@@ -20,7 +20,7 @@ import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
 import { moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
-import { judgeRecord, ownerWaivedPerformanceRow, stampVerdict } from './perf-audit-analysis.mjs'
+import { judgeRecord, ownerWaivedPerformanceRow, priceLimits, approvalCoversSource, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
@@ -28,7 +28,7 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
-import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { atRestStatus, cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
@@ -138,7 +138,7 @@ function octatrack(id) {
   const hardwareApproval = exists(approvalPath) ? json(approvalPath) : null
   const performanceRequired = entry && (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM
   if (exists(folder + '/evidence/performance.json')) {
-    const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record)
+    const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record, priceLimits(document))
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
     // A key-press record has no flood, so a module with a MIDI path or ColdFire sound work cannot take it.
     if (record.trigger === 'key' && ['midi-usb', 'machines'].includes(document.category)) fail('performance', "a key-press record (trigger: 'key') is for a module with no MIDI path and no frame-interrupt work, not a " + document.category + ' module', 'npm run perf:audit -- template coldfire, and measure under the flood')
@@ -151,7 +151,9 @@ function octatrack(id) {
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
     // Were these numbers taken on this code? The stamp names the source they were measured on.
     const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json')
-    if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
+    if (stamped.state === 'fail' && !record.sourceSha256 && approvalCoversSource(hardwareApproval, id, document.version, nativeHashes.get(id)))
+      info('performance stamp', 'not stamped: the owner\'s approval binds this exact source, record included (' + approvalPath + ')')
+    else if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
     else if (stamped.state === 'note') info('performance stamp', stamped.detail)
     else ok('performance stamp', stamped.detail)
   } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
@@ -192,6 +194,11 @@ function octatrack(id) {
   if (price.state === 'fail') fail('cpu price', price.detail, price.fix)
   else if (price.state === 'pending') info('cpu price', price.detail)
   else ok('cpu price', price.detail)
+  // What it costs installed and used nowhere (test procedure step 9): above the limit it must rest (answer ev_in_use), unless a machine.
+  const rest = atRestStatus({ root, document })
+  if (rest.state === 'fail') fail('cost at rest', rest.detail, rest.fix)
+  else if (rest.state === 'ok') ok('cost at rest', rest.detail)
+  else info('cost at rest', rest.detail + (rest.fix ? '. Fix: ' + rest.fix : ''))
 
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')

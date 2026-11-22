@@ -5,7 +5,7 @@
   npm run device:test -- [--seconds 30] [--soak SECONDS] [--hold SECONDS] [--share SOCKET] [--testing-entry FILE] PKG.mwrm
 
 The run of `npm run device:qualify` (the module alone on T1 and T5 with the load meters, an effect in its FX slot and a
-machine through SRC SETUP's machine list with its render against its CPU price, then on every track while the
+machine through SRC SETUP's machine list with its sequenced peak and its triggered mean cost against its CPU price, then on every track while the
 pattern plays, its knobs swept, the Parts and a bank switched, an optional soak, the Part restored, the loader, crash
 and stall counters compared), with these differences:
 - The package goes in as a trial in RAM through `npm run device -- try` on the session's shared socket, without
@@ -16,6 +16,8 @@ and stall counters compared), with these differences:
   during it (scripts/device.mjs, src/dev/trial-verdict.ts). Its notes, such as a hot CPU, do not.
 - One package a run (bases without whole-set trials take one change), and no crash test (a restart ends the trial
   outside the run).
+- The CF card stays in. A development twin loads no set another base wrote (`do saved` reads card set 4, FOREIGN), and
+  the run fails if the card set reads differently after the rollback than before the install: nothing reached the card.
 
 Start the session with `npm run device -- serve --share /tmp/modwerk-share.sock`, on a development base, transport
 stopped, on a bank and Part whose working copy equals its saved one (docs/OCTATRACK_DRIVING.md); for a machine, one
@@ -91,6 +93,13 @@ class Trial:
         failures.extend('the unit logged during the trial: ' + fault for fault in self.faults())
 
 
+def card_set():
+    """The card set's result and counts (`npm run device -- do saved`: modset.c's result code, modules saved, live), or None
+    on a base that does not answer it."""
+    try: return qualify.send('saved').strip().splitlines()[-1]
+    except (OSError, RuntimeError, IndexError): return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--seconds', type=int, default=30)
@@ -112,14 +121,19 @@ def main():
     turn.loader.exec_module(unit_turn)
     unit_turn.take_turn(__file__, 'device:test ' + os.path.basename(args.packages[0]), expect='%ds' % (hold + 120))
     pkgs = [qualify.package(p) for p in args.packages]
-    trials = []
+    trials, card = [], []
 
     def install(pkgs):
+        card.append(card_set())
         trials.append(Trial(trial_command(os.path.abspath(pkgs[0]['path']), hold, args.share)))
         trials[0].wait_started()
 
     def uninstall(pkgs, failures):
         for trial in trials: trial.end(failures)
+        before = card[0] if card else None
+        after = card_set() if before else None
+        if before and after != before:
+            failures.append('the card set reads %r after the run, %r before: the trial must leave the card alone' % (after, before))
 
     result = qualify.run(args, pkgs, install, uninstall, selftest=True, inventory=True)
     if qualify.EMULATOR:  # the same cases on an ot_emu session: labelled as such, never hardware evidence

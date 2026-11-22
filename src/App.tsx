@@ -55,14 +55,14 @@ import type { HubView, SetAction } from './components/OctatrackHub'
 import type { OctatrackLink } from './engine/elekloader/octatrack-link'
 import type { BaseLayout } from './engine/elekloader/base-variants'
 import type { BaseGuideFailure, BaseGuideStage } from './components/BaseInstallDialog'
-import { missingFromProject, sameModules, UNIT_STATE, unitState, type LastSeen } from './config/inventory'
+import { inventoryUsbAudio, matchesUsbAudio, missingFromProject, sameModules, UNIT_STATE, unitState, type LastSeen } from './config/inventory'
 import { ShareModuleButton } from './community/ShareModuleButton'
 import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
 import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctatrackLink'
 import { recordLoad } from './hooks/useOctatrackLoad'
 import { baseGuideToReopen, forgetBaseGuideReopen, pendingBaseInstall } from './config/octatrack-progress'
 import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
+import { comesWithBase, USB_AUDIO_PACKAGED, USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
 import { desktopShell, openAppMenu, useDesktopCommands } from './desktop-shell'
@@ -82,7 +82,8 @@ import { ZoomEffectDetail } from './devices/ZoomEffectDetail'
 import { ZOOM_EFFECTS, isZoomSetDevice } from './devices/zoom-effects'
 import { LibraryDock } from './components/LibraryDock'
 import { LibrarySelection } from './components/LibrarySelection'
-import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, deviceHref, parseDeviceRoute, rememberDevice, rememberedDevice, type DeviceProfile } from './devices/registry'
+import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, deviceHref, lastMachine, parseDeviceRoute, rememberDevice, rememberedDevice, type DeviceProfile } from './devices/registry'
+import { sidebarMachine } from './devices/sidebar-machine'
 import { parseZoomHubRoute, zoomHubHref } from './devices/zoom-hub-route'
 import type { ZoomLink } from './engine/zoom/zoom-link'
 import { DIGI_DEVICES, DIGI_MODS, isDigiDevice, type DigiMod } from './devices/digi-mods'
@@ -295,6 +296,8 @@ export default function App() {
   const machineHasMods = !allMachines && (currentDevice.status === 'available' || currentDevice.status === 'preview')
   const machineBuildPreview = !allMachines && isCoreBuildPreview(currentDevice.id) && currentDevice.status === 'research' && !!currentDevice.sdk
   const machineCanConfigure = machineHasMods || machineBuildPreview
+  // A machine that has mods or a core build preview, as machineCanConfigure asks of the page's machine.
+  const takesSets = (device: DeviceProfile) => device.status === 'available' || device.status === 'preview' || (isCoreBuildPreview(device.id) && device.status === 'research' && !!device.sdk)
   // The overview shows All machines too, so the forum and other machine-less pages after it don't fall back to an older machine.
   useEffect(() => { if (allRoute || overviewRoute) rememberDevice(ALL_MACHINES); else if (machineView || octatrackRoute) rememberDevice(currentDevice.id) }, [allRoute, overviewRoute, machineView, octatrackRoute, currentDevice.id])
   // #devices, the old machine overview, opens the overview page.
@@ -428,7 +431,7 @@ export default function App() {
 
   function toggleComparison(id: string) { setComparison(current=>current.includes(id)?current.filter(value=>value!==id):current.length<3?[...current,id]:current) }
   function toggleModule(id: string) {
-    if (id === USB_AUDIO_MODULE && !selectedIds.includes(id)) {
+    if (!USB_AUDIO_PACKAGED && id === USB_AUDIO_MODULE && !selectedIds.includes(id)) {
       setCompareOpen(false)
       window.history.pushState(null, '', new URL(moduleHref(id) + '?setup=1', document.baseURI))
       window.dispatchEvent(new Event('hashchange'))
@@ -447,8 +450,10 @@ export default function App() {
   const [putBackId, setPutBackId] = useState<string>(), [putBackOff, setPutBackOff] = useState<string[]>([])
   function putBack(last: LastSeen) {
     setPutBackOff(last.offIds ?? [])
-    const id = configurationsFor('octatrack').find(set => sameModules(set.moduleIds.filter(module => module !== USB_AUDIO_MODULE), last.moduleIds))?.id
-      ?? workspace.importConfiguration('From my Octatrack', last.moduleIds, true, undefined, 'octatrack', undefined, last.removedStockFx)
+    const matches = configurationsFor('octatrack').filter(set => sameModules(set.moduleIds.filter(module => !comesWithBase(module)), last.moduleIds) &&
+      matchesUsbAudio(set.usbAudio, last))
+    const id = (matches.find(set => set.id === active?.id) ?? matches[0])?.id
+      ?? workspace.importConfiguration('From my Octatrack', last.moduleIds, true, undefined, 'octatrack', last.usbAudio, last.removedStockFx)
     setPutBackId(id); setLoadingSet(id)
   }
   // Replaces the modules a new one cannot run beside. Adding last goes through toggleModule, which also opens USB setup.
@@ -490,7 +495,12 @@ export default function App() {
     if (action === 'share') window.location.hash = 'forum/new?category=configs&machine=' + configurationDevice(item)
     else setConfigDialog(action)
   }
-  function saveUnitAsSet() { if (inventory) { workspace.importConfiguration('From my Octatrack', inventory.moduleIds, true, undefined, 'octatrack', undefined, inventory.removedStockFx); openEditedSet('octatrack') } }
+  function saveUnitAsSet() {
+    if (!inventory) return
+    const audio = inventoryUsbAudio(usbLink?.getState().identity?.base, inventory)
+    workspace.importConfiguration('From my Octatrack', audio.moduleIds, true, undefined, 'octatrack', audio.usbAudio, inventory.removedStockFx)
+    openEditedSet('octatrack')
+  }
 
   // Routes that browse a library: they get the search field and, on phones, the category chips under the app bar.
   const libraryNav = onLibrary || route === 'module-sets'
@@ -529,7 +539,7 @@ export default function App() {
         {!!selectedIds.length && <button type="button" className="button button-quiet" aria-haspopup="dialog" onClick={() => active && setReportingConfiguration({ machine: 'octatrack', id: active.id })}><Icon name="message" size={15} />Report a problem</button>}
       </div></header>
       <input ref={importRef} type="file" accept="application/json,.json" hidden onChange={event=>void importSelection(event)} aria-label="Import module set backup"/>{importError&&<p className="file-error" role="alert">{importError}</p>}</>}
-    grid={<>{availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}<ModuleGrid ids={selectedIds} inventory={inventory} describe={id => id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name + ' · 0.2 experimental' : !isModuleAvailable(id, betaAccess) ? 'Temporarily unavailable' : MODULES.find(module => module.id === id)?.detail ?? ''} onOpen={setOpenModule} onRemove={toggleModule} onKeep={toggleModule} onSaveUnit={saveUnitAsSet} /></>}
+    grid={<>{availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}<ModuleGrid ids={selectedIds} inventory={inventory} describe={id => id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name : !isModuleAvailable(id, betaAccess) ? 'Temporarily unavailable' : MODULES.find(module => module.id === id)?.detail ?? ''} onOpen={setOpenModule} onRemove={toggleModule} onKeep={toggleModule} onSaveUnit={saveUnitAsSet} /></>}
     card={<CardSetDownload set={active && { name: active.name, moduleIds: active.moduleIds, removedStockFx: active.removedStockFx, usbAudio: active.usbAudio }} onInstall={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} />} /></Suspense>
   const categoryNav = <nav className={phoneLayout ? 'sidebar-nav' : 'library-categories'} aria-label="Module library" ref={phoneLayout ? libraryNavRef : undefined}>
     <a href={libraryHref()} className={onLibrary && !libraryCategory ? 'active' : ''} aria-current={onLibrary && !libraryCategory ? 'page' : undefined}>
@@ -578,11 +588,11 @@ export default function App() {
             <section className="sidebar-workspace" aria-label="Your workspace">
               {octatrackUi && <div className="sidebar-section-label">Your workspace</div>}
               {octatrackUi ? <Suspense fallback={null}>{(() => {
-                const pedal = zoomHub?.device ?? (hubRoute || configuration ? undefined : zoomConnected)
-                if (pedal) return <><InstrumentItem device={pedal} href={zoomHubHref(pedal.id)} zoom={zoomLink} current={!!zoomHub} />{zoomLink && <ZoomSidebarStatus link={zoomLink} onInstall={() => setZoomInstall(true)} />}</>
-                const device = sidebarConfiguration ? DEVICES_BY_ID[configurationDevice(sidebarConfiguration)] : machineCanConfigure ? currentDevice : DEVICES_BY_ID.octatrack
+                const last = DEVICES_BY_ID[lastMachine() ?? '']
+                const { device, pedal } = sidebarMachine({ allMachines, current: currentDevice, currentTakesSets: machineCanConfigure, currentHasSet: !!machineActive, last, lastTakesSets: !!last && takesSets(last), octatrackConnected: !!usbLink, pedalPage: zoomHub?.device, pedalConnected: zoomConnected, octatrackPage: hubRoute || configuration })
+                if (pedal) return <><InstrumentItem device={device} href={zoomHubHref(device.id)} zoom={zoomLink} current={!!zoomHub} />{zoomLink && <ZoomSidebarStatus link={zoomLink} onInstall={() => setZoomInstall(true)} />}</>
                 const unit = device.id === 'octatrack' && !!usbLink
-                return <><InstrumentItem device={device} set={unit ? active : sidebarConfiguration} href={unit ? '#configuration' : device.family === 'zoom' ? zoomHubHref(device.id) : deviceHref(device.id, 'configuration')} link={unit ? usbLink : null} inventory={inventory} current={unit ? hubRoute : device.family === 'zoom' ? !!zoomHub : configuration || machineView === 'configuration'} />{unit && usbLink && <OctatrackSidebarStatus link={usbLink} onInstall={() => setBaseInstall('manual')} />}</> })()}</Suspense> : <>
+                return <><InstrumentItem device={device} set={unit ? active : activeFor(device.id)} href={unit ? '#configuration' : device.family === 'zoom' ? zoomHubHref(device.id) : deviceHref(device.id, 'configuration')} link={unit ? usbLink : null} inventory={inventory} current={unit ? hubRoute : device.family === 'zoom' ? !!zoomHub : configuration || machineView === 'configuration'} />{unit && usbLink && <OctatrackSidebarStatus link={usbLink} onInstall={() => setBaseInstall('manual')} />}</> })()}</Suspense> : <>
                 <div className="sidebar-section-label configuration-label"><span>Configurations</span><button className="icon-button" aria-label={'New ' + (machineCanConfigure ? currentDevice.name : 'Octatrack') + ' configuration'} disabled={!ready} onClick={() => newConfiguration(machineCanConfigure ? currentDevice.id : 'octatrack')}><Icon name="plus" size={18} /></button></div>
                 <div className="configuration-launcher"><button type="button" className="configuration-browse" onClick={event => { event.currentTarget.focus(); setConfigurationsOpen(true) }}><Icon name="file" size={17} /><span>Browse configurations</span><small>{workspace.configurations.length}</small></button><button type="button" className="configuration-recent" disabled={!sidebarConfiguration} onClick={() => { const item = allMachines ? storedActive : machineActive; if (item) changeConfiguration(item.id) }}>{sidebarConfiguration ? <><span>{sidebarConfiguration.name}</span><small>{DEVICES_BY_ID[configurationDevice(sidebarConfiguration)].name} · current</small></> : <><span>No configuration yet</span><small>Saved on this device</small></>}</button></div>
               </>}

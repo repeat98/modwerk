@@ -34,11 +34,20 @@ the same image booted one-shot came back. Everything else here was done on the o
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
   background and logs every step, and you look at the log.
 - Never power-cycle on your own; ask the owner. Never flash.
+- Leave the CF card in for a trial. A twin loads no set another base wrote (`do saved` reads card set 4, FOREIGN) and a
+  trial writes none: `device:test` fails if `saved` reads differently afterwards. `npm run device -- boot <flashed image>`
+  returns to the flashed base, which loads the owner's set from the card again. Ask for no card swap or power cycle.
 - A Keep on a RAM-booted base overwrites the owner's kept modules. The kept set lives in two card files,
   `/MODWERK0.SET` and `/MODWERK1.SET`, written alternately and stamped with the writing base's identity
   (`modset.c`); a base loads neither file another base wrote. Two Keeps on a twin (a `try`, then a `remove`)
   replace both, and after the power cycle the flashed base starts with no modules (23 October 2026, MKII, flashed
-  `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
+  `a408c505`, twin `8dc7692c`). A base with no set of its own on the card saves first to `/MODWERK1.SET`, then to each
+  other file in turn (`modset.c` `slot`), so one Keep on a twin replaces only that file. The kept set's whole-set identity
+  (USB request 38, order-free: `journal.h` `runtime_journal_set_digest`) names its exact packages: hash candidate files
+  the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). A twin's RAM boot
+  that restores its kept set took 72 s to answer on USB after a power-cycled start, past `boot`'s 60 s wait, and 18 s
+  later; keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
+  after its Keep, never enumerated (Windows, `a328967d`, same day). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
   its removal. It is not a read; never run it on a unit whose kept set matters (30 October 2026, MKII, twin `04e94075`).
@@ -134,7 +143,7 @@ Keep one uploader owner throughout a retained trial. A second
 first transport retains its cached counter. That can make its next ENTER reuse
 the second client's sequence and receive a stale HELLO result. Shared observers
 may read identity, inventory and load or drive panel requests; do not SUBMIT
-another upload frame while the first client retains ownership.
+another upload frame while the first client retains ownership. Close paired Modwerk browser tabs before a native USB Audio trial. When the unit reconnects with new audio interfaces, a paired tab can claim the vendor interface and run its unfinished-sync recovery.
 
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
@@ -291,9 +300,12 @@ not isolated: verify each held-row transition and stock modifier release, and st
 - **Modwerk's pages.** PROJ's fifth category, MODWERK (from S55, 12 October 2026), lists STATUS (the status dialog,
   also CUE+PROJ from anywhere), MODULE COST, MISSING, SELF TEST and, on a base with it, MODULES (every installed
   module, ON or OFF: UP and DOWN move, YES switches the one under the cursor at once, stopped, and the last line says
-  why when it can't); NO closes each. The list keeps its cursor from
+  why when it can't); NO closes each. On a development base with SETTINGS, open it, then choose a module such as USB AUDIO.
+  UP and DOWN highlight its options, YES applies the highlighted one, and NO returns to the module list. The PROJ menu keeps its cursor from
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >
   MODWERK and MODWERK TEST.
+
+`device:price --memory --out FILE.json` also records bytes in the module pool and program words on each DSP core after every reading. These are tracked allocations. Pair them with the module's region inventory for state, existing reservations and buffers.
 
 ## Where the state is (OS 1.40C)
 

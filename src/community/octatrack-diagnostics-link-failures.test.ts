@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OctatrackLink, type LinkDiagnostic, type LinkState } from '../engine/elekloader/octatrack-link'
+import { UsbVendorTransport } from '../engine/elekloader/upload-usb'
 import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
 import { collectOctatrackDiagnostics, changeDiagnosticSharing, reportLinkFailure } from './octatrack-diagnostics'
 import { api, apiFetch, post } from './api'
@@ -77,6 +78,20 @@ describe('failures the link reports itself', () => {
     await collect(real); await changeDiagnosticSharing(true)
     return real
   }
+  it('leaves a successfully claimed unit out of failures while another client owns its trial', async () => {
+    const unit = fakeUnit('base')
+    unit.orphan = '78'.repeat(32)
+    const probe = vi.spyOn(UsbVendorTransport.prototype, 'hasUsbFunctionChanges').mockResolvedValue(true)
+    try {
+      const real = await sharing(unit)
+      const connecting = real.connect()
+      await vi.waitFor(() => expect(real.getState().status).toBe('busy'))
+      await connecting; await vi.advanceTimersByTimeAsync(0)
+      expect(real.getState()).toMatchObject({ status: 'busy', identity: { base: unit.base } })
+      expect(probe).toHaveBeenCalledOnce()
+      expect(sent().filter(data => data.event === 'link_failed')).toEqual([])
+    } finally { probe.mockRestore() }
+  })
   it('no-device when the device picker closes without an Octatrack', async () => {
     const real = await sharing(fakeUnit('none'))
     await real.connect(); await vi.advanceTimersByTimeAsync(0)
