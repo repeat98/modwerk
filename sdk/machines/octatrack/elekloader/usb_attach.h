@@ -24,7 +24,10 @@ enum usb_attach_action { USB_ATTACH_NONE, USB_ATTACH_DROP, USB_ATTACH_OFFER };
 /* One UI tick: DROP takes the pull-up off now, OFFER puts it back. */
 static inline enum usb_attach_action usb_attach_tick(struct usb_attach *s, uint32_t usbcmd, uint32_t portsc, uint32_t otgsc, int busy)
 {
-    if (s->off) return --s->off ? USB_ATTACH_NONE : USB_ATTACH_OFFER;
+    if (s->off) { /* the offer waits for a link someone took meanwhile: its pull-up must come back */
+        if (s->off == 1u && busy) return USB_ATTACH_NONE;
+        return --s->off ? USB_ATTACH_NONE : USB_ATTACH_OFFER;
+    }
     if (portsc & USB_ATTACH_ACTIVE) { s->detached = 0, s->tries = 0; return USB_ATTACH_NONE; } /* attached: the next loss counts afresh */
     if (busy || !(usbcmd & USB_ATTACH_RS) || !(otgsc & USB_ATTACH_BSV)) { s->detached = 0; return USB_ATTACH_NONE; }
     if (++s->detached < USB_ATTACH_WAIT || s->tries >= USB_ATTACH_TRIES) return USB_ATTACH_NONE;

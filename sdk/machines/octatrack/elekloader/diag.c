@@ -222,7 +222,7 @@ static void diag_tick(void)
     uint32_t held = mw_frame_skips; /* a late entry held, which skips a DSP frame (a click): at most one incident in HOT_GAP */
     if (held != frame_skips && (!skip_at || ticks - skip_at >= HOT_GAP)) add(l, DIAG_LATE, held, 1), skip_at = ticks, frame_skips = held;
     uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */
-    if (reoffered != reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1), reoffers = reoffered;
+    if (reoffered != reoffers) { if (!reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1); reoffers = reoffered; } /* a boot's first: five with no host would crowd the log */
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
     uint32_t cpu = modwerk_status[0], d0p = modwerk_status[2], d1p = modwerk_status[4];
     ++n, cpu_sum += cpu, d0_sum += modwerk_status[1], d1_sum += modwerk_status[3], played += PLAYING;

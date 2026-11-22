@@ -581,6 +581,14 @@ int main(void)
         frame_played = kept, test_machines_booked = 200u, modwerk_status_cpu_entered(0); cpu_note_played();
         test_machines_booked = 0, modwerk_status_cpu_left(0); cpu_note_played();          /* a pick's exit */
         CHECK(frame_played == kept);
+        test_machines_booked = 313u, modwerk_status_cpu_entered(0); cpu_note_played();    /* FM Synth picked */
+        test_machines_booked = 0; cpu_note_played();                                       /* another Part ... */
+        CHECK(frame_played == kept - 313u);
+        test_machines_booked = 313u; cpu_note_played();                                    /* ... and this one again */
+        CHECK(frame_played == kept);
+        modwerk_status_cpu_left(0); cpu_note_played();                    /* a reading before the exit lands ... */
+        test_machines_booked = 0; cpu_note_played();                      /* ... and after: the adjust's, once */
+        CHECK(frame_played == kept);
         transport_stopped = 0, test_machines_booked = 0; }
       /* Stopped, a machine swapped out and back is judged by what it adds, once, never below the newest reading
        * (owner's MKII, 21 November 2026: Grain to FLEX and back right after STOP, refused at once). */
@@ -720,6 +728,14 @@ int main(void)
       test_busiest = 0;
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
+    /* Playing, what a pick replaces leaves the last four seconds too: a swap for a lighter module is never refused. */
+    { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1150u;
+      CHECK(!modwerk_status_pick_busy(2, 1, "Lite", 100u, 200u, 0) && open == CLOSED);   /* 115 - 20 + 10 = 105 % */
+      CHECK(modwerk_status_pick_busy(2, 1, "Heavy", 300u, 200u, 0));                     /* 125 % */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0;
+      mw_stock_reserve = RESERVE_ADAPTIVE, transport_stopped = 1; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266, 450);
     CHECK(open == SHOWN);
     CHECK(strstr(shows(), "MODWERK BASE 0.7|"));                       /* the status page names the base by its version */

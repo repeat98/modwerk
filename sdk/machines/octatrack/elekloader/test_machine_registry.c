@@ -823,7 +823,7 @@ static void check_resting_machines(void)
 static uint32_t entered;
 static void late_fresh(uint32_t at)
 {
-    entry_at = entry_late = 0, entered = at, host_tick = TICK;
+    entry_at = entry_late = wait_run = 0, entered = at, host_tick = TICK;
     mw_late_max = mw_late_hits = mw_late_waits = mw_late_wait_max = 0, mw_late_wait_on = 1;
 }
 /* The frame interrupt enters `interval` counts after its last entry: whether it waited. An entry that did leaves
@@ -871,6 +871,15 @@ static void check_late_entry(void)
     }
     /* The DSP skips the frame after a waited entry: the next comes two frames less the lateness later, on the grid. */
     CHECK(late_by(149) && !entry(2u * FRAME - 149u * US) && !entry_late && !entry(FRAME) && mw_late_waits == 1u);
+    /* A chain of held entries, each frame ending in the window again: WAIT_RUN in a row brake the module machines. */
+    { uint32_t brakes = mw_frame_brakes;
+      late_fresh(5000000u); mw_frame_brake = 0;
+      CHECK(!entry(FRAME) && entry(FRAME + 149u * US));
+      for (unsigned i = 2; i < WAIT_RUN; ++i) CHECK(entry(GRID));
+      CHECK(!mw_frame_brake && entry(GRID) && mw_frame_brake && mw_frame_brakes == brakes + 1u);
+      mw_frame_brake = 0;
+      late_fresh(5000000u);
+      CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && !entry(2u * FRAME - 149u * US) && !wait_run && !mw_frame_brake); }
     /* Lateness carries from one entry to the next: 60 µs twice is 120 µs. A frame that came early takes it back. */
     late_fresh(5000000u);
     CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && entry(FRAME + 60u * US) && entry_late == 120u * US - 132u);
@@ -1262,6 +1271,9 @@ int main(void)
     for (unsigned i = 0; i < 12u; ++i) CHECK(frame(3, 10000, 0) > 100);
     mw_frame_t0 = host_timer; host_timer += 30000; mw_source_start_select(3, 0); f_cost = 30000;
     CHECK(mw_source_render_impl(3, 0, 0, 1) == -9); mw_frame_exit();     /* 30,000 + its start's 30,000: held */
+    CHECK(skipped[3] && start_cost[3] >= 30000u);
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0; mw_ui_tick();      /* STOP: its step figures afresh too */
+    CHECK(!cost[3] && !start_cost[3] && !start_after[3]);
     f_cost = 2000; frame(3, 0, 0), frame(3, 0, 0);
     CHECK(frame(3, 30000, 0) > 100);                                     /* no start: the steady cost fits */
     /* A machine that starts its own notes past the base (FM Synth): a step's frame is one where any track started, so
@@ -1287,6 +1299,9 @@ int main(void)
         CHECK(i < 4u ? light > 100 && dear > 100 : i < 6u ? light > 100 && dear == -9 : light == -9 && dear == -9);
     }
     CHECK(mw_frame_shed_tracks == (1u << 2 | 1u << 3) && cost[2] == 3000 && cost[3] == 20000);
+    start_cost[3] = start_after[11] = 7u, skipped[11] = 3u;
+    guard_forget(3);                                                     /* another machine on T4: timed afresh */
+    CHECK(!cost[3] && !start_cost[3] && !start_after[11] && !skipped[11] && cost[2] == 3000);
     CHECK(mw_assign(part0(), 2, 1) == 1);
     /* A track's second render in a frame has its own estimate: once measured, the heavy second render skips and the
      * light first one runs (also in the frame after the first long one, which starts 25,109 late: skipping the heavy

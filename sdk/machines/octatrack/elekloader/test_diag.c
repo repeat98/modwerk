@@ -3,7 +3,7 @@
  * since; five minutes of meters make one load record; the CPU at 90 % for a second makes one HOT incident with the
  * unit's context, at most one in ten minutes; five seconds without a UI tick while frames run make a FREEZE, added
  * with its length once the tick moves again, or with length 0 at the next start; the frame guard's skips make one
- * SHED, at most one in ten minutes; each USB re-offer makes one USB incident; LOG pages are 244 bytes. */
+ * SHED, at most one in ten minutes; a boot's first USB re-offer makes one USB incident; LOG pages are 244 bytes. */
 #include "diag.c"
 #include <stdio.h>
 
@@ -117,10 +117,13 @@ int main(void)
     mw_frame_brakes = 2u;
     tick();
     CHECK(LOG->incidents == before + 4u && last()->kind == DIAG_BRAKE && (last()->a & 0xffffffu) == 2u);
-    /* The attach watchdog offered the unit again (#1985): one USB incident each time, with OTGSC and PORTSC1. */
+    /* The attach watchdog offered the unit again (#1985): one USB incident a boot, with OTGSC and PORTSC1. */
     mw_usb_reoffer_regs = 0x0800u << 16 | 0x1000u, mw_usb_reoffers = 1u;
     tick();
     CHECK(LOG->incidents == before + 5u && last()->kind == DIAG_USB && last()->a == (0x0800u << 16 | 0x1000u));
+    mw_usb_reoffers = 2u; /* a boot's later ones are not logged: five with no host would crowd the log */
+    tick();
+    CHECK(LOG->incidents == before + 5u);
     tick();
     CHECK(LOG->incidents == before + 5u);
     /* A late frame entry held, a skipped DSP frame: the count since boot, at most once in HOT_GAP. */

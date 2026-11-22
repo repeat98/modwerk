@@ -98,9 +98,9 @@ static uint32_t recent_mean(void)
     for (unsigned i = 0; i < 8u; ++i) sum += cpu_recent[i];
     return sum / 8u;
 }
-/* Each reading: what the guard below goes by once the unit is stopped, the mean of the last four seconds it played,
- * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
-static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the mean as it last stood playing; the newest */
+/* Each reading: what the guard below goes by once the unit is stopped, the longest frame of the last four seconds it
+ * played, kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
+static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the longest as it last stood playing; the newest */
 static uint32_t frame_longest(void);
 /* Module picks and removals since the frame readings last held them (machine_registry.c, the effect check below), per
  * mille of a frame: a pick made stopped is judged with every one before it, and a machine swapped out and back stopped
@@ -111,7 +111,9 @@ static uint32_t adjust_readings;
 /* Modules that leave the Part without a pick (a Part reload, a paste, a project load) take what they cost off the kept
  * figure as they go, stopped: what the Part's modules book (the reserve's own sum, below) is noted each reading, and a
  * fall no pick made comes off. Else the figure kept from a play with FM Synth on T8 refused SYNTIZ and then Amiga on
- * the same track after a Part reload, until the unit had played four seconds (owner's MKII, 22 November 2026). */
+ * the same track after a Part reload, until the unit had played four seconds (owner's MKII, 22 November 2026). A rise
+ * no pick made goes back on (another Part chosen and then this one again). After a pick the sum is only noted, once it
+ * moved: a reading between the guard's booking and the pick landing would see the fall a second time. */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net); /* machine_registry.c */
 static uint32_t effects_booked(unsigned skip);
 static uint32_t booked_seen;
@@ -121,12 +123,14 @@ static void cpu_note_played(void)
     uint32_t booked = modwerk_machine_frame_booked(8u, 0) + effects_booked(16u);
     if (modwerk_machine_stopped()) {
         play_readings = adjust_readings = 0;
-        if (!booked_moved && booked < booked_seen) frame_played = frame_played > booked_seen - booked ? frame_played - (booked_seen - booked) : 0;
+        int32_t played = (int32_t)frame_played + (int32_t)booked - (int32_t)booked_seen;
+        if (!booked_moved && booked != booked_seen) frame_played = played > 0 ? (uint32_t)played : 0u;
     } else {
         if (++adjust_readings >= 8u) frame_adjust = 0;
         if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest();
     }
-    booked_seen = booked, booked_moved = 0;
+    if (booked != booked_seen) booked_moved = 0;
+    booked_seen = booked;
 }
 void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0, booked_moved = 1; }
 void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0, booked_moved = 1; }
@@ -167,11 +171,13 @@ static void frame_note(unsigned at)
  * Part's four quiet delays took 7.2 of the room the reserve promised (owner's MKII, 22 November 2026). The kept figure
  * goes stale when the unit is made lighter while stopped (a stock pick, another project): four seconds of playing
  * replace it. */
-static uint32_t measured_load(void)
+static uint32_t measured_load(uint32_t gone) /* `gone`: what a pick's predecessor takes, off both */
 {
-    int32_t kept = (int32_t)frame_played + frame_adjust, now = 0;
-    now += modwerk_machine_stopped() ? (int32_t)frame_newest + (frame_adjust > 0 ? frame_adjust : 0) : (int32_t)frame_longest();
-    return (uint32_t)(kept > now ? kept : now);
+    int32_t adjust = frame_adjust - (int32_t)gone, kept = (int32_t)frame_played + adjust, now;
+    if (modwerk_machine_stopped()) now = (int32_t)frame_newest + (adjust > 0 ? adjust : 0);
+    else now = (int32_t)frame_longest() - (int32_t)gone; /* playing, the last four seconds hold what leaves */
+    int32_t most = kept > now ? kept : now;
+    return most > 0 ? (uint32_t)most : 0u;
 }
 static void missing_check(void);
 static void missing_on_tick(void);
@@ -559,7 +565,7 @@ static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
 }
 uint32_t modwerk_status_frame_load(void)
 {
-    uint32_t measured = measured_load(), stock = reserved(8u, 16u);
+    uint32_t measured = measured_load(0), stock = reserved(8u, 16u);
     return measured > stock ? measured : stock;
 }
 /* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
@@ -1379,9 +1385,7 @@ uint32_t modwerk_status_module_rest(uint32_t module)
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
-    frame_adjust -= (int32_t)gone;
-    uint32_t measured = measured_load() + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
-    frame_adjust += (int32_t)gone;
+    uint32_t measured = measured_load(gone) + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
     uint32_t net = machine ? (add > track_stock ? add - track_stock : 0u) : add; /* a machine in a sample's place */
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;

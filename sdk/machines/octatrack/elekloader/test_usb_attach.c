@@ -55,6 +55,9 @@ int main(void)
     for (unsigned t = 0; t < USB_ATTACH_WAIT - 1u; ++t) CHECK(usb_attach_tick(&s, RS, 0, BSV, 0) == USB_ATTACH_NONE);
     CHECK(usb_attach_tick(&s, RS, CCS, BSV, 0) == USB_ATTACH_NONE);
     CHECK(until_action(&s, RS, 0, BSV, 0, 2000u, &what) == USB_ATTACH_WAIT && what == USB_ATTACH_DROP);
+    /* A link taken during the off time: the offer waits for it, then comes. */
+    CHECK(until_action(&s, 0, 0, BSV, 1, 2000u, &what) == 0);
+    CHECK(until_action(&s, 0, 0, BSV, 0, 2000u, &what) == 1u && what == USB_ATTACH_OFFER);
     if (failures) return 1;
     puts("usb_attach: ok");
     return 0;

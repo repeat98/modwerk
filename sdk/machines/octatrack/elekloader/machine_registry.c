@@ -637,6 +637,7 @@ static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsign
     return type;
 }
 static void mc_assigned(const Machine *who); /* the machine map, below: a track takes an installed machine */
+static void guard_forget(unsigned track);    /* the frame guard, below: a track's figures are another machine's */
 /* A machine's admission precedes every mutation; -1 refuses. */
 #ifdef MODWERK_RESIDENT_ON_DEMAND
 extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
@@ -678,7 +679,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             pick_who = next;
             modwerk_runtime_rest_poll();
         }
-        if (old != next) mc_assigned(next), modwerk_status_cpu_entered(add);
+        if (old != next) mc_assigned(next), modwerk_status_cpu_entered(add), guard_forget(track);
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
@@ -1031,7 +1032,13 @@ volatile uint32_t mw_late_wait_on = 1;
 /* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
 volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
 volatile uint32_t mw_frame_skips; /* every wait since boot, each a DSP frame skipped (diag.c's `late` incident) */
-static uint32_t entry_at, entry_late;
+/* A held entry stamps its lateness before the wait, so after one held to LATE_HI a body of 283 to 363 µs puts the next
+ * entry in the window again, and so on: the frame interrupt would never leave level 5. Between a pattern's steps the
+ * frames are light and break such a chain (on the unit no more than eight entries in a row were held, at a pattern
+ * switch), but a module-heavy Part could keep one going; past WAIT_RUN in a row the brake silences the module machines,
+ * which ends it. The wait itself never stops: an entry let through in the window is what stalls the DSP for good. */
+#define WAIT_RUN 16u
+static uint32_t entry_at, entry_late, wait_run;
 /* From the frame interrupt's entry, after stock's register save (machine_registry.s): level 5, stock's stack. */
 void mw_frame_enter(void)
 {
@@ -1051,8 +1058,9 @@ void mw_frame_enter(void)
             mw_late_waits = mw_late_waits + 1u, mw_frame_skips = mw_frame_skips + 1u;
             if (waited > mw_late_wait_max) mw_late_wait_max = waited;
             now += waited;
+            if (++wait_run >= WAIT_RUN && !mw_frame_brake) mw_frame_brake = 1, mw_frame_brakes = mw_frame_brakes + 1u;
         }
-    }
+    } else wait_run = 0;
     mw_frame_t0 = now;
     /* ev_frame_deadline (owner, 22 November 2026): by when work at IPL 5 (stock's delay routine, a ColdFire effect's
      * detours in it) must end for the next entry to be no more than 60 µs late: this frame's grid time (its entry less
@@ -1107,12 +1115,13 @@ static int guarded_as(Render *f, Render *instead, unsigned track, unsigned ping,
      * frame is one where any track started a note (FM Synth starts its own, past the base, so a track cannot tell): in it
      * each render is judged at the ceiling by what it, and the work after it, cost in the last step's frame. Past the
      * ceiling no probe runs it: a render the guard knows would end the frame there is what stalls the DSP; it comes back
-     * when the rest of the frame leaves room, or afresh after STOP or a Part change (ceiling_tick). shortcut: the first
-     * step since boot has no figure yet and runs on the steady costs. */
+     * when the rest of the frame leaves room, or afresh after STOP, a Part change (ceiling_tick) or another machine on
+     * its track (guard_forget). shortcut: the first step since boot, and since then, has no figure yet and runs on the
+     * steady costs. */
     unsigned starts = (starting | start_prev) != 0;
     uint32_t peak = starts ? at - mw_frame_t0 + (start_cost[k] > cost[k] ? start_cost[k] : cost[k]) + (start_after[k] > after[k] ? start_after[k] : after[k]) : ends;
     int ceiling = peak > FRAME_CEILING && !dearer_later(k, peak - FRAME_CEILING);
-    if (ceiling || (share && over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE)) {
+    if (ceiling || (share && over > 0 && !dearer_later(k, (uint32_t)over) && skipped[k] < PROBE && ++skipped[k] < PROBE)) {
         if (ceiling && skipped[k] < 0xffffu) ++skipped[k]; /* timed afresh when it runs again */
         mw_frame_sheds = mw_frame_sheds + 1u, mw_frame_shed_tracks |= 1u << track;
         r = instead(track, ping, start, end);
@@ -1141,7 +1150,15 @@ static void ceiling_tick(void)
     if (!modwerk_machine_stopped() && part == ceiling_part) return;
     ceiling_part = modwerk_machine_stopped() ? 0 : part;
     uint32_t mask = modwerk_machine_mask();
-    for (unsigned k = 0; k < 16u; ++k) if (skipped[k]) cost[k] = 0; /* a held render: measured again when it next runs */
+    for (unsigned k = 0; k < 16u; ++k) /* a held render: measured again when it next runs, its step figures too */
+        if (skipped[k]) cost[k] = start_cost[k] = start_after[k] = 0;
+    modwerk_machine_unmask(mask);
+}
+static void guard_forget(unsigned track)
+{
+    if (track >= 8u) return;
+    uint32_t mask = modwerk_machine_mask();
+    for (unsigned k = track; k < 16u; k += 8u) cost[k] = after[k] = start_cost[k] = start_after[k] = 0, skipped[k] = 0;
     modwerk_machine_unmask(mask);
 }
 /* The FLEX renderer, in the audio render: no mask. The row is read once, a word at a time; a module that left
