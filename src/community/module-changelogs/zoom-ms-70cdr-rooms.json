@@ -1,0 +1,9 @@
+[
+  {
+    "version": "2.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A multi-mode reverb after the DBA Rooms: Room, Digit, Peak, Gate, Wave and Gong, with Freq and Depth reused per mode."
+    ]
+  }
+]

@@ -46,6 +46,7 @@ _spec = importlib.util.spec_from_file_location('dsp_contract_abi9', ROOT / 'sdk/
 ABI9 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(ABI9)
 KEEP = {'init': {'r1', 'n1', 'm1'}, 'proc': set()}  # beyond the mode, stack and vector registers no entry may write
+REST_FLAG = 0x80  # loader.h RUNTIME_SITE_RESTS: bit 7 of an ABI 7+ site's length byte, a detour that rests with its module
 
 CC = 'cc|hs|ge|ne|pl|nn|ec|lc|gt|cs|lo|lt|eq|mi|nr|es|ls|le'
 FLAGS_ONLY = re.compile(r'^(cmp|cmpm|cmpu|tst)$')
@@ -249,6 +250,20 @@ def placed(words, relocations, base):
     return out
 
 
+def claims_end(data):
+    """abi9.py's `_claims_end`, with each site's length read as loader.c reads it: without RUNTIME_SITE_RESTS. A package
+    whose detours rest (runtime.json "rests") otherwise reads 128 bytes too many for each."""
+    abi = struct.unpack_from('>H', data, 4)[0]
+    if abi < 7:
+        return ABI9._claims_end(data)
+    image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
+    plain, at = bytearray(data), ABI9.HEADERS[abi] + 4 * hooks + image + 4 * count
+    for _ in range(sites):
+        plain[at + 4] &= ~REST_FLAG & 0xff
+        at += 8 + 32 + plain[at + 4] + 2 * plain[at + 7]
+    return ABI9._claims_end(bytes(plain))
+
+
 def package_entries(data):
     """A runtime package's DSP words, relocations and entries: (kind, offset, site index or None, exit word), or None
     without DSP code (sdk/runtime/loader/README.md; the claims start where abi9.py's `_claims_end` says)."""
@@ -259,7 +274,7 @@ def package_entries(data):
     if not count:
         return None
     nclaims, nentries = (data[78], data[79]) if abi >= 9 else (0, 0)
-    at = ABI9._claims_end(data) + 12 * nclaims
+    at = claims_end(data) + 12 * nclaims
     hooks = [struct.unpack_from('>BBHI', data, at + 8 * i) for i in range(nentries)]
     at += 8 * nentries
     words = list(struct.unpack_from('>%dI' % count, data, at))

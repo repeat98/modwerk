@@ -322,7 +322,7 @@ The public audio-preview announcement’s **Show me how** action opens `#module/
 
 Declared module recordings play in the card and main detail preview; the screenshots gallery no longer repeats them as standalone audio tiles. Community submissions retain their contributor, caption and removal controls in the Previews tab, and media credits remain available.
 
-Cards with recordings retain the waveform strip on thumbnail hover or keyboard focus. Clicking the waveform seeks and starts playback; playing controls remain visible after pointer exit. Card dimensions and the hover description stay unchanged. The idle play indicator matches the Add button height: 32px on desktop and 40px on phones. Touch users open the module page to play.
+Card thumbnails show a summary on hover. For recordings, the cover link has a tooltip and hover or keyboard focus reveals the waveform. Seeking starts playback. Playing controls stay visible after pointer exit. The idle play indicator matches Add (32px on desktop, 40px on phones). On touch, open the module page for the description or playback.
 
 The module-page player has a persistent audio strip below the illustration, with 44px Play/Pause and seek targets. Play/Pause comes before seeking in keyboard order; elapsed and total times sit below the waveform. Pressing Play loads the clip on touch. A manual carousel provides previous/next controls and a clip counter when multiple previews are available. Modules without recordings retain their artwork and an Add preview action. The standalone preview player uses this layout too; forum and gallery players keep their existing layout.
 
@@ -519,7 +519,7 @@ Record real device outcomes against the exact source, base, package hashes and v
 
 ## Documentation validation and deployment scope
 
-Run `npm run check -- --base origin/main` before committing. `scripts/change-scope.mjs` compares actual changes, manifest prose and generated catalogues included. Documentation-only edits check licences, catalogue freshness, module contracts, tutorials, capture provenance and the catalogue tests, skipping the app suite, lint, typecheck, bundle and native builds. Local and pull request checks skip the SDK suite when every changed path falls on its tested list of unrelated site, Worker and release-note paths. An empty diff, an unknown path or an unscoped full check runs the SDK suite. The release workflow also runs it before deployment.
+Local readiness and PR CI use the same diff. A CSS edit builds the site and runs its stylesheet tests. Source changes run affected Vitest files, including importers and known filesystem consumers. Mixed changes combine checks. Module contracts, native builds and qualification follow their inputs. Changes to check infrastructure or dependencies, unknown paths, removals and unscoped runs get the full local suite. Release verification runs again before deployment.
 
 PR and Pages firmware builds follow firmware source and build identities rather than broad SDK directory changes. Digi documentation/version labels do not rebuild Octatrack packages. Source pins, build recipes, toolchains, code, linking metadata and package changes retain their native gates. Pages still bundles the site to publish updated documentation. Generated catalogue edits only redeploy the Worker when its consumed module fields change; a manual Worker dispatch still deploys.
 

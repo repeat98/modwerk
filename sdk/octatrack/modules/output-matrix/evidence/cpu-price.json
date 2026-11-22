@@ -1,0 +1,114 @@
+{
+  "module": "output-matrix",
+  "version": "0.1.1-experimental",
+  "base": "8850f5399c453b9c (development twin, ef6099b0a)",
+  "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding",
+  "seconds": 8,
+  "measuredAt": "2026-11-21T07:52:06.105Z",
+  "result": {
+    "id": "output-matrix",
+    "version": "file",
+    "packageSha256": "20f409df8ad2c5096d8b4a2bc451337fbba8edd7436f830230eeac68ac486069",
+    "before": {
+      "frame": 32.7,
+      "frameMax": 70.7,
+      "frames": 22295,
+      "skipped": 0,
+      "cpu": 45.3,
+      "dsp1to4": 45.6,
+      "dsp5to8": 41,
+      "allocation": {
+        "modulePoolBytes": 2208,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRest": {
+      "frame": 32.8,
+      "frameMax": 70.3,
+      "frames": 22349,
+      "skipped": 0,
+      "cpu": 45.5,
+      "dsp1to4": 45.3,
+      "dsp5to8": 40.9,
+      "allocation": {
+        "modulePoolBytes": 4544,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRestAdds": {
+      "frame": 0.1,
+      "cpu": 0.2,
+      "dsp1to4": -0.3,
+      "dsp5to8": -0.1
+    },
+    "rolledBack": true,
+    "repetitions": [
+      {
+        "measuredAt": "2026-11-21T07:52:06.105Z",
+        "before": {
+          "frame": 32.7,
+          "frameMax": 70.7,
+          "frames": 22295,
+          "skipped": 0,
+          "cpu": 45.3,
+          "dsp1to4": 45.6,
+          "dsp5to8": 41,
+          "allocation": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 32.8,
+          "frameMax": 70.3,
+          "frames": 22349,
+          "skipped": 0,
+          "cpu": 45.5,
+          "dsp1to4": 45.3,
+          "dsp5to8": 40.9,
+          "allocation": {
+            "modulePoolBytes": 4544,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        }
+      },
+      {
+        "measuredAt": "2026-11-21T07:52:35.912Z",
+        "before": {
+          "frame": 32.7,
+          "frameMax": 70.9,
+          "frames": 22285,
+          "skipped": 0,
+          "cpu": 45.6,
+          "dsp1to4": 45.2,
+          "dsp5to8": 41,
+          "allocation": {
+            "modulePoolBytes": 4544,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 32.8,
+          "frameMax": 70.9,
+          "frames": 22272,
+          "skipped": 0,
+          "cpu": 45.6,
+          "dsp1to4": 45.6,
+          "dsp5to8": 41,
+          "allocation": {
+            "modulePoolBytes": 4544,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        }
+      }
+    ],
+    "releaseSourceVersion": "0.1.1-experimental",
+    "releaseSourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727"
+  }
+}

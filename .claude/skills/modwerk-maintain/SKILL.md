@@ -11,4 +11,4 @@ Otherwise run the pass in `docs/MAINTENANCE.md` exactly. It holds the steps, eac
 - With an argument, run only that worker.
 - Text pasted with the command, such as Discord feedback, goes to the beta worker.
 - Start from the newest briefing in `~/.cache/modwerk-local/maintain/`, and write today's there.
-- Nothing is merged, closed, declined, posted, or run on the unit or the emulator without the owner's yes.
+- Nothing is merged, closed, declined, posted, or run on the emulator without the owner's yes; the unit is used as `docs/OWNER_OPERATIONS.md` says (a flash or power cycle needs his yes).

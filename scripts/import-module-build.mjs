@@ -57,7 +57,8 @@ for (const name of expected) {
   const file = resolve(folder,name); await regular(file,folder); const bytes = await readFile(file), entry = report.files[name]
   if (!entry || entry.bytes !== bytes.length || entry.sha256 !== sha(bytes)) throw new Error('Corrupt compiled artifact: ' + name)
   const doc = JSON.parse(bytes)
-  if (doc.schema !== 1 || doc.revision !== catalog.sourceRevision || doc.sourceCommit !== report.sourceCommit || JSON.stringify(doc.moduleVersions) !== JSON.stringify(report.moduleVersions)) throw new Error('Compiled artifact provenance differs: ' + name)
+  // Build provenance lives only in module-build.json, bound to each file by its hash above, so releases of different modules never touch the same lines.
+  if (doc.schema !== 1 || doc.revision !== catalog.sourceRevision || 'sourceCommit' in doc || 'moduleVersions' in doc) throw new Error('Compiled artifact provenance differs: ' + name)
   packages.set(name,doc)
 }
 for (const variant of packages.get('resident-dsp.json').variants) {
@@ -127,10 +128,9 @@ for(const pkg of utility.packages) {
   for(const [path,fingerprint] of Object.entries(pkg.sources)) if(report.sources['modules/'+pkg.id+'/'+path]!==fingerprint) throw new Error('Utility source provenance differs from the complete source inventory')
 }
 // Release automation never sees firmware, so it cannot prove native parity. Publish only packages that
-// reproduce the committed, locally parity-verified ones; provenance is the only permitted difference.
+// reproduce the committed, locally parity-verified ones exactly.
 if (!development || verifyExisting) for (const [name, doc] of packages) {
-  const withoutProvenance = doc => ({ ...doc, sourceCommit: null })
-  if (!isDeepStrictEqual(withoutProvenance(doc), withoutProvenance(await json(resolve(root,'src/engine/assets',name))))) throw new Error('Compiled ' + name + ' does not reproduce the committed, parity-verified package. Rebuild locally, verify native parity and commit the result.')
+  if (!isDeepStrictEqual(doc, await json(resolve(root,'src/engine/assets',name)))) throw new Error('Compiled ' + name + ' does not reproduce the committed, parity-verified package. Rebuild locally, verify native parity and commit the result.')
 }
 if(checkOnly){console.log('All source-package artifacts, complete source inventory and version pins validated ('+(development?'development':'owner-approved')+').');process.exit(0)}
 // Validate the complete artifact before touching any frontend file.

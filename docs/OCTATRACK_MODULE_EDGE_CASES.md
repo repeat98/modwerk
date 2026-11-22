@@ -1,5 +1,7 @@
 # Octatrack module edge cases
 
+A change's own edge cases start here and in the [hardware traps](OCTATRACK_HARDWARE_TRAPS.md): [the test procedure](TEST_PROCEDURE.md#edge-cases) says how to derive, run and record them.
+
 Owner and Claude, 11 October 2026, after the persistence run on a scratch project. What can go wrong when
 modules, projects, Parts and the base meet, what the base does today, and what is proven. Status: **done**
 (proven on the unit), **built** (code exists, not proven on the unit), **open** (not built or not tested).

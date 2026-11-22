@@ -1,0 +1,1 @@
+Octatrack base 0.7.10 spends less time checking installed modules for screen, key, encoder and timer events. With 24 modules installed on an MKII, the module timer took 22 µs per tick while stopped and 52 µs during playback, down from 39 and 111 µs.

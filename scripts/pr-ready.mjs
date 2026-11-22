@@ -20,14 +20,14 @@ const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:gene
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
 const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|pr-check-plan|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
 }
 
-// The base: its hooks and tables, the shared services and adapter code, its loader and the committed base image. A base change is its own
-// owner-reviewed pull request, merged before a module uses it (docs/module-guides/README.md#propose-a-hook). The per-module recipe
+// The base: its hooks and tables, the shared services and adapter code, its loader and the committed base image. Base changes go directly onto the
+// machine’s cumulative owner-reviewed draft, merged before a module uses it (docs/module-guides/README.md#propose-a-hook). The per-module recipe
 // files beside the adapters (*.json, *.py) are a module's own and stay in its pull request.
 const BASE = /^(?:sdk\/machines\/[^/]+\/(?:events\.json$|site-events\.json$|dsp-sites\.json$|base-binding\.json$|HOOKS\.md$|include\/|elekloader\/|module-adapters\/[^/]+\.(?:c|h|cpp|s)$)|src\/engine\/assets\/[a-z0-9-]+-base(?:[.-]|$))/
 /** The base files a change edits while it also adds or changes a module; [] when it changes no module. */
@@ -46,7 +46,7 @@ export function moduleScopeProblems(files, { author = null, owner = null, opened
   return problems
 }
 const gateProblem = files => 'This pull request changes a module and also ' + files.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.'
-const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. A base change is its own owner-reviewed pull request, merged before the module uses it (docs/module-guides/README.md#propose-a-hook). Move these files to a pull request of their own, then base the module on main once it has merged.'
+const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. Add the base commits directly to the machine’s base/<machine>-next branch and update its cumulative draft (docs/DEVELOPER_WORKFLOW.md#change-a-base). Resume the module on main once that draft has shipped.'
 
 /** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
  * (macOS's own is 3.9) crashes inside scripts/module-compat.py while it loads the Octatrack manifests, with no word on why. */
@@ -57,20 +57,41 @@ export function pythonProblem({ command = 'python3', version = null, error = nul
   return `npm run check needs Python 3.10 or newer, and ${found}. Install Python 3.10+ and put it first on PATH, then run this again.`
 }
 
+/** pythonProblem for the interpreter the gates call (scripts/modules.mjs): python3, or python on Windows. */
+export function localPythonProblem(root) {
+  const command = process.platform === 'win32' ? 'python' : 'python3'
+  const probe = spawnSync(command, ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], { cwd: root, encoding: 'utf8' })
+  return pythonProblem({ command, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
+}
+
+/** Merges main into a clean branch that lacks it. A conflict is aborted, leaving the branch as it was, and its files are returned. */
+export function mergeMain(git, ref) {
+  try {
+    git('merge', '--no-edit', ref)
+    return { merged: true, conflicts: [] }
+  } catch {
+    const conflicts = (() => { try { return git('diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean) } catch { return [] } })()
+    try { git('merge', '--abort') } catch { /* nothing started */ }
+    return { merged: false, conflicts }
+  }
+}
+
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], compiled = null, board = null }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [] }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
   if (baseEdits.length) problems.push(baseProblem(baseEdits))
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
-  if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
+  if (behind) problems.push(conflicts.length
+    ? `Merging current main conflicts in ${conflicts.join(', ')}. Run git merge ${remote}/main, resolve them, commit, then run this again.`
+    : `Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
   if (!checkPassed) problems.push('npm run check failed: fix every failure above; CI runs the same checks.')
   if (author) {
     if (scope?.error) problems.push(`This is not an automatic author update (${scope.error}). Keep the PR to your own module's folder and its changelog entry, or ask the owner for a review.`)
     else if (scope) notes.push('Automatic merge: the bot can merge this update to ' + scope.modules.join(', ') + ' once both release boxes are ticked and CI is green.')
-  } else notes.push('For a first release, ask a device reviewer or repository maintainer to review and merge once CI is green. Shared changes go to a maintainer.')
+  } else if (!baseDraft) notes.push('For a first release, ask a device reviewer or repository maintainer to review and merge once CI is green. Shared changes go to a maintainer.')
   // pr:ready has no toolchain, so it can only say which packages CI rebuilds in Docker and how to reproduce them first (DEVELOPER_WORKFLOW.md, "Compiled packages").
   if (compiled?.octatrack) notes.push('CI rebuilds the Octatrack packages (octatrack-source) and requires the committed ones to match. pr:ready cannot run that: before you push, reproduce them with bash scripts/build-modules-isolated.sh <clean checkout> <new dir> <image id> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
@@ -79,10 +100,12 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   // Ready means the checks pass, not that anything ran on a unit (#1694 went up ready to merge after only development twins had).
-  if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
-    '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it.')
-  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
-  return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0 }
+  if (baseDraft) notes.push('Add these base commits directly to base/<machine>-next and update its cumulative draft. Start the machine’s cumulative draft only if none is open. Record the exact build and unit results there. The owner marks it ready after extensive hardware testing (docs/DEVELOPER_WORKFLOW.md#change-a-base).')
+  else if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
+    '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it. Until then, pr:ready -- --draft and the draft\'s CI list missing qualification, captures or approval as warnings.')
+  if (baseDraft) notes.push('Watch the existing cumulative draft’s checks with gh pr checks <number> --watch. If main moves before the merge, run this again.')
+  else notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0, baseDraft }
 }
 
 /** Claim on the agent board what this branch adds (a module, a hook or table index, a migration), so two developers never
@@ -148,6 +171,8 @@ async function main(argv) {
   const remote = option('--remote') ?? (remotes.includes('upstream') ? 'upstream' : 'origin')
   const author = option('--author')?.replace(/^@/, '') ?? null
   const commit = option('--commit')
+  // --draft: the pull request stays a draft until the exact build ran on a unit, so missing release evidence warns (scripts/modules.mjs).
+  if (argv.includes('--draft')) process.env.MODWERK_EVIDENCE_PENDING = '1'
   if (argv.includes('--commit') && (!commit?.trim() || commit.startsWith('--'))) throw new Error('--commit needs a commit message.')
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
@@ -162,10 +187,22 @@ async function main(argv) {
   let head = git('rev-parse', 'HEAD'), dirty = changedFiles()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
-  // The same interpreter the gates call (scripts/modules.mjs).
-  const pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
-  const probe = spawnSync(pythonCommand, ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], { cwd: root, encoding: 'utf8' })
-  const python = pythonProblem({ command: pythonCommand, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
+  // A clean branch takes current main here rather than stopping, and a main that moves during the run needs no second run: the
+  // PR's CI checks the merge with the newest main. A conflict stays the developer's to resolve.
+  let conflicts = []
+  if (behind && !dirty.length) {
+    const merge = mergeMain(git, `${remote}/main`)
+    if (merge.merged) { head = git('rev-parse', 'HEAD'); behind = false; console.log(`Merged current ${remote}/main into this branch.`) }
+    conflicts = merge.conflicts
+  }
+  const python = localPythonProblem(root)
+  // Assign before the expensive check. Ignored replay files leave the staged tree unchanged.
+  const eligible = commit ? dirty.length && !git('ls-files', '--others', '--exclude-standard') && !git('diff', '--name-only') : !dirty.length && head !== base
+  if (!python && !behind && eligible) {
+    const { localReplay } = await import('./agent-eval/run.mjs')
+    const tree = commit ? git('write-tree') : git('rev-parse', 'HEAD^{tree}')
+    if (!localReplay(tree, remote, option('--eval-agent'))) return 2
+  }
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
   const check = () => npm('check', '--', '--base', base)
@@ -201,13 +238,14 @@ async function main(argv) {
   const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
-  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
+  const baseDraft = changed.some(file => BASE.test(file)) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
+  const verdict = readiness({ python, baseDraft, dirty, behind, conflicts, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
-  // Once the work is ready, the agent asks whether to share the session with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
-  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
+  // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
+  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
-  console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
+  console.log(!verdict.ok ? 'Not ready yet.' : process.env.MODWERK_EVIDENCE_PENDING === '1' ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'
     : 'Ready: this PR can merge without the owner repairing it.')
   return verdict.ok ? 0 : 1

@@ -28,8 +28,8 @@ describe('the MS-70CDR flash', () => {
     const fake = fakeZoomPedal({ firmware: '1.10', badCrcAt: 7 }), link = await connect(fake), main = os(), preset = Uint8Array.from({ length: 0x3000 }, (_, i) => i & 0x7f)
     fake.flash.fill(0)   // whatever was there: only an erase makes room
     await link.flashBase(main, preset)
-    expect(fake.flash.subarray(0x040000, 0x0f0000)).toEqual(main)
-    expect(fake.flash.subarray(0x3fd000, 0x400000)).toEqual(preset)
+    expect(Buffer.compare(fake.flash.subarray(0x040000, 0x0f0000), main), 'flashed OS bytes').toBe(0)
+    expect(Buffer.compare(fake.flash.subarray(0x3fd000, 0x400000), preset), 'flashed preset bytes').toBe(0)
     expect(fake.flash.subarray(0, 0x040000).every(b => b === 0)).toBe(true)
     expect(fake.flash.subarray(0x0f0000, 0x3fd000).every(b => b === 0)).toBe(true)
     expect(fake.sent.filter(m => m[4] === 0x02).length).toBe(6 + 352 + 1)

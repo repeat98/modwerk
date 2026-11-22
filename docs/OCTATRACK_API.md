@@ -29,7 +29,7 @@ Every ColdFire module can define these. They run in the UI task, never at interr
 
 Every installed module's tick gets the same `api`, one after another, so `api->value` holds whatever the last module to write it left there. A one-shot `npm run device -- try` prints that word each second; with other modules installed that write it (SAMPLE LOCKS, Beat Slicer, Tiempos), it says nothing about the module on trial (13 November 2026, flashed beta base `c1f21351`). From the base after `dfb632b0` (not built yet on 16 November 2026), the word goes back to 0 on the first tick after the installed set changes, before any tick runs: a value there was written by a module installed now, and 0 means none of them wrote it. On earlier bases a removed module's value stays until another tick writes the word (#1314).
 
-Subscribe to them in `runtime.json` like any hook. Butter Fingers ([its runtime.json](../sdk/octatrack/modules/butter-fingers/runtime.json)) does it this way:
+Subscribe in `runtime.json` only to the events the module uses. The 0.7.10 base visits subscribers in installed slot order. The first key or encoder handler that takes the event ends the search. Butter Fingers subscribes to keys and ticks. [Its runtime.json](../sdk/octatrack/modules/butter-fingers/runtime.json)
 
 ```json
 { "schema": 1, "subscribe": [{ "event": "module_key", "fn": "bf_key" }, { "event": "module_tick", "fn": "bf_tick" }] }
@@ -52,7 +52,7 @@ The base owns every stock site that more than one module needs and shares it as 
 
 - **Playback:** `ev_play_increment` (Repitch changes a track's playback rate), `ev_voice_bind`, `ev_voice_bind_run`.
 - **Mutes and stops:** `ev_mute_keep` and `ev_trig_muted` (raised), `ev_tail_kill`.
-- **Resting:** `ev_in_use`, which the base asks each module from the UI tick: while a module answers 0 it is left out of the hooks marked `rests`.
+- **Resting:** `ev_in_use`, which the base asks each module from the UI tick: while a module answers 0 it is left out of the hooks marked `rests`, and its detours listed in `"rests"` hold stock's bytes. A machine (`ot_machines`) needs no answer: the base rests it while no track of any Part of the project is that machine, and wakes it before a pick commits; a machine package whose detours are marked `"rests"` without its own `ev_in_use` names `requiresCapabilities: 2048`, so only such a base is offered it (older ones refuse it as malformed). An effect module (DSP code) is answered for the same way, with the same capability: it rests while no slot of the project names its effect id and no live slot runs it, and wakes before a pick of it is written. Any other module with code in the frame interrupt (a stock-site detour or a `rests` hook) answers `ev_in_use` itself, or it costs the frame while unused ([performance](MODULE_PERFORMANCE.md)).
 - **MIDI and the keyboard:** `ev_midi_note_on`, `ev_midi_note_off`, `ev_midi_note_key`, `ev_octave_key`, `ev_octave_number`, `ev_keyboard_draw`, the `ev_chromatic_*` hooks, `ev_arp_setup_knob`, `ev_arp_setup_text`.
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.

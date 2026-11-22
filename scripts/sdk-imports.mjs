@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, resolve, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { manifestWithoutPrice } from './module-cpu-price.mjs'
 
 const localGuides = new Set(['README.md', 'TESTING.md', 'CPU.md'])
 export function verifyImportedFile(path, expected, moduleRoot = null) {
@@ -16,6 +17,13 @@ export function verifyImportedFile(path, expected, moduleRoot = null) {
     return true
   }
   const actual = createHash('sha256').update(bytes).digest('hex')
+  // A measured CPU price changes no module (owner, 18 November 2026): an imported manifest still matches when only
+  // device:price --write's resources.cpuPrice was added (module-qualification.mjs keeps the same rule).
+  if (actual !== expected && moduleRoot && basename(path) === 'octamod.module.json' && basename(dirname(resolve(path))) === basename(resolve(moduleRoot))) { // the module's manifest, or its generated sdk/octabam copy
+    let priceless
+    try { priceless = manifestWithoutPrice(bytes.toString('utf8')) } catch { priceless = null }
+    if (priceless !== null && createHash('sha256').update(priceless).digest('hex') === expected) return false
+  }
   if (actual !== expected) throw new Error(`Imported source checksum mismatch: ${path}\nExpected ${expected}\nActual   ${actual}`)
   return false
 }

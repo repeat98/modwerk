@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+  "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
+  "moduleVersion": "0.2.0-experimental",
+  "root": "sdk/octatrack/modules/direct-jump-kyoti",
+  "modules": [
+    "direct-jump-kyoti"
+  ],
+  "stockGuards": [
+    {
+      "address": "0x400a1f72",
+      "bytes": 6,
+      "sha256": "4aaaa6d9488b552fc485627001a1f1b8b4fc72156809c7f9750050c787869e56"
+    },
+    {
+      "address": "0x400a221c",
+      "bytes": 6,
+      "sha256": "6d3f127d6f8c27521bb383e06dae4599364ceb88426d80464a0cdffdc7d71cda"
+    },
+    {
+      "address": "0x40043418",
+      "bytes": 6,
+      "sha256": "b229662bc9a5d09d0d4613dc32ce8de200fbda85d81dd13630451d0b780946e2"
+    },
+    {
+      "address": "0x40009ebe",
+      "bytes": 6,
+      "sha256": "37edecfc18058ca757b701a5e909152025e5ceb96e33328800af3bea09dd5e94",
+      "note": "V7.2 (0.2.0-experimental): the light Part apply's LFO AUTO CHANGE test, tst.b of one byte; a jsr to dj_lfoq, which replays it unless a jump has just deferred the per-track part."
+    },
+    {
+      "address": "0x400a4850",
+      "bytes": 6,
+      "sha256": "3eb71e079e73b289302dbd71e2397466226349dc505a46c2cc16a49a1595c7db",
+      "note": "V7.3 (0.2.0-experimental): stock's pattern switch calling COND_RESET(-1), a jsr after its pea -1; a jsr to dj_swres, which re-bases the jump's clock to this restart and tail-jumps COND_RESET (return address 0x400a4856 and the -1 left as stock's call made them)."
+    },
+    {
+      "address": "0x4009b6f2",
+      "bytes": 18,
+      "sha256": "1737cfa861055a533a8a63f6ee4a007de11433354ad97185fba8e79c7a06ac43",
+      "note": "The per-track scale seed of a track's manual start (0.1.1-experimental): the cave redoes all 18 bytes; only the first instruction becomes its jmp."
+    },
+    {
+      "address": "0x400bf0c0",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+      "note": "The [PTN]-layer YES press slot: NULL in stock, written with the unit's dj_toggle."
+    }
+  ],
+  "excluded": [
+    "Firmware and stock expectation bytes",
+    "The author's BATCH_BUGFIXES module as such: not a prerequisite. Its MIDI_PLAYS_FREE_FIX source is carried in this module (since 0.1.1-experimental); its EMPTY_PATTERN_LED_FIX and PART_CHANGE_CARRYOVER_FIX are not.",
+    "The author's standalone builder tools/build_direct_jump_kyoti.py, his combined KYOTI image and his emulator diagnostics (tools/cmp_reflock.py, diag_reflock.py, check_dj_part.py, diag_dj_partpub.py, diag_dj_switchpop.py), which read a firmware file; the Modwerk gate (verify.py) checks the same behaviours with its own code.",
+    "The DJ_SELFHOOK and DJ_DIAG assembly options (the author's KYOTI-with-Clyps hook and diagnostics), which this build never defines",
+    "Generated firmware, runtime images and memory dumps",
+    "Unrelated modules and author repository tooling"
+  ],
+  "notes": [
+    "0.2.0-experimental moves the pin from the octabam wrapper (sambanks/octabam b725fb1a, author pin 329b801c) to the author's repository at cd788e9: DIRECT JUMP V7.3 (prepared at 109f54c, V7.2.2; V7.3 makes the last restart, PLAY or a stock pattern change, a jump's time origin, with a fifth detour at 0x400a4850). upstream/OCTABAM_README.md and upstream/OCTABAM_LICENSE stay as imported from octabam for its integration credit.",
+    "patch_directjump_v7.s comments describe stock routines and data by address and in assembler mnemonics, as the author wrote them; it contains no firmware bytes or hex dumps.",
+    "The stock guard digests were computed from the author's declared expectations and matched against a local original OS 1.40C MAIN image (SHA-256 164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e).",
+    "Since base 0.7.5 (#1475) no scan refuses a package for sharing byte runs with the stock OS. The runs the earlier MODWERK re-encodings avoided were the author's original code calling the OS the way the OS calls itself, not Elektron bytes, so patch_directjump_v7.s is vendored unchanged and the unit is the author's bytes."
+  ],
+  "status": "Owner review pending (new stock addresses: 0x40009ebe, 0x400a4850).",
+  "files": [
+    {
+      "path": "patch_directjump_v7.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
+      "sourcePath": "octabam-modules/direct-jump-kyoti/patch_directjump_v7.s",
+      "sourceBytes": 76359,
+      "sourceGitBlob": "7463b27416af540833cac18197cd74daf472fbb7",
+      "sourceSha256": "cae97228230f43214ff3ca6ac8fb84a082397f4dec67c59ca772e56f95b4b841",
+      "vendoredSha256": "cae97228230f43214ff3ca6ac8fb84a082397f4dec67c59ca772e56f95b4b841"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
+      "sourcePath": "octabam-modules/direct-jump-kyoti/manifest.py",
+      "sourceBytes": 11217,
+      "sourceGitBlob": "5277034336d232f34e55635542e07cea439b342a",
+      "sourceSha256": "6e5c81e0e36944536e56642c25a5f854ee9e26312cdbec3c221a964eedee0655",
+      "vendoredSha256": "f449e3af81f61d400cabbdc73c4b5d1f8f1332d6f651cc0b118f6c020aefc9f1",
+      "transforms": [
+        "Rewrite the declaration for Modwerk: the same DRAM unit, five detours (the landing, the MIDI START gate, the [PTN] release, V7.2's light Part apply LFO AUTO CHANGE test at 0x40009ebe and V7.3's stock pattern switch COND_RESET call at 0x400a4850) and symbol reference, with every stock expectation an address/length/SHA-256 guard in place of the stock bytes the author's file spells out.",
+        "Drop requires=(\"BATCH_BUGFIXES\",): Modwerk modules never depend on another module. The bundle was required for its MIDI_PLAYS_FREE_FIX, which this module has carried since 0.1.1-experimental as a second DRAM unit (patch_trigscale.s) and one more detour, guarded over the 18 stock bytes it redoes.",
+        "Drop the two Keeps around the [PTN]-layer YES record (a USB package cannot carry them; the symbol reference's NULL guard still refuses a changed slot) and the conflicts with octabam's DIRECT JUMP and OCTAKIT, which Modwerk does not have.",
+        "Add the author fields, UNIT_BYTES and the units' references (the author's own bytes: 51478a6773f5b987dc98c595f55a3dd88e9de514d1cedb8fbd35cffe4755e48d and a1eec6b67bb817cc2e063f23897377697f6057a9bf2389d5eb442813b854bba4)."
+      ]
+    },
+    {
+      "path": "patch_trigscale.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
+      "sourcePath": "octabam-modules/batch-bugfixes/patch_trigscale.s",
+      "sourceBytes": 2684,
+      "sourceGitBlob": "36159e8ab0467d0b00023e25c9f1aa9a088be935",
+      "sourceSha256": "7400c42bdc56e29d51033ad75d7f98439aa97cb73e98c439e5b66f78073ee695",
+      "vendoredSha256": "bd3978d7fc75d228ca02e4e4fa10c75b2095e23de1a84d5749c52485e565857f",
+      "transforms": [
+        "The author's file at cd788e9 with one change, marked MODWERK: the global label cave is renamed ts_cave (it links beside Direct Jump's unit); no byte changes, and the unit links to the author's 62 bytes (SHA-256 a1eec6b67bb817cc2e063f23897377697f6057a9bf2389d5eb442813b854bba4). Until the V7.2.2 preparation the audio path's movea.l was also moved before its add.l, and the copyright line kept the 0.1.x form; both are back to the author's file (the move existed only for the stock-run scan that base 0.7.5, #1475, dropped)."
+      ]
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
+      "sourcePath": "octabam-modules/direct-jump-kyoti/README.md",
+      "sourceBytes": 10257,
+      "sourceGitBlob": "fa85e54097517b9b640ad07ba1248cc7b8ac8ad7",
+      "sourceSha256": "8580a54c9e672e707ff655a2b084cf870e4a3eb3da18b13e9ddf49d7c2730abd",
+      "vendoredSha256": "8580a54c9e672e707ff655a2b084cf870e4a3eb3da18b13e9ddf49d7c2730abd"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "3e76489f7da43570add4342b27fd9e1aff949672",
+      "sourceSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "vendoredSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "transforms": [
+        "Unchanged since 0.1.0-experimental (the author's file at 329b801cf90f32cbca97c6699a908908968e4df6, byte for byte). At cd788e9 only its copyright line differs (the name written Zac Kyoti); it is kept as imported so that the shared licence notice (sdk/octabam/licenses/kyoti-direct-jump.txt) stays as it is in this module update."
+      ]
+    },
+    {
+      "path": "upstream/OCTABAM_LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    },
+    {
+      "path": "upstream/OCTABAM_README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
+      "sourcePath": "modules/direct-jump-kyoti/README.md",
+      "sourceBytes": 2923,
+      "sourceGitBlob": "15bd3eaf87591957e563902afa0ceee91028ec3f",
+      "sourceSha256": "ca375bc0ddd58e86c39cad14d7b4248c8231a9d76d00786ebba10a0058c0abe9",
+      "vendoredSha256": "ca375bc0ddd58e86c39cad14d7b4248c8231a9d76d00786ebba10a0058c0abe9"
+    }
+  ]
+}
