@@ -277,6 +277,23 @@ uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net)
     }
     return sum;
 }
+/* status.c's predicted brake: the current Part's module machines, each once, with the tracks it owns (bit t), what it
+ * books there (its first, then each, less `net` a track) and its label; how many. */
+unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], const char *label[8], uint32_t net)
+{
+    if (!valid_bank()) return 0;
+    const Machine *m[ROWS - 5u], *seen[8], *who = 0; unsigned n = machines(m), k = 0;
+    const Part *part = current_part();
+    for (unsigned t = 0; t < 8u; ++t) {
+        if (!owner(m, n, part, t, &who) || !who) continue;
+        unsigned j = 0;
+        while (j < k && seen[j] != who) ++j;
+        if (j == k) seen[k] = who, tracks[k] = 0, cost[k] = 0, label[k] = who->label, ++k;
+        uint32_t c = frame_cost(who, !tracks[j], 0);
+        tracks[j] = (uint8_t)(tracks[j] | 1u << t), cost[j] += c > net ? c - net : 0u;
+    }
+    return k;
+}
 /* The Part's bill without track `skip` (8: none), in track order. The tick also uses these owners to charge DSP
  * voices and label refusals. Keep them on its stack for this pass, so a Part or module change is read afresh next tick. */
 static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over, const Machine **owners)
@@ -685,7 +702,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         /* a unit whose frame this machine would fill does not take it; the one it replaces is judged gone */
         uint32_t voice = 0; uint8_t voice_kind = 0; /* a DSP voice: the box shows its core too */
         if (old != next && next->source_kind && !price(next, &voice, &voice_kind)) voice = 0;
-        if (old != next && modwerk_status_pick_busy(track, 1u, next->label, add, old ? frame_cost(old, !elsewhere(part, track, old), 0) : 0u, voice))
+        if (old != next && modwerk_status_pick_busy(track, elsewhere(part, track, next) ? 2u : 1u, next->label, add, old ? frame_cost(old, !elsewhere(part, track, old), 0) : 0u, voice))
             return (unsigned)-1;
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over, 0);
@@ -741,12 +758,42 @@ int modwerk_machine_stopped(void); /* runtime.c */
 extern volatile uint8_t mw_frame_brake; /* the frame guard's brake (below) */
 static const Part *brake_part;     /* the Part that played when the brake caught */
 static void ceiling_tick(void);     /* the frame guard's ceiling (below) */
-uint32_t modwerk_status_hush(void); /* status.c: the predicted brake's patterns (mw_hush, below) */
-extern volatile uint32_t mw_hush;
+uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2]); /* status.c: the predicted brake (mw_hush, below) */
+extern volatile uint32_t mw_hush, mw_hush_fx[2];
+static int effect_id(const struct runtime_module *module);
+/* The effect handle of an ev_frame_deadline handler's module, or -1. */
+static int deadline_effect(uintptr_t fn)
+{
+    struct runtime_owner o;
+    if (modwerk_runtime_owner_at(fn, &o) != 1) return -1;
+    for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
+        const struct runtime_module *m = modwerk_runtime_module(p);
+        if (m && m->id == o.module) return effect_id(m);
+    }
+    return -1;
+}
+/* The ev_frame_deadline rows (bit i) whose module's effect is in `fx`. */
+static uint32_t deadline_rows(fx_set fx)
+{
+    uint32_t rows = 0;
+    uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
+    for (unsigned i = 0; row && *row && i < 24u; ++row, ++i) { int e = deadline_effect(*row); if (e >= 0 && fx_in(fx, (unsigned)e)) rows |= 1u << i; }
+    return rows;
+}
+/* status.c: the effects whose module subscribes ev_frame_deadline, so can bypass dry on a hushed pattern. */
+fx_set modwerk_machine_deadline_effects(void)
+{
+    fx_set fx = {{0}};
+    uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
+    for (unsigned i = 0; row && *row && i < 24u; ++row, ++i) { int e = deadline_effect(*row); if (e >= 0) fx = fx_with(fx, (unsigned)e); }
+    return fx;
+}
 static void brake_tick(void)       /* released at STOP or a Part change */
 {
     ceiling_tick();
-    mw_hush = modwerk_status_hush();
+    fx_set fx[2]; uint16_t id[2];
+    mw_hush = modwerk_status_hush(fx, id);
+    for (unsigned p = 0; p < 2u; ++p) { uint32_t rows = id[p] <= 255u ? deadline_rows(fx[p]) : 0u; mw_hush_fx[p] = rows ? (uint32_t)id[p] << 24 | rows : 0u; }
     if (!mw_frame_brake) { brake_part = 0; return; }
     const Part *part = valid_bank() ? current_part() : 0;
     if (!brake_part) brake_part = part;
@@ -1023,14 +1070,18 @@ volatile uint32_t mw_frame_window; /* the longest frame interrupt since status.c
 #define BRAKE_LATE (2u * FRAME)
 volatile uint8_t mw_frame_brake;   /* nonzero while braked */
 volatile uint32_t mw_frame_brakes; /* for diagnostics: how often */
-/* status.c's predicted brake (owner, 22 November 2026): two patterns, bank × 16 + pattern in the high half and the low,
- * 0xffff none, whose frames run no module machine track, from the first, since their stock load with the Part's modules
- * on top passes the frame ceiling. The frame interrupt reads the pattern that plays each render. */
-volatile uint32_t mw_hush = 0xffffffffu;
-static int braked(void)
+/* status.c's predicted brake (owner, 22 November 2026): for the pattern that plays and one queued, in the high half and
+ * the low, the pattern (bank × 16 + pattern) above the module machine tracks (bit t) that play silent there from its
+ * first frame, its stock load with the Part's modules passing the frame ceiling; no tracks, none. The frame interrupt
+ * reads the pattern that plays at each render. */
+volatile uint32_t mw_hush;
+/* ... and for the same two patterns, the pattern above the ev_frame_deadline rows (bit i) whose effect bypasses dry
+ * there (`rest`): only a module that subscribes it can, so no other effect is touched (owner, 22 November 2026). */
+volatile uint32_t mw_hush_fx[2];
+static int braked(unsigned track)
 {
     uint32_t h = mw_hush, id = (uint32_t)U8(PLAYING) * 16u + U8(PLAYING + 1u);
-    return mw_frame_brake || h >> 16 == id || (h & 0xffffu) == id;
+    return mw_frame_brake || (h >> 24 == id && h >> 16 >> track & 1u) || ((h >> 8 & 0xffu) == id && h >> track & 1u);
 }
 volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
@@ -1105,7 +1156,9 @@ void mw_frame_enter(void)
      * drop, and took a busy Part past the frame ceiling and its entries into the late window. */
     uint32_t deadline = entry_at - l + GRID + DEADLINE_LATE;
     uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
-    if (row) for (; *row; ++row) ((unsigned (*)(uint32_t))*row)(deadline);
+    uint32_t id = (uint32_t)U8(PLAYING) * 16u + U8(PLAYING + 1u), rest = 0; /* the predicted brake's dry effects, latched */
+    for (unsigned p = 0; p < 2u; ++p) if (mw_hush_fx[p] >> 24 == id) rest |= mw_hush_fx[p] & 0xffffffu;
+    if (row) for (unsigned i = 0; *row; ++row, ++i) ((unsigned (*)(uint32_t, unsigned))*row)(deadline, i < 24u ? rest >> i & 1u : 0u);
 }
 void mw_frame_exit(void)
 {
@@ -1269,7 +1322,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
-        if (mw_cpu_refused >> track & 1u || braked()) { /* past the CPU budget (charge()), or braked */
+        if (mw_cpu_refused >> track & 1u || braked(track)) { /* past the CPU budget (charge()), or braked */
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
@@ -1288,7 +1341,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) flex_machine = m[k];
         looked_up |= 1u << 8;
     }
-    if (flex_machine && !braked()) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
+    if (flex_machine && !braked(track)) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
 /* A renderer a module put into a track's slots itself, from the frame builder's two calls (machine_registry.s).
@@ -1305,10 +1358,10 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
     unsigned kind = look(track, &who);
     if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
         return frame_part && frame_part[0x22 + track] <= 1u
-            ? braked() ? STOCK(Render *, 0x40004008u)(track, ping, start, end) : guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end)
+            ? braked(track) ? STOCK(Render *, 0x40004008u)(track, ping, start, end) : guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end)
             : f(track, ping, start, end);
     if (kind == ASLEEP) wake_who[track] = who;
-    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u || braked() ||
+    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u || braked(track) ||
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     return who->source_kind ? guarded_as(f, STOCK(Render *, 0x400047f0u), track, ping, start, end, 0) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);

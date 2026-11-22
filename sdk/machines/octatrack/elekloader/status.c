@@ -573,26 +573,85 @@ static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
         effects_booked(effect_skip);
 }
 /* The predicted brake (owner, 22 November 2026): a pattern whose stock load, with the Part's modules and those at rest on
- * top (the reserve's own figure), passes the frame ceiling plays with the Part's module machine tracks silent from its
- * first frame (machine_registry.c's mw_hush), effects still running, and the screen says so. Each UI tick judges the
- * pattern that plays and one queued in the bank, so it lifts with the next pattern or Part, or a module gone. Else such
- * a pattern ran at 130 % with about 4,400 renders dropped and a click every two or three seconds (twin 25), and once
- * stalled (twin 24). A Part with no module machine is never hushed: nothing would make room. */
+ * top (the reserve's own figure), passes the frame ceiling goes without only what it must: the Part's module machines,
+ * dearest first (their tracks silent from the pattern's first frame, machine_registry.c's mw_hush), then its effects
+ * that can bypass dry (an ev_frame_deadline subscriber, told `rest` from the same frame), dearest first, until it is
+ * under the ceiling; no other effect is touched. The screen names what went. Each UI tick judges the pattern that plays and one queued in the bank, so it lifts
+ * with the next pattern or Part, or a module gone. Else such a pattern ran at 130 % with about 4,400 renders dropped and
+ * a click every two or three seconds (twin 25), and once stalled (twin 24); with its machines silent, its effects still
+ * held it at 127 % (twin 27). */
 #define HUSH_CEILING 1220u /* machine_registry.c's FRAME_CEILING, per mille */
-volatile uint32_t mw_frame_hushes; /* for diagnostics: each pattern that began hushed (diag.c's `brake`, flagged) */
-static unsigned hush_notice_left, hush_playing;
-int modwerk_machine_stopped(void);
-uint32_t modwerk_status_hush(void)
+/* machine_registry.c: the current Part's module machines, their tracks, what they book and their labels */
+unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], const char *label[8], uint32_t net);
+volatile uint32_t mw_frame_hushes; /* for diagnostics: each pattern that began with modules gone (diag.c's `brake`, flagged) */
+fx_set modwerk_machine_deadline_effects(void); /* machine_registry.c: effects that can bypass dry (ev_frame_deadline's rest) */
+void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
+static unsigned hush_notice_left, hush_playing, hush_count;
+static char hush_names[2][17];
+static void hush_name(unsigned n, const char *name)
 {
-    uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2] = {0xffffu, 0xffffu};
-    unsigned patterns = modwerk_machine_pattern_trigs(most, tracks, id);
-    uint32_t machines = modwerk_machine_frame_booked(8u, tuned(TRACK_STOCK_ID, mw_track_stock)), hush = 0xffffffffu;
-    if (machines) {
-        uint32_t modules = machines + modwerk_machine_rest_booked() + effects_booked(16u);
-        for (unsigned p = 0; p < patterns && p < 2u; ++p)
-            if (pattern_reserve(most[p], tracks[p]) + modules > HUSH_CEILING) hush &= p ? 0xffff0000u | id[1] : (uint32_t)id[0] << 16 | 0xffffu;
+    if (n >= 2u) return;
+    for (unsigned i = 0; i < 16u; ++i) {
+        char c = name ? name[i] : 0;
+        hush_names[n][i] = c >= 'a' && c <= 'z' ? (char)(c - 32) : c;
+        if (!c) break;
     }
-    unsigned now = patterns && hush >> 16 == id[0] && !modwerk_machine_stopped(); /* the pattern that plays is hushed */
+    hush_names[n][16] = 0;
+}
+/* What pattern `p` (its busiest step `most`, tracks that trig `tracks`) must go without: the machine tracks (bit t),
+ * and in *fx the effects; `named` 1 writes the notice's names and count. */
+static unsigned hush_pick(unsigned most, unsigned tracks, fx_set *fx, int named)
+{
+    uint8_t mt[8]; uint32_t mc[8]; const char *ml[8];
+    unsigned nm = modwerk_machine_part_machines(mt, mc, ml, tuned(TRACK_STOCK_ID, mw_track_stock)), fid[16], nf = 0;
+    uint32_t fc[16], load = pattern_reserve(most, tracks) + modwerk_machine_rest_booked();
+    for (unsigned k = 0; k < nm; ++k) load += mc[k];
+    fx_set dry = modwerk_machine_deadline_effects();
+    for (unsigned k = 0; k < 16u; ++k) { /* the live effects by module, each with its first and each */
+        unsigned id = LIVE[k], j = 0;
+        while (j < nf && fid[j] != id) ++j;
+        uint32_t c = effect_cost(id, j == nf, 0);
+        if (!c) continue;
+        load += c;
+        if (!fx_in(dry, id)) continue; /* runs whatever comes: it cannot bypass */
+        if (j == nf) fid[nf] = id, fc[nf] = 0, ++nf;
+        fc[j] += c;
+    }
+    unsigned hushed = 0, count = 0;
+    for (unsigned i = 0; i < 8u; ++i) fx->w[i % MODWERK_FX_WORDS] = 0;
+    while (load > HUSH_CEILING) {
+        unsigned best = 16u, machine = 0; uint32_t most_cost = 0;
+        for (unsigned k = 0; k < nm; ++k) if (mc[k] > most_cost) most_cost = mc[k], best = k, machine = 1;
+        if (!machine) for (unsigned k = 0; k < nf; ++k) if (fc[k] > most_cost) most_cost = fc[k], best = k;
+        if (best == 16u) break; /* nothing left that could go */
+        load -= most_cost;
+        if (machine) hushed |= mt[best], mc[best] = 0;
+        else *fx = fx_with(*fx, fid[best]), fc[best] = 0;
+        if (named) {
+            char name[16];
+            if (!machine) modwerk_fxmap_name(fid[best], name);
+            hush_name(count, machine ? ml[best] : name);
+        }
+        ++count;
+    }
+    if (named) hush_count = count;
+    return hushed;
+}
+int modwerk_machine_stopped(void);
+/* machine_registry.c's brake_tick, each UI tick: mw_hush, and for the pattern that plays and one queued (`id`, 0xffff
+ * none) the effects that bypass dry there. */
+uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
+{
+    uint8_t most[2] = {0, 0}, tracks[2] = {0, 0};
+    id[0] = id[1] = 0xffffu, fx[0] = fx[1] = (fx_set){{0}};
+    unsigned patterns = modwerk_machine_pattern_trigs(most, tracks, id);
+    uint32_t hush = 0;
+    for (unsigned p = 0; p < 2u; ++p) {
+        if (p >= patterns || id[p] > 255u) { id[p] = 0xffffu; continue; }
+        unsigned t = hush_pick(most[p], tracks[p], &fx[p], !p);
+        if (t) hush |= ((uint32_t)id[p] << 8 | t) << (p ? 0u : 16u);
+    }
+    unsigned now = id[0] <= 255u && (hush >> 16 & 0xffu || fx_any(fx[0])) && !modwerk_machine_stopped();
     if (now && !hush_playing) hush_notice_left = 180u, mw_frame_hushes = mw_frame_hushes + 1u;
     hush_playing = now;
     return hush;
@@ -1420,16 +1479,21 @@ uint32_t modwerk_status_module_rest(uint32_t module)
  * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
 #define NEAR_FREE 20u /* 2 %: Mini Verb's first 1.5, E-Verb's 0.7, Vibrato's 0 */
+#define MEASURED_SAMPLE 25u /* what a sample track's render was worth to a machine's first instance there, per mille */
 unsigned modwerk_machine_trigging(void); /* machine_registry.c: the tracks that trig in the pattern that plays */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
     /* A pick is not refused for load it does not add (owner, 22 November 2026): one adding at most NEAR_FREE is always
      * made. shortcut: one threshold for every pick; per module from the table if one ever reads wrong. */
     if (add <= NEAR_FREE) return 0;
+    unsigned further = machine == 2u; /* machine_registry.c: a further instance of a machine the Part runs */
+    machine = machine != 0u;
     uint32_t measured = measured_load(gone) + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
-    /* A machine on a track that plays a sample now takes that render's place in the measured frame too, as in the
-     * reserve's (twin 25: Amiga on C03's T1 refused in one set and admitted in another as the reading moved 79 to 84 %). */
-    if (machine && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > track_stock ? measured - track_stock : 0u;
+    /* A machine's first instance on a track that plays a sample takes that render's place in the measured frame too:
+     * 2.5 %, measured (twin 27, C03's T1: Amiga added 24.1 against its curve's 26.6 on an empty track), a further one
+     * nothing (the second added 4.3 against its each of 4; a machine's own trig starts cost about the sample's). The
+     * reserve's 7 % is the stacked ladder's, measured there. shortcut: one figure for every machine. */
+    if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > MEASURED_SAMPLE ? measured - MEASURED_SAMPLE : 0u;
     uint32_t net = machine ? (add > track_stock ? add - track_stock : 0u) : add; /* a machine in a sample's place */
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
@@ -1702,8 +1766,16 @@ static void status_draw(unsigned char *frame)
         canvas(frame);
         fill(frame, 13u, 18u, 114u, 45u, 0);
         outline(frame, 13u, 18u, 114u, 45u);
-        centred(23u, "MACHINES PAUSED");
-        centred(34u, "PATTERN IS BUSY");
+        static char more[17];
+        centred(23u, "PATTERN IS BUSY");
+        centred(34u, hush_names[0]);
+        if (hush_count > 2u) {
+            unsigned n = hush_count - 1u, i = 0;
+            more[i++] = '+'; if (n >= 10u) more[i++] = (char)('0' + n / 10u % 10u); more[i++] = (char)('0' + n % 10u);
+            const char *tail = " MORE OFF"; for (unsigned k = 0; tail[k]; ++k) more[i++] = tail[k];
+            more[i] = 0;
+            centred(45u, more);
+        } else if (hush_count == 2u) centred(45u, hush_names[1]);
         return;
     }
 #ifdef MODWERK_SETTINGS

@@ -177,7 +177,7 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 static uint32_t cpu_now, hot_line = 500u; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add, hot_box_gone;
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
-    (void)label; (void)dsp; CHECK(machine == 1u);
+    (void)label; (void)dsp; CHECK(machine == 1u || machine == 2u); /* 2: a further instance of a machine the Part runs */
     extern volatile uint32_t mw_cpu_refusals;
     if (cpu_now + add < hot_line + gone) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, ++hot_boxes, hot_box_track = slot, hot_box_cpu = cpu_now, hot_box_add = add, hot_box_gone = gone; return 1;
@@ -187,8 +187,9 @@ static int costs_listed;
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 { if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
 uint32_t modwerk_status_module_rest(uint32_t module) { return costs_listed && module == 'L' ? 15u : 0u; } /* 1.5 % at rest */
-static uint32_t test_hush = 0xffffffffu; /* status.c's predicted brake */
-uint32_t modwerk_status_hush(void) { return test_hush; }
+static uint32_t test_hush; /* status.c's predicted brake */
+uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
+{ fx[0] = fx[1] = (fx_set){{0}}; id[0] = (uint16_t)(test_hush >> 24), id[1] = 0xffffu; return test_hush; }
 static uint32_t cpu_in, cpu_out; /* what picks reported adding to the meter and exits taking away (status.c counts them) */
 void modwerk_status_cpu_entered(uint32_t mille) { cpu_in += mille; }
 void modwerk_status_cpu_left(uint32_t mille) { cpu_out += mille; }
@@ -701,11 +702,14 @@ static void check_brake(void)
     /* The predicted brake: on a pattern status.c names (C01 here), the module's track renders silence from the first
      * frame; on any other, it renders. */
     playing[5] = 2u, playing[6] = 0;
-    test_hush = 32u << 16 | 0xffffu, mw_ui_tick();
+    test_hush = 32u << 24 | 1u << 2 << 16, mw_ui_tick();                /* C01: T3 silent */
     a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0); CHECK(a_renders == a0 && mw_hush == test_hush);
+    test_hush = 32u << 24 | 1u << 3 << 16, mw_ui_tick();                /* C01: only T4 */
+    a0 = a_renders; frame(2, 0, 0); CHECK(a_renders > a0);
+    test_hush = 32u << 24 | 1u << 2 << 16, mw_ui_tick();
     playing[6] = 1u;                                                     /* C02 plays */
     a0 = a_renders; frame(2, 0, 0); CHECK(a_renders > a0);
-    test_hush = 0xffffffffu, mw_ui_tick(); memset(playing, 0, sizeof playing);
+    test_hush = 0, mw_ui_tick(); memset(playing, 0, sizeof playing);
     /* The ceiling: a render that would end the frame past 122 % does not run, however much credit there is; the next
      * frame under it renders it again. */
     for (unsigned k = 0; k < 4u; ++k) frame(0, 0, 0);                    /* full credit */
@@ -864,7 +868,8 @@ static unsigned late_by(uint32_t us)
     return entry(FRAME + us * US);
 }
 static uint32_t deadline_seen; static unsigned deadline_calls;
-static unsigned take_deadline(uint32_t deadline) { deadline_seen = deadline, ++deadline_calls; return 0; }
+static unsigned deadline_rest;
+static unsigned take_deadline(uint32_t deadline, unsigned rest) { deadline_seen = deadline, deadline_rest = rest, ++deadline_calls; return 0; }
 static void check_late_entry(void)
 {
     /* On the grid nothing waits and nothing counts as late; the first entry after the start is on time. */
@@ -950,7 +955,14 @@ static void check_late_entry(void)
     deadline_row[0] = (uintptr_t)take_deadline, deadline_calls = 0;
     late_fresh(7000000u);
     CHECK(!entry(FRAME) && deadline_calls == 1u && deadline_seen == entered + GRID + 7920u);
-    CHECK(!late_by(60) && deadline_calls == 4u && deadline_seen == entered - entry_late + GRID + 7920u);
+    CHECK(!late_by(60) && deadline_calls == 4u && deadline_seen == entered - entry_late + GRID + 7920u && !deadline_rest);
+    /* On a pattern the predicted brake names, its row's subscriber is told to bypass dry, from that frame; on another,
+     * not. */
+    playing[5] = 2u, playing[6] = 0, mw_hush_fx[1] = 32u << 24 | 1u;    /* C01 queued: row 0 */
+    CHECK(!entry(FRAME) && deadline_rest == 1u);
+    playing[6] = 1u;
+    CHECK(!entry(FRAME) && !deadline_rest);
+    mw_hush_fx[1] = 0, memset(playing, 0, sizeof playing);
     deadline_row[0] = 0;
     fresh(); late_fresh(0); host_tick = 0;
 }

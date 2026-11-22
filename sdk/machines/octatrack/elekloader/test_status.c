@@ -144,6 +144,11 @@ static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
 unsigned modwerk_machine_pattern(void) { return test_pattern; }
 uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
+/* ... and as the predicted brake lists them: one machine on T2 that books all of it */
+unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], const char *label[8], uint32_t net)
+{ (void)net; if (!test_machines_booked) return 0; tracks[0] = 1u << 1, cost[0] = test_machines_booked, label[0] = "Fm Synth"; return 1; }
+static fx_set test_dry; /* machine_registry.c: the effects that can bypass dry */
+fx_set modwerk_machine_deadline_effects(void) { return test_dry; }
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
 struct dl_package dl_catalog[MODWERK_FX_IDS]; /* the transport's effect catalog: each effect's DSP cycles */
@@ -757,20 +762,31 @@ int main(void)
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_played = 0, frame_newest = 0, played_pattern = 0xffffu, test_pattern = 0, mw_stock_reserve = RESERVE_ADAPTIVE;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
-    /* The predicted brake: a pattern whose stock load with the Part's modules passes the ceiling plays with its module
-     * machines silent, and the screen says so once it plays; a Part with no module machine is never hushed. */
-    { mw_stock_reserve = 1000u, test_machines_booked = 0, transport_stopped = 1;
-      CHECK(modwerk_status_hush() == 0xffffffffu);
+    /* The predicted brake: a pattern whose stock load with the Part's modules passes the ceiling goes without only what
+     * it must, machines first, then effects that can bypass dry, and the screen names them once it plays. */
+    { fx_set f[2]; uint16_t ids[2]; unsigned hushes = mw_frame_hushes;
+      mw_stock_reserve = 1000u, test_machines_booked = 0, transport_stopped = 1;
+      CHECK(!modwerk_status_hush(f, ids) && ids[0] == 32u && ids[1] == 0xffffu);
       test_machines_booked = 230u;                                       /* 100 + 23: past 122 % */
-      unsigned hushes = mw_frame_hushes;
-      CHECK(modwerk_status_hush() == (32u << 16 | 0xffffu) && !hush_notice_left);  /* stopped: armed, no notice yet */
+      CHECK(modwerk_status_hush(f, ids) == (32u << 24 | 2u << 16) && !hush_notice_left);   /* stopped: armed, no notice */
       transport_stopped = 0;
-      CHECK(modwerk_status_hush() == (32u << 16 | 0xffffu) && hush_notice_left == 180u && mw_frame_hushes == hushes + 1u);
-      CHECK(strstr(shows(), "MACHINES PAUSED|PATTERN IS BUSY|"));
-      for (unsigned i = 0; i < 180u; ++i) memory_tick(), modwerk_status_hush();
+      CHECK(modwerk_status_hush(f, ids) == (32u << 24 | 2u << 16) && hush_notice_left == 180u && mw_frame_hushes == hushes + 1u);
+      CHECK(strstr(shows(), "PATTERN IS BUSY|FM SYNTH|"));
+      for (unsigned i = 0; i < 180u; ++i) memory_tick(), modwerk_status_hush(f, ids);
       CHECK(!hush_notice_left && mw_frame_hushes == hushes + 1u);       /* once a pattern */
       test_machines_booked = 210u;                                       /* 121 %: under it */
-      CHECK(modwerk_status_hush() == 0xffffffffu);
+      CHECK(!modwerk_status_hush(f, ids));
+      { uint8_t t[12] = {0x9f, 0x48, 0x2b, 0xb9, 0, 80u, 0, 40u, 0, 0, 0, 0}, live[16]; /* Tape Echo: first 12 % */
+        memcpy(live, modwerk_test_live_fx, 16), memset(modwerk_test_live_fx, 0, 16);
+        map_module[27] = 0x9f482bb9u, modwerk_machine_frame_costs(t, 1), modwerk_test_live_fx[11] = 27;
+        mw_stock_reserve = 1110u, test_machines_booked = 50u;            /* 111 + 5 + 12: past it without the machine too */
+        CHECK(modwerk_status_hush(f, ids) == (32u << 24 | 2u << 16) && !fx_any(f[0])); /* it cannot bypass: left as it is */
+        test_dry = fx_with(test_dry, 27);
+        CHECK(modwerk_status_hush(f, ids) == (32u << 24 | 2u << 16) && fx_in(f[0], 27) && hush_count == 2u);
+        mw_stock_reserve = 1080u;                                        /* 108 + 12 once the machine is silent */
+        CHECK(modwerk_status_hush(f, ids) == (32u << 24 | 2u << 16) && !fx_any(f[0]) && hush_count == 1u);
+        memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, 16), map_module[27] = 0;
+        test_dry = (fx_set){{0}}; }
       test_machines_booked = 0, transport_stopped = 1, mw_stock_reserve = RESERVE_ADAPTIVE; hush_playing = 0; }
     /* A pick adding 2 % or less is always made; a machine on a track that plays a sample takes its share off the
      * measured figure too. */

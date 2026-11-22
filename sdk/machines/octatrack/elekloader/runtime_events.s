@@ -1208,7 +1208,7 @@ modwerk_raise_ev_usb_frame:
         lea     modwerk_runtime_event_row+220,%a0
         bra.w   modwerk_raise_row
 
-| ---- raised (by a module, or by the base): ev_frame_deadline: unsigned f(uint32_t deadline); every handler runs, the answers OR'd
+| ---- raised (by a module, or by the base): ev_frame_deadline: unsigned f(uint32_t deadline, unsigned rest); every handler runs, the answers OR'd
         .globl  modwerk_raise_ev_frame_deadline
 modwerk_raise_ev_frame_deadline:
         lea     modwerk_runtime_event_row+232,%a0
