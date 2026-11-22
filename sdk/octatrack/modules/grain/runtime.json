@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_draw", "fn": "grain_draw"}
+  ],
+  "contribute": [
+    {"to": "ot_machines", "order": 71, "data": "grain_machine"},
+    {"to": "ot_machine_starts", "order": 71, "data": "grain_machine_start"}
+  ]
+}

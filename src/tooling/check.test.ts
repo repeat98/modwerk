@@ -21,7 +21,7 @@ function writeRunner(folder: string) {
   return path
 }
 
-function check(failure = '', buildOnly = false, args: string[] = []) {
+function check(failure = '', buildOnly = false, args: string[] = [], env: Record<string, string> = {}) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
   const log = join(folder, 'scripts.log')
   const npm = join(folder, 'npm.mjs')
@@ -30,6 +30,12 @@ function check(failure = '', buildOnly = false, args: string[] = []) {
     const name = process.argv[3]
     appendFileSync(process.env.CHECK_TEST_LOG, JSON.stringify(process.argv.slice(3)) + '\\n')
     process.exitCode = process.env.CHECK_TEST_FAIL === name ? 1 : 0
+    // CHECK_TEST_FLAKY: the full Vitest run fails one file; rerun alone, it passes ('alone') or fails again.
+    const args = process.argv.slice(5)
+    if (name === 'test' && process.env.CHECK_TEST_FLAKY && !args.includes('-t')) {
+      if (args.includes('src/a.test.ts')) process.exitCode = process.env.CHECK_TEST_FLAKY === 'alone' && process.env.MODWERK_TEST_WORKERS === '1' ? 0 : 1
+      else { console.log('\\x1b[41m FAIL \\x1b[49m src/a.test.ts > waits out a reply timer'); process.exitCode = 1 }
+    }
   `)
   try {
     const entry = writeRunner(folder)
@@ -45,7 +51,7 @@ function check(failure = '', buildOnly = false, args: string[] = []) {
     }
     const result = spawnSync(process.execPath, [entry, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
-      env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
+      env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0', ...env },
     })
     if (result.error) throw result.error
     const calls: string[][] = readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line))
@@ -84,6 +90,13 @@ it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independ
   expect(result.scripts.indexOf('sdk:check')).toBeGreaterThan(result.scripts.indexOf('test'))
   // The module doctor's draft test copies a draft under sdk/octatrack/modules/, so it runs alone once the parallel stage is done.
   expect(result.scripts.at(-1)).toBe('test')
+})
+
+it.each([['alone', 0], ['again', 1]])('reruns a failed test file alone on one worker and passes only when it passes there (%s)', (mode, status) => {
+  const result = check('', false, [], { CHECK_TEST_FLAKY: mode })
+  expect(result.status).toBe(status)
+  expect(result.calls).toContainEqual(['test', '--', 'src/a.test.ts'])
+  if (status === 0) expect(result.stdout).toMatch(/passed alone, so they did not fail the check: src\/a\.test\.ts/)
 })
 
 it('runs as CI\'s contract part with the draft doctor last', () => {

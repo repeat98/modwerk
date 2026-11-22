@@ -34,6 +34,9 @@ the same image booted one-shot came back. Everything else here was done on the o
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
   background and logs every step, and you look at the log.
 - Never power-cycle on your own; ask the owner. Never flash.
+- Leave the CF card in for a trial. A twin loads no set another base wrote (`do saved` reads card set 4, FOREIGN) and a
+  trial writes none: `device:test` fails if `saved` reads differently afterwards. `npm run device -- boot <flashed image>`
+  returns to the flashed base, which loads the owner's set from the card again. Ask for no card swap or power cycle.
 - A Keep on a RAM-booted base overwrites the owner's kept modules. The kept set lives in two card files,
   `/MODWERK0.SET` and `/MODWERK1.SET`, written alternately and stamped with the writing base's identity
   (`modset.c`); a base loads neither file another base wrote. Two Keeps on a twin (a `try`, then a `remove`)
@@ -301,6 +304,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
   UP and DOWN highlight its options, YES applies the highlighted one, and NO returns to the module list. The PROJ menu keeps its cursor from
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >
   MODWERK and MODWERK TEST.
+
+`device:price --memory --out FILE.json` also records bytes in the module pool and program words on each DSP core after every reading. These are tracked allocations. Pair them with the module's region inventory for state, existing reservations and buffers.
 
 ## Where the state is (OS 1.40C)
 

@@ -30,6 +30,6 @@ that brings DSP code.
 npm run machine:base -- digitone-ii --stock /private/Digitone_II_OS1.12.syx
 ```
 
-There is no `base-binding.json` until this exact build has run on a unit; then `--write` records its identity.
+It matches [`base-binding.json`](../base-binding.json), the identity that ran on a unit; a deliberate change records a new one with `--write` once that build has run on a unit. The site builds the same package from its catalog (`sdk/imports/elekloader-modwerk-base-digitone-ii-2026-11-19.json`).
 
 GPL-2.0-or-later, as core-dt2 (irpina); the copies say what they change.

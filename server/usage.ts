@@ -1,5 +1,6 @@
 import type { Database, Env } from './platform'
-import { OCTATRACK_COUNTS, OCTATRACK_STEP_COUNTS, type OctatrackStepCount } from '../src/community/octatrack-diagnostics-contract'
+import { DIAGNOSTIC_RETENTION_DAYS, OCTATRACK_COUNTS, OCTATRACK_STEP_COUNTS, type OctatrackStepCount } from '../src/community/octatrack-diagnostics-contract'
+import { OCTATRACK_INSTALL_EVENTS, type InstallActivity } from '../src/community/usage-contract'
 import { USAGE_CONSENT_VERSION } from '../src/legal/policy'
 import { boundedBody, HttpError, response } from './security'
 import { throttle } from './auth'
@@ -194,24 +195,37 @@ export async function usageStatistics(db: Database, days: number, now = new Date
   // Compare equal windows of completed days; today and the first partial collection day are excluded.
   const previousFrom = before(now,2 * (days-1)), previousTo = before(now,days)
   const outsideRetention = previousFrom < before(now,89)
+  const retainedFrom = before(now, DIAGNOSTIC_RETENTION_DAYS - 1)
+  const activityFrom = from > retainedFrom ? from : retainedFrom
   const [meta,daily,devices,hourly,periodCounts] = await Promise.all([
-    db.prepare("SELECT key,value FROM usage_meta WHERE key IN ('collection_started','breakdowns_started','hourly_started','discord_invites_started','pages_started','machine_coverage_expanded','site_counts_started')").all<{key:string;value:string}>(),
+    db.prepare(`SELECT key,value FROM usage_meta WHERE key IN ('collection_started','breakdowns_started','hourly_started','discord_invites_started','pages_started','machine_coverage_expanded','site_counts_started')
+      UNION ALL SELECT 'guide_from',MIN(day) FROM octatrack_count_daily WHERE day BETWEEN ? AND ?
+      UNION ALL SELECT 'sync_from',MIN(day) FROM octatrack_beta_daily WHERE day BETWEEN ? AND ?`).bind(retainedFrom,to,retainedFrom,to).all<{key:string;value:string|null}>(),
     db.prepare(`SELECT day,${USAGE_COLUMNS} FROM usage_daily WHERE day>=? AND day<=? ORDER BY day`).bind(outsideRetention?from:previousFrom,to).all<UsageDay>(),
     db.prepare('SELECT device,SUM(builds) AS builds,SUM(builds_failed) AS builds_failed,SUM(downloads) AS downloads FROM usage_device_daily WHERE day>=? AND day<=? GROUP BY device').bind(from,to).all<UsageDeviceTotals>(),
     // Hours are kept for 14 days, so only the 7-day view can show them.
     days===7 ? db.prepare(`SELECT hour,${USAGE_COLUMNS} FROM usage_hourly WHERE hour>=? AND hour<=? ORDER BY hour`).bind(from+'T00',to+'T23').all<UsageHour>() : null,
-    // Page views per day and the period's site counts in one read: a page row's kind is 'page', a site count's its event.
-    db.prepare("SELECT 'page' AS kind,day,page AS name,views AS count FROM usage_page_daily WHERE day>=? AND day<=? UNION ALL SELECT event,'',detail,SUM(count) FROM site_count_daily WHERE day>=? AND day<=? GROUP BY event,detail").bind(from,to,from,to).all<{kind:string;day:string;name:string;count:number}>(),
+    // Independent daily aggregates share one read. Joining their rows would multiply counts.
+    db.prepare(`SELECT 'page' AS kind,day,page AS name,views AS count FROM usage_page_daily WHERE day BETWEEN ? AND ?
+      UNION ALL SELECT event,'',detail,SUM(count) FROM site_count_daily WHERE day BETWEEN ? AND ? GROUP BY event,detail
+      UNION ALL SELECT 'install',day,event,count FROM octatrack_count_daily WHERE day BETWEEN ? AND ? AND event IN ('base_first_connection','base_usb_update_done') AND detail=''
+      UNION ALL SELECT 'install',day,event,count FROM octatrack_beta_daily WHERE day BETWEEN ? AND ? AND event='usb_sync_kept'`).bind(from,to,from,to,activityFrom,to,activityFrom,to).all<{kind:string;day:string;name:string;count:number}>(),
   ])
   const pages: UsagePageDay[] = periodCounts.results.filter(row => row.kind==='page').map(row => ({day:row.day,page:row.name,views:row.count})).sort((a,b) => byText(a.day,b.day) || byText(a.page,b.page))
-  const siteCounts: SiteCountTotal[] = periodCounts.results.filter(row => row.kind!=='page').map(row => ({event:row.kind as SiteCount,detail:row.name,count:row.count})).sort((a,b) => byText(a.event,b.event) || b.count-a.count || byText(a.detail,b.detail))
+  const siteCounts: SiteCountTotal[] = periodCounts.results.filter(row => Object.hasOwn(SITE_COUNTS,row.kind)).map(row => ({event:row.kind as SiteCount,detail:row.name,count:row.count})).sort((a,b) => byText(a.event,b.event) || b.count-a.count || byText(a.detail,b.detail))
   const metaValue = (key: string) => meta.results.find(row => row.key===key)?.value ?? null
+  const installActivity: InstallActivity = { guideFrom: metaValue('guide_from'), syncFrom: metaValue('sync_from'), counts: [] }
+  for (const row of periodCounts.results) {
+    if (row.kind !== 'install') continue
+    const event = OCTATRACK_INSTALL_EVENTS.find(name => name === row.name)
+    if (event) installActivity.counts.push({ day: row.day, event, count: row.count })
+  }
   const collectionStarted = metaValue('collection_started'), breakdownsStarted = metaValue('breakdowns_started'), hourlyStarted = metaValue('hourly_started')
   const byDevice = new Map(devices.results.map(row => [row.device,row]))
   const rows = daily.results.filter(row=>row.day>=from)
   const unavailableReason = outsideRetention ? 'retention' : !collectionStarted || previousFrom <= collectionStarted.slice(0,10) ? 'collection' : null
   const previousRows = unavailableReason ? [] : daily.results.filter(row=>row.day>=previousFrom&&row.day<=previousTo)
-  return response({generatedAt:now.toISOString(),collectionStarted,from,to,days,rows,comparison:{from:previousFrom,to:previousTo,rows:previousRows,unavailableReason},
+  return response({generatedAt:now.toISOString(),collectionStarted,from,to,days,rows,installActivity,comparison:{from:previousFrom,to:previousTo,rows:previousRows,unavailableReason},
     machineCoverageExpanded:metaValue('machine_coverage_expanded'),pagesStarted:metaValue('pages_started'),pages,siteCountsStarted:metaValue('site_counts_started'),siteCounts,breakdownsStarted,hourlyStarted,discordInvitesStarted:metaValue('discord_invites_started'),...(hourly ? {hourly:hourly.results} : {}),devices:USAGE_DEVICES.map(device => byDevice.get(device) ?? {device,builds:0,builds_failed:0,downloads:0})})
 }
 
