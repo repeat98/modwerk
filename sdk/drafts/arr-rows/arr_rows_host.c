@@ -515,9 +515,9 @@ int main(void)
     hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 4-5 selected, cursor on 5 */
     for (int k = 0; k < 3; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
     check("three moves down: the rows are on 7-8 and the cursor on 8", same(7, 4) && same(8, 5) && cursor() == 8);
-    check("the editor scrolled to keep the cursor on screen (first row shown 3)", get32(0x460d1c64u) == 3);
+    check("the editor scrolled to keep the cursor and the row below the block on screen (first row shown 4)", get32(0x460d1c64u) == 4);
     for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
-    check("six moves back up: rows on 1-2, both on screen (first row shown 1), the cursor on 2", same(1, 4) && same(2, 5) && cursor() == 2 && get32(0x460d1c64u) == 1);
+    check("six moves back up: rows on 1-2, both on screen with the row above (first row shown 0), the cursor on 2", same(1, 4) && same(2, 5) && cursor() == 2 && get32(0x460d1c64u) == 0);
     /* a block of four selected upward (cursor on its first row), moved down past the screen: all four stay visible */
     fill(16);
     set32(0x460d1c64u, 0); set_cursor(5);
@@ -525,6 +525,18 @@ int main(void)
     for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
     { int top = (int)get32(0x460d1c64u);
       check("moved down six: rows on 8-11, the cursor on 8, all four on screen", same(8, 2) && same(11, 5) && cursor() == 8 && top <= 8 && top + 5 >= 11); }
+    /* the row the block moves towards stays in view: two rows moved down past the screen, then up past it */
+    tap(NO);                                       /* ends the selection, as on the unit */
+    fill(16);
+    set32(0x460d1c64u, 0); set_cursor(3);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 3-4, cursor on 4 */
+    for (int k = 0; k < 4; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
+    { int top = (int)get32(0x460d1c64u);
+      check("moving down: the block on 7-8 and the row below it, 9, on screen", same(7, 3) && same(8, 4) && top <= 7 && top + 5 >= 9); }
+    set32(0x460d1c64u, 7);                         /* scrolled down meanwhile */
+    for (int k = 0; k < 3; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
+    { int top = (int)get32(0x460d1c64u);
+      check("moving up: the block on 4-5 and the row above it, 3, on screen", same(4, 3) && same(5, 4) && top <= 3 && top + 5 >= 5); }
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

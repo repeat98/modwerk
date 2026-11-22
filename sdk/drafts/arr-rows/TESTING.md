@@ -244,3 +244,8 @@ Package `794f1170…`, as the developer reported it: moving down past the screen
 only the selection's last row stayed on screen, the cursor's row, while the rows above it scrolled off. Fixed: after a
 move the module sets the cursor to the block's other end first and then back, so stock scrolls just enough to keep a
 block of up to six rows wholly visible either way. `verify.py`: 96 checks.
+
+Package `d626d9ab…`, as the developer reported it: moved blocks stayed on screen both ways (passed). The developer
+asked to also see the row the block moves towards. Built: before the block's other end and the cursor, the module
+sets the cursor to the row beyond the block (above moving up, below moving down, the END row at the bottom); with up to
+five rows selected, that row and the whole block stay on screen. `verify.py`: 98 checks.

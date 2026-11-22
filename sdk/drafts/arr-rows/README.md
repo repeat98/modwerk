@@ -87,7 +87,8 @@ arrangement, open EDIT and paste or insert.
   above a HALT (the HALT follows itself, as on stock), and the module's own paste, insert and move.
 - A move (CUE + LEFT/RIGHT) keeps every LOOP/JUMP target on the row it pointed at, so a HALT stays a HALT. A LOOP
   moved past its target becomes a JUMP to it, and a JUMP moved past its target a LOOP with no count shown (stock
-  labels a row by its target below or above it). Each press moves one place; holding the key does not repeat.
+  labels a row by its target below or above it). Each press moves one place; holding the key does not repeat. The editor scrolls along, keeping the moved rows and
+  the row they move towards on screen (with up to five rows selected).
 - The copied rows live in RAM: gone after a power cycle or when the module is removed.
 - Editing while the arrangement plays behaves as stock's own edits do; it was not tested separately.
 
