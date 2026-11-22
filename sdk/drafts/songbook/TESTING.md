@@ -99,6 +99,26 @@ Package `08d0833a…` (source `f068cd608`), kept beside USB AUDIO on base 0.7.13
 PLAY played B2 ONE's rows, and book 1's B1 ONE and B1 TWO were intact afterwards (passed). Together with the round
 before on `7b4329e6…` (LOAD back on book 2 in arranger mode, book 1 intact), the book 1 load fix is tested on the MKI.
 
+## Edge cases
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Switching books 1 to 16 and back, stopped | each switch writes 8 files and reads 8 inside stock's SYNC job, on the card task | the developer's MKI, builds 101941a7 to c5027552c | pass |
+| LEFT/RIGHT in ARR > CHANGE while playing | stock's write job would stop playback | the developer's MKI, c5027552c | pass: refused with STOP TO CHANGE BOOK, nothing changed |
+| PROJECT > CHANGE (load) on book 2, arranger mode | stock loads in two jobs; a return switch between them overwrote book 1 on an earlier build | the developer's MKI, 7b4329e6 (base 0.7.13) | pass: back on book 2 in arranger mode, book 1 intact |
+| RELOAD PROJECT on book 2, arranger mode | stock re-applies arranger mode over book 1's slots before the return | the developer's MKI, 08d0833a (base 0.7.13) | pass: main screen and PLAY on book 2, book 1 intact |
+| SAVE, edit, RELOAD on a book other than 1 | arr09+ need their own .strd copies | the developer's MKI, c5027552c | pass: the saved version came back |
+| Power cycle on book 3 | the slots stay in battery RAM; the module must recognise them | the developer's MKI, c5027552c | pass: back on book 3 |
+| FUNC + PLAY clear in the list, and its undo | stock's list clear sets no changed bit | the developer's MKI, 06f593e3 | pass: cleared stayed cleared, undo restored |
+| A trial of another build over the kept one, switching during it | the kept copy came back with stale memory on an early build | the developer's MKI, 06f593e3 | pass: the kept copy reread its record |
+| Beside USB AUDIO (installed with base 0.7.13) | both kept in one set, sharing the base | the developer's MKI, 08d0833a | pass: kept together, no crash, stall or freeze |
+| Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI on an earlier build: book 1 then held book 2, the load fault since fixed | not run on the fixed build yet |
+| Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
+| A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |
+| A new project (ev_project_new outside a load) | must reset the books, not keep a load's return | host test (verify.py) | not run on a unit |
+| MKII | another panel and key layout | none | not run: no MKII |
+| device:test / device:qualify lifecycle | install, Keep, Undo, removal on the scripted path | none | not run: the development base did not upload over USB |
+
 ## Stock flows
 
 Not tested on the unit. In the emulator, ARR > CHANGE with the module and book 1 behaved as stock: YES chose the
