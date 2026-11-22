@@ -114,6 +114,13 @@ Nothing here is hardware evidence. Ghost Cut has not run on a track in the emula
 - **Afterward:** The base returned to normal with the same active identity, generation 8, no running slot and an empty module inventory. No card set was kept, no flash was written and no power cycle was performed.
 - **Not tested by this run:** GRAIN, PTCH, DRFT, scenes, two instances, a Part change, CPU price and persistence. The flashed base refuses the development UI and performance requests. The developer's report confirms the TAPE controls above, not the other behaviours.
 
+### 22 November 2026: private Keep for untimed playing
+
+- **Build and unit:** The same 0.1.0-experimental package as above (SHA-256 `58289edadefd1d41280c4fdcc2eace329276ef56facede77aa9925159e0c7517`) on OS 1.40C and flashed base `254c5a75a139255e…`. The developer said a test project was selected and playback stopped. Before installation, `inventory` was empty, `saved` reported zero saved and live modules, and the loader was normal at generation 8.
+- **Trial and Keep:** `device -- try <that package> --seconds 30 --accept` ran 30 seconds. The slot stayed running and ticks advanced. The unit-log verdict was “no crash, stall, freeze or skipped track logged during the trial”; the command accepted the package and returned to normal at generation 9. The refusal counter increased from 55 at the first reading to 62 at 30 seconds; its cause was not isolated by this run.
+- **After Keep:** `inventory` returned one Ghost Cut (handle 10, module `4326ed5b`); `saved` reported one saved and one live module. The unit's later status was normal with the same active package identity. The project and Part were not saved by these commands.
+- **Not tested:** A power cycle and restored FX2 selection, extended playing after Keep, and the remaining control/qualification cases above. This is a private experimental Keep, not release qualification.
+
 ## Stock flows
 
 Not tested. The module adds a row to the FX2 chooser through the base and takes no key, screen or stock site (`uiClaims: []`).
