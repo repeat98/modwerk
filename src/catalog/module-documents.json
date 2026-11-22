@@ -14283,7 +14283,7 @@
       "id": "grain",
       "key": "GRAIN",
       "name": "Grain",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
@@ -14430,11 +14430,11 @@
         "recorded": "2026-11-21",
         "storage": {
           "label": "Module image and memory",
-          "display": "30,768 bytes of static runtime memory",
-          "value": 30768,
+          "display": "30,852 bytes of static runtime memory",
+          "value": 30852,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Package ff5ac017 loads 27,908 bytes of code and data and declares 2,860 bytes of BSS. The deepest Grain-only audio path uses 756 stack bytes including return addresses and saved frame pointers. Stock calls, interrupt nesting and loader overhead are additional.",
+          "conditions": "Package 1b3728c0 loads 27,988 bytes of code and data and declares 2,864 bytes of BSS. The deepest Grain-only audio path uses 760 stack bytes including return addresses and saved frame pointers. Stock calls, interrupt nesting and loader overhead are additional.",
           "source": "TESTING.md"
         },
         "processing": {
@@ -14463,7 +14463,7 @@
           "memory": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "The 29,248-byte package loads 27,908 bytes of code and data and reserves 2,860 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
+            "rationale": "The 29,344-byte package loads 27,988 bytes of code and data and reserves 2,864 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
             "source": "TESTING.md"
           }
         },
@@ -14475,11 +14475,20 @@
           "date": "2026-11-20",
           "conditions": "Carried forward from package ff105b46. MKII 1.40C, base 06e08f35, B16 Part 1, 140 BPM. A stereo 16-bit Flex sample played on T1 in SYNC with DENS, SPRY and PAN 127. Across paired six-second windows with zero and 16 trigs, SQR and long grains added 31.4 points, NORM and long grains 31.7, and NORM and shorter grains 32.5. All reached six voices with zero skips. On package 0c5632f6 the 24-bit stereo MIDI trace peaked at 89.6% of a frame on T1 and 93.0% on T5, against 70.3% for stock Flex. Both Grain tracks dropped renders with 20-channel USB audio capture.",
           "source": "TESTING.md"
+        },
+        "cpuMeter": {
+          "value": 17,
+          "unit": "percent-of-meter",
+          "measure": "machine-meter",
+          "tool": "npm run device -- do health, seven 1-second readings per arm",
+          "date": "2026-11-21",
+          "conditions": "The largest of three paired runs against the same Part with the track on Flex: +16.55 meter points on T5 with 24-bit stereo, dense six voices and SPRY and SCAN at maximum (side-first build db843bc2), +14.55 on T1, and +8.9 on a 16-bit stereo sample at PTCH +24 with SIZE and DENS at maximum (MKII, 21 November 2026). The descriptor carries 17 in reserved[1].",
+          "source": "evidence/cpu-meter.json"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Release package ff5ac017 on the MKII, card-free in RAM: Grain played T1, FLEX could be picked after a pool jump, and Grain kept its engine with the pool open on another track. Its audio path differs from the timed builds only by the pool check: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
+        "summary": "0.1.1 package 1b3728c0 differs from the unit-tested build c841ea87 only by its meter cost (reserved[1]). On the MKII, c841ea87 kept Grain rendering with the pool open and took the plain Flex path only for a FUNC+YES audition, until the next trig. 0.1.0 package ff5ac017, card-free in RAM: Grain played T1, FLEX could be picked after a pool jump, and Grain kept its engine with the pool open on another track. Its audio path differs from the timed builds only by the pool check: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
         "hardwareStatus": "reported",
         "evidenceRevision": "db1e077309f4c538a1b1b672960c345c22b07ead",
         "gates": [

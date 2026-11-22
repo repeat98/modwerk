@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "qperf",
   "name": "QPER Live Rec",
-  "version": "0.2.2-experimental",
+  "version": "0.3.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "scenes",
   "exclusive": false,
@@ -90,7 +90,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 16233,
+    "memoryBytes": 16553,
     "fastBytes": 0,
     "load": {
       "display": "About 0.5 % of the audio block idle (the audio handler, measured on a unit)",
@@ -100,29 +100,29 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.2.2-experimental",
-    "sourceSha256": "076348b89eac05101ef735996cd450b23b146030780d9df14334e208572b2073",
+    "moduleVersion": "0.3.0-experimental",
+    "sourceSha256": "2e6f97f91bf5ac370f07b2a29a0196634e3d7564dbd3c631aa1c5de489510160",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-17",
+      "testedOn": "2026-11-21",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.2.2 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QPN2 (the Modwerk base with the development link, this module and a private meter that times the audio handler on DTIM0, sha256 3c6578d8…a93b), against 0.2.1 as QPO2 (72693bc6…dd4d) booted before and after it. The audio handler took 470 ticks a block stopped (0.2.1: 850 to 854) and 902 playing (0.2.1: 1269 to 1286). Two rig cases, run by the test rig on the unit with no hand on it (RECORD + YES and RECORD + NO with nothing to apply or clear, a QPER hold; performance 1's amount by MIDI stopped, playing and in LIVE RECORDING, the quick perf rec playing a take back on the next pass, RECORD + NO clearing it and NO undoing it), gave the same screens and the same amounts on both images.",
+      "summary": "0.3.0 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QU02 (the Modwerk base with the development link and this module; sha256 dccd518a…ceb1, src/main.c sha256 2e6f97f9…0160). Four rig cases, run over the USB link with no hand on the unit, read the take from RAM: a 16-step take repeated over steps 17-32 when the SCALE menu took the master length to 32 one step at a time, 16 to 24 repeated steps 1-8, 32 scrolled down to INF kept the take and repeated it over 33-64, a cleared take stayed as it was until NO brought it back filled to 32, and RECORD + YES after a lengthening showed APPLY QUICK PERF REC and made a 16-step track 32 steps.",
       "limitations": [
-        "Run by the rig over the USB link, not by a person: no pads, pressure, QPER knob or LEDs.",
-        "The image holds the base with the development link and a private meter, not the plain published base.",
-        "0.2.1's tutorial result (QR01) was not repeated by hand on 0.2.2."
+        "Run by the rig over the USB link, not by a person: no pads, pressure, QPER knob, LEDs or sound.",
+        "The image holds the base with the development link, not the plain published base.",
+        "The cases ran one after another on one pattern, so two checks that assumed empty steps past the loop read moves left by the case before."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, with the sequencer stopped the audio hook ran a quarter of the instructions, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 850 to 854, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.3.0 (the take repeats when the loop gets longer): host scenarios, rytm-emu, and four rig cases on the author's unit that read the take from RAM; RECORD + YES after a lengthening applied on the unit. 0.2.2: no difference from 0.2.1 in 80 million host blocks, and 470 ticks a block stopped on the unit against 850. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -169,9 +169,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.2-experimental",
-        "imageSha256": "1b9ea783a4db43e2bfbbc98cbe225d9dd0e1f82d8045304abf68eef6d011645e",
-        "setup": "Headless rytm-emu (dtboot) running QL21: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "295cc4269722fea7b5e204ec6e3a75a978ba42477089fcfc513252496327b39f",
+        "setup": "Headless rytm-emu (dtboot) running QX07: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.3.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -185,9 +185,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.2-experimental",
-        "imageSha256": "1b9ea783a4db43e2bfbbc98cbe225d9dd0e1f82d8045304abf68eef6d011645e",
-        "setup": "Headless rytm-emu (dtboot) running QL21: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "295cc4269722fea7b5e204ec6e3a75a978ba42477089fcfc513252496327b39f",
+        "setup": "Headless rytm-emu (dtboot) running QX07: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.3.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

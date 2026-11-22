@@ -2,6 +2,17 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## 0.1.1-experimental: the pool keeps Grain playing, 21 November 2026
+
+The package is `1b3728c04f521b84…` (29,344 bytes; 27,988 bytes of code and data and 2,864 of BSS; the deepest Grain audio stack is 760 bytes, `grain_render` 176). It differs from the unit-tested build `c841ea878f467105…` in one byte, the descriptor's `reserved[1]` (0 there, 17 here), compared byte for byte.
+
+- **The pool no longer stops Grain.** In 0.1.0 a Grain track played as a plain Flex for as long as the pool window was open on it, so opening the pool silenced the cloud and played the sample from its start on every trig. A probe build that logged every START on the owner's MKII showed the difference: sequencer trigs arrive with flags `0xc0`, with the pool shut or open, and the pool's FUNC+YES audition with `0xe0`. Now only a START with `0x20` takes the plain Flex path, for that track until its next ordinary trig. `verify_lanes.py` checks the pool open on T5 and T1 across all eight tracks (all granular) and an audition START on the pool's track (plain).
+- **The meter it adds.** `resources.cpuMeter` and `reserved[1]` are 17: the largest of three paired runs in [cpu-meter.json](evidence/cpu-meter.json), +16.55 meter points on T5 with dense six-voice 24-bit stereo (side-first build), rounded up. A base that reads `reserved[1]` charges this in place of the 35-point price when it decides whether the unit is too busy for a pick; an older base ignores it.
+
+**On the MKII** (OS 1.40C, base twin `0449ed78` in RAM, card in, the owner's project; `c841ea87`): with T1 playing Grain, the pool opened on T1 by a double tap, and Grain's six voices kept advancing. FUNC+YES held over USB stopped them (the plain path), and after the next trig they advanced again. The trial rolled back.
+
+**Not tested:** listening to the pool and the audition on this build, the exact 0.1.1 package `1b3728c0` on a unit (only `reserved[1]` differs from what ran), the meter cost with 24-bit stereo on this build, project save and reload, MKI. **Still open, not in 0.1.1:** a click on every trig at SIZE 86, DENS 127, TRI and SYNC (owner's project, 134 BPM: one-sample steps every 1.791 s on T1's stem, with no frame-guard skips and no clipping).
+
 ## Release build: pool fixes, 21 November 2026
 
 The release package is `ff5ac017118aa58850212e9bb7243ad933d654edadca1dc0f4db65c25dda56f5` (29,248 bytes; 27,908 bytes of code and data and 2,860 of BSS). It is the side-first build below plus three pool changes. Both the SDK and catalogue builders reproduce it.

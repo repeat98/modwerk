@@ -224,12 +224,12 @@ static void view_close(uintptr_t fp, const View *v)
     U16(fp + 28u) = v->last_setup;
 }
 #define POOL_WINDOW 0x460e70e0u
-/* The track whose voice plays the pool's audition: the selected track, while the pool window is open. Other Grain tracks
- * keep playing granular. */
-static inline int auditioning(unsigned track)
-{
-    return U32(POOL_WINDOW) && track == U8(0x100b14ccu);
-}
+/* The pool's audition (FUNC + YES) starts the track's voice with this flag; a sequencer trig never sets it (MKII,
+ * 21 November 2026: 0xe0 against 0xc0). Only that voice plays as a plain Flex, until the track's next trig: opening the
+ * pool leaves Grain playing. */
+#define AUDITION 0x20u
+static uint8_t audition; /* a bit a track */
+static inline int auditioning(unsigned track) { return audition >> track & 1u; }
 /* The sample pool's audition (FUNC + YES with the pool window open) plays a sample from memory on this track's voice. On
  * a Grain track it went through the engine with Grain's knobs: faster, lower, sometimes right. With the pool open the
  * track plays as a plain Flex with its factory SRC and SETUP values: no loop, no time-stretch. */
@@ -357,6 +357,8 @@ int grain_start(unsigned track, unsigned sample, unsigned flags)
     uintptr_t fp = lane(track);
     if (!fp) return 0;
     View v;
+    if (flags & AUDITION) audition |= (uint8_t)(1u << track);
+    else audition &= (uint8_t)~(1u << track);
     if (auditioning(track)) {
         plain_view(fp, &v);
         int plain = FLEX_START(track, sample, flags);
@@ -1067,7 +1069,7 @@ const struct modwerk_machine_setup grain_machine = {.machine = {
     .track_page = grain_page, .ui_tick = grain_ui_tick, .pool_open = grain_pool_open, .pool_left = grain_pool_left,
     .render = grain_render,
     /* Media del frame en MKII, seis granos en SYNC: 33,3 a 34,1 puntos sobre la pista sin trigs (TESTING.md). */
-    .reserved = {35},
+    .reserved = {35, 17},   /* the CPU price (% of a frame), then the CPU meter it adds (resources.cpuMeter) */
 }, .page = grain_setup_page, .knob = grain_setup_knob};
 const struct modwerk_machine_start grain_machine_start = {
     .abi = MODWERK_MACHINE_START_ABI, .bytes = sizeof(struct modwerk_machine_start),
