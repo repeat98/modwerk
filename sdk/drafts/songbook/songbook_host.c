@@ -123,7 +123,8 @@ static int list_draws;
 void host_draw_change(void) { ++list_draws; }
 void host_arr_mode_on(void) { arr_mode = 1; }
 int host_close_message(void) { msg_up = 0; ++closes; return 0; }
-void host_select_arr(unsigned n) { chosen = (uint8_t)n; }
+static int select_busy;                         /* frames stock refuses select_arr (a change of its own pending) */
+int host_select_arr(unsigned n) { if (select_busy) { --select_busy; return -1; } chosen = (uint8_t)n; return 0; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
@@ -356,6 +357,13 @@ int main(void)
     as_project_reloaded(); as_project_load(); as_project_new(); mark(0x10);   /* no ev_banks_loaded after a reload */
     settle(); job(); as_tick(0);
     check("RELOAD PROJECT comes back to where it was saved: book 3, arrangement 5", book() == 2 && chosen == 4);
+    /* right after a RELOAD in arranger mode, stock refuses the choice for a few frames */
+    as_project_stored();
+    tap(LEFT); job(); as_tick(0); chosen = 6; job();
+    as_project_reloaded(); as_project_new(); mark(0x10); settle(); job();
+    select_busy = 5; chosen = 1;
+    for (int i = 0; i < 10; ++i) as_tick(0);
+    check("a refused choice is tried again until stock takes it: book 3, arrangement 5", book() == 2 && chosen == 4 && select_busy == 0);
     /* RELOAD as the unit raised it the second time: the reload, stock's new-project step, and no ev_banks_load */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();

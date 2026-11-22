@@ -105,6 +105,7 @@ struct as_state {
     uint32_t seq;            /* the serial this copy last wrote into the record: another one there means another build ran */
     uint8_t damaged;         /* a file of the book in the slots did not read: write back only what is edited */
     uint8_t redraw;          /* a switch finished: the UI task chooses the book's arrangement and redraws the list */
+    uint8_t select_tries;    /* frames stock refused that choice (a change of its own still pending, as after RELOAD) */
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
     uint16_t restore_ticks;
@@ -172,8 +173,8 @@ void host_arr_mode_on(void);
 static void arr_mode_on(void) { host_arr_mode_on(); }
 int host_close_message(void);
 static void close_message(void) { host_close_message(); }
-void host_select_arr(unsigned n);
-static void select_arr(unsigned n) { host_select_arr(n); }
+int host_select_arr(unsigned n);
+static int select_arr(unsigned n) { return host_select_arr(n); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
 static int arr_read(struct as_state *s, unsigned slot) { return host_arr_read(s->path, slot); }
@@ -188,7 +189,7 @@ static void message(const char *t) { ((void (*)(const char *, int))MESSAGE)(t, 0
 static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
 static void arr_mode_on(void) { ((void (*)(void))ARR_MODE_ON)(); }
 static void close_message(void) { ((void (*)(void))MESSAGE_CLOSE)(); }
-static void select_arr(unsigned n) { ((int (*)(int))SELECT_ARR)((int)n); }
+static int select_arr(unsigned n) { return ((int (*)(int))SELECT_ARR)((int)n); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return as_stock_writer(a1, a2, a3, a4); }
 
@@ -567,11 +568,17 @@ void as_tick(void *api)
         | (evlog & 0x0fffffffu) << 4;
     /* Stock draws the list's names once, when it opens: after a switch, draw them again from the new book. */
     if (s->redraw && s->pending < 0) {
-        s->redraw = 0;
-        select_arr(s->last[s->book]);                     /* the book's own last choice, as YES in the list makes it */
-        if (rd32(CHANGE_WINDOW)) {
-            if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);  /* the cursor on it, as stock opens the list */
-            draw_change();
+        /* The book's own last choice, as YES in the list makes it. Stock refuses it while a change of its own is
+         * pending (0x800066a0; right after a RELOAD in arranger mode, on the developer's MKI): again next frame, for up
+         * to two seconds, so the main screen does not keep the old book's name. */
+        if (select_arr(s->last[s->book]) < 0 && ++s->select_tries < 120) { /* refused: again next frame */ }
+        else {
+            s->select_tries = 0;
+            s->redraw = 0;
+            if (rd32(CHANGE_WINDOW)) {
+                if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);  /* the cursor on it, as stock opens the list */
+                draw_change();
+            }
         }
     }
     /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */

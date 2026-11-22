@@ -80,6 +80,13 @@ ev_project_new, and the return switch is asked for only after it, so it queues b
 among them that write landing in arr01-08. On the unit: not yet (the unit is paused while #1980, base freezes, is
 open).
 
+Package `7b4329e6…` (the book 1 load fix), kept beside USB AUDIO on base 0.7.13 (`6d23e888…`), a new project with
+book 1's arrangements named B1 ONE and B1 TWO, as the developer reported it, 22 November 2026: book 2 with B2 ONE, SYNC
+and PROJECT > CHANGE came back on book 2, B2 ONE, in arranger mode; book 1's B1 ONE and B1 TWO were intact (passed).
+SAVE and RELOAD on book 2 came back on book 2, but the main screen showed book 1's arrangement name until the ARR menu
+was opened and closed. Stock refuses select_arr while a change of its own is pending (0x800066a0), as after a RELOAD in
+arranger mode; the module now tries again on the next frames, up to two seconds. `verify.py`: 72 checks.
+
 ## Stock flows
 
 Not tested on the unit. In the emulator, ARR > CHANGE with the module and book 1 behaved as stock: YES chose the
