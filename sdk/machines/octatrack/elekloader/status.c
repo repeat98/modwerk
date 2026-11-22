@@ -107,16 +107,28 @@ static uint32_t frame_longest(void);
  * figure stays as it was, so no pick counts twice. */
 static int32_t frame_adjust;
 static uint32_t adjust_readings;
+/* Modules that leave the Part without a pick (a Part reload, a paste, a project load) take what they cost off the kept
+ * figure as they go, stopped: what the Part's modules book (the reserve's own sum, below) is noted each reading, and a
+ * fall no pick made comes off. Else the figure kept from a play with FM Synth on T8 refused SYNTIZ and then Amiga on
+ * the same track after a Part reload, until the unit had played four seconds (owner's MKII, 22 November 2026). */
+uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net); /* machine_registry.c */
+static uint32_t effects_booked(unsigned skip);
+static uint32_t booked_seen;
+static int booked_moved; /* a pick or an exit since the last reading: the next one only notes the sum */
 static void cpu_note_played(void)
 {
-    if (modwerk_machine_stopped()) play_readings = adjust_readings = 0;
-    else {
+    uint32_t booked = modwerk_machine_frame_booked(8u, 0) + effects_booked(16u);
+    if (modwerk_machine_stopped()) {
+        play_readings = adjust_readings = 0;
+        if (!booked_moved && booked < booked_seen) frame_played = frame_played > booked_seen - booked ? frame_played - (booked_seen - booked) : 0;
+    } else {
         if (++adjust_readings >= 8u) frame_adjust = 0;
         if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest();
     }
+    booked_seen = booked, booked_moved = 0;
 }
-void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0; }
-void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0; }
+void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0, booked_moved = 1; }
+void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0, booked_moved = 1; }
 /* The longest frame interrupt of each reading, per mille of a frame (machine_registry.c's mw_frame_window, cleared at
  * each read). The meter above is all of the ColdFire, averaged; the frame guard drops renders frame by frame, once a
  * frame would run past its share and what credit the short frames before it left, so a pick is judged by the frames

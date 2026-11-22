@@ -562,6 +562,16 @@ int main(void)
       CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 530u);
       cpu_note_played();
       CHECK(!frame_adjust && frame_played == 530u && modwerk_status_frame_load() == 530u);
+      /* A module that leaves without a pick (a Part reload) takes its cost off the kept figure; a pick's own change of
+       * the sum is its adjust's, not counted twice. */
+      { uint32_t kept = frame_played;
+        transport_stopped = 1, test_machines_booked = 313u; cpu_note_played();            /* FM Synth booked */
+        test_machines_booked = 0; cpu_note_played();                                       /* the reload took it off */
+        CHECK(frame_played == (kept > 313u ? kept - 313u : 0u));
+        frame_played = kept, test_machines_booked = 200u, modwerk_status_cpu_entered(0); cpu_note_played();
+        test_machines_booked = 0, modwerk_status_cpu_left(0); cpu_note_played();          /* a pick's exit */
+        CHECK(frame_played == kept);
+        transport_stopped = 0, test_machines_booked = 0; }
       /* Stopped, a machine swapped out and back is judged by what it adds, once, never below the newest reading
        * (owner's MKII, 21 November 2026: Grain to FLEX and back right after STOP, refused at once). */
       transport_stopped = 1, frame_newest = 350u;
