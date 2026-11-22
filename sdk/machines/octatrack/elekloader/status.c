@@ -125,6 +125,10 @@ unsigned modwerk_machine_pattern(void); /* machine_registry.c */
 static unsigned played_pattern = 0xffffu;
 static void note_stock(void);
 static unsigned reading_pattern = 0xffffu; /* the pattern the readings in a row were played on */
+/* The longest reading played on that pattern since the last pick or exit: the picks so far as they play, before four
+ * seconds make them the kept figure (modwerk-bd, twin 30: after Amiga's pick C03 read 104.2 while the kept figure, the
+ * reading before it with Amiga's table cost on top, said 102.9). */
+static uint32_t played_since;
 static void cpu_note_played(void)
 {
     uint32_t booked = modwerk_machine_frame_booked(8u, 0) + effects_booked(16u);
@@ -134,15 +138,16 @@ static void cpu_note_played(void)
         if (!booked_moved && booked != booked_seen) frame_played = played > 0 ? (uint32_t)played : 0u;
     } else {
         unsigned now = modwerk_machine_pattern();
-        if (now != reading_pattern) play_readings = 0, reading_pattern = now; /* four seconds of this pattern first */
+        if (now != reading_pattern) play_readings = 0, reading_pattern = now, played_since = 0; /* four seconds of this pattern first */
+        if (frame_newest > played_since) played_since = frame_newest;
         if (++adjust_readings >= 8u) frame_adjust = 0;
         if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_pattern = now, note_stock();
     }
     if (booked != booked_seen) booked_moved = 0;
     booked_seen = booked;
 }
-void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0, booked_moved = 1; }
-void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0, booked_moved = 1; }
+void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0, booked_moved = 1, played_since = 0; }
+void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0, booked_moved = 1, played_since = 0; }
 /* The longest frame interrupt of each reading, per mille of a frame (machine_registry.c's mw_frame_window, cleared at
  * each read). The meter above is all of the ColdFire, averaged; the frame guard drops renders frame by frame, once a
  * frame would run past its share and what credit the short frames before it left, so a pick is judged by the frames
@@ -185,6 +190,8 @@ static uint32_t measured_load(uint32_t gone) /* `gone`: what a pick's predecesso
 {
     unsigned elsewhere = played_pattern != 0xffffu && played_pattern != modwerk_machine_pattern();
     int32_t adjust = frame_adjust - (int32_t)gone, kept = (int32_t)(elsewhere ? 0u : frame_played) + adjust, now;
+    if (reading_pattern == modwerk_machine_pattern() && (int32_t)played_since - (int32_t)gone > kept)
+        kept = (int32_t)played_since - (int32_t)gone;              /* played with the picks since: higher, so honest */
     if (modwerk_machine_stopped()) now = (int32_t)frame_newest + (adjust > 0 ? adjust : 0);
     else now = (int32_t)frame_longest() - (int32_t)gone; /* playing, the last four seconds hold what leaves */
     int32_t most = kept > now ? kept : now;
@@ -553,30 +560,42 @@ static uint32_t pattern_reserve(unsigned most, unsigned tracks) /* a pattern's, 
  * the floor (modwerk-bd, twin 28: C03 with three Tape Echos played at 95.9 to 97.3 % while the ladder judged 108 and
  * refused a fourth). The ladder is samples on all eight tracks; a Part with empty slots plays lighter. Another pattern,
  * or the same one with other trigs, goes by the ladder until it has played. */
+#define MEASURED_SAMPLE 25u /* what a sample track's render was worth to a machine's first instance there, per mille */
 static uint32_t played_stock, played_shape = 0xffffffffu; /* that stock, and its pattern's busiest step << 4 | tracks */
 static void note_stock(void)
 {
     uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2];
     unsigned n = modwerk_machine_pattern_trigs(most, tracks, id);
-    uint32_t modules = modwerk_machine_frame_booked(8u, tuned(TRACK_STOCK_ID, mw_track_stock)) + effects_booked(16u) +
-        modwerk_machine_rest_booked();
+    uint32_t modules = modwerk_machine_frame_booked(8u, MEASURED_SAMPLE) + effects_booked(16u) + modwerk_machine_rest_booked();
     played_stock = frame_played > modules ? frame_played - modules : 0u;
     played_shape = n && id[0] == played_pattern ? (uint32_t)most[0] << 4 | tracks[0] : 0xffffffffu;
 }
-static uint32_t pattern_stock(unsigned p, unsigned most, unsigned tracks, unsigned id) /* p 0: the pattern that plays */
+/* `*measured` 1 when the figure is the pattern's own measured stock: a machine's first instance then nets what a sample
+ * track's render was worth in it (MEASURED_SAMPLE), as on the measured figure, since that stock already holds the sample
+ * its track played; the ladder's is a sample track's share (mw_track_stock). Twin 30: netting 7 off a measured stock
+ * admitted a second Amiga that took C03 to 115.7 %. */
+static uint32_t pattern_stock(unsigned p, unsigned most, unsigned tracks, unsigned id, int *measured) /* p 0: the pattern that plays */
 {
     uint32_t v = pattern_reserve(most, tracks);
+    *measured = 0;
     if (p || mw_stock_reserve != RESERVE_ADAPTIVE || id != played_pattern || played_shape != (most << 4 | tracks)) return v;
     uint32_t m = played_stock + tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
     if (m < floor) m = floor;
-    return m < v ? m : v;
+    if (m >= v) return v;
+    *measured = 1;
+    return m;
 }
-static uint32_t stock_reserve(void)
+/* The stock reserve; in *net (when given) what a machine's first instance nets against it. */
+static uint32_t stock_reserve(uint32_t *net)
 {
     uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2];
     unsigned patterns = modwerk_machine_pattern_trigs(most, tracks, id);
-    uint32_t r = pattern_reserve(0, 0);
-    for (unsigned p = 0; p < patterns && p < 2u; ++p) { uint32_t v = pattern_stock(p, most[p], tracks[p], id[p]); if (v > r) r = v; }
+    uint32_t r = pattern_reserve(0, 0); int from_measured = 0;
+    for (unsigned p = 0; p < patterns && p < 2u; ++p) {
+        int m; uint32_t v = pattern_stock(p, most[p], tracks[p], id[p], &m);
+        if (v > r || (!p && v == r)) r = v, from_measured = m;
+    }
+    if (net) *net = from_measured ? MEASURED_SAMPLE : tuned(TRACK_STOCK_ID, mw_track_stock);
     return r;
 }
 static uint32_t effect_cost(unsigned id, int first, int waking);
@@ -594,10 +613,11 @@ static uint32_t effects_booked(unsigned skip)
     }
     return sum;
 }
-static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
+static uint32_t reserved(unsigned machine_skip, unsigned effect_skip, uint32_t *net_out)
 {
-    return stock_reserve() + modwerk_machine_rest_booked() + modwerk_machine_frame_booked(machine_skip, tuned(TRACK_STOCK_ID, mw_track_stock)) +
-        effects_booked(effect_skip);
+    uint32_t net, r = stock_reserve(&net);
+    if (net_out) *net_out = net;
+    return r + modwerk_machine_rest_booked() + modwerk_machine_frame_booked(machine_skip, net) + effects_booked(effect_skip);
 }
 /* The predicted brake (owner, 22 November 2026): a pattern whose stock load, with the Part's modules and those at rest on
  * top (the reserve's own figure), passes the frame ceiling goes without only what it must: the Part's module machines,
@@ -629,9 +649,9 @@ static void hush_name(unsigned n, const char *name)
  * and in *fx the effects; `named` 1 writes the notice's names and count. */
 static unsigned hush_pick(unsigned p, unsigned most, unsigned tracks, unsigned id, fx_set *fx, int named)
 {
-    uint8_t mt[8]; uint32_t mc[8]; const char *ml[8];
-    unsigned nm = modwerk_machine_part_machines(mt, mc, ml, tuned(TRACK_STOCK_ID, mw_track_stock)), fid[16], nf = 0;
-    uint32_t fc[16], load = pattern_stock(p, most, tracks, id) + modwerk_machine_rest_booked();
+    uint8_t mt[8]; uint32_t mc[8]; const char *ml[8]; int measured;
+    uint32_t fc[16], load = pattern_stock(p, most, tracks, id, &measured) + modwerk_machine_rest_booked();
+    unsigned nm = modwerk_machine_part_machines(mt, mc, ml, measured ? MEASURED_SAMPLE : tuned(TRACK_STOCK_ID, mw_track_stock)), fid[16], nf = 0;
     for (unsigned k = 0; k < nm; ++k) load += mc[k];
     fx_set dry = modwerk_machine_deadline_effects();
     for (unsigned k = 0; k < 16u; ++k) { /* the live effects by module, each with its first and each */
@@ -685,7 +705,7 @@ uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
 }
 uint32_t modwerk_status_frame_load(void)
 {
-    uint32_t measured = measured_load(0), stock = reserved(8u, 16u);
+    uint32_t measured = measured_load(0), stock = reserved(8u, 16u, 0);
     return measured > stock ? measured : stock;
 }
 /* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
@@ -1361,7 +1381,7 @@ static void memory_box(unsigned char *frame)
         label(23u, 34u, "MEM"), share_bar(frame, 45u, 34u, 40, 6, mem, mem > before ? mem - before : 0);
         plus(89u, 34u, mem > before ? mem - before : before - mem, mem < before);
         /* MODS: what modules use of their allowance (the line less the stock reserve), as CPU FULL gives it */
-        const uint32_t line = frame_line(), reserve = stock_reserve(), allowed = line > reserve ? line - reserve : 1u;
+        const uint32_t line = frame_line(), reserve = stock_reserve(0), allowed = line > reserve ? line - reserve : 1u;
         label(23u, 42u, "MODS"), bar(frame, 45u, 42u, 40, 6, share(pick_load > reserve ? pick_load - reserve : 0u, allowed), 0), percent(89u, 42u, allowed);
         return;
     }
@@ -1506,7 +1526,6 @@ uint32_t modwerk_status_module_rest(uint32_t module)
  * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
 #define NEAR_FREE 20u /* 2 %: Mini Verb's first 1.5, E-Verb's 0.7, Vibrato's 0 */
-#define MEASURED_SAMPLE 25u /* what a sample track's render was worth to a machine's first instance there, per mille */
 unsigned modwerk_machine_trigging(void); /* machine_registry.c: the tracks that trig in the pattern that plays */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
@@ -1515,18 +1534,19 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     if (add <= NEAR_FREE) return 0;
     unsigned further = machine == 2u; /* machine_registry.c: a further instance of a machine the Part runs */
     machine = machine != 0u;
-    uint32_t measured = measured_load(gone) + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
+    uint32_t measured = measured_load(gone) + add, line = frame_line();
     /* A machine's first instance on a track that plays a sample takes that render's place in the measured frame too:
      * 2.5 %, measured (twin 27, C03's T1: Amiga added 24.1 against its curve's 26.6 on an empty track), a further one
      * nothing (the second added 4.3 against its each of 4; a machine's own trig starts cost about the sample's). The
      * reserve's 7 % is the stacked ladder's, measured there. shortcut: one figure for every machine. */
     if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > MEASURED_SAMPLE ? measured - MEASURED_SAMPLE : 0u;
-    uint32_t net = !machine || further ? add : add > track_stock ? add - track_stock : 0u; /* a first machine in a sample's place */
-    uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
+    uint32_t sample, base = reserved(machine ? slot : 8u, machine ? 16u : slot, &sample);
+    uint32_t net = !machine || further ? add : add > sample ? add - sample : 0u; /* a first machine in a sample's place */
+    uint32_t stock = base + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
     uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    uint32_t reserve = stock_reserve(), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
+    uint32_t reserve = stock_reserve(0), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
     /* Why, in the box: modules installed and used nowhere, when their cost at rest is more than the pick's and what
      * leaves no room; the Part's own sound; else the Part's modules, one of which to change. */
     unsigned why = rest > add && load - rest < line ? WHY_UNUSED : before > reserve + modules ? WHY_PART : WHY_CHANGE;

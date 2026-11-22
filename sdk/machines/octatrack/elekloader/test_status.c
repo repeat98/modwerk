@@ -570,6 +570,7 @@ int main(void)
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
       transport_stopped = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 430u;
+      frame_newest = 430u;                                               /* each reading is the newest too */
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       transport_stopped = 1, frame_newest = 300u;
       CHECK(frame_played == 430u && modwerk_status_frame_load() == 430u);
@@ -822,6 +823,24 @@ int main(void)
       for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
       test_pattern = 34u, cpu_note_played();                             /* back before four seconds: none kept */
       CHECK(play_readings == 1u && played_pattern == 34u && played_stock == 763u);
+      /* Against a measured stock, a machine's first instance nets what the sample was worth there (2.5 %), not a
+       * sample track's share of the ladder (7 %); a further one, nothing (twin 30, C03: Amiga 73.8 + 8 + 2.5 + 24.1, then
+       * a second one, 4 more). */
+      played_stock = 738u, transport_stopped = 1, frame_played = 0, frame_newest = 0;
+      CHECK(!modwerk_status_pick_busy(0, 1, "Amiga", 266u, 0, 0));        /* 81.8 + 2.5 + 24.1 = 108.4 */
+      test_machines_booked = 241u;
+      CHECK(modwerk_status_pick_busy(2, 2, "Amiga", 40u, 0, 0));          /* and 4: 112.4 */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_machines_booked = 0;
+      /* What played since the last pick counts when it is more than the kept figure with the picks on top. */
+      mw_stock_reserve = 0, transport_stopped = 0, play_readings = 0, frame_played = 763u, frame_adjust = 0;
+      modwerk_status_cpu_entered(266u);
+      frame_newest = 1042u, cpu_note_played(), frame_newest = 1020u, cpu_note_played();
+      transport_stopped = 1, frame_newest = 380u;
+      CHECK(played_since == 1042u && modwerk_status_frame_load() == 1042u); /* not 76.3 + 26.6 */
+      modwerk_status_cpu_entered(40u);
+      CHECK(!played_since && modwerk_status_frame_load() == 1069u);      /* a pick since: the kept figure and both */
+      frame_adjust = 0, mw_stock_reserve = RESERVE_ADAPTIVE, test_pattern = 34u;
       test_rest = 0, test_busiest = 0, test_tracks = 0, test_pattern = 0, played_shape = 0xffffffffu, played_pattern = 0xffffu;
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
