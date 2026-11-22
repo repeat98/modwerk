@@ -27,6 +27,7 @@ import { adminActivity, unansweredThreads } from './admin-activity'
 import { adminOctatrack } from './admin-octatrack'
 import { adminAnnouncements, publicAnnouncementItems, publicAnnouncementRoutes } from './announcements'
 import { adminNews, newsUnsubscribe } from './news-mail'
+import { adminDiagnosticsMail, diagnosticsMailUnsubscribe } from './diagnostics-mail'
 import recipes from '../src/catalog/module-sets.json'
 import type { Database, Env, Media, User } from './platform'
 import { withPrivacyDeadline } from './privacy-deadline'
@@ -72,6 +73,10 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/news/unsubscribe' && request.method === 'POST') {
       if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
       return await newsUnsubscribe(request,env,env.DB)
+    }
+    if (path === '/api/diagnostics/mail/unsubscribe' && request.method === 'POST') {
+      if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
+      return await diagnosticsMailUnsubscribe(request,env,env.DB)
     }
     // Telegram and the maintenance bot's GitHub job call these server-to-server: a webhook secret or bearer key authenticates them.
     if (path.startsWith('/api/maintenance-bot/')) {
@@ -268,20 +273,40 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     if (path.startsWith('/api/admin/')) {
       if (!admin) throw new HttpError(403,'Administrator access is required.')
-      if(path==='/api/admin/account-requests'&&request.method==='GET')return response((await db.prepare("SELECT r.id,r.user_id,r.status,r.created_at,r.updated_at,r.review_note,u.username FROM account_removal_requests r JOIN users u ON u.id=r.user_id ORDER BY CASE WHEN r.status IN ('requested','reviewing') THEN 0 ELSE 1 END,r.created_at ASC,r.rowid ASC LIMIT 100").all<{created_at:string}>()).results.map(withPrivacyDeadline))
+      if (path === '/api/admin/account-requests' && request.method === 'GET') {
+        const view = url.searchParams.get('view')
+        const active = "r.status IN ('requested','reviewing')"
+        const filter = view === 'active' ? 'WHERE ' + active : view === 'archive' ? 'WHERE NOT (' + active + ')' : ''
+        const order = view === 'archive' ? 'r.updated_at DESC, r.rowid DESC' : `CASE WHEN ${active} THEN 0 ELSE 1 END, r.created_at, r.rowid`
+        const rows = await db.prepare(`SELECT r.id,r.user_id,r.status,r.created_at,r.updated_at,r.review_note,u.username
+          FROM account_removal_requests r JOIN users u ON u.id=r.user_id ${filter} ORDER BY ${order} LIMIT 100`).all<{created_at:string}>()
+        return response(rows.results.map(withPrivacyDeadline))
+      }
       if(path==='/api/admin/account-mail'&&request.method==='GET')return response((await db.prepare('SELECT day,purpose,accepted,failed,limited FROM account_mail_daily ORDER BY day DESC,purpose LIMIT 60').all()).results)
       if((match=path.match(/^\/api\/admin\/account-requests\/([a-zA-Z0-9-]+)$/))&&request.method==='PATCH')return reviewAccountRequest(request,db,match[1])
       const announcements = await adminAnnouncements(request, db, path)
       if (announcements) return announcements
       const news = await adminNews(request, env, db, path, adminId)
       if (news) return news
+      const diagnosticsMail = await adminDiagnosticsMail(request, env, db, path, adminId)
+      if (diagnosticsMail) return diagnosticsMail
       if (path === '/api/admin/insights' && request.method === 'GET') return response(await adminInsights(db))
       if (path === '/api/admin/octatrack' && request.method === 'GET') return response(await adminOctatrack(db))
       if (path === '/api/admin/unanswered-threads' && request.method === 'GET') return response(await unansweredThreads(db,new Date(),url.searchParams))
       if (path === '/api/admin/activity' && request.method === 'GET') return response(await adminActivity(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/accounts' && request.method === 'GET') return response(await adminAccounts(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/statistics' && request.method === 'GET') return await usageStatistics(db,Number(url.searchParams.get('days') ?? 7))
-      if (path === '/api/admin/overview' && request.method === 'GET') return response(await db.prepare("SELECT (SELECT COUNT(*) FROM submissions WHERE status='pending') AS pending,(SELECT COUNT(*) FROM module_publications) AS published,(SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id WHERE t.id='module-' || t.module_id AND p.id<>t.id AND p.hidden=0 AND t.hidden=0) AS comments,(SELECT COUNT(*) FROM issues WHERE status='open') AS issues,(SELECT COALESCE(SUM(bytes),0) FROM media) AS mediaBytes").first())
+      if (path === '/api/admin/overview' && request.method === 'GET') return response(await db.prepare(`
+        SELECT (SELECT COUNT(*) FROM issues WHERE status='open') AS issues,
+          (SELECT COUNT(*) FROM forum_reports WHERE resolved=0) +
+          (SELECT COUNT(*) FROM forum_shout_reports WHERE resolved=0) +
+          (SELECT COUNT(*) FROM message_reports WHERE resolved=0) AS forum,
+          (SELECT COUNT(*) FROM account_removal_requests WHERE status IN ('requested','reviewing')) AS requests,
+          (SELECT COUNT(*) FROM submissions WHERE status='pending') AS pending,
+          (SELECT COUNT(*) FROM module_publications) AS published,
+          (SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id
+            WHERE t.id='module-' || t.module_id AND p.id<>t.id AND p.hidden=0 AND t.hidden=0) AS comments,
+          (SELECT COALESCE(SUM(bytes),0) FROM media) AS mediaBytes`).first())
       if (path === '/api/admin/history' && request.method === 'GET') return response((await db.prepare('SELECT e.id,e.module_id,e.action,e.note,e.created_at,u.display_name AS actor FROM review_events e JOIN users u ON u.id=e.actor_id ORDER BY e.rowid DESC LIMIT 100').all()).results)
       if (path === '/api/admin/issues' && request.method === 'GET') {
         const moduleId = url.searchParams.has('moduleId') ? required(url.searchParams.get('moduleId'),'Module ID',100) : '', status = url.searchParams.get('status')??'all'

@@ -6,7 +6,7 @@ The maintenance bot does the routine part of the [daily pass](MAINTENANCE.md) on
 
 `.github/workflows/maintenance-bot.yml` runs in two jobs:
 
-1. **propose** runs `scripts/maintenance-bot/snapshot.mjs`, which lists open pull requests and issues and skips the model when nothing has changed since its last run. Otherwise Claude Code reads them with a read-only token and read-only `gh` and `git` commands, following [prompt.md](../scripts/maintenance-bot/prompt.md). It writes `bot/proposals.json` and nothing else. It never checks out or runs pull request code.
+1. **propose** runs `scripts/maintenance-bot/snapshot.mjs`, which lists open pull requests and issues and skips the model when nothing has changed since its last run. Otherwise Claude Code reads them with a read-only token and read-only `gh` and `git` commands, following [prompt.md](../scripts/maintenance-bot/prompt.md). It writes nothing: its proposals come back as structured output checked against a schema, and the job saves them to `bot/proposals.json`. It never checks out or runs pull request code.
 2. **act** runs `scripts/maintenance-bot/act.mjs` from `main`, with write access and no model. It re-reads each proposal's target from GitHub and holds it to [policy.mjs](../scripts/maintenance-bot/policy.mjs), which sets the tier. It files the proposal in the Worker's ledger (`server/maintenance-bot.ts`, table `maintenance_bot_actions`), carries out whatever is due, and on the daily run sends the report.
 
 | Tier | Actions | What happens |
@@ -34,6 +34,8 @@ TARS reads every Discord channel and active thread it can see, minus the reposit
 On the site, TARS answers in the forum and the shoutbox as the system account `tars` (migration 0093), with the same rules: a thread whose last post is not from TARS or the owner, or a shout no helper has answered since, one reply each, 1 h for a Stop (`forum_reply`, `shout_reply`). The Worker posts through the site's own forum and shoutbox handlers, so limits and notifications are the same as anyone's, and refuses with 409 if someone answered first. Like the `modwerk` system author, `tars` has no verified email, so it stays out of member lists, @-suggestions and announcement audiences. `POST /api/maintenance-bot/tars/avatar` sets its picture through the site's avatar upload. Every public reply follows the prompt's "How you write": the answer first, plain words, kind, one step at a time.
 
 The repository is public, and so are the job logs and artifacts. The model's output is never printed, the executor logs counts only, and the proposals travel between the jobs encrypted with the bot key.
+
+The [five-fix eval pilot](AGENT_EVALS.md#five-fix-pilot) checks newly merged Node fixes for gaps in the replay suite. TARS posts one wanted task per gap and reports how many independently verified cases land.
 
 ## Telegram
 

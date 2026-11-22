@@ -203,19 +203,50 @@ export function judgeIdle(result, limits = LIMITS) {
 
 export const SAME_LIMIT = -60     // dB of the difference to the louder render; at or below it two renders count as the same (audit default)
 const SILENT_DBFS = -100
+const MAX_SHIFT = 64
+
+// A positive shift means b is late. Require at least half the window (and eight frames),
+// exact agreement across every channel, and signal in the overlap. Silence and repeating
+// patterns can match at many lags. Never use an aligned overlap for the verdict.
+function explainShift(a, b, frames, verdict) {
+  if (a.length !== b.length || a[0].length !== b[0].length) return 'indeterminate (different render shapes)'
+  if (verdict === 'silent') return 'indeterminate (silent window)'
+  if (frames < 8) return 'indeterminate (fewer than 8 frames)'
+  const bound = Math.min(MAX_SHIFT, Math.floor(frames / 2), frames - 8)
+  let match = null
+  for (let shift = -bound; shift <= bound; shift++) {
+    const startA = Math.max(0, -shift), startB = Math.max(0, shift), overlap = frames - Math.abs(shift)
+    let equal = true, signal = false
+    for (let c = 0; equal && c < a.length; c++) {
+      for (let i = 0; i < overlap; i++) {
+        const value = a[c][startA + i]
+        if (value !== b[c][startB + i]) { equal = false; break }
+        if (value !== 0) signal = true
+      }
+    }
+    if (!equal || !signal) continue
+    if (match !== null) return 'indeterminate (multiple matching shifts)'
+    match = shift
+  }
+  if (match === null) return 'no exact shift within ±' + bound + ' frames'
+  return (match > 0 ? '+' : '') + match + ' frames (second render relative to first)'
+}
 
 /** Two renders (channel arrays) sample for sample over their common length, worst channel, and b's level against a's over all channels. `same` for two settings of one knob means the
  *  knob does nothing to this signal; for two presets, that they are one sound. Two silent renders prove nothing, so they are `silent`. */
-export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
+export function compareRenders(a, b, sameLimit = SAME_LIMIT, { explain = false } = {}) {
   const frames = Math.min(...a.map(c => c.length), ...b.map(c => c.length))
+  const firstByChannel = []
   let ratio = 0, loudest = 0, peak = 0, first = -1, energyA = 0, energyB = 0
   for (let c = 0; c < Math.min(a.length, b.length); c++) {
-    let sa = 0, sb = 0, sd = 0
+    let sa = 0, sb = 0, sd = 0, channelFirst = null
     for (let n = 0; n < frames; n++) {
       const x = a[c][n], y = b[c][n], d = x - y
       sa += x * x; sb += y * y; sd += d * d
-      if (d) { peak = Math.max(peak, Math.abs(d)); if (first < 0 || n < first) first = n }
+      if (d) { peak = Math.max(peak, Math.abs(d)); if (channelFirst === null) channelFirst = n }
     }
+    if (channelFirst !== null && (first < 0 || channelFirst < first)) first = channelFirst
+    if (explain) firstByChannel.push(channelFirst)
     energyA += sa; energyB += sb
     const louder = Math.max(sa, sb)
     loudest = Math.max(loudest, louder)
@@ -225,7 +256,9 @@ export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
   const differenceDb = first < 0 ? -Infinity : db(ratio)
   const verdict = dbfs(Math.sqrt(loudest / Math.max(frames, 1))) < SILENT_DBFS ? 'silent' : identical ? 'identical' : differenceDb <= sameLimit ? 'same' : 'differs'
   const levelDb = energyA && energyB ? db(energyB / energyA) : null // b's level against a's; null when either is silent
-  return { verdict, differenceDb, levelDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
+  const result = { verdict, differenceDb, levelDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
+  if (explain) result.details = { frames, channels: [a.length, b.length], firstByChannel, shift: explainShift(a, b, frames, verdict) }
+  return result
 }
 
 // ---- writing and reading files -------------------------------------------------
@@ -244,9 +277,10 @@ export function wavFile(samples) {
 
 /** A render as one Float64Array of +-1 per channel. Raw is what dsp_host writes: little-endian int32 words holding 24-bit values,
  *  interleaved L R (`channels: 1` for a mono file). WAV: 16/24/32-bit PCM or 32-bit float at 44.1 kHz. */
-export function readAudio(path, { channels = 2 } = {}) {
+export function readAudio(path, { channels = 2, strict = false } = {}) {
   const bytes = readFileSync(path), view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   if (!/\.wav$/i.test(path)) {
+    if (strict && bytes.byteLength % (4 * channels)) throw new Error(path + ' ends in a partial raw frame')
     const words = bytes.byteLength >> 2, frames = Math.floor(words / channels)
     return Array.from({ length: channels }, (_, c) => Float64Array.from({ length: frames }, (_, n) => ((view.getInt32(4 * (n * channels + c), true) << 8) >> 8) / FULL_SCALE))
   }
@@ -254,20 +288,30 @@ export function readAudio(path, { channels = 2 } = {}) {
   let format = null, data = null
   for (let at = 12; at + 8 <= bytes.byteLength;) {
     const id = bytes.toString('ascii', at, at + 4), size = view.getUint32(at + 4, true)
-    if (id === 'fmt ') format = { tag: view.getUint16(at + 8, true), channels: view.getUint16(at + 10, true), rate: view.getUint32(at + 12, true), bits: view.getUint16(at + 22, true), extensible: view.getUint16(at + 8 + 24, true) }
-    if (id === 'data') data = { start: at + 8, size: Math.min(size, bytes.byteLength - at - 8) }
+    if (id === 'fmt ') {
+      const tag = view.getUint16(at + 8, true)
+      format = { tag, channels: view.getUint16(at + 10, true), rate: view.getUint32(at + 12, true), bits: view.getUint16(at + 22, true),
+        extensible: tag === 0xfffe ? view.getUint16(at + 8 + 24, true) : null }
+    }
+    if (id === 'data') {
+      if (strict && size > bytes.byteLength - at - 8) throw new Error(path + ' has a truncated WAV data chunk')
+      data = { start: at + 8, size: Math.min(size, bytes.byteLength - at - 8) }
+    }
     at += 8 + size + (size & 1)
   }
   if (!format || !data) throw new Error(path + ' has no fmt or data chunk')
   const tag = format.tag === 0xfffe ? format.extensible : format.tag, bytesPer = format.bits >> 3
   if (format.rate !== SAMPLE_RATE) throw new Error(path + ' is ' + format.rate + ' Hz; the plan is for ' + SAMPLE_RATE + ' Hz')
   if (!(tag === 1 && [2, 3, 4].includes(bytesPer)) && !(tag === 3 && bytesPer === 4)) throw new Error(path + ': only 16/24/32-bit PCM and 32-bit float WAV are read')
+  if (strict && (!format.channels || data.size % (bytesPer * format.channels))) throw new Error(path + ' has an invalid WAV frame size or a partial frame')
   const frames = Math.floor(data.size / (bytesPer * format.channels))
   const sample = at => tag === 3 ? view.getFloat32(at, true)
     : bytesPer === 2 ? view.getInt16(at, true) / 32768
       : bytesPer === 3 ? (((view.getUint8(at) | view.getUint8(at + 1) << 8 | view.getUint8(at + 2) << 16) << 8) >> 8) / 8388608
         : view.getInt32(at, true) / 2147483648
-  return Array.from({ length: format.channels }, (_, c) => Float64Array.from({ length: frames }, (_, n) => sample(data.start + (n * format.channels + c) * bytesPer)))
+  const audio = Array.from({ length: format.channels }, (_, c) => Float64Array.from({ length: frames }, (_, n) => sample(data.start + (n * format.channels + c) * bytesPer)))
+  if (strict && tag === 3 && audio.some(channel => !channel.every(Number.isFinite))) throw new Error(path + ' contains a non-finite WAV sample')
+  return audio
 }
 
 // ---- proving the instrument ------------------------------------------------------

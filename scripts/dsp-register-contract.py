@@ -25,6 +25,7 @@ REFUSED_FROM, which the owner sets (None: report only), as scripts/dsp-source-ga
 
   python3 -B scripts/dsp-register-contract.py             # every package; exit 1 only on a refusal
   python3 -B scripts/dsp-register-contract.py --json <id>  # one module's findings as JSON (module:doctor)
+  python3 -B scripts/dsp-register-contract.py --json-modules <id>...  # summaries keyed by module ID
 """
 import importlib.util
 import json
@@ -45,6 +46,7 @@ _spec = importlib.util.spec_from_file_location('dsp_contract_abi9', ROOT / 'sdk/
 ABI9 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(ABI9)
 KEEP = {'init': {'r1', 'n1', 'm1'}, 'proc': set()}  # beyond the mode, stack and vector registers no entry may write
+REST_FLAG = 0x80  # loader.h RUNTIME_SITE_RESTS: bit 7 of an ABI 7+ site's length byte, a detour that rests with its module
 
 CC = 'cc|hs|ge|ne|pl|nn|ec|lc|gt|cs|lo|lt|eq|mi|nr|es|ls|le'
 FLAGS_ONLY = re.compile(r'^(cmp|cmpm|cmpu|tst)$')
@@ -248,6 +250,20 @@ def placed(words, relocations, base):
     return out
 
 
+def claims_end(data):
+    """abi9.py's `_claims_end`, with each site's length read as loader.c reads it: without RUNTIME_SITE_RESTS. A package
+    whose detours rest (runtime.json "rests") otherwise reads 128 bytes too many for each."""
+    abi = struct.unpack_from('>H', data, 4)[0]
+    if abi < 7:
+        return ABI9._claims_end(data)
+    image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
+    plain, at = bytearray(data), ABI9.HEADERS[abi] + 4 * hooks + image + 4 * count
+    for _ in range(sites):
+        plain[at + 4] &= ~REST_FLAG & 0xff
+        at += 8 + 32 + plain[at + 4] + 2 * plain[at + 7]
+    return ABI9._claims_end(bytes(plain))
+
+
 def package_entries(data):
     """A runtime package's DSP words, relocations and entries: (kind, offset, site index or None, exit word), or None
     without DSP code (sdk/runtime/loader/README.md; the claims start where abi9.py's `_claims_end` says)."""
@@ -258,7 +274,7 @@ def package_entries(data):
     if not count:
         return None
     nclaims, nentries = (data[78], data[79]) if abi >= 9 else (0, 0)
-    at = ABI9._claims_end(data) + 12 * nclaims
+    at = claims_end(data) + 12 * nclaims
     hooks = [struct.unpack_from('>BBHI', data, at + 8 * i) for i in range(nentries)]
     at += 8 * nentries
     words = list(struct.unpack_from('>%dI' % count, data, at))
@@ -336,27 +352,37 @@ def refused(module, dates):
 
 
 def run(only=None):
+    if isinstance(only, str):
+        only = {only}
     tool = disassembler()
     if not tool:
         return None
     sites = {s['index']: s for s in json.loads(SITES.read_text())['sites']}
     with tempfile.TemporaryDirectory(prefix='modwerk-dsp-contract.') as work:
         return [check(m, v, w, r, e, sites, tool, work, label) for m, v, w, r, e, label in published()
-                if only is None or m == only]
+                if only is None or m in only]
 
 
 def main(argv):
     dates = added()
-    if '--json' in argv:
-        module = argv[argv.index('--json') + 1]
-        reports = run(module)
-        if reports is None:
-            print(json.dumps(dict(module=module, skipped='no dsp56kDisassemble: build it beside ELEKLOADER_DSP_ASM (npm run upstream:tools)')))
-            return 0
-        found = [f for r in reports for f in findings(r)]
-        print(json.dumps(dict(module=module, packages=len(reports), entries=sum(len(r['entries']) for r in reports),
-                              refused=refused(module, dates), refusedFrom=REFUSED_FROM,
-                              findings=['%s: %s' % f for f in found], reports=reports)))
+    if '--json' in argv or '--json-modules' in argv:
+        batch = '--json-modules' in argv
+        ids = argv[argv.index('--json-modules') + 1:] if batch else [argv[argv.index('--json') + 1]]
+        reports = run(set(ids))
+        by_module = {module: [] for module in ids}
+        for report in reports or []:
+            by_module[report['module']].append(report)
+        results = {}
+        for module, items in by_module.items():
+            if reports is None:
+                results[module] = dict(module=module, skipped='no dsp56kDisassemble: build it beside ELEKLOADER_DSP_ASM (npm run upstream:tools)')
+                continue
+            results[module] = dict(module=module, packages=len(items), entries=sum(len(r['entries']) for r in items),
+                                   refused=refused(module, dates), refusedFrom=REFUSED_FROM,
+                                   findings=['%s: %s' % f for r in items for f in findings(r)])
+            if not batch:
+                results[module]['reports'] = items
+        print(json.dumps(results if batch else results[ids[0]]))
         return 0
     reports = run()
     if reports is None:

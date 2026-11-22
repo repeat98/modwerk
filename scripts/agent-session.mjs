@@ -7,7 +7,9 @@
 //   npm run session -- preview [--skip 3,7]   # what would be sent, written to ~/.cache/modwerk/session-preview.json
 //   npm run session -- share --note "…" [--skip 3,7] [--file <transcript>] [--agent claude-code|codex]
 //   npm run session -- list | get <id> | delete <id>
-//   npm run session -- pull                   # the owner: every shared session into ~/.cache/modwerk-local/sessions/
+//   npm run session -- review [--file <transcript>]   # where this session spent its time; printed here, nothing is sent
+//   npm run session -- pull                   # the owner: every shared session into ~/.cache/modwerk-local/sessions/,
+//                                             # signed in with the owner's site account (prompt, or MODWERK_EMAIL/PASSWORD)
 // Only the conversation is sent: the developer's prompts, the agent's replies and which tools ran and whether they failed.
 // Tool output, thinking, long code blocks, hex dumps, secrets and home paths stay here. Uses the board sign-in.
 import { chmod, lstat, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
@@ -18,6 +20,7 @@ import { gzipSync } from 'node:zlib'
 import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 import { boardRequest, readToken, BoardError, BoardUnavailable } from './agent-board.mjs'
+import { formatReview, readCalls, reviewSession } from './agent-session-review.mjs'
 import { claudeProjectFolder, firmwareFindings, prepareSession, readClaudeTranscript, readCodexRollout, SESSION_CONSENT_VERSION, SESSION_GZIP_LIMIT, SESSION_NOTE_LIMIT } from '../src/community/agent-sessions.ts'
 
 const PREFERENCES = ['ask', 'always', 'never']
@@ -32,11 +35,14 @@ async function writePrivate(file, text) {
   await writeFile(file, text, { mode: 0o600 }); await chmod(file, 0o600)
 }
 
+/** What the agent does before its final message, whatever the developer chose about sharing (pr:ready prints it). */
+export const reviewLine = 'Session review: before your final message, run npm run session -- review, add what its figures cannot show, and tell the developer at most three things that cost time, each with its fix. A concrete fix goes in its own "Workflow: …" pull request (docs/AGENT_SESSIONS.md#review-the-session-first).'
+
 /** What the agent should do about sharing at the end of a task, in one line (pr:ready prints it too). */
 export function sharingLine(preference) {
   return preference === 'never' ? 'Session sharing: never. The developer chose not to be asked; do not offer it.'
     : preference === 'always' ? 'Session sharing: always. When the task is done, share this session yourself (npm run session -- share --note "…") and tell the developer in a line.'
-      : 'Session sharing: ask. When the task is done, ask the developer once whether to share this session with the owner, so they can remove what got in the way (npm run session -- share --note "…"; only the conversation is sent, docs/AGENT_SESSIONS.md). If they answer always or never, save it with npm run session -- prefer always|never.'
+      : 'Session sharing: ask. When the task is done, ask the developer once whether to share this session with the owner, and say why it helps: what slowed this session down stays in it unless it is shared, and the owner turns it into a guide edit, a check or a fix that spares their next session and every other developer (npm run session -- share --note "…"; only the conversation is sent, docs/AGENT_SESSIONS.md). If they answer always or never, save it with npm run session -- prefer always|never.'
 }
 
 /** The working directories this session may have started in: where npm was called, here, and the checkout's root. */
@@ -104,7 +110,20 @@ export async function buildSession({ file, agent, note = '', skip = [] }) {
   const read = agent === 'codex' ? readCodexRollout(lines) : readClaudeTranscript(lines)
   let user = ''
   try { user = userInfo().username } catch { /* none */ }
-  return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir() }, skip)
+  return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir(), names: developerNames() }, skip)
+}
+
+/** A note with nothing of the session in it: missing, or only dots, ellipses, quotes and spaces. */
+export const placeholderNote = note => !/[\p{L}\p{N}]/u.test(note ?? '')
+
+// Parts of an email address that are roles or services, not a person: never scrubbed as names.
+const NOT_NAMES = new Set(['info', 'mail', 'email', 'contact', 'hello', 'admin', 'office', 'studio', 'music', 'noreply', 'users', 'github', 'dev'])
+/** The developer's names as git knows them: user.name in full and in parts, and the parts of user.email before the @. */
+export function developerNames(read = key => execFileSync('git', ['config', '--get', key], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) {
+  const value = key => { try { return read(key) } catch { return '' } }
+  const name = value('user.name'), local = value('user.email').split('@')[0].replace(/^\d+\+/, '')
+  const parts = [...name.split(/\s+/), ...local.split(/[._+-]+/)].filter(part => part.length >= 3 && /\p{L}/u.test(part) && !NOT_NAMES.has(part.toLowerCase()))
+  return [...new Set([name.trim(), ...parts].filter(part => part.length >= 3))]
 }
 
 function summary(session, file) {
@@ -125,11 +144,75 @@ async function token() {
   return value
 }
 
+// The same Worker and site the board client uses (scripts/agent-board.mjs).
+const API = () => (process.env.MODWERK_API ?? 'https://octamod-community.octamod.workers.dev/api').replace(/\/$/, '')
+const SITE = () => new URL(process.env.MODWERK_SITE ?? 'https://modwerk.app/').origin
+
+/** A request with the owner's site account session (`Authorization: Bearer`, as the site sends it). */
+export async function accountRequest(path, { method = 'GET', session, body, api = API(), fetch: send = fetch } = {}) {
+  const result = await send(api + path, { method, redirect: 'error', signal: AbortSignal.timeout(30000), headers: { Accept: 'application/json', ...(method === 'GET' ? {} : { Origin: SITE() }), ...(session ? { Authorization: 'Bearer ' + session } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) })
+  let value
+  try { value = await result.json() } catch { throw new BoardUnavailable('The Worker did not answer with JSON (HTTP ' + result.status + ').') }
+  if (!result.ok) throw new BoardError(value?.error ?? 'HTTP ' + result.status, result.status)
+  return { value, session: result.headers.get('X-Octamod-Session') }
+}
+/** Signs in to the owner's site account with email and password, as the site's sign-in does, runs `work` with that
+ * session, then signs out again. The password is only sent to sign in and is never written anywhere. */
+export async function asAccount({ email, password }, work, options = {}) {
+  let signedIn
+  try { signedIn = await accountRequest('/auth/login', { ...options, method: 'POST', body: { email, password } }) } catch (error) {
+    if (error instanceof BoardError && error.status === 401) throw new BoardError(error.message + ' An account made with Google, GitHub or Discord has no password until you set one with "Forgot password" on the site.', 401)
+    throw error
+  }
+  if (!signedIn.session) throw new BoardError('The sign-in returned no session.', 500)
+  try { return await work(signedIn.session) } finally { await accountRequest('/auth/logout', { ...options, method: 'POST', session: signedIn.session }).catch(() => {}) }
+}
+/** Reads a line from the terminal, without echoing it when `hidden`. Enter on an empty line is ignored, so a stray
+ * Enter already waiting in the terminal does not answer for the person. */
+function ask(question, hidden = false) {
+  const input = process.stdin
+  if (!input.isTTY) return Promise.resolve('')
+  return new Promise(resolve => {
+    let value = ''
+    process.stdout.write(question)
+    input.setRawMode(true); input.resume(); input.setEncoding('utf8')
+    const done = answer => { input.setRawMode(false); input.pause(); input.off('data', onData); process.stdout.write('\n'); resolve(answer) }
+    const onData = chunk => {
+      for (const ch of chunk) {
+        if (ch === '\r' || ch === '\n') { if (value.trim()) return done(value); continue }
+        if (ch === '\u0003' || ch === '\u0004') return done('')
+        if (ch === '\u007f' || ch === '\b') { if (value) { value = value.slice(0, -1); if (!hidden) process.stdout.write('\b \b') } continue }
+        value += ch
+        if (!hidden) process.stdout.write(ch)
+      }
+    }
+    input.on('data', onData)
+  })
+}
+
+/** Saves every shared session not yet in `folder`, and an index of all of them. */
+export async function pullSessions(folder, get) {
+  const { sessions } = await get('/agent-sessions?all=1'), index = []
+  await mkdir(folder, { recursive: true, mode: 0o700 })
+  for (const item of sessions) {
+    const name = `${item.createdAt.slice(0, 10)}-${item.login ?? 'deleted'}-${item.id.slice(0, 8)}.json`, file = join(folder, name)
+    try { await stat(file) } catch { await writePrivate(file, JSON.stringify(await get('/agent-sessions/' + item.id), null, 2) + '\n') }
+    index.push(`- ${name}: @${item.login ?? 'deleted'}, ${item.agent}, ${item.entries} entries, ${item.branch ?? 'no branch'}${item.note ? ` — «${item.note.replace(/\s+/g, ' ').slice(0, 200)}»` : ''}`)
+  }
+  await writePrivate(join(folder, 'INDEX.md'), `# Shared agent sessions (pulled ${new Date().toISOString().slice(0, 16)}Z)\n\nPrivate: names and quotes stay in this folder and in chat.\n\n${index.join('\n')}\n`)
+  return sessions.length
+}
+
 export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { note: { type: 'string' }, skip: { type: 'string' }, file: { type: 'string' }, agent: { type: 'string' } } })
   const [command = 'help', arg] = positionals
   const skip = (values.skip ?? '').split(',').filter(Boolean).map(Number).filter(Number.isInteger)
   if (command === 'status') { console.log(sharingLine(await readPreference())); return 0 }
+  if (command === 'review') {
+    const found = await findTranscript({ file: values.file, agent: values.agent })
+    for (const line of formatReview(reviewSession(readCalls((await readFile(found.file, 'utf8')).split('\n').filter(Boolean), found.agent)))) console.log(line)
+    return 0
+  }
   if (command === 'prefer') {
     if (!PREFERENCES.includes(arg)) { console.error('Choose ask, always or never.'); return 2 }
     await writePrivate(preferenceFile(), JSON.stringify({ sharing: arg }) + '\n')
@@ -137,6 +220,8 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if (command === 'preview' || command === 'share') {
     if ((values.note ?? '').length > SESSION_NOTE_LIMIT) { console.error(`Keep the note to ${SESSION_NOTE_LIMIT} characters.`); return 2 }
+    // The note is what the owner reads first; an agent once sent the instructions' "…" placeholder as it was.
+    if (command === 'share' && placeholderNote(values.note)) { console.error('Write the note: a few sentences on what got in the way in this session (--note "The board refused … until …").'); return 2 }
     const found = await findTranscript({ file: values.file, agent: values.agent })
     const session = await buildSession({ ...found, note: values.note ?? '', skip })
     await writePrivate(previewFile(), JSON.stringify(session, null, 2) + '\n')
@@ -168,19 +253,20 @@ export async function main(argv = process.argv.slice(2)) {
     return 0
   }
   if (command === 'pull') {
-    const auth = await token(), { sessions } = await boardRequest('/agent-sessions?all=1', { token: auth })
-    const folder = join(homedir(), '.cache', 'modwerk-local', 'sessions'), index = []
-    await mkdir(folder, { recursive: true, mode: 0o700 })
-    for (const item of sessions) {
-      const name = `${item.createdAt.slice(0, 10)}-${item.login ?? 'deleted'}-${item.id.slice(0, 8)}.json`, file = join(folder, name)
-      try { await stat(file) } catch { await writePrivate(file, JSON.stringify(await boardRequest('/agent-sessions/' + item.id, { token: auth }), null, 2) + '\n') }
-      index.push(`- ${name}: @${item.login ?? 'deleted'}, ${item.agent}, ${item.entries} entries, ${item.branch ?? 'no branch'}${item.note ? ` — «${item.note.replace(/\s+/g, ' ').slice(0, 200)}»` : ''}`)
-    }
-    await writePrivate(join(folder, 'INDEX.md'), `# Shared agent sessions (pulled ${new Date().toISOString().slice(0, 16)}Z)\n\nPrivate: names and quotes stay in this folder and in chat.\n\n${index.join('\n')}\n`)
-    console.log(`${sessions.length} shared sessions in ${folder} (INDEX.md lists them).`)
+    // The owner's site account, which carries the administrator role: typed in, or from the environment for this command.
+    const email = (process.env.MODWERK_EMAIL ?? '').trim() || (await ask('Modwerk account email: ')).trim()
+    const password = process.env.MODWERK_PASSWORD || await ask('Password (not shown, not stored): ', true)
+    if (!email || !password) { console.error('Pulling needs your Modwerk account: type its email and password when asked, or set MODWERK_EMAIL and MODWERK_PASSWORD for this command.'); return 2 }
+    const folder = join(homedir(), '.cache', 'modwerk-local', 'sessions')
+    const count = await asAccount({ email, password }, session => pullSessions(folder, async path => (await accountRequest(path, { session })).value).catch(error => {
+      // Signed in, but the account is not an administrator: the Worker answers as for nobody signed in.
+      if (error instanceof BoardError && (error.status === 401 || error.status === 403)) throw new BoardError('This account does not have the administrator role, so it cannot read shared sessions.', error.status)
+      throw error
+    }))
+    console.log(`${count} shared sessions in ${folder} (INDEX.md lists them).`)
     return 0
   }
-  console.log('npm run session -- status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--file <transcript>] | list | get <id> | delete <id> | pull')
+  console.log('npm run session -- review | status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--file <transcript>] | list | get <id> | delete <id> | pull')
   return command === 'help' ? 0 : 2
 }
 

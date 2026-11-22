@@ -32,8 +32,9 @@ class LoaderTests(unittest.TestCase):
         if not cc:
             self.skipTest('no host C compiler')
         octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')
-        # the default, the Octatrack's, and both with build_core.py --cached-modules
-        for defines in ((), octatrack, ('-DMODWERK_CACHED_MODULES',), octatrack + ('-DMODWERK_CACHED_MODULES',),
+        # Force the 32-bit stock/pool address collision in one cached build, where both kinds of flush run.
+        cached_overlap = ('-DMODWERK_CACHED_MODULES', '-DMODWERK_HOST_OVERLAP_STOCK')
+        for defines in ((), octatrack, cached_overlap, octatrack + ('-DMODWERK_CACHED_MODULES',),
                         octatrack + ('-DMODWERK_RUNTIME_SETS',),
                         octatrack + ('-DMODWERK_RUNTIME_SETS', '-DMODWERK_CACHED_MODULES')):
             with self.subTest(defines), tempfile.TemporaryDirectory() as temp:
@@ -150,6 +151,8 @@ class LoaderTests(unittest.TestCase):
         result = subprocess.run([sys.executable, '-B', ROOT / 'scripts/octatrack-module-packages.py', '--check'],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        if result.stderr:
+            print(result.stderr.rstrip())
 
     def test_converted_module_becomes_image_relocations_and_sites(self):
         stock = {0x40001000: bytes.fromhex('70201140000e'), 0x40002000: bytes.fromhex('4e714e71')}
@@ -210,6 +213,25 @@ class SiteEventTests(unittest.TestCase):
             path.write_text(json.dumps(dict(schema=1, subscribe=sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}],
                                             rests=['0x4000406a'])))
             self.assertEqual(build.runtime_declaration(temp)['rests'], ['0x4000406a'])
+            # A machine needs no ev_in_use of its own: the base answers for a contributor to a judged table (ot_machines),
+            # in its runtime.json or in its machine port (POLY8's), and machine_ports.declaration carries the rests on.
+            path.write_text(json.dumps(dict(schema=1, contribute=[{'to': 'ot_machines', 'order': 50, 'data': 'm'}], rests=['0x4000406a'])))
+            self.assertEqual(build.runtime_declaration(temp)['rests'], ['0x4000406a'])
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp) / 'poly8'
+            folder.mkdir()
+            (folder / 'runtime.json').write_text(json.dumps(dict(schema=1, subscribe=[{'event': 'ev_play_increment', 'fn': 'f', 'order': 20}],
+                                                                 rests=['0x40007978'])))
+            self.assertEqual(build.runtime_declaration(folder)['rests'], ['0x40007978'])
+            sys.path.insert(0, str(ROOT / 'sdk/machines/octatrack/module-adapters'))
+            import machine_ports
+            self.assertEqual(machine_ports.declaration('poly8', folder=folder)['rests'], ['0x40007978'])
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'runtime.json'
+            path.write_text(json.dumps(dict(schema=1, rests=['0x4000406a'])))
+            self.assertEqual(machine_ports.declaration('test-fx', temp, effect=True)['rests'], ['0x4000406a'])
+            with self.assertRaises(ValueError):
+                machine_ports.declaration('test-cf', temp)
         # The flag is bit 7 of the hashed site's length byte, and only there; the verifier reads the length without it.
         digest = hashlib.sha256(b'\0' * 8).digest()
         sites = [(0x4000406a, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8, True), (0x4000409e, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8)]

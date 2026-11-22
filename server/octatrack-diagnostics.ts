@@ -2,7 +2,7 @@ import type { Database, User } from './platform'
 import { needMember, sameDigest, throttle } from './auth'
 import { boundedBody, digest, HttpError, response } from './security'
 import { MODULES } from '../src/catalog/modules'
-import { DIAGNOSTICS_GUEST, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
+import { DIAGNOSTICS_GUEST, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, OCTATRACK_DIAGNOSTICS_ACCEPTED, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
 
 const since = (now: Date, days: number) => new Date(now.getTime() - days * 86400000).toISOString()
 const hash = (v: unknown) => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v)
@@ -125,10 +125,10 @@ async function guestRoutes(request: Request, db: Database, token: string, path: 
     if (request.method === 'GET') return response(await consent(db,id,now,true))
     if (request.method !== 'PUT') throw new HttpError(405, 'Use GET or PUT.')
     const body = await bodyOf(request)
-    if (!object(body) || Object.keys(body).sort().join(',') !== 'enabled,version' || typeof body.enabled !== 'boolean' || body.version !== OCTATRACK_DIAGNOSTICS_VERSION) throw new HttpError(400, 'Choose whether to share the current diagnostics.')
+    if (!object(body) || Object.keys(body).sort().join(',') !== 'enabled,version' || typeof body.enabled !== 'boolean' || !OCTATRACK_DIAGNOSTICS_ACCEPTED.includes(body.version as string)) throw new HttpError(400, 'Choose whether to share the current diagnostics.')
     if (body.enabled) {
       await throttle(db,'octatrack-guest-consent:'+ip,10,3600)
-      await db.prepare('INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES(?,1,?,?) ON CONFLICT(guest_id) DO UPDATE SET enabled=1,version=excluded.version,changed_at=excluded.changed_at').bind(id,OCTATRACK_DIAGNOSTICS_VERSION,now.toISOString()).run()
+      await db.prepare('INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES(?,1,?,?) ON CONFLICT(guest_id) DO UPDATE SET enabled=1,version=excluded.version,changed_at=excluded.changed_at').bind(id,body.version,now.toISOString()).run()
     } else await db.batch([db.prepare('DELETE FROM octatrack_guest_diagnostic_events WHERE guest_id=?').bind(id), db.prepare('DELETE FROM octatrack_guest_diagnostic_consent WHERE guest_id=?').bind(id)])
     return response(await consent(db,id,now,true))
   }
@@ -136,7 +136,7 @@ async function guestRoutes(request: Request, db: Database, token: string, path: 
   if (!(await consent(db,id,now,true)).enabled) throw new HttpError(403, 'Current diagnostics consent is required.')
   if (request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1') return response({ok:true,stored:false})
   const body = await bodyOf(request)
-  if (!object(body) || Object.keys(body).sort().join(',') !== 'data,version' || body.version !== OCTATRACK_DIAGNOSTICS_VERSION) throw new HttpError(400, 'Invalid diagnostics version.')
+  if (!object(body) || Object.keys(body).sort().join(',') !== 'data,version' || !OCTATRACK_DIAGNOSTICS_ACCEPTED.includes(body.version as string)) throw new HttpError(400, 'Invalid diagnostics version.')
   const data = validateDiagnostic(body.data)
   await throttle(db,'octatrack-diagnostics:guest:'+id,120,3600)
   await throttle(db,'octatrack-diagnostics-ip:'+ip,600,3600)
@@ -172,9 +172,9 @@ export async function octatrackDiagnosticRoutes(request: Request, db: Database, 
     if (request.method === 'GET') return response(await consent(db,member.id,now))
     if (request.method !== 'PUT') throw new HttpError(405, 'Use GET or PUT.')
     const body = await bodyOf(request)
-    if (!object(body) || Object.keys(body).sort().join(',') !== 'enabled,version' || typeof body.enabled !== 'boolean' || body.version !== OCTATRACK_DIAGNOSTICS_VERSION) throw new HttpError(400, 'Choose whether to share the current diagnostics.')
+    if (!object(body) || Object.keys(body).sort().join(',') !== 'enabled,version' || typeof body.enabled !== 'boolean' || !OCTATRACK_DIAGNOSTICS_ACCEPTED.includes(body.version as string)) throw new HttpError(400, 'Choose whether to share the current diagnostics.')
     await db.batch([
-      db.prepare('INSERT INTO octatrack_diagnostic_consent(user_id,enabled,version,changed_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM users WHERE id=? AND suspended=0 AND email_verified=1) ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled,version=excluded.version,changed_at=excluded.changed_at WHERE excluded.changed_at>octatrack_diagnostic_consent.changed_at OR (excluded.changed_at=octatrack_diagnostic_consent.changed_at AND excluded.enabled=0)').bind(member.id,Number(body.enabled),OCTATRACK_DIAGNOSTICS_VERSION,now.toISOString(),member.id),
+      db.prepare('INSERT INTO octatrack_diagnostic_consent(user_id,enabled,version,changed_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM users WHERE id=? AND suspended=0 AND email_verified=1) ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled,version=excluded.version,changed_at=excluded.changed_at WHERE excluded.changed_at>octatrack_diagnostic_consent.changed_at OR (excluded.changed_at=octatrack_diagnostic_consent.changed_at AND excluded.enabled=0)').bind(member.id,Number(body.enabled),body.version,now.toISOString(),member.id),
       ...(!body.enabled ? [db.prepare('DELETE FROM octatrack_diagnostic_events WHERE user_id=? AND EXISTS(SELECT 1 FROM octatrack_diagnostic_consent WHERE user_id=? AND enabled=0)').bind(member.id,member.id)] : []),
     ])
     return response(await consent(db,member.id,now))
@@ -187,7 +187,7 @@ export async function octatrackDiagnosticRoutes(request: Request, db: Database, 
   if (!(await consent(db,member.id,now)).enabled) throw new HttpError(403, 'Current diagnostics consent is required.')
   if (request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1') return response({ok:true,stored:false})
   const body = await bodyOf(request)
-  if (!object(body) || Object.keys(body).sort().join(',') !== 'data,version' || body.version !== OCTATRACK_DIAGNOSTICS_VERSION) throw new HttpError(400, 'Invalid diagnostics version.')
+  if (!object(body) || Object.keys(body).sort().join(',') !== 'data,version' || !OCTATRACK_DIAGNOSTICS_ACCEPTED.includes(body.version as string)) throw new HttpError(400, 'Invalid diagnostics version.')
   const data = validateDiagnostic(body.data)
   await throttle(db,'octatrack-diagnostics:'+member.id,120,3600)
   const results = await db.batch([

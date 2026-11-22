@@ -1,12 +1,12 @@
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { ConfigurationHandoff } from './ConfigurationHandoff'
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
-import { lastInventory, sameModules, type Inventory } from '../config/inventory'
+import { inventoryUsbAudio, lastInventory, matchesUsbAudio, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, moduleSetReview, setLayout } from '../engine/elekloader/module-set'
 import { baseLayout, baseVersion, type BaseLayout } from '../engine/elekloader/base-variants'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -87,31 +87,15 @@ function MobileModuleSets({ sets, selectedId, onSelect, onNew, onImport, onSetAc
 
 function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, username, onSelect, onSync, onInstall, onNew, onImport, onSetAction, onFill, onSaveUnit, onReport, onWelcome, header, grid, card }: OctatrackHubProps) {
   const state = useOctatrackLink(link), { status, identity } = state
-  // The page fits the window, so it never scrolls as a whole: the split gets the height left in the app's main area.
-  // shortcut: measured when the window or main area resizes and when the page changes, not when a banner above appears.
-  const split = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const element = split.current, main = element?.closest('main')
-    if (!element || !main || typeof ResizeObserver === 'undefined') return
-    const fit = () => {
-      // Box positions come in zoomed pixels (the desktop app shell has zoom: .9); heights are set in CSS pixels.
-      const box = main.getBoundingClientRect(), scale = box.height / main.offsetHeight || 1
-      const top = (element.getBoundingClientRect().top - box.top) / scale + main.scrollTop
-      element.style.setProperty('--hub-height', Math.max(560, main.clientHeight - top - (parseFloat(getComputedStyle(main).paddingBottom) || 0)) + 'px')
-    }
-    fit()
-    const observer = new ResizeObserver(fit)
-    observer.observe(main)
-    return () => observer.disconnect()
-  }, [view])
   const connected = !!identity?.canSubmit && status === 'ready', busy = BUSY.includes(status), usb = !!link && status !== 'unsupported'
   const last = connected || busy ? undefined : lastInventory()
-  const unitIds = connected ? inventory?.moduleIds : last?.moduleIds
+  const audio = connected && inventory ? inventoryUsbAudio(identity?.base, inventory) : last
+  const unitIds = audio?.moduleIds
   const selected = sets.find(set => set.id === selectedId) ?? sets[0]
   // USB Audio is on the unit when its base runs the set's layout (base-variants.ts); the inventory lists packages only.
-  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => id !== USB_AUDIO_MODULE), unitIds) &&
-    (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
-  const review = connected && inventory && selected ? moduleSetReview(selected, inventory, identity?.capabilities, identity?.base) : undefined
+  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => !comesWithBase(id)), unitIds) &&
+    (!audio || matchesUsbAudio(set.usbAudio, audio)) && (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
+  const review = connected && inventory && selected ? moduleSetReview({ ...selected, usbAudio: selected.usbAudio }, inventory, identity?.capabilities, identity?.base) : undefined
   const changes = review?.changes, updates = review?.updates ?? []
   const needsBase = review?.problem instanceof BaseUpdateRequired || connected && baseOutdated(identity?.base)
   const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined
@@ -124,7 +108,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const led = connected && !stopped ? 'on' : busy ? 'load' : 'off'
   const health = useOctatrackHealth(link)
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
-  const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) ? lastSync.name : undefined)
+  const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) && matchesUsbAudio(lastSync.usbAudio, last) ? lastSync.name : undefined)
   // The hero: the unit's state in one line and the one action it needs, on every page.
   const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB', <CardSetButton key="card" set={selected && { name: selected.name, moduleIds: selected.moduleIds, removedStockFx: selected.removedStockFx, usbAudio: selected.usbAudio }} onInstall={onInstall} />]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
@@ -145,16 +129,17 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : 'Connect your Octatrack to sync this set.'
   return <div className="configuration-page octatrack-hub">
     {header}
-    <div className="hub-split" ref={split}>
+    <div className="hub-split">
       <header className="hub-hero">
         <DeviceImage device={DEVICES_BY_ID.octatrack} eager />
         <div><h2 className="hub-view-title">{model}</h2>
           <p role="status"><span className={'unit-led is-' + led} aria-hidden="true" />{line}</p>
-          {/* Without WebUSB: the browser to move to comes first, the card file is the way until then (owner, 12 November 2026). */}
-          {!usb && <div className="hub-browser-note" role="note"><Icon name="warn" size={18} /><div>
-            <strong>Open Modwerk in {USB_BROWSERS}</strong>
-            <span>There your modules sync over USB in seconds, without the card and without a restart. In this browser they go onto the card as a file.</span>
-          </div></div>}
+          {!usb && <div className="hub-browser-note" role="note">
+            <Icon name="warn" size={16} />
+            <div><strong>Open Modwerk in {USB_BROWSERS}</strong>
+              <span>Sync modules over USB without removing the card or restarting. In this browser, load your set from the card.</span>
+            </div>
+          </div>}
           {(connected || lastSync) && <dl className="hub-facts">
             {connected && <div><dt>Base</dt><dd title={identity!.base}>{baseVersion(identity!.base) ?? <code>{identity!.base.slice(0, 8)}</code>}</dd></div>}
             {lastSync && <div><dt>Last sync from this browser</dt><dd><b>{lastSync.name}</b> · <time dateTime={lastSync.at}>{when(lastSync.at)}</time></dd></div>}

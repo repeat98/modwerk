@@ -59,7 +59,7 @@ export async function requireAdditiveSynthPackages(root, commit) {
     const after = await json(resolve(root, path))
     for (const value of [before, after]) {
       delete value.sourceCommit
-      if (value.moduleVersions) for (const id of omitted) delete value.moduleVersions[id]
+      delete value.moduleVersions // whole-build pins, kept in module-build.json since 21 November 2026
       for (const key of ['objects', 'groups', 'modules']) if (Array.isArray(value[key])) value[key] = value[key].filter(row => !omitted.includes(row.moduleId ?? row.id))
     }
     if (!isDeepStrictEqual(before, after)) throw new Error('FM Synth integration changed an existing package payload or recipe: ' + name)

@@ -251,8 +251,38 @@ def audio_storage_source(text):
     return text.replace(dma, '    .bss\n' + dma)
 
 
-def assembly(base, descriptors, audio=None):
+# The frame interrupt's block, where usbaudio.s's producer sits when USB Audio is linked in (usb_base.py
+# AUDIO_DETOURS): `clrl 0x46104d4e`, rejoining at +6. A base that takes a module's USB function owns it instead and
+# raises ev_usb_frame there (usb_function.c).
+FRAME_DETOUR = (0x4000d9a0, 6, '37a52c3300cbe2e0b5453bac91ed193defe49493058e8a287b2f9a1c47a325b9', 'modwerk_usb_frame_shim')
+FRAME_SHIM = '''
+| The frame interrupt's block: ev_usb_frame, then the displaced clear.
+    .text
+    .balign 2
+    .global modwerk_usb_frame_shim
+modwerk_usb_frame_shim:
+    lea     %sp@(-16),%sp
+    moveml  %d0-%d1/%a0-%a1,%sp@
+    jsr     modwerk_usb_function_frame
+    moveml  %sp@,%d0-%d1/%a0-%a1
+    lea     %sp@(16),%sp
+    clrl    0x46104d4e
+    jmp     0x4000d9a6
+'''
+SLOT = 512  # a configuration with room for the function a module adds behind it (elekloader/usb_function.c)
+
+
+def header(base, descriptors, audio=None):
+    """What usb_function.c knows of the base's own configuration: its bytes and its interfaces."""
+    blob = configuration(base, descriptors, True, False, audio)
+    return ('#define MODWERK_USB_CFG_BYTES %du\n#define MODWERK_USB_CFG_INTERFACES %du\n' % (len(blob), blob[4]))
+
+
+def assembly(base, descriptors, audio=None, slots=False):
     """One ISR chain and page-contained tables, including a 259-byte config.
+
+    With `slots`, each configuration sits at the start of a 512-byte slot and the two clamps read the live
+    length from modwerk_cfg_len: usb_function.c rewrites both when a module's USB function comes or goes.
 
     Audio -> bounded MIDI receive -> MIDI transmit -> vendor EP0 poll -> stock.
     Without audio the same chain starts at MIDI receive. Each configuration
@@ -277,7 +307,26 @@ def assembly(base, descriptors, audio=None):
     else:
         tails.update(reset_tail='jmp     usbmidi_rx_reset_shim',
                      session_end_tail='jmp     usbmidi_rx_sessend_shim')
-    text = base.ASSEMBLY.format(length=lengths.pop(), **tails)
+    length = lengths.pop()
+    text = base.ASSEMBLY.format(length=length, **tails)
+    if slots:
+        if length > SLOT:
+            raise ValueError('A USB configuration outgrows its slot.')
+        for constant, live in (('    .set modwerk_cfg_len, %d\n' % length, ''),
+                               ('    cmpil   #modwerk_cfg_len,%d1', '    cmpl    modwerk_cfg_len,%d1'),
+                               ('    movel   #modwerk_cfg_len,%d1', '    movel   modwerk_cfg_len,%d1')):
+            if text.count(constant) != (2 if live else 1):
+                raise ValueError('The base USB clamp template changed.')
+            text = text.replace(constant, live)
+        if not audio:  # code first: the slots and tables follow it
+            text += FRAME_SHIM
+        text += '    .balign 4\n    .global modwerk_cfg_len\nmodwerk_cfg_len:\n    .long %d\n' % length
+        text += ('    .global modwerk_cfg_native\nmodwerk_cfg_native:\n    .short %d\n    .byte %d, %d\n'
+                 % (length, blobs['modwerk_cfg_fs'][4], int(audio is not None)))
+        for name, blob in blobs.items():
+            text += '    .balign %d\n    .global %s\n%s:\n    .byte %s\n    .space %d\n' % (
+                SLOT, name, name, ', '.join('0x%02x' % byte for byte in blob), SLOT - len(blob))
+        blobs = {}
     blobs.update(modwerk_device=base.device(True), modwerk_bos=base.bos(), modwerk_msos20=base.msos20())
     for name, blob in blobs.items():
         alignment = max(64, 1 << (len(blob) - 1).bit_length())
@@ -288,7 +337,7 @@ def assembly(base, descriptors, audio=None):
     return text
 
 
-def sites(base, image_at, audio=None):
+def sites(base, image_at, audio=None, slots=False):
     """Guard the original sites once and reject overlapping ownership.
 
     Returned stock spans are private build inputs, never publication data.
@@ -307,6 +356,12 @@ def sites(base, image_at, audio=None):
         stock = image_at(address, length)
         if len(stock) != length or hashlib.sha256(stock).hexdigest() != digest:
             raise ValueError('USB MIDI site at %#x is not the guarded native source.' % address)
+        out.append(dict(addr=hex(address), stock=stock.hex(), op='jmp', target=target))
+    if slots and not audio:
+        address, length, digest, target = FRAME_DETOUR
+        stock = image_at(address, length)
+        if len(stock) != length or hashlib.sha256(stock).hexdigest() != digest:
+            raise ValueError('The frame block site at %#x is not the guarded native source.' % address)
         out.append(dict(addr=hex(address), stock=stock.hex(), op='jmp', target=target))
     spans = sorted((int(site['addr'], 16), len(bytes.fromhex(site['stock']))) for site in out)
     if any(address + size > following for (address, size), (following, _) in zip(spans, spans[1:])):

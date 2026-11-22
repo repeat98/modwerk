@@ -143,8 +143,8 @@ effect IDs. No module depends on another, as everywhere in Modwerk.
 
 The v3 tiers apply per pedal: `author-hardware` for the pedal and firmware
 the author tested, `reported` for user reports linked by issue, emulator
-results (the project's Ziddle checks) never counted as hardware. A module is
-listed for a pedal only with hardware evidence for that pedal.
+results (the project's Ziddle checks) never counted as hardware. Publication normally requires hardware evidence on the listed pedal.
+The owner approved the exact MS-70CDR 2.10 builds in `sdk/approvals/zoom-release-waivers.json` for release with the label **Hardware untested**. Each entry pins the effect version, source and binary SHA-256. A different build or version needs its own evidence.
 
 ## Install
 

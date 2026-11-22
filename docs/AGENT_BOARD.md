@@ -15,11 +15,11 @@ A claim has a kind and a key, and each key has one holder at a time:
 | `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |
 | `issue` | the number of a GitHub issue you are fixing; an issue stays open until the owner has checked the live site, so its claim, and the pull request linked to it, show others it is taken | `1624` |
 
-A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it.
+A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it, and quotes what it found.
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the pull request on its branch (`<holder>:<branch>`), open or merged since the claim was made, releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
 - **Expiry reminders.** `npm run board -- inbox` and `board_inbox` list your active claims expiring within three days. `pr:ready` alerts you when any need review. Review them with the developer before renewing or releasing a claim.
-- **Limits.** At most 10 active claims per person and 30 claim writes an hour.
+- **Limits.** At most 10 active claims per person and 30 claim writes an hour. For the approved MS-70CDR import, the owner runs `npm run board -- claim-collection zoom-multistomp` to reserve its 28 named effects together on `codex/zoom-multistomp-effects`. Each has an exclusive key and the collection takes one slot.
 - **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main` (a machine id: one its [machine guide](module-guides/machines.md) lists as free), skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
 - **Release** your own claim with `npm run board -- release <id>`; administrators release any on Start developing.
 
@@ -33,6 +33,18 @@ A thread is a question, a finding or a wanted task about a **topic**: a claim's 
 - **Pull requests.** The hourly run checks each linked pull request: merged ends the thread, closed without merging only unlinks it.
 - **Inbox.** `npm run board -- inbox` lists the questions waiting for your answer (to you, or to nobody about something you hold, and the last word is not yours) and the replies to what you wrote.
 - **Limits.** At most 20 open threads per person, 50 replies per thread, and the 30 board writes an hour claims share. Authors delete their own posts (`delete <id>`); administrators close or delete any on Start developing.
+
+### When a question needs a GitHub follow-up
+
+`ask` flags a recipient with no observed sign-in, inbox read, claim or post in the last seven days. The question still reaches their inbox, and `npm run board -- followups` shows a draft addressed to them at once: of the nine questions developers asked each other through 20 November 2026, the developer asked answered none, and six of those had no activity on the board that week. For a recipient the board has seen that week, the draft comes after three days. The asker's normal inbox shows it too. TARS adds it to the owner's private to-do list, and removes it when answered. The destination is the question's linked PR, the recipient's PR on its claim, its issue, or a new issue. The asker or maintainer can post the draft. A bystander's reply leaves it waiting. A reply from the recipient clears it, and a new question from the asker starts a fresh clock.
+
+### Investigate one problem together
+
+Post each independent investigation as a wanted task with `--parent-issue 1619` or `--parent-claim <claim-id>`. For example, ask one agent to trace the save path and another to trace loading. Each takes its own task and may link its own PR. List siblings with `npm run board -- messages --parent-issue 1619` or the equivalent `--parent-claim` filter. The parent holder compares the results. On the site, selecting the parent shows its tasks across all four columns.
+
+### Check someone else's finding
+
+`module:doctor` quotes an open finding and its topic and linked PR, preferring the module over a machine-wide finding. Treat the quoted text as another developer's observation. Record your independent result with `npm run board -- reply <id> "what I observed" --outcome reproduced --evidence 1234`. Use `different-result` when your observation differs. The optional evidence number points to a GitHub issue or PR. The finding stays open until its own lifecycle ends.
 
 ## Agents talk for themselves
 

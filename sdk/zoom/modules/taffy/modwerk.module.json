@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 3,
+  "id": "taffy",
+  "name": "Taffy",
+  "version": "3.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/taffy"
+  },
+  "presentation": {
+    "label": "TAFFY",
+    "family": "Pitch shift",
+    "summary": "A tape warp after the Red Panda Tensor: reverse, stop, double speed and random slips.",
+    "overview": "A tape warp after the Red Panda Tensor: reverse, stop, double speed and random slips.",
+    "highlights": [
+      "Play a recognisable phrase and listen for changes in playback speed."
+    ],
+    "usage": [
+      "Add Taffy from the Delay group to a spare patch.",
+      "Play a recognisable phrase and listen for changes in playback speed.",
+      "Use the page buttons to reach the remaining controls."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Taffy.",
+    "steps": [
+      "Add Taffy from the Delay group to a spare patch.",
+      "Play a recognisable phrase and listen for changes in playback speed."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Speed",
+      "default": 50,
+      "doc": "params[5]. Tape-motor speed the head ALWAYS trends toward: 0=-1x reverse, 25=stop, 50=+1x normal, 100=+2x octave up. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Chnce",
+      "default": 35,
+      "doc": "params[6]. How often random speed/direction slips happen. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Depth",
+      "default": 60,
+      "doc": "params[7]. How far a slip deviates from Speed (0 = slips do nothing, pure speed control; 100 = fully random tape warps). Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Glide",
+      "default": 60,
+      "doc": "params[8]. Tape-motor smoothness: 0 = snappy/abrupt speed jumps, 100 = long smooth pitch glides. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Mix default 1 (quiet-safe). The editor materialises patches on load (full-patch send), so audible-on-load no longer needs a hot default. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Taffy.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 466
+    },
+    "effectVersion": "3.00",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "6dd61dca204c34e8701c614796475c676843382cee8a82f6f675624c09b839ee",
+      "bytes": 6306,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "taffy-3.00",
+        "asset": "Taffy.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 6306,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "3.0.0",
+    "sourceSha256": "6dd61dca204c34e8701c614796475c676843382cee8a82f6f675624c09b839ee",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Taffy from the Delay group to a spare patch.",
+          "Play a recognisable phrase and listen for changes in playback speed.",
+          "Use the page buttons to reach the remaining controls."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Taffy in the MultiStomp Editor",
+      "alt": "Taffy editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/taffy.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Taffy embedded cover",
+      "alt": "The monochrome effect cover for Taffy",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "3.0.0",
+        "imageSha256": "6dd61dca204c34e8701c614796475c676843382cee8a82f6f675624c09b839ee",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

@@ -284,6 +284,15 @@
         "rationale": "The card build has a 255-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 255 bytes.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-18",
+      "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere; CPU meter 60.4 % before, 59.5 % at rest.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {

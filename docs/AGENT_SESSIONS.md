@@ -2,9 +2,25 @@
 
 Since 19 November 2026. Developers build with coding agents on their own computers, and what slows them down (a guide that sent the agent the wrong way, a check that failed without saying why, a setup step that took an hour) mostly stays in their sessions. A developer can now send the owner the conversation of one session, so the owner can fix what got in the way. Sharing is voluntary, one session at a time, and never needed to contribute.
 
+## Review the session first
+
+Since 20 November 2026. Before the final message of a session that did real work (about half an hour or 40 tool calls, not a short question), the agent looks back at it once. `pr:ready` prints the reminder.
+
+1. **Measure.** `npm run session -- review` reads this session's transcript and prints the wall time per tool, the slowest calls, the failed calls, what ran three times or more, and how long questions waited for the developer. Nothing is sent. A transcript holds no processor time, so wall time is the measure, and it includes waiting for a permission prompt.
+2. **Add what the figures cannot show:** where you guessed and were wrong, which guide, check or error message sent you the wrong way or said nothing, and what the developer had to correct or say twice.
+3. **Tell the developer at most three findings**, a line each: what cost time, why, and the fix. When nothing would spare a later session time, say so in a line and stop.
+
+A finding with a concrete fix becomes a pull request of its own, titled `Workflow: …` and labelled `workflow` from that: a check that names its cause, a quicker command, a script for what you ran by hand, a corrected guide line. It holds one change, branched from current `main`, and stays off the task's pull request and out of a module release, so every one can be found under the label. Its description says what cost time, how much the review measured, and what changes, without names or quotes from the session. The rest of [Fixes and improvements](DEVELOPER_WORKFLOW.md#fixes-and-improvements) applies: prefer a check to a sentence, ask first in a contributor's fork, and open an issue for what you cannot fix.
+
 ## Ask once, at the end
 
-When a task is done (`npm run pr:ready` says Ready, or the developer stops), the agent asks the developer once, in one line, whether to share this session. `pr:ready` prints the reminder, and `npm run session -- status` says what to do:
+When a task is done (`npm run pr:ready` says Ready, or the developer stops) and the review is told, the agent asks the developer once whether to share this session, and says why it helps:
+
+- What slowed a session down stays in it. The owner sees the pull request, not the hour before it.
+- The owner turns what a session shows into a guide edit, a check or a fix, which spares the developer's next session and every other developer the same.
+- The conversation shows what was tried and in which order. The review and the note hold only what the agent noticed.
+
+`pr:ready` prints the reminder, and `npm run session -- status` says what to do:
 
 - **ask** (the default): ask, and share only on a yes. Write the developer's answer and the agent's own short account of what got in the way as the note: `npm run session -- share --note "…"`.
 - **always**: the developer said to share every session. Share it and say so in a line.
@@ -16,9 +32,9 @@ When the developer answers "always" or "never", save it with `npm run session --
 
 Only the conversation: the developer's prompts, the agent's replies, and one line per tool call (the command or file it touched, and whether it failed). The script finds the session's transcript (Claude Code's in `~/.claude/projects/`, Codex's in `~/.codex/sessions/`) and removes, before anything is sent:
 
-- every tool output, the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
+- every tool output (including the output of commands the developer ran with `!`, which keep only the command), the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
 - code blocks longer than 12 lines, hex dumps, runs of hex values and long data blobs;
-- secrets (tokens, keys, passwords, bearer headers), email addresses, IP addresses, home folders, the computer's user and host name.
+- secrets (tokens, keys, passwords, bearer headers), email addresses, IP addresses, home folders, the computer's user and host name, and the developer's names as git knows them (`user.name`, and `user.email` before the @).
 
 What remains still looking like firmware or stock code (disassembly, long hex or number tables) stops the upload: the script names the entries, and `--skip 3,7` leaves them out. `npm run session -- preview` writes what would be sent to `~/.cache/modwerk/session-preview.json` without sending anything; offer it when the developer wants to look first. The Worker runs the same checks again and refuses what fails them.
 
@@ -28,14 +44,14 @@ Only the developer who shared it and the site's administrators. The owner may an
 
 ## The owner's side
 
-`npm run session -- pull`, signed in for the board with the administrator account, saves every shared session into `~/.cache/modwerk-local/sessions/` with an `INDEX.md`. Developers' names and quotes stay there and in chat, like diagnostics ([MAINTENANCE.md](MAINTENANCE.md)). What a session shows becomes a guide edit, a check or a fix, written without names.
+`npm run session -- pull` saves every shared session into `~/.cache/modwerk-local/sessions/` with an `INDEX.md`. It signs in to the owner's Modwerk account, the one with the administrator role, as the site's sign-in does: email and password at a prompt (the password hidden), or from `MODWERK_EMAIL` and `MODWERK_PASSWORD` for that one command. The password is never stored, and the pull signs out when it is done. A board session never reads other developers' sessions, even on an administrator's account. The owner runs it in their own terminal, so the password never passes through an agent. Developers' names and quotes stay there and in chat, like diagnostics ([MAINTENANCE.md](MAINTENANCE.md)). What a session shows becomes a guide edit, a check or a fix, written without names.
 
 ## API
 
 Writes need the board session (`X-Modwerk-Developer`) and the site's `Origin`.
 
 - `POST /api/agent-sessions` `{consent, data}`: `data` is the session JSON, gzip, base64, at most 1 MB packed. `consent` is `SESSION_CONSENT_VERSION`; a stale client is refused.
-- `GET /api/agent-sessions`: your own; `?all=1` everyone's, for administrators.
+- `GET /api/agent-sessions`: your own; `?all=1` everyone's, for administrators (`X-Octamod-Admin` from `POST /api/auth/admin`, or a member account with the administrator role).
 - `GET /api/agent-sessions/<id>` and `DELETE /api/agent-sessions/<id>`: yours, or any for administrators.
 
 The format, the scrubbing and the checks are in `src/community/agent-sessions.ts`, shared by the client (`scripts/agent-session.mjs`) and the Worker (`server/agent-sessions.ts`); the table is `agent_sessions` (migration 0099).

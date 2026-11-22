@@ -4,7 +4,7 @@
 // Modwerk base loaded over USB. Card firmware has no base, so the card build
 // refuses it; USB sync still takes it. Derived from the published package, never listed per module, and not checked
 // against the selected version: the published package is the only one the site offers.
-import packages from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedPackages as packages } from '../engine/elekloader/octatrack-publication.ts'
 
 export type PackageList = { packages: readonly { id: string; requires?: number; sources?: readonly string[]; usbOnly?: boolean; version?: string; lagsBehind?: string; lagReason?: string }[] }
 export function moduleUsbOnly(id: string, published: PackageList = packages) {

@@ -1,0 +1,37 @@
+{
+  "module": "apply-scene",
+  "version": "0.2.0-experimental",
+  "base": "development twin d3d71297 of base 0.7.8 (main 02dfa20ca)",
+  "scene": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting",
+  "seconds": 8,
+  "measuredAt": "2026-11-18T14:13:51.819Z",
+  "result": {
+    "id": "apply-scene",
+    "version": "0.2.0-experimental",
+    "before": {
+      "frame": 41,
+      "frameMax": 74.3,
+      "frames": 22896,
+      "skipped": 0,
+      "cpu": 60.6,
+      "dsp1to4": 38.9,
+      "dsp5to8": 45
+    },
+    "atRest": {
+      "frame": 41,
+      "frameMax": 74.1,
+      "frames": 22796,
+      "skipped": 0,
+      "cpu": 60.5,
+      "dsp1to4": 38.9,
+      "dsp5to8": 45.3
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": -0.1,
+      "dsp1to4": 0,
+      "dsp5to8": 0.3
+    },
+    "rolledBack": true
+  }
+}
