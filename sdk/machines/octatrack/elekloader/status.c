@@ -16,6 +16,7 @@
 #include "selftest.h"
 #include "status.h"
 #include "fxids.h"
+#include "allocator.h" /* dl_catalog: an effect's DSP cycles, for CPU FULL's DSP row */
 #include "load_wire.h"
 void modwerk_status_close_menu(void); /* below, with the menu rows */
 extern const char modwerk_base_version[]; /* build_core.py, from base-version.json: "0.7.1" */
@@ -538,7 +539,7 @@ extern volatile uint32_t dl_refusal[8];
 static unsigned refused_left, refused_reason, refused_core, refused_machine, refused_elsewhere;
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
-static uint32_t refused_allowed, refused_meter, refused_busy; /* CPU FULL: the modules' allowance (per mille of a frame), the meter then, the Part's own load the cause */
+static uint32_t refused_allowed, refused_busy, refused_dsp, refused_dsp_add; /* CPU FULL: what fits, the Part's own load the cause, the pick's DSP core as booked and what it adds (per mille) */
 static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
 /* Each core's code words before the pick: what it took is the change, so a second instance on the core or a module
@@ -1257,16 +1258,19 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
 }
 /* machine_registry.c's CPU budget: the track's machine would take the Part past what the frame interrupt carries. The
  * same box, as CPU FULL: what the Part's machines book and what this one adds, per mille of the allowance. */
-/* CPU FULL, per mille of a frame: what the Part's modules take of their allowance, what the pick adds, the allowance.
- * The box gives those and the CPU meter as it reads (owner, 22 November 2026: a bar past 100 % read as the CPU already
- * overloaded), or, `busy`, that the Part's own sound leaves no room: a full bar there read as the modules' doing with
- * none in use. */
-static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t allowed, unsigned busy)
+/* CPU FULL, as the DSP FULL box (owner, 22 November 2026): what the pick needs; a DSP row for a module that also runs on
+ * the DSP; a CPU row, solid what the unit takes now and shaded what the pick adds, both of what fits (`whole`), its
+ * figure the now, never past 100 %; for a module only on the ColdFire, what makes room, or PART IS BUSY (`busy`) when
+ * the Part's own sound is why. `used`, `add`, `whole` in the same unit; `dsp` the pick's DSP cycles, 0 none. */
+static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t whole, unsigned busy, uint32_t dsp)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
     refused[0] = 4u, refused[1] = slot, refused[4] = add, refused_booked = used;
-    refused_allowed = allowed ? allowed : 1u, refused_meter = modwerk_status[CPU], refused_busy = busy;
+    refused_allowed = whole ? whole : 1u, refused_busy = busy;
+    unsigned c = (slot & 7u) < 4u ? 1u : 0u; /* the core tracks 1-4 run on */
+    const uint32_t dsp_allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
+    refused_dsp = dsp ? modwerk_dsp_booked(c) : 0u, refused_dsp_add = dsp ? dsp * 1000u / dsp_allowance : 0u;
     refused_machine = machine, refused_reason = 4u;
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
@@ -1275,7 +1279,7 @@ static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, 
 /* machine_registry.c's per-Part price allowance, per mille of a frame. */
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
 {
-    cpu_refusal_box(track, 1u, label, booked, add, allowed, 0);
+    cpu_refusal_box(track, 1u, label, booked, add, allowed, 0, 0);
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
@@ -1325,7 +1329,7 @@ int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
  * play, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is
  * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
-int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
     frame_adjust -= (int32_t)gone;
     uint32_t measured = measured_load() + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
@@ -1335,7 +1339,7 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     if (load < line) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     uint32_t reserve = stock_reserve(), modules = stock - net - reserve, before = load - add; /* the Part's modules but this pick */
-    cpu_refusal_box(slot, machine, label, modules, add, line > reserve ? line - reserve : 1u, before > reserve + modules);
+    cpu_refusal_box(slot, machine, label, before, add, line, before > reserve + modules, dsp);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1370,7 +1374,8 @@ int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old)
     uint32_t add = old != id ? effect_cost(id, !runs_elsewhere(slot, id), waking) : 0u;
     char name[16];
     modwerk_fxmap_name(id, name);
-    if (modwerk_status_pick_busy(slot, 0u, name, add, gone)) return 1;
+    extern struct dl_package dl_catalog[MODWERK_FX_IDS];
+    if (modwerk_status_pick_busy(slot, 0u, name, add, gone, id < MODWERK_FX_IDS ? dl_catalog[id].cycles : 0u)) return 1;
     if (waking) modwerk_machine_effect_wake(id);
     /* shortcut: counted when the guard passes the pick, before the DSP places it; a pick the DSP then refuses stays
      * counted until the unit has played four seconds. Count at the DSP's commit if that ever misleads a pick. */
@@ -1417,12 +1422,14 @@ static void refused_box(unsigned char *frame)
     if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */
         const char *t = " NEEDS ";
         while (*t) *e++ = *t++;
-        *e++ = '+', e = number(e, (refused[4] + 5u) / 10u), *e++ = '%', *e = 0;
+        *e++ = '+', e = number(e, (refused[4] * 1000u / refused_allowed + 5u) / 10u), *e++ = '%', *e = 0;
         label(23u, 26u, need);
-        const uint32_t used = (refused_booked + refused[4]) * 1000u / refused_allowed, part = refused[4] * 1000u / refused_allowed;
-        label(23u, 34u, "MODS"), share_bar(frame, 45u, 34u, 40, 6, used, part), percent(89u, 34u, refused_allowed);
-        if (refused_busy) label(23u, 42u, "PART IS BUSY");
-        else label(23u, 42u, "CPU NOW"), percent(58u, 42u, refused_meter);
+        const uint32_t now = refused_booked * 1000u / refused_allowed, cpu = now < 1000u ? now : 1000u;
+        const uint32_t part = refused[4] * 1000u / refused_allowed, y = refused_dsp_add ? 42u : 34u;
+        if (refused_dsp_add) /* as DSP FULL draws its DSP row */
+            label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, refused_dsp + refused_dsp_add, refused_dsp_add), percent(89u, 34u, refused_dsp + refused_dsp_add);
+        label(23u, y, "CPU"), share_bar(frame, 45u, y, 40, 6, cpu + part, part), percent(89u, y, cpu);
+        if (!refused_dsp_add) label(23u, 42u, refused_busy ? "PART IS BUSY" : "CHANGE ONE FIRST");
         return;
     }
     const int32_t add = (int32_t)refused[4];

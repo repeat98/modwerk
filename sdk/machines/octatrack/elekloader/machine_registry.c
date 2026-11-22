@@ -64,7 +64,7 @@ void modwerk_status_machine_refused(unsigned track, const char *label); /* statu
 void modwerk_dsp_source_engine_off(uint32_t module);
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed); /* status.c: the CPU FULL box, per mille of a frame */
 /* status.c: 1, with the CPU FULL box, when the frame share past this pick would reach the line; per mille of a frame */
-int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone);
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake); /* status.c: the site's measured costs */
 void modwerk_status_cpu_entered(uint32_t mille); /* status.c: a machine took a track; the share shows it after four seconds played */
 void modwerk_status_cpu_left(uint32_t mille);    /* status.c: a machine left a track */
@@ -76,8 +76,8 @@ __attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const 
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
 __attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
 { (void)track; (void)label; (void)booked; (void)add; (void)allowed; }
-__attribute__((weak)) int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
-{ (void)slot; (void)machine; (void)label; (void)add; (void)gone; return 0; }
+__attribute__((weak)) int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
+{ (void)slot; (void)machine; (void)label; (void)add; (void)gone; (void)dsp; return 0; }
 __attribute__((weak)) int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake) { (void)module; (void)use; (void)wake; return 0; }
 __attribute__((weak)) void modwerk_status_cpu_entered(uint32_t mille) { (void)mille; }
 __attribute__((weak)) void modwerk_status_cpu_left(uint32_t mille) { (void)mille; }
@@ -625,7 +625,9 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         int waking = old != next && asleep(next);
         uint32_t add = old != next ? frame_cost(next, !elsewhere(part, track, next), waking) : 0u;
         /* a unit whose frame this machine would fill does not take it; the one it replaces is judged gone */
-        if (old != next && modwerk_status_pick_busy(track, 1u, next->label, add, old ? frame_cost(old, !elsewhere(part, track, old), 0) : 0u))
+        uint32_t voice = 0; uint8_t voice_kind = 0; /* a DSP voice: the box shows its core too */
+        if (old != next && next->source_kind && !price(next, &voice, &voice_kind)) voice = 0;
+        if (old != next && modwerk_status_pick_busy(track, 1u, next->label, add, old ? frame_cost(old, !elsewhere(part, track, old), 0) : 0u, voice))
             return (unsigned)-1;
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over, 0);

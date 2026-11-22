@@ -173,9 +173,9 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 { (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add, cpu_box_allowed = allowed; }
 /* status.c's frame judge: the share now (cpu_now) with the pick on top and what it replaces off, against the line. */
 static uint32_t cpu_now, hot_line = 500u; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add, hot_box_gone;
-int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
-    (void)label; CHECK(machine == 1u);
+    (void)label; (void)dsp; CHECK(machine == 1u);
     extern volatile uint32_t mw_cpu_refusals;
     if (cpu_now + add < hot_line + gone) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, ++hot_boxes, hot_box_track = slot, hot_box_cpu = cpu_now, hot_box_add = add, hot_box_gone = gone; return 1;
