@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { publishedUsbAudioPackage } from './config/published-usb-audio.fixture'
 import 'fake-indexeddb/auto'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -10,7 +11,7 @@ import { fakeUnit } from './dev/octatrack-link-fake'
 import { OCTATRACK_WELCOME_KEY } from './hooks/useOctatrackWelcome'
 import { waitForBaseInstall } from './config/octatrack-progress'
 import { OCTATRACK_DIAGNOSTICS_VERSION } from './community/octatrack-diagnostics-contract'
-import baseBinding from '../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './engine/elekloader/published-octatrack.fixture'
 import { newConfiguration } from './config/workspace'
 import { deviceStore, openDeviceDatabase } from './storage/device'
 import { USB_AUDIO_MODULE, usbAudioPreset } from './config/usb-audio'
@@ -151,7 +152,7 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     await vi.waitFor(() => expect(install()).toBeDefined(), { timeout: 5000 })
     await act(async () => install()!.click())
     await vi.waitFor(() => expect(guide()?.querySelector('h2')?.textContent).toBe('Update the Modwerk base'), { timeout: 5000 })
-    expect(guide()!.textContent).toContain('Updating takes a minute or two over USB, with USB Audio · Main.')
+    expect(guide()!.textContent).toContain(publishedUsbAudioPackage ? 'Load your module set after the base update to restore USB Audio.' : 'Updating takes a minute or two over USB, with USB Audio · Main.')
     expect(guide()!.textContent).not.toContain('USB Audio is off in this base')
   }, 20000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {

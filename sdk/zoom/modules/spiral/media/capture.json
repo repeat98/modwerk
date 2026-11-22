@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "spiral",
+  "moduleVersion": "1.0.0",
+  "imageSha256": "7982e70502a23cf3f7862f7f5c4e83a2aaf8a26e115444a98e97db47d75ffd71",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "85180de6b6d152bf2432f64c0a2814d60787622c68cf4d52fd687140c051d4ae",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

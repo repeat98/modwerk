@@ -291,13 +291,34 @@ function parseEvidence(value: unknown, moduleVersion: string): ModwerkModule['ev
 }
 
 // Tiered release gate: published versions measure their memory and load and carry the author's hardware report.
-export function requireModwerkPublication(document: ModwerkModule) {
+type ZoomReleaseApprovals = {
+  machine: string; firmware: string; sourceRepository: string
+  modules: Record<string, { version: string; binarySha256: string; sourceRevision: string; sourcePath: string }>
+}
+
+function hasZoomReleaseWaiver(document: ModwerkModule, zoomApprovals?: ZoomReleaseApprovals): boolean {
+  const { platform, evidence, source } = document
+  if (!zoomApprovals || platform.kind !== 'zdl' || document.machine !== zoomApprovals.machine ||
+      !Object.hasOwn(zoomApprovals.modules, document.id)) return false
+
+  const pin = zoomApprovals.modules[document.id]
+  const [pedal] = platform.pedals
+  return document.version === pin.version && source?.repository === zoomApprovals.sourceRepository &&
+    source.revision === pin.sourceRevision && source.path === pin.sourcePath &&
+    platform.binary.sha256 === pin.binarySha256 && evidence.sourceSha256 === pin.binarySha256 &&
+    evidence.tier === 'emulator' && evidence.moduleVersion === pin.version && evidence.hardware === null &&
+    evidence.verifiedBy === null && evidence.reports.length > 0 &&
+    platform.pedals.length === 1 && pedal.machine === document.machine && pedal.firmware === zoomApprovals.firmware &&
+    pedal.status === 'untested' && pedal.report === null
+}
+
+export function requireModwerkPublication(document: ModwerkModule, zoomApprovals?: ZoomReleaseApprovals) {
   if (document.resources.memoryBytes === null) fail(document.id + '.resources.memoryBytes', 'measure the module’s memory before publication')
   if (document.resources.load.method === 'unmeasured') fail(document.id + '.resources.load.method', 'measure the audio and CPU load before publication')
-  if (EVIDENCE_TIERS.indexOf(document.evidence.tier) < EVIDENCE_TIERS.indexOf('author-hardware')) fail(document.id + '.evidence.tier', 'publication needs at least author-hardware evidence')
+  const waived = hasZoomReleaseWaiver(document, zoomApprovals)
+  if (!waived && EVIDENCE_TIERS.indexOf(document.evidence.tier) < EVIDENCE_TIERS.indexOf('author-hardware')) fail(document.id + '.evidence.tier', 'publication needs at least author-hardware evidence')
   if ('screenshots' in document.access && !document.access.screenshots.length) fail(document.id + '.access.screenshots', 'publication needs actual screenshots of where the mod appears')
-  // A Zoom effect is listed for a pedal only with hardware evidence on that pedal (docs/ZDL_MODULE_CONTRACT.md#evidence).
-  if (document.platform.kind === 'zdl' && !document.platform.pedals.some(pedal => pedal.machine === document.machine && pedal.status === 'confirmed')) fail(document.id + '.platform.pedals', 'publication needs a confirmed hardware report on ' + document.machine)
+  if (!waived && document.platform.kind === 'zdl' && !document.platform.pedals.some(pedal => pedal.machine === document.machine && pedal.status === 'confirmed')) fail(document.id + '.platform.pedals', 'publication needs a confirmed hardware report on ' + document.machine)
 }
 
 // The elemod build spec (build.json): what Modwerk's toolchain compiles and links. Stock bytes never appear here:

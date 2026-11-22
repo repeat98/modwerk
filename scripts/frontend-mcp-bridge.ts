@@ -8,6 +8,7 @@ export { availableModules, moduleAvailabilityError } from '../src/catalog/availa
 export { moduleUsbOnly } from '../src/catalog/usb-only'
 export { octatrackMatchesQuery, digiMatchesQuery } from '../src/catalog/module-search'
 export { newConfiguration, validateConfiguration, pinModuleVersions, afterDeleting } from '../src/config/workspace'
+export * as usbAudioSettings from '../src/config/usb-audio'
 export { inventoryChanges, missingFromProject, sameModules } from '../src/config/inventory'
 export { createRuntimeCatalogue, USB_MODULE_IDS, moduleSetKit } from '../src/engine/elekloader/module-set'
 export { OctatrackLink, tabLocks } from '../src/engine/elekloader/octatrack-link'

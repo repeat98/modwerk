@@ -58,5 +58,5 @@ Whole images per module selection would need a native build for every combinatio
 
 1. **`source`:** build the source twice in separate folders with Arm GNU Toolchain 14.3.rel1 and compare the `.img` hashes. If they match, record the commit, toolchain and hash in the profile's pull request and mark `source` done. Not run yet: these build scripts are external code, and running them needs the developer's go-ahead.
 2. **`boot`:** change only the start-up text, install from the SD card, check it boots and plays, then install Erica's official 1.71 update the same way and check stock is back.
-3. **`core`:** the base with events and its budgets, then the platform contract, in their own owner-reviewed pull requests.
+3. **`core`:** add the base, events and budgets to the LXR-02 cumulative base draft. The platform contract follows for owner review.
 4. **`mods`:** a first module, with its source, documentation and hardware evidence.

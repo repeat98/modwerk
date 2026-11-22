@@ -1,0 +1,1 @@
+Octatrack base 0.7.13: a busy unit judges a machine pick by what the machine really adds to the CPU meter (its measured meter cost, else its price), and a machine swapped out and back while stopped is no longer refused CPU FULL, WAS BUSY PLAYING.

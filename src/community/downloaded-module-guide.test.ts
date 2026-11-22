@@ -1,3 +1,4 @@
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -39,9 +40,13 @@ describe('downloaded module guides', () => {
     const document = MODULE_DOCUMENTS_BY_ID[module.id]
     const guide = downloadedModuleGuide(module)!
     expect(guide.steps.map(step => step.text)).toEqual(document.presentation.usage)
-    expect(guide.screenshots).toEqual([])
-    expect(guide.noUiReason).toBeTruthy()
-    expect(guide.noUiReason).not.toMatch(/reviewer/i)
+    if (publishedUsbAudioPackage) {
+      expect(guide.screenshots.map(item => item.path.split('/').pop()).sort()).toEqual(['ot-outbox-pairs.png', 'ot-settings.png', 'ot-track-tap.png', 'ot-usb-audio.png'])
+    } else {
+      expect(guide.screenshots).toEqual([])
+      expect(guide.noUiReason).toBeTruthy()
+      expect(guide.noUiReason).not.toMatch(/reviewer/i)
+    }
   })
   it('gives longer guides titled first tests without losing their full instructions', () => {
     for (const module of builtModules(['vector', 'synth', 'digitakt-digislicer', 'digitakt-digineighbor', 'digitakt-digisophie', 'digitakt-digimono', 'digitakt-digiutils'])) {

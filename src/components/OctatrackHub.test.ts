@@ -10,7 +10,7 @@ import type { DiagnosticReading } from '../community/octatrack-diagnostics-contr
 import { OctatrackHub, type HubView } from './OctatrackHub'
 import { OctatrackActivity, OctatrackLoadWidget, OctatrackSidebarStatus } from './OctatrackStatus'
 import { recordLoad } from '../hooks/useOctatrackLoad'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { MODULE_SKIP_HINT } from '../firmware-notices'
 
 vi.mock('./OctatrackDiagnostics', () => ({ OctatrackDiagnosticsSettings: () => null }))
