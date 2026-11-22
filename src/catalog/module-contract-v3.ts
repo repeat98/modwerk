@@ -291,13 +291,34 @@ function parseEvidence(value: unknown, moduleVersion: string): ModwerkModule['ev
 }
 
 // Tiered release gate: published versions measure their memory and load and carry the author's hardware report.
-export function requireModwerkPublication(document: ModwerkModule) {
+type ZoomReleaseApprovals = {
+  machine: string; firmware: string; sourceRepository: string
+  modules: Record<string, { version: string; binarySha256: string; sourceRevision: string; sourcePath: string }>
+}
+
+function hasZoomReleaseWaiver(document: ModwerkModule, zoomApprovals?: ZoomReleaseApprovals): boolean {
+  const { platform, evidence, source } = document
+  if (!zoomApprovals || platform.kind !== 'zdl' || document.machine !== zoomApprovals.machine ||
+      !Object.hasOwn(zoomApprovals.modules, document.id)) return false
+
+  const pin = zoomApprovals.modules[document.id]
+  const [pedal] = platform.pedals
+  return document.version === pin.version && source?.repository === zoomApprovals.sourceRepository &&
+    source.revision === pin.sourceRevision && source.path === pin.sourcePath &&
+    platform.binary.sha256 === pin.binarySha256 && evidence.sourceSha256 === pin.binarySha256 &&
+    evidence.tier === 'emulator' && evidence.moduleVersion === pin.version && evidence.hardware === null &&
+    evidence.verifiedBy === null && evidence.reports.length > 0 &&
+    platform.pedals.length === 1 && pedal.machine === document.machine && pedal.firmware === zoomApprovals.firmware &&
+    pedal.status === 'untested' && pedal.report === null
+}
+
+export function requireModwerkPublication(document: ModwerkModule, zoomApprovals?: ZoomReleaseApprovals) {
   if (document.resources.memoryBytes === null) fail(document.id + '.resources.memoryBytes', 'measure the module’s memory before publication')
   if (document.resources.load.method === 'unmeasured') fail(document.id + '.resources.load.method', 'measure the audio and CPU load before publication')
-  if (EVIDENCE_TIERS.indexOf(document.evidence.tier) < EVIDENCE_TIERS.indexOf('author-hardware')) fail(document.id + '.evidence.tier', 'publication needs at least author-hardware evidence')
+  const waived = hasZoomReleaseWaiver(document, zoomApprovals)
+  if (!waived && EVIDENCE_TIERS.indexOf(document.evidence.tier) < EVIDENCE_TIERS.indexOf('author-hardware')) fail(document.id + '.evidence.tier', 'publication needs at least author-hardware evidence')
   if ('screenshots' in document.access && !document.access.screenshots.length) fail(document.id + '.access.screenshots', 'publication needs actual screenshots of where the mod appears')
-  // A Zoom effect is listed for a pedal only with hardware evidence on that pedal (docs/ZDL_MODULE_CONTRACT.md#evidence).
-  if (document.platform.kind === 'zdl' && !document.platform.pedals.some(pedal => pedal.machine === document.machine && pedal.status === 'confirmed')) fail(document.id + '.platform.pedals', 'publication needs a confirmed hardware report on ' + document.machine)
+  if (!waived && document.platform.kind === 'zdl' && !document.platform.pedals.some(pedal => pedal.machine === document.machine && pedal.status === 'confirmed')) fail(document.id + '.platform.pedals', 'publication needs a confirmed hardware report on ' + document.machine)
 }
 
 // The elemod build spec (build.json): what Modwerk's toolchain compiles and links. Stock bytes never appear here:
@@ -320,6 +341,9 @@ export type ElemodBuildSpec = {
   collections: Record<string, number>; copied: { lo: string; hi: string; to: string }[]; regions: { name: string; lo: string; hi: string }[]
   storage: { sym: string; scope: 'sound' | 'kit' | 'global' | 'track' | 'pattern' | 'project'; bits: number }[]   // mod storage fields, for a core that keeps them
   claims: string[]; requires: string[]
+  // A Digitakt II machine module's sound-chip player: its source, assembled into the package's build.dt2_sharc, and
+  // the machine types (7-10, each claimed as machine:<type>) whose voices it plays from which entry label.
+  sharc?: { source: string; players: { type: number; entry: string }[] }
   // Steps that need the stock OS run only during the owner's local build, never in CI.
   derive: { kind: string; note: string; release: string; releases: string[]; block: [string, string]; sram: [string, string]; callSites: { addr: string; len: number; stockSha256: string; target: string }[] } | null
   releases: Record<string, ElemodRelease>
@@ -378,7 +402,7 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   const platform = document.platform
   if (platform.kind !== 'elemod') fail('build', 'only elemod modules have a build.json')
   const keys = ['schemaVersion', 'sources', 'defsym', 'cflags', 'weak', 'subscribe', 'contribute', 'collections', 'copied', 'regions', 'claims', 'requires', 'derive', 'releases'] as const
-  const item = object(value, 'build', keys, ['strings', 'storage'])
+  const item = object(value, 'build', keys, ['strings', 'storage', 'sharc'])
   if (item.schemaVersion !== 1) fail('build.schemaVersion', 'expected 1')
   const sources = list(item.sources, 'build.sources', 1, 64).map((path, index) => {
     const file = modulePath(path, 'build.sources[' + index + ']')
@@ -435,7 +459,22 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   if (derive && (derive.releases.some(release => !document.compatibility.releases.includes(release)) || !derive.releases.includes(derive.release))) fail('build.derive.releases', 'expected supported releases including the base release')
   const stringsValue = object(item.strings ?? {}, 'build.strings', Object.keys((item.strings ?? {}) as object))
   const strings = Object.fromEntries(Object.entries(stringsValue).map(([name, value]) => [symbol(name, 'build.strings.' + name), text(value, 'build.strings.' + name, 120)]))
-  return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, storage, claims, requires, derive, releases }
+  let sharc: ElemodBuildSpec['sharc']
+  if (item.sharc !== undefined) {
+    const value = object(item.sharc, 'build.sharc', ['source', 'players'])
+    const source = modulePath(value.source, 'build.sharc.source')
+    if (!/^src\/.+\.sharc$/.test(source)) fail('build.sharc.source', 'expected a .sharc source under src/')
+    const players = list(value.players, 'build.sharc.players', 1, 4).map((entry, index) => {
+      const at = 'build.sharc.players[' + index + ']', player = object(entry, at, ['type', 'entry'])
+      const type = count(player.type, at + '.type')
+      if (type === null || type < 7 || type > 10) fail(at + '.type', 'expected an added machine type, 7 to 10')
+      if (!claims.includes('machine:' + type)) fail(at + '.type', 'claim the machine type as machine:' + type)
+      return { type: type!, entry: symbol(player.entry, at + '.entry') }
+    })
+    if (new Set(players.map(player => player.type)).size !== players.length) fail('build.sharc.players', 'one player per machine type')
+    sharc = { source, players }
+  }
+  return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, storage, claims, requires, derive, releases, ...(sharc ? { sharc } : {}) }
 }
 
 // Framework sources are compiled and resolved, but are not library/UI modules.

@@ -96,6 +96,21 @@ it('shows wanted tasks as a to-do board with their priority and who took or fini
   expect(container.querySelector('select')).toBeNull()
 })
 
+it('filters sibling tasks across columns and links independent evidence', async () => {
+  const task = (body: string, parentIssue: number, to: string | null) => thread({ kind: 'wanted', body, parentIssue, to, pullRequest: null })
+  board.messages = [task('Trace saving.', 42, null), task('Trace loading.', 42, 'cy'), task('Check another issue.', 43, null),
+    thread({ kind: 'finding', replies: [{ id: 'result', author: 'cy', body: 'Only on reload.', createdAt: '', outcome: 'different-result', evidence: 345 }] })]
+  await render(false)
+  const button = (label: string) => [...container.querySelectorAll('button')].find(el => el.textContent === label)!
+  await act(async () => { button('Issue #42').click() })
+  expect(container.textContent).toContain('Trace saving.')
+  expect(container.textContent).toContain('Trace loading.')
+  expect(container.textContent).not.toContain('Check another issue.')
+  expect(container.querySelector('a[href$="/issues/345"]')?.textContent).toBe('Evidence #345')
+  await act(async () => { button('Show all tasks').click() })
+  expect(container.textContent).toContain('Check another issue.')
+})
+
 it('says when nobody holds anything', async () => {
   await render(false)
   expect(container.textContent).toContain('No claims right now.')

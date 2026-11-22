@@ -37,15 +37,15 @@ export async function moduleThumbnail(id: string, stylesheet: string): Promise<B
     const declarations = rule.declarations.split(';').filter(declaration => /^\s*(?:stroke[\w-]*|fill|opacity|font[\w-]*|letter-spacing)\s*:/.test(declaration)).join(';')
     return `${rule.selector}{${declarations}}`
   }).join('\n').replaceAll('var(--signal)', color).replaceAll('var(--signal-rgb)', rgb).replaceAll('var(--mono)', 'monospace')
-  const detail = DETAILS[id]
+  const controls = DETAILS[id].controls.slice(0, 3)
+  const artworkHeight = controls.length ? 558 : 630
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
     <style>${styles}</style>
     <defs><radialGradient id="glow" cx="60%" cy="100%" r="75%"><stop stop-color="${color}" stop-opacity=".075"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
     <rect width="1200" height="630" fill="#1c1c22"/><rect width="1200" height="630" fill="url(#glow)"/>
-    <text x="55" y="58" fill="${color}" opacity=".85" font-family="monospace" font-size="24" letter-spacing="2">${escapeHtml(detail.label)}</text>
     <circle cx="1140" cy="48" r="7" fill="${color}" opacity=".6"/>
-    ${artwork.replace('<svg ', '<svg x="60" y="70" width="1080" height="490" ')}
-    ${detail.controls.slice(0, 3).map((control, index) => `<text x="${[55, 600, 1145][index]}" y="595" text-anchor="${['start', 'middle', 'end'][index]}" fill="${color}" opacity=".75" font-family="monospace" font-size="22" letter-spacing="1">${escapeHtml(control)}</text>`).join('')}
+    ${artwork.replace('<svg ', `<svg width="1200" height="${artworkHeight}" `)}
+    ${controls.map((control, index) => `<text x="${[55, 600, 1145][index]}" y="595" text-anchor="${['start', 'middle', 'end'][index]}" fill="${color}" opacity=".75" font-family="monospace" font-size="22" letter-spacing="1">${escapeHtml(control)}</text>`).join('')}
   </svg>`
   return sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toBuffer()
 }
@@ -110,6 +110,17 @@ export function digiModulePageHtml(html: string, mod: DigiMod, imagePath: string
   return pageContentHtml(page, digiContent(mod, appUrl))
 }
 
+async function renderThumbnails<T>(modules: readonly T[], render: (module: T) => Promise<Buffer>): Promise<Buffer[]> {
+  // Sharp and filesystem reads share libuv's worker pool. Only queue two images at a time.
+  const batchSize = 2
+  const thumbnails: Buffer[] = []
+  for (let start = 0; start < modules.length; start += batchSize) {
+    const batch = modules.slice(start, start + batchSize)
+    thumbnails.push(...await Promise.all(batch.map(render)))
+  }
+  return thumbnails
+}
+
 export function modulePages(): Plugin {
   let config: ResolvedConfig
   return {
@@ -123,8 +134,8 @@ export function modulePages(): Plugin {
       const html = String(index.source)
       this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPageHtml(html, config.base) })
       const stylesheet = readFileSync(resolve(config.root, 'src/styles.css'), 'utf8')
-      const thumbnails = await Promise.all(MODULES.map(module => moduleThumbnail(module.id, stylesheet)))
-      const cards = await Promise.all(DIGI_MODS.map(digiModuleThumbnail))
+      const thumbnails = await renderThumbnails(MODULES, module => moduleThumbnail(module.id, stylesheet))
+      const cards = await renderThumbnails(DIGI_MODS, digiModuleThumbnail)
       for (const [index, module] of MODULES.entries()) {
         const thumbnail = thumbnails[index]
         const hash = createHash('sha256').update(thumbnail).digest('hex').slice(0, 12)

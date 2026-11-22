@@ -1,0 +1,241 @@
+{
+ "date": "2026-11-21",
+ "model": "Octatrack MKII",
+ "os": "1.40C",
+ "packageSHA256": "db843bc231090ede8e663fe603226cca1c429d614b3755e49200af0e36a7dfc8",
+ "developmentBase": "62ac89ff7ff72e9d8490188f424b7a4781a57e3cd1a1911b0e86696fcfd2ce36",
+ "developmentBaseNote": "The guard-trace twin of 3a4c07fe (see guard-trace.json). Capture closed means the 20-channel USB audio linked into it was not streaming.",
+ "releaseBar": "Shipping setup: USB audio optional, lean layout by default (owner, 21 Nov 2026). Capture closed is the no-USB-audio case; the 20-channel layout is the heaviest optional case. The lean Main layout lies between and was not measured.",
+ "card": "physically removed at power-up; mount flag zero",
+ "arms": {
+  "captureClosedT1": {
+   "track": 1,
+   "playbackSkips": 0,
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "playbackMaxFrameMicroseconds": 326.5,
+   "maxGuardedCallbackMicroseconds": 118.3,
+   "observedGrains": 6,
+   "midi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+   "pickerAndPanel": [
+    true,
+    true,
+    true
+   ],
+   "postStopObservedSeconds": 27.47,
+   "healthDelta": {
+    "stalls": 0,
+    "crash": 0,
+    "stall": 0,
+    "errors": 0
+   },
+   "framesOverDeadline": 0,
+   "overruns": []
+  },
+  "captureClosedT5": {
+   "track": 5,
+   "playbackSkips": 0,
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "playbackMaxFrameMicroseconds": 317.8,
+   "maxGuardedCallbackMicroseconds": 113.6,
+   "observedGrains": 6,
+   "midi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+   "pickerAndPanel": [
+    true,
+    true,
+    true
+   ],
+   "postStopObservedSeconds": 27.33,
+   "healthDelta": {
+    "stalls": 0,
+    "crash": 0,
+    "stall": 0,
+    "errors": 0
+   },
+   "framesOverDeadline": 0,
+   "overruns": []
+  },
+  "twentyChannelCaptureT1": {
+   "track": 1,
+   "playbackSkips": 0,
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "playbackMaxFrameMicroseconds": 383.3,
+   "maxGuardedCallbackMicroseconds": 124.1,
+   "observedGrains": 6,
+   "midi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+   "pickerAndPanel": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "postStopObservedSeconds": 29.48,
+   "healthDelta": {
+    "stalls": 0,
+    "crash": 0,
+    "stall": 0,
+    "errors": 0
+   },
+   "framesOverDeadline": 12,
+   "overruns": [
+    {
+     "frameUs": 364.4,
+     "grainUs": 133.4,
+     "outsideRendersUs": 231.0
+    },
+    {
+     "frameUs": 382.5,
+     "grainUs": 144.9,
+     "outsideRendersUs": 237.6
+    },
+    {
+     "frameUs": 383.3,
+     "grainUs": 150.7,
+     "outsideRendersUs": 232.6
+    },
+    {
+     "frameUs": 368.5,
+     "grainUs": 129.9,
+     "outsideRendersUs": 238.7
+    },
+    {
+     "frameUs": 367.6,
+     "grainUs": 116.9,
+     "outsideRendersUs": 250.7
+    },
+    {
+     "frameUs": 369.4,
+     "grainUs": 133.1,
+     "outsideRendersUs": 236.3
+    },
+    {
+     "frameUs": 363.0,
+     "grainUs": 134.9,
+     "outsideRendersUs": 228.1
+    },
+    {
+     "frameUs": 367.5,
+     "grainUs": 142.5,
+     "outsideRendersUs": 225.0
+    },
+    {
+     "frameUs": 363.2,
+     "grainUs": 132.3,
+     "outsideRendersUs": 230.9
+    },
+    {
+     "frameUs": 364.3,
+     "grainUs": 92.4,
+     "outsideRendersUs": 271.9
+    },
+    {
+     "frameUs": 370.8,
+     "grainUs": 136.0,
+     "outsideRendersUs": 234.9
+    },
+    {
+     "frameUs": 374.1,
+     "grainUs": 128.5,
+     "outsideRendersUs": 245.6
+    }
+   ]
+  },
+  "midiFloodT1": {
+   "track": 1,
+   "playbackSkips": 0,
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "playbackMaxFrameMicroseconds": 358.2,
+   "maxGuardedCallbackMicroseconds": 124.9,
+   "observedGrains": 6,
+   "midi": "240 BPM flood over 50 s: 4800 clocks, 16670 notes on, 16666 off, 16666 CC, 1096 messages/s; holding note 60 on channels 1 and 5",
+   "pickerAndPanel": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "postStopObservedSeconds": 30.56,
+   "healthDelta": {
+    "stalls": 0,
+    "crash": 0,
+    "stall": 0,
+    "errors": 0
+   },
+   "framesOverDeadline": 0,
+   "overruns": [],
+   "clockBpm": 240,
+   "messagesPerSecond": 1096,
+   "seconds": 50,
+   "stopMidNote": true,
+   "partChange": [
+    1,
+    3
+   ],
+   "note": "The flood ended holding note 60 on channels 1 and 5. The flood also started the stock T1 and T5 recorders (R1, R5); both were emptied by the recorder reset."
+  }
+ },
+ "twentyChannelStemDump": {
+  "frames": 2425500,
+  "seconds": 55.0,
+  "T1 stem": {
+   "peak": 1.0,
+   "clippedSamplePercent": 53.386,
+   "repeatedNonzeroBlocks": 557,
+   "repeatedPinnedAtRail": 387,
+   "repeatedConstantNotRail": 170,
+   "repeatedChangingAudio": 0,
+   "rms": [
+    0.7878,
+    0.928
+   ]
+  },
+  "T5 stem": {
+   "peak": 1.0,
+   "clippedSamplePercent": 3.442,
+   "repeatedNonzeroBlocks": 0,
+   "repeatedPinnedAtRail": 0,
+   "repeatedConstantNotRail": 0,
+   "repeatedChangingAudio": 0,
+   "rms": [
+    0.6093,
+    0.7793
+   ]
+  },
+  "MAIN": {
+   "peak": 1.0,
+   "clippedSamplePercent": 67.555,
+   "repeatedNonzeroBlocks": 3,
+   "repeatedPinnedAtRail": 3,
+   "repeatedConstantNotRail": 0,
+   "repeatedChangingAudio": 0,
+   "rms": [
+    0.8873,
+    0.9809
+   ]
+  }
+ },
+ "heldNoteProbe": {
+  "events": {
+   "PLAY": -3.82,
+   "note held": 2.26,
+   "STOP": 4.47,
+   "second STOP": 8.7,
+   "note off": 11.98
+  },
+  "rmsBeforeStop": {
+   "grainT1": 0.6845,
+   "flexT5": 0.6277
+  },
+  "rmsFrom05sAfterStopToNoteOff": {
+   "grainT1": 0.0,
+   "flexT5": 0.0001
+  },
+  "voiceStateCounter": "Grain voice-state words stay nonzero after STOP and note-off; they are retained state, not sounding voices."
+ },
+ "afterwards": "The RAM boot back to the shipping base hung after it logged its start (boot 830: animation running, controls and USB dead, no crash or stall record); the owner power-cycled with the card, which booted the flashed base and the card set."
+}

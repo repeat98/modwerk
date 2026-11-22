@@ -7,6 +7,8 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
+import struct
 import tempfile
 import unittest
 
@@ -21,6 +23,16 @@ SITE = {'index': 9, 'name': 'dsp_test', 'clobbers': ['a', 'x0'], 'exit': {'A': '
 
 
 class Decoding(unittest.TestCase):
+    def test_doctor_batch_has_each_modules_individual_findings(self):
+        driver = [sys.executable, '-B', str(ROOT / 'scripts/dsp-register-contract.py')]
+        ids = ('miniverb', 'euclid')
+        batch = json.loads(subprocess.check_output([*driver, '--json-modules', *ids], cwd=ROOT))
+        self.assertEqual(set(batch), set(ids))
+        for module in ids:
+            single = json.loads(subprocess.check_output([*driver, '--json', module], cwd=ROOT))
+            single.pop('reports', None)  # The doctor consumes the summary.
+            self.assertEqual(batch[module], single)
+
     def test_what_each_form_writes(self):
         for line, regs in (('move x:(r6)+,x0', {'r6', 'x0'}), ('tfr y1,b x:(r6)+n6,x1 y:(r0)-,b', {'b', 'r6', 'x1', 'r0'}),
                            ('lua (r0)+n0,r1', {'r1'}), ('move a,x:(r1)+', {'r1'}), ('move (r3)+n3', {'r3'}),
@@ -60,6 +72,22 @@ class PublishedPackages(unittest.TestCase):
             self.assertEqual(relocations, p['relocations'], module)
             self.assertEqual(entries, [('init', p['init'], None, None), ('proc', p['proc'], None, None)], module)
         self.assertGreaterEqual(compared, 5)
+
+    def test_a_package_whose_detours_rest_reads_as_the_loader_reads_it(self):
+        # Tape Echo 0.1.7 on marks both its detours "rests": bit 7 of each site's length byte, which loader.c masks.
+        row = next(r for r in json.loads((ROOT / 'src/engine/assets/octatrack-module-packages.json').read_text())['packages']
+                   if r['id'] == 'tapeecho')
+        data = bytearray((ROOT / 'public' / row['path']).read_bytes())
+        expected = contract.package_entries(bytes(data))
+        image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
+        at = contract.ABI9.HEADERS[struct.unpack_from('>H', data, 4)[0]] + 4 * hooks + image + 4 * count
+        self.assertEqual(sites, 2)
+        for _ in range(sites):
+            n, r = data[at + 4] & ~contract.REST_FLAG & 0xff, data[at + 7]
+            data[at + 4] = n | contract.REST_FLAG
+            at += 8 + 32 + n + 2 * r
+        self.assertIsNotNone(expected)
+        self.assertEqual(contract.package_entries(bytes(data)), expected)
 
     def test_an_engine_enters_from_its_site_and_leaves_by_a_long_branch(self):
         engines = [(m, w, e) for m, _, w, _, e, label in contract.published() if e[0][0] == 'hook' and label.endswith('.mwrm')]

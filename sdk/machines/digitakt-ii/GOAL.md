@@ -33,7 +33,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 Two kinds of work can happen at any time:
 
-- **Base services that several modules will want:** a sample pool, machine registration, per-kit state in one table the base owns, SHARC DSP dispatch. Each one goes in as its own base pull request, before the module that needs it.
+- **Base services that several modules will want:** a sample pool, machine registration, per-kit state in one table the base owns, SHARC DSP dispatch. Add these services directly to the machine’s cumulative base draft before releasing a module that uses them.
 - **Modules.** Each one builds, installs and works as the only module chosen.
 
 ## USB link
@@ -53,13 +53,14 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 - **No raw block writes to the +Drive** (`fw_card_write`). The preflight refuses a build that uses one.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. Emulator runs are for iteration only.
 - **Firmware stays on your computer.** Never commit the OS file, extracted stock code or built images.
-- **One piece per pull request.** A base change, the link, a loader port and the page each go in their own pull request for the owner to review, never inside a module release.
+- **Owner review.** Add base changes directly to `base/digitakt-ii-next` and update its cumulative draft. A separate link, loader port or page outside the base has its own review.
 
 ## Open questions
 
 - **Kit data that changes alone.** Does OS 1.17 save a kit when only a module's block changed? The test steps are in the [machine guide](README.md#core-hooks), and any unit owner can run them.
 - **More units.** The pinned base has run on one unit so far.
-- **A SHARC assembler.** No Modwerk build writes SHARC code yet. The first one to do so brings its toolchain, pinned through `npm run upstream:tools`, and a build check for the rules above.
+- **Upstream drift.** The core 1.1 source is `0df8409`, the reviewed head of the open [elekloader#221](https://github.com/elekloader/elekloader/pull/221). When it merges, take the source again from the release and rebuild the base ([base source](elekloader/README.md)).
+- **A SHARC assembler.** Modwerk's own (`src/engine/elektron/sharc-asm.ts`) builds a machine module's `.sharc` player into its package and refuses code that breaks the rules above. It knows only the instruction forms a voice player has needed so far: add a form with its test, checked against the programming reference.
 
 ## How to join
 

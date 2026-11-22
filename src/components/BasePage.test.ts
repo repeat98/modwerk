@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { CURRENT_BASE_VERSION } from '../engine/elekloader/base-variants'
 import { BasePage } from './BasePage'
 
 let root: Root, container: HTMLDivElement
@@ -54,6 +55,25 @@ it('lists the other instruments without repeating the three that have their own 
   expect(names.length).toBeGreaterThan(3)
   expect(names.filter(name => name?.startsWith('Octatrack') || name?.includes('MS-70CDR') || name === 'Analog Rytm MKII')).toEqual([])
   expect(names).toContain('Analog Rytm MKI')
+})
+
+it('shows the newest change for the chosen base and links earlier changes to shipped notes', async () => {
+  await render()
+  expect(container.querySelector('.base-changelog > dl dt')?.textContent).toBe(CURRENT_BASE_VERSION)
+  for (const [machine, note] of [['Octatrack', 'octatrack'], ['MS-70CDR', 'midistomp'], ['Analog Rytm', 'rytm']]) {
+    await choose(machine)
+    const log = container.querySelector('.base-changelog')!
+    const latest = log.querySelector<HTMLAnchorElement>(':scope > dl a')!
+    expect(latest.href).toContain(note)
+    expect(latest.closest('details')).toBeNull()
+    expect(log.querySelectorAll('details .base-change').length).toBeGreaterThan(0)
+    for (const link of log.querySelectorAll<HTMLAnchorElement>('a')) {
+      const file = new URL(link.href).pathname.split('/changelog/')[1]
+      expect(existsSync(join(process.cwd(), 'changelog', file)), file).toBe(true)
+    }
+  }
+  await choose('Others')
+  expect(container.querySelector('.base-changelog')).toBeNull()
 })
 
 it('puts setup and recovery prerequisites before the optional Octatrack references', async () => {

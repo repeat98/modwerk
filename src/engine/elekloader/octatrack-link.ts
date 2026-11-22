@@ -7,7 +7,7 @@ import { runSelftest, waitUntilSaved } from './selftest.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
-import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport, VendorTransportError, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
 import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
@@ -49,6 +49,8 @@ export function openFailure(agent = typeof navigator === 'undefined' ? '' : navi
 }
 /** Well inside the base's 10 s quiet limit (sdk/runtime/upload/vendor.c mv_tick); any vendor request counts. */
 const KEEPALIVE_MS = 1000
+/** Leave time for recovery before the base’s quiet-USB timer expires. */
+const EP0_DIAGNOSTIC_MS = 1000
 /** Asked while playing, the base presses STOP itself and answers `unsafe` that once; ask again until it has stopped. */
 const STOP_RETRY_MS = 200
 /** A whole set publishes and restores one row per engine turn (20 rows took 3.8 s at the 200 ms retry interval):
@@ -97,6 +99,9 @@ export type BaseUpdateReport = (step: BaseUpdateStep, fraction?: number, slow?: 
 const BASE_WRITE_ATTEMPTS = 4
 /** How long a unit may take to come back after a write step failed (a slow NOR erase, then the restart). */
 const RECONNECT_MS = 120000
+/** How long a trial waits for the unit to come back after the base's own reconnect: the base takes half a second off
+ * the bus and counts a host that has not reached it again within 20 s as unplugged (usb_function.c). */
+export const RECONNECT_WAIT_MS = 45000
 /** A restart is back in 5-13 s in the field (docs/OCTATRACK_BETA_TEST_PLAN.md item 78), 12-16 s on the bench: past this
  * the unit has more likely lost USB, which only a power cycle brings back (the soft reset stops the USB controller first;
  * such a stop is reported to leave the USB PHY dead about once in 76 to 200 stops, not measured on a Modwerk base). The
@@ -117,11 +122,15 @@ class NothingWritten extends Error {}
 /** One step of a module set load: a runtime package, and the package that puts back what it changes (absent when the
  * site has none, such as for a removed module it does not publish). `replaces`: it removes or replaces a module already
  * on the unit, so a track may be using it (the loader's refusal 7, RUNTIME_IN_USE). */
-export interface SetChange { readonly module: string; readonly data: Uint8Array; readonly undo?: Uint8Array; readonly replaces?: boolean }
+/** `reconnects`: the change makes the base take the unit off USB and back once (a module's USB function coming, going or
+ * changing: usb_function.c), and the sync stays open across it. */
+export interface SetChange { readonly module: string; readonly data: Uint8Array; readonly undo?: Uint8Array; readonly replaces?: boolean; readonly reconnects?: boolean }
 
 export type LinkStatus = 'unsupported' | 'idle' | 'connecting' | 'stock' | 'busy' | 'ready' | 'sending' | 'testing' | 'trial' | 'finishing'
 export interface LinkState {
   readonly status: LinkStatus
+  /** The trial is open while the base reconnects on USB by itself (SetChange.reconnects): Keep and Undo wait for it. */
+  readonly reconnecting?: boolean
   /** From IDENTIFY. `ready` without `canSubmit` is a base this page cannot send to. */
   readonly identity?: VendorIdentity
   /** HELLO's running set: the base's own digest while no module runs; null or absent when unknown. */
@@ -302,6 +311,9 @@ export class OctatrackLink {
   // Another Elektron device plugged in meanwhile is left alone, and so is a stock unit while one with the base is busy.
   private readonly onConnect: DeviceListener = ({ device }) => {
     const { status } = this.state, rank = octatrackRank(device)
+    // Back after the base's own reconnect: this page's sync still holds the tabs' lock (update keeps it until Keep or
+    // Undo), so the reopen runs under it rather than queueing behind it.
+    if (rank && this.state.reconnecting) { const connection = this.connection; void (async () => { if (connection === this.connection) await this.opening(device) })(); return }
     if (rank && (status === 'idle' || ['stock', 'busy'].includes(status) && rank >= (this.device ? octatrackRank(this.device) : 0))) void this.open(device)
   }
   private readonly onDisconnect: DeviceListener = ({ device }) => {
@@ -310,7 +322,21 @@ export class OctatrackLink {
     const { status, module } = this.state
     this.diagnostic('disconnected')
     this.stopKeepalive(); this.abort?.abort()
+    const candidate = this.session?.status
     this.device = this.index = this.transport = this.session = this.slotsRead = undefined
+    // The base's own reconnect after a change that adds, removes or changes a module's USB function: the trial stays
+    // open on the unit, and the page waits for it to come back (opening resumes it).
+    if (this.audioTrial && (status === 'trial' || status === 'sending' && this.step === 'trial') && !this.state.reconnecting) {
+      this.reconnectCandidate = candidate
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = setTimeout(() => {
+        if (!this.state.reconnecting) return
+        this.expectReconnect = false
+        this.set({ status: 'idle', notice: { tone: 'error', text: `The Octatrack didn’t come back on USB after reconnecting. It undoes ${module} by itself as soon as playback is stopped.` } })
+      }, RECONNECT_WAIT_MS)
+      this.set({ ...this.state, status: 'trial', reconnecting: true, notice: undefined })
+      return
+    }
     this.set({ status: 'idle', notice: status === 'sending' ? { tone: 'error', text: 'USB disconnected. The Octatrack undoes the unfinished load as soon as playback is stopped.' }
       : status === 'testing' || status === 'trial' ? { tone: 'error', text: `USB disconnected. The Octatrack undoes ${module} by itself as soon as playback is stopped.` }
       : status === 'finishing' ? { tone: 'error', text: 'USB disconnected before Keep or Undo was confirmed. Reconnect to read the Octatrack’s state.' }
@@ -321,22 +347,26 @@ export class OctatrackLink {
     const connection = this.connection
     return this.serial(async () => { if (connection === this.connection) await this.opening(device) })
   }
+  private async openDevice(device: LinkDevice, connection: number) {
+    if (!device.opened) await device.open()
+    this.live(connection)
+    if (!device.configuration) await device.selectConfiguration(1)
+  }
   private async opening(device: LinkDevice) {
-    const connection = this.connection
+    const connection = this.connection, resuming = !!this.state.reconnecting, module = this.state.module
     await this.release(true)
     if (connection !== this.connection) return
     // A retry while another page holds the unit stays 'busy' until it connects, or the card flickers every 3 s.
-    if (this.state.status !== 'busy') this.setFor(connection, { status: 'connecting' })
+    if (this.state.status !== 'busy' && !resuming) this.setFor(connection, { status: 'connecting' })
+    let resumed = false
     this.device = device
     try {
-      if (!device.opened) await device.open()
-      this.live(connection)
-      if (!device.configuration) await device.selectConfiguration(1)
+      await this.openDevice(device, connection)
       this.live(connection)
       const index = findVendorInterface(device.configuration)
       if (index === undefined) { await device.close().catch(() => {}); return this.setFor(connection, { status: 'stock' }) }
       this.index = index; this.transport = new UsbVendorTransport(device, index)
-      if (!await this.claim()) return
+      if (!await this.claim(resuming)) return
       try {
         const identity = await this.transport.identify()
         this.live(connection)
@@ -352,18 +382,46 @@ export class OctatrackLink {
         // A sync another page left open (closed or reloaded during it): this page holds the lock every page's sync
         // keeps until it is kept or undone, so nobody finishes it. The base would undo it only after 10 s without
         // any USB request, which this page's own reads prevent: undo it now, as the base would have.
+        // Back after the base's own reconnect: this page's trial is still open on the unit. Adopt it and carry on.
+        const candidate = this.reconnectCandidate
+        if (resuming && candidate?.active && session && session.status.active === candidate.active &&
+            identity.base === candidate.base && session.status.currentTransaction === candidate.currentTransaction &&
+            session.status.generation === candidate.generation && ['pending', 'trial'].includes(session.status.phase)) {
+          session.adopt()
+          if (session.status.phase === 'pending') await session.startTrial()
+          this.live(connection)
+          clearTimeout(this.reconnectTimer); this.expectReconnect = false
+          this.session = session; resumed = true
+        }
         let notice: LinkState['notice']
-        if (session && session.status.phase !== 'normal') {
+        if (resuming && !resumed) {
+          clearTimeout(this.reconnectTimer); this.expectReconnect = false
+          notice = { tone: 'error', text: `The Octatrack reconnected, but ${module ?? 'the sync'} was no longer open there, so nothing changed. Sync again.` }
+        }
+        if (!resumed && session && session.status.phase !== 'normal') {
+          // A native client can own a trial across USB Audio's interface change. A browser tab lock only
+          // covers this origin. Release the interface and give an abandoned trial its full idle timeout.
+          const external = resuming || await this.transport.hasUsbFunctionChanges()
+          this.live(connection)
+          if (external) {
+            this.set({ status: 'busy', identity })
+            setTimeout(() => {
+              if (connection === this.connection && this.state.status === 'busy') void this.open(device)
+            }, 15000)
+            return
+          }
           const staged = session.status.phase !== 'ready', undone = await this.cleanUp(session).catch(() => false)
           this.live(connection)
           notice = !undone ? { tone: 'error', text: UNPLUG } : staged ? { tone: 'success', text: 'The last sync wasn’t finished, so the Octatrack undid it.' } : undefined
         }
         if (!notice && slots?.fellBack) notice = { tone: 'error', text: FELL_BACK }
-        this.set({ status: 'ready', identity, active: session?.status.active, notice })
+        if (resumed) this.set({ status: 'trial', identity, active: session!.status.active, module })
+        else this.set({ status: 'ready', identity, active: session?.status.active, notice })
         this.diagnostic('connected')
       }
       catch { this.setFor(connection, { status: 'ready', identity: undefined }) } // a Modwerk base this page does not speak
-      finally { await this.release() }
+      finally { if (!resumed) await this.release() } // a resumed trial keeps the interface, as a sync does until Keep or Undo
+      if (resumed) this.startKeepalive()
     } catch (error) {
       if (connection !== this.connection) { if (device.opened) await device.close().catch(() => {}); return }
       console.error(error)
@@ -374,14 +432,22 @@ export class OctatrackLink {
     }
   }
   /** Claimed only while talking, so other tabs and `npm run device` can use the unit in between. */
-  private async claim() {
+  private async claim(resuming = false): Promise<boolean> {
     const connection = this.connection, device = this.device, index = this.index
     if (!device || index === undefined) return false
     try {
       await device.claimInterface(index)
-      if (connection !== this.connection) { await device.releaseInterface(index).catch(() => {}); return false }
+      if (connection !== this.connection || resuming && !this.state.reconnecting) { await device.releaseInterface(index).catch(() => {}); return false }
       return true
     } catch {
+      // The trial still holds the tab lock. Retry under it until the existing reconnect deadline.
+      if (resuming) {
+        if (connection !== this.connection || this.device !== device || !this.state.reconnecting) return false
+        this.diagnostic('link_failed', { failure: 'claim-failed' })
+        await wait(BUSY_RETRY_MS)
+        if (connection !== this.connection || this.device !== device || !this.state.reconnecting) return false
+        return this.claim(true)
+      }
       this.setFor(connection, { status: 'busy', identity: this.state.identity })
       setTimeout(() => { if (connection === this.connection && this.state.status === 'busy') void this.retry() }, BUSY_RETRY_MS)
       return false
@@ -391,6 +457,36 @@ export class OctatrackLink {
     const device = this.device, index = this.index
     if (device?.opened && index !== undefined) await device.releaseInterface(index).catch(() => {})
     if (close) { this.device = this.index = this.transport = this.session = undefined; if (device?.opened) await device.close().catch(() => {}) }
+  }
+
+  /** DIAG is optional. Close an unanswered control transfer before sending any further USB commands. */
+  private async syncUsbCounters(signal?: AbortSignal): Promise<number[] | undefined> {
+    const { device, transport, connection } = this
+    if (!device || !transport || signal?.aborted) return undefined
+    let abandon!: () => void
+    const unanswered = new Promise<null>(resolve => { abandon = () => resolve(null) })
+    const timer = setTimeout(abandon, EP0_DIAGNOSTIC_MS)
+    signal?.addEventListener('abort', abandon, { once: true })
+    const counters = await Promise.race([transport.ep0().catch(() => undefined), unanswered]).finally(() => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', abandon)
+    })
+    if (counters !== null) return counters
+
+    // WebUSB close cancels EP0 and releases the claim. A new transport starts
+    // with the device's last sequence when Sync or recovery checks the session.
+    if (connection === this.connection) this.index = this.transport = undefined
+    await device.close()
+    this.live(connection)
+    await this.openDevice(device, connection)
+    this.live(connection)
+    const index = findVendorInterface(device.configuration)
+    if (index === undefined) throw new DOMException('The Modwerk USB interface is unavailable.', 'NotFoundError')
+    await device.claimInterface(index)
+    this.live(connection)
+    this.index = index
+    this.transport = new UsbVendorTransport(device, index)
+    return undefined
   }
 
   /** Stage a whole set on capable bases, then trial it once. Older bases
@@ -415,14 +511,16 @@ export class OctatrackLink {
     const abort = this.abort = new AbortController(), total = changes.reduce((sum, change) => sum + change.data.length, 0)
     this.rows = changes.length
     this.replaced = changes.filter(change => change.replaces).map(change => change.module)
+    this.audioTrial = this.expectReconnect = changes.some(change => change.reconnects)
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
-    const usb = this.diagnosticListeners.size ? await this.transport?.ep0().catch(() => undefined) : undefined
-    let session: LinkSession | undefined
+    let usb: number[] | undefined, session: LinkSession | undefined
     this.step = 'session'
     try {
       const wholeSet = !!(this.state.identity?.capabilities?.features && this.state.identity.capabilities.features & RuntimeFeature.moduleSets)
       if (changes.length > 1 && !wholeSet) throw new WholeSetBaseRequired()
+      if (this.diagnosticListeners.size) usb = await this.syncUsbCounters(abort.signal)
+      this.live(connection); abort.signal.throwIfAborted()
       session = this.session = await this.connectSession(this.transport!, base)
       this.live(connection); abort.signal.throwIfAborted()
       // Another tab loaded while this one waited for the unit: these changes were planned for what was on it before.
@@ -498,6 +596,7 @@ export class OctatrackLink {
   async missing(): Promise<MissingModule[] | undefined> { return this.read('missing modules', transport => transport.missing()).then(list => list ?? [], () => undefined) }
   /** The modules installed on the unit, while it is idle; undefined from a base before INVENTORY (it stalls the request).
    * Rejects with LinkBusyError when it couldn't ask just now. */
+  settingPresets() { return this.read('setting presets', transport => transport.settingPresets()) }
   inventory(): Promise<MissingModule[] | undefined> { return this.read('modules', transport => transport.inventory()) }
   /** The modules switched off on the unit (PROJ > MODWERK > MODULES): installed and saved, not running. Undefined from
    * a base before that page. Rejects with LinkBusyError when it couldn't ask just now. */
@@ -524,6 +623,26 @@ export class OctatrackLink {
       if (!await this.claim()) throw busy('another app holds it', 'claim failed')
       try { permitted(); const result = await request(this.transport); this.live(connection); return result } catch (error) { throw busy('the transfer failed', error) } finally { await this.release() }
     }).catch(error => { throw error instanceof LinkBusyError ? error : busy('another tab of the site or a load is using it') })
+  }
+  /** After a sync whose changes reconnect (SetChange.reconnects): resolves true once the base's own reconnect is over
+   * and the trial is open again, false when the trial ended instead. The base reconnects about a second after the switch,
+   * and at the latest after ten (usb_function.c); with no disconnect within `startMs` the trial goes on as it is. Keep
+   * only after this, so the reconnect never lands in the middle of Keep. */
+  reconnected(startMs = 15000): Promise<boolean> {
+    return new Promise(resolve => {
+      let began = false
+      const done = (value: boolean) => { stop(); clearTimeout(timer); resolve(value) }
+      const check = () => {
+        const { status, reconnecting } = this.state
+        if (reconnecting) { began = true; clearTimeout(timer); return }
+        if (status !== 'trial') done(false)
+        else if (began) done(true)
+      }
+      const stop = this.subscribe(check)
+      const timer = setTimeout(() => { if (!began) done(this.state.status === 'trial') }, startMs)
+      if (!this.expectReconnect && !this.state.reconnecting) done(this.state.status === 'trial')
+      else check()
+    })
   }
   keep() { return this.finish(true) }
   undo() { return this.finish(false) }
@@ -689,7 +808,7 @@ export class OctatrackLink {
 
   private async finish(keep: boolean) {
     const session = this.session, module = this.state.module, connection = this.connection
-    if (this.state.status !== 'trial' || !session) return
+    if (this.state.status !== 'trial' || !session || this.state.reconnecting) return
     this.stopKeepalive()
     this.set({ ...this.state, status: 'finishing', notice: undefined })
     try {
@@ -727,7 +846,8 @@ export class OctatrackLink {
     if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StaleLoadError) && !(error instanceof WholeSetBaseRequired)) console.error(error)
     this.stopKeepalive()
     // Read before the recovery below sends anything, so the counters cover the failed sync alone.
-    const after = usb && error instanceof UploadUnconfirmedError ? await this.transport?.ep0().catch(() => undefined) : undefined
+    const after = usb && error instanceof UploadUnconfirmedError ? await this.syncUsbCounters(this.abort?.signal).catch(() => undefined) : undefined
+    if (connection !== this.connection) return
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
     if (session && !session.connectionTrusted && error instanceof UploadUnconfirmedError && this.transport && this.state.identity?.base) {
       try { settled = await this.connectSession(this.transport, this.state.identity.base); recovered = true } catch { settled = undefined }
@@ -746,14 +866,20 @@ export class OctatrackLink {
     // `kind` then said only VendorTransportError (the unit stalled the submission), so the base's EP0 counters over the sync
     // come too: they tell a submission refused at its SETUP from a data stage that stopped part way or a bus reset.
     const step = this.step
-    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
+    const cause = error instanceof UploadUnconfirmedError ? error.cause : error
+    const detail = cause instanceof VendorTransportError ? cause.cause ?? cause : cause
+    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' || label === 'transport' ? {kind: diagnosticErrorKind(detail)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
       ...(usb && after ? {usb: after.map((count, i) => (count - usb[i]) >>> 0)} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
     const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) +
       (why === RUNTIME_IN_USE ? inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
-    if (this.device && connection === this.connection) this.ready({ tone: 'error', text }, session ? settled?.status.active : this.state.active)
+    if (this.device && connection === this.connection) {
+      const notice = { tone: 'error', text } as const
+      if (this.transport) this.ready(notice, session ? settled?.status.active : this.state.active)
+      else this.set({ status: 'idle', notice })
+    }
   }
   /** Cancel, roll back or leave upload mode from whatever phase `session` reports; true once back to normal. */
   private async cleanUp(session: LinkSession) {
@@ -781,6 +907,10 @@ export class OctatrackLink {
     return error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) &&
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal === 5
   }
+  private expectReconnect = false
+  private audioTrial = false
+  private reconnectCandidate?: LinkSession['status']
+  private reconnectTimer?: ReturnType<typeof setTimeout>
   private startKeepalive() {
     this.stopKeepalive()
     this.keepalive = setInterval(() => { void this.transport?.identify().catch(() => {}) }, KEEPALIVE_MS)

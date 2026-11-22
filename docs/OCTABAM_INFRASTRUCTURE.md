@@ -65,3 +65,21 @@ Review: none of the four carries a hex string of 8 bytes or more found in the or
 ## Tenth import: docs (octabam `f7d72906`, 11 November 2026)
 
 [The tenth record](../sdk/imports/octabam-docs-f7d72906.json) pins the newer `docs/TRAPS.md` (three entries: a call into stock returns with a0, a1, d0 and d1 changed; a held scene key writes stock's scene-lock handler into every encoder slot, so a page editor's hook never sees the turn; bit 31 of the stock icon blit's column is the bottom row) and `docs/FAILURE_MODES.md` (the demand loader's 8 and 9 November soak beside STEM REC, with a freeze while two frame-interrupt waits have no time limit) to `f7d72906`, byte for byte; HARDWARE_MATRIX.md and MIDI_TRACKS.md stay pinned by the earlier records. The entries that reach Modwerk are in [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md#octabams-register) and the scene one in [the scenes guide](module-guides/scenes.md#test). Same review: no 8-byte hex window found in `MAIN.raw`, no instruction listing. The developer tools pin in `sdk/upstream-tools.json` moves to the same commit in this pull request.
+
+## Eleventh import: the cycle scan (octabam `cc7cffc1`, 19 November 2026)
+
+[The eleventh record](../sdk/imports/octabam-cycle-scan-cc7cffc1.json) takes octabam's cycle scan (#1169) into
+[`sdk/cycle-scan/`](../sdk/cycle-scan/README.md): `interlock_scan.py`, which runs an effect's proc under `dsp_host` and
+prices the executed path with the DSP56300 manual's instruction cycles (Table A-1) and pipeline stalls (sections A.2
+and 3.5), upstream's `dsp_host.cpp` with `-steptrace` (a host-stepped core, so a DO loop's body shows in the trace) and
+`CYCLE_SCAN.md`, upstream's results and how they compare with its unit (3.0 % above it on average over 38 settings of
+22 effects).
+
+It sits outside `sdk/octabam` on purpose: `sdk/octabam/tools` is part of the module-source fingerprint
+(`scripts/module-source.mjs`), and no compiler reads these files, so they must not make every module package count as
+rebuilt. The harness's `dsp_host.cpp` stays the second import's; `sdk/cycle-scan/build-tools.sh` stages upstream's copy
+over the vendor tree's when it builds the scan's tools. Two adaptations, both in the scanner and both recorded: it finds
+the octabam tree at `sdk/octabam` (`OCTABAM_ROOT` overrides), and, since Modwerk has no SEND module (FX2 id 0x09 is
+LOFI2's), its scratch image is the module beside the stock effects with no fallback, as the modules' own `perf.py`
+build theirs. How to run it: [its README](../sdk/cycle-scan/README.md). It is a model, not a measurement: the unit stays
+the judge ([MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md)).

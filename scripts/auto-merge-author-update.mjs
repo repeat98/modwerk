@@ -4,10 +4,12 @@ import { fileURLToPath } from 'node:url'
 import { authorReleaseEvent, authorRequestedRelease } from '../src/release/author-updates.ts'
 import { inspectAuthorUpdate } from './author-update-git.mjs'
 import { githubApi, pages, mergeAuthorPull } from './author-release-api.mjs'
+import { bodyProblems } from './pr-body.mjs'
 
 const repository = process.env.GITHUB_REPOSITORY, api = githubApi(repository, process.env.GITHUB_TOKEN)
 const event = authorReleaseEvent(JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')))
 const root = fileURLToPath(new URL('../', import.meta.url))
+const template = readFileSync(new URL('../.github/pull_request_template.md', import.meta.url), 'utf8')
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 const pulls = await pages(api, '/pulls?state=open')
 for (const candidate of pulls.filter(pr => pr.head?.sha === event.head && pr.base?.ref === 'main' && (!event.number || pr.number === event.number))) {
@@ -27,6 +29,9 @@ for (const candidate of pulls.filter(pr => pr.head?.sha === event.head && pr.bas
     await comment(pr.number, body, comments => comments.some(item => item.body === body))
     continue
   }
+  // The describe check runs in its own workflow (pr-description.yml), so check the exact description this merge publishes here too.
+  const problems = bodyProblems(pr.body, template, { files: git('diff', '--name-only', '--no-renames', base + '...' + head).split('\n').filter(Boolean) })
+  if (problems.length) { console.log('PR #' + pr.number + ' waits for its description: ' + problems.join(' ')); continue }
   // Expected head SHA and GitHub branch protection are enforced by the merge endpoint.
   const runId = await mergeAuthorPull(api, repository, pr.number, head, base, scope, event.runId)
   console.log('Author PR #' + pr.number + ' merged after CI run ' + runId + '; site and API publication requested for ' + scope.modules.join(', ') + '.')

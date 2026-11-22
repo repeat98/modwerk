@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "shatter",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "9d80c0b591d920b70f3e7457d0f709e99e2dfa80f41052dece3b95463346eaf0",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "37f32ee8a0701c120fefda9a00c510b87468eb88ff57cd56699a00797039b9de",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

@@ -13,13 +13,22 @@ import { ModulePreview } from '../components/ModulePreview'
 import type { ModuleStatistics } from './module-statistics'
 import { memberStanding, POINTS, TIERS } from './member-standing'
 import { ProfileLinksView } from './ProfileLinksView'
+import { ForumRecentSkeleton, Skeleton } from './ForumSkeleton'
 
 const memberSince = (value: string) => new Date(value.includes('T') ? value : value.replace(' ', 'T') + 'Z').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-export function ForumProfile({ username, onLoad }: { username: string; onLoad?: (profile: MemberProfile) => void }) {
+const PROFILE_STATS = ['Threads', 'Replies', 'Likes received', 'Bug reports', 'Modules']
+export function ForumProfile({ username, onLoad, onFail }: { username: string; onLoad?: (profile: MemberProfile) => void; onFail?: () => void }) {
   const { session } = useCommunity(), [profile, setProfile] = useState<MemberProfile | null>(null), [error, setError] = useState('')
   const canMessage = !!session.user?.verified && session.user.username?.toLowerCase() !== username.toLowerCase()
-  useEffect(() => { let cancelled = false; void api<MemberProfile>('/forum/profiles/' + encodeURIComponent(username)).then(value => { if (!cancelled) { setProfile(value); onLoad?.(value) } }).catch(error => { if (!cancelled) setError(error.message) }); return () => { cancelled = true } }, [username, onLoad])
-  if (!profile) return <section className="configuration-section forum-profile"><p role={error ? 'alert' : 'status'}>{error || 'Loading member profile…'}</p></section>
+  useEffect(() => { let cancelled = false; void api<MemberProfile>('/forum/profiles/' + encodeURIComponent(username)).then(value => { if (!cancelled) { setProfile(value); onLoad?.(value) } }).catch(error => { if (!cancelled) { setError(error.message); onFail?.() } }); return () => { cancelled = true } }, [username, onLoad, onFail])
+  if (error) return <section className="configuration-section forum-profile"><p role="alert">{error}</p></section>
+  // The loading card has the loaded one's avatar, lines and stat labels, so the threads below start where they stay.
+  if (!profile) return <section className="configuration-section forum-profile" aria-busy="true"><span className="forum-avatar forum-skeleton-box" /><div>
+    <span className="sr-only" role="status">Loading member profile…</span>
+    <h2 aria-hidden="true"><Skeleton width="180px" /></h2>
+    <p className="forum-profile-since" aria-hidden="true"><Skeleton width="220px" /></p>
+    <dl className="forum-profile-stats" aria-hidden="true">{PROFILE_STATS.map(label => <div key={label}><dt>{label}</dt><dd><Skeleton width="28px" /></dd></div>)}</dl>
+  </div></section>
   return <><section className="configuration-section forum-profile"><ForumAvatar username={profile.username} avatar={profile.avatar} /><div>
     <h2>{profile.displayName}<ForumRoleBadge contributions={profile.contributions} role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge />}</h2>
     <p className="forum-profile-since">@{profile.username} · Member since {memberSince(profile.memberSince)}</p>
@@ -33,8 +42,8 @@ export function ForumProfile({ username, onLoad }: { username: string; onLoad?: 
 }
 
 /** A member's latest replies, shown beside the threads they started. */
-export function ForumProfileReplies({ items }: { items: ForumReplyItem[] }) {
-  return <aside className="forum-recent" aria-labelledby="forum-profile-replies-title"><div className="forum-list-heading"><h2 id="forum-profile-replies-title">Recent replies</h2><span>Latest first</span></div>{items.length ? items.map(item => <article key={item.id}><div className="forum-meta"><ForumTime value={item.created_at} relative /></div><h3><a href={'#forum/thread/' + item.thread_id + '?post=' + item.id + '&page=' + item.page}>{item.title}</a></h3><p>{item.excerpt}</p></article>) : <p className="service-note">No replies yet.</p>}</aside>
+export function ForumProfileReplies({ items }: { items?: ForumReplyItem[] }) {
+  return <aside className="forum-recent" aria-labelledby="forum-profile-replies-title"><div className="forum-list-heading"><h2 id="forum-profile-replies-title">Recent replies</h2><span>Latest first</span></div>{!items ? <ForumRecentSkeleton author={false} /> : items.length ? items.map(item => <article key={item.id}><div className="forum-meta"><ForumTime value={item.created_at} relative /></div><h3><a href={'#forum/thread/' + item.thread_id + '?post=' + item.id + '&page=' + item.page}>{item.title}</a></h3><p>{item.excerpt}</p></article>) : <p className="service-note">No replies yet.</p>}</aside>
 }
 
 /** The member's tier, points and progress to the next tier, with the rules that earn points. */
@@ -62,7 +71,6 @@ function MaintainedModules({ maintains }: { maintains: MemberProfile['maintains'
         <a href={item.href} className="module-cover" aria-label={'View ' + module.name}><ModulePreview id={module.id} /><div className="hover-info"><span>{module.description}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div></a>
         <div className="module-card-body">
           <div className="module-card-heading"><a href={item.href}>{module.name}</a></div>
-          <p className="card-description">{module.description}</p>
           <div className="card-bottom"><span>{DETAILS[module.id].family} · {machine}</span><CardStats statistics={statistics?.find(stats => stats.module_id === module.id)} /></div>
         </div>
       </article>
