@@ -1,10 +1,12 @@
 # Mute Modes measurements
 
-Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1, 0.2.2 and 0.2.3 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1, 0.2.2 and 0.2.4 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
 
-## 0.2.3: rests while MUTE MODE is OT (prepared 22 November 2026, not tested)
+## 0.2.4: rests while MUTE MODE is OT (prepared 22 November 2026, not tested)
 
 Owner waiver, 22 November 2026, for this optimization; Zac Kyoti's code and credit are unchanged.
+
+**Waits for #1652 and a base rebuild.** Zac Kyoti's 0.2.3 (#1652, `ev_trig_muted`) comes first; this branch is cut from `main` and must be brought onto 0.2.3 once it merges. A base admits Mute Modes only by the exact package SHA-256 in its table-owner records (`module-adapters/table-owners.json`, built into the base), so this package installs only on a base rebuilt with a record for it. The `runtime_units` change here is the tables-route fix of its own `Fix:` pull request; drop it from this branch once that merges.
 
 - **Why.** On an MKII (development twin of base 0.7.14, Dev17 C01, eight STATIC tracks at 126 BPM) 0.2.2 installed and used nowhere added 2.6 points to the frame interrupt's 39.4 %. The owner's rule (20 November 2026): an installed module nobody uses costs nothing.
 - **The change.** `mm_in_use` answers `ev_in_use`: nonzero while GATE or its battery shadow is not 0 (OT). While it answers 0 the base leaves `mm_voice_bind` out of `ev_voice_bind` and puts stock's bytes back at the five detours (`runtime.json` "rests"): `pre` 0x40004dc6 (every frame), `trigflag` 0x40004c72 (the frame's per-trig flag bits), `mt_trig` 0x40006844, `dt_trig` 0x4000d498 and `mt_rebind` 0x4000f4dc (every trig). The PERSONALIZE row, its tables, the ANDY pokes and `mm_restore` stay. Native (non-`MODWERK_EVENTS`) bytes are unchanged, so every author reference still matches.

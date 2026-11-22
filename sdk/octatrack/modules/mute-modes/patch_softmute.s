@@ -1241,7 +1241,7 @@ mm_bind_drop:
     moveq   #1,%d0
     rts
 
-| ev_in_use (0.2.3), asked from the base's UI tick (a task): nonzero while MUTE MODE is not OT, in
+| ev_in_use (0.2.4), asked from the base's UI tick (a task): nonzero while MUTE MODE is not OT, in
 | GATE or its battery shadow (which mm_restore copies into GATE at the first tick after install).
 | In OT every hook here passes and `pre` only holds every track, so while this answers 0 the base
 | puts stock's bytes back at the five detours (runtime.json "rests") and leaves mm_voice_bind out of

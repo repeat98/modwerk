@@ -1,6 +1,6 @@
 [
   {
-    "version": "0.2.3-experimental",
+    "version": "0.2.4-experimental",
     "date": "2026-11-22",
     "changes": [
       "Costs the Octatrack nothing while MUTE MODE is OT: the module rests until you pick another mode.",
