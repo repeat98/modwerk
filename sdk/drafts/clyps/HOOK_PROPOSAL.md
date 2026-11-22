@@ -1,7 +1,7 @@
 # RFC (draft) — Octatrack sequencer hooks for CLYPS
 **For Modwerk base maintainers and contributors. Not an approved ABI.**
 
-The implemented contract and source are available in [the candidate RFC](https://github.com/btzz5w8w5d-star/modwerk/blob/7419b7598006646dd2bbbd3f09af6f352b95ff9b/sdk/machines/octatrack/SEQUENCER_SOURCE_RFC.md). The implementation uses 63/64 for sequencing and 65 for independent modal ownership. The questions below preserve the original review context.
+The implemented contract and source are available in [the candidate RFC](https://github.com/btzz5w8w5d-star/modwerk/blob/b3184dd5e19caaae8c88e2e002c6ab5204ac27d6/sdk/machines/octatrack/SEQUENCER_SOURCE_RFC.md). The implementation uses 63/64 for sequencing and 65 for independent modal ownership. The questions below preserve the original review context.
 
 ## Why shared hooks are requested
 

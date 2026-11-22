@@ -1,8 +1,8 @@
 # Shared development base replay
 
-Use the candidate base branch integration/clyps-shared-sequencer from the contributor fork, starting with commit 7419b7598. The module checkout contains the original public engine and UI. The build resolves the handlers from the candidate registry and packages them with a versioned modal-input marker and the ABI 9 requirement. The recipe produces a local emulator package. Keep the distribution and hardware trial gates closed.
+Use the candidate base branch integration/clyps-shared-sequencer from the contributor fork, at commit b3184dd5e on cumulative head 23f41e720. The module checkout contains the original public engine and UI. The build resolves the handlers from the candidate registry and packages them with a versioned modal-input marker and the ABI 9 requirement. The recipe produces a local emulator package. Keep the distribution and hardware trial gates closed.
 
-Use Python 3.12, Node 24, m68k-elf GCC 16.2, a legally supplied Octatrack OS 1.40C, the Elekloader source pinned in the base proof, its DSP assembler, and the MKII frame emulator with interactive watch, key, knob and memory commands. The measured run uses the existing synthetic MODWERK/GATE3 test card with eight ordinary audio tracks and a clean SRC page. Its SHA-256 is 0e69834f607f27e090b34a7c6204dffbb90baf34bbcdebc3fbbf5a01eed996d2. The OS and seed project are external inputs. The source recipe below regenerates the card locally. With the original seed, the final shelved card SHA-256 is 2e204ad956098649f6c04feedc6d8fc8608d12b1b7f29c2d3b45db4ce1881465. All replay writes go to temporary card copies.
+Use Python 3.12, Node 24, m68k-elf GCC 16.2, a legally supplied Octatrack OS 1.40C, the Elekloader source pinned in the base proof, its DSP assembler, and the MKII frame emulator with interactive watch, key, knob and memory commands. The measured run uses the existing synthetic MODWERK/GATE3 test card with eight ordinary audio tracks and a clean SRC page. Its SHA-256 is 0e69834f607f27e090b34a7c6204dffbb90baf34bbcdebc3fbbf5a01eed996d2. The OS and seed project are external inputs. The source recipe below regenerates the card locally. With the original seed, the final shelved card SHA-256 for candidate b3184dd5e is 486a7937319e2a8f6747fc3e4fe1ca63137a1587888c65af37a009cd8ab500e1. All replay writes go to temporary card copies.
 
 Set BASE to the candidate repository, DRAFT to the module directory, OUT to a new scratch directory, OCTABAM to the Octabam source checkout containing tools/emu/emu_card.py, ELEK to the Elekloader checkout, EMU to the MKII emulator executable, STOCK_OS to the OS file, ELEKLOADER_DSP_ASM to the DSP assembler and FIXTURE to the synthetic card. Use absolute paths and export ELEKLOADER_DSP_ASM.
 
@@ -77,3 +77,14 @@ python3.12 -B "$DRAFT/tests/native_rows.py" "$EMU" "$OUT/base/MAIN.raw" "$OUT/ui
 python3.12 -B "$DRAFT/tests/native_profile.py" "$EMU" "$OUT/base/MAIN.raw" "$OUT/base/symbols.json" \
   "$OUT/ui.img" "$OUT/profile.json"
 ```
+
+### Matched missing-capability control
+
+In a disposable checkout of the pinned base candidate, edit the advertised feature mask in sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c. Change the single return expression `MW_DSP_KEYBUS | MODWERK_SEQ_PANEL_FEATURE` to `MW_DSP_KEYBUS`. Leave the hooks, registry width, module package and admission code intact. Run the same build recipe into a fresh output directory. Prepare a shelf with that build's proofs.json. Run the command below on that build and card. The expected refusal is decimal 259 with unchanged owner count, callback heads and pool size.
+
+```sh
+python3.12 -B "$DRAFT/tests/native_refusal.py" "$EMU" "$NEG/base/MAIN.raw" \
+  "$NEG/base/symbols.json" "$NEG/ui.img" "$NEG/refusal.json"
+```
+
+For the tick-193 queue witness, repeat both wide commands with --observe-queue and separate output names. This samples in 1 ms increments near ticks 190–195 and writes a .phase file for each role. Grade the two new JSON files with the same grade_wide.py. Keep the original wide capture and its exit status. Compare the queue flag changes independently from ordered native builder calls and timestamp writes.

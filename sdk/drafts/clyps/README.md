@@ -25,7 +25,7 @@ A Session View-inspired performance system for Octatrack's **native sequencer**,
 
 ## Emulator qualification
 
-The public candidate based on #1910 ran a T2-only change at stock wrap 90. The independent eight-lane replay matched 624 ordered events, 608 timestamp writes and 219 sampled states. A second test exercised 16 rows and every ordinary track/source combination. FUNC+LEVEL outside Meta moved the native MAIN setting from 64 to 56 and back to 64, with CUE steady. The late request was accepted at 187, published at 188 and restored musically at 282. [Qualification and limits](TESTING.md).
+The contributor candidate at b3184dd5e integrates cumulative base 23f41e720. T2 switched at stock wrap 90. The eight-lane replay matched all 624 native calls and 608 timestamp writes. Its default capture differed in one of 219 queue samples, at tick 193. A second pair sampled at 1 ms around that tick passed the unchanged oracle on all three streams. The late request was accepted and published at 187 and restored musically at 282; the historical diagnostic expects publication at 188. A separate 16-row sweep verified all 128 ordinary track/source combinations. FUNC+LEVEL outside Meta moved MAIN from 64 to 56 and back, with CUE steady. [Qualification and limits](TESTING.md).
 
 The cumulative branch still needs the proposed capability. External clock, physical hardware and T8 as a playable Master track remain outside qualification.
 

@@ -37,7 +37,7 @@ The README discovery command builds the donor C handlers, links with the reposit
 
 With independent native captures available, run tests/grade_wide.py CANDIDATE STOCK or tests/grade_boundary.py early|late CANDIDATE STOCK from this directory. In the archived protected captures the fixed eight-lane pair passes all three streams and the truncation controls; early passes; late passes its musical comparisons and still fails the strict pending-state diagnostic. Those are regrades of existing captures. New runs on the shared base require both callbacks and modal-input admission.
 
-## Current shared-development candidate
+## First shared-development candidate (7419b7598)
 
 The base candidate at 7419b7598 and the public source from c3c516e8a completed a fresh native A01/T2→A02 replay. Both executable identities are recorded in evidence/shared-base.json. The SRC key path reported QUEUED, then PLAY. Stock scheduled the change at wrap 90. All eight audio lanes were observed before and after that wrap. The other seven kept A01 and the MIDI builder kept its stock input. All 384 ordered audio/MIDI calls and 400 relative timestamp writes matched the stock global-pattern composite. STOP canceled a second pending request. ARR displayed the committed sources, bank and Part bytes matched, callback rows returned to their starting values and the largest free extent returned to 786432 bytes.
 
@@ -60,3 +60,13 @@ The measured three-second dense window had all eight audio builders selecting A0
 The native HOME editing test inserted the T2 step-6 trig and held it while changing AMP encoder A. Stock and CLYPS produced identical hashes before and after the p-lock and after leaving the editor. Parts stayed intact. A separate boot confirmed stock popup priority. Editing a foreign source remains interlocked.
 
 The scene-selection fixture changed A and B independently using each physical scene button and a trig, read the two active Part scene bytes after each gesture and restored both. The five pairs matched with and without CLYPS. Run native_rows.py with the same arguments as the Arranger check and use --scene-select in place of --arranger-recovery.
+
+## Current candidate on cumulative 23f41e720
+
+Candidate 18e28a172 merged the cumulative frame-budget update. Candidate b3184dd5e subsequently integrated the upstream pricing-curve and measurement-script changes through 23f41e720. Its freshly built MAIN, symbol map and configuration digest matched the tested executable byte for byte. The code/data size, BSS, relocations and CLYPS package digest are unchanged. The new MAIN and negative control identities are in evidence/shared-base-refresh.json. Both vertical-slice traces and the missing-feature receipt reproduced byte for byte. The 16-row sweep and the stock Arranger after OFF passed. Six profiling windows again had zero skips and zero sheds. The maxima at the two sequencer sites were unchanged.
+
+The default eight-lane capture matched 624 ordered calls, 608 relative timestamp writes and 218 of 219 sampled states. At tick 193 the candidate snapshot retained queue entries for T2–T7 while stock retained only T3. The paired 1 ms near-boundary observer read the T3-only flag on both runs at 193. The same unmodified grader accepted the full refined pair and rejected each truncated stream. Keep both results.
+
+The early boundary passed its strict grader. In the late case the stock and candidate musical comparison passed for all 848 calls, 816 writes and 298 ticks. The request entered module state at +1 ms of tick 187; the diagnostic published it at +5 ms of that same tick. The T2 builder first used home again at 282. The strict diagnostic expectation of 188 failed. The previous base's +16 ms result remains in the preceding evidence. The input, diagnostic and builder observations are separate.
+
+Track Solo (both orders), panel, Grain, POLY8, VECTOR, stock popup priority, native Scene A/B parameter changes and the home trig/p-lock comparison repeated on the refreshed executable. The FLEX stem test passed. Both native STATIC controls again measured T2 peak 2117 before selection and 2337 after selection. The prelaunch-silence assertion failed in both. No physical test was performed.
