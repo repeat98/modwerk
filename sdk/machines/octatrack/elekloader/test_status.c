@@ -456,7 +456,7 @@ int main(void)
       CHECK(open == MEMORY && pick_load == 1300u && strstr(shows(), "|MODS|120%|"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
-      budget_on = 0, frame_newest = 0, mw_stock_reserve = 1060u; }
+      budget_on = 0, frame_newest = 0, mw_stock_reserve = 880u; }
     /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
     dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
     dl_residency_words[1] = 1508;
@@ -512,7 +512,7 @@ int main(void)
     int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old);
     void modwerk_status_cpu_entered(uint32_t mille), modwerk_status_cpu_left(uint32_t mille);
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
-    CHECK(mw_frame_line == 1200u && mw_stock_reserve == 1060u && mw_track_stock == 70u);
+    CHECK(mw_frame_line == 1200u && mw_stock_reserve == 880u && mw_track_stock == 70u);
     mw_frame_line = 500u, mw_stock_reserve = 0; /* the figures below in round numbers, the reserve tried on its own */
     { uint32_t before = mw_cpu_refusals;
       transport_stopped = 1, frame_newest = 400u;
@@ -653,7 +653,7 @@ int main(void)
       test_machines_booked = 0, mw_stock_reserve = 0, frame_adjust = 0;
       memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, sizeof live);
       frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
-    mw_frame_line = 1200u, mw_stock_reserve = 1060u;
+    mw_frame_line = 1200u, mw_stock_reserve = 880u;
     /* A reading: the longest frame since the last, per mille of a frame, and the guard's record cleared; a reading with
      * no frame keeps what it had. */
     { mw_frame_window = 28735u; frame_note(0);                          /* 60 % of 47,891 counts */
@@ -673,8 +673,8 @@ int main(void)
       play_readings = 0;
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       CHECK(modwerk_status_frame_load() == 200u);
-      mw_stock_reserve = 1060u;
-      CHECK(modwerk_status_frame_load() == 1060u);                       /* a light Part: the reserve */
+      mw_stock_reserve = 880u;
+      CHECK(modwerk_status_frame_load() == 880u);                        /* a light Part: the reserve */
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266, 450);

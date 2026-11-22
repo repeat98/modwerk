@@ -463,11 +463,14 @@ extern uint8_t modwerk_test_live_fx[16];
  * that is more than the unit measures. Owner, 22 November 2026: Tape Echos placed on an empty pattern, then trigs and
  * samples added, ran the unit past its frame. */
 #ifndef MW_STOCK_RESERVE
-#define MW_STOCK_RESERVE 1060u
+#define MW_STOCK_RESERVE 880u
 #endif
-/* 106 %: eight sample tracks playing with all eight delays awake (owner's MKII, 22 November 2026: 105.2 to 105.6 %; the
- * owner chose it). LFOs and p-locks on all of them reached 113 %: past the reserve, the guard drops module renders
- * first. A machine takes a track that would otherwise play a sample, so it is booked net of that track's share. */
+/* 88 %: a medium project (owner, 22 November 2026: "refusals should be rare with empty and medium sized projects,
+ * heavy projects and the heavy cpu mods I don't care that much about"): on the owner's MKII four to six trigging
+ * tracks, two of them samples, played at 75 to 79 %, and eight sample tracks with their delays awake at 105 %, past the
+ * reserve, where the guard drops module renders first. The set's `stock` normally carries it (frame-costs.json); this
+ * is the figure without one. A machine takes a track that would otherwise play a sample, so it is booked net of that
+ * track's share. */
 #ifndef MW_TRACK_STOCK
 #define MW_TRACK_STOCK 70u
 #endif
