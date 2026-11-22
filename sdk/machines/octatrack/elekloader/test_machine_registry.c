@@ -164,8 +164,9 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
 static unsigned box_calls, box_track = 99; static const char *box_label;
 void modwerk_status_machine_refused(unsigned track, const char *label) { ++box_calls, box_track = track, box_label = label; }
 static unsigned cpu_boxes, cpu_box_track = 99; static uint32_t cpu_box_booked, cpu_box_add;
-void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
-{ (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add; }
+static uint32_t cpu_box_allowed;
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
+{ (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add, cpu_box_allowed = allowed; }
 /* status.c's frame judge: the share now (cpu_now) with the pick on top and what it replaces off, against the line. */
 static uint32_t cpu_now, hot_line = 500u; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add, hot_box_gone;
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
@@ -519,7 +520,7 @@ static void check_cpu_budget(void)
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
     CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */
-    CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 800 && cpu_box_add == 266);
+    CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 360 && cpu_box_add == 120 && cpu_box_allowed == 450); /* per mille of a frame */
     CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1);                           /* nor the dear one */
     CHECK(mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes + 2);            /* the same machine again asks nothing */
     CHECK(mw_assign(part0(), 2, 6) == (unsigned)-1);                           /* its own 12 back, 30 more: 54 */

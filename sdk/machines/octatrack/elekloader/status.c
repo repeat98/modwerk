@@ -475,6 +475,19 @@ volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame *
                   mw_track_stock = MW_TRACK_STOCK;     /* one sample track's share: (98.7 - 40.8 %) / 8 */
 /* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
+int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake);
+/* The set's measured stock figures take the compiled ones' place (frame-costs.json's `stock`, as pseudo module ids), so
+ * a base whose stock gets cheaper gives modules more room with a new measurement and no new base. */
+#define STOCK_RESERVE_ID 0xfffffff0u
+#define TRACK_STOCK_ID 0xfffffff1u
+#define FRAME_LINE_ID 0xfffffff2u
+static uint32_t tuned(uint32_t id, uint32_t compiled)
+{
+    uint32_t value, unused;
+    return modwerk_status_module_cost(id, &value, &unused) && value ? value : compiled;
+}
+static uint32_t frame_line(void) { return tuned(FRAME_LINE_ID, mw_frame_line ? mw_frame_line : 1u); }
+static uint32_t stock_reserve(void) { return tuned(STOCK_RESERVE_ID, mw_stock_reserve); }
 static uint32_t effect_cost(unsigned id, int first, int waking);
 static int runs_elsewhere(unsigned slot, unsigned id);
 /* The module effects the live slots run but slot `skip` (16: none), each by its `each` and the first of a module by its
@@ -492,7 +505,7 @@ static uint32_t effects_booked(unsigned skip)
 }
 static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
 {
-    return mw_stock_reserve + modwerk_machine_frame_booked(machine_skip, mw_track_stock) + effects_booked(effect_skip);
+    return stock_reserve() + modwerk_machine_frame_booked(machine_skip, tuned(TRACK_STOCK_ID, mw_track_stock)) + effects_booked(effect_skip);
 }
 uint32_t modwerk_status_frame_load(void)
 {
@@ -510,6 +523,7 @@ extern volatile uint32_t dl_refusal[8];
 static unsigned refused_left, refused_reason, refused_core, refused_machine, refused_elsewhere;
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
+static uint32_t refused_allowed, refused_meter; /* CPU FULL: the modules' allowance (per mille of a frame), the meter then */
 static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
 /* Each core's code words before the pick: what it took is the change, so a second instance on the core or a module
@@ -1169,9 +1183,9 @@ static void memory_box(unsigned char *frame)
         label(23u, 26u, "DSP"), share_bar(frame, 45u, 26u, 40, 6, dsp, dsp_part), plus(89u, 26u, dsp_part, 0);
         label(23u, 34u, "MEM"), share_bar(frame, 45u, 34u, 40, 6, mem, mem > before ? mem - before : 0);
         plus(89u, 34u, mem > before ? mem - before : before - mem, mem < before);
-        /* CPU: the longest frame against the line where the frame guard starts dropping renders */
-        const uint32_t cpu = share(pick_load, mw_frame_line);
-        label(23u, 42u, "CPU"), bar(frame, 45u, 42u, 40, 6, cpu, 0), percent(89u, 42u, cpu);
+        /* MODS: what modules use of their allowance (the line less the stock reserve), as CPU FULL gives it */
+        const uint32_t line = frame_line(), reserve = stock_reserve(), allowed = line > reserve ? line - reserve : 1u;
+        label(23u, 42u, "MODS"), bar(frame, 45u, 42u, 40, 6, share(pick_load > reserve ? pick_load - reserve : 0u, allowed), 0), percent(89u, 42u, allowed);
         return;
     }
     label((unsigned)(64 - TEXT_WIDTH(FONT, -1, "MEMORY USED") / 2), 15u, "MEMORY USED");
@@ -1228,19 +1242,23 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
 }
 /* machine_registry.c's CPU budget: the track's machine would take the Part past what the frame interrupt carries. The
  * same box, as CPU FULL: what the Part's machines book and what this one adds, per mille of the allowance. */
-static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t booked, uint32_t add)
+/* CPU FULL, per mille of a frame: what modules use of their allowance, what the pick adds, the allowance. The box gives
+ * those and the CPU meter as it reads (owner, 22 November 2026: a bar past 100 % read as the CPU already overloaded). */
+static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t allowed)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
-    refused[0] = 4u, refused[1] = slot, refused[4] = add, refused_booked = booked;
+    refused[0] = 4u, refused[1] = slot, refused[4] = add, refused_booked = used;
+    refused_allowed = allowed ? allowed : 1u, refused_meter = modwerk_status[CPU];
     refused_machine = machine, refused_reason = 4u;
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
     open = REFUSED, refused_left = 180u;
 }
-void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+/* machine_registry.c's per-Part price allowance, per mille of a frame. */
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
 {
-    cpu_refusal_box(track, 1u, label, booked, add);
+    cpu_refusal_box(track, 1u, label, booked, add, allowed);
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 /* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet, back from the frame a scene
@@ -1303,13 +1321,14 @@ int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
 {
     frame_adjust -= (int32_t)gone;
-    uint32_t measured = measured_load() + add, line = mw_frame_line ? mw_frame_line : 1u;
+    uint32_t measured = measured_load() + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
     frame_adjust += (int32_t)gone;
-    uint32_t net = machine ? (add > mw_track_stock ? add - mw_track_stock : 0u) : add; /* a machine in a sample's place */
+    uint32_t net = machine ? (add > track_stock ? add - track_stock : 0u) : add; /* a machine in a sample's place */
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    cpu_refusal_box(slot, machine, label, (load - (load > add ? add : load)) * 1000u / line, add * 1000u / line);
+    uint32_t reserve = stock_reserve(), before = load > add ? load - add : 0u;
+    cpu_refusal_box(slot, machine, label, before > reserve ? before - reserve : 0u, add, line > reserve ? line - reserve : 1u);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1393,8 +1412,9 @@ static void refused_box(unsigned char *frame)
         while (*t) *e++ = *t++;
         *e++ = '+', e = number(e, (refused[4] + 5u) / 10u), *e++ = '%', *e = 0;
         label(23u, 26u, need);
-        label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked + refused[4], refused[4]), percent(89u, 34u, refused_booked + refused[4]);
-        label(23u, 42u, "CHANGE ONE FIRST");
+        const uint32_t used = (refused_booked + refused[4]) * 1000u / refused_allowed, part = refused[4] * 1000u / refused_allowed;
+        label(23u, 34u, "MODS"), share_bar(frame, 45u, 34u, 40, 6, used, part), percent(89u, 34u, refused_allowed);
+        label(23u, 42u, "CPU NOW"), percent(58u, 42u, refused_meter);
         return;
     }
     const int32_t add = (int32_t)refused[4];

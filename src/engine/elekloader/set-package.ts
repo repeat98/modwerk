@@ -7,13 +7,19 @@ import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with {
 /** v2's table entry: a module's package id and what it adds to the longest frame, per mille: each further instance
  * (`use`), and on top for the Part's first (`wake`). */
 export interface FrameCost { module: number; use: number; wake: number }
-/** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further) as v2 sends
- * them, by package id ascending. */
-export function frameCostTable(costs: Record<string, { first: number; each: number }> = frameCosts.costs): FrameCost[] {
-  return Object.entries(costs).map(([id, cost]) => ({
+/** The base's own figures travel as these pseudo module ids (status.c), after every package id. */
+export const STOCK_IDS = { reserve: 0xfffffff0, trackStock: 0xfffffff1, line: 0xfffffff2 } as const
+type Stock = { reserve: number; trackStock: number; line: number }
+/** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further, and the base's
+ * `stock`) as v2 sends them, by id ascending. */
+export function frameCostTable(costs: Record<string, { first: number; each: number }> = frameCosts.costs, stock: Stock | null = frameCosts.stock): FrameCost[] {
+  const modules = Object.entries(costs).map(([id, cost]) => ({
     module: new DataView(sha256(new TextEncoder().encode(id)).buffer).getUint32(0), // build.py module_id()
     use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
-  })).sort((a, b) => a.module - b.module)
+  }))
+  if (modules.some(m => m.module >= STOCK_IDS.reserve)) throw new Error('A module id collides with the base\'s own figures.')
+  const own = stock ? (['reserve', 'trackStock', 'line'] as const).map(key => ({ module: STOCK_IDS[key], use: Math.round(stock[key] * 10), wake: 0 })) : []
+  return [...modules.sort((a, b) => a.module - b.module), ...own]
 }
 /** set_package.h RUNTIME_SET_COSTS. */
 export const SET_COSTS = 128
@@ -38,7 +44,7 @@ export function encodeModuleSet(base: string, baseline: string, packages: readon
   }
   if (costs) {
     if (costs.length > SET_COSTS || costs.some((c, i) => !(c.module > (i ? costs[i - 1].module : 0)) || c.module > 0xffffffff ||
-        ![c.use, c.wake].every(n => Number.isInteger(n) && n >= 0 && n <= 1000)))
+        ![c.use, c.wake].every(n => Number.isInteger(n) && n >= 0 && n <= 2000)))
       throw new Error('The module set\'s frame costs are invalid.')
     bytes += 4 + 8 * costs.length
     if (bytes > UPLOAD_MAX_BYTES) throw new Error('The module set exceeds the upload limit.')

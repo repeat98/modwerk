@@ -8,7 +8,7 @@
  * (module u32, in use u16, wake u16) entries: what each measured catalogue module adds
  * to the frame interrupt's share, per mille of a frame, as the site measured it on a
  * unit (sdk/machines/octatrack/frame-costs.json): on a track or slot it takes, and once
- * when a resting module wakes. Each at most 1000 (0 0: measured to cost nothing), modules in ascending
+ * when a resting module wakes. Each at most 2000 (0 0: measured to cost nothing), modules in ascending
  * order. A base that took v2 replaces its table with these; v1 leaves it as it was.
  */
 #ifndef MODWERK_SET_PACKAGE_H
@@ -49,7 +49,7 @@ static inline int runtime_set_parse(const uint8_t *data, uint32_t bytes,
         if (n > RUNTIME_SET_COSTS || n*8u > bytes-at) return 0;
         for (uint32_t k=0, last=0; k<n; ++k, at += 8u) {
             uint32_t module = runtime_set_u32(data+at), use = (uint32_t)data[at+4]<<8 | data[at+5], wake = (uint32_t)data[at+6]<<8 | data[at+7];
-            if (module <= last || use > 1000u || wake > 1000u) return 0;
+            if (module <= last || use > 2000u || wake > 2000u) return 0;
             last = module;
         }
     }

@@ -62,7 +62,7 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
 void modwerk_dsp_source_release(unsigned track);
 void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
-void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed); /* status.c: the CPU FULL box, per mille of a frame */
 /* status.c: 1, with the CPU FULL box, when the frame share past this pick would reach the line; per mille of a frame */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake); /* status.c: the site's measured costs */
@@ -74,8 +74,8 @@ __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t modu
 __attribute__((weak)) void modwerk_dsp_source_release(unsigned track) { (void)track; }
 __attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const char *label) { (void)track; (void)label; }
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
-__attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
-{ (void)track; (void)label; (void)booked; (void)add; }
+__attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
+{ (void)track; (void)label; (void)booked; (void)add; (void)allowed; }
 __attribute__((weak)) int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
 { (void)slot; (void)machine; (void)label; (void)add; (void)gone; return 0; }
 __attribute__((weak)) int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake) { (void)module; (void)use; (void)wake; return 0; }
@@ -248,11 +248,10 @@ static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, 
 }
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
-static uint32_t cpu_mille(unsigned percent) { return mw_cpu_allowance ? percent * 1000u / mw_cpu_allowance : 1000u; }
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
 {
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
-    modwerk_status_cpu_refused(track, who->label, cpu_mille(booked), cpu_mille(cpu_price(who)));
+    modwerk_status_cpu_refused(track, who->label, 10u * booked, 10u * cpu_price(who), 10u * mw_cpu_allowance);
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
  * Their tracks keep their 12 bytes from stock's validator while the machine is absent too: the boot's battery

@@ -66,7 +66,7 @@ describe('one module-set offer', () => {
     expect([view.getUint32(at + 4), view.getUint16(at + 8), view.getUint16(at + 10)]).toEqual([5, 77, 4])
     expect([view.getUint32(at + 12), view.getUint16(at + 16), view.getUint16(at + 18)]).toEqual([0x9f482bb9, 114, 0])
     expect(data.length).toBe(at + 4 + 16)
-    for (const bad of [[costs[1], costs[0]], [costs[0], costs[0]], [{ module: 5, use: 1, wake: 1001 }], [{ module: 5, use: 1001, wake: 0 }], [{ module: 0, use: 1, wake: 0 }], [{ module: 5, use: 1.5, wake: 0 }]])
+    for (const bad of [[costs[1], costs[0]], [costs[0], costs[0]], [{ module: 5, use: 1, wake: 2001 }], [{ module: 5, use: 2001, wake: 0 }], [{ module: 0, use: 1, wake: 0 }], [{ module: 5, use: 1.5, wake: 0 }]])
       expect(() => encodeModuleSet(base, baseline, [one], bad)).toThrow(/frame costs/)
     expect(() => encodeModuleSet(base, baseline, [one], Array.from({ length: SET_COSTS + 1 }, (_, i) => ({ module: i + 1, use: 1, wake: 0 })))).toThrow(/frame costs/)
     expect(new DataView(encodeModuleSet(base, baseline, [one]).buffer).getUint16(4)).toBe(1) // v1 without costs
@@ -77,6 +77,8 @@ describe('one module-set offer', () => {
     expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 37, wake: 93 }) // tapeecho: each 3.7, first 13.0
     expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 181, wake: 0 }) // syntiz: one reading, first = each
     expect(frameCostTable({ x: { first: 1, each: 2 } })[0].wake).toBe(0) // never below each
+    expect(table.slice(-3)).toEqual([{ module: 0xfffffff0, use: 1060, wake: 0 }, { module: 0xfffffff1, use: 70, wake: 0 }, { module: 0xfffffff2, use: 1200, wake: 0 }])
+    expect(frameCostTable({ x: { first: 1, each: 1 } }, null)).toHaveLength(1) // no stock: the base's compiled figures
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0 }])).not.toThrow() // measured free
     const record = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))

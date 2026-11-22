@@ -449,11 +449,11 @@ int main(void)
       frame_newest = 600u;                                             /* stopped, half the line (1200) */
       modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
       CHECK(open == MEMORY && budget_slot == 13 && pick_load == 600u);
-      CHECK(strstr(shows(), "|CPU|50%|") && !strstr(said, "POOL"));
+      CHECK(strstr(shows(), "|MODS|120%|") && !strstr(said, "POOL"));          /* the modules' allowance: line less reserve */
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       frame_newest = 1300u;                                            /* past the line: a full bar, no more */
       modwerk_test_live_fx[13] = 27; ++dl_selection_completed; memory_tick();
-      CHECK(open == MEMORY && pick_load == 1300u && strstr(shows(), "|CPU|100%|"));
+      CHECK(open == MEMORY && pick_load == 1300u && strstr(shows(), "|MODS|120%|"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
       budget_on = 0, frame_newest = 0, mw_stock_reserve = 1060u; }
@@ -499,10 +499,11 @@ int main(void)
     dl_refusal[0] = 1, dl_refusal[1] = 9; CHECK(modwerk_status_refused(3) && !refused_machine); /* an effect's box clears the machine mark */
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     /* The CPU budget's refusal: the same box as CPU FULL on "Tn SRC", for three seconds, never over a page. */
-    void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add);
-    modwerk_status_cpu_refused(2, "Poly8", 800, 266);
-    CHECK(open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 2 && refused_booked == 800 && refused[4] == 266);
-    CHECK(!strcmp(refused_name, "POLY8"));
+    void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed);
+    modwerk_status[CPU] = 640u;
+    modwerk_status_cpu_refused(2, "Poly8", 360, 120, 450);                /* 36 % of 45 booked, POLY8's 12 % more */
+    CHECK(open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 2 && refused_booked == 360 && refused[4] == 120);
+    CHECK(!strcmp(refused_name, "POLY8") && strstr(shows(), "POLY8 NEEDS +12%|MODS|45%|CPU NOW|64%|"));
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     CHECK(open == CLOSED);
     /* Every module pick is judged by the frame share the unit would play at (mw_frame_line): a machine's
@@ -518,8 +519,8 @@ int main(void)
       CHECK(modwerk_status_frame_load() == 400u);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 99u, 0) && open == CLOSED);   /* 49.9 %: passes */
       CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 120u, 0) && open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 5);
-      CHECK(refused_booked == 800u && refused[4] == 240u && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 5);
-      CHECK(!strcmp(refused_name, "AMIGA") && strstr(shows(), "AMIGA NEEDS +24%|CPU|104%|CHANGE ONE FIRST|"));
+      CHECK(refused_booked == 400u && refused[4] == 120u && refused_allowed == 500u && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 5);
+      CHECK(!strcmp(refused_name, "AMIGA") && strstr(shows(), "AMIGA NEEDS +12%|MODS|50%|CPU NOW|64%|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(open == CLOSED);
       /* A swap: what leaves comes off the kept figure, never off a stopped reading (which holds no renders). */
@@ -527,7 +528,7 @@ int main(void)
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 70u, 30u) && modwerk_status_pick_busy(5, 1, "Amiga", 70u, 0));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_played = 0, frame_newest = 600u;
-      CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 0, 300u) && refused_booked == 1200u); /* past the line already */
+      CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 0, 300u) && refused_booked == 600u); /* past the line already */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_newest = 0; }
     /* The kept figure: after STOP, the share of the last four seconds played, until four more replace it. */
@@ -599,8 +600,8 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(12, 27, 0) && frame_adjust == 200);  /* a further one: its each */
       modwerk_test_live_fx[12] = 27;
       CHECK(modwerk_status_effect_busy(13, 27, 0) == 1 && open == REFUSED && refused[0] == 4 && refused[1] == 13 && !refused_machine);
-      CHECK(refused_booked == 960u && refused[4] == 160u && mw_cpu_refusal_tracks & 1u << 5 && frame_adjust == 200);
-      CHECK(strstr(shows(), "FX7 NEEDS +16%|CPU|112%|"));
+      CHECK(refused_booked == 480u && refused[4] == 80u && mw_cpu_refusal_tracks & 1u << 5 && frame_adjust == 200);
+      CHECK(strstr(shows(), "FX7 NEEDS +8%|MODS|50%|CPU NOW|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(!modwerk_status_effect_busy(12, 8, 27) && frame_adjust == 120 && open == CLOSED); /* one of two leaves: each */
       modwerk_test_live_fx[12] = 8;
@@ -624,7 +625,7 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 120); /* 30 % + its first */
       modwerk_test_live_fx[11] = 27;
       CHECK(modwerk_status_frame_load() == 420u);                         /* the reserve with Tape Echo booked */
-      CHECK(modwerk_status_effect_busy(12, 27, 0) == 1 && refused_booked == 840u && refused[4] == 160u); /* 42 + 8 */
+      CHECK(modwerk_status_effect_busy(12, 27, 0) == 1 && refused_booked == 120u && refused[4] == 80u); /* 42 + 8: 12 of the 20 % modules have */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       test_machines_booked = 50u;
       CHECK(modwerk_status_frame_load() == 470u);                         /* the Part's machines too */
@@ -633,8 +634,21 @@ int main(void)
       /* A machine takes a track that would play a sample: against the reserve it adds what it costs less that share. */
       test_machines_booked = 0, frame_newest = 100u, frame_adjust = 0, memset(modwerk_test_live_fx, 0, 16);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 260u, 0) && open == CLOSED);  /* 30 + 26 - 7 = 49 % */
-      CHECK(modwerk_status_pick_busy(5, 0, "Echo", 200u, 0) && refused_booked == 600u); /* an effect: 30 + 20 % */
+      CHECK(modwerk_status_pick_busy(5, 0, "Echo", 200u, 0) && !refused_booked && refused[4] == 200u); /* an effect: 30 + 20 % */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      /* The set's measured stock figures take the compiled ones' place: a base whose stock got cheaper gives modules
+       * more room with a new measurement and no new base. */
+      { uint8_t t[24] = {0};
+        memcpy(t, table, 8);
+        t[8] = t[9] = t[10] = 0xff, t[11] = 0xf0, t[12] = 0x01, t[13] = 0x90;  /* reserve 40 % */
+        t[16] = t[17] = t[18] = 0xff, t[19] = 0xf2, t[20] = 0x02, t[21] = 0x58; /* line 60 % */
+        modwerk_machine_frame_costs(t, 3);
+        frame_newest = 100u, frame_adjust = 0, test_machines_booked = 50u, modwerk_test_live_fx[11] = 27;
+        CHECK(modwerk_status_frame_load() == 570u);                       /* 40 % + machines 5 % + Tape Echo's first */
+        CHECK(!modwerk_status_pick_busy(5, 0, "Echo", 20u, 0) && open == CLOSED); /* 59 % under the set's 60 % line */
+        modwerk_machine_frame_costs(table, 1);
+        CHECK(modwerk_status_pick_busy(5, 0, "Echo", 40u, 0));          /* the compiled 30 % and 50 % again: 51 % */
+        for (unsigned i = 0; i < 180u; ++i) memory_tick(); }
       test_machines_booked = 0, mw_stock_reserve = 0, frame_adjust = 0;
       memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, sizeof live);
       frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
@@ -662,7 +676,7 @@ int main(void)
       CHECK(modwerk_status_frame_load() == 1060u);                       /* a light Part: the reserve */
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
-    modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
+    modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266, 450);
     CHECK(open == SHOWN);
     CHECK(strstr(shows(), "MODWERK BASE 0.7|"));                       /* the status page names the base by its version */
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
