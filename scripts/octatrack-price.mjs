@@ -166,6 +166,14 @@ if (import.meta.filename === process.argv[1]) {
       return /^[0-9a-f]{8}$/.test(word) ? parseInt(word, 16) : undefined
     } catch { return undefined }
   }
+  // The trig masks of a pattern of the current bank (1 to 16; machine_registry.c's PATTERN_STRIDE and PATTERN_TRACK): a module
+  // that writes trigs (VECTOR) leaves them after its trial's rollback, and the next reading would measure them as stock.
+  const trigMasks = async pattern => {
+    const bank = parseInt((await send('mem:0x46c82456:4')).trim(), 16), masks = []
+    for (let track = 0; track < 8; track++) masks.push((await send('mem:0x' + (bank + (Number(pattern) - 1) * 0x8ed8 + track * 0x91a).toString(16) + ':8')).trim())
+    return masks.join(' ')
+  }
+  const patternTrigs = async () => (await trigMasks(args['pick-pattern'])) + ' | ' + (await trigMasks(args['measure-pattern']))
   // --curve: the module on 1, 2, 3… of these empty tracks (their slots for an effect), each picked on the empty pattern
   // (--pick-pattern, where admission has room) and read on the busy one (--measure-pattern): what the longest frame gains.
   const curve = async (row, result) => {
@@ -230,7 +238,7 @@ if (import.meta.filename === process.argv[1]) {
     const packagePath = row.file ?? resolve(root, 'public', row.path)
     const packageSha256 = createHash('sha256').update(readFileSync(packagePath)).digest('hex')
     if (row.sha256 && packageSha256 !== row.sha256) throw new Error('Package SHA-256 differs from the release catalogue for ' + row.id)
-    const before = await measure(), result = { id: row.id, version: row.version, packageSha256, before }
+    const trigs = await patternTrigs(), before = await measure(), result = { id: row.id, version: row.version, packageSha256, before }
     const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', packagePath, '--seconds', '600', '--socket', args.share])
     let log = ''; trial.stdout.on('data', chunk => { log += chunk }); trial.stderr.on('data', chunk => { log += chunk })
     const ended = new Promise(done => trial.on('exit', done))
@@ -269,6 +277,8 @@ if (import.meta.filename === process.argv[1]) {
     trial.kill('SIGINT') // rolls the trial back
     await ended
     result.rolledBack = /rolled back/.test(log) || Boolean(result.refused) // a refused module was never in
+    if ((await patternTrigs()) !== trigs) result.restore = 'it wrote trigs into pattern ' + args['pick-pattern'] + ' or ' + args['measure-pattern'] +
+      ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'
     results.push(result)
     // Written after every module: a unit that hangs on the next one must not take the finished readings with it.
     if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, seconds, slot: args.slot, measuredAt, results }, null, 1) + '\n')
