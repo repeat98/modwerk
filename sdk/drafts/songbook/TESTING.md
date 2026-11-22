@@ -112,7 +112,7 @@ before on `7b4329e6…` (LOAD back on book 2 in arranger mode, book 1 intact), t
 | FUNC + PLAY clear in the list, and its undo | stock's list clear sets no changed bit | the developer's MKI, 06f593e3 | pass: cleared stayed cleared, undo restored |
 | A trial of another build over the kept one, switching during it | the kept copy came back with stale memory on an early build | the developer's MKI, 06f593e3 | pass: the kept copy reread its record |
 | Beside USB AUDIO (installed with base 0.7.13) | both kept in one set, sharing the base | the developer's MKI, 08d0833a | pass: kept together, no crash, stall or freeze |
-| Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI on an earlier build: book 1 then held book 2, the load fault since fixed | not run on the fixed build yet |
+| Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI, package 08d0833a removed on book 1, then a power cycle (an earlier build had left book 2 in book 1, the load fault since fixed) | pass: the stock arrangements were book 1's |
 | Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
 | A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |
 | A new project (ev_project_new outside a load) | must reset the books, not keep a load's return | host test (verify.py) | not run on a unit |
