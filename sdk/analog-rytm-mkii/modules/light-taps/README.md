@@ -18,11 +18,11 @@ Press GLOBAL, scroll past SYSTEM to the module's row, and press YES:
 
 ## Usage
 
-1. Press GLOBAL and scroll down past SYSTEM to **LIGHT TAPS: OFF**.
-2. Press YES: the row reads **LIGHT TAPS: ON**. Leave the menu.
-3. Tap a pad lightly with a fingertip: it plays as a soft hit. With VELOCITY TO VOL on, the tap is quiet; with it off, it plays at the sound's full level, as every hit does.
-4. Hit the same pad harder: it plays with the pads' own velocity, as on stock.
-5. To turn it off, press YES on the row again.
+1. Press GLOBAL and scroll down past SYSTEM to LIGHT TAPS: OFF.
+2. Press YES: the row reads LIGHT TAPS: ON. Leave the menu.
+3. Tap a pad lightly with a fingertip: it plays as a soft hit. Hit it harder: it plays with the pads' own velocity, as on stock.
+
+With VELOCITY TO VOL on, a light tap is quiet; with it off, it plays at the sound's full level, as every hit does. To turn the module off, press YES on the row again.
 
 A light tap plays the sound like any hit: the amp, the filter envelope, velocity modulation, live recording and MIDI out all see a strike of velocity 8. A sound whose filter envelope or velocity modulation needs a firmer hit to open may stay silent on a light tap; that is the sound's own setting.
 
@@ -59,4 +59,8 @@ GPL-3.0-or-later; see LICENSE. An original module by @filefolder. Elekloader's G
 
 ## Screens and audio
 
-Screenshots of the GLOBAL menu row are still to be taken on the unit.
+Emulator captures of build LT02 in rytm-emu (screen documentation only; `media/capture.json` has the plan):
+
+![LIGHT TAPS: OFF below SYSTEM](media/light-taps-off.png)
+
+![LIGHT TAPS: ON after YES](media/light-taps-on.png)

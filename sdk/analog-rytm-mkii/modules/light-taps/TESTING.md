@@ -6,7 +6,9 @@ Evidence tier: **none** until the developer's run on this module's own build is 
 
 - 17 November 2026, 0.1.0-experimental: compiled with Debian's `m68k-linux-gnu-gcc` and linked with core-ar2 0.7 by `scripts/link-image.mjs` against stock OS 1.74 (the stock file's hash matches Modwerk's identity). Build LT01, sha256 `49bcc1114214513c80cbf0bef857fac6ea27387246a9117304d4fb1da347e314`; `light_taps_enabled` is 1 bit of project storage at bit 0 (layout 0x2ded6b87). `src/main.c` compiles with `-Wall -Wextra` and no warnings.
 - `npm run module:doctor -- light-taps`: green but "browser builder" (no catalog pin until the pull request is open) and the board claim (the board was not reachable).
-- Not run in rytm-emu.
+- 22 November 2026, after merging main: build LT02, linked on the plain Modwerk Rytm base (`modwerk-base-analog-rytm-mkii-1c14b6b0`), the variant a set with Light Taps alone gets; sha256 `bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8`. The module's source is LT01's; the base under it differs. Memory: `ramSpare` 118836 for the base alone, 117912 with Light Taps (924 bytes); `fastSpare` 0 both.
+- 22 November 2026, emulator (rytm-emu 2ac0f1f, dtboot), build LT02, cold boot on a fresh card: GLOBAL, then DOWN past SYSTEM, shows **LIGHT TAPS: OFF** as the menu's last row; YES turns it to **LIGHT TAPS: ON**. Emulator result, screen only (the screenshots in `media/`, plan in `media/capture.json`): not hardware evidence, and the emulator plays no pad strikes.
+- `npm run test:procedure`: stops at step 1 until the package is pinned, which needs the pull request (see Build above).
 
 ## From the Pad Thresh experiments
 
@@ -20,7 +22,9 @@ The behaviour comes from Pad Thresh, a diagnostic never submitted (branch `pad-p
 
 ## Hardware
 
-Not tested yet on this module's build. Results below are recorded only as the developer reports them.
+Results below are recorded only as the developer reports them.
+
+- 22 November 2026, build LT01 (core-ar2 0.7 under the module, not the plain base), @filefolder's Rytm MKII, OS 1.74: "I've tested it and it all seems to work" (reported), against the list below. The final build, from the pinned package, is still to be tested.
 
 To do on the unit, with the build named:
 

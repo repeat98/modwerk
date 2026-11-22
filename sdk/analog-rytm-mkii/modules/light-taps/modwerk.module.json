@@ -26,8 +26,9 @@
       "One switch in the GLOBAL menu, saved with the project"
     ],
     "usage": [
-      "Play quiet ghost notes and rolls with light fingertip taps",
-      "Live record light taps into the sequencer"
+      "Press GLOBAL and scroll down past SYSTEM to LIGHT TAPS: OFF.",
+      "Press YES: the row reads LIGHT TAPS: ON. Leave the menu.",
+      "Tap a pad lightly with a fingertip: it plays as a soft hit. Hit it harder: it plays with the pads' own velocity, as on stock."
     ]
   },
   "access": {
@@ -37,7 +38,10 @@
       "Press YES: the row reads LIGHT TAPS: ON.",
       "Tap a pad lightly: it plays as a soft hit. Press YES on the row again to turn it off."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/light-taps-off.png",
+      "media/light-taps-on.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -86,7 +90,22 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Built and linked for OS 1.74; not yet run on a unit as this module (Pad Thresh experiments reported in TESTING.md)."
+    "summary": "Built and linked for OS 1.74; not yet run on a unit as this module (Pad Thresh experiments reported in TESTING.md).",
+    "documentation": {
+      "tutorial": {
+        "title": "Usage",
+        "steps": [
+          "Press GLOBAL and scroll down past SYSTEM to LIGHT TAPS: OFF.",
+          "Press YES: the row reads LIGHT TAPS: ON. Leave the menu.",
+          "Tap a pad lightly with a fingertip: it plays as a soft hit. Hit it harder: it plays with the pads' own velocity, as on stock."
+        ]
+      },
+      "screenshots": [
+        "media/light-taps-off.png",
+        "media/light-taps-on.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -102,6 +121,38 @@
       "credit": "filefolder",
       "license": "GPL-3.0-or-later",
       "source": "Original illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/light-taps-off.png",
+      "kind": "screenshot",
+      "caption": "LIGHT TAPS: OFF, below SYSTEM in GLOBAL.",
+      "alt": "GLOBAL menu with the LIGHT TAPS OFF row selected below SYSTEM.",
+      "credit": "filefolder documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8",
+        "setup": "Cold boot of build LT02 on a fresh card image; four held NO presses clear the calibration notices. DTBOOT_STEPS=1; DTBOOT_PNG_DIR points outside Git. Screen documentation only."
+      }
+    },
+    {
+      "path": "media/light-taps-on.png",
+      "kind": "screenshot",
+      "caption": "LIGHT TAPS: ON after YES.",
+      "alt": "GLOBAL menu with the LIGHT TAPS ON row selected.",
+      "credit": "filefolder documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8",
+        "setup": "Cold boot of build LT02 on a fresh card image; four held NO presses clear the calibration notices. DTBOOT_STEPS=1; DTBOOT_PNG_DIR points outside Git. Screen documentation only."
+      }
     }
   ]
 }
