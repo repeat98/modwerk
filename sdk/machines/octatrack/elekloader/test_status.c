@@ -814,7 +814,7 @@ int main(void)
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       CHECK(frame_played == 788u && played_stock == 763u && played_shape == (4u << 4 | 4u));
       transport_stopped = 1, frame_played = 0;
-      CHECK(modwerk_status_frame_load() == 868u);                        /* 76.3 + 8 + 2.5, not 79.8 + 8 + 2.5 */
+      CHECK(modwerk_status_frame_load() == 828u);                        /* 76.3 + 4 + 2.5, not 79.8 + 8 + 2.5 */
       test_tracks = 5;
       CHECK(modwerk_status_frame_load() == 929u);                        /* other trigs: the ladder, 79.8 + 2.6 + 8 + 2.5 */
       test_tracks = 4, test_pattern = 35u;
@@ -824,12 +824,15 @@ int main(void)
       test_pattern = 34u, cpu_note_played();                             /* back before four seconds: none kept */
       CHECK(play_readings == 1u && played_pattern == 34u && played_stock == 763u);
       /* Against a measured stock, a machine's first instance nets what the sample was worth there (2.5 %), not a
-       * sample track's share of the ladder (7 %); a further one, nothing (twin 30, C03: Amiga 73.8 + 8 + 2.5 + 24.1, then
-       * a second one, 4 more). */
+       * sample track's share of the ladder (7 %); a further one, nothing, but its trig starts on a trigging track (twin 30,
+       * C03: Amiga on 73.8 + 4 + 2.5, then a second one). */
       played_stock = 738u, transport_stopped = 1, frame_played = 0, frame_newest = 0;
-      CHECK(!modwerk_status_pick_busy(0, 1, "Amiga", 266u, 0, 0));        /* 81.8 + 2.5 + 24.1 = 108.4 */
-      test_machines_booked = 241u;
-      CHECK(modwerk_status_pick_busy(2, 2, "Amiga", 40u, 0, 0));          /* and 4: 112.4 */
+      CHECK(!modwerk_status_pick_busy(0, 1, "Amiga", 266u, 0, 0));        /* 77.8 + 2.5 + 24.1 = 104.4 */
+      test_machines_booked = 241u, test_trigging = 1u << 2;
+      CHECK(modwerk_status_pick_busy(2, 2, "Amiga", 40u, 0, 0));          /* and 4 with its starts' 2.5: 110.9 */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_trigging = 0;
+      CHECK(!modwerk_status_pick_busy(2, 2, "Amiga", 40u, 0, 0));         /* on a track with no trigs: 108.4 */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       test_machines_booked = 0;
       /* What played since the last pick counts when it is more than the kept figure with the picks on top. */

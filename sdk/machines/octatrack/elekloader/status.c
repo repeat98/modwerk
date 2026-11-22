@@ -515,6 +515,10 @@ extern uint8_t modwerk_test_live_fx[16];
 #define TRACK_PLAY 26u
 static const uint16_t reserve_by_step[9] = {371u, 642u, 700u, 753u, 798u, 846u, 905u, 958u, 1010u};
 #define RESERVE_MARGIN 80u
+/* A pattern that has played four seconds has shown most of what the ladder's margin is for: its 15 s longest frame read
+ * 1 to 4 % over its 4 s one (modwerk-bd, twins 28 to 31), and with 8 % every first heavy machine on C03 was refused
+ * though Amiga, SYNTIZ and FM Synth played there at 95 to 106 % with nothing dropped. */
+#define MEASURED_MARGIN 40u
 #define RESERVE_FLOOR 600u
 /* A machine takes a track that would otherwise play a sample, so it is booked net of that track's share. */
 #ifndef MW_TRACK_STOCK
@@ -537,6 +541,7 @@ uint32_t modwerk_machine_rest_booked(void); /* machine_registry.c: the installed
 #define RESERVE_MARGIN_ID 0xfffffffcu
 #define RESERVE_FLOOR_ID 0xfffffffdu
 #define TRACK_PLAY_ID 0xfffffffeu
+#define MEASURED_MARGIN_ID 0xffffffffu /* the margin on a pattern's own measured stock */
 static uint32_t tuned(uint32_t id, uint32_t compiled)
 {
     uint32_t value, unused;
@@ -579,7 +584,7 @@ static uint32_t pattern_stock(unsigned p, unsigned most, unsigned tracks, unsign
     uint32_t v = pattern_reserve(most, tracks);
     *measured = 0;
     if (p || mw_stock_reserve != RESERVE_ADAPTIVE || id != played_pattern || played_shape != (most << 4 | tracks)) return v;
-    uint32_t m = played_stock + tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
+    uint32_t m = played_stock + tuned(MEASURED_MARGIN_ID, MEASURED_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
     if (m < floor) m = floor;
     if (m >= v) return v;
     *measured = 1;
@@ -1534,6 +1539,9 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     if (add <= NEAR_FREE) return 0;
     unsigned further = machine == 2u; /* machine_registry.c: a further instance of a machine the Part runs */
     machine = machine != 0u;
+    /* A further instance on a track that trigs brings its own trig starts: about 2.5 % over its each (a second Amiga on
+     * C03 added 4.3, 5.7 and 7.4 against its each of 4, twins 27, 30 and 29). */
+    if (machine && further && slot < 8u && modwerk_machine_trigging() >> slot & 1u) add += MEASURED_SAMPLE;
     uint32_t measured = measured_load(gone) + add, line = frame_line();
     /* A machine's first instance on a track that plays a sample takes that render's place in the measured frame too:
      * 2.5 %, measured (twin 27, C03's T1: Amiga added 24.1 against its curve's 26.6 on an empty track), a further one
