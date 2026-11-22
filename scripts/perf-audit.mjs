@@ -10,9 +10,9 @@
 // (sourceSha256), and module:doctor fails it once that source changes.
 //
 // options: --usable <cycles>  --ratio-note <x>  --ratio-fail <x>  --load-fail <share of a frame>
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { LIMITS, judgeRecord, selfTest, templateRecord } from './perf-audit-analysis.mjs'
+import { LIMITS, judgeRecord, priceLimits, selfTest, templateRecord } from './perf-audit-analysis.mjs'
 import { modulePerformanceSourceSha256 } from './module-qualification.mjs'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 
@@ -35,13 +35,13 @@ function usage(problem) {
 const symbol = { ok: '✓', note: '·', fail: '✗' }
 if (command === 'template' && ['dsp', 'coldfire', 'key'].includes(paths[0]) && paths.length === 1) console.log(JSON.stringify(templateRecord(paths[0]), null, 2))
 else if (command === 'check' && paths.length === 1) {
-  const file = resolve(paths[0]), record = JSON.parse(readFileSync(file, 'utf8')), rows = judgeRecord(record, options)
+  const file = resolve(paths[0]), record = JSON.parse(readFileSync(file, 'utf8')), limits = { ...priceLimits(manifestBeside(file)), ...options }, rows = judgeRecord(record, limits)
   for (const line of rows) {
     console.log(symbol[line.state] + ' ' + line.name.padEnd(16) + line.detail)
     if (line.fix) console.log('  ' + ''.padEnd(16) + 'fix: ' + line.fix)
   }
   const failed = rows.filter(line => line.state === 'fail').length
-  console.log(failed ? '\n' + failed + ' check(s) failed. The limits are audit defaults (' + Object.entries({ ...LIMITS, ...options }).map(([key, value]) => key + ' ' + value).join(', ') + '); say in TESTING.md what you changed and why.' : '\nNo check failed. Paste this table into TESTING.md, with the commands that produced the numbers.')
+  console.log(failed ? '\n' + failed + ' check(s) failed. The limits are audit defaults (' + Object.entries({ ...LIMITS, ...limits }).map(([key, value]) => key + ' ' + value).join(', ') + '); say in TESTING.md what you changed and why.' : '\nNo check failed. Paste this table into TESTING.md, with the commands that produced the numbers.')
   process.exitCode = failed ? 1 : 0
   if (stamp && failed) console.log('Not stamped: a record is stamped only once every check passes.')
   else if (stamp) await stampRecord(file, record)
@@ -50,6 +50,13 @@ else if (command === 'check' && paths.length === 1) {
   for (const row of rows) console.log((row.ok ? '  ok   ' : '  FAIL ') + row.name + ': ' + row.detail)
   process.exitCode = rows.every(row => row.ok) ? 0 : 1
 } else usage(command ? 'Unknown or incomplete command: ' + positional.join(' ') : '')
+
+/** The manifest of the module whose <module>/evidence/performance.json this is, or null (a loose record, or one that does not parse). */
+function manifestBeside(file) {
+  const manifest = join(dirname(dirname(file)), 'octamod.module.json')
+  if (basename(dirname(file)) !== 'evidence' || !existsSync(manifest)) return null
+  try { return parseModuleDocument(JSON.parse(readFileSync(manifest, 'utf8'))) } catch { return null }
+}
 
 /** Write the module's current performance source hash into its record, after `version`. The record must be the module's own
  * (<module>/evidence/performance.json) and name the manifest's id and version, so a stamp never binds numbers to other code. */

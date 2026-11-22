@@ -1,0 +1,511 @@
+{
+ "date": "2026-11-21",
+ "model": "Octatrack MKII",
+ "os": "1.40C",
+ "order": [
+  "new-T1",
+  "new-T5",
+  "old-T5"
+ ],
+ "sameBoot": true,
+ "durationSecondsPerArm": 60,
+ "developmentBase": "62ac89ff7ff72e9d8490188f424b7a4781a57e3cd1a1911b0e86696fcfd2ce36",
+ "developmentBaseNote": "Diagnostic twin of 3a4c07fe4df32e41 (same sources and flags, 20-channel USB layout) with only the trace below added to the frame guard. Never released; RAM boot only.",
+ "instrumentation": "diff --git a/sdk/machines/octatrack/elekloader/machine_registry.c b/sdk/machines/octatrack/elekloader/machine_registry.c\nindex 16d1dfd65..8b66b7cfb 100644\n--- a/sdk/machines/octatrack/elekloader/machine_registry.c\n+++ b/sdk/machines/octatrack/elekloader/machine_registry.c\n@@ -905,6 +905,9 @@ static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a\n static uint16_t skipped[16];\n static uint32_t before;            /* the renders the last frame made (bit k), skipped or not */\n static uint8_t place[16], next[16], made; /* a render's place in the last frame's order, and in this frame's so far */\n+/* shortcut: diagnostic twin only (Grain #1858), never committed: the guard's inputs at each skip and every overrun frame */\n+volatile uint32_t mw_shed_trace[256][9], mw_shed_trace_n, mw_over_trace[128][20], mw_over_trace_n;\n+static uint32_t shed_first, shed_open, spent[16];\n void mw_frame_exit(void)\n {\n     uint32_t now = DTCN3, d = now - mw_frame_t0, due = d + late;\n@@ -915,6 +918,13 @@ void mw_frame_exit(void)\n     int32_t c = credit + (int32_t)mw_frame_share - (int32_t)d;\n     credit = c > (int32_t)BURST ? (int32_t)BURST : c < -(int32_t)FRAME ? -(int32_t)FRAME : c;\n     mw_frame_busy += d >> 8, mw_frame_count = mw_frame_count + 1u;\n+    if (shed_open) { for (uint32_t i = shed_first; i != mw_shed_trace_n; ++i) mw_shed_trace[i & 255u][8] = d; shed_open = 0; }\n+    if (d > FRAME) {\n+        volatile uint32_t *o = mw_over_trace[mw_over_trace_n & 127u];\n+        o[0] = mw_frame_count, o[1] = d, o[2] = late, o[3] = timed;\n+        for (unsigned j = 0; j < 16u; ++j) o[4 + j] = timed >> j & 1u ? spent[j] : 0;\n+        mw_over_trace_n = mw_over_trace_n + 1u;\n+    }\n     if (timed) for (unsigned k = 0; k < 16u; ++k) if (timed >> k & 1u) after[k] = now - end_at[k], place[k] = next[k];\n     before = timed, timed = 0, made = 0;\n     frame_seen = 0;\n@@ -936,12 +946,19 @@ static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, un\n     int32_t over = (int32_t)(at - mw_frame_t0 + cost[k] + after[k]) - credit - (int32_t)mw_frame_share;\n     if (over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE) {\n         mw_frame_sheds = mw_frame_sheds + 1u, mw_frame_shed_tracks |= 1u << track;\n+        if (!shed_open) shed_first = mw_shed_trace_n, shed_open = 1;\n+        volatile uint32_t *z = mw_shed_trace[mw_shed_trace_n & 255u];\n+        z[0] = mw_frame_count, z[1] = k << 16 | timed, z[2] = before, z[3] = at - mw_frame_t0, z[4] = cost[k], z[5] = after[k];\n+        z[6] = (uint32_t)credit, z[7] = mw_frame_last, z[8] = 0;\n+        mw_shed_trace_n = mw_shed_trace_n + 1u;\n         r = instead(track, ping, start, end);\n+        spent[k] = DTCN3 - at;\n     } else {\n         unsigned back = skipped[k] != 0;\n         skipped[k] = 0;\n         r = f(track, ping, start, end);\n         uint32_t c = DTCN3 - at, fall = cost[k] - (cost[k] >> 3);\n+        spent[k] = c;\n         cost[k] = back || c > fall ? c : fall; /* a rise at once, a fall by an eighth a frame; after skips, as measured */\n         if (c > mw_frame_cost_max[k]) mw_frame_cost_max[k] = c;\n     }\n",
+ "units": {
+  "time": "microseconds from the 132 MHz timer",
+  "frameDeadlineUs": 362.8,
+  "guardShareUs": 290.2
+ },
+ "fields": {
+  "skip": "elapsedUs: frame time before the render; predictedCostUs: cost[k]; afterUs: work after it last frame; creditUs; overUs = elapsed + cost + after - credit - share; previousFrameUs; thisFrameUs: the frame as it ran with the skip; render: k = track - 1, +8 for the second pass",
+  "overrun": "frameUs; grainUs: both Grain passes as measured; otherRendersUs: other guarded renders; outsideRendersUs: everything else in the frame interrupt; lateUs; rendersMade"
+ },
+ "card": "physically removed at power-up; mount flag zero",
+ "source": {
+  "recorder": "R3",
+  "frames": 37800,
+  "channels": 2,
+  "bitDepth": 24,
+  "pcmSHA256": "71391a1f06c23a9ea1190aab64ff7469a6f6b43b9c9cc315dadbb83664efb8cd"
+ },
+ "arms": {
+  "new-T1": {
+   "package": "db843bc231090ede8e663fe603226cca1c429d614b3755e49200af0e36a7dfc8",
+   "track": 1,
+   "playbackSkips": 2,
+   "totalSkips": 2,
+   "playbackMaxFrameMicroseconds": 392.614,
+   "maxGuardedCallbackMicroseconds": 128.909,
+   "observedGrains": 6,
+   "matchedMidi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "sampleTimeGaps": 0,
+   "cpuMeterMedianBusyPercent": 77.3,
+   "afterStop": {
+    "parts": [
+     1,
+     3
+    ],
+    "returnedAssignment": true,
+    "flexSelected": true,
+    "trackSelectionVerified": true,
+    "observedSeconds": 29.34,
+    "uiTickProgress": 1330,
+    "audioFrameProgress": 61082,
+    "healthDelta": {
+     "stalls": 0,
+     "crash": 0,
+     "stall": 0,
+     "errors": 0
+    }
+   },
+   "skips": [
+    {
+     "render": 8,
+     "doneBefore": 1,
+     "elapsedUs": 187.2,
+     "predictedCostUs": 86.2,
+     "afterUs": 72.6,
+     "creditUs": 52.4,
+     "overUs": 3.2,
+     "previousFrameUs": 303.1,
+     "thisFrameUs": 265.8
+    },
+    {
+     "render": 8,
+     "doneBefore": 1,
+     "elapsedUs": 173.3,
+     "predictedCostUs": 88.8,
+     "afterUs": 76.5,
+     "creditUs": 41.7,
+     "overUs": 6.6,
+     "previousFrameUs": 303.7,
+     "thisFrameUs": 251.8
+    }
+   ],
+   "overrunFrames": 10,
+   "overruns": [
+    {
+     "frameUs": 392.6,
+     "lateUs": 29.8,
+     "grainUs": 154.0,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 238.6,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 364.6,
+     "lateUs": 1.8,
+     "grainUs": 123.2,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 241.3,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 378.4,
+     "lateUs": 15.6,
+     "grainUs": 147.6,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 230.8,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 366.7,
+     "lateUs": 3.9,
+     "grainUs": 143.6,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 223.1,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 381.3,
+     "lateUs": 18.5,
+     "grainUs": 143.1,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 238.3,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 366.0,
+     "lateUs": 3.2,
+     "grainUs": 127.2,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 238.8,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.6,
+     "lateUs": 0.8,
+     "grainUs": 129.5,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 234.1,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 376.6,
+     "lateUs": 13.8,
+     "grainUs": 139.4,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 237.2,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.5,
+     "lateUs": 0.7,
+     "grainUs": 116.8,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 246.7,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.7,
+     "lateUs": 0.8,
+     "grainUs": 119.0,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 244.7,
+     "rendersMade": 2
+    }
+   ]
+  },
+  "new-T5": {
+   "package": "db843bc231090ede8e663fe603226cca1c429d614b3755e49200af0e36a7dfc8",
+   "track": 5,
+   "playbackSkips": 1,
+   "totalSkips": 1,
+   "playbackMaxFrameMicroseconds": 379.394,
+   "maxGuardedCallbackMicroseconds": 122.606,
+   "observedGrains": 6,
+   "matchedMidi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "sampleTimeGaps": 0,
+   "cpuMeterMedianBusyPercent": 78.1,
+   "afterStop": {
+    "parts": [
+     1,
+     3
+    ],
+    "returnedAssignment": true,
+    "flexSelected": true,
+    "trackSelectionVerified": true,
+    "observedSeconds": 29.2,
+    "uiTickProgress": 1332,
+    "audioFrameProgress": 61172,
+    "healthDelta": {
+     "stalls": 0,
+     "crash": 0,
+     "stall": 0,
+     "errors": 0
+    }
+   },
+   "skips": [
+    {
+     "render": 12,
+     "doneBefore": 1,
+     "elapsedUs": 189.7,
+     "predictedCostUs": 53.1,
+     "afterUs": 67.3,
+     "creditUs": 18.2,
+     "overUs": 1.7,
+     "previousFrameUs": 314.0,
+     "thisFrameUs": 243.7
+    }
+   ],
+   "overrunFrames": 8,
+   "overruns": [
+    {
+     "frameUs": 364.2,
+     "lateUs": 1.4,
+     "grainUs": 102.4,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 261.9,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.0,
+     "lateUs": 0.2,
+     "grainUs": 90.1,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 272.8,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 364.0,
+     "lateUs": 1.2,
+     "grainUs": 94.0,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 270.0,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 379.4,
+     "lateUs": 16.6,
+     "grainUs": 104.3,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 275.1,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 364.5,
+     "lateUs": 1.7,
+     "grainUs": 93.3,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 271.2,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 368.0,
+     "lateUs": 5.2,
+     "grainUs": 95.6,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 272.4,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 370.1,
+     "lateUs": 7.3,
+     "grainUs": 105.8,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 264.3,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 365.2,
+     "lateUs": 2.4,
+     "grainUs": 94.9,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 270.4,
+     "rendersMade": 2
+    }
+   ]
+  },
+  "old-T5": {
+   "package": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21",
+   "track": 5,
+   "playbackSkips": 4,
+   "totalSkips": 4,
+   "playbackMaxFrameMicroseconds": 381.303,
+   "maxGuardedCallbackMicroseconds": 121.765,
+   "observedGrains": 6,
+   "matchedMidi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+   "midiReceiveErrors": 0,
+   "midiTransmitDrops": 0,
+   "sampleTimeGaps": 0,
+   "cpuMeterMedianBusyPercent": 78.25,
+   "afterStop": {
+    "parts": [
+     1,
+     3
+    ],
+    "returnedAssignment": true,
+    "flexSelected": true,
+    "trackSelectionVerified": true,
+    "observedSeconds": 29.5,
+    "uiTickProgress": 1331,
+    "audioFrameProgress": 61152,
+    "healthDelta": {
+     "stalls": 0,
+     "crash": 0,
+     "stall": 0,
+     "errors": 0
+    }
+   },
+   "skips": [
+    {
+     "render": 12,
+     "doneBefore": 1,
+     "elapsedUs": 219.6,
+     "predictedCostUs": 101.6,
+     "afterUs": 68.0,
+     "creditUs": 76.2,
+     "overUs": 22.6,
+     "previousFrameUs": 381.3,
+     "thisFrameUs": 264.3
+    },
+    {
+     "render": 12,
+     "doneBefore": 1,
+     "elapsedUs": 267.7,
+     "predictedCostUs": 106.3,
+     "afterUs": 68.5,
+     "creditUs": 151.6,
+     "overUs": 0.7,
+     "previousFrameUs": 320.1,
+     "thisFrameUs": 313.6
+    },
+    {
+     "render": 4,
+     "doneBefore": 0,
+     "elapsedUs": 126.5,
+     "predictedCostUs": 73.4,
+     "afterUs": 148.5,
+     "creditUs": 37.9,
+     "overUs": 20.4,
+     "previousFrameUs": 360.9,
+     "thisFrameUs": 262.8
+    },
+    {
+     "render": 12,
+     "doneBefore": 1,
+     "elapsedUs": 192.9,
+     "predictedCostUs": 53.7,
+     "afterUs": 62.1,
+     "creditUs": 13.8,
+     "overUs": 4.7,
+     "previousFrameUs": 305.0,
+     "thisFrameUs": 242.0
+    }
+   ],
+   "overrunFrames": 18,
+   "overruns": [
+    {
+     "frameUs": 369.2,
+     "lateUs": 6.4,
+     "grainUs": 91.6,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 277.6,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 364.6,
+     "lateUs": 1.8,
+     "grainUs": 118.3,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 246.3,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 381.3,
+     "lateUs": 18.5,
+     "grainUs": 104.0,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 277.3,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 377.7,
+     "lateUs": 14.9,
+     "grainUs": 107.7,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 270.1,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 364.5,
+     "lateUs": 1.7,
+     "grainUs": 92.5,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 271.9,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 375.1,
+     "lateUs": 12.3,
+     "grainUs": 102.0,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 273.1,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 365.5,
+     "lateUs": 2.6,
+     "grainUs": 98.1,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 267.4,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.4,
+     "lateUs": 0.5,
+     "grainUs": 104.7,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 258.7,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 376.9,
+     "lateUs": 14.1,
+     "grainUs": 107.1,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 269.8,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.9,
+     "lateUs": 1.1,
+     "grainUs": 136.1,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 227.9,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 373.9,
+     "lateUs": 11.1,
+     "grainUs": 105.2,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 268.7,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.9,
+     "lateUs": 1.1,
+     "grainUs": 132.7,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 231.2,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.8,
+     "lateUs": 1.0,
+     "grainUs": 96.1,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 267.8,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 376.8,
+     "lateUs": 13.9,
+     "grainUs": 102.5,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 274.2,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 364.0,
+     "lateUs": 1.2,
+     "grainUs": 89.5,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 274.5,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.5,
+     "lateUs": 0.7,
+     "grainUs": 105.0,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 258.5,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 366.0,
+     "lateUs": 3.2,
+     "grainUs": 103.5,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 262.5,
+     "rendersMade": 2
+    },
+    {
+     "frameUs": 363.2,
+     "lateUs": 0.4,
+     "grainUs": 90.3,
+     "otherRendersUs": 0.0,
+     "outsideRendersUs": 272.9,
+     "rendersMade": 2
+    }
+   ]
+  }
+ },
+ "shippingBaseRollbackTrial": true
+}
