@@ -1,3 +1,7 @@
+## Source integration update
+
+The UI implementation, executable checks and source boundary are available in this branch. Start with [TESTING.md](TESTING.md) and [PROVENANCE.md](PROVENANCE.md). The numbered work items below preserve the initial RFC and its original evidence dates.
+
 # CLYPS community engineering handoff
 **22 November 2026 — early DRAFT, source-only, no physical hardware qualification**
 

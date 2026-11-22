@@ -1,6 +1,8 @@
 # CLYPS — experimental Octatrack performance module (community draft)
 
-**Status:** source-integration work in progress; **not a release, not hardware-qualified, not a flash candidate**. This folder is the initial **public collaboration handoff**, not the latest compiled module. The author has an existing local Modwerk-fork implementation which must be brought into this branch after source and licence review.
+**Public source draft.** This directory contains the production SRC/ARR renderer and input callbacks from the protected integration, plus a synthetic adapter and host and ColdFire checks. The complete installed sequencer currently runs on a private emulator base. Hardware qualification is outstanding.
+
+Run `python3 -B sdk/drafts/clyps/test_renderer.py` from the checkout root. See [test coverage](TESTING.md) and [source provenance](PROVENANCE.md).
 
 **Artist/product direction:** Endrew. Built on Zac Kyoti's existing CLYPS ideas and independent Modwerk research with attribution retained. The project is independent and unofficial.
 
@@ -38,4 +40,4 @@ See [HOOK_PROPOSAL.md](HOOK_PROPOSAL.md) for the shared-base ABI questions and [
 
 Kyoti's original repo: https://github.com/Zac-Kyoti/octatrack-kyoti-fw (pinned source used in previous private experiments: `e750155a3d5c16fe2c8752413582fa61a90d97a2`), subject to the precise licence and exclusions of each imported file. Modwerk source and SDK have their own applicable licences. The artist previously reported permission for **private, isolated experimentation**; public reuse/attribution coordination with the original author must be completed before any dependent-source import or release requiring it. No contributor should import restricted source until review confirms its provenance and rights.
 
-**Public PR deliberately stays DRAFT.** Its first revision is a documentation-only collaboration entry; it is **not** a completed module or a request to merge to `main`. Modules must follow Modwerk's current `AGENTS.md`, `ADD_A_MODULE.md`, `DEVELOPER_WORKFLOW.md` and `MODULE_QUALIFICATION.md`.
+**Public PR deliberately stays DRAFT.** Its initial RFC has been extended with the reviewable UI implementation. The runtime contract is proposed and the draft is outside the catalogue. Modules must follow Modwerk's current `AGENTS.md`, `ADD_A_MODULE.md`, `DEVELOPER_WORKFLOW.md` and `MODULE_QUALIFICATION.md`.
