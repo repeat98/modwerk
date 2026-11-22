@@ -1,9 +1,144 @@
 # Tape Echo testing
 
-Version: 0.1.2-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.1.9-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
 
 This revision updates author credits only. The historical evidence below is retained; no new hardware or DSP qualification is claimed.
 
+## 0.1.9-experimental: bounded by the frame's deadline, dry while rested (prepared 22 November 2026, not tested on a unit)
+
+**Why.** Tape Echo's work runs at IPL 5 inside stock's delay routine, where the base's guard cannot drop it: two Tape Echos
+took a busy Part to 134-140 % of a frame and the frame interrupt into the DSP's late window (owner's MKII, 22 November 2026).
+Base 0.8 raises `ev_frame_deadline(deadline, rest)` at every frame-interrupt entry; 0.1.9 subscribes (`runtime.json`, order 50)
+and requires that two-argument event.
+
+**Deadline hold.** Before each Tape Echo track's block, `te_cpu_hook` holds the block when `(int32_t)(DTCN3 - deadline +
+5280) >= 0` (wrap-safe on the free-running 32-bit counter while the count is within 2^31 of the deadline). 5,280 counts (40 µs)
+is an **estimate** of one block, not a bound: the first instance raised the longest frame by 9.4 % (34 µs) in
+`evidence/frame-cost.json`, and the emulator's worst block (2,926 instructions against 1,800 on the default page) scales that to
+about 55 µs, within the 20 µs margin the base leaves. A held block outputs the track's audio as stock handed it (the dry input
+at unity: stock's mix is skipped as on the full path) and writes 32 zero words to the scratch buffer stock commits to the ring,
+so that block of tape is silence and the echo plays a 16-sample gap there later; no stale or repeated tape is ever played. The
+0.1.8 draft's accumulator clear in the hold is gone: the hold uses no EMAC, and stock leaves every accumulator empty at the seam.
+
+**Rest.** While `rest` is nonzero, every Tape Echo track toggles the scratch buffers and steps the filter iterator as before,
+clears its state's active word and returns to `0x400037e0`, past stock's ring write (the base's quiet-track path returns there
+too): the audio is the dry input at unity, with no echo, no stock filter or mix (whose feedback would play the ring as a tail)
+and no ring write. The first frame with `rest` 0 runs `te_block` from an inactive state: every state word cleared, `valid` 0,
+so no tape from before the rest is read and the echo builds from the new input.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Rest, wake and deadline in the emulator | the new exit must leave the frame as stock expects and the wake must start clean | the 0.1.8 scratch ColdFire probe (stock 1.40C image, detours in place, module at `0x47300000`) with three local cases added: 10 rested frames, deadlines 1, 8,192 and `0xfffff000` with DTIM3 at 0 | rested: all 8 tracks' audio equal to the input, the scratch buffer and ring untouched, sp, toggle and iterator as stock's, active cleared; the wake and every later block bit-exact with native arithmetic from a fresh state; deadlines 1 and `0xfffff000` held all 8, 8,192 none; every 0.1.8 case passed again (peak 2,930 instructions a track block) |
+| Software build | the new exit and arguments must assemble and link | `generate_cpu.py --check`, `npm run module:dev -- tapeecho --build-only`, `npm run coldfire:isa` | built; inside the MCF54455 set |
+| Rest on a busy pattern | the output must be dry with no tail | the base's PATTERN IS BUSY scene, by ear and USB recording | not tested for this version |
+| Wake after rest | no stale echo; a dry level step at MIX above 64 is expected | pattern change back to a light one | not tested for this version |
+| Deadline holds | holds must keep the frame entry out of the late window; each is a 0.36 ms gap in the echo | `te_guard` `holds` and the base's late counters, two Tape Echos on a busy Part | not tested for this version |
+| Hardware | | | not tested for this version |
+
+The rest case's exit is checked up to `0x400037e0`, not through stock's following tracks with modelled DMA. The repository's
+probe (`tools/harness/tapeecho_cpu_probe.cpp`) has not taken 0.1.8's state layout yet (it still writes `filters`), so
+`verify_tapeecho_cpu.py` does not build against 0.1.8 or 0.1.9; the runs above used the local scratch probe.
+
+## 0.1.8-experimental: cheaper on the ColdFire, bounded under overload (prepared 22 November 2026, not tested on a unit)
+
+**Why.** On the owner's MKII (development twin of base 0.7.14, `b36f9c53e`, 21 November 2026) one Tape Echo on T1 FX2 beside a big
+installed set added 11.4 points of frame share (50.7 → 62.1 %, longest frame 134 %), the frame guard skipped 165 renders in about
+11 s, and about 3 s into the next PLAY the audio froze and the unit left USB (no crash or stall record; a power-off is possible).
+At rest it costs 0.4 points, so the in-use path is the expensive one. Its work runs inside stock's delay routine, which the eDMA
+interrupt calls once a frame at IPL 5 (`0x40004b0e`); the frame guard cannot shed it.
+
+**Same sound.** The audio is bit-identical to 0.1.7: no arithmetic changed, only what is computed again and where.
+
+- **Other effects' tracks decline in assembly.** The seam hook runs on all eight tracks every frame while Tape Echo is awake.
+  A track whose FX2 is not Tape Echo now goes back to stock in 14 instructions (was about 37, through the C entry), and its
+  state is cleared only once, tracked by a live mask, instead of a store to its state on every frame.
+- **Steady blocks skip the control half.** While the six knob words and the tempo word are the last steady block's and no ramp,
+  glide or fade is running, every control computation (targets, gains, the five ramp steps, the motor, the BEAT fade logic)
+  would repeat itself; `te_block` then runs only the clocks, the head and the audio. Any change takes the full path again,
+  and a ramp leaves it only once it is exactly settled.
+- **The per-track entry is assembly** (`te_cpu_hook`; GCC spilled most of the C version's values to the stack), the scratch
+  toggle is the constant stock's delay reset writes (no data read of stock code each frame), and the settled wet and MIX loops
+  fold the next sample's dry load into a multiply-with-load.
+
+**Bounded under overload.** Per instance and block: at most 2,926 executed instructions (all controls reversing, BEAT, full
+history), at most 64 uncached ring words (both heads of a BEAT crossfade on the per-sample path; 17 for an ordinary block),
+fixed loop counts, three divides at most, no wait and no poll. Its only uncached accesses are those ring reads. A long delay
+routine delays the rest of stock's eDMA chain, and the chain's end is what unmasks the frame interrupt (`0x40004bc2`), so
+lateness carries into the next frame. The new **overload hold**: each delay-routine call's first Tape Echo block reads stock's
+free-running DTIM3 count (`0xfc07c00c`, 132 MHz, set up by stock at `0x400209c2`); a call that begins more than a quarter frame
+later than one frame after the last (more than 59,863 counts, less than two frames) holds every instance for that block: the
+dry signal passes untouched, the block's tape is silence, no head, filter or clock runs (about 60 instructions and 32 stores).
+A count that stands still or jumps by two frames or more never holds. It needs nothing from the base. The counters sit in
+`te_guard` (`holds`: blocks held; `late`: the longest gap seen under two frames, in counts), 24 bytes before `te_states`.
+
+**Run (22 November 2026, this checkout, no hardware).** m68k-elf-gcc 16.2.0, `cpu.s` regenerated by `generate_cpu.py` (the
+header now records the compiler). The ColdFire probe (`tools/harness/tapeecho_cpu_probe.cpp`, the repository's emulator at
+`sdk/octabam/tools/emu/ot_emu` built against upstream octabam's vendored cores) ran against the author's stock 1.40C image with
+the two detours written in place, the module linked at `0x47300000`, its TIME formatter test skipped (it needs octabam's full
+remix build).
+
+| Gate | Result |
+| --- | --- |
+| Native signal and voice gates (`verify_tapeecho_cpu.py`'s host half) | 39 of 39 passed, every value as 0.1.7 |
+| 0.1.8's `te_process` and steady path against 0.1.7's `te_process`, random piecewise-constant controls (out-of-range knobs, invalid tempos, SYNC above 1, dirty re-entry) | 40,000,000 blocks over two seeds, 10.6 M through the steady path: every state word, audio and record word equal |
+| Probe: steady path against the full path (new) | 1,000,000 blocks, 290,468 steady: equal |
+| Probe: kernels against their native oracles | filter 1,024, tape 1,024 (all modes), reader 2,048 blocks: equal; ceilings unchanged |
+| Probe: eight instances against native arithmetic | 3,504 blocks (now with a 1,200-frame phase of standing controls: 4,385 of 9,600 blocks took the ColdFire's steady path): equal |
+| Probe: overload hold (new) | a call 1.5 frames after the last holds all eight instances for one block (dry untouched, silence recorded, `holds` 8, `late` 71,836); the blocks before and after stay bit-exact |
+| Probe: stock DELAY fallback, complete frame with modelled DMA | registers preserved, history invalidated; stock DELAY tracks bit-identical to stock |
+| `npm run coldfire:isa` | inside the MCF54455 set |
+
+Executed instructions per complete eight-track 16-sample delay routine, the probe's benchmark (1,500 warm-up and 1,000 measured
+blocks, modelled DMA). Instructions, **not** cycles or CPU percent. "Tape Echo's own" is the routine minus the stock part (6,869
+for one instance):
+
+| Case | 0.1.7 | 0.1.8 | Change |
+| --- | ---: | ---: | ---: |
+| One instance, default page (TIME 64, WOW 25, MIX 40), stock ×7 | 8,944 | 8,669 | Tape Echo's own 2,075 → 1,800 (−13 %), 130 → 113 a sample |
+| One instance, WOW 44, full wet, stock ×7 | 8,821 | 8,546 | own 1,952 → 1,677 (−14 %) |
+| Awake on no track (a saved Part names it), stock ×8 | 7,900 | 7,724 | its overhead 272 → 96 |
+| Three instances settled, WOW 44, stock ×5 | 10,668 | 10,194 | −4.4 % |
+| Eight instances settled, WOW 44 | 15,283 | 14,315 | −6.3 % |
+| Eight instances, moving FREE TIME | 15,539 | 15,580 | +0.3 % |
+| Eight instances, all controls reversing in BEAT (peak, stress run) | 22,571 | 22,586 | +0.1 % |
+
+While a knob moves every block takes the full path, which now carries the steady bookkeeping and the hold's clock read; those
+peaks are within 1 % of 0.1.7's. Per frame for one instance on the default page the executed code fell from 173 to 147
+sixteen-byte lines and the state and table data it touches from about 30 to 23 lines; the 17 uncached ring words are unchanged.
+On a unit with a big installed set these lines are likely cold each frame, which is why they are counted: cold line fills are
+the probable reason one instance cost 11.4 points there against 1.7 on base 0.7.11 with only Tape Echo installed (#1869). That
+is an inference, not a measurement.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Frame share, one instance, big set playing | the reason for the release | `guard` over 8 s, set G of the 0.7.14 run, T1 FX2, against 0.1.7 | not run (unit held by the owner) |
+| Holds in normal use | a false hold is a 0.36 ms dropout of the echo | `te_guard` `holds`/`late` after minutes of playing, small set and big set | not run |
+| Overload | the hold must keep the unit alive where 0.1.7 froze | the 0.7.14 freeze scene, then three and six instances | not run |
+| Knob turns, BEAT switches, Part and pattern changes | steady blocks must end exactly when a control moves | by ear and USB recording against 0.1.7 | emulator bit-exact only; unit not run |
+| Pick, rest and wake (0.1.7) | the live mask must clear a track's state when it leaves | T1 to DELAY and back | probe: decline clears the state; unit not run |
+
+
+## 0.1.7-experimental: rests while no slot uses it (prepared 20 November 2026, not built, not tested)
+
+No code change. A `runtime.json` holding only `"rests"` marks its ColdFire detours `te_cpu_reset` (0x40002f44) and `te_cpu_hook` (0x4000361a, the stock delay routine's seam, every track and frame). On a base that judges
+effect modules (#1849, base 0.7.11, loader capability 2048) the base rests the module while no slot of the project,
+working or saved, names its effect id and no live slot runs it: those detours hold stock's bytes. Its DSP code is
+resident on demand as before.
+
+- **Why:** 0.4 points of the frame interrupt at rest in its `evidence/cpu-price.json` (`npm run device:price`, playing; MKII, development twin `d3d71297` of base 0.7.8, the Tresor Prep scene, 18 November 2026). The owner's goal (20 November 2026): an installed module nobody uses costs nothing.
+- **Note:** while it rests the stock delay routine runs unpatched, so the base's quiet-delay skip counts as without Tape Echo; a pick wakes it before stock writes the pick, so its first frame on the slot has its seam.
+- **Not built yet:** the builder change that takes a rests-only `runtime.json` for an effect is in #1849; the package
+  row then needs `requiresCapabilities: 2048`, and the standalone recipe re-pins after #1862.
+- **Test procedure:** not run (no build; the unit was off USB, then held by another session, on 20 November 2026).
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no slot names it | the detours must hold stock's bytes and cost nothing | `device:price` at rest, same scene as before | not run: not built, unit unavailable |
+| Picked while playing | the wake writes its sites masked before stock writes the pick | frame guard over the pick window, a stock effect pick as control | not run |
+| A Part, pattern or bank change bringing it in | must not need a wake | any slot of the project keeps it awake (base host test) | pass (host, #1849); unit not run |
+| A paste or a project load putting it on a live slot | it runs unpatched until the next tick | the live slot wakes it within a tick (base host test) | pass (host); unit not run |
+| Both slots and two instances | the effect id is one for every slot | picks on T1 and T5 | not run |
+| Undo of the trial that brought this version | resting sites restored while resting | whole-set trial and Undo | not run |
 
 ## Source evidence
 

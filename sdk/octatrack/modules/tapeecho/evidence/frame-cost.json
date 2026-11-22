@@ -1,0 +1,32 @@
+{
+  "module": "tapeecho",
+  "version": "0.1.8-experimental",
+  "base": "dce1d30e (0.8 development twin)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; stock alone 79.4 %), picks on empty C02; owner's MKII",
+  "seconds": 8,
+  "measuredAt": "2026-11-22T11:53:49.405Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "first": 9.4,
+  "each": 4.6,
+  "points": [
+    80.7,
+    90.1,
+    94.4,
+    99,
+    102.3
+  ],
+  "adds": [
+    9.4,
+    13.7,
+    18.3,
+    21.6
+  ],
+  "notes": [
+    "package sha256 d5a0bd7b51103d9f8a97a3f4b5c2300ae09d539e9c97932734de468171174b73"
+  ]
+}

@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.9-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "On a pattern too busy for the unit, the base can now switch Tape Echo off: the track plays dry, with no echo or tail, instead of the Octatrack falling behind.",
+      "When it comes back, the echo starts fresh from what you play next, never from old tape.",
+      "A block of echo the unit has no time left for is skipped: the dry signal plays on and the repeats have a tiny gap there.",
+      "Needs Modwerk base 0.8 or newer.",
+      "Known issue: not tested on hardware yet, and the freeze with seven instances is still open."
+    ]
+  },
+  {
     "version": "0.1.6-experimental",
     "date": "2026-10-27",
     "changes": [
