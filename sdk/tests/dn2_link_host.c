@@ -89,6 +89,27 @@ static int request(int cmd, uint32_t id, uint32_t v)   // the link's reply statu
     return sent_status[sent_count - 1];
 }
 
+static int request4(int cmd, const uint32_t v[4])     // ramboot's four values
+{
+    uint8_t m[40] = { 0xF0, 0x7D, 'M', 'W', 'L', LINK_VERSION, 1, (uint8_t)cmd };
+    uint8_t *p = m + HEADER;
+    int i, k;
+    for (k = 0; k < 4; k++)
+        for (i = 0; i < 5; i++)
+            *p++ = (uint8_t)((v[k] >> (7 * i)) & 0x7f);
+    *p++ = 0xF7;
+    act(m, (int)(p - m));
+    return sent_status[sent_count - 1];
+}
+
+static int presses_of(int key)
+{
+    int i, n = 0;
+    for (i = 0; i < posted_count_host; i++)
+        n += posted[i].kind == MSG_KEY && posted[i].id == key && (posted[i].value & KEY_DOWN);
+    return n;
+}
+
 static void ui_sees_key(int key, int flags)            // stock's loop passes a posted key to ev_key
 {
     char event[20] = { 0 };
@@ -159,6 +180,22 @@ int main(void)
     mw_link_tick();
     CHECK(request(CMD_FREEZE_TEST, 1500, 0) == ST_OK && mw_diag_test_freeze == 1500);
     CHECK(request(CMD_FREEZE_TEST, 15u * 1500u + 1, 0) == ST_BAD);
+
+#ifdef CMD_RAMBOOT
+    // RAM boot: YES only while UPGRADE OS NOW? waits for the upload the host describes; otherwise the panel is left alone.
+    {
+        const uint32_t args[4] = { 0x200000, 0x2f2c3b6e, 0x1d0000, 0x12345678 };
+        int yes = presses_of(KEY_YES);
+        upload[0] = 0;
+        CHECK(request4(CMD_RAMBOOT, args) == ST_NO_PROMPT && presses_of(KEY_YES) == yes && !mw_link_ramboot_due);
+        upload[0] = 3;
+        upload_words[8] = 0x1d0004;                     // another upload's container
+        CHECK(request4(CMD_RAMBOOT, args) == ST_NO_PROMPT && presses_of(KEY_YES) == yes && !mw_link_ramboot_due);
+        upload_words[8] = 0x1d0000;
+        CHECK(request4(CMD_RAMBOOT, args) == ST_OK && presses_of(KEY_YES) == yes + 1 && mw_link_ramboot_due == 1);
+        upload[0] = 0;
+    }
+#endif
 
     if (!failed)
         printf("ok\n");

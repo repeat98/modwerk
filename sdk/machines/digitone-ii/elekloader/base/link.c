@@ -58,6 +58,7 @@
 #define ST_BUSY 3
 #define ST_RANGE 4
 #define ST_HUMAN 5
+#define ST_NO_PROMPT 7                  // ramboot: no UPGRADE OS NOW? waits for this staged upload; the panel is left alone
 #define ST_FLASH 6                      // an OS upload waits at UPGRADE OS NOW?: only a person confirms it
 #define CMD_IDENT 0x01
 #define CMD_DISARM 0x02
@@ -409,6 +410,8 @@ static void COLD act(const uint8_t *m, int len)
             status = ST_HUMAN;
         else if (n < 20)
             status = ST_BAD;
+        else if (!flash_waits() || STAGED[0] != get32(m + HEADER + 10))   // the container length
+            status = ST_NO_PROMPT;      // the prompt went away, or it is for another upload: no YES
         else if (pend_head - pend_tail > PENDING - 2)
             status = ST_BUSY;
         else {

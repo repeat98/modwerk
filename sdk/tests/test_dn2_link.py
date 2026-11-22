@@ -199,5 +199,38 @@ class Dn2DiagSave(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in pathlib.Path(self.dir.name).iterdir()), ["log.bin"])
 
 
+class Dn2RamBootResult(unittest.TestCase):
+    """The ramboot command succeeds only for a RAM boot of the image asked for (device I/O mocked)."""
+    WANT = 0x2F2C3B6E
+
+    @staticmethod
+    def ident(status, crc, n=12):
+        return ([1, 0, 0, 0, 1, 0, 0, 0, 0, status, crc, 0x47FEFFBC] + [0] * 4)[:n]
+
+    def test_a_ram_boot_of_the_image_asked_for_succeeds(self):
+        self.assertTrue(link.wait_ramboot(self.WANT, lambda: self.ident(1, self.WANT), pause=0)[0])
+
+    def test_the_flashed_os_another_crc_or_a_short_reply_fail(self):
+        for v in (self.ident(0, 0), self.ident(1, self.WANT ^ 1), self.ident(8, self.WANT), self.ident(1, self.WANT, n=9)):
+            good, message = link.wait_ramboot(self.WANT, lambda v=v: v, pause=0)
+            self.assertFalse(good, message)
+
+    def test_silence_fails_and_a_late_answer_is_still_judged(self):
+        self.assertFalse(link.wait_ramboot(self.WANT, lambda: None, tries=3, pause=0)[0])
+        answers = iter([None, None, self.ident(1, self.WANT)])
+        self.assertTrue(link.wait_ramboot(self.WANT, lambda: next(answers), tries=5, pause=0)[0])
+
+    def test_the_command_exits_nonzero_when_the_flashed_os_answers(self):
+        from unittest import mock
+        with mock.patch.object(link, "upload"), mock.patch.object(link, "ok"), \
+                mock.patch.object(link, "ramboot_args", return_value=(1, self.WANT, 2, 3)), \
+                mock.patch.object(link, "ask_ident_once", return_value=self.ident(0, 0x12345678)), \
+                mock.patch.object(link.time, "sleep"), mock.patch("builtins.open", mock.mock_open(read_data=b"")), \
+                mock.patch.object(link.sys, "argv", ["dn2_link.py", "ramboot", "x.syx"]):
+            with self.assertRaises(SystemExit) as e:
+                link.main()
+        self.assertIn("boot status 0", str(e.exception.code))
+
+
 if __name__ == "__main__":
     unittest.main()

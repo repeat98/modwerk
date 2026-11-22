@@ -27,7 +27,8 @@ import zlib
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
 CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23, 'ramboot': 0x14}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
-          5: 'a person is at the unit', 6: 'an OS upload waits at UPGRADE OS NOW?: confirm it at the unit'}
+          5: 'a person is at the unit', 6: 'an OS upload waits at UPGRADE OS NOW?: confirm it at the unit',
+          7: 'no UPGRADE OS NOW? waits for this upload: nothing pressed'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
 KEYS = {'TRIGPAGE': 0x01, 'SYN': 0x02, 'FLTR': 0x03, 'AMP': 0x04, 'FX': 0x05, 'MOD': 0x06, 'PERFORM': 0x07,
         'SAVEPROJ': 0x08, 'TAPTEMPO': 0x09, 'UNISON': 0x32, 'YES': 0x0a, 'UP': 0x0b, 'NO': 0x0c, 'LEFT': 0x0d, 'DOWN': 0x0e, 'RIGHT': 0x0f, 'TRK': 0x10, 'FUNC': 0x11,
@@ -227,6 +228,44 @@ def ramboot_args(syx):
     return ulen, ucrc, clen, ccrc
 
 
+BOOT_RAM = 1
+
+
+def ramboot_result(v, want_crc):
+    """(success, message) from an ident reply's values after a RAM boot: success only for status 1 (booted from RAM)
+    with the image CRC asked for. A fallback to the flashed OS, a short reply or another CRC is a failure."""
+    if len(v) < 11:
+        return False, 'the unit answered without a boot status (%d values): not a RAM boot' % len(v)
+    message = 'boot status %d: %s; image crc %08x (wanted %08x)' % (v[9], BOOT_STATUS.get(v[9], '?'), v[10], want_crc)
+    return v[9] == BOOT_RAM and v[10] == want_crc, message
+
+
+def ask_ident_once(port):
+    """ident's values, or None when nothing (or a refusal) came back within a second."""
+    line = MidiLine(port)
+    try:
+        _, _, status, p = exchange(line, 'ident', timeout=1.0)
+    except LinkError:
+        return None
+    finally:
+        line.close()
+    return None if status else [get32(p, 5 * i) for i in range(len(p) // 5)]
+
+
+def wait_ramboot(want_crc, ident, tries=60, pause=1.0):
+    """Wait for the unit after a RAM boot's reset: (success, message), success only as ramboot_result says."""
+    for _ in range(tries):
+        try:
+            v = ident()
+        except SystemExit:
+            v = None
+        if v is None:
+            time.sleep(pause)
+            continue
+        return ramboot_result(v, want_crc)
+    return False, 'The unit did not answer within a minute after the reset; power cycle it to get the flashed OS back.'
+
+
 def upload(syx, port):
     """Stock's OS upgrade over USB (os-upgrade.ts's messages): returns once the unit asks UPGRADE OS NOW?."""
     import mido
@@ -335,17 +374,9 @@ def main():
         time.sleep(0.5)
         ok('ramboot', *args, port=a.port)
         time.sleep(8)
-        for _ in range(60):
-            try:
-                _, _, status, p = ask('ident', port=a.port, timeout=1.0)
-            except SystemExit:
-                time.sleep(1)
-                continue
-            v = [get32(p, 5 * i) for i in range(len(p) // 5)]
-            if len(v) >= 11:
-                print('boot status %d: %s; image crc %08x (wanted %08x)' % (v[9], BOOT_STATUS.get(v[9], '?'), v[10], args[1]))
-            return
-        sys.exit('The unit did not answer within a minute after the reset; power cycle it to get the flashed OS back.')
+        good, message = wait_ramboot(args[1], lambda: ask_ident_once(a.port))
+        print(message) if good else sys.exit(message)
+        return
     if a.cmd == 'bootdiag':
         _, _, status, p = ask('ident', port=a.port)
         v = [get32(p, 5 * i) for i in range(len(p) // 5)]
