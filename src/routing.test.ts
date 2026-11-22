@@ -13,6 +13,12 @@ describe.each(['https://modwerk.app/', 'https://example.github.io/octamod/'])('m
     expect(routeFromUrl(new URL('module/miniverb/index.html', appUrl), appUrl)).toBe('module/miniverb')
     expect(routeFromUrl(new URL('analog-rytm-mkii/module/filter-hz/', appUrl), appUrl)).toBe('analog-rytm-mkii/module/filter-hz')
   })
+  it.each(['scenes', 'all/scenes', 'digitakt/scenes', 'analog-rytm-mkii/scenes'])('keeps old %s library links working', route => {
+    const old = new URL('#' + route, appUrl)
+    const current = route.replace('scenes', 'performance')
+    expect(routeFromUrl(old, appUrl)).toBe(current)
+    expect(canonicalRouteUrl(old, appUrl, moduleIds).hash).toBe('#' + current)
+  })
   it('opens machine-qualified module paths and upgrades legacy Digi hashes', () => {
     for (const [device, id] of [['digitakt', 'digihealth'], ['digitakt-ii', 'track-names'], ['digitone', 'digihealth'], ['analog-rytm-mkii', 'filter-hz']]) {
       const path = `${device}/module/${id}`

@@ -34,6 +34,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SDK.md](SDK.md): machine profiles, module contract v3, evidence tiers and the shared commands.
 - [OCTATRACK_API.md](OCTATRACK_API.md): what an Octatrack module builds against: entry points, hooks, state, what stays stable.
 - [MODULE_REPOSITORIES.md](MODULE_REPOSITORIES.md): the module folder and its manifest fields.
+- [TEST_PROCEDURE.md](TEST_PROCEDURE.md): the steps every module or base change is tested through, in order, and its own edge cases (`npm run test:procedure`).
 - [MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md): qualification gates: cycles, memory, hardware, exceptions.
 - [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md): how to measure a module before it is listed: worst-case cycles, a benchmark against stock and a stress run.
 - [MODULE_RESOURCE_GAUGES.md](MODULE_RESOURCE_GAUGES.md): the CPU, DSP and memory gauges a release needs.
@@ -52,6 +53,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_MODULE_EDGE_CASES.md](OCTATRACK_MODULE_EDGE_CASES.md): what can go wrong across projects, Parts and power cycles.
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
 - [OCTATRACK_PACKAGE_DSP_HOOKS.md](OCTATRACK_PACKAGE_DSP_HOOKS.md): design: stock-DSP hooks and DSP memory claims that packages carry.
+- [OCTATRACK_USB_AUDIO_MODULE.md](OCTATRACK_USB_AUDIO_MODULE.md): design: USB Audio as a module package instead of a base variant per layout.
 - [OCTATRACK_RECONSTRUCTION.md](OCTATRACK_RECONSTRUCTION.md): source-bound USB packaging and explicit USB-only distribution.
 - [OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md](OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md): design: resident engines loaded on demand.
 - [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md): record: the DSP receiver's packet operations in the shared window, FX2 swaps keeping their block (28 October 2026).
@@ -79,7 +81,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.
 - [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md): creator settings and private report details.
 - [AGENT_BOARD.md](AGENT_BOARD.md): the agent board: claims every developer's agent sees and makes (module ports, hook, table and migration numbers), the questions and findings agents leave each other, and the commands that check them.
-- [AGENT_SESSIONS.md](AGENT_SESSIONS.md): sharing the conversation of an agent session with the owner, what is removed before it leaves the computer, and who reads it for how long.
+- [AGENT_SESSIONS.md](AGENT_SESSIONS.md): the review an agent makes of its own session before it finishes, and sharing the conversation of an agent session with the owner, what is removed before it leaves the computer, and who reads it for how long.
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
 - [FIRMWARE_DOWNLOAD_API.md](FIRMWARE_DOWNLOAD_API.md): building and saving firmware without a browser.
@@ -94,6 +96,9 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 History, not current instructions.
 
+- The Analog BD Undo recording and BBD Delay buffer check are in the [Octatrack 0.7.10 test record](verification/2026-11-19-octatrack-0710-checks.md).
+- [Unused module cost](verification/2026-11-20-octatrack-unused-module-cost.md): what 24 installed, unused modules cost the frame interrupt, module by module, and resting machines, 20 November 2026.
+- The DSP stall on a project load with modules restored from the card, and its 0.7.11 fix, are in the [project-load record](verification/2026-11-19-octatrack-project-load-dsp.md).
 - [FRACT consolidation](verification/2026-11-04-fract-consolidation.md): source draft, native FLEX support, source checks and review limits for #926, 4 November 2026.
 - [OCTATRACK_USB_CHECKPOINT.md](OCTATRACK_USB_CHECKPOINT.md) and [OCTATRACK_BETA_HANDOVER.md](OCTATRACK_BETA_HANDOVER.md): handovers frozen on 12 October 2026.
 - [REPITCH_ORIGINAL_TEMPO_CHECK.md](REPITCH_ORIGINAL_TEMPO_CHECK.md): a check of 8 October 2026.

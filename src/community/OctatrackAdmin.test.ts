@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json'
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { OctatrackAdminReport, baseName } from './OctatrackAdmin'
 import type { AdminOctatrack } from './admin-octatrack-contract'
 

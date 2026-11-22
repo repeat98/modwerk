@@ -20,7 +20,7 @@ const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:gene
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
 const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|pr-check-plan|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
@@ -55,6 +55,13 @@ export function pythonProblem({ command = 'python3', version = null, error = nul
   if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
   const found = error ? `${command} did not run (${error})` : `${command} is ${version || 'an unknown version'}`
   return `npm run check needs Python 3.10 or newer, and ${found}. Install Python 3.10+ and put it first on PATH, then run this again.`
+}
+
+/** pythonProblem for the interpreter the gates call (scripts/modules.mjs): python3, or python on Windows. */
+export function localPythonProblem(root) {
+  const command = process.platform === 'win32' ? 'python' : 'python3'
+  const probe = spawnSync(command, ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], { cwd: root, encoding: 'utf8' })
+  return pythonProblem({ command, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
 }
 
 /** The verdict from what was found; every problem says what to do. */
@@ -162,10 +169,7 @@ async function main(argv) {
   let head = git('rev-parse', 'HEAD'), dirty = changedFiles()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
-  // The same interpreter the gates call (scripts/modules.mjs).
-  const pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
-  const probe = spawnSync(pythonCommand, ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], { cwd: root, encoding: 'utf8' })
-  const python = pythonProblem({ command: pythonCommand, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
+  const python = localPythonProblem(root)
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
   const check = () => npm('check', '--', '--base', base)
@@ -204,8 +208,8 @@ async function main(argv) {
   const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
-  // Once the work is ready, the agent asks whether to share the session with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
-  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
+  // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
+  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'

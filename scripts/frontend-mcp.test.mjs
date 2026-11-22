@@ -1,3 +1,5 @@
+import { publishedBinding } from '../src/engine/elekloader/published-octatrack.fixture.ts'
+import { publishedUsbAudioPackage } from '../src/config/published-usb-audio.fixture.ts'
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { mkdtemp, rm, readFile, writeFile, chmod, symlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -74,13 +76,14 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     expect(usb).toContain('usb-audio-out-tracks-main-cue')
     // Every published package alone, every pair and all together, on the published base with site events (every subset
     // of 19 would be 2^19 sets; preparing one only preflights each package).
-    const { identity: base } = JSON.parse(await readFile(new URL('../sdk/machines/octatrack/base-binding.json', import.meta.url), 'utf8'))
+    const { identity: base } = publishedBinding
     const capabilities = { abi: 10, features: 7 | 128 | 512 | 1024, maxSites: 128, maxCopies: 128 } // ABI 10: Analog BD's engine; 1024: Tuner's window (base 0.7.5)
     const sets = [...usb.map(id => [id]), ...usb.flatMap((a, i) => usb.slice(i + 1).map(b => [a, b])), usb]
     for (const moduleIds of sets) {
       const prepared = await service.call('site_selection', { moduleIds, usb: true, capabilities, base })
       // USB Audio comes with the base (here in its default layout, the set's), so it adds no package.
-      expect(prepared.changes).toHaveLength(moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue').length)
+      const expected = publishedUsbAudioPackage ? moduleIds : moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue')
+      expect(prepared.changes).toHaveLength(expected.length)
       expect(prepared.changes.every(change => /^[a-f0-9]{64}$/.test(change.sha256) && change.undoSha256)).toBe(true)
     }
     await expect(service.call('site_selection', { moduleIds: ['sidechain-compressor'], usb: true, capabilities })).rejects.toThrow('latest Modwerk base')
@@ -99,6 +102,22 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     await expect(service.call('board_post', { kind: 'note', topic: 'machine', key: 'octatrack', text: 'x' })).rejects.toThrow()
     await expect(service.call('board_claims', { kind: 'module' })).rejects.toThrow('turned off')
     await expect(service.call('board_messages', { machine: 'octatrack' })).rejects.toThrow('turned off')
+  })
+  it.runIf(publishedUsbAudioPackage)('starts fresh sets on stereo Main and retains saved USB routing on edit', async () => {
+    const moduleIds = ['usb-audio-out-tracks-main-cue']
+    const fresh = await service.call('set_save', { name: 'Fresh USB', moduleIds })
+    try {
+      expect(fresh.usbAudio).toMatchObject({ destination: 'computer', layout: 'main', outboxPairs: [1, 0, 0, 0] })
+      const saved = { ...fresh.usbAudio, destination: 'outbox', layout: 'tracks-post', outboxPairs: [7, 1, 7, 0] }
+      await service.call('set_save', { id: fresh.id, name: 'Outbox', moduleIds, usbAudio: saved })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Renamed', moduleIds })).usbAudio).toEqual(saved)
+      const classic = { ...fresh }
+      delete classic.usbAudio
+      await service.call('set_import', { configurations: [classic] })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Classic', moduleIds })).usbAudio).toBeUndefined()
+    } finally {
+      await service.call('set_delete', { id: fresh.id })
+    }
   })
   it('round trips sets through frontend validation without including private firmware', async () => {
     const created = await service.call('set_save', { name: 'MCP test', moduleIds: ['miniverb'] })

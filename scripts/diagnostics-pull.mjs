@@ -22,7 +22,7 @@ const OUT = join(homedir(), '.cache/modwerk-local/diagnostics')
 /** Module ids (the package's `module`, 8 hex digits) to names, for the unit's `set` records. */
 const MODULE_NAMES = new Map((() => { try { return JSON.parse(readFileSync(new URL('src/engine/assets/octatrack-module-packages.json', ROOT), 'utf8')).packages.map(p => [p.module, p.name ?? p.id]) } catch { return [] } })())
 const PAGE = 500
-const PROBLEMS = ['sync_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
+const PROBLEMS = ['sync_failed', 'link_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
 
 /** Pages through every retained record, oldest first; `page(since)` answers with the endpoint's JSON. */
 export async function pullAll(page, from) {
@@ -43,12 +43,13 @@ export async function pullAll(page, from) {
 /** This computer's local time, as Discord shows it. */
 export const when = iso => new Date(iso).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
 const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username, data.event, data.phase,
+  data.failure && 'failure=' + data.failure, data.client && [data.client.browser, data.client.major].filter(Boolean).join(' ') + '/' + data.client.os,
   data.error && 'error=' + data.error, data.result && 'result=' + data.result, data.refusal !== undefined && 'refusal=' + data.refusal,
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reason && 'reason=' + data.reason,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
-const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down'],
+const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down', 'window open', 'meets a buffer'],
   { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)

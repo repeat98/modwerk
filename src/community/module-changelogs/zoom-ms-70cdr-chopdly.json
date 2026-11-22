@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.4.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A delay that chops what it recorded: every repeat replays the last cycle cut into 1-16 chops (or at your notes), rearranged, reversed, pitched and stretched, and the repeats get re-chopped."
+    ]
+  }
+]

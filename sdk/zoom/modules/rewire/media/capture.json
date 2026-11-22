@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "rewire",
+  "moduleVersion": "1.0.0",
+  "imageSha256": "fc2297e2665799e58ba1323654fc055eef033dd8f70308ef7359a03ab5949864",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "7f87f076312d5d847db8d2b256d90fb10ed77817a6cd86aafcf2e1cb6415661a",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

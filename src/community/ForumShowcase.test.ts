@@ -7,7 +7,7 @@ import { CommunityContext } from './context'
 import { api } from './api'
 import type { ForumShowcaseItem } from './forum-contract'
 
-vi.mock('./api', () => ({ api: vi.fn() }))
+vi.mock('./api', () => ({ api: vi.fn(), onCommunityReconnect: vi.fn(() => () => {}) }))
 
 const session = { available: true, admin: false, user: null, forumMedia: true }
 const share = (id: string, machine = 'octatrack'): ForumShowcaseItem => ({
@@ -33,10 +33,43 @@ afterEach(async () => {
   container.remove()
   vi.unstubAllGlobals()
 })
-const render = (machine?: string) => act(async () => root.render(createElement(CommunityContext.Provider, {
-  value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} },
+const render = (machine?: string, context: { session?: typeof session | { available: boolean; admin: boolean; user: null }; settled?: boolean } = {}) => act(async () => root.render(createElement(CommunityContext.Provider, {
+  value: { session: context.session ?? session, settled: context.settled, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} },
 }, createElement(ForumShowcase, { machine, shareHref: '#forum/new?category=showcase' }))))
 const strip = () => container.querySelector<HTMLUListElement>('.forum-showcase-strip')!
+
+it('shows loading cards shaped like shares while the session is still being checked', async () => {
+  vi.mocked(api).mockReturnValueOnce(pendingFeed().promise)
+  await render(undefined, { session: { available: false, admin: false, user: null }, settled: false })
+  const cards = strip().querySelectorAll('.forum-showcase-loading:not(.forum-showcase-ghost)')
+  expect(cards).toHaveLength(3)
+  // The same title, caption and author lines as a loaded card, so the strip keeps its height when shares arrive.
+  expect(cards[0].querySelector('.forum-showcase-copy h3 .forum-skeleton')).not.toBeNull()
+  expect(cards[0].querySelector('.forum-showcase-caption .forum-skeleton')).not.toBeNull()
+  expect(cards[0].querySelector('.forum-showcase-meta .forum-avatar')).not.toBeNull()
+})
+
+it('hides the strip once the session shows that media sharing is off', async () => {
+  vi.mocked(api).mockResolvedValueOnce([])
+  await render(undefined, { session: { available: true, admin: false, user: null }, settled: true })
+  expect(container.querySelector('.forum-showcase')).toBeNull()
+})
+
+it('keeps a full strip height with only the invitation when the feed is empty', async () => {
+  vi.mocked(api).mockResolvedValueOnce([])
+  await render()
+  expect(strip().dataset.empty).toBe('true')
+  expect(strip().querySelector('.forum-showcase-ghost')).not.toBeNull()
+  expect(strip().querySelector('.forum-showcase-invite strong')?.textContent).toBe('Be the first to share')
+})
+
+it('keeps the strip in place with the invitation when the feed fails', async () => {
+  vi.mocked(api).mockRejectedValueOnce(new Error('Offline'))
+  await render()
+  expect(container.querySelector('.forum-showcase')).not.toBeNull()
+  expect(strip().querySelector('.forum-showcase-ghost')).not.toBeNull()
+  expect(strip().querySelector('.forum-showcase-invite')?.textContent).toContain('could not load')
+})
 
 it('resets to the invitation and newest shares when cards replace loading placeholders', async () => {
   const response = pendingFeed()
