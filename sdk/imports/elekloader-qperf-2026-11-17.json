@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "qperf-2026-11-21",
+  "revision": "qperf-2026-11-17",
   "about": "Modwerk source-only qperf package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/qperf.",
   "cores": [],
   "mods": [
     {
-      "file": "qperf-0.3.0-experimental-os1.74.elemod",
-      "sha256": "9b7b8801baf07a0b99145cc9c3c138473a0149776042bbc9d538905a11ec1011",
+      "file": "qperf-0.2.2-experimental-os1.74.elemod",
+      "sha256": "4ff5dfe4667642dcfe19e545da988a8b48a8b662d2a6cb5b942614528c667aa5",
       "id": "qperf",
-      "version": "0.3.0-experimental",
+      "version": "0.2.2-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "eded568203cdf0b35a23f2cfe36eb9d8753a2a4f",
-        "path": "sdk/imports/packages/qperf/qperf-0.3.0-experimental-os1.74.elemod"
+        "commit": "0562e6522a94d95cfcfbc4fff99d78606dfdf691",
+        "path": "sdk/imports/packages/qperf/qperf-0.2.2-experimental-os1.74.elemod"
       },
       "title": "QPERF",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "This package's code ran alone on the author's Analog Rytm MKII on OS 1.74 from RAM in a test image with the development base (QU02, 21 November 2026): rig cases read the take from RAM as the SCALE menu lengthened the loop, and RECORD + YES after a lengthening applied."
+      "on_unit": "This package's source ran alone on the author's Analog Rytm MKII on OS 1.74 from RAM in a test image with the development base and a private meter (QPN2, 17 November 2026): its audio handler took 470 ticks a block stopped against 0.2.1's 850 to 854, and two rig cases gave the same results as 0.2.1."
     }
   ]
 }
