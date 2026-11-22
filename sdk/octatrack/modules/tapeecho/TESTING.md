@@ -15,24 +15,29 @@ and requires that two-argument event.
 5280) >= 0` (wrap-safe on the free-running 32-bit counter while the count is within 2^31 of the deadline). 5,280 counts (40 µs)
 is an **estimate** of one block, not a bound: the first instance raised the longest frame by 9.4 % (34 µs) in
 `evidence/frame-cost.json`, and the emulator's worst block (2,926 instructions against 1,800 on the default page) scales that to
-about 55 µs, within the 20 µs margin the base leaves. A held block outputs the track's audio as stock handed it (the dry input
-at unity: stock's mix is skipped as on the full path) and writes 32 zero words to the scratch buffer stock commits to the ring,
-so that block of tape is silence and the echo plays a 16-sample gap there later; no stale or repeated tape is ever played. The
-0.1.8 draft's accumulator clear in the hold is gone: the hold uses no EMAC, and stock leaves every accumulator empty at the seam.
+about 55 µs, within the 20 µs margin the base leaves. A held block (deadline or 0.1.8's overload hold) gives the audio the dry gain of te_tape_block's MIX law
+(`te_dry`: unity up to MIX 64, `((full - mix) >> 14) * 33028` above, from `s->mix`) and writes the scratch buffer stock commits
+to the ring through te_tape_block's record path without feedback and hiss: the drive sum, the `[1,6,1]/8` FIR on `s->fir` and
+the tape curve. Of the three choices this leaves the least in the later echo: zeros play back as a 0.36 ms gap, an unwritten
+block as 16 samples of tape from 4 s before, and the input scaled linearly (230 instructions a hold) differed from the full
+path's record by 0.044 FS at a 0.24 FS record peak, the curve's compression; with FIR and curve (524 instructions at MIX 64 or
+below, 722 above, seam to exit, against 1,907 for a full block) it differs by under 0.0001 FS (hiss), and only the feedback's
+repeat is missing. The 0.1.8 draft's accumulator clear is gone: stock leaves every accumulator empty at the seam, and the hold
+clears what it uses.
 
 **Rest.** While `rest` is nonzero, every Tape Echo track toggles the scratch buffers and steps the filter iterator as before,
 clears its state's active word and returns to `0x400037e0`, past stock's ring write (the base's quiet-track path returns there
-too): the audio is the dry input at unity, with no echo, no stock filter or mix (whose feedback would play the ring as a tail)
+too): the audio gets the dry gain of the MIX knob, with no echo, no stock filter or mix (whose feedback would play the ring as a tail)
 and no ring write. The first frame with `rest` 0 runs `te_block` from an inactive state: every state word cleared, `valid` 0,
 so no tape from before the rest is read and the echo builds from the new input.
 
 | Case | Why this change makes it a risk | How run | Result |
 | --- | --- | --- | --- |
-| Rest, wake and deadline in the emulator | the new exit must leave the frame as stock expects and the wake must start clean | the 0.1.8 scratch ColdFire probe (stock 1.40C image, detours in place, module at `0x47300000`) with three local cases added: 10 rested frames, deadlines 1, 8,192 and `0xfffff000` with DTIM3 at 0 | rested: all 8 tracks' audio equal to the input, the scratch buffer and ring untouched, sp, toggle and iterator as stock's, active cleared; the wake and every later block bit-exact with native arithmetic from a fresh state; deadlines 1 and `0xfffff000` held all 8, 8,192 none; every 0.1.8 case passed again (peak 2,930 instructions a track block) |
+| Rest, wake and deadline in the emulator | the new exit must leave the frame as stock expects and the wake must start clean | the 0.1.8 scratch ColdFire probe (stock 1.40C image, detours in place, module at `0x47300000`) with three local cases added: 10 rested frames, deadlines 1, 8,192 and `0xfffff000` with DTIM3 at 0 | rested: all 8 tracks' audio equal to the input, the scratch buffer and ring untouched, sp, toggle and iterator as stock's, active cleared; the wake and every later block bit-exact with native arithmetic from a fresh state; deadlines 1 and `0xfffff000` held all 8, 8,192 none; held blocks' audio and tape equal to a reference of the dry gain and the record path; level continuity at MIX 32, 64, 96 and 127 (track 1 alone, no tape history yet, a hold and ten rested frames among 200): every block within 1 LSB of the full path's dry, the held tape under 0.0001 FS from the full block's; every 0.1.8 case passed again (peak 2,930 instructions a track block) |
 | Software build | the new exit and arguments must assemble and link | `generate_cpu.py --check`, `npm run module:dev -- tapeecho --build-only`, `npm run coldfire:isa` | built; inside the MCF54455 set |
 | Rest on a busy pattern | the output must be dry with no tail | the base's PATTERN IS BUSY scene, by ear and USB recording | not tested for this version |
 | Wake after rest | no stale echo; a dry level step at MIX above 64 is expected | pattern change back to a light one | not tested for this version |
-| Deadline holds | holds must keep the frame entry out of the late window; each is a 0.36 ms gap in the echo | `te_guard` `holds` and the base's late counters, two Tape Echos on a busy Part | not tested for this version |
+| Deadline holds | holds must keep the frame entry out of the late window; each is 0.36 ms without echo | `te_guard` `holds` and the base's late counters, two Tape Echos on a busy Part | not tested for this version |
 | Hardware | | | not tested for this version |
 
 The rest case's exit is checked up to `0x400037e0`, not through stock's following tracks with modelled DMA. The repository's

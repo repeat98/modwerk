@@ -27179,6 +27179,18 @@ te_hp:
 | MKII (evidence/frame-cost.json, 22 Nov 2026). The emulator's worst block, 2,926, scales that to about 55 µs;
 | the base's deadline keeps a 20 µs margin, which covers the 15 µs the estimate can fall short.
         .set    TE_BLOCK_COUNTS, 5280
+| d0 = gain(MIX knob) as te_block forms it: min(knob, 127) * 16909320.
+        .macro  TE_KNOB_MIX
+        movea.l 72+72(%sp),%a1
+        mvz.b   10(%a1),%d0
+        moveq   #127,%d1
+        cmp.l   %d1,%d0
+        bls.s   .Lknob\@
+        move.l  %d1,%d0
+.Lknob\@:
+        move.l  #16909320,%d1
+        mulu.l  %d1,%d0
+        .endm
 te_cpu_reset:
         lea     -12(%sp),%sp
         movem.l %d0-%d1/%a0,(%sp)
@@ -27355,38 +27367,113 @@ te_track_done:
         movem.l 32(%sp),%d1-%d5/%a0-%a4
         lea     72(%sp),%sp
         jmp     0x4000377a
-| Held: the track's audio at 96(frame) is left as stock handed it, the dry
-| input at unity (stock's mix, 0x40003704, is skipped as on the full path),
-| and record[], the scratch buffer stock's commit from 0x4000378a writes to
-| the ring, is 32 zero words: this block's 16 frames of tape are silence. The
-| head, filters and clocks stand still; valid counts the 16 silent frames,
-| so the echo later plays a 16-sample gap, never stale tape.
+| Held: no head, filter or clock runs; the block costs about a quarter of a
+| full one (emulator: 543 instructions at MIX 64 or below, 741 above, against
+| about 1,900). The audio gets the dry gain the full path would give it
+| (te_dry). record[], the scratch buffer stock's commit from 0x4000378a
+| writes to the ring, gets the record path of te_tape_block without its
+| feedback and hiss terms: the drive sum, the [1,6,1]/8 FIR on s->fir and
+| the tape curve, so the tape holds the block's own input, shaped as always,
+| and the FIR's history runs on into the next block. Only the repeat the
+| feedback would have laid over it is missing for these 16 samples. Zeros
+| played back later as a 0.36 ms gap, an unwritten block as 16 samples of
+| tape from 4 s before, the input unshaped up to 1.6 dB too loud. An
+| inactive state (its first block) records nothing it would keep: it
+| starts with no history.
+| x2 <- the shaped sample of the next input; record it through the curve.
+        .macro  TE_HOLD_RECORD x1,x2
+        move.l  (%a0)+,%d0
+        move.l  (%a0)+,%d3
+        mac.l   %d0,%a5,%acc0
+        mac.l   %d3,%a5,%acc0
+        movclr.l %acc0,%d4
+        asr.l   #3,%d4
+        add.l   %d4,\x2
+        sub.l   \x1,\x2
+        sub.l   \x1,\x2
+        asr.l   #3,\x2
+        add.l   \x1,\x2
+        move.l  \x2,%d5
+        swap    %d5
+        ext.l   %d5
+        and.l   #-4,%d5
+        and.l   #262143,\x2
+        lsl.l   #8,\x2
+        lsl.l   #5,\x2
+        move.l  (%a4,%d5.l),%d0
+        move.l  4(%a4,%d5.l),%d3
+        move.l  %d0,%acc1
+        msac.l  %d0,\x2,%acc1
+        mac.l   %d3,\x2,%acc1
+        movclr.l %acc1,%d0
+        move.l  %d0,(%a3)+
+        move.l  %d0,(%a3)+
+        move.l  %d4,\x2
+        .endm
 te_hold:
         addq.l  #1,12(%a1)
-        moveq   #31,%d0
-4:      clr.l   (%a3)+
-        subq.l  #1,%d0
-        bpl.s   4b
+        movea.l 72+96(%sp),%a0          | the track's 16 stereo samples
         tst.l   (%a2)
-        beq.s   te_track_done
+        beq     7f
+        lea     128(%a0),%a1
+        lea     te_tape_curve+4096,%a4
+        move.l  te_record_gain,%a5
+        move.l  44(%a2),%d1             | s->fir
+        move.l  48(%a2),%d2
+4:      TE_HOLD_RECORD %d1,%d2
+        TE_HOLD_RECORD %d2,%d1
+        cmpa.l  %a1,%a0
+        bne     4b
+        move.l  %d1,44(%a2)
+        move.l  %d2,48(%a2)
         moveq   #16,%d0
         add.l   4(%a2),%d0
         cmp.l   #176399,%d0             | TE_RING - 1
         bls.s   5f
         move.l  #176399,%d0
 5:      move.l  %d0,4(%a2)
-        bra.s   te_track_done
-| Rested (rest nonzero, base 0.8): the audio stays the dry input at unity and
-| stock's ring write is skipped (0x400037e0, past it, as the base's own quiet
-| path does), so no echo, no tape and no stock filter or mix run. Clearing
-| the active word makes the first block after the rest start afresh in
-| te_block: every state word zero and valid 0, so the head reads no tape
-| recorded before it (read_head and render_head give silence beyond valid).
+        move.l  24(%a2),%d0             | s->mix, ramped where the last block left it
+        lea     -128(%a0),%a0
+        bra.s   8f
+7:      TE_KNOB_MIX
+8:      bsr.s   te_dry
+        bra     te_track_done
+| Rested (rest nonzero, base 0.8): the audio gets the dry gain of the MIX
+| knob (te_dry) and stock's ring write is skipped (0x400037e0, past it, as
+| the base's own quiet path does), so no echo, no tape and no stock filter
+| or mix run. Clearing the active word makes the first block after the rest
+| start afresh in te_block, its MIX unramped at the same knob: every state
+| word zero and valid 0, so the head reads no tape recorded before it
+| (read_head and render_head give silence beyond valid).
 te_rested:
         clr.l   (%a2)
+        movea.l 72+96(%sp),%a0
+        TE_KNOB_MIX
+        bsr.s   te_dry
         movem.l 32(%sp),%d1-%d5/%a0-%a4
         lea     72(%sp),%sp
         jmp     0x400037e0
+| The dry gain of te_tape_block's MIX law for d0 = s->mix (TE_TAPE_GAINS):
+| unity up to the knee, as the full path leaves the dry unscaled there but
+| for its 1-LSB TE_ONE; above it ((full - mix) >> 14) * 33028, applied as
+| the kernel applies it, so a held or rested block meets the blocks around
+| it at the same dry level. a0 the audio; uses d0-d2, a0 and acc0, cleared.
+te_dry:
+        cmp.l   #1082196480,%d0         | TE_MIX_KNEE
+        bls.s   9f
+        move.l  #2147483640,%d1         | TE_FULL_WET
+        sub.l   %d0,%d1
+        moveq   #14,%d2
+        lsr.l   %d2,%d1
+        mulu.w  #33028,%d1
+        moveq   #31,%d2
+1:      move.l  (%a0),%d0
+        mac.l   %d0,%d1,%acc0
+        movclr.l %acc0,%d0
+        move.l  %d0,(%a0)+
+        subq.l  #1,%d2
+        bpl.s   1b
+9:      rts
 | The write position leaves no room for a block: stock's path, and the
 | instance starts afresh when it comes back.
 te_track_far:

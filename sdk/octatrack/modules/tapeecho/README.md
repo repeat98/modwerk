@@ -145,9 +145,9 @@ remix. The rings themselves are already reserved by the stock OS.
 * Ring base is `0x4f502c10 + track * 1411328`, through the **uncached** alias.
   Each ring contains 176400 stereo frames; Tape Echo writes mono to both sides.
 * `ev_frame_deadline` (base 0.8, `runtime.json`): `te_frame_deadline(deadline, rest)` stores both each frame.
-  A block that would end past the deadline is held: the dry audio at unity, a silent block of tape. While
-  `rest` is nonzero every Tape Echo track leaves the seam for `0x400037e0`, past stock's ring write: dry at
-  unity, no echo, no stock filter or mix, no ring write, and its state is dropped, so the first frame after
+  A block that would end past the deadline is held: the dry audio at MIX's dry gain, and the input recorded
+  through the record FIR and tape curve without feedback or hiss. While `rest` is nonzero every Tape Echo
+  track leaves the seam for `0x400037e0`, past stock's ring write: dry at MIX's dry gain, no echo, no stock filter or mix, no ring write, and its state is dropped, so the first frame after
   the rest starts the tape afresh.
 * On effect entry, a valid-history counter excludes the previous effect's
   samples. There is no large buffer clear inside the audio callback.
@@ -269,9 +269,9 @@ Use a backed-up test project and a short transient to hear the repeats clearly. 
 
 ## Compatibility and limitations
 
-Tape Echo targets Octatrack OS 1.40C FX2 and keeps stock DELAY and SPRING REV available. It uses the shared 10 MiB DRAM arena and existing stock delay rings; the original CPU integration and resource figures above remain the evidence for these costs. The pinned historical record reports six instances running and a seventh freezing the unit; other historical builds froze during edits. The current candidate is not a hardware-confirmed fix. Timing headroom, cache/bus behavior and live-set reliability remain unqualified. 0.1.6 adds work only while MIX, FDBK or AGE is moving (see Tests and measurements). 0.1.8 does the same audio with less ColdFire work while the controls stand still, and holds every instance for one block (dry passes, the tape records silence) when stock's delay routine starts more than a quarter frame late, so an overloaded unit drops echo instead of piling on; neither is measured on a unit yet ([TESTING.md](TESTING.md)).
+Tape Echo targets Octatrack OS 1.40C FX2 and keeps stock DELAY and SPRING REV available. It uses the shared 10 MiB DRAM arena and existing stock delay rings; the original CPU integration and resource figures above remain the evidence for these costs. The pinned historical record reports six instances running and a seventh freezing the unit; other historical builds froze during edits. The current candidate is not a hardware-confirmed fix. Timing headroom, cache/bus behavior and live-set reliability remain unqualified. 0.1.6 adds work only while MIX, FDBK or AGE is moving (see Tests and measurements). 0.1.8 does the same audio with less ColdFire work while the controls stand still, and holds every instance for one block when stock's delay routine starts more than a quarter frame late, so an overloaded unit drops echo instead of piling on; neither is measured on a unit yet ([TESTING.md](TESTING.md)).
 
-**0.1.9 requires Modwerk base 0.8 or newer**, whose `ev_frame_deadline` passes `rest`: on a pattern the base predicts past the frame ceiling it bypasses Tape Echo dry (no echo, no tail) and the echo starts afresh from the next audio when the pattern is lighter again; a block that would run past the frame's deadline plays dry and leaves a 16-sample gap in the tape. A development base that raises the event with its deadline only leaves `rest` a stale stack word, so the echo may drop out or never build there. Nothing of 0.1.9 is measured on a unit yet.
+**0.1.9 requires Modwerk base 0.8 or newer**, whose `ev_frame_deadline` passes `rest`: on a pattern the base predicts past the frame ceiling it bypasses Tape Echo dry (no echo, no tail) and the echo starts afresh from the next audio when the pattern is lighter again; a block that would run past the frame's deadline plays dry at MIX's dry level and records its own input to the tape without the feedback's repeat; the dry level is the same as in the blocks around it. A development base that raises the event with its deadline only leaves `rest` a stale stack word, so the echo may drop out or never build there. Nothing of 0.1.9 is measured on a unit yet.
 
 ## Tests and measurements
 

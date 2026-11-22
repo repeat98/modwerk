@@ -6,10 +6,12 @@ brings the CPU voice closer to Galaxy without moving it back to the DSP.
 
 ## Dry while rested (0.1.9, 22 Nov 2026)
 
-The echo's arithmetic is 0.1.8's. Two new silences: a block held at the frame's deadline plays the dry input at unity and
-records a 16-sample gap of silence into the tape, and while base 0.8 rests the effect the track is dry at unity with no echo
-or tail. At MIX above 64, where the dry is normally attenuated, both are a step up in dry level for their duration. After a
-rest the tape starts empty. See TESTING.md.
+The echo's arithmetic is 0.1.8's. A block held at the frame's deadline (or by 0.1.8's overload hold) plays the dry input at
+the dry gain MIX gives it, with no echo for 16 samples, and records its own input through the record FIR and tape curve, so
+only the feedback's repeat is missing from that block of tape. While base 0.8 rests the effect the track is dry at the same
+gain with no echo or tail. On the emulator the dry level stays within 1 LSB of the full path's across hold and rest at MIX
+32, 64, 96 and 127; at MIX 127 the dry gain is 0, so a held block is 16 samples of silence. After a rest the tape starts
+empty. See TESTING.md.
 
 ## Less ColdFire work, same samples (0.1.8, 22 Nov 2026)
 
