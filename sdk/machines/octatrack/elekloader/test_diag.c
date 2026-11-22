@@ -3,7 +3,7 @@
  * since; five minutes of meters make one load record; the CPU at 90 % for a second makes one HOT incident with the
  * unit's context, at most one in ten minutes; five seconds without a UI tick while frames run make a FREEZE, added
  * with its length once the tick moves again, or with length 0 at the next start; the frame guard's skips make one
- * SHED, at most one in ten minutes; LOG pages are 244 bytes. */
+ * SHED, at most one in ten minutes; each USB re-offer makes one USB incident; LOG pages are 244 bytes. */
 #include "diag.c"
 #include <stdio.h>
 
@@ -21,6 +21,7 @@ volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
 volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes; /* machine_registry.c's frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
+volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
@@ -116,6 +117,12 @@ int main(void)
     mw_frame_brakes = 2u;
     tick();
     CHECK(LOG->incidents == before + 4u && last()->kind == DIAG_BRAKE && (last()->a & 0xffffffu) == 2u);
+    /* The attach watchdog offered the unit again (#1985): one USB incident each time, with OTGSC and PORTSC1. */
+    mw_usb_reoffer_regs = 0x0800u << 16 | 0x1000u, mw_usb_reoffers = 1u;
+    tick();
+    CHECK(LOG->incidents == before + 5u && last()->kind == DIAG_USB && last()->a == (0x0800u << 16 | 0x1000u));
+    tick();
+    CHECK(LOG->incidents == before + 5u);
 
     /* The CPU budget refused a machine on T4: one incident with the track and the count. */
     before = LOG->incidents;

@@ -25,6 +25,7 @@
 #endif
 #include "vendor.h"
 #include "usb_base.h"
+#include "usb_attach.h"
 #ifdef MODWERK_USB_FUNCTIONS
 #include "usb_function.h"
 #endif
@@ -54,6 +55,9 @@ void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the b
 #define ENDPTFLUSH REG(0xfc0b01b4u)
 #define ENDPTCOMPLETE REG(0xfc0b01bcu)
 #define ENDPTCTRL0 REG(0xfc0b01c0u)
+#define USBCMD REG(0xfc0b0140u)  /* bit 0 RS: the pull-up */
+#define PORTSC1 REG(0xfc0b0184u)
+#define OTGSC REG(0xfc0b01a4u)
 /* Stock EP0 state: 10 while an IN stage is pending, 11 when idle. */
 #define EP0_STATE REG(0x460bb3ecu)
 /* Stock's awaited OUT descriptor; null unless one of its own OUT stages runs. */
@@ -615,6 +619,10 @@ void modwerk_ep0_bus_reset(void)
 int modwerk_modset_due(void); /* modset.c: a kept set waits for its save */
 int modwerk_modset_switch_due(void); /* modset.c: PROJ > MODWERK > MODULES asked for a module on or off */
 void modwerk_modset_notice_tick(void); /* modset.c: "MODULES LOADED" once the restored engines run */
+int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open */
+/* usb_attach.h: how often the unit offered itself again because the host never enumerated it, and OTGSC (high half)
+ * and PORTSC1 (low half) the last time; diag.c logs each. */
+volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
 void modwerk_ep0_tick(void)
@@ -642,6 +650,23 @@ static void ep0_tick(void)
         modwerk_usb_function_host(); /* and it is back after the base's own reconnect */
 #endif
     } else if (quiet < HOST_TIMEOUT_TICKS) ++quiet;
+    /* #1985: a unit the host never enumerated, after a RAM boot or any start, offers itself again (usb_attach.h). A link
+     * stock's USB DISK MODE, the base's own reconnect or an armed RAM boot owns is theirs, also at the end of a drop. */
+    static struct usb_attach attach;
+    {
+        int busy = modwerk_machine_usb_disk() || modwerk_boot_pending();
+#ifdef MODWERK_USB_FUNCTIONS
+        busy = busy || modwerk_usb_reconnecting();
+#endif
+        uint32_t lock = modwerk_machine_lock(); /* the controller's registers with the USB interrupt held off */
+        uint32_t portsc = PORTSC1, otgsc = OTGSC;
+        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, busy);
+        if (act == USB_ATTACH_DROP) {
+            USBCMD = USBCMD & ~USB_ATTACH_RS;
+            mw_usb_reoffer_regs = (otgsc & 0xffffu) << 16 | (portsc & 0xffffu), mw_usb_reoffers = mw_usb_reoffers + 1u;
+        } else if (act == USB_ATTACH_OFFER && !busy) USBCMD = USBCMD | USB_ATTACH_RS;
+        modwerk_machine_unlock(lock);
+    }
 #ifdef MODWERK_USB_FUNCTIONS
     /* ot_usb_functions changed: the base reconnects by itself (usb_function.c). A host that does not reach the
      * vendor interface again is handled as unplugged; until then its silence is not counted. */

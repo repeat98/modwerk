@@ -21,6 +21,12 @@ describe('trial verdict', () => {
     expect(verdict.lines[0]).toMatch(/^FAIL .*brake silenced the module machines \(1 since boot\)/)
   })
 
+  it('prints a USB re-offer (#1985) but passes: the link, not the module', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'usb', 0x0800 << 16 | 0x1000)]))
+    expect(verdict.failed).toBe(false)
+    expect(verdict.lines[0]).toMatch(/offered itself on USB again \(OTGSC 0x800, PORTSC1 0x1000\)/)
+  })
+
   it('fails on a crash, stall, freeze or skip logged after the trial began, and names the crash', () => {
     const before = log(10, [incident(9, 'stall', 1)])
     const after = log(14, [incident(9, 'stall', 1), incident(11, 'crash', 0x40a00004), incident(12, 'freeze', 40), incident(13, 'shed', 0x05000003), incident(14, 'stall', 2)])

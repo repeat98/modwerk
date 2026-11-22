@@ -24,6 +24,7 @@ void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
 extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
 extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
+extern volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;   /* ep0.c: the attach watchdog (usb_attach.h) */
 extern const uint8_t modwerk_base_digest[32];       /* the base's identity (build_core.py) */
 
 #ifdef MODWERK_HOST /* test_diag.c models the unit's memory */
@@ -76,7 +77,7 @@ static unsigned installed(uint32_t *ids, unsigned most)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 static volatile uint16_t trace[DIAG_TRACE_FRAMES][2]; /* the last frames (diag.h's struct diag_trace), in ordinary memory */
 static volatile uint32_t traced;
@@ -217,6 +218,8 @@ static void diag_tick(void)
         add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | (refusals & 0xffffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
     uint32_t braked = mw_frame_brakes; /* the brake caught the frame interrupt falling behind: each time, with the tracks shed */
     if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
+    uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */
+    if (reoffered != reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1), reoffers = reoffered;
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
     uint32_t cpu = modwerk_status[0], d0p = modwerk_status[2], d1p = modwerk_status[4];
     ++n, cpu_sum += cpu, d0_sum += modwerk_status[1], d1_sum += modwerk_status[3], played += PLAYING;
