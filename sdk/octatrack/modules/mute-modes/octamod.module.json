@@ -3,7 +3,7 @@
   "id": "mute-modes",
   "key": "MUTE_MODES",
   "name": "Mute Modes",
-  "version": "0.2.2-experimental",
+  "version": "0.2.3-experimental",
   "category": "system",
   "source": {
     "repository": "https://github.com/sambanks/octabam",

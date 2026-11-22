@@ -1240,6 +1240,22 @@ mm_bind_drop:
     movea.l (%sp)+,%a2
     moveq   #1,%d0
     rts
+
+| ev_in_use (0.2.3), asked from the base's UI tick (a task): nonzero while MUTE MODE is not OT, in
+| GATE or its battery shadow (which mm_restore copies into GATE at the first tick after install).
+| In OT every hook here passes and `pre` only holds every track, so while this answers 0 the base
+| puts stock's bytes back at the five detours (runtime.json "rests") and leaves mm_voice_bind out of
+| ev_voice_bind: the frame runs stock, which is what OT is. The answer 0 also does OT's
+| `clr.w UNHELD` (every track held, SHADOW 0), so a track muted in OT keeps OT's cut when MUTE MODE
+| leaves OT, as when awake. MUTE MODE is one global setting, so no Part or project can need it.
+    .equ SH_GATE,   0x100fff6c          | GATE's battery shadow (patch_mutemode.s)
+    .global mm_in_use
+mm_in_use:
+    move.l  GATE,%d0
+    or.l    SH_GATE,%d0
+    bne.s   1f
+    clr.w   (UNHELD).l
+1:  rts
     .endif
 
 | ============================ hook 11: 0x4000d0ba (THE REL_STATE RACE, FIXED SAFELY) ====

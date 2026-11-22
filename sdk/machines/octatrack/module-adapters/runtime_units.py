@@ -116,6 +116,7 @@ def compile_linked(module, sdk_root, builder, work, cross, selected, guards, sto
         digest, checked = builder.stock_digest(detour.expect)
         code = builder.OPCODES[detour.kind] + struct.pack('>I', symbols[detour.symbol]) + b'\x4e\x71' * ((n - 6) // 2)
         sites.append((detour.site, digest, code, [2], 2 if detour.kind == 'lea' else 0, checked))
+    detoured = {site[0] for site in sites}
     for index, table in enumerate(module.tables):
         for address, expected in table.refs:
             sites.append((address, hashlib.sha256(struct.pack('>I', expected)).digest(),
@@ -131,6 +132,11 @@ def compile_linked(module, sdk_root, builder, work, cross, selected, guards, sto
     for address, digest, _, _, _, checked in sites if stock_at is not None else ():
         if hashlib.sha256(stock_at(address, checked)).digest() != digest:
             raise ValueError('A guarded stock site changed.')
+    # runtime.json "rests", marked as build.py marks them on the octabam route: only the module's own detours
+    rest = {int(a, 16) for a in (declared or {}).get('rests', ())}
+    if rest - detoured:
+        raise ValueError('"rests" names only its own detours: ' + ', '.join('%#x' % a for a in sorted(rest - detoured)))
+    sites = [site + (True,) if site[0] in rest else site for site in sites]
     hooks = []
     if declared:
         builder.unevented(sites, copies)

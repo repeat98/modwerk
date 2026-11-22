@@ -1,6 +1,23 @@
 # Mute Modes measurements
 
-Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1, 0.2.2 and 0.2.3 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+
+## 0.2.3: rests while MUTE MODE is OT (prepared 22 November 2026, not tested)
+
+Owner waiver, 22 November 2026, for this optimization; Zac Kyoti's code and credit are unchanged.
+
+- **Why.** On an MKII (development twin of base 0.7.14, Dev17 C01, eight STATIC tracks at 126 BPM) 0.2.2 installed and used nowhere added 2.6 points to the frame interrupt's 39.4 %. The owner's rule (20 November 2026): an installed module nobody uses costs nothing.
+- **The change.** `mm_in_use` answers `ev_in_use`: nonzero while GATE or its battery shadow is not 0 (OT). While it answers 0 the base leaves `mm_voice_bind` out of `ev_voice_bind` and puts stock's bytes back at the five detours (`runtime.json` "rests"): `pre` 0x40004dc6 (every frame), `trigflag` 0x40004c72 (the frame's per-trig flag bits), `mt_trig` 0x40006844, `dt_trig` 0x4000d498 and `mt_rebind` 0x4000f4dc (every trig). The PERSONALIZE row, its tables, the ANDY pokes and `mm_restore` stay. Native (non-`MODWERK_EVENTS`) bytes are unchanged, so every author reference still matches.
+- **Why resting in OT loses nothing.** In OT every trig hook passes and `pre` only clears UNHELD and SHADOW (every track held): stock's behaviour. The answer 0 does the same `clr.w UNHELD`, so a track muted in OT keeps OT's cut when MUTE MODE leaves OT, as when awake. MUTE MODE is one global setting, so no Part, bank or project can bring a soft mode in. Leaving OT wakes the module at the next UI tick, while the musician is still on the PERSONALIZE page; until then stock runs, which is OT's cut for every muted track, the same as the hold gives it after the wake.
+- **Not tested.** No unit run and no emulator run of this package.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, MUTE MODE OT | the detours must hold stock's bytes and cost nothing | `device:price` at rest, Dev17 C01 | not run |
+| OT to each soft mode while playing, a track muted | the wake and the hold after it | mute T1 in OT, switch to DT-T, OTFX-T, OTFX: T1 stays cut until unmuted | not run |
+| Each soft mode back to OT | rest with a soft mute held | mute in DT-T, switch to OT, unmute | not run |
+| Install or power-up with a soft mode saved | the first tick before `mm_restore` | the shadow keeps it awake | not run |
+| Beside Sidechain Compressor | ev_mute_keep is raised only while awake | KEY checks of 0.2.2 in DT-T | not run |
 
 ## 0.2.2: OT-exit hold, a track still muted when MUTE MODE leaves OT stays cut (3 November 2026)
 

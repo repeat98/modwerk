@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.3-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "Costs the Octatrack nothing while MUTE MODE is OT: the module rests until you pick another mode.",
+      "Picking OTFX, OTFX-T or DT-T wakes it at once; a track muted in OT keeps OT's cut until you unmute it, as before.",
+      "Not yet checked on a unit."
+    ]
+  },
+  {
     "version": "0.2.2-experimental",
     "date": "2026-11-05",
     "changes": [
