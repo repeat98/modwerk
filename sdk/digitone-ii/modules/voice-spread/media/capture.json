@@ -1,0 +1,20 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitone-ii",
+ "moduleId": "voice-spread",
+ "moduleVersion": "0.1.0-experimental",
+ "imageSha256": "5193559275f5656e9dafd88790bd27ee0d1dd7b9322a08f122b1a13e2fcc4270",
+ "firmware": "1.12",
+ "build": "Modwerk Digitone II development base 1.1 (modwerk-base-digitone-ii-dev-70f7a8dc) + voice-spread from this folder, GCC 16.2.0 m68k-elf, linked by Elekloader 0.11.0's patcher",
+ "emulator": "none: a Digitone II's screen read over the base's USB link (dn2_link.py screen --png), 128x64 frame shown 3x",
+ "capturedAt": "2026-11-23",
+ "setup": "Booted from RAM over the link; SETTINGS > PERSONALIZE, scrolled to the end, VOICE SPREAD stepped to 75 with RIGHT.",
+ "captures": [
+  {
+   "path": "media/personalize.png",
+   "sha256": "4544b8853096d1c93235da5120c72168957c10f3c045013d8c849f2127d1d38d",
+   "plan": "press SAVEPROJ; UP x10; DOWN x6; YES; DOWN x11; RIGHT x3; screen --png",
+   "frame": "PERSONALIZE with VOICE SPREAD 75"
+  }
+ ]
+}

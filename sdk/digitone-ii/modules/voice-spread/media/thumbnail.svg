@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192" width="320" height="192" role="img" aria-label="Eight voices of a chord fanned out from the centre to left and right">
+<rect width="320" height="192" fill="#0d1014"/>
+<g stroke="#1e262e" stroke-width="1"><path d="M0 0V192"/><path d="M20 0V192"/><path d="M40 0V192"/><path d="M60 0V192"/><path d="M80 0V192"/><path d="M100 0V192"/><path d="M120 0V192"/><path d="M140 0V192"/><path d="M160 0V192"/><path d="M180 0V192"/><path d="M200 0V192"/><path d="M220 0V192"/><path d="M240 0V192"/><path d="M260 0V192"/><path d="M280 0V192"/><path d="M300 0V192"/><path d="M320 0V192"/><path d="M0 0H320"/><path d="M0 16H320"/><path d="M0 32H320"/><path d="M0 48H320"/><path d="M0 64H320"/><path d="M0 80H320"/><path d="M0 96H320"/><path d="M0 112H320"/><path d="M0 128H320"/><path d="M0 144H320"/><path d="M0 160H320"/><path d="M0 176H320"/><path d="M0 192H320"/></g>
+<path d="M160 48V160" stroke="#6b7a89" stroke-width="1" stroke-dasharray="3 3"/>
+<g fill="#4fb3a9" stroke="#4fb3a9" stroke-width="2"><path d="M160 60H32"/><circle cx="32" cy="60" r="4"/><path d="M160 72H288"/><circle cx="288" cy="72" r="4"/><path d="M160 84H96"/><circle cx="96" cy="84" r="4"/><path d="M160 96H224"/><circle cx="224" cy="96" r="4"/><path d="M160 108H64"/><circle cx="64" cy="108" r="4"/><path d="M160 120H256"/><circle cx="256" cy="120" r="4"/><path d="M160 132H128"/><circle cx="128" cy="132" r="4"/><path d="M160 144H192"/><circle cx="192" cy="144" r="4"/></g>
+<text x="20" y="30" fill="#9aa7b4" font-family="monospace" font-size="12">VOICE SPREAD</text>
+<text x="24" y="178" fill="#6b7a89" font-family="monospace" font-size="11">L</text>
+<text x="290" y="178" fill="#6b7a89" font-family="monospace" font-size="11">R</text>
+</svg>
