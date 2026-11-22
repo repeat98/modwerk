@@ -5,9 +5,8 @@
 // The Modwerk base runs everything around the sound (modwerk/voice.h): the hit, the
 // voice's analog circuit silenced, the knobs, velocity and note, LEV into the voice's
 // stream and its filter, AMP and OVR after it, the end of a hit, and the type: 808 or
-// 909, stepped by a tap of encoder B, whose label reads TON or SWT (its long name, in the
-// header, 808 Tone or 909 Sweep Time). No type name in the bottom bar (names 0): B says it,
-// and the bar's right end is left to other modules. ACNT is the hit's velocity.
+// 909, stepped by a tap of encoder B, whose label reads TON or SWT. ACNT is the hit's
+// velocity.
 
 #include <stdint.h>
 #include "analog-rytm-mk2/machines.h"
@@ -47,9 +46,10 @@ static void bd_render(int v, const struct mw_voice_play *p, int32_t *out)
 static void bd_engine(int32_t v, void *frame, uint16_t *blk, int32_t pitch);
 
 static const char *const labels[4] = { "TON", "808 Tone", "SWT", "909 Sweep Time" };
+static const char *const names[2] = { "808", "909" };
 
 const struct mw_voice analog_bd_voice = {
-    MW_VOICE_ABI, SLOT, 2, TAP_ENCODER, TAP_INDEX, 0, labels, 0, bd_hit, bd_render,
+    MW_VOICE_ABI, SLOT, 2, TAP_ENCODER, TAP_INDEX, 0, labels, names, bd_hit, bd_render,
 };
 
 static void bd_engine(int32_t v, void *frame, uint16_t *blk, int32_t pitch)
