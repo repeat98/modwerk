@@ -541,25 +541,25 @@ int main(void)
       transport_stopped = 1, frame_newest = 300u;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 300u;
       CHECK(modwerk_status_frame_load() == 450u);
-      /* Quiet delays count as awake once (MKII, 21 November 2026: eight asleep after a play that had them awake were
-       * charged on top of the kept figure, and a second FM Synth was refused at 79 % meter), at what they cost the frame. */
+      /* Quiet delays are what stock may add later: the reserve's, not the measured figure's (MKII, 22 November 2026: a
+       * medium Part's four quiet delays took 7.2 of the room the reserve promised). */
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 1;
-      CHECK(modwerk_status_frame_load() == 450u);                        /* 300 + 72 now, 450 kept */
+      CHECK(modwerk_status_frame_load() == 450u);                        /* the kept figure as it played */
       frame_newest = 440u;
-      CHECK(modwerk_status_frame_load() == 512u);                        /* the newest with its delays awake */
+      CHECK(modwerk_status_frame_load() == 450u);
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
-      transport_stopped = 0, mw_delay[17] = mw_delay[18] = 1;            /* two quiet while it plays: kept as awake */
+      transport_stopped = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 430u;
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
-      mw_delay[17] = mw_delay[18] = 0, transport_stopped = 1, frame_newest = 300u;
-      CHECK(frame_played == 430u && played_asleep == 18u && modwerk_status_frame_load() == 448u);
+      transport_stopped = 1, frame_newest = 300u;
+      CHECK(frame_played == 430u && modwerk_status_frame_load() == 430u);
       /* Picks since count once: playing, the kept figure stays put while the mean takes the pick in. */
       transport_stopped = 0;
       modwerk_status_cpu_entered(100u);
-      CHECK(modwerk_status_frame_load() == 548u);
+      CHECK(modwerk_status_frame_load() == 530u);
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 530u;
       for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
-      CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 548u);
+      CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 530u);
       cpu_note_played();
       CHECK(!frame_adjust && frame_played == 530u && modwerk_status_frame_load() == 530u);
       /* Stopped, a machine swapped out and back is judged by what it adds, once, never below the newest reading
@@ -579,7 +579,7 @@ int main(void)
       CHECK(frame_adjust == 120);
       cpu_note_played();
       CHECK(!frame_adjust);
-      transport_stopped = 1, frame_played = played_asleep = frame_newest = 0, play_readings = adjust_readings = 0;
+      transport_stopped = 1, frame_played = frame_newest = 0, play_readings = adjust_readings = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* An effect pick: by its measured cost from the site's table (MWMS v2), the Part's first slot of a module by its
      * first, a further one by its each, with the box on its slot ("T5 FX2"); stock effects and NONE pass and take their

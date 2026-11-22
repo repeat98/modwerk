@@ -100,9 +100,7 @@ static uint32_t recent_mean(void)
 /* Each reading: what the guard below goes by once the unit is stopped, the mean of the last four seconds it played,
  * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
 static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the mean as it last stood playing; the newest */
-static uint32_t played_asleep;                                /* the quiet delays' points when frame_played was taken */
 static uint32_t frame_longest(void);
-static uint32_t delays_asleep(void);
 /* Module picks and removals since the frame readings last held them (machine_registry.c, the effect check below), per
  * mille of a frame: a pick made stopped is judged with every one before it, and a machine swapped out and back stopped
  * by what it adds, once. Eight readings played after the last change, the share holds them all; until then the kept
@@ -114,7 +112,7 @@ static void cpu_note_played(void)
     if (modwerk_machine_stopped()) play_readings = adjust_readings = 0;
     else {
         if (++adjust_readings >= 8u) frame_adjust = 0;
-        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_asleep = delays_asleep();
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest();
     }
 }
 void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0; }
@@ -151,12 +149,14 @@ static void frame_note(unsigned at)
  * (13 November 2026) picks made stopped at 62 to 74 % meter left a Part that played at 87 to 97 %. A stopped reading
  * holds no machine's renders, so a machine that left takes nothing off it: right after STOP the last four seconds still
  * hold the play, and Grain to FLEX and back was refused at once (owner's MKII, 21 November 2026). Playing, the last
- * four seconds hold part of the picks since already: only the kept figure adds them. A quiet delay counts as awake either way
- * (delays_asleep). The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
- * project): four seconds of playing replace it. */
+ * four seconds hold part of the picks since already: only the kept figure adds them. What stock may add later (a scene
+ * that opens quiet delays, more trigs) is the reserve's (below), not this figure's: counted here as well, a medium
+ * Part's four quiet delays took 7.2 of the room the reserve promised (owner's MKII, 22 November 2026). The kept figure
+ * goes stale when the unit is made lighter while stopped (a stock pick, another project): four seconds of playing
+ * replace it. */
 static uint32_t measured_load(void)
 {
-    int32_t kept = (int32_t)(frame_played + played_asleep) + frame_adjust, now = (int32_t)delays_asleep();
+    int32_t kept = (int32_t)frame_played + frame_adjust, now = 0;
     now += modwerk_machine_stopped() ? (int32_t)frame_newest + (frame_adjust > 0 ? frame_adjust : 0) : (int32_t)frame_longest();
     return (uint32_t)(kept > now ? kept : now);
 }
@@ -1263,16 +1263,6 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
     cpu_refusal_box(track, 1u, label, booked, add, allowed, 0);
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
-/* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet, back from the frame a scene
- * opens the sends. So a pick is judged as if every delay were awake: the skip buys margin and is never spent. All
- * eight awake took the longest frame from 89.3 % to 96.1 % (owner's MKII, 22 November 2026, Dev17 C01 playing). */
-#define DELAY_WAKE 9u /* per mille of a frame, a quiet track */
-static uint32_t delays_asleep(void)
-{
-    uint32_t n = 0;
-    for (unsigned t = 0; t < 8u; ++t) n += ((volatile uint32_t *)mw_delay)[17u + t] != 0; /* status.s: no read this frame */
-    return n * DELAY_WAKE;
-}
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
