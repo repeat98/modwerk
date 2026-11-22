@@ -241,7 +241,8 @@ static const Part *slot(unsigned t) { return part0() + 0x22 + t; }
 static void fresh(void)
 {
     late = timed = before = 0; made = 0; credit = 0; frame_seen = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
-    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = 0, skipped[k] = 0, place[k] = next[k] = 0;
+    starting = start_prev = 0;
+    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = start_cost[k] = start_after[k] = 0, skipped[k] = 0, place[k] = next[k] = 0;
 }
 /* The track's render in a later frame than the last one: the lookup reads the Part again (mw_frame_exit ends a frame). */
 static int later(unsigned track) { frame_seen = 0; return mw_source_render_impl(track, 0, 0, 1); }
@@ -1225,6 +1226,16 @@ int main(void)
     CHECK(mw_source_render_impl(3, 0, 0, 1) == -9); mw_frame_exit();     /* 30,000 + its start's 30,000: held */
     f_cost = 2000; frame(3, 0, 0), frame(3, 0, 0);
     CHECK(frame(3, 30000, 0) > 100);                                     /* no start: the steady cost fits */
+    /* A machine that starts its own notes past the base (FM Synth): a step's frame is one where any track started, so
+     * T3 learns its step cost from T1's START and is held at the next step all the same. */
+    for (unsigned i = 0; i < 12u; ++i) frame(3, 10000, 0);
+    mw_frame_t0 = host_timer; host_timer += 10000; mw_source_start_select(0, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) > 100); mw_frame_exit();
+    f_cost = 2000;
+    for (unsigned i = 0; i < 12u; ++i) CHECK(frame(3, 10000, 0) > 100);
+    mw_frame_t0 = host_timer; host_timer += 30000; mw_source_start_select(0, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) == -9); mw_frame_exit();
+    f_cost = 2000; frame(3, 0, 0), frame(3, 0, 0);
     /* Two machine tracks, T3 (3,000) before T4 (20,000). When the frame would overdraw and skipping T4 alone makes
      * the room, T3 runs and T4 is skipped when it comes; when T4's cost would not make it, T3 is skipped at once. */
     CHECK(mw_assign(part0(), 2, 5) == 1);
