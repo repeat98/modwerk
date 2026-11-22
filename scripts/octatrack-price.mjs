@@ -4,9 +4,10 @@
 // What a module costs an Octatrack, measured on a unit: the frame interrupt's share, the CPU meter and both DSPs,
 // before the module, with it installed but used nowhere (at rest), and for an effect on one slot (in use).
 //   npm run device:price -- [--memory] [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
-//   --curve T1,T3,T6,T7 [--pick-pattern 2] [--measure-pattern 1] [--write-costs]: what the longest frame gains with the module on
+//   --curve T1,T3,T6,T7 [--pick-pattern 2] [--measure-pattern 1] [--limit 125] [--write-costs]: what the longest frame gains with the module on
 //   1, 2, 3… of those empty tracks (machines) or their slots (effects), each picked on the empty pattern and read on the busy one,
-//   and the next-instance cost from it (curveFit: `first`, then `each`); --write saves it as the module's evidence/frame-cost.json, --write-costs into the base's own frame-costs-base.json;
+//   and the next-instance cost from it (curveFit: `first`, then `each`); it stops at the first skipped render or past --limit % (lower it
+//   for a run nobody watches: a frame interrupt past about 130 % can stop the DSP frames until a power cycle); --write saves it as the module's evidence/frame-cost.json, --write-costs into the base's own frame-costs-base.json;
 //   either regenerates frame-costs.json (as npm run modules:generate does), which admission charges.
 //   --write (needs --base and --scene): each module measured cleanly gets its price in octamod.module.json (resources.cpuPrice) and
 //   its readings in evidence/cpu-price.json, and leaves the pending list; modules:check recomputes the price from those readings.
@@ -108,7 +109,7 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
 if (import.meta.filename === process.argv[1]) {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: 'string' }, seconds: { type: 'string', default: '8' },
     slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, memory: { type: 'boolean' },
-    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds), measuredAt = new Date().toISOString()
   const fxNames = new Map((args['fx-name'] ?? []).map(pair => { const at = pair.indexOf('='); if (at < 1) throw new Error('--fx-name takes ID=NAME, the name the FX chooser shows'); return [pair.slice(0, at), pair.slice(at + 1)] }))
   if ((args.write || args['write-costs']) && !(args.base && args.scene)) throw new Error('--write and --write-costs need --base and --scene: the price names the base and what played (model, project, pattern)')
@@ -182,7 +183,7 @@ if (import.meta.filename === process.argv[1]) {
       points.push(load.frameMax)
       // Past where renders drop the guard's skips distort the reading, and the unit should not sit in overload: stop there.
       const dropped = load.skipped - skipped; skipped = load.skipped
-      if (dropped > 0 || load.frameMax > OVERLOAD) { notes.push(`stopped after ${track}: longest frame ${load.frameMax} %, ${dropped} renders skipped`); break }
+      if (dropped > 0 || load.frameMax > Number(args.limit)) { notes.push(`stopped after ${track}: longest frame ${load.frameMax} %, ${dropped} renders skipped`); break }
     }
     for (const track of placed) {
       if (!fx) { await send(machineToStatic(track)); continue }
@@ -215,6 +216,7 @@ if (import.meta.filename === process.argv[1]) {
     if (!positionals.length) process.exit(0)
   }
   const results = []
+  if (args.curve) await send(`PATTERN+TRIG${args['measure-pattern']} w600`) // the baseline on the pattern the curve is read on
   for (const row of chosen) {
     const packagePath = row.file ?? resolve(root, 'public', row.path)
     const packageSha256 = createHash('sha256').update(readFileSync(packagePath)).digest('hex')
