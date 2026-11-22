@@ -182,7 +182,7 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
 /* The prices bound a Part's renders at their worst. What else an installed set costs the frame interrupt (modules' hooks,
  * effects' ColdFire work, a DSP voice's glue) and what a machine costs in the frames between its worst ones no price
  * knows. So every module pick is also judged by the frame share the unit would play at with it (status.c,
- * modwerk_status_pick_busy, against mw_frame_line): a machine by what one track of it adds there, as the site measured
+ * modwerk_status_pick_busy, against mw_frame_line, its longest frame): a machine by what one track of it adds there, as the site measured
  * it (frame_cost below), else by its measured meter cost (reserved[1]) or its price, a machine's renders being frame
  * interrupt time either way. Admitted by the meter instead, SYNTIZ took a Part from 50.7 % to 65.2 % of the frame and the
  * guard dropped 24 renders in 8 s, three Analog BDs to 71.4 % and 61 (owner's MKII, base 0.7.14, 21 November 2026). */
@@ -911,6 +911,7 @@ volatile uint32_t mw_frame_t0, mw_frame_share = FRAME / 5u * 4u; /* development 
  * over its frames, the skips and their tracks. */
 volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds, mw_frame_shed_tracks;
 volatile uint32_t mw_frame_last; /* how long the frame interrupt last ran: diag.c's trace of the frames before a stall */
+volatile uint32_t mw_frame_window; /* the longest frame interrupt since status.c last read it (the CPU guard) */
 volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
@@ -921,6 +922,7 @@ void mw_frame_exit(void)
 {
     uint32_t now = DTCN3, d = now - mw_frame_t0, due = d + late;
     if (d > mw_frame_max) mw_frame_max = d;
+    if (d > mw_frame_window) mw_frame_window = d;
     mw_frame_last = d;
     late = due > FRAME ? due - FRAME : 0;
     if (late > mw_frame_late_max) mw_frame_late_max = late;

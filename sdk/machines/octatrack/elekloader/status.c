@@ -101,9 +101,9 @@ static uint32_t recent_mean(void)
  * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
 static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the mean as it last stood playing; the newest */
 static uint32_t played_asleep;                                /* the quiet delays' points when frame_played was taken */
-static uint32_t frame_mean(void);
+static uint32_t frame_longest(void);
 static uint32_t delays_asleep(void);
-/* Module picks and removals since the frame share last held them (machine_registry.c, the effect check below), per
+/* Module picks and removals since the frame readings last held them (machine_registry.c, the effect check below), per
  * mille of a frame: a pick made stopped is judged with every one before it, and a machine swapped out and back stopped
  * by what it adds, once. Eight readings played after the last change, the share holds them all; until then the kept
  * figure stays as it was, so no pick counts twice. */
@@ -114,50 +114,49 @@ static void cpu_note_played(void)
     if (modwerk_machine_stopped()) play_readings = adjust_readings = 0;
     else {
         if (++adjust_readings >= 8u) frame_adjust = 0;
-        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_mean(), played_asleep = delays_asleep();
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_asleep = delays_asleep();
     }
 }
 void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0; }
 void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0; }
-/* The frame interrupt's share of each frame, per mille, from the frame guard's own sums (machine_registry.c): what a
- * module effect's CPU price (`npm run device:price`) is measured in. The meter above is all of the ColdFire, averaged;
- * the guard drops renders frame by frame once this share passes its own, so the pick box shows this one (owner's MKII, 17 November 2026: a third Tape Echo, the meter at 72 %, the guard dropped 4,782
- * Amiga renders, 70 a second). The guard's development read clears its sums: that reading is left out. */
-extern volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c: frame lengths >> 8, frames */
+/* The longest frame interrupt of each reading, per mille of a frame (machine_registry.c's mw_frame_window, cleared at
+ * each read). The meter above is all of the ColdFire, averaged; the frame guard drops renders frame by frame, once a
+ * frame would run past its share and what credit the short frames before it left, so a pick is judged by the frames
+ * at the top. On the owner's MKII (base 0.7.14, 21-22 November 2026, a Part with a trig every four steps on all eight
+ * tracks) no render dropped with the longest frame at 88 to 108.7 % (Analog BD at a 61.7 % mean), and renders dropped
+ * from 120 % (one in twenty Part switches; 125 %: 33 in 8 s, at a 57.5 % mean), while at a 50.7 % mean with eleven
+ * modules installed they dropped too: the mean does not tell them apart, the longest frame does. */
+extern volatile uint32_t mw_frame_window; /* machine_registry.c: the longest frame since this last read it, DTCN3 counts */
 #ifndef MW_FRAME_LINE
-#define MW_FRAME_LINE 500u
+#define MW_FRAME_LINE 1150u
 #endif
-/* The line every module pick is judged against. On the owner's MKII (base 0.7.14, 21-22 November 2026, a Part with a trig
- * every four steps on all eight tracks) the frame guard dropped no render up to a 49.2 % mean (Euclid on four slots,
- * longest frame 97 %), and dropped them at every mean from 50.7 % (11 modules installed: 10 renders in 8 s; on 50.8 %
- * each effect added dropped 1 to 4; 57.5 %: 33). The longest frame rises with the mean (88 % at 39.4, 120 to 146 % past
- * 50), so the mean is what a pick is judged by. */
+/* shortcut: 115 % lies between the longest frames that dropped nothing (108.7 %) and those that dropped (120 %); narrow
+ * it with runs between them. */
 volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: no pick past it, and the CPU bars are full at it */
-static uint32_t last_busy, last_frame_count;
-static uint32_t frame_mean(void)
+static uint32_t frame_longest(void) /* the longest of the last four seconds */
 {
-    uint32_t sum = 0;
-    for (unsigned i = 0; i < 8u; ++i) sum += frame_recent[i];
-    return sum / 8u;
+    uint32_t most = 0;
+    for (unsigned i = 0; i < 8u; ++i) most = frame_recent[i] > most ? frame_recent[i] : most;
+    return most;
 }
 static void frame_note(unsigned at)
 {
-    uint32_t busy = mw_frame_busy, count = mw_frame_count, db = busy - last_busy, dc = count - last_frame_count;
-    last_busy = busy, last_frame_count = count;
-    if (dc && dc <= count) frame_newest = frame_recent[at] = db * 1000u / (dc * 187u); /* a frame is 47,891 counts, 187 of them >> 8 */
+    uint32_t longest = mw_frame_window;
+    mw_frame_window = 0; /* shortcut: a frame that ends between the read and this write is lost; one in 1,378 a reading */
+    if (longest) frame_newest = frame_recent[at] = longest * 1000u / 47891u; /* a frame is 47,891 counts */
 }
-/* The frame share a pick is judged by, per mille of a frame. A stopped unit is not busy, but the Part put together on it
- * will play: the larger of the share it last played at and the newest reading, with the picks since on top. On an MKII
+/* The longest frame a pick is judged by, per mille of a frame. A stopped unit is not busy, but the Part put together on
+ * it will play: the larger of the figure it last played at and the newest reading, with the picks since on top. On an MKII
  * (13 November 2026) picks made stopped at 62 to 74 % meter left a Part that played at 87 to 97 %. A stopped reading
- * holds no machine's renders, so a machine that left takes nothing off it: right after STOP the four-second mean still
- * holds the play, and Grain to FLEX and back was refused at once (owner's MKII, 21 November 2026). Playing, the mean
- * holds part of the picks since already: only the kept figure adds them. A quiet delay counts as awake either way
+ * holds no machine's renders, so a machine that left takes nothing off it: right after STOP the last four seconds still
+ * hold the play, and Grain to FLEX and back was refused at once (owner's MKII, 21 November 2026). Playing, the last
+ * four seconds hold part of the picks since already: only the kept figure adds them. A quiet delay counts as awake either way
  * (delays_asleep). The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
  * project): four seconds of playing replace it. */
 uint32_t modwerk_status_frame_load(void)
 {
     int32_t kept = (int32_t)(frame_played + played_asleep) + frame_adjust, now = (int32_t)delays_asleep();
-    now += modwerk_machine_stopped() ? (int32_t)frame_newest + (frame_adjust > 0 ? frame_adjust : 0) : (int32_t)frame_mean();
+    now += modwerk_machine_stopped() ? (int32_t)frame_newest + (frame_adjust > 0 ? frame_adjust : 0) : (int32_t)frame_longest();
     return (uint32_t)(kept > now ? kept : now);
 }
 static void missing_check(void);
@@ -475,8 +474,8 @@ static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept
  * another Part already holds takes +0% (one copy of the code per core), and a swap for a smaller one shows minus.
  * shortcut: a second pick within the box's 1.5 s counts from before the first, until the box closes. */
 static uint32_t words_before[2];
-/* The pick's CPU (owner, 17 November 2026: the box showed the DSP an effect took, not the CPU): the frame share as it
- * stood, from windows that ended before the pick but for the last half second. */
+/* The pick's CPU (owner, 17 November 2026: the box showed the DSP an effect took, not the CPU): the figure picks are judged
+ * by, as it stood after the pick. */
 static uint32_t pick_load;
 #ifdef MODWERK_RESIDENT_ON_DEMAND
 int mw_project_sidechain_notice(void);
@@ -1128,7 +1127,7 @@ static void memory_box(unsigned char *frame)
         label(23u, 26u, "DSP"), share_bar(frame, 45u, 26u, 40, 6, dsp, dsp_part), plus(89u, 26u, dsp_part, 0);
         label(23u, 34u, "MEM"), share_bar(frame, 45u, 34u, 40, 6, mem, mem > before ? mem - before : 0);
         plus(89u, 34u, mem > before ? mem - before : before - mem, mem < before);
-        /* CPU: the frame share against the line where the frame guard starts dropping renders */
+        /* CPU: the longest frame against the line where the frame guard starts dropping renders */
         const uint32_t cpu = share(pick_load, mw_frame_line);
         label(23u, 42u, "CPU"), bar(frame, 45u, 42u, 40, 6, cpu, 0), percent(89u, 42u, cpu);
         return;
@@ -1203,10 +1202,9 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 /* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet, back from the frame a scene
- * opens the sends. So a pick is judged as if every delay were awake: the skip buys margin and is never spent. The
- * routine runs from the eDMA handler, mostly outside the frame interrupt: all eight awake added 6 meter points but 1.7
- * of the frame share (owner's MKII, 22 November 2026, Dev17 C01 playing: 38.9 % to 40.6 %). */
-#define DELAY_WAKE 2u /* per mille of a frame, a quiet track */
+ * opens the sends. So a pick is judged as if every delay were awake: the skip buys margin and is never spent. All
+ * eight awake took the longest frame from 89.3 % to 96.1 % (owner's MKII, 22 November 2026, Dev17 C01 playing). */
+#define DELAY_WAKE 9u /* per mille of a frame, a quiet track */
 static uint32_t delays_asleep(void)
 {
     uint32_t n = 0;
@@ -1214,9 +1212,10 @@ static uint32_t delays_asleep(void)
     return n * DELAY_WAKE;
 }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
-/* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame share, per mille of
- * a frame, on each track or slot it takes (use) and once when it wakes from resting (wake), as the site measured it on
- * a unit (sdk/machines/octatrack/frame-costs.json). Kept in battery RAM through a power cycle; each v2 set replaces it.
+/* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
+ * of a frame, on each track or slot it takes (use) and once when it wakes from resting (wake), as the site measured it
+ * on a unit (sdk/machines/octatrack/frame-costs.json). Their work is much the same every frame, so what they add to the
+ * mean they add to the longest frame (Analog BD on T1, 22 November 2026: +22.5 and +20.0). Kept in battery RAM through a power cycle; each v2 set replaces it.
  * A module it does not list: a machine is charged by its descriptor (machine_registry.c), an effect nothing, and a wake
  * mw_wake_mille. */
 #define EC_MAGIC 0x4d574543u /* "MWEC" */
@@ -1253,8 +1252,8 @@ int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
         if (COSTS->entry[i][0] == module) { *use = COSTS->entry[i][1] >> 16, *wake = COSTS->entry[i][1] & 0xffffu; return 1; }
     return 0;
 }
-/* Every module pick, a machine's (machine_registry.c) or an effect's (below): 1 when the frame share the unit would play
- * at, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is
+/* Every module pick, a machine's (machine_registry.c) or an effect's (below): 1 when the longest frame the unit would
+ * play, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is
  * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)

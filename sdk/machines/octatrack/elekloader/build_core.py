@@ -660,7 +660,7 @@ DSP_EDITS = {
                    ('unsigned dl_frame(void) {\n    ++dl_frames;',
                     'volatile uint32_t dl_frame_gap=0;\nstatic uint32_t frame_at=0;\n'
                     'unsigned dl_frame(void) {\n'
-                    '    { uint32_t now=*(volatile uint32_t *)0xfc07c00cu, d=now-frame_at; if(frame_at && d>dl_frame_gap) dl_frame_gap=d; frame_at=now; }\n'
+                    '    { uint32_t now=*(volatile uint32_t *)0xfc07c00cu, d=now-frame_at; if(frame_at && (int32_t)d>0 && d>dl_frame_gap) dl_frame_gap=d; frame_at=now; }\n'
                     '    ++dl_frames;'),
                    ('volatile uint16_t dl_tx[2][DL_WORDS]={{0}}, dl_rx[2][32]={{0}};',
                     'volatile uint16_t dl_tx[2][DL_WORDS] __attribute__((aligned(16)))={{0}}, '

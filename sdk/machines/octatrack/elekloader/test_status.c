@@ -129,7 +129,7 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
     memset(out, 0, sizeof *out), out->allowance = out->arena = 1000u, strcpy(out->name, "Euclid");
     return 1;
 }
-volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c's: the frame guard's sums */
+volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
 /* dsp.c's MODULE COST list: `installed` modules. */
@@ -444,14 +444,14 @@ int main(void)
     /* The pick's CPU (owner, 17 November 2026: the box showed the DSP Tape Echo took, not the CPU): the frame share as
      * it stood, against the line where the guard starts dropping renders, in place of POOL. */
     { budget_on = 1;
-      frame_newest = 250u;                                             /* stopped, half the line (500) */
+      frame_newest = 575u;                                             /* stopped, half the line (1150) */
       modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
-      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 250u);
+      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 575u);
       CHECK(strstr(shows(), "|CPU|50%|") && !strstr(said, "POOL"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
-      frame_newest = 700u;                                             /* past the line: a full bar, no more */
+      frame_newest = 1300u;                                            /* past the line: a full bar, no more */
       modwerk_test_live_fx[13] = 27; ++dl_selection_completed; memory_tick();
-      CHECK(open == MEMORY && pick_load == 700u && strstr(shows(), "|CPU|100%|"));
+      CHECK(open == MEMORY && pick_load == 1300u && strstr(shows(), "|CPU|100%|"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
       budget_on = 0, frame_newest = 0; }
@@ -509,7 +509,8 @@ int main(void)
     int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old);
     void modwerk_status_cpu_entered(uint32_t mille), modwerk_status_cpu_left(uint32_t mille);
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
-    CHECK(mw_frame_line == 500u);
+    CHECK(mw_frame_line == 1150u);
+    mw_frame_line = 500u; /* the figures below in round numbers */
     { uint32_t before = mw_cpu_refusals;
       transport_stopped = 1, frame_newest = 400u;
       CHECK(modwerk_status_frame_load() == 400u);
@@ -540,28 +541,28 @@ int main(void)
       /* Quiet delays count as awake once (MKII, 21 November 2026: eight asleep after a play that had them awake were
        * charged on top of the kept figure, and a second FM Synth was refused at 79 % meter), at what they cost the frame. */
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 1;
-      CHECK(modwerk_status_frame_load() == 450u);                        /* 300 + 16 now, 450 kept */
+      CHECK(modwerk_status_frame_load() == 450u);                        /* 300 + 72 now, 450 kept */
       frame_newest = 440u;
-      CHECK(modwerk_status_frame_load() == 456u);                        /* the newest with its delays awake */
+      CHECK(modwerk_status_frame_load() == 512u);                        /* the newest with its delays awake */
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
       transport_stopped = 0, mw_delay[17] = mw_delay[18] = 1;            /* two quiet while it plays: kept as awake */
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 430u;
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       mw_delay[17] = mw_delay[18] = 0, transport_stopped = 1, frame_newest = 300u;
-      CHECK(frame_played == 430u && played_asleep == 4u && modwerk_status_frame_load() == 434u);
+      CHECK(frame_played == 430u && played_asleep == 18u && modwerk_status_frame_load() == 448u);
       /* Picks since count once: playing, the kept figure stays put while the mean takes the pick in. */
       transport_stopped = 0;
       modwerk_status_cpu_entered(100u);
-      CHECK(modwerk_status_frame_load() == 534u);
+      CHECK(modwerk_status_frame_load() == 548u);
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 530u;
       for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
-      CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 534u);
+      CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 548u);
       cpu_note_played();
       CHECK(!frame_adjust && frame_played == 530u && modwerk_status_frame_load() == 530u);
       /* Stopped, a machine swapped out and back is judged by what it adds, once, never below the newest reading
        * (owner's MKII, 21 November 2026: Grain to FLEX and back right after STOP, refused at once). */
       transport_stopped = 1, frame_newest = 350u;
-      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 530u;         /* the mean still holds the play */
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 530u;         /* the readings still hold the play */
       modwerk_status_cpu_left(170u);
       CHECK(modwerk_status_frame_load() == 360u);                        /* 530 kept, less what left */
       modwerk_status_cpu_entered(170u);
@@ -608,16 +609,17 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == (int32_t)mw_wake_mille);
       memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs);
       frame_adjust = 0, frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
-    /* The frame share: the frame guard's sums between two readings, per mille of a frame. The guard's development read
-     * clears them: that reading is left out. */
-    { mw_frame_count = 1000u, mw_frame_busy = 187u * 600u; frame_note(0);
-      CHECK(frame_recent[0] == 600u);
-      mw_frame_count = 2000u, mw_frame_busy += 187u * 350u; frame_note(1);
-      CHECK(frame_recent[1] == 350u);
-      frame_recent[2] = 77u, mw_frame_count = 10u, mw_frame_busy = 1000u; frame_note(2);
-      CHECK(frame_recent[2] == 77u);
-      mw_frame_count = 1010u, mw_frame_busy = 1000u + 187u * 500u; frame_note(2);
-      CHECK(frame_recent[2] == 500u); }
+    mw_frame_line = 1150u;
+    /* A reading: the longest frame since the last, per mille of a frame, and the guard's record cleared; a reading with
+     * no frame keeps what it had. */
+    { mw_frame_window = 28735u; frame_note(0);                          /* 60 % of 47,891 counts */
+      CHECK(frame_recent[0] == 600u && !mw_frame_window && frame_newest == 600u);
+      mw_frame_window = 62259u; frame_note(1);                          /* 130 %: past the frame */
+      CHECK(frame_recent[1] == 1300u);
+      frame_recent[2] = 77u; frame_note(2);
+      CHECK(frame_recent[2] == 77u && frame_newest == 1300u);
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0;
+      frame_newest = 0; }
     /* The frame display uses the same playback window across a restart. */
     { transport_stopped = 1, frame_played = 540u;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 200u;
