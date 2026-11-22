@@ -1,0 +1,118 @@
+# Octatrack base 0.8: frame admission, stock reserve and the late-entry stall (22 November 2026)
+
+The owner's MKII, OS 1.40C, CF card in, project Dev17, bank C, Part 1 (Filter and Delay on every track, the working copy
+equal to the saved one before and after each run). Development twins of `base/octatrack-next` with the frame admission
+(`fix/octatrack-frame-admission`), last `dce1d30e` (twin 10, with the late-entry counters of `3eda58cde`). USB Audio linked
+in as `USB AUDIO OUT MAIN`. Everything ran in RAM as rolled-back trials; nothing was kept, the flashed base and its kept set
+were left alone. Figures are the guard's longest frame interrupt in percent of a frame (363 µs at 44.1 kHz), its skipped
+renders, the CPU meter, and the refusals the unit showed.
+
+## Stock alone (no modules)
+
+| Scene | Longest frame |
+|---|---:|
+| C02, empty pattern (the owner's "empty session": default bank, Filter and Delay on every track) | 35.9 % |
+| C03, T1–T4 playing samples on steps 1/5/9/13 (medium) | 74.6 % |
+| C01, all eight tracks on steps 1/5/9/13, delays quiet | 98.7 % |
+| C01, all eight delays awake | 105.6 % |
+| C01, plus three LFOs on every track | 110.6 % |
+| C01, plus six p-locks a track | 112.8 % |
+
+None of these skipped a render, and knob-to-screen latency stayed at or under 60 ms. A sample track adds about 7.2 points.
+
+## Where renders drop
+
+Of 32 readings from 95 to 125 % none skipped a render; half of those from 125 to 130 % did. Machines that render on the
+ColdFire skip earlier: SYNTIZ at 120.1 % (8 skips), Amiga at 120.4 % (1), FM Synth at 124 % (7). POLY8 past the line
+(141.6 %) shed only its own track, 7,609 renders, with the UI responsive. Heavier overload during a curve run hung the unit
+(no record; POLY8 is left out of the curves).
+
+## Instance curves
+
+Each module on 1, 2, 3… empty tracks (T1, T3, T6, T7), picked on C02, the longest frame's gain over the module installed
+and resting (`npm run device:price -- --curve`). `first` is one alone with its wake, `each` every further one. Read first on
+the busy C01, then on C04 (trigs on T1–T4, T6, T7; T2 and T4 play samples; 79.4 % with stock alone), stopping at 115 %.
+The table carries the C04 figures: near the line the guard caps the longest frame, so C01 read some modules low.
+
+| Module | C01 first / each | C04 gains | C04 first / each |
+|---|---|---|---|
+| Tape Echo 0.1.6 | 12.4 / 3.5 | +9.9 +13.5 +16.9 +20.8 | 9.9 / 3.9 |
+| Tape Echo 0.1.8 (draft) | | +9.4 +13.7 +18.3 +21.6 | 9.4 / 4.6 |
+| Euclid 0.1.5 | 2.9 / 1.3 | +3.7 +3.9 +6.4 +6.7 | 3.7 / 2.5 |
+| Mini Verb, E-Verb, Air Chorus, Vibrato | 0.5, 0.3, 0, 0 / 0 | within ±2.7 | 1.5, 0.7, 1.3, 0 / 0, 0.2, 1.3, 0 |
+| FM Synth 0.1.4 (+20.3 at rest on C04) | 4.9 / 2.5 | +6.7 +9.5 +10.1 +13.1 | 6.7 / 3 |
+| FM Synth 0.1.5 (draft, +1 at rest) | | +26.9 +31.8 +32.3 +31.1 | 31.3 / 0.5 |
+| SYNTIZ 0.1.0 | 19.1 / 4.8 | +19.5 +28.9 +32.9 +33.6 | 24.9 / 4 |
+| SYNTIZ 0.1.1 (draft) | | +13.1 +20.8 +26.2 +25.4 | 15.4 / 5.4 |
+| Amiga 0.3.0 | 24.5 / 4.9 | +24.5 +30.6 +34.6 (3 skips at 115.5 %) | 26.6 / 4 |
+| Amiga 0.3.1 (draft) | | +20.8 +25.8 +29.5 | 22.1 / 3.7 |
+| Analog BD | 25.8 / 5.8 | +20.7 +32.6 +40.8 (122 %, no skip) | 24.4 / 8.2 |
+
+Installed and unused, FM Synth 0.1.4 adds 6.1 points on C01, 16.8 on C03 and 20.3 on C04 (0.1.5 about 0), Euclid 2.
+Six Tape Echos fit on C02 at 72.7 %; on C01 seven read 89 / 98.2 / 105.7 / 105.8 / 109.5 / 111.9 / 114.5 % with no skip.
+
+## The late-entry stall
+
+A pattern change from C02 to C01 while playing, with Tape Echo ×2, Euclid, Mini Verb, Air Chorus, E-Verb, Vibrato and FM
+Synth placed, stopped the DSP frame exchange for good (stall records 49 on twin 9 and 50 on twin 10; only a power cycle
+clears it). Both records show one long frame interrupt (477–498 µs), then an entry 147–162 µs late, then no frames. With
+the late-entry wait off, twin 10 stalled on the first try. Steady play under the 120 % line cannot produce such an entry
+(436 µs at most, so at most about 73 µs late); the pattern change's spike can. After a RAM boot the counters showed 165
+entries in the 110–190 µs window within 12 s, with nothing playing and no stall; at rest afterwards, none.
+
+## Sessions: refusals at a stock reserve
+
+Eleven picks in a fixed order, each made stopped and followed by 2.5 s of play: Tape Echo T1 FX2, Euclid T2 FX1, Mini Verb
+T3 FX2, Air Chorus T4 FX2, E-Verb T5 FX2, Vibrato T6 FX1, Amiga T7, FM Synth T8, a second Tape Echo T8 FX2, SYNTIZ T3,
+Analog BD T6. The line stayed at 120 %; the reserve changed. Every refusal showed the CPU FULL window.
+
+| Set, reserve | Empty C02 admitted | Medium C03 admitted | C03 with them, 30 s |
+|---|---:|---:|---|
+| FM Synth 0.1.4, 92 | 8 | 4 | 111.3 %, no skip |
+| FM Synth 0.1.4, 88 | 9 | 5–6 | 107–112 %, no skip |
+| FM Synth 0.1.4, 85 | 8 | 6 | 112.2 %, no skip |
+| FM Synth 0.1.5, 88 | 9 | 8 | 115.2 %, 16 renders dropped |
+| FM Synth 0.1.5, 92 | 8 | 8 | 116.7 %, 12 renders dropped |
+| FM Synth 0.1.5, medium-pattern table, 88 (line 120) | 7 | 7 | 101.3 %, none dropped |
+| FM Synth 0.1.5, medium-pattern table, 83 (line 115) | 7 | 7 | 100.5 %, none dropped |
+
+On the empty pattern every result is what the table predicts: the reserve term decides, and what is refused is the second
+or third heavy machine, or Amiga after six effects. The medium pattern refused more for three reasons:
+
+- **FM Synth 0.1.4 at rest.** Installed and used nowhere it adds 16.8 points to C03's longest frame (75.0 to 91.8 %);
+  0.1.5 adds nothing (74.7 %). On C01 the same cost read 6.1, hidden between the stock peaks.
+- **Quiet delays counted twice.** The kept figure added the sleeping delays (7.2 points on C03) although the reserve
+  already holds them. Removed in the admission after this run.
+- **The kept figure is the longest of eight readings,** 87.6 to 96.8 % on one steady pattern.
+
+With FM Synth 0.1.5 the medium pattern admitted as much as the empty one, but played past the guard: FM Synth 0.1.5 in
+use costs C03 +17.3 on an untrigged track and +22.4 on a trigged one (C02: +13.6), while the table still carried 0.1.4's
+price. With the medium-pattern table (FM Synth 0.1.5 at 31.3) the same picks played at about 101 % with nothing dropped;
+what it refused was each machine after six effects, the reserve's arithmetic (88 + 17.1 booked + the machine's 15 to 24).
+
+The table these figures settle: reserve 88 (85 admits a seventh Tape Echo on an empty Part, 92 refuses Amiga, Tape Echo
+and Mini Verb together), a sample track's share 7, line 120 (module-heavy Parts dropped renders from about 115 %, none
+from 100 to 114 %; stock-heavy ones none to 125 %).
+
+C01 with all eight tracks playing refused all eleven picks: it played at 117.8 % with the set installed, and the
+window filled the MODS bar with the stock load above the reserve (changed after this run to show only the modules'
+share and "PART IS BUSY").
+
+A pick made stopped right after a short play is judged against the kept figure plus every pick since it was taken, until
+four seconds of play renew it. Six pairs (Euclid after Tape Echo, picked 0.2 s or 3 s after STOP) were admitted or
+refused by that margin alone.
+
+The late-entry wait was on through all of these: no entry fell in the window and none waited.
+
+## The refusal window
+
+"CPU FULL · TAPE ECHO NEEDS +12% · MODS [bar] 28% · CPU NOW 44%". The MODS figure is the modules' allowance (line less
+reserve), CPU NOW the meter. The bar was filled with the judged load above the reserve, so on C01 with no module in use it
+showed almost full: the busy stock pattern, not modules, took the room. Changed after this run: the bar holds the
+modules' share only, and "PART IS BUSY" replaces CPU NOW when the Part's own load is the reason (not yet seen on a unit).
+
+## Not tested
+
+The late-entry wait switched on under the stalling pattern change, the brake under overload, the line above 120 % with the
+backlog readings, the admission without the quiet-delay charge on a unit, listening by a person, a Keep and a power cycle. Three RAM boots did not come back on USB (issue #1985); once the unit also left USB on the flashed base with
+no boot, and a hub replug was part of the recovery.
