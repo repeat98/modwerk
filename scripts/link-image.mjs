@@ -10,6 +10,10 @@
 // runs now (--lock-in): with it, every field stays where that build's projects keep it. --lock-out writes this build's
 // lockfile for the next one.
 //
+// A Digitakt II set is built as the website builds it (src/engine/elekloader/dt2-link.ts): the kit's build, then the
+// step that adds the base's and the modules' sound-chip parts, so the image is the one a musician's browser makes from
+// the same stock file, packages and version.
+//
 // Needs the cross toolchain (MODWERK_CROSS, default m68k-elf-). Your firmware is read and the result written where you
 // say; neither enters Git. The result is a local test image: whether it is safe on a unit is for hardware to show.
 // It prints the image's sha256, the flash left (flashHeadroom) and the shared mod RAM and fast RAM the set leaves free
@@ -22,7 +26,7 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { materializeElemodRecipe } from '../src/catalog/elemod-recipe.ts'
-import { composeDt2MachineBuild } from '../src/engine/elekloader/dt2-render-build.ts'
+import { linkDt2Image } from '../src/engine/elekloader/dt2-link.ts'
 import { ELE3_DEVICES, mainImage, packMain, readEle3Syx, verifyEle3Build, writeEle3Syx } from '../src/engine/elektron/ele3.ts'
 import { linkMods, parseElemod } from '../src/engine/elektron/elemod.ts'
 import { sendFxRoom } from '../src/engine/elekloader/rytm-fx-room.ts'
@@ -60,6 +64,19 @@ if (modules.length) {
   } finally { await rm(tmp, { recursive: true, force: true }) }
 }
 
+// The Digitakt II's OS file carries a seal only the kit's writer redoes: build it as the website does (the kit, then the
+// composition step that adds the base's and the modules' sound-chip parts), so both make the same image.
+if (machine === 'digitakt-ii') {
+  const files = await Promise.all(documents.map(async ({ name, document }, index) => ({ name: name.endsWith('.elemod') ? name : name.replace(':', '-') + '.elemod',
+    bytes: index < prebuilt.length ? new Uint8Array(await readFile(resolve(prebuilt[index]))) : new TextEncoder().encode(JSON.stringify(document)) })))
+  const result = await linkDt2Image(stockBytes, files, version, lockIn ? await json(lockIn) : null)
+  if (lockOut && !result.store) throw new Error('--lock-out: this set has no mod storage, so there is no lockfile to write')
+  if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(result.store, null, 1) + '\n')
+  await writeFile(resolve(out), result.syx)
+  console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(result.syx).digest('hex'), files: files.map(file => file.name), soundChip: result.composed ? 'composed' : 'stock' }, null, 1))
+  process.exit(0)
+}
+
 const linked = await linkMods(mods, image, lockIn ? await json(lockIn) : null)
 if (linked.storeNotes.length) console.error(linked.storeNotes.join('\n'))
 // The Rytm base's send effects work in the RAM the set leaves free: a set that leaves too little would not list one.
@@ -70,13 +87,7 @@ if (fx && fx.largest > fx.room)
   throw new Error(`The set leaves the send effects ${fx.room} words of work area, and its largest effect asks for ${fx.largest}: drop a module or that effect.`)
 if (lockOut && !linked.store) throw new Error('--lock-out: this set has no mod storage, so there is no lockfile to write')
 if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(linked.store, null, 1) + '\n')
-let built = writeEle3Syx(stock, packMain(linked.image), device, version)
-let facts = verifyEle3Build(built, stock, linked.image, device, version)
-// A Digitakt II set that registers machines gets the base's sound-chip parts and its modules' players through the
-// composition step the website's preflight runs (composeDt2MachineBuild), so both paths make the same image.
-if (machine === 'digitakt-ii') {
-  const composed = await composeDt2MachineBuild(stockBytes, built, mods, documents)
-  if (composed) { built = composed.output; facts = composed.facts }
-}
+const built = writeEle3Syx(stock, packMain(linked.image), device, version)
+const facts = verifyEle3Build(built, stock, linked.image, device, version)
 await writeFile(resolve(out), built)
 console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare, ...(fx && { fxWork: fx }) }, null, 1))
