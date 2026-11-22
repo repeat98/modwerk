@@ -331,6 +331,11 @@
    "index": 61,
    "event": "ev_audio_frame_prepare",
    "kind": "call"
+  },
+  {
+   "index": 62,
+   "event": "ev_frame_deadline",
+   "kind": "raise"
   }
  ]
 }

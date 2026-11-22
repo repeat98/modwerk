@@ -989,6 +989,7 @@ static uint8_t place[16], next[16], made; /* a render's place in the last frame'
 #define LATE_LO 14520u /* 110 µs */
 #define LATE_HI 25080u /* 190 µs */
 #define IDLE (4u * GRID)
+#define DEADLINE_LATE (10560u - 2640u) /* 80 µs late, less a 20 µs margin */
 volatile uint32_t mw_late_wait_on = 1;
 /* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
 volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
@@ -1015,6 +1016,13 @@ void mw_frame_enter(void)
         }
     }
     mw_frame_t0 = now;
+    /* ev_frame_deadline (owner, 22 November 2026): by when work at IPL 5 (stock's delay routine, a ColdFire effect's
+     * detours in it) must end for the next entry to be no more than 60 µs late: this frame's grid time (its entry less
+     * its lateness), a frame on, 80 µs late, less a 20 µs margin. Tape Echo's work there is no render the guard can
+     * drop, and took a busy Part past the frame ceiling and its entries into the late window. */
+    uint32_t deadline = entry_at - l + GRID + DEADLINE_LATE;
+    uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
+    if (row) for (; *row; ++row) ((unsigned (*)(uint32_t))*row)(deadline);
 }
 void mw_frame_exit(void)
 {

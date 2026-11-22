@@ -85,6 +85,7 @@ static struct runtime_module engine_module; static int engine_installed;
 const struct runtime_module *modwerk_runtime_module(unsigned position)
 { return engine_installed && position == 3u ? &engine_module : 0; }
 static uintptr_t volatile machine_row[10], sequencer_row[9], start_row[10];
+static uintptr_t volatile deadline_row[2]; /* ev_frame_deadline's subscribers */
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
@@ -108,7 +109,7 @@ void mw_seq_set_none(void) {}
 #define modwerk_runtime_event_row host_rows
 static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_MACHINES - RUNTIME_EVENTS] = machine_row, [MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS] = sequencer_row,
-    [MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS] = start_row};
+    [MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS] = start_row, [MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS] = deadline_row};
 static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic renders advance it */
 static uint32_t host_tick;           /* and each read of it by this much: a wait on it ends (check_late_entry) */
 static uint32_t host_dtcn3(void) { uint32_t now = host_timer; host_timer = now + host_tick; return now; }
@@ -818,6 +819,8 @@ static unsigned late_by(uint32_t us)
     CHECK(!entry(FRAME) && !entry(FRAME) && !entry_late);
     return entry(FRAME + us * US);
 }
+static uint32_t deadline_seen; static unsigned deadline_calls;
+static unsigned take_deadline(uint32_t deadline) { deadline_seen = deadline, ++deadline_calls; return 0; }
 static void check_late_entry(void)
 {
     /* On the grid nothing waits and nothing counts as late; the first entry after the start is on time. */
@@ -887,6 +890,13 @@ static void check_late_entry(void)
     fresh(); CHECK(late_by(149));
     host_timer += 30000u; mw_frame_exit();
     CHECK(mw_frame_last == 30000u + TICK && mw_frame_max == mw_frame_last && !mw_frame_late_max);
+    /* ev_frame_deadline: each entry tells its subscribers by when work at IPL 5 must end, the next frame's grid time
+     * 80 µs late less a 20 µs margin; a late entry's grid time is its arrival less its lateness. */
+    deadline_row[0] = (uintptr_t)take_deadline, deadline_calls = 0;
+    late_fresh(7000000u);
+    CHECK(!entry(FRAME) && deadline_calls == 1u && deadline_seen == entered + GRID + 7920u);
+    CHECK(!late_by(60) && deadline_calls == 4u && deadline_seen == entered - entry_late + GRID + 7920u);
+    deadline_row[0] = 0;
     fresh(); late_fresh(0); host_tick = 0;
 }
 int main(void)

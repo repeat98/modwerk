@@ -349,4 +349,8 @@ struct modwerk_setting_pages { /* ABI 2: row.choices points here, row.count is z
 #define MODWERK_EV_AUDIO_FRAME_PREPARE 61
 typedef void modwerk_ev_audio_frame_prepare(void);
 
+/* ev_frame_deadline (raised by the base): every frame-interrupt entry, before any render: no stock site, the base raises it from mw_frame_enter (machine_registry.c) once it knows how late the entry is against the DSP's frame grid. The frame interrupt: short, no firmware call that can block, the EMAC kept as found. Store the deadline and return. deadline is the DTCN3 count (0xfc07c00c, 132 MHz) by which work at IPL 5 (stock's delay routine and a module's detours in it) must end so that the next frame interrupt enters no more than 60 µs late: the next frame's grid time plus 80 µs less a 20 µs margin. Compare with (int32_t)(DTCN3 - deadline): past 0, or within your next block's cost of it, hold that block (dry, or the ring held) rather than run it. An entry in the DSP's late window (110 to 190 µs) skips a DSP frame, heard as a full-scale click, or stops the frame exchange for good (owner's MKII, 22 November 2026). Every handler runs; the answers are ignored. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1. */
+#define MODWERK_EV_FRAME_DEADLINE 62
+typedef unsigned modwerk_ev_frame_deadline(uint32_t deadline);
+
 #endif
