@@ -513,7 +513,7 @@ volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame, 
                   mw_track_stock = MW_TRACK_STOCK;     /* one sample track's share: (98.7 - 40.8 %) / 8 */
 /* machine_registry.c: for the pattern that plays and the queued one, the most tracks that trig on one step and how
  * many trig at all */
-unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2]);
+unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint16_t id[2]);
 /* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake);
@@ -536,20 +536,21 @@ static uint32_t frame_line(void)
     uint32_t line = tuned(FRAME_LINE_ID, 0u); /* a line of 0 would refuse every pick */
     return line ? line : mw_frame_line ? mw_frame_line : 1u;
 }
-static uint32_t stock_reserve(void)
+static uint32_t pattern_reserve(unsigned most, unsigned tracks) /* a pattern's, by its busiest step and tracks that trig */
 {
     if (mw_stock_reserve != RESERVE_ADAPTIVE) return mw_stock_reserve;
-    uint8_t most[2], tracks[2];
-    unsigned patterns = modwerk_machine_pattern_trigs(most, tracks);
-    uint32_t r = tuned(RESERVE_STEP_ID, reserve_by_step[0]), play = tuned(TRACK_PLAY_ID, TRACK_PLAY);
-    for (unsigned p = 0; p < patterns && p < 2u; ++p) {
-        unsigned n = most[p] > 8u ? 8u : most[p], t = tracks[p] > 8u ? 8u : tracks[p] < n ? n : tracks[p];
-        uint32_t v = tuned(RESERVE_STEP_ID + n, reserve_by_step[n]) + play * (t - n);
-        if (v > r) r = v;
-    }
-    r += tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN);
-    uint32_t floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
+    unsigned n = most > 8u ? 8u : most, t = tracks > 8u ? 8u : tracks < n ? n : tracks;
+    uint32_t r = tuned(RESERVE_STEP_ID + n, reserve_by_step[n]) + tuned(TRACK_PLAY_ID, TRACK_PLAY) * (t - n) +
+        tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
     return r > floor ? r : floor;
+}
+static uint32_t stock_reserve(void)
+{
+    uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2];
+    unsigned patterns = modwerk_machine_pattern_trigs(most, tracks, id);
+    uint32_t r = pattern_reserve(0, 0);
+    for (unsigned p = 0; p < patterns && p < 2u; ++p) { uint32_t v = pattern_reserve(most[p], tracks[p]); if (v > r) r = v; }
+    return r;
 }
 static uint32_t effect_cost(unsigned id, int first, int waking);
 static int runs_elsewhere(unsigned slot, unsigned id);
@@ -570,6 +571,31 @@ static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
 {
     return stock_reserve() + modwerk_machine_rest_booked() + modwerk_machine_frame_booked(machine_skip, tuned(TRACK_STOCK_ID, mw_track_stock)) +
         effects_booked(effect_skip);
+}
+/* The predicted brake (owner, 22 November 2026): a pattern whose stock load, with the Part's modules and those at rest on
+ * top (the reserve's own figure), passes the frame ceiling plays with the Part's module machine tracks silent from its
+ * first frame (machine_registry.c's mw_hush), effects still running, and the screen says so. Each UI tick judges the
+ * pattern that plays and one queued in the bank, so it lifts with the next pattern or Part, or a module gone. Else such
+ * a pattern ran at 130 % with about 4,400 renders dropped and a click every two or three seconds (twin 25), and once
+ * stalled (twin 24). A Part with no module machine is never hushed: nothing would make room. */
+#define HUSH_CEILING 1220u /* machine_registry.c's FRAME_CEILING, per mille */
+volatile uint32_t mw_frame_hushes; /* for diagnostics: each pattern that began hushed (diag.c's `brake`, flagged) */
+static unsigned hush_notice_left, hush_playing;
+int modwerk_machine_stopped(void);
+uint32_t modwerk_status_hush(void)
+{
+    uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2] = {0xffffu, 0xffffu};
+    unsigned patterns = modwerk_machine_pattern_trigs(most, tracks, id);
+    uint32_t machines = modwerk_machine_frame_booked(8u, tuned(TRACK_STOCK_ID, mw_track_stock)), hush = 0xffffffffu;
+    if (machines) {
+        uint32_t modules = machines + modwerk_machine_rest_booked() + effects_booked(16u);
+        for (unsigned p = 0; p < patterns && p < 2u; ++p)
+            if (pattern_reserve(most[p], tracks[p]) + modules > HUSH_CEILING) hush &= p ? 0xffff0000u | id[1] : (uint32_t)id[0] << 16 | 0xffffu;
+    }
+    unsigned now = patterns && hush >> 16 == id[0] && !modwerk_machine_stopped(); /* the pattern that plays is hushed */
+    if (now && !hush_playing) hush_notice_left = 180u, mw_frame_hushes = mw_frame_hushes + 1u;
+    hush_playing = now;
+    return hush;
 }
 uint32_t modwerk_status_frame_load(void)
 {
@@ -603,6 +629,7 @@ static unsigned sidechain_notice_left;
 #endif
 static void memory_tick(void)
 {
+    if (hush_notice_left && open == CLOSED) --hush_notice_left;
 #ifdef MODWERK_RESIDENT_ON_DEMAND
     if (open == CLOSED && transfer == T_NONE) {
         if (sidechain_notice_left) --sidechain_notice_left;
@@ -1393,16 +1420,20 @@ uint32_t modwerk_status_module_rest(uint32_t module)
  * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
 #define NEAR_FREE 20u /* 2 %: Mini Verb's first 1.5, E-Verb's 0.7, Vibrato's 0 */
+unsigned modwerk_machine_trigging(void); /* machine_registry.c: the tracks that trig in the pattern that plays */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
+    /* A pick is not refused for load it does not add (owner, 22 November 2026): one adding at most NEAR_FREE is always
+     * made. shortcut: one threshold for every pick; per module from the table if one ever reads wrong. */
+    if (add <= NEAR_FREE) return 0;
     uint32_t measured = measured_load(gone) + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
+    /* A machine on a track that plays a sample now takes that render's place in the measured frame too, as in the
+     * reserve's (twin 25: Amiga on C03's T1 refused in one set and admitted in another as the reading moved 79 to 84 %). */
+    if (machine && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > track_stock ? measured - track_stock : 0u;
     uint32_t net = machine ? (add > track_stock ? add - track_stock : 0u) : add; /* a machine in a sample's place */
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
-    /* A pick is not refused for load it does not add (owner, 22 November 2026): with the unit over the line already, a
-     * near-free one is made. shortcut: one threshold for every pick; per module from the table if one ever reads wrong. */
-    uint32_t before = load - add, rest = modwerk_machine_rest_booked();
-    if (before >= line && add <= NEAR_FREE) return 0;
+    uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     uint32_t reserve = stock_reserve(), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
     /* Why, in the box: modules installed and used nowhere, when their cost at rest is what leaves no room; the Part's own
@@ -1667,6 +1698,14 @@ static void status_draw(unsigned char *frame)
         return;
     }
 #endif
+    if (open == CLOSED && hush_notice_left) { /* the predicted brake's three seconds */
+        canvas(frame);
+        fill(frame, 13u, 18u, 114u, 45u, 0);
+        outline(frame, 13u, 18u, 114u, 45u);
+        centred(23u, "MACHINES PAUSED");
+        centred(34u, "PATTERN IS BUSY");
+        return;
+    }
 #ifdef MODWERK_SETTINGS
     if (open == SETTINGS) { settings_page(frame); return; }
 #endif

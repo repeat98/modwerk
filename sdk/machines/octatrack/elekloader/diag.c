@@ -24,6 +24,7 @@ void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
 extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
 extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
+extern volatile uint32_t mw_frame_hushes;                         /* status.c: patterns begun with them silenced */
 extern volatile uint32_t mw_frame_skips;                          /* ... and the late entries held, each a DSP frame skipped */
 extern volatile uint16_t mw_late_ring[8];                         /* ... and the last entries' lateness */
 extern volatile uint32_t mw_late_count;
@@ -84,7 +85,7 @@ static unsigned installed(uint32_t *ids, unsigned most)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, skip_at;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, skip_at, hushes, hush_at;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 static volatile uint16_t trace[DIAG_TRACE_FRAMES][2]; /* the last frames (diag.h's struct diag_trace), in ordinary memory */
 static volatile uint32_t traced;
@@ -229,6 +230,8 @@ static void diag_tick(void)
         add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | (refusals & 0xffffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
     uint32_t braked = mw_frame_brakes; /* the brake caught the frame interrupt falling behind: each time, with the tracks shed */
     if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
+    uint32_t hushed = mw_frame_hushes; /* a pattern predicted past the ceiling began with them silenced: flagged, once in HOT_GAP */
+    if (hushed != hushes && (!hush_at || ticks - hush_at >= HOT_GAP)) add(l, DIAG_BRAKE, 1u << 23 | (hushed & 0x7fffffu), 1), hush_at = ticks, hushes = hushed;
     uint32_t held = mw_frame_skips; /* a late entry held, which skips a DSP frame (a click): at most one incident in HOT_GAP */
     if (held != frame_skips && (!skip_at || ticks - skip_at >= HOT_GAP)) add(l, DIAG_LATE, held, 1), skip_at = ticks, frame_skips = held;
     uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */

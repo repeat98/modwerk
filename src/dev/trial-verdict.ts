@@ -25,7 +25,8 @@ const SAID: Record<string, (a: number) => string> = {
   shed: a => `the frame guard skipped tracks ${tracks(a >>> 24)}, ${a & 0xffffff} skips since the start`,
   hot: a => `the CPU at 90 % or more for ${a / 2} s`,
   cpu: () => 'the CPU meter over its limit',
-  brake: a => `the frame fell behind and the brake silenced the module machines (${a & 0xffffff} since boot)`,
+  brake: a => a >>> 23 & 1 ? `a pattern predicted past the frame ceiling began with the module machines silenced (${a & 0x7fffff} since boot)`
+    : `the frame fell behind and the brake silenced the module machines (${a & 0xffffff} since boot)`,
   late: a => `a late frame entry was held, so the DSP skipped a frame, heard as a click (${a} since boot)`,
   usb: a => `the host never enumerated the unit, so it offered itself on USB again (OTGSC 0x${(a >>> 16).toString(16)}, PORTSC1 0x${(a & 0xffff).toString(16)})`,
 }
@@ -41,7 +42,9 @@ export function trialVerdict(before: LogReading, after: LogReading, names?: (add
     && !(incident.kind === 'shed' && counted !== undefined))
   const lines = incidents.map(incident => {
     const name = incident.kind === 'crash' && names?.(incident.a)
-    return `${FAILS.has(incident.kind) ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
+    // A pattern predicted past the ceiling that began with module machines silenced is the base's design (owner), not a fault.
+    const fails = FAILS.has(incident.kind) && !(incident.kind === 'brake' && incident.a >>> 23 & 1)
+    return `${fails ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
   })
   if (counted) lines.push(`FAIL the frame guard skipped ${counted} render${counted === 1 ? '' : 's'} during the trial (tracks it skipped on since the start: ${tracks(after!.sheds!.tracks)})`)
   // A crash or stall record whose count moved, when no incident of its kind says so (a log that wrapped, or a record kept before its incident).

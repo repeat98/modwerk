@@ -187,6 +187,8 @@ static int costs_listed;
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 { if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
 uint32_t modwerk_status_module_rest(uint32_t module) { return costs_listed && module == 'L' ? 15u : 0u; } /* 1.5 % at rest */
+static uint32_t test_hush = 0xffffffffu; /* status.c's predicted brake */
+uint32_t modwerk_status_hush(void) { return test_hush; }
 static uint32_t cpu_in, cpu_out; /* what picks reported adding to the meter and exits taking away (status.c counts them) */
 void modwerk_status_cpu_entered(uint32_t mille) { cpu_in += mille; }
 void modwerk_status_cpu_left(uint32_t mille) { cpu_out += mille; }
@@ -646,20 +648,21 @@ static void clear_sigs(void)
  * record's first eight bytes, the last eight steps first). */
 static void check_busiest_step(void)
 {
-    uint8_t *base = (uint8_t *)AT(U32(BANK)), most[2], tracks[2];
+    uint8_t *base = (uint8_t *)AT(U32(BANK)), most[2], tracks[2]; uint16_t id[2];
     playing[5] = playing[7] = 2u, playing[6] = playing[8] = 0;                                   /* C01, nothing queued */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && !most[0] && !tracks[0]);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && !most[0] && !tracks[0]);
     for (unsigned t = 0; t < 5u; ++t) base[PATTERN_TRACK * t + 7u] |= 1u;                      /* pattern 1, step 1 */
     for (unsigned t = 0; t < 8u; ++t) base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] |= (uint8_t)(1u << t); /* pattern 2: Tn on step n */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 5u && tracks[0] == 5u);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 5u && tracks[0] == 5u);
     playing[8] = 1u;                                                                             /* C02 queued */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 2u && most[0] == 5u && most[1] == 1u && tracks[1] == 8u);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 2u && most[0] == 5u && most[1] == 1u && tracks[1] == 8u && id[0] == 32u && id[1] == 33u);
+    CHECK(modwerk_machine_trigging() == 0x1fu);                                                   /* C01: T1-T5 trig */
     playing[7] = 3u;                                                                             /* queued in bank D */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 5u);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 5u);
     playing[6] = 1u, playing[7] = 2u;                                                            /* C02 plays */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 1u && tracks[0] == 8u && modwerk_machine_pattern() == 33u);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 1u && tracks[0] == 8u && modwerk_machine_pattern() == 33u);
     playing[6] = playing[8] = 40u;                                                               /* no pattern: the safe side */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 8u && tracks[0] == 8u);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 8u && tracks[0] == 8u);
     for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;
     memset(playing, 0, sizeof playing);
 }
@@ -695,6 +698,14 @@ static void check_brake(void)
     CHECK(!mw_frame_brake);                                              /* STOP releases it */
     a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0), frame(2, 0, 0);
     CHECK(a_renders > a0);                                               /* renders again (the guard re-times it first) */
+    /* The predicted brake: on a pattern status.c names (C01 here), the module's track renders silence from the first
+     * frame; on any other, it renders. */
+    playing[5] = 2u, playing[6] = 0;
+    test_hush = 32u << 16 | 0xffffu, mw_ui_tick();
+    a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0); CHECK(a_renders == a0 && mw_hush == test_hush);
+    playing[6] = 1u;                                                     /* C02 plays */
+    a0 = a_renders; frame(2, 0, 0); CHECK(a_renders > a0);
+    test_hush = 0xffffffffu, mw_ui_tick(); memset(playing, 0, sizeof playing);
     /* The ceiling: a render that would end the frame past 122 % does not run, however much credit there is; the next
      * frame under it renders it again. */
     for (unsigned k = 0; k < 4u; ++k) frame(0, 0, 0);                    /* full credit */

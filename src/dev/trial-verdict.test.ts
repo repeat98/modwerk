@@ -21,6 +21,12 @@ describe('trial verdict', () => {
     expect(verdict.lines[0]).toMatch(/^FAIL .*brake silenced the module machines \(1 since boot\)/)
   })
 
+  it('notes, and passes, a pattern begun with module machines silenced as predicted', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'brake', 1 << 23 | 2)]))
+    expect(verdict.failed).toBe(false)
+    expect(verdict.lines[0]).toMatch(/^note .*predicted past the frame ceiling .*\(2 since boot\)/)
+  })
+
   it('fails when a late frame entry made the DSP skip a frame', () => {
     const verdict = trialVerdict(log(10), log(11, [incident(11, 'late', 4)]))
     expect(verdict.failed).toBe(true)

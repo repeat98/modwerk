@@ -48,7 +48,8 @@ struct diag_load {
  * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
  * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), USB the controller when the unit
  * offered itself again because the host never enumerated it (usb_attach.h: OTGSC in the high half, PORTSC1 in the low),
- * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped,
+ * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, BRAKE with
+ * bit 23 set how many patterns began with module machines silenced as predicted past the frame ceiling (status.c),
  * SET how many modules are installed, their ids in
  * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep); after a
  * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes

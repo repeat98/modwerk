@@ -225,10 +225,21 @@ unsigned modwerk_machine_pattern(void) /* status.c: the pattern that plays, bank
 {
     return valid_bank() ? U8(PLAYING) * 16u + U8(PLAYING + 1u) : 0xffffu;
 }
-unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2])
+/* status.c: the tracks (bit t) that trig anywhere in the pattern that plays; 0 without a bank. */
+unsigned modwerk_machine_trigging(void)
+{
+    if (!valid_bank() || U8(PLAYING + 1u) > 15u) return 0;
+    const volatile uint8_t *pattern = AT(U32(BANK) + PATTERN_STRIDE * U8(PLAYING + 1u));
+    unsigned mask = 0;
+    for (unsigned t = 0; t < 8u; ++t)
+        for (unsigned b = 0; b < 8u; ++b) if (pattern[PATTERN_TRACK * t + b]) { mask |= 1u << t; break; }
+    return mask;
+}
+unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint16_t id[2])
 {
     if (!valid_bank()) return 0;
     unsigned at[2] = {U8(PLAYING + 1u), U8(PLAYING + 3u)}, n = U8(PLAYING + 2u) == U8(PLAYING) && at[1] != at[0] ? 2u : 1u;
+    id[0] = (uint16_t)(U8(PLAYING) * 16u + at[0]), id[1] = (uint16_t)(U8(PLAYING) * 16u + at[1]);
     for (unsigned i = 0; i < n; ++i) {
         unsigned p = at[i];
         if (p > 15u) { most[i] = tracks[i] = 8u; continue; } /* not a pattern of the bank: the safe side */
@@ -730,9 +741,12 @@ int modwerk_machine_stopped(void); /* runtime.c */
 extern volatile uint8_t mw_frame_brake; /* the frame guard's brake (below) */
 static const Part *brake_part;     /* the Part that played when the brake caught */
 static void ceiling_tick(void);     /* the frame guard's ceiling (below) */
+uint32_t modwerk_status_hush(void); /* status.c: the predicted brake's patterns (mw_hush, below) */
+extern volatile uint32_t mw_hush;
 static void brake_tick(void)       /* released at STOP or a Part change */
 {
     ceiling_tick();
+    mw_hush = modwerk_status_hush();
     if (!mw_frame_brake) { brake_part = 0; return; }
     const Part *part = valid_bank() ? current_part() : 0;
     if (!brake_part) brake_part = part;
@@ -1009,6 +1023,15 @@ volatile uint32_t mw_frame_window; /* the longest frame interrupt since status.c
 #define BRAKE_LATE (2u * FRAME)
 volatile uint8_t mw_frame_brake;   /* nonzero while braked */
 volatile uint32_t mw_frame_brakes; /* for diagnostics: how often */
+/* status.c's predicted brake (owner, 22 November 2026): two patterns, bank × 16 + pattern in the high half and the low,
+ * 0xffff none, whose frames run no module machine track, from the first, since their stock load with the Part's modules
+ * on top passes the frame ceiling. The frame interrupt reads the pattern that plays each render. */
+volatile uint32_t mw_hush = 0xffffffffu;
+static int braked(void)
+{
+    uint32_t h = mw_hush, id = (uint32_t)U8(PLAYING) * 16u + U8(PLAYING + 1u);
+    return mw_frame_brake || h >> 16 == id || (h & 0xffffu) == id;
+}
 volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
@@ -1246,7 +1269,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
-        if (mw_cpu_refused >> track & 1u || mw_frame_brake) { /* past the CPU budget (charge()), or braked */
+        if (mw_cpu_refused >> track & 1u || braked()) { /* past the CPU budget (charge()), or braked */
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
@@ -1265,7 +1288,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) flex_machine = m[k];
         looked_up |= 1u << 8;
     }
-    if (flex_machine && !mw_frame_brake) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
+    if (flex_machine && !braked()) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
 /* A renderer a module put into a track's slots itself, from the frame builder's two calls (machine_registry.s).
@@ -1282,10 +1305,10 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
     unsigned kind = look(track, &who);
     if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
         return frame_part && frame_part[0x22 + track] <= 1u
-            ? mw_frame_brake ? STOCK(Render *, 0x40004008u)(track, ping, start, end) : guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end)
+            ? braked() ? STOCK(Render *, 0x40004008u)(track, ping, start, end) : guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end)
             : f(track, ping, start, end);
     if (kind == ASLEEP) wake_who[track] = who;
-    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u || mw_frame_brake ||
+    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u || braked() ||
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     return who->source_kind ? guarded_as(f, STOCK(Render *, 0x400047f0u), track, ping, start, end, 0) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);

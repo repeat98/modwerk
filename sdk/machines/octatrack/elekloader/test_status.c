@@ -131,12 +131,14 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
-static unsigned test_busiest, test_tracks; /* machine_registry.c: the playing pattern's busiest step and tracks that trig */
-unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2])
+static unsigned test_busiest, test_tracks, test_trigging; /* machine_registry.c: the playing pattern's busiest step, tracks that trig */
+unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint16_t id[2])
 {
     most[0] = (uint8_t)test_busiest, tracks[0] = (uint8_t)(test_tracks > test_busiest ? test_tracks : test_busiest);
+    id[0] = 32u, id[1] = 32u;
     return 1u;
 }
+unsigned modwerk_machine_trigging(void) { return test_trigging; }
 static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
 static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
 unsigned modwerk_machine_pattern(void) { return test_pattern; }
@@ -755,6 +757,33 @@ int main(void)
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_played = 0, frame_newest = 0, played_pattern = 0xffffu, test_pattern = 0, mw_stock_reserve = RESERVE_ADAPTIVE;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
+    /* The predicted brake: a pattern whose stock load with the Part's modules passes the ceiling plays with its module
+     * machines silent, and the screen says so once it plays; a Part with no module machine is never hushed. */
+    { mw_stock_reserve = 1000u, test_machines_booked = 0, transport_stopped = 1;
+      CHECK(modwerk_status_hush() == 0xffffffffu);
+      test_machines_booked = 230u;                                       /* 100 + 23: past 122 % */
+      unsigned hushes = mw_frame_hushes;
+      CHECK(modwerk_status_hush() == (32u << 16 | 0xffffu) && !hush_notice_left);  /* stopped: armed, no notice yet */
+      transport_stopped = 0;
+      CHECK(modwerk_status_hush() == (32u << 16 | 0xffffu) && hush_notice_left == 180u && mw_frame_hushes == hushes + 1u);
+      CHECK(strstr(shows(), "MACHINES PAUSED|PATTERN IS BUSY|"));
+      for (unsigned i = 0; i < 180u; ++i) memory_tick(), modwerk_status_hush();
+      CHECK(!hush_notice_left && mw_frame_hushes == hushes + 1u);       /* once a pattern */
+      test_machines_booked = 210u;                                       /* 121 %: under it */
+      CHECK(modwerk_status_hush() == 0xffffffffu);
+      test_machines_booked = 0, transport_stopped = 1, mw_stock_reserve = RESERVE_ADAPTIVE; hush_playing = 0; }
+    /* A pick adding 2 % or less is always made; a machine on a track that plays a sample takes its share off the
+     * measured figure too. */
+    { transport_stopped = 1, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0, frame_newest = 1095u;
+      CHECK(!modwerk_status_pick_busy(12, 0, "Chorus", 13u, 0, 0));       /* 109.5 + 1.3: crosses, near-free */
+      frame_newest = 840u;
+      CHECK(modwerk_status_pick_busy(1, 1, "Amiga", 266u, 0, 0));        /* 84 + 26.6: an empty track */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_trigging = 1u << 1;
+      CHECK(!modwerk_status_pick_busy(1, 1, "Amiga", 266u, 0, 0));       /* a sample track: 84 + 26.6 - 7 */
+      CHECK(modwerk_status_pick_busy(1, 1, "Amiga", 266u, 100u, 0));    /* a swap: the track played a machine, no share off */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_trigging = 0, frame_newest = 0, mw_stock_reserve = RESERVE_ADAPTIVE; }
     /* Playing, what a pick replaces leaves the last four seconds too: a swap for a lighter module is never refused. */
     { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1150u;

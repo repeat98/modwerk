@@ -22,7 +22,7 @@ const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
 volatile uint8_t modwerk_test_running[16];
 volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
-volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips; /* machine_registry.c's frame guard */
+volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes; /* the frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
 
@@ -138,6 +138,13 @@ int main(void)
     CHECK(LOG->incidents == before + 6u);
     tick();
     CHECK(LOG->incidents == before + 7u && last()->kind == DIAG_LATE && last()->a == 9u);
+    /* A pattern begun with module machines silenced, as predicted: a brake incident with bit 23, once in HOT_GAP. */
+    mw_frame_hushes = 2u;
+    tick();
+    CHECK(LOG->incidents == before + 8u && last()->kind == DIAG_BRAKE && last()->a == (1u << 23 | 2u));
+    mw_frame_hushes = 3u;
+    tick();
+    CHECK(LOG->incidents == before + 8u);
 
     /* The CPU budget refused a machine on T4: one incident with the track and the count. */
     before = LOG->incidents;
