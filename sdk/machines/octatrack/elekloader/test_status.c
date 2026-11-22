@@ -446,9 +446,9 @@ int main(void)
     /* The pick's CPU (owner, 17 November 2026: the box showed the DSP Tape Echo took, not the CPU): the frame share as
      * it stood, against the line where the guard starts dropping renders, in place of POOL. */
     { budget_on = 1, mw_stock_reserve = 0; /* the measured figure alone (the reserve: below) */
-      frame_newest = 575u;                                             /* stopped, half the line (1150) */
+      frame_newest = 600u;                                             /* stopped, half the line (1200) */
       modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
-      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 575u);
+      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 600u);
       CHECK(strstr(shows(), "|CPU|50%|") && !strstr(said, "POOL"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       frame_newest = 1300u;                                            /* past the line: a full bar, no more */
@@ -511,7 +511,7 @@ int main(void)
     int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old);
     void modwerk_status_cpu_entered(uint32_t mille), modwerk_status_cpu_left(uint32_t mille);
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
-    CHECK(mw_frame_line == 1150u && mw_stock_reserve == 1060u && mw_track_stock == 70u);
+    CHECK(mw_frame_line == 1200u && mw_stock_reserve == 1060u && mw_track_stock == 70u);
     mw_frame_line = 500u, mw_stock_reserve = 0; /* the figures below in round numbers, the reserve tried on its own */
     { uint32_t before = mw_cpu_refusals;
       transport_stopped = 1, frame_newest = 400u;
@@ -638,7 +638,7 @@ int main(void)
       test_machines_booked = 0, mw_stock_reserve = 0, frame_adjust = 0;
       memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, sizeof live);
       frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
-    mw_frame_line = 1150u, mw_stock_reserve = 1060u;
+    mw_frame_line = 1200u, mw_stock_reserve = 1060u;
     /* A reading: the longest frame since the last, per mille of a frame, and the guard's record cleared; a reading with
      * no frame keeps what it had. */
     { mw_frame_window = 28735u; frame_note(0);                          /* 60 % of 47,891 counts */
