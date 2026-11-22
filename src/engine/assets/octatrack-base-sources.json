@@ -242,7 +242,7 @@
   "sdk/runtime/loader/loader.c": "69bbdf33558eddb7cba344f550ce6ab06bfc4d0986ea950b988b681d1ed41d8a",
   "sdk/runtime/loader/loader.h": "f105ada3121166179bd8ac199883e5185916329ea427eb0e8c64338eeaa50b01",
   "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
-  "sdk/runtime/loader/set_package.h": "a07299631c3ecdb5db269a324eae9b5dbf5f178f008d096560ce012e49e0f505",
+  "sdk/runtime/loader/set_package.h": "58778ed3f73f424576cd217a99e2a0bb9c07340598da2c2c32070eeefddc9eed",
   "sdk/runtime/loader/verify_static.py": "7504ab2211a70fc8df9eb99cd50fd1d806fdeeb4eb6dcf7e300a3abc1d86055f",
   "sdk/runtime/logging/build_local.py": "f6fd4ca4d5513a04ea03e0c9779ff1324169899970b92af15342ce0732e0e21a",
   "sdk/runtime/logging/frame_guard.c": "950f4cd188e1d221fce40d83fc34eb1feda157b541ab0e2a94d0b4dbad0ecf2e",

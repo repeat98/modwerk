@@ -36,7 +36,7 @@ export function encodeModuleSet(base: string, baseline: string, packages: readon
   }
   if (costs) {
     if (costs.length > SET_COSTS || costs.some((c, i) => !(c.module > (i ? costs[i - 1].module : 0)) || c.module > 0xffffffff ||
-        ![c.use, c.wake].every(n => Number.isInteger(n) && n >= 0 && n <= 1000) || !(c.use || c.wake)))
+        ![c.use, c.wake].every(n => Number.isInteger(n) && n >= 0 && n <= 1000)))
       throw new Error('The module set\'s frame costs are invalid.')
     bytes += 4 + 8 * costs.length
     if (bytes > UPLOAD_MAX_BYTES) throw new Error('The module set exceeds the upload limit.')

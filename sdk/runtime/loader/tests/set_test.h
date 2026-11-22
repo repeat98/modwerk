@@ -78,7 +78,7 @@ static void set_checks(void)
     /* v2: the frame cost table reaches the machine once the baseline matches, whether or not the set is kept; a bad
      * entry, an unsorted table or a stale baseline leaves the machine's table as it was, and allocates nothing. */
     { static const uint8_t two[16]={0,0,0,5, 0,77,0,4, 0x9f,0x48,0x2b,0xb9, 0,114,0,0};
-      static const uint8_t bad[4][8]={{0,0,0,5,0,0,0,0},{0,0,0,5,0x03,0xe9,0,0},{0,0,0,0,0,1,0,0},{0,0,0,5,0,0,0x03,0xe9}};
+      static const uint8_t bad[4][8]={{0,0,0,5,0x10,0,0,0},{0,0,0,5,0x03,0xe9,0,0},{0,0,0,0,0,1,0,0},{0,0,0,5,0,0,0x03,0xe9}};
       uint8_t down[16];memcpy(down,two+8,8);memcpy(down+8,two,8);
       CHECK(s->enter(0));
       set_make();set_costs(2,two);CHECK(s->prepare(0,set_offer,set_bytes) && costs_seen==2u && !memcmp(costs_copy,two,16) && s->discard(0));

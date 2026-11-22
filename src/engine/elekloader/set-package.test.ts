@@ -66,7 +66,7 @@ describe('one module-set offer', () => {
     expect([view.getUint32(at + 4), view.getUint16(at + 8), view.getUint16(at + 10)]).toEqual([5, 77, 4])
     expect([view.getUint32(at + 12), view.getUint16(at + 16), view.getUint16(at + 18)]).toEqual([0x9f482bb9, 114, 0])
     expect(data.length).toBe(at + 4 + 16)
-    for (const bad of [[costs[1], costs[0]], [costs[0], costs[0]], [{ module: 5, use: 0, wake: 0 }], [{ module: 5, use: 1001, wake: 0 }], [{ module: 0, use: 1, wake: 0 }], [{ module: 5, use: 1.5, wake: 0 }]])
+    for (const bad of [[costs[1], costs[0]], [costs[0], costs[0]], [{ module: 5, use: 1, wake: 1001 }], [{ module: 5, use: 1001, wake: 0 }], [{ module: 0, use: 1, wake: 0 }], [{ module: 5, use: 1.5, wake: 0 }]])
       expect(() => encodeModuleSet(base, baseline, [one], bad)).toThrow(/frame costs/)
     expect(() => encodeModuleSet(base, baseline, [one], Array.from({ length: SET_COSTS + 1 }, (_, i) => ({ module: i + 1, use: 1, wake: 0 })))).toThrow(/frame costs/)
     expect(new DataView(encodeModuleSet(base, baseline, [one]).buffer).getUint16(4)).toBe(1) // v1 without costs
@@ -78,11 +78,12 @@ describe('one module-set offer', () => {
     expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 145, wake: 0 }) // syntiz: read from rest
     expect(frameCostTable({ x: { use: 1 } })[0].wake).toBe(30) // the default wake
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
+    expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0 }])).not.toThrow() // measured free
     const record = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
     for (const [id, cost] of Object.entries(record.costs) as [string, { use: number; wake?: number; measured: string }][]) {
       expect(existsSync(new URL(`../../../sdk/octatrack/modules/${id}/octamod.module.json`, import.meta.url)), id).toBe(true)
       expect(cost.measured.length, id).toBeGreaterThan(10)
-      expect(cost.use >= 0 && cost.use <= 100 && (cost.wake ?? 3) >= 0 && (cost.wake ?? 3) <= 100 && cost.use + (cost.wake ?? 3) > 0, id).toBe(true)
+      expect(cost.use >= 0 && cost.use <= 100 && (cost.wake ?? 3) >= 0 && (cost.wake ?? 3) <= 100, id).toBe(true)
     }
   })
 })
