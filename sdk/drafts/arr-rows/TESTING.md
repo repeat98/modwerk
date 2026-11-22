@@ -249,3 +249,20 @@ Package `d626d9ab…`, as the developer reported it: moved blocks stayed on scre
 asked to also see the row the block moves towards. Built: before the block's other end and the cursor, the module
 sets the cursor to the row beyond the block (above moving up, below moving down, the END row at the bottom); with up to
 five rows selected, that row and the whole block stay on screen. `verify.py`: 98 checks.
+
+Package `46e75872…` (source `50bb1e6b2`), as the developer reported it, 22 November 2026: moved blocks stayed on
+screen with the row ahead in view, up and down, selected either way (passed).
+
+## Edge cases (0.2.0)
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| FUNC + DOWN on a HALT row | the module fixes the moved row after stock's insert | the developer's MKI, ec53c063 (base 0.7.13) | pass: `HALT: 003` and `HALT: 004` |
+| FUNC + DOWN on a pattern row, FUNC + UP | must stay stock's | the developer's MKI, ec53c063 | pass |
+| FUNC + DOWN with 256 rows (stock refuses the insert) | the fix must not touch rows when no row was added | host test (verify.py) | pass in the host test; not run on a unit |
+| Moving a block past the bottom and the top of the screen | the module moves the cursor; the editor must scroll along | the developer's MKI, 794f1170, d626d9ab, 46e75872 | pass on 46e75872 (failed on the first two, fixed) |
+| A block selected upward (cursor on its first row) | the other end must stay on screen | the developer's MKI, d626d9ab and 46e75872 | pass |
+| Moving at the arrangement's first and last row | nothing above, the END row below | the developer's MKI, 46e75872 | pass |
+| Beside USB AUDIO (installed with base 0.7.13) | both kept in one set | the developer's MKI, 46e75872 | pass: kept together, no crash, stall or freeze |
+| A LOOP moved past its target | turns into a JUMP (the developer's choice) | the developer's MKI, 0.2.0 on base 0.7.5 | pass |
+| MKII | another panel and key layout | none | not run: no MKII |

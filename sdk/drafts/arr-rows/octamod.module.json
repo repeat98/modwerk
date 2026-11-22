@@ -69,7 +69,7 @@
       "screen:ARRANGEMENT EDITOR"
     ],
     "limitations": [
-      "OS 1.40C. Not yet tested on a unit.",
+      "OS 1.40C, tested on an MKI (the developer's own checks: 0.1.0 on base 0.7.5, 0.2.0 build 50bb1e6b2 on base 0.7.13); not tested on an MKII.",
       "In the arrangement editor, CUE + UP/DOWN still move the cursor as UP/DOWN do, and now also mark rows; CUE + LEFT/RIGHT move rows instead of changing columns; after rows were copied here, FUNC + STOP replaces the cursor row with them instead of pasting stock's one copied row until the next stock copy. Remove the module to restore stock behaviour.",
       "The copied rows live in RAM until power off or until the module is removed.",
       "A paste or insert that would pass 256 rows is refused with stock's ROW LIMIT REACHED."
@@ -128,9 +128,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 74 checks); stock key routing measured under ot_emu (MKI panel); select, copy, paste, undo, insert and a paste into another arrangement run under ot_emu on the beta base over emulated USB. Not yet tested on a unit.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "0000000000000000000000000000000000000000",
+    "summary": "Host gate (verify.py, 98 checks); stock key routing measured under ot_emu (MKI panel). On the developer's MKI: selecting, copying, clearing, pasting, inserting and undo (0.1.0, base 0.7.5); FUNC + DOWN on a HALT row keeping both HALTs, FUNC + DOWN on other rows and FUNC + UP as stock, and moving rows up and down with the editor scrolling along and the row ahead in view (0.2.0, build 50bb1e6b2, base 0.7.13, beside USB AUDIO), as the developer reported them.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "50bb1e6b2034bc911d0656451f7971972ae19a63",
     "gates": [
       "modules/arr-rows/verify.py"
     ]
