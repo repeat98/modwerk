@@ -131,6 +131,8 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
+static unsigned test_busiest; /* machine_registry.c's busiest step of the bank */
+unsigned modwerk_machine_busiest_step(void) { return test_busiest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
@@ -457,7 +459,7 @@ int main(void)
       CHECK(open == MEMORY && pick_load == 1300u && strstr(shows(), "|MODS|120%|"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
-      budget_on = 0, frame_newest = 0, mw_stock_reserve = 880u; }
+      budget_on = 0, frame_newest = 0, mw_stock_reserve = RESERVE_ADAPTIVE; }
     /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
     dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
     dl_residency_words[1] = 1508;
@@ -513,7 +515,7 @@ int main(void)
     int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old);
     void modwerk_status_cpu_entered(uint32_t mille), modwerk_status_cpu_left(uint32_t mille);
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
-    CHECK(mw_frame_line == 1200u && mw_stock_reserve == 880u && mw_track_stock == 70u);
+    CHECK(mw_frame_line == 1200u && mw_stock_reserve == RESERVE_ADAPTIVE && mw_track_stock == 70u);
     mw_frame_line = 500u, mw_stock_reserve = 0; /* the figures below in round numbers, the reserve tried on its own */
     { uint32_t before = mw_cpu_refusals;
       transport_stopped = 1, frame_newest = 400u;
@@ -657,19 +659,18 @@ int main(void)
        * more room with a new measurement and no new base. */
       { uint8_t t[24] = {0};
         memcpy(t, table, 8);
-        t[8] = t[9] = t[10] = 0xff, t[11] = 0xf0, t[12] = 0x01, t[13] = 0x90;  /* reserve 40 % */
-        t[16] = t[17] = t[18] = 0xff, t[19] = 0xf2, t[20] = 0x02, t[21] = 0x58; /* line 60 % */
-        modwerk_machine_frame_costs(t, 3);
+        t[8] = t[9] = t[10] = 0xff, t[11] = 0xf2, t[12] = 0x02, t[13] = 0x58;  /* line 60 % */
+        modwerk_machine_frame_costs(t, 2);
         frame_newest = 100u, frame_adjust = 0, test_machines_booked = 50u, modwerk_test_live_fx[11] = 27;
-        CHECK(modwerk_status_frame_load() == 570u);                       /* 40 % + machines 5 % + Tape Echo's first */
-        CHECK(!modwerk_status_pick_busy(5, 0, "Echo", 20u, 0, 0) && open == CLOSED); /* 59 % under the set's 60 % line */
+        CHECK(modwerk_status_frame_load() == 470u);                       /* 30 % + machines 5 % + Tape Echo's first */
+        CHECK(!modwerk_status_pick_busy(5, 0, "Echo", 120u, 0, 0) && open == CLOSED); /* 59 % under the set's 60 % line */
         modwerk_machine_frame_costs(table, 1);
-        CHECK(modwerk_status_pick_busy(5, 0, "Echo", 40u, 0, 0));          /* the compiled 30 % and 50 % again: 51 % */
+        CHECK(modwerk_status_pick_busy(5, 0, "Echo", 120u, 0, 0));         /* the compiled 50 % line again: 59 % */
         for (unsigned i = 0; i < 180u; ++i) memory_tick(); }
       test_machines_booked = 0, mw_stock_reserve = 0, frame_adjust = 0;
       memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, sizeof live);
       frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
-    mw_frame_line = 1200u, mw_stock_reserve = 880u;
+    mw_frame_line = 1200u, mw_stock_reserve = RESERVE_ADAPTIVE;
     /* A reading: the longest frame since the last, per mille of a frame, and the guard's record cleared; a reading with
      * no frame keeps what it had. */
     { mw_frame_window = 28735u; frame_note(0);                          /* 60 % of 47,891 counts */
@@ -689,8 +690,17 @@ int main(void)
       play_readings = 0;
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       CHECK(modwerk_status_frame_load() == 200u);
-      mw_stock_reserve = 880u;
-      CHECK(modwerk_status_frame_load() == 880u);                        /* a light Part: the reserve */
+      /* The adaptive reserve: the bank's busiest step's figure and a margin, never under the floor; the set's figures
+       * take the compiled ones' place. */
+      mw_stock_reserve = RESERVE_ADAPTIVE, test_busiest = 0;
+      CHECK(modwerk_status_frame_load() == 600u);                        /* an empty bank: the floor */
+      test_busiest = 8;
+      CHECK(modwerk_status_frame_load() == 1037u);                       /* eight tracks on a step: 98.7 % and 5 % */
+      { uint8_t t[16] = {0xff, 0xff, 0xff, 0xfb, 0x03, 0x84, 0, 0, 0xff, 0xff, 0xff, 0xfc, 0, 20, 0, 0}; /* 90 % at eight, margin 2 % */
+        modwerk_machine_frame_costs(t, 2);
+        CHECK(modwerk_status_frame_load() == 920u);
+        memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs); }
+      test_busiest = 0;
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266, 450);

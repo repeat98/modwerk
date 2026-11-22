@@ -640,6 +640,19 @@ static void clear_sigs(void)
 }
 /* The brake: a frame interrupt fallen two frames behind silences every module machine track, as one past the CPU budget
  * renders, until STOP or a Part change (owner's MKII, 22 November 2026: past about 135 % the unit hung, twice). */
+/* The adaptive reserve's input: the most tracks that trig on one step of any of the bank's 16 patterns (each track
+ * record's first eight bytes, the last eight steps first). */
+static void check_busiest_step(void)
+{
+    uint8_t *base = (uint8_t *)AT(U32(BANK));
+    CHECK(modwerk_machine_busiest_step() == 0u);
+    for (unsigned t = 0; t < 5u; ++t) base[PATTERN_TRACK * t + 7u] |= 1u;                      /* pattern 1, step 1 */
+    CHECK(modwerk_machine_busiest_step() == 5u);
+    for (unsigned t = 0; t < 7u; ++t) base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] |= 4u; /* pattern 4, step 11 */
+    CHECK(modwerk_machine_busiest_step() == 7u);
+    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] &= (uint8_t)~4u;
+    CHECK(modwerk_machine_busiest_step() == 0u);
+}
 static void check_brake(void)
 {
     const void *one[] = {&A};
@@ -1386,6 +1399,7 @@ int main(void)
     check_native_flex_voice();
     check_cpu_budget();
     check_engine_price();
+    check_busiest_step();
     check_brake();
     check_resting_machines();
     check_late_entry();

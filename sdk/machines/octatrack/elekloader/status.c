@@ -471,39 +471,55 @@ extern uint8_t modwerk_test_live_fx[16];
 #else
 #define LIVE ((const volatile uint8_t *)0x80000ec4u) /* the FX ids each track runs: FX1 T1-T8, then FX2 */
 #endif
-/* Modules never take the room stock needs later: a pick is judged as if the Part already played a full stock load
- * (mw_stock_reserve), with what the modules it runs cost on top (their first and each from the site's table), when
- * that is more than the unit measures. Owner, 22 November 2026: Tape Echos placed on an empty pattern, then trigs and
- * samples added, ran the unit past its frame. */
+/* Modules never take the room stock needs later: a pick is judged as if the Part already played the stock load its bank's
+ * patterns ask for, with what the modules it runs cost on top (their first and each from the site's table), when that
+ * is more than the unit measures. Owner, 22 November 2026: Tape Echos placed on an empty pattern, then a busy pattern
+ * played, ran the unit past its frame; and refusals should be rare on empty and medium projects. A pattern's longest
+ * frame follows how many tracks trig on one step (four on 1/5/9/13: 75 %, six: 79.4 %, eight: 96 to 98.7 %, owner's
+ * MKII, base 0.8): the reserve is the bank's busiest step's figure (reserve_by_step) with a margin for what a pattern
+ * cannot show (delays opening, LFOs, p-locks), never under a floor, so a project built on an empty pattern keeps room
+ * for its trigs. A pick already made stays when the bank grows busier; the next one sees it. mw_stock_reserve fixes the
+ * reserve instead (development bases and tests); ~0 leaves it to the bank. */
+#define RESERVE_ADAPTIVE 0xffffffffu
 #ifndef MW_STOCK_RESERVE
-#define MW_STOCK_RESERVE 880u
+#define MW_STOCK_RESERVE RESERVE_ADAPTIVE
 #endif
-/* 88 %: a medium project (owner, 22 November 2026: "refusals should be rare with empty and medium sized projects,
- * heavy projects and the heavy cpu mods I don't care that much about"): on the owner's MKII four to six trigging
- * tracks, two of them samples, played at 75 to 79 %, and eight sample tracks with their delays awake at 105 %, past the
- * reserve, where the guard drops module renders first. The set's `stock` normally carries it (frame-costs.json); this
- * is the figure without one. A machine takes a track that would otherwise play a sample, so it is booked net of that
- * track's share. */
+/* shortcut: 0, 4, 6 and 8 tracks measured, the rest between them; a ladder of every count replaces these (the set's
+ * `stock` carries them). Per mille of a frame. */
+static const uint16_t reserve_by_step[9] = {360u, 458u, 555u, 653u, 750u, 772u, 794u, 891u, 987u};
+#define RESERVE_MARGIN 50u
+#define RESERVE_FLOOR 600u
+/* A machine takes a track that would otherwise play a sample, so it is booked net of that track's share. */
 #ifndef MW_TRACK_STOCK
 #define MW_TRACK_STOCK 70u
 #endif
-volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame */
+volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame, or RESERVE_ADAPTIVE */
                   mw_track_stock = MW_TRACK_STOCK;     /* one sample track's share: (98.7 - 40.8 %) / 8 */
+unsigned modwerk_machine_busiest_step(void); /* machine_registry.c: the most tracks that trig on one step of the bank */
 /* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake);
 /* The set's measured stock figures take the compiled ones' place (frame-costs.json's `stock`, as pseudo module ids), so
  * a base whose stock gets cheaper gives modules more room with a new measurement and no new base. */
-#define STOCK_RESERVE_ID 0xfffffff0u
 #define TRACK_STOCK_ID 0xfffffff1u
 #define FRAME_LINE_ID 0xfffffff2u
+#define RESERVE_STEP_ID 0xfffffff3u   /* + N, N = 0 to 8: the reserve for a bank whose busiest step trigs N tracks */
+#define RESERVE_MARGIN_ID 0xfffffffcu
+#define RESERVE_FLOOR_ID 0xfffffffdu
 static uint32_t tuned(uint32_t id, uint32_t compiled)
 {
     uint32_t value, unused;
     return modwerk_status_module_cost(id, &value, &unused) && value ? value : compiled;
 }
 static uint32_t frame_line(void) { return tuned(FRAME_LINE_ID, mw_frame_line ? mw_frame_line : 1u); }
-static uint32_t stock_reserve(void) { return tuned(STOCK_RESERVE_ID, mw_stock_reserve); }
+static uint32_t stock_reserve(void)
+{
+    if (mw_stock_reserve != RESERVE_ADAPTIVE) return mw_stock_reserve;
+    unsigned n = modwerk_machine_busiest_step();
+    if (n > 8u) n = 8u;
+    uint32_t r = tuned(RESERVE_STEP_ID + n, reserve_by_step[n]) + tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
+    return r > floor ? r : floor;
+}
 static uint32_t effect_cost(unsigned id, int first, int waking);
 static int runs_elsewhere(unsigned slot, unsigned id);
 /* The module effects the live slots run but slot `skip` (16: none), each by its `each` and the first of a module by its

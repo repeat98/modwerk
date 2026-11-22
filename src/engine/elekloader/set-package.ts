@@ -7,9 +7,10 @@ import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with {
 /** v2's table entry: a module's package id and what it adds to the longest frame, per mille: each further instance
  * (`use`), and on top for the Part's first (`wake`). */
 export interface FrameCost { module: number; use: number; wake: number }
-/** The base's own figures travel as these pseudo module ids (status.c), after every package id. */
-export const STOCK_IDS = { reserve: 0xfffffff0, trackStock: 0xfffffff1, line: 0xfffffff2 } as const
-type Stock = { reserve: number; trackStock: number; line: number }
+/** The base's own figures travel as these pseudo module ids (status.c), after every package id: a sample track's share,
+ * the line, the stock reserve for a bank whose busiest step trigs 0 to 8 tracks, the reserve's margin and its floor. */
+export const STOCK_IDS = { trackStock: 0xfffffff1, line: 0xfffffff2, reserveBySteps: 0xfffffff3, reserveMargin: 0xfffffffc, reserveFloor: 0xfffffffd } as const
+type Stock = { trackStock: number; line: number; reserveBySteps: readonly number[]; reserveMargin: number; reserveFloor: number }
 /** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further, and the base's
  * `stock`) as v2 sends them, by id ascending. */
 export function frameCostTable(costs: Record<string, { first: number; each: number }> = frameCosts.costs, stock: Stock | null = frameCosts.stock): FrameCost[] {
@@ -18,7 +19,14 @@ export function frameCostTable(costs: Record<string, { first: number; each: numb
     use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
   }))
   if (modules.some(m => m.module >= STOCK_IDS.reserve)) throw new Error('A module id collides with the base\'s own figures.')
-  const own = stock ? (['reserve', 'trackStock', 'line'] as const).map(key => ({ module: STOCK_IDS[key], use: Math.round(stock[key] * 10), wake: 0 })) : []
+  if (stock && stock.reserveBySteps.length !== 9) throw new Error('The stock reserve needs a figure for 0 to 8 tracks on a step.')
+  const own = stock ? [
+    { module: STOCK_IDS.trackStock, use: Math.round(stock.trackStock * 10), wake: 0 },
+    { module: STOCK_IDS.line, use: Math.round(stock.line * 10), wake: 0 },
+    ...stock.reserveBySteps.map((figure, n) => ({ module: STOCK_IDS.reserveBySteps + n, use: Math.round(figure * 10), wake: 0 })),
+    { module: STOCK_IDS.reserveMargin, use: Math.round(stock.reserveMargin * 10), wake: 0 },
+    { module: STOCK_IDS.reserveFloor, use: Math.round(stock.reserveFloor * 10), wake: 0 },
+  ] : []
   return [...modules.sort((a, b) => a.module - b.module), ...own]
 }
 /** set_package.h RUNTIME_SET_COSTS. */

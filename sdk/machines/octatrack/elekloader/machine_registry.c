@@ -213,6 +213,25 @@ static int elsewhere(const Part *part, unsigned track, const Machine *who)
     for (unsigned t = 0; t < 8u; ++t) if (t != track && owner(m, n, part, t, &t_who) && t_who == who) return 1;
     return 0;
 }
+/* status.c's stock reserve: the most tracks that trig on one step of any pattern of the current bank, 0 to 8 (each
+ * pattern's track record starts with its 64-step trig mask, the last eight steps first, as Pattern Sample Locks reads
+ * it). Steps past a track's length count too: the safe side. */
+#define PATTERN_STRIDE 0x8ed8u
+#define PATTERN_TRACK 0x91au
+unsigned modwerk_machine_busiest_step(void)
+{
+    if (!valid_bank()) return 0;
+    unsigned most = 0;
+    for (unsigned p = 0; p < 16u && most < 8u; ++p) {
+        const volatile uint8_t *pattern = AT(U32(BANK) + PATTERN_STRIDE * p);
+        for (unsigned s = 0; s < 64u; ++s) {
+            unsigned n = 0;
+            for (unsigned t = 0; t < 8u; ++t) n += pattern[PATTERN_TRACK * t + 7u - s / 8u] >> (s % 8u) & 1u;
+            if (n > most) most = n;
+        }
+    }
+    return most;
+}
 /* status.c's stock reserve: what the current Part's module machines cost but track `skip` (8: none), each track by its
  * `each` and the first of a machine by its `first` too, less `net` (the sample a track would otherwise play), never
  * below 0. */
