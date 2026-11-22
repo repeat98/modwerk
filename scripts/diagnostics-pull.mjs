@@ -22,7 +22,7 @@ const OUT = join(homedir(), '.cache/modwerk-local/diagnostics')
 /** Module ids (the package's `module`, 8 hex digits) to names, for the unit's `set` records. */
 const MODULE_NAMES = new Map((() => { try { return JSON.parse(readFileSync(new URL('src/engine/assets/octatrack-module-packages.json', ROOT), 'utf8')).packages.map(p => [p.module, p.name ?? p.id]) } catch { return [] } })())
 const PAGE = 500
-const PROBLEMS = ['sync_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
+const PROBLEMS = ['sync_failed', 'link_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
 
 /** Pages through every retained record, oldest first; `page(since)` answers with the endpoint's JSON. */
 export async function pullAll(page, from) {
@@ -43,19 +43,29 @@ export async function pullAll(page, from) {
 /** This computer's local time, as Discord shows it. */
 export const when = iso => new Date(iso).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
 const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username, data.event, data.phase,
+  data.failure && 'failure=' + data.failure, data.client && [data.client.browser, data.client.major].filter(Boolean).join(' ') + '/' + data.client.os,
   data.error && 'error=' + data.error, data.result && 'result=' + data.result, data.refusal !== undefined && 'refusal=' + data.refusal,
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reason && 'reason=' + data.reason,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
-const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down'],
+const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down', 'window open', 'meets a buffer'],
   { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base'] // records that carry no cpu, keys or screen
+/** A refused restore's set record from base 0.7.10 on (diag.c): the loader's check that refused it (dsp1, read as dsp1to4;
+ * loader.h runtime_check) and the module pool then, in 16-byte units (cpu the bytes used, dsp0 the largest free run, read as
+ * dsp5to8). Older bases leave all three 0. A module-memory refusal by the claims check is a DSP claim meeting a delay buffer. */
+const REFUSED_CHECKS = ['', 'the module pool', 'its DSP claims', 'the machine metadata', 'the DSP limits']
+const refusedPool = r => !(r.cpu || r.dsp5to8 || r.dsp1to4) ? '' :
+  (r.dsp1to4 ? `, by ${r.tempo24 === 2 && r.dsp1to4 === 2 ? 'its DSP claims meeting a delay buffer' : REFUSED_CHECKS[r.dsp1to4] ?? 'check ' + r.dsp1to4}` : '') +
+  `, module memory ${Math.round(r.cpu / 64)} KiB used, largest free block ${(r.dsp5to8 / 64).toFixed(1)} KiB`
+// diag.c stores up to fourteen package IDs in the set record. A full record can be only part of the inventory.
+const SET_ID_CAPACITY = 14
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
-  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
-    (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
+  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a === SET_ID_CAPACITY ? 'at least ' : ''}${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
+    (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? ` ${r.a & 0xffffff} machines refused for CPU, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
@@ -84,7 +94,9 @@ const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NA
  * 95 % CPU or more after PROJ … RIGHT YES (PROJ may have left the 16 keys the unit keeps), with the log's last set record
  * showing none installed, is likely one too, or USB disk mode (beta finding 72): only a hint, since the base stayed the same.
  * A freeze until a restart, stopped, in a session whose next start runs another base is the upgrade seen by diag.c's
- * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed is left as it is. */
+ * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed but whose keys
+ * end in that walk (PROJ … YES YES: pick the file, confirm) is likely the same image flashed again: the 17 November 2026
+ * pull had 21 stopped freezes after the walk, all until a restart, 9 before another base and 12 before the same one. */
 export function unitLines(incidents, names = namesFor) {
   const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
   const at = (r, boot = r.boot) => r.epoch + '/' + boot
@@ -92,6 +104,10 @@ export function unitLines(incidents, names = namesFor) {
   const upgrade = r => r.kind === 'stall' && base.has(at(r)) && base.has(at(r, r.boot - 1)) && base.get(at(r)) !== base.get(at(r, r.boot - 1))
   // The freeze twin: stock's OS upgrade stops the UI tick while the frames still run, and the record keeps the boot it happened in.
   const upgraded = r => r.kind === 'freeze' && !r.a && !r.playing && base.has(at(r)) && base.has(at(r, r.boot + 1)) && base.get(at(r)) !== base.get(at(r, r.boot + 1))
+  const reflashed = r => {
+    const keys = r.keys.filter(k => k !== 255)
+    return r.kind === 'freeze' && !r.a && !r.playing && base.has(at(r)) && base.get(at(r)) === base.get(at(r, r.boot + 1)) && keys.includes(PROJ) && keys.at(-1) === YES && keys.at(-2) === YES
+  }
   const system = r => {
     if (r.kind !== 'stall') return false
     const last = all.findLast(p => at(p) === at(r, r.boot - 1) && !STATELESS.includes(p.kind))
@@ -103,7 +119,7 @@ export function unitLines(incidents, names = namesFor) {
   // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
   const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
   return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [], ...all.filter(r => r.kind !== 'start' && !brief(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
-    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
+    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : reflashed(r) ? ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
     (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
 }
 

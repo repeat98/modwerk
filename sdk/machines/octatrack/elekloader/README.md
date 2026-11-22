@@ -176,8 +176,10 @@ hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with
 `dsp56kDisassemble` built beside it in the same tree (`make setup` in
 `~/.cache/modwerk-upstream/octabam`, or `cmake --build` of its
-`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets), and
-Node 24 for Modwerk's chooser composer ([`octatrack-base-choosers.mjs`](../../../../scripts/octatrack-base-choosers.mjs)).
+`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets). The
+base builds its choosers on the unit; building a module FX package
+(`sdk/runtime/loader/build.py --dsp`) needs Node 24 for its FX page recipe
+([`octatrack-module-page.mjs`](../../../../scripts/octatrack-module-page.mjs)).
 The module FX with a chooser row (`MODULES` in `dsp_loader.py`) as packages. The
 figures are each module's own: cycles per sample and instance with their kind
 (executed worst cases for E-Verb and AIR CHORUS, static bounds, modeled, for the rest),
@@ -330,6 +332,29 @@ removal package any module gets (`sdk/tests/runtime_card_guard.c`: the loader ta
 
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
 time-stretch reads its splice search and only BEAT reads its transient markers.
+
+`status.s` also shortens stock's delay routine (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). Stock reads,
+filters, mixes and writes back all eight tracks' delay rings every frame, whatever their FX2 and however silent the
+ring; nearly all of its time is the ring transfers. Once a track's taps and filter state have stayed within 2,048
+counts of zero (-120 dBFS) with its send gain at zero for 16,384 frames in a row (no DELAY on the track, or a DELAY
+whose echoes have died), its read and write are left out and only the dry gain is applied, as stock ramps it. Stock's
+filter never comes back to exact zero after a send, so this drops a residue below -120 dBFS rather than being
+bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
+`0x4000361a`) restarts the count. A pick is still judged as if every quiet delay were awake (`modwerk_status_cpu_load` adds a point a quiet track), since a scene that opens the sends takes the whole saving back from the next frame: the skip buys margin, never admission. The A/B harness and the unit figures are in `delay-harness/`.
+
+`machine_registry.c` rests the module of a machine no track of the project uses (the loader asks it through
+`modwerk_machine_in_use`, events.json's judged `ot_machines`): its handlers leave the hooks that rest and its detours
+marked `rests` hold stock's bytes, so an installed machine nobody plays costs the frame interrupt nothing of its own.
+The machine map's scan (every two seconds, at once after a change) reads every Part of the project, working and saved,
+so pattern, Part and bank changes never need a wake; a module rests after two scans in a row find none of its tracks,
+never on a scan taken while a project loads, and every machine stays awake for two scans after the set changes. A pick
+of a resting machine wakes it before the pick commits and is judged with `mw_wake_mille` (3 meter points) on top of its
+price, for its hooks coming back into the frame; a track that names one without a pick renders stock's silent source
+and starts no voice until the next UI tick wakes it. A RENDER_FLEX machine never rests. The module of a DSP effect rests the same way while no slot of the project names its effect id (fxmap.c's
+map of every bank's Parts) and no live slot runs it;  judges a pick of it with the same
+margin and wakes it before stock writes the pick.
+
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
 
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),

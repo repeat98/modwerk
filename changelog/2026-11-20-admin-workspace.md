@@ -1,0 +1,1 @@
+The admin workspace opens with counts of open issues, unreviewed forum reports and active account removal requests. Each queue and tool has a direct link, and the issue inbox keeps its filters when you reload or use the Back button.

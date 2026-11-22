@@ -1,0 +1,1 @@
+Docs: driving the Octatrack emulator for a module's USB trial and screenshots. A USB trial needs `--dsp-rt` (plain `--dsp` times out the hello), the `--usb-host` socket path must stay under 104 characters on macOS, and a module's own `module_draw` marks are captured by rebuilding the screen from the panel link's bytes, since `capture-module-ui.py` reads stock's LCD plane.

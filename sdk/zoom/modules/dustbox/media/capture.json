@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "dustbox",
+  "moduleVersion": "1.0.0",
+  "imageSha256": "46edd0332f2cd18dcebee93ad43e0dc66221719b4f3fdd12df27c8ac3ba58928",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "f0f9ad2324c1a53ee75fe20001da8ddb0536af60ab8c0313342f3111e8f3a7d1",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

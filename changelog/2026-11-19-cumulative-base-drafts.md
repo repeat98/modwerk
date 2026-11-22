@@ -1,0 +1,1 @@
+Docs: base changes now join their machine's one cumulative draft pull request (`base/<machine>-next`), which several developers commit to. It stays a draft until the base has been tested extensively on a unit, and only the owner marks it ready and ships it.

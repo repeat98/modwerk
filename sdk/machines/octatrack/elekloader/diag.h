@@ -42,7 +42,10 @@ struct diag_load {
  * CRASH the program counter, STALL the stall's reason, BASE the first four bytes of the base's identity (right after
  * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
  * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), SET how many modules are installed, their ids in
- * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep).
+ * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep); after a
+ * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes
+ * used and the largest free run, in 16-byte units) and `dsp1` the loader's check that refused it (runtime_check: 1 the
+ * pool, 2 claims, 3 metadata, 4 the DSP's limits); all three 0 on bases before 0.7.10.
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */
@@ -71,8 +74,11 @@ int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers pres
 void modwerk_diag_frame(void);                         /* dl_frame, in the frame interrupt */
 unsigned modwerk_diag_read(uint8_t *out, unsigned page); /* ep0.c LOG: DIAG_PAGE bytes of the log, then the records */
 void modwerk_diag_set(void);                           /* modset.c: the installed set changed (restore, Keep) */
-void modwerk_diag_refused(uint32_t module, uint32_t refusal); /* modset.c, before a restore's set record: its first refused
-                                                       * package's module and the loader's refusal (screen, tempo24) */
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* modset.c,
+                                                       * before a restore's set record: its first refused package's module and the
+                                                       * loader's refusal (screen, tempo24), the module pool when it was refused:
+                                                       * bytes used and the largest free run (cpu and dsp0, in 16-byte units), and
+                                                       * the loader's check that refused it (dsp1, loader.h runtime_check) */
 #ifdef MODWERK_DEV
 /* Development builds: what the base's own hooks cost, in DTIM3 counts (132 MHz), read over MEM. The tick chain is
  * stamped in its order (runtime_tick 1, ep0_tick 2 and its end 3, dl_ui 4, status_tick 5 and its end 6, crash_tick 7,

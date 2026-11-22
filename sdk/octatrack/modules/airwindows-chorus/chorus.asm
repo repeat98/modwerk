@@ -15,7 +15,7 @@
 ; State (X, offsets from r7):
 ; 00 allocator, 01 FX1 guard, 02 ring cursor, 03 phase high, 04 flip,
 ; 05 seeded, 06..08 targets, 09..0b final smoothed high words,
-; 0c..0e smoothed low words, 10 tap offset, 11 fraction, 12 age,
+; 0c..0e smoothed low words, 11 fraction (the tap age stays in n5),
 ; 15 L previous,16/17 L even hi/lo,
 ; 18/19 L odd hi/lo,1a R previous,1b/1c R even,1d/1e R odd,
 ; 20/21 RANGE first slew stage,22/23 MIX first stage,
@@ -69,13 +69,16 @@ proc:
 ; parallel. n1 reaches the shared dry coefficient. Init still preserves r1.
         lua     (r7+$0b),r1
         move    #>$2a,n1
-; Warm rings use the original tap body. Choose once per processing call;
-; a call that finishes filling history keeps the masked path until next call.
-        move    #>ac_maskedread,r2
+; r2 is the ring routine of the next channel: it writes the new sample and
+; reads the three taps. Each routine hands r2 to the other channel's. Choose
+; cold or warm once per processing call; a call that finishes filling history
+; keeps the masked path until next call. Only the cold left routine counts
+; history: a warm ring's count stays 8192.
+        move    #>ac_coldleft,r2
         move    x:(r7+$37),a
         cmp     #>8192,a
         blt     ac_historyready
-        move    #>ac_warmread,r2
+        move    #>ac_warmleft,r2
 ac_historyready:
         move    #>$fab1e0,r5
         move    r5,x:(r7+$30)
@@ -192,33 +195,31 @@ ac_sample:
         mpy     x0,y1,a
         move    x:(r7+$0a),x0
         add     x0,a
-        move    a1,x:(r7+$10)
+        move    a1,b
         and     #>$3ff,a
         asl     #13,a,a
         move    a1,x:(r7+$11)
-        move    x:(r7+$10),a
-        asr     #10,a,a
-        move    a1,x:(r7+$12)
-; Count this sample before either channel writes/reads the current position.
-        move    x:(r7+$37),a
-        add     #>1,a
-        move    #>8192,x0
-        cmp     x0,a
-        tge     x0,a
-        move    a1,x:(r7+$37)
+        asr     #10,b,b
+        move    b1,n5
+; Both channels share the tap age in n5 and the ring modulo in m5. r4 is the
+; channel's write address: the left ring's, then 8192 words on for the right.
+; Allocator bases are 8192-word aligned. Restore linear mode for the sine.
+        move    #>8191,m5
+        move    x:(r7+$00),r4
+        move    x:(r7+$02),n4
+        move    (r4)+n4
 ; Air pre-emphasis and three-point read are the same for each channel.
         lua     (r7+$15),r3
-        move    x:(r7+$00),r4
         move    x:(r0),a
         bsr     ac_channel
         move    a,x:(r0)+
+        move    #>8192,n4
+        move    (r4)+n4
         lua     (r7+$1a),r3
-        move    x:(r7+$00),a
-        add     #>8192,a
-        move    a,r4
         move    x:(r0),a
         bsr     ac_channel
         move    a,x:(r0)+
+        move    #>$ffffff,m5
         move    x:(r7+$02),a
         sub     #>1,a
         and     #>$1fff,a
@@ -358,12 +359,12 @@ ac_channel:
         move    x:(r3),b
         sub     x1,b      x1,x:(r3)+
         asr     #8,b,b
-; Sign the air delta once; the even and odd updates use opposite signs.
+; Test the flip once. The state that takes +delta is the selected factor
+; (y0): even on flip 0, odd on flip 1. Both arms leave odd in a.
         move    x:(r7+$04),a
         tst     a
-        beq     ac_deltaready
-        neg     b
-ac_deltaready:
+        bne     ac_oddflip
+ac_evenflip:
         move    x:(r3),a
         move    x:(r3+1),a0
         add     b,a
@@ -375,34 +376,41 @@ ac_deltaready:
         sub     b,a
         move    a1,x:(r3+2)
         move    a0,x:(r3+3)
-        move    a1,x0
-        move    x:(r7+$04),b
-        tst     b
-        move    y0,b
-        tne     x0,b
-        move    b1,y0
-; Keep the 48-bit recurrences in the accumulators instead of spilling
-; each difference and loading it back. Arithmetic order/rounding is unchanged.
-        move    x:(r3),b
-        move    x:(r3+1),b0
-        sub     b,a
-        asr     #8,a,a
-        move    x:(r3+2),b
-        move    x:(r3+3),b0
-        sub     a,b
-        move    b1,x0
-        move    #>839,y1
-        mpy     x0,y1,a
-        sub     a,b
-        move    b1,x:(r3+2)
-        move    b0,x:(r3+3)
-; even -= (even-updatedOdd)/256, then the same full-precision leak.
+        bra     ac_deltaready
+ac_oddflip:
         move    x:(r3),a
         move    x:(r3+1),a0
         sub     b,a
-        asr     #8,a,a
+        move    a1,x:(r3)
+        move    a0,x:(r3+1)
+        move    x:(r3+2),a
+        move    x:(r3+3),a0
+        add     b,a
+        move    a1,x:(r3+2)
+        move    a0,x:(r3+3)
+        move    a1,y0
+ac_deltaready:
+; odd -= (odd-even)/256, then the full-precision leak. The state being
+; updated stays in its accumulator; the difference is formed in the other
+; and negated, so each state is loaded once. Rounding is unchanged.
         move    x:(r3),b
         move    x:(r3+1),b0
+        sub     a,b
+        neg     b
+        asr     #8,b,b
+        sub     b,a
+        move    a1,x0
+        move    #>839,y1
+        mpy     x0,y1,b
+        sub     b,a
+        move    a1,x:(r3+2)
+        move    a0,x:(r3+3)
+; even -= (even-updatedOdd)/256, then the same full-precision leak.
+        move    x:(r3),b
+        move    x:(r3+1),b0
+        sub     b,a
+        neg     a
+        asr     #8,a,a
         sub     a,b
         move    b1,x0
         mpy     x0,y1,a
@@ -415,32 +423,10 @@ ac_deltaready:
         asr     #8,b,b
         add     b,a
         rnd     a
-        move    x:(r7+$02),n5
+; The ring routine stores a at r5, advances by the age in n5 with the
+; hardware modulo AGU and returns s0/s1/s2 in x0/y0/y1.
         move    r4,r5
-        move    (r5)+n5
-; Shadow the slot's first 72 words in its own unused X state. This also
-; works on private-Y slots, preserving one identical virtual ring layout.
-        move    r5,b
-        and     #>$3fff,b
-        cmp     #>72,b
-        bge     ac_writey
-ac_writeshadow:
-        add     #>60,b
-        move    b1,n4
-        move    r7,r4
-        move    (r4)+n4
-        move    a,x:(r4)
-        bra     ac_writeend
-ac_writey:
-        move    a,y:(r5)
-ac_writeend:
-; Advance from the write address to age with the hardware modulo AGU.
-; Allocator bases are 8192-word aligned. Restore linear mode for the sine.
-        move    x:(r7+$12),n5
-        move    #>8191,m5
-        move    (r5)+n5
         jsr     (r2)
-        move    #>$ffffff,m5
 ; Preserve the three tap words in registers through interpolation and
 ; correction, keeping the original truncations at the same arithmetic points.
         move    y1,b
@@ -477,15 +463,39 @@ ac_writeend:
         teq     x0,a
         rts
 
+; Ring routines. The slot's first 72 words are shadowed in its own unused X
+; state. That prefix and the wrap into it lie in the left ring only: the right
+; ring's low 14 address bits stay 8192..16383, so it always uses Y.
+ac_coldleft:
+; Count this sample before either channel reads the current position.
+        move    x:(r7+$37),b
+        add     #>1,b
+        move    #>8192,x0
+        cmp     x0,b
+        tge     x0,b
+        move    b1,x:(r7+$37)
+        move    #>ac_coldright,r2
+        bra     ac_coldwrite
+ac_coldright:
+        move    #>ac_coldleft,r2
+ac_coldwrite:
+        move    r5,b
+        and     #>$3fff,b
+        cmp     #>72,b
+        bge     ac_coldy
+        bsr     ac_putshadow
+        bra     ac_maskedread
+ac_coldy:
+        move    a,y:(r5)+n5
 ac_maskedread:
 ; Return s0/s1/s2 in x0/y0/y1. The valid count includes the new sample.
 ; age+2 <= 8161, so only the last zero, one or two taps can be unwritten.
 ; Fully valid triplets use the same three reads even before the ring fills.
-        move    x:(r7+$12),b
+        move    n5,b
         move    x:(r7+$37),a
         sub     b,a
         cmp     #>2,a
-        bgt     ac_warmread
+        bgt     ac_fullread
         tst     a
         ble     ac_emptyread
         cmp     #>1,a
@@ -509,17 +519,50 @@ ac_oneread:
         move    #>0,y0
         move    #>0,y1
         rts
-ac_warmread:
-; Most triplets remain entirely in Y. Only left-ring prefix/boundary
-; triplets need the virtual-word helper; right-ring wrapping stays in Y.
+ac_fullread:
+; A complete triplet on a cold ring, either channel.
         move    r5,a
         and     #>$3fff,a
-        cmp     #>72,a
-        blt     ac_shadowread
-        cmp     #>8190,a
-        blt     ac_yread
         cmp     #>8192,a
         bge     ac_yread
+        bra     ac_leftcheck
+ac_warmleft:
+        move    #>ac_warmright,r2
+        move    r5,b
+        and     #>$3fff,b
+        cmp     #>72,b
+        bge     ac_lefty
+        add     #>60,b
+        move    r7,x0
+        add     x0,b
+        move    b1,r3
+        move    a,x:(r3)
+        move    (r5)+n5
+        bra     ac_leftread
+ac_lefty:
+        move    a,y:(r5)+n5
+ac_leftread:
+; Most triplets remain entirely in Y. One that lies wholly in the prefix
+; (words 0..69) is read straight from the shadow; r5 is not used afterwards.
+; Only the four boundary triplets need the virtual-word helper.
+        move    r5,a
+        and     #>$3fff,a
+ac_leftcheck:
+        cmp     #>8190,a
+        bge     ac_shadowread
+        cmp     #>72,a
+        bge     ac_yread
+        cmp     #>70,a
+        bge     ac_shadowread
+ac_prefixread:
+        add     #>60,a
+        move    r7,x0
+        add     x0,a
+        move    a1,r3
+        move    x:(r3)+,x0
+        move    x:(r3)+,y0
+        move    x:(r3)+,y1
+        rts
 ac_shadowread:
         bsr     ac_readword
         move    x0,y0
@@ -531,10 +574,24 @@ ac_shadowread:
         move    y1,y0
         move    x1,y1
         rts
+ac_warmright:
+        move    #>ac_warmleft,r2
+        move    a,y:(r5)+n5
 ac_yread:
         move    y:(r5)+,x0
         move    y:(r5)+,y0
         move    y:(r5)+,y1
+        rts
+
+ac_putshadow:
+; b = virtual word 0..71. r3 is free once the air states are stored; r4 and
+; n4 keep the write address for the right channel.
+        add     #>60,b
+        move    r7,x0
+        add     x0,b
+        move    b1,r3
+        move    a,x:(r3)
+        move    (r5)+n5
         rts
 
 ac_readword:
@@ -544,10 +601,10 @@ ac_readword:
         bge     ac_ready
 ac_readshadow:
         add     #>60,a
-        move    a1,n4
-        move    r7,r4
-        move    (r4)+n4
-        move    x:(r4),x0
+        move    r7,x0
+        add     x0,a
+        move    a1,r3
+        move    x:(r3),x0
         move    (r5)+
         rts
 ac_ready:

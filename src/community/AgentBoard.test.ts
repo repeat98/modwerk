@@ -5,16 +5,16 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AgentBoard, type BoardActivity, type BoardClaim, type BoardThread } from './AgentBoard'
 import { CommunityContext, emptySession } from './context'
 
-const calls = vi.hoisted(() => [] as { path: string; method?: string }[])
-const board = vi.hoisted(() => ({ claims: [] as unknown[], released: [] as unknown[], messages: [] as unknown[] | null, activity: null as unknown }))
+const calls = vi.hoisted(() => [] as { path: string; method?: string; body?: unknown }[])
+const board = vi.hoisted(() => ({ claims: [] as unknown[], released: [] as unknown[], messages: [] as unknown[] | null, ended: [] as unknown[], activity: null as unknown }))
 vi.mock('./api', () => {
   const answer = async (path: string, options: RequestInit = {}) => {
-    calls.push({ path, method: options.method })
-    if (path.startsWith('/agent-board/messages') && !options.method) { if (!board.messages) throw new Error('API route not found.'); return { messages: board.messages } }
+    calls.push({ path, method: options.method, body: options.body })
+    if (path.startsWith('/agent-board/messages') && !options.method) { if (!board.messages) throw new Error('API route not found.'); return { messages: board.messages, ended: board.ended } }
     if (path === '/agent-board/activity') { if (!board.activity) throw new Error('API route not found.'); return board.activity }
     return { claims: board.claims, released: board.released }
   }
-  return { api: vi.fn(answer), post: vi.fn((path: string) => answer(path, { method: 'POST' })) }
+  return { api: vi.fn(answer), post: vi.fn((path: string, body: unknown) => answer(path, { method: 'POST', body: body as BodyInit })) }
 })
 let root: Root, container: HTMLDivElement
 const claim = (values: Partial<BoardClaim>): BoardClaim => ({ id: crypto.randomUUID(), kind: 'module', key: 'octatrack/tape-echo', holder: 'ada', branch: 'module/tape-echo', pullRequest: null, note: '', createdAt: '2026-10-29T10:00:00.000Z', expiresAt: '2026-11-12T10:00:00.000Z', ...values })
@@ -22,7 +22,7 @@ const thread = (values: Partial<BoardThread>): BoardThread => ({ id: crypto.rand
 const activity: BoardActivity = { days: 30, developers: { signedIn: 4, active: 3 }, claims: { active: 2, made: 5 }, questions: { open: 1 }, findings: { active: 1 }, posts: 1 }
 beforeEach(() => {
   calls.length = 0
-  Object.assign(board, { claims: [], released: [], messages: [], activity: null })
+  Object.assign(board, { claims: [], released: [], messages: [], ended: [], activity: null })
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
 })
@@ -34,7 +34,7 @@ it('lists who holds what, with the pull request once there is one', async () => 
   board.claims = [claim({ note: 'Porting the BBD echo' }), claim({ kind: 'hook', key: 'octatrack/39', holder: 'bo', pullRequest: 1200, expiresAt: null })]
   await render(false)
   const text = container.textContent!
-  expect(calls.map(call => call.path)).toEqual(['/agent-board/claims?released=1', '/agent-board/messages', '/agent-board/activity'])
+  expect(calls.map(call => call.path)).toEqual(['/agent-board/claims?released=1', '/agent-board/messages?ended=1', '/agent-board/activity'])
   expect(text).toContain('octatrack/tape-echo'); expect(text).toContain('@ada'); expect(text).toContain('module/tape-echo'); expect(text).toContain('Porting the BBD echo')
   expect(text).toContain('Hook or table'); expect(text).toContain('while its pull request is open')
   expect(container.querySelector('a[href="https://github.com/repeat98/modwerk/pull/1200"]')).not.toBeNull()
@@ -72,6 +72,43 @@ it('gives administrators Release, Close and Delete buttons that ask first', asyn
   expect(writes[0].path).toMatch(/^\/agent-board\/claims\/[0-9a-f-]{36}$/)
   expect(writes[1].path).toMatch(/^\/agent-board\/messages\/[0-9a-f-]{36}\/close$/)
   expect(writes[2].path).toMatch(/^\/agent-board\/messages\/[0-9a-f-]{36}$/)
+})
+
+it('shows wanted tasks as a to-do board with their priority and who took or finished them, and lets administrators reprioritise', async () => {
+  const task = (values: Partial<BoardThread>) => thread({ kind: 'wanted', topic: { kind: 'site', key: 'forum' }, to: null, priority: 'normal', ...values })
+  board.messages = [task({ body: 'Fix broken thread links.', priority: 'high' }), task({ body: 'Show versions.', to: 'cy' }), task({ body: 'Tidy the footer.', to: 'bo', pullRequest: 1700, priority: 'low' }), thread({})]
+  board.ended = [task({ body: 'Count replies.', to: 'ada', pullRequest: 1600, endedAt: '2026-11-10T10:00:00.000Z', endedReason: 'merged' }), task({ body: 'Lapsed.', endedAt: '2026-11-10T10:00:00.000Z', endedReason: 'expired' })]
+  await render(true)
+  const column = (name: string) => container.querySelector(`[aria-label="${name}"]`)!.textContent!
+  expect(column('To do')).toContain('High'); expect(column('To do')).toContain('Fix broken thread links.'); expect(column('To do')).toContain('posted by @bo')
+  expect(column('Taken')).toContain('taken by @cy')
+  expect(column('In review')).toContain('Low'); expect(column('In review')).toContain('#1700')
+  expect(column('Done')).toContain('done by @ada'); expect(column('Done')).not.toContain('Lapsed.')
+  expect(container.querySelector('summary')!.textContent).toContain('1 to-do · ')
+  // The question stays under Questions and findings, not on the to-do board.
+  expect(container.textContent).toContain('Room for a chorus stage?')
+  // Only open tasks get a priority control, and only for administrators.
+  expect(container.querySelectorAll('select')).toHaveLength(3)
+  const select = container.querySelector<HTMLSelectElement>('select[aria-label="Priority of forum"]')!
+  await act(async () => { select.value = 'low'; select.dispatchEvent(new Event('change', { bubbles: true })) })
+  expect(calls.find(call => call.body)).toMatchObject({ path: expect.stringMatching(/^\/agent-board\/messages\/[0-9a-f-]{36}\/priority$/), body: { priority: 'low' } })
+  await render(false)
+  expect(container.querySelector('select')).toBeNull()
+})
+
+it('filters sibling tasks across columns and links independent evidence', async () => {
+  const task = (body: string, parentIssue: number, to: string | null) => thread({ kind: 'wanted', body, parentIssue, to, pullRequest: null })
+  board.messages = [task('Trace saving.', 42, null), task('Trace loading.', 42, 'cy'), task('Check another issue.', 43, null),
+    thread({ kind: 'finding', replies: [{ id: 'result', author: 'cy', body: 'Only on reload.', createdAt: '', outcome: 'different-result', evidence: 345 }] })]
+  await render(false)
+  const button = (label: string) => [...container.querySelectorAll('button')].find(el => el.textContent === label)!
+  await act(async () => { button('Issue #42').click() })
+  expect(container.textContent).toContain('Trace saving.')
+  expect(container.textContent).toContain('Trace loading.')
+  expect(container.textContent).not.toContain('Check another issue.')
+  expect(container.querySelector('a[href$="/issues/345"]')?.textContent).toBe('Evidence #345')
+  await act(async () => { button('Show all tasks').click() })
+  expect(container.textContent).toContain('Check another issue.')
 })
 
 it('says when nobody holds anything', async () => {

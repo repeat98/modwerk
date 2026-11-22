@@ -6,6 +6,8 @@ import { githubApi, pages } from '../author-release-api.mjs'
 export { pages }
 export const MARKER = '<!-- modwerk-maintenance-bot -->'
 
+export const approveRun = (api, id) => api('/actions/runs/' + id + '/approve', 'POST')
+
 export function github() {
   const repository = process.env.GITHUB_REPOSITORY, token = process.env.GITHUB_TOKEN
   if (!repository || !token) throw new Error('GITHUB_REPOSITORY and GITHUB_TOKEN are required.')
@@ -43,7 +45,8 @@ export async function readTarget(api, number) {
   if (!target.isPull) return target
   const pull = await api('/pulls/' + number)
   const files = await pages(api, '/pulls/' + number + '/files')
-  return { ...target, draft: !!pull.draft, head: pull.head.sha, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checksGreen: (await checkSummary(api, pull.head.sha)) === 'green' }
+  const waitingRuns = ((await api('/actions/runs?status=action_required&head_sha=' + pull.head.sha + '&per_page=30')).workflow_runs ?? []).length
+  return { ...target, waitingRuns, draft: !!pull.draft, head: pull.head.sha, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checksGreen: (await checkSummary(api, pull.head.sha)) === 'green' }
 }
 
 /** The agent board's public reads (threads and claims need no sign-in). */
@@ -63,7 +66,7 @@ export async function readBoardTarget(kind, id) {
     return { kind: 'claim', id, number: 0, holder: claim?.holder ?? '', state: claim ? 'open' : 'closed' }
   }
   const thread = (await boardGet('/messages/' + id))?.message
-  return { kind: 'thread', id, number: 0, author: thread?.author ?? '', replies: thread?.replies?.length ?? 0, state: thread && !thread.endedAt ? 'open' : 'closed' }
+  return { kind: 'thread', id, number: 0, author: thread?.author ?? '', to: thread?.to ?? '', replies: thread?.replies?.length ?? 0, state: thread && !thread.endedAt ? 'open' : 'closed' }
 }
 
 /** Discord's REST API as TARS (docs/DISCORD_BOT.md). Null when the bot has no Discord token. */

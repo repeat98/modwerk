@@ -24,7 +24,7 @@ export const MISSING_PAGE = 13 // entries a MISSING reply holds; wValue is the f
 export const VENDOR_INVENTORY = 27 // the modules installed on the unit, in MISSING's form (sdk/runtime/loader/loader.c)
 export const VENDOR_CAPABILITIES = 29 // loader capabilities; older bases stall this read-only request
 export const CAPABILITIES_BYTES = 12
-export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024 } as const
+export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024, judgedRests: 2048 } as const
 export interface RuntimeCapabilities { abi: number; features: number; maxSites: number; maxCopies: number }
 /** MWCP v1. Unknown feature bits are retained: they do not imply features this client requires. */
 export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
@@ -33,6 +33,8 @@ export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
   return { abi: view.getUint8(5), features: view.getUint16(6), maxSites: view.getUint16(8), maxCopies: view.getUint16(10) }
 }
 export const VENDOR_SLOTS = 39 // the base's two-slot layout (sdk/machines/octatrack/elekloader/flash.h); older bases stall it
+export const VENDOR_USB_FUNCTION = 41
+const VENDOR_SETTING_PRESETS = 42
 export const VENDOR_OFF = 40 // the modules switched off on the unit (elekloader/modset.c's shelf); older bases stall it
 export const OFF_PAGE = 5 // entries an OFF reply holds; wValue is the first (elekloader/status.h)
 export const OFF_BYTES = 8 + 56 * OFF_PAGE
@@ -82,7 +84,11 @@ export function findVendorInterface(configuration: { interfaces: readonly UsbInt
 export class VendorTransportError extends Error {
   /** True only when the device positively reported that the frame was never executed. */
   readonly notExecuted: boolean
-  constructor(message: string, notExecuted = false) { super(message); this.name = 'VendorTransportError'; this.notExecuted = notExecuted }
+  constructor(message: string, notExecuted = false, cause?: unknown) {
+    super(message, { cause })
+    this.name = 'VendorTransportError'
+    this.notExecuted = notExecuted
+  }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
 
@@ -210,6 +216,32 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the loader capabilities request.')
     return parseRuntimeCapabilities(reply.data)
   }
+  /** Initial settings installed with active packages, from the last completed owner epoch. */
+  async settingPresets(signal?: AbortSignal): Promise<Map<number, number> | undefined> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_SETTING_PRESETS, 0), 68)
+    signal?.throwIfAborted()
+    if (reply.status === 'stall') return undefined
+    const data = reply.data
+    if (reply.status !== 'ok' || !data || data.byteLength < 4 || data.getUint32(0) >>> 8 !== 0x4d5750 ||
+        data.getUint8(3) > 8 || data.byteLength !== 4 + 8 * data.getUint8(3))
+      throw new VendorTransportError('The Octatrack did not confirm its installed setting presets.')
+    const presets = new Map<number, number>()
+    for (let i = 4; i < data.byteLength; i += 8) {
+      const key = data.getUint32(i)
+      if (!key || presets.has(key)) throw new VendorTransportError('The Octatrack reported a duplicate or empty setting key.')
+      presets.set(key, data.getUint32(i + 4))
+    }
+    return presets
+  }
+  /** The runtime USB function is being added, is live, or has reconnected in this boot. */
+  async hasUsbFunctionChanges(): Promise<boolean> {
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_USB_FUNCTION, 0), 8)
+    if (reply.status === 'stall') return false
+    const status = reply.data
+    if (reply.status !== 'ok' || status?.byteLength !== 8) throw new VendorTransportError('The Octatrack did not answer the USB function status request.')
+    return status.getUint32(0) !== 0
+  }
   /** Read-only, from the interrupt: undefined from a base before the two slots (it stalls), null before its first look. */
   async slots(signal?: AbortSignal): Promise<BaseSlots | null | undefined> {
     signal?.throwIfAborted()
@@ -327,6 +359,14 @@ export class UsbVendorTransport implements UploadTransport {
       if (owned !== undefined) await this.releaseSavedSet(owned)
     }
   }
+  /** DIAG version 3 (request 4, ep0.c): the base's EP0 counters, answered in its USB interrupt even while it refuses
+   * submissions: frames received, refusals, bus resets, data stages primed, completed and abandoned. */
+  async ep0(): Promise<number[]> {
+    const reply = await this.device.controlTransferIn(this.setup(4, 0), 68), view = reply.data
+    if (reply.status !== 'ok' || !view || view.byteLength !== 68 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
+      throw new VendorTransportError('The Octatrack did not answer DIAG version 3.')
+    return [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
+  }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()
     const reply = await this.device.controlTransferIn(this.setup(VENDOR_RESULT, 0), VENDOR_RESULT_BYTES)
@@ -429,14 +469,15 @@ export class UsbVendorTransport implements UploadTransport {
     for (let attempt = 0; ; attempt++) {
       const sequence = this.sequence = (this.sequence + 1) & 0xffff
       let sent: { status: string; bytesWritten: number } | undefined
-      try { sent = await this.device.controlTransferOut(this.setup(VENDOR_SUBMIT, sequence), frame) } catch { sent = undefined }
+      let transferError: unknown
+      try { sent = await this.device.controlTransferOut(this.setup(VENDOR_SUBMIT, sequence), frame) } catch (error) { transferError = error }
       signal.throwIfAborted()
       if (sent?.status === 'ok' && sent.bytesWritten === frame.length) return sequence
       // Unconfirmed submission: the device's result says whether it was accepted.
       const state = await this.result(signal)
       if (state.sequence === sequence && (state.status === 'pending' || state.status === 'ready')) return sequence
       const refused = sent?.status === 'stall' && (state.sequence !== sequence || state.status === 'refused')
-      if (!refused) throw new VendorTransportError('The submission failed without a device refusal.')
+      if (!refused) throw new VendorTransportError('The submission failed without a device refusal.', false, transferError)
       if (attempt >= retries) throw new VendorTransportError('The device kept refusing the submission.', true)
       await wait(2 ** Math.min(attempt, 5), signal)
     }

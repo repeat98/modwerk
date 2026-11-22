@@ -1,0 +1,119 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "d0a645f292f0f1c9ad34ce44dab6383a56eb7d1f444aebf4c87c6ff9d6caef56",
+  "emulatorSha256": "bdbe962c14fc3560fb3196b01566646b80a74fd451883873a77290b4973dbbf1",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX2"
+      ]
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": -30
+      }
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 1
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-setup.png"
+    },
+    {
+      "press": [
+        "FX2"
+      ]
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "capture": "ot-main.png"
+    },
+    {
+      "encoder": {
+        "name": "B",
+        "delta": 79
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-deep.png"
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX2"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": 8
+      }
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-shape-sqr.png"
+    }
+  ],
+  "screenshots": {
+    "ot-setup.png": "c79bc54ccba15652d19e98da2e8432e8a4138fd68104b077dce2cee68693fcb0",
+    "ot-main.png": "0b6d9e58eb9baf8a62218528ecb0ad06d874c9c29b198f91982147be12d29dbe",
+    "ot-deep.png": "8e8e91223863ce5c23e034c1f0de8f87a6f56e92306f14366ba8a2e3a1452ee2",
+    "ot-shape-sqr.png": "d69f257277153b6bbe2076c6570fa58d2f6afbab92926dd269464751ebf4bb3e"
+  }
+}

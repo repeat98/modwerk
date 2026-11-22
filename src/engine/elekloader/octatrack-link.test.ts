@@ -4,9 +4,9 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
-import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
+import { UsbVendorTransport, VendorTransportError, parseBaseSlots } from './upload-usb'
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 const deferred = () => { let resolve!: () => void; const promise = new Promise<void>(done => { resolve = done }); return { promise, resolve } }
@@ -239,10 +239,13 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(failures).toEqual([{ error: 'device', step: 'stage', refusal: 7 }])
   })
-  it('reports what stopped a sync whose transfer was never confirmed', async () => {
-    const causes = [new DOMException('private text', 'NetworkError'), Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined], failures: unknown[] = []
-    for (const cause of causes) {
+  it('reports what stopped a sync whose transfer was never confirmed, with the base’s EP0 counters over it', async () => {
+    const networkError = new DOMException('private text', 'NetworkError')
+    const causes = [networkError, Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined,
+      new VendorTransportError('unconfirmed OUT', false, networkError), new VendorTransportError('device refusal')], failures: unknown[] = []
+    for (const [i, cause] of causes.entries()) {
       const unit = fakeUnit(), base = fakeSession(unit)
+      if (i) unit.ep0 = [10, 0xfffffffe, 2, 50, 50, 0] // the first base stalls DIAG
       let calls = 0
       const connect: typeof base = async (...args) => {
         const session = await base(...args)
@@ -250,16 +253,123 @@ describe('sending a module', () => {
         let trusted = true // the update's session: a chunk's reply goes missing mid-transfer
         return Object.create(session, {
           connectionTrusted: { get: () => trusted },
-          stage: { value: async () => { trusted = false; unit.staged = true; throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause) } },
+          stage: { value: async () => {
+            trusted = false; unit.staged = true
+            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0] // eight submissions refused at their SETUP, across the wrap
+            throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause)
+          } },
         })
       }
       const link = new OctatrackLink(unit.usb, connect, 300)
-      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind }) })
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind, usb: event.usb }) })
       link.start(); await settle(); await settle()
       await link.update('PREVIEW VOL', one)
     }
-    expect(failures).toEqual(['NetworkError', 'TimeoutError', 'OtherError'].map(kind => ({ error: 'transport', kind })))
+    expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError' },
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
   })
+  it.each(['cancel', 'timeout'] as const)('closes a pending diagnostic read before continuing from %s', async outcome => {
+    const unit = fakeUnit(), [device] = await unit.usb.getDevices()
+    const connect = vi.fn(fakeSession(unit)), link = new OctatrackLink(unit.usb, connect, 300)
+    const failures: unknown[] = []
+    link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push(event) })
+    await link.connect()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    const close = vi.spyOn(device, 'close'), open = vi.spyOn(device, 'open'), claim = vi.spyOn(device, 'claimInterface')
+    const read = device.controlTransferIn.bind(device), pending = deferred()
+    vi.spyOn(device, 'controlTransferIn').mockImplementation((setup, length) => {
+      if (setup.request !== 4) return read(setup, length)
+      pending.resolve()
+      return new Promise<never>(() => {})
+    })
+
+    const update = link.update('PREVIEW VOL', one)
+    await pending.promise
+    if (outcome === 'cancel') link.cancel()
+    await vi.advanceTimersByTimeAsync(outcome === 'cancel' ? 0 : 1000)
+    expect(close).toHaveBeenCalledTimes(1)
+    expect(open).toHaveBeenCalledTimes(1)
+    expect(claim).toHaveBeenCalledTimes(2)
+    expect(close.mock.invocationCallOrder[0]).toBeLessThan(open.mock.invocationCallOrder[0])
+    await vi.runAllTimersAsync()
+    await update
+
+    if (outcome === 'cancel') {
+      expect(connect).toHaveBeenCalledTimes(1)
+      expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE,
+        notice: { text: 'Cancelled. Nothing changed on the Octatrack.' } })
+      expect(failures).toMatchObject([{ error: 'cancelled' }])
+    } else {
+      expect(connect).toHaveBeenCalledTimes(2)
+      expect(connect.mock.calls[1][0]).not.toBe(connect.mock.calls[0][0])
+      expect(claim.mock.invocationCallOrder[1]).toBeLessThan(connect.mock.invocationCallOrder[1])
+      expect(link.getState().status).toBe('trial')
+      expect(failures).toEqual([])
+      const undo = link.undo()
+      await vi.runAllTimersAsync()
+      await undo
+    }
+  })
+
+  it.each(['reopened', 'reopen failed'] as const)('settles a lost upload reply when the diagnostic read hangs and USB %s', async outcome => {
+    const unit = fakeUnit(), [device] = await unit.usb.getDevices()
+    unit.ep0 = [10, 0, 0, 10, 10, 0]
+    const base = fakeSession(unit)
+    let connections = 0
+    const connect = vi.fn<typeof base>(async (...args) => {
+      const session = await base(...args)
+      if (++connections !== 2) return session
+      return Object.create(session, {
+        connectionTrusted: { get: () => false },
+        stage: { value: async () => {
+          unit.staged = true
+          throw new UploadUnconfirmedError('chunk was not confirmed', session.status, new DOMException('fixture', 'NetworkError'))
+        } },
+      })
+    })
+    const link = new OctatrackLink(unit.usb, connect, 300), failures: unknown[] = []
+    link.subscribeDiagnostics(event => {
+      if (event.event === 'sync_failed') failures.push({ step: event.step, error: event.error, kind: event.kind, usb: event.usb })
+    })
+    await link.connect()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    const close = vi.spyOn(device, 'close'), open = vi.spyOn(device, 'open')
+    if (outcome === 'reopen failed') open.mockRejectedValueOnce(new DOMException('fixture', 'NetworkError'))
+    const read = device.controlTransferIn.bind(device), pending = deferred()
+    let reads = 0
+    vi.spyOn(device, 'controlTransferIn').mockImplementation((setup, length) => {
+      if (setup.request !== 4 || ++reads === 1) return read(setup, length)
+      pending.resolve()
+      return new Promise<never>(() => {})
+    })
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      const update = link.update('PREVIEW VOL', one)
+      await vi.advanceTimersByTimeAsync(0)
+      await pending.promise
+      expect(unit.staged).toBe(true)
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(close).toHaveBeenCalledTimes(1)
+      expect(open).toHaveBeenCalledTimes(1)
+      await vi.runAllTimersAsync()
+      await update
+
+      expect(failures).toEqual([{ step: 'stage', error: 'transport', kind: 'NetworkError', usb: undefined }])
+      if (outcome === 'reopened') {
+        expect(connect).toHaveBeenCalledTimes(3)
+        expect(connect.mock.calls[2][0]).not.toBe(connect.mock.calls[1][0])
+        expect(unit.staged).toBe(false)
+        expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE,
+          notice: { text: 'The Octatrack missed a reply, so nothing changed. Try again.' } })
+      } else {
+        expect(connect).toHaveBeenCalledTimes(2)
+        expect(unit.staged).toBe(true)
+        expect(link.getState()).toMatchObject({ status: 'idle', notice: { text: expect.stringContaining('Unplug the USB cable') } })
+      }
+    } finally { log.mockRestore() }
+  })
+
   it('says why the Octatrack rejected a module, from the base’s record', async () => {
     const { unit, link } = await linked()
     unit.refusal = 7 // a track plays the effect it would replace
@@ -479,6 +589,121 @@ describe('sending a module', () => {
     expect(leave).not.toHaveBeenCalled()
     expect(link.getState().status).toBe('idle')
     stop()
+  })
+})
+
+describe('a sync that changes the unit’s USB configuration', () => {
+  // USB Audio's package (SetChange.reconnects): the base takes the unit off USB and back once, with the trial open.
+  const audio = [{ module: 'USB Audio', data: new Uint8Array(4000), reconnects: true }]
+  async function reconnecting() {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    expect(link.getState().status).toBe('trial')
+    unit.orphan = link.getState().active ?? 'trial' // what a fresh session finds: this page's trial, still open
+    unit.unplug()
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true, notice: undefined })
+    return { unit, link }
+  }
+  it('waits for the unit, resumes the open trial and keeps Undo working', async () => {
+    const { unit, link } = await reconnecting()
+    await link.undo() // Keep and Undo wait while it reconnects
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true })
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'USB Audio' })
+    await link.undo()
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
+  })
+  it('leaves another client’s USB Audio trial running when the paired page opens', async () => {
+    const unit = fakeUnit(), candidate = '79'.repeat(32)
+    unit.orphan = candidate
+    const probe = vi.spyOn(UsbVendorTransport.prototype, 'hasUsbFunctionChanges').mockResolvedValue(true)
+    const link = new OctatrackLink(unit.usb, fakeSession(unit)), stop = link.start()
+    try {
+      await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+      expect(unit.orphan).toBe(candidate)
+      expect(probe).toHaveBeenCalledOnce()
+    } finally { stop(); probe.mockRestore() }
+  })
+  it('releases a different trial that appeared while this page was waiting for its USB Audio trial', async () => {
+    const { unit, link } = await reconnecting()
+    unit.orphan = 'a8'.repeat(32)
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe('a8'.repeat(32))
+  })
+  it('leaves a newer trial of the same USB Audio package with its owner', async () => {
+    const { unit, link } = await reconnecting()
+    const candidate = unit.orphan
+    unit.orphanTransaction = 8
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe(candidate)
+  })
+  it('resumes the same USB Audio trial after a second format change from the panel', async () => {
+    const { unit, link } = await reconnecting()
+    for (let i=0; i<2; i++) {
+      unit.plug('base')
+      await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+      expect(link.getState().status).toBe('trial')
+      if (!i) unit.unplug()
+    }
+    await link.undo()
+    expect(link.getState().status).toBe('ready')
+  })
+  it('says so when the unit came back with the sync no longer open', async () => {
+    const { unit, link } = await reconnecting()
+    unit.orphan = undefined // the base undid it: the host did not reach it in time
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(link.getState()).toMatchObject({ notice: { tone: 'error', text: expect.stringMatching(/USB Audio was no longer open/) } })
+  })
+  it('gives up when the unit does not come back', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    unit.unplug()
+    expect(RECONNECT_WAIT_MS).toBeGreaterThan(20000) // the base waits 20 s for a host to come back
+    vi.advanceTimersByTime(RECONNECT_WAIT_MS - 1)
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true })
+    vi.advanceTimersByTime(1)
+    expect(link.getState()).toMatchObject({ status: 'idle', notice: { tone: 'error', text: expect.stringMatching(/didn’t come back on USB.*undoes USB Audio by itself/) } })
+  })
+  it('lets the Load dialog keep only once the reconnect is over', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    const back = link.reconnected()
+    let settled: boolean | undefined
+    void back.then(value => { settled = value })
+    await settle()
+    expect(settled).toBeUndefined() // the base has not reconnected yet
+    unit.orphan = link.getState().active ?? 'trial'
+    unit.unplug(); await settle()
+    expect(settled).toBeUndefined()
+    unit.plug('base')
+    expect(await back).toBe(true)
+    expect(link.getState()).toMatchObject({ status: 'trial' })
+    await link.keep()
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' } })
+  })
+  it('tells the Load dialog when the trial ended during the reconnect', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    const back = link.reconnected()
+    unit.unplug(); await settle()
+    unit.plug('base') // no trial open any more: the base undid it
+    expect(await back).toBe(false)
+  })
+  it('does not wait when nothing in the sync reconnects', async () => {
+    const { link } = await linked()
+    await link.update('PREVIEW VOL', [{ module: 'PREVIEW VOL', data: new Uint8Array(4000) }])
+    expect(await link.reconnected()).toBe(true)
+  })
+  it('handles an unplug as before when the sync does not reconnect', async () => {
+    const { unit, link } = await linked()
+    await link.update('PREVIEW VOL', [{ module: 'PREVIEW VOL', data: new Uint8Array(4000) }])
+    unit.unplug()
+    expect(link.getState()).toMatchObject({ status: 'idle', notice: { text: expect.stringMatching(/undoes PREVIEW VOL by itself/) } })
   })
 })
 

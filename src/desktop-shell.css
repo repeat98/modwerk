@@ -1,0 +1,34 @@
+/* The site inside Modwerk's desktop app (desktop/, src/desktop-shell.ts). The window has no title bar of its own:
+   the toolbar and the sidebar header drag it, and the window's controls sit at the toolbar's top right
+   (Windows, Linux: the titlebar-area variables) or over the sidebar (macOS's traffic lights). */
+:root[data-shell='desktop'] { --window-controls: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)); }
+:root[data-shell='desktop'] :is(.app-toolbar, .sidebar-brand) { app-region: drag; -webkit-app-region: drag; }
+:root[data-shell='desktop'] :is(.app-toolbar, .sidebar-brand) :is(a, button, input, label, select, textarea, [role='button'], [tabindex]) { app-region: no-drag; -webkit-app-region: no-drag; }
+:root[data-shell='desktop'] .app-toolbar { padding-right: calc(16px + var(--window-controls)); }
+@media (min-width: 601px) {
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand { padding-left: 5.5rem; }
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand { display: flex; }
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand > small { display: none; }
+}
+@media (min-width: 601px) and (max-width: 1100px) {
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand > img { display: none; }
+}
+:root[data-shell='desktop'][data-platform='darwin'] .desktop-menu-button { display: none; }
+
+/* An app, not a page: chrome is not selectable or draggable, and its controls keep the arrow cursor. */
+:root[data-shell='desktop'] :is(.sidebar, .app-toolbar, .status-bar, button, .button, [role='button']) { user-select: none; -webkit-user-select: none; }
+:root[data-shell='desktop'] :is(.sidebar, .app-toolbar, .status-bar) :is(a, button, label) { cursor: default; }
+:root[data-shell='desktop'] :is(img, svg, a) { -webkit-user-drag: none; }
+
+.desktop-menu-button { display: none; }
+:root[data-shell='desktop'] .desktop-menu-button { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
+:root[data-shell='desktop'] .desktop-menu-button:hover { background: #ffffff10; color: var(--text); }
+
+/* The desktop through the sidebar (data-material: Mica on Windows 11, vibrancy on macOS): the window is see-through,
+   the workspace paints itself, and the sidebar keeps a tint so its text stays as readable as on the solid colour. */
+:root[data-material='true'] { background: transparent; }
+:root[data-material='true'] .workspace { background: var(--background); }
+:root[data-material='true'] .sidebar { background: color-mix(in srgb, var(--sidebar) 55%, transparent); }
+
+/* An app doesn't rubber-band past its edges. */
+:root[data-shell='desktop'], :root[data-shell='desktop'] :is(body, .workspace-content, .sidebar) { overscroll-behavior: none; }

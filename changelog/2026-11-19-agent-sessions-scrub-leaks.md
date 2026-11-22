@@ -1,0 +1,1 @@
+A shared agent session no longer carries the output of commands the developer ran with `!` (a login's one-time code reached the server that way), a one-time device code an agent quotes, or the developer's names from git's `user.name` and `user.email`. `npm run session -- share` asks for a real note instead of sending the instructions' "…" placeholder.

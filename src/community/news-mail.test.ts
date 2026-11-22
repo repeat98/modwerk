@@ -91,10 +91,10 @@ describe('news mail campaigns', () => {
     expect(message.headers!['List-Unsubscribe']).toMatch(/^<https:\/\/api\.example\.test\/api\/news\/unsubscribe\?token=[^>]+>$/)
     expect(message.html).toContain('<a href="https://modwerk.app/#module/miniverb"')
     expect(message.html).toContain('<li style="margin:0 0 8px;">')
-    expect(message.html).toContain('href="https://octamod.test/#account/notifications"')
+    expect(message.html).toContain('href="https://octamod.test/?utm_source=mail-news#account/notifications"')
     expect(message.html).not.toMatch(/<script|<img|<iframe|<form/i)
     expect(message.text).toContain('Mini Verb (https://modwerk.app/#module/miniverb)')
-    expect(message.text).toContain('https://octamod.test/#account/notifications')
+    expect(message.text).toContain('https://octamod.test/?utm_source=mail-news#account/notifications')
     expect((await overview()).campaigns[0]).toMatchObject({ status: 'sent', recipient_count: 4, sent: 2, skipped: 2, failed: 0, queued: 0 })
     expect(db.prepare("SELECT accepted,failed,limited FROM account_mail_daily WHERE purpose='news'").get()).toEqual({ accepted: 2, failed: 0, limited: 0 })
     // A second run, including the minute trigger, never mails the campaign again.

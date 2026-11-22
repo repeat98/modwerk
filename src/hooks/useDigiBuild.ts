@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { requireBuildAccount } from '../community/member-access'
 import { captureSiteDiagnosticContext, emitSiteDiagnosticEvent, isExpectedDiagnosticCancellation } from '../community/site-diagnostic-events'
+import { elekloaderBuildKind } from '../community/octatrack-diagnostics-contract'
 import { trackUsage } from '../community/usage'
 import { buildStep, buildWithLock, builtLock, createMachineBuilder, prepareBuild, type Builder } from '../engine/elekloader/machine-build'
 import { PREFLIGHT_MACHINES, PreflightError, preflightBuiltFile, type PreflightFacts } from '../engine/elekloader/digi-preflight'
@@ -48,11 +49,11 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
     }).then(prepared => {
       if (operation.current !== request || !prepared) return
       setLoaded(true)
-      if (!prepared.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'selection' }, context)
+      if (!prepared.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: elekloaderBuildKind(machine), error: 'selection' }, context)
       setView(prepared.ok ? { phase: 'ready', key, enabled: prepared.enabled, check: prepared.check, device: prepared.device } : { phase: 'blocked', key, error: prepared.error, check: prepared.check })
     }).catch(error => {
       if (operation.current !== request) return
-      if (started && !isExpectedDiagnosticCancellation(error)) emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'build' }, context)
+      if (started && !isExpectedDiagnosticCancellation(error)) emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
       setView({ phase: 'blocked', key, error: message(error, 'The builder could not check this selection.') })
     })
     return () => { ++controller.current }
@@ -75,35 +76,35 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
       started = true
       const named = await builder.version(version, enabled)
       if (operation.current !== request) return
-      if (!named.ok) { emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'input' }, context); setView({ phase: 'failed', key, enabled, device, error: named.error ?? 'Check the OS version.' }); return }
+      if (!named.ok) { emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: elekloaderBuildKind(machine), error: 'input' }, context); setView({ phase: 'failed', key, enabled, device, error: named.error ?? 'Check the OS version.' }); return }
       const result = await buildWithLock(builder, enabled, version, named.name, storage?.lock ?? null, line => {
         step = buildStep(line, step)
         if (operation.current === request) setView({ phase: 'building', key, enabled, device, log: line, step })
       })
-      const lock = builtLock(result)
-      if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       if (operation.current !== request) return
-      if (!result.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: 'elekloader', error: 'build' }, context)
+      if (!result.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
       // A second, independent check before the page offers the file (digi-preflight.ts): a refusal is a failed build.
       let preflight: PreflightFacts | undefined
       if (result.ok && file && (PREFLIGHT_MACHINES as readonly string[]).includes(machine)) {
         setView({ phase: 'building', key, enabled, device, log: 'Checking the build against the stock file…', step: 'verifying' })
         try { preflight = await preflightBuiltFile(machine, file, enabled, result.files) } catch (error) {
           if (operation.current !== request) return
-          emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'verifying', buildKind: 'elekloader', error: 'build' }, context)
+          emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'verifying', buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
           setView({ phase: 'failed', key, enabled, device, error: 'The build did not pass the preflight check, so it is not offered.', problems: error instanceof PreflightError ? error.problems : [message(error, 'The preflight could not run.')] })
           trackUsage('build_failed', usageMachine)
           return
         }
         if (operation.current !== request) return
       }
+      const lock = builtLock(result)
+      if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       setView(result.ok ? { phase: 'built', key, enabled, device, moduleIds: [...moduleIds], result, preflight } : { phase: 'failed', key, enabled, device, error: result.error, result })
       trackUsage(result.ok ? 'build_succeeded' : 'build_failed', usageMachine)
     } catch (error) {
       if (operation.current !== request) return
       setView({ phase: 'failed', key, enabled, device, error: message(error, 'The build failed.') })
       // A refused sign-in is not a failed build; a rejected OS version name returns above without counting.
-      if (started && !isExpectedDiagnosticCancellation(error)) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: 'elekloader', error: 'build' }, context)
+      if (started && !isExpectedDiagnosticCancellation(error)) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
       if (started) trackUsage('build_failed', usageMachine)
     }
   }

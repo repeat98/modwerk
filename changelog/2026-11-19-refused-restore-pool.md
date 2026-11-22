@@ -1,0 +1,1 @@
+Octatrack base 0.7.10: when a restore at start refuses a module, the unit's own log also notes which check refused it (the module memory itself, a module's DSP claims meeting a delay buffer, or the DSP's limits) and how much module memory was in use then, so a "module memory" refusal that happens on some starts and not others can be traced from shared diagnostics.

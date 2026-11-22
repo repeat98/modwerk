@@ -43,15 +43,17 @@ SETTINGS > FX TRACK
 2. Press SETTINGS and go down to FX TRACK, below SYSTEM, with UP/DOWN.
 3. Press YES to tick or untick it. RIGHT ticks it and LEFT unticks it.
 4. Set FX CONTROL CH in SETTINGS > MIDI CONFIG > CHANNELS, and give a MIDI track the same CHAN.
+5. In SETTINGS > MIDI CONFIG > PORT CONFIG, tick RECEIVE CC/NRPN and set INPUT FROM to MIDI, USB or both. FX Track hands the messages over as if they had come in at MIDI IN, so with these off they are dropped.
 
 ### Quick tutorial: MIDI track H as an effects track
 
 1. In SETTINGS > MIDI CONFIG > CHANNELS, set TRACK H CHANNEL to OFF and FX CONTROL CH to 16, so no track listens on that channel.
-2. Open SETTINGS and tick FX TRACK.
-3. Select MIDI track H (TRK + trig 16). On its SRC page press FUNC + knob A to switch CHAN on and set it to 16.
-4. On the AMP page (CC Select) set SEL1 to 85 (delay TIME) and SEL2 to 88 (delay FDBK), or any effects CC from the list.
-5. On the FLTR page (CC Value) turn VAL1 and VAL2: the delay follows, and nothing is sent out of MIDI OUT for those CCs.
-6. Record lock trigs with parameter locks on VAL1 and VAL2, or set the track’s LFO to a CC VAL, and press PLAY: the delay changes per step.
+2. In SETTINGS > MIDI CONFIG > PORT CONFIG, tick RECEIVE CC/NRPN and set INPUT FROM to MIDI, USB or both, so the effects take the messages.
+3. Open SETTINGS and tick FX TRACK.
+4. Select MIDI track H (TRK + trig 16). On its SRC page press FUNC + knob A to switch CHAN on and set it to 16.
+5. On the AMP page (CC Select) set SEL1 to 85 (delay TIME) and SEL2 to 88 (delay FDBK), or any effects CC from the list.
+6. On the FLTR page (CC Value) turn VAL1 and VAL2: the delay follows, and nothing is sent out of MIDI OUT for those CCs.
+7. Record lock trigs with parameter locks on VAL1 and VAL2, or set the track’s LFO to a CC VAL, and press PLAY: the delay changes per step.
 
 For send throws on the external inputs, use CC 106-109 (IN L/R DEL and REV) instead.
 

@@ -4,7 +4,7 @@
 
 The published package `6650ef77…` ran on the owner's MKII over USB: on a development twin of the beta base, slicing, re-slicing while playing, both BPM sources, NO, self-test and rollback, plus the draw cost while the popup is open; on the exact beta base `903f8ed6…`, a trial, self-test and rollback. Results and what was not run: [evidence/hardware.md](evidence/hardware.md) and [evidence/performance.json](evidence/performance.json).
 
-For the current completion boundary, see [integration readiness](INTEGRATION.md#current-readiness).
+For the current completion boundary, see [integration readiness](../../../drafts/beat-slicer/INTEGRATION.md#current-readiness).
 The versioned sections below retain historical research evidence; old Undo
 experiments do not add a player-facing Undo requirement. USB Keep/Undo remains
 an independent installation lifecycle requirement.
@@ -405,7 +405,7 @@ binary was refused by the wrapper after its source changed; it produced no
 accepted report. Keep probe sources fixed from configure through execution.
 
 The required lifetime exclusion and missing native writers are listed in
-[WRITER_COVERAGE.md](WRITER_COVERAGE.md). No hooks, source revision service,
+[WRITER_COVERAGE.md](../../../drafts/beat-slicer/WRITER_COVERAGE.md). No hooks, source revision service,
 live reader, editor transaction or installable package was added. Hardware,
 actual audio, live timing and persistence remain untested.
 
@@ -446,7 +446,7 @@ Playback fades are not implemented. Marker scores are not auditory evidence.
 **Not tested:** menu integration, Undo, sample settings save/load, Part/project
 save/load, module removal and physical reboot. The planner writes no files,
 marker input or audio buffer; that is not native persistence qualification.
-INTEGRATION.md contains the planned acceptance flow.
+[INTEGRATION.md](../../../drafts/beat-slicer/INTEGRATION.md) contains the planned acceptance flow.
 
 ## Performance and resources
 
@@ -476,7 +476,7 @@ and completion allocation/posting. Only message display is mocked. They check
 exact producer-originated zero gain across four packed formats and page
 boundaries, writer entry/return ordering, worker stack/frame/interrupt-mask
 restoration, failure results, FIFO/wrap, null callbacks, exhausted completion
-records and forced command-pointer reuse. See [coverage](WRITER_COVERAGE.md#executed-worker-lifetime)
+records and forced command-pointer reuse. See [coverage](../../../drafts/beat-slicer/WRITER_COVERAGE.md#executed-worker-lifetime)
 for the observed constraints and omitted paths.
 
 Build and run inside the pinned source-tools container, with sources frozen
@@ -514,7 +514,7 @@ upstream is authoritative; historical changelog contents are left intact.
 ## Preview admission prototype (0.1.6)
 
 `preview_guard.c` adds portable bookkeeping for the proposed shared-base
-provider; see [PREVIEW_GUARD.md](PREVIEW_GUARD.md). It starts disabled and does
+provider; see [PREVIEW_GUARD.md](../../../drafts/beat-slicer/PREVIEW_GUARD.md). It starts disabled and does
 not install a hook, discover writers, pin PCM or provide a native lock.
 
 - `evidence/guard-host.json`: Apple clang 17 ASan/UBSan selftest passes lifecycle,
@@ -1054,7 +1054,7 @@ saved card and requires LOAD PROJECT completion. Its paused read snapshot:
 
 The stock-produced card/project, source WAV, captured memory and raw logs stay
 private. `evidence/boot-observation.json` retains only source/input hashes,
-conditions and outcomes. See [BOOT_OBSERVATION.md](BOOT_OBSERVATION.md) for
+conditions and outcomes. See [BOOT_OBSERVATION.md](../../../drafts/beat-slicer/BOOT_OBSERVATION.md) for
 reproduction and fixture preparation. The observer uses a verified 44.1 kHz
 WAV, not a new native sample-rate getter. It does not qualify other encodings,
 replacement paths, Static streaming, concurrent ownership, actual module UI,
@@ -1070,7 +1070,7 @@ the earlier source-bound target reports.
 Undo prototype. The player workflow now explicitly uses stock slice deletion
 after grid creation, with no module Undo/history UI. These reports are retained
 unchanged; they do not establish stock slice clearing or native UI parity.
-The pending comparison matrix is in INTEGRATION.md. Failure rollback remains
+The pending comparison matrix is in [INTEGRATION.md](../../../drafts/beat-slicer/INTEGRATION.md). Failure rollback remains
 required independently of a user-facing Undo feature.
 
 `edit_transaction.c` passes host ASan/UBSan and compiled ColdFire execution with
@@ -1149,7 +1149,7 @@ all source/repacked card images remain unchanged.
 Within each rate pair, the complete controls, settings and PCM are identical.
 Those fields cannot identify the original file rate in these cases. Actual
 playback clock/resampling, native metadata discovery, Static streaming and
-live ownership remain open. See [BOOT_OBSERVATION.md](BOOT_OBSERVATION.md)
+live ownership remain open. See [BOOT_OBSERVATION.md](../../../drafts/beat-slicer/BOOT_OBSERVATION.md)
 for exact reproduction and private-artifact handling.
 
 The separate `boot_formats24.py` variant changes only the private project's
@@ -1345,7 +1345,7 @@ table; the runner allows only those exact changes. Complete Flex PCM matches
 the original at each sampled stage, and the original source card stays exact.
 
 The initial timeout and the subsequent overbroad full-settings oracle failure
-are described in BOOT_OBSERVATION.md and excluded from passing evidence. The
+are described in [BOOT_OBSERVATION.md](../../../drafts/beat-slicer/BOOT_OBSERVATION.md) and excluded from passing evidence. The
 accepted run checks final save completion and distinguishes exact file contents
 from inactive-row normalization. No physical reboot, installed Beat Slicer,
 Static streaming or audio behavior is qualified.
@@ -2374,7 +2374,7 @@ Two recorder-bank reports bind source commit `034701491d876f54ccfda11ed616477148
 
 ## Compiled recorder entry/return boundary (0.1.40)
 
-The private prototype described in [RECORDER_BOUNDARY.md](RECORDER_BOUNDARY.md)
+The private prototype described in [RECORDER_BOUNDARY.md](../../../drafts/beat-slicer/RECORDER_BOUNDARY.md)
 passes 72 host sanitizer bank/track cases, nested independent writers and 13
 terminal fault families. The portable self-test also runs on the native target.
 The actual-stock runner passes 896 original/compiled-guard pairs across tracks
@@ -2807,7 +2807,7 @@ against pinned 1.40C MAIN and its three reversed 24-bit alignments. Source-built
 frontend validation accepts this exact package and prepares its removal Undo;
 the planning capabilities/base identity in that check are hypothetical.
 
-The [private device client](USB_TEST.md) uses the standard frontend validator,
+The [private device client](../../../drafts/beat-slicer/USB_TEST.md) uses the standard frontend validator,
 OctatrackLink, actual physical self-test and Undo. Review is read-only and expires
 in 60 seconds. Trial requires unchanged package/source/SDK hashes, frontend Git
 revision, base, active identity and inventory. It refuses an existing probe,

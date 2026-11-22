@@ -210,7 +210,13 @@ DYNLOAD_HOOKS = (
     # stock's spin stays, where ot_emu parks main again after a bench call.
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
     # Modwerk's: the time-stretch helper task skips a track whose TSTR is OFF (status.s).
-    (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'))
+    (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'),
+    # Modwerk's: the delay routine leaves out the ring transfers, the filter and the mix of a track whose ring and
+    # filter are silent (within -120 dBFS of zero) and whose send is shut (status.s): track 0's read, each next track's read, and the seam before the
+    # filter, beside Tape Echo's at 0x4000361a, which ends where it starts.
+    (0x4000332a, 6, '35712ed931e7b9f14e5721c866bf66a4ccded8e9b4626aadc3adc68d33f729fd', 'mw_delay_read0'),
+    (0x400035ba, 8, 'dc58231763e0149114fe595c44a7495bb4b761d125428723426785e031a9ac67', 'mw_delay_read'),
+    (0x4000362a, 6, '6fe3fe068b6c0068ddd69d19f2d916d6bcb80ffb2ba78d2268618e6f7dcf82e3', 'mw_delay_idle'))
 # --dsp-loader: the knob routine of an audio track's main pages (0x40055008) names the default stepper 0x4003240c by
 # `lea 0x4003240c,%aN` for a live turn; the base repoints that operand at fxpage.s's mw_knob_step, which restages a
 # module page's turned knob before it (a select then steps as stock's do from the first visit). Address, the lea's
@@ -549,7 +555,8 @@ DSP_EDITS = {
                    '    else if(token==current && phase && phase!=6) rollback();\n}')),
     # The switch frame runs the outgoing effect's first sub-block, then the incoming one's init and its
     # second: no instance runs twice, so no overlap charge (it would refuse stock picks beside modules).
-    # Each core's sum starts at its machines' source-stage charge (dsp.c), so FX slots are admitted beside it.
+    # Each core's sum starts at its machines' source-stage charge (dsp.c), so FX slots are admitted beside it. It is read
+    # after the floors, where voices first give way to what a loaded bank names (dsp.c's make_way; #1542).
     # Each slot is charged at least the dearest stock effect its bank's Parts name there (dsp.c's floors; owner, 24 October
     # 2026): a Part switch or a RELOAD then needs no room it was not given, and a stock pick dearer than that is admitted.
     'allocator.c': (('#include "allocator.h"\n', '#include "allocator.h"\nuint32_t modwerk_dsp_source_charge(unsigned);\n'
@@ -558,14 +565,15 @@ DSP_EDITS = {
                      '{ (void)ids; for(unsigned i=0;i<16;++i) least[i]=0; return 0; }\n'),
                     ('    if(!token || token==a->token) return DL_ALLOC_STALE;\n',
                      '    if(!token || token==a->token) return DL_ALLOC_STALE;\n'
-                     '    uint32_t least[16]; unsigned crowded=modwerk_dsp_slot_floors(ids,least); /* 1 + a core a raised floor overfills */\n'),
+                     '    uint32_t least[16]; unsigned crowded=modwerk_dsp_slot_floors(ids,least); /* 1 + a core a raised floor overfills */\n'
+                     '    steady[0]=modwerk_dsp_source_charge(0); steady[1]=modwerk_dsp_source_charge(1); /* after the voices made way */\n'
+                     '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;\n'),
                     ('        if(pkg->cycles>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n        steady[c]+=pkg->cycles;\n    }\n',
                      '        uint32_t cost=pkg->cycles>least[i] ? pkg->cycles : least[i];\n'
                      '        if(cost>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n        steady[c]+=cost;\n    }\n'
                      '    if(crowded) return DL_ALLOC_CYCLES;\n'),
                     ('    uint32_t steady[2]={0,0},overlap[2]={0,0};',
-                     '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n'
-                     '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;'),
+                     '    uint32_t steady[2]={0,0};'),
                     ('    overlap[0]=steady[0]; overlap[1]=steady[1];\n'
                      '    for(unsigned i=0;i<16;++i) {\n'
                      '        unsigned p=a->active[i],c=core_of(i);\n'
@@ -987,7 +995,12 @@ TRANSITION_EDITS = {
         # request's kind, and an automatic one commits before the stock setter publishes the pick.
         ('    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; return DL_SELECT_WAIT; }\n',
          '    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; queued_auto=0; return DL_SELECT_WAIT; }\n'),
-        ('    reinit();\n    if(phase) return;\n', '    reinit();\n    if(phase || queued_token) return;\n'),
+        ('    reinit();\n    if(phase) return;\n',
+         '    reinit();\n'
+         '    /* Stock rewrites the live slots and the bank during a project load. Keep unbound slots dry,\n'
+         '     * then plan their residency from the completed project rather than from intermediate Parts. */\n'
+         '    int modwerk_fxmap_loading(void);\n'
+         '    if(phase || queued_token || modwerk_fxmap_loading()) return;\n'),
     ),
 }
 for _name, _edits in TRANSITION_EDITS.items():
@@ -1510,6 +1523,8 @@ def main():
     parser.add_argument('--usb-audio', choices=('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS',
                         'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE', 'USB AUDIO OUT MAIN', usb_post.LAYOUT),
                         help='Private composite-base preparation: one authored output layout, with internal USB MIDI. Requires exact new-base qualification.')
+    parser.add_argument('--packaged-usb-audio', action='store_true',
+                        help='Build one USB MIDI base with a runtime audio function slot and no linked audio reserve.')
     parser.add_argument('--usb-audio-profiles', action='store_true',
                         help='Offline staging only: source-link all six outputs and off, with --usb-audio as the explicit initial profile. No host settings/recovery or catalogue admission.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
@@ -1524,6 +1539,8 @@ def main():
                         help='Private fixed-two-file read-only recovery snapshot. No card writes.')
     parser.add_argument('--site-events', action='store_true',
                         help='own the stock sites of sdk/machines/octatrack/events.json and dispatch their events to subscribed modules')
+    parser.add_argument('--part-menu', action='store_true',
+                        help='The Part Edit menu table (events.json ot_part_menu, part_menu.c); needs site events.')
     parser.add_argument('--sample-editor', action='store_true',
                         help='Private staged AED sample-editor service; needs site events and the ordinary DSP loader. Not a released base capability.')
     parser.add_argument('--table-owners', type=Path,
@@ -1554,10 +1571,18 @@ def main():
     parser.add_argument('--module-ui-roots', action='store_true',
                         help='Refuse to retire any module whose window, page or key layer is still open (RUNTIME_UI_OPEN, '
                              'loader capability 1024; machine_admission_runtime.c). Part of the beta base.')
+    parser.add_argument('--measure-voices', action='store_true',
+                        help='with --dev and --dsp-loader, a development twin only: machine voices and engines are admitted '
+                             'without a cycle charge, so a voice with no hardware price yet can be measured with the meters '
+                             'on a Part with NONE in every FX slot (#1542). Nothing guards the DSP: never for users.')
     parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
+    if args.packaged_usb_audio and (args.usb_audio or not args.usb_midi or not args.site_events or not args.dsp_loader):
+        parser.error('--packaged-usb-audio needs USB MIDI, site events, DSP loader and no linked USB Audio')
+    if args.part_menu and not args.site_events:
+        parser.error('--part-menu needs --site-events.')
     if args.sample_editor and (not args.site_events or not args.dsp_loader or args.dsp_probe or args.dsp_burn):
         parser.error('--sample-editor needs --site-events and the ordinary --dsp-loader, without probes/burn.')
     if args.usb_audio_profiles and (not args.usb_midi or not args.usb_audio or not args.dsp_loader or args.dev or args.controller_policies):
@@ -1566,6 +1591,8 @@ def main():
         parser.error('Private saved-set export requires the ordinary DSP loader without probes/burn.')
     if args.resident_stock_hooks and (not args.dsp_loader or args.dsp_probe or args.dsp_burn):
         parser.error('Private resident stock hooks require the ordinary DSP loader, without probes/burn.')
+    if args.measure_voices and (not args.dev or not args.dsp_loader):
+        parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')
     if args.resident_on_demand and not args.resident_stock_hooks:
         parser.error('--resident-on-demand needs --resident-stock-hooks.')
     if args.resident_stock_hooks and not args.resident_on_demand:
@@ -1687,8 +1714,17 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s', 'sample_memory.c') if args.site_events else ()):
+             'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
+            ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
+    if args.site_events and args.dsp_loader:  # PROJ > MODWERK > SETTINGS (events.json ot_settings; status.c's page)
+        for name in ('settings.c', 'settings.h', 'setting_presets.h'):
+            shutil.copyfile(HERE / name, source / name)
+    # A module may add one USB function to the base's configuration (events.json ot_usb_functions, usb_function.c).
+    usb_function_slots = bool(usb_functions) and not usb_profiles and args.site_events
+    if usb_function_slots:
+        for name in ('usb_function.c', 'usb_function.h'):
+            shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
     import build_stub
@@ -1855,9 +1891,10 @@ def main():
                 raise ValueError('The Part validator\'s clamp at %#x is not moveq #31.' % at)
             chooser_sites.append(dict(addr=hex(at), stock=word.hex(), op='bytes', new=bytes((word[0], FX_IDS - 1)).hex()))
         dsp_sites += chooser_sites
-    (source/'usb_base.h').write_text(usb.header())
+    (source/'usb_base.h').write_text(usb.header() + (
+        usb_functions.header(usb, usb_descriptors, args.usb_audio) if usb_function_slots else ''))
     (source/'usb_base.s').write_text(usb_profiles.assembly(usb, usb_functions, usb_descriptors, args.usb_audio) if usb_profiles else
-                                   usb_functions.assembly(usb, usb_descriptors, args.usb_audio)
+                                   usb_functions.assembly(usb, usb_descriptors, args.usb_audio, slots=usb_function_slots)
                                    if usb_functions else usb.assembly(args.dev))
     if usb_functions:
         (source/'usbmidi.s').write_text(usb_functions.midi_source((usb.OCTABAM / 'platform/usb-midi/usbmidi.s').read_text()))
@@ -2035,7 +2072,8 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches')) + (
+            (('settings', 'settings'),) if args.site_events else ())  # settings.c: the settings modules contribute
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),
@@ -2100,12 +2138,18 @@ modwerk_retained_end:
          '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
          for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'), ('METER', 'meter'))] if args.dsp_loader else [])
+    if args.measure_voices:  # dsp.c: voices admitted uncharged
+        recipe['cflags'].append('-DMODWERK_MEASURE_VOICES')
     if args.cached_modules:  # loader.c, runtime.c, fxpage.c, controller_board.c
         recipe['cflags'].append('-DMODWERK_CACHED_MODULES')
     if args.module_sets:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
     if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
         recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
+    if args.site_events and args.dsp_loader:
+        recipe['cflags'].append('-DMODWERK_SETTINGS')
+    if usb_function_slots:  # a base with USB Audio linked in (a development twin) has the table and refuses every function
+        recipe['cflags'] += ['-DMODWERK_USB_FUNCTIONS'] + (['-DMODWERK_USB_AUDIO_LINKED'] if args.usb_audio else [])
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:
@@ -2130,6 +2174,8 @@ modwerk_retained_end:
         for s in EVENTS.owned_sites():
             if s['table']=='ot_sample_editor_actions' and not args.sample_editor:
                 continue  # knowing the staged registry entry does not enable its stock sites
+            if s['table']=='ot_part_menu' and not args.part_menu:
+                continue
             addr, n = s['site'], s['length']
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != s['guard']:
@@ -2160,7 +2206,7 @@ modwerk_retained_end:
         recipe['sites'].append(dict({k: v for k, v in site.items() if k != 'length'},
                                     addr=hex(addr), stock=stock_at(addr, site['length']).hex()))
     recipe['sites'] += (usb_profiles.sites(usb, usb_functions, stock_at, args.usb_audio) if usb_profiles else
-                       usb_functions.sites(usb, stock_at, args.usb_audio) if usb_functions else usb.sites(stock_at, args.dev))
+                       usb_functions.sites(usb, stock_at, args.usb_audio, slots=usb_function_slots) if usb_functions else usb.sites(stock_at, args.dev))
     # RAM boot: the gate at the OS entry, and the DSP park in both payloads.
     at = BOOT_GATE[0] - device.main_load
     if image[at:at+6].hex() != BOOT_GATE[1]:
@@ -2187,6 +2233,12 @@ modwerk_retained_end:
         recipe['sources'].append('sample_editor_hooks.s')
         recipe['subscribe'] += [dict(event='ev_tick', fn='mw_sample_ui_tick', order=89),
                                 dict(event='ev_key', fn='mw_sample_ui_key', order=87)]
+    if args.part_menu:  # part_menu.c: the two-column Part Edit window, over the popup and the modules' drawing
+        recipe['sources'].append('part_menu.s')
+        recipe['subscribe'] += [dict(event='ev_key', fn='mw_part_menu_key', order=89),
+                                dict(event='ev_enc', fn='mw_part_menu_enc', order=89),
+                                dict(event='ev_tick', fn='mw_part_menu_tick', order=86),
+                                dict(event='ev_draw', fn='mw_part_menu_draw', order=91)]
     recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_boot_draw', order=10))  # boot_anim.c, while it runs
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
@@ -2234,11 +2286,14 @@ modwerk_retained_end:
     locked = catalogue_overlaps(recipe['sites'])
     if locked:
         raise ValueError('Base sites overlap what these catalogue modules patch: ' + ', '.join(locked))
-    if usb_functions and not usb_profiles:
+    if args.packaged_usb_audio:
+        recipe['sources'] = ([name for name in recipe['sources'] if name not in USB_GROUP] +
+                             [name for name in USB_GROUP if name in recipe['sources']])
+    elif usb_functions and not usb_profiles:
         recipe['sources'] = usb_reserve(source, recipe['sources'], recipe.get('defsym', {}), device, sdk)
     (source/'mod.json').write_text(json.dumps(recipe, indent=2)+'\n')
     path, _ = sdk.build(str(source), str(args.stock), str(out/'package'))
-    if usb_functions and not usb_profiles:
+    if usb_functions and not usb_profiles and not args.packaged_usb_audio:
         usb_reserve_check(json.loads(Path(path).read_text())['symbols'])
     # Every C object of the base, before anything is packaged (sdk/runtime/m68k_codegen.py).
     if not CODEGEN.check_mcf54455(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):

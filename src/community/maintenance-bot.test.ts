@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
-import { chunks, dispatchMaintenance, dispatchSlot, failureKey } from '../../server/maintenance-bot'
+import { TELEGRAM_COMMANDS, chunks, dispatchMaintenance, dispatchSlot, failureKey } from '../../server/maintenance-bot'
 
 const KEY = 'k'.repeat(64), SECRET = 's'.repeat(40), CHAT = '4242'
 const databases: DatabaseSync[] = []
@@ -59,6 +59,25 @@ describe('maintenance bot ledger', () => {
     expect(sent.at(-1)!.body.text).toBe('✅ #7 Merge the thing')
   })
 
+  it.each(['resubmit', 'scheduled pass'])('starts the full veto window on successful delivery by %s', async retry => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-17T10:00:00Z'))
+    const { bot, sent } = await fixture(), id = 'a'.repeat(16)
+    const actions = [action(id, 'window', { windowHours: 2 })]
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ ok: false }, { status: 503 }))
+    await bot('/actions', 'POST', { actions })
+    vi.setSystemTime(new Date('2026-11-18T10:00:00Z'))
+    expect((await bot('/actions/' + id + '/claim', 'POST')).status).toBe(409)
+    if (retry === 'resubmit') await bot('/actions', 'POST', { actions: [action(id, 'window', { windowHours: 0 })] })
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+    expect(sent).toHaveLength(1)
+    expect(sent[0].body.text).toContain('13:00')
+    vi.setSystemTime(new Date('2026-11-18T11:59:59Z'))
+    expect((await bot('/actions/' + id + '/claim', 'POST')).status).toBe(409)
+    vi.setSystemTime(new Date('2026-11-18T12:00:00Z'))
+    expect((await bot('/actions/' + id + '/claim', 'POST')).status).toBe(200)
+  })
+
   it('runs a notice at once without a Telegram message, and an ask never without approval', async () => {
     const { bot, sent, press } = await fixture()
     await bot('/actions', 'POST', { actions: [action('b'.repeat(16), 'notify', { kind: 'label' }), action('c'.repeat(16), 'ask')] })
@@ -107,6 +126,21 @@ describe('maintenance bot ledger', () => {
     expect(sent.filter(item => item.method === 'sendMessage')).toHaveLength(2)
   })
 
+  it('lists the open to-dos in Telegram, urgent first, only to the owner', async () => {
+    const { bot, hook, sent } = await fixture()
+    const texts = () => sent.filter(item => item.method === 'sendMessage').map(item => item.body.text)
+    await hook({ message: { text: '/todos', chat: { id: Number(CHAT) } } })
+    expect(texts()).toEqual(['No open to-dos.'])
+    await bot('/todos', 'POST', { todos: [
+      { id: '8'.repeat(16), target: 0, command: 'npm run board -- reply ' + '0'.repeat(8) + '-0000-0000-0000-' + '0'.repeat(12), note: 'twwwy asks about Kits', urgent: false },
+      { id: '9'.repeat(16), target: 1690, command: '/modwerk-fix-issue 1690', note: 'Euclid NOTCH stays audible', urgent: true },
+    ] })
+    await hook({ message: { text: '/todos@modwerk_bot', chat: { id: Number(CHAT) } } })
+    expect(texts().at(-1)).toBe('2 open to-dos, for /modwerk-todo at your computer:\n⚠️ #1690 Euclid NOTCH stays audible\n   /modwerk-fix-issue 1690\n• twwwy asks about Kits\n   npm run board -- reply 00000000-0000-0000-0000-000000000000')
+    await hook({ message: { text: '/todos', chat: { id: 1 } } })
+    expect(texts()).toHaveLength(3)
+  })
+
   it('keeps a to-do list the bot adds to and only the owner reads and ticks off', async () => {
     const { bot, env, db } = await fixture()
     Object.assign(env, { GITHUB_OAUTH_CLIENT_ID: 'client', GITHUB_OAUTH_CLIENT_SECRET: 'secret' })
@@ -148,6 +182,9 @@ describe('maintenance bot ledger', () => {
     expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'See docs/AGENT_BOARD.md.' })).status).toBe(200)
     expect(db.prepare("SELECT user_id,body FROM agent_messages WHERE parent_id=?").get(thread)).toEqual({ user_id: 'owner', body: 'See docs/AGENT_BOARD.md.' })
     expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'x'.repeat(501) })).status).toBe(400)
+    // An agent's question to TARS gets TARS's own answer (migration 0094 gives it the board name).
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'TARS here: hook 39 is free.', as: 'tars' })).status).toBe(200)
+    expect(db.prepare("SELECT u.github_login AS login FROM agent_messages m JOIN users u ON u.id=m.user_id WHERE m.parent_id=? ORDER BY m.created_at DESC,m.rowid DESC LIMIT 1").get(thread)).toEqual({ login: 'tars' })
     expect((await bot('/board/claims/' + thread + '/reply', 'POST', {})).status).toBe(404)
     expect((await bot('/board/claims/' + claim + '/release', 'POST', {}, 'x'.repeat(64))).status).toBe(401)
     expect((await bot('/board/claims/' + claim + '/release', 'POST', {})).status).toBe(200)
@@ -238,6 +275,45 @@ describe('maintenance bot ledger', () => {
     expect(JSON.parse((db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").get() as { value: string }).value)).toEqual({ slot: '2026-11-17T10:35', mode: 'pass', ok: false, status: 401 })
   })
 
+  it('merges in the owner’s name at exactly the checked commit', async () => {
+    // The unattended owner path continues to use the same endpoint without a human review receipt.
+    const { bot, env } = await fixture()
+    const sha = 'a'.repeat(40), calls: { url: string; auth: string; body: unknown }[] = []
+    expect((await bot('/merge', 'POST', { number: 7, sha, method: 'squash' })).status).toBe(503)
+    env.MAINTENANCE_BOT_GITHUB_TOKEN = 'github_pat_owner'
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, auth: new Headers(init.headers).get('Authorization')!, body: JSON.parse(String(init.body)) })
+      return calls.length === 1 ? Response.json({ merged: true, sha: 'b'.repeat(40) }) : Response.json({ message: 'Head branch was modified.' }, { status: 409 })
+    }))
+    expect((await bot('/merge', 'POST', { number: 7, sha: 'nope', method: 'squash' })).status).toBe(400)
+    expect(await (await bot('/merge', 'POST', { number: 7, sha, method: 'squash' })).json()).toEqual({ merged: true, sha: 'b'.repeat(40) })
+    expect(calls[0]).toEqual({ url: 'https://api.github.com/repos/repeat98/modwerk/pulls/7/merge', auth: 'Bearer github_pat_owner', body: { sha, merge_method: 'squash' } })
+    const refused = await bot('/merge', 'POST', { number: 7, sha, method: 'merge' })
+    expect([refused.status, (await refused.json()).error]).toEqual([409, 'GitHub refused the merge: Head branch was modified.'])
+  })
+
+  it('records the reviewed commit and human decision, respecting paused, stopped and repeated requests', async () => {
+    const { bot,env,db } = await fixture()
+    env.MAINTENANCE_BOT_GITHUB_TOKEN = 'owner-token'
+    const head = 'b'.repeat(40), base = 'a'.repeat(40), merged = 'c'.repeat(40)
+    const body = { number: 12, sha: head, method: 'merge', review: { base,id:18,actorId:42,login:'device-tester',role:'device-reviewer',machine:'digitakt',module:'digitakt-example',registered:true,checkRun:76 } }
+    const github = vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT') return Response.json({merged:true,sha:merged})
+      if (url.endsWith('/reviews/18')) return Response.json({state:'APPROVED',commit_id:head,user:{id:42}})
+      return Response.json({state:'open',draft:false,base:{ref:'main',sha:base},head:{sha:head}})
+    })
+    vi.stubGlobal('fetch',github)
+    db.prepare("INSERT INTO maintenance_bot_state(key,value) VALUES('paused','1')").run()
+    expect((await bot('/merge/reviewed','POST',body)).status).toBe(409)
+    db.prepare("UPDATE maintenance_bot_state SET value='0' WHERE key='paused'").run()
+    db.prepare("INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,created_at,updated_at) VALUES('v','merge',12,'ask','held','held',?,'vetoed',0,0,0)").run(JSON.stringify({head}))
+    expect((await bot('/merge/reviewed','POST',body)).status).toBe(409)
+    db.prepare("DELETE FROM maintenance_bot_actions WHERE id='v'").run()
+    for (let i=0;i<2;i++) expect(await (await bot('/merge/reviewed','POST',body)).json()).toEqual({merged:true,sha:merged})
+    expect(github).toHaveBeenCalledTimes(3)
+    expect(db.prepare("SELECT status,result,payload_json FROM maintenance_bot_actions WHERE kind='review_merge'").get()).toMatchObject({ status:'done',result:merged,payload_json:JSON.stringify(body) })
+  })
+
   it('keeps the fingerprint and splits long reports', async () => {
     const { bot, sent } = await fixture()
     expect((await bot('/state', 'PUT', { fingerprint: 'nope' })).status).toBe(400)
@@ -245,6 +321,8 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/state')).json()).fingerprint).toBe('f'.repeat(64))
     await bot('/report', 'POST', { text: ('line\n').repeat(2000) })
     expect(sent.filter(item => item.method === 'sendMessage').length).toBe(3)
+    // The daily report keeps the chat's command menu current, so a new command shows without running setup again.
+    expect(sent.find(item => item.method === 'setMyCommands')?.body.commands).toEqual(TELEGRAM_COMMANDS)
     expect(chunks('x'.repeat(9000)).map(part => part.length)).toEqual([4000, 4000, 1000])
   })
 })

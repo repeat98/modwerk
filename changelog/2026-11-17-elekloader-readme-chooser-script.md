@@ -1,0 +1,1 @@
+SDK: the Octatrack base's build guide no longer points to a chooser script that was removed. The base builds its choosers on the unit; Node 24 is needed only to build a module FX package, for its FX page recipe. `npm run check` now refuses a relative link in AGENTS.md, `docs/` or `sdk/machines/` to a file that does not exist.

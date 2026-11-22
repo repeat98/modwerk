@@ -23,6 +23,10 @@ Selected-period event totals include today. Percentage changes compare the compl
 
 CSV contains only daily aggregate values, UTC dates and `uncollected`, `partial` or `complete` coverage. Uncollected metric fields are blank; a recorded zero stays zero. It contains no visitor identifiers, module/configuration grouping or private report content.
 
+## Firmware and module activity
+
+The **Firmware and module activity** chart opens on the last 30 UTC days. Each stack adds firmware download requests across machines, Octatrack card base installs confirmed by the guide’s first connection to the expected base, completed Octatrack USB base updates and kept Octatrack module syncs. On 12 November 2026 the Octatrack card firmware builder retired. A base file download alone does not confirm installation, and a card-only install may never connect. Actions can repeat on one unit. The Octatrack sources retain 30 days. Before each source’s first retained activity its cells are blank, and the stack shows the available counts. The first observed day and today are marked partial. The daily CSV includes the four components, their recorded total and its coverage.
+
 ## Page traffic
 
 Migration `0061_page_traffic.sql` adds `usage_page_daily(day,page,views)`, retained for 90 UTC days by the existing cleanup. The admin dashboard ranks named pages by views and share, with a selectable daily chart using the same 7/30/90-day period. These are repeatable page views, not unique visitors per page. Earlier totals cannot be split retroactively. The first named event sets `pages_started`; earlier days show unavailable and the start day and today are partial. Older clients may still send unnamed views: the dashboard shows their count separately and excludes them from named-page shares.
@@ -32,6 +36,15 @@ Both `/usage/count` and `/usage/events` accept an optional `page` only for `page
 The legacy `page-not-found` bucket mixed missing pages with valid routes, including the Overview introduced on 21 October 2026. It remains accepted for older clients and is labelled “Legacy unclassified / missing pages” in Admin. Never interpret it as a broken-link count or backfill it into Overview. New routes need a bounded label in `usage-pages.ts` and coverage in `usage-pages.test.ts`; preserve the renderer's missing-page signal instead of treating an unknown analytics label as a missing page. Deploy the Worker accepting new labels before publishing the frontend.
 
 The existing opt-out, DNT/GPC, origin checks, omitted credentials/referrer and abuse limits apply. Opted-in event retries update global and page counts atomically and only once, even if a retry changes its page. The bilingual notice and usage-consent version are updated; existing opt-ins require a new choice for the expanded payload. Apply the migration and deploy the Worker before the frontend; older identifier-free clients can still send unnamed views, and the dashboard supports older responses.
+
+## Visit sources and the sign-in prompt
+
+`site_count_daily` (migration 0097) holds identifier-free daily totals through `/usage/count`: an event from `SITE_COUNTS` (`usage-contract.ts`) and exactly one category from its list. The server refuses anything else rather than storing it, and keeps 90 days.
+
+- `visit_source`: where a page load came from. `visit-source.ts` maps the link's `utm_source`, or else the referring site's domain, to a fixed category in the browser. The address never leaves the browser. A page reached from the site itself, a reload and back/forward count nothing; an empty referrer counts as `direct`. To credit a campaign, tag its links with `utm_source` set to a listed source (or an alias such as `newsletter` → `mail`); the site drops `utm_…` from the address once read. Modwerk's own mails (news, activity, welcome, beta) tag every site link `mail-<kind>` when sent, TARS's Discord replies tag theirs `discord-bot` (`server/site-link-tags.ts`), the forum feed's links `forum-feed`, the thread Share button `forum-share`, push notifications (`public/push-sw.js`) `push` and the repository README `github-readme`; account mail is never tagged.
+- `sign_in_prompt`: how `LoginPromptDialog` was answered, `gate-…` before a firmware build (it can be skipped) and `other-…` before a member action.
+
+The admin statistics show both under "Where visits come from". The consent version is unchanged: nothing joins the consented payload, and the privacy page names both counts.
 
 ## Machine attribution
 
@@ -92,6 +105,8 @@ Run `npm run check` with Node.js 24. Local UI QA uses an isolated local D1 datab
 Library cards and module community panels lead with the members who reported a module working and its likes, followed by firmware download requests. Ratings are no longer shown or collected. The library can sort by most reported working, most liked and most downloaded; most reported working breaks ties by likes, and every sort ends on the name, so ties are deterministic. Modules with likes but no working reports are included in the summary. Unavailable counts appear as a dash, while a successfully fetched zero is shown as zero. Public module aggregates do not grant access to administrator site statistics.
 
 The administrator's Rating (Bayesian) sort, which still ranks the ratings members gave before they were retired, uses the shared score `(count × average + 5 × prior) / (count + 5)`. The prior is the vote-weighted mean across rated modules in the complete statistics response, calculated before search, machine or category filtering. Public rankings use the public response; administrator rankings include all retained records in their response. Five prior votes pull small samples toward that mean while larger samples approach their own average. An empty response uses the neutral midpoint of 3 stars, but unrated or unavailable modules have no score and sort after every rated module. Equal scores sort by rating count descending, then name and module ID. Scores use full precision; the displayed averages and counts remain unweighted, and no stored ratings or API fields change.
+
+A kept Octatrack USB sync credits each distinct module it added or updated once. Unchanged and removed modules receive no download credit. A downloaded Octatrack card set credits its contents. Aggregate sync history contains no module IDs for a backfill.
 
 A click on an enabled firmware download button reports each unique module ID from the **completed build report**, once for that request. It does not count module selection, configuration export, build attempts, rejected builds or a confirmed file save/flash. Repeated download requests count again. Previous downloads cannot be reconstructed and are not backfilled; `0009_module_downloads.sql` records the UTC deployment coverage boundary. Counts are cumulative from that point, including through module version updates; likes remain the current total of guest likes and can decrease when unliked.
 

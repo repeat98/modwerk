@@ -1,0 +1,1 @@
+Agent sessions on one computer now take turns on the connected unit by themselves: device:test, device:qualify, device:price, RAM boots, driving device steps and the developer MCP's trials wait in line for it and start when it is free, and `npm run unit -- status` shows who has it and who waits (`hold` and `release` keep it across several commands or for playing it by hand).

@@ -220,6 +220,20 @@
       ]
     },
     {
+      "id": "vibrato",
+      "name": "VIBRATO (Bryan T, in octabam)",
+      "spdx": "MIT",
+      "noticeFile": "vibrato.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/vibrato/upstream/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/vibrato"
+      ]
+    },
+    {
       "id": "kyoti-quantize-live-rec-toggle",
       "name": "Zac Kyoti Quantize Live Rec Toggle",
       "spdx": "MIT",
@@ -276,6 +290,22 @@
       "usedIn": [
         "modules/tuner"
       ]
+    },
+    {
+      "id": "model-tg",
+      "name": "Model-TG (granular engine)",
+      "spdx": "MIT",
+      "noticeFile": "model-tg.txt",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/TinyGregAudio/Model-TG/70b39dd6787770ebefc7a2d78dea1678ec012679/LICENSE",
+          "revision": "70b39dd6787770ebefc7a2d78dea1678ec012679",
+          "path": "LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/grain: the granular engine (window and table formulas, grain scheduling)"
+      ]
     }
   ],
   "moduleComponents": {
@@ -301,6 +331,9 @@
     "lofi2": [
       "lofi2"
     ],
+    "vibrato": [
+      "vibrato"
+    ],
     "quantize-live-rec-toggle": [
       "kyoti-quantize-live-rec-toggle"
     ],
@@ -312,6 +345,9 @@
     ],
     "tuner": [
       "tim-hastie-tuner"
+    ],
+    "grain": [
+      "model-tg"
     ]
   }
 }

@@ -22,6 +22,9 @@ describe('phone library results bar', () => {
     expect(changed).toContain('<span>Downloads</span>')
     expect(changed).toContain('<span>Scenes</span>')
     expect(changed.match(/is-set/g)).toHaveLength(2)
+    const period = renderToStaticMarkup(createElement(LibraryResultsBar, { ...bar, sort: 'downloaded-7' }))
+    expect(period).toContain('aria-label="Sort: Most downloaded, last 7 days"')
+    expect(period).toContain('<span>Downloads · 7 days</span>')
   })
 
   it('leaves out sort and type on a machine without modules', () => {
@@ -33,7 +36,7 @@ describe('phone library results bar', () => {
   it('replaces the desktop filter row on phones', () => {
     const props = {
       query: '', octatrackModules: AVAILABLE_MODULES, octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
-      family: 'all', onFamilyChange: noop, sort: 'updated', onSortChange: noop, statistics: null, octatrackConflicts: [], comparison: [], onCompare: noop, onOpenComparison: noop,
+      family: 'all', onFamilyChange: noop, sort: 'updated', onSortChange: noop, statistics: null, comparison: [], onCompare: noop, onOpenComparison: noop,
       viewedModuleVersions: {}, moduleBaseline: null, device: DEVICES_BY_ID.octatrack,
     }
     expect(renderToStaticMarkup(createElement(MachineLibrary, props))).toContain('class="discovery-tools"')

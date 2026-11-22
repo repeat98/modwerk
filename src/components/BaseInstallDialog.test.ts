@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,6 +10,7 @@ import { BaseInstallDialog } from './BaseInstallDialog'
 import { layoutIdentity } from '../engine/elekloader/base-variants'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import type { InventoryTarget } from '../config/inventory'
+import { baseGuideToReopen, forgetBaseGuideReopen } from '../config/octatrack-progress'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -185,17 +187,41 @@ describe('the base dialog for a unit on an older base', () => {
       expect(update).not.toHaveBeenCalled()
     } finally { script.remove() }
   })
+  it('opens again after its own Reload page, with the layout and set it was opened for', async () => {
+    const script = Object.assign(document.createElement('script'), { type: 'module' }); script.setAttribute('src', './assets/index-old.js'); document.head.append(script)
+    const reload = vi.fn()
+    try {
+      vi.stubGlobal('fetch', async () => new Response('<script type="module" crossorigin src="./assets/index-new.js"></script>'))
+      vi.stubGlobal('location', { pathname: '/', reload })
+      const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
+      unit.base = 'cc'.repeat(32); link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+      await act(() => root.render(createElement(BaseInstallDialog, { link, layout: 'main', returnSetId: 'set-1', firmwareReady: true, onChooseFirmware: () => {}, buildBase: vi.fn(), onClose: () => {}, onReady: () => {} })))
+      await settle()
+      expect(baseGuideToReopen()).toBeUndefined()
+      click(buttonNamed('Reload page')!)
+      expect(reload).toHaveBeenCalledOnce()
+      expect(baseGuideToReopen()).toEqual({ layout: 'main', returnSetId: 'set-1' })
+      // Only a reload right after: two minutes later the page opens as usual.
+      expect(baseGuideToReopen(Date.now() + 121_000)).toBeUndefined()
+      forgetBaseGuideReopen(); expect(baseGuideToReopen()).toBeUndefined()
+    } finally { script.remove(); sessionStorage.clear() }
+  })
   // The previous base's default (500cdb6f…) ran USB Audio in tracks-main-cue; its `off` variant ran none.
   const previousDefault = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7', previousOff = '05b7f09031bc3892626e7c2576810386faeb01bd3a3101353a56c56c96d82a4a'
-  const audioOff = 'USB Audio is off in this base by default. To keep using it, add the USB Audio module to your module set first; the update then installs your layout.'
+  const audioOff = publishedUsbAudioPackage
+    ? 'Load your module set after the base update to restore USB Audio. It will use the layout and Outbox assignments saved in your set. You can change them on the Octatrack under PROJ > MODWERK > SETTINGS > USB AUDIO.'
+    : 'USB Audio is off in this base by default. To keep using it, add the USB Audio module to your module set first; the update then installs your layout.'
   const runUpdate = async () => { click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle() }
   it('keeps the USB Audio layout the set asks for, in one update, and says nothing about USB Audio going off', async () => {
     const set = { name: 'Live', moduleIds: ['everb', USB_AUDIO_MODULE], usbAudio: { layout: 'main' as const } }
     const { buildBase, update } = await older(true, undefined, { base: previousDefault, set })
-    expect(container.textContent).toContain('with USB Audio · Main')
-    expect(container.textContent).not.toContain(audioOff)
+    if (publishedUsbAudioPackage) expect(container.textContent).toContain(audioOff)
+    else {
+      expect(container.textContent).toContain('with USB Audio · Main')
+      expect(container.textContent).not.toContain(audioOff)
+    }
     await runUpdate()
-    expect(buildBase.mock.calls).toEqual([['main']]); expect(update).toHaveBeenCalledTimes(1)
+    expect(buildBase.mock.calls).toEqual([[publishedUsbAudioPackage ? undefined : 'main']]); expect(update).toHaveBeenCalledTimes(1)
   })
   it('installs USB Audio off for a set without the USB Audio module, and says so first when the old base had USB Audio', async () => {
     const { buildBase } = await older(true, undefined, { base: previousDefault, set: { name: 'Live', moduleIds: ['everb'] } })
@@ -219,12 +245,19 @@ describe('the base dialog for a unit on an older base', () => {
 describe('the base dialog for another USB Audio layout', () => {
   it('sends the current base in the set’s layout over USB, from a unit already on the current base', async () => {
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
-    unit.base = layoutIdentity('tracks-main-cue')!
+    unit.base = layoutIdentity(publishedUsbAudioPackage ? 'off' : 'tracks-main-cue')!
     link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     const expected = layoutIdentity('main')!, bin = new Uint8Array([5, 6])
     const update = vi.spyOn(link, 'updateBase').mockImplementation(async (_bin, _base, report) => { report?.('done') })
     const buildBase = vi.fn(async () => ({ buffer: bin.buffer, sha256: 'y', base: expected }))
-    await act(() => root.render(createElement(BaseInstallDialog, { link, layout: 'main', firmwareReady: true, onChooseFirmware: () => {}, buildBase, onClose: () => {}, onReady: () => {} })))
+    const onClose = vi.fn()
+    await act(() => root.render(createElement(BaseInstallDialog, { link, launch: publishedUsbAudioPackage, layout: 'main', firmwareReady: true, onChooseFirmware: () => {}, buildBase, onClose, onReady: () => {} })))
+    if (publishedUsbAudioPackage) {
+      expect(onClose).toHaveBeenCalledWith(true)
+      expect(buildBase).not.toHaveBeenCalled()
+      expect(update).not.toHaveBeenCalled()
+      return
+    }
     expect(container.textContent).toContain('Change USB Audio')
     expect(container.textContent).toContain('USB Audio · Tracks + Main + Cue')
     expect(container.textContent).toContain('switching to USB Audio · Main updates the base over USB')

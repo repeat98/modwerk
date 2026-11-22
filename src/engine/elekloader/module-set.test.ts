@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import catalog from '../../../sdk/catalog.json' with { type: 'json' }
+import { publishedManifest as manifest } from './published-octatrack.fixture'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
@@ -14,10 +15,13 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'midi-scenes', 'kits', 'tuner', 'usb-audio-out-tracks-main-cue'])
+    // Stem Recorder is the catalog's retained card-only module. New USB releases must appear in both inventories.
+    expect([...USB_MODULE_IDS].sort()).toEqual(catalog.modules.map(module => module.id).filter(id => id !== 'stem-rec').sort())
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
-      expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
+      const versioned = `octatrack-modules/${entry.id}/${entry.version}.mwrm`
+      const paths = 'base' in entry ? [versioned, `octatrack-base-packages/${sha(data)}.mwrm`] : [versioned]
+      expect(paths).toContain(entry.path)
       expect([data.length, sha(data), view.getUint32(28).toString(16).padStart(8, '0')]).toEqual([entry.bytes, entry.sha256, runtimeId(entry.id)])
       expect(String.fromCharCode(...data.subarray(0, 4))).toBe('MWRM')
       if (!('octabam' in entry) && !('machine' in entry) && !('tables' in entry) && !('base' in entry) && !('sources' in entry)) expect([abi, view.getUint32(20), view.getUint32(24)]).toEqual([entry.requires ? 9 : 6, 0, 0]) // ABI 6 DSP effects (9 when they require a base feature) carry no stock-code bytes
@@ -107,8 +111,10 @@ describe('preparing a module set', () => {
     await expect(prepareModuleSet(target, empty, fetched, { ...events, maxSites: 1 })).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, events, 'b'.repeat(64))).rejects.toBeInstanceOf(BaseUpdateRequired) // an older base
     expect(fetched).not.toHaveBeenCalled()
+    const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
+    const extraNames = audio ? [audio.name] : []
     const result = await prepareModuleSet(target, empty, fetched, events, baseBinding.identity)
-    expect(result.changes.map(change => change.module)).toEqual(manifest.packages.map(entry => entry.name))
+    expect(result.changes.map(change => change.module)).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames])
     expect(result.changes.every(change => change.undo?.length === 32)).toBe(true)
     // An ABI 8 loader still takes every package but the ABI 9 and 10 ones (RINGMOD SC, Analog BD's engine package),
     // which ask for the base update.
@@ -116,7 +122,7 @@ describe('preparing a module set', () => {
     expect([...abi9].sort()).toEqual(['analog-bassdrum', 'ring-sc'])
     for (const id of abi9) await expect(prepareModuleSet({ name: id, moduleIds: [id] }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)).rejects.toBeInstanceOf(BaseUpdateRequired)
     const older = await prepareModuleSet({ name: 'ABI 8', moduleIds: USB_MODULE_IDS.filter(id => !abi9.includes(id)) }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)
-    expect(older.changes.map(change => change.module)).toEqual(manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name))
+    expect(older.changes.map(change => change.module)).toEqual([...manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name), ...extraNames])
   })
   it('refuses hook words a subscriber’s manifest does not declare, or more than the base dispatches', async () => {
     const entry = manifest.packages.find(item => item.id === 'repitch')!, data = file(entry.path)

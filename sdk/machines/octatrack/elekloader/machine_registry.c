@@ -10,6 +10,7 @@
 #include "loader.h"
 #include "modwerk_events.h"
 #include "status.h" /* MODWERK_MACHINE_MAP and the machine map's calls */
+#include "fxids.h"  /* the effect ids a project names (effect modules that rest) */
 #ifndef MW_HOST /* test_machine_registry.c maps these onto a model of the unit's memory */
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
@@ -64,6 +65,8 @@ void modwerk_dsp_source_engine_off(uint32_t module);
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
 uint32_t modwerk_status_cpu_load(void); /* status.c: the CPU meter's mean over its last four seconds, per mille; stopped, what it last read playing if that was more */
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu); /* status.c: the CPU FULL box for a unit already busy */
+void modwerk_status_cpu_entered(uint32_t mille); /* status.c: a machine took a track; the meter shows it after four seconds played */
+void modwerk_status_cpu_left(uint32_t mille);    /* status.c: a machine left a track */
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
@@ -74,6 +77,8 @@ __attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char
 { (void)track; (void)label; (void)booked; (void)add; }
 __attribute__((weak)) uint32_t modwerk_status_cpu_load(void) { return 0; }
 __attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)track; (void)label; (void)cpu; }
+__attribute__((weak)) void modwerk_status_cpu_entered(uint32_t mille) { (void)mille; }
+__attribute__((weak)) void modwerk_status_cpu_left(uint32_t mille) { (void)mille; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
@@ -94,6 +99,10 @@ static void release(unsigned track)
     charged[track] = 0; modwerk_dsp_source_release(track);
     if (!charges(old)) modwerk_dsp_source_engine_off(key(old));
 }
+/* dsp.c's make_way: a bank or project load needs the room this track's voice booked (#1542). The track renders the
+ * stock silent source until charge() claims it again, with the DSP FULL box while it does not fit. */
+void modwerk_machine_voice_shed(unsigned track);
+void modwerk_machine_voice_shed(unsigned track) { if (track < 8u) release(track); }
 /* Charge `who`'s voice on the track, replacing what was charged there; 0 when its core cannot carry it (nothing
  * changes). The machine the track was charged to keeps its engine only while another track still is. */
 /* Its price per voice: its module's engine's when its package carries one (ABI 10: the header's cycles and kind,
@@ -175,21 +184,33 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * five-minute window at 85 % or more had a UI gap past 100 ms more often than not, and under 65 % one in twenty did.
  * Stopped, it goes by what the meter read while the unit last played (status.c, modwerk_status_cpu_load): a Part
  * put together stopped is judged as it will play. A unit that has not played since its start is judged as it is.
- * A machine is judged with its price on top (a percent of a frame is a percent of the meter): one admitted just
- * under the line played over it, and the frame guard then dropped its renders (shared diagnostics, 11 to 14
- * November 2026: 166 skip records on 24 units beside 5 refusals). */
+ * A machine is judged with what it adds to the meter on top: one admitted just under the line played over it, and
+ * the frame guard then dropped its renders (shared diagnostics, 11 to 14 November 2026: 166 skip records on 24 units
+ * beside 5 refusals). That is its measured meter cost (meter_cost), else its price, the worst render of one frame:
+ * Grain's 35-point price plus the wake on a Part kept at 43.5 % and 8 sleeping-delay points was 89.5 and refused,
+ * while it played the Part at 52.7 %, 8.9 points more, at its worst settings (owner's MKII, 21 November 2026). */
 volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change it */
+/* A pick that wakes a resting machine's module (below, "Machines that rest") is judged with this on top of its price:
+ * what the module's hooks and detours cost the frame again once awake, which the meter cannot show before. The most
+ * of the 24 packages measured at rest on an MKII (20 November 2026, base 0.7.10 twin, playing): POLY8 0.3.3, 2.3
+ * points of the frame interrupt and 2.6 of the CPU meter. Per mille of the meter. */
+volatile uint32_t mw_wake_mille = 30u;
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
 static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
-/* The Part's bill without track `skip` (8: none), tracks in order; *over gets the tracks that did not fit. */
-static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over)
+static unsigned meter_cost(const Machine *m) { return m->reserved[1] ? m->reserved[1] : cpu_price(m); }
+/* The Part's bill without track `skip` (8: none), in track order. The tick also uses these owners to charge DSP
+ * voices and label refusals. Keep them on its stack for this pass, so a Part or module change is read afresh next tick. */
+static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over, const Machine **owners)
 {
-    unsigned sum = 0; const Machine *who;
+    unsigned sum = 0;
     *over = 0;
     for (unsigned t = 0; t < 8; ++t) {
-        unsigned p = t != skip && owner(m, n, part, t, &who) ? cpu_price(who) : 0u;
+        const Machine *who = 0;
+        if (t != skip) owner(m, n, part, t, &who);
+        if (owners) owners[t] = who;
+        unsigned p = who ? cpu_price(who) : 0u;
         if (sum + p > mw_cpu_allowance) *over |= (uint8_t)(1u << t); else sum += p;
     }
     return sum;
@@ -312,8 +333,122 @@ static unsigned sequencer(void)
  * FLEX track; walking the machine table and comparing every machine's signature each time was most of its own cost.
  * Written in the frame interrupt only. The descriptors it names are the rows': looked_up is cleared masked when the
  * rows change (modwerk_machine_tables_changed), before a machine that left loses its memory. */
-enum { NOBODY, OWNED, ORPHAN };
+enum { NOBODY, OWNED, ORPHAN, ASLEEP };
 static struct { const Part *part; uint32_t bytes; const Machine *who; unsigned kind; } looked[8];
+/* ---- Machines that rest (owner, 20 November 2026: an installed module no track uses costs nothing) -----------------
+ * A machine's module that does not answer ev_in_use itself is answered for here (events.json's judged ot_machines,
+ * loader.h modwerk_machine_in_use): it is in use while a track of any Part of the project, working or saved, is the
+ * machine, so a pattern, Part or bank change never needs it woken; the scan is the machine map's (mc_scan), every two
+ * seconds or at once after a change. It rests after REST_AFTER scans in a row find no such track: its handlers leave
+ * the hooks that rest (the frame interrupt's ev_play_increment, ev_voice_bind and ev_tail_kill) and its detours marked
+ * rests hold stock's bytes. A track that names a resting machine all the same (a paste, a project just loaded) renders
+ * stock's silent source and asks for it (wake_who) until the next UI tick wakes it; a pick wakes it before it commits.
+ * A RENDER_FLEX machine is offered FLEX tracks nobody owns, so it never rests. */
+#define REST_AFTER 2u
+int modwerk_fxmap_loading(void); /* fxmap.c: a project load runs */
+static const Machine *use_who[ROWS - 5u]; /* the rows' machines at the last scan, and how many scans in a row found */
+static uint8_t use_idle[ROWS - 5u];       /* no track of the project on each (UI task) */
+static unsigned use_n;
+static uint32_t use_epoch;                /* the loader's owner epoch at the last scan: a set installed, removed or undone
+                                           * since keeps every machine awake until REST_AFTER scans of the new set */
+static const Machine *volatile wake_who[8]; /* the frame interrupt: track t names this resting machine */
+static const Machine *volatile pick_who;    /* mw_assign: this resting machine is being picked */
+static const Machine *asleep_who[ROWS - 5u]; /* the rows' machines whose module rests: written masked (tables changed) */
+static unsigned asleep_n;
+static int asleep(const Machine *who)
+{
+    for (unsigned k = 0; k < asleep_n; ++k) if (asleep_who[k] == who) return 1;
+    return 0;
+}
+static void asleep_refresh(void) /* masked: the loader just changed the rows or the resting set */
+{
+    asleep_n = 0;
+    for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && asleep_n < ROWS - 5u; ++row)
+        if (modwerk_runtime_resting_at(*row)) asleep_who[asleep_n++] = (const Machine *)*row;
+}
+/* Effect modules rest the same way (owner, 20 November 2026): a module with a DSP effect and no ev_in_use of its own is
+ * in use while a slot of the project names its effect id (fxmap.c's modwerk_fxmap_used: every bank's Parts, working
+ * and saved, and what runs) or a live slot runs it (checked at every ask, so a paste or a load wakes it within a tick).
+ * Its ColdFire detours marked rests (Euclid's frame hook, Tape Echo's delay seam) hold stock's bytes meanwhile; its DSP
+ * code is the DSP's, resident on demand as before. A pick of it wakes it before stock writes the pick (status.c's
+ * modwerk_status_effect_busy). */
+#define LIVE_FX 0x80000ec4u /* what each slot runs: FX1 T1-T8, then FX2 */
+fx_set modwerk_fxmap_used(void);       /* fxmap.c */
+int modwerk_fxmap_handle(uint32_t module);
+static uint8_t fx_idle[MODWERK_FX_IDS]; /* idle scans in a row for each effect id (UI task) */
+static uint32_t fx_epoch;
+static volatile int fx_wanted = -1;    /* an effect id being picked while its module rests */
+static int effect_id(const struct runtime_module *module)
+{
+    int id = modwerk_fxmap_handle(module->id);
+    return id >= 0 ? id : (int)module->dsp.id;
+}
+static int effect_in_use(const struct runtime_module *module)
+{
+    int id = effect_id(module);
+    if (id < 0 || (unsigned)id >= MODWERK_FX_IDS || id == fx_wanted || modwerk_runtime_owner_epoch() != fx_epoch) return 1;
+    for (unsigned k = 0; k < 16u; ++k) if (U8(LIVE_FX + k) == (unsigned)id) return 1;
+    return fx_idle[id] < REST_AFTER;
+}
+static void fx_scanned(void) /* the machine map's refresh, with its whole scan */
+{
+    fx_set used = modwerk_fxmap_used();
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    int loading = modwerk_fxmap_loading(), same_set = epoch == fx_epoch;
+    fx_epoch = epoch;
+    for (unsigned id = 0; id < MODWERK_FX_IDS; ++id) {
+        unsigned was = same_set ? fx_idle[id] : 0u;
+        fx_idle[id] = (uint8_t)(fx_in(used, id) ? 0u : loading || was == 255u ? was : was + 1u);
+    }
+    if (fx_wanted >= 0 && (fx_in(used, (unsigned)fx_wanted) || fx_idle[fx_wanted] >= REST_AFTER)) fx_wanted = -1;
+}
+/* status.c, before stock writes an effect pick: whether the module behind `id` rests, and its wake. */
+int modwerk_machine_effect_resting(unsigned id)
+{
+    for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
+        const struct runtime_module *m = modwerk_runtime_module(p);
+        if (m && m->dsp.count && !m->hook[MODWERK_OT_MACHINES] && effect_id(m) == (int)id)
+            return modwerk_runtime_resting_at((uintptr_t)m);
+    }
+    return 0;
+}
+void modwerk_machine_effect_wake(unsigned id)
+{
+    if (id >= MODWERK_FX_IDS) return;
+    fx_wanted = (int)id, fx_idle[id] = 0;
+    modwerk_runtime_rest_poll();
+}
+int modwerk_machine_in_use(const struct runtime_module *module)
+{
+    const Machine *who = (const Machine *)module->hook[MODWERK_OT_MACHINES];
+    if (!who && module->dsp.count) return effect_in_use(module);
+    if (!who || who->abi != MODWERK_MACHINE_ABI || who->flags & MODWERK_MACHINE_RENDER_FLEX || pick_who == who ||
+        modwerk_runtime_owner_epoch() != use_epoch) return 1;
+    for (unsigned t = 0; t < 8u; ++t) if (wake_who[t] == who) return 1;
+    for (unsigned k = 0; k < use_n; ++k) if (use_who[k] == who) return use_idle[k] < REST_AFTER;
+    return 1; /* not scanned since it came: awake until a scan says otherwise */
+}
+/* The machine map's scan found `mine` (bit k: a track of the project is m[k]): the count of idle scans for each. */
+static void use_scanned(const Machine *const *m, unsigned n, uint32_t mine)
+{
+    uint8_t idle[ROWS - 5u];
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    int same_set = epoch == use_epoch, loading = modwerk_fxmap_loading();
+    use_epoch = epoch;
+    for (unsigned k = 0; k < n; ++k) {
+        unsigned was = 0;
+        for (unsigned j = 0; same_set && j < use_n; ++j) if (use_who[j] == m[k]) was = use_idle[j];
+        /* While a project loads, stock rewrites the banks a Part at a time (fxmap.c): a scan then counts what it sees
+         * used, never an idle scan, so nothing rests on a half-loaded project. */
+        idle[k] = mine >> k & 1u ? 0u : loading ? (uint8_t)was : (uint8_t)(was < 255u ? was + 1u : 255u);
+        if (!(mine >> k & 1u) && idle[k] < REST_AFTER) continue;
+        /* used, or idle long enough: a wake asked for it is answered either way */
+        if (pick_who == m[k]) pick_who = 0;
+        for (unsigned t = 0; t < 8u; ++t) if (wake_who[t] == m[k]) wake_who[t] = 0;
+    }
+    for (unsigned k = 0; k < n; ++k) use_who[k] = m[k], use_idle[k] = idle[k];
+    use_n = n;
+}
 static const Machine *flex_machine; /* the first RENDER_FLEX machine with a render: it takes unowned FLEX tracks */
 static uint32_t looked_up;          /* bit t: looked[t] stands; bit 8: flex_machine does */
 /* Those bytes are slow to read: the Part index is in battery RAM, about half a microsecond a read, and the bank's
@@ -326,6 +461,10 @@ static uint32_t frame_seen;         /* bit t: looked[t] was checked this frame; 
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
 void modwerk_machine_tables_changed(void)
 {
+#ifdef MODWERK_USB_FUNCTIONS
+    void modwerk_usb_functions_changed(void); /* usb_function.c: a function that left is off its endpoint at once */
+    modwerk_usb_functions_changed();
+#endif
     unsigned n = 0;
     looked_up = 0, frame_seen = 0;
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && n < ROWS - 5u; ++row)
@@ -343,6 +482,7 @@ void modwerk_machine_tables_changed(void)
     }
     for (unsigned k = 5; k < ROWS; ++k) mw_src_names[k] = (const char *)(uintptr_t)U32(0x400a78c8u + 4), mw_pb_table[k] = FLEX_PAGE;
     counts(n, sequencer());
+    asleep_refresh();
 }
 
 const char *mw_name(unsigned row)
@@ -395,6 +535,7 @@ static void flex_defaults(Part *part, Part *mirror, unsigned track)
 static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
 {
     if (old->leave) old->leave(track);
+    modwerk_status_cpu_left(10u * meter_cost(old));
     if (!old->assign && old->flags & MODWERK_MACHINE_PROTECT) flex_defaults(part, mirror, track);
     if (charged[track] == old) release(track); /* a priced machine that took the track was charged in its place */
 }
@@ -404,16 +545,18 @@ static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
 static void charge(const Machine *const *m, unsigned n)
 {
     if (!valid_bank()) return;
-    const Part *part = current_part(); const Machine *who;
+    const Machine *owners[8];
+    uint8_t over;
+    unsigned booked = cpu_bill(m, n, current_part(), 8, &over, owners);
     for (unsigned t = 0; t < 8; ++t) {
-        if (!owner(m, n, part, t, &who) || !who->source_kind) who = 0;
+        const Machine *who = owners[t];
+        if (who && !who->source_kind) who = 0;
         if (!who) warned &= (uint8_t)~(1u << t);
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
-    uint8_t over; unsigned booked = cpu_bill(m, n, part, 8, &over);
     for (unsigned t = 0; t < 8; ++t)
-        if (over & ~cpu_warned & 1u << t && owner(m, n, part, t, &who)) { /* the first new one: the box shows one at a time */
-            cpu_refuse(t, who, booked);
+        if (over & ~cpu_warned & 1u << t && owners[t]) { /* the first new one: the box shows one at a time */
+            cpu_refuse(t, owners[t], booked);
             break;
         }
     mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
@@ -445,23 +588,30 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
+        int waking = old != next && asleep(next);
         if (old != next) { /* a unit this machine's renders would make busy does not take it */
             uint32_t cpu = modwerk_status_cpu_load();
-            if (cpu + 10u * cpu_price(next) >= mw_cpu_hot) {
+            /* A resting machine's module also brings its hooks and detours back into the frame: the meter does not
+             * hold them yet, so its pick is judged with them (mw_wake_mille) on top. */
+            if (cpu + 10u * meter_cost(next) + (waking ? mw_wake_mille : 0u) >= mw_cpu_hot) {
                 mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
                 modwerk_status_cpu_hot(track, next->label, cpu);
                 return (unsigned)-1;
             }
         }
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
-            uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
+            uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over, 0);
             if (booked + cpu_price(next) > mw_cpu_allowance) {
                 cpu_refuse(track, next, booked);
                 return (unsigned)-1;
             }
         }
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
-        if (old != next) mc_assigned(next);
+        if (waking) { /* awake before the track becomes it: its hooks see the commit; else silent until the next tick */
+            pick_who = next;
+            modwerk_runtime_rest_poll();
+        }
+        if (old != next) mc_assigned(next), modwerk_status_cpu_entered(10u * meter_cost(next));
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
@@ -494,9 +644,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
 }
 static void ui_tick(void);
 void mg_tick(void); /* midi_generators.c: the MIDI tracks' generators */
+/* The UI tick, a task: also where a module that no track uses rests (loader.h modwerk_runtime_rest_poll; HOOKS.md). */
 void mw_ui_tick(void)
 {
-    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); MW_STAMP(15);
+    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); modwerk_runtime_rest_poll(); MW_STAMP(15);
 }
 static void ui_tick(void)
 {
@@ -701,6 +852,10 @@ int mw_source_start_impl(unsigned track, unsigned sample, unsigned flags, Source
         start_refused[track] = 0;
         return orphan(current_part(), track) ? 0 : fallback ? fallback(track, sample, flags) : 0;
     }
+    if (asleep(who)) { /* as an absent machine's track, until it wakes */
+        start_refused[track] = 0, wake_who[track] = who;
+        return 0;
+    }
     if (!(who->flags & MODWERK_MACHINE_START)) {
         start_refused[track] = 0;
         return fallback ? fallback(track, sample, flags) : 0;
@@ -740,7 +895,7 @@ SourceStart *mw_source_start_select(unsigned track, SourceStart *fallback)
     const Machine *m[ROWS - 5u], *who = 0;
     unsigned n = machines(m);
     if (owner(m, n, current_part(), track, &who)) {
-        if (who->flags & MODWERK_MACHINE_START) return source_start_dispatch;
+        if (who->flags & MODWERK_MACHINE_START || asleep(who)) return source_start_dispatch;
     } else if (orphan(current_part(), track)) {
         return source_start_dispatch;
     }
@@ -843,7 +998,7 @@ static unsigned look(unsigned t, const Machine **who)
         uint32_t bytes = (uint32_t)part[0x22 + t] << 24 | (uint32_t)s[0] << 16 | (uint32_t)s[1] << 8 | s[2];
         if (!(looked_up >> t & 1u) || looked[t].part != part || looked[t].bytes != bytes) {
             const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
-            looked[t].kind = owner(m, n, part, t, &looked[t].who) ? OWNED : orphan(part, t) ? ORPHAN : NOBODY;
+            looked[t].kind = owner(m, n, part, t, &looked[t].who) ? asleep(looked[t].who) ? ASLEEP : OWNED : orphan(part, t) ? ORPHAN : NOBODY;
             looked[t].part = part, looked[t].bytes = bytes, looked_up |= 1u << t;
         }
         frame_seen |= 1u << t;
@@ -878,7 +1033,8 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
         }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
         return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
-    } else if (kind == ORPHAN) { /* its bytes are the absent machine's, not FLEX's */
+    } else if (kind == ORPHAN || kind == ASLEEP) { /* its bytes are the absent machine's, not FLEX's */
+        if (kind == ASLEEP) wake_who[track] = who; /* resting: its detours hold stock's bytes until it wakes */
         stop_stock(track);
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     }
@@ -908,7 +1064,8 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
     if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
         return frame_part && frame_part[0x22 + track] <= 1u
             ? guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end) : f(track, ping, start, end);
-    if (kind == ORPHAN || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
+    if (kind == ASLEEP) wake_who[track] = who;
+    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
@@ -1042,7 +1199,9 @@ void modwerk_machine_map_refresh(void)
     if (!mc_stale && (mc_refreshes & 3u)) return;
     mc_stale = 0;
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
-    uint32_t named = mc_scan(0, 0, 0), absent = 0;
+    uint32_t mine, named = mc_scan(m, n, &mine), absent = 0;
+    use_scanned(m, n, mine); /* which machines' modules may rest (modwerk_machine_in_use) */
+    fx_scanned();            /* and which effect modules */
     for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
         const volatile struct mc_entry *e = &MCMAP->e[k];
         if (!(named >> k & 1u)) continue;
