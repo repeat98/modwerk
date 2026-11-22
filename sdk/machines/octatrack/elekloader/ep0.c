@@ -15,6 +15,9 @@
  * The controller's backend is boot.c's: the runtime loader's for module
  * packages, plus whole OS images for a RAM boot. */
 #include "status.h"
+#ifdef MODWERK_SETTINGS
+#include "settings.h"
+#endif
 #ifdef MODWERK_DSP_LOADER
 #include "selftest.h"
 #include "fxids.h"
@@ -22,6 +25,9 @@
 #endif
 #include "vendor.h"
 #include "usb_base.h"
+#ifdef MODWERK_USB_FUNCTIONS
+#include "usb_function.h"
+#endif
 #include "runtime.h"
 #include "boot.h"
 #include "flash.h"
@@ -339,7 +345,15 @@ uint32_t modwerk_ep0_dispatch(void)
         ++abandons;
         flush_receive();
     }
-    if (r.action == MV_PASS) return windows(SETUP, out);
+    if (r.action == MV_PASS) {
+        uint32_t n = windows(SETUP, out);
+#ifdef MODWERK_USB_FUNCTIONS
+        /* Neither stock's nor the vendor interface's: a module's USB function may answer it itself
+         * (ev_usb_control). Nothing is sent or stalled here then: stock's done path. */
+        if (!n && modwerk_usb_function_control()) return MODWERK_EP0_RECEIVING;
+#endif
+        return n;
+    }
     if (r.action == MV_STALL && diag(SETUP, out)) { /* mv_setup stalls requests it does not know */
         modwerk_ep0_reply = out;
         return 68;
@@ -362,6 +376,26 @@ uint32_t modwerk_ep0_dispatch(void)
         modwerk_ep0_reply = out;
         return FLASH_SLOTS_BYTES;
     }
+#ifdef MODWERK_USB_FUNCTIONS
+    /* USB FUNCTION (0xC1, bRequest 41, wValue 0, wLength 8): whether the base is about to reconnect or is
+     * reconnecting because a module's USB function came or went, and whether the configuration the host read holds
+     * one (usb_function.h). Read-only; bases without ot_usb_functions stall it. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 41 && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == MODWERK_USB_FUNCTION_STATUS_BYTES && !SETUP[7]) {
+        modwerk_ep0_reply = out;
+        return modwerk_usb_function_status(out);
+    }
+#endif
+#ifdef MODWERK_SETTINGS
+    /* Read-only install presets. The current panel choice remains private to the unit. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 42u && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == 4 + 8 * MODWERK_SETTINGS_ROOM && !SETUP[7]) {
+        unsigned n = modwerk_settings_presets(out);
+        if (!n) return MODWERK_EP0_REFUSE;
+        modwerk_ep0_reply = out;
+        return n;
+    }
+#endif
 #ifdef MODWERK_RUNTIME_SETS
     /* Exact baseline identity; only cached copies in the ISR. A stale cache
      * wakes its engine owner and refuses this read until it is refreshed. */
@@ -471,6 +505,9 @@ uint32_t modwerk_ep0_dispatch(void)
 void modwerk_ep0_poll(void);
 void modwerk_ep0_poll(void)
 {
+#ifdef MODWERK_USB_FUNCTIONS
+    modwerk_usb_function_isr(); /* ev_usb_isr: a module's USB function retires its endpoint before stock's loop */
+#endif
     if (!receiving) return;
     struct mv_transport *t = vendor();
     if (ENDPTSETUPSTAT & 1u) { /* The host gave this data stage up. */
@@ -516,6 +553,9 @@ void modwerk_ep0_bus_reset(void)
 {
     struct mv_transport *t = vendor();
     ++resets;
+#ifdef MODWERK_USB_FUNCTIONS
+    modwerk_usb_function_bus_end(); /* ev_usb_bus_end: a module's USB function goes back to alternate setting 0 */
+#endif
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     volatile_receiving=0;modwerk_volatile_reset(VOLATILE_SERVICE);wake();
 #endif
@@ -526,6 +566,11 @@ void modwerk_ep0_bus_reset(void)
         receiving = 0;
         flush_receive();
     }
+#ifdef MODWERK_USB_FUNCTIONS
+    /* The base took the unit off the bus itself, to show the host a configuration with or without a module's USB
+     * function (usb_function.c). The host is still there: an open sync or trial stays open. */
+    if (modwerk_usb_reconnecting()) return;
+#endif
     if (mv_reset(t)) wake();
 }
 
@@ -558,7 +603,16 @@ static void ep0_tick(void)
         if (quiet >= HOST_TIMEOUT_TICKS) ((void (*)(const char *, unsigned))0x4005a2b8u)("MODWERK CONNECTED", 0x60);
         heard = activity, quiet = 0;
         modwerk_flash_host = 1; /* a computer talks to this base: flash.c may confirm its slot */
+#ifdef MODWERK_USB_FUNCTIONS
+        modwerk_usb_function_host(); /* and it is back after the base's own reconnect */
+#endif
     } else if (quiet < HOST_TIMEOUT_TICKS) ++quiet;
+#ifdef MODWERK_USB_FUNCTIONS
+    /* ot_usb_functions changed: the base reconnects by itself (usb_function.c). A host that does not reach the
+     * vendor interface again is handled as unplugged; until then its silence is not counted. */
+    if (modwerk_usb_function_tick(!receiving) && mv_reset(vendor())) wake();
+    if (!modwerk_usb_reconnecting())
+#endif
     if (started && controller_started && mv_tick(vendor(), controller.phase != MU_NORMAL, HOST_TIMEOUT_TICKS)) wake();
     if (controller_started && controller.disconnecting) wake(); /* finish all rows of an abandoned set */
     if (modwerk_boot_tick()) wake(); /* an armed RAM boot is due */

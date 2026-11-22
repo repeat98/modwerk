@@ -25,7 +25,7 @@ import zlib
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
 CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
-          5: 'a person is at the unit'}
+          5: 'a person is at the unit', 6: 'an OS upload waits at UPGRADE OS NOW?: confirm it at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
 KEYS = {'TRIGPAGE': 0x01, 'SYN': 0x02, 'FLTR': 0x03, 'AMP': 0x04, 'FX': 0x05, 'MOD': 0x06, 'PERFORM': 0x07,
         'SAVEPROJ': 0x08, 'TAPTEMPO': 0x09, 'UNISON': 0x32, 'YES': 0x0a, 'UP': 0x0b, 'NO': 0x0c, 'LEFT': 0x0d, 'DOWN': 0x0e, 'RIGHT': 0x0f, 'TRK': 0x10, 'FUNC': 0x11,
@@ -90,41 +90,109 @@ def parse(msg):
     return msg[6], msg[7] & 0x3f, msg[8], msg[9:-1]
 
 
-def ask(name, *values, port='Digitone II', timeout=2.0):
-    import mido
-    pick = lambda names: [n for n in names if port.lower() in n.lower()]
-    ins, outs = pick(mido.get_input_names()), pick(mido.get_output_names())
-    if len(ins) != 1 or len(outs) != 1:
-        sys.exit('Need exactly one MIDI input and output named like %r.' % port)
-    with mido.open_input(ins[0]) as inp, mido.open_output(outs[0]) as out:
-        for _ in inp.iter_pending():
+class LinkError(Exception):
+    """No acceptable reply: the caller decides whether that ends the command."""
+
+
+# The sequence number: advanced for every request, so a late reply to an earlier one (this run or the last) never
+# matches the current one. Seeded from the clock so two runs in a row start apart.
+_seq = [int(time.time() * 10)]
+
+
+class MidiLine:
+    """The unit's USB MIDI pair, through mido."""
+
+    def __init__(self, port):
+        import mido
+        self.mido = mido
+        pick = lambda names: [n for n in names if port.lower() in n.lower()]
+        ins, outs = pick(mido.get_input_names()), pick(mido.get_output_names())
+        if len(ins) != 1 or len(outs) != 1:
+            sys.exit('Need exactly one MIDI input and output named like %r.' % port)
+        self.inp, self.out = mido.open_input(ins[0]), mido.open_output(outs[0])
+
+    def drain(self):
+        for _ in self.inp.iter_pending():
             pass
-        seq = int(time.time() * 10) & 0x7f
-        out.send(mido.Message('sysex', data=request(seq, name, *values)[1:-1]))
-        end = time.time() + timeout
-        while time.time() < end:
-            m = inp.poll()
-            if m is None:
-                time.sleep(0.002)
-                continue
-            if m.type == 'sysex':
-                got = parse(bytes([0xF0]) + bytes(m.data) + b'\xF7')
-                if got and got[0] == seq and got[1] == CMD[name]:
-                    return got
-    sys.exit('No answer: is a development base with the link on the unit, and USB MIDI connected?')
+
+    def send(self, frame):
+        self.out.send(self.mido.Message('sysex', data=frame[1:-1]))
+
+    def poll(self):
+        """The next SysEx message as F0..F7 bytes, or None."""
+        m = self.inp.poll()
+        while m is not None and m.type != 'sysex':
+            m = self.inp.poll()
+        return None if m is None else bytes([0xF0]) + bytes(m.data) + b'\xF7'
+
+    def close(self):
+        self.inp.close()
+        self.out.close()
 
 
-def mem(addr, n, port):
-    _, _, status, p = ask('mem', addr, n, port=port)
+def exchange(line, name, *values, timeout=2.0, accept=None):
+    """Send one request on line and return the first reply with its sequence number, its command and, if given,
+    accept(reply) true. Anything else (a late reply to an earlier request, a short reply) is skipped."""
+    _seq[0] += 1
+    seq = _seq[0] & 0x7f
+    line.drain()
+    line.send(request(seq, name, *values))
+    end = time.time() + timeout
+    while time.time() < end:
+        msg = line.poll()
+        if msg is None:
+            time.sleep(0.002)
+            continue
+        got = parse(msg)
+        if got and got[0] == seq and got[1] == CMD[name] and (accept is None or accept(got)):
+            return got
+    raise LinkError('No answer: is a development base with the link on the unit, and USB MIDI connected?')
+
+
+def ask(name, *values, port='Digitone II', timeout=2.0, accept=None, line=None):
+    own = line is None
+    line = MidiLine(port) if own else line
+    try:
+        return exchange(line, name, *values, timeout=timeout, accept=accept)
+    except LinkError as e:
+        sys.exit(str(e))
+    finally:
+        if own:
+            line.close()
+
+
+def packed_len(n):
+    """The length of n bytes packed 7 in 8, as link.c's pack() writes them."""
+    return n + (n + 6) // 7
+
+
+def mem_reply_fits(addr, n):
+    """A mem reply is this request's only if it echoes addr and carries exactly n bytes (or is a refusal)."""
+    def fits(got):
+        _, _, status, p = got
+        if status:
+            return True
+        return len(p) == 5 + packed_len(n) and get32(p, 0) == addr
+    return fits
+
+
+def mem(addr, n, port, line=None):
+    _, _, status, p = ask('mem', addr, n, port=port, accept=mem_reply_fits(addr, n), line=line)
     if status:
         sys.exit('refused: ' + STATUS.get(status, str(status)))
     return unpack7(p[5:])[:n]
 
 
-def screen(port):
+def screen(port, line=None):
     """The frame on the screen: its pointer, then the frame in eight reads (a draw between them can tear it)."""
-    front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port), 'big')
-    return b''.join(mem(front + at, 128, port) for at in range(0, FRAME_BYTES, 128))
+    own = line is None
+    line = MidiLine(port) if own else line
+    try:
+        front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port, line), 'big')
+        return b''.join(mem(front + at, 128, port, line) for at in range(0, FRAME_BYTES, 128))
+    finally:
+        if own:
+            line.close()
 
 
 def ok(name, *values, port):
@@ -212,10 +280,7 @@ def main():
             line += ', armed %d, person %d, presses by a person %d, posted %d, refused %d' % tuple(v[4:9])
         print(line)
     else:
-        _, _, status, p = ask('mem', a.addr, a.n, port=a.port)
-        if status:
-            sys.exit('refused: ' + STATUS.get(status, str(status)))
-        print('%08x: %s' % (get32(p, 0), unpack7(p[5:])[:a.n].hex()))
+        print('%08x: %s' % (a.addr, mem(a.addr, a.n, a.port).hex()))
 
 
 if __name__ == '__main__':

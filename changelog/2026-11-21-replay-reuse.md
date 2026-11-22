@@ -1,0 +1,1 @@
+`npm run pr:ready` no longer hands out a coding replay this computer has already scored on the same suite: a new tree whose case was solved before, in this checkout or another of its worktrees, keeps that score.

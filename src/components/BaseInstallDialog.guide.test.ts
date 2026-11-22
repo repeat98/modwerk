@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,7 +9,7 @@ import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-progress'
 import { BaseInstallDialog } from './BaseInstallDialog'
 import { pendingReask, resetReask } from '../community/diagnostics-reask'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
 // The browser's download of the .bin; the guide's own steps are what is tested here.
@@ -108,7 +109,7 @@ describe('the guided first install, for a member on the original OS', () => {
     const withAudio = open({ link, set: { name: 'Live', moduleIds: ['everb', USB_AUDIO_MODULE], usbAudio: { layout: 'master' } } }); await withAudio.render()
     expect(container.textContent).not.toContain('USB Audio is off in this base')
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Download base .bin')!); await settle(); await settle()
-    expect(withAudio.buildBase.mock.calls).toEqual([['master']])
+    expect(withAudio.buildBase.mock.calls).toEqual([[publishedUsbAudioPackage ? undefined : 'master']])
     await act(() => root.unmount()); root = createRoot(container); sessionStorage.clear()
     const without = open({ link, set: { name: 'Live', moduleIds: ['everb'] } }); await without.render()
     expect(container.textContent).not.toContain('USB Audio is off in this base')

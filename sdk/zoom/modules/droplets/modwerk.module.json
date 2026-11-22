@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 3,
+  "id": "droplets",
+  "name": "Droplets",
+  "version": "0.3.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/droplets"
+  },
+  "presentation": {
+    "label": "DROPLETS",
+    "family": "Granular delay",
+    "summary": "A granular delay: short grains sprayed from the last 2.5 s, with pitch steps and patterns, scan, randomness and feedback. Feedback at 100 freezes the buffer.",
+    "overview": "A granular delay: short grains sprayed from the last 2.5 s, with pitch steps and patterns, scan, randomness and feedback. Feedback at 100 freezes the buffer.",
+    "highlights": [
+      "Hold a chord, then engage Lock and listen for a captured cloud after the input stops."
+    ],
+    "usage": [
+      "Add Droplets from the Delay group to a spare patch.",
+      "Hold a chord, then engage Lock and listen for a captured cloud after the input stops.",
+      "Use the page buttons to reach the remaining controls."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Droplets.",
+    "steps": [
+      "Add Droplets from the Delay group to a spare patch.",
+      "Hold a chord, then engage Lock and listen for a captured cloud after the input stops."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Pitch",
+      "default": 5,
+      "doc": "params[5]. Named steps: -24, -12, -7, -5, -3, Unity, +3, +5, +7, +12, +24 semitones for every grain. Range 0–10.",
+      "labels": null
+    },
+    {
+      "name": "Rate",
+      "default": 45,
+      "doc": "params[6]. Grains per second, ~2 .. 60 (free running). Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Size",
+      "default": 40,
+      "doc": "params[7]. Grain length 10 .. 250 ms, squared curve. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Contr",
+      "default": 50,
+      "doc": "params[8]. Grain envelope: 0 = sharp hit, 50 = smooth, 100 = slow swell with a sharp end. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Scan",
+      "default": 25,
+      "doc": "params[9]. 0..49: where grains start, 30 ms .. 2.5 s behind the live input (a place in the frozen buffer when Locked). 50..100: the start point travels through the last 2.5 s, still at 50 up to twice speed at 100. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Pattn",
+      "default": 0,
+      "doc": "params[10]. Named steps: pitch sequence stepped per grain, on top of Pitch. Off, Oct, Oct-, Fifth, Pwr, Maj, Min, Down, Sus (fixed cycles), Pent, Wide (random picks). Range 0–10.",
+      "labels": null
+    },
+    {
+      "name": "Rand",
+      "default": 20,
+      "doc": "params[11]. 0..33: spray (random start, up to 0.5 s) and stereo spread; 33..66 adds random pitch jumps, size, timing and level; 66..100 adds reversed grains (up to half). Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Feed",
+      "default": 30,
+      "doc": "params[12]. Grains back into the buffer, 0 .. 99; 100 = Lock: the buffer freezes (nothing new is recorded) and the grains keep playing from it. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "params[13]. Dry/wet. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Droplets.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 492
+    },
+    "effectVersion": "0.03",
+    "dspCost": 50.0,
+    "binary": {
+      "sha256": "8f04eef9234caef2427aa62866fd89e4fdf0440e9ac1a04aafdaa61a49e909ef",
+      "bytes": 21590,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "droplets-0.03",
+        "asset": "Droplets.ZDL"
+      }
+    },
+    "screen": "live",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 21590,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 50 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.3.0",
+    "sourceSha256": "8f04eef9234caef2427aa62866fd89e4fdf0440e9ac1a04aafdaa61a49e909ef",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Droplets from the Delay group to a spare patch.",
+          "Hold a chord, then engage Lock and listen for a captured cloud after the input stops.",
+          "Use the page buttons to reach the remaining controls."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Droplets in the MultiStomp Editor",
+      "alt": "Droplets editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/droplets.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Droplets embedded cover",
+      "alt": "The monochrome effect cover for Droplets",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "0.3.0",
+        "imageSha256": "8f04eef9234caef2427aa62866fd89e4fdf0440e9ac1a04aafdaa61a49e909ef",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

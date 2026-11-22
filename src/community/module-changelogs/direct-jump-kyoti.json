@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "A jump now counts from the last restart, PLAY or the last normal pattern change: after a normal change, the new pattern lands in phase with the one that started there.",
+      "Trig conditions carry on across a jump: 1:2 and the other A:B counts stand where the new pattern's would since that restart. A held [FILL] stays on, and a PRE trig right after the jump plays.",
+      "A jump now lands just before the step, so the new pattern's first step is never late, and a cue made in the playing pattern's last step lands on its grid point too.",
+      "With LFO AUTO CHANGE on, each track's new LFOs arrive with its first trig of the new pattern; with SILENCE TRACKS on, the tracks a jump silences are released just before the step, without a pop.",
+      "Known issue: not yet run on an MKII; the author ran it on his MKI, both his card build and this USB package."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-10-25",
     "changes": [

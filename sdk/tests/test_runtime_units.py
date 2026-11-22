@@ -45,6 +45,8 @@ class RuntimeUnits(unittest.TestCase):
             return self.data[address - 0x40001000:address - 0x40001000 + n]
         if address == 0x40002002 and n == 4:
             return struct.pack('>I', 0x40001000)
+        if address == 0x40002100 and n == 6:
+            return b'\x4e\x71' * 3
         raise ValueError('Outside authored synthetic fixture')
 
     def prepare(self, name='work', selected=frozenset({'TEST'}), selected_builder=builder):
@@ -96,6 +98,25 @@ class RuntimeUnits(unittest.TestCase):
         raw = runtime_units.compile_linked(self.module, self.sdk, builder, self.root / 'raw', 'm68k-elf-', {'TEST'},
                                            [self.guard], self.read, events=False)
         self.assertEqual((raw['image'], raw['hooks']), (normal['image'], []))
+
+    def test_runtime_json_rests_mark_its_own_detours_in_the_package(self):
+        (self.sdk / 'row.s').write_text('.include "remix.inc"\n.text\n.global entry\nentry:\n.ifdef SC_KEY\nnop\n.endif\nrts\n'
+                                        '.ifdef MODWERK_EVENTS\n.global hook\nhook:\nrts\n.global in_use\nin_use:\nmoveq #0,%d0\nrts\n.endif\n')
+        self.module.detours = (SimpleNamespace(site=0x40002100, expect=b'\x4e\x71' * 3, unit='row', symbol='hook',
+                                               target=None, kind='jmp', pad_to=None),)
+        (self.sdk / 'modules/test').mkdir(parents=True)
+        declaration = self.sdk / 'modules/test/runtime.json'
+        declaration.write_text('{"schema": 1, "subscribe": [{"event": "ev_in_use", "fn": "in_use", "order": 50}], '
+                               '"rests": ["0x40002100"]}')
+        result = self.prepare()
+        data = builder.package(result['image'], result['bss'], result['hooks'], result['offsets'], result['sites'],
+                               name='test', hashed=True, title='TEST', layout=1, copies=result['copies'], abi=8)
+        length = lambda address: data[data.index(struct.pack('>I', address)) + 4]
+        self.assertEqual(length(0x40002100), 6 | builder.REST_FLAG)  # the detour rests with the module ...
+        self.assertEqual(length(0x40002002), 4)                       # ... a table reference never
+        declaration.write_text(declaration.read_text().replace('0x40002100', '0x40002002'))
+        with self.assertRaisesRegex(ValueError, 'only its own detours'):
+            self.prepare('table-rests')
 
     def test_source_drift_and_mismatched_callable_variant_are_refused(self):
         (self.sdk / 'row.s').write_text('.text\n.global entry\nentry:\nnop\nrts\n')

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { api } from './api'
 import { PageTraffic } from './PageTraffic'
 import { SiteCounts } from './SiteCounts'
+import { InstallActivityChart } from './InstallActivityChart'
+import { installActivityDays, installSeries } from './install-activity'
 import { CommunityInsights } from './CommunityInsights'
 import { HOURLY_ERA_METRICS, hourlyRows, usageCsv, usageInsights, usageMachineBreakdown, usageMetrics } from './statistics-insights'
 import type { UsageMetric } from './statistics-insights'
@@ -40,6 +42,7 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
   const [resolution,setResolution] = useState<'day'|'hour'>('day')
   const [selectedDay,setSelectedDay] = useState('')
   const insights = usageInsights(data), covered = !!data.collectionStarted, hours = hourlyRows(data)
+  const activityDays = installActivityDays(data, insights.rows)
   // Failed builds and Digitakt/Digitone builds are counted from the breakdowns' start, so earlier windows cannot be compared.
   const breakdownsDay = data.breakdownsStarted?.slice(0,10) ?? null
   const hourlyDay = data.hourlyStarted?.slice(0,10) ?? null
@@ -71,6 +74,7 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
   }
 
   return <>
+    <InstallActivityChart days={activityDays}/>
     <DiscordInviteStatistics data={data} />
     <dl className="admin-overview statistics-cards">
       <div><dt>Visitors today</dt><dd>{covered ? format(insights.today) : '—'}</dd><small>Estimated unique visitors · today is partial</small></div>
@@ -116,8 +120,8 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
       {breakdownsDay && data.devices && <p className="service-note">Unattributed events are the difference between overall totals and named machines, including older browsers and earlier collection. They cannot be reassigned retrospectively.{data.machineCoverageExpanded ? ' Digitakt II and Analog Rytm MKII attribution became available on ' + data.machineCoverageExpanded.slice(0, 10) + '; that day is partial. Earlier zero counts do not imply no builds.' : ' This backend has not reported expanded machine coverage yet.'}</p>}
       <details className="statistics-daily"><summary>Daily counts and CSV export</summary><button className="button button-quiet" onClick={exportDaily}>Export daily CSV</button><div className="statistics-table" role="region" aria-label="Daily usage counts" tabIndex={0}>
         <table><caption>UTC days · today and the collection start day are partial · — means not collected</caption>
-          <thead><tr><th scope="col">Date</th>{usageMetrics.map(([key,title]) => <th scope="col" key={key}>{title}</th>)}</tr></thead>
-          <tbody>{insights.rows.map(({day,counts}) => <tr key={day}><th scope="row">{day}{day===data.to || day===data.collectionStarted?.slice(0,10) ? ' *' : ''}</th>{usageMetrics.map(([key]) => <td key={key}>{counts ? format(counts[key]) : '—'}</td>)}</tr>)}</tbody>
+          <thead><tr><th scope="col">Date</th>{usageMetrics.map(([key,title]) => <th scope="col" key={key}>{title}</th>)}{data.installActivity && installSeries.slice(1).map(([key,label]) => <th scope="col" key={key}>{label}</th>)}</tr></thead>
+          <tbody>{insights.rows.map(({day,counts}, index) => <tr key={day}><th scope="row">{day}{day===data.to || day===data.collectionStarted?.slice(0,10) ? ' *' : ''}</th>{usageMetrics.map(([key]) => <td key={key}>{counts ? format(counts[key]) : '—'}</td>)}{activityDays[index]?.values.slice(1).map((value, i) => <td key={installSeries[i+1][0]}>{value === null ? '—' : format(value)}</td>)}</tr>)}</tbody>
         </table>
       </div></details>
     </> : <p className="service-note" role="status">Waiting for the first recorded visit. Earlier traffic is unavailable.</p>}
@@ -132,7 +136,7 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
 }
 
 export function StatisticsPanel({onNavigate}: {onNavigate: (tab: 'issues'|'comments'|'modules', moduleId?: string) => void}) {
-  const [days,setDays] = useState(7), [refresh,setRefresh] = useState(0)
+  const [days,setDays] = useState(30), [refresh,setRefresh] = useState(0)
   const [data,setData] = useState<UsageStatistics|null>(null), [community,setCommunity] = useState<AdminInsights|null>(null)
   const [error,setError] = useState(''), [communityError,setCommunityError] = useState(''), [loading,setLoading] = useState(true)
   useEffect(() => {

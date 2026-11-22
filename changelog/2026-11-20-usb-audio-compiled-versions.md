@@ -1,0 +1,1 @@
+USB Audio release checks compare the version saved in a set with the compiled layouts and the hardware status with the module’s own test record. The download check recognizes the configurable USB Audio package and still flags obsolete files.

@@ -1,0 +1,178 @@
+{
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-20",
+  "machine": "zoom-ms-70cdr",
+  "firmware": "2.10",
+  "reason": "Owner approved these exact software-verified releases for listing with the hardware status displayed as untested.",
+  "modules": {
+    "spiral": {
+      "version": "1.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "7982e70502a23cf3f7862f7f5c4e83a2aaf8a26e115444a98e97db47d75ffd71",
+      "sourcePath": "src/custom/spiral"
+    },
+    "hydra": {
+      "version": "1.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "5e93e918f46005be8e73557c01fc7f51d266b7e3ffc0a0b2937a21b35bc5a519",
+      "sourcePath": "src/custom/hydra"
+    },
+    "spool": {
+      "version": "1.2.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "18c7cfc2494453074a0c4e68ee27706c3f46b37673b55a725c1ce1aa7a5f88dc",
+      "sourcePath": "src/airwindows/tapeecho4"
+    },
+    "dissolve": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "375d3b5da9efd8629ce210f553e74917cf9847c961ece5862c2f3c628fcf891d",
+      "sourcePath": "src/custom/dissolve"
+    },
+    "chopdly": {
+      "version": "1.4.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "22d0052c79b01dcef092b968905f1c7a5287b6c83a54c8609f73bd718082450b",
+      "sourcePath": "src/custom/chopdly"
+    },
+    "droplets": {
+      "version": "0.3.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "8f04eef9234caef2427aa62866fd89e4fdf0440e9ac1a04aafdaa61a49e909ef",
+      "sourcePath": "src/custom/droplets"
+    },
+    "gyre": {
+      "version": "1.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "c7de68b262567e37ecec35a4cdae49b0caf88e0b1ffc495d358b78975c0b621a",
+      "sourcePath": "src/custom/gyre"
+    },
+    "galactic": {
+      "version": "1.2.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "7f41a7fe6f1e685abd2aa93f117d58cd62ea9749a722ebb2671006550a3f0353",
+      "sourcePath": "src/airwindows/galactic"
+    },
+    "rooms": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "8a08e4048e640ade0c2dbeb6562cc77578b1aa3924a323427c16ede754e5ec1b",
+      "sourcePath": "src/custom/rooms"
+    },
+    "horizon": {
+      "version": "0.3.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "e7422a884ad56e13346f2dc186da4e3b2599beee756ebeac2a08970208e600d2",
+      "sourcePath": "src/custom/horizon"
+    },
+    "horizonl": {
+      "version": "0.2.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "ca0d9022243ab343ce115aba55560074de6ea30b8e20fdee496f097ed413ee3b",
+      "sourcePath": "src/custom/horizonl"
+    },
+    "arrakis": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "5c7957d9d2970378439adcada6dc504dba07118597c70fb7370a13d257294a32",
+      "sourcePath": "src/custom/arrakis"
+    },
+    "taffy": {
+      "version": "3.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "6dd61dca204c34e8701c614796475c676843382cee8a82f6f675624c09b839ee",
+      "sourcePath": "src/custom/taffy"
+    },
+    "genloss": {
+      "version": "1.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "04ca88ae2dc7f4e2c2c8d0fe349434736b2ccf49cc75f7b69793369d8264696e",
+      "sourcePath": "src/custom/genloss"
+    },
+    "shatter": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "9d80c0b591d920b70f3e7457d0f709e99e2dfa80f41052dece3b95463346eaf0",
+      "sourcePath": "src/custom/shatter"
+    },
+    "dustbox": {
+      "version": "1.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "46edd0332f2cd18dcebee93ad43e0dc66221719b4f3fdd12df27c8ac3ba58928",
+      "sourcePath": "src/custom/dustbox"
+    },
+    "corrupt": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "6b97d1d821a1fdce23d2522f4e8abb20a15dea44935ba579dd6c4555ced326a4",
+      "sourcePath": "src/custom/corrupt"
+    },
+    "oxide": {
+      "version": "1.1.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "8f07a8b6d226e980157c45b5b3ebaa1e8ce1f9461d42b9833cbcbdb6daa7d172",
+      "sourcePath": "src/airwindows/totape9"
+    },
+    "deform": {
+      "version": "0.4.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "9d2daaaccf6808ab09e4c3b215007c052d86a25cedde6d90eee5503a0c904369",
+      "sourcePath": "src/custom/deform"
+    },
+    "rewire": {
+      "version": "1.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "fc2297e2665799e58ba1323654fc055eef033dd8f70308ef7359a03ab5949864",
+      "sourcePath": "src/custom/rewire"
+    },
+    "tonic": {
+      "version": "0.1.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "388343ba778aa7b89709b0aa3363ec4c4c936a19f511c2de9ceaaf37813cc7a8",
+      "sourcePath": "src/custom/tonic"
+    },
+    "flower": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "3075e592e86fe95ff9744112a7997766aac5df127108653dd81746ee7d64ae15",
+      "sourcePath": "src/custom/flower"
+    },
+    "klang": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "2f64691a4ab840a2094d558d5f02809ff1c4ca22b8b8cc61ff71a01486335173",
+      "sourcePath": "src/custom/klang"
+    },
+    "howl": {
+      "version": "2.0.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "2f8a67f2fc75d1bc37961c7f02db4ef24493362c80786c6e6400b1810254a341",
+      "sourcePath": "src/custom/howl"
+    },
+    "carillon": {
+      "version": "0.4.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "327646298c5f164a3df3cd31fee16ebd802331edfb143b2bd3680c85ddcd1f1b",
+      "sourcePath": "src/custom/carillon"
+    },
+    "chimera": {
+      "version": "0.3.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "59ba2eb3252fce589fa8741e0fb14c868ee6be238817ab8317ede5f2874a0704",
+      "sourcePath": "src/custom/chimera"
+    },
+    "ring": {
+      "version": "0.3.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "7be0ab44802cad6e3ebe08f94c23c51e0dcafc4e0ccaaf9ce596b336ad2d094c",
+      "sourcePath": "src/custom/ring"
+    },
+    "skull": {
+      "version": "0.6.0",
+      "sourceRevision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+      "binarySha256": "20655be1d98570066a255273296696aeef19675f68a9b184fb6033911384f008",
+      "sourcePath": "src/custom/skull"
+    }
+  },
+  "sourceRepository": "https://github.com/themanro/ZoomMultistompZDL"
+}

@@ -202,7 +202,8 @@
       "-DQUEUE_POST_AT=0x40001896",
       "-DKEY_INDEX_AT=0x401f3d10",
       "-DKEY_BITS_AT=0x445a2e30",
-      "-DFRAME_HZ_MEASURED=1500"
+      "-DFRAME_HZ_MEASURED=1500",
+      "-DUPLOAD_AT=0x4038bec0"
     ],
     "defsym": {
       "SYSEX_TABLE": "0x40207f9e"

@@ -322,7 +322,7 @@ The public audio-preview announcement’s **Show me how** action opens `#module/
 
 Declared module recordings play in the card and main detail preview; the screenshots gallery no longer repeats them as standalone audio tiles. Community submissions retain their contributor, caption and removal controls in the Previews tab, and media credits remain available.
 
-Cards with recordings retain the waveform strip on thumbnail hover or keyboard focus. Clicking the waveform seeks and starts playback; playing controls remain visible after pointer exit. Card dimensions and the hover description stay unchanged. The idle play indicator matches the Add button height: 32px on desktop and 40px on phones. Touch users open the module page to play.
+Card thumbnails show a summary on hover. For recordings, the cover link has a tooltip and hover or keyboard focus reveals the waveform. Seeking starts playback. Playing controls stay visible after pointer exit. The idle play indicator matches Add (32px on desktop, 40px on phones). On touch, open the module page for the description or playback.
 
 The module-page player has a persistent audio strip below the illustration, with 44px Play/Pause and seek targets. Play/Pause comes before seeking in keyboard order; elapsed and total times sit below the waveform. Pressing Play loads the clip on touch. A manual carousel provides previous/next controls and a clip counter when multiple previews are available. Modules without recordings retain their artwork and an Add preview action. The standalone preview player uses this layout too; forum and gallery players keep their existing layout.
 
