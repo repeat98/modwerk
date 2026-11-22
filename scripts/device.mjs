@@ -755,6 +755,8 @@ if (command === 'serve') {
     const packages = file.split(',').flatMap(name => name === '+refuse'
       ? [runtimePackage(identity.base, tick, 0x6d770002, [ENTRY]).data, runtimePackage(identity.base, tick, 0x6d770003, [[0x40000402, [0xff, 0xe4]]]).data]
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
+    // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
+    if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
     const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
     const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
     console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
