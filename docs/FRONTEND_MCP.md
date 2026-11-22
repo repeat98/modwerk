@@ -293,7 +293,7 @@ other way round). If Keep or Undo is not confirmed, the keepalive stops so the u
 and the tool reports the loader's phase from a fresh read. The upload base is the one the unit names in HELLO (a
 development build's layout digest); `--digitone-base` takes the build's `.identity` file (`machine:base --dev
 --out`) and refuses a unit running another build. There is
-no raw memory, key or flashing tool ([LOADER.md](../sdk/machines/digitone-ii/LOADER.md)). Tests run against
+no raw memory, key or flashing tool (the loader and its link: `sdk/machines/digitone-ii/LOADER.md` on the Digitone II base drafts, #1842). Tests run against
 `fakeDigitone` in [`digitone-device.test.mjs`](../scripts/digitone-device.test.mjs).
 
 ## A member's unit through a remote session
