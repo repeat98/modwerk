@@ -131,12 +131,11 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
-static unsigned test_busiest, test_tracks; /* machine_registry.c's bank: one pattern's busiest step and tracks that trig */
-unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16])
+static unsigned test_busiest, test_tracks; /* machine_registry.c: the playing pattern's busiest step and tracks that trig */
+unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2])
 {
-    memset(most, 0, 16), memset(tracks, 0, 16);
-    most[3] = (uint8_t)test_busiest, tracks[3] = (uint8_t)(test_tracks > test_busiest ? test_tracks : test_busiest);
-    return 16u;
+    most[0] = (uint8_t)test_busiest, tracks[0] = (uint8_t)(test_tracks > test_busiest ? test_tracks : test_busiest);
+    return 1u;
 }
 static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
 uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
@@ -538,7 +537,8 @@ int main(void)
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 70u, 30u, 0) && modwerk_status_pick_busy(5, 1, "Amiga", 70u, 0, 0));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_played = 0, frame_newest = 600u;
-      CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 0, 300u, 0) && refused_booked == 600u && refused_busy && strstr(shows(), "|CPU|100%|")); /* past the line already: never past 100 % */
+      CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 0, 300u, 0));      /* past the line already: a free pick is made */
+      CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 30u, 300u, 0) && refused_booked == 600u && refused_busy && strstr(shows(), "|CPU|100%|")); /* a dearer one: never past 100 % */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_newest = 0; }
     /* The kept figure: after STOP, the share of the last four seconds played, until four more replace it. */
@@ -728,6 +728,17 @@ int main(void)
       test_busiest = 0;
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
+    /* A pick is not refused for load it does not add (owner): over the line already, a near-free one is made; a dearer
+     * one is refused, and when the installed modules' cost at rest is what leaves no room, the box says so. */
+    { transport_stopped = 1, frame_adjust = 0, frame_played = 0, frame_newest = 0, mw_stock_reserve = 1000u, test_rest = 300u;
+      CHECK(!modwerk_status_pick_busy(12, 0, "Verb", 15u, 0, 0) && open == CLOSED);        /* 130 % before, +1.5 */
+      CHECK(modwerk_status_pick_busy(12, 0, "Echo", 99u, 0, 0) && refused_busy == WHY_UNUSED);
+      CHECK(strstr(shows(), "UNUSED MODULES"));
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_rest = 0;
+      CHECK(modwerk_status_pick_busy(12, 0, "Echo", 250u, 0, 0) && refused_busy != WHY_UNUSED); /* 125 %: the pick's own */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      mw_stock_reserve = RESERVE_ADAPTIVE; }
     /* Playing, what a pick replaces leaves the last four seconds too: a swap for a lighter module is never refused. */
     { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1150u;

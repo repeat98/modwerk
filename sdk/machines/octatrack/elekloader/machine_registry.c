@@ -213,16 +213,21 @@ static int elsewhere(const Part *part, unsigned track, const Machine *who)
     for (unsigned t = 0; t < 8u; ++t) if (t != track && owner(m, n, part, t, &t_who) && t_who == who) return 1;
     return 0;
 }
-/* status.c's stock reserve: for each of the current bank's 16 patterns, the most tracks that trig on one step
- * (`most`) and how many trig on any (`tracks`), 0 to 8 (each pattern's track record starts with its 64-step trig mask,
- * the last eight steps first, as Pattern Sample Locks reads it). Steps past a track's length count too: the safe side.
- * 16, or 0 without a bank. */
+/* status.c's stock reserve: for the pattern that plays, and the one queued in the same bank, the most tracks that trig
+ * on one step (`most`) and how many trig on any (`tracks`), 0 to 8 (each pattern's track record starts with its 64-step
+ * trig mask, the last eight steps first, as Pattern Sample Locks reads it). Steps past a track's length count too: the
+ * safe side. Owner, 22 November 2026: a pick is judged against the pattern that plays, not the bank's busiest; a later
+ * switch to a busier one is the guard's, the ceiling's and the late-entry wait's. Their count, or 0 without a bank. */
 #define PATTERN_STRIDE 0x8ed8u
 #define PATTERN_TRACK 0x91au
-unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16])
+#define PLAYING 0x800065bdu /* current bank and pattern, then the queued bank and pattern (OCTATRACK_DRIVING.md) */
+unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2])
 {
     if (!valid_bank()) return 0;
-    for (unsigned p = 0; p < 16u; ++p) {
+    unsigned at[2] = {U8(PLAYING + 1u), U8(PLAYING + 3u)}, n = U8(PLAYING + 2u) == U8(PLAYING) && at[1] != at[0] ? 2u : 1u;
+    for (unsigned i = 0; i < n; ++i) {
+        unsigned p = at[i];
+        if (p > 15u) { most[i] = tracks[i] = 8u; continue; } /* not a pattern of the bank: the safe side */
         const volatile uint8_t *pattern = AT(U32(BANK) + PATTERN_STRIDE * p);
         unsigned top = 0, any = 0;
         for (unsigned s = 0; s < 64u; ++s) {
@@ -235,9 +240,9 @@ unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16])
         }
         unsigned count = 0;
         for (; any; any &= any - 1u) ++count;
-        most[p] = (uint8_t)top, tracks[p] = (uint8_t)count;
+        most[i] = (uint8_t)top, tracks[i] = (uint8_t)count;
     }
-    return 16u;
+    return n;
 }
 /* status.c's stock reserve: what the current Part's module machines cost but track `skip` (8: none), each track by its
  * `each` and the first of a machine by its `first` too, less `net` (the sample a track would otherwise play), never

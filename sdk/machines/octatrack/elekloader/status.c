@@ -477,23 +477,23 @@ extern uint8_t modwerk_test_live_fx[16];
 #else
 #define LIVE ((const volatile uint8_t *)0x80000ec4u) /* the FX ids each track runs: FX1 T1-T8, then FX2 */
 #endif
-/* Modules never take the room stock needs later: a pick is judged as if the Part already played the stock load its bank's
- * patterns ask for, with what the modules it runs cost on top (their first and each from the site's table), when that
- * is more than the unit measures. Owner, 22 November 2026: Tape Echos placed on an empty pattern, then a busy pattern
- * played, ran the unit past its frame; and refusals should be rare on empty and medium projects. A pattern's longest
- * frame follows how many tracks trig on one step (samples on all eight, none trigging: 37.1 %, one: 64.2 %, then about
- * 5.4 % a track to 101 % at eight, owner's MKII, base 0.8): the reserve is the bank's busiest step's figure
- * (reserve_by_step) with a margin for what a pattern cannot show (delays opening added 7 % at eight), never under a
- * floor, so a project built on an empty pattern keeps room for its trigs. Installed modules' cost at rest (the table's
- * `rest`) is booked on top. A pick already made stays when the bank grows busier; the next one sees it.
- * mw_stock_reserve fixes the reserve instead (development bases and tests); ~0 leaves it to the bank. */
+/* Modules never take the room stock needs: a pick is judged as if the Part already played the stock load the pattern
+ * that plays (and one queued) asks for, with what the modules it runs cost on top (their first and each from the site's
+ * table), when that is more than the unit measures. Owner, 22 November 2026: most picks must not be refused, so not
+ * against the bank's busiest pattern (one stacked eight-track pattern refused every pick in a bank); a later switch to
+ * a busier one is the guard's, the ceiling's and the wait's. A pattern's longest frame follows how many tracks trig on
+ * one step (samples on all eight, none trigging: 37.1 %, one: 64.2 %, then about 5.4 % a track to 101 % at eight,
+ * owner's MKII, base 0.8): the reserve is that figure (reserve_by_step) with a margin for what a pattern cannot show
+ * (delays opening added 7 % at eight), never under a floor, so a pick made stopped on an empty pattern keeps room for
+ * its first trigs. Installed modules' cost at rest (the table's `rest`) is booked on top. mw_stock_reserve fixes the
+ * reserve instead (development bases and tests); ~0 leaves it to the pattern. */
 #define RESERVE_ADAPTIVE 0xffffffffu
 #ifndef MW_STOCK_RESERVE
 #define MW_STOCK_RESERVE RESERVE_ADAPTIVE
 #endif
 /* Per mille of a frame, each count measured; the set's `stock` carries newer ones. A track that trigs but not on the
  * busiest step adds about 2.6 % more (one trig on every step of eight tracks: 82.3 %, against 64.2 % for one on one
- * step; modwerk-bd, twin 7a5b0949), so each pattern is judged by its own pair and the bank by its busiest pattern. */
+ * step; modwerk-bd, twin 7a5b0949), so a pattern is judged by both. */
 #define TRACK_PLAY 26u
 static const uint16_t reserve_by_step[9] = {371u, 642u, 700u, 753u, 798u, 846u, 905u, 958u, 1010u};
 #define RESERVE_MARGIN 80u
@@ -504,8 +504,9 @@ static const uint16_t reserve_by_step[9] = {371u, 642u, 700u, 753u, 798u, 846u, 
 #endif
 volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame, or RESERVE_ADAPTIVE */
                   mw_track_stock = MW_TRACK_STOCK;     /* one sample track's share: (98.7 - 40.8 %) / 8 */
-/* machine_registry.c: per pattern of the bank, the most tracks that trig on one step and how many trig at all */
-unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16]);
+/* machine_registry.c: for the pattern that plays and the queued one, the most tracks that trig on one step and how
+ * many trig at all */
+unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2]);
 /* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake);
@@ -531,10 +532,10 @@ static uint32_t frame_line(void)
 static uint32_t stock_reserve(void)
 {
     if (mw_stock_reserve != RESERVE_ADAPTIVE) return mw_stock_reserve;
-    uint8_t most[16], tracks[16];
-    unsigned patterns = modwerk_machine_bank_trigs(most, tracks);
+    uint8_t most[2], tracks[2];
+    unsigned patterns = modwerk_machine_pattern_trigs(most, tracks);
     uint32_t r = tuned(RESERVE_STEP_ID, reserve_by_step[0]), play = tuned(TRACK_PLAY_ID, TRACK_PLAY);
-    for (unsigned p = 0; p < patterns && p < 16u; ++p) {
+    for (unsigned p = 0; p < patterns && p < 2u; ++p) {
         unsigned n = most[p] > 8u ? 8u : most[p], t = tracks[p] > 8u ? 8u : tracks[p] < n ? n : tracks[p];
         uint32_t v = tuned(RESERVE_STEP_ID + n, reserve_by_step[n]) + play * (t - n);
         if (v > r) r = v;
@@ -1302,6 +1303,7 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
  * the DSP; a CPU row, solid what the unit takes now and shaded what the pick adds, both of what fits (`whole`), its
  * figure the now, never past 100 %; for a module only on the ColdFire, what makes room, or PART IS BUSY (`busy`) when
  * the Part's own sound is why. `used`, `add`, `whole` in the same unit; `dsp` the pick's DSP cycles, 0 none. */
+enum { WHY_CHANGE, WHY_PART, WHY_UNUSED }; /* CPU FULL's last line (`busy`) */
 static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t whole, unsigned busy, uint32_t dsp)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
@@ -1383,15 +1385,23 @@ uint32_t modwerk_status_module_rest(uint32_t module)
  * play, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is
  * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
  * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
+#define NEAR_FREE 20u /* 2 %: Mini Verb's first 1.5, E-Verb's 0.7, Vibrato's 0 */
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
 {
     uint32_t measured = measured_load(gone) + add, line = frame_line(), track_stock = tuned(TRACK_STOCK_ID, mw_track_stock);
     uint32_t net = machine ? (add > track_stock ? add - track_stock : 0u) : add; /* a machine in a sample's place */
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
+    /* A pick is not refused for load it does not add (owner, 22 November 2026): with the unit over the line already, a
+     * near-free one is made. shortcut: one threshold for every pick; per module from the table if one ever reads wrong. */
+    uint32_t before = load - add, rest = modwerk_machine_rest_booked();
+    if (before >= line && add <= NEAR_FREE) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    uint32_t reserve = stock_reserve(), modules = stock - net - reserve, before = load - add; /* the Part's modules but this pick */
-    cpu_refusal_box(slot, machine, label, before, add, line, before > reserve + modules, dsp);
+    uint32_t reserve = stock_reserve(), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
+    /* Why, in the box: modules installed and used nowhere, when their cost at rest is what leaves no room; the Part's own
+     * sound; else the Part's modules, one of which to change. */
+    unsigned why = rest && load - rest < line ? WHY_UNUSED : before > reserve + modules ? WHY_PART : WHY_CHANGE;
+    cpu_refusal_box(slot, machine, label, before, add, line, why, dsp);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1481,7 +1491,7 @@ static void refused_box(unsigned char *frame)
         if (refused_dsp_add) /* as DSP FULL draws its DSP row */
             label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, refused_dsp + refused_dsp_add, refused_dsp_add), percent(89u, 34u, refused_dsp + refused_dsp_add);
         label(23u, y, "CPU"), share_bar(frame, 45u, y, 40, 6, cpu + part, part), percent(89u, y, cpu);
-        if (!refused_dsp_add) label(23u, 42u, refused_busy ? "PART IS BUSY" : "CHANGE ONE FIRST");
+        if (!refused_dsp_add) label(23u, 42u, refused_busy == WHY_UNUSED ? "UNUSED MODULES" : refused_busy == WHY_PART ? "PART IS BUSY" : "CHANGE ONE FIRST");
         return;
     }
     const int32_t add = (int32_t)refused[4];

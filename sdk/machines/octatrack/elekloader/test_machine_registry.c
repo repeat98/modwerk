@@ -13,6 +13,7 @@ static unsigned failures;
 static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168 * track): byte 0 is "playing" */
 static uint32_t render_states[8 * 10]; /* stock's render states (0x80004898 + 40 * track): +4 the RTRG count */
 static uint8_t live_fx[16]; /* what each slot runs (0x80000ec4): FX1 T1-T8, then FX2 */
+static uint8_t playing[16];  /* 0x800065b8: +5 the current bank, +6 its pattern, +7 and +8 the queued ones */
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
@@ -26,7 +27,7 @@ static struct segment segments[] = {
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
     {0x800049d8u, sizeof stock_voices, stock_voices}, {0x80004898u, sizeof render_states, (uint8_t *)render_states},
-    {0x80000ec4u, sizeof live_fx, live_fx},
+    {0x80000ec4u, sizeof live_fx, live_fx}, {0x800065b8u, sizeof playing, playing},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -645,18 +646,22 @@ static void clear_sigs(void)
  * record's first eight bytes, the last eight steps first). */
 static void check_busiest_step(void)
 {
-    uint8_t *base = (uint8_t *)AT(U32(BANK)), most[16], tracks[16], none[16] = {0};
-    CHECK(modwerk_machine_bank_trigs(most, tracks) == 16u && !memcmp(most, none, 16) && !memcmp(tracks, none, 16));
+    uint8_t *base = (uint8_t *)AT(U32(BANK)), most[2], tracks[2];
+    playing[5] = playing[7] = 2u, playing[6] = playing[8] = 0;                                   /* C01, nothing queued */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && !most[0] && !tracks[0]);
     for (unsigned t = 0; t < 5u; ++t) base[PATTERN_TRACK * t + 7u] |= 1u;                      /* pattern 1, step 1 */
-    for (unsigned t = 0; t < 7u; ++t) base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] |= 4u; /* pattern 4, step 11 */
-    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u - t / 8u] |= (uint8_t)(1u << t); /* pattern 2: Tn on step n */
-    modwerk_machine_bank_trigs(most, tracks);
-    CHECK(most[0] == 5u && tracks[0] == 5u && most[3] == 7u && tracks[3] == 7u && most[1] == 1u && tracks[1] == 8u && !most[2] && !tracks[2]);
-    for (unsigned t = 0; t < 8u; ++t)
-        base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] &= (uint8_t)~4u,
-        base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;
-    modwerk_machine_bank_trigs(most, tracks);
-    CHECK(!memcmp(most, none, 16) && !memcmp(tracks, none, 16));
+    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] |= (uint8_t)(1u << t); /* pattern 2: Tn on step n */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 5u && tracks[0] == 5u);
+    playing[8] = 1u;                                                                             /* C02 queued */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 2u && most[0] == 5u && most[1] == 1u && tracks[1] == 8u);
+    playing[7] = 3u;                                                                             /* queued in bank D */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 5u);
+    playing[6] = 1u, playing[7] = 2u;                                                            /* C02 plays */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 1u && tracks[0] == 8u);
+    playing[6] = playing[8] = 40u;                                                               /* no pattern: the safe side */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 8u && tracks[0] == 8u);
+    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;
+    memset(playing, 0, sizeof playing);
 }
 /* The reserve books each installed module's cost at rest, whether or not a track or slot uses it. */
 static void check_rest_booked(void)
