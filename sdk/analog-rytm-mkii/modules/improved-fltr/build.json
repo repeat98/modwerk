@@ -14,16 +14,6 @@
       "order": 50
     },
     {
-      "event": "ev_tick",
-      "fn": "improved_fltr_tick",
-      "order": 50
-    },
-    {
-      "event": "ev_enc",
-      "fn": "improved_fltr_enc",
-      "order": 50
-    },
-    {
       "event": "ev_key",
       "fn": "improved_fltr_key",
       "order": 50
@@ -51,9 +41,8 @@
     "audio:filter cutoff, resonance and type stores",
     "param:FILTER TYP range to 8",
     "ui:value text of FILTER TYP and RES",
-    "ui:a tap of encoder F on the FILTER page",
     "ui:FILTER TYP picture for types 7 and 8",
-    "ui:FILTER page graph for types 7 and 8"
+    "ui:FILTER page graph for types 7 and 8 (drawn by the module)"
   ],
   "requires": [],
   "derive": null,

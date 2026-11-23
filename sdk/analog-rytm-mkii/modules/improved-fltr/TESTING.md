@@ -1,5 +1,11 @@
 # Improved FLTR: testing
 
+Names: the runs below up to IFC2 used the first layout, **BND** (TYP 7, linked) and **BND+** (TYP 8, RES the cutoff) with a tap of RES between them. Since IF07 the types are **BW** (TYP 7, RES the cutoff, as BND+ was) and **BWL** (TYP 8, linked, as BND was), the tap is gone, and the graph draws the band itself. The audio path is the same code with the two type values swapped.
+
+## Emulator, current layout
+
+IF08 (sha256 566159c6; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 3 dB a row, at five settings; stock BP unchanged) pass. Not on the unit yet in this layout.
+
 ## Emulator (rytm-emu, not hardware evidence)
 
 IF06 (sha256 a7e5523a: Modwerk dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP), rig cases in the rig's `cases/improved-fltr/`, all pass:

@@ -11,3 +11,4 @@
 #define STRING_DTOR_AT 0x401bb540
 #define SHOW_HEADER_AT 0x40035fe8
 #define KIT_TRACK_SOUND_AT 0x400a67ca   // (kit, track) -> the track's sound accessor
+#define FILLRECT_AT 0x40070726         // (bitmap, x0, y0, x1, y1, colour), y up from the bottom row
