@@ -2336,7 +2336,7 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .sidebar-nav .sidebar-feature-new { border: 0; background: var(--accent-soft); }
   .sidebar-nav .sidebar-online { border: 0; background: #27332d; }
   .sidebar-nav .sidebar-online.is-unknown { background: transparent; color: var(--faint); font-weight: 500; }
-  .primary-nav > a.active, .primary-nav .sidebar-nav-row:has(> a.active) { box-shadow: inset 2px 0 var(--accent); }
+  .primary-nav > a.active, .sidebar-resources .sidebar-nav-row:has(> a.active) { box-shadow: inset 2px 0 var(--accent); }
   .workspace-content { padding-inline: clamp(1rem, 2.5vw, 2.5rem); }
   .configuration-button { flex-shrink: 1; min-width: 0; max-width: 100%; }
   .configuration-button > span:first-of-type { overflow: hidden; text-overflow: ellipsis; }
