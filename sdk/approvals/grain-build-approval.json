@@ -1,15 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "grain",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-22",
-  "ownerStatement": "On 22 November 2026, repeat98 approved the exact Grain 0.1.2-experimental package in PR #1989 after review of the MKI report and the outstanding CPU, timing, memory and MIDI measurements. The owner's response was “Approve f961b458 with those limits and push”.",
-  "reason": "Package f961b458deb9f93bad68435630b4c55110d3d0ef732bdfc7886df461a6250f66. On an MKI running OS 1.40C and official base 6d23e888, the author reported that the seven-module set loaded, the pitch control, sample edges, pool and audition worked, and the saved Grain sound and settings returned after a power cycle. With 24-bit stereo, PTCH +24 and DENS and SPRY at maximum, the stock meter showed 70–71% on the kick and 68–69% on the longer sample. The baseline was 49.5% stopped. The 17-point meter charge therefore lacks a matched playing Flex comparison on this build. Short-loop render skips, worst-case chip timing, complete memory bounds, and complete MIDI stress counts remain unmeasured for this build. Static runtime memory is 31,808 bytes. Earlier performance records retain their original provenance. The 0.1.2 captures and tutorial go through the release documentation checks.",
-  "sourceSha256": "97486848f6f4114512dc2e28cfeeee8b2f9c1569a984705d2fb564f65075817e",
+  "approvedOn": "2026-11-23",
+  "ownerStatement": "On 23 November 2026, repeat98 approved Grain 0.1.3-experimental (“I approve 0.1.3”), chose Flex's PTCH units, and after the unit runs on package 07b6e497 said “ok let's bring this update live”, with the waivers listed here.",
+  "reason": "Package 07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865. 0.1.3 makes trig keys, CHROMATIC keys and MIDI notes play Grain's engine instead of plain Flex (the START flag 0x20 counts as the pool's audition only while the pool window is open on the selected track) and reads PTCH in Flex's units (60 an octave), in which stock locks CHROMATIC and MIDI notes. On the owner's MKII (OS 1.40C, development twin 95adb64b of base 0.8) five rolled-back trials showed no crash, stall, freeze or skipped track; the trig cases, the audition and the PTCH knob behaved as TESTING.md records. Nothing was heard: tuning by ear, a recorded CHROMATIC take, SCALE, a 0.1.2 project reloaded and the MKI are untested. The controls and screens are 0.1.2's, so 0.1.2's captures and tutorial stay. Worst-case chip timing and complete memory bounds remain unmeasured, as for 0.1.2.",
+  "retainedUiVersion": "0.1.2-experimental",
+  "sourceSha256": "24fad490769a6e8aaaabe34104956da5e1cb64a690367136a59db9682e874ccc",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
-    "complete-memory-bounds"
+    "complete-memory-bounds",
+    "release-documentation"
   ]
 }

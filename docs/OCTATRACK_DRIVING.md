@@ -252,13 +252,9 @@ stall. Each CC was checked on its own against the Part's bytes and the screen: l
 
 ## The panel, as it behaves
 
-For automated panel tests, a KEY reply confirms posted bytes, not the resulting
-stock action. Check the observed menu/transport transition and key release;
-advancing UI/DSP counters and zero DSP errors do not prove responsive controls.
-After a navigation timeout, stop sending test gestures and inspect held-key rows
-(`boot.c`'s `modwerk_post_key`) before retrying. A physical STOP acting as paste
-was observed with FUNC absent from those rows; row readback alone does not
-establish that stock's modifier state is clear.
+A KEY reply confirms posted bytes, not stock's action: check the menu or transport change and the key's release
+(moving UI/DSP counters prove nothing). After a navigation timeout, stop and read the held-key rows (`boot.c`'s
+`modwerk_post_key`) before retrying; they can be clear while stock still holds FUNC (a physical STOP once pasted).
 
 Remote keys wait for a whole physical report. The panel sends two-byte reports, and a USB KEY rung between a
 fader report's two bytes once left TRIG5-7 held or lost a FUNC release
@@ -278,6 +274,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
   NO closes a CPU FULL box together with the list. Check the pick by the Part's bytes (type at Part `+0x22 + track`,
   signature at `+0x3c + 30 * track`). POLY8 turns TSTR and LOOP off in SRC SETUP and leaving it does not turn them
   back on (0.3.1 and 0.3.3); FM Synth and Amiga left no Part byte changed.
+- **Trig keys.** In the TRACKS trig mode TRIG9-16 trig tracks 1-8; TRIG1-8 do not. Holding FUNC, DOWN opens the trig
+  mode menu, a second DOWN moves to CHROMATIC and releasing FUNC picks it (UP twice goes back).
 - **Grid recording.** REC toggles, and a remote REC can be lost: press one trig and read the track's mask in the
   pattern (`+0x6 + 0x91a * track` from the pattern's start, two bytes for steps 1 to 16) before placing the rest.
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).

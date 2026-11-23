@@ -72,6 +72,21 @@ describe('diagnostics pull', () => {
     expect(text).toContain("  restarts 2 (the unit's log, starts 5-7)")
     expect(text).toContain(`  set reloads at boot: ${when(entry(2).createdAt)} nothing saved, ${when(entry(5).createdAt)} RESTORED 6/6, ${when(entry(9).createdAt)} another base’s set`)
   })
+  it('reports card write failures after Keep and skips repeat readings of the same failure', () => {
+    const health = (n, saved) => entry(n, 'tester', { event: 'health', phase: 'ready', reading: { saved, savedCount: 3, live: 3 } })
+    const events = [
+      entry(1, 'tester', { event: 'kept', phase: 'ready' }),
+      health(2, 7), health(3, 8), health(4, 8), health(5, 7), health(6, 8), health(7, 9),
+    ]
+    const text = summary({ events: [...events].reverse(), counts: [] })
+    expect(text).toContain('Problems (3, newest first')
+    const problems = text.split('Problems (')[1].split('\n').slice(1, 4)
+    expect(problems).toEqual([
+      `  ${when(entry(7).createdAt)} @tester health ready card=too big`,
+      `  ${when(entry(6).createdAt)} @tester health ready card=save failed`,
+      `  ${when(entry(3).createdAt)} @tester health ready card=save failed`,
+    ])
+  })
   it('keeps the card build’s refused selections out of the problems', () => {
     const check = n => entry(n, 'tester', { event: 'build_failed', phase: 'preparing', buildKind: 'octatrack-firmware', error: 'selection' })
     const text = summary({ events: [check(1), check(2), entry(3, 'other', { event: 'build_failed', phase: 'building', buildKind: 'octatrack-base', error: 'build' })], counts: [] })

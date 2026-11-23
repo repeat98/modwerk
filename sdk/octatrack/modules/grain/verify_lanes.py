@@ -30,10 +30,11 @@ def check_track(image, symbols, track, ping, pool=None, audition=False):
         cpu.mem_map(address, size)
     cpu.mem_write(IMAGE, image)
     # The sample pool window and the selected track. Opening the pool changes nothing: only a START with the audition flag
-    # (FUNC + YES, 0xe0 on the MKII against a sequencer trig's 0xc0) plays that voice as a plain Flex until the next trig.
+    # (FUNC + YES, 0xe0 on the MKII against a sequencer trig's 0xc0) on the pool's track plays that voice as a plain Flex
+    # until the next trig. A manual trig (trig key, CHROMATIC key, MIDI note) carries 0xe0 too and stays granular.
     cpu.mem_write(0x460E70E0, struct.pack(">I", 1 if pool is not None else 0))
     cpu.mem_write(0x100B14CC, bytes((pool if pool is not None else 0,)))
-    plain = audition
+    plain = audition and pool == track
     # Synthetic Flex callbacks simply return. The render callback also emits a valid 16-frame packet.
     for address in (FLEX_START, FLEX_RENDER):
         cpu.mem_write(address, bytes.fromhex("4e75"))
@@ -123,6 +124,22 @@ def check_scan(cpu, symbols, lane, packet):
         if (whole << 16) + fraction != expected_cursor:
             raise AssertionError(f"SCAN {value} advanced to {whole}+{fraction}/65536, expected Q16 {expected_cursor}")
 
+    # 0.1.3: PTCH in Flex's units, 60 an octave (CHROMATIC and MIDI notes lock it so): the step prepare_frame keeps for T1
+    # (Prepared: 12 bytes of GranParams, three words, then whole and frac) and the label.
+    for value, label in ((4, "-12"), (44, "-4"), (59, "-1"), (63, "-0.2"), (64, "0"), (69, "+1"), (124, "+12"), (127, "+12.6")):
+        cpu.mem_write(lane, struct.pack(">H", value << 8))
+        cpu.mem_write(CURSOR, struct.pack(">I", packet))
+        call("grain_start", 0, 0, 0)
+        call("grain_render", 0, 0, 0, 16)
+        whole, frac = struct.unpack(">iI", cpu.mem_read(symbols["prepared"] + 24, 8))
+        if abs(whole + frac / 2 ** 32 - 2 ** ((value - 64) / 60)) > 1e-5:
+            raise AssertionError(f"PTCH {value} stepped {whole}+{frac:#x}, expected 2^({value - 64}/60)")
+        call("ptch_text", display, value)
+        shown = bytes(cpu.mem_read(display, 8)).split(b"\0", 1)[0].decode("ascii")
+        if shown != label:
+            raise AssertionError(f"PTCH {value} displayed {shown!r}, expected {label!r}")
+    cpu.mem_write(lane, struct.pack(">H", 0x4000))
+
     # The track recorders use eight independent rows of 14,602 physical page numbers.
     # Ordinary slot zero above and the recorder rows below point to the same test PCM.
     recorder_map = 0x46010000
@@ -197,7 +214,8 @@ def check_scan(cpu, symbols, lane, packet):
 
 
 def check_ptch(image, symbols):
-    """PTCH's knob step (0.1.2): one semitone a detent; FUNC jumps between -24, -12, 0, +12 and +24; a pressed knob moves 7."""
+    """PTCH's knob step (0.1.3, Flex's units, 5 a semitone): one semitone a detent on the 64 + 5n grid; FUNC jumps between
+    -12, 0 and +12 (4, 64, 124); a pressed knob moves 7 semitones."""
     cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
     cpu.ctl_set_cpu_model(m68k_const.UC_CPU_M68K_CFV4E)
     for at, size in ((IMAGE, 0x10000), (0x200000, 0x10000), (0x46C7D8EE & ~0xFFF, 0x1000)):
@@ -214,10 +232,11 @@ def check_ptch(image, symbols):
         result = cpu.reg_read(m68k_const.UC_M68K_REG_D0) & 0xFFFFFFFF
         return result - (1 << 32) if result & 0x80000000 else result
 
-    cases = [((1, 64), 65), ((-1, 64), 63), ((3, 64), 67), ((-30, 64), 40), ((1, 88), 88), ((-1, 40), 40),
-             ((1, 65, True), 76), ((-1, 65, True), 64), ((1, 63, True), 64), ((1, 64, True), 76), ((-1, 64, True), 52),
-             ((-1, 52, True), 40), ((1, 76, True), 88), ((1, 88, True), 88), ((-1, 40, True), 40), ((-1, 70, True), 64),
-             ((1, 64, False, True), 71), ((-1, 44, False, True), 40)]
+    cases = [((1, 64), 69), ((-1, 64), 59), ((3, 64), 79), ((-30, 64), 4), ((1, 124), 124), ((-1, 4), 4),
+             ((1, 66), 69), ((-1, 62), 59), ((1, 67), 74),   # off the grid (an older Grain's value): to the next semitone
+             ((1, 65, True), 124), ((-1, 65, True), 64), ((1, 63, True), 64), ((1, 64, True), 124), ((-1, 64, True), 4),
+             ((-1, 124, True), 64), ((1, 124, True), 124), ((-1, 4, True), 4), ((1, 4, True), 64),
+             ((1, 64, False, True), 99), ((-1, 9, False, True), 4)]
     for args, want in cases:
         got = step(*args)
         if got != want:
@@ -348,12 +367,18 @@ if __name__ == "__main__":
             for track in range(8):
                 check_track(image, symbols, track, 0, pool)
             check_track(image, symbols, pool, 0, pool, audition=True)
+            check_track(image, symbols, 7 - pool, 0, pool, audition=True)   # a MIDI note on another track: granular
+        # 0.1.3: trig keys, CHROMATIC keys and MIDI notes (START 0xe0) with the pool shut play grains on every track.
+        for track in range(8):
+            check_track(image, symbols, track, 0, audition=True)
         check_stereo(image, symbols)
         check_assign(image, symbols)
         check_ptch(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
-    print("[PASS] With the pool open on T5 or T1 every track stays granular; only an audition START (0xe0) takes the plain Flex path")
+    print("[PASS] With the pool open on T5 or T1 every track stays granular; only an audition START (0xe0) on the pool's track takes the plain Flex path")
+    print("[PASS] Manual trigs (0xe0) with the pool shut play grains on all eight tracks")
     print("[PASS] Compiled SCAN label and cursor match on 24-bit stereo at all 128 settings and 128 legacy values")
+    print("[PASS] PTCH steps 2^((v-64)/60), Flex's units, and shows semitones (-12 .. +12.6)")
     print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")
-    print("[PASS] PTCH moves one semitone a detent, FUNC + turn stops at -24, -12, 0, +12 and +24, a pressed knob moves 7")
+    print("[PASS] PTCH moves one semitone (5) a detent, FUNC + turn stops at -12, 0 and +12, a pressed knob moves 7 semitones")
     print("[PASS] T1/T5 assignment refreshes Flex once, restores both Part copies and queues no control writes on exit")
