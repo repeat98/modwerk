@@ -51,9 +51,23 @@ frame idle, 8 to 17 % for a plain Flex note, 23 to 35 % with Grain's engine. The
 **Known limit:** a trig key pressed while the pool window is open on that same track plays a plain Flex, like the
 audition: both arrive as the same START.
 
-**Not tested:** the package `07b6e497` on a unit (the PTCH units change), listening to anything, PTCH on the unit's
-knob and screen, a recorded CHROMATIC take, SCALE, project reload, MKI, and the frame cost curve and performance stamp
-`module:doctor` asks for.
+### Unit run on `07b6e497` (the release candidate), 23 November 2026
+
+Same unit, twin and setup, RAM-booted again after the unit had come back on the flashed base; one timed trial of 240 s,
+rolled back with "no crash, stall, freeze or skipped track logged", no loader refusal. Every case above was run again with
+the same results (engine 23 to 29 %, plain Flex 8 %, the known limit unchanged). The PTCH knob on T1's SRC page, read in
+the working Part:
+
+| Case | How run | Result |
+| --- | --- | --- |
+| One detent is one semitone | `encA+1`, `encA+2` from 64 | pass: 69, then 79; the knob reads "+1" |
+| FUNC + turn: octaves, always back to 0 | FUNC with `encA-1`, `+1`, `+1`, `-1` | pass: 64, 124, 124, 64 |
+| A note reaches the engine at the knob's value | `encA-3`, `encA+1` (54, "-2"), TRIG9 | pass: the lane's PTCH word is 0x3600, engine |
+| Put back | reload, step 1 trig removed, trig mode TRACKS, bank D, boot of the flashed base `e1152583` | pass: the same eight kept modules restored from the card, bank D Part 1 byte-identical |
+
+**Not tested:** listening (whether CHROMATIC keys and MIDI notes sound in tune is shown only by the host check of the
+step and stock's units), a recorded CHROMATIC take, SCALE, a project saved with 0.1.2 and reloaded, MKI, and the frame
+cost curve and performance stamp `module:doctor` asks for.
 
 ## 0.1.2-experimental: the sample is a ring, PTCH steps and 3 dB per grain, 22 November 2026
 
