@@ -236,6 +236,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
 }
 .hub-screen-display { border: 1px solid var(--control-border); border-radius: 7px; background: var(--field); }
+.hub-screen-canvas { border-radius: inherit; }
 .hub-screen canvas:not([hidden]) {
   display: block; width: 100%; height: auto; border-radius: inherit; background: #181818; image-rendering: pixelated;
 }
