@@ -9,7 +9,7 @@ Elekloader #192 to #194. The pinned kit's SDK has core-mc 0.1 and no Model:Cycle
 import.
 
 [base.json](base.json) builds core-mc's own `mod.json` and adds one hook, `ev_key_leds`
-([modwerk/key-leds.s](modwerk/key-leds.s)): the key-LED frame after the LEDs are cleared and before the stock views set
+([base/key-leds.s](base/key-leds.s)): the key-LED frame after the LEDs are cleared and before the stock views set
 theirs, as the Digitakt II has it. Its site is the frame's clear call (`0x40006a6e`); `fw_led_set` names the OS's own
 setter, declared for C in [`../include/mc/core.h`](../include/mc/core.h). [events.json](../events.json) lists all six
 hooks.

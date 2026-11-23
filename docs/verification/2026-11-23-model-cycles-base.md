@@ -21,7 +21,7 @@ bytes"), found when the first test module was linked. Nothing subscribed, so the
 
 ## 2e5243e6: the base this pull request vendors
 
-core-mc 0.3's own `mod.json` (collections 4, as released) and Modwerk's `ev_key_leds` (`modwerk/key-leds.s`, site
+core-mc 0.3's own `mod.json` (collections 4, as released) and Modwerk's `ev_key_leds` (`base/key-leds.s`, site
 `0x40006a6e`, collection `ev_key_leds`). The recipe's check passes: it keeps every site, export, import, weak symbol,
 contribution, collection, requirement and conflict of the release.
 
@@ -37,3 +37,11 @@ contribution, collection, requirement and conflict of the release.
   with PATTERN pressed, where it stays over the stock pattern LEDs (the test module sets it in every frame, first
   setter wins). The other LEDs behave as with stock 1.13.
 - **Not run on this build:** recovery with the stock `.syx` after it.
+
+## The development link (dev base bf2f8ac4)
+
+The release base above with base.json's `dev`: the read-only USB link (`base/link.c`, `link.s`), dev base `bf2f8ac4`,
+1524 bytes `.run`, 484 `.bss`, 7 sites. On the submitter's Model:Cycles over USB from a Mac with
+`sdk/machines/model-cycles/tools/mc_link.py`: the first link (`79efd1ec…`, any port) answered `ident` (port USB) and
+`mem 0x40000400 16` (the stock OS's first bytes); the link limited to USB (`6054da89…`) answered `ident` after a fresh
+flash with port USB and one request. Details in `sdk/machines/model-cycles/LINK.md`.

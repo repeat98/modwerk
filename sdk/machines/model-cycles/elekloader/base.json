@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Model:Cycles OS 1.13 base, built by npm run machine:base -- model-cycles: core-mc 0.3's source from Elekloader v0.11.0, unchanged (sdk/imports/core-mc-source-f20ffda.json). Modwerk adds ev_key_leds (modwerk/key-leds.s), the key-LED frame, as the Digitakt II has it: one source, one site and its collection. The base keeps everything of the core-mc 0.3 release. A collection's number is its entry size in bytes (a handler's address), not a count: the linker puts every subscriber in the hook's table.",
+  "about": "Modwerk's Model:Cycles OS 1.13 base, built by npm run machine:base -- model-cycles: core-mc 0.3's source from Elekloader v0.11.0, unchanged (sdk/imports/core-mc-source-f20ffda.json). Modwerk adds ev_key_leds (base/key-leds.s), the key-LED frame, as the Digitakt II has it: one source, one site and its collection. The base keeps everything of the core-mc 0.3 release. A collection's number is its entry size in bytes (a handler's address), not a count: the linker puts every subscriber in the hook's table.",
   "core": "core-mc",
   "include": "sdk/machines/model-cycles/include",
   "os": "1.13",
@@ -26,7 +26,7 @@
   },
   "add": {
     "sources": [
-      "../modwerk/key-leds.s"
+      "../base/key-leds.s"
     ],
     "defsym": {
       "LEDS_CLEAR": "0x4000602a",
@@ -44,5 +44,34 @@
     "collections": {
       "ev_key_leds": 4
     }
+  },
+  "dev": {
+    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's. Read-only for now. Any USB host can reach it: development bases only.",
+    "sources": [
+      "../base/link.c",
+      "../base/link.s"
+    ],
+    "sites": [
+      {
+        "addr": "0x400812f6",
+        "len": 8,
+        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+        "op": "jmp",
+        "target": "mw_link_router"
+      }
+    ],
+    "cflags": [
+      "-DSYSEX_SEND_AT=0x400828fe"
+    ],
+    "defsym": {
+      "mw_link_router_resume": "0x400812fe"
+    },
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      }
+    ]
   }
 }

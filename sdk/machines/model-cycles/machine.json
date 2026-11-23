@@ -28,7 +28,8 @@
     "mods": "open"
   },
   "stack": {
-    "base": "started"
+    "base": "started",
+    "link": "started"
   },
   "research": [
     {

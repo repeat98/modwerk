@@ -1062,7 +1062,7 @@
     },
     "stack": {
       "base": "started",
-      "link": "open",
+      "link": "started",
       "flash": "open",
       "loader": "open",
       "status": "open",
