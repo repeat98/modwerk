@@ -8,10 +8,16 @@
  * note-off to the track that holds that note. The record already names the lead's sound (+0x3c, or a sound lock's),
  * so the voice track plays the lead's sound with that trig's own locks; nothing in the kit changes.
  *
- * While linked, a voice track belongs to its lead: it plays only the notes its lead sends, always with the lead's
- * machine (machine-frame.c sends the sound chip the lead's type for it), and its own notes (its trigs) go to no
- * track, so its own machine and sample never sound over, between or after its lead's notes. Its own sound and
- * pattern stay as they are and play again once VOICES puts it back on its own.
+ * While linked, a voice track belongs to its lead: it plays the notes its lead sends, always with the lead's machine
+ * (machine-frame.c sends the sound chip the lead's type for it). Its own steps play too, with the lead's sound (the
+ * record's sound is pointed at the lead's), so chords recorded across the group play back as recorded; its own key
+ * presses go to no track. Its own machine and sample never sound while it is linked, and play again once VOICES puts
+ * it back on its own.
+ *
+ * Live recording: the sequencer's live-record routine (0x40048fb2, core_voice_record_entry) records a lead's note
+ * from the keys or MIDI on the track that will play it, so each note of a chord lands as an ordinary step on its own
+ * track (editable afterwards like any step). The routine runs before the frame plays the note, so it picks the track
+ * and leaves a pending entry; the frame then sends that note to the same track.
  *
  * Record fields used (read from the sequencer's constructor at 0x400d6d24 and the frame's note handling from
  * 0x4002e1b2): +0x00 kind (0 and 1 take the note path), +0x04 1 for a note-on, +0x10 the track, +0x14 the note's
@@ -39,7 +45,12 @@ enum {
     PATTERN_TRACK_VIEW = 0x30,
     NONE = 0xff,
     SEQUENCER = 1,           /* a record's source (+0x14) for the sequencer's notes */
+    SOUND_STRIDE = 0x450,
+    PENDING = 8,             /* recorded notes the frame has not played yet */
+    PENDING_FRAMES = 512,    /* after which a pending entry is dropped */
 };
+
+#define KIT_SOUNDS 0x426532ecu /* the kit's track sounds (a record's +0x3c without a sound lock), SOUND_STRIDE apart */
 
 #define TARGETS ((volatile int16_t *)0x80003362u)          /* track t's value j at [VALUES * t + j] */
 #define NOTE_SOURCE ((const volatile uint32_t *)0x47db4310u) /* the source of the note each track holds, 0 none */
@@ -54,6 +65,26 @@ static uint8_t sync_next[TRACKS];   /* per lead: the voice track the idle copy l
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
 static volatile uint16_t leads;     /* leads with a group; written last by regroup */
 static int16_t last[TRACKS][VALUES];
+
+/* A note the live-record routine put on a track of its group, for the frame to play there. The task writes an entry
+ * and sets `used` last; the frame interrupt clears it when it plays the note or the entry ages out. */
+static struct {
+    volatile uint8_t used;
+    uint8_t lead;
+    uint8_t track;
+    int8_t pitch;
+    uint16_t age;
+} pending[PENDING];
+
+static int reserved(unsigned int track)
+{
+    for (unsigned int k = 0; k < PENDING; ++k) {
+        if (pending[k].used && pending[k].track == track) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static void regroup(void)
 {
@@ -104,7 +135,7 @@ static unsigned int pick(unsigned int lead, uint32_t mutes)
         ++size;
     }
     for (unsigned int t = lead; t < lead + size; ++t) {
-        if (!((mutes >> t) & 1u) && !NOTE_SOURCE[t]) {
+        if (!((mutes >> t) & 1u) && !NOTE_SOURCE[t] && !reserved(t)) {
             return t;
         }
     }
@@ -138,8 +169,17 @@ void core_voice_event(uint8_t *record)
         return;
     }
     if (!((leads >> lead) & 1u)) {
-        /* A linked voice track's own note (its trigs): to no track (16), so only its lead's notes play there. */
-        if (lead_of[lead] != NONE) {
+        if (lead_of[lead] == NONE) {
+            return;
+        }
+        /* A linked voice track's own steps (chord notes recorded there) play with its lead's sound, unless the step
+         * locks a sound of its own; its own key presses go to no track (16). */
+        if (*(const uint32_t *)(record + 0x14) == SEQUENCER) {
+            uint32_t *const sound = (uint32_t *)(record + 0x3c);
+            if (*sound == KIT_SOUNDS + SOUND_STRIDE * lead) {
+                *sound = KIT_SOUNDS + SOUND_STRIDE * lead_of[lead];
+            }
+        } else {
             *(uint32_t *)(record + 0x10) = TRACKS;
         }
         return;
@@ -154,6 +194,7 @@ void core_voice_event(uint8_t *record)
          * In a group that note is still ringing on its own track, so a note-on from the keys or MIDI (any source but
          * the sequencer, whose repeated notes should ring over) for a pitch a track of the group holds goes nowhere. */
         const uint32_t source = *(const uint32_t *)(record + 0x14);
+        to = NONE;
         if (source != SEQUENCER) {
             const int32_t pitch = record_pitch(record);
             for (unsigned int t = lead; t < TRACKS && lead_of[t] == lead; ++t) {
@@ -162,8 +203,18 @@ void core_voice_event(uint8_t *record)
                     return;
                 }
             }
+            /* A note live recording has just put on a track of the group plays on that track. */
+            for (unsigned int k = 0; k < PENDING; ++k) {
+                if (pending[k].used && pending[k].lead == lead && pending[k].pitch == pitch) {
+                    to = pending[k].track;
+                    pending[k].used = 0;
+                    break;
+                }
+            }
         }
-        to = pick(lead, mutes);
+        if (to == NONE) {
+            to = pick(lead, mutes);
+        }
     } else {
         const uint32_t source = *(const uint32_t *)(record + 0x14);
         const int32_t pitch = record_pitch(record);
@@ -186,6 +237,47 @@ void core_voice_event(uint8_t *record)
     }
 }
 
+/* Live recording of a lead's note (core_voice_record_entry, the live-record routine at 0x40048fb2): args points at
+ * its arguments (sequencer, track, note, velocity, flag, step, ...). The note is recorded on the track of the group it
+ * will play on, chosen as the frame will choose it, and a pending entry tells the frame so. A note the group already
+ * holds (the keys sending a held note again) is not recorded (track 16: the routine returns at once). */
+void core_voice_record(uint32_t *args)
+{
+    const uint32_t lead = args[1];
+    if (!leads || lead >= TRACKS || !((leads >> lead) & 1u)) {
+        return;
+    }
+    const int32_t pitch = (int32_t)args[2];
+    for (unsigned int t = lead; t < TRACKS && lead_of[t] == lead; ++t) {
+        if (NOTE_SOURCE[t] && NOTE_SOURCE[t] != SEQUENCER && NOTE_PITCH[t] == pitch) {
+            args[1] = TRACKS;
+            return;
+        }
+    }
+    unsigned int free = PENDING;
+    for (unsigned int k = 0; k < PENDING; ++k) {
+        if (!pending[k].used) {
+            free = k;
+        } else if (pending[k].lead == lead && pending[k].pitch == pitch) {
+            args[1] = TRACKS; /* recorded already, not played yet */
+            return;
+        }
+    }
+    const uint32_t mutes = MUTES_OVERRIDE ? ~MUTES_OVERRIDE : MUTES;
+    if ((mutes >> lead) & 1u) {
+        return; /* a muted lead plays nothing: record as stock does */
+    }
+    const unsigned int to = pick(lead, mutes);
+    args[1] = to;
+    if (free < PENDING) {
+        pending[free].lead = (uint8_t)lead;
+        pending[free].track = (uint8_t)to;
+        pending[free].pitch = (int8_t)pitch;
+        pending[free].age = 0;
+        pending[free].used = 1;
+    }
+}
+
 /* A whole track's targets from a lead's last values. Its own function, indexed, so the compiler does not reuse a
  * post-incremented address register in one instruction (sdk/runtime/m68k_codegen.py refuses that). */
 static __attribute__((noinline)) void copy_values(volatile int16_t *to, const volatile int16_t *from)
@@ -199,6 +291,11 @@ void core_voice_frame(void)
 {
     const uint16_t taken = absorb;
     absorb = 0;
+    for (unsigned int k = 0; k < PENDING; ++k) {
+        if (pending[k].used && ++pending[k].age > PENDING_FRAMES) {
+            pending[k].used = 0;
+        }
+    }
     for (unsigned int lead = 0; lead < TRACKS; ++lead) {
         if (!((leads >> lead) & 1u)) {
             continue;
