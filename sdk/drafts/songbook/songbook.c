@@ -57,6 +57,8 @@
 #define MESSAGE_UP 0x460d1e70u       /* stock's message box window, 0 while none is open */
 #define MESSAGE_CLOSE 0x40056bec     /* closes it (stock's own, before it opens another) */
 #define DRAW_CHANGE 0x40036e18u      /* draws ARR > CHANGE's list into its open window (stock: once, when it opens) */
+#define ARR_STATE 0x800066a0u        /* the arranger's run state: 1 playing, 2 held by STOP; select_arr refuses unless 0 */
+#define ARR_RESET 0x4009ae48u        /* stock's arranger reset, run at start-up and for each new project (0x40025af2) */
 #define SELECT_ARR 0x400a03a0u       /* select_arr(n): stock's choice of arrangement n (index, pointer, playback reset) */
 #define INDEX 0x100b14d1u            /* the arrangement chosen, 0-7 */
 #define ARR_MODE 0x460d1aecu         /* arranger mode on (FUNC + PATTERN) */
@@ -199,6 +201,8 @@ int host_select_arr(unsigned n);
 void host_arr_apply(int on);
 static void arr_apply(int on) { host_arr_apply(on); }
 static int select_arr(unsigned n) { return host_select_arr(n); }
+void host_arr_reset(void);
+static void arr_reset(void) { host_arr_reset(); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
 static int open_read(struct as_state *s) { return host_open_read(s->path); }
@@ -217,6 +221,7 @@ static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
 static void arr_mode_on(void) { ((void (*)(void))ARR_MODE_ON)(); }
 static void close_message(void) { ((void (*)(void))MESSAGE_CLOSE)(); }
 static int select_arr(unsigned n) { return ((int (*)(int))SELECT_ARR)((int)n); }
+static void arr_reset(void) { ((void (*)(void))ARR_RESET)(); }
 static void arr_apply(int on) { ((void (*)(int))ARR_MODE_APPLY)(on); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return as_stock_writer(a1, a2, a3, a4); }
@@ -663,7 +668,17 @@ void as_tick(void *api)
         /* The book's own last choice, as YES in the list makes it. Stock refuses it while a change of its own is
          * pending (0x800066a0; right after a RELOAD in arranger mode, on the developer's MKI): again next frame, for up
          * to two seconds, so the main screen does not keep the old book's name. */
-        if (select_arr(s->last[s->book]) < 0 && ++s->select_tries < 120) { /* refused: again next frame */ }
+        int r = select_arr(s->last[s->book]);
+        /* Returning after a LOAD of another project, the arranger's run state can stay set with nothing playing (the
+         * developer's MKI, 24 November 2026: the book came back on arrangement 1, every choice refused): once half a
+         * second of refusals has passed, stopped, the arranger is reset as stock resets it for each new project, and
+         * the choice made then. Arranger mode is applied again below. Never for LEFT/RIGHT. */
+        if (r < 0 && s->reapply && s->select_tries >= 30 && stopped() && rd32(ARR_STATE)) {
+            ev(0xbu);
+            arr_reset();
+            r = select_arr(s->last[s->book]);
+        }
+        if (r < 0 && ++s->select_tries < 120) { /* refused: again next frame */ }
         else {
             s->select_tries = 0;
             s->redraw = 0;

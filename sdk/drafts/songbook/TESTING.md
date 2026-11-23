@@ -6,7 +6,7 @@ Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gat
 
 ## Host gate
 
-`verify.py`: 92 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 95 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two

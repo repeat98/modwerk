@@ -43,6 +43,8 @@ static uint8_t msg_up;               /* 0x460d1e70's low byte: a message box is 
 static int closes;
 static uint8_t list[16];             /* 0x400c0ba0: the CHANGE list's first row shown, then its cursor */
 static int failures, checks;
+static uint32_t arr_state;           /* 0x800066a0: the arranger's run state */
+static int resets;
 
 uint8_t host_rd8(uint32_t a)
 {
@@ -50,6 +52,7 @@ uint8_t host_rd8(uint32_t a)
     if (a >= 0x100f8f10u && a <= 0x100f8f23u) return rec[a - 0x100f8f10u];
     if (a >= 0x400c0b40u && a < 0x400c0b44u) return (uint8_t)(change_window >> (8 * (3 - (a - 0x400c0b40u))));
     if (a >= 0x800065b8u && a < 0x800065bcu) return (uint8_t)(playing >> (8 * (3 - (a - 0x800065b8u))));
+    if (a >= 0x800066a0u && a < 0x800066a4u) return (uint8_t)(arr_state >> (8 * (3 - (a - 0x800066a0u))));
     if (a >= 0x80004f00u && a < 0x80004f00u + sizeof misc) return misc[a - 0x80004f00u];
     if (a == 0x100b14d1u) return chosen;
     if (a == 0x460d1aefu) return arr_mode;
@@ -149,7 +152,8 @@ int host_close_message(void) { msg_up = 0; ++closes; return 0; }
 static int select_busy;                         /* frames stock refuses select_arr (a change of its own pending) */
 static int applies;
 void host_arr_apply(int on) { ++applies; arr_mode = (uint8_t)!!on; }
-int host_select_arr(unsigned n) { if (select_busy) { --select_busy; return -1; } chosen = (uint8_t)n; return 0; }
+int host_select_arr(unsigned n) { if (select_busy) { --select_busy; return -1; } if (arr_state) return -1; chosen = (uint8_t)n; return 0; }
+void host_arr_reset(void) { arr_state = 0; ++resets; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
@@ -531,6 +535,23 @@ int main(void)
     settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);   /* the module's job reads A's arrbook.work */
     job(); for (int i = 0; i < 300; ++i) as_tick(0);  /* and the switch to its book */
     check("back in project A: book 3, arrangement 5", book() == 2 && chosen == 4);
+    check("with no arranger reset", resets == 0);
+    /* LOAD of another project with the arranger's run state left set: every choice refused until it is reset */
+    strcpy(job_name, "PROJB");
+    as_project_load(); as_project_loaded(); as_project_new(); mark(0x30); chosen = 0;
+    host_dir = "/SET/PROJB"; strcpy(cur_name, "PROJB");
+    settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);
+    strcpy(job_name, "PROJ");
+    as_project_load(); as_project_loaded(); as_project_new(); mark(0x10); chosen = 0;
+    host_dir = "/SET/PROJ"; strcpy(cur_name, "PROJ");
+    arr_state = 2;
+    settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);
+    job(); for (int i = 0; i < 300; ++i) as_tick(0);
+    check("a run state left set after the load: reset once, and back on book 3, arrangement 5", book() == 2 && chosen == 4 && resets == 1 && arr_state == 0);
+    arr_state = 2; select_busy = 0;
+    tap(LEFT); job(); for (int i = 0; i < 200; ++i) as_tick(0);
+    check("a LEFT/RIGHT switch never resets the arranger", resets == 1);
+    arr_state = 0; for (int i = 0; i < 200; ++i) as_tick(0);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;
