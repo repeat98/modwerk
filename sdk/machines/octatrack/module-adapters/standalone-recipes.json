@@ -41,7 +41,7 @@
     "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
     "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
     "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "b2112bcc6334db4e043d69ccf19af7c22a5f78e07229b5481c47ab587d7132eb",
+    "sdk/runtime/loader/build.py": "1a3c7746950365a34664a45e77be2f27591fabbde2ca053d781ae38b5e7e30c2",
     "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "b2841ad6c500e3f4731221267d86d032c92dacfa604ce9e9ab85f36cb6489af3",
     "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
     "upstream/elekloader/link.py": "2d950474a5bd9d54e62747bfe7f9be30a37a7857df24cd9594e2198b912204f7",
@@ -158,18 +158,18 @@
   },
   "tapeecho": {
    "schema": 1,
-   "imageSha256": "def1bc39f8bc9e998cf49b7df6ab36725f42f460b1e73c079238ebc4c25caded",
+   "imageSha256": "dac1a8ba566961cc13ab4a653431ae423164660f4d441db8246dc507f8b0043c",
    "sources": {
-    "sdk/octabam/modules/tapeecho/cpu_hooks.s": "d1d959af91fbd0759191c5e244b4396613d18c057c8e65281d76cb67beb73e34",
-    "sdk/octabam/modules/tapeecho/cpu.c": "bbb50e96305a64f99d72045defa40d09ab3e8fc910e717d8122dd1f070de35a7",
+    "sdk/octabam/modules/tapeecho/cpu_hooks.s": "27a9b63286bb70c7606b5ed5ca42f899da75c0de54563217a0c8cd3466bbf41d",
+    "sdk/octabam/modules/tapeecho/cpu.c": "1be3c6e9b7895739562aa442b31c60a7dd6d04ebf5423622e294e0a2b8fe3f62",
     "sdk/octabam/modules/tapeecho/time_fmt.s": "f50337532bbd802f67bb3c93d975405c2e386ec2a75bf525a814b9f9756f9d15",
     "sdk/octabam/modules/tapeecho/cpu_tables.h": "1d2e3e062651f021ca94fd19339dde824bcf49c4d867da790c20957dd24db9b2",
     "sdk/octabam/modules/tapeecho/manifest.py": "8444fc496776df2c719401f6967aba44a5922e15f0906268286663d012dd94b8",
-    "sdk/octabam/modules/tapeecho/octamod.module.json": "5f41cfb21b3a9cecc514a69825ce3278ccb1b2d6aeea52053e3452bc5111befc",
-    "sdk/octabam/modules/tapeecho/cpu_kernels.s": "1cb1d400cbf0f0b7a75dc0ea13f6afc70b56221f2d45f424f7f58fa79ce6347f",
-    "sdk/octabam/modules/tapeecho/cpu.s": "783901f817efc5496c9b6178367459cfae1fe036adfd2a5be3a89d62e37906b6",
+    "sdk/octabam/modules/tapeecho/octamod.module.json": "e1f92a6075ed211ad5144ba8d44893a2a462c9985422374f0f2abff0d328dc77",
+    "sdk/octabam/modules/tapeecho/cpu_kernels.s": "0abbfc5cb6189f08f5ecddb101867b67de23a8de6894ffb00c89583b420360bc",
+    "sdk/octabam/modules/tapeecho/cpu.s": "925804ae201ea754a59addb39bd4cfbd39dfb34407b2369c7d5f99ff2114fca3",
     "sdk/octabam/modules/tapeecho/cpu_passthrough.asm": "68ef0beaa213de43e116d2feb367b437ef8c73c7f7b1c07328fde2d72edb3fdc",
-    "sdk/octabam/modules/tapeecho/cpu.h": "d07d496a62b95f23f8c2cbd893a0125e8a67071e83bf2c642e14251e48e69ff3",
+    "sdk/octabam/modules/tapeecho/cpu.h": "b3afe117675ec7cc9a6cd3cf0930a482161575d5ca12d034016571e7646c2e72",
     "sdk/octabam/modules/tapeecho/generate_tables.py": "3461b659e2f22d7da776eb87755610094a4a3e72609c875e82902a8da9a8a69c",
     "sdk/octabam/modules/tapeecho/generate_cpu.py": "09477f59af29dc6b68458454f818ec999339f4f4eefadb979cc13236ce431353",
     "sdk/octabam/modules/tapeecho/media/capture.json": "8e0627d47f074322917978cd4abf505d82d9b53ece8e8c2b1ad280b69cd2902b",
@@ -196,7 +196,7 @@
     "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
     "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
     "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "b2112bcc6334db4e043d69ccf19af7c22a5f78e07229b5481c47ab587d7132eb",
+    "sdk/runtime/loader/build.py": "1cab81067040bec39f391601d5f4b90e658da34dbc7351f97c4aa92a5d999dd4",
     "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
     "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
     "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
@@ -205,10 +205,10 @@
     "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
     "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
     "src/catalog/modules.ts": "14304ea8450f8ec7ecaaf3ccf9e764929161288babe7b34cb37ff41e44fe1b43",
-    "src/engine/assets/dsp-packages.json": "2fa2454f9a802eb2b40e6ddbf4f69f34802894130504f38f2bf1db6a31479155",
+    "src/engine/assets/dsp-packages.json": "ab942589c223cc30b801d0f63658ac2a5e8a63d65ddf61d109bb4cd00d3e86b1",
     "src/engine/assets/descriptor-recipes.json": "a68ac90d1e83ead391f8058f51458e0dc4a48a250db9585135b2c620d66dac0b",
     "src/engine/assets/menu-recipes.json": "da6bf3602d4546eca11d1cc76f2772127b505bc01ecc8bae04d697e6ce0bc942",
-    "src/engine/assets/rom-packages.json": "3c45c7b7b681d4df243c6f332dbb6a6119f5008aefd4abd5175423f7d500c6de",
+    "src/engine/assets/rom-packages.json": "68d9f0e5f388910e20cd00f5b00cbc1eb606258921d90d4a0d87dab934f835cb",
     "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
     "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
     "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
@@ -242,7 +242,9 @@
     "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
     "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
     "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5",
-    "sdk/octabam/modules/tapeecho/evidence/cpu-price.json": "e36a69f6d41fea8d53ce061599289edf1fecc99b6722542fe6504f578cc7f02c"
+    "sdk/octabam/modules/tapeecho/evidence/cpu-price.json": "e36a69f6d41fea8d53ce061599289edf1fecc99b6722542fe6504f578cc7f02c",
+    "sdk/octabam/modules/tapeecho/runtime.json": "1b598258c15a58b60c60fb3c3d02048dad6b2ff40d1e62fd2f361de57ee9759e",
+    "sdk/octabam/modules/tapeecho/evidence/frame-cost.json": "f8baa3719226c7458de984c8708d3ad429e3dbd4e99ee50bf646901789cf2c74"
    },
    "copies": [
     {
@@ -262,7 +264,7 @@
      }
     },
     {
-     "offset": 3076,
+     "offset": 3066,
      "length": 18,
      "address": 1073753950,
      "sha256": "1e998d15e30ac012a8b3cd88d4588e8f85d7921a2850b0551b2259a84752a995",
@@ -270,15 +272,15 @@
      "authored": {
       "source": "sdk/octabam/modules/tapeecho/cpu.s",
       "lines": [
-       915,
-       919
+       908,
+       912
       ],
       "symbol": "render_head",
       "method": "native-unit"
      }
     },
     {
-     "offset": 3100,
+     "offset": 3090,
      "length": 26,
      "address": 1074366192,
      "sha256": "90dc32b1ff6203f13faaba47d8a89d606c770746e69ea8010df241e1241fd9c5",
@@ -286,15 +288,47 @@
      "authored": {
       "source": "sdk/octabam/modules/tapeecho/cpu.s",
       "lines": [
-       921,
-       927
+       914,
+       920
       ],
       "symbol": "render_head",
       "method": "native-unit"
      }
     },
     {
-     "offset": 3462,
+     "offset": 3406,
+     "length": 10,
+     "address": 1073974022,
+     "sha256": "c070650562c6a17e86fc3e6575ee3deae6bbc73c10819a28b3118e88ed607fa9",
+     "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
+     "authored": {
+      "source": "sdk/octabam/modules/tapeecho/cpu.s",
+      "lines": [
+       1024,
+       1026
+      ],
+      "symbol": "render_head",
+      "method": "native-unit"
+     }
+    },
+    {
+     "offset": 3416,
+     "length": 4,
+     "address": 1073974032,
+     "sha256": "4588d2f3db332715f3deb955e001dc741b54e633be8ffc3c2a4da9948cf6274d",
+     "purpose": "Authored te_target instruction span; reconstructed identically from guarded stock coincidence",
+     "authored": {
+      "source": "sdk/octabam/modules/tapeecho/cpu.s",
+      "lines": [
+       1032,
+       1033
+      ],
+      "symbol": "te_target",
+      "method": "native-unit"
+     }
+    },
+    {
+     "offset": 3430,
      "length": 19,
      "address": 1074375602,
      "sha256": "3fd2ea50644e110d89a47a30180101283abeae689e44d39c646c941fea217965",
@@ -302,15 +336,15 @@
      "authored": {
       "source": "sdk/octabam/modules/tapeecho/cpu.s",
       "lines": [
-       1055,
-       1060
+       1037,
+       1042
       ],
       "symbol": "te_target",
       "method": "native-unit"
      }
     },
     {
-     "offset": 7462,
+     "offset": 8342,
      "length": 13,
      "address": 1073973354,
      "sha256": "2393ebbe40716982dc0fc11a30e3e53f13d60755b68dc8f156a4cf02ec77c2f2",
@@ -318,15 +352,15 @@
      "authored": {
       "source": "sdk/octabam/modules/tapeecho/cpu.s",
       "lines": [
-       27285,
-       27332
+       27574,
+       27621
       ],
       "symbol": "te_filter_block",
       "method": "native-unit"
      }
     },
     {
-     "offset": 8940,
+     "offset": 9824,
      "length": 8,
      "address": 1073897668,
      "sha256": "8937904adb028ee826e1da6e9593b99222dd3fb141bbaa852b54ef596f94054f",
@@ -334,15 +368,15 @@
      "authored": {
       "source": "sdk/octabam/modules/tapeecho/cpu.s",
       "lines": [
-       27523,
-       27524
+       27821,
+       27822
       ],
       "symbol": "te_tape_block",
       "method": "native-unit"
      }
     },
     {
-     "offset": 8948,
+     "offset": 9832,
      "length": 16,
      "address": 1073745896,
      "sha256": "324b9e08fe60e608cbdebbbd690d3efdac6a0fc7a2ec6b9756fc1f64e1ef5281",
@@ -350,8 +384,8 @@
      "authored": {
       "source": "sdk/octabam/modules/tapeecho/cpu.s",
       "lines": [
-       27525,
-       27545
+       27823,
+       27843
       ],
       "symbol": "te_read_linear",
       "method": "native-unit"
@@ -397,7 +431,7 @@
     "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
     "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
     "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "b2112bcc6334db4e043d69ccf19af7c22a5f78e07229b5481c47ab587d7132eb",
+    "sdk/runtime/loader/build.py": "1cab81067040bec39f391601d5f4b90e658da34dbc7351f97c4aa92a5d999dd4",
     "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
     "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
     "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
@@ -406,10 +440,10 @@
     "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
     "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
     "src/catalog/modules.ts": "14304ea8450f8ec7ecaaf3ccf9e764929161288babe7b34cb37ff41e44fe1b43",
-    "src/engine/assets/dsp-packages.json": "2fa2454f9a802eb2b40e6ddbf4f69f34802894130504f38f2bf1db6a31479155",
+    "src/engine/assets/dsp-packages.json": "ab942589c223cc30b801d0f63658ac2a5e8a63d65ddf61d109bb4cd00d3e86b1",
     "src/engine/assets/descriptor-recipes.json": "a68ac90d1e83ead391f8058f51458e0dc4a48a250db9585135b2c620d66dac0b",
     "src/engine/assets/menu-recipes.json": "da6bf3602d4546eca11d1cc76f2772127b505bc01ecc8bae04d697e6ce0bc942",
-    "src/engine/assets/rom-packages.json": "3c45c7b7b681d4df243c6f332dbb6a6119f5008aefd4abd5175423f7d500c6de",
+    "src/engine/assets/rom-packages.json": "68d9f0e5f388910e20cd00f5b00cbc1eb606258921d90d4a0d87dab934f835cb",
     "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
     "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
     "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",

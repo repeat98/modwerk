@@ -301,7 +301,7 @@ int main(void)
     uint8_t capabilities[14]; memset(capabilities, 0xa5, sizeof capabilities);
     CHECK(modwerk_runtime_capabilities(capabilities) == 12u);
     CHECK(!memcmp(capabilities, "MWCP", 4) && capabilities[4] == 1 && capabilities[5] == 10);
-    CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
+    CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY | COSTS_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
     CHECK(capabilities[12] == 0xa5 && capabilities[13] == 0xa5);
 
     struct runtime_module alias_group; memset(&alias_group, 0, sizeof alias_group);

@@ -111,7 +111,7 @@ describe('the developer MCP’s Zoom tools', () => {
     }, build: { ssr: join(root, 'scripts/frontend-mcp-bridge.ts'), write: false, minify: false, sourcemap: false } })
     frontend = await import('data:text/javascript;base64,' + Buffer.from(bundled.output.find(entry => entry.type === 'chunk' && entry.isEntry).code).toString('base64'))
   }, 60000)
-  const open = options => createFrontendTools({ dataDir: folder, zoomMidi: true, ...options }, frontend, { zoomAccess: async () => pedal.access })
+  const open = (options, dependencies) => createFrontendTools({ dataDir: folder, zoomMidi: true, ...options }, frontend, { zoomAccess: async () => pedal.access, ...dependencies })
   beforeEach(async () => {
     folder = await mkdtemp(join(tmpdir(), 'modwerk-mcp-zoom-test-')); effectsDir = await mkdtemp(join(tmpdir(), 'modwerk-zoom-effects-'))
     pedal = fakeZoomPedal({ files: effects() })
@@ -128,6 +128,35 @@ describe('the developer MCP’s Zoom tools', () => {
     expect(backup.path.startsWith(folder)).toBe(true)
     expect(service.tools.find(tool => tool.name === 'zoom_list').annotations.readOnlyHint).toBe(true)
     expect(writes(pedal)).toEqual([])
+  })
+  it('reads MS-70CDR identity and effect inventory through the shared device tools', async () => {
+    service = await open({ allowDeviceWrites: true })
+    expect(await service.call('device_status')).toMatchObject({
+      machine: 'zoom-ms-70cdr', state: { status: 'ready', identity: { model: 'MS-70CDR', firmware: '2.10' } },
+      inventory: { files: expect.arrayContaining([{ name: 'LOOP.ZDL', size: 1200, inEffectList: true, effect: { gid: 8, fxid: 480, version: '0.03' } }]), free: 400_000 },
+    })
+    expect(await service.call('device_load')).toMatchObject({ machine: 'zoom-ms-70cdr', supported: false, reading: null })
+    expect(await service.call('device_log')).toEqual({ supported: false, log: null })
+    await expect(service.call('device_review', { moduleIds: ['loop'] })).rejects.toThrow('runtime set loader')
+    expect(writes(pedal)).toEqual([])
+  }, 10000)
+  it('identifies the pedal afresh and skips file reads in update mode', async () => {
+    pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 1, 0], features: 512, load: {
+      cpu: 65, audio: 50, audioMax: 51, system: 3, perform: 0, midi: 1, late: 0, lateTotal: 0,
+      dsp: 0, slots: Array.from({ length: 6 }, () => ({ name: '-', cpu: 0, dsp: 0 })),
+    } } })
+    service = await open()
+    expect(await service.call('device_load')).toMatchObject({ supported: true, identity: { firmware: 'M201' }, reading: { cpu: 65 } })
+    pedal = fakeZoomPedal({ firmware: '1.10' })
+    expect(await service.call('device_status')).toMatchObject({ state: { status: 'update-mode', identity: { firmware: '1.10' } }, inventory: null, load: null })
+    expect(pedal.sent).toHaveLength(1)
+    pedal = fakeZoomPedal({ portName: 'IAC Driver Bus 1' })
+    await expect(service.call('device_status')).rejects.toThrow('No Zoom pedal')
+  })
+  it('keeps shared tools on the Octatrack when its socket is also selected', async () => {
+    service = await open({ deviceSocket: '/path/to/octatrack.sock' }, { openLink: async () => { throw new Error('Octatrack link selected') } })
+    await expect(service.call('device_status')).rejects.toThrow('Octatrack link selected')
+    expect(pedal.sent).toEqual([])
   })
   it('starts again after the pedal went away, as these ports don’t say', async () => {
     service = await open()

@@ -1,0 +1,7 @@
+{
+ "schema": 1,
+ "subscribe": [
+  {"event": "ev_in_use", "fn": "fm_in_use", "order": 40}
+ ],
+ "rests": ["0x40003ca4", "0x4000d03e", "0x4000b51a", "0x4000b2c8", "0x4000c634", "0x4000685c", "0x4000d514"]
+}

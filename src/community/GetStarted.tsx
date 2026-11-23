@@ -9,6 +9,7 @@ import { getStartedComplete, getStartedKey, getStartedSteps } from './get-starte
 type Progress = { introductions: number; followedModules: number; pushEnabled: boolean }
 const NO_PROGRESS: Progress = { introductions: 0, followedModules: 0, pushEnabled: false }
 const progressKey = (id: string) => 'modwerk.get-started.progress:' + id
+const seenKey = (id: string) => 'modwerk.get-started.seen:' + id
 function dismissed(id: string) { try { return localStorage.getItem(getStartedKey(id)) === '1' } catch { return false } }
 function dismiss(id: string) { try { localStorage.setItem(getStartedKey(id), '1') } catch { /* The card simply returns next time. */ } }
 /** The progress this browser saw last time, shown at once while the current answers load. */
@@ -24,12 +25,17 @@ export function GetStarted({ machine }: { machine?: string }) {
   const { session } = useCommunity(), user = session.user, [loaded, setLoaded] = useState<Progress & { id: string } | null>(null), [closed, setClosed] = useState(false), [failed, setFailed] = useState('')
   const id = user?.verified && user.username ? user.id : '', username = user?.username ?? ''
   const stepsId = useId()
-  const [expanded, setExpanded] = useState(() => typeof window === 'undefined' || !window.matchMedia?.('(max-width: 600px)').matches)
   const wasDismissed = useMemo(() => !!id && dismissed(id), [id]), saved = useMemo(() => id ? remembered(id) : null, [id])
+  const [expanded, setExpanded] = useState(() => {
+    if (saved || (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 600px)').matches)) return false
+    try { return localStorage.getItem(seenKey(id)) !== '1' } catch { return true }
+  })
   // Progress is keyed by member so another account's answers never show for this one.
   const progress = loaded && loaded.id === id ? loaded : null
   useEffect(() => {
     if (!id || dismissed(id)) return
+    // A quick visit counts even if the member leaves before the progress requests finish.
+    try { localStorage.setItem(seenKey(id), '1') } catch { /* The checklist still works without storage. */ }
     let cancelled = false
     void Promise.all([
       api<{ threads: ForumThread[] }>('/forum/threads?category=introductions&author=' + encodeURIComponent(username)),
