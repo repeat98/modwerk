@@ -97,7 +97,13 @@ static void interrupted_editor(void)
 
     tap(ARR); tap(2); tap(ARR); tap(YES); tap(3); /* R04 = A03 */
     tap(0x1b); tap(YES); tap(4); tap(YES);       /* confirmed A05 */
-    assert(rows[3] == 4);
+    assert(rows[3] == 4 && !editing);
+    popup = 1;
+    module_tick(&api);
+    assert(!visible && !module_key(NO, 1) && !module_key(NO, 0));
+    popup = 0;
+    tap(ARR); tap(ARR); /* Reopen, then focus row navigation. */
+    assert(visible && row_view && !editing && (defined & 8) && rows[3] == 4);
     run = 1;
     tap(3); /* R04 queued while A03 plays */
     for (unsigned repeat = 0; repeat < 3; ++repeat) {
