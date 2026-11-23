@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "sources": ["src/main.c"],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [{ "event": "ev_draw", "fn": "mod_draw", "order": 50 }],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [],
+  "requires": [],
+  "derive": null,
+  "releases": { "1.74": { "defsym": {}, "cflags": [], "sites": [] } }
+}
