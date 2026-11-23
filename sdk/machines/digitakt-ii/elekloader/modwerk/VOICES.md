@@ -47,7 +47,9 @@ Emulator only (coupled ColdFire and sound-chip run from a ready point saved with
 
 | The test project's own pattern played (PLAY, about 1.2 s), every track at 1 and with track 1 at 3 | The two runs' PCM is identical (`5af68b89…`): with track 1 leading, the sequencer's notes on the project's other tracks play exactly as without. |
 
-Not checked yet: sequencer trigs on a linked lead (only live trig-key notes above), the SETTINGS row on screen, MIDI chords, knob turns reaching the voices, muted voices, save and reload of the setting.
+| Track 1 at 3 playing Granula (an added machine, in progress), two notes, then SIZE (knob C) turned on track 1 while both ring | The second note plays on track 2 as a grain cloud (the voice track takes its lead's machine). A trace of each grain's length: before the turn 256 samples on all four voices (tracks 1 and 2); after it 48,000 on all four, track 2's in the same block as track 1's. The turn on the lead reached its voice. |
+
+Not checked yet: sequencer trigs on a linked lead (only live trig-key notes above), the SETTINGS row on screen, MIDI chords, muted voices, save and reload of the setting.
 
 ## Open
 
