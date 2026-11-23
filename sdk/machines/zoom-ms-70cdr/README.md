@@ -23,6 +23,75 @@ Where the MS-70CDR stands on the stack every machine gets
   effect list; a power cycle loads it. The next loader milestone is one
   RAM-only effect trial on the development base, with the original chain and
   files verified after Undo and a separate unkept trial followed by a reboot.
+
+## Build a labelled development base
+
+Use Zoom's original MS-70CDR 2.10 updater zip and a unique four-character
+development label beginning with D.
+
+```sh
+node scripts/zoom-dev-base.ts /private/path/MS-70CDR_v2.10_Mac_E.zip --label D001
+```
+
+The command uses the browser's base builder, writes the image to a private
+temporary directory, and prints its label and hashes. A plain development
+build changes only the identity reply.
+
+### Measure a ZDL load
+
+Add `--load-probe` with GNU binutils for C674x on your PATH, or set
+`--c6x-prefix` to their executable prefix. Use a fresh label for the probe.
+To install that same build through the existing browser dialog, start the
+local development server with the same label and tools:
+
+```sh
+MODWERK_ZOOM_PROBE_LABEL=D005 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
+  npm run dev -- --host 127.0.0.1
+```
+
+From the pedal page, back up the files. The owner puts the pedal in update
+mode and opens **Install base**. The dialog must name **ZDL load probe
+D005** before the owner flashes. After restarting, read the identity
+through `device_status` or `npm run zoom -- status`.
+
+The status returns `zdlHeaderReads` as an unsigned number. It is the same
+counter shown as eight hexadecimal digits in **System**. The USB read
+works with the screen closed and leaves the pedal's files and patch alone.
+Older images omit the field. The probe counts attempts, including failed
+header reads, and resets at power-up.
+
+To check the counter over USB, take two idle readings, then open and close
+Zoom's MIDI editor mode (SysEx commands `50` and `51`). On the original
+MS-70CDR with D004, each editor exit requested one more ELF header and
+the active and saved patch read back unchanged. See the
+[hardware record](../../../docs/verification/2026-11-23-ms70cdr-usb-counter.md).
+
+The probe retargets the guarded header read at `0xC00A5518` and the
+MIDISTOMP System draw call at `0xC00A93D0`. It taps MIDISTOMP's MIDI
+diagnostics branch at `0xC00F485C` and then runs the original diagnostics.
+The aligned code fits in the gap at `0xC00F4B00` on the pinned base. On MIDI,
+`F0 7D 4D 53 54 07 <nonce> F7` returns
+`F0 7D 4D 53 54 48 <nonce> <five 7-bit groups, low first> F7`.
+
+### Trace the ZDL stream
+
+D005 records the latest eight completed loader calls around the ELF reader.
+The probe calls each original routine with its original arguments, then
+records the requested and returned item counts, the seek offset and origin,
+or the close result. The trace contains neither effect bytes nor addresses.
+
+```sh
+npm run unit -- run --expect 20s -- node scripts/zoom.ts stream-trace
+```
+
+Take one snapshot at idle and another after a load. `completed` counts all
+recorded calls since boot. The eight displayed events are oldest first. If
+a load interrupted a snapshot, take another reading once the pedal is idle.
+For a seek, origins 0, 1 and 2 name the start, current position and end. A
+close is conditional on the loader's cleanup path. The memory stream's
+close callback returns zero, and the surrounding loader owns teardown.
+See the [call map](../../../docs/verification/2026-11-23-ms70cdr-stream-probe.md).
+
 - **Modules:** `sdk/zoom/modules/<id>/`, one folder per effect for the whole
   ZDL family, each naming the pedal it is developed on and every pedal's
   tested status.

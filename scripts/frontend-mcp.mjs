@@ -63,7 +63,7 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory and development counter when available.'),
   tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available. Read-only.'),
   tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; Zoom pedals and older Octatrack bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
@@ -72,7 +72,7 @@ const TOOLS = [
   tool('device_trial', 'Install a reviewed set through the real frontend link as a trial, with no self-test (as a site sync). Requires --allow-device-writes; never accepts automatically.', { review: string }, ['review'], true),
   tool('device_keep', 'Explicitly accept the current trial and save it on the card. Requires --allow-device-writes.', { trial: string }, ['trial'], true),
   tool('device_undo', 'Undo the current trial and restore its exact reviewed previous packages.', { trial: string }, ['trial'], true),
-  tool('zoom_status', 'Connect to the Zoom MultiStomp over MIDI (startup --zoom-midi) through the site\u2019s own ZoomLink and read its model and firmware; on MIDISTOMP also its version, features and load. Read-only.'),
+  tool('zoom_status', 'Connect to the Zoom MultiStomp over MIDI (startup --zoom-midi) through the site\u2019s own ZoomLink and read its model and firmware; on MIDISTOMP also its version, features and load. On a development probe also read the ZDL header count. Read-only.'),
   tool('zoom_list', 'List every file on the Zoom pedal with the group, ID and version of each effect in the group added effects use, and the free space. Read-only.'),
   { ...tool('zoom_backup', 'Read every file on the Zoom pedal, checksum-checked, into a zip in the startup-selected private workspace and return a receipt (path, size, sha256). Writes nothing to the pedal.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
@@ -277,12 +277,12 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     try {
       closeZoom()
       const unit = await zoomLink(), opts = { dir: dataDir }
-      const { load, ...identity } = await zoomCommand(unit, 'status', undefined, opts)
+      const { load, zdlHeaderReads, ...identity } = await zoomCommand(unit, 'status', undefined, opts)
       const machine = Object.keys(ZOOM_DEVICE_IDS).find(id => ZOOM_DEVICE_IDS[id] === identity.deviceId) ?? null
       const updateMode = isUpdateMode(identity)
       const state = { status: updateMode ? 'update-mode' : 'ready', identity }
       const inventory = includeInventory && !updateMode ? await zoomCommand(unit, 'list', undefined, opts) : null
-      return { machine, state, inventory, load: load ?? null }
+      return { machine, state, inventory, load: load ?? null, ...(zdlHeaderReads === undefined ? {} : { zdlHeaderReads }) }
     } finally { try { closeZoom() } finally { turn?.release() } }
   }
   const zoomWrite = (args, name) => {

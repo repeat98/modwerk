@@ -189,7 +189,7 @@ export const ZOOM_BASE = { name: 'MIDISTOMP V2.0.1', tag: 'M201' } as const
  * F0 7D 'M' 'S' 'T' <command> <nonce> … F7; replies are numbered from 41 in the order the commands came, with the
  * request's nonce (MIDISTOMP PR #64, its docs/dev/modwerk-research.md section 1). Hello 01 answers 41 (major, minor,
  * patch) and 42 (feature bits, 7 a byte); 02 to 05 (MIXER and PERFORM entries, 43 to 46) aren't used here; load 06 answers 47. */
-export const MST = { hello: 0x01, version: 0x41, features: 0x42, load: 0x06, loadReply: 0x47 } as const
+export const MST = { hello: 0x01, version: 0x41, features: 0x42, load: 0x06, loadReply: 0x47, zdlHeaderReads: 0x07, zdlHeaderReadsReply: 0x48, zdlStreamTrace: 0x08, zdlStreamTraceReply: 0x49 } as const
 export const mstSysex = (command: number, nonce: number, args: number[] = []) => [0xf0, 0x7d, 0x4d, 0x53, 0x54, command, nonce & 0x7f, ...args, 0xf7]
 export const isMstReply = (m: number[]) => m[1] === 0x7d && m[2] === 0x4d && m[3] === 0x53 && m[4] === 0x54
 /** The hello's feature bits, low bit first. */
@@ -216,6 +216,48 @@ export function parseLoad(m: number[]): MidistompLoad | undefined {
   const tenths = (k: number) => Math.round(word(k) * 1000 / 54422)
   const slots = Array.from({ length: 6 }, (_, s) => ({ name: String.fromCharCode(...b.slice(72 + 8 * s, 80 + 8 * s)).replace(/\0[^]*$/, ''), cpu: tenths(5 + s), dsp: b[60 + 2 * s] | b[61 + 2 * s] << 8 }))
   return { window: word(12), cpu: tenths(0), audio: tenths(1), audioMax: tenths(2), system: tenths(3), perform: tenths(4), late: word(11), midi: tenths(13), lateTotal: word(14), dsp: slots.reduce((sum, slot) => sum + slot.dsp, 0), slots }
+}
+
+const word7 = (m: number[], at: number) =>
+  (m[at] | m[at + 1] << 7 | m[at + 2] << 14 | m[at + 3] << 21 | m[at + 4] << 28) >>> 0
+
+/** The development probe's SYSTEM counter, as five little-endian 7-bit groups. */
+export function parseZdlHeaderReads(m: number[]): number | undefined {
+  if (!isMstReply(m) || m[5] !== MST.zdlHeaderReadsReply || m.length !== 13 || m[7] > 127 ||
+    m[8] > 127 || m[9] > 127 || m[10] > 127 || m[11] > 15 || m[12] !== 0xf7) return undefined
+  return word7(m, 7)
+}
+
+export type ZdlStreamEvent =
+  | { operation: 'header' | 'copy' | 'view'; itemSize: number; requested: number; returned: number }
+  | { operation: 'seek'; offset: number; origin: number; result: number }
+  | { operation: 'close'; result: number }
+export type ZdlStreamTrace = { completed: number; events: ZdlStreamEvent[] }
+
+/** Eight physical ring slots, each with one kind byte and three u32s. A zero kind marks an unused slot. */
+export function parseZdlStreamTrace(m: number[]): ZdlStreamTrace | undefined {
+  if (!isMstReply(m) || m[5] !== MST.zdlStreamTraceReply || m.length !== 141 || m[140] !== 0xf7 ||
+    m.slice(7, -1).some(byte => byte < 0 || byte > 127) || m[11] > 15) return undefined
+  const completed = word7(m, 7), events: ZdlStreamEvent[] = []
+  const kinds = ['header', 'copy', 'view'] as const
+  for (let i = 0; i < 8; i++) {
+    const at = 12 + 16 * ((completed + i) & 7)
+    if (m[at + 5] > 15 || m[at + 10] > 15 || m[at + 15] > 15) return undefined
+    const kind = m[at], first = word7(m, at + 1), second = word7(m, at + 6), result = word7(m, at + 11)
+    if (kind === 0) {
+      if (first || second || result || events.length) return undefined
+    } else if (kind >= 1 && kind <= 3) {
+      events.push({ operation: kinds[kind - 1], itemSize: first, requested: second, returned: result })
+    } else if (kind === 4) {
+      events.push({ operation: 'seek', offset: first | 0, origin: second, result: result | 0 })
+    } else if (kind === 5 && first === 0 && second === 0) {
+      events.push({ operation: 'close', result: result | 0 })
+    } else {
+      return undefined
+    }
+  }
+  if (events.length !== Math.min(completed, 8) && events.length !== 8) return undefined
+  return { completed, events }
 }
 
 /** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with

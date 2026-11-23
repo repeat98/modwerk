@@ -242,6 +242,10 @@ on and sends each message at its Web MIDI timestamp, so the link's pacing holds.
 Close Zoom Effect Manager and every browser tab with a pedal page (dev servers
 too) first: the pedal answers every MIDI client, so another client's replies
 end up in this link's operations, and this link's file commands in theirs.
+`device_status` and `zoom_status` include `zdlHeaderReads` when the
+[development load probe](../sdk/machines/zoom-ms-70cdr/README.md#measure-a-zdl-load)
+answers. It is the unsigned System counter and can be read with the
+screen closed.
 On 9 November 2026 `status` read the owner's MS-70CDR on MIDISTOMP 2.0.1
 (identity, features and load) over CoreMIDI; `list` stopped after four files
 because a pedal page in another worktree's dev server was reading the pedal. On

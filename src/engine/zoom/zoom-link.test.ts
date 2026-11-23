@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
-import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
+import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, parseZdlHeaderReads, parseZdlStreamTrace, unpack7 } from './zoom-protocol'
 
 const connected = async (pedal: ReturnType<typeof fakeZoomPedal>, timeout = 200) => {
   const link = new ZoomLink(() => Promise.resolve(pedal.access), timeout)
@@ -26,6 +26,35 @@ describe('the Zoom file protocol', () => {
     const m = 'F0 7D 4D 53 54 47 11 44 0E 64 00 00 7D 3F 00 20 00 55 4A 00 00 6D 00 11 00 00 0D 02 00 00 03 00 19 00 00 00 00 00 00 00 00 00 00 00 00 00 00 20 00 62 0E 00 00 00 00 01 00 00 02 00 00 00 05 08 00 00 00 5A 00 00 00 04 70 11 01 00 42 01 00 00 00 00 00 00 00 58 02 00 00 00 54 61 70 65 45 00 63 68 6F 2D 00 00 00 00 00 00 00 00 2D 00 00 00 00 00 00 00 00 2D 00 00 00 00 00 00 00 00 4E 00 41 4D 31 00 00 00 00 00 3F 00 00 00 00 00 00 00 00 F7'
     expect(parseLoad(m.split(' ').map(h => parseInt(h, 16)))).toEqual({ window: 133, cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 2, lateTotal: 70000, dsp: 1050,
       slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '?', cpu: 0, dsp: 0 }] })
+  })
+  it('decodes the full unsigned ZDL read counter and rejects malformed replies', () => {
+    const header = [0xf0, 0x7d, 0x4d, 0x53, 0x54, 0x48, 17]
+    expect(parseZdlHeaderReads([...header, 0x78, 0x2c, 0x51, 0x11, 0x09, 0xf7])).toBe(0x92345678)
+    expect(parseZdlHeaderReads([...header, 127, 127, 127, 127, 15, 0xf7])).toBe(0xffffffff)
+    expect(parseZdlHeaderReads([...header, 0, 0, 0, 0, 16, 0xf7])).toBeUndefined()
+    expect(parseZdlHeaderReads([...header, 0, 0, 0, 0, 0xf7])).toBeUndefined()
+  })
+  it('decodes partial and wrapped stream traces in completion order', () => {
+    const word = (value: number) => Array.from({ length: 5 }, (_, i) => (value >>> (7 * i)) & 127)
+    const slot = (kind: number, first = 0, second = 0, result = 0) => [kind, ...word(first), ...word(second), ...word(result)]
+    const reply = (count: number, slots: number[][]) => [0xf0, 0x7d, 0x4d, 0x53, 0x54, 0x49, 17, ...word(count), ...slots.flat(), 0xf7]
+    const empty = slot(0), close = slot(5), header = slot(1, 52, 1, 1), seek = slot(4, -16, 2, -1), view = slot(3, 32, 20, 14)
+    expect(parseZdlStreamTrace(reply(0, Array(8).fill(empty)))).toEqual({ completed: 0, events: [] })
+    expect(parseZdlStreamTrace(reply(4, [header, seek, view, close, empty, empty, empty, empty]))).toEqual({
+      completed: 4, events: [
+        { operation: 'header', itemSize: 52, requested: 1, returned: 1 },
+        { operation: 'seek', offset: -16, origin: 2, result: -1 },
+        { operation: 'view', itemSize: 32, requested: 20, returned: 14 },
+        { operation: 'close', result: 0 },
+      ],
+    })
+    const slots = Array.from({ length: 8 }, (_, i) => slot(2, 1, i, i))
+    const events = [3, 4, 5, 6, 7, 0, 1, 2].map(i => ({ operation: 'copy', itemSize: 1, requested: i, returned: i }))
+    for (const count of [11, 3]) expect(parseZdlStreamTrace(reply(count, slots))).toEqual({ completed: count, events })
+    expect(parseZdlStreamTrace(reply(9, [close, empty, ...slots.slice(2)]))).toBeUndefined()
+    const malformed = reply(11, slots)
+    malformed[17] = 16
+    expect(parseZdlStreamTrace(malformed)).toBeUndefined()
   })
   it('reads an effect file header', () => expect(effectInfo(fakeEffect('LOOP.ZDL', 8, 480, '0.03').data)).toEqual({ gid: 8, fxid: 480, version: '0.03' }))
 })
@@ -111,6 +140,31 @@ describe('MIDISTOMP over USB', () => {
     await new Promise(resolve => setTimeout(resolve, 60))
     expect(pedal.sent.some(m => m[1] === 0x7d)).toBe(false)
   })
+  it('reads the ZDL probe without MIDISTOMP hello and ignores another command or nonce', async () => {
+    const pedal = fakeZoomPedal({ firmware: 'D004' })
+    const send = pedal.output.send
+    pedal.output.send = message => {
+      send(message)
+      if (message[1] !== 0x7d || message[5] !== 0x07) return
+      const [start, id, m, s, t, , nonce] = message
+      const deliver = (reply: number[]) => pedal.input.onmidimessage?.({ data: Uint8Array.from(reply) })
+      deliver([start, id, m, s, t, 0x47, nonce, 0xf7])
+      deliver([start, id, m, s, t, 0x48, (nonce + 1) & 0x7f, 3, 0, 0, 0, 0, 0xf7])
+      deliver([start, id, m, s, t, 0x48, nonce, 0x30, 0, 0xf8, 0, 0, 0, 0xf7])
+    }
+    const link = await connected(pedal, 50)
+    expect(await link.zdlHeaderReads()).toBe(0x30)
+    expect(await link.zdlHeaderReads()).toBe(0x30)
+  })
+
+  it('omits the counter on older development builds and never asks stock or the bootloader', async () => {
+    for (const firmware of ['2.10', '1.10', 'M201', 'D003']) {
+      const pedal = fakeZoomPedal({ firmware }), link = await connected(pedal, 30)
+      expect(await link.zdlHeaderReads()).toBeUndefined()
+      expect(pedal.sent.some(m => m[1] === 0x7d && m[5] === 0x07)).toBe(firmware === 'D003')
+    }
+  })
+
   it('reads the SYSTEM screen’s load, each answer a new window', async () => {
     const pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 2], features: 1, load } }), link = await connected(pedal)
     await hello(pedal, link)

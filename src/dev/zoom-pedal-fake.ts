@@ -8,7 +8,7 @@ import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, zdlHeaderReads = undefined as number | undefined, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
   let firmware = started, starting = 0
   let writes = 0
@@ -28,7 +28,7 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
   const head = [0xf0, 0x52, 0x00, deviceId, 0x60, 0x04]
   const ack = () => reply([...head, 0, 0xf7])
   const nope = () => reply([0xf0, 0x52, 0x00, deviceId, 0x60, 0x7f, 0xf7])
-  const size5 = (n: number) => [n & 0x7f, (n >> 7) & 0x7f, (n >> 14) & 0x7f, (n >> 21) & 0x7f, (n >> 28) & 0x7f]
+  const size5 = (n: number) => [n & 0x7f, (n >>> 7) & 0x7f, (n >>> 14) & 0x7f, (n >>> 21) & 0x7f, (n >>> 28) & 0x7f]
   function entry(file: FakePedalFile) {
     const m = [...head, ...Array(30).fill(0), 0xf7]
     Array.from(file.name).forEach((c, i) => { m[15 + i] = c.charCodeAt(0) })
@@ -47,6 +47,8 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       const m = Array.from(data); sent.push(m)
       if (silent) return
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
+      if (zdlHeaderReads !== undefined && m.length === 8 && m[1] === 0x7d && m[2] === 0x4d && m[3] === 0x53 && m[4] === 0x54 && m[5] === 0x07 && m[7] === 0xf7)
+        return reply([...m.slice(0, 5), 0x48, m[6], ...size5(zdlHeaderReads), 0xf7])
       if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return

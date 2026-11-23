@@ -2,10 +2,10 @@
 // user's own MS-70CDR 2.10 OS, byte for byte what zoomms builds (its cli._apply_patches). The repository holds no Zoom
 // bytes: guards are hashes, and what a patch repeats from Zoom's files is copied from the user's own
 // (scripts/midistomp-import.ts).
-import midistomp from '../../../vendor/midistomp/midistomp.json'
-import { addSection, buildPart, concat, hex, parseAis, span } from './ais'
-import { zipEntry } from './zip'
-import { ZOOM_BASE } from './zoom-protocol'
+import midistomp from '../../../vendor/midistomp/midistomp.json' with { type: 'json' }
+import { addSection, buildPart, concat, hex, parseAis, span } from './ais.ts'
+import { zipEntry } from './zip.ts'
+import { ZOOM_BASE } from './zoom-protocol.ts'
 
 type Part = ['hex', string] | ['copy', string, number, number]
 type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string | string[]; expect_length?: number }
@@ -75,10 +75,26 @@ export const buildRelease = (stock: ZoomStock) => buildBase(stock, MIDISTOMP.rel
 /** The base for the user's own stock MS-70CDR 2.10 parts, from MIDISTOMP's patches by name (a release: MIDISTOMP.releases). */
 export async function buildBase(stock: ZoomStock, names: readonly string[]) {
   await checkStock(stock)
-  const patches = names.map(name => {
+  return applyPatches(stock, releasePatches(names), MIDISTOMP.build)
+}
+
+function releasePatches(names: readonly string[]) {
+  return names.map(name => {
     const patch = MIDISTOMP.patches.find(patch => patch.name === name)
     if (!patch) throw new Error('MIDISTOMP has no patch ' + name + '.')
     return patch
   })
-  return applyPatches(stock, patches, MIDISTOMP.build)
+}
+
+/** A developer's own base image. Use a distinct identity before a trial can target it. */
+export async function buildDevelopmentBase(stock: ZoomStock, label: string, overlays: readonly ZoomPatch[] = []) {
+  if (!/^D[A-Z0-9]{3}$/.test(label)) throw new Error('Use a four-character development label, for example D001.')
+  await checkStock(stock)
+  const patches = releasePatches(MIDISTOMP.releases[ZOOM_BASE.name])
+  const identity = patches.find(patch => patch.name === 'identity-tag')
+  if (identity?.write?.length !== 1 || identity.write[0].expect_length !== label.length)
+    throw new Error('The pinned release has no matching identity patch.')
+  const data = Array.from(label, char => char.charCodeAt(0).toString(16)).join('')
+  const tagged = { ...identity, write: [{ ...identity.write[0], data }] }
+  return applyPatches(stock, [...patches.filter(patch => patch !== identity), ...overlays, tagged], MIDISTOMP.build)
 }
