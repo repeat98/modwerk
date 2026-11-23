@@ -53,5 +53,5 @@
     "Rest while nothing in the project uses FM Synth: fm_in_use answers ev_in_use, and its frame-path detours and its STATIC renderer and FLEX start entries hold stock's bytes meanwhile.",
     "A silent FM track (no voice of ours, or a released voice at silence) ships its silence without the FM loop; #1928's faster fm_frame. #1928's frame-prepare clock and LFO gate are dropped: the rest covers the case they were for."
   ],
-  "publication": "0.1.5-experimental: #1928 and #1974 combined, then the silent-track cost cut (22 November 2026); needs the owner's approval again. See TESTING.md."
+  "publication": "0.1.5-experimental: #1928 and #1974 combined, then a silent-track path (22 November 2026) whose saving did not show on the unit (#2030); needs the owner's approval again. See TESTING.md."
 }

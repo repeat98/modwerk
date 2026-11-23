@@ -1,6 +1,6 @@
 # FM Synth — 0.1.5 experimental
 
-FM Synth 0.1.5 rests while nothing in the project uses it: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. A silent FM track, before a note or after its release has faded, ships its silence without the FM engine. Sound and controls are 0.1.4's (TESTING.md). Its CPU price, measured again on 0.1.5 on an MKII, is 4 % of a frame a track (0.1.4: 6), so the base's CPU budget no longer refuses an FM Synth track of a Part on its own.
+FM Synth 0.1.5 rests while nothing in the project uses it: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. A silent FM track was meant to cost less, but on an MKII a track that had played notes still cost about 11 points of the frame interrupt on an empty pattern and while stopped; a fix is to follow (TESTING.md). Sound and controls are 0.1.4's (TESTING.md). Its CPU price, measured again on 0.1.5 on an MKII, is 4 % of a frame a track (0.1.4: 6), so the base's CPU budget no longer refuses an FM Synth track of a Part on its own.
 
 ## Overview
 

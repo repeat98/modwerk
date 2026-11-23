@@ -6,7 +6,8 @@ the LFO pass left to stock between notes) and #1974 (FM Synth rests while nothin
 frame path costing 1.3 to 1.6 frame points more than the rest alone whenever FM Synth is awake: its saving was for an
 installed FM Synth on no track, which the rest now makes free. So the current package keeps the rest, drops #1928's
 frame-prepare clock and LFO gate (the LFO depth site and the clock are 0.1.4's again, so no base 0.7.14 is needed),
-keeps #1928's faster `fm_frame`, and cuts what a silent FM track costs. The owner waived the ask-the-author step for
+keeps #1928's faster `fm_frame`, and adds a path meant to cut what a silent FM track costs, which on the unit
+did not lower a track's cost once it had played notes (23 November 2026, below; #2030). The owner waived the ask-the-author step for
 this optimization work on 22 November 2026; the engine and its credit stay Tim Hastie's.
 
 ## The package `791e26c5` (built 23 November 2026; its code was `8cf43bfb`'s, prepared 22 November)
@@ -27,10 +28,11 @@ scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-pack
 the stock OS 1.40C (the same 39 copies, at new offsets); `--check --stock`: every package identical, the strict
 stock-free scans pass. It needs a base with resting sites (0.7.10 or later; an older base refuses the package).
 
-**On a unit so far:** only its cost, both times on `8cf43bfb`. On 22 November 2026 the owner's MKII with the 0.8
-development twin `dce1d30e` recorded `evidence/frame-cost.json` (Dev17 C04 at 126 BPM, 79.4 % with stock alone: `rest`
-0, `first` 31.3, `each` 0.5), and on 23 November its CPU price (below). The playback cases in the table below were not
-run on it.
+**On a unit so far:** its cost on `8cf43bfb`: on 22 November 2026 the owner's MKII with the 0.8 development twin
+`dce1d30e` recorded `evidence/frame-cost.json` (Dev17 C04 at 126 BPM, 79.4 % with stock alone: `rest` 0, `first` 31.3,
+`each` 0.5), and on 23 November its CPU price (below). On 23 November `791e26c5` itself ran the cases in the table
+below on twin `856cbbcf` ("MKII runs of `791e26c5`", below): the rest and a pick while it rests pass; the
+released-silence and after-STOP paths did not lower the cost.
 
 **Rests** (stock's bytes while `fm_in_use` answers 0):
 
@@ -83,7 +85,8 @@ stock calls stubbed; `test_silence.py` prints them):
 
 The fixed part of each is `fm_frame`, once a frame for all eight tracks (148 instructions in 0.1.4 with an FM track
 read, 112 now). Instruction counts are not frame points: memory access (cache misses) is not counted, nor is the
-base's route of an FM track.
+base's route of an FM track. On the unit (23 November 2026, below) a track that had played notes kept costing about 11
+frame points while silent or stopped, so these counts did not show there (#2030).
 
 **Software checks** (22 November 2026): `test_silence.py` (both builds over silence before a note, a note, its release to
 silence, a second note, a retrigger, a voice kill and a note after it, and GLIDE on: every call's return and everything
@@ -94,15 +97,62 @@ and signature cases (a one-off comparison, not committed); `machine_composition_
 
 | Case | Why this change makes it a risk | How run | Result |
 | --- | --- | --- | --- |
-| Installed, no FM track, C01 playing | the nine sites must cost nothing | frame share against the empty base | not run on `8cf43bfb` or `791e26c5` (pass on `5b425a33`) |
-| FM on T2, C01 (notes) | the awake path must cost no more than the rest alone | frame share and CPU meter against `2ac17c3a` | not run |
-| FM on T2, C02 (no trigs, the note released) | the released-silence path must cut the silent track's cost | frame share against the empty C02 | not run |
-| STOP, then PLAY | the no-voice path after a kill, then the first note | frame share while stopped, the first note by ear | not run |
-| A pick while it rests | the wake must land before the commit | pick on a track of a playing pattern | not run (pass on `5b425a33`) |
-| GLIDE on with a LEG MONO sample track | GLIDE must keep it awake and slide | glide by ear, GLIDE on, then off | not run |
-| HOLD shorter than INF on the first notes after a wake | the clock's rebase | listen to the note lengths | not run |
-| Legacy FMSYNTH marker project | the slot sweep must keep it awake; its track keeps the full path | the saved marker fixture | not run |
-| Silent paths against the full path | a silent path must ship what the full path ships | `test_silence.py` | pass |
+| Installed, no FM track, C01 playing | the nine sites must cost nothing | `791e26c5` installed alone, frame share on C01 (all eight tracks trig on 1/5/9/13) against no modules; twin `856cbbcf`, Dev17 Part 1 | pass: 40.9 % and 41.0 % against 40.8 % (+0.1 to 0.2) |
+| FM on T2, C01 (notes) | the awake path must cost no more than the rest alone | frame share, longest frame and CPU meter with T2 on FM SYNTH, against T2 on its sample; twin `856cbbcf`, Dev17 Part 1 | 55.4 %, longest frame 114.2 %, CPU meter 67.8 %, 0 skipped: +14.6 frame points against the sample. Not compared with `2ac17c3a` (not run), so "no more than the rest alone" is untested |
+| FM on T2, C02 after notes on C01 (the note released) | the released-silence path must cut the silent track's cost | frame share on C02 started fresh after 8 s of quiet, two readings, against FM on T2 before any note (24.7 %) and no modules (23.7 %); twin `856cbbcf`, Dev17 Part 1 | **does not meet the claim**: 36.2 % and 36.2 %, +11.5 points over the same track before any note, held over about 45 s ([#2030](https://github.com/repeat98/modwerk/issues/2030)) |
+| STOP, then PLAY | the no-voice path after a kill, then the first note | frame share stopped for 8 s after notes, two readings, against FM on T2 stopped before any note (24.6 %) and no modules stopped (23.7 %); then PLAY on C01; twin `856cbbcf`, Dev17 Part 1 | stopped: **does not meet the claim**, 36.0 % and 36.0 %, +11.4 points over the same track before any note ([#2030](https://github.com/repeat98/modwerk/issues/2030)). PLAY on C01 after the stop: 55.4 %, 0 skipped, no stall. The first note by ear: not judged |
+| A pick while it rests | the wake must land before the commit | FM SYNTH picked on T2 while C01 played; twin `856cbbcf`, Dev17 Part 1 | pass: admitted, no stall, 0 skipped |
+| GLIDE on with a LEG MONO sample track | GLIDE must keep it awake and slide | glide by ear, GLIDE on, then off | not run (the owner, at the unit) |
+| HOLD shorter than INF on the first notes after a wake | the clock's rebase | listen to the note lengths | not run (the owner, at the unit) |
+| Legacy FMSYNTH marker project | the slot sweep must keep it awake; its track keeps the full path | the saved marker fixture | not run: no fixture on this card |
+| Silent paths against the full path | a silent path must ship what the full path ships | `test_silence.py` on Unicorn's ColdFire core | pass in the emulator; on the unit the saving did not show (rows above, [#2030](https://github.com/repeat98/modwerk/issues/2030)) |
+
+## MKII runs of `791e26c5` on base 0.8 (23 November 2026)
+
+Reported by the coordinating session for the owner: package `791e26c5`, Octatrack MKII, development twin `856cbbcf`
+of base 0.8 (`base/octatrack-next` `9ac83b232`), project Dev17, bank C, Part 1. Two trials of FM Synth alone, each
+rolled back. Readings are `guard`'s "in the frame interrupt" from `PLAY w2500 guard w6000` (stopped: `w8000 guard
+w6000`).
+
+**Run 1** (10:42 to 10:45). C01 has trigs on steps 1, 5, 9 and 13 of all eight tracks; C02 has none.
+
+| State | Frame share | Longest frame | CPU meter | Skipped |
+| --- | ---: | ---: | ---: | ---: |
+| No modules, C01 | 40.8 % | | 58.5 % | |
+| No modules, C02 | 30.4 % | | | |
+| Installed, no FM track, C01 | 40.9 %, 41.0 % | | | |
+| FM SYNTH picked on T2 while C01 played | admitted, no stall | | | 0 |
+| FM on T2, C01 (notes) | 55.4 % | 114.2 % | 67.8 % | 0 |
+| PLAY on C01 after STOP | 55.4 % | | | 0 |
+
+**Run 2** (10:55 to 10:59), matched baselines: C02 started fresh after 8 s of quiet, and stopped after 8 s; two
+readings each.
+
+| State | C02 playing | Stopped |
+| --- | --- | --- |
+| No modules | 23.7 % / 23.7 % | 23.7 % / 23.7 % |
+| Installed, no FM track | 23.8 % / 23.8 % | 23.7 % / 23.7 % |
+| FM on T2, before any note | 24.7 % / 24.7 % | 24.6 % / 24.6 % |
+| FM on T2, after notes on C01 | 36.2 % / 36.2 % | 36.0 % / 36.0 % |
+
+**What it shows.** The rest works: installed on no track FM Synth adds 0.1 to 0.2 points, and a pick while it rests is
+admitted without a stall. An FM track before its first note costs about 1 point. But once FM Synth has played notes,
+its track keeps costing about 11.4 points more than before its first note, on an empty pattern (+11.5) and while
+stopped (+11.4), over about 45 s; playing notes on C01 it cost +14.6 against T2 on its sample. So the released-silence path and the after-STOP no-voice path did **not** show the reduction this release set
+out to make (the emulator's instruction counts above are for the paths themselves, not for what the unit reached). A
+possible cause, not verified: the default sound's HOLD may be INF, so its voices never release; the owner will check by
+ear. The fix is the follow-up [#2030](https://github.com/repeat98/modwerk/issues/2030). Admission still charges the track its in-use `first`
+(31.3, `evidence/frame-cost.json`), so nothing is over-admitted.
+
+Run 2's trial verdict was FAIL for one render the guard replaced on T8, a plain FLEX track with no machine, whose
+render the guard substitutes with stock's FLEX render (`machine_registry.c`, #999). Both trials rolled back; T2 and
+Part 1 were checked identical afterwards.
+
+**Owner's decision** (23 November 2026): ship 0.1.5 with base 0.8, with these results recorded and the silent path's
+fix as a follow-up ("yes, sounds good").
+
+**Not run on the unit:** GLIDE with a LEG MONO track, HOLD shorter than INF after a wake and the first note by ear (the
+owner, at the unit), and the legacy FMSYNTH marker project (no fixture on this card).
 
 ## The price, measured on 0.1.5 (23 November 2026)
 
