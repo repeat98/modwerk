@@ -74,4 +74,16 @@ Nathaniel Pavel wrote it; the core is irpina's Elekloader core-ar2. GPL-3.0-or-l
 
 ## Screens and audio
 
-Not captured yet.
+These captures are from rytm-emu running Modwerk's base for core-ar2 0.7 and Improved FLTR alone, from stock OS 1.74 ([capture provenance](media/capture.json)). The emulator's analog voices are stubbed, so the screens show the controls, not the sound; FRQ shows stock's number because Filter Hz is not in this build.
+
+![FILTER page with TYP showing a band picture, the graph drawing a narrow peak near the left, and the knob labels FRQ (reading 47) and WID.](media/band-base.png)
+
+BW with FRQ turned down to 47 (about 208 Hz) and WID at 0: a narrow band at the base. RES's knob reads WID.
+
+![FILTER page titled WIDTH, the graph drawing a band from the base, and WID reading 440Hz.](media/band-width.png)
+
+WID turned up: the band opens upward, and WID shows its top edge, 440 Hz.
+
+![FILTER page titled WIDTH, the graph drawing a wide, low band, and WID reading 1.05kHz.](media/band-wide.png)
+
+Further up: a wider band, drawn lower because the analog filter's band-pass loses level as it widens; top edge at 1.05 kHz.
