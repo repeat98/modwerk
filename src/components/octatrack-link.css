@@ -180,6 +180,10 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
 .hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
+.hub-screen canvas { width: min(100%, 48rem); height: auto; image-rendering: pixelated; background: #181818; }
+.hub-screen-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.hub-screen-rate { display: inline-flex; align-items: center; gap: .4rem; }
+.hub-screen-rate select { min-height: 32px; padding: 0 .4rem; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: 12px; background: var(--sidebar); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
 .hub-hero .device-photo { width: clamp(8.5rem, 15cqi, 11rem); height: auto; flex: none; }

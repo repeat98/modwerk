@@ -2298,8 +2298,6 @@ modwerk_retained_end:
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_crash_tick', order=96))  # crash.c: restart after a crash
-    if args.dev:  # the screen as composed, modules' drawing included
-        recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_dev_draw', order=95))
     if args.dsp_loader:  # the DSP manager's UI work (its own hook was the UI tick, 0x4005221e) and its ColdFire hooks
         recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_dsp_tick', order=92))  # dsp.c's test picks
         recipe['subscribe'].append(dict(event='ev_tick', fn='dl_ui', order=93))

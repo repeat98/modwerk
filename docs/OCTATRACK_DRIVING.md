@@ -1,17 +1,14 @@
 # Driving the Octatrack from an agent
 
-How to work a real Octatrack MKII running a Modwerk development base (`build_core.py --dsp-loader --dev`) over
-USB: start the link, send steps, read the unit, change things without harming the owner's project, and keep
-runs short. The flashed beta base refuses these steps; a twin of it is `build_core.py` with the flags that
+Drive an Octatrack MKII over USB with a development twin. Build it with `build_core.py` and the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
 then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
 Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
 `base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
 Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
 analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
-the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR
---chunk 4096`: the same day a boot sent through `serve` left the unit running but gone from USB until a power cycle, and
-the same image booted one-shot came back. Everything else here was done on the owner's MKII on 11 October 2026. Why things fail is in
+the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR`.
+Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -197,7 +194,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `loader` | packets accepted, rejected, errors, jobs, selections, commits, rollbacks, code words per core |
 | `mem:0x80000ec4:16` | RAM in hex, read-only, any length, within 0x40000400-0x40cfffff (short of the pool's end and the loader's statics), 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and the battery RAM's records 0x100f0000-0x100fffff (`dev.c`); the battery-RAM Part copies are outside it |
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
-| `png:/path.png` | a screenshot, 256 x 128: cheaper to read than the text rendering. It shows stock's menus too (PERSONALIZE, read on an MKI twin) |
+| `png:/path.png` | On bases advertising the Screen capability (MWCP bit 13), the Hub and this command read the same on-demand frame. Older development twins also answer the request. A screenshot, 256 x 128: cheaper to read than the text rendering. It shows stock's menus too (PERSONALIZE, read on an MKI twin) |
 | `screen` | the screen as block characters (thousands of tokens; avoid) |
 | `crash` | the last crash record (vector, PC, registers); `crashtest` makes one. The PC and the stack read as names (`mw_frame_exit+0x2c`) when the running base was built with `octatrack:base -- --out` or started with `boot DIR` on this computer; your own names for stock addresses go in `~/.cache/modwerk-local/octatrack/addresses.json` (`{"0x…": "name"}`), never in Git. `diaglog` and `diagnostics:pull` name them the same way |
 | `selftest` | PROJ > MODWERK > SELF TEST over USB: start it (transport stopped), wait, print the verdict, the modules that ran and the CPU and core peaks |
