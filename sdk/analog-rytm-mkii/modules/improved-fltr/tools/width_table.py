@@ -48,7 +48,7 @@ def text():
     return ('// Written by tools/width_table.py from tools/calibration.json: do not edit.\n'
             '// The resonance word for a band w semitones wide (index w), signed.\n'
             '#define FLTR_WIDTH_ENTRIES %d\n'
-            'static const short fltr_width_words[FLTR_WIDTH_ENTRIES] = {\n%s\n};\n' % (len(t), '\n'.join(rows)))
+            'const short fltr_width_words[FLTR_WIDTH_ENTRIES] = {\n%s\n};\n' % (len(t), '\n'.join(rows)))
 
 
 if __name__ == '__main__':
