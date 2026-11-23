@@ -22,11 +22,11 @@
     {
       "id": "miniverb",
       "slots": "fx2",
-      "cycles": 411,
+      "cycles": 402,
       "cyclesKind": "modeled",
       "state": 64,
       "buffer": 15870,
-      "version": "0.2.3-experimental",
+      "version": "0.2.4-experimental",
       "name": "Mini Verb",
       "module": "3cbedc9c",
       "bytes": 2770,
