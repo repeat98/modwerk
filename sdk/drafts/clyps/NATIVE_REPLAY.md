@@ -88,3 +88,11 @@ python3.12 -B "$DRAFT/tests/native_refusal.py" "$EMU" "$NEG/base/MAIN.raw" \
 ```
 
 For the tick-193 queue witness, repeat both wide commands with --observe-queue and separate output names. This samples in 1 ms increments near ticks 190–195 and writes a .phase file for each role. Grade the two new JSON files with the same grade_wide.py. Keep the original wide capture and its exit status. Compare the queue flag changes independently from ordered native builder calls and timestamp writes.
+
+### Row lifecycle replay (23 November)
+
+Build and shelve the current module using the commands above. Against the pinned candidate base, pass `--row-popup` to the same native_rows.py invocation used for arranger recovery, with a separate output file. The popup case uses the stock timed message routine while Row Edit owns the panel. Wait for the stock message handle to clear before testing ARR. Run the identical popup fixture with the previous module on the shelf for the negative control.
+
+For project transition diagnostics, use `--project-change --package "$OUT/clyps-live.mwrm" --symbols-module "$OUT/module-symbols.json"` with a newly generated symbol witness. The fixture creates a second disposable project that selects bank B, confirms a nonzero R04 in the first project, and posts a load to the stock card task. The receipt records which callbacks ran and whether the new project's bank was selected. A failed assertion can leave a diagnostic receipt; always check process status. Ordinary masked bank-return and failed-read semantics are also covered by the scoped host suite.
+
+Use the same command with `--project-reload stored` or `--project-reload missing` in place of `--project-change`. Both follow the stock PROJECT menu and confirm RELOAD. The stored fixture prepares a bank-B saved generation. The missing fixture omits stored files in the disposable copy. A completed recovery receipt includes off_pool after stock I/O and module retirement.

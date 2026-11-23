@@ -70,3 +70,33 @@ The default eight-lane capture matched 624 ordered calls, 608 relative timestamp
 The early boundary passed its strict grader. In the late case the stock and candidate musical comparison passed for all 848 calls, 816 writes and 298 ticks. The request entered module state at +1 ms of tick 187; the diagnostic published it at +5 ms of that same tick. The T2 builder first used home again at 282. The strict diagnostic expectation of 188 failed. The previous base's +16 ms result remains in the preceding evidence. The input, diagnostic and builder observations are separate.
 
 Track Solo (both orders), panel, Grain, POLY8, VECTOR, stock popup priority, native Scene A/B parameter changes and the home trig/p-lock comparison repeated on the refreshed executable. The FLEX stem test passed. Both native STATIC controls again measured T2 peak 2117 before selection and 2337 after selection. The prelaunch-silence assertion failed in both. No physical test was performed.
+
+## 23 November · contributor regressions
+
+Run `python3.12 -B -m unittest discover -s sdk/drafts/clyps -v`. The host fixture compiles the production callbacks; lifecycle delivery follows the candidate subscription JSON. The bank fixture reads a one-byte grid marker from a temporary file and exercises a short read at EOF. On the previous implementation the popup path failed when ARR did not reopen, and the unrelated bank request removed an already confirmed R04. Both failed independently when linked to the previous handlers. The previous MKII package also reproduced the ARR re-entry failure after opening a real timed stock message during Row Edit. On the corrected candidate all four discovered host/ColdFire tests pass. Standalone linked image 5,596 bytes, BSS 176 bytes, 248 relocations.
+
+UI-01/02/03/04 cover the home case and three repeated interruptions with a foreign lane playing, a different confirmed row queued and an unconfirmed third source held down. Check encoder, modal query, stock YES, owned release, popup-owned ARR repeat/release, row bytes and next wrap. A separate stock YES/NO dialog handle used by Temp Save reproduced the same ownership failure before its addition to the stock-window check. UI-05 includes the existing TRACK and SRC ownership fixtures.
+
+BANK-01/02/03 cover an unrelated bank return, failed read with original fixture bytes retained, and a successful relevant replacement that changes the saved source to an unsupported grid. Recall refuses it and the native source selector falls back to home. Restoring compatible grid bytes makes the same confirmed slot usable. BANK-04 exercises project initialization and a missing R04 on next recall. BANK-05 covers a failed reload event sequence without initialization. A failure after project initialization is unresolved. The tests inject no success argument into a module callback. During an A read the fixture calls the real tick, wrap and selector: current and requested state survive, and the selector leaves the stock pattern argument alone. During a B read the same selector continues redirecting T1.
+
+The intermediate build that subscribed to project initialization alone was refused with 259 by the positive base: candidate B1 admission requires the bank pre-load subscription. The final contract keeps that subscription as the read guard and pairs it with bank-loaded; both the base and its admission rules are unchanged.
+
+### Native build identities and comparisons
+
+All 23 November runs use the existing MKII integration base b3184dd5e, MAIN SHA-256 `6a9d7518ba7707e3763215ecc50be1c7eec09628b1bdf45b86b3f207a02b434b`. The cumulative #1910 branch at c3706472b requires separate qualification. No hardware trial.
+
+| Package SHA-256 | Scope |
+|---|---|
+| `7707f1199cd7595bf49d8974445acbfb0610a0f7fb12c2c86268d259826a1142` | Admitted implementation of both fixes, before adding the additional stock YES/NO window handle. |
+| `32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9` | Final implementation, also guards the YES/NO dialog. 5,600 bytes of linked package image, 176 BSS, 248 relocations. |
+
+The first admitted package passed the native interrupted-editor replay. The independent stock T2 pair matched at wrap 90, 384 ordered calls and 400 relative writes. The stock Arranger matched its pre-install run after OFF (336 calls, 336 writes, complete 786432-byte pool). Track Solo, Grain and panel receipts matched the archived 9/21/17 observations respectively. POLY8 and VECTOR SRC returned correctly. Scene A/B selections matched stock on every step. In the fresh eight-lane pair, 624 events and 608 writes matched; strict default capture **FAIL**, with tick 193 the only mismatch among 219 samples. The historical 1 ms pair regraded PASS at 219/219; the historical late diagnostic still fails its 188 expectation after publication at 187. The musical and diagnostic graders retain their previous assertions.
+
+On the final package the stock timed popup closed, ARR reopened CLYPS, R04 recalled its confirmed A01 and OFF returned the full pool. The equal-width base without the required capability refused this package with 259, zero installed owners and six empty observed hooks. Catalog compatibility on the public checkout: 44 active modules, 946 pairs, zero problems. The catalog excludes this draft. Module doctor in draft mode still fails because octamod.module.json is absent.
+
+
+The final package also passed the matched T2 slice against the fresh, same-MAIN stock control. Wrap 90, 384 ordered calls, 400 relative writes, the seven unaffected lanes, SRC/ARR, STOP cancellation, bank and Part checks and pool recovery all passed.
+
+On the same final package, the GATE4 project fixture selected bank B, observed project initialization and the bank pre/post callbacks, and found R04 undefined with CLYPS still installed. Waiting for the stock card task before OFF returned 786432 bytes. The initial short OFF timeout had expired while the stock operation was still running. A direct attempt to invoke the stock bank reader synchronously from emulator main timed out; it provides no native bank-only I/O result. The independent host short-read case covers that path. Fresh FLEX on the first admitted package went from 0 to 1930 on T1. STATIC T2 measured 2117 before and 2337 after, failing the pre-launch silence assertion as in the historical stock control. E1 remains locked.
+
+On the final package, Track Solo and Grain both passed fresh native replays. OFF restored the same stock Arranger signature (336/336) and the complete pool. Every package and card used in these tests stayed local.
