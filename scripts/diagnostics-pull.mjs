@@ -47,6 +47,7 @@ export async function pullAll(page, from) {
 export const when = iso => new Date(iso).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
 const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username, data.event, data.phase,
   data.failure && 'failure=' + data.failure, data.client && [data.client.browser, data.client.major].filter(Boolean).join(' ') + '/' + data.client.os,
+  cardSaveFailed(data) && 'card=' + SAVED[data.reading.saved],
   data.error && 'error=' + data.error, data.result && 'result=' + data.result, data.refusal !== undefined && 'refusal=' + data.refusal,
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reconnect && 'reconnect=' + data.reconnect, data.reason && 'reason=' + data.reason,
   data.upload && 'command=' + data.upload.command, data.upload?.chunkOffset !== undefined && 'chunkOffset=' + data.upload.chunkOffset,
@@ -131,11 +132,13 @@ export function unitLines(incidents, names = namesFor) {
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (PROJ or FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
   'left out after a failed start', 'held after a failed start']
+const cardSaveFailed = data => data.event === 'health' && (data.reading?.saved === 8 || data.reading?.saved === 9)
 
 /** Each member's records in order: the bases, set reloads, the last finished self-test and the event counts. */
 export function members(events) {
   const found = new Map()
-  for (const { username, createdAt, data } of [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+  for (const entry of [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+    const { username, createdAt, data } = entry
     const member = found.get(username) ?? { last: '', kinds: {}, bases: [], reloads: [], selftest: undefined }
     member.last = createdAt
     member.kinds[data.event] = (member.kinds[data.event] ?? 0) + 1
@@ -152,6 +155,13 @@ export function members(events) {
     }
     // A base with RESTORE (request 43) says itself which modules that start left out and why: it replaces the guess.
     if (data.restore?.length && data.reading && member.reloads.at(-1)?.saved === data.reading.saved) member.reloads.at(-1).restore = data.restore
+    // A write can fail after Keep. Keep its first status reading and let a new set or a recovery start a new occurrence.
+    if (data.event === 'health' && data.reading) {
+      const last = member.lastCardReading
+      if (cardSaveFailed(data) && (last?.reading.saved !== data.reading.saved || last.base !== data.base || last.active !== data.active))
+        (member.saveFailures ??= []).push(entry)
+      member.lastCardReading = data
+    }
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
     // The unit's log arrives in pieces and can arrive twice: keep each record once, by its log and seq. A base that
@@ -215,7 +225,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
-  const problems = events.filter(entry => !selection(entry) && (PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
+  const saveFailures = new Set([...found.values()].flatMap(member => member.saveFailures ?? []))
+  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
@@ -230,6 +241,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       ...restarts(member),
       ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.restore?.length ? ` (left out ${r.restore.map(m => `${m.id}: ${REFUSALS[m.refusal] ?? 'refusal ' + m.refusal}`).join(', ')})`
         : r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
+      ...member.saveFailures?.length ? ['  card save failures: ' + member.saveFailures.map(({ createdAt, data }) => `${when(createdAt)} ${SAVED[data.reading.saved]}`).join(', ')] : [],
       ...member.selftest ? [`  last self-test ${member.selftest.state === 2 ? 'passed' : 'failed (bits ' + member.selftest.failed + ')'}` + (member.selftest.ran ? '' : ', no DSP module ran')] : [],
       ...member.peak ? [`  highest self-test peaks ${when(member.peak.at)}: CPU ${percent(member.peak.cpu)}, DSP T1-4 ${percent(member.peak.tracks1to4)}, T5-8 ${percent(member.peak.tracks5to8)}`] : [],
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
