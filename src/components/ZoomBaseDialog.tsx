@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DeviceProfile } from '../devices/registry'
 import { ZoomPedalArt } from '../devices/ZoomPedalArt'
-import type { ZoomStock } from '../engine/zoom/zoom-base'
+import type { ZoomPatch, ZoomStock } from '../engine/zoom/zoom-base'
 import type { ZoomLink } from '../engine/zoom/zoom-link'
 import { ZOOM_BASE, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { useZoomLink } from '../hooks/useZoomLink'
@@ -33,7 +33,11 @@ const store = () => openDeviceDatabase().then(deviceStore)
 // The builder carries MIDISTOMP's patches (277 KB): loaded when a zip is read, not with the page.
 const builder = () => import('../engine/zoom/zoom-base')
 const readZip = (file: File) => Promise.all([file.arrayBuffer(), builder()]).then(([buffer, zoom]) => zoom.readUpdater(new Uint8Array(buffer)))
-const buildRelease = (stock: ZoomStock) => builder().then(zoom => zoom.buildRelease(stock))
+declare const __MODWERK_ZOOM_PROBE__: { label: string; patch: ZoomPatch } | null
+const probe = import.meta.env.DEV && typeof __MODWERK_ZOOM_PROBE__ !== 'undefined' ? __MODWERK_ZOOM_PROBE__ : null
+const target = probe ? { name: 'ZDL load probe ' + probe.label, tag: probe.label } : ZOOM_BASE
+const buildTarget = (stock: ZoomStock) => builder().then(zoom =>
+  probe ? zoom.buildDevelopmentBase(stock, probe.label, [probe.patch]) : zoom.buildRelease(stock))
 
 /**
  * Installing the Modwerk base on an MS-70CDR, like the Octatrack's (BaseInstallDialog), in the shared frame: Zoom's
@@ -41,7 +45,7 @@ const buildRelease = (stock: ZoomStock) => builder().then(zoom => zoom.buildRele
  * answers with the base's tag. The link reconnects by itself each time the pedal comes back. `read` and `build` are
  * seams for tests (the real ones need Zoom's own files).
  */
-export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = buildRelease }: {
+export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = buildTarget }: {
   link: ZoomLink
   device: DeviceProfile
   onClose: () => void
@@ -50,7 +54,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
 }) {
   const state = useZoomLink(link), { status, identity } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing'
-  const updateMode = connected && isUpdateMode(identity), onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
+  const updateMode = connected && isUpdateMode(identity), onBase = connected && identity?.deviceId === 0x61 && identity.firmware === target.tag
   const finished = useRef(false), fileRef = useRef<HTMLInputElement>(null)
   const [view, setView] = useState<'intro' | 'steps'>('intro'), [stage, setStage] = useState<Stage>('updater')
   const [stock, setStock] = useState<ZoomStock>(), [fileError, setFileError] = useState(''), [accepted, setAccepted] = useState(false)
@@ -84,7 +88,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
   }
 
   const failed = run && 'error' in run ? run : undefined, running = run && 'step' in run ? run : undefined
-  const restartLine = onBase ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} runs {ZOOM_BASE.name}.</p>
+  const restartLine = onBase ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} runs {target.name}.</p>
     : updateMode ? <p className="base-install-note" role="status">It started in update mode again. Unplug it, then plug it in without holding any buttons.</p>
     : connected ? <p className="file-error" role="status">Your pedal answers with firmware {identity?.firmware || 'unknown'}, not the base. Go back and flash again.</p>
     : status === 'idle' && state.notice?.tone === 'error' ? <p className="base-install-note" role="status">{state.notice.text} Once it shows its patch screen, connect again.</p>
@@ -109,13 +113,13 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
   </>
 
   return <BaseDialogFrame canClose={!flashing} busy={flashing} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer}>
-    {view === 'intro' ? <BaseIntro title={<>{ZOOM_BASE.name.split(' ')[0]} on your {device.name}</>} promises={PROMISES}
+    {view === 'intro' ? <BaseIntro title={<>{probe ? target.name : 'MIDISTOMP'} on your {device.name}</>} promises={PROMISES}
       hero={<div className="module-preview link-hero" aria-hidden="true"><div className="preview-label"><span>BETA</span><span className="preview-led" /></div><ZoomPedalArt device={device} /></div>}
       intro={<>Flash the base once over USB: Zoom’s own firmware, patched in your browser with Luca Matturro’s <a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a>. Zoom’s 2.10 updater puts the original back at any time. It’s a beta: please report problems in <strong>#zoom-pedals</strong> on the development Discord.</>}
       needs={'You need an ' + device.name + ', Zoom’s MS-70CDR 2.10 updater for Mac (the .zip; it works here on any computer), a USB cable, and Chrome or Edge on a computer.'}
       missing={status === 'unsupported' ? 'This browser can’t use MIDI. Open this page in Chrome or Edge on a computer.' : undefined} /> : <>
       <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>Install the Modwerk base <span className="module-beta-badge">Beta</span></h2></header>
-      <p id="base-install-intro" className="base-install-intro">{ZOOM_BASE.name}, flashed once over USB. It takes about a minute.</p>
+      <p id="base-install-intro" className="base-install-intro">{target.name}, flashed once over USB. It takes about a minute.</p>
       <StageProgress labels={['Updater', 'Update mode', 'Flash', 'Restart']} at={at} />
       <section className="base-install-stage" aria-labelledby="base-stage-title">
         {stage === 'updater' && <>

@@ -23,6 +23,49 @@ Where the MS-70CDR stands on the stack every machine gets
   effect list; a power cycle loads it. The next loader milestone is one
   RAM-only effect trial on the development base, with the original chain and
   files verified after Undo and a separate unkept trial followed by a reboot.
+
+## Build a labelled development base
+
+Use Zoom's original MS-70CDR 2.10 updater zip and a unique four-character
+development label beginning with D.
+
+```sh
+node scripts/zoom-dev-base.ts /private/path/MS-70CDR_v2.10_Mac_E.zip --label D001
+```
+
+The command uses the browser's base builder, writes the image to a private
+temporary directory, and prints its label and hashes. A plain development
+build changes only the identity reply.
+
+### Measure a ZDL load
+
+Add `--load-probe` with GNU binutils for C674x on your PATH, or set
+`--c6x-prefix` to their executable prefix. Use a fresh label for the probe.
+To install that same build through the existing browser dialog, start the
+local development server with the same label and tools:
+
+```sh
+MODWERK_ZOOM_PROBE_LABEL=D002 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
+  npm run dev -- --host 127.0.0.1
+```
+
+From the pedal page, back up the files. The owner puts the pedal in update
+mode and opens **Install base**. The dialog must name **ZDL load probe
+D002** before the owner flashes. After restarting, read the identity
+through `device_status` or `npm run zoom -- status`.
+
+In **System**, read the eight hexadecimal digits at the right of the
+title. Change an effect on an unsaved scratch patch with Auto Save off.
+Open System again. A higher value shows the ordinary ZDL loader requested
+another ELF header. The stock read still runs. The probe counts requests,
+including failed reads. It has no candidate effect or trial controls.
+
+The probe retargets the guarded header read at `0xC00A5518` and the
+MIDISTOMP System draw call at `0xC00A93D0`. Its aligned section fits in
+the gap at `0xC00F4B00` on the pinned base. These sites are checked against the
+private 2.10 build. The next device work is to verify the stream's read,
+seek and close behavior before substituting RAM for one registered effect.
+This development image is awaiting its first hardware run.
 - **Modules:** `sdk/zoom/modules/<id>/`, one folder per effect for the whole
   ZDL family, each naming the pedal it is developed on and every pedal's
   tested status.

@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { deflateRawSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
-import { buildPart, concat, parseAis } from './ais'
-import { MIDISTOMP, applyPatches, buildBase, readUpdater, sha256, type ZoomPatch } from './zoom-base'
+import { buildLoadProbe } from '../../../sdk/machines/zoom-ms-70cdr/dev/load-probe'
+import { buildPart, concat, parseAis, span } from './ais'
+import { MIDISTOMP, applyPatches, buildBase, buildDevelopmentBase, buildRelease, readUpdater, sha256, type ZoomPatch } from './zoom-base'
 import { ZOOM_BASE } from './zoom-protocol'
 import { storedZip, zipEntry } from './zip'
 
@@ -71,6 +72,11 @@ describe('the Zoom base builder', () => {
     expect(MIDISTOMP.releases[ZOOM_BASE.name]).toContain('identity-tag')
   })
 
+  it('reserves a distinct identity for a development base', async () => {
+    await expect(buildDevelopmentBase(stock, ZOOM_BASE.tag)).rejects.toThrow(/development label/)
+    await expect(buildDevelopmentBase(stock, 'D001')).rejects.toThrow(/unmodified copy/)
+  })
+
   // With Zoom's download at hand (ZOOM_MS70CDR_ZIP='…/MS-70CDR_v2.10_Mac_E.zip'): the page reads its parts as they are.
   const zip = process.env.ZOOM_MS70CDR_ZIP
   it.runIf(zip)('reads the stock parts from Zoom’s own updater zip', async () => {
@@ -93,5 +99,37 @@ describe('the Zoom base builder', () => {
     expect(await sha256(release.main)).toBe('fffb805f42a047a94d1fa731994d2925e92776ea22f1c152cccf74f25a9edad0')
     expect(await sha256(release.preset!)).toBe('ca52f406a7324822a4c9113fec7b6083ff8c8b3c8bb0c956ce39b6ee0055eee4')
     await expect(buildBase({ ...own, 'Main.bin': hello.main }, ['hello'])).rejects.toThrow(/unmodified copy/)
+  })
+
+  it.runIf(app)('changes only the identity in a development build with no overlays', async () => {
+    const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
+    const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
+    const released = await buildRelease(own), development = await buildDevelopmentBase(own, 'D001')
+    const identity = MIDISTOMP.patches.find(patch => patch.name === 'identity-tag')!.write![0]
+    const image = parseAis(development.main), tag = span(image, identity.addr!, 4)
+    expect(new TextDecoder().decode(tag)).toBe('D001')
+    tag.set(new TextEncoder().encode(ZOOM_BASE.tag))
+    expect(await sha256(buildPart(image, development.main))).toBe(await sha256(released.main))
+    expect(development.preset).toEqual(released.preset)
+  })
+
+  const toolPrefix = process.env.MODWERK_ZOOM_C6X_PREFIX
+  it.runIf(app && toolPrefix)('adds the probe section and guarded calls to the labelled build', async () => {
+    const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
+    const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
+    const overlay = buildLoadProbe(toolPrefix!)
+    const baseline = await buildDevelopmentBase(own, 'D002')
+    const probe = await buildDevelopmentBase(own, 'D002', [overlay])
+    const image = parseAis(probe.main), before = parseAis(baseline.main)
+    expect(image.sections).toHaveLength(before.sections.length + 1)
+    for (const call of overlay.write!) {
+      const expected = span(before, call.addr!, call.expect_length!)
+      const patched = span(image, call.addr!, call.expect_length!)
+      expect(await sha256(expected)).toEqual(call.expect_sha256)
+      expect(patched[0] & 1).toBe(expected[0] & 1)
+      expected.set(patched)
+    }
+    expect(image.sections.slice(0, -1)).toEqual(before.sections)
+    expect(probe.preset).toEqual(baseline.preset)
   })
 })

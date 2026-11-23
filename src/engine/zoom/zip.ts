@@ -1,8 +1,8 @@
-import { crc32 } from './zoom-protocol'
+import { crc32 } from './zoom-protocol.ts'
 
 /** A zip of stored (uncompressed) files: the pedal backup. Effect files barely compress, so none is attempted. */
 export function storedZip(entries: { name: string; data: ArrayLike<number> }[]): Blob {
-  const parts: BlobPart[] = [], central: number[] = [], encoder = new TextEncoder()
+  const parts: Uint8Array<ArrayBuffer>[] = [], central: number[] = [], encoder = new TextEncoder()
   const u16 = (v: number) => [v & 255, (v >> 8) & 255], u32 = (v: number) => [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255]
   let offset = 0
   for (const { name, data } of entries) {
