@@ -103,6 +103,8 @@ On the final package, Track Solo and Grain both passed fresh native replays. OFF
 
 Both final native RELOAD fixtures passed. The stored B project cleared R04. Missing stored state kept bank A and its confirmed R04. OFF restored 786432 bytes in both cases.
 
+The final package also ran a fresh eight-lane pair using the 1 ms queue observation near wrap. Both replay processes exited successfully. The unchanged strict grader **FAILS** at tick 193: the queue snapshot contained one entry on the candidate and six on stock. All 624 ordered events, 608 relative writes and 218 of 219 sampled states matched. The earlier 219/219 result belongs to the historical package. The cause and any audible consequence remain unresolved.
+
 ## Artist requirements checkpoint
 
 Discovery now runs five tests. The added stopped popup/Bank H case injects both events into the production callbacks during a draft edit, then checks ARR re-entry, confirmed row, playback and pending state. The independent C clipboard fixture checks row and same-track cell snapshots, source isolation, overwrite refusal, cancellation/clear, invalid targets and cross-bank refusal. This fixture works on staging rows only. The firmware has no clipboard binding, sidecar writer or native duplication command. Hardware A–H: NOT TESTED.
