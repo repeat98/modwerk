@@ -60,9 +60,11 @@ works with the screen closed and leaves the pedal's files and patch alone.
 Older images omit the field. The probe counts attempts, including failed
 header reads, and resets at power-up.
 
-For a manual load check, record the count, change an effect on an unsaved
-scratch patch with Auto Save off, then read the count again. A higher value
-shows the stock ZDL loader requested another ELF header.
+To check the counter over USB, take two idle readings, then open and close
+Zoom's MIDI editor mode (SysEx commands `50` and `51`). On the original
+MS-70CDR with D004, each editor exit requested one more ELF header and
+the active and saved patch read back unchanged. See the
+[hardware record](../../../docs/verification/2026-11-23-ms70cdr-usb-counter.md).
 
 The probe retargets the guarded header read at `0xC00A5518` and the
 MIDISTOMP System draw call at `0xC00A93D0`. It taps MIDISTOMP's MIDI
@@ -70,7 +72,6 @@ diagnostics branch at `0xC00F485C` and then runs the original diagnostics.
 The aligned code fits in the gap at `0xC00F4B00` on the pinned base. On MIDI,
 `F0 7D 4D 53 54 07 <nonce> F7` returns
 `F0 7D 4D 53 54 48 <nonce> <five 7-bit groups, low first> F7`.
-The USB reply awaits its first hardware run.
 
 - **Modules:** `sdk/zoom/modules/<id>/`, one folder per effect for the whole
   ZDL family, each naming the pedal it is developed on and every pedal's
