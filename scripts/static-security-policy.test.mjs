@@ -20,9 +20,9 @@ async function policies() {
 }
 
 describe('production frame policy', () => {
-  it('allows the Ko-fi dialog, YouTube player and requested SoundCloud preview in built HTML', async () => {
+  it('allows only the reviewed embeds, including the MultiStomp Editor, in built HTML', async () => {
     const { meta } = await policies()
-    expect(meta['frame-src']).toEqual(['https://ko-fi.com', 'https://w.soundcloud.com', 'https://www.youtube-nocookie.com'])
+    expect(meta['frame-src']).toEqual(['https://ko-fi.com', 'https://themanro.github.io/ZoomMultistompZDL/tools/editor.html', 'https://w.soundcloud.com', 'https://www.youtube-nocookie.com'])
   })
 
   it('uses the same policy in HTML and hosting headers, which add only frame-ancestors', async () => {

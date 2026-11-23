@@ -11,6 +11,7 @@ import { useZoomLink } from '../hooks/useZoomLink'
 import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import { ZoomLoad } from './ZoomLoad'
+import { ZoomPatchEditor } from './ZoomPatchEditor'
 import { HubSetHead, HubSetList, type SetAction } from './HubSets'
 import { ModuleGrid } from './ModuleGrid'
 import { ZoomEffectPreview } from '../devices/ZoomEffectDetail'
@@ -22,6 +23,7 @@ import './zoom-hub.css'
 
 const VIEWS: { view: ZoomHubView; title: string; icon: IconName }[] = [
   { view: 'status', title: 'Status', icon: 'grid' },
+  { view: 'editor', title: 'Editor', icon: 'sliders' },
   { view: 'backups', title: 'Backups', icon: 'download' },
   { view: 'setup', title: 'Setup', icon: 'sliders' },
 ]
@@ -57,6 +59,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   listed?: readonly ZoomEffect[]
 }) {
   const mobile = useMobileWorkspace()
+  const editing = view === 'editor', hasEditor = device.id === 'zoom-ms-70cdr'
   const state = useZoomLink(link), { status, identity, notice, progress } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
   const expected = ZOOM_DEVICE_IDS[device.id], other = connected && identity && expected !== undefined && identity.deviceId !== expected
@@ -163,7 +166,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const asked = useRef(onPedal?.key)
   useEffect(() => {
     if (!pedalKey) asked.current = undefined
-    else if (status === 'ready' && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() }
+    else if (!editing && status === 'ready' && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() }
   })
   const save = () => run(async () => {
     if (!link) return
@@ -178,7 +181,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     : onBase ? <>Connected · {identity?.midistomp ? 'MIDISTOMP ' + identity.midistomp.version : ZOOM_BASE.name}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
     : connected ? <>Connected · firmware {identity?.firmware || 'unknown'}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
     : notice ? notice.text : 'Not connected'
-  const action = status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
+  const action = editing ? null : status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
     : canBase && connected && !onBase && !other ? <button className="button button-primary" disabled={busy} onClick={onInstall}>Install base</button> : null
   const led = connected ? 'on' : busy ? 'load' : 'off'
   const panel = (name: ZoomHubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : VIEWS.find(item => item.view === name)!.title}>{content}</section>
@@ -207,7 +210,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
       <nav className="hub-nav" aria-label={'Your ' + device.name}>
         <div className="hub-nav-group">
           <h2 className="hub-nav-label">{device.name}</h2>
-          <ul className="hub-nav-list">{VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={zoomHubHref(device.id, item.view)} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
+          <ul className="hub-nav-list">{VIEWS.filter(item => item.view !== 'editor' || hasEditor).map(item => <li key={item.view}><a className="hub-nav-item" href={zoomHubHref(device.id, item.view)} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
         </div>
         {sets && onSelect && onNew && onSetAction && <HubSetList sets={sets} selected={selected} open={view === 'set'} contents={names} onSelect={onSelect} onNew={onNew} onSetAction={onSetAction} actions={SET_ACTIONS}
           state={item => { const on = connected && holdsSet(item); return { on, label: on ? 'On your ' + model : undefined } }} />}
@@ -237,6 +240,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
           </section>
         </div>)}
+        {editing && hasEditor && panel('editor', <ZoomPatchEditor link={link} connecting={status === 'connecting'} />)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
           {error && <p role="alert" className="hub-error">{error}</p>}

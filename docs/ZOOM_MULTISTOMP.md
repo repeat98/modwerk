@@ -51,6 +51,22 @@ out.wav` plays a 44.1 kHz WAV through it, both without Zoom firmware. Leave
 whose coefficient knobs (depth, rate, mix) read the firmware refuses to render
 without one; test it on the pedal.
 
+## MS-70CDR stack progress
+
+| Piece | Verified capability and next check |
+| --- | --- |
+| Modwerk base | The browser builds pinned MIDISTOMP from the owner's 2.10 updater. Define the common loader sites and admission limits before publishing the first runtime module. |
+| USB link | The pedal page and the shared developer MCP read identity and installed effects over USB MIDI. |
+| Setup and updates | The pedal page guides backup, a bootloader flash and reconnection. Zoom's updater is the stock recovery route. |
+| Loading without a reflash | The development probe counted ELF-header reads on the original pedal. Qualify read, seek and close, then run one effect from RAM and verify Undo and reboot. Keep needs a separate persistence check. |
+| Status page | Status shows firmware, installed effects and any load snapshot the connected base supplies. |
+| Diagnostics | USB load support and the development loader counter are in place. Device self-test and a consent-gated diagnostic log remain to be wired. |
+| Device tools | Shared status and load calls reach the pedal. Review, Trial, Keep and Undo depend on the qualified RAM loader. |
+
+The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) runs
+Roman Rusinov's ZoomMultistompZDL Patch Editor within the pedal page. The
+editor requests MIDI access for its own origin. On the pedal page, Modwerk gives the editor the MIDI turn until you leave the tab. [Upstream Patch Editor](https://github.com/themanro/ZoomMultistompZDL#quickstart--edit-your-pedal-from-the-browser)
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |

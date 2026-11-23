@@ -36,6 +36,7 @@ let nextConnection = 0
 
 export class ZoomLink {
   private operationConnection?: number
+  private editorSignal?: AbortSignal
   private state: ZoomLinkState
   private readonly listeners = new Set<() => void>()
   private access?: MidiAccessLike
@@ -74,7 +75,7 @@ export class ZoomLink {
   }
 
   async connect() {
-    if (!this.requestAccess || this.state.status === 'connecting' || this.state.status === 'reading') return
+    if (this.editorSignal?.aborted === false || !this.requestAccess || this.state.status === 'connecting' || this.state.status === 'reading') return
     this.set({ status: 'connecting' })
     try {
       this.access ??= await this.requestAccess()
@@ -98,7 +99,7 @@ export class ZoomLink {
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
       this.heads.clear()
       this.set({ status: 'ready', identity, connection: ++nextConnection })
-      if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
+      if (!isUpdateMode(identity)) void this.quiet(() => this.editorSignal?.aborted === false ? Promise.resolve() : this.hello())
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
     }
@@ -111,7 +112,7 @@ export class ZoomLink {
     if (this.retrying) return
     this.retrying = true
     try {
-      for (let i = 0; i < 10 && this.state.status === 'idle' && this.pedalPresent(); i++) {
+      for (let i = 0; i < 10 && this.editorSignal?.aborted !== false && this.state.status === 'idle' && this.pedalPresent(); i++) {
         if (i) await new Promise(resolve => setTimeout(resolve, this.retry))
         if (this.state.status === 'idle') await this.connect()
       }
@@ -200,6 +201,24 @@ export class ZoomLink {
     this.op = run.catch(() => undefined)
     return run
   }
+  /** Give the embedded editor a turn on MIDI until it leaves the pedal page. */
+  readonly openPatchEditor = (signal: AbortSignal, ready: () => void) => {
+    this.editorSignal = signal
+    return this.quiet(async () => {
+      if (signal.aborted) return
+      await new Promise<void>(resolve => {
+        signal.addEventListener('abort', () => resolve(), { once: true })
+        ready()
+      })
+    }).finally(() => {
+      if (this.editorSignal !== signal) return
+      this.editorSignal = undefined
+      if (this.state.status !== 'idle') return
+      if (this.pedalPresent()) void this.reconnect()
+      else this.start()
+    })
+  }
+
   /** The base's load now (MIDISTOMP's load command), null when it doesn't answer, undefined when the link is busy. */
   readonly load = () => this.quiet(async () => {
     if (this.state.status !== 'ready' || !this.state.identity?.midistomp) return undefined

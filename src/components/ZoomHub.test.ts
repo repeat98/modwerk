@@ -34,9 +34,32 @@ describe('the Zoom pedal page', () => {
   it('has its routes, beside the machine’s library', () => {
     expect(zoomHubHref('zoom-ms-70cdr')).toBe('#zoom-ms-70cdr/pedal')
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/backups')).toMatchObject({ device: { id: 'zoom-ms-70cdr' }, view: 'backups' })
+    expect(zoomHubHref('zoom-ms-70cdr', 'editor')).toBe('#zoom-ms-70cdr/pedal/editor')
+    expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/editor')?.view).toBe('editor')
+    expect(parseZoomHubRoute('zoom-ms-50g/pedal/editor')).toBeUndefined()
     expect(parseZoomHubRoute('zoom-ms-50g/pedal')?.view).toBe('status')
     expect(parseZoomHubRoute('octatrack/pedal')).toBeUndefined()
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/samples')).toBeUndefined()
+  })
+
+  it('gives the Editor the MIDI turn only while its tab is open', async () => {
+    const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 50, 10)
+    const reads = vi.spyOn(link, 'listFiles')
+    await render('editor', link)
+    await settle()
+    const frame = open().querySelector('iframe')!
+    expect(frame.getAttribute('src')).toBe('https://themanro.github.io/ZoomMultistompZDL/tools/editor.html')
+    expect(frame.getAttribute('allow')).toBe('midi https://themanro.github.io')
+    expect(container.querySelector('[aria-current=page]')?.textContent).toBe('Editor')
+    await link.connect()
+    expect(fake.sent).toEqual([])
+    expect(reads).not.toHaveBeenCalled()
+    await render('status', link)
+    expect(container.querySelector('iframe')).toBeNull()
+    await act(() => link.connect())
+    await settle()
+    expect(reads).toHaveBeenCalledTimes(1)
+    await idle(link)
   })
 
   it('connects, then reads what’s on the pedal by itself', async () => {
