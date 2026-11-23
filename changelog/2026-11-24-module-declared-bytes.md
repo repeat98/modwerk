@@ -1,0 +1,1 @@
+Docs: the module guide says a module must leave the bytes its pokes and symbol refs wrote as installed (a changed byte makes the base refuse every later install as busy until a power cycle), and must check that no other reference points inside a stock string before poking it.
