@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "hardware-dsp-timing",
+  "subject": "the base's key bus tap (dsp-sites.json feature 8): the one-pass tap of Sidechain Compressor 0.2.0, 25 executed instructions a sample for a core's four tracks",
+  "measuredOn": "2026-11-23",
+  "unit": "Octatrack MKII (the owner's), over USB, OS 1.40C",
+  "base": {
+    "identity": "856cbbcf",
+    "note": "A RAM-booted development twin of base/octatrack-next 9ac83b232 (base 0.8's tree before its release rebuild) with the beta flags and --dev (ot/rel-08/twin.sh). Repeated on twin 1c937ed6, the same tree with the 0.8.1 receiver change (base/receiver-one-word-forms), whose tap words are the same."
+  },
+  "reader": {"module": "ring-sc", "version": "0.2.1-experimental", "package": "public/octatrack-modules/ring-sc/0.2.1-experimental.mwrm"},
+  "method": "The 23 October 2026 method (keybus-tap-timing-20261023.json), repeated: the base's load meter, core 0's main-loop idle passes a frame as `stats` prints them (the mean of the last 1,024-frame window), read three times 3 s apart per state; one idle pass is 20.0 chip cycles (status.c idle_cycles[0]). Project LIVE/Dev17, bank C, pattern C01 on Part 1, every slot FILTER/DELAY, sequencer stopped, Sidechain Compressor not installed, RINGMOD SC in a rolled-back trial. OFF: installed, on no track, so the base holds no key bus (MWEV byte 53 = 0x00). ON: RINGMOD SC on T1 FX1 with KEY OFF, so the base holds the bus on both cores (MWEV bytes 53-55 = 0x01 0x80 0x80). T1 runs on core 1, so core 0 (T5-T8) carries the tap and no instance; its difference is the tap alone. T1 FX1 was put back to FILTER for a second OFF reading, then the trial rolled back.",
+  "readings": [
+    {"twin": "856cbbcf", "state": "OFF", "core0IdlePassesPerFrame": [2108.4, 2108.4, 2108.3], "core1IdlePassesPerFrame": [3367.7, 3367.7, 3367.6], "mwev52": "00000000"},
+    {"twin": "856cbbcf", "state": "ON", "core0IdlePassesPerFrame": [2074.6, 2074.6, 2074.6], "core1IdlePassesPerFrame": [3582.0, 3582.0, 3582.0], "mwev52": "00018080"},
+    {"twin": "856cbbcf", "state": "OFF again", "core0IdlePassesPerFrame": [2108.4, 2108.4, 2108.3], "core1IdlePassesPerFrame": [3367.6, 3367.7, 3367.6], "mwev52": "00000000"},
+    {"twin": "1c937ed6", "state": "OFF", "core0IdlePassesPerFrame": [2108.5, 2108.5, 2108.5], "core1IdlePassesPerFrame": [3366.7, 3366.7, 3366.7], "mwev52": "00000000", "meter0": {"least": 2072, "most": 2111, "mean": 2108.5, "missed": 0}},
+    {"twin": "1c937ed6", "state": "ON", "core0IdlePassesPerFrame": [2074.8, 2074.8], "core1IdlePassesPerFrame": [3581.1, 3581.2], "mwev52": "00018080", "meter0": {"least": 2039, "most": 2077, "mean": 2074.8, "missed": 0}, "note": "the first read, 4 s after the pick, still showed the OFF window and is left out"},
+    {"twin": "1c937ed6", "state": "OFF again", "core0IdlePassesPerFrame": [2108.5, 2108.5], "core1IdlePassesPerFrame": [3366.7, 3366.7], "mwev52": "00000000", "note": "the first read still held frames of a 15 s play and is left out"}
+  ],
+  "result": {
+    "core0IdlePassesPerFrame": 33.8,
+    "cyclesPerFrame": 675,
+    "derivation": "(2108.37 - 2074.6) passes x 20 cycles / 16 samples = 42.2 cycles a sample on 856cbbcf; (2108.5 - 2074.8) x 20 / 16 = 42.1 on 1c937ed6. Charged rounded up, so the charge still covers the tap."
+  },
+  "cyclesPerSample": 43,
+  "previousCharge": {"hardware": 51, "evidence": "keybus-tap-timing-20261023.json", "measuredOn": "the 41-instruction tap, before Sidechain Compressor 0.2.0's one-pass tap"},
+  "limits": [
+    "Core 0 only, as before. Core 1's difference (214 passes) also holds RINGMOD SC's own instance and the FILTER it replaced on T1, so it does not isolate the tap; core 1 is charged the same figure, as both cores run the same tap over their own four tracks.",
+    "Sequencer stopped. The tap's path does not depend on the audio or the transport.",
+    "The meter counts the frame's waits for the host and DMA as busy, so it is conservative.",
+    "The survey's estimate of about 31 (51 scaled by 25/41) assumed the cycles scale with the instruction count; the one-pass tap runs about 1.7 cycles an instruction against the old tap's 1.24."
+  ]
+}
