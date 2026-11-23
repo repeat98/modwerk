@@ -18,7 +18,7 @@
 |   8, unlinked: the low-pass edge is RES itself, on FRQ's scale.
 | Words are 8.8 semitones (stock's FRQ: one value a semitone). The width w = edge - FRQ is held to
 | 1..60 semitones; the filter's cutoff is the edges' midpoint (their geometric mean in hertz), held
-| to 0..0x7fff, and its resonance the width table's word for w, interpolated. The filter envelope
+| to 0..0x7f00 (stock's FRQ 127), and its resonance the width table's word for w, interpolated. The filter envelope
 | moves the analog cutoff, so it moves both edges.
         .text
         .globl  improved_fltr_store
@@ -56,9 +56,9 @@ improved_fltr_store:
         add.l   %d1,%d3
         bge.s   5f
         moveq   #0,%d3
-5:      cmp.l   #0x7fff,%d3
+5:      cmp.l   #0x7f00,%d3                     | stock's top: FRQ 127
         ble.s   6f
-        move.l  #0x7fff,%d3
+        move.l  #0x7f00,%d3
 6:      add.l   #-16384,%d3
         add.l   %d3,%d3
         move.w  %d3,(%a0)+
@@ -138,3 +138,45 @@ improved_fltr_graph:
 6:      moveq   #2,%d1                          | stock's BP curve
 9:      jmp     improved_fltr_graph_on
 8:      jmp     improved_fltr_graph_off
+
+| improved_fltr_snap(track, res, typ): a tap's new RES and TYP land at once. Stock glides every
+| sound word to its target (0x40120cfa: targets 0x8000e5b0 + 84 t, state 0x8000eeec + 168 t in
+| 16.16, engine words 0x8000f774 + 2 (26 + 42 t)), so the type would read its old meaning for a
+| few blocks against the new RES: an audible sweep. Target, state and engine word of RES (index 31)
+| and TYP (32) are written together with interrupts masked.
+        .globl  improved_fltr_snap
+improved_fltr_snap:
+        move.l  4(%sp),%d0                      | track
+        move.l  %d2,-(%sp)
+        move.w  %sr,%d2
+        move.w  #0x2700,%sr
+        move.l  %d0,%d1                         | targets: 0x8000e5b0 + 84 t + 62
+        mulu.w  #84,%d1
+        move.l  %d1,%a0
+        add.l   #0x8000e5ee,%a0
+        move.l  12(%sp),%d1                     | RES
+        move.w  %d1,(%a0)
+        move.l  16(%sp),%d1                     | TYP
+        move.w  %d1,2(%a0)
+        move.l  %d0,%d1                         | engine words: 0x8000f774 + 84 t + 2 (26 + 31)
+        mulu.w  #84,%d1
+        move.l  %d1,%a0
+        add.l   #0x8000f7e6,%a0
+        move.l  12(%sp),%d1
+        move.w  %d1,(%a0)
+        move.l  16(%sp),%d1
+        move.w  %d1,2(%a0)
+        mulu.w  #168,%d0                        | state: 0x8000eeec + 168 t + 4 x 31, 16.16
+        move.l  %d0,%a0
+        add.l   #0x8000ef68,%a0
+        move.l  12(%sp),%d1
+        swap    %d1
+        clr.w   %d1
+        move.l  %d1,(%a0)
+        move.l  16(%sp),%d1
+        swap    %d1
+        clr.w   %d1
+        move.l  %d1,4(%a0)
+        move.w  %d2,%sr
+        move.l  (%sp)+,%d2
+        rts

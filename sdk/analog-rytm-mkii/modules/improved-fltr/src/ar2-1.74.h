@@ -10,3 +10,4 @@
 #define STRING_FROM_CSTR_AT 0x401bcff0
 #define STRING_DTOR_AT 0x401bb540
 #define SHOW_HEADER_AT 0x40035fe8
+#define KIT_TRACK_SOUND_AT 0x400a67ca   // (kit, track) -> the track's sound accessor

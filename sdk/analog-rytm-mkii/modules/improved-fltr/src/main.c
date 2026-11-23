@@ -2,14 +2,16 @@
 // Improved FLTR for the Analog Rytm MKII (OS 1.74): a band type on the FILTER page.
 // Written for Modwerk by Nathaniel Pavel (npp1993).
 //
-// TYP turns past PK to BND (7, linked) and BND (8, unlinked): stock's analog 2-pole band-pass with
+// TYP turns past PK to BND (7, linked) and BND+ (8, unlinked): stock's analog 2-pole band-pass with
 // its high-pass edge at FRQ and its low-pass edge set by RES (band.s). This file is the page:
 // - TYP's range: build.json opens its id record's maximum to 8, so stock's turn, setter, locks and
 //   MIDI take the two band types as they take the others.
 // - TYP's and RES's value text (core_params): TYP reads BND or BND+ (unlinked), RES the low-pass
 //   edge in hertz, as band.s places it.
 // - A tap of RES (knob F) on a band type flips linked and unlinked, keeping the low-pass edge where
-//   it is: TYP 7 <-> 8, and RES converted from a distance to a cutoff or back.
+//   it is: TYP 7 <-> 8, and RES converted from a distance to a cutoff or back. It reads the sound as
+//   edited (not what a lock plays), writes through stock's setter, and lands both words at once
+//   (band.s's improved_fltr_snap), so the old meaning never meets the new RES.
 // Stock with a band type in a kit plays it as PK (its own clamp) and draws a blank TYP knob.
 
 #include <stdint.h>
@@ -28,8 +30,9 @@
 #define W_MIN 0x0100                    // as band.s
 #define W_MAX 0x3c00
 
-#define TARGETS 0x8000e5b0              // a track's parameter targets: 84 bytes a track, a word a sound index
-#define TRACK_TARGETS 84
+#define PROJECT_KIT 352                 // project + 352: the active kit
+#define ACC_LIVE_SOUND 0x28             // a sound accessor's vtable: the live sound
+#define LIVE_PARAMS 0x14                // the live sound: a word a sound index, as edited (no locks or LFO)
 #define IDX_FRQ 30
 #define IDX_RES 31
 #define IDX_TYP 32
@@ -74,6 +77,9 @@ typedef int (*is_live_rec_t)(void *rec);
 typedef void (*string_from_cstr_t)(void *string, const char *text, void *allocator);
 typedef void (*string_dtor_t)(void *string);
 typedef void (*show_header_t)(void *page_state, void *string);
+typedef word_t (*kit_track_sound_t)(void *kit, int track);
+
+void improved_fltr_snap(int track, int res, int typ);   // band.s
 
 // The band types' TYP picture: 21 columns, a word each, its rows from the top bit up the screen (stock's layout); build.json points
 // stock's eighth type picture, blank in OS 1.74, at it. Original artwork.
@@ -91,15 +97,26 @@ static int tap_ticks = -1, tap_turns;
 
 static int band_type(int typ_word) { return (typ_word >> 8) == TYP_LINKED || (typ_word >> 8) == TYP_FREE; }
 
-// The low-pass edge (8.8 semitones on FRQ's scale) for a base and a RES word.
-static int edge_of(int typ_word, int frq, int res)
+// The band's width in 8.8 semitones for a base and a RES word, held as band.s holds it.
+static int width_of(int typ_word, int frq, int res)
 {
     int w = (typ_word >> 8) == TYP_LINKED ? (res * 15) >> 5 : res - frq;
     if (w < W_MIN)
         w = W_MIN;
     if (w > W_MAX)
         w = W_MAX;
-    return frq + w;
+    return w;
+}
+
+// The low-pass edge band.s plays: the midpoint held to 0..0x7f00, plus half the width.
+FLTR_UI static int played_edge(int typ_word, int frq, int res)
+{
+    int w = width_of(typ_word, frq, res), c = frq + w / 2;
+    if (c > WORD_MAX)
+        c = WORD_MAX;
+    if (c < 0)
+        c = 0;
+    return c + w / 2;
 }
 
 // ---- hertz ----
@@ -132,34 +149,40 @@ FLTR_UI static char *put_uint(char *p, unsigned n)
     return p;
 }
 
-// Three significant figures: 13.8Hz, 440Hz, 1.11kHz, 21.1kHz.
-FLTR_UI static void put_hz(char *p, uint32_t f10)
+// Three significant figures, rounded first: 13.8Hz, 440Hz, 999Hz, 1.00kHz, 9.99kHz, 10.0kHz, 21.1kHz;
+// above 21.1 kHz (FRQ 127, stock's top) OPEN, as Filter Hz shows an open low-pass.
+FLTR_UI static void put_hz(char *p, int v)
 {
+    uint32_t f10 = hz10(v), n;
     const char *unit = "Hz";
-    unsigned whole, tenth, digits;
+    unsigned digits;
 
-    if (f10 >= 10000) {                     // 1 kHz and up: in kHz, rounded to three figures
-        uint32_t f = (f10 + 5) / 10;        // Hz
-        unit = "kHz";
-        if (f >= 10000) {
-            f = (f + 50) / 100;             // tenths of a kHz
-            whole = f / 10, tenth = f % 10, digits = 1;
-        } else {
-            f = (f + 5) / 10;               // hundredths of a kHz
-            whole = f / 100, tenth = f % 100, digits = 2;
-        }
-    } else if (f10 >= 1000) {
-        whole = (f10 + 5) / 10, tenth = 0, digits = 0;
-    } else {
-        whole = f10 / 10, tenth = f10 % 10, digits = 1;
+    if (v > WORD_MAX) {
+        const char *o = "OPEN";
+        while (*o)
+            *p++ = *o++;
+        *p = 0;
+        return;
     }
-    p = put_uint(p, whole);
-    if (digits) {
+    if (f10 < 1000)                             // under 100 Hz: tenths
+        n = f10, digits = 1;
+    else if ((n = (f10 + 5) / 10) < 1000)       // whole hertz
+        digits = 0;
+    else if ((n = (f10 + 50) / 100) < 1000)     // hundredths of a kHz
+        unit = "kHz", digits = 2;
+    else                                        // tenths of a kHz
+        n = (f10 + 500) / 1000, unit = "kHz", digits = 1;
+    if (digits == 2) {
+        p = put_uint(p, n / 100);
         *p++ = '.';
-        if (digits == 2)
-            *p++ = (char)('0' + tenth / 10), tenth %= 10;
-        *p++ = (char)('0' + tenth);
-    }
+        *p++ = (char)('0' + n / 10 % 10);
+        *p++ = (char)('0' + n % 10);
+    } else if (digits == 1) {
+        p = put_uint(p, n / 10);
+        *p++ = '.';
+        *p++ = (char)('0' + n % 10);
+    } else
+        p = put_uint(p, n);
     while (*unit)
         *p++ = *unit++;
     *p = 0;
@@ -174,9 +197,19 @@ FLTR_UI static int selected_track(void)
     return (int)((of_t)SELECTED_TRACK_AT)((void *)seq);
 }
 
-FLTR_UI static volatile uint16_t *targets(int track)
+// The selected sound's parameter words as edited (not what a lock is playing), or 0.
+FLTR_UI static volatile int16_t *sound_words(int track)
 {
-    return (volatile uint16_t *)(TARGETS + TRACK_TARGETS * track);
+    char *project = (char *)((singleton_t)PROJECT_AT)();
+    void *acc, *live;
+
+    if (track < 0 || track > 11)
+        return 0;
+    acc = (void *)((kit_track_sound_t)KIT_TRACK_SOUND_AT)(project + PROJECT_KIT, track);
+    if (!acc)
+        return 0;
+    live = (void *)(*(word_t (***)(void *))acc)[ACC_LIVE_SOUND / 4](acc);
+    return live ? (volatile int16_t *)((char *)live + LIVE_PARAMS) : 0;
 }
 
 // ---- core_params: the page asks for these ids while it is up ----
@@ -191,13 +224,9 @@ FLTR_UI static int fltr_get(int32_t id, int32_t *value)
 
 FLTR_UI static int fltr_text(struct core_text *t)
 {
-    int track = selected_track();
-    volatile uint16_t *tg;
+    volatile int16_t *sw;
     int typ;
 
-    if (track < 0 || track > 11)
-        return CORE_TEXT_PASS;
-    tg = targets(track);
     if (t->id == ID_TYP) {
         int v = t->value >> 8;
         if (v != TYP_LINKED && v != TYP_FREE)
@@ -207,10 +236,9 @@ FLTR_UI static int fltr_text(struct core_text *t)
         t->buf[4] = 0;
         return CORE_TEXT_DONE;
     }
-    typ = (int16_t)tg[IDX_TYP];
-    if (t->id != ID_RES || !band_type(typ))
+    if (t->id != ID_RES || !(sw = sound_words(selected_track())) || !band_type(typ = sw[IDX_TYP]))
         return CORE_TEXT_PASS;
-    put_hz(t->buf, hz10(edge_of(typ, (int16_t)tg[IDX_FRQ], t->value)));
+    put_hz(t->buf, played_edge(typ, sw[IDX_FRQ], t->value));
     return CORE_TEXT_DONE;
 }
 
@@ -269,26 +297,28 @@ FLTR_UI static void show_header(const char *text)
 }
 
 // Linked <-> unlinked, the low-pass edge kept: RES becomes the edge itself, or the distance to it.
+// The selected sound when it has a band type, else 0.
+FLTR_UI static volatile int16_t *band_sound(int *track)
+{
+    volatile int16_t *sw = sound_words(*track = selected_track());
+    return sw && band_type(sw[IDX_TYP]) ? sw : 0;
+}
+
 FLTR_UI static void flip_link(void)
 {
-    int track = selected_track(), typ, frq, res, edge, w;
-    volatile uint16_t *tg;
+    int track, typ, frq, res, w;
+    volatile int16_t *sw = band_sound(&track);
     word_t target;
 
-    if (track < 0 || track > 11)
+    if (!sw)
         return;
-    tg = targets(track);
-    typ = (int16_t)tg[IDX_TYP];
-    if (!band_type(typ))
-        return;
-    frq = (int16_t)tg[IDX_FRQ];
-    res = (int16_t)tg[IDX_RES];
-    edge = edge_of(typ, frq, res);
-    if ((typ >> 8) == TYP_LINKED) {
-        res = edge;
+    typ = sw[IDX_TYP];
+    frq = sw[IDX_FRQ];
+    w = width_of(typ, frq, sw[IDX_RES]);
+    if ((typ >> 8) == TYP_LINKED) {             // RES becomes the edge itself
+        res = frq + w;
         typ = TYP_FREE << 8;
-    } else {
-        w = edge - frq;
+    } else {                                    // RES becomes the distance, x 32/15
         res = (w * 32 + 14) / 15;
         typ = TYP_LINKED << 8;
     }
@@ -299,6 +329,7 @@ FLTR_UI static void flip_link(void)
     target = ((param_target_t)PARAM_TARGET_AT)((void *)((singleton_t)PROJECT_AT)(), track, 0);
     ((param_set_t)PARAM_SET_AT)(target, ID_RES, res, track, 1, 1);
     ((param_set_t)PARAM_SET_AT)(target, ID_TYP, typ, track, 1, 1);
+    improved_fltr_snap(track, res, typ);
     show_header((typ >> 8) == TYP_LINKED ? "LP LINKED" : "LP FREE");
 }
 
@@ -350,7 +381,8 @@ FLTR_UI int improved_fltr_key(void *brain, char *event)
     if (key != KEY_PUSH_F || !page_up)
         return 0;
     if (flags & KEY_PRESSED) {
-        tap_ticks = plain_press(brain) ? 0 : -1;
+        int track;
+        tap_ticks = band_sound(&track) && plain_press(brain) ? 0 : -1;
         tap_turns = 0;
         return 0;
     }
