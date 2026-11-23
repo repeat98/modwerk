@@ -78,14 +78,14 @@ Em ([emuyia](https://github.com/emuyia)) designed Kits on the Octatrack in [Octa
 
 ![The status line names the Kit the pattern plays](media/ot-status-kit.png)
 
-With Kits installed the status line names the pattern's Kit: here 001 ONE, the project's Part 1 read in as a Kit.
+With Kits installed the status line names the pattern's Kit: here 009 ONE.
 
 ![PART opens LOAD KIT](media/ot-load-kit.png)
 
-PART opens LOAD KIT: UNDO KIT, then the project's Kits. YES on one makes the current pattern play it.
+PART opens LOAD KIT with the project's Kits. YES on one makes the current pattern play it.
 
-![FUNC + PART opens SAVE KIT](media/ot-save-kit.png)
+![FUNC + PART opens the Part Edit window with Kits' actions](media/ot-part-edit-kits.png)
 
-FUNC + PART opens SAVE KIT, the cursor on the current Kit; YES names it and saves the Part into it.
+FUNC + PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place.
 
 Captured on an MKII (media/capture.json). No audio: Kits changes what the Parts hold, not how they sound.
