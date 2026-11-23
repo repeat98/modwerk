@@ -28,7 +28,7 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
-import { atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
@@ -136,7 +136,10 @@ function octatrack(id) {
   // Cycles, a benchmark against stock and a stress run. Required for a module listed from PERFORMANCE_REQUIRED_FROM; older modules are told.
   const approvalPath = 'sdk/approvals/' + id + '-build-approval.json'
   const hardwareApproval = exists(approvalPath) ? json(approvalPath) : null
-  const performanceRequired = entry && (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM
+  // A release from RELEASE_COST_FROM carries the record whatever day its module was first listed (owner, 23 November 2026:
+  // every module goes through the whole cost procedure before a release; Tape Echo, listed 1 October, had none for 0.1.9).
+  const released = releaseDate({ root, document }), releaseInProgress = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json')) && (!released || released >= RELEASE_COST_FROM)
+  const performanceRequired = entry && ((entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM || releaseInProgress)
   if (exists(folder + '/evidence/performance.json')) {
     const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record, priceLimits(document))
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
@@ -156,8 +159,8 @@ function octatrack(id) {
     else if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
     else if (stamped.state === 'note') info('performance stamp', stamped.detail)
     else ok('performance stamp', stamped.detail)
-  } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
-  else info('performance', 'no evidence/performance.json. Not required before ' + PERFORMANCE_REQUIRED_FROM + '; npm run perf:audit measures the same three things')
+  } else if (performanceRequired) fail('performance', 'a new module, and every release from ' + RELEASE_COST_FROM + ', needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
+  else info('performance', 'no evidence/performance.json. Not required for a module listed before ' + PERFORMANCE_REQUIRED_FROM + ' until its next release (from ' + RELEASE_COST_FROM + '); npm run perf:audit measures the same three things')
 
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
