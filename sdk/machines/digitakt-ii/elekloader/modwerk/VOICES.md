@@ -56,4 +56,6 @@ Not checked yet: sequencer trigs on a linked lead (only live trig-key notes abov
 - A knob turned in the same frame as a note-on on the lead does not reach the voices until it moves again.
 - A knob turned on the lead overrides a voice's trig lock on that parameter while the voice's note plays.
 - The setting is per project, not per kit or pattern.
+- The machine wire gives a voice track its lead's machine type, also for the voice track's own trigs: with an added machine on the lead and another machine on a voice track, that track's own trigs reach the lead's sound-chip player. Stock machines are not affected (their type comes from the sound the note carries).
+- Chords from the trig keys in chromatic mode are not checked: in the emulator a second key held with the first added no note on either build.
 - Changing VOICES while notes play regroups at once (routing pauses while the groups change); a note-off that then finds no owner stays on the lead.
