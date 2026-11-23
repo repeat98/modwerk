@@ -73,9 +73,12 @@ after a power cycle (the Zoom pedal on USB had kept a RAM boot from coming back)
 tracks whose Flex slots hold loaded samples. At rest Grain adds +0.1 points (it rests). Its first instance adds 33.3
 points of the frame, so the medium pattern read 113.4 %, past the 100 % where the guard drops renders; the pick on T3
 was refused, and alone on the medium pattern the base refused Grain's pick (on the empty pattern it was admitted, longest
-frame 50.9 %, nothing dropped, no stall). No curve was written. Bank C's Part and both patterns were unchanged
-afterwards. The render path is 0.1.2's, so 0.1.2 costs the same; the release gate (`curveProblem`, from 23 November 2026)
-holds 0.1.3 until Grain's first instance fits a medium pattern.
+frame 50.9 %, nothing dropped, no stall). That run asked for two tracks and wrote nothing; a second run the same
+evening with `--curve T1` alone read the same (+33.3 points, 114.4 % on the medium pattern, refused there, admitted on
+the empty one at 51.3 %) and wrote `evidence/frame-cost.json` (first 33.3, each 33.3), which admission charges. Bank C's
+Part and both patterns were unchanged afterwards. The render path is 0.1.2's, so 0.1.2 costs the same. This release is
+dated before 24 November 2026 (`RELEASE_COST_FROM`), so the overload is reported, not refused; the next Grain release is
+held to a first instance that fits a medium pattern.
 
 **Not tested:** listening (whether CHROMATIC keys and MIDI notes sound in tune is shown only by the host check of the
 step and stock's units), a recorded CHROMATIC take, SCALE, a project saved with 0.1.2 and reloaded, MKI.
