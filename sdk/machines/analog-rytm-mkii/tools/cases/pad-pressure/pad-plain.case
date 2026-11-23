@@ -1,0 +1,25 @@
+# The base's pad pressure, control: a plain held BD pad (no roll) sends its pressure to the sound's
+# aftertouch and to MIDI poly pressure, as stock does. The aftertouch target the sound reads is one word per
+# track at 0x800067de (BD first), written as the pad's pressure byte times 128 (stock's setter 0x4011f490);
+# on MIDI it goes out as `An note pressure/2` when PAD DEST and PRESSURE DST send to USB (INT+EXT, the
+# default). Plays BD and leaves its aftertouch at 0.
+name: pad-plain
+state: changes
+
+midi m begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 300
+mem at60 0x800067de 2
+pad BD pressure 30
+wait 300
+mem at30 0x800067de 2
+pad BD pressure 0
+pad BD up
+wait 300
+midi m end
+expect at60 == 1e00
+expect at30 == 0f00
+expect m.notes == 1
+expect m.polyat > 1

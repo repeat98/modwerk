@@ -349,6 +349,18 @@ class Case:
                     self.func_turn = func
                     self.func_nudges += func
                 self.after_input = True
+            elif verb == 'pad':
+                # A pad as the panel plays it (the link's PAD: the panel's own pad messages, not keys):
+                # pad BD down 100 | pad BD pressure 60 | pad BD up. The link lets go of a pad it holds at the end.
+                if len(args) not in (2, 3) or args[0] not in rl.PADS or args[1] not in ('down', 'up', 'pressure') \
+                        or (len(args) == 3) == (args[1] == 'up') or len(args) == 3 and not (
+                            args[2].isdigit() and int(args[2]) <= 127):
+                    self.fail(n, 'pad takes a pad (%s), down VELOCITY, pressure 0..127 or up, as: pad BD pressure 60'
+                              % ' '.join(rl.PADS))
+                what = {'up': rl.PAD_UP, 'down': rl.PAD_DOWN, 'pressure': rl.PAD_PRESSURE}[args[1]]
+                self.after_turn()
+                self.req(n, 'pad', rl.PADS[args[0]], what, int(args[2]) if len(args) == 3 else 0)
+                self.after_input = True
             elif verb == 'wait':
                 (ms,) = args
                 if not ms.isdigit() or int(ms) > 60000:
@@ -503,16 +515,17 @@ class Case:
                              'region': region, 'within': within})
 
     def expect_midi(self, n, a, text):
-        """fb has|lacks nrpn 1:20 [VALUE] [chN] | cc 74 [VALUE] [chN], or fb.count ==|!=|<|> N."""
+        """fb has|lacks nrpn 1:20 [VALUE] [chN] | cc 74 [VALUE] [chN] | note 36 [VELOCITY] [chN] | polyat 36
+        [PRESSURE] [chN], or fb.count (parameters), fb.notes or fb.polyat ==|!=|<|> N."""
         name, _, field = a[0].partition('.')
         channel = None
         if len(a) >= 5 and re.fullmatch(r'ch\d+', a[-1]):
             channel, a = int(a[-1][2:]), a[:-1]             # only on that channel
             if not 1 <= channel <= 16:
                 self.fail(n, 'a channel is ch1 to ch16, as: expect fb has nrpn 5:0 1 ch2')
-        if field == 'count' and len(a) == 3 and a[1] in ('==', '!=', '<', '>') and a[2].isdigit():
+        if field in ('count', 'notes', 'polyat') and len(a) == 3 and a[1] in ('==', '!=', '<', '>') and a[2].isdigit():
             want = ('count', int(a[2]))
-        elif not field and len(a) in (4, 5) and a[1] in ('has', 'lacks') and a[2] in ('nrpn', 'cc'):
+        elif not field and len(a) in (4, 5) and a[1] in ('has', 'lacks') and a[2] in ('nrpn', 'cc', 'note', 'polyat'):
             if a[2] == 'nrpn':
                 m = re.fullmatch(r'(\d+):(\d+)', a[3])
                 if not m:
@@ -522,11 +535,11 @@ class Case:
                 number = int(a[3])                          # ValueError unless a number
             value = int(a[4]) if len(a) == 5 else None
             if value is not None and not 0 <= value <= 127 or a[2] == 'cc' and not 0 <= number <= 127:
-                self.fail(n, 'a controller and a value are 0 to 127')
+                self.fail(n, 'a controller, a note and a value are 0 to 127')
             want = (a[1], (a[2], number, value, channel))
         else:
-            self.fail(n, 'a MIDI capture is checked as: NAME has|lacks nrpn 1:20 [VALUE], NAME has|lacks cc 74 [VALUE], '
-                         'or NAME.count ==|!=|<|> N')
+            self.fail(n, 'a MIDI capture is checked as: NAME has|lacks nrpn 1:20 [VALUE], NAME has|lacks cc|note|polyat '
+                         'NUMBER [VALUE], or NAME.count|notes|polyat ==|!=|<|> N')
         self.expects.append({'line': n, 'text': text, 'name': name, 'field': field, 'op': a[1], 'want': want,
                              'region': None, 'within': None})
 
@@ -624,7 +637,8 @@ def screen_diff(a, b, region, ignore=()):
 
 def midi_events(data):
     """The parameter messages in MIDI bytes: [('nrpn', channel, (msb, lsb), value, fine), ('cc', channel, number,
-    value)], channels 1 to 16. SysEx (the link's answers) and real-time bytes are left out; an NRPN is one
+    value)], channels 1 to 16, and the notes and poly pressure: ('note', channel, note, velocity) for a note on
+    with a velocity, ('polyat', channel, note, pressure). SysEx (the link's answers) and real-time bytes are left out; an NRPN is one
     event at its data entry (CC 6), its fine part (CC 38) added when it follows. A data entry or fine part with
     no NRPN selected (none yet, or an RPN since) is a plain `cc`."""
     clean, i = bytearray(), 0
@@ -653,6 +667,8 @@ def midi_events(data):
             i += 1                                          # cut short: the next status byte starts again
             continue
         i += size
+        if status >> 4 == 0x9 and body[1] or status >> 4 == 0xa:
+            events.append(['note' if status >> 4 == 0x9 else 'polyat', (status & 15) + 1, body[0], body[1]])
         if status >> 4 != 0xb:
             continue
         ch, (num, val) = (status & 15) + 1, body
@@ -675,13 +691,18 @@ def midi_events(data):
 
 
 def midi_text(ev):
-    return ('nrpn %d:%d %d' % (ev[2] + (ev[3],)) if ev[0] == 'nrpn' else 'cc %d %d' % (ev[2], ev[3])) + ' ch%d' % ev[1]
+    return ('nrpn %d:%d %d' % (ev[2] + (ev[3],)) if ev[0] == 'nrpn' else '%s %d %d' % (ev[0], ev[2], ev[3])) + ' ch%d' % ev[1]
 
 
 def check_midi(e, got):
     how, what = e['want']
     seen = ', '.join(map(midi_text, got)) or 'nothing'
     if how == 'count':
+        if e['field'] != 'count':                           # .notes, .polyat: those messages alone
+            got = [ev for ev in got if ev[0] == {'notes': 'note', 'polyat': 'polyat'}[e['field']]]
+        else:                                               # .count: the parameter messages, as before notes were read
+            got = [ev for ev in got if ev[0] in ('nrpn', 'cc')]
+        seen = ', '.join(map(midi_text, got)) or 'nothing'
         have = len(got)
         return {'==': have == what, '!=': have != what, '<': have < what, '>': have > what}[e['op']], \
             '%d messages: %s' % (have, seen)

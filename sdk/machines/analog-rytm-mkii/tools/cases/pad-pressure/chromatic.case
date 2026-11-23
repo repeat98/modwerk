@@ -1,0 +1,59 @@
+# The base's pad pressure in CHROMATIC mode: a held pad's poly pressure goes out on the note its note on
+# sent (stock: 24 semitones above it, and moved by UP or DOWN during the hold), and none after its note
+# off. After a boot BD plays note 36 (0x24) on CHRO's pads. Needs PAD DEST and PRESSURE DST sending to USB.
+# Then a roll with RTRG held: the base sends its pressure on the played note too (stock: none).
+# Enters CHROMATIC with CHRO and leaves it with CHRO (the screen does not change: a pad's note shows it). Leaves BD's aftertouch at 0.
+name: chromatic
+state: changes
+
+key CHRO
+wait 500
+midi held begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 300
+key UP
+wait 300
+pad BD pressure 30
+wait 300
+pad BD up
+wait 300
+pad BD pressure 20
+wait 300
+midi held end
+key DOWN                            # back to the layout BD plays 36 on
+wait 300
+hold RTRG
+wait 300
+midi roll begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 500
+mem at60 0x800067de 2
+pad BD pressure 0
+pad BD up
+wait 300
+midi roll end
+release RTRG
+wait 300
+key CHRO
+wait 500
+midi out begin                      # CHRO again: the pads' own notes, not CHROMATIC's 36
+pad BD down 100
+wait 300
+pad BD up
+wait 300
+midi out end
+expect held has note 36
+expect held has polyat 36 30
+expect held has polyat 36 15
+expect held lacks polyat 60
+expect held lacks polyat 64
+expect held lacks polyat 36 10
+expect held.polyat == 2
+expect roll has polyat 36 30
+expect at60 == 1e00
+expect out.notes == 1
+expect out lacks note 36

@@ -77,6 +77,7 @@ range, 5 a person is at the unit.
 | `release` | 0x12 | yes | lets go of every key the link holds |
 | `confirm` | 0x13 | yes | YES pressed and let go, for stock's UPGRADE OS NOW? |
 | `ramboot ULEN UCRC CLEN CCRC` | 0x14 | yes | as `confirm`, but the next boot runs the upload from RAM (below) |
+| `pad PAD WHAT VALUE` | 0x15 | yes | a pad (0-11, BD to CB) as the panel posts it: WHAT 1 down with a velocity, 2 its pressure, 0 up (0-127); every view's pad and pressure methods see it as a hand on the pad. `release` and `disarm` send a held pad's pressure 0 and its up. A base before this answers `bad request` |
 | `screen OFF` | 0x20 | no | 512 bytes of the frame on the screen from OFF (0 or 512) |
 | `mem ADDR N` | 0x21 | no | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 

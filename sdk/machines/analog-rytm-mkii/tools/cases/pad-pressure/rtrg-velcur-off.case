@@ -1,0 +1,32 @@
+# The base's pad pressure: RTRG held, VEL.CUR OFF (a new kit's). Stock writes a roll's pressure to the
+# roll's velocity only (0x4011f262: 0x42ac6b4c + 56 x track, the pressure byte times 128) and the RETRIG
+# menu RTRG opens drops it, so the sound's aftertouch (0x800067de, BD first) and MIDI poly pressure stay
+# still. With the base both follow, and the roll's velocity still follows too.
+# Expects BD's VEL.CUR OFF and ALWAYS ON off. Plays a BD roll and leaves its aftertouch at 0.
+name: rtrg-velcur-off
+state: changes
+
+hold RTRG
+wait 300
+midi m begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 500
+mem at60 0x800067de 2
+mem roll60 0x42ac6b4c 2
+pad BD pressure 30
+wait 500
+mem at30 0x800067de 2
+mem roll30 0x42ac6b4c 2
+pad BD pressure 0
+pad BD up
+wait 300
+release RTRG
+wait 300
+midi m end
+expect at60 == 1e00
+expect at30 == 0f00
+expect roll60 == 1e00
+expect roll30 == 0f00
+expect m.polyat > 1

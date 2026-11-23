@@ -1,0 +1,38 @@
+# The base's pad pressure in PERF mode with RTRG held: the RETRIG menu passes pad pressure on, so pad 1's
+# pressure moves performance 1's amount (a u16 at 0x8000e57c, the pressure byte times 128, written through
+# 0x400b2c6a) as it does without RTRG. Stock froze it while RTRG was held. Pressure 0 brings it back.
+# Enters PERF mode with PERF and leaves it with PERF (the screen does not change: where pressure goes shows it).
+name: perf-rtrg
+state: changes
+
+key PERF
+wait 500
+hold RTRG
+wait 300
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 300
+mem p60 0x8000e57c 2
+pad BD pressure 0
+wait 300
+mem p0 0x8000e57c 2
+pad BD up
+wait 300
+release RTRG
+wait 300
+key PERF
+wait 500
+pad BD down 100                     # PERF again: back on the pad page, pressure goes to BD again
+wait 300
+pad BD pressure 60
+wait 300
+mem off60 0x8000e57c 2
+mem at60 0x800067de 2
+pad BD pressure 0
+pad BD up
+wait 300
+expect p60 == 1e00
+expect p0 == 0000
+expect off60 == 0000
+expect at60 == 1e00

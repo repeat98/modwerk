@@ -29,6 +29,13 @@
 //   until long after the loop took it. A key held from here also reads as held to
 //   stock's is_key_held (0x40081c28, which base.json points at mw_link_held), which only sees the panel's
 //   bitmap otherwise: FUNC + turn and every other held-key test behave as on the panel.
+// - Pads: the panel posts a pad's press, its pressure and its release as their own
+//   messages, not keys (the UI loop's switch at 0x400a4708: 3 down, 2 pressure, 4 up;
+//   m[1] the pad 0..11, the byte at +8 the velocity or the pressure, which 0x400a476e
+//   scales by 128). PAD posts the same, so every view's pad and pressure methods run as
+//   for a hand on the pad (the RETRIG menu, the pad pages, CHROMATIC, PERF). They reach
+//   neither ev_key nor ev_enc, so the link does not track them as keys; a pad the link
+//   holds gets a pressure of 0 and its release when the link lets go of everything.
 // - Arm: GLOBAL > REMOTE CONTROL. Keys and encoders from the host need it; identity,
 //   screen and memory reads do not. It is ON at every boot, power-on included (the
 //   10 Nov 2026: a development image is meant to be driven): the row turns it
@@ -89,6 +96,10 @@
 #define AUTO_USB 4
 #define MSG_KEY 0
 #define MSG_ENC 1
+#define MSG_PRESSURE 2                  // the panel's pad messages (0x400a4708's switch)
+#define MSG_PAD_DOWN 3
+#define MSG_PAD_UP 4
+#define PADS 12
 #define KEY_YES 0x44
 #define KEY_DOWN 1                      // ev_key flags bit 0: down
 #define ENC_LAST 8                      // A..H, then LEVEL
@@ -101,6 +112,7 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_CONFIRM 0x13                // YES pressed and let go, for stock's UPGRADE OS NOW?: sets the carry
 #define CMD_RAMBOOT 0x14                // as CONFIRM, but the staged image is booted from RAM, not flashed
+#define CMD_PAD 0x15                    // pad, what (0 up, 1 down, 2 pressure), value 0..127
 #define CMD_SCREEN 0x20
 #define CMD_MEM 0x21
 #define ST_OK 0
@@ -207,6 +219,7 @@ int mw_link_rx(const uint8_t *msg, int len, int iface)
 static int armed, booted, carry_ticks, human_ticks = -1, ui_dirty, release_due;
 static uint32_t human_count, posted_count, refused_count, boot_rsr, ticks;
 static uint8_t held_bits[32];           // keys this link holds down, a bit each
+static uint16_t pads_held;              // pads this link holds down, a bit each
 int mw_link_ramboot_due;                // link.s reads it where stock's job would flash:
                                         //   0 flash, 1 RAM boot, 2 cancelled (reset, no write)
 static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
@@ -262,12 +275,32 @@ static int post(int kind, int id, int value)
     return 1;
 }
 
+// A pad message, as the panel posts it. Not in pend: no ev_key or ev_enc ever sees it.
+static void post_pad(int kind, int pad, int value)
+{
+    int32_t *m = slots[slot_next++ % SLOTS];
+    m[0] = kind << 24;
+    m[1] = pad;
+    m[2] = (int32_t)((uint32_t)(uint8_t)value << 24);
+    m[3] = 0;
+    QUEUE_POST(UI_QUEUE(), m);
+    posted_count++;
+}
+
 // Lets go of every key the link holds. A release the queue cannot take now stays held
-// and due: the next tick tries again. -> 1 when any key was held.
+// and due: the next tick tries again. Every pad it holds gets a pressure of 0 (stock
+// keeps a performance's amount until one comes) and its release. -> 1 when any key or
+// pad was held.
 static int release_all(void)
 {
-    int k, any = 0;
+    int k, any = pads_held != 0;
     release_due = 0;
+    for (k = 0; k < PADS; k++)
+        if (pads_held >> k & 1) {
+            post_pad(MSG_PRESSURE, k, 0);
+            post_pad(MSG_PAD_UP, k, 0);
+        }
+    pads_held = 0;
     for (k = 0; k < 256; k++)
         if (HELD(k)) {
             any = 1;
@@ -298,6 +331,7 @@ static void disarm(void)
     }
     for (k = 0; k < 32; k++)
         held_bits[k] = 0;
+    pads_held = 0;
     release_due = 0;
     ramboot_cancel();
 }
@@ -515,6 +549,7 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_RELEASE_ALL:
     case CMD_CONFIRM:
     case CMD_RAMBOOT:
+    case CMD_PAD:
         if (!armed || !booted)          // before the boot's settle its set_carry(0) would drop a request
             status = ST_NOT_ARMED;
         else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
@@ -536,6 +571,20 @@ static void COLD act(const uint8_t *m, int len)
                     mw_link_ramboot_due = 1;
                     MARK[1] = DIAG_STAGE | 1;
                 }
+            }
+        } else if (cmd == CMD_PAD) {
+            uint32_t pad = PADS, what = 0, v = 0;
+            if (n >= 15) {
+                pad = get32(a);
+                what = get32(a + 5);
+                v = get32(a + 10);
+            }
+            if (pad >= PADS || what > 2 || v > 127)
+                status = ST_BAD;
+            else {
+                post_pad(what == 0 ? MSG_PAD_UP : what == 1 ? MSG_PAD_DOWN : MSG_PRESSURE, (int)pad, (int)v);
+                if (what < 2)
+                    pads_held = (uint16_t)((pads_held & ~(1u << pad)) | (what << pad));
             }
         } else if (n < 10)
             status = ST_BAD;
