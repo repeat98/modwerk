@@ -1,0 +1,16 @@
+{
+  "scope": "synthetic private CF project; native Save Project not exercised",
+  "hardwareTested": false,
+  "images": {
+    "plain": {
+      "sha256": "2be9c136ab51ea4be89b0a90ab626a2173c486509dbd04eaf510041bd3e1293e",
+      "bytes": 67108864,
+      "externalSampleRecords": 0
+    },
+    "signed": {
+      "sha256": "4d6d8234bf79fc22e5cca548a1d250c0249cbb5b97e13427b38a7c9444300ae2",
+      "bytes": 67108864,
+      "externalSampleRecords": 0
+    }
+  }
+}

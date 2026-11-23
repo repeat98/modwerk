@@ -1,0 +1,34 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> octamod@0.1.0 module:doctor
+> node scripts/module-doctor.mjs --draft supersaw --release
+
+
+supersaw (Octatrack)
+  ✗ catalog entry       sdk/catalog.json does not list supersaw, so the library, the configurator and the packages ignore it
+                        fix: add { "id", "version", "addedAt" } to sdk/catalog.json, then npm run modules:generate
+  ✓ category guide      walk docs/module-guides/machines.md (and sequencing.md if it acts in time)
+  · host tests          none: a test_*.py in the module folder runs here and in npm run sdk:check
+  · performance         no evidence/performance.json. Not required before 2026-10-07; npm run perf:audit measures the same three things
+  ✓ thumbnail           the library card has art
+  ✗ page controls       test_bridge.c writes a page descriptor by hand, so nothing picks stock's switch for a control with two to five values
+                        fix: fill each slot with modwerk_page_control() from modwerk_page.h (docs/module-guides/machines.md, "A control with few values is a switch")
+  · dsp sources         no .asm source (ColdFire-only module)
+  · dsp registers       not checked: no dsp56kDisassemble: build it beside ELEKLOADER_DSP_ASM (npm run upstream:tools)
+  ✗ cpu price           it names no CPU price (resources.cpuPrice)
+                        fix: measure what one track of it adds to the frame interrupt on a unit with npm run device -- do and guard (a trig on every step, every voice sounding, against the same pattern without those trigs; docs/MODULE_PERFORMANCE.md), then write resources.cpuPrice with "measure": "machine-render" in octamod.module.json and the same percent as reserved[0] of its machine descriptor (docs/MODULE_PERFORMANCE.md)
+  · cost at rest        no cost at rest measured yet (test procedure step 9, npm run device:price)
+  ✗ module rules        npm run modules:check fails: supersaw.tests.qualification: publication requires worst-case cycles, exact memory and hardware test evidence. supersaw is not listed in sdk/catalog.json: keep an unqualified module in sdk/drafts/supersaw/ (with its note
+                        fix: fix what it names, then run npm run modules:check -- --base origin/main
+  ✗ packages            the committed packages lack supersaw@0.32.0-source-draft
+                        fix: rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)
+  ✗ usb package         none. An Octatrack module ships as a package for the Modwerk base: install, Keep/Undo and removal, tested on a unit
+                        fix: build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages
+  ✓ cross-compatibility installs beside every other active module and the base (npm run modules:compat -- --with supersaw)
+  ✓ ui claims           none
+  · conflicts           none declared. Are they complete? (guide: Integrate)
+  ✗ package fingerprint the committed packages were built from different module code
+                        fix: rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)
+  · board claim         not checked: The board is turned off for this run (MODWERK_BOARD=off or a test run).
+
+Fix the lines marked ✗, then run this again.

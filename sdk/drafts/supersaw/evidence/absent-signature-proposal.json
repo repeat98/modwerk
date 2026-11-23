@@ -1,0 +1,15 @@
+{
+  "scope": "temporary host base proposal only; original SDK unchanged",
+  "registrySha256": "95f70f357e6e32eba78c5c9ac87eae89d6ec398fcbf14109747143931c65a58f",
+  "proposedRegistrySha256": "410e9ae42049f616a65ce056c9e3d4d98e8a9ffc63b24b1d8e243671d1667e48",
+  "baselineRecognizesSW1": false,
+  "proposalRecognizesSW1": true,
+  "results": {
+    "baseline": "Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard and the CPU budget passed.\nPASS exact SW/1 selector, eight tracks, bounds, absent validator protection and silent routing\n",
+    "proposal": "Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard and the CPU budget passed.\nPASS exact SW/1 selector, eight tracks, bounds, absent validator protection and silent routing\n"
+  },
+  "hardwareTested": false,
+  "rebootTested": false,
+  "baseChanged": false,
+  "installable": false
+}

@@ -1,0 +1,30 @@
+{
+  "version": "0.32.0-source-draft",
+  "kind": "private-emulator-package",
+  "moduleId": "3fae49db",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "abi": 8,
+  "imageBytes": 35336,
+  "bssBytes": 2416,
+  "relocations": 88,
+  "eventWords": 38,
+  "stockCodeSites": 0,
+  "stockCopies": 15,
+  "reconstructedImageEqualsAuthored": true,
+  "basePackageSha256": "b2ee3bf9ddd5eb5797e3351e4daff1bce7ef2a9427ebdb47ab4b9935a3ab6f55",
+  "typedStart": "SDK accepted",
+  "stockFree": "both unchanged strict scans passed",
+  "publicRelease": false,
+  "hardwareTested": false,
+  "usbLifecycleTested": false,
+  "sources": {
+    "usb_machine.c": "f56bdf12d06e37316f84d633fb4c488dd644baa5324d367f5861aeae75f6497c",
+    "bridge.c": "aa2b17836bb5ac36c1b51e32e43ad575c1d656823e16e04afb21dc193b49966d",
+    "engine/machine.c": "55d6a94815d7efc86319236b54731e47cf4a8a9c0094ea050bb8e5689bfd5fac",
+    "engine/adapter.c": "38a0f650c9dc32d8cd2f61a91f0183980219eea3016c0b8692b7946cf559f16b",
+    "engine/ot_records.c": "22a94a3493ded2d315c85de4077af529ccc21d07e521f9c65f95898576aa4438",
+    "bridge.h": "7fbf21dc8fc78334aaf9fa6fd0f03d2bb42fddc70eecfc6782fd2093a8a2026a",
+    "events.s": "f882f09a46e8d3e1d11b03b01faa843604dfee374265d27ca77072dd9db8e479",
+    "runtime.json": "514e6a684396f02e2ab62934fce4fc2aec25dbf0f63e2730b79732568be5b8d0"
+  }
+}

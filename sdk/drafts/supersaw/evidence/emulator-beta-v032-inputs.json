@@ -1,0 +1,17 @@
+{
+  "stepIdle": true,
+  "resumeIdle": true,
+  "guestFirmwareChanged": false,
+  "timingIsHardwareMeasurement": false,
+  "sha256": {
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/modwerk-supersaw-work/sdk/drafts/supersaw/usb_pipe.cpp": "f12f0cc677302975fc3bcc61d4a4f41a7133a913a9057f9b81b5d89b160ebfad",
+    "../private-supersaw-v032/pipe-05/rtos-stepped-idle.cpp": "7947df596b9ebb67bd30ff197f46e86aad5ac7249a3ea46a9f95e6f3d27459dd",
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/octabam-work/out/emu/libot_machine.a": "9b7c52f775a66f690bb231eee1fd7e73df208c5b6dda9fd6937627c97ef61a4a",
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/octabam-work/out/emu/mc68k/lib68kEmu.a": "26252f2cbb3066efc6611a70722a9ea8886ecd479c7d9e744688b2e5df4d32d8",
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/octabam-work/out/emu/dsp56300/dsp56kEmu/libdsp56kEmu.a": "358022426894933ba136509132b04e7ec9bddefc37c9c2b94c54b0046c1d7f10",
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/octabam-work/out/emu/dsp56300/dsp56kBase/libdsp56kBase.a": "78d39241b97985060a19342b6c4361691cc9d0afaa4d717f2f9a2b4f5a5e6086",
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/octabam-work/out/emu/dsp56300/asmjit/libasmjit.a": "275c6cc30897d1c8b3c14bd3a32ff514b166c5fe9d16062b53c301fdc7c62841",
+    "/Users/josealeixo/Documents/ChatGPT/SOFTWARE AUDIO/SuperSAW-OT-Integration/modwerk-supersaw-work/scripts/octatrack-emulator/idle-range.h": "088ed8d855cf1bc8a087129de941861f7b67d4cde68d621314dabf65e92667f1"
+  },
+  "binarySha256": "985d7c492c50b8353e95bdb29e50ace26eb103e76586c2e54767c2cf746f7a6f"
+}

@@ -1,0 +1,26 @@
+{
+  "version": "0.31.0-source-draft",
+  "scope": "seeded ColdFire callbacks and selected native MIDI continuations; no RTOS, whole base, USB, DSP or hardware",
+  "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "fixtureSha256": "64e99bfff45bb8a01eac13ebc1d469830249fbf0fd953e168ba69e7a6bd41edd",
+  "sourceSha256": {
+    "usb_machine.c": "f56bdf12d06e37316f84d633fb4c488dd644baa5324d367f5861aeae75f6497c",
+    "bridge.c": "aa2b17836bb5ac36c1b51e32e43ad575c1d656823e16e04afb21dc193b49966d",
+    "engine/machine.c": "55d6a94815d7efc86319236b54731e47cf4a8a9c0094ea050bb8e5689bfd5fac",
+    "engine/adapter.c": "38a0f650c9dc32d8cd2f61a91f0183980219eea3016c0b8692b7946cf559f16b",
+    "engine/ot_records.c": "22a94a3493ded2d315c85de4077af529ccc21d07e521f9c65f95898576aa4438",
+    "events.s": "f882f09a46e8d3e1d11b03b01faa843604dfee374265d27ca77072dd9db8e479",
+    "native_probe.cpp": "2b663261e4333800e6c40dcd9f0363c419cb9e0136bd7c224f20698feaf5f2ce"
+  },
+  "emulatorArchives": {
+    "out/emu/libot_machine.a": "9b7c52f775a66f690bb231eee1fd7e73df208c5b6dda9fd6937627c97ef61a4a",
+    "out/emu/mc68k/lib68kEmu.a": "26252f2cbb3066efc6611a70722a9ea8886ecd479c7d9e744688b2e5df4d32d8",
+    "out/emu/dsp56300/dsp56kEmu/libdsp56kEmu.a": "358022426894933ba136509132b04e7ec9bddefc37c9c2b94c54b0046c1d7f10",
+    "out/emu/dsp56300/dsp56kBase/libdsp56kBase.a": "78d39241b97985060a19342b6c4361691cc9d0afaa4d717f2f9a2b4f5a5e6086",
+    "out/emu/dsp56300/asmjit/libasmjit.a": "275c6cc30897d1c8b3c14bd3a32ff514b166c5fe9d16062b53c301fdc7c62841"
+  },
+  "result": "PASS claim only SW/1 FLEX owner\nPASS neighbour sample not claimed\nPASS claim also accepts alternate SDRAM arena\nPASS invalid bank rejected before read\nPASS all eight track claims and CPU callee registers\nPASS chromatic predicate uses event track, not selected track\nPASS MIDI 84 -> TUNE 64 with native held note/gate\nPASS native renderer outputs audio, headers/cursor/AMP and FP restoration\nPASS old MIDI note-off does not clear held note\nPASS old MIDI note-off leaves new voice sounding\nPASS matched MIDI-off keeps native mailbox/gate semantics\nPASS matching MIDI note-off finishes at exact source zero\nPASS native packet split offsets 0 through 16\nPASS old chromatic key release follows native mismatch path\nPASS old chromatic key release preserves new voice\nPASS matching chromatic release follows native accepted path\nPASS matching chromatic release finishes at exact source zero\nPASS playing-to-stopped transport kills source\nPASS STOP tail-kill callback kills manual source while transport already stopped\nPASS native voice reset notification kills source with transport already zero\nPASS new START after native voice reset sounds\nPASS FUNC+STOP key notification passes through\nPASS FUNC+STOP leaves manual voice sounding\nPASS STOP key notification passes through\nPASS STOP key notification kills manual source with transport already zero\nPASS STOP key release does not kill a later note\nPASS chromatic key 12 -> raw 64\nRESULT failures=0 calls=2228; seeded ColdFire only; no RTOS/base/USB/DSP/hardware\n",
+  "hardwareTested": false,
+  "usbLifecycleTested": false,
+  "cpuPercent": null
+}

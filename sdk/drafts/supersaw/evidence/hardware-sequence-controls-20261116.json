@@ -1,0 +1,36 @@
+{
+  "base": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "at": "2026-11-16T00:16:26.949Z",
+  "source": "native host load log plus separate operator listening reports",
+  "sampleCount": 503,
+  "lastElapsedMs": 503403,
+  "cpuSessionMinPercent": 43.8,
+  "cpuSessionMaxPercent": 66.1,
+  "screenshotMusicalReadingsPercent": [
+    59.7,
+    59.8,
+    60.5,
+    59.8
+  ],
+  "screenshotDspPercent": {
+    "tracks1to4": 38.5,
+    "tracks5to8": 41.9
+  },
+  "isolatedVoiceCostMeasured": false,
+  "undoConfirmed": true,
+  "keepPerformed": false,
+  "operatorReports": {
+    "LEVL": "smooth level changes; no audible clicks or distortion; no perceptible sound at zero through MOTU 828",
+    "TUNE": "pitch responds as expected, including low notes",
+    "sequencing": "four programmed triggers; short notes with AMP HOLD/REL; smooth release and no reported clicks",
+    "modulation": "P-locks and LFO use reported, including DETN/WIDE; no reported clicks"
+  },
+  "notTested": [
+    "coexistence with seven sample tracks",
+    "MIDI/chromatic pitch verification",
+    "Keep and persistence after reboot",
+    "calibrated RMS/loudness and matched CPU benchmark"
+  ],
+  "scope": "One instrument, manual RAM trials; not release qualification"
+}

@@ -1,0 +1,7 @@
+{
+  "scope": "fixture layout guard; original owner project untouched",
+  "legacyInputRejected": true,
+  "originalBankSha256": "06fa09a869d49064bb3330a6c6fa1a35a7e4481a3b3ee0f22ae8b51ef63297f2",
+  "originalUnchanged": true,
+  "hardwareTested": false
+}

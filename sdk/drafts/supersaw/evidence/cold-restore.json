@@ -1,0 +1,48 @@
+{
+  "version": "0.32.0-source-draft",
+  "scope": "three fresh emulator processes with native CF set writes and project loads; not a physical reboot",
+  "baseIdentity": "c718ab2ef2c9d0dc617fb1157e31137314f047ba45a1c39940a97701ea98dceb",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "checks": [
+    "initial-absent: SW/1 signature and twelve source bytes survive native project load",
+    "initial boot: no module restored",
+    "install and Keep preserve pre-existing signed source parameters",
+    "restored-present: SW/1 signature and twelve source bytes survive native project load",
+    "fresh process: saved CF set restores SuperSAW without host installation",
+    "restored module retains all twelve project source bytes",
+    "restored in-use module refuses removal with code 7",
+    "return to FLEX and native Keep remove the module",
+    "removed-absent: SW/1 signature and twelve source bytes survive native project load",
+    "fresh process: newer empty CF set wins over older kept module",
+    "missing module after restart preserves the signed CF project"
+  ],
+  "boots": [
+    {
+      "label": "initial-absent",
+      "pid": 30237,
+      "cardSha256": "4d6d8234bf79fc22e5cca548a1d250c0249cbb5b97e13427b38a7c9444300ae2",
+      "activeCount": 0,
+      "sourceParameters": "40557f067f50717273747576"
+    },
+    {
+      "label": "restored-present",
+      "pid": 32230,
+      "cardSha256": "55480673342271790f88bb7854ac315f3798a80d40ad022fa895614e5461f01e",
+      "activeCount": 1,
+      "sourceParameters": "40557f067f50717273747576"
+    },
+    {
+      "label": "removed-absent",
+      "pid": 32489,
+      "cardSha256": "2a8ac815004f4a2734c4538648cd17730920652238909531a3586735f59ce0a3",
+      "activeCount": 0,
+      "sourceParameters": "40557f067f50717273747576"
+    }
+  ],
+  "emulatedRestartTested": true,
+  "hardwareTested": false,
+  "physicalRebootTested": false,
+  "batterySRAMPersisted": false,
+  "nativeSaveProjectTested": false,
+  "audioTested": false
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.32.0-source-draft",
+    "date": "2026-11-22",
+    "changes": [
+      "RAM audition now requests manual STOP/FLEX/AMP confirmation before timed Undo; adds a 30-second end-check mode. Sound engine unchanged.",
+      "Recorded current-base RAM lifecycle success, positive user listening report and an unconfirmed timed Undo; added pinned recovery tooling.",
+      "Prepared current public source-review export with licences and reports; raw signature buffers omitted; no installable release."
+    ]
+  }
+]

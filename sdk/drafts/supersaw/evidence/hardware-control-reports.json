@@ -1,0 +1,44 @@
+{
+  "baseIdentity": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "source": "user listening reports; no recorded audio analysis",
+  "controls": {
+    "DETN": {
+      "reported": "Le bouton DETN joue à la perfection le son souhaité.",
+      "audibleResponseApprovedByUser": true,
+      "exactPositionsIndependentlyReadBack": false
+    },
+    "MIX": {
+      "reported": "Slight perceived level increase from 18 down to 0.",
+      "status": "level consistency observation to measure; not a confirmed discontinuity",
+      "codeFinding": "central weight 127/(127+(voices-1)*mix) increases toward MIX 0; peak-oriented normalization does not impose constant RMS/loudness",
+      "amplitudeMeasured": false,
+      "engineModified": false,
+      "transitionReported": "progressive; no distinct jump reported"
+    },
+    "WIDE": {
+      "reported": "oui absolument, l’effet est très bien perçu.",
+      "audibleResponseApprovedByUser": true
+    },
+    "OSC": {
+      "reported": "Stepwise changes of thickness; user accepts this as a preset choice rather than a live modulation control.",
+      "audibleResponseApprovedByUser": true,
+      "displayedRangeConfirmed": false,
+      "amplitudeMeasured": false
+    }
+  },
+  "subsequentSession": {
+    "undoConfirmed": false,
+    "source": "user Terminal screenshot",
+    "error": "UploadDeviceError: Device refused rollback: needs-recovery",
+    "shellFinHarmless": true,
+    "newTrialBlocked": false,
+    "recoveryPrepared": true,
+    "recoveryHardwareRun": "confirmed normal, known identity and empty inventory; already normal before cleanup",
+    "launcherFix": "quiet console; CPU/C cached readings; FIN/Q case-insensitive; typed transient Undo refusals retried up to 10 s; unconfirmed writes never replayed",
+    "launcherFixHardwareTested": false,
+    "secondUndoFailureReported": true,
+    "nextStep": "short RAM retirement verification before longer listening trials",
+    "latestRecovery": "normal, known identity, empty inventory already present before command; no repair attributed to script"
+  }
+}

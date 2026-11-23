@@ -1,0 +1,10 @@
+{
+  "scope": "negative control: new protection regression against unchanged base source",
+  "baselineSha256": "95f70f357e6e32eba78c5c9ac87eae89d6ec398fcbf14109747143931c65a58f",
+  "proposedSha256": "c7b530d86e95e9fd1f804cfbe619bcb2fbcdceae2c9516626c14f5825c39c1d9",
+  "expectedFailure": true,
+  "exitCode": 1,
+  "stderr": "PRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:485: orphan(p, t)\nPRIVATE_FIXTURE/test.c:499: mw_validate(part0()) == 11 && seen[0] == 0x40 && seen[11] == 0x40\nPRIVATE_FIXTURE/test.c:503: mw_source_render_impl(3, 0, 0, 1) == -9\n18 registry checks failed\n",
+  "hardwareTested": false,
+  "guardsWeakened": false
+}

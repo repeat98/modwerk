@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" role="img" aria-labelledby="title desc">
+<title id="title">SuperSAW-OT</title>
+<desc id="desc">Saw oscillator traces with stereo spread, an experimental monophonic Octatrack source.</desc>
+<defs><pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0H0V16" fill="none" stroke="#a7a3ed" stroke-opacity=".065" stroke-width=".5"/></pattern></defs>
+<rect width="320" height="192" rx="12" fill="#1d1d25"/>
+<rect x="12" y="12" width="296" height="168" rx="6" fill="url(#grid)"/>
+<g fill="none" stroke="#aaa5ff" stroke-width="1.4" stroke-linejoin="round">
+<path d="M28 70L79 100V62L130 92V54L181 84V46L232 76V38L283 68" opacity=".3"/>
+<path d="M28 84L80 114V76L132 106V68L184 98V60L236 90V52L288 82" opacity=".55"/>
+<path d="M28 98L81 128V90L134 120V82L187 112V74L240 104V66L293 96"/>
+</g>
+<text x="26" y="35" fill="#aaa5ff" font-family="monospace" font-size="9" letter-spacing="1.2">TRACK MACHINE · SOURCE DRAFT</text>
+<text x="26" y="157" fill="#efedf8" font-family="monospace" font-size="20" letter-spacing=".5">SUPERSAW–OT</text>
+<text x="27" y="175" fill="#aaa8bb" font-family="monospace" font-size="8.5" letter-spacing=".7">1–7 OSC · DETUNE · STEREO SPREAD</text>
+</svg>

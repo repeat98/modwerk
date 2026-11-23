@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-16T23:30:10.668Z",
+  "base": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "configurationReportedByOperator": {
+    "T1": "SuperSAW, same sequence with P-locks",
+    "T2-T5": "FLEX short samples",
+    "T6-T8": "STATIC short samples",
+    "T5Effect": "delay on short voice sample"
+  },
+  "operatorReport": "All eight tracks playing; distinct percussion selected; no audible clicks, dropouts or other anomaly reported.",
+  "operatorActionOrder": "Stopped; T1 sequenced; T2 through T8 successively enabled; all playing; stopped. No exact action timestamps.",
+  "screenshotCpuPercent": {
+    "stoppedBefore": 47.5,
+    "playingFirst": 82.0,
+    "successiveReadings": [
+      82.2,
+      81.9,
+      81.7,
+      82.1,
+      81.8,
+      82.0
+    ],
+    "allEightPlaying": 81.9,
+    "stoppedAfter": 51.8
+  },
+  "screenshotPlayingDspPercent": {
+    "tracks1to4Range": [
+      38.4,
+      40.3
+    ],
+    "tracks5to8Range": [
+      48.0,
+      49.3
+    ]
+  },
+  "sampleCount": 518,
+  "lastElapsedMs": 518397,
+  "wholeSessionCpuMaxPercent": 82.6,
+  "undoConfirmed": true,
+  "keepPerformed": false,
+  "limitations": [
+    "Whole-device load; no isolated SuperSAW benchmark.",
+    "Muted tracks may still process: successive unmuting is not a clean incremental cost benchmark.",
+    "Limited CPU margin relative to host precaution threshold of 85 percent.",
+    "One short-sample project on one unit, no general eight-track guarantee.",
+    "Keep, reboot persistence, other-module coexistence and long-file STATIC streaming remain untested."
+  ]
+}

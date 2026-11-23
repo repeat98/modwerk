@@ -1,0 +1,41 @@
+{
+  "base": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "reconstructedBinSha256": "261ced971a82f27e4d698769c1df2361b359068f5831ed8168bb937796cb1715",
+  "emulatorBinarySha256": "985d7c492c50b8353e95bdb29e50ace26eb103e76586c2e54767c2cf746f7a6f",
+  "runs": [
+    {
+      "profile": "frame-only",
+      "target": "emulator",
+      "at": "2026-11-22T15:05:10.483Z",
+      "undoConfirmed": true,
+      "assignedToTrack": false,
+      "audioTested": false,
+      "keepPerformed": false,
+      "normalAndPreviousIdentityVerified": true,
+      "inventoryAfter": [],
+      "samples": 10,
+      "frameCounterAdvanced": true
+    },
+    {
+      "profile": "frame-dsp",
+      "target": "emulator",
+      "at": "2026-11-22T15:07:04.681Z",
+      "undoConfirmed": true,
+      "assignedToTrack": false,
+      "audioTested": false,
+      "keepPerformed": false,
+      "normalAndPreviousIdentityVerified": true,
+      "inventoryAfter": [],
+      "samples": 10,
+      "frameCounterAdvanced": true
+    }
+  ],
+  "hardwareTested": false,
+  "physicalRebootTested": false,
+  "limitations": [
+    "Unassigned RAM lifecycle only. No track selection or sound qualification.",
+    "Emulated CPU readings are not physical performance or an isolated module cost.",
+    "Published public base reconstructed locally from the original OS; no firmware or card data committed."
+  ]
+}

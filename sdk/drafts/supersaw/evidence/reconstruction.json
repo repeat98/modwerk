@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "imageSha256": "d107ce94860e5998a2def161cd810c9e83b81c9646d627933264c8c7a11eb3ca",
+  "sources": {
+    "usb_machine.c": "58294cb23c649672e89709ea3212cb6a83081c7b172fa017cab28d78515548e0",
+    "bridge.c": "dc9c7492b8fa5ed6b06c1502c86f8f2ea6e8fcc22bf8cc64a14d93d3f39419e5",
+    "engine/machine.c": "55d6a94815d7efc86319236b54731e47cf4a8a9c0094ea050bb8e5689bfd5fac",
+    "engine/adapter.c": "38a0f650c9dc32d8cd2f61a91f0183980219eea3016c0b8692b7946cf559f16b",
+    "engine/ot_records.c": "22a94a3493ded2d315c85de4077af529ccc21d07e521f9c65f95898576aa4438",
+    "bridge.h": "2ed793bc59608feecb03ddb513ed362a2a19d4a34f5592373cb253428d0880ca",
+    "events.s": "f882f09a46e8d3e1d11b03b01faa843604dfee374265d27ca77072dd9db8e479",
+    "runtime.json": "965a316b1709ec65f0bba455909bd055149b835f2c8152137b64fb52aefdc9cf"
+  },
+  "copies": [
+    {
+      "offset": 4212,
+      "length": 12,
+      "address": 1074354032,
+      "sha256": "ccd2d027127be6736923924dfe5f1990324150d2312dcdeebcfff1de3e29c7f9",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 4980,
+      "length": 12,
+      "address": 1074632142,
+      "sha256": "5e9630c825da1c11086fd0f7c820ff272dc7d37c2104655bd6094f6541003ead",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14576,
+      "length": 27,
+      "address": 1074626784,
+      "sha256": "9e0b21ccf9d9508a4b85166f0b62e03f1512ef16427362ba2b6f41a18513d4b2",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14948,
+      "length": 32,
+      "address": 1074435603,
+      "sha256": "c72a78512f065ee94a26474f4b592fdfa14bf94df6fbcd3195a949ef9f6ab83e",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14980,
+      "length": 32,
+      "address": 1074435635,
+      "sha256": "fc73120c1917f2b276eb6ec26c0bdbde246941d56de4efca8e1895608f68f0b6",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 15023,
+      "length": 32,
+      "address": 1074445206,
+      "sha256": "79765f8cea863508a371d9596eeedb3b4d724cdd699ec4fbc81d323a7899189b",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 15055,
+      "length": 7,
+      "address": 1074445238,
+      "sha256": "94c6cc4e45c4a856ca7acd01d97da21aa5868143c11c1981890d6c7bf1075f9c",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 15062,
+      "length": 16,
+      "address": 1074445093,
+      "sha256": "28ac40463c521892fbbd848e88362f6242502a24e597b9c1de8b865011459502",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 30496,
+      "length": 27,
+      "address": 1074626784,
+      "sha256": "9e0b21ccf9d9508a4b85166f0b62e03f1512ef16427362ba2b6f41a18513d4b2",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 30868,
+      "length": 32,
+      "address": 1074435603,
+      "sha256": "c72a78512f065ee94a26474f4b592fdfa14bf94df6fbcd3195a949ef9f6ab83e",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 30900,
+      "length": 32,
+      "address": 1074435635,
+      "sha256": "fc73120c1917f2b276eb6ec26c0bdbde246941d56de4efca8e1895608f68f0b6",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 30943,
+      "length": 32,
+      "address": 1074445206,
+      "sha256": "79765f8cea863508a371d9596eeedb3b4d724cdd699ec4fbc81d323a7899189b",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 30975,
+      "length": 7,
+      "address": 1074445238,
+      "sha256": "94c6cc4e45c4a856ca7acd01d97da21aa5868143c11c1981890d6c7bf1075f9c",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 30982,
+      "length": 16,
+      "address": 1074445093,
+      "sha256": "28ac40463c521892fbbd848e88362f6242502a24e597b9c1de8b865011459502",
+      "purpose": "supersaw: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    }
+  ],
+  "fills": []
+}

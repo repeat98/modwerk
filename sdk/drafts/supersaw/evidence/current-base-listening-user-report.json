@@ -1,0 +1,32 @@
+{
+  "source": "Jos\u00e9 Aleixo, user report 2026-11-22",
+  "soundOnT1": true,
+  "sequenceSteps": [
+    1,
+    4,
+    7,
+    9,
+    12,
+    15
+  ],
+  "srcPlocks": [
+    "TUNE",
+    "DETN",
+    "WIDE"
+  ],
+  "fx1": "Filter, p-lock on step 9",
+  "fx2": "Delay, BASE/FB/WDTH/SEND p-locks on step 9",
+  "sampleTracks": {
+    "T2": "short FLEX kick",
+    "T3": "short FLEX hi-hat",
+    "T4": "short FLEX clap with delay"
+  },
+  "clicksReported": false,
+  "saturationReported": false,
+  "oscSettings": "various settings appreciated; exact values not reported",
+  "screenshotCpuMaximum": 48.9,
+  "recordedCpuMaximum": 57.1,
+  "undoConfirmed": false,
+  "qualification": "Listening reported positive; timeout rollback failed; recovery must be confirmed separately.",
+  "performanceComparison": "Lower displayed global readings than historical trials; scene/base differ; no isolated SuperSAW optimization demonstrated."
+}

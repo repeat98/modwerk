@@ -1,0 +1,51 @@
+{
+  "module_key": {
+    "index": 2,
+    "kind": "call",
+    "site": null
+  },
+  "ev_voice_bind_run": {
+    "index": 6,
+    "kind": "call",
+    "site": "0x40006820"
+  },
+  "ev_midi_note_on": {
+    "index": 8,
+    "kind": "take",
+    "site": "0x4000e746",
+    "entry": "jmp"
+  },
+  "ev_midi_note_off": {
+    "index": 9,
+    "kind": "take",
+    "site": "0x4000dfd4",
+    "entry": "jmp"
+  },
+  "ev_chromatic_release": {
+    "index": 15,
+    "kind": "take",
+    "site": "0x4004fbde",
+    "entry": "jmp"
+  },
+  "ev_chromatic_pitch": {
+    "index": 17,
+    "kind": "take",
+    "site": "0x4004fc58",
+    "entry": "jsr"
+  },
+  "ot_machines": {
+    "index": 28,
+    "kind": "table",
+    "site": null
+  },
+  "ev_tail_kill": {
+    "index": 30,
+    "site": "0x40004d0c",
+    "kind": "call"
+  },
+  "ot_machine_starts": {
+    "index": 37,
+    "kind": "table",
+    "site": null
+  }
+}

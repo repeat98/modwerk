@@ -1,0 +1,23 @@
+{
+  "version": "0.30.0-source-draft",
+  "scenario": "full",
+  "status": "blocked at native T1 assignment",
+  "virtualFixture": "frame off; RTOS and in-memory USB controller; no DSP model",
+  "moduleAdmissionPredicate": 1,
+  "mwAssignReturn": 4294967295,
+  "cpuMeterPermille": 1000,
+  "cpuHotThresholdPermille": 850,
+  "baseAllowancePercent": 45,
+  "bankAddress": "0x400e21e0",
+  "hardwareCpuMeasurement": false,
+  "guardsModified": false,
+  "packageSha256": "909ebc771df301881d9d7255b5606a06662531e9db44d260470aafeb9c875c0e",
+  "source": "recorded assignment preflight in pipe-client-03.log",
+  "testsNotReached": [
+    "positive T1 assignment",
+    "second-track admission in base",
+    "removal while Part owns machine",
+    "source START/render through frame IRQ",
+    "DSP MAIN"
+  ]
+}
