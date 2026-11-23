@@ -30,4 +30,17 @@ Not run in the emulator: sound (its analog model is not the unit's), MIDI CC 76 
 | BND, FRQ 60, RES 51 | 440..1750 Hz | 439..1777 Hz |
 | BND, FRQ 72, RES 51 | 880..3501 Hz | 908..3613 Hz |
 
-- **The resonance curve** between 0x2000 and 0xe000 in 0x0400 steps at 880 Hz and 440 Hz (Q 3.3 at 0x2000, 0.61 at 0x0000, 0.26 at 0xf000, 0.10 at 0xe000; the two frequencies agree). Folded into `tools/calibration.json`; the width table it gives places the widest bands about 6 % wider than the one measured above, which ran on the earlier table (wide bands came out up to 10 % narrow at each edge). Not yet run on the unit with the new table.
+- **The resonance curve** between 0x2000 and 0xe000 in 0x0400 steps at 880 Hz and 440 Hz (Q 3.3 at 0x2000, 0.61 at 0x0000, 0.26 at 0xf000, 0.10 at 0xe000; the two frequencies agree). Folded into `tools/calibration.json`; the width table it gives places the widest bands about 6 % wider than the one measured above, which ran on the earlier table (wide bands came out up to 10 % narrow at each edge). 
+
+**IFC2** (sha256 f32dc489: IFC1 with the P2 table, Improved FLTR 35806e604), RAM-booted the same day, the band words and edge cases again, both passed:
+
+| setting | asked | measured -3 dB edges |
+| --- | --- | --- |
+| BND+, FRQ 48, RES 72 | 220..880 Hz | 233..862 Hz |
+| BND+, FRQ 48, RES 96 (4 oct) | 220..3520 Hz | 247..3579 Hz |
+| BND+, FRQ 36, RES 96 (5 oct) | 110..3520 Hz | 130..3374 Hz |
+| BND+, FRQ 60, RES 66 (6 st) | 440..622 Hz | 446..621 Hz |
+| BND, FRQ 60, RES 51 | 440..1750 Hz | 469..1755 Hz |
+| BND, FRQ 72, RES 51 | 880..3501 Hz | 944..3596 Hz |
+
+Settings whose resonance word hardly changed between the two tables moved 4..7 % between the runs (the analog filter's own spread from run to run), as much as the table's correction: the P2 table is the better measured one, and the edges land within about 7 %, the 5-octave band's low edge 12..18 % high.

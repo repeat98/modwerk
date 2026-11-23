@@ -55,6 +55,7 @@ Requires Modwerk's base (core-ar2 0.7) on OS 1.74. Use your own original stock O
 - **Without the module** a kit with a band type plays it as PK (stock's own clamp) and draws a blank TYP picture; nothing else changes. Stock's MIDI CC 76 already stores values 7 to 127 unclamped, so such kits can come from stock too; the module treats only 7 and 8 as bands.
 - **Widths.** 1 semitone to 5 octaves. Narrow bands are resonant (Q 17 at one semitone); past about 4.5 octaves the band flattens and drops in level.
 - **Level.** A wider band is quieter: about 7 dB down at 4.5 octaves, 14 dB at 7 octaves. Set VOL by ear; there is no make-up gain.
+- **Accuracy.** On a unit the edges landed within about 7 % of FRQ and RES (two runs; the analog filter itself moves a few percent from run to run), a 5-octave band's low edge up to 18 % high.
 - **Slopes.** 6 dB/oct each side, the analog filter's own: a 2-pole band-pass split in two.
 - **The graph** shows bands wider than stock's widest BP at that width.
 - **The envelope** moves the analog cutoff: in BND+ it moves both edges too.
