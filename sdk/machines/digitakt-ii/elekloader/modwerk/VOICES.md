@@ -52,4 +52,4 @@ Not checked yet: sequencer trigs on a linked lead (only live trig-key notes abov
 - A knob turned in the same frame as a note-on on the lead does not reach the voices until it moves again.
 - A knob turned on the lead overrides a voice's trig lock on that parameter while the voice's note plays.
 - The setting is per project, not per kit or pattern.
-- Changing VOICES while notes play regroups at once; a note-off that then finds no owner stays on the lead.
+- Changing VOICES while notes play regroups at once (routing pauses while the groups change); a note-off that then finds no owner stays on the lead.

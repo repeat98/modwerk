@@ -43,13 +43,16 @@ enum {
 static uint8_t voices[TRACKS];      /* the project's setting, 0 or 1 for a track that plays only its own notes */
 static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group */
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
-static uint16_t absorb;             /* leads whose own note set its targets this frame */
-static uint16_t leads;              /* leads with a group */
+static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
+static volatile uint16_t leads;     /* leads with a group; written last by regroup */
 static int16_t last[TRACKS][VALUES];
 
 static void regroup(void)
 {
     uint16_t found = 0;
+    /* The frame interrupt reads the groups: route nothing while they change (the menu and a project load run in
+     * tasks), and publish the leads last. */
+    leads = 0;
     for (unsigned int t = 0; t < TRACKS; ++t) {
         lead_of[t] = NONE;
     }
