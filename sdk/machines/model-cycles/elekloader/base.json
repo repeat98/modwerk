@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "about": "Modwerk's Model:Cycles OS 1.13 base, built by npm run machine:base -- model-cycles: core-mc 0.3's source from Elekloader v0.11.0, unchanged (sdk/imports/core-mc-source-f20ffda.json). Its copy of core-mc's mod.json (copies) differs in the collections alone: every hook holds 8 subscribers, not 4, as sdk/machines/model-cycles/events.json records. Modwerk adds no sources or sites yet. The reference keeps everything of the core-mc 0.3 release but its collections, whose room this base raises; built with the reviewed toolchain, the package differs from the release in the collections alone.",
+  "core": "core-mc",
+  "include": "sdk/machines/model-cycles/include",
+  "os": "1.13",
+  "toolchain": {
+    "cross": "m68k-elf-",
+    "gcc": "16.2.0",
+    "binutils": "2.47"
+  },
+  "reference": {
+    "file": "vendor/elekloader/catalog/core-mc-0.3.elemod",
+    "sha256": "e214e171a8bfd13f67ceaac66ff3ce3b899372722fdc582274c43a6db74065c0",
+    "keeps": [
+      "id",
+      "sites",
+      "exports",
+      "imports",
+      "weak",
+      "contribute",
+      "requires",
+      "conflicts"
+    ]
+  },
+  "copies": [
+    {
+      "path": "core-mc/mod.json",
+      "from": "core-mc/mod.json",
+      "sha256": "b0173eed22f2285839584667c6e420406b9d38a5593ccd8428e959dd8ccf078b"
+    }
+  ]
+}

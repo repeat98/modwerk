@@ -58,6 +58,37 @@ class MachineBases(unittest.TestCase):
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
         self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
+    def test_model_cycles_base_source_is_core_mc_0_3_unchanged(self):
+        record = json.loads((APP / "sdk/imports/core-mc-source-f20ffda.json").read_text())
+        self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
+        for item in record["files"]:
+            self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
+        imported = {item["to"] for item in record["files"]}
+        folder = APP / "sdk/machines/model-cycles/elekloader/core-mc"
+        mod = json.loads((folder / "mod.json").read_text())
+        for source in mod["sources"]:
+            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
+        self.assertIn("sdk/machines/model-cycles/include/model-cycles/core.h", imported)
+        # The three sources the release was built from, by its own build record.
+        release = json.loads((APP / "vendor/elekloader/catalog/core-mc-0.3.elemod").read_text())
+        hashes = {pathlib.Path(item["from"]).name: item["sha256"] for item in record["files"]}
+        self.assertEqual({name: hashes[name] for name in release["build"]["sources"]}, release["build"]["sources"])
+
+    def test_model_cycles_hooks_are_the_sites_and_room_the_base_builds(self):
+        # events.json is the registry; the base's copy of core-mc's mod.json must dispatch the same hooks at the same
+        # guarded sites, each with the room the registry gives it.
+        events = json.loads((APP / "sdk/machines/model-cycles/events.json").read_text())["events"]
+        copy = json.loads((APP / "sdk/machines/model-cycles/elekloader/copies/core-mc/mod.json").read_text())
+        stock = {site["addr"]: bytes.fromhex(site["stock"]) for site in copy["sites"]}
+        self.assertEqual([event["index"] for event in events], list(range(len(events))))
+        self.assertEqual({event["event"]: event["room"] for event in events}, copy["collections"])
+        for event in events:
+            self.assertIn(event["site"], stock, event["event"])
+            self.assertEqual(event["length"], len(stock[event["site"]]), event["event"])
+            self.assertEqual(event["guard"], hashlib.sha256(stock[event["site"]]).hexdigest(), event["event"])
+        interface = json.loads((APP / "sdk/model-cycles/core-profile/interface.json").read_text())
+        self.assertEqual({entry["name"]: entry["room"] for entry in interface["events"]}, copy["collections"])
+
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
         mod = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json").read_text())

@@ -1,0 +1,40 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-11-23",
+ "decision": "Model:Cycles OS 1.13 upstream core source at Elekloader v0.11.0, the release that ships core-mc 0.3. Imported byte for byte as the starting point for the Modwerk base. core-mc is drumkilla's, on irpina's hook bus (core.s); the firmware locations (0.2), ev_boot and the boot cache invalidation (0.3) came in through Elekloader #192 to #194. Modwerk's changes live beside the imported sources (copies/).",
+ "repository": "https://github.com/elekloader/elekloader",
+ "revision": "f20ffda0a9d3ac008b7285ab01ca4dd8da58341f",
+ "license": "GPL-2.0-or-later",
+ "files": [
+  {
+   "from": "mods/core-mc/mod.json",
+   "to": "sdk/machines/model-cycles/elekloader/core-mc/mod.json",
+   "sha256": "b0173eed22f2285839584667c6e420406b9d38a5593ccd8428e959dd8ccf078b"
+  },
+  {
+   "from": "mods/core-mc/boot.s",
+   "to": "sdk/machines/model-cycles/elekloader/core-mc/boot.s",
+   "sha256": "96efcf2a8f7cce3cd9fc3d2722df6a13482a1929710f6017214bf6c1f0f4c603"
+  },
+  {
+   "from": "mods/core-mc/fw.s",
+   "to": "sdk/machines/model-cycles/elekloader/core-mc/fw.s",
+   "sha256": "a63c9626d17acca2a5137f132ca88103293a33196831779320b142781a61710a"
+  },
+  {
+   "from": "mods/core/core.s",
+   "to": "sdk/machines/model-cycles/elekloader/core/core.s",
+   "sha256": "dd0074e9b08a254838feae6215404e775ba7ef7aa2afbcce1e5c24794eebddc5"
+  },
+  {
+   "from": "elekloader/sdk/include/model-cycles/core.h",
+   "to": "sdk/machines/model-cycles/include/model-cycles/core.h",
+   "sha256": "a541f4df9129f3ac8e15d6383b982c8b82f1e7a906a597fb29fd6133b9195cbf"
+  },
+  {
+   "from": "elekloader/sdk/include/model-cycles/core.inc",
+   "to": "sdk/machines/model-cycles/include/model-cycles/core.inc",
+   "sha256": "d810ee3d5d4d00f640c001d52e2cf906f7c1e57de1084a990a78f20f7adf1909"
+  }
+ ]
+}
