@@ -52,7 +52,16 @@ estimate (22.1 against 26.6). The written records were removed from the branch; 
 `results/amiga-031-frame-cost.json`. Next: read the curve on a pattern with room (`--measure-pattern`, the tool's
 own hint), then hand the owner the approval values.
 
-SYNTIZ was running at handover; its logs land in `results/`.
+SYNTIZ, same twin and scenes (finished 15:35):
+
+| | at rest | curve first / each | admission empty / medium | first reading |
+|---|---|---|---|---|
+| 0.1.0 (published) | +0 | 27.5 / 5.1 | admitted 64.2 % / admitted 101.9 % | 101.1 % (saturated) |
+| 0.1.1 | +0 | 18.6 / 5.5 | admitted 56.0 % / admitted 95.4 % | 97.7 % |
+
+SYNTIZ 0.1.1 passes the procedure cleanly and is about 9 points cheaper on the first copy. Its record is committed
+on #1978 (`32df915a6`: `evidence/frame-cost.json` and the `frame-costs.json` line). It still needs the owner's
+approval file before release.
 
 ## Laslo (Lasl00)
 
@@ -70,8 +79,8 @@ frame on Dev17 C03, while the mean rose only 1.7. Dev17 may name some of them, w
 1. Read `results/fair/`. If Euclid and Repitch now rest, decide from the A/B whether 0.1.6 and 0.2.2 are worth
    releasing. If Repitch still does not rest with TSTR NORM, its `ev_in_use` path has a bug (TESTING.md lists the
    AUTO/TSMODE case as not run).
-2. Amiga 0.3.1: re-read the curve on a pattern with room. Then SYNTIZ from `results/`. Then the owner's approval
-   files for both.
+2. SYNTIZ 0.1.1 is ready for the owner's approval file. Amiga 0.3.1: re-read the curve on a pattern with room,
+   then its approval file.
 3. Mini Verb 0.2.4 (#2027) needs only the owner's approval file.
 4. POLY8 0.3.4 (#1863) stays on hold: it failed its playback test.
 

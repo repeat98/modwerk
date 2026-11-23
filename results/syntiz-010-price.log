@@ -1,0 +1,4 @@
+syntiz                      at rest frame +0, cpu -0.1
+syntiz                      curve on T1 T3 T6: +20.7, +32.6, +37.7 -> rest 0, first 27.5, each 5.1 (stopped after T6: longest frame 118.1 %, 1 renders skipped)
+syntiz                      admission: empty admitted, longest frame 64.2 %, 0 dropped, 0 stalls; medium admitted, longest frame 101.9 %, 0 dropped, 0 stalls
+                            NOT RELEASABLE: its first instance was read at 101.1 % of a frame: past 100 % the guard drops renders, so that is the overload, not the module's cost. Read it on a pattern with room (--measure-pattern)

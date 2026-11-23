@@ -1,0 +1,5 @@
+syntiz                      at rest frame +0, cpu -0.3
+syntiz                      not written: a machine's price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)
+syntiz                      curve on T1 T3 T6 T7: +16.2, +24.1, +29.6, +30.9 -> rest 0, first 18.6, each 5.5
+syntiz                      admission: empty admitted, longest frame 56 %, 0 dropped, 0 stalls; medium admitted, longest frame 95.4 %, 0 dropped, 0 stalls
+syntiz                      wrote first 18.6, each 5.5 into evidence/frame-cost.json, and regenerated sdk/machines/octatrack/frame-costs.json
