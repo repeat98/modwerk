@@ -415,11 +415,24 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
     struct as_state *s = ready();
     int rc = 0;
-    if (s->load_read && s->load_posted) load_read(s);    /* the module's own job, after the whole load */
+    int own_read = s->load_read && s->load_posted;        /* the module's own job, after the whole load */
+    if (own_read) load_read(s);
     if (s->load_read) {                                   /* mid-LOAD, the new project not read yet: none of the module's */
         if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);   /* files written (LOAD saved the last project before */
         remember(s);                                      /* it began); book 1 is stock's own */
         return rc;
+    }
+    if (own_read) {
+        s->hush = 1;                                      /* our job: its NOW SAFE TO EJECT! is closed after */
+        /* The same job takes the return to the book the project was left on: one card job of the module's after a
+         * LOAD of another project, not a second one (the developer's MKI, 24 November 2026). */
+        if (s->restore >= 0 && s->reloaded_slots && s->pending < 0) {
+            s->pending = s->restore;
+            s->reapply = 1;
+            s->restore = -1;
+            s->reloaded_slots = 0;
+            ev(7u);
+        }
     }
     if (s->pending >= 0) s->hush = 1;                     /* our job: its NOW SAFE TO EJECT! is closed after */
     if (s->book == 0 && !s->damaged) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
@@ -464,6 +477,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
     if (!switched) s->last[s->book] = (uint8_t)(rd8(INDEX) & 7u);   /* the choice in the book in use, as saved */
     write_place(s);                                       /* where the project is: a load comes back here */
     remember(s);
+    if (s->hush) s->hush = 1;                             /* its NOW SAFE TO EJECT! comes after stock's own part */
     return rc;
 }
 

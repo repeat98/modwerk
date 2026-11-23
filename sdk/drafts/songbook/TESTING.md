@@ -6,7 +6,7 @@ Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gat
 
 ## Host gate
 
-`verify.py`: 96 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 97 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
@@ -196,11 +196,13 @@ MKI (OS 1.40C, base 6d23e888):
    runs for each new project) and chooses then (build `e6998c4c5`). On the unit, A then came back on book 3,
    arrangement 6, and B on book 2, arrangement 1, but B's closed list kept A's cursor (row 6).
 3. The list's cursor is now set after a switch whether the list is open or not (build `85d544a68`).
+4. The module's job after such a load also takes the return to the project's book (one card job of its own, not two),
+   and closes that job's NOW SAFE TO EJECT! (found with the setlists build, 24 November 2026).
 
 On build `85d544a68` (package `81eb7172`), as the developer reported it: A left on book 3 on an arrangement with rows,
 LOAD of B came up on book 2, arrangement 1, with the list's cursor on 1; LOAD of A came back on book 3 and its
 arrangement, cursor on it; PLAY played that arrangement from its first row; CHANGE LEFT and RIGHT switched books as
-before. `verify.py` (96 checks) models both project directories, the name switching only after the load and a run
+before. `verify.py` (97 checks) models both project directories, the name switching only after the load and a run
 state left set; the previous builds fail their cases.
 
 

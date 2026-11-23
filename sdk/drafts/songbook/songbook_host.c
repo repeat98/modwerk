@@ -532,9 +532,11 @@ int main(void)
     strcpy(job_name, "PROJ");
     as_project_load(); as_project_loaded(); as_project_new(); mark(0x10); chosen = 0;   /* back to A */
     host_dir = "/SET/PROJ"; strcpy(cur_name, "PROJ");
-    settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);   /* the module's job reads A's arrbook.work */
-    job(); for (int i = 0; i < 300; ++i) as_tick(0);  /* and the switch to its book */
-    check("back in project A: book 3, arrangement 5", book() == 2 && chosen == 4);
+    settle();                                         /* stock's jobs are over: the module posts its own */
+    { int pp = posted, c0 = closes;
+      job(); msg_up = 1; for (int i = 0; i < 300; ++i) as_tick(0);   /* A's arrbook.work, and the switch, in that job */
+      check("back in project A: book 3, arrangement 5", book() == 2 && chosen == 4);
+      check("in one card job of the module's, its NOW SAFE TO EJECT! closed", posted == pp && closes == c0 + 1); msg_up = 0; }
     check("with no arranger reset", resets == 0);
     /* LOAD of another project with the arranger's run state left set: every choice refused until it is reset */
     strcpy(job_name, "PROJB");
