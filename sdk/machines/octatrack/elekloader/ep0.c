@@ -58,6 +58,7 @@ void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the b
 #define USBCMD REG(0xfc0b0140u)  /* bit 0 RS: the pull-up */
 #define PORTSC1 REG(0xfc0b0184u)
 #define OTGSC REG(0xfc0b01a4u)
+#define DEVICEADDR REG(0xfc0b0154u) /* USBADR in bits 31-25: 0 until a host addresses the unit, and after a bus reset */
 /* Stock EP0 state: 10 while an IN stage is pending, 11 when idle. */
 #define EP0_STATE REG(0x460bb3ecu)
 /* Stock's awaited OUT descriptor; null unless one of its own OUT stages runs. */
@@ -660,7 +661,7 @@ static void ep0_tick(void)
 #endif
         uint32_t lock = modwerk_machine_lock(); /* the controller's registers with the USB interrupt held off */
         uint32_t portsc = PORTSC1, otgsc = OTGSC;
-        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, busy);
+        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, DEVICEADDR >> 25, busy);
         if (act == USB_ATTACH_DROP) {
             USBCMD = USBCMD & ~USB_ATTACH_RS;
             mw_usb_reoffer_regs = (otgsc & 0xffffu) << 16 | (portsc & 0xffffu), mw_usb_reoffers = mw_usb_reoffers + 1u;
