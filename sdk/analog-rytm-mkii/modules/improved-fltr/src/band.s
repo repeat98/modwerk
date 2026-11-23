@@ -37,31 +37,10 @@ improved_fltr_store:
         movem.l %d2-%d3,(%sp)
         mvs.w   10(%a4),%d1                     | FRQ: the base
         mvs.w   12(%a4),%d2                     | RES
-        tst.l   %d0
-        bne.s   1f
-        move.l  %d2,%d3                         | 7: w = RES x 15/32
-        lsl.l   #4,%d2
-        sub.l   %d3,%d2
-        asr.l   #5,%d2
-        bra.s   2f
-1:      sub.l   %d1,%d2                         | 8: w = RES - FRQ
-2:      cmp.l   #W_MIN,%d2
-        bge.s   3f
-        move.l  #W_MIN,%d2
-3:      cmp.l   #W_MAX,%d2
-        ble.s   4f
-        move.l  #W_MAX,%d2
-4:      move.l  %d2,%d3                         | the cutoff: FRQ + w / 2
-        asr.l   #1,%d3
-        add.l   %d1,%d3
-        bge.s   5f
-        moveq   #0,%d3
-5:      cmp.l   #0x7f00,%d3                     | stock's top: FRQ 127
-        ble.s   6f
-        move.l  #0x7f00,%d3
-6:      add.l   #-16384,%d3
-        add.l   %d3,%d3
-        move.w  %d3,(%a0)+
+        bsr.w   band_edges                      | d2 = w, d1 = the cutoff
+        add.l   #-16384,%d1
+        add.l   %d1,%d1
+        move.w  %d1,(%a0)+
         move.l  %d2,%d3                         | the resonance: table[w >> 8], to the next by w & 255
         asr.l   #8,%d3
         lea     fltr_width_words,%a0
@@ -91,59 +70,81 @@ stock:  mvs.w   10(%a4),%d0                     | stock's own stores, as displac
         moveq   #6,%d0
 7:      jmp     improved_fltr_resume
 
+| band_edges: d0 = 0 linked (TYP 7) or 1 unlinked (TYP 8), d1 = FRQ, d2 = RES (8.8 semitones).
+| Out: d2 = the width w, 1..60 semitones; d1 = the analog cutoff, the edges' midpoint FRQ + w / 2,
+| held to 0..0x7f00 (stock's FRQ 127). 7: w = RES x 15/32; 8: w = RES - FRQ. d0 is used.
+band_edges:
+        tst.l   %d0
+        bne.s   1f
+        move.l  %d2,%d0                         | 7: w = RES x 15/32
+        lsl.l   #4,%d2
+        sub.l   %d0,%d2
+        asr.l   #5,%d2
+        bra.s   2f
+1:      sub.l   %d1,%d2                         | 8: w = RES - FRQ
+2:      cmp.l   #W_MIN,%d2
+        bge.s   3f
+        move.l  #W_MIN,%d2
+3:      cmp.l   #W_MAX,%d2
+        ble.s   4f
+        move.l  #W_MAX,%d2
+4:      move.l  %d2,%d0                         | the cutoff
+        asr.l   #1,%d0
+        add.l   %d0,%d1
+        bge.s   5f
+        moveq   #0,%d1
+5:      cmp.l   #0x7f00,%d1
+        ble.s   6f
+        move.l  #0x7f00,%d1
+6:      rts
+
 | The FILTER page's graph (0x40038db6, args: obj, bitmap, x, y, 1, FRQ, RES, TYP; held in d7 = FRQ,
-| d2 = RES, d4 = TYP, all 8.8) takes d1 = TYP >> 8 at 0x40038e20 and, above 6, returns without a
-| curve. The site (a jmp over 0x40038e20..0x40038e27) keeps stock's types and draws the band types as
+| d2 = RES, d4 = TYP, all 8.8, each as the page shows it: a held trig's lock included) takes
+| d1 = TYP >> 8 at 0x40038e20 and, above 6, returns without a curve. The site (a jmp over
+| 0x40038e20..0x40038e27) first notes FRQ and TYP for main.c (the page's own values for RES's text,
+| and proof that stock's FILTER page drew), then keeps stock's types and draws the band types as
 | stock's BP: d7 the edges' midpoint, d2 the width table's word, or 0 for a band wider than stock's
 | widest BP (the graph shows such a band at that width). d0 is free here and d1 goes on as the jump
-| table's index; the stack is not touched but for a0's save.
+| table's index; the stack is not touched but for a0's save and the call.
         .globl  improved_fltr_graph
         .extern improved_fltr_graph_on, improved_fltr_graph_off
+        .extern improved_fltr_seen_frq, improved_fltr_seen_typ, improved_fltr_seen
 
 improved_fltr_graph:
+        move.l  %d7,improved_fltr_seen_frq
+        move.l  %d1,improved_fltr_seen_typ
+        moveq   #1,%d0
+        move.l  %d0,improved_fltr_seen
         moveq   #6,%d0
         cmp.l   %d1,%d0
         bcc.s   9f                              | stock's 0..6
         cmp.l   #8,%d1
         bhi.s   8f                              | above 8: stock's early return
-        move.l  %d2,%d0                         | RES
-        cmp.l   #7,%d1
-        bne.s   1f
-        lsl.l   #4,%d0                          | 7: w = RES x 15/32
-        sub.l   %d2,%d0
-        asr.l   #5,%d0
-        bra.s   2f
-1:      sub.l   %d7,%d0                         | 8: w = RES - FRQ
-2:      cmp.l   #W_MIN,%d0
-        bge.s   3f
-        move.l  #W_MIN,%d0
-3:      cmp.l   #W_MAX,%d0
-        ble.s   4f
-        move.l  #W_MAX,%d0
-4:      move.l  %d0,%d1                         | the centre: FRQ + w / 2, on the graph's 0..127
-        asr.l   #1,%d1
-        add.l   %d1,%d7
-        cmp.l   #0x7f00,%d7
-        ble.s   5f
-        move.l  #0x7f00,%d7
-5:      asr.l   #8,%d0                          | the drawn RES: table[w], never below 0
+        moveq   #7,%d0
+        sub.l   %d0,%d1
+        move.l  %d1,%d0                         | 0 linked, 1 unlinked
+        move.l  %d7,%d1
+        bsr.w   band_edges
+        move.l  %d1,%d7                         | the centre
+        move.l  %d2,%d0                         | the drawn RES: table[w], never below 0
+        asr.l   #8,%d0
         add.l   %d0,%d0
         move.l  %a0,-(%sp)
         lea     fltr_width_words,%a0
         mvs.w   (%a0,%d0.l),%d2
         move.l  (%sp)+,%a0
         tst.l   %d2
-        bge.s   6f
+        bge.s   7f
         moveq   #0,%d2
-6:      moveq   #2,%d1                          | stock's BP curve
+7:      moveq   #2,%d1                          | stock's BP curve
 9:      jmp     improved_fltr_graph_on
 8:      jmp     improved_fltr_graph_off
 
 | improved_fltr_snap(track, res, typ): a tap's new RES and TYP land at once. Stock glides every
 | sound word to its target (0x40120cfa: targets 0x8000e5b0 + 84 t, state 0x8000eeec + 168 t in
-| 16.16, engine words 0x8000f774 + 2 (26 + 42 t)), so the type would read its old meaning for a
-| few blocks against the new RES: an audible sweep. Target, state and engine word of RES (index 31)
-| and TYP (32) are written together with interrupts masked.
+| 16.16), so the type would read its old meaning for a few blocks against the new RES: an audible
+| sweep. Target and state of RES (index 31) and TYP (32) are written together with interrupts
+| masked; the next block builds the engine words from them, modulation on top.
         .globl  improved_fltr_snap
 improved_fltr_snap:
         move.l  4(%sp),%d0                      | track
@@ -157,14 +158,6 @@ improved_fltr_snap:
         move.l  12(%sp),%d1                     | RES
         move.w  %d1,(%a0)
         move.l  16(%sp),%d1                     | TYP
-        move.w  %d1,2(%a0)
-        move.l  %d0,%d1                         | engine words: 0x8000f774 + 84 t + 2 (26 + 31)
-        mulu.w  #84,%d1
-        move.l  %d1,%a0
-        add.l   #0x8000f7e6,%a0
-        move.l  12(%sp),%d1
-        move.w  %d1,(%a0)
-        move.l  16(%sp),%d1
         move.w  %d1,2(%a0)
         mulu.w  #168,%d0                        | state: 0x8000eeec + 168 t + 4 x 31, 16.16
         move.l  %d0,%a0

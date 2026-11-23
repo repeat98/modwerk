@@ -58,7 +58,8 @@ Requires Modwerk's base (core-ar2 0.7) on OS 1.74. Use your own original stock O
 - **Slopes.** 6 dB/oct each side, the analog filter's own: a 2-pole band-pass split in two.
 - **The graph** shows bands wider than stock's widest BP at that width.
 - **The envelope** moves the analog cutoff: in BND+ it moves both edges too.
-- **The tap** edits the sound, not a trig's lock.
+- **The tap** edits the sound, not a trig's lock. It writes RES and then TYP through stock's setter, so MIDI out sends CC 75 then CC 76 (the unit itself changes both at once).
+- **RES carries over** when TYP moves between a band type and a stock type: its value keeps its number and takes the new type's meaning. A wide band's RES (an edge high up) read as stock resonance can self-oscillate loudly on LP2..PK; a stock RES 0 read in BND is the narrowest, most resonant band. Set RES after changing TYP.
 - **At the top.** The analog cutoff stops at stock's top (FRQ 127, 21.1 kHz): a wide band with a high base then starts below FRQ. RES shows the low-pass edge as played, OPEN above 21.1 kHz.
 - **TYP 9 to 127** (from MIDI CC 76 only) play and read as PK, as on stock, but show the band picture: stock draws its eighth picture for any type above 7.
 - **A locked RES** shows its hertz in stock's 27-pixel lock box, which kHz values overrun (Filter Hz widens the box for FRQ only).

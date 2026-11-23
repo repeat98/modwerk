@@ -11,7 +11,8 @@
 // - A tap of RES (knob F) on a band type flips linked and unlinked, keeping the low-pass edge where
 //   it is: TYP 7 <-> 8, and RES converted from a distance to a cutoff or back. It reads the sound as
 //   edited (not what a lock plays), writes through stock's setter, and lands both words at once
-//   (band.s's improved_fltr_snap), so the old meaning never meets the new RES.
+//   (band.s's improved_fltr_snap), so the old meaning never meets the new RES. RES's text uses FRQ
+//   and TYP as the page shows them (a held trig's locks), noted by band.s's graph site.
 // Stock with a band type in a kit plays it as PK (its own clamp) and draws a blank TYP knob.
 
 #include <stdint.h>
@@ -89,6 +90,10 @@ const uint32_t improved_fltr_glyph[21] __attribute__((aligned(4))) = {
     0x00400000, 0x00400000, 0x00400000, 0x01800000, 0x06000000, 0x08000000,
     0x30000000, 0x40000000, 0x00000000,
 };
+
+// Written by band.s's graph site each time stock draws the FILTER graph: FRQ (8.8) and TYP (whole)
+// as the page shows them, a held trig's locks included, and a mark that it drew.
+volatile int32_t improved_fltr_seen_frq, improved_fltr_seen_typ, improved_fltr_seen;
 
 static int asked, page_up, redraw;
 static int tap_ticks = -1, tap_turns;
@@ -236,7 +241,16 @@ FLTR_UI static int fltr_text(struct core_text *t)
         t->buf[4] = 0;
         return CORE_TEXT_DONE;
     }
-    if (t->id != ID_RES || !(sw = sound_words(selected_track())) || !band_type(typ = sw[IDX_TYP]))
+    if (t->id != ID_RES)
+        return CORE_TEXT_PASS;
+    if (page_up) {                              // the page's own FRQ and TYP, as its graph drew them
+        typ = improved_fltr_seen_typ << 8;
+        if (!band_type(typ))
+            return CORE_TEXT_PASS;
+        put_hz(t->buf, played_edge(typ, improved_fltr_seen_frq, t->value));
+        return CORE_TEXT_DONE;
+    }
+    if (!(sw = sound_words(selected_track())) || !band_type(typ = sw[IDX_TYP]))
         return CORE_TEXT_PASS;
     put_hz(t->buf, played_edge(typ, sw[IDX_FRQ], t->value));
     return CORE_TEXT_DONE;
@@ -333,14 +347,17 @@ FLTR_UI static void flip_link(void)
     show_header((typ >> 8) == TYP_LINKED ? "LP LINKED" : "LP FREE");
 }
 
-// ev_draw: stock asks for the page's ids only while the FILTER page is drawn.
+// ev_draw: the FILTER page is up when this compose both asked for RES or TYP and drew stock's
+// FILTER graph (another view asking those ids draws no graph; Voice DAC's page draws the graph
+// for ids of its own).
 FLTR_UI void improved_fltr_draw(void *bmp, void *ctrl)
 {
     (void)bmp;
     (void)ctrl;
-    if (asked)
+    if (asked && improved_fltr_seen)
         page_up = 1;
     asked = 0;
+    improved_fltr_seen = 0;
 }
 
 FLTR_UI void improved_fltr_tick(char *ctrl)
