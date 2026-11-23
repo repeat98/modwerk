@@ -29,10 +29,11 @@
       "All analog: no digital processing of the voice."
     ],
     "usage": [
-      "Press FILTER and turn TYP past PK to BW.",
-      "Turn FRQ to set the band's bottom edge and WID to open it upward; WID shows the top edge in hertz.",
-      "Add filter envelope with ENV to sweep the band on each hit.",
-      "Point an LFO at FRQ to move the band, or at RES (WID) to open and close it."
+      "Use a build containing Improved FLTR. On BD, press FILTER and turn TYP past PK: it reads BW, the knob shows a band, RES's knob now reads WID and the graph draws the band.",
+      "Turn FRQ to about 220 Hz and WID up: the band opens upward from 220 Hz; WID shows its top edge in hertz.",
+      "Turn FRQ: the whole band moves and keeps its width.",
+      "Add filter envelope with ENV: the band sweeps on each hit.",
+      "Lock FRQ or WID on trigs, or point an LFO at either, as on any type."
     ]
   },
   "access": {
@@ -112,7 +113,7 @@
     "memoryBytes": 3652,
     "fastBytes": null,
     "load": {
-      "display": "A few instructions a voice an audio block: about 35 for a BW voice, 5 for any other; the graph, texts and names run in the UI only",
+      "display": "About 35 instructions a BW voice an audio block, 5 for any other type; graph and texts in the UI only",
       "method": "static",
       "conditions": "Counted in src/band.s: the filter routine's stores are taken by one jump; a stock type adds a compare and two jumps, BW adds the width, centre and table interpolation. Not measured on a unit."
     }
@@ -138,7 +139,7 @@
       ]
     },
     "verifiedBy": null,
-    "sourceSha256": null
+    "sourceSha256": "cd05336069af02042e4959e654575fed476b66a1540c83d7f4945a15a6d645de"
   },
   "tests": {
     "report": "TESTING.md",
@@ -184,7 +185,14 @@
       "alt": "FILTER page with TYP showing a band picture, the graph drawing a narrow peak near the left, and the knob labels FRQ (reading 47) and WID.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
-      "source": "original capture in rytm-emu: media/capture.json"
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+        "setup": "Headless rytm-emu (dtboot) running IFS2: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved FLTR 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit on BD. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
     },
     {
       "path": "media/band-width.png",
@@ -193,7 +201,14 @@
       "alt": "FILTER page titled WIDTH, the graph drawing a band from the base, and WID reading 440Hz.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
-      "source": "original capture in rytm-emu: media/capture.json"
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+        "setup": "Headless rytm-emu (dtboot) running IFS2: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved FLTR 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit on BD. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
     },
     {
       "path": "media/band-wide.png",
@@ -202,7 +217,14 @@
       "alt": "FILTER page titled WIDTH, the graph drawing a wide, low band, and WID reading 1.05kHz.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
-      "source": "original capture in rytm-emu: media/capture.json"
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+        "setup": "Headless rytm-emu (dtboot) running IFS2: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved FLTR 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit on BD. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
     }
   ]
 }
