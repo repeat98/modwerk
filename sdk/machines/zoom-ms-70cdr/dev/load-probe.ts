@@ -11,9 +11,11 @@ const sites = [
   // The read call's execute packet includes the stock code that prepares its arguments.
   { name: '.patch_read', addr: 0xc00a5518, hash: '7fc4e7d3c510a1510790fe3a3ec8957537b17d66e08d019dad6257746b7c133a', parallel: true },
   { name: '.patch_draw', addr: 0xc00a93d0, hash: '705f25fd3ff3d2454e642775dccd7f676ae5428ce195b07531684fb7e46a46ba', parallel: false },
+  // Replace the branch in MIDISTOMP's MIDI diagnostics vector, keeping its return address setup.
+  { name: '.patch_midi', addr: 0xc00f485c, hash: '9c1c0fb36c10f4425663846918af0b4804605fa9d9ba59b4152ad4c6e769da4e', parallel: false },
 ]
 
-/** Assemble only Modwerk's instrumentation. The patcher checks both call sites and the loaded section. */
+/** Assemble only Modwerk's instrumentation. The patcher checks the branch sites and loaded section. */
 export function buildLoadProbe(prefix: string): ZoomPatch {
   const dir = mkdtempSync(join(tmpdir(), 'modwerk-zoom-probe-'))
   const source = fileURLToPath(new URL('./', import.meta.url))
@@ -28,7 +30,7 @@ export function buildLoadProbe(prefix: string): ZoomPatch {
     }
     const write = sites.map(({ name, addr, hash, parallel }) => {
       const code = section(name).subarray(0, 4)
-      if (code.length !== 4) throw new Error('Could not assemble the call for ' + name)
+      if (code.length !== 4) throw new Error('Could not assemble the branch for ' + name)
       code[0] = (code[0] & ~1) | Number(parallel)
       return { model: MODEL, addr, expect_length: 4, expect_sha256: hash, data: code.toString('hex') }
     })

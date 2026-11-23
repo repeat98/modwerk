@@ -45,16 +45,21 @@ export async function nodeMidiAccess(native?: Native): Promise<MidiAccessLike & 
 }
 
 /**
- * One command through a ZoomLink that has connected: `status` (identity, and MIDISTOMP's load on its base), `list`
+ * One command through a ZoomLink that has connected: `status` (identity, load and the development counter when available), `list`
  * (files, with the group, ID and version of each effect in the group added effects use, and the free space), `backup` (every file into a zip at `file`,
  * resolved against `dir`, by default a new name in `dir`), `install` (the effect file at path `file`) and `remove`
  * (the effect named `file`). Install and remove write to the pedal: only `confirmed`, and the effect list from before
  * is saved in `dir`. Every file written here is new and private.
  */
 export async function zoomCommand(link: ZoomLink, command: string, file: string | undefined, { dir, confirmed = false }: { dir: string; confirmed?: boolean }) {
-  const { status, identity, notice } = link.getState()
+  const { status, identity, notice, connection } = link.getState()
   if (status !== 'ready' || !identity) throw new Error(notice?.text ?? 'The Zoom pedal is not ready (' + status + ').')
-  if (command === 'status') { const load = await link.load(); return { ...link.getState().identity, ...(load ? { load } : {}) } }
+  if (command === 'status') {
+    const load = await link.load(), zdlHeaderReads = await link.zdlHeaderReads()
+    const after = link.getState()
+    if (after.connection !== connection) throw new Error('The pedal connection changed.')
+    return { ...after.identity, ...(load ? { load } : {}), ...(zdlHeaderReads !== undefined ? { zdlHeaderReads } : {}) }
+  }
   if (isUpdateMode(identity)) throw new Error('The pedal is in update mode (bootloader ' + identity.firmware + '): unplug it and plug it in again to use its files.')
   if (command === 'list') return { files: await link.listFiles({ versions: true }), free: await link.freeSpace() ?? null }
   const stamp = new Date().toISOString().replace(/[:.]/g, '-'), save = async (path: string, data: Uint8Array) => {

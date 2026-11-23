@@ -45,27 +45,33 @@ To install that same build through the existing browser dialog, start the
 local development server with the same label and tools:
 
 ```sh
-MODWERK_ZOOM_PROBE_LABEL=D003 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
+MODWERK_ZOOM_PROBE_LABEL=D004 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
   npm run dev -- --host 127.0.0.1
 ```
 
 From the pedal page, back up the files. The owner puts the pedal in update
 mode and opens **Install base**. The dialog must name **ZDL load probe
-D003** before the owner flashes. After restarting, read the identity
+D004** before the owner flashes. After restarting, read the identity
 through `device_status` or `npm run zoom -- status`.
 
-In **System**, read the eight hexadecimal digits at the right of the
-title. Change an effect on an unsaved scratch patch with Auto Save off.
-Open System again. A higher value shows the ordinary ZDL loader requested
-another ELF header. The stock read still runs. The probe counts requests,
-including failed reads. It has no candidate effect or trial controls.
+The status returns `zdlHeaderReads` as an unsigned number. It is the same
+counter shown as eight hexadecimal digits in **System**. The USB read
+works with the screen closed and leaves the pedal's files and patch alone.
+Older images omit the field. The probe counts attempts, including failed
+header reads, and resets at power-up.
+
+For a manual load check, record the count, change an effect on an unsaved
+scratch patch with Auto Save off, then read the count again. A higher value
+shows the stock ZDL loader requested another ELF header.
 
 The probe retargets the guarded header read at `0xC00A5518` and the
-MIDISTOMP System draw call at `0xC00A93D0`. Its aligned section fits in
-the gap at `0xC00F4B00` on the pinned base. These sites are checked against the
-private 2.10 build. The next device work is to verify the stream's read,
-seek and close behavior before substituting RAM for one registered effect.
-This development image is awaiting its first hardware run.
+MIDISTOMP System draw call at `0xC00A93D0`. It taps MIDISTOMP's MIDI
+diagnostics branch at `0xC00F485C` and then runs the original diagnostics.
+The aligned code fits in the gap at `0xC00F4B00` on the pinned base. On MIDI,
+`F0 7D 4D 53 54 07 <nonce> F7` returns
+`F0 7D 4D 53 54 48 <nonce> <five 7-bit groups, low first> F7`.
+The USB reply awaits its first hardware run.
+
 - **Modules:** `sdk/zoom/modules/<id>/`, one folder per effect for the whole
   ZDL family, each naming the pedal it is developed on and every pedal's
   tested status.

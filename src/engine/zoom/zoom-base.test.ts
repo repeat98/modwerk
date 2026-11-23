@@ -126,17 +126,20 @@ describe('the Zoom base builder', () => {
         ['-EL', '-D', '-b', 'binary', '-m', 'tic6x', '--adjust-vma=' + code.addr, file], { encoding: 'utf8' })
       expect(disassembly).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\(32\)/i)
       expect(disassembly).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\(32\),b3/i)
+      expect(disassembly).toMatch(/ldbu\s+\.D2T1\s+\*\+b14\(226\),a4/i)
+      expect(disassembly).toMatch(/callp\s+\.S2\s+0xc00ad664,b3/i)
+      expect(disassembly).toMatch(/b\s+\.S2\s+0xc00f3920/i)
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
   })
 
-  it.runIf(app && toolPrefix)('adds the probe section and guarded calls to the labelled build', async () => {
+  it.runIf(app && toolPrefix)('adds the probe section and guarded branches to the labelled build', async () => {
     const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
     const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
     const overlay = buildLoadProbe(toolPrefix!)
-    const baseline = await buildDevelopmentBase(own, 'D003')
-    const probe = await buildDevelopmentBase(own, 'D003', [overlay])
+    const baseline = await buildDevelopmentBase(own, 'D004')
+    const probe = await buildDevelopmentBase(own, 'D004', [overlay])
     const image = parseAis(probe.main), before = parseAis(baseline.main)
     expect(image.sections).toHaveLength(before.sections.length + 1)
     for (const call of overlay.write!) {

@@ -140,6 +140,19 @@ describe('the developer MCP’s Zoom tools', () => {
     await expect(service.call('device_review', { moduleIds: ['loop'] })).rejects.toThrow('runtime set loader')
     expect(writes(pedal)).toEqual([])
   }, 10000)
+  it('reports the System counter through the shared status and Zoom CLI status, including zero', async () => {
+    pedal = fakeZoomPedal({ firmware: 'D004', zdlHeaderReads: 0, files: effects() })
+    const access = await nodeMidiAccess(fakeNative(pedal)), link = new ZoomLink(async () => access, 50)
+    await link.connect()
+    expect(await zoomCommand(link, 'status', undefined, { dir: folder })).toMatchObject({ firmware: 'D004', zdlHeaderReads: 0 })
+    access.close()
+    service = await open()
+    pedal = fakeZoomPedal({ firmware: 'D004', zdlHeaderReads: 0xffffffff, files: effects() })
+    const status = await service.call('device_status')
+    expect(status).toMatchObject({ state: { status: 'ready', identity: { firmware: 'D004' } }, zdlHeaderReads: 0xffffffff })
+    expect(status.state.identity).not.toHaveProperty('zdlHeaderReads')
+    expect(writes(pedal)).toEqual([])
+  }, 10000)
   it('identifies the pedal afresh and skips file reads in update mode', async () => {
     pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 1, 0], features: 512, load: {
       cpu: 65, audio: 50, audioMax: 51, system: 3, perform: 0, midi: 1, late: 0, lateTotal: 0,
