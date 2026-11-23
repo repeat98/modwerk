@@ -11,11 +11,11 @@
 | and returns to 0x4010d1c2, which maps d0 through stock's type table. a0 and d1 are written again
 | there; fp walks on to the next voice. Every other register is kept.
 |
-| Types 7 and 8 are the band: a 2-pole band-pass whose -3 dB edges are FRQ (the high-pass edge,
+| Type 7, BW, is the band: a 2-pole band-pass whose -3 dB edges are FRQ (the high-pass edge,
 | the base) and the low-pass edge. Measured on a unit (22 Nov 2026): below stock's RES 0 the
 | resonance word (signed) widens the band-pass, the same at every cutoff.
-|   7, BW:  the low-pass edge is RES itself, on FRQ's scale.
-|   8, BWL: linked, the low-pass edge sits RES x 15/32 semitones above FRQ (0..59.5).
+| the low-pass edge sits RES (the knob reads WID) x 15/32 semitones above FRQ (0..59.5), so FRQ
+| moves the whole band.
 | Words are 8.8 semitones (stock's FRQ: one value a semitone). The width w = edge - FRQ is held to
 | 1..60 semitones; the filter's cutoff is the edges' midpoint (their geometric mean in hertz), held
 | to 0..0x7f00 (stock's FRQ 127), and its resonance the width table's word for w, interpolated. The filter envelope
@@ -29,9 +29,8 @@
 
 improved_fltr_store:
         mvs.b   14(%a4),%d0                     | TYP
-        subq.l  #7,%d0
-        cmp.l   #1,%d0
-        bhi.w   stock                           | not 7 or 8 (unsigned: below 7 too)
+        cmp.l   #7,%d0
+        bne.w   stock                           | not BW (d1 is still stock's 6 there)
 
         lea     -8(%sp),%sp
         movem.l %d2-%d3,(%sp)
@@ -70,18 +69,14 @@ stock:  mvs.w   10(%a4),%d0                     | stock's own stores, as displac
         moveq   #6,%d0
 7:      jmp     improved_fltr_resume
 
-| band_edges: d0 = 0 for BW (TYP 7) or 1 for BWL (TYP 8), d1 = FRQ, d2 = RES (8.8 semitones).
-| Out: d2 = the width w, 1..60 semitones; d1 = the analog cutoff, the edges' midpoint FRQ + w / 2,
-| held to 0..0x7f00 (stock's FRQ 127). BW: w = RES - FRQ; BWL: w = RES x 15/32. d0 is used.
+| band_edges: d1 = FRQ, d2 = RES (8.8 semitones). Out: d2 = the width w = RES x 15/32, held to
+| 1..60 semitones; d1 = the analog cutoff, the edges' midpoint FRQ + w / 2, held to 0..0x7f00
+| (stock's FRQ 127). d0 is used.
 band_edges:
-        tst.l   %d0
-        beq.s   1f
-        move.l  %d2,%d0                         | BWL: w = RES x 15/32
+        move.l  %d2,%d0                         | w = RES x 15/32
         lsl.l   #4,%d2
         sub.l   %d0,%d2
         asr.l   #5,%d2
-        bra.s   2f
-1:      sub.l   %d1,%d2                         | BW: w = RES - FRQ
 2:      cmp.l   #W_MIN,%d2
         bge.s   3f
         move.l  #W_MIN,%d2
@@ -103,7 +98,7 @@ band_edges:
 | box's left and bottom border) takes d1 = TYP >> 8 at 0x40038e20 and, above 6, returns without a
 | curve. The site (a jmp over 0x40038e20..0x40038e27) first notes FRQ and TYP for main.c (the page's
 | own values for RES's text, and proof that stock's FILTER page drew), then keeps stock's types and
-| draws BW and BWL itself (main.c's improved_fltr_band_graph, the band as measured) and leaves
+| draws BW itself (main.c's improved_fltr_band_graph, the band as measured) and leaves
 | through stock's return, which restores every register.
         .globl  improved_fltr_graph
         .extern improved_fltr_graph_on, improved_fltr_graph_off
@@ -117,16 +112,15 @@ improved_fltr_graph:
         moveq   #6,%d0
         cmp.l   %d1,%d0
         bcc.s   9f                              | stock's 0..6
-        cmp.l   #8,%d1
-        bhi.s   8f                              | above 8: stock's early return
-        move.l  %d1,-(%sp)                      | improved_fltr_band_graph(bitmap, x0, y0, FRQ, RES, TYP)
-        move.l  %d2,-(%sp)
+        cmp.l   #7,%d1
+        bne.s   8f                              | above 7: stock's early return
+        move.l  %d2,-(%sp)                      | improved_fltr_band_graph(bitmap, x0, y0, FRQ, RES)
         move.l  %d7,-(%sp)
         move.l  %d5,-(%sp)                      | the box's bottom border
         move.l  %d3,-(%sp)                      | and its left
-        move.l  88(%sp),-(%sp)                  | the bitmap, the routine's second argument (68 + 20)
+        move.l  84(%sp),-(%sp)                  | the bitmap, the routine's second argument (68 + 16)
         jsr     improved_fltr_band_graph
-        lea     24(%sp),%sp
+        lea     20(%sp),%sp
         bra.s   8f                              | stock's return restores every register
 9:      jmp     improved_fltr_graph_on
 8:      jmp     improved_fltr_graph_off

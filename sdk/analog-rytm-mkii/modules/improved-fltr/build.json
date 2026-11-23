@@ -14,6 +14,11 @@
       "order": 50
     },
     {
+      "event": "ev_tick",
+      "fn": "improved_fltr_tick",
+      "order": 50
+    },
+    {
       "event": "ev_key",
       "fn": "improved_fltr_key",
       "order": 50
@@ -39,10 +44,11 @@
   "regions": [],
   "claims": [
     "audio:filter cutoff, resonance and type stores",
-    "param:FILTER TYP range to 8",
+    "param:FILTER TYP range to 7",
+    "param:FILTER RES names (WID / Width on BW)",
     "ui:value text of FILTER TYP and RES",
-    "ui:FILTER TYP picture for types 7 and 8",
-    "ui:FILTER page graph for types 7 and 8 (drawn by the module)"
+    "ui:FILTER TYP picture for type 7",
+    "ui:FILTER page graph for type 7 (drawn by the module)"
   ],
   "requires": [],
   "derive": null,
@@ -66,7 +72,7 @@
           "addr": "0x401c05c8",
           "op": "bytes",
           "len": 4,
-          "new": "00000800",
+          "new": "00000700",
           "kind": "data",
           "stockSha256": "ab6dd45f1c3a7f5f98b3f5facd25bc0fd899b0d1b9629a7fd59fba9444015981"
         },
@@ -83,6 +89,20 @@
           "stockSha256": "641214ad96050fbd8977d75fb108e579d6f1ff46fdf70aaf0e94139657134658",
           "op": "jmp",
           "target": "improved_fltr_graph"
+        },
+        {
+          "addr": "0x401c05b0",
+          "len": 4,
+          "stockSha256": "f3bb5aea03482ef0647a01fd4476b0b15b856926f51832ceaf326d8d5f6866eb",
+          "op": "ptr",
+          "target": "improved_fltr_res_long"
+        },
+        {
+          "addr": "0x401c05b8",
+          "len": 4,
+          "stockSha256": "649e324eaba8562fe515bbc1e1cce0c1ba55d6f44d1bfcda7167c0c4556a7f4e",
+          "op": "ptr",
+          "target": "improved_fltr_res_short"
         }
       ]
     }

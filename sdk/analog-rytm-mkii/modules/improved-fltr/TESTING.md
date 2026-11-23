@@ -1,8 +1,12 @@
 # Improved FLTR: testing
 
-Names: the runs below up to IFC2 used the first layout, **BND** (TYP 7, linked) and **BND+** (TYP 8, RES the cutoff) with a tap of RES between them. Since IF07 the types are **BW** (TYP 7, RES the cutoff, as BND+ was) and **BWL** (TYP 8, linked, as BND was), the tap is gone, and the graph draws the band itself. The audio path is the same code with the two type values swapped.
+Layouts: since IF10 there is one type, **BW** (TYP 7: FRQ the base, RES's knob reads WID and sets the width above it). IFC3 ran the two-type layout (BW = RES the cutoff, BWL = linked), the runs up to IFC2 the first layout, **BND** (TYP 7, linked) and **BND+** (TYP 8, RES the cutoff) with a tap of RES between them. Since IF07 the types are **BW** (TYP 7, RES the cutoff, as BND+ was) and **BWL** (TYP 8, linked, as BND was), the tap is gone, and the graph draws the band itself. The audio path is the same code with the two type values swapped.
 
-## Emulator, current layout
+## Emulator, current layout (one BW type)
+
+IF10 (sha256 b48c1ddd; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BW, FRQ 48: RES 52 -> 0xf860 / 0x0133, RES 72 -> 0x01c0 / 0xf9ea, BP switch code), if-typ-turn (TYP's knob: PK, BW, stops), if-graph (five widths, references) and if-screens (RES's knob reads WID on BW and RES on stock BP, references) pass.
+
+## Emulator, two-type layout
 
 IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 4 dB a row with +15 dB at the top, at five settings, and stock BP; each box against a reference recorded from screens checked by eye) pass. `sdk/tests/test_improved_fltr_table.py` keeps `src/width-table.h` in step with the calibration.
 

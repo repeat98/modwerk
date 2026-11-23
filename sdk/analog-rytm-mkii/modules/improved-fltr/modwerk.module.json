@@ -50,14 +50,16 @@
     "build": "build.json",
     "events": [
       "ev_draw",
+      "ev_tick",
       "ev_key"
     ],
     "claims": [
       "audio:filter cutoff, resonance and type stores",
-      "param:FILTER TYP range to 8",
+      "param:FILTER TYP range to 7",
+      "param:FILTER RES names (WID / Width on BW)",
       "ui:value text of FILTER TYP and RES",
-      "ui:FILTER TYP picture for types 7 and 8",
-      "ui:FILTER page graph for types 7 and 8 (drawn by the module)"
+      "ui:FILTER TYP picture for type 7",
+      "ui:FILTER page graph for type 7 (drawn by the module)"
     ]
   },
   "resources": {

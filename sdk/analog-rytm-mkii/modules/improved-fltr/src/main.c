@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Improved FLTR for the Analog Rytm MKII (OS 1.74): base-width types on the FILTER page.
+// Improved FLTR for the Analog Rytm MKII (OS 1.74): a base-width type on the FILTER page.
 // Written for Modwerk by Nathaniel Pavel (npp1993).
 //
-// TYP turns past PK to BW (7) and BWL (8): stock's analog 2-pole band-pass with its high-pass edge at
-// FRQ and its low-pass edge set by RES (band.s). BW: RES is the low-pass cutoff. BWL, linked: RES is
-// the distance above FRQ, so FRQ moves the whole band. This file is the page:
-// - TYP's range: build.json opens its id record's maximum to 8, so stock's turn, setter, locks and
-//   MIDI take the two types as they take the others.
-// - TYP's and RES's value text (core_params): TYP reads BW or BWL, RES the low-pass edge in hertz,
-//   as band.s places it, from FRQ and TYP as the page shows them (a held trig's locks included).
-// - The FILTER graph: for BW and BWL, band.s's graph site calls improved_fltr_band_graph, which draws
+// TYP turns past PK to BW (7): stock's analog 2-pole band-pass with its high-pass edge at FRQ (the
+// base) and its low-pass edge RES x 15/32 semitones above it (the width; the knob reads WID), so FRQ
+// moves the whole band (band.s). This file is the page:
+// - TYP's range: build.json opens its id record's maximum to 7, so stock's turn, setter, locks and
+//   MIDI take BW as they take the others.
+// - RES's names: build.json points them at res_short and res_long, which ev_tick sets to WID / Width
+//   while the selected sound is BW and to stock's RES / Resonance otherwise.
+// - TYP's and RES's value text (core_params): TYP reads BW, RES the low-pass edge in hertz, as band.s
+//   places it, from FRQ and TYP as the page shows them (a held trig's locks included).
+// - The FILTER graph: for BW, band.s's graph site calls improved_fltr_band_graph, which draws
 //   the band as measured on a unit (tools/calibration.json): the edges, the 6 dB/oct slopes and the
 //   level, 4 dB a row with +15 dB at the top (narrower bands' peaks clip there), FRQ's scale
 //   (13.8 Hz .. 21.1 kHz) across.
@@ -26,7 +28,6 @@
 #define ID_RES 48                       // the FILTER page's stock ids (record indices)
 #define ID_TYP 49
 #define TYP_BW 7
-#define TYP_BWL 8
 #define WORD_MAX 0x7f00                 // 127.0 in 8.8
 #define W_MIN 0x0100                    // as band.s
 #define W_MAX 0x3c00
@@ -44,6 +45,7 @@
 #define KEY_INDEX 12                    // ev_key's event: the key, then its flags
 #define KEY_FLAGS 16
 #define KEY_REPEAT 8
+#define CTRL_REDRAW 0x20                // ev_tick's ctrl: asks for a redraw
 
 // The graph's box (stock's, 0x40038e00..0x40038e12): x0 and y0 its left and bottom border, bottom-up.
 #define GR_W 51                         // inside: x0 + 1 .. x0 + 51
@@ -75,14 +77,20 @@ volatile int32_t improved_fltr_seen_frq, improved_fltr_seen_typ, improved_fltr_s
 
 static int asked, page_up, page_track = -1;   // the track the noted values are from
 
+// RES's names, which build.json points stock's id table at (record 48, +40 and +48). Stock reads them
+// afresh each time it draws a label or a header.
+char improved_fltr_res_short[4] = "RES";
+char improved_fltr_res_long[10] = "Resonance";
+static int named_width;                 // the names read WID / Width
+
 // ---- the band, as band.s places it ----
 
-static int band_type(int typ) { return typ == TYP_BW || typ == TYP_BWL; }
+static int band_type(int typ) { return typ == TYP_BW; }
 
-// The band's width in 8.8 semitones, held as band.s holds it. typ is whole (7 or 8).
-static int width_of(int typ, int frq, int res)
+// The band's width in 8.8 semitones, RES x 15/32, held as band.s holds it.
+static int width_of(int res)
 {
-    int w = typ == TYP_BWL ? (res * 15) >> 5 : res - frq;
+    int w = (res * 15) >> 5;
     if (w < W_MIN)
         w = W_MIN;
     if (w > W_MAX)
@@ -209,9 +217,7 @@ FLTR_UI static int fltr_text(struct core_text *t)
         int v = t->value >> 8;
         if (!band_type(v))
             return CORE_TEXT_PASS;
-        t->buf[0] = 'B', t->buf[1] = 'W';
-        t->buf[2] = v == TYP_BWL ? 'L' : 0;
-        t->buf[3] = 0;
+        t->buf[0] = 'B', t->buf[1] = 'W', t->buf[2] = 0;
         return CORE_TEXT_DONE;
     }
     if (t->id != ID_RES)
@@ -226,7 +232,7 @@ FLTR_UI static int fltr_text(struct core_text *t)
         return CORE_TEXT_PASS;
     if (!band_type(typ))
         return CORE_TEXT_PASS;
-    w = width_of(typ, frq, t->value);
+    w = width_of(t->value);
     put_hz(t->buf, centre_of(frq, w) + w / 2);  // the low-pass edge as played
     return CORE_TEXT_DONE;
 }
@@ -253,12 +259,12 @@ FLTR_UI static int band_db(int wi, int d)
     return fltr_width_gain[wi] - a;
 }
 
-// Called by band.s for BW and BWL in place of stock's curve: stock has cleared the box; its frame,
-// which stock's curves draw themselves, is drawn here as theirs (corners open).
-FLTR_UI void improved_fltr_band_graph(void *bmp, int x0, int y0, int frq, int res, int typ)
+// Called by band.s for BW in place of stock's curve: stock has cleared the box; its frame, which
+// stock's curves draw themselves, is drawn here as theirs (corners open).
+FLTR_UI void improved_fltr_band_graph(void *bmp, int x0, int y0, int frq, int res)
 {
     fillrect_t fill = (fillrect_t)FILLRECT_AT;
-    int w = width_of(typ, frq, res), c = centre_of(frq, w), wi = w >> 8, x, prev = 0;
+    int w = width_of(res), c = centre_of(frq, w), wi = w >> 8, x, prev = 0;
 
     fill(bmp, x0 + 1, y0, x0 + GR_W, y0, 1);
     fill(bmp, x0 + 1, y0 + GR_H + 1, x0 + GR_W, y0 + GR_H + 1, 1);
@@ -295,6 +301,26 @@ FLTR_UI void improved_fltr_draw(void *bmp, void *ctrl)
     }
     asked = 0;
     improved_fltr_seen = 0;
+}
+
+FLTR_UI static void set_name(char *to, const char *from)
+{
+    while ((*to++ = *from++))
+        ;
+}
+
+// ev_tick, about 20 Hz: RES's names follow the selected sound's TYP (as edited); a change redraws.
+FLTR_UI void improved_fltr_tick(char *ctrl)
+{
+    volatile int16_t *sw = sound_words(selected_track());
+    int width = sw && band_type(sw[IDX_TYP] >> 8);
+
+    if (width == named_width)
+        return;
+    named_width = width;
+    set_name(improved_fltr_res_short, width ? "WID" : "RES");
+    set_name(improved_fltr_res_long, width ? "Width" : "Resonance");
+    ctrl[CTRL_REDRAW] = 1;
 }
 
 // ev_key: a page key or any other key that can leave the page ends page_up until the FILTER page
