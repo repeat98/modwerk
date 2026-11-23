@@ -684,7 +684,7 @@
           "name": "Core image",
           "unit": "bytes",
           "value": 16275,
-          "note": "Modwerk's base, plain variant (2977431b), for a set with no send effect or digital voice machine: 14,715 bytes .run plus 1,560 bytes .bss (3,879 and 189 of them the lean engine, 44 and 3 pad pressure) in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+          "note": "Modwerk's base, plain variant (2977431b), for a set with no send effect or digital voice machine: 14,715 bytes .run plus 1,560 bytes .bss (3,879 and 189 of them the lean engine, 44 of .run pad pressure) in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
         },
         {
           "name": "Core image with the send bus",

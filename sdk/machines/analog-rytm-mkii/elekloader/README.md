@@ -74,7 +74,7 @@ module's 0.2.0 exactly: the same four sites, bytes and code (`pad-pressure.s`, 4
 | CHROMATIC mode | poly pressure goes out 24 semitones above the played note, and follows UP and DOWN | on the played note, until its note off |
 
 - `0x400c755a` (KeyboardView) and `0x400c6228` (ChromPadsView): the branch past the aftertouch and MIDI path after the
-  roll velocity write becomes no-ops.
+  roll velocity write is replaced by no-ops.
 - `0x400e2924` (the RETRIG menu's pressure method, `0x400e27cc`): returns 0, so the pad view below also gets the event.
 - `0x400c628e` (ChromPadsView): the poly pressure call goes through `mw_pad_pressure_out`, which sends the held note less
   24, the note off's note, and nothing once the pad is released or the note lies outside 0..127.
