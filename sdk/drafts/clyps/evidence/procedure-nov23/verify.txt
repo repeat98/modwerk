@@ -1,0 +1,2 @@
+ColdFire image 5596 bytes, BSS 176, relocations 248
+Host callbacks passed for 8 lanes x 16 sources and eight ownership transitions.

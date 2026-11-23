@@ -1,0 +1,19 @@
+$TMPDIR/tmpj9c4oh4p/modal.c:2:14: error: variable 'clyps_modal' has initializer but incomplete type
+    2 | const struct modwerk_modal_input clyps_modal = { MODWERK_MODAL_INPUT_ABI };
+      |              ^~~~~~~~~~~~~~~~~~~
+$TMPDIR/tmpj9c4oh4p/modal.c:2:50: error: 'MODWERK_MODAL_INPUT_ABI' undeclared here (not in a function); did you mean 'MODWERK_MACHINE_ABI'?
+    2 | const struct modwerk_modal_input clyps_modal = { MODWERK_MODAL_INPUT_ABI };
+      |                                                  ^~~~~~~~~~~~~~~~~~~~~~~
+      |                                                  MODWERK_MACHINE_ABI
+$TMPDIR/tmpj9c4oh4p/modal.c:2:50: error: excess elements in struct initializer [-Werror]
+$TMPDIR/tmpj9c4oh4p/modal.c:2:50: note: (near initialization for 'clyps_modal')
+$TMPDIR/tmpj9c4oh4p/modal.c:2:34: error: storage size of 'clyps_modal' isn't known
+    2 | const struct modwerk_modal_input clyps_modal = { MODWERK_MODAL_INPUT_ABI };
+      |                                  ^~~~~~~~~~~
+cc1: all warnings being treated as errors
+Traceback (most recent call last):
+  File "sdk/drafts/clyps/build_candidate.py", line 34, in <module>
+    subprocess.run(['m68k-elf-gcc', *build.CFLAGS, *m68k_codegen.FLAGS,
+  File "$HOME/.local/share/uv/python/cpython-3.12.14-macos-aarch64-none/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['m68k-elf-gcc', '-mcpu=54455', '-Os', '-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common', '-fno-tree-loop-distribute-patterns', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables', '-Wall', '-Wextra', '-Werror', '-I', 'sdk/runtime/loader', '-fno-late-combine-instructions', '-I', PosixPath('sdk/machines/octatrack/include'), '-c', PosixPath('$TMPDIR/tmpj9c4oh4p/modal.c'), '-o', PosixPath('$TMPDIR/tmpj9c4oh4p/modal.o')]' returned non-zero exit status 1.

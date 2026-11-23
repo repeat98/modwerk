@@ -1,0 +1,6 @@
+late 848 ordered calls including tick zero, 816 timestamp writes, 298 ticks; deadlines {0: 565466144, 1: 570758144, 2: 575838464}
+Traceback (most recent call last):
+  File "sdk/drafts/clyps/tests/grade_boundary.py", line 61, in <module>
+    assert candidate['panel_requests'] == [
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: missing or incorrect pending selection evidence

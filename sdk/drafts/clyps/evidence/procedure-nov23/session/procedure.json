@@ -1,0 +1,268 @@
+{
+ "procedure": 1,
+ "command": "npm run test:procedure -- clyps --target emulator --package /tmp/clyps-1997-review-23/clyps.mwrm --out sdk/drafts/clyps/evidence/procedure-nov23/session",
+ "date": "2026-11-23",
+ "started": "2026-11-23T14:24:27.875Z",
+ "finished": "2026-11-23T14:24:30.284Z",
+ "seconds": 2,
+ "target": {
+  "kind": "module",
+  "id": "clyps",
+  "machine": "octatrack",
+  "draft": true
+ },
+ "build": {
+  "revision": "613db9857006a1f865d85a28e9aebd6bfba6e527",
+  "dirty": false
+ },
+ "unit": {
+  "available": true,
+  "share": "/tmp/clyps-1997-review-23/session/share.sock",
+  "target": "emulator"
+ },
+ "steps": [
+  {
+   "id": "software",
+   "title": "Software checks",
+   "layer": "host",
+   "unit": false,
+   "status": "failed",
+   "commands": [
+    "npm run module:doctor -- --draft clyps"
+   ],
+   "seconds": 2.4,
+   "log": "logs/01-software.log",
+   "reason": "exit 1: npm run module:doctor -- --draft clyps"
+  },
+  {
+   "id": "compat",
+   "title": "Beside every other module",
+   "layer": "contract",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "build",
+   "title": "Name the build",
+   "layer": "host",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "cost-model",
+   "title": "DSP cost model",
+   "layer": "contract",
+   "unit": false,
+   "status": "not run",
+   "commands": [
+    "node scripts/cycle-scan.mjs check"
+   ],
+   "seconds": 0,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "emulator",
+   "title": "Emulator rehearsal",
+   "layer": "emulator",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "unit-read",
+   "title": "Read the unit",
+   "layer": "target",
+   "unit": true,
+   "status": "not run",
+   "commands": [
+    "node scripts/device.mjs status --socket /tmp/clyps-1997-review-23/session/share.sock",
+    "node scripts/device.mjs do inventory --socket /tmp/clyps-1997-review-23/session/share.sock"
+   ],
+   "seconds": 0,
+   "emulator": true,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "unit-pass",
+   "title": "Scripted unit pass",
+   "layer": "target",
+   "unit": true,
+   "status": "not run",
+   "commands": [
+    "npm run device:test -- --share /tmp/clyps-1997-review-23/session/share.sock --testing-entry 'sdk/drafts/clyps/evidence/procedure-nov23/session/device-test.md' /tmp/clyps-1997-review-23/clyps.mwrm"
+   ],
+   "seconds": 0,
+   "emulator": true,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "soak",
+   "title": "Soak",
+   "layer": "target",
+   "unit": true,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "emulator": true,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "cost-unit",
+   "title": "Cost on the unit",
+   "layer": "unit",
+   "unit": true,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "emulator": true,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "restore",
+   "title": "Put back",
+   "layer": "target",
+   "unit": true,
+   "status": "not run",
+   "commands": [
+    "node scripts/device.mjs do inventory --socket /tmp/clyps-1997-review-23/session/share.sock"
+   ],
+   "seconds": 0,
+   "emulator": true,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "by-hand",
+   "title": "Agent by hand",
+   "layer": "target",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "stopped: step 1 (Software checks) failed"
+  },
+  {
+   "id": "developer",
+   "title": "Submitter's own stage",
+   "layer": "unit",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "stopped: step 1 (Software checks) failed"
+  }
+ ],
+ "edgeCases": {
+  "suggested": [
+   {
+    "touches": "persistence",
+    "ask": "saved in a Part, then a Part reload, a project reload and a power cycle; removed while a saved Part still names it",
+    "see": "OCTATRACK_MODULE_EDGE_CASES.md#copying-and-saving"
+   },
+   {
+    "touches": "the loader",
+    "ask": "install, replace, remove and Undo; a set the base refuses rolls back whole; the pool full; a trial that expires with a page open",
+    "see": "OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code"
+   },
+   {
+    "touches": "DSP code",
+    "ask": "DSP FULL; both cores; the receiver window; pipeline stalls the instruction count hides",
+    "see": "OCTATRACK_HARDWARE_TRAPS.md#coldfire-and-dsp-load"
+   },
+   {
+    "touches": "the USB link",
+    "ask": "USB unplugged mid-transfer; the host silent until the base rolls back; a reconnect",
+    "see": "OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0"
+   },
+   {
+    "touches": "load and admission",
+    "ask": "the pick at the 85 % line with the delays quiet and open; the guard counters while playing",
+    "see": "OCTATRACK_HARDWARE_TRAPS.md#coldfire-and-dsp-load"
+   },
+   {
+    "touches": "boot and restore",
+    "ask": "PROJ held at power-on; the restore held back; a RAM boot back to the flashed base",
+    "see": "OCTATRACK_MODULE_EDGE_CASES.md#boot-and-power"
+   }
+  ],
+  "cases": [
+   {
+    "case": "Eight audio lanes and independent source selection",
+    "risk": "A source change could redirect a neighboring lane",
+    "how": "Native MKII wide pair against independent stock composite and T2-only slice",
+    "result": "Pass. All 624 events, 608 relative writes and 219 states matched. The separate T2 slice matched 384 calls and 400 writes at wrap 90."
+   },
+   {
+    "case": "Request just before wrap",
+    "risk": "Pending state could appear too late",
+    "how": "Native early-boundary panel fixture",
+    "result": "Fail. Requested by tick 89 +1 ms, pending diagnostic still zero at +15 ms, committed at wrap 90 +16 ms."
+   },
+   {
+    "case": "Request just after wrap",
+    "risk": "Restore could be reported on the wrong tick",
+    "how": "Native late pair and strict boundary grader",
+    "result": "Fail. All 848 events, 816 writes and 298 states matched, but pending restore appeared at tick 187; the oracle requires 188."
+   },
+   {
+    "case": "ARR after stock popup during Row Edit",
+    "risk": "Editor could keep the panel hidden or lose a row",
+    "how": "Native popup fixture and host callback test",
+    "result": "Pass. ARR reopened, R04 retained its definition and OFF recovered the full pool."
+   },
+   {
+    "case": "Unrelated bank, early EOF, popup during bank load",
+    "risk": "An already-defined R04 could be cleared",
+    "how": "Host callbacks with an actual temporary-file EOF and an unrelated bank mask",
+    "result": "Pass. R04 and its source survive."
+   },
+   {
+    "case": "Late interrupted project load",
+    "risk": "Destination initialization can clear the previous rows before completion",
+    "how": "Host late-failure case with a short read after init",
+    "result": "Fail. The characterization test passes by reproducing loss of R04. Native late-abort recovery remains unverified."
+   },
+   {
+    "case": "Missing versus completed stored reload",
+    "risk": "Rows could be kept or discarded for the wrong destination",
+    "how": "Stock PROJECT menu in native emulator on disposable cards",
+    "result": "Pass. Missing stored files preserved bank A and R04. Completed stored reload selected bank B and cleared R04. OFF recovered the full pool in both cases."
+   },
+   {
+    "case": "STOP, OFF and stock Arranger",
+    "risk": "Queued source changes or handlers could survive removal",
+    "how": "T2 slice and Arranger recovery fixtures",
+    "result": "Pass. STOP cancelled the queued change; OFF restored callback heads and all 786432 pool bytes. Stock Arranger playback matched before and after removal."
+   },
+   {
+    "case": "Shared hook interaction",
+    "risk": "Panel, source or wrap registration could conflict with base owners",
+    "how": "Candidate build by named hooks, callback heads before/after OFF and upstream-only compile",
+    "result": "Pass on the candidate for bindings and T2 unload. Blocked on upstream main for the three proposed bindings; catalogue-only compatibility excludes CLYPS."
+   },
+   {
+    "case": "Physical MKII",
+    "risk": "Audio, cost, USB trial and persistence require the real instrument",
+    "how": "Separate authorization required",
+    "result": "Not run. Trial, soak, pricing, rollback and inventory, MAIN/CUE listening and persistence remain open."
+   }
+  ]
+ },
+ "developer": {
+  "status": "to do",
+  "items": [
+   "how it sounds and plays, and timing by ear",
+   "MIDI, scenes and recording with it",
+   "it beside the other modules installed on their unit",
+   "two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md)",
+   "Part reload, project save and reload, and a power cycle with it saved: what survives (the Keep and the power cycle are theirs)"
+  ]
+ }
+}

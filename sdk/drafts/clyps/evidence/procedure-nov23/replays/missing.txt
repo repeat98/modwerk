@@ -1,0 +1,11 @@
+usage: native_rows.py [-h] --octabam OCTABAM [--reference] [--lane-matrix]
+                      [--project-reload {stored,missing}] [--project-change]
+                      [--row-popup] [--scene-select] [--crossfader]
+                      [--arranger-recovery] [--observe-queue]
+                      [--home-control {home,stop}]
+                      [--clock-witness CLOCK_WITNESS]
+                      [--boundary {early,late}] [--package PACKAGE]
+                      [--symbols-module SYMBOLS_MODULE]
+                      emulator base card symbols output
+native_rows.py: error: Project change requires package and matching module symbols
+exit 2

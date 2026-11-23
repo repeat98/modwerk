@@ -1,0 +1,524 @@
+{
+  "slice": {
+    "sha256": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "receipt": {
+      "wraps": [
+        90
+      ],
+      "events": 384,
+      "writes": 400,
+      "initial_pool": 786432,
+      "final_pool": 786432
+    }
+  },
+  "stock": {
+    "sha256": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "receipt": {
+      "wraps": [
+        90
+      ],
+      "events": 384,
+      "writes": 400,
+      "initial_pool": 786432,
+      "final_pool": 786432
+    }
+  },
+  "wide": {
+    "sha256": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "receipt": {
+      "events": 624,
+      "writes": 608,
+      "states": 219
+    }
+  },
+  "wide-stock": {
+    "sha256": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "receipt": {
+      "events": 624,
+      "writes": 608,
+      "states": 219
+    }
+  },
+  "early.phase-89": {
+    "sha256": "a4764efaf7a34cd54e5a7a74aa7edbe308f150b6b67313fd5d9b4f98a15d8658",
+    "receipt": [
+      {
+        "ms": 1,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 2,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 3,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 4,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 5,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 6,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 7,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 8,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 9,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 10,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 11,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 12,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 13,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 14,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 15,
+        "tick": 89,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": []
+      },
+      {
+        "ms": 16,
+        "tick": 90,
+        "playing": 273,
+        "requested": 273,
+        "diag": 1118481,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 17,
+        "tick": 90,
+        "playing": 273,
+        "requested": 273,
+        "diag": 1118481,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 18,
+        "tick": 90,
+        "playing": 273,
+        "requested": 273,
+        "diag": 1118481,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 19,
+        "tick": 90,
+        "playing": 273,
+        "requested": 273,
+        "diag": 1118481,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 20,
+        "tick": 90,
+        "playing": 273,
+        "requested": 273,
+        "diag": 1118481,
+        "wraps": [
+          90
+        ]
+      }
+    ]
+  },
+  "late": {
+    "sha256": "4d3f4326cd585236bf84fb38643f9e1799364b0e4b706345a1cf66c65c6aaf02",
+    "receipt": {
+      "events": 848,
+      "wraps": [
+        90,
+        186,
+        282
+      ],
+      "writes": 5175,
+      "states": 298,
+      "panel_requests": [
+        {
+          "edge": 91,
+          "observed": 91,
+          "playing": 0,
+          "pending": 273
+        },
+        {
+          "edge": 187,
+          "observed": 187,
+          "playing": 273,
+          "pending": 257
+        }
+      ]
+    }
+  },
+  "late-control": {
+    "sha256": "b51cc639a607a6ab9e4e26809623e3bb6a12bd96d0d8ef6da67c65be669c654a",
+    "receipt": {
+      "events": 848,
+      "wraps": [
+        90,
+        186,
+        282
+      ],
+      "writes": 5175,
+      "states": 298,
+      "panel_requests": []
+    }
+  },
+  "late.phase-91": {
+    "sha256": "377d36e48fefe56ec5ebd7bb0c71865297f80c4ce5b1c379dd1e1ea0c4ea1fd3",
+    "receipt": [
+      {
+        "ms": 1,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 2,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 3,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 4,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 5,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 6,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 7,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 8,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 9,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 0,
+        "wraps": [
+          90
+        ]
+      },
+      {
+        "ms": 10,
+        "tick": 91,
+        "playing": 0,
+        "requested": 273,
+        "diag": 1118208,
+        "wraps": [
+          90
+        ]
+      }
+    ]
+  },
+  "late.phase-187": {
+    "sha256": "e8e1884197305e4833bdaa62ff6bd8f54050efb32f3790ea2dec45c707094a2b",
+    "receipt": [
+      {
+        "ms": 1,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 2,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 3,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 4,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 5,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 6,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 7,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 8,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 9,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1118481,
+        "wraps": [
+          90,
+          186
+        ]
+      },
+      {
+        "ms": 10,
+        "tick": 187,
+        "playing": 273,
+        "requested": 257,
+        "diag": 1052945,
+        "wraps": [
+          90,
+          186
+        ]
+      }
+    ]
+  },
+  "popup": {
+    "sha256": "4a6fee10669880b179edcab30a17cdde3d8beb6df82ab4a7bffa980f7fe3e6e4",
+    "receipt": {
+      "reopened": true,
+      "r04": 0,
+      "pool": 786432
+    }
+  },
+  "reload-missing": {
+    "sha256": "570ad0762506540bfa23b3210518b391e5fccd1b1757f9dfdff8ca9b9f3d87d3",
+    "receipt": {
+      "bank": 0,
+      "defined": 8,
+      "active": 1,
+      "observed": [
+        false,
+        false,
+        false
+      ],
+      "off_pool": 786432
+    }
+  },
+  "reload-stored": {
+    "sha256": "7abb52946765eae9c7e72f0a3cb81e0cfdb5ed5204304215731362850277ec33",
+    "receipt": {
+      "bank": 1,
+      "defined": 0,
+      "active": 1,
+      "observed": [
+        true,
+        true,
+        false
+      ],
+      "off_pool": 786432
+    }
+  },
+  "arr": {
+    "sha256": "4f11f7019655baf3998789acb6d409a603e72d88199ec0747763caf0e4c77725",
+    "receipt": {
+      "events": 336,
+      "writes": 336,
+      "row": 1,
+      "pool": 786432,
+      "sha256": "2db4fed437f3f9095af9d085e956054a9538384b612b30a5433b01a34a70dbac"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+
+> octamod@0.1.0 modules:compat
+> node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/module-compat.py
+
+Traceback (most recent call last):
+  File "scripts/module-compat.py", line 457, in <module>
+    sys.exit(main(sys.argv[1:]))
+  File "scripts/module-compat.py", line 421, in main
+    ids, modules, inputs, problems = repository_inputs(extra)
+  File "scripts/module-compat.py", line 363, in repository_inputs
+    known = registry.modules()
+  File "sdk/octabam/tools/remix/registry.py", line 81, in modules
+    m = _load_one(manifest)
+  File "sdk/octabam/tools/remix/registry.py", line 59, in _load_one
+    mod = _exec(manifest, f"remix_manifest_{manifest.parent.name}")
+  File "sdk/octabam/tools/remix/registry.py", line 48, in _exec
+    exec(compile(path.read_text(), str(path), "exec"), ns.__dict__)
+  File "sdk/octabam/platform/dsp-dynload-stock/manifest.py", line 16, in <module>
+    from experimental.dsp_dynload.runtime_catalog import include_dynamic
+  File "sdk/octabam/tools/experimental/dsp_dynload/runtime_catalog.py", line 13, in <module>
+    from .build_candidates import build as new_build
+  File "sdk/octabam/tools/experimental/dsp_dynload/build_candidates.py", line 14, in <module>
+    from .package import Package, Relocation, Section
+  File "sdk/octabam/tools/experimental/dsp_dynload/package.py", line 39, in <module>
+    class Package:
+  File "sdk/octabam/tools/experimental/dsp_dynload/package.py", line 46, in Package
+    cycles_per_block: int | None
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'

@@ -185,3 +185,24 @@ and read position and all ten stock morph weights. The sequence 0, 64,
 different weight vectors and the return restored the original weights.
 The stored-reload repeat exited 0 and reproduced its first receipt exactly;
 the original scratch wrapper had failed to save the exit status.
+
+## Official procedure on upstream main — 23 November 2026
+
+Tested merge 613db9857006 (CLYPS 236294956e38, official procedure 6f31dd3c43ff). The plan printed all 12 steps. The host run and the connected MKII emulator run both **failed step 1**. Doctor could not read the staged draft's octamod.module.json. **Steps 2–12 did not run** in either procedure. The emulator session was available and received an explicit candidate package. Package selection does not skip the software check. The draft currently has proposed contracts and depends on shared base services missing from upstream. A build against upstream also failed at the modal-input ABI. See [records, logs, exact commands and hashes](evidence/procedure-nov23/README.md).
+
+Separate checks passed on the same module source: ten host tests, ColdFire link and callback fixtures, and a byte-identical candidate MWRM on shared SDK 5c32cbacd (SHA-256 32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9). The standalone Python 3.12 catalogue check passed for 44 active modules and 946 pairs; CLYPS is outside that catalogue. The standalone DSP scan found ten current records. Neither standalone result changes the official step statuses.
+
+Edge cases
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Eight audio lanes and independent source selection | A source change could redirect a neighboring lane | Native MKII wide pair against independent stock composite and T2-only slice | Pass. All 624 events, 608 relative writes and 219 states matched. The separate T2 slice matched 384 calls and 400 writes at wrap 90. |
+| Request just before wrap | Pending state could appear too late | Native early-boundary panel fixture | Fail. Requested by tick 89 +1 ms, pending diagnostic still zero at +15 ms, committed at wrap 90 +16 ms. |
+| Request just after wrap | Restore could be reported on the wrong tick | Native late pair and strict boundary grader | Fail. All 848 events, 816 writes and 298 states matched, but pending restore appeared at tick 187; the oracle requires 188. |
+| ARR after stock popup during Row Edit | Editor could keep the panel hidden or lose a row | Native popup fixture and host callback test | Pass. ARR reopened, R04 retained its definition and OFF recovered the full pool. |
+| Unrelated bank, early EOF, popup during bank load | An already-defined R04 could be cleared | Host callbacks with an actual temporary-file EOF and an unrelated bank mask | Pass. R04 and its source survive. |
+| Late interrupted project load | Destination initialization can clear the previous rows before completion | Host late-failure case with a short read after init | Fail. The characterization test passes by reproducing loss of R04. Native late-abort recovery remains unverified. |
+| Missing versus completed stored reload | Rows could be kept or discarded for the wrong destination | Stock PROJECT menu in native emulator on disposable cards | Pass. Missing stored files preserved bank A and R04. Completed stored reload selected bank B and cleared R04. OFF recovered the full pool in both cases. |
+| STOP, OFF and stock Arranger | Queued source changes or handlers could survive removal | T2 slice and Arranger recovery fixtures | Pass. STOP cancelled the queued change; OFF restored callback heads and all 786432 pool bytes. Stock Arranger playback matched before and after removal. |
+| Shared hook interaction | Panel, source or wrap registration could conflict with base owners | Candidate build by named hooks, callback heads before/after OFF and upstream-only compile | Pass on the candidate for bindings and T2 unload. Blocked on upstream main for the three proposed bindings; catalogue-only compatibility excludes CLYPS. |
+| Physical MKII | Audio, cost, USB trial and persistence require the real instrument | Separate authorization required | Not run. Trial, soak, pricing, rollback and inventory, MAIN/CUE listening and persistence remain open. |

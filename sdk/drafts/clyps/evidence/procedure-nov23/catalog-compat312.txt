@@ -1,0 +1,6 @@
+
+> octamod@0.1.0 modules:compat
+> node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/module-compat.py
+
+· ot_sample_memory is full: room for 1 (kits); another module that uses it needs more room first (docs/module-guides/README.md#hooks)
+Cross-compatibility: 44 active Octatrack modules, 946 pairs and the whole set, 105 hooks, 0 reviewed relations; 0 problem(s) in 2.34s
