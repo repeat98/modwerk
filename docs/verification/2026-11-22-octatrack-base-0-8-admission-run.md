@@ -155,6 +155,9 @@ before any pick. Every drop after it came from the set with two Amigas on triggi
 `each` is 4). Twin 32's medium refusals depend on the sets before them (a first Tape Echo refused at 77 % in the set run,
 admitted alone): the readings since a pick survived a rollback and a reload, fixed in twin 33. Twin 28's first empty-pattern sets are invalid: C02 still held the trigs VECTOR's
 curve had written (60 % instead of 38 % with stock alone); `device:price` now stops when a module leaves trigs.
+Twin 33's remaining medium refusals sit within a point or two of the line and go either way between sets (Amiga on T1
+refused in set 1, admitted in set 3; FM Synth on T3 refused in set 2, admitted in set 6): expected scatter in the
+readings at the line, not a fault.
 
 **The overload scene** (set L on empty C02, then the stacked C01 played; stall 56 on twin 24): twin 24 stalled once,
 with an entry the base read under 110 µs late. Twin 25 (window from 80 µs), three takes: no stall, 4,368 to 4,501
