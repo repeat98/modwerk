@@ -93,4 +93,4 @@ All current published primary authors are registered with numeric IDs from their
 
 ## Recover an unpublished update
 
-To undo an unpublished Elemod update, restore the module folder, module changelog and package pins from the last successful production release. The version check compares the files with that release and verifies the packages against the live catalog. This check needs network access and the release commit in the local Git history.
+To undo an unpublished Elemod update, restore the module folder, module changelog and package pins from the last successful production release. The version check compares the files with that release and checks the package pins against both that commit’s catalog and the live catalog, including when the published download has a different version from the module page. This check needs network access and the release commit in the local Git history.
