@@ -33,7 +33,7 @@ Because the record names its sound, a note moved to another track plays the lead
 
 **Knobs.** The per-track parameter targets are 71 int16 a track from `0x80003362` (142 bytes a track; the smoother at `0x400d9406` follows them each frame from `0x80003340`). A note-on loads the note's sound and locks into its track's targets. Once a frame, before the transfer, `core_voice_frame` compares the lead's targets with the last frame's and copies the values that changed to its voice tracks. In a frame where a note stayed on the lead, it only takes the lead's new values, so a trig lock on the lead does not spread to the voices.
 
-**Sound chip.** The machine wire's per-track types (`machine-frame.c`) give a voice track its lead's type, so an added machine's player also plays the notes its lead sends to voice tracks.
+**Sound chip.** The machine wire's per-track types (`machine-frame.c`) give a voice track its lead's type while the note it plays came from its lead, so an added machine's player also plays the notes its lead sends to voice tracks. A note-on of the voice track's own (its trigs) gives it its own type back.
 
 ## Checked
 
@@ -56,6 +56,5 @@ Not checked yet: sequencer trigs on a linked lead (only live trig-key notes abov
 - A knob turned in the same frame as a note-on on the lead does not reach the voices until it moves again.
 - A knob turned on the lead overrides a voice's trig lock on that parameter while the voice's note plays.
 - The setting is per project, not per kit or pattern.
-- The machine wire gives a voice track its lead's machine type, also for the voice track's own trigs: with an added machine on the lead and another machine on a voice track, that track's own trigs reach the lead's sound-chip player. Stock machines are not affected (their type comes from the sound the note carries).
 - Chords from the trig keys in chromatic mode are not checked: in the emulator a second key held with the first added no note on either build.
 - Changing VOICES while notes play regroups at once (routing pauses while the groups change); a note-off that then finds no owner stays on the lead.

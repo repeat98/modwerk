@@ -45,6 +45,7 @@ static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group *
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
 static volatile uint16_t leads;     /* leads with a group; written last by regroup */
+static volatile uint16_t borrowed;  /* voice tracks whose last note-on came from their lead */
 static int16_t last[TRACKS][VALUES];
 
 static void regroup(void)
@@ -53,6 +54,7 @@ static void regroup(void)
     /* The frame interrupt reads the groups: route nothing while they change (the menu and a project load run in
      * tasks), and publish the leads last. */
     leads = 0;
+    borrowed = 0;
     for (unsigned int t = 0; t < TRACKS; ++t) {
         lead_of[t] = NONE;
     }
@@ -125,7 +127,14 @@ void core_voice_event(uint8_t *record)
         return;
     }
     const uint32_t lead = *(const uint32_t *)(record + 0x10);
-    if (lead >= TRACKS || !((leads >> lead) & 1u)) {
+    if (lead >= TRACKS) {
+        return;
+    }
+    if (!((leads >> lead) & 1u)) {
+        /* A voice track's own note-on: from now it plays its own machine again. */
+        if (*(const uint32_t *)(record + 4) == 1u) {
+            borrowed &= (uint16_t)~(1u << lead);
+        }
         return;
     }
     const uint32_t mutes = MUTES_OVERRIDE ? ~MUTES_OVERRIDE : MUTES;
@@ -149,6 +158,7 @@ void core_voice_event(uint8_t *record)
         absorb |= (uint16_t)(1u << lead);
     } else {
         *(uint32_t *)(record + 0x10) = to;
+        borrowed |= (uint16_t)(1u << to);
     }
 }
 
@@ -180,11 +190,11 @@ void core_voice_frame(void)
     }
 }
 
-/* The track whose sound a track plays: its lead inside a group, else itself (machine-frame.c sends that track's
- * machine type for the sound chip's player dispatch). */
+/* The track whose sound a track plays: its lead while the track plays a note its lead sent it, else itself
+ * (machine-frame.c sends that track's machine type for the sound chip's player dispatch). */
 unsigned int core_voice_lead(unsigned int track)
 {
-    return track < TRACKS && lead_of[track] != NONE ? lead_of[track] : track;
+    return track < TRACKS && lead_of[track] != NONE && ((borrowed >> track) & 1u) ? lead_of[track] : track;
 }
 
 /* ---- SETTINGS > VOICES ------------------------------------------------------------------------------------------ */
