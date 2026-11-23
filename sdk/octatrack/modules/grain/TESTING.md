@@ -1,6 +1,45 @@
 # GRAIN testing
 
-Grain 0.1.2-experimental · by A Force Truly Evil.
+Grain 0.2.0-experimental · by A Force Truly Evil.
+
+## 0.2.0-experimental: EDGE, four ways to treat the sample's edges, 23 November 2026
+
+The package is `0e4bebd4d54ffd0efd73194159521e7e3b2178aeb2626f83d87f99b8dcde2e43` (31,560 bytes), rebuilt with
+`scripts/octatrack-module-packages.py` in the pinned toolchain. It loads 30,172 bytes of code and data and reserves 2,880 of BSS
+(33,052 bytes of static memory; 31,808 in 0.1.2). The deepest Grain-only audio stack is 792 bytes by the same method as 0.1.2's 768
+(`grain_render` 180, `gran_render` 412 against 392, `stereo_paged` 92 and `stereo_page` 84, plus four return addresses and 8 for the
+frame pointers `link.w` saves).
+
+- **EDGE** is a selector in SRC SETUP, knob E, with four values stored in SETUP E (the byte stock calls TSTR, whose range 0 to 3
+  passes the power-on check): CLMP 0 (the default), WRAP 1, STOP 2 and BNCE 3. A value above 3 reads as CLMP. SETUP E also held the
+  eighths of SIZE in the display code, but nothing ever wrote them, so `part_size` no longer reads it.
+- **Where a grain is born** (POS plus SPRY outside the sample). WRAP: on the other side, as in 0.1.2. CLMP, STOP and BNCE: on the edge
+  that was crossed; past the end, a forward CLMP grain starts at the beginning (the end and the beginning are the same point) and a
+  STOP or BNCE grain, or a backward one, on the last frame.
+- **A grain that reaches an edge while it plays.** CLMP and WRAP: it carries on from the other side, in its own direction. STOP: it
+  ends there. BNCE: it is reflected about the edge and turns round.
+- **STOP shortens the grain** that would reach an edge before its window ends, so that the window ends at the edge. 0.1.0 and 0.1.1
+  cut such a grain in the middle of its window, which clicked. A grain that does not reach an edge is unchanged.
+- **Cost.** The two loops that run for every sample, `stereo_page` and `stereo_paged`, compile to the same instructions as in 0.1.2
+  (the function bodies in `grain_core.s` compared). The new code runs when a grain is born or reaches an edge: a few compares, and for
+  STOP a multiplication and a compare (a division only for a grain that does reach an edge).
+- **Host results.** WRAP renders match 0.1.2 bit for bit over 7,200 combinations of sample length, mono and stereo, POS, SIZE, DENS,
+  SPRY, DIR, SCAN and pitch. STOP renders match 0.1.1's engine (with 0.1.2's window tables) bit for bit where no grain comes near an
+  edge (96 cases with SPRY 0, DIR 0 and SCAN 0 on long samples). On a clean 220 Hz tone, the output steps over 2,500 in one sample went from 118 to 0 at POS 124, 10 to 0 at
+  POS 100, 7 to 0 at POS 110 with SPRY 60, and 2 to 0 at POS 60 with SPRY 127 (STOP, SIZE 70, DENS 100, before and after the
+  shortening); at pitch x4 with half the grains backwards, from 23 to 8. `verify.py` runs every case in all four modes (optimized
+  against plain paths) and holds references for CLMP, STOP and BNCE beside 0.1.2's three, which WRAP keeps. `range_test.c` checks
+  births at both edges and a sounding grain at both edges in every mode. `verify_lanes.py` passes on the compiled kernels, including
+  the 18 PTCH cases.
+
+**On the MKI** (the author, OS 1.40C, official base `6d23e888`, card set with Grain, E-Verb, Mini Verb, syntiz, FM Synth, BBD Delay and
+Tape Echo): the first build of this release, package `8a4555de` (STOP without the shortening), with an eight-tone sample, one tone a
+second from C3 to E5, so the notes heard say which part of the sample each grain reads. SIZE 64, DENS 100, SCAN 0, PTCH 0. In CLMP,
+WRAP and BNCE the notes heard were those the host renders give: at POS 0 with SPRY 60, at POS 127 with SPRY 0 and 60, and at POS 0
+with DIR 127. STOP was nearly silent at POS 127.8, as expected (a grain born that close to the end has a few milliseconds of sample
+left), and played as expected at POS 120. The author heard a click when a STOP grain reached an edge; the shortening above is the
+change made for it. The final package `0e4bebd4` (card set for the same base) loaded and played. **Not recorded:** the STOP click on
+`0e4bebd4`, EDGE kept across a save and a power cycle, a p-lock on EDGE, the CPU meter in the four modes, MKII.
 
 ## 0.1.2-experimental: the sample is a ring, PTCH steps and 3 dB per grain, 22 November 2026
 

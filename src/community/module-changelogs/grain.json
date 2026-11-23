@@ -3,7 +3,10 @@
     "version": "0.2.0-experimental",
     "date": "2026-11-23",
     "changes": [
-      "New EDGE knob in SRC SETUP (E): CLMP keeps a grain inside the sample when SPRY pushes it past an edge, WRAP makes the sample a ring as in 0.1.2, BNCE turns a grain round at an edge."
+      "New EDGE knob in SRC SETUP (knob E): CLMP, WRAP, STOP or BNCE sets what happens when a grain reaches the start or end of the sample.",
+      "CLMP (default): SPRY can't push a grain past an end, and a grain that runs off one end carries on from the other. WRAP is 0.1.2's loop.",
+      "STOP ends a grain at an edge, as in 0.1.0 and 0.1.1, but its window now ends there too, so it no longer clicks. BNCE plays the grain back.",
+      "A project saved with 0.1.2 opens in CLMP; set EDGE to WRAP for 0.1.2's sound."
     ]
   },
   {

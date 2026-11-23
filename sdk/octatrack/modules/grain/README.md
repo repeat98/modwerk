@@ -1,6 +1,6 @@
 # Grain
 
-Version 0.1.1-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
+Version 0.2.0-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
 
 ## Overview
 
@@ -20,10 +20,10 @@ SRC (knobs A to F):
 | POS | 0 to 127.8 | Where the grains are read: 0 is the start of the sample, 127.8 the end. Turned slowly it moves in eighths (41.0, 41.1, 41.2, 41.3, 41.5, 41.6, 41.7, 41.8, 42.0) and speeds up as you turn faster; a pressed knob jumps by seven. |
 | SIZE | 0 to 127 | The length of each grain, on an exponential scale: 0 is 10 ms, 64 about 100 ms, 127 one second. |
 | DENS | 0 to 127 | How often a grain is born. Low values leave gaps; 64 puts the grains one after another; 127 overlaps four of them (up to six sound at once). With MODE SYNC it picks the division of the bar: 1, 2, 4, 6, 8, 12, 16, 24, 32, 48 or 64 grains. |
-| SPRY | 0 to 127 | How far each grain strays from POS at random: 0 keeps them all on POS, 127 spreads them up to half the sample either way. The sample is a ring: a grain born or reading past the end carries on from the beginning, and one going back past the beginning carries on from the end. |
+| SPRY | 0 to 127 | How far each grain strays from POS at random: 0 keeps them all on POS, 127 spreads them up to half the sample either way. What happens when a grain reaches an edge of the sample is set by EDGE. |
 | SCAN | -2.00 to +2.00 | A read head that runs through the sample from POS: 1.00 is the sample's own speed, negative runs backwards, 0.00 holds. It wraps round the sample and starts again from POS at every trig. |
 
-SRC SETUP (knobs A to D):
+SRC SETUP (knobs A to E):
 
 | Knob | Values | What it does |
 | --- | --- | --- |
@@ -31,6 +31,7 @@ SRC SETUP (knobs A to D):
 | DIR | 0 to 127 | The share of grains that play backwards: 0 none, 64 half, chosen at random, 127 all. |
 | PAN | OFF, 1 to 127 | A random pan for each grain, independent of where it was born. OFF at 0, the widest spread at 127. |
 | MODE | RAND, SYNC | RAND: the grains are born freely, as DENS says. SYNC: they follow the project's tempo, and DENS picks how many fall in a bar. |
+| EDGE | CLMP, WRAP, STOP, BNCE | What happens at the start and end of the sample. Turn several detents to change a value. **CLMP:** SPRY can't push a grain past an end. A grain that runs off one end carries on from the other. **WRAP:** the sample is a loop. A grain pushed or running off one end comes out of the other (as in 0.1.2). **STOP:** grains stay inside. SPRY can't push one past an end, and a grain that reaches an end stops there. **BNCE:** SPRY can't push a grain past an end. A grain that reaches an end plays back the other way. |
 
 ## Usage
 
@@ -43,7 +44,7 @@ SRC SETUP (knobs A to D):
 1. Double-tap a track key, choose GRAIN in the machine list and press YES, then double-tap again and pick a Flex sample.
 2. Put a trig on the track and play. Press SRC and turn POS: the grains move through the sample, and the waveform shows where. Turn SIZE down for a fine mist and up for long overlapping grains.
 3. Turn SPRY up to scatter the grains around POS, and DENS up to thicken the cloud. Turn SCAN to let the read head run through the sample by itself.
-4. Press SRC twice for SRC SETUP: turn PAN for a spread across the stereo field, DIR for a share of backward grains, SHAP to change the grain window, and MODE to SYNC to lock the grains to the tempo.
+4. Press SRC twice for SRC SETUP: turn PAN for a spread across the stereo field, DIR for a share of backward grains, SHAP to change the grain window, MODE to SYNC to lock the grains to the tempo, and EDGE to choose what happens when a grain reaches the start or end of the sample.
 5. Press SRC once more from SRC SETUP for the full-screen page, with a larger waveform and every value beside its name, for precise settings.
 6. Press SRC again to leave the full-screen page. Press STOP to stop playback.
 
@@ -59,7 +60,7 @@ Everything else, menus, saving, loading, scenes, recording, MIDI and timing, is 
 
 ## What a Part keeps
 
-Everything Grain stores in a Part is a value stock's own power-on check accepts: PTCH as Flex's (64 is 0), SHAP and MODE in LOOP and RATE, POS's eighths in TSNS, and DIR and PAN in the track's unused NEIGHBOR bytes. A project opened without the module, or on a unit without it, keeps its banks and plays the track as Flex.
+Everything Grain stores in a Part is a value stock's own power-on check accepts: PTCH as Flex's (64 is 0), SHAP and MODE in LOOP and RATE, POS's eighths in TSNS, EDGE in TSTR (0 to 3), and DIR and PAN in the track's unused NEIGHBOR bytes. A project opened without the module, or on a unit without it, keeps its banks and plays the track as Flex.
 
 ## Screens and audio
 
@@ -74,7 +75,7 @@ The author supplied a 45-second recording of Grain on their Octatrack MKI. They 
 
 ## Compatibility and limitations
 
-Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. POS parameter locks use whole numbers. Each grain plays 3 dB below full scale, so six long grains of a loud sample stay clean; raise the track volume if a single grain is too quiet. With a SCALE set in PROJECT > CONTROL > SEQUENCER (the scale quantizer that comes with FM Synth and Scale Quantizer), PTCH jumps by several semitones per detent, because the quantizer steps in Flex units: set SCALE to OFF in projects with Grain.
+Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. POS parameter locks use whole numbers. Each grain plays 3 dB below full scale, so six long grains of a loud sample stay clean; raise the track volume if a single grain is too quiet. With a SCALE set in PROJECT > CONTROL > SEQUENCER (the scale quantizer that comes with FM Synth and Scale Quantizer), PTCH jumps by several semitones per detent, because the quantizer steps in Flex units: set SCALE to OFF in projects with Grain. A project saved with 0.1.2 opens with EDGE on CLMP, so a grain that SPRY threw past an edge is now born on that edge instead of wrapping: set EDGE to WRAP for the 0.1.2 sound, or to STOP for the 0.1.0 and 0.1.1 sound without the click.
 
 ## Tests and measurements
 
