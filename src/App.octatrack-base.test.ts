@@ -90,16 +90,25 @@ describe('desktop navigation', () => {
     const sidebar = container.querySelector('aside[aria-label="App sidebar"]')!
     const main = container.querySelector('main')!
     const primary = sidebar.querySelector('nav[aria-label="Main navigation"]')!
-    expect(Array.from(primary.querySelectorAll('a'), link => link.textContent)).toEqual(['Overview', 'Module library', 'Forum'])
+    expect(Array.from(primary.querySelectorAll('a'), link => link.textContent)).toEqual(['Overview', 'Module library'])
     expect(main.querySelector('nav[aria-label="Module library"] [aria-current="page"]')?.getAttribute('href')).toBe('#effects')
     expect(sidebar.querySelector('a[href="#effects"]')).toBeNull()
     expect(sidebar.querySelector('a[href="#base"] .sidebar-feature-new')?.textContent).toBe('New')
-    expect(sidebar.querySelector('.sidebar-online')?.textContent).toContain('online')
     const resources = sidebar.querySelector('details')!
     expect(resources.open).toBe(true)
     resources.open = false
     await open('library')
     expect(resources.open).toBe(false)
+
+    const forum = resources.querySelector('a[href="#forum"]')!
+    expect(forum.parentElement?.querySelector('.sidebar-online')?.textContent).toContain('online')
+    await open('forum')
+    expect(resources.open).toBe(true)
+    expect(forum.getAttribute('aria-current')).toBe('page')
+    resources.open = false
+    await open('forum/thread/sidebar-test')
+    expect(resources.open).toBe(true)
+    expect(forum.getAttribute('aria-current')).toBe('location')
 
     await open('credits')
     expect(sidebar.querySelector('details')?.open).toBe(true)

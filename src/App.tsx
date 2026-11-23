@@ -565,7 +565,7 @@ export default function App() {
     : forumRoute ? 'Forum' : betaInvitationRoute ? 'Join the beta' : accountRoute ? 'Account' : developerRoute ? 'Creator settings'
     : adminRoute ? 'Admin workspace' : route.startsWith('submit') ? 'Start developing'
     : route.startsWith('module-set') ? 'Module sets' : missingRoute ? 'Page unavailable' : 'Modules'
-  const resourcesCurrent = projectsRoute || faqRoute || ['base', 'credits', 'modding-guidelines'].includes(route) || (!DEVELOP_HIGHLIGHT && route.startsWith('submit'))
+  const resourcesCurrent = forumRoute || projectsRoute || faqRoute || ['base', 'credits', 'modding-guidelines'].includes(route) || (!DEVELOP_HIGHLIGHT && route.startsWith('submit'))
   useEffect(() => {
     if (resourcesCurrent && resourcesRef.current) resourcesRef.current.open = true
   }, [resourcesCurrent, route])
@@ -583,7 +583,6 @@ export default function App() {
             <nav className="sidebar-nav primary-nav" aria-label="Main navigation">
               <a href="#overview" className={overviewRoute ? 'active' : ''} aria-current={overviewRoute ? 'page' : undefined}><Icon name="home" /><span>Overview</span></a>
               <a href={libraryHref()} className={libraryCurrent ? 'active' : ''} aria-current={onLibrary && !libraryCategory ? 'page' : libraryCurrent ? 'location' : undefined}><Icon name="grid" /><span>Module library</span></a>
-              <div className="sidebar-nav-row"><a href="#forum" className={forumRoute ? 'active' : ''} aria-current={forumRoute ? 'location' : undefined}><Icon name="message" /><span>Forum</span></a><MembersOnlineChip presence={presence} /></div>
             </nav>
             <section className="sidebar-workspace" aria-label="Your workspace">
               {octatrackUi && <div className="sidebar-section-label">Your workspace</div>}
@@ -608,6 +607,7 @@ export default function App() {
             <details className="sidebar-resources" ref={resourcesRef} open>
               <summary>Resources</summary>
               <nav className="sidebar-nav" aria-label="Resources">
+                <div className="sidebar-nav-row"><a href="#forum" className={forumRoute ? 'active' : ''} aria-current={route === 'forum' ? 'page' : forumRoute ? 'location' : undefined}><Icon name="message" /><span>Forum</span></a><MembersOnlineChip presence={presence} /></div>
                 <a href="#projects" aria-current={projectsRoute ? 'page' : undefined}><Icon name="external" /><span>Other projects</span></a>
                 {!DEVELOP_HIGHLIGHT && <a href="#submit" aria-current={route.startsWith('submit') ? 'page' : undefined}><Icon name="plus" /><span>Start developing</span></a>}
                 <a href="#base" aria-current={route === 'base' ? 'page' : undefined}><Icon name="shield" /><span>Base firmware</span><span className="sidebar-feature-new">New</span></a>
