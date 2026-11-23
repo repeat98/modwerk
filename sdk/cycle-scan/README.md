@@ -41,4 +41,32 @@ a record whose module source has changed since (scan it again) and a `performanc
 instructions the scan saw executing; it lists the DSP modules without a record, without failing them. The records sit
 here, not in the module folders, which belong to their authors.
 
+## The identity gate: proof that a speed-up changes no sample
+
+A change that only reorders or re-spells DSP code (the remedies in [CYCLE_SCAN.md](CYCLE_SCAN.md)) must render exactly
+what it rendered before. `verify_ident.py` is octabam's widened gate (Yves Rosius, octabam `e4c207a2`, MIT), recorded in
+[`sdk/imports/octabam-verify-ident-e4c207a2.json`](../imports/octabam-verify-ident-e4c207a2.json). Stamp a reference on
+the tree you trust, then check the candidate against it:
+
+```bash
+OCTABAM_ROOT=<trusted worktree>/sdk/octabam python3 sdk/cycle-scan/verify_ident.py miniverb ref
+cp <trusted worktree>/sdk/octabam/out/ident_miniverb_ref.json sdk/octabam/out/
+python3 sdk/cycle-scan/verify_ident.py miniverb check       # IDENTICAL: 56/56 settings bit-identical
+```
+
+It builds a scratch image with the module beside the stock effects every run and renders 40 to 60 settings through
+`dsp_host`: every value of the first small select, hot, cool, zeros, max and the manifest's `dear` knobs, on the module's
+own slot and the other one, on payload B, in 16-sample blocks, over 2 s, with a ramp of every knob, with different L and
+R inputs and with the dispatcher's split call, and it compares the instance block (r7 `$00..$83`) after every block. A
+word the change stopped writing on purpose is named with `--scratch 0c,47`. Two controls fail a run that never reaches the
+module: its fx id must dispatch to other code than the stock image's and NONE's (Modwerk's control: octabam's compares
+with its SEND module, which Modwerk does not have), and `defaults` must render other audio than `max` or `dear`. On ten
+faults planted in Modwerk's modules the old gate caught one and this one all ten
+([record](../../docs/verification/2026-11-23-widened-identity-gate.md)).
+
+CYCLE_SCAN.md's `make verify-ident MOD=<name>` means this script here. The copy under `sdk/octabam/tools/verify/` is the
+old gate as octabam's tree had it at the 16 November import; it asks for SEND and cannot run in Modwerk, and it stays
+because that folder is part of the module-source fingerprint. Neither the gate nor the scan is hardware evidence: a
+bit-identical render on the emulator's DSP core says nothing about timing on a unit.
+
 It is a model, not a measurement: the unit stays the judge ([MODULE_PERFORMANCE.md](../../docs/MODULE_PERFORMANCE.md)).
