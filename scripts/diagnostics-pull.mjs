@@ -48,7 +48,7 @@ export const when = iso => new Date(iso).toLocaleString('sv-SE', { dateStyle: 's
 const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username, data.event, data.phase,
   data.failure && 'failure=' + data.failure, data.client && [data.client.browser, data.client.major].filter(Boolean).join(' ') + '/' + data.client.os,
   data.error && 'error=' + data.error, data.result && 'result=' + data.result, data.refusal !== undefined && 'refusal=' + data.refusal,
-  data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reason && 'reason=' + data.reason,
+  data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reconnect && 'reconnect=' + data.reconnect, data.reason && 'reason=' + data.reason,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
@@ -199,6 +199,14 @@ function restarts(member) {
   })
 }
 
+// crash.s refreshes the two instruction snapshots only when the program counter is in SDRAM.
+function crashLine({ count, vector, pc, code, memory }) {
+  const line = `  crash record ${count}: vector ${vector} pc 0x${pc.toString(16)}`
+  if (pc < 0x40000000 || pc >= 0x41000000) return line + ', instruction bytes unavailable (PC outside SDRAM)'
+  const hex = words => words.map(word => word.toString(16).padStart(8, '0')).join(' ')
+  return line + ` code ${hex(code)} uncached ${hex(memory)}`
+}
+
 export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
@@ -222,7 +230,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
       ...member.loads?.size ? [`  unit's load log: ${member.loads.size} five-minute records, CPU peak ${percent(Math.max(...[...member.loads.values()].map(r => r.cpu[1])))}, mean ${percent([...member.loads.values()].reduce((a, r) => a + r.cpu[0], 0) / member.loads.size)}`] : [],
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
-      ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`,
+      ...member.crash ? [crashLine(member.crash),
         ...[crashNames(names(member.crashBase), member.crash.pc, member.crash.stack ?? [])].filter(Boolean).map(line => '    ' + line)] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
         ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
