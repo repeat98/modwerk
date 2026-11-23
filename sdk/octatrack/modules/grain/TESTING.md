@@ -65,9 +65,20 @@ the working Part:
 | A note reaches the engine at the knob's value | `encA-3`, `encA+1` (54, "-2"), TRIG9 | pass: the lane's PTCH word is 0x3600, engine |
 | Put back | reload, step 1 trig removed, trig mode TRACKS, bank D, boot of the flashed base `e1152583` | pass: the same eight kept modules restored from the card, bank D Part 1 byte-identical |
 
+### Frame cost on `07b6e497`: not releasable on a medium pattern, 23 November 2026
+
+`npm run device:price -- --write --curve T1,T3 --pick-pattern 2 --measure-pattern 4 grain` on the same unit and twin,
+after a power cycle (the Zoom pedal on USB had kept a RAM boot from coming back): C04 at 126 BPM, trigs on steps
+1/5/9/13 of T1-T4, T6, T7 (the scene FM Synth 0.1.5's curve used), picks on empty C02; Grain on T1 and T3, the two
+tracks whose Flex slots hold loaded samples. At rest Grain adds +0.1 points (it rests). Its first instance adds 33.3
+points of the frame, so the medium pattern read 113.4 %, past the 100 % where the guard drops renders; the pick on T3
+was refused, and alone on the medium pattern the base refused Grain's pick (on the empty pattern it was admitted, longest
+frame 50.9 %, nothing dropped, no stall). No curve was written. Bank C's Part and both patterns were unchanged
+afterwards. The render path is 0.1.2's, so 0.1.2 costs the same; the release gate (`curveProblem`, from 23 November 2026)
+holds 0.1.3 until Grain's first instance fits a medium pattern.
+
 **Not tested:** listening (whether CHROMATIC keys and MIDI notes sound in tune is shown only by the host check of the
-step and stock's units), a recorded CHROMATIC take, SCALE, a project saved with 0.1.2 and reloaded, MKI, and the frame
-cost curve and performance stamp `module:doctor` asks for.
+step and stock's units), a recorded CHROMATIC take, SCALE, a project saved with 0.1.2 and reloaded, MKI.
 
 ## 0.1.2-experimental: the sample is a ring, PTCH steps and 3 dB per grain, 22 November 2026
 
