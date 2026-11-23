@@ -208,6 +208,17 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     }
   }
   const dropLink = () => { release?.(); bench?.socket.destroy(); link = undefined; release = undefined; bench = undefined; trial = undefined; endTrialTurn(); reviews.clear() }
+  // The USB bridge serves one client at a time (scripts/octatrack-usb-bridge.py), so a link held between tool calls kept
+  // `npm run device` and the site off the unit. Give it back after each call: a trial keeps it until Keep or Undo, and a
+  // review until it expires, so its trial runs on the link it was read through. The next device tool opens a fresh one.
+  let idleTimer
+  function releaseIdleLink() {
+    clearTimeout(idleTimer); idleTimer = undefined
+    if (!link || remote || trial || running || closed) return
+    const pending = Math.max(0, ...[...reviews.values()].map(item => item.expires - clock()))
+    if (pending > 0) { idleTimer = setTimeout(releaseIdleLink, pending + 100); idleTimer.unref?.(); return }
+    release?.(); bench?.socket.destroy(); link = undefined; release = undefined; bench = undefined
+  }
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   async function connected() {
@@ -514,11 +525,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       if (closed) throw new Error('The MCP workspace is closed.')
       if (running) throw new Error('Another frontend/device operation is running.')
       running = true
-      try { return await handlers[name](args) } finally { running = false }
+      try { return await handlers[name](args) } finally { running = false; releaseIdleLink() }
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
-    close() { return closing ??= (async () => { closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
+    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }
