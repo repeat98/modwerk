@@ -24,9 +24,26 @@ stayed in, every trial rolled back, and nothing was kept or flashed. After the r
 | Those 33 in two sets of 17 (267,792 bytes) and 16 (129,116 bytes), 30 s each | `91a0a86e` | Both installed; "no crash, stall, freeze or skipped track logged during the trial"; both rolled back to an empty inventory. |
 | RINGMOD SC on T1 while the selected pattern played (`device:price --fx-name "ring-sc=RINGMOD SC"`) | `91a0a86e` | Admitted. At rest frame +0, CPU +0.8; in use frame -0.1, CPU -2.7, DSP +0.7 / +0.9 points. The effect was picked back and the trial rolled back. The scene was the owner's loaded project, not named. |
 
+## Idle CPU with large unused sets, and the cost-table fix
+
+The owner reported a high idle CPU with large sets. The same project and scene, transport stopped then playing (the
+`guard` line and three `stats` readings, as `device:price` takes them), on controller-row twins of the source before
+(`91a0a86e`) and after the fix (`30a67657`, source `5c96e1f93` plus the cost-table copy). Every set was installed in a
+rolled-back trial and named by no Part, except one effect in the 17-module set: Part 1 T1 FX2 named it.
+
+| Unused set | CPU meter stopped, before / after | Playing, before / after | `profile:5` module UI ticks, µs a tick, before / after |
+| --- | --- | --- | --- |
+| none | 39.8 % / 38.4 % | 42.4 % / 40.9 % | 461.8 / 226.5 |
+| 16 ColdFire and UI modules (the second set above) | 45.9 % / 40.9 % | 47.2 % / 42.1 % | 1,411.5 / 247.0 |
+| 17 effects and machines (the first set above) | 46.4 % / 41.4 % | 47.1 % / 42.2 % | not read |
+
+The empty readings before and after each run agreed within 0.3 points. The 17-module trial on the fixed twin logged one
+note, "the CPU at 90 % or more for 1.5 s"; its moment was not separated from the install. No crash, stall, freeze or
+skipped track was logged, and every trial rolled back.
+
 ## Not run
 
-- The release image `48133772…`, a Keep and a power cycle on it.
+- The release image (`48133772…` before the cost-table fix, `eb667962…` with it), a Keep and a power cycle on it.
 - The fast soak: this Mac has no `mido` for `scripts/octatrack-midi-bridge.py`.
 - Step 9's price of every package, and #2049's saving in the meter at rest (it needs a 0.8 twin beside it).
 - Amiga and Grain trials: the loaded project names them, so a trial's end would need another power cycle.
