@@ -92,11 +92,31 @@ describe('the Octatrack page', () => {
     }
     await show(0)
     expect(open().querySelector('h2')?.textContent).toBe('Screen')
-    expect(button('Start preview').disabled).toBe(true)
+    expect(button('Start preview')).toBeUndefined()
     expect(open().textContent).toContain('needs a Modwerk base with screen capture')
+    expect(open().querySelector('.hub-screen-empty a')?.getAttribute('href')).toBe('#octatrack/setup')
     await show(8192)
     expect(button('Start preview').disabled).toBe(false)
+    expect(open().querySelector('canvas')?.hidden).toBe(true)
     expect(read).not.toHaveBeenCalled()
+  })
+
+  it('offers the USB connection in Screen and explains what to do in a browser without it', async () => {
+    const props = callbacks(), connect = vi.fn()
+    const render = (link: OctatrackLink | null) => act(() => root.render(createElement(OctatrackHub, {
+      ...props, view: 'screen', link, sets: [], header: null, grid: null, card: null,
+    })))
+    await render(Object.assign(unit({ status: 'idle' }), { connect }))
+    expect(open().querySelector('h3')?.textContent).toBe('Connect your Octatrack')
+    expect(open().querySelector('select')).toBeNull()
+    expect(container.querySelector('.hub-hero button')).toBeNull()
+    await act(() => button('Connect').click())
+    expect(connect).toHaveBeenCalledOnce()
+
+    await render(null)
+    expect(open().querySelector('h3')?.textContent).toBe('Screen preview needs USB')
+    expect(open().textContent).toContain('Chrome, Edge or another Chromium browser on a computer')
+    expect(open().querySelector('button')).toBeNull()
   })
 
   it('shows the unit’s status from its own records and this browser’s syncs', async () => {

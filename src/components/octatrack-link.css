@@ -180,10 +180,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
 .hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
-.hub-screen canvas { width: min(100%, 48rem); height: auto; image-rendering: pixelated; background: #181818; }
-.hub-screen-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
-.hub-screen-rate { display: inline-flex; align-items: center; gap: .4rem; }
-.hub-screen-rate select { min-height: 32px; padding: 0 .4rem; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: 12px; background: var(--sidebar); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
 .hub-hero .device-photo { width: clamp(8.5rem, 15cqi, 11rem); height: auto; flex: none; }
@@ -235,6 +231,38 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-base h3 { color: var(--text); font-size: 18px; letter-spacing: -.2px; }
 .hub-base > p:first-of-type { color: var(--text); font-size: 15px; }
 .hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
+.hub-section.hub-screen {
+  max-width: 50rem; margin-top: 14px; padding: 10px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+}
+.hub-screen-display { border: 1px solid var(--control-border); border-radius: 7px; background: var(--field); }
+.hub-screen canvas:not([hidden]) {
+  display: block; width: 100%; height: auto; border-radius: inherit; background: #181818; image-rendering: pixelated;
+}
+.hub-screen-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  min-height: 15.5rem; aspect-ratio: 2 / 1; padding: 20px; border-radius: inherit; text-align: center;
+  background-image: radial-gradient(rgb(165 173 255 / 12%) .65px, transparent .85px);
+  background-size: 8px 8px;
+}
+.hub-screen-mark {
+  display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 4px; flex: none;
+  border: 1px solid var(--accent-line); border-radius: 10px; background: var(--accent-soft); color: var(--accent-hover);
+}
+.hub-screen .hub-screen-empty h3 { margin: 0; color: var(--text); font-size: 19px; line-height: 1.3; letter-spacing: -.2px; }
+.hub-screen .hub-screen-empty p { max-width: 37ch; margin: 0; color: var(--muted); font-size: 14px; }
+.hub-screen .hub-screen-empty .button { min-height: 44px; margin-top: 6px; }
+.hub-screen-actions, .hub-screen-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.hub-screen-actions { padding: 10px 2px 0; }
+.hub-screen-controls { margin-inline-start: auto; }
+.hub-screen-rate { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.hub-screen-rate select { min-height: 40px; padding: 0 2rem 0 10px; background-color: var(--field); }
+.hub-screen-live { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+.hub-screen-live.is-recording .unit-led { background: #ec9297; box-shadow: none; }
+.hub-screen .hub-screen-demo { margin: 0 2px 8px; }
+.hub-screen .hub-screen-notice, .hub-screen .hub-screen-note { margin: 10px 2px 0; color: var(--muted); }
+.hub-screen .hub-screen-notice { color: var(--text-secondary); }
+.hub-screen-download { min-height: 40px; padding: 0 2px; }
 .hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
 .hub-view p.hub-empty { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */

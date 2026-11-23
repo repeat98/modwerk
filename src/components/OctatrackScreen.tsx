@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { DEFAULT_SCREEN_FPS, SCREEN_FRAME_RATES, ScreenSession, type ScreenFrameRate, VIDEO_HEIGHT, VIDEO_WIDTH } from './octatrack-screen-session'
 import { Icon } from './Icon'
 
-export function OctatrackScreen({ active, link, supported }: { active: boolean; link: OctatrackLink | null; supported: boolean }) {
+export function OctatrackScreen({ active, link, unavailable }: {
+  active: boolean
+  link: OctatrackLink | null
+  unavailable?: { title: string; detail?: ReactNode; action?: ReactNode }
+}) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const session = useRef<ScreenSession | null>(null)
   const mounted = useRef(false)
@@ -31,12 +35,12 @@ export function OctatrackScreen({ active, link, supported }: { active: boolean; 
   }, [])
   useEffect(() => {
     const check = () => {
-      if (session.current && (!link || !supported || ((!active || document.hidden) && !session.current.hasAudience))) stop()
+      if (session.current && (!link || ((!active || document.hidden) && !session.current.hasAudience))) stop()
     }
     check()
     document.addEventListener('visibilitychange', check)
     return () => document.removeEventListener('visibilitychange', check)
-  }, [active, link, supported, detached, recording, stop])
+  }, [active, link, detached, recording, stop])
 
   function save(blob: Blob) {
     const url = URL.createObjectURL(blob), ext = blob.type.includes('mp4') ? 'mp4' : 'webm'
@@ -54,7 +58,7 @@ export function OctatrackScreen({ active, link, supported }: { active: boolean; 
     } else window.setTimeout(() => URL.revokeObjectURL(url), 60000)
   }
   function start() {
-    if (!link || !supported || !canvas.current || session.current) return
+    if (!link || !canvas.current || session.current) return
     setNotice('')
     try {
       const current = new ScreenSession(link, canvas.current, {
@@ -70,38 +74,51 @@ export function OctatrackScreen({ active, link, supported }: { active: boolean; 
     } catch { setNotice('This browser could not open the screen preview.') }
   }
   const canRecord = typeof MediaRecorder !== 'undefined' && typeof HTMLCanvasElement.prototype.captureStream === 'function'
-  const message = notice || (!link ? 'Connect your Octatrack over USB to preview its screen.' :
-    !supported ? 'Screen preview needs a Modwerk base with screen capture support.' :
-    recording ? 'Recording the screen on this computer.' :
-    preview === 'starting' ? 'Waiting for the Octatrack screen…' : preview === 'live' ? 'Live preview' : 'Preview is off.')
+  const live = !!link && preview === 'live'
+  const starting = !!link && preview === 'starting'
+  const status = notice || (live ? (recording ? 'Recording the screen on this computer.' : 'Live preview') : starting ? 'Waiting for the first frame…' : '')
   function action(run: () => void) {
     setNotice('')
     try { run() } catch (error) { setNotice(error instanceof Error ? error.message : 'The browser could not start this action.') }
   }
   return <>
     <h2 className="hub-view-title">Screen</h2>
-    <section className="hub-section hub-screen">
-      {import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'screen' && <p>Local demo · Recorded Synth module screens</p>}
-      <canvas ref={canvas} width={VIDEO_WIDTH} height={VIDEO_HEIGHT} hidden={preview !== 'live'} role="img" aria-label="Live Octatrack LCD" />
-      <p role="status">{message}</p>
-      <div className="hub-screen-actions">
-        <label className="hub-screen-rate">Frame rate
-          <select value={fps} disabled={recording} onChange={event => {
-            const next = SCREEN_FRAME_RATES.find(rate => String(rate) === event.target.value)
-            if (next) { setFps(next); session.current?.setFrameRate(next) }
-          }}>
-            {SCREEN_FRAME_RATES.map(rate => <option key={rate} value={rate}>{rate} fps</option>)}
-          </select>
-        </label>
-        {preview === 'off' ? <button className="button button-primary" disabled={!link || !supported} onClick={start}><Icon name="play" size={14} />Start preview</button> :
-          <button className="button button-quiet" onClick={stop}>Stop preview</button>}
-        {preview === 'live' && <>
-          <button className="button button-quiet" onClick={() => action(() => session.current?.popOut())}><Icon name="external" size={14} />{detached ? 'Show window' : 'Pop out'}</button>
-          {canRecord ? <button className="button button-quiet" onClick={() => action(() => recording ? session.current?.stopRecording() : session.current?.record())}>{recording ? 'Stop recording' : 'Record video'}</button>
-            : <span>This browser cannot record canvas video. Use the detached window with OBS.</span>}
-        </>}
-        {file && <a className="text-button" href={file.url} download={file.name}><Icon name="download" size={14} />Download last video</a>}
+    <section className="hub-section hub-screen" aria-label="Screen preview">
+      {import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'screen' && <p className="hub-screen-demo">Local demo · Recorded Synth module screens</p>}
+      <div className="hub-screen-display">
+        <canvas ref={canvas} width={VIDEO_WIDTH} height={VIDEO_HEIGHT} hidden={!live} role="img" aria-label="Live Octatrack LCD" />
+        {!live && <div className="hub-screen-empty">
+          <span className="hub-screen-mark"><Icon name="display" size={24} /></span>
+          <h3>{unavailable?.title ?? (starting ? 'Waiting for the first frame…' : 'Preview is off')}</h3>
+          {unavailable?.detail && <p>{unavailable.detail}</p>}
+          {unavailable?.action}
+        </div>}
       </div>
+      {link && <div className="hub-screen-actions">
+        {live && <span className={'hub-screen-live' + (recording ? ' is-recording' : '')} aria-hidden="true">
+          <span className="unit-led is-on" />{recording ? 'Recording' : 'Live preview'}
+        </span>}
+        <div className="hub-screen-controls">
+          <label className="hub-screen-rate">Frame rate
+            <select value={fps} disabled={recording} onChange={event => {
+              const next = SCREEN_FRAME_RATES.find(rate => String(rate) === event.target.value)
+              if (next) { setFps(next); session.current?.setFrameRate(next) }
+            }}>
+              {SCREEN_FRAME_RATES.map(rate => <option key={rate} value={rate}>{rate} fps</option>)}
+            </select>
+          </label>
+          <button type="button" className={'button ' + (preview === 'off' ? 'button-primary' : 'button-quiet')} onClick={preview === 'off' ? start : stop}>
+            {preview === 'off' ? <><Icon name="play" size={14} />Start preview</> : 'Stop preview'}
+          </button>
+          {live && <>
+            <button type="button" className="button button-quiet" onClick={() => action(() => session.current?.popOut())}><Icon name="external" size={14} />{detached ? 'Show window' : 'Pop out'}</button>
+            {canRecord && <button type="button" className="button button-quiet" onClick={() => action(() => recording ? session.current?.stopRecording() : session.current?.record())}>{recording ? 'Stop recording' : 'Record video'}</button>}
+          </>}
+        </div>
+      </div>}
+      <p role="status" className={notice ? 'hub-screen-notice' : 'sr-only'}>{status}</p>
+      {live && !canRecord && <p className="hub-screen-note">To record in this browser, pop out the preview and capture the window in OBS.</p>}
+      {file && <a className="text-button hub-screen-download" href={file.url} download={file.name}><Icon name="download" size={14} />Download last video</a>}
     </section>
   </>
 }
