@@ -46,7 +46,7 @@
     }
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's. Read-only for now. Any USB host can reach it: development bases only.",
+    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, and panel keys and encoder turns from the host while the link is armed (at every boot). Any USB host can drive it: development bases only.",
     "sources": [
       "../base/link.c",
       "../base/link.s"
@@ -58,15 +58,36 @@
         "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
         "op": "jmp",
         "target": "mw_link_router"
+      },
+      {
+        "addr": "0x4007faf4",
+        "len": 6,
+        "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
+        "op": "jmp",
+        "target": "mw_link_held"
       }
     ],
     "cflags": [
-      "-DSYSEX_SEND_AT=0x400828fe"
+      "-DSYSEX_SEND_AT=0x400828fe",
+      "-DUI_QUEUE_PTR_AT=0x40148cd0",
+      "-DQUEUE_POST_AT=0x40001fba",
+      "-DKEY_INDEX_AT=0x4010ae5c",
+      "-DKEY_BITS_AT=0x40f95744"
     ],
     "defsym": {
       "mw_link_router_resume": "0x400812fe"
     },
     "subscribe": [
+      {
+        "event": "ev_key",
+        "fn": "mw_link_key",
+        "order": 1
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_link_enc",
+        "order": 1
+      },
       {
         "event": "ev_tick",
         "fn": "mw_link_tick",

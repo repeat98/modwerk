@@ -1,1 +1,1 @@
-The Model:Cycles' USB link is started: a development base answers identity and memory reads over USB MIDI SysEx, with the Analog Rytm MKII's wire format, and `sdk/machines/model-cycles/tools/mc_link.py` asks for them. Release bases do not carry it.
+The Model:Cycles' USB link is started: a development base answers identity and memory reads and takes panel keys and encoder turns over USB MIDI SysEx, with the Analog Rytm MKII's wire format, and `sdk/machines/model-cycles/tools/mc_link.py` asks for them. Release bases do not carry it.

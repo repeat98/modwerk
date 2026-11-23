@@ -45,3 +45,6 @@ The release base above with base.json's `dev`: the read-only USB link (`base/lin
 `sdk/machines/model-cycles/tools/mc_link.py`: the first link (`79efd1ec…`, any port) answered `ident` (port USB) and
 `mem 0x40000400 16` (the stock OS's first bytes); the link limited to USB (`6054da89…`) answered `ident` after a fresh
 flash with port USB and one request. Details in `sdk/machines/model-cycles/LINK.md`.
+
+Keys and encoders over the link (dev base `26dee268`, image `ccb406b4…`): on the same unit, `key 2 1` held TRACK as
+a person would and `key 2 0` let it go; `enc 2 10` on the main page turned PITCH.
