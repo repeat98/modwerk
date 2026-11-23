@@ -1,0 +1,1 @@
+For developers: the test procedure now says that on base 0.8 a module effect can be picked under the Octatrack emulator, since picks follow the frame share, and why the emulator still cannot judge a pick's cost: its CPU meter reads full because the emulator skips the base's idle loop, and the frame share it reads is empty.
