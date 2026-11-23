@@ -13,6 +13,7 @@ static unsigned failures;
 static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168 * track): byte 0 is "playing" */
 static uint32_t render_states[8 * 10]; /* stock's render states (0x80004898 + 40 * track): +4 the RTRG count */
 static uint8_t live_fx[16]; /* what each slot runs (0x80000ec4): FX1 T1-T8, then FX2 */
+static uint8_t playing[16];  /* 0x800065b8: +5 the current bank, +6 its pattern, +7 and +8 the queued ones */
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
@@ -26,7 +27,7 @@ static struct segment segments[] = {
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
     {0x800049d8u, sizeof stock_voices, stock_voices}, {0x80004898u, sizeof render_states, (uint8_t *)render_states},
-    {0x80000ec4u, sizeof live_fx, live_fx},
+    {0x80000ec4u, sizeof live_fx, live_fx}, {0x800065b8u, sizeof playing, playing},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -85,6 +86,7 @@ static struct runtime_module engine_module; static int engine_installed;
 const struct runtime_module *modwerk_runtime_module(unsigned position)
 { return engine_installed && position == 3u ? &engine_module : 0; }
 static uintptr_t volatile machine_row[10], sequencer_row[9], start_row[10];
+static uintptr_t volatile deadline_row[2]; /* ev_frame_deadline's subscribers */
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
@@ -108,12 +110,16 @@ void mw_seq_set_none(void) {}
 #define modwerk_runtime_event_row host_rows
 static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_MACHINES - RUNTIME_EVENTS] = machine_row, [MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS] = sequencer_row,
-    [MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS] = start_row};
+    [MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS] = start_row, [MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS] = deadline_row};
 static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic renders advance it */
-#define DTCN3 host_timer
+static uint32_t host_tick;           /* and each read of it by this much: a wait on it ends (check_late_entry) */
+static uint32_t host_dtcn3(void) { uint32_t now = host_timer; host_timer = now + host_tick; return now; }
+#define DTCN3 host_dtcn3()
 /* The loader's count of owner changes: the machine map notes a newly installed set's machines when it moves. */
 static uint32_t owner_epoch;
 uint32_t modwerk_runtime_owner_epoch(void) { return owner_epoch; }
+static int test_stopped; /* runtime.c: the transport */
+int modwerk_machine_stopped(void) { return test_stopped; }
 #include "machine_registry.c"
 #undef modwerk_runtime_event_row
 
@@ -164,11 +170,26 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
 static unsigned box_calls, box_track = 99; static const char *box_label;
 void modwerk_status_machine_refused(unsigned track, const char *label) { ++box_calls, box_track = track, box_label = label; }
 static unsigned cpu_boxes, cpu_box_track = 99; static uint32_t cpu_box_booked, cpu_box_add;
-void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
-{ (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add; }
-static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu;
-uint32_t modwerk_status_cpu_load(void) { return cpu_now; }
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu; }
+static uint32_t cpu_box_allowed;
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
+{ (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add, cpu_box_allowed = allowed; }
+/* status.c's frame judge: the share now (cpu_now) with the pick on top and what it replaces off, against the line. */
+static uint32_t cpu_now, hot_line = 500u; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add, hot_box_gone;
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone, uint32_t dsp)
+{
+    (void)label; (void)dsp; CHECK(machine == 1u || machine == 2u); /* 2: a further instance of a machine the Part runs */
+    extern volatile uint32_t mw_cpu_refusals;
+    if (cpu_now + add < hot_line + gone) return 0;
+    mw_cpu_refusals = mw_cpu_refusals + 1u, ++hot_boxes, hot_box_track = slot, hot_box_cpu = cpu_now, hot_box_add = add, hot_box_gone = gone; return 1;
+}
+/* The site's measured costs: module 'L' (LIGHT) one track 2 % of a frame, 1 % to wake, while costs_listed. */
+static int costs_listed;
+int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
+{ if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
+uint32_t modwerk_status_module_rest(uint32_t module) { return costs_listed && module == 'L' ? 15u : 0u; } /* 1.5 % at rest */
+static uint32_t test_hush; /* status.c's predicted brake */
+uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
+{ fx[0] = fx[1] = (fx_set){{0}}; id[0] = (uint16_t)(test_hush >> 24), id[1] = 0xffffu; return test_hush; }
 static uint32_t cpu_in, cpu_out; /* what picks reported adding to the meter and exits taking away (status.c counts them) */
 void modwerk_status_cpu_entered(uint32_t mille) { cpu_in += mille; }
 void modwerk_status_cpu_left(uint32_t mille) { cpu_out += mille; }
@@ -226,7 +247,8 @@ static const Part *slot(unsigned t) { return part0() + 0x22 + t; }
 static void fresh(void)
 {
     late = timed = before = 0; made = 0; credit = 0; frame_seen = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
-    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = 0, skipped[k] = 0, place[k] = next[k] = 0;
+    starting = start_prev = 0;
+    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = start_cost[k] = start_after[k] = 0, skipped[k] = 0, place[k] = next[k] = 0;
 }
 /* The track's render in a later frame than the last one: the lookup reads the Part again (mw_frame_exit ends a frame). */
 static int later(unsigned track) { frame_seen = 0; return mw_source_render_impl(track, 0, 0, 1); }
@@ -461,27 +483,28 @@ static void check_cpu_budget(void)
     for (unsigned t = 0; t < 8; ++t) { part0()[0x22 + t] = 1; for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0; }
     fresh(); a_admit = 1; mw_cpu_allowance = 45; { unsigned polls = rest_polls; mw_ui_tick(); CHECK(rest_polls == polls + 1u); }
     CHECK(!mw_cpu_refused && !mw_cpu_booked);
-    /* A busy unit (the meter at mw_cpu_hot or more) takes no further machine, with its own box and the measured
-     * load; the same machine on its own track asks nothing, and the pick passes once the load is under the line. */
-    extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals;
+    /* A unit at the frame line (status.c) takes no further machine, with its own box and the share it plays at; the
+     * same machine on its own track asks nothing, and the pick passes once the share and its cost are under the line. */
+    extern volatile uint32_t mw_cpu_refusals;
     { uint32_t refusals = mw_cpu_refusals; unsigned was = cpu_boxes;
-      cpu_now = mw_cpu_hot;
-      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == mw_cpu_hot);
+      cpu_now = hot_line;
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == hot_line);
       CHECK(mw_cpu_refusals == refusals + 1 && cpu_boxes == was && !mw_cpu_booked);
-      cpu_now = mw_cpu_hot - 120u; /* its price (12 % of a frame, unpriced) would take the meter to the line */
-      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == mw_cpu_hot - 120u);
+      cpu_now = hot_line - 120u; /* its price (12 % of a frame, unpriced) would take the share to the line */
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == hot_line - 120u && hot_box_add == 120u);
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 3);         /* nor the dear one (30) */
-      cpu_now = mw_cpu_hot - 121u;
+      cpu_now = hot_line - 121u;
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 4);
       CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);
       cpu_now = 1000u;
       CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);                    /* already this machine's track */
       CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 4);                    /* back to stock: never refused */
       cpu_now = 0; mw_ui_tick(); }
-    /* The busy check adds a machine's measured meter cost (reserved[1]), its price only without one; a pick reports
-     * what it adds and an exit what it takes away (owner's MKII, 21 November 2026: Grain priced 35 added 8.9). */
+    /* A pick adds what the site measured one track of the machine to add to the frame, else its measured meter cost
+     * (reserved[1]), else its price; it reports what it adds and an exit what it takes away (owner's MKII, 21 November
+     * 2026: Grain priced 35 added 8.9). A swap is judged with the one it replaces gone. */
     { const void *three[] = {&A, &P, &L}; rows(three, 3, 0, 0); fresh(); a_admit = 1; cpu_in = cpu_out = 0;
-      cpu_now = mw_cpu_hot - 100u;
+      cpu_now = hot_line - 100u;
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && !cpu_in);               /* the dear one by its price: 30 */
       CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 50u);                    /* priced 30, adds 5: admitted */
       CHECK(mw_assign(part0(), 7, 1) == 1 && cpu_out == 50u);                   /* back to stock: its cost comes off */
@@ -490,11 +513,25 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_out == 170u && cpu_in == 470u); /* a swap: one out, one in */
       CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_in == 470u);                   /* its own track again: nothing */
       CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 470u);
+      /* Measured by the site: the first track of the Part by its first (2 % + 1 %), a further one by its each (2 %), and
+       * the reserve's booking of the Part's machines the same way. */
+      costs_listed = 1, cpu_in = cpu_out = 0, mw_cpu_allowance = 100; /* room for two LIGHTs at 30 */
+      CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 30u);
+      CHECK(mw_assign(part0(), 6, 7) == 1 && cpu_in == 50u);                    /* a second LIGHT: each */
+      uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
+      CHECK(modwerk_machine_frame_booked(8, 0) == 50u && modwerk_machine_frame_booked(7, 0) == 30u && modwerk_machine_frame_booked(6, 0) == 30u);
+      CHECK(modwerk_machine_frame_booked(8, 25u) == 25u);                        /* the first less a sample's share, a further one whole */
+      CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 20u);                   /* one of two leaves: each */
+      cpu_now = hot_line - 89u;
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_box_gone == 30u);  /* the last LIGHT out, unpriced A in: 120 */
+      cpu_now = hot_line - 91u;
+      CHECK(mw_assign(part0(), 7, 5) == 1 && cpu_out == 50u && cpu_in == 170u);
+      CHECK(mw_assign(part0(), 7, 1) == 1); costs_listed = 0, cpu_now = 0, mw_cpu_allowance = 45;
       rows(both, 2, 0, 0); fresh(); a_admit = 1; mw_ui_tick(); }
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
     CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */
-    CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 800 && cpu_box_add == 266);
+    CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 360 && cpu_box_add == 120 && cpu_box_allowed == 450); /* per mille of a frame */
     CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1);                           /* nor the dear one */
     CHECK(mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes + 2);            /* the same machine again asks nothing */
     CHECK(mw_assign(part0(), 2, 6) == (unsigned)-1);                           /* its own 12 back, 30 more: 54 */
@@ -606,11 +643,88 @@ static void clear_sigs(void)
             *host_at(0x46000000u + SAVED_OFF + p * PART_STRIDE + 0x22 + t) = 1;
         }
 }
+/* The brake: a frame interrupt fallen two frames behind silences every module machine track, as one past the CPU budget
+ * renders, until STOP or a Part change (owner's MKII, 22 November 2026: past about 135 % the unit hung, twice). */
+/* The adaptive reserve's input: the most tracks that trig on one step of any of the bank's 16 patterns (each track
+ * record's first eight bytes, the last eight steps first). */
+static void check_busiest_step(void)
+{
+    uint8_t *base = (uint8_t *)AT(U32(BANK)), most[2], tracks[2]; uint16_t id[2];
+    playing[5] = playing[7] = 2u, playing[6] = playing[8] = 0;                                   /* C01, nothing queued */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && !most[0] && !tracks[0]);
+    for (unsigned t = 0; t < 5u; ++t) base[PATTERN_TRACK * t + 7u] |= 1u;                      /* pattern 1, step 1 */
+    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] |= (uint8_t)(1u << t); /* pattern 2: Tn on step n */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 5u && tracks[0] == 5u);
+    playing[8] = 1u;                                                                             /* C02 queued */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 2u && most[0] == 5u && most[1] == 1u && tracks[1] == 8u && id[0] == 32u && id[1] == 33u);
+    CHECK(modwerk_machine_trigging() == 0x1fu);                                                   /* C01: T1-T5 trig */
+    playing[7] = 3u;                                                                             /* queued in bank D */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 5u);
+    playing[6] = 1u, playing[7] = 2u;                                                            /* C02 plays */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 1u && tracks[0] == 8u && modwerk_machine_pattern() == 33u);
+    playing[6] = playing[8] = 40u;                                                               /* no pattern: the safe side */
+    CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 8u && tracks[0] == 8u);
+    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;
+    memset(playing, 0, sizeof playing);
+}
+/* The reserve books each installed module's cost at rest, whether or not a track or slot uses it. */
+static void check_rest_booked(void)
+{
+    CHECK(!modwerk_machine_rest_booked());
+    engine_installed = 1, engine_module.id = 'L';
+    CHECK(!modwerk_machine_rest_booked());                 /* not in the table: nothing */
+    costs_listed = 1;
+    CHECK(modwerk_machine_rest_booked() == 15u);
+    costs_listed = 0, engine_installed = 0, engine_module.id = 0;
+}
+static void check_brake(void)
+{
+    const void *one[] = {&A};
+    clear_sigs(); misc[0x0f] = 0; /* Part 1 */
+    fresh(); a_admit = 1; cpu_now = 0; mw_cpu_allowance = 45; mw_cpu_refused = 0;
+    rows(one, 1, 0, 0); mw_ui_tick();
+    CHECK(mw_assign(part0(), 2, 5) == 1);
+    mw_ui_tick();
+    int a0 = a_renders; CHECK(later(2) == a0 + 1);
+    uint32_t brakes = mw_frame_brakes;
+    frame(0, FRAME / 2u * 3u, 0), frame(0, FRAME / 2u * 3u, 0), frame(0, FRAME / 2u * 3u, 0), frame(0, FRAME / 2u * 3u, 0);
+    CHECK(!mw_frame_brake);                                              /* two frames behind: not past it yet */
+    frame(0, FRAME / 2u * 3u, 0);
+    CHECK(mw_frame_brake && mw_frame_brakes == brakes + 1u);
+    a0 = a_renders; later(2); CHECK(a_renders == a0);                   /* the module's track renders silence */
+    mw_ui_tick(); CHECK(mw_frame_brake);                                 /* the same Part, still playing */
+    frame(0, FRAME / 2u * 3u, 0); CHECK(mw_frame_brakes == brakes + 1u); /* braked once */
+    for (unsigned k = 0; k < 8u; ++k) frame(0, 0, 0);                    /* short frames: it catches up */
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0;
+    CHECK(!mw_frame_brake);                                              /* STOP releases it */
+    a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0), frame(2, 0, 0);
+    CHECK(a_renders > a0);                                               /* renders again (the guard re-times it first) */
+    /* The predicted brake: on a pattern status.c names (C01 here), the module's track renders silence from the first
+     * frame; on any other, it renders. */
+    playing[5] = 2u, playing[6] = 0;
+    test_hush = 32u << 24 | 1u << 2 << 16, mw_ui_tick();                /* C01: T3 silent */
+    a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0); CHECK(a_renders == a0 && mw_hush == test_hush);
+    test_hush = 32u << 24 | 1u << 3 << 16, mw_ui_tick();                /* C01: only T4 */
+    a0 = a_renders; frame(2, 0, 0); CHECK(a_renders > a0);
+    test_hush = 32u << 24 | 1u << 2 << 16, mw_ui_tick();
+    playing[6] = 1u;                                                     /* C02 plays */
+    a0 = a_renders; frame(2, 0, 0); CHECK(a_renders > a0);
+    test_hush = 0, mw_ui_tick(); memset(playing, 0, sizeof playing);
+    /* The ceiling: a render that would end the frame past 122 % does not run, however much credit there is; the next
+     * frame under it renders it again. */
+    for (unsigned k = 0; k < 4u; ++k) frame(0, 0, 0);                    /* full credit */
+    { uint32_t sheds = mw_frame_sheds; a0 = a_renders;
+      frame(2, FRAME_CEILING + 1u, 0);
+      CHECK(a_renders == a0 && mw_frame_sheds == sheds + 1u);
+      frame(2, FRAME / 4u, 0), frame(2, FRAME / 4u, 0);
+      CHECK(a_renders > a0); }
+    CHECK(mw_assign(part0(), 2, 1) == 1);
+}
 static void check_resting_machines(void)
 {
     static const struct modwerk_machine Q = {MODWERK_MACHINE_ABI, {'Q', '8'}, 1, 1, "POLY", 0, 0, a_defaults,
                                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}; /* renders inside stock's */
-    extern volatile uint32_t mw_cpu_hot, mw_wake_mille;
+    extern volatile uint32_t mw_wake_mille;
     const void *aq[] = {&A, &Q};
     clear_sigs(); misc[0x0f] = 0; /* Part 1 */
     fresh(); a_admit = 1; cpu_now = 0; mw_cpu_allowance = 45; mw_cpu_refused = 0;
@@ -641,9 +755,10 @@ static void check_resting_machines(void)
 
     /* A busy unit: a pick that would wake a module is judged with its hooks back on top (mw_wake_mille). */
     { unsigned boxes = hot_boxes;
-      cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille;
+      cpu_now = hot_line - 10u * CPU_DEFAULT - mw_wake_mille;
       CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1 && hot_boxes == boxes + 1 && resting(1) && !pick_who);
-      cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille - 1u;
+      CHECK(hot_box_add == 10u * CPU_DEFAULT + mw_wake_mille);
+      cpu_now = hot_line - 10u * CPU_DEFAULT - mw_wake_mille - 1u;
       CHECK(mw_assign(part0(), 3, 6) == 1 && hot_boxes == boxes + 1 && !resting(1));
       CHECK(mw_assign(part0(), 3, 1) == 1); cpu_now = 0; }               /* back to FLEX */
 
@@ -718,6 +833,153 @@ static void check_resting_machines(void)
 
     model_rests = 0; judged_n = 0; rows(0, 0, 0, 0); clear_sigs();
     CHECK(!asleep_n && !masked);
+}
+/* The late-entry wait (machine_registry.c) against a model of the timer: a read costs TICK counts, so a wait ends
+ * within one TICK of its time. It shows the decision and the wait's length; that an entry in the window stops the
+ * DSP's frame exchange, and that one LATE_HI late makes the DSP skip a frame, are measurements on a unit, not this
+ * test's. */
+#define US 132u
+#define TICK 12u
+static uint32_t entered;
+static void late_fresh(uint32_t at)
+{
+    entry_at = entry_late = wait_run = 0, entered = at, host_tick = TICK;
+    mw_late_max = mw_late_hits = mw_late_waits = mw_late_wait_max = 0, mw_late_wait_on = 1;
+}
+/* The frame interrupt enters `interval` counts after its last entry: whether it waited. An entry that did leaves
+ * LATE_HI late; one that did not leaves at once; either way the frame's stamp is taken as it leaves. */
+static unsigned entry(uint32_t interval)
+{
+    uint32_t waits = mw_late_waits, longest = mw_late_wait_max;
+    host_timer = entered += interval;
+    mw_frame_enter();
+    uint32_t kept = mw_frame_t0 - entered;
+    CHECK(mw_frame_t0 == host_timer - TICK && entry_at == entered && mw_late_waits - waits <= 1u);
+    if (mw_late_waits == waits) { CHECK(!kept && mw_late_wait_max == longest); return 0; }
+    CHECK(entry_late + kept >= LATE_HI && entry_late + kept < LATE_HI + TICK && kept <= LATE_HI - LATE_LO);
+    CHECK(mw_late_wait_max == (kept > longest ? kept : longest));
+    return 1;
+}
+/* A quiet start, an entry on the grid, then one `us` µs late: whether that one waited. */
+static unsigned late_by(uint32_t us)
+{
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME) && !entry_late);
+    return entry(FRAME + us * US);
+}
+static uint32_t deadline_seen; static unsigned deadline_calls;
+static unsigned deadline_rest;
+static unsigned take_deadline(uint32_t deadline, unsigned rest) { deadline_seen = deadline, deadline_rest = rest, ++deadline_calls; return 0; }
+static void check_late_entry(void)
+{
+    /* On the grid nothing waits and nothing counts as late; the first entry after the start is on time. */
+    late_fresh(5000000u);
+    for (unsigned i = 0; i < 6u; ++i) CHECK(!entry(FRAME));
+    CHECK(!mw_late_max && !mw_late_hits && !mw_late_waits && !mw_late_wait_max);
+    /* Below the window (70, 75 and 80 µs) and past it (190, 195, 200 and 250 µs) an entry goes straight on. The
+     * lateness is 0.5 µs under the interval's excess: GRID. */
+    static const uint16_t outside[] = {1, 60, 70, 75, 80, 191, 195, 200, 250, 340};
+    for (unsigned i = 0; i < sizeof outside / sizeof *outside; ++i) {
+        uint32_t over = mw_late_over;
+        CHECK(!late_by(outside[i]) && entry_late == outside[i] * US - 66u && mw_late_max == entry_late);
+        CHECK(!mw_late_hits && !mw_late_waits);
+        /* Past the window it is counted since boot (octabam's two such entries, 205 and 209 µs, both stalled); below, not. */
+        CHECK(mw_late_over - over == (outside[i] > 190u ? 1u : 0u));
+    }
+    CHECK(!late_by(75) && !entry(FRAME - 75u * US) && !entry_late && !entry(FRAME));
+    /* In it (81 µs; stall 56's entry, under 110 µs by this clock; the two logged stalls' 149 and 155 µs; 189 µs) it waits
+     * until it is 190 µs late: 110 µs at most. */
+    static const uint16_t inside[] = {81, 105, 111, 120, 149, 155, 189, 190};
+    for (unsigned i = 0; i < sizeof inside / sizeof *inside; ++i) {
+        uint32_t over = mw_late_over;
+        CHECK(late_by(inside[i]) && entry_late == inside[i] * US - 66u && mw_late_max == entry_late);
+        CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late && mw_late_over == over);
+    }
+    /* A held entry's next one, two frames on, is on the grid: not counted. One past the window after a skipped frame
+     * (two frames and 250 µs) is; four frames or more without an entry start again at 0 and are not. */
+    { uint32_t over = mw_late_over;
+      CHECK(late_by(149) && !entry(2u * FRAME - 149u * US) && mw_late_over == over);
+      late_fresh(5000000u);
+      CHECK(!entry(FRAME) && !entry(2u * FRAME + 250u * US) && mw_late_over == over + 1u);
+      CHECK(!entry(5u * FRAME + 250u * US) && !entry_late && mw_late_over == over + 1u);
+      /* Switched off, the wait counts the window's entries as before and still only later ones as past it. */
+      late_fresh(5000000u); mw_late_wait_on = 0;
+      CHECK(!entry(FRAME) && !entry(FRAME + 149u * US) && mw_late_over == over + 1u);
+      late_fresh(5000000u); }
+    /* The DSP skips the frame after a waited entry: the next comes two frames less the lateness later, on the grid. */
+    CHECK(late_by(149) && !entry(2u * FRAME - 149u * US) && !entry_late && !entry(FRAME) && mw_late_waits == 1u);
+    /* A chain of held entries, each frame ending in the window again: WAIT_RUN in a row brake the module machines. */
+    { uint32_t brakes = mw_frame_brakes;
+      late_fresh(5000000u); mw_frame_brake = 0;
+      CHECK(!entry(FRAME) && entry(FRAME + 149u * US));
+      for (unsigned i = 2; i < WAIT_RUN; ++i) CHECK(entry(GRID));
+      CHECK(!mw_frame_brake && entry(GRID) && mw_frame_brake && mw_frame_brakes == brakes + 1u);
+      mw_frame_brake = 0;
+      late_fresh(5000000u);
+      CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && !entry(2u * FRAME - 149u * US) && !wait_run && !mw_frame_brake); }
+    /* Lateness carries from one entry to the next: 60 µs twice is 120 µs. A frame that came early takes it back. */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && entry(FRAME + 60u * US) && entry_late == 120u * US - 132u);
+    CHECK(mw_late_ring[(mw_late_count - 1u) & 7u] == entry_late && !mw_late_ring[(mw_late_count - 3u) & 7u]); /* kept for a stall */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && !entry(FRAME - 60u * US) && !entry(FRAME + 60u * US));
+    /* It is taken modulo a frame (three frames and 150 µs: the DSP skipped two), and four frames or more without an
+     * entry start it again at 0, whatever it was. */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && entry(3u * FRAME + 150u * US) && entry_late == 150u * US + 2u * FRAME - 2u * GRID - 66u);
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(5u * FRAME + 150u * US) && !entry_late && !entry(FRAME));
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 70u * US) && entry_late && !entry(IDLE) && !entry_late && !mw_late_hits);
+    /* After a skipped frame the sum is a frame less 0.5 µs: it counts as that frame. Left standing it decays 0.5 µs a
+     * frame into the window, and about 150 entries on the grid wait:
+     * 800 entries after a waited entry and its skipped frame, and after one 250 µs late and its skipped frame. */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && !entry(2u * FRAME - 149u * US) && !entry_late);
+    for (unsigned i = 0; i < 800u; ++i) CHECK(!entry(FRAME));
+    CHECK(mw_late_waits == 1u && mw_late_hits == 1u && mw_late_max == 149u * US - 66u);
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 250u * US) && !entry(2u * FRAME - 250u * US) && !entry_late);
+    for (unsigned i = 0; i < 800u; ++i) CHECK(!entry(FRAME));
+    CHECK(!mw_late_waits && !mw_late_hits && mw_late_max == 250u * US - 66u);
+    /* The same with the unit's frame a little off the nominal one, either way: no entry on its grid waits. */
+    for (uint32_t off = 0; off < 3u; ++off) {
+        late_fresh(5000000u);
+        CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && !entry(2u * (FRAME + off - 1u) - 149u * US));
+        for (unsigned i = 0; i < 800u; ++i) CHECK(!entry(FRAME + off - 1u));
+        CHECK(mw_late_waits == 1u);
+    }
+    /* The 32-bit timer wraps every 32.5 s: across it the intervals, the decision and a wait that spans it hold. */
+    late_fresh(0u - 3u * FRAME);
+    CHECK(!entry(FRAME) && !entry(FRAME) && entered == 0u - FRAME && !entry(FRAME + 70u * US) && entered < FRAME);
+    CHECK(!entry(FRAME - 70u * US) && !entry_late && !mw_late_hits);
+    late_fresh(0u - 2u * FRAME - 149u * US - 40u * US);
+    CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && entered == 0u - 40u * US && mw_frame_t0 < 2u * US);
+    CHECK(!entry(2u * FRAME - 149u * US) && !entry(FRAME) && mw_late_waits == 1u);
+    /* Switched off (development bases) it counts the entry and does not wait; the lateness is kept the same way. */
+    CHECK(late_by(149) && mw_late_hits == 1u);
+    late_fresh(5000000u); mw_late_wait_on = 0;
+    CHECK(!entry(FRAME) && !entry(FRAME + 149u * US) && entry_late == 149u * US - 66u && mw_late_max == entry_late);
+    CHECK(mw_late_hits == 1u && !mw_late_waits && !mw_late_wait_max && !entry(2u * FRAME - 149u * US) && !entry_late);
+    /* The budget times the frame from the wait's end: a waited frame is charged what it ran, not the wait. */
+    fresh(); CHECK(late_by(149));
+    host_timer += 30000u; mw_frame_exit();
+    CHECK(mw_frame_last == 30000u + TICK && mw_frame_max == mw_frame_last && !mw_frame_late_max);
+    /* ev_frame_deadline: each entry tells its subscribers by when work at IPL 5 must end, the next frame's grid time
+     * 80 µs late less a 20 µs margin; a late entry's grid time is its arrival less its lateness. */
+    deadline_row[0] = (uintptr_t)take_deadline, deadline_calls = 0;
+    late_fresh(7000000u);
+    CHECK(!entry(FRAME) && deadline_calls == 1u && deadline_seen == entered + GRID + 7920u);
+    CHECK(!late_by(60) && deadline_calls == 4u && deadline_seen == entered - entry_late + GRID + 7920u && !deadline_rest);
+    /* On a pattern the predicted brake names, its row's subscriber is told to bypass dry, from that frame; on another,
+     * not. */
+    playing[5] = 2u, playing[6] = 0, mw_hush_fx[1] = 32u << 24 | 1u;    /* C01 queued: row 0 */
+    CHECK(!entry(FRAME) && deadline_rest == 1u);
+    playing[6] = 1u;
+    CHECK(!entry(FRAME) && !deadline_rest);
+    mw_hush_fx[1] = 0, memset(playing, 0, sizeof playing);
+    deadline_row[0] = 0;
+    fresh(); late_fresh(0); host_tick = 0;
 }
 int main(void)
 {
@@ -1017,28 +1279,58 @@ int main(void)
     fresh(); f_cost = 11973; unsigned ran = 0; uint32_t from = host_timer;
     for (unsigned i = 0; i < 10000u; ++i) ran += frame(3, 0, 30000) > 100;
     CHECK(ran > 6000u && ran < 7000u && (host_timer - from) / 10000u <= FRAME / 5u * 4u + 50u && !mw_frame_late_max);
-    /* Past the budget even with the credit full (64,000), within the slack: a probe about every 1,026 frames measures
-     * it again; lighter, it comes back within one probe and stays. */
+    /* Past the ceiling (64,000 of 58,451): once measured it never runs again, no probe (a frame that long stopped the
+     * DSP, owner's MKII, 22 November 2026); lighter, it is timed afresh at STOP or a Part change and stays. */
     fresh(); f_cost = 48000; ran = 0;
     for (unsigned i = 0; i < 3000u; ++i) ran += frame(3, 6000, 10000) > 100;
-    CHECK(ran >= 3u && ran <= 4u);
+    CHECK(ran == 1u);                                                    /* the first, before its cost was known */
     f_cost = 5000; ran = 0;
     for (unsigned i = 0; i < 1100u; ++i) ran += frame(3, 6000, 10000) > 100;
+    CHECK(!ran);
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0; mw_ui_tick();
     unsigned stays = 0;
     for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 6000, 10000) > 100;
-    CHECK(ran >= 10u && stays == 10u);
-    /* One slow render (90,000, as at a pattern change) is no sentence: too far over for the budget ever to have room
-     * for it, the track is probed after 1,024 skips, the probe's time is its cost again and it stays. */
+    CHECK(stays == 10u);
+    /* One slow render (90,000, as at a pattern change) is no sentence: held while its cost says it would pass the
+     * ceiling, it is timed afresh at STOP or a Part change, and stays. */
     fresh(); f_cost = 10000;
     for (unsigned i = 0; i < 4u; ++i) CHECK(frame(3, 10000, 10000) > 100);
     f_cost = 90000; CHECK(frame(3, 10000, 10000) > 100);
     f_cost = 10000; ran = 0;
     for (unsigned i = 0; i < 1023u; ++i) ran += frame(3, 10000, 10000) > 100;
     CHECK(!ran && cost[3] == 90000);
+    CHECK(frame(3, 10000, 10000) == -9);                                 /* no probe past the ceiling */
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0; mw_ui_tick();      /* STOP: timed afresh */
     CHECK(frame(3, 10000, 10000) > 100 && cost[3] == 10000);
     stays = 0;
     for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 10000, 10000) > 100;
     CHECK(stays == 10u);
+    /* A note start costs a render far more than its steady frames: at the ceiling a starting track is judged by what
+     * its last start cost (FM Synth on T8 at C01's step 1, owner's MKII, 22 November 2026); the first start has no
+     * figure yet, and a frame without a start goes by the steady cost. */
+    fresh(); f_cost = 2000;
+    for (unsigned i = 0; i < 4u; ++i) CHECK(frame(3, 10000, 0) > 100);
+    mw_frame_t0 = host_timer; host_timer += 10000; mw_source_start_select(3, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) > 100); mw_frame_exit();     /* the first start: runs, and is measured */
+    f_cost = 2000;
+    for (unsigned i = 0; i < 12u; ++i) CHECK(frame(3, 10000, 0) > 100);
+    mw_frame_t0 = host_timer; host_timer += 30000; mw_source_start_select(3, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) == -9); mw_frame_exit();     /* 30,000 + its start's 30,000: held */
+    CHECK(skipped[3] && start_cost[3] >= 30000u);
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0; mw_ui_tick();      /* STOP: its step figures afresh too */
+    CHECK(!cost[3] && !start_cost[3] && !start_after[3]);
+    f_cost = 2000; frame(3, 0, 0), frame(3, 0, 0);
+    CHECK(frame(3, 30000, 0) > 100);                                     /* no start: the steady cost fits */
+    /* A machine that starts its own notes past the base (FM Synth): a step's frame is one where any track started, so
+     * T3 learns its step cost from T1's START and is held at the next step all the same. */
+    for (unsigned i = 0; i < 12u; ++i) frame(3, 10000, 0);
+    mw_frame_t0 = host_timer; host_timer += 10000; mw_source_start_select(0, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) > 100); mw_frame_exit();
+    f_cost = 2000;
+    for (unsigned i = 0; i < 12u; ++i) CHECK(frame(3, 10000, 0) > 100);
+    mw_frame_t0 = host_timer; host_timer += 30000; mw_source_start_select(0, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) == -9); mw_frame_exit();
+    f_cost = 2000; frame(3, 0, 0), frame(3, 0, 0);
     /* Two machine tracks, T3 (3,000) before T4 (20,000). When the frame would overdraw and skipping T4 alone makes
      * the room, T3 runs and T4 is skipped when it comes; when T4's cost would not make it, T3 is skipped at once. */
     CHECK(mw_assign(part0(), 2, 5) == 1);
@@ -1052,6 +1344,9 @@ int main(void)
         CHECK(i < 4u ? light > 100 && dear > 100 : i < 6u ? light > 100 && dear == -9 : light == -9 && dear == -9);
     }
     CHECK(mw_frame_shed_tracks == (1u << 2 | 1u << 3) && cost[2] == 3000 && cost[3] == 20000);
+    start_cost[3] = start_after[11] = 7u, skipped[11] = 3u;
+    guard_forget(3);                                                     /* another machine on T4: timed afresh */
+    CHECK(!cost[3] && !start_cost[3] && !start_after[11] && !skipped[11] && cost[2] == 3000);
     CHECK(mw_assign(part0(), 2, 1) == 1);
     /* A track's second render in a frame has its own estimate: once measured, the heavy second render skips and the
      * light first one runs (also in the frame after the first long one, which starts 25,109 late: skipping the heavy
@@ -1179,11 +1474,14 @@ int main(void)
     check_native_flex_voice();
     check_cpu_budget();
     check_engine_price();
+    check_busiest_step(); check_rest_booked();
+    check_brake();
     check_resting_machines();
+    check_late_entry();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
-         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard, the CPU budget and resting "
+         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard, the late-entry wait, the CPU budget and resting "
          "machines (rest when unused, wake on pick, on a track and after a set change) passed.");
     return 0;
 }

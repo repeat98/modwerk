@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "f112f45e4541a9b7aa87a186c62a3156143c86c9",
+  "sourceCommit": "81eda9fa3c774ebd1a3017e00ad7b39272c78617",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "2d9de2b0bc2a341e011c1407910fcc73a1f52adda5b5bc5e5b175a723d599c00",
+  "sourceTreeSha256": "05fb992d9ff999900808c82c89c9baff87656c9a092a7bef27cf6580a4c9cf42",
   "compilerSha256": "0b303a1e9517e96e93720ee99b01f4c2d46fdf94d84e8e332d9326d241e98066",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
-    "tapeecho": "0.1.6-experimental",
+    "tapeecho": "0.1.9-experimental",
     "euclid": "0.1.5-experimental",
     "repitch": "0.2.1-experimental",
     "tapehead": "0.1.2-experimental",
@@ -20,7 +20,7 @@
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
     "quantizer": "0.1.4-experimental",
-    "synth": "0.1.4-experimental",
+    "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
@@ -44,19 +44,19 @@
   "files": {
     "dsp-packages.json": {
       "bytes": 75767,
-      "sha256": "2fa2454f9a802eb2b40e6ddbf4f69f34802894130504f38f2bf1db6a31479155"
+      "sha256": "ab942589c223cc30b801d0f63658ac2a5e8a63d65ddf61d109bb4cd00d3e86b1"
     },
     "resident-dsp.json": {
       "bytes": 6981,
       "sha256": "5820dc7e948cd6167fb7777903a35e390cda40fd90c33bc82149c8291b32a0da"
     },
     "coldfire-packages.json": {
-      "bytes": 362220,
-      "sha256": "c81c39fd917191414abb9864e1a3cd74f4805a548b465fb37905ab583bacfc97"
+      "bytes": 364756,
+      "sha256": "f48d93cf43345798918d01f10bce800208d6e0aaab2a409627651c12e18fb19b"
     },
     "rom-packages.json": {
       "bytes": 28500,
-      "sha256": "3c45c7b7b681d4df243c6f332dbb6a6119f5008aefd4abd5175423f7d500c6de"
+      "sha256": "68d9f0e5f388910e20cd00f5b00cbc1eb606258921d90d4a0d87dab934f835cb"
     },
     "bootstrap-package.json": {
       "bytes": 2607,
@@ -75,8 +75,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1338948,
-      "sha256": "d577d95eb453db8121e4b844fb132d8a2e7faa7a45569f04f76528b6ba6b2336"
+      "bytes": 1343068,
+      "sha256": "97f1fc21dc5aaed8b731915440e1258cf3d8f34436f4d3900526173426f2992a"
     },
     "utility-packages.json": {
       "bytes": 11735,
