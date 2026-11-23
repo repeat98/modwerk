@@ -113,7 +113,8 @@ static uint32_t gran_dir(GranEngine *e, unsigned dir)
     return (e->seed >> 16) >= 65536u - thr;
 }
 
-static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const GranSample *s, unsigned n)
+static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const GranSample *s, unsigned n,
+                       int32_t whole, uint32_t frac)
 {
     uint32_t d6 = t->cd;
 
@@ -181,6 +182,22 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
             else if ((uint32_t)at >= s->count)
                 at = (g->rev || t->edge != GRAN_EDGE_CLAMP) ? (int32_t)s->count - 1 : 0;
             g->idx = (uint32_t)at;
+        }
+        if (t->edge == GRAN_EDGE_STOP) {
+            /* STOP: a grain that would reach an edge before its window ends is shortened so that the window ends there. The
+             * 0.1.1 grain was cut by the edge in the middle of its window, which clicked (the author, 23 November 2026).
+             * The frames the cursor can still read, in output frames: a pitch up reads several a frame, and a grain
+             * going backwards (its own direction against the note's step) leaves by the start. */
+            uint32_t room = (g->rev ^ (whole < 0 ? 1u : 0u)) ? g->idx + 1u : s->count - g->idx;
+            uint32_t adv = whole < 0 ? 0u - (uint32_t)whole : (uint32_t)whole + (frac != 0);
+            if (!adv) adv = 1u;
+            /* A multiplication and a compare for every grain; the divisions only for a grain that does reach the edge. */
+            if (room < g->left * adv) {
+                room /= adv;
+                if (!room) room = 1;
+                g->left = room;
+                g->phs = 0x1000000u / room;
+            }
         }
         g->pan = 0;             /* v018: paneo al azar dentro de +-PAN/16 */
         if (p->pan) {           /* PAN 0..127: 127 da exactamente el PAN maximo del original */
@@ -744,7 +761,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
     for (unsigned i = 0; i < n; ++i)
         mix[i].mid = mix[i].side = 0;
     if (count)
-        gran_spawn(e, t, p, s, n);
+        gran_spawn(e, t, p, s, n, whole, frac);
     if (GRAN_PTR_PATH && stereo)
         mix_voices(t, s, whole, frac, win, mix, n, count, 1, 1);
     else
