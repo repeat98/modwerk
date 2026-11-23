@@ -1,0 +1,110 @@
+{
+  "about": "Band-pass Q of the Analog Rytm MKII's analog filter against the resonance word the filter routine sends (frame +74 + 2v), measured on a unit (Nathaniel Pavel's MKII, OS 1.74) with the private Filter Probe: white noise into the BD voice, the BD voice's USB channel recorded, each step fitted with a 2-pole band-pass. Words 0x2000 down to 0xe000 in 0x0400 steps: the P2 run (23 Nov 2026, image IFC1), the mean of 880 Hz and 440 Hz. Words above 0x2000: the P1 run (22 Nov 2026), the mean at 220 Hz, 880 Hz and 3.5 kHz. Stock's RES knob sends value x 256 (0x0000..0x7f00); words below 0 (0x8000..0xffff) are signed and widen the band-pass. gain_db: the fitted band-pass's peak level against the open filter (LP2 at FRQ 127), the same runs (words above 0x2000 from P1's 880 Hz run).",
+  "points": [
+    {
+      "word": 16384,
+      "q": 17.7,
+      "gain_db": 26.26
+    },
+    {
+      "word": 14336,
+      "q": 11.3,
+      "gain_db": 22.29
+    },
+    {
+      "word": 12288,
+      "q": 7.6,
+      "gain_db": 19.02
+    },
+    {
+      "word": 10240,
+      "q": 5.06,
+      "gain_db": 15.46
+    },
+    {
+      "word": 8192,
+      "q": 3.325,
+      "gain_db": 11.79
+    },
+    {
+      "word": 7168,
+      "q": 2.702,
+      "gain_db": 10.09
+    },
+    {
+      "word": 6144,
+      "q": 2.1015,
+      "gain_db": 7.99
+    },
+    {
+      "word": 5120,
+      "q": 1.7555,
+      "gain_db": 6.23
+    },
+    {
+      "word": 4096,
+      "q": 1.4365,
+      "gain_db": 4.54
+    },
+    {
+      "word": 3072,
+      "q": 1.1765,
+      "gain_db": 2.79
+    },
+    {
+      "word": 2048,
+      "q": 0.9427,
+      "gain_db": 0.92
+    },
+    {
+      "word": 1024,
+      "q": 0.7809,
+      "gain_db": -0.85
+    },
+    {
+      "word": 0,
+      "q": 0.6072,
+      "gain_db": -2.66
+    },
+    {
+      "word": -1024,
+      "q": 0.4817,
+      "gain_db": -4.68
+    },
+    {
+      "word": -2048,
+      "q": 0.4047,
+      "gain_db": -6.35
+    },
+    {
+      "word": -3072,
+      "q": 0.3162,
+      "gain_db": -8.19
+    },
+    {
+      "word": -4096,
+      "q": 0.2602,
+      "gain_db": -10.02
+    },
+    {
+      "word": -5120,
+      "q": 0.1991,
+      "gain_db": -11.92
+    },
+    {
+      "word": -6144,
+      "q": 0.1588,
+      "gain_db": -13.79
+    },
+    {
+      "word": -7168,
+      "q": 0.1177,
+      "gain_db": -15.65
+    },
+    {
+      "word": -8192,
+      "q": 0.1043,
+      "gain_db": -17.29
+    }
+  ]
+}

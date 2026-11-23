@@ -3912,7 +3912,7 @@
       "id": "usb-audio-out-tracks-main-cue",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "name": "USB Audio",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "category": "midi-usb",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3923,13 +3923,14 @@
         "location": "PROJ > MODWERK > SETTINGS > USB AUDIO",
         "steps": [
           "Open SETTINGS, highlight USB AUDIO and press YES. Open a field to see its choices. Press YES to select one or NO to go back.",
-          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts.",
+          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts. INPUTS plays USB channels from the computer into inputs A/B, C/D or all four.",
           "For Outbox 8, choose OUTBOX 8 and assign the four stereo pairs. In the Outbox app, map USB pairs 1–4 to the four desired physical output pairs. Subsequent source changes take place on the Octatrack."
         ],
         "screenshots": [
           "media/ot-settings.png",
           "media/ot-usb-audio.png",
           "media/ot-track-tap.png",
+          "media/ot-inputs.png",
           "media/ot-outbox-pairs.png"
         ]
       },
@@ -3968,22 +3969,22 @@
         "location": "USB",
         "conflicts": [],
         "limitations": [
-          "Output only, fixed 44.1 kHz / 24-bit; USB input and Crossbar variants are excluded.",
+          "Fixed 44.1 kHz / 24-bit. USB input (INPUTS: AB, CD or ABCD) needs a high-speed connection to a computer; full speed and Outbox 8 are output only. Crossbar variants are excluded.",
           "Like every DRAM module, gives up about 10 MB of sample memory: projects that filled Flex/recorder memory can show OUT OF MEMORY. Shorten recorder reservations or load long samples into Static (#433).",
           "At full speed, track feeds fall back to a stereo sum and Main + Cue to Main.",
           "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1–7. With a master track, tracks 1–7 lead track 8 by 32 samples.",
-          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, worst-case ColdFire cycles and complete memory bounds remain untested."
+          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, the MKI, worst-case ColdFire cycles and complete memory bounds remain untested."
         ]
       },
       "resources": {
-        "recorded": "20 November 2026, configurable release package",
+        "recorded": "23 November 2026, configurable release package with USB input",
         "storage": {
           "label": "Runtime memory",
           "display": "Full bound unmeasured",
           "value": null,
           "unit": "bytes",
           "method": "unmeasured",
-          "conditions": "USB Audio 0.3 allocates 10,288 initialized bytes and 94,152 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
+          "conditions": "USB Audio 0.4 allocates 17,852 bytes of code and data and 110,552 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
           "source": "README.md"
         },
         "processing": {
@@ -4019,7 +4020,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "On an Octatrack MKII, macOS recorded all five widths. Track 8/Master reconnected and survived Undo twice. Keep and card restoration after a physical power cycle passed on the same release image. See TESTING.md for build identities and limits.",
+        "summary": "0.4.0 is the input build that ran on an Octatrack MKII on 21 November 2026 (all four INPUTS modes, 17 minutes of duplex audio), with a new inventory kind; this exact package was released on the owner's word without a run on base 0.8.1. 0.3.0 recorded all five widths, survived Undo and passed Keep and card restoration after a physical power cycle. See TESTING.md for build identities and limits.",
         "hardwareStatus": "reported",
         "evidenceRevision": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
         "gates": [
@@ -4039,6 +4040,7 @@
             "media/ot-settings.png",
             "media/ot-usb-audio.png",
             "media/ot-track-tap.png",
+            "media/ot-inputs.png",
             "media/ot-outbox-pairs.png"
           ],
           "screenshotStyle": "black-and-white"
@@ -4062,16 +4064,16 @@
             "page": "SETTINGS",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
           "path": "media/ot-usb-audio.png",
           "captureType": "emulator",
-          "caption": "Open SEND TO to choose a computer or Outbox 8. Open LAYOUT to choose which tracks or mixes to send.",
-          "alt": "USB AUDIO shows SEND TO set to OUTBOX 8, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL and OUTPUT MODE to ALL.",
+          "caption": "Open SEND TO to choose a computer or Outbox 8, LAYOUT to choose which tracks or mixes to send, and INPUTS to play audio from the computer into the Octatrack.",
+          "alt": "USB AUDIO shows SEND TO set to COMPUTER, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL, OUTPUT MODE to ALL and INPUTS to OFF.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4079,9 +4081,9 @@
             "page": "USB AUDIO",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
@@ -4096,16 +4098,33 @@
             "page": "TRACK TAP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+          }
+        },
+        {
+          "path": "media/ot-inputs.png",
+          "captureType": "emulator",
+          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+          "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "USB AUDIO INPUTS",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
           "path": "media/ot-outbox-pairs.png",
           "captureType": "emulator",
-          "caption": "With OUTBOX 8 selected, open each output pair and choose its source. Here the first two pairs carry Main, the third is silent and the last carries Cue.",
-          "alt": "USB AUDIO shows OUT 1/2 MAIN, OUT 3/4 MAIN, OUT 5/6 OFF and OUT 7/8 CUE, with OUT 7/8 highlighted.",
+          "caption": "With OUTBOX 8 selected, INPUTS gives way to the four output pairs. Open each pair and choose its source: a track, Main, Cue or OFF for silence.",
+          "alt": "USB AUDIO with SEND TO on OUTBOX 8 shows OUT 1/2 to OUT 7/8 set to TRACK 1 to TRACK 4, with OUT 7/8 highlighted.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4113,9 +4132,9 @@
             "page": "USB AUDIO outputs",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         }
       ]

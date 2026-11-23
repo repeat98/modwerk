@@ -74,7 +74,7 @@
     {
       "label": "usbaudio",
       "moduleId": "usb-audio-out-tracks-main-cue",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "author": "markandrus",
       "nativeAuthor": "markandrus/octemu",
@@ -97,7 +97,7 @@
     {
       "label": "usbmidi_rx",
       "moduleId": "usb-audio-out-tracks-main-cue",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "author": "markandrus",
       "nativeAuthor": "markandrus/octemu",
