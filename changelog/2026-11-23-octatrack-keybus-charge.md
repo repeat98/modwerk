@@ -1,0 +1,1 @@
+Octatrack base 0.8.1: the key bus that RINGMOD SC reads is charged 43 DSP cycles a sample on each core, down from 51. 51 was timed on the tap before Sidechain Compressor 0.2.0 made it one pass. The one-pass tap times at 42.2 on an MKII, so a Part with RINGMOD SC has about 8 more cycles a sample of room on each core before DSP FULL.
