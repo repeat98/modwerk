@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.9.0-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "Renamed Improved Configs, a home for more settings like these; sets that include it keep it, by its id.",
+      "New row PAD LEAVES FX: with the FX track up, a pad or TRIG key that selects its track takes you to that track's page, as TRK + pad does.",
+      "It covers silent selects, RTRG + pad and LIVE RECORDING; a press that selects nothing (AUTO TRK SWITCH off, no SILENT row) keeps the FX track up.",
+      "After updating, all rows start unchecked when this module is linked alone: check the ones you use again once."
+    ]
+  },
+  {
     "version": "0.8.0-experimental",
     "date": "2026-11-08",
     "changes": [
