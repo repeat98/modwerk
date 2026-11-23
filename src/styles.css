@@ -2325,11 +2325,10 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .app-toolbar .search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
   .app-toolbar .toolbar-count, .app-toolbar .preview-badge { background: var(--surface); }
   .app-toolbar .configuration-button:hover { background: var(--surface-hover); }
-  .sidebar-scroll :is(.develop-card, .instrument-item, .instrument-action, .instrument-editing, .library-selection) { border: 0; }
-  .sidebar-scroll .instrument-item, .sidebar-scroll .instrument-editing { background: var(--surface); }
+  .sidebar-scroll :is(.develop-card, .library-selection) { border: 0; }
+  .sidebar-scroll .instrument-item:where(:not(.is-unit)) { border: 0; background: var(--surface); }
   .sidebar-scroll .instrument-item:hover { background: var(--surface-hover); }
   .sidebar-scroll .instrument-item[aria-current="page"] { background: var(--accent-soft); }
-  .sidebar-scroll .instrument-editing { grid-template-columns: 1fr; gap: .125rem; }
   .sidebar-scroll .instrument-editing strong, .sidebar-scroll .instrument-head small { overflow-wrap: anywhere; white-space: normal; }
   .sidebar-scroll .configuration-launcher .configuration-browse { box-shadow: none; }
   .sidebar-scroll .library-selection-device { border: 0; }
