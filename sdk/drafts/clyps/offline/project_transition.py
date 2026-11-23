@@ -8,8 +8,14 @@ class Generation:
     project: bytes
     bank: int
     rows: tuple
+    epoch: int
     playing: int = 0
     queued: int = 0
+
+
+    @property
+    def binding(self):
+        return (self.project, self.bank, self.epoch)
 
 
 class Transition:
@@ -25,13 +31,13 @@ class Transition:
         self.available = False
         return self.serial
 
-    def finish(self, serial, stock_identity, staged=None):
+    def finish(self, serial, stock_binding, staged=None):
         """None means abort. Stock certifies which incarnation is usable again."""
         if self.pending is None or serial != self.serial:
             raise ValueError("stale completion")
         if staged is None:
-            self.available = stock_identity == self.committed.project
-        elif stock_identity == self.pending == staged.project:
+            self.available = stock_binding == self.committed.binding
+        elif stock_binding == staged.binding and self.pending == staged.project:
             self.committed = staged
             self.available = True
         else:

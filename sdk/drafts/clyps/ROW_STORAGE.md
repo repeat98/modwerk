@@ -49,5 +49,5 @@ Source selection falls back to stock, but a confirmed A/R04 is lost. The
 isolated transaction model in `offline/project_transition.py` needs a
 nonreused transaction token, a committed project incarnation and a terminal
 result. Abort may re-enable the prior generation only if stock certifies
-that its source bytes are usable again. Otherwise preserve the snapshot and
+the original project, bank and stock source epoch as usable again. Otherwise preserve the snapshot and
 keep selection suspended. Stale completion cannot publish a generation.
