@@ -307,7 +307,8 @@
           ]
         }
       ],
-      "releasePackageSha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b"
+      "releasePackageSha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
+      "reboundReleasePackageSha256": "0b9bf60368dd2cb538970de6ea58334bb001f63d1e3eaea9bec3256bb0894372"
     },
     {
       "module": "analog-bassdrum",
@@ -430,7 +431,8 @@
             }
           ]
         }
-      ]
+      ],
+      "reboundReleasePackageSha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930"
     },
     {
       "module": "sidechain-compressor",
@@ -665,7 +667,8 @@
             }
           ]
         }
-      ]
+      ],
+      "reboundReleasePackageSha256": "cbd0fa736250c328efdfaa0f015217a42e124cb8f73c4718f5d90f4b2977319c"
     },
     {
       "module": "usb-audio-out-tracks-main-cue",
@@ -947,5 +950,6 @@
         }
       ]
     }
-  ]
+  ],
+  "releaseRebindVerification": "For the three records with a rebound release digest, comparison against the original release package reproduced the new bytes exactly by substituting the two controller write-lease addresses from the 0.7.13 base binding. The hardware readings and scene refer to the named development base."
 }

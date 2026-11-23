@@ -1,9 +1,10 @@
 {
-  "version": "0.1.4-experimental",
-  "date": "2026-11-17",
+  "version": "0.1.5-experimental",
+  "date": "2026-11-22",
   "changes": [
-    "name the machine's CPU price: \"cpuPrice\": 6 in its machine-ports.json entry, which machine_ports.py writes as reserved[0] of the generated mw_machine descriptor, and resources.cpuPrice in octamod.module.json.",
-    "the price is what one playing track adds to the frame interrupt (docs/MODULE_PERFORMANCE.md): measured with 0.1.3 on an MKII, 4.6 points, priced 6. The base's CPU budget (45) admits seven FM tracks a Part, where its default of 12 admitted three.",
-    "no other change: the module's code is 0.1.3's."
+    "FM Synth answers ev_in_use (registration.c fm_in_use: an FM/1 track in the live Part or, swept a Part and a FLEX slot a UI tick, in any Part of any bank, working or saved, a legacy marker slot, GLIDE on, a pick through fm_admit_track). While it answers 0 its seven frame-path detours (runtime.json \"rests\") and its STATIC renderer and FLEX start entries (the row's \"restingReferences\") hold stock's bytes; po_rebase drops the clock's step measured across the rest.",
+    "sy_render ships a silent FM track's silence without the FM engine: with no voice of ours (GLIDE off), and with a released mono voice at silence (every DSP-visible write kept). Bit for bit the full path's output (test_silence.py against the FM_NO_SILENT build).",
+    "#1928's faster fm_frame (no per-track start loop in a frame without STARTs; 5,000 random cases match 0.1.4's). #1928's frame-prepare clock and LFO gate are dropped: on the owner's MKII they cost 1.3 to 1.6 frame points more than the rest alone whenever FM Synth was awake.",
+    "Needs a base with resting sites (0.7.10 or later)."
   ]
 }

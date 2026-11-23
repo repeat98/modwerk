@@ -1,0 +1,1 @@
+The forum home brings discussions into view sooner. Community shares and online members sit beside the discussion list on wider screens and below it on smaller ones. Returning members can reopen their onboarding checklist from its progress summary.

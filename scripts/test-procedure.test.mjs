@@ -53,7 +53,7 @@ describe('the steps', () => {
       'node scripts/device.mjs status --socket /tmp/share.sock',
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
       'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md --soak 120 /out/vibrato.mwrm',
-      expect.stringMatching(/^npm run device:price -- --share \/tmp\/share.sock --out \/out\/price.json --scene .+ \/out\/vibrato.mwrm$/),
+      expect.stringMatching(/^npm run device:price -- --share \/tmp\/share.sock --out \/out\/price.json --scene .+ --curve T1,T3,T6,T7 \/out\/vibrato.mwrm$/), // the curve and the admission run
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
     ])
     expect(statuses(steps)).toEqual({ software: 'passed', compat: 'passed', build: 'passed', 'cost-model': 'not run', emulator: 'not run', 'unit-read': 'passed',

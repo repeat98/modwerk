@@ -77,7 +77,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     // Every published package alone, every pair and all together, on the published base with site events (every subset
     // of 19 would be 2^19 sets; preparing one only preflights each package).
     const { identity: base } = publishedBinding
-    const capabilities = { abi: 10, features: 7 | 128 | 512 | 1024, maxSites: 128, maxCopies: 128 } // ABI 10: Analog BD's engine; 1024: Tuner's window (base 0.7.5)
+    const capabilities = { abi: 10, features: 7 | 128 | 512 | 1024 | 2048 | 4096, maxSites: 128, maxCopies: 128 } // ABI 10: Analog BD's engine; 1024: Tuner's window (base 0.7.5); 2048 | 4096: judged rests and frame costs (base 0.8, Tape Echo 0.1.9)
     const sets = [...usb.map(id => [id]), ...usb.flatMap((a, i) => usb.slice(i + 1).map(b => [a, b])), usb]
     for (const moduleIds of sets) {
       const prepared = await service.call('site_selection', { moduleIds, usb: true, capabilities, base })

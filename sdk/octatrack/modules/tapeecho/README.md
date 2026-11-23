@@ -1,6 +1,6 @@
 # Tape Echo
 
-Version: 0.1.1-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.1.9-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
 
 `TAPE ECHO` is on its own id `0x0f` beside FX2 **SPRING REV** (it replaced
 SPRING REV on `0x15` until 30 Sep 2026; it keeps SPRING REV's controls). It is a mono single-head tape echo
@@ -144,6 +144,11 @@ remix. The rings themselves are already reserved by the stock OS.
   then rejoin `0x4000377a` for the existing ring DMA writes.
 * Ring base is `0x4f502c10 + track * 1411328`, through the **uncached** alias.
   Each ring contains 176400 stereo frames; Tape Echo writes mono to both sides.
+* `ev_frame_deadline` (base 0.8, `runtime.json`): `te_frame_deadline(deadline, rest)` stores both each frame.
+  A block that would end past the deadline is held: the dry audio at MIX's dry gain, and the input recorded
+  through the record FIR and tape curve without feedback or hiss. While `rest` is nonzero every Tape Echo
+  track leaves the seam for `0x400037e0`, past stock's ring write: dry at MIX's dry gain, no echo, no stock filter or mix, no ring write, and its state is dropped, so the first frame after
+  the rest starts the tape afresh.
 * On effect entry, a valid-history counter excludes the previous effect's
   samples. There is no large buffer clear inside the audio callback.
 
@@ -264,7 +269,9 @@ Use a backed-up test project and a short transient to hear the repeats clearly. 
 
 ## Compatibility and limitations
 
-Tape Echo targets Octatrack OS 1.40C FX2 and keeps stock DELAY and SPRING REV available. It uses the shared 10 MiB DRAM arena and existing stock delay rings; the original CPU integration and resource figures above remain the evidence for these costs. The pinned historical record reports six instances running and a seventh freezing the unit; other historical builds froze during edits. The current candidate is not a hardware-confirmed fix. Timing headroom, cache/bus behavior and live-set reliability remain unqualified. 0.1.6 does not address those limits. It adds work only while MIX, FDBK or AGE is moving (see Tests and measurements).
+Tape Echo targets Octatrack OS 1.40C FX2 and keeps stock DELAY and SPRING REV available. It uses the shared 10 MiB DRAM arena and existing stock delay rings; the original CPU integration and resource figures above remain the evidence for these costs. The pinned historical record reports six instances running and a seventh freezing the unit; other historical builds froze during edits. The current candidate is not a hardware-confirmed fix. Timing headroom, cache/bus behavior and live-set reliability remain unqualified. 0.1.6 adds work only while MIX, FDBK or AGE is moving (see Tests and measurements). 0.1.8 does the same audio with less ColdFire work while the controls stand still, and holds every instance for one block when stock's delay routine starts more than a quarter frame late, so an overloaded unit drops echo instead of piling on; neither is measured on a unit yet ([TESTING.md](TESTING.md)).
+
+**0.1.9 requires Modwerk base 0.8 or newer**, whose `ev_frame_deadline` passes `rest`: on a pattern the base predicts past the frame ceiling it bypasses Tape Echo dry (no echo, no tail) and the echo starts afresh from the next audio when the pattern is lighter again; a block that would run past the frame's deadline plays dry at MIX's dry level and records its own input to the tape without the feedback's repeat; the dry level is the same as in the blocks around it. A development base that raises the event with its deadline only leaves `rest` a stale stack word, so the echo may drop out or never build there. On the owner's MKII (development twin 856cbbcf of base 0.8, 23 November 2026, the plain build of this source) the overload scene's frame-interrupt share fell from 69.0 % with 0.1.6 to 55.6 % and its latest frame entry from about 145 to 110 µs late; in ordinary use it measured dearer than 0.1.6 for one to three instances (first 11.5, each 4.1 % of a frame against 9.1 and 5.0) and cheaper at four. Not listened to on a unit yet; Keep and a power cycle not run.
 
 ## Tests and measurements
 
