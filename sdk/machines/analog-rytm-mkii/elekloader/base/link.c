@@ -31,8 +31,8 @@
 //   bitmap otherwise: FUNC + turn and every other held-key test behave as on the panel.
 // - Pads: the panel posts a pad's press, its pressure and its release as their own
 //   messages, not keys (the UI loop's switch at 0x400a4708: 3 down, 2 pressure, 4 up;
-//   m[1] the pad 0..11, the byte at +8 the velocity or the pressure, which 0x400a476e
-//   scales by 128). PAD posts the same, so every view's pad and pressure methods run as
+//   m[1] the pad 0..11, the byte at +8 the velocity (1..127; the loop clamps it to 127) or
+//   the pressure (0..255, which 0x400a476e scales by 128; MIDI sends half of it)). PAD posts the same, so every view's pad and pressure methods run as
 //   for a hand on the pad (the RETRIG menu, the pad pages, CHROMATIC, PERF). They reach
 //   neither ev_key nor ev_enc, so the link does not track them as keys; a pad the link
 //   holds gets a pressure of 0 and its release when the link lets go of everything.
@@ -112,7 +112,7 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_CONFIRM 0x13                // YES pressed and let go, for stock's UPGRADE OS NOW?: sets the carry
 #define CMD_RAMBOOT 0x14                // as CONFIRM, but the staged image is booted from RAM, not flashed
-#define CMD_PAD 0x15                    // pad, what (0 up, 1 down, 2 pressure), value 0..127
+#define CMD_PAD 0x15                    // pad, what (0 up, 1 down, 2 pressure), velocity 1..127 or pressure 0..255
 #define CMD_SCREEN 0x20
 #define CMD_MEM 0x21
 #define ST_OK 0
@@ -124,7 +124,8 @@
 
 #define RING 8                          // commands waiting for the UI task
 #define CMD_BYTES 48                    // a command's bytes, F0..F7 (the longest, RAMBOOT, is 29)
-#define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
+#define SLOTS 64                        // posted messages, reused in turn: more than PENDING keys and turns plus
+                                        //   one release_all's pad messages (2 x PADS) and a tick's commands
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define PER_TICK 6                      // commands acted on in one tick
 #define HUMAN_TICKS 60                  // about 3 s
@@ -357,8 +358,8 @@ static int ours(int kind, int id, int value)
     return 1;
 }
 
-// A person pressed or turned something. -> 1 when the link held keys: that first press
-// is taken, so it never combines with a key the link still held (FUNC + X).
+// A person pressed or turned something. -> 1 when the link held keys or pads: that first
+// press is taken, so it never combines with a key the link still held (FUNC + X).
 static int human(void)
 {
     human_count++;
@@ -579,8 +580,8 @@ static void COLD act(const uint8_t *m, int len)
                 what = get32(a + 5);
                 v = get32(a + 10);
             }
-            if (pad >= PADS || what > 2 || v > 127)
-                status = ST_BAD;
+            if (pad >= PADS || what > 2 || (what == 1 ? v < 1 || v > 127 : what == 2 ? v > 255 : v != 0))
+                status = ST_BAD;                // as the panel: a down has a velocity, an up none
             else {
                 post_pad(what == 0 ? MSG_PAD_UP : what == 1 ? MSG_PAD_DOWN : MSG_PRESSURE, (int)pad, (int)v);
                 if (what < 2)

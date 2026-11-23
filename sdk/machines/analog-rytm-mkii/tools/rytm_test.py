@@ -137,7 +137,7 @@ class Case:
         raise CaseError('%s:%d: %s' % (self.path, n, why))
 
     def req(self, n, name, *values, slot=None, gap=GAP_MS):
-        if name in ('key', 'enc') and n and self.t < self.panel_quiet:
+        if name in ('key', 'enc', 'pad') and n and self.t < self.panel_quiet:
             self.fail(n, 'the link refuses keys and turns for %d ms after a panel press: wait first' % PANEL_QUIET_MS)
         if name == 'release' and self.t < self.panel_quiet:
             self.t = self.panel_quiet                       # the runner's closing release, once the link takes it
@@ -354,9 +354,9 @@ class Case:
                 # pad BD down 100 | pad BD pressure 60 | pad BD up. The link lets go of a pad it holds at the end.
                 if len(args) not in (2, 3) or args[0] not in rl.PADS or args[1] not in ('down', 'up', 'pressure') \
                         or (len(args) == 3) == (args[1] == 'up') or len(args) == 3 and not (
-                            args[2].isdigit() and int(args[2]) <= 127):
-                    self.fail(n, 'pad takes a pad (%s), down VELOCITY, pressure 0..127 or up, as: pad BD pressure 60'
-                              % ' '.join(rl.PADS))
+                            args[2].isdigit() and (1 <= int(args[2]) <= 127 if args[1] == 'down' else int(args[2]) <= 255)):
+                    self.fail(n, 'pad takes a pad (%s), down VELOCITY 1..127, pressure 0..255 (the panel\'s byte: MIDI '
+                                 'sends half) or up, as: pad BD pressure 60' % ' '.join(rl.PADS))
                 what = {'up': rl.PAD_UP, 'down': rl.PAD_DOWN, 'pressure': rl.PAD_PRESSURE}[args[1]]
                 self.after_turn()
                 self.req(n, 'pad', rl.PADS[args[0]], what, int(args[2]) if len(args) == 3 else 0)
@@ -534,7 +534,7 @@ class Case:
             else:
                 number = int(a[3])                          # ValueError unless a number
             value = int(a[4]) if len(a) == 5 else None
-            if value is not None and not 0 <= value <= 127 or a[2] == 'cc' and not 0 <= number <= 127:
+            if value is not None and not 0 <= value <= 127 or a[2] != 'nrpn' and not 0 <= number <= 127:
                 self.fail(n, 'a controller, a note and a value are 0 to 127')
             want = (a[1], (a[2], number, value, channel))
         else:

@@ -81,7 +81,7 @@ screen up                # capture the screen under a name
 mem m 0x417e32b8 1       # capture 1 to 1024 bytes
 ident i                  # capture the link's ident
 note BD                  # a MIDI note for a track: velocity 100, held 100 ms
-pad BD down 100          # a pad as the panel plays it (BD to CB): down with a velocity, pressure 0 to 127, up;
+pad BD down 100          # a pad as the panel plays it (BD to CB): down with a velocity 1 to 127, pressure 0 to 255
 pad BD pressure 60       #   the link lets go of a pad it holds at the end. Needs a base with the link's `pad`
 pad BD up
 note SD 64 250           # velocity 1 to 127, held 10 to 10000 ms

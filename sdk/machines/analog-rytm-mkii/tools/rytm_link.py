@@ -279,7 +279,8 @@ class Link:
             self.call('release')
 
     def pad(self, name, what, value=0):
-        """A pad as the panel plays it: PAD_DOWN with a velocity, PAD_PRESSURE with a pressure, PAD_UP (0..127)."""
+        """A pad as the panel plays it: PAD_DOWN with a velocity 1..127, PAD_PRESSURE with the panel's pressure byte
+        0..255 (MIDI poly pressure sends half of it), PAD_UP with 0."""
         status, _ = self.call('pad', PADS[name], what, value)
         if status:
             raise RuntimeError('pad %s: %s' % (name, STATUS.get(status, status)))
