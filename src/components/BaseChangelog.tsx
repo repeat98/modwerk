@@ -9,6 +9,7 @@ type BaseChange = {
 // Use the published Octatrack version. The Rytm's base changes are dated, and Zoom uses MIDISTOMP's version.
 const changes: Record<'octatrack' | 'rytm' | 'zoom', BaseChange[]> = {
   octatrack: [
+    { label: '0.8.1', summary: 'Large module sets cost much less CPU while their modules are unused, each DSP core spends less of every audio frame on its own checks, and a Part with RINGMOD SC has a little more room before DSP FULL.', note: '2026-11-23-octatrack-idle-module-cost' },
     { label: '0.8', summary: 'CPU FULL shows the cost of a pick, saved effects get priority on project load, and Beat Slicer can snap to zero crossings.', note: '2026-11-21-octatrack-base-0-8' },
     { label: '0.7.13', summary: 'Picking a module machine on a busy Octatrack counts what the machine really costs, so a swap back no longer shows CPU FULL.', note: '2026-11-21-octatrack-cpu-guard-meter-cost' },
     { label: '0.7.12', summary: 'Install USB Audio once and choose layouts, stem taps and Outbox pairs on the Octatrack.', note: '2026-11-20-octatrack-usb-audio-package' },

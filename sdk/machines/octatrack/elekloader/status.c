@@ -1500,12 +1500,13 @@ struct frame_costs modwerk_test_costs;
 #define COSTS ((volatile struct frame_costs *)0x100f9200u) /* battery-ram.json */
 typedef char frame_costs_fit[sizeof(struct frame_costs) <= 0x50cu ? 1 : -1]; /* the range battery-ram.json gives it */
 #endif
-static uint32_t costs_sum(unsigned n)
+static uint32_t sum_of(const volatile uint32_t *entry, const volatile uint16_t *rest, unsigned n) /* entry: n pairs */
 {
     uint32_t sum = 0x5a17u + n;
-    for (unsigned i = 0; i < n; ++i) sum = sum * 31u + COSTS->entry[i][0] * 7u + COSTS->entry[i][1] + COSTS->rest[i] * 3u;
+    for (unsigned i = 0; i < n; ++i) sum = sum * 31u + entry[2u * i] * 7u + entry[2u * i + 1u] + rest[i] * 3u;
     return sum;
 }
+static uint32_t costs_sum(unsigned n) { return sum_of(&COSTS->entry[0][0], COSTS->rest, n); }
 static uint32_t costs_be32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
 /* loader.c, engine task, after set_package.h checked every entry: torn while it writes, so a read meanwhile finds none. */
 void modwerk_machine_frame_costs(const uint8_t *table, unsigned n)
@@ -1516,26 +1517,44 @@ void modwerk_machine_frame_costs(const uint8_t *table, unsigned n)
         COSTS->entry[i][0] = costs_be32(table), COSTS->entry[i][1] = costs_be32(table + 4u), COSTS->rest[i] = (uint16_t)(table[8] << 8 | table[9]);
     COSTS->count = n, COSTS->sum = costs_sum(n), COSTS->magic = EC_MAGIC;
 }
+/* The table checked and copied into RAM. Every UI tick looks up each installed module (hush_pick), and checking the
+ * whole table in battery RAM on each lookup cost about 60 µs a tick per installed module (owner's MKII, 0.8.1 twin,
+ * 23 November 2026: 16 unused modules, 462 to 1,412 µs a tick). Only the header is read on each lookup: a write (magic
+ * 0, then a new sum) or a torn table changes it, and the copy is then checked again. */
+static struct { uint32_t magic, count, sum; int ok; uint32_t entry[EC_ROOM][2]; uint16_t rest[EC_ROOM]; } costs_copy;
+static int costs_valid(void)
+{
+    uint32_t magic = COSTS->magic, n = COSTS->count, sum = COSTS->sum;
+    if (magic == costs_copy.magic && n == costs_copy.count && sum == costs_copy.sum) return costs_copy.ok;
+    int ok = magic == EC_MAGIC && n <= EC_ROOM;
+    if (ok) {
+        for (unsigned i = 0; i < n; ++i)
+            costs_copy.entry[i][0] = COSTS->entry[i][0], costs_copy.entry[i][1] = COSTS->entry[i][1], costs_copy.rest[i] = COSTS->rest[i];
+        /* a write that began or ended during the copy changes the header: not this copy, and the next lookup copies again */
+        ok = sum_of(&costs_copy.entry[0][0], costs_copy.rest, n) == sum && COSTS->magic == magic && COSTS->sum == sum;
+    }
+    costs_copy.magic = magic, costs_copy.count = n, costs_copy.sum = sum, costs_copy.ok = ok;
+    return ok;
+}
 /* 1 with the module's costs when the table lists it (`module`: its package id). */
 static int cost_row(uint32_t module)
 {
-    unsigned n = COSTS->count;
-    if (COSTS->magic != EC_MAGIC || n > EC_ROOM || COSTS->sum != costs_sum(n)) return -1;
-    for (unsigned i = 0; i < n; ++i) if (COSTS->entry[i][0] == module) return (int)i;
+    if (!costs_valid()) return -1;
+    for (unsigned i = 0; i < costs_copy.count; ++i) if (costs_copy.entry[i][0] == module) return (int)i;
     return -1;
 }
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 {
     int i = cost_row(module);
     if (i < 0) return 0;
-    *use = COSTS->entry[i][1] >> 16, *wake = COSTS->entry[i][1] & 0xffffu;
+    *use = costs_copy.entry[i][1] >> 16, *wake = costs_copy.entry[i][1] & 0xffffu;
     return 1;
 }
 /* What the module adds installed on no track or slot, per mille; 0 when the table does not list it. */
 uint32_t modwerk_status_module_rest(uint32_t module)
 {
     int i = cost_row(module);
-    return i < 0 ? 0u : COSTS->rest[i];
+    return i < 0 ? 0u : costs_copy.rest[i];
 }
 /* Every module pick, a machine's (machine_registry.c) or an effect's (below): 1 when the longest frame the unit would
  * play, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is
