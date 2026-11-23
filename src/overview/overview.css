@@ -1,7 +1,10 @@
 /* The landing page (#overview) and the temporary Start developing highlight. Colours reuse the app tokens;
    apricot is the kicker colour and stands for "open for development" throughout. */
 .overview-page, .develop-card, .mobile-menu-panel a.is-highlight { --apricot: #c7a16c; --apricot-text: #ecd6b0; --apricot-line: #7a6546; --apricot-surface: #2a2620; --done: #7fd1a0; }
-.overview-page { width: 100%; max-width: 80rem; margin: 0 auto; }
+.overview-page { width: 100%; max-width: 75rem; margin: 0 auto; }
+@media (min-width: 1051px) {
+  .overview-page { width: 90%; }
+}
 
 /* Heading: the title, one line of numbers and the filters in a single row */
 .overview-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; margin-bottom: 18px; }
@@ -29,11 +32,6 @@
 .overview-tile:hover { border-color: #ffffff1a; background: linear-gradient(180deg, #ffffff0f, #ffffff04 60%); }
 .overview-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .overview-art { position: relative; display: block; aspect-ratio: 16 / 10; border-radius: 13px 13px 0 0; }
-@media (min-width: 1051px) {
-  /* A long invitation or research label only needs space in its own row. */
-  .machine-grid { grid-auto-rows: auto; }
-  .overview-art { aspect-ratio: 2 / 1; }
-}
 /* A soft white shine behind each machine, brighter on hover */
 /* A soft halo behind each machine. The gradient reaches zero exactly at its own edge (closest-side), which stays inside
    the card, so it never shows a cut. Brighter on hover. */
