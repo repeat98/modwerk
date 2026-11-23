@@ -377,35 +377,35 @@
   },
   {
    "base": "0.7.11",
-   "identity": "24d3b92890e97f5dc57af2f7ce3e12475a229d22c2b9b1649cf606cf78f721b6",
+   "identity": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd",
    "layouts": {
     "tracks-main-cue": {
-     "main": 1328523,
-     "container": 809460
+     "main": 1327492,
+     "container": 808332
     },
     "tracks": {
-     "main": 1328368,
-     "container": 809280
+     "main": 1327347,
+     "container": 808128
     },
     "tracks-post": {
-     "main": 1329971,
-     "container": 811092
+     "main": 1328952,
+     "container": 809860
     },
     "main-cue": {
-     "main": 1328284,
-     "container": 809184
+     "main": 1327259,
+     "container": 808048
     },
     "main": {
-     "main": 1328142,
-     "container": 809048
+     "main": 1327122,
+     "container": 807916
     },
     "master": {
-     "main": 1328162,
-     "container": 809056
+     "main": 1327146,
+     "container": 807928
     },
     "off": {
-     "main": 1326738,
-     "container": 807524
+     "main": 1325717,
+     "container": 806276
     }
    }
   },
@@ -421,11 +421,21 @@
   },
   {
    "base": "0.7.13",
-   "identity": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc",
+   "identity": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a",
    "layouts": {
     "off": {
-     "main": 1332165,
-     "container": 813592
+     "main": 1331330,
+     "container": 812568
+    }
+   }
+  },
+  {
+   "base": "0.8",
+   "identity": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7",
+   "layouts": {
+    "off": {
+     "main": 1347681,
+     "container": 830980
     }
    }
   }

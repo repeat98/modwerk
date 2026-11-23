@@ -1,0 +1,1 @@
+When the Octatrack base saves a smaller module set over a larger one, its set file on the card keeps its earlier length. Shortening the file had left the end of the file linked to space marked free on the card, where a later project save could write over it.

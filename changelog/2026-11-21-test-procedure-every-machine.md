@@ -1,0 +1,1 @@
+The test procedure now runs for every machine's modules and bases (`npm run test:procedure -- --base analog-rytm-mkii`, `analog-rytm-mkii:<id>`): the same steps and record, with the Rytm's image link, rytm-emu cases, RAM boot and unit cases, and each step a machine has no tool for yet recorded as not run with what is missing.

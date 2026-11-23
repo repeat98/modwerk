@@ -34,7 +34,9 @@ static void host_popup(uint32_t n, uint32_t row, uint32_t *out, const char *cons
 }
 #define PM_POPUP(n, row, out, names, cbs) host_popup(n, row, out, names, cbs)
 #define PM_CLOSE() (++closes, popup_open = 0)
-#define PM_TEXT(x, top, t) (texts < 16u ? (void)strncpy(drawn[texts++], (t), 23) : (void)0)
+static const unsigned char *bound; /* the frame the text surface points at: text drawn before it is bound is lost */
+#define PM_BIND(frame) (bound = (frame))
+#define PM_TEXT(x, top, t) (texts < 16u ? (void)strncpy(drawn[texts++], bound ? (t) : "UNBOUND", 23) : (void)0)
 #define PM_WIDTH(t) ((int)strlen(t) * 5)
 #define PM_MASK() 0u
 #define PM_UNMASK(m) ((void)(m))
@@ -201,7 +203,8 @@ int main(void)
     says = MODWERK_PART_MENU_LEAVE_PART;
     open_part_edit();
     CHECK(asked == 5 && pm_shown && pm_list && pm_parent == 1 && pm_focus);
-    memset(frame, 0, sizeof frame); texts = 0; mw_part_menu_draw(frame);
+    memset(frame, 0, sizeof frame); texts = 0; bound = 0; mw_part_menu_draw(frame);
+    CHECK(bound == frame);
     CHECK(texts == 3 && !strcmp(drawn[0], "SAVE KIT") && !strcmp(drawn[1], "RELOAD KIT") && !strcmp(drawn[2], "RENAME KIT"));
     /* The box fits the widest action (RENAME KIT, 50 pixels in this test's text): x 43-99, y 16-47, shadow to 101. */
     CHECK(pixel(43, 16) && pixel(43, 47) && pixel(99, 30) && pixel(101, 30) && pixel(45, 18 + 7 * pm_child) && !pixel(30, 30) && !pixel(103, 30));
@@ -214,15 +217,20 @@ int main(void)
     CHECK(pm_list && pm_child == 1);                                 /* it reopens on the row chosen */
     CHECK(mw_part_menu_key(PM_NO, 1) == 0 && !pm_shown);              /* NO: stock closes its popup */
     mw_part_menu_key(PM_NO, 0);
-    /* The module removed while it is open: PART comes back. */
+    /* The module removed while it is open: the window is stock's again and its keys are stock's. */
     open_part_edit();
     table[0] = 0;
-    CHECK(press(PM_UP) && !pm_lo && !pm_list && pm_parent == 0);
-    CHECK(asked == 7);                                              /* once an opening; abi 1's field never asked */
+    CHECK(!press(PM_DOWN) && !pm_shown);
+    texts = 0; mw_part_menu_draw(frame); CHECK(texts == 0);
+    table[0] = &k.menu; open_part_edit(); CHECK(pm_list); table[0] = 0;
+    CHECK(mw_part_menu_enc(6, 4) == 0 && !pm_shown);                /* LEVEL too */
+    table[0] = &k.menu; open_part_edit(); CHECK(pm_list); table[0] = 0;
+    mw_part_menu_tick(); CHECK(!pm_shown);                           /* and the next tick, with no key pressed */
+    CHECK(asked == 9);                                              /* once an opening; abi 1's field never asked */
     /* Kits hiding PART beside Locks, then only Kits removed while it is open: PART is back though Locks stays. */
     table[0] = &a; table[1] = &k.menu; table[2] = 0;
     open_part_edit();
-    CHECK(asked == 8 && pm_shown && pm_lo && !pm_list && pm_parent == 1);
+    CHECK(asked == 10 && pm_shown && pm_lo && !pm_list && pm_parent >= 1);    /* on KITS, the row used last */
     table[1] = 0;
     CHECK(press(PM_UP) && !pm_lo && !pm_list && pm_parent == 0);
     texts = 0; mw_part_menu_draw(frame);
@@ -232,7 +240,7 @@ int main(void)
     /* Two records leaving PART out: it stays out until both are gone. */
     table[0] = &a; table[1] = &k.menu; table[2] = &k2.menu; table[3] = 0;
     open_part_edit();
-    CHECK(asked == 10 && pm_lo);
+    CHECK(asked == 12 && pm_lo);
     table[1] = &k2.menu; table[2] = 0;
     CHECK(press(PM_DOWN) && pm_lo && pm_parent >= 1);
     table[1] = 0;

@@ -351,6 +351,44 @@ describe('frontend MCP reviewed device transactions', () => {
     await expect(service.call('device_keep', { trial: result.trial })).rejects.toThrow('matching authorized')
     expect(link.keeps).toBe(1)
   })
+
+  // The USB bridge serves one client at a time: a link held between calls kept npm run device and the site off the unit.
+  async function countingOpens() {
+    await service.close()
+    const counter = { opens: 0 }
+    service = await createFrontendTools({ dataDir: folder, deviceSocket: 'test-only', allowDeviceWrites: true }, frontend, {
+      openLink: async () => { counter.opens++; return link }, now: () => clock,
+    })
+    return counter
+  }
+
+  it('gives the link back after each read and opens a fresh one for the next call', async () => {
+    const counter = await countingOpens()
+    await service.call('device_status'); await service.call('device_load'); await service.call('device_log')
+    expect(counter.opens).toBe(3)
+  })
+
+  it('keeps the link from a review through its trial until Keep, then gives it back', async () => {
+    const counter = await countingOpens()
+    const result = await trial()
+    expect(counter.opens).toBe(1) // the trial runs on the link its review was read through
+    await service.call('device_status')
+    expect(counter.opens).toBe(1) // an open trial keeps it
+    await service.call('device_keep', { trial: result.trial })
+    expect(counter.opens).toBe(1)
+    await service.call('device_status')
+    expect(counter.opens).toBe(2) // given back after Keep
+  })
+
+  it('keeps a reviewed link until the review expires', async () => {
+    const counter = await countingOpens()
+    await review(); await service.call('device_status')
+    expect(counter.opens).toBe(1)
+    clock += 61000
+    await service.call('device_status') // the review has expired: this call gives the link back
+    await service.call('device_status')
+    expect(counter.opens).toBe(2)
+  })
   it('refuses Keep over foreign saved files while leaving the exact trial Undo available', async () => {
     link.diagnostics = { state: 0, failed: 0, saved: 4 }
     const result = await trial()

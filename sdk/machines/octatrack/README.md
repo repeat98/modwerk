@@ -17,6 +17,14 @@ The Octatrack is the reference for [the recipe every machine follows](../../../d
 Recovery: hold FUNC while powering on, choose MIDI UPGRADE and send the stock .syx over 5-pin DIN MIDI.
 
 
+## Stock OS fixes
+
+Every base carries four fixes to stock OS 1.40C that add nothing to play, pick or set: the empty-pattern LED (which also
+keeps KITS from copying over a pattern holding only parameter locks), the Part-change carryover, erasing a trigless
+lock's last parameter lock, and the MIDI Plays-Free trig. Three are Zac-Kyoti's code (MIT). The sources, their six stock
+sites and how they sit beside Direct Jump Kyoti, KITS and MIDI Scenes are in
+[`elekloader/stock-fixes/`](elekloader/stock-fixes/README.md). A new stock fix goes there too.
+
 ## Sample-editor service
 
 The beta base carries the [sample-editor service](SAMPLE_EDITOR.md) for the AED

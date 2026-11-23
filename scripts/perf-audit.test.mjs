@@ -4,7 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:f
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { judgeRecord, selfTest, templateRecord, ownerWaivedPerformanceRow, stampVerdict } from './perf-audit-analysis.mjs'
+import { judgeRecord, selfTest, templateRecord, ownerWaivedPerformanceRow, stampVerdict, priceLimits, approvalCoversSource } from './perf-audit-analysis.mjs'
 import { modulePerformanceSourceSha256 } from './module-qualification.mjs'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 
@@ -106,5 +106,44 @@ describe('exact-source performance exceptions', () => {
     expect(ownerWaivedPerformanceRow(r, judgeRecord(r).find(row => row.name === 'stock benchmark'), approval, source)).toBe(false)
     r.stress.hangs = 1
     expect(ownerWaivedPerformanceRow(r, judgeRecord(r).find(row => row.name === 'stress'), approval, source)).toBe(false)
+  })
+})
+
+describe('track machines and exact-source approvals', () => {
+  const source = 'a'.repeat(64)
+  const machine = price => ({ category: 'machines', resources: { cpuPrice: { value: price, measure: 'machine-render' } } })
+  const loaded = (added, idle) => ({ ...templateRecord('coldfire'), module: 'example', version: '0.1.0',
+    load: { frameUs: 362.8, stockLongestUs: 280, moduleLongestUs: 280 + added, stockIdlePercent: 40, moduleIdlePercent: 40 - idle, method: 'matched runs, same recording and MIDI' } })
+  const benchmark = (record, options) => judgeRecord(record, options).find(row => row.name === 'stock benchmark')
+  it('judges a machine\'s load against the CPU price the base books for it', () => {
+    expect(priceLimits(machine(35))).toEqual({ cpuPrice: 35, loadFail: 0.35, idleFail: 35 })
+    for (const document of [{ category: 'effects', resources: machine(35).resources }, { category: 'machines', resources: { cpuPrice: { value: 35, measure: 'device-price' } } }, machine(0), null])
+      expect(priceLimits(document)).toEqual({})
+    const grain = loaded(101.6, 16.5)
+    expect(benchmark(grain).state).toBe('fail')
+    expect(benchmark(grain, priceLimits(machine(35)))).toMatchObject({ state: 'note' })
+    expect(benchmark(grain, priceLimits(machine(35))).detail).toContain('35% of a frame the base books')
+    expect(benchmark(loaded(140, 16.5), priceLimits(machine(35))).state).toBe('fail')
+    expect(benchmark(loaded(101.6, 36), priceLimits(machine(35))).state).toBe('fail')
+  })
+  it('binds a record to an approval only at its exact owner, version and source', () => {
+    const approval = { kind: 'owner-approved-update', approvedBy: 'repeat98', id: 'example', version: '0.1.0', sourceSha256: source }
+    expect(approvalCoversSource(approval, 'example', '0.1.0', source)).toBe(true)
+    for (const [change, id, version, hash] of [[{}, 'example', '0.1.0', 'b'.repeat(64)], [{}, 'example', '0.2.0', source], [{}, 'other', '0.1.0', source],
+      [{ approvedBy: 'contributor' }, 'example', '0.1.0', source], [{ kind: 'other' }, 'example', '0.1.0', source], [{}, 'example', '0.1.0', null]])
+      expect(approvalCoversSource({ ...approval, ...change }, id, version, hash)).toBe(false)
+    expect(approvalCoversSource(null, 'example', '0.1.0', source)).toBe(false)
+  })
+  it('excuses a flood whose stuck notes or lost messages were not counted, never a failed one', () => {
+    const approval = { kind: 'owner-approved-update', approvedBy: 'repeat98', id: 'example', version: '0.1.0', sourceSha256: source, waived: ['chip-worst-case-cycles', 'current-build-hardware'] }
+    const flood = change => ({ ...templateRecord('coldfire'), module: 'example', version: '0.1.0',
+      stress: { floodMessagesPerSecond: 1096, clockBpm: 240, seconds: 50, stuckNotes: null, hangs: 0, dropped: null, droppedExplanation: 'receive errors and drops counted, delivery not', ...change } })
+    const excused = (record, scope = approval) => ownerWaivedPerformanceRow(record, judgeRecord(record).find(row => row.name === 'stress'), scope, source)
+    expect(judgeRecord(flood({})).find(row => row.name === 'stress').state).toBe('fail')
+    expect(excused(flood({}))).toBe(true)
+    expect(excused(flood({ stuckNotes: 0 }))).toBe(true)
+    expect(excused(flood({}), { ...approval, waived: ['chip-worst-case-cycles'] })).toBe(false)
+    for (const change of [{ hangs: 1 }, { stuckNotes: 2 }, { dropped: 3 }, { floodMessagesPerSecond: 47.5 }, { clockBpm: 100 }, { seconds: 5 }, { hangs: null }])
+      expect(excused(flood(change))).toBe(false)
   })
 })

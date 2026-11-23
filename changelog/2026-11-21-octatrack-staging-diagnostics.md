@@ -1,0 +1,1 @@
+Shared Octatrack diagnostics identify the upload command that failed during staging and the byte offset of a failed chunk. On bases that support the new USB reading, the report also shows how many bytes the controller still expected for that transfer.

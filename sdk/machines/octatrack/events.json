@@ -50,6 +50,20 @@
    ]
   },
   {
+   "site": "0x4000cf4a",
+   "length": 6,
+   "guard": "d667a779e117b682edd70e6622bdeebe3c61e1e25ce8ff48b0e2d6cba7c505ca",
+   "routine": "the audio frame builder, immediately before it enters the track and LFO loops. Both paths into their setup join at 0x4000cf40. The six-byte address load has no PC-relative operand.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4000cf50"
+   ],
+   "done": null
+  },
+  {
    "site": "0x4000dfd4",
    "length": 8,
    "guard": "85d5478797bd0d879fe58aa4de88956a8f8fbacdd65ac8faa8a28da95e9c14f4",
@@ -2419,6 +2433,37 @@
    "order": "lower first, then module id: the page's row order. 50-90.",
    "subscribers": [],
    "orderEvidence": "Each setting is its module's own and no row reads another's. USB Audio is the first to contribute (ALL CHANNELS, OFF, and MAIN + CUE ONLY in the twenty-channel layout: issue 1512); until its package is published no module does."
+  },
+  {
+   "event": "ev_audio_frame_prepare",
+   "index": 61,
+   "site": "0x4000cf4a",
+   "length": 6,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "once per 16-sample audio frame, after sequencer event staging and before the eight audio tracks calculate LFOs and render their sources, including while transport is stopped",
+   "context": "the audio frame interrupt. Keep the EMAC as found and preserve the C callee-saved registers. A handler must be bounded and must not block.",
+   "contract": "Observe the instrument’s current step and tick here to prepare the upcoming render. Return without starting transport or advancing the sequencer. Each subscriber receives one notification per visit to the frame preparation site. The hook stays active while a module rests, so it can retain timing from before its first note.",
+   "order": "Lower order first, then module ID. All subscribers run. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "Clock readers such as FM Synth and sequenced machines observe stock state independently. Subscribers must not rely on another module’s state."
+  },
+  {
+   "event": "ev_frame_deadline",
+   "index": 62,
+   "site": null,
+   "prototype": "unsigned f(uint32_t deadline, unsigned rest)",
+   "args": [],
+   "results": "or",
+   "when": "every frame-interrupt entry, before any render: no stock site, the base raises it from mw_frame_enter (machine_registry.c) once it knows how late the entry is against the DSP's frame grid",
+   "context": "the frame interrupt: short, no firmware call that can block, the EMAC kept as found. Store the deadline and return",
+   "contract": "deadline is the DTCN3 count (0xfc07c00c, 132 MHz) by which work at IPL 5 (stock's delay routine and a module's detours in it) must end so that the next frame interrupt enters no more than 60 µs late: the next frame's grid time plus 80 µs less a 20 µs margin. Compare with (int32_t)(DTCN3 - deadline): past 0, or within your next block's cost of it, hold that block (dry, or the ring held) rather than run it. An entry in the DSP's late window (80 to 190 µs) skips a DSP frame, heard as a click, or stops the frame exchange for good (owner's MKII, 22 November 2026). rest is nonzero on every frame of a pattern the base predicts past the frame ceiling with this module's effect running, the Part's module machines already silent (owner, 22 November 2026): bypass dry for this frame, doing no work. It is latched at the frame's entry and never changes within it; the handler runs every frame whether rest is set or not, so it sees rest go back to 0 itself and starts its state afresh then. Admission charges the effect as if it ran either way. Every handler runs; the answers are ignored. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1.",
+   "order": "lower first, then module id; every handler runs, so the order does not change the result. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "raisedByBase": true,
+   "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
   }
  ]
 }

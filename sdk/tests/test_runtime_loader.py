@@ -532,6 +532,71 @@ start_record = {1,16,machine,TARGET};
                 with self.subTest(text), self.assertRaises(ValueError):
                     build.runtime_declaration(temp)
 
+    @unittest.skipUnless(shutil.which('m68k-elf-as') and importlib.util.find_spec('unicorn'),
+                         'ColdFire binutils and Unicorn required')
+    def test_frame_prepare_notifies_each_subscriber_and_preserves_the_stock_frame(self):
+        from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE
+        from unicorn import m68k_const as m
+
+        event = 'ev_audio_frame_prepare'
+        entry = next(row for row in events.load()['events'] if row['event'] == event)
+        self.assertFalse(entry.get('rests'))
+        words = build.subscribe([build.NONE] * 4, [dict(event='ev_audio_frame_prepare', fn='frame', order=20)],
+                                {'frame': 4})
+        self.assertEqual(words[entry['index']], 20 << 24 | 4)
+        rows, handlers = 0x200000, 0x201000
+        with tempfile.TemporaryDirectory() as temp:
+            work = Path(temp)
+            subprocess.run(['m68k-elf-as', '-mcpu=5475', '-o', work/'events.o',
+                            EVENTS_DIR/'elekloader/runtime_events.s'], check=True)
+            subprocess.run(['m68k-elf-ld', '-Ttext=0x100000', '-e', 'modwerk_site_4000cf4a',
+                            '--defsym', f'modwerk_runtime_event_row={rows}', '--unresolved-symbols=ignore-all',
+                            work/'events.o', '-o', work/'events.elf'], check=True)
+            subprocess.run(['m68k-elf-objcopy', '-O', 'binary', work/'events.elf', work/'events.bin'], check=True)
+            code = (work/'events.bin').read_bytes()
+            symbols = {}
+            listing = subprocess.check_output(['m68k-elf-nm', work/'events.elf'], text=True)
+            for line in listing.splitlines():
+                fields = line.split()
+                if len(fields) == 3:
+                    symbols[fields[2]] = int(fields[0], 16)
+
+        def word(value):
+            return struct.pack('>I', value)
+
+        cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+        cpu.ctl_set_cpu_model(m.UC_CPU_M68K_CFV4E)
+        cpu.mem_map(0x100000, (len(code) + 4095) & ~4095)
+        cpu.mem_write(0x100000, code)
+        cpu.mem_map(rows, 0x4000)
+        cpu.mem_write(rows + 4 * (entry['index'] - events.FIRST), word(handlers))
+        callees = [0x202000, 0x202100]
+        volatile = [m.UC_M68K_REG_D0, m.UC_M68K_REG_D1, m.UC_M68K_REG_A0, m.UC_M68K_REG_A1]
+        original = {reg: 100 + i for i, reg in enumerate(volatile + [m.UC_M68K_REG_A2])}
+        original[m.UC_M68K_REG_A7] = 0x203f00
+        seen = []
+
+        def callback(uc, address, size, user_data):
+            if address in callees:
+                seen.append(address)
+                for reg in volatile:
+                    uc.reg_write(reg, 0xdeadcafe)
+
+        cpu.hook_add(UC_HOOK_CODE, callback)
+        for address in callees:
+            cpu.mem_write(address, bytes.fromhex('4e75'))  # rts, our test handler
+        for subscribers in ([], callees[:1], callees, list(reversed(callees)), []):
+            with self.subTest(subscribers=subscribers):
+                seen.clear()
+                cpu.mem_write(handlers, b''.join(word(a) for a in [*subscribers, 0]))
+                for reg, value in original.items():
+                    cpu.reg_write(reg, value)
+                tail = symbols['modwerk_stock_4000cf4a_6']
+                cpu.emu_start(symbols['modwerk_site_4000cf4a'], tail, count=90)
+                self.assertEqual(cpu.reg_read(m.UC_M68K_REG_PC), tail)
+                self.assertEqual(seen, subscribers)
+                self.assertEqual({reg: cpu.reg_read(reg) for reg in original}, original)
+
     def test_events_execute_under_the_emulator(self):
         """Opt-in: MODWERK_PRIVATE_STOCK_MAIN and MODWERK_PRIVATE_EVENT_PACKETS (old/ and new/ repitch.mwrm,
         mute-modes.mwrm, poly8-group.mwrm and poly8-capture.json: the current packets and the migrated ones)."""
