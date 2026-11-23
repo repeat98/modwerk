@@ -73,7 +73,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 86 checks, a missing, unreadable or partly written book 1 backup and a file that fails to open once among them; several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle and arranger mode after LOAD (build c5027552c, base 0.7.5); LOAD and RELOAD returning to book 2 in arranger mode with book 1 intact, the main screen and PLAY on the returned book (build f068cd608, base 0.7.13, beside USB AUDIO), as the developer reported them.",
+    "summary": "Host gate (verify.py, 88 checks, a missing, unreadable or partly written book 1 backup, a file that fails to open once and a reload after it among them; several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle and arranger mode after LOAD (build c5027552c, base 0.7.5); LOAD and RELOAD returning to book 2 in arranger mode with book 1 intact, the main screen and PLAY on the returned book (build f068cd608, base 0.7.13, beside USB AUDIO), as the developer reported them.",
     "hardwareStatus": "reported",
     "evidenceRevision": "f068cd6087b9098166fda7c34c39533a50aa1f4e",
     "gates": [

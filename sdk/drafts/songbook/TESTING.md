@@ -6,7 +6,7 @@ Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gat
 
 ## Host gate
 
-`verify.py`: 86 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 88 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
@@ -121,6 +121,14 @@ another slot is still saved, the file reads again later), and the open and the e
 second open working; the previous rule fails six of them (arr11.work saved empty). Not covered: a card on which the
 open and the exists check keep failing for a file that is there, which still reads as missing. On the unit: not yet.
 
+### A reload between the failed read and the next sync (found by the owner in review, #1737, 23 November 2026)
+
+The module kept which book is in the slots across a reinstall, but not that the book was read only in part: after a
+reinstall, or back after another build's trial (Undo), the next sync wrote the empty slot over arr11.work. Fixed:
+the battery record keeps that state too (its byte 6), and the install handler reads it back with the book.
+`verify.py` (88 checks): the reinstall and the return after Undo, each between arr11.work's failed open and the next
+sync; without the record byte both overwrite arr11.work. On the unit: not yet.
+
 ## Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |
@@ -136,6 +144,7 @@ open and the exists check keep failing for a file that is there, which still rea
 | Beside USB AUDIO (installed with base 0.7.13) | both kept in one set, sharing the base | the developer's MKI, 08d0833a | pass: kept together, no crash, stall or freeze |
 | Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI, package 08d0833a removed on book 1, then a power cycle (an earlier build had left book 2 in book 1, the load fault since fixed) | pass: the stock arrangements were book 1's |
 | An arr09+ file there but failing to open once | taken for a missing file, its empty slot was written back (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
+| A reinstall or Undo between that failed read and the next sync | the module forgot the book was read only in part (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
 | Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
 | A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |
 | A new project (ev_project_new outside a load) | must reset the books, not keep a load's return | host test (verify.py) | not run on a unit |

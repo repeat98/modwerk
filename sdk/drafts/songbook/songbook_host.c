@@ -333,12 +333,23 @@ int main(void)
       last_message[0] = 0;
       tap(LEFT); job(); as_tick(0);                /* back to book 2: arr11.work does not open this once */
       check("arr11.work there but not opened: reported as a book file error", book() == 1 && !strcmp(last_message, "BOOK FILE ERROR"));
+      as_host_reinstall(); as_modules_ready();      /* the owner's review: the module reloads before the next sync */
+      check("after a reinstall it still knows book 2 was read only in part", book() == 1);
       int w0 = writes; job();                      /* the next sync, nothing edited */
       check("the next sync writes none of book 2's files", writes == w0);
       check("and arr11.work keeps its saved arrangement", find("/SET/PROJ/arr11.work")->work[100] == keep11);
       cs1[W(0) + 100] ^= 0x5a; cs1[CHG] = 0x01; job();   /* an edit of slot 1 on that book */
       check("an edit on that book is still saved, to arr09.work only", find("/SET/PROJ/arr09.work")->work[100] == cs1[W(0) + 100] && find("/SET/PROJ/arr11.work")->work[100] == keep11);
       fail_open_path = 0; fail_opens = 0;
+      /* the same after Undo: this copy comes back with its memory from before the failed read (another build ran) */
+      tap(RIGHT); job(); as_tick(0);              /* book 3 */
+      as_host_keep_memory();
+      fail_open_path = "/SET/PROJ/arr11.work"; fail_opens = 1;
+      tap(LEFT); job(); as_tick(0);                /* the failed read happens in another build's trial */
+      fail_open_path = 0; fail_opens = 0;
+      as_host_back_memory(); as_modules_ready();
+      { int w1 = writes; job();
+        check("back after Undo: the next sync still writes nothing of book 2", book() == 1 && writes == w1 && find("/SET/PROJ/arr11.work")->work[100] == keep11); }
       tap(RIGHT); job(); tap(LEFT); job(); as_tick(0);
       check("opened again later, arr11.work reads into slot 3", book() == 1 && cs1[W(2) + 100] == keep11);
       tap(RIGHT); job();

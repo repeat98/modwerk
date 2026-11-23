@@ -5,7 +5,7 @@
  "ranges": [
   {"from": "0x100f85a0", "to": "0x100f85e8", "owner": "kits", "what": "'KCS1': which Kit each of the 64 Part slots holds, and a sum that starts from the project's id"},
   {"from": "0x100f8600", "to": "0x100f8f06", "owner": "playmodes", "what": "'PMNV': each pattern's play mode, 256 rows of 9 bytes and a 16-bit sum"},
-  {"from": "0x100f8f10", "to": "0x100f8f24", "owner": "songbook", "what": "'ASB1': which book of arrangements the 8 slots hold, whether a backup of book 1 exists, a fingerprint of the slots, the serial of the copy that wrote it last, and its last eight project events"},
+  {"from": "0x100f8f10", "to": "0x100f8f24", "owner": "songbook", "what": "'ASB1': which book of arrangements the 8 slots hold, whether a backup of book 1 exists, whether that book was read only in part, a fingerprint of the slots, the serial of the copy that wrote it last, and its last eight project events"},
   {"from": "0x100f9000", "to": "0x100f9044", "owner": "base", "what": "settings.c's 'MWS1': the choice kept for each of eight module settings (PROJ > MODWERK > SETTINGS), by the hash of its label"},
   {"from": "0x100f9044", "to": "0x100f91c8", "owner": "base", "what": "setting_presets.h MWP1 stores panel overrides for up to 32 imported module presets"},
   {"from": "0x100f9800", "to": "0x100fbf00", "owner": "midi-scenes", "what": "'SCS2': the current bank's MIDI scene locks, packed (magic, bank, count, sum, project id, then one long a lock)"},

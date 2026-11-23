@@ -397,7 +397,6 @@ remember:
 	move.w %a1,%d4
 	lsr.l #8,%d2
 	lea (4,%a2),%a1
-	addq.l #7,%a2
 	move.b %d4,(%a6)
 	move.b %d3,(%a5)
 	move.b %d2,(%a4)
@@ -411,7 +410,10 @@ remember:
 	move.b %d4,269455122
 	move.b %d0,269455123
 	move.b (%a1),269455124
-	move.b (%a2),269455125
+	lea (7,%a2),%a1
+	lea (14,%a2),%a2
+	move.b (%a1),269455125
+	move.b (%a2),269455126
 .L77:
 	mvz.b (%a0)+,%d0
 	eor.l %d0,%d1
@@ -1428,24 +1430,24 @@ as_modules_ready:
 	jcc .L204
 .L196:
 	move.l evlog,%d1
-	moveq #15,%d2
-	clr.b %d0
+	moveq #15,%d0
+	clr.b %d2
 	lea (13,%sp),%a2
 	lsl.l #4,%d1
-	move.b %d0,4(%a1)
-	or.l %d2,%d1
-	move.l %d1,%d0
+	move.b %d2,4(%a1)
+	or.l %d0,%d1
 	move.l %d1,%d2
-	clr.w %d0
-	swap %d0
+	move.l %d1,%d0
+	clr.w %d2
+	swap %d2
 	move.l %d1,evlog
-	move.l %d0,%a0
-	moveq #24,%d0
-	lsr.l %d0,%d2
+	move.l %d2,%a0
+	moveq #24,%d2
+	lsr.l %d2,%d0
+	move.w %a0,%d2
+	move.l %d0,10(%sp)
 	move.l %d1,%d0
 	lsr.l #8,%d0
-	move.l %d2,10(%sp)
-	move.w %a0,%d2
 	move.b (%a2),269455136
 	move.b %d2,269455137
 	move.b %d0,269455138
@@ -1495,9 +1497,16 @@ as_modules_ready:
 	cmp.l 10(%sp),%d0
 	jne .L196
 	move.l #269455124,%a0
+	mov3q.l #1,%d1
 	move.b (%a0),4(%a1)
 	move.l #269455125,%a2
 	move.b (%a2),7(%a1)
+	move.b 269455126,%d0
+	eor.l %d1,%d0
+	tst.b %d0
+	seq %d0
+	neg.l %d0
+	move.b %d0,14(%a1)
 	move.l %a1,-(%sp)
 	jsr remember
 	addq.l #4,%sp

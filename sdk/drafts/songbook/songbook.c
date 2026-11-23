@@ -314,6 +314,7 @@ static void remember(struct as_state *s)
     wr32(RECORD, REC_MAGIC);
     wr8(RECORD + 4, s->book);
     wr8(RECORD + 5, s->backup);
+    wr8(RECORD + 6, s->damaged);                         /* a book read only in part: kept through a reload (#1737) */
     wr32(RECORD + 8, slots_sum());
 }
 
@@ -567,6 +568,9 @@ unsigned as_modules_ready(void)
     if (rd32(RECORD) == REC_MAGIC && rd8(RECORD + 4) < BOOKS && rd32(RECORD + 8) == slots_sum()) {
         s->book = (uint8_t)rd8(RECORD + 4);
         s->backup = (uint8_t)rd8(RECORD + 5);
+        /* The book in the slots was read only in part: still write back only what is edited, after a reinstall or
+         * after another build's trial (the owner's review, #1737). */
+        s->damaged = (uint8_t)(rd8(RECORD + 6) == 1);
     } else { s->book = 0; ev(0xf); }
     remember(s);
     return 0;
