@@ -58,3 +58,18 @@ Reset volatile rows only on the stock project-initialization event. Ordinary ban
 The contributor fork now carries the implementation on integration/clyps-shared-sequencer, commit 7419b7598, based on a9674ed84. Its Board claim covers candidate slots 63–65. Source and scheduling use two call events. An independent modal-input marker allows an eligible UI to take its own controls before stock shortcuts. The versioned feature requirement prevents an equal-width loader missing that capability from publishing the package. The shipping registry and official base are subject to maintainer review. See NATIVE_REPLAY.md for the matched development build and control.
 
 On 23 November PR #1910 head c3706472be93ff0d02a7293412ab3992b3b60be7 still ended its event registry at 62 (events.json blob c572264f6142843e6f93bfb6d08233c6f9909439). The contributor candidate's 63–65 contract remains pending.
+
+### Project completion contract requested for maintainer review
+
+A serialized begin notification supplies a unique token and destination
+incarnation before stock can replace any referenced pattern or Part. At begin
+the module retains its committed generation and suspends foreign selection.
+The terminal notification correlates the token, supplies commit or abort, and
+identifies the usable project incarnation, bank and stock source epoch. On
+abort the base must distinguish an exactly restored previous binding from an
+unknown or partially replaced binding. The latter keeps selection suspended.
+The module may validate and prepare its own data on an idle task, then publish
+one generation at a scheduling-safe point. A shared reader return, RELOAD
+return, or project initialization cannot substitute for this terminal event.
+The executable host model is in `offline/project_transition.py`. No event
+index or battery storage is assigned by this proposal.

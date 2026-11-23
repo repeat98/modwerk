@@ -24,6 +24,8 @@ parser.add_argument('--row-popup', action='store_true')
 parser.add_argument('--scene-select', action='store_true')
 parser.add_argument('--arranger-recovery', action='store_true')
 parser.add_argument('--observe-queue', action='store_true')
+parser.add_argument('--home-control', choices=('home', 'stop'))
+parser.add_argument('--clock-witness', type=Path, help='Additional JSONL observations on the wide replay')
 parser.add_argument('--boundary', choices=('early','late'))
 parser.add_argument('--package', type=Path)
 parser.add_argument('--symbols-module', type=Path)
@@ -135,10 +137,11 @@ with tempfile.TemporaryDirectory() as tmp:
                     advance(min(quantum, ms-offset))
                 return
             old_tick = tick
-            cmd(f'run {ms}')
+            clock = cmd(f'run {ms}')
             if not recording:
                 return
-            for raw in cmd('hits').split()[2:]:
+            hits = cmd('hits').split()[2:]
+            for raw in hits:
                 h = [int(v, 16) for v in raw.split(':')]
                 pc = h[1]
                 if pc == TICK:
@@ -159,7 +162,13 @@ with tempfile.TemporaryDirectory() as tmp:
                     state.append([[t, slot, times[slot*8+t]] for t in range(8)
                                   for slot in range(3) if flags[t] & (1<<slot)])
                 states.append([tick,state,peek(cmd,0x800064d0,64).hex(),peek(cmd,0x800065b2,6).hex()])
-            for raw in cmd('writes').split()[2:]:
+            mutations = cmd('writes').split()[2:]
+            if args.clock_witness and sampling and (old_tick < 33 or 89 <= tick <= 91 or 124 <= tick <= 196):
+                with args.clock_witness.open('a') as witness:
+                    print(json.dumps(dict(tick=tick, sample=float(clock.split('sample=')[1].split()[0]),
+                                          queue=peek(cmd,0x46c7fe44,8).hex(), hits=hits, writes=mutations)),
+                          file=witness)
+            for raw in mutations:
                 sample, pc, addr, value, width, _ = raw.split(':')
                 writes.append([float(sample), int(pc,16), int(addr,16), int(value,16), int(width)])
 
@@ -198,7 +207,11 @@ with tempfile.TemporaryDirectory() as tmp:
         recording = sampling = False
         tick = 0
         states = []
-        cmd('watch ' + ','.join(hex(i) for i in (TICK, WRAP, TRIG, AUDIO, MIDI)))
+        sites = [TICK, WRAP, TRIG, AUDIO, MIDI]
+        if args.clock_witness:
+            sites.extend([syms['modwerk_site_400a2d5a'], 0x400a2d60])
+            args.clock_witness.open('x').close()
+        cmd('watch ' + ','.join(hex(i) for i in sites))
         cmd('watchmem 0x80001904 256')
         if args.observe_queue:
             cmd('watchmem 0x46c7fe44 8')
@@ -452,6 +465,28 @@ with tempfile.TemporaryDirectory() as tmp:
                 edge = request['edge']
                 refresh = 188 if args.boundary == 'late' and edge == 187 else edge
                 assert request['observed'] == refresh, ('diagnostic refresh',edge,request)
+            sys.exit(0)
+        if args.home_control:
+            # Same home pattern in both runs. Reference leaves the shelf OFF.
+            if not args.reference:
+                switch(1)
+            sampling = True
+            start_trace()
+            tap(PLAY)
+            until(190 if args.home_control == 'stop' else 219)
+            tap(STOP)
+            assert not num(0x800065b8)
+            sampling = recording = False
+            assert events and all(event[-1] == 0 for event in events if event[1] in (AUDIO, MIDI))
+            if not args.reference:
+                switch(0)
+            assert call('modwerk_runtime_free', 0) == free and num(syms['core:owners']) == 0
+            origin = next(w[3] for w in writes if w[2] == 0x80001904)
+            for _, domains, _, _ in states:
+                for domain in domains:
+                    for entry in domain:
+                        entry[2] = (entry[2] - origin) & 0xffffffff
+            args.output.write_text(json.dumps(dict(events=events, states=states, wraps=wraps)))
             sys.exit(0)
         if not args.lane_matrix:
             bank, stride, track_size = 0x400e21e0, 0x8ed8, 0x91a

@@ -108,3 +108,36 @@ The final package also ran a fresh eight-lane pair using the 1 ms queue observat
 ## Artist requirements checkpoint
 
 Discovery now runs five tests. The added stopped popup/Bank H case injects both events into the production callbacks during a draft edit, then checks ARR re-entry, confirmed row, playback and pending state. The independent C clipboard fixture checks row and same-track cell snapshots, source isolation, overwrite refusal, cancellation/clear, invalid targets and cross-bank refusal. This fixture works on staging rows only. The firmware has no clipboard binding, sidecar writer or native duplication command. Hardware A–H: NOT TESTED.
+
+### Matched cumulative-base qualification · 23 November
+
+Candidate 5c32cbacd, module 32ebca98, emulator a1410ad4.
+[Identities and suite results](evidence/nov23-reliability.json).
+Both the default and 1 ms wide captures passed the unchanged strict grader,
+including its three truncation controls. The shelf-disabled vs active-home
+pair matched 624 events and 219 states. STOP at tick 190 matched 544 events
+and 190 states. The missing-feature control refused the package with 259,
+zero owners, six empty hooks and unchanged free pool.
+
+On the earlier MAIN we repeated the original failure byte for byte, even
+with the additional PC and absolute-sample witness. At the first tick-193
+read stock had six entries. Its frame consumer at 0x4000bc22 cleared five
+flags from +0.408 to +2.708 samples relative to the read. CLYPS had one
+entry. Its same five clears spanned −23.745 to −21.345 samples. Both
+reported one entry at the next poll. In both runs we observed eight audio
+selector returns, eight audio builder entries and eight MIDI builder entries
+during the tick. On the refreshed MAIN both first reads followed the five
+clears. The instrumented ordered streams match their uninstrumented
+counterparts. [Original samples](evidence/tick193-original-clock.json) ·
+[refreshed samples](evidence/tick193-current-clock.json).
+
+The original fixture samples after an emulator run quantum containing a tick.
+That does not fix whether stock's frame consumer has run. This explains the
+recorded 6:1 difference for these inputs. Neither a general permission for
+callback jitter nor a change in the strict oracle follows from that finding.
+
+The before-wrap boundary replay failed its diagnostic assertion. The request
+was in RAM by tick 89 +1 ms; the queued-only diagnostic was still zero at
++15 ms, then the wrap committed at tick 90 +16 ms. The after-wrap replay
+matched all 848 calls, 816 relative writes and 298 states, but the diagnostic
+appeared at 187 instead of the expected 188. Both failures remain open.
