@@ -26,7 +26,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice } from './module-cpu-price.mjs'
+import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
 import { takeUnitTurn } from './unit-queue.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
@@ -207,9 +207,35 @@ if (import.meta.filename === process.argv[1]) {
       const back = await send(`pick:${track}:FX${fx}:${was[track].replaceAll(' ', '_')}`)
       if (pickFailure(back)) notes.push('restore ' + track + ': ' + pickFailure(back))
     }
+    // The admission run (owner, 23 November 2026: a refused pick, a silent module, a stall and a crash all cost the player): the
+    // module alone on the first track, picked stopped after the pattern has played, as a player would, on the empty pattern and
+    // on the medium one; an admitted pick then plays a reading. modules:check holds a release to both, with nothing dropped.
+    const admission = []
+    const troubles = async () => { try { const h = JSON.parse((await send('health')).trim().split('\n').pop()).health; return h.stalls + h.stall + h.crash } catch { return undefined } }
+    for (const [pattern, number] of [['empty', args['pick-pattern']], ['medium', args['measure-pattern']]]) {
+      const track = tracks[0], run = { pattern, number: Number(number), track, seconds }
+      await send(`PATTERN+TRIG${number} w600 PLAY w5000 STOP w600`)
+      const before = await refusals()
+      if (fx) { const failed = pickFailure(await send(`pick:${track}:FX${fx}:${name}`)); run.admitted = !failed; if (failed) run.why = failed }
+      else {
+        await send(machinePick(track))
+        const after = await refusals()
+        run.admitted = before === undefined || after === undefined ? null : after === before
+        if (run.admitted === null) run.why = 'no symbols for the running base, so a refusal cannot be read'
+        if (run.admitted === false) await send(machineToStatic(track))
+      }
+      if (run.admitted) {
+        const was0 = await troubles(), load = await measure(), now = await troubles()
+        Object.assign(run, { frameMax: load.frameMax, frame: load.frame, dropped: load.skipped - skipped, stalls: was0 === undefined || now === undefined ? null : now - was0 })
+        skipped = load.skipped
+        if (!fx) await send(machineToStatic(track))
+        else { const back = await send(`pick:${track}:FX${fx}:${was[track].replaceAll(' ', '_')}`); if (pickFailure(back)) notes.push('restore ' + track + ': ' + pickFailure(back)) }
+      }
+      admission.push(run)
+    }
     await send(`PATTERN+TRIG${args['measure-pattern']} w600`)
     const adds = points.slice(1).map(point => tenth(point - points[0]))
-    return { tracks: placed, points, adds, ...curveFit(adds), notes }
+    return { tracks: placed, points, adds, ...curveFit(adds), notes, admission }
   }
   // --stock: what stock alone needs, so module admission leaves it room (owner, 22 November 2026) and a base that makes stock
   // cheaper gives modules more by itself: the longest frame on the empty pattern, on the busy one (eight tracks playing samples,
@@ -294,6 +320,10 @@ if (import.meta.filename === process.argv[1]) {
     const { first, each, adds, tracks, notes } = result.curve, wanted = args.curve.split(',').length
     const rest = restCost(result.before, result.atRest)
     console.log(result.id.padEnd(28) + `curve on ${tracks.join(' ')}: +${adds.join(', +')} -> rest ${rest}, first ${first}, each ${each}` + (notes.length ? ' (' + notes.join('; ') + ')' : ''))
+    const problem = curveProblem({ points: result.curve.points, admission: result.curve.admission })
+    console.log(result.id.padEnd(28) + 'admission: ' + result.curve.admission.map(run => run.pattern + ' ' + (run.admitted ? `admitted, longest frame ${run.frameMax} %, ${run.dropped} dropped, ${run.stalls} stalls` : run.admitted === false ? 'REFUSED' : 'not verified')).join('; ') +
+      (problem ? '\n' + ''.padEnd(28) + 'NOT RELEASABLE: ' + problem : ''))
+    if (problem) process.exitCode = 1 // the test procedure's step 9 stops here: this build does not carry a release
     if (!args['write-costs'] && !args.write) continue
     // Fewer than three placed is fine when the curve stopped at overload: the module costs what it measured up to there.
     const overloaded = notes.some(note => note.startsWith('stopped after'))
@@ -306,7 +336,7 @@ if (import.meta.filename === process.argv[1]) {
     if (args.write && existsSync(manifestPath)) { // the release's own record, which module:doctor and modules:check hold its version to
       const record = resolve(root, 'sdk/octatrack/modules', result.id, FRAME_COST_RECORD)
       mkdirSync(dirname(record), { recursive: true })
-      writeFileSync(record, JSON.stringify({ module: result.id, version, base: args.base, scene: args.scene, seconds, measuredAt, tracks, rest, first, each, points: result.curve.points, adds, notes }, null, 2) + '\n')
+      writeFileSync(record, JSON.stringify({ module: result.id, version, base: args.base, scene: args.scene, seconds, measuredAt, tracks, rest, first, each, points: result.curve.points, adds, admission: result.curve.admission, notes }, null, 2) + '\n')
       wrote = 'wrote first ' + first + ', each ' + each + ' into ' + FRAME_COST_RECORD
     } else { // --write-costs: the base's own list (a base-bound module, or the base owner's reading of a published version)
       const path = resolve(root, FRAME_COSTS_BASE_PATH), list = JSON.parse(readFileSync(path, 'utf8'))
