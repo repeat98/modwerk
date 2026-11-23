@@ -33,6 +33,7 @@ import { pathToFileURL } from 'node:url'
 
 export const ROOT = resolve(import.meta.dirname, '..')
 const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs'
+const REFUSED = /^refused: .*$/m // device.mjs set prints a refusal and exits 0, so the large-set steps read their output
 const CURVE_TRACKS = 'T1,T3,T6,T7' // empty tracks of the test bank (docs/MODULE_PERFORMANCE.md)
 const DEFAULT_SCENE = 'the bank, pattern and Part the unit was on, transport stopped (test:procedure)'
 
@@ -148,11 +149,11 @@ export function plan(step, ctx) {
       if (ctx.target === 'emulator') return { skip: 'steps 6 to 10 run on the emulator (--target emulator)' }
       if (!ctx.emulatorSocket) return { skip: 'no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)' }
       return { commands: [module ? node('scripts/device.mjs', 'try', pkg, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)
-        : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true }
+        : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--split', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true, failOn: REFUSED }
     case 'unit-read':
       return { commands: [node('scripts/device.mjs', 'status', '--socket', ctx.share), node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)] }
     case 'unit-pass':
-      if (!module) return { commands: [node('scripts/device.mjs', 'set', set, '--seconds', '30', '--socket', ctx.share)] }
+      if (!module) return { commands: [node('scripts/device.mjs', 'set', set, '--seconds', '30', '--split', '--socket', ctx.share)], failOn: REFUSED }
       return { commands: [npmRun('device:test', '--share', ctx.share, '--testing-entry', join(ctx.out, 'device-test.md'),
         ...(ctx.tools?.soak ? [] : ['--soak', String(ctx.soakSeconds)]), pkg)] }
     case 'soak': {
@@ -225,6 +226,8 @@ export async function runSteps(ids, ctx, deps, results = []) {
         outputs.push(run.output ?? '')
         if (run.code !== 0) { code = run.code; result.reason = `exit ${run.code}: ${shown(argv)}`; break }
       }
+      const refused = code === 0 && p.failOn && outputs.join('\n').match(p.failOn)
+      if (refused) { code = 1; result.reason = refused[0].slice(0, 200) }
       if (trial) {
         const end = await trial.stop()
         if (/^accepted$/m.test(end.output ?? '')) { code ||= 1; result.reason ??= 'the trial was kept: it must roll back' }
@@ -337,6 +340,19 @@ function moduleContext(root, id, machine) {
 }
 const catalogue = root => JSON.parse(readFileSync(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
 
+/** The base's large set (step 7): every package the base trusts by itself, in catalogue order, leaving out a module that
+ * declares a conflict with one already in, either way. The whole catalogue holds declared pairs (Kits and Pattern Sample
+ * Locks, Synth and Quantizer, Vector and Synth), so the unit refused it outright (23 November 2026). */
+export function largeSet(rows, conflictsOf) {
+  const kept = []
+  for (const row of rows.filter(r => !r.requiredBase))
+    if (!kept.some(k => conflictsOf(k.id).includes(row.id) || conflictsOf(row.id).includes(k.id))) kept.push(row)
+  return kept
+}
+const declaredConflicts = root => id => {
+  try { return JSON.parse(readFileSync(join(root, 'sdk/octatrack/modules', id, 'octamod.module.json'), 'utf8')).compatibility?.conflicts ?? [] } catch { return [] }
+}
+
 /** Everything the steps read, from the arguments and the checkout. */
 export function context(root, values, positionals, env = process.env) {
   const git = (...args) => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() } catch { return '' } }
@@ -368,7 +384,7 @@ export function context(root, values, positionals, env = process.env) {
     ctx.machine = 'octatrack'
     ctx.pkg = resolve(values.package ?? join(root, 'src/engine/assets/octatrack-base.elemod'))
     ctx.version = JSON.parse(readFileSync(join(root, 'sdk/machines/octatrack/base-versions.json'), 'utf8')).bases.at(-1)?.version
-    ctx.setPackages = rows.filter(r => !r.requiredBase).map(r => join(root, 'public', r.path)).filter(path => existsSync(path))
+    ctx.setPackages = largeSet(rows, declaredConflicts(root)).map(r => join(root, 'public', r.path)).filter(path => existsSync(path))
     ctx.priceModules = values['price-modules'] ? values['price-modules'].split(',') : undefined
   } else {
     ctx.machine = positionals[0]
