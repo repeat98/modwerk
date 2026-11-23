@@ -30,10 +30,11 @@ def check_track(image, symbols, track, ping, pool=None, audition=False):
         cpu.mem_map(address, size)
     cpu.mem_write(IMAGE, image)
     # The sample pool window and the selected track. Opening the pool changes nothing: only a START with the audition flag
-    # (FUNC + YES, 0xe0 on the MKII against a sequencer trig's 0xc0) plays that voice as a plain Flex until the next trig.
+    # (FUNC + YES, 0xe0 on the MKII against a sequencer trig's 0xc0) on the pool's track plays that voice as a plain Flex
+    # until the next trig. A manual trig (trig key, CHROMATIC key, MIDI note) carries 0xe0 too and stays granular.
     cpu.mem_write(0x460E70E0, struct.pack(">I", 1 if pool is not None else 0))
     cpu.mem_write(0x100B14CC, bytes((pool if pool is not None else 0,)))
-    plain = audition
+    plain = audition and pool == track
     # Synthetic Flex callbacks simply return. The render callback also emits a valid 16-frame packet.
     for address in (FLEX_START, FLEX_RENDER):
         cpu.mem_write(address, bytes.fromhex("4e75"))
@@ -348,11 +349,16 @@ if __name__ == "__main__":
             for track in range(8):
                 check_track(image, symbols, track, 0, pool)
             check_track(image, symbols, pool, 0, pool, audition=True)
+            check_track(image, symbols, 7 - pool, 0, pool, audition=True)   # a MIDI note on another track: granular
+        # 0.1.3: trig keys, CHROMATIC keys and MIDI notes (START 0xe0) with the pool shut play grains on every track.
+        for track in range(8):
+            check_track(image, symbols, track, 0, audition=True)
         check_stereo(image, symbols)
         check_assign(image, symbols)
         check_ptch(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
-    print("[PASS] With the pool open on T5 or T1 every track stays granular; only an audition START (0xe0) takes the plain Flex path")
+    print("[PASS] With the pool open on T5 or T1 every track stays granular; only an audition START (0xe0) on the pool's track takes the plain Flex path")
+    print("[PASS] Manual trigs (0xe0) with the pool shut play grains on all eight tracks")
     print("[PASS] Compiled SCAN label and cursor match on 24-bit stereo at all 128 settings and 128 legacy values")
     print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")
     print("[PASS] PTCH moves one semitone a detent, FUNC + turn stops at -24, -12, 0, +12 and +24, a pressed knob moves 7")

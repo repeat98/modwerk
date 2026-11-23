@@ -225,8 +225,9 @@ static void view_close(uintptr_t fp, const View *v)
 }
 #define POOL_WINDOW 0x460e70e0u
 /* The pool's audition (FUNC + YES) starts the track's voice with this flag; a sequencer trig never sets it (MKII,
- * 21 November 2026: 0xe0 against 0xc0). Only that voice plays as a plain Flex, until the track's next trig: opening the
- * pool leaves Grain playing. */
+ * 21 November 2026: 0xe0 against 0xc0). Every manual trig sets it too (trig keys, CHROMATIC keys, MIDI notes: stock's
+ * 0x40005030 with 0x1d), so only one with the pool window open on the selected track is the audition. That voice plays
+ * as a plain Flex, until the track's next trig: opening the pool leaves Grain playing. */
 #define AUDITION 0x20u
 static uint8_t audition; /* a bit a track */
 static inline int auditioning(unsigned track) { return audition >> track & 1u; }
@@ -357,7 +358,7 @@ int grain_start(unsigned track, unsigned sample, unsigned flags)
     uintptr_t fp = lane(track);
     if (!fp) return 0;
     View v;
-    if (flags & AUDITION) audition |= (uint8_t)(1u << track);
+    if ((flags & AUDITION) && U32(POOL_WINDOW) && track == U8(0x100b14ccu)) audition |= (uint8_t)(1u << track);
     else audition &= (uint8_t)~(1u << track);
     if (auditioning(track)) {
         plain_view(fp, &v);

@@ -1,6 +1,6 @@
 # Grain
 
-Version 0.1.1-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
+Version 0.1.3-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
 
 ## Overview
 
@@ -74,7 +74,7 @@ The author supplied a 45-second recording of Grain on their Octatrack MKI. They 
 
 ## Compatibility and limitations
 
-Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. POS parameter locks use whole numbers. Each grain plays 3 dB below full scale, so six long grains of a loud sample stay clean; raise the track volume if a single grain is too quiet. With a SCALE set in PROJECT > CONTROL > SEQUENCER (the scale quantizer that comes with FM Synth and Scale Quantizer), PTCH jumps by several semitones per detent, because the quantizer steps in Flex units: set SCALE to OFF in projects with Grain.
+Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. Sequencer trigs, trig keys, CHROMATIC keys and MIDI notes all play the grains, a note at its pitch; only FUNC + YES in the sample pool plays the sample as a plain Flex, as a preview, until the track's next trig. POS parameter locks use whole numbers. Each grain plays 3 dB below full scale, so six long grains of a loud sample stay clean; raise the track volume if a single grain is too quiet. With a SCALE set in PROJECT > CONTROL > SEQUENCER (the scale quantizer that comes with FM Synth and Scale Quantizer), PTCH jumps by several semitones per detent, because the quantizer steps in Flex units: set SCALE to OFF in projects with Grain.
 
 ## Tests and measurements
 

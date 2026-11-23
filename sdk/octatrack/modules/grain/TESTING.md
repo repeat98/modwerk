@@ -1,6 +1,27 @@
 # GRAIN testing
 
-Grain 0.1.2-experimental · by A Force Truly Evil.
+Grain 0.1.3-experimental · by A Force Truly Evil.
+
+## 0.1.3-experimental: trig keys, CHROMATIC keys and MIDI notes play grains, 23 November 2026
+
+The package is `e0bd49774e4c11388ca7e96927acd93b37678cae8ab3f05c517c6ca3b4a60e0c` (30,332 bytes), rebuilt with
+`scripts/octatrack-module-packages.py`. Only `grain_start`'s audition test changed; the render path is 0.1.2's.
+
+- **The report (owner, MKII):** Grain played the sample as a plain Flex when triggered from the trig keys, and CHROMATIC
+  mode did not play grains.
+- **The cause, read in OS 1.40C:** stock calls START with `0xc0 | (the track's trig byte & 0x20)` (`0x4000d486`), and
+  every manual trig sets that bit: trig keys, CHROMATIC keys and MIDI notes all go through `0x40005030` with `0x1d`,
+  as the pool's FUNC+YES audition does. 0.1.1 took every START with `0x20` for the audition, so all of them played
+  plain Flex. A CHROMATIC key's note is written to the track's pending trig locks (`0x46c7dfda + 32 × track`, byte 0)
+  and copied with them at the trig (`0x4000b760`), as a sequencer PTCH lock is, so the engine reads it from the lane's
+  PTCH word once the START goes through it.
+- **The fix:** a START with `0x20` is the audition only while the pool window is open and the track is the selected
+  one. `verify_lanes.py` now also checks a `0xe0` START with the pool shut on all eight tracks (granular) and one on
+  another track while the pool is open (granular); the 0.1.2 build fails the second case.
+
+**Not tested:** everything on a unit. Still to run on this exact package: trig keys and CHROMATIC keys (several
+octaves) on a Grain track, a MIDI note from a controller, FUNC+YES in the pool (still plain Flex), a sequencer trig
+after the audition (grains again), and the frame cost curve and performance stamp `module:doctor` asks for.
 
 ## 0.1.2-experimental: the sample is a ring, PTCH steps and 3 dB per grain, 22 November 2026
 
