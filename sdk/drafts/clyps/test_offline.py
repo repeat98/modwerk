@@ -41,6 +41,21 @@ class OfflineBanks(unittest.TestCase):
         self.assertEqual(encode(self.a.identity, 23, self.rows), expected)
         self.assertEqual(decode(expected, self.a.identity)[0], 23)
 
+    def test_reentry_and_stored_reload(self):
+        self.assertEqual(self.a.load("saved"), (0, EMPTY_PROJECT))
+        self.a.save("saved", self.rows)
+        self.rows[1][3][0] = 9
+        self.a.save("working", self.rows)
+        # Recreate the host object using only the bytes that survived OFF.
+        reopened = Archive(self.a.identity)
+        reopened.files.update(self.a.files)
+        self.assertEqual(reopened.load("saved")[1][1][3][0], 1)
+        self.assertEqual(reopened.load("working")[1][1][3][0], 9)
+        reopened.files["saved"] = reopened.files["saved"][:-1]
+        with self.assertRaises(ValueError):
+            reopened.load("saved")
+        self.assertEqual(reopened.load("working")[1][1][3][0], 9)
+
     def test_failure_recovery(self):
         self.a.save("working", self.rows)
         original = self.a.files["working"]

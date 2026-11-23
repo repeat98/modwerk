@@ -75,11 +75,16 @@ class Archive:
         self.identity = identity
         self.files = {}
 
-    def save(self, slot, banks, *, cut=None):
+    def load(self, slot):
+        """Missing data starts undefined; present damaged data raises."""
         if slot not in ("working", "saved"):
             raise ValueError("invalid slot")
-        previous = self.files.get(slot)
-        number = 0 if previous is None else decode(previous, self.identity)[0]
+        if slot not in self.files:
+            return 0, EMPTY_PROJECT
+        return decode(self.files[slot], self.identity)
+
+    def save(self, slot, banks, *, cut=None):
+        number, _ = self.load(slot)
         new = encode(self.identity, number + 1, banks)
         staged = new if cut is None else new[:cut]
         decode(staged, self.identity)
