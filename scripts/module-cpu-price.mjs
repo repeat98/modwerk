@@ -150,6 +150,10 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
   if (declared.source.endsWith('.json')) { // a price device:price wrote: recomputed from its readings, never taken on trust
     const record = readJson(resolve(root, 'sdk/octatrack/modules', id, declared.source))
     if (record?.module !== id || !record.result?.atRestAdds) return { state: 'fail', detail: 'its price names ' + declared.source + ' as its source, which holds no device:price reading of ' + id, fix: howTo }
+    // Tape Echo 0.1.9 carried the price read on 0.1.6: a release from RELEASE_COST_FROM measures its own.
+    const date = releaseDate({ root, document }), logged = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json'))
+    if (record.version !== document.version && logged && (!date || date >= RELEASE_COST_FROM))
+      return { state: 'fail', detail: 'its price was measured on ' + record.version + ', not ' + document.version + ': a release measures its own cost', fix: howTo }
     if (measuredPrice(record.result) !== declared.value) return { state: 'fail', detail: 'it names ' + declared.value + ' % of a frame, but the reading in ' + declared.source + ' gives ' + measuredPrice(record.result), fix: 'write the price with npm run device:price -- --write, never by hand' }
   }
   const disagree = descriptors.find(item => item.price !== declared.value)
@@ -331,6 +335,25 @@ export const FRAME_COST_RECORD = 'evidence/frame-cost.json'
 export const FRAME_COSTS_PATH = 'sdk/machines/octatrack/frame-costs.json' // generated: never by hand
 export const FRAME_COSTS_BASE_PATH = 'sdk/machines/octatrack/frame-costs-base.json' // the base's own: base-bound modules and its readings
 export const FRAME_COST_FROM = '2026-11-23' // the day after base 0.8's curves were first measured
+// What a curve must also show (owner, 23 November 2026: every refused pick, silent module, stall and crash costs the player, so a
+// release proves on a unit that it is admitted and plays). FM Synth 0.1.5's first curve reading sat at 107.9 % of a frame, past
+// where the guard drops renders, and no step had ever checked that a module is admitted on an empty and a medium pattern.
+export const RELEASE_COST_FROM = '2026-11-24'
+export const CURVE_ROOM = 100 // percent of a frame: the first instance's reading must stay under it
+/** Why a current-version curve does not carry a release, or null: its first reading past CURVE_ROOM, or no clean admission run. */
+export function curveProblem(record) {
+  const reading = Array.isArray(record.points) ? record.points[1] : undefined
+  if (typeof reading !== 'number') return 'its curve holds no readings (points), so nothing shows the frame had room'
+  if (!(reading < CURVE_ROOM)) return 'its first instance was read at ' + reading + ' % of a frame: past ' + CURVE_ROOM + ' % the guard drops renders, so that is the overload, not the module\'s cost. Read it on a pattern with room (--measure-pattern)'
+  const runs = Array.isArray(record.admission) ? record.admission : []
+  for (const pattern of ['empty', 'medium']) {
+    const run = runs.find(item => item?.pattern === pattern)
+    if (!run) return 'no admission run on the ' + pattern + ' pattern (device:price --curve makes it)'
+    if (run.admitted !== true) return 'alone on the ' + pattern + ' pattern it was ' + (run.admitted === false ? 'refused' : 'not verified') + (run.why ? ' (' + run.why + ')' : '')
+    if (run.dropped !== 0 || run.stalls !== 0) return 'alone on the ' + pattern + ' pattern it dropped ' + run.dropped + ' renders and logged ' + run.stalls + ' stalls or crashes in ' + (run.seconds ?? '?') + ' s'
+  }
+  return null
+}
 export const frameCostHowTo = id => 'measure it on a unit with npm run device:price -- --write --curve T1,T3,T6,T7 --base ID --scene TEXT ' + id +
   ' (the longest frame it adds on 1-4 empty tracks of a busy pattern, picked on an empty one; docs/MODULE_PERFORMANCE.md), which writes ' + FRAME_COST_RECORD + ' (npm run modules:generate then carries it into ' + FRAME_COSTS_PATH + ')'
 
@@ -343,13 +366,18 @@ export function frameCostStatus({ root, document, glue = null }) {
   const record = readJson(resolve(root, 'sdk/octatrack/modules', id, FRAME_COST_RECORD))
   const valid = record?.module === id && typeof record.first === 'number' && typeof record.each === 'number' && record.first >= record.each && record.each >= 0 &&
     (record.rest == null || (typeof record.rest === 'number' && record.rest >= 0))
-  if (valid && record.version === document.version) {
-    return { state: 'ok', detail: 'first ' + record.first + ', each ' + record.each + (record.rest != null ? ', rest ' + record.rest : '') + ' % of a frame (' + record.base + ', ' + String(record.measuredAt).slice(0, 10) + ')' }
-  }
   // A module with no changelog file predates the release notes (a legacy fixture): reported. One whose current version has no
   // entry yet is a release in progress, and one dated from FRAME_COST_FROM a new release: both refused.
   const logged = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json')), date = releaseDate({ root, document })
   const refused = logged && (!date || date >= FRAME_COST_FROM)
+  if (valid && record.version === document.version) {
+    const detail = 'first ' + record.first + ', each ' + record.each + (record.rest != null ? ', rest ' + record.rest : '') + ' % of a frame (' + record.base + ', ' + String(record.measuredAt).slice(0, 10) + ')'
+    const problem = curveProblem(record)
+    if (!problem) return { state: 'ok', detail: detail + '; admitted alone on the empty and the medium pattern, nothing dropped' }
+    const strict = logged && (!date || date >= RELEASE_COST_FROM)
+    return strict ? { state: 'fail', detail: problem, fix: frameCostHowTo(id) }
+      : { state: 'ok', detail: detail + '; ' + problem + ' (reported, not refused, for a release dated before ' + RELEASE_COST_FROM + ')' }
+  }
   return { state: refused ? 'fail' : 'warn', detail: (valid ? 'its curve is for ' + record.version + ', not ' + document.version : 'no instance curve measured') +
     (refused ? '' : '; reported, not refused, for a release dated before ' + FRAME_COST_FROM), fix: frameCostHowTo(id) }
 }

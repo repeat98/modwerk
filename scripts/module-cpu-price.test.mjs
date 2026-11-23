@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseModuleCpuMeter, parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
+import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, RELEASE_COST_FROM, curveProblem, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
 const roots = []
@@ -233,6 +233,32 @@ describe('a release of an effect or a machine carries its instance curve', () =>
     const resting = fixture({ ...curve('echo', '0.2.0', 13, 3.7, 2.5) }), negative = fixture({ ...curve('echo', '0.2.0', 13, 3.7, -1) })
     expect(frameCostStatus({ root: resting, document: effect('echo', '0.2.0'), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('rest 2.5') })
     expect(frameCostStatus({ root: negative, document: effect('echo', '0.2.0'), glue: {} }).state).not.toBe('ok')
+  })
+
+  it('holds a release from RELEASE_COST_FROM to a first reading with room and a clean admission run', () => {
+    const run = (pattern, more = {}) => ({ pattern, admitted: true, frameMax: 80, dropped: 0, stalls: 0, seconds: 8, ...more })
+    const record = (points, admission) => ({ ['sdk/octatrack/modules/echo/' + FRAME_COST_RECORD]: { module: 'echo', version: '0.2.0', base: 'twin', measuredAt: '2026-11-24T10:00:00Z', first: 13, each: 3.7, points, admission } })
+    const status = (points, admission, date = RELEASE_COST_FROM) => frameCostStatus({ root: fixture({ ...record(points, admission), ...dated('echo', '0.2.0', date) }), document: effect('echo', '0.2.0'), glue: {} })
+    expect(status([79, 92], [run('empty'), run('medium')])).toMatchObject({ state: 'ok', detail: expect.stringContaining('admitted alone') })
+    expect(status([81, 107.9], [run('empty'), run('medium')])).toMatchObject({ state: 'fail', detail: expect.stringContaining('107.9 %') }) // FM Synth 0.1.5's reading
+    expect(status([79, 92], [run('empty')])).toMatchObject({ state: 'fail', detail: expect.stringContaining('no admission run on the medium') })
+    expect(status([79, 92], [run('empty'), run('medium', { admitted: false, why: 'CPU FULL' })])).toMatchObject({ state: 'fail', detail: expect.stringContaining('refused (CPU FULL)') })
+    expect(status([79, 92], [run('empty'), run('medium', { admitted: null })])).toMatchObject({ state: 'fail', detail: expect.stringContaining('not verified') })
+    expect(status([79, 92], [run('empty', { dropped: 3 }), run('medium')])).toMatchObject({ state: 'fail', detail: expect.stringContaining('dropped 3 renders') })
+    expect(status([79, 92], [run('empty'), run('medium', { stalls: 1 })]).state).toBe('fail')
+    expect(status(undefined, undefined).state).toBe('fail') // a curve from before the admission run
+    // a release dated before the rule keeps its curve, and says what it lacks
+    expect(status([81, 107.9], undefined, FRAME_COST_FROM)).toMatchObject({ state: 'ok', detail: expect.stringContaining('reported, not refused') })
+    expect(curveProblem({ points: [79, 92], admission: [run('empty'), run('medium')] })).toBeNull()
+  })
+
+  it('refuses a price measured on another version from RELEASE_COST_FROM', () => {
+    const reading = version => ({ 'sdk/octatrack/modules/echo/evidence/cpu-price.json': { module: 'echo', version, result: { atRestAdds: { frame: 0.2 }, inUseAdds: { frame: 1.3 } } } })
+    const document = { ...module('echo', 'FX2', { ...share(1.3), source: 'evidence/cpu-price.json' }), version: '0.2.0' }
+    const status = (version, date) => cpuPriceStatus({ root: fixture({ ...reading(version), ...dated('echo', '0.2.0', date) }), document, pending: new Map(), glue: {} })
+    expect(status('0.2.0', RELEASE_COST_FROM).state).toBe('ok')
+    expect(status('0.1.0', RELEASE_COST_FROM)).toMatchObject({ state: 'fail', detail: expect.stringContaining('measured on 0.1.0, not 0.2.0') })
+    expect(status('0.1.0', FRAME_COST_FROM).state).toBe('ok') // Tape Echo 0.1.9 carried 0.1.6's price, released before the rule
   })
 
   it('generates the table from the base list with each module\'s current curve on top, one module a line', () => {
