@@ -1,3 +1,37 @@
+# CLYPS contributor checkpoint · 23 November 2026
+
+[Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
+
+PR #1997 remains an experimental source draft. See [testing](TESTING.md) for per-build results. The 22 November checkpoint below is historical.
+
+## Maintainer findings
+
+- Stock UI takeover discards the Row Edit draft, disarms row capture and yields new keys, the base ownership query and encoders. Keys already consumed retain their releases. A key pressed in a popup stays with stock through repeats and release, including when it closes the popup. ARR reopens the view after dismissal. The transition never calls the launch or row-commit paths.
+- Rows represent local slot numbers in the current volatile session. The pre-load mask suspends foreign-source selection during a read of A. Wrap and tick preserve requests while A is being replaced. A read of B–P leaves selection active. The paired return releases this guard on either outcome and retains the row definitions. Each recall checks current grid compatibility. A relevant successful bank read can change what the same slot sounds like. Stock project initialization clears row validity, active lanes and pending work together. It can also occur during CHANGE and RELOAD. A failed whole-project operation that initializes stock state cannot be distinguished from a new epoch. The public callbacks supply neither a committed project identity nor a success mask. Confirm this boundary before extending the lifetime of rows. The module writes no bank, Part or project files.
+
+## Artist contract and next design work
+
+The historical artist handoff and idea register are in the private design branch `design/clyps-session-view-ui-2026-11-22`, files `docs/CLYPS_MODWERK_HANDOFF_2026-11-21.md` and `docs/CLYPS_IDEAS.md`. D18–D22 and I60–I64 were appended at `e376ba5`. The public summary below supports implementation review.
+
+| Decision / idea | Status | Engineering consequence |
+|---|---|---|
+| D18 / I60 | Artist confirmed A–P × 16; storage layout proposed | Sixteen local rows per bank A–P, versioned project storage, extensible row count. Compare against 128 global rows. [Decision record](ROW_STORAGE.md). |
+| D19 / I61 | Artist confirmed | A popup cancels only the unconfirmed row edit. Keep playback and pending launches intact. |
+| D20 / I62 | Artist confirmed, future scheduler | A defined row can request CLIP(source), STOP (empty default) or explicit HOLD. STOP executes at the common boundary. Undefined rows issue no operations. Voice cutoff, FX tails, MIDI note-offs, representation and gestures remain open. |
+| D21 / I63 | Artist confirmed, future scheduler | Select Restart or Legato at clip or row level. Both use the common launch boundary. |
+| D22 / I64 | Artist confirmed, future editing | Edit Source changes all references. Duplicate & Edit requires an independent destination and must preserve the original and other references. Prove safe allocation, full-bank refusal, trig/p-lock/sample/slice-lock and metadata copying, retarget scope, undo and cross-bank behavior. E1 remains interlocked. |
+
+| Future phase fixture | Acceptance at the common boundary |
+|---|---|
+| Restart 16→32 and 32→16 | Observe new source step 1 and unchanged phase on the other seven lanes. |
+| Legato 16→32 and 32→16 | Agree the phase rule first, then compare actual next steps against an independent oracle in both directions. |
+| Clip/row modes disagree or either mode is unset | Choose precedence/default with the artist before fixing expected values. |
+| Independent scales, polymeter, looping and one-shots | Define clock domain and terminal behavior. Test requests either side of wrap and STOP cancellation. |
+
+**Next gate:** on the agreed #1910 build, trace CHANGE, successful RELOAD and a failed RELOAD after initialization using two disposable project identities with distinct R04 sentinels. Correlate request, resulting identity and outcome. Require zero cross-project recall and recoverable previous rows on failure before accepting persistence.
+
+---
+
 # CLYPS · chiusura indipendente del 22 novembre 2026
 
 **Sessione chiusa. Modulo Draft, ABI proposta, hardware NOT TESTED / NOT_FLASH_CANDIDATE.** Questa verifica ha riletto sorgenti, build e ricevute conservate e rieseguito i grader offline. I replay MKII e le misure appartengono allo sprint precedente. Le sezioni storiche più sotto ne conservano il contesto.

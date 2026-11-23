@@ -1,5 +1,7 @@
 # CLYPS — experimental Octatrack performance module (community draft)
 
+[Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
+
 **Build the eight-track engine.** From the repository root run:
 
 ```sh
@@ -38,3 +40,7 @@ See [HOOK_PROPOSAL.md](HOOK_PROPOSAL.md) for the shared-base ABI questions and [
 ## Source and qualification
 
 [File-by-file import and licences](PROVENANCE.md). The native module remains a draft outside the catalogue. No physical MKII runs are recorded.
+
+## Volatile rows in the contributor draft
+
+A stock popup cancels an unconfirmed Row Edit. Reopen CLYPS with ARR after dismissal. Bank reads preserve the sixteen row definitions as local slot numbers. Recall validates the current grids. Project initialization clears the volatile set and returns all lanes home, including when stock initializes during a project change or reload. See [handoff](HANDOFF.md) for verification scope and [row storage](ROW_STORAGE.md) for the proposed multi-bank model.
