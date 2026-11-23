@@ -58,6 +58,23 @@ Each step proves only what it ran. Steps 1 to 5 prove the code paths they exerci
 
 A machine without a USB link runs the steps its tools reach, and the record lists the rest as not run with what is missing; step 12 then carries all the hardware evidence ([every machine](#every-machine)).
 
+## What a release measures
+
+Every release of an Octatrack module proves these on a unit, on the version it ships (owner, 23 November 2026). `module:doctor` and `modules:check` refuse a release dated from 24 November 2026 without them, whenever its module was first listed; step 9 runs the unit part.
+
+| Figure | What it is | Command | Record |
+| --- | --- | --- | --- |
+| Idle | what it adds installed and used nowhere | `device:price --write` | `evidence/cpu-price.json` (`atRest`) |
+| Mean | its CPU price: the frame interrupt's share in use | `device:price --write`; a machine with `guard` (below) | `resources.cpuPrice` |
+| DSP | both cores' load in use, for a module with DSP code | `device:price --write` | `evidence/cpu-price.json` (`inUse.dsp1to4`, `dsp5to8`) |
+| Curve | the longest frame with 1 to 4 instances: `first`, `each`, `rest` | `device:price --write --curve` | `evidence/frame-cost.json` |
+| Admission | alone on an empty and on a medium pattern: admitted, then played with no dropped render and no stall | the same run | `evidence/frame-cost.json` (`admission`) |
+| Worst case | worst-case cycles, a stock benchmark and a stress run | `perf:audit` | `evidence/performance.json` |
+
+Three rules close what earlier releases slipped through. A price record names the version it was read on, and a release takes no other's (Tape Echo 0.1.9 carried 0.1.6's). A curve's first reading must stay under 100 % of a frame: past it the guard drops renders, so the figure is the overload and not the module (FM Synth 0.1.5's read 107.9 %); read it on a pattern with room (`--measure-pattern`). And a machine's price is the whole track, the machine against the same trigs on the track's own sample, never its trigs against none on a machine that is already running: that comparison cancels the engine's cost (FM Synth 0.1.5 read 3.2 points that way).
+
+A module that is refused alone on the medium pattern, or drops a render there, does not ship until it is cheaper or the owner decides otherwise for that version.
+
 ## Every machine
 
 The steps, their order and the record are the same on every machine. Each step runs the machine's own tool where it has one (`MACHINE_STEPS` in [the runner](../scripts/test-procedure.mjs)); where it has none, the record says "not run" and what is missing, so the gap stays in sight until the machine's next piece fills it ([where each machine stands](MACHINE_RECIPE.md#where-each-machine-stands)). A tool added for a machine fills its row here and in `MACHINE_STEPS` in the same pull request.
