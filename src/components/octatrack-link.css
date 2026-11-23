@@ -181,6 +181,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
 .hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: 12px; background: var(--sidebar); }
+.octatrack-hub:not(.zoom-hub) > .hub-split { background: var(--surface); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
 .hub-hero .device-photo { width: clamp(8.5rem, 15cqi, 11rem); height: auto; flex: none; }
 .hub-hero .device-photo.is-cutout { padding: 0; }
@@ -236,6 +237,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
 }
 .hub-screen-display { border: 1px solid var(--control-border); border-radius: 7px; background: var(--field); }
+.hub-screen-canvas { border-radius: inherit; }
 .hub-screen canvas:not([hidden]) {
   display: block; width: 100%; height: auto; border-radius: inherit; background: #181818; image-rendering: pixelated;
 }
@@ -268,7 +270,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */
 .hub-pane:has(> .hub-view-status:not([hidden])) { display: flex; padding: 0; overflow: hidden; }
 .hub-view-status { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; }
-.hub-view-status > .usb-missing { margin: 12px 16px; }
+.hub-view-status > .usb-missing { margin: 12px 16px; background: transparent; }
 .hub-console { flex: 1 0 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: auto minmax(150px, 1fr) minmax(130px, 1fr); grid-template-areas: "cpu cpu dsp1 dsp1 dsp2 dsp2" "chart chart chart chart health health" "unit unit history history history history"; gap: 1px; border-radius: 0 0 12px 0; overflow: hidden; background: var(--line); }
 .hub-cell { min-width: 0; min-height: 0; overflow: auto; padding: 14px 18px; background: var(--surface); }
 .hub-cell-cpu { grid-area: cpu; } .hub-cell-dsp1 { grid-area: dsp1; } .hub-cell-dsp2 { grid-area: dsp2; }
