@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Make the pattern longer and the quick perf rec repeats over the new steps: 16 to 32 plays your take twice, 16 to 24 plays steps 1 to 8 again.",
+      "Shortening still plays just the start; once a whole loop has played that way, lengthening again repeats it over the hidden steps.",
+      "A QPER knob take runs to the loop's new end when the length changes during it."
+    ]
+  },
+  {
     "version": "0.2.2-experimental",
     "date": "2026-11-17",
     "changes": [

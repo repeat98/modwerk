@@ -2,11 +2,11 @@ import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { ConfigurationHandoff } from './ConfigurationHandoff'
 import { useEffect, type ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
-import { lastInventory, sameModules, type Inventory } from '../config/inventory'
+import { inventoryUsbAudio, lastInventory, matchesUsbAudio, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, moduleSetReview, setLayout } from '../engine/elekloader/module-set'
 import { baseLayout, baseVersion, type BaseLayout } from '../engine/elekloader/base-variants'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -20,6 +20,8 @@ import { OctatrackBackups } from './OctatrackBackups'
 import { CardSetButton } from './UnitPanel'
 import { OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
 import { OctatrackOverview } from './OctatrackOverview'
+import { OctatrackScreen } from './OctatrackScreen'
+import { RuntimeFeature } from '../engine/elekloader/upload-usb'
 import { OctatrackSamples } from './OctatrackSamples'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
 import { MODULE_SKIP_HINT, USB_BROWSERS } from '../firmware-notices'
@@ -31,7 +33,7 @@ const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
 const BUSY = ['sending', 'testing', 'trial', 'finishing']
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
-export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'diagnostics' | 'set'
+export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'screen' | 'diagnostics' | 'set'
 export type { SetAction }
 /** The Octatrack's own pages, in the list above the module sets; `#configuration` is the set you edit. */
 const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; icon: IconName }[] = [
@@ -39,6 +41,7 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'backups', title: 'Backups', href: '#octatrack/backups', icon: 'download' },
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
+  { view: 'screen', title: 'Screen', href: '#octatrack/screen', icon: 'image' },
   { view: 'diagnostics', title: 'Diagnostics', href: '#octatrack/diagnostics', icon: 'shield' },
 ]
 // Samples is unfinished: its panel stays (and keeps its tests), but nothing leads to it until it is ready.
@@ -89,12 +92,13 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const state = useOctatrackLink(link), { status, identity } = state
   const connected = !!identity?.canSubmit && status === 'ready', busy = BUSY.includes(status), usb = !!link && status !== 'unsupported'
   const last = connected || busy ? undefined : lastInventory()
-  const unitIds = connected ? inventory?.moduleIds : last?.moduleIds
+  const audio = connected && inventory ? inventoryUsbAudio(identity?.base, inventory) : last
+  const unitIds = audio?.moduleIds
   const selected = sets.find(set => set.id === selectedId) ?? sets[0]
   // USB Audio is on the unit when its base runs the set's layout (base-variants.ts); the inventory lists packages only.
-  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => id !== USB_AUDIO_MODULE), unitIds) &&
-    (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
-  const review = connected && inventory && selected ? moduleSetReview(selected, inventory, identity?.capabilities, identity?.base) : undefined
+  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => !comesWithBase(id)), unitIds) &&
+    (!audio || matchesUsbAudio(set.usbAudio, audio)) && (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
+  const review = connected && inventory && selected ? moduleSetReview({ ...selected, usbAudio: selected.usbAudio }, inventory, identity?.capabilities, identity?.base) : undefined
   const changes = review?.changes, updates = review?.updates ?? []
   const needsBase = review?.problem instanceof BaseUpdateRequired || connected && baseOutdated(identity?.base)
   const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined
@@ -107,7 +111,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const led = connected && !stopped ? 'on' : busy ? 'load' : 'off'
   const health = useOctatrackHealth(link)
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
-  const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) ? lastSync.name : undefined)
+  const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) && matchesUsbAudio(lastSync.usbAudio, last) ? lastSync.name : undefined)
   // The hero: the unit's state in one line and the one action it needs, on every page.
   const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB', <CardSetButton key="card" set={selected && { name: selected.name, moduleIds: selected.moduleIds, removedStockFx: selected.removedStockFx, usbAudio: selected.usbAudio }} onInstall={onInstall} />]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
@@ -162,6 +166,8 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
         {panel('status', <OctatrackOverview link={link} inventory={inventory} sets={sets} needs={needs} health={health} active={view === 'status'} selected={selected} onOpen={onSelect} onSync={onSync} onSaveUnit={onSaveUnit} onReport={onReport} />)}
         {panel('backups', <OctatrackBackups link={link} />)}
         {panel('samples', <OctatrackSamples active={view === 'samples'} />)}
+        {panel('screen', <OctatrackScreen key={identity?.base} active={view === 'screen'} link={connected ? link : null}
+          supported={!!((identity?.capabilities?.features ?? 0) & RuntimeFeature.screen)} />)}
         {panel('setup', <>
           <h2 className="hub-view-title">Setup</h2>
           <section className="hub-section hub-base" aria-labelledby="setup-base-title">

@@ -96,7 +96,7 @@ function nativeChange(change, machine) {
     || /^sdk\/imports\/packages\/.*\.elemod$/.test(path)
     || /^src\/catalog\/(?:module-contract(?:-v3)?|module-folder|module-authors|versions|zoom-effect-ids|elemod-site-recipe)\.ts$/.test(path)
     || /^src\/devices\/(?:machine-contract\.ts|machines\.generated\.json)$/.test(path)
-    || /^scripts\/(?:elemod-compiler-flags|elemod-dependencies|machine-folders)\.mjs$/.test(path)
+    || /^scripts\/(?:elemod-audio-stack|elemod-compiler-flags|elemod-dependencies|machine-folders)\.mjs$/.test(path)
 }
 function compilerJob(text, name) {
   const lines = text?.split('\n') ?? [], start = lines.indexOf('  ' + name + ':')
@@ -114,7 +114,7 @@ function workerCatalog(value) {
 // Whole trees the Worker compiles from: a test checks that every file worker.ts imports falls under these, so a new
 // import cannot silently miss the deploy. A few frontend-only files here only cause a harmless extra deploy.
 const workerTrees = /^(server|migrations|src\/(community|catalog|devices|config|legal))\//
-const workerFiles = ['worker.ts', 'wrangler.worker.jsonc', 'package-lock.json', 'src/hosting.ts', 'src/support.ts', 'sdk/catalog.json', 'docs/news/008-beta-invitation.draft.json', '.github/workflows/worker.yml', '.github/module-authors.json']
+const workerFiles = ['worker.ts', 'wrangler.worker.jsonc', 'package-lock.json', 'src/hosting.ts', 'src/support.ts', 'sdk/catalog.json', 'sdk/approvals/zoom-release-waivers.json', 'docs/news/008-beta-invitation.draft.json', '.github/workflows/worker.yml', '.github/module-authors.json']
 function workerChange({ path, before, after }) {
   if (catalogs.has(path) && before !== null && after !== null) return canonical(workerCatalog(json(before))) !== canonical(workerCatalog(json(after)))
   // The Worker bundles the generated (uncommitted) list of every machine's modules but the Octatrack's

@@ -4,7 +4,7 @@
 // sources last in a fixed reserve (build_core.py usb_reserve), so all of them share every other address: one set of
 // base-bound packages fits each (scripts/octatrack-base.mjs --usb-audio-variants proves it when it writes them).
 // The committed package is the default layout's; each other variant is a line patch against it, checked by hash.
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './octatrack-publication.ts'
 import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { USB_AUDIO_LAYOUTS, type UsbAudioLayout } from '../../config/usb-audio.ts'
@@ -47,6 +47,12 @@ const PREVIOUS_IDENTITIES = new Map<string, BaseLayout>([
   ['d16bd599630c2312ad50d0cfb0c4011138154bc5ea3c7f7e09f7a1353f1b8962', 'master'],
   ['05b7f09031bc3892626e7c2576810386faeb01bd3a3101353a56c56c96d82a4a', 'off'],
 ])
+// Published 0.7 through 0.7.11 recorded the default identity followed by the six alternatives in this order.
+const linkedAudioLayouts: BaseLayout[] = ['tracks-main-cue', 'tracks', 'tracks-post', 'main-cue', 'main', 'master', 'off']
+for (const release of baseVersions.bases) {
+  if (release.identities.length === linkedAudioLayouts.length)
+    release.identities.forEach((identity, index) => PREVIOUS_IDENTITIES.set(identity, linkedAudioLayouts[index]))
+}
 /** The layout a unit's base runs as far as the site knows: a published base's, or the previous base's; undefined for
  * any other base, which may have had USB Audio. */
 export const runningLayout = (identity?: string) => identity === undefined ? undefined : IDENTITIES.get(identity) ?? PREVIOUS_IDENTITIES.get(identity)

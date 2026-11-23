@@ -8,6 +8,7 @@ import { BaseTooBigError, explainLinkError, LINK_BUSY, type BaseUpdateStep, type
 import { UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { siteUpdated, unitForPrompt } from '../hooks/useBaseInstallPrompt'
 import { baseLayout, isPublishedBase, layoutName, MEMBER_LAYOUT, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { setLayout } from '../engine/elekloader/module-set'
 import type { InventoryTarget } from '../config/inventory'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -60,7 +61,7 @@ const STILL_PREVIOUS_BASE = 'Your Octatrack still runs the base it had before, s
 /** Even the step base does not fit the unit's base: only the card is left. */
 const TOO_OLD_FOR_USB = 'The base on your Octatrack is too old to take this update over USB. Update from the card.'
 /** Before an update that installs USB Audio off over a base that had it, or may have had it. */
-const AUDIO_OFF_NOTE = 'USB Audio is off in this base by default. To keep using it, add the USB Audio module to your module set first; the update then installs your layout.'
+const AUDIO_OFF_NOTE = 'Load your module set after the base update to restore USB Audio. It will use the layout and Outbox assignments saved in your set. You can change them on the Octatrack under PROJ > MODWERK > SETTINGS > USB AUDIO.'
 /** Said before anything else in a browser without WebUSB (Safari, Firefox, any phone): the card is its way, not a failure. */
 const CARD_ROUTE = <><strong>USB needs {USB_BROWSERS}.</strong> This browser can’t connect to the Octatrack, so the card is your way here: install the base from the card in the steps below, then load your modules as one file on the card. To sync over USB later, open Modwerk in one of those browsers.</>
 /** Folded away below the update: what to do when it goes wrong. */
@@ -108,8 +109,7 @@ function keepStage(stage: CardStage | null) {
 }
 
 /**
- * The one place to install the Modwerk base, as a guide: a first view (`launch`, when the Your Octatrack page opens it
- * by itself), then the card stages Download, Copy, Install and Connect for a first install, or one update over USB for a
+ * The one place to install the Modwerk base, as a guide: a first view (`launch`, for the standalone install preview), then the card stages Download, Copy, Install and Connect for a first install, or one update over USB for a
  * unit on an older base. The card is the only way onto the original OS; every later update goes over USB, with the card
  * as the fallback. The Connect stage completes by itself when the unit comes back with the downloaded base, and the
  * guide resumes there (or at the card step it left) after a reload. `buildBase` is the builder's seam, absent until the
@@ -176,12 +176,12 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   // The current base in another USB Audio layout: the same update over USB, to the variant the module set needs.
   // Both are read from the unit until an update over USB starts, then kept: mid-update the unit runs the new base,
   // which would turn the dialog into the first install's.
-  const live = { older: !pending && unitForPrompt(state) === 'older', switching: !pending && layout !== undefined && isPublishedBase(state.identity?.base) && baseLayout(state.identity?.base) !== layout, from: state.identity?.base }
+  const live = { older: !pending && unitForPrompt(state) === 'older', switching: !pending && !USB_AUDIO_PACKAGED && layout !== undefined && isPublishedBase(state.identity?.base) && baseLayout(state.identity?.base) !== layout, from: state.identity?.base }
   const [began, setBegan] = useState(live)
   const { older, switching, from } = usb ? began : live, running = baseLayout(from), usbStages = USB_STAGES
   // What gets built: the layout asked for, else the set's own (an update keeps what the set asks for, in one go), else
   // USB Audio off. An update to off from a base that had USB Audio, or one the site can't tell, says so before it runs.
-  const installLayout = layout ?? (set ? setLayout(set) : undefined)
+  const installLayout = USB_AUDIO_PACKAGED ? undefined : layout ?? (set ? setLayout(set) : undefined)
   const turnsAudioOff = older && (installLayout ?? MEMBER_LAYOUT) === 'off' && runningLayout(from) !== 'off'
   // Over USB from any older base (every base RAM-boots the new one, which writes itself: flash.c); the card stays for
   // the first install and as the fallback after an error.
@@ -210,7 +210,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   useEffect(() => { if (firmwareError) step('os-file-refused') }, [firmwareError]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (accepted) step('risk-accepted') }, [accepted]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (signIn) step('sign-in-asked') }, [signIn]) // eslint-disable-line react-hooks/exhaustive-deps
-  // The guide opens in such a browser only when the member asks for it (useBaseInstallPrompt), so this is an attempt.
+  // The guide opens in such a browser only after someone chooses to install, so this counts as an attempt.
   useEffect(() => { if (state.status === 'unsupported') { report('failed', 'no-webusb'); link.noWebUsb() } }, [state.status]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (outdated) report('failed', 'site-outdated') }, [outdated]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (wrongBase) report('failed', 'wrong-base') }, [wrongBase]) // eslint-disable-line react-hooks/exhaustive-deps

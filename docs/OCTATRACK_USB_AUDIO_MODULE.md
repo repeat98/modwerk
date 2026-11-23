@@ -1,14 +1,12 @@
 # Octatrack: USB Audio as a module (design, for owner review)
 
-Status, 20 November 2026: decided ([decision](decisions/2026-11-20-usb-audio-is-a-module.md)), not built into any
-published base. A base-side prototype from 12 November sits on the unpushed branch `base/usb-audio-module`; it ran
-in the emulator only, and nothing here was seen on a unit. Addresses are OS 1.40C.
+USB Audio 0.3.0-experimental uses Octatrack base 0.7.12 on OS 1.40C. [PR #1840](https://github.com/repeat98/modwerk/pull/1840) published base 0.7.11 with the built-in layouts. The new USB function and settings hooks first appear together in the 0.7.12 release candidate. Earlier references to 0.7.11 in the [unit record](verification/2026-11-20-octatrack-usb-audio-package.md) name development builds by their individual identities.
 
-## Today
+The [design decision](decisions/2026-11-20-usb-audio-is-a-module.md) explains why USB Audio became a package. The following design describes the transition from the built-in layouts.
 
-USB Audio has no runtime package. Since #756 each of its six output layouts, and USB MIDI alone (`off`), is a
-published base, because the layout sets the USB configuration descriptors. Turning it on or changing the layout
-installs a base (RAM boot, then the write). The cost:
+## Through base 0.7.11
+
+Since #756 each of the six output layouts, and USB MIDI alone (`off`), shipped as a separate base because the layout set the USB configuration descriptors. Turning on USB Audio or changing the layout required a base install. That design required the following:
 
 - seven base identities to build, prove and publish for every base change (`base-variants.ts`,
   `octatrack-base-variants.json`, `base-binding.json`'s `variants`);
@@ -48,7 +46,7 @@ Two things it found in the emulator shape the rest:
 - **The base walks these hooks' rows itself.** Through the loader's dispatch code the USB interrupt left module
   addresses on the stack at every transfer, and the loader then refused a rollback for good.
 
-### Still to design
+### Base and migration work
 
 1. **The audio frame: `ev_usb_frame`** (added to the prototype on 20 November 2026, emulator only). The producer
    runs in the frame interrupt (`audio_frame_shim` at `0x4000d9a0`, one of `usb_base.py`'s `AUDIO_DETOURS`). A
@@ -73,30 +71,23 @@ Two things it found in the emulator shape the rest:
 ## The module
 
 - One catalogue module, the present id `usb-audio-out-tracks-main-cue`, so sets, reports and changelogs keep working.
-- The layout is a setting of the set on the site, as today. Each layout is its own package build of the same
-  module id; changing it replaces the package and reconnects.
-- **The player switches it on the Octatrack, in the Modwerk settings** (owner, 20 November 2026). The base has one
-  row, PROJ > MODWERK > SETTINGS, for every module that has a setting (table `ot_settings`, `settings.c`): each
-  setting shows its label and the choice in force, and YES takes the next choice at once. The base keeps the
-  choice in battery RAM under the label, through power cycles and module updates, and applies it again after
-  every change of the installed modules. USB Audio offers ALL CHANNELS and OFF in every layout and MAIN + CUE ONLY
-  in the twenty-channel one, read by the producer through #1517's seams. None of them changes a descriptor, so
-  nothing reconnects and the host keeps its channel count. The 13 November measurements in #1517 are the baseline.
+- Install one package. Open PROJ > MODWERK > SETTINGS, then USB AUDIO. Choose COMPUTER or OUTBOX 8, an output layout, and PRE LEVEL or POST LEVEL for the eight stems in either track layout. Main and Cue keep their existing taps.
+- In OUTBOX 8, choose the source for each of four stereo USB pairs. Each pair can carry a source from the selected layout or silence. Duplicate assignments are allowed. Set up the matching physical outputs once in Elektron’s app.
+- The base saves these settings through a power cycle. A change of USB format reconnects the device. Changes to sources and stem tap within the current format can keep a recording open.
 - The imported producer source stays exact; the adapter inserts at guarded seams, as `base_usb_functions.py` does.
 
 ## Sync
 
-- Adding, removing or changing the layout ends in a reconnect. The site's link already waits for a unit to come
+- Adding, removing or changing the advertised channel format ends in a reconnect. The site's link already waits for a unit to come
   back after a base update; here it reads USB FUNCTION, waits for the reconnect to settle and goes on with the
   self-test, Keep or Undo on the same trial.
 - An Undo, a failed self-test and a power cycle each put the earlier configuration back, with a reconnect of
   their own.
-- The reconnect waits for an idle control endpoint and for the transport to be stopped, as a load does.
+- A panel format change waits until playback stops and the card leaves USB Disk Mode.
 
 ## Site
 
-Remove the special cases listed under Today. The layout stays in `usbAudio` on the set; `setLayout` picks the
-package instead of a base. The module counts toward `SET_MODULE_LIMIT`: a set that holds 24 others and USB
+Remove the special cases listed under Today. Each layout installs the same package. Existing sets retain their layout for migration. The module counts toward `SET_MODULE_LIMIT`: a set that holds 24 others and USB
 Audio then loads and shows but is not synced until trimmed, as any set over the limit. `base-variants.ts` keeps
 only what the transition needs.
 
@@ -120,7 +111,9 @@ every module. A set that names a layout keeps naming it.
 
 ## Steps
 
-Steps 1 to 3 are built and seen in the emulator only (20 November 2026, draft #1848); none ran on a unit.
+The packaged 0.3.0-experimental candidate passed Keep and card restoration across a physical power cycle on an Octatrack MKII. The Mac recorded 89,088 stereo frames from the restored Track 8/Master set. Steps 1 to 3 also ran in the emulator. On the Octatrack MKII, all six layouts recorded on macOS and Undo restored the
+original configuration. Main + Cue passed three repeats with one USB client after two earlier rollbacks with a paired
+browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-package.md) includes the package hashes and settings measurements.
 
 1. Bring `base/usb-audio-module` onto current `main`, add the frame event, and run its emulator verifier.
 2. Build USB Audio (20 channels first) as a package against a development twin; verify in the emulator, then on a
@@ -129,3 +122,53 @@ Steps 1 to 3 are built and seen in the emulator only (20 November 2026, draft #1
 4. The site: package selection, the reconnect in the Load dialog, the limit, the special cases out.
 5. The base without reserve and variants on `base/octatrack-next`, with the transition, a draft until
    extensively tested on a unit.
+
+## USB input in the 0.8 draft
+
+**PROJ → MODWERK → SETTINGS → USB AUDIO → INPUTS** offers OFF, AB, CD
+and ABCD for a computer host. OFF is the default. AB and CD use the same
+stereo USB format and select where channels 1/2 arrive. ABCD assigns host
+channels 1–4 to the four inputs. The input stream and its implicit feedback
+are available at high speed. Full speed and Outbox keep their output layouts.
+When a block is unavailable, the affected inputs read from the jacks.
+
+The development base owns the frame-transfer interrupt. Its guarded DMA
+scheduler sends a staged input block to core 0 before an FX loader packet
+when both are due. The two transfers use disjoint DSP ranges. The RX hook
+consumes the block marker once so a closed stream or a skipped transfer
+leaves the analog input intact. The base gives USB priority on the crossbar
+while a duplex configuration is selected and restores its previous values
+when that configuration leaves.
+
+Build the cumulative draft with `npm run octatrack:base -- --beta --stock OS.bin --out /private/tmp/new-build-dir`.
+The output directory includes `usb-audio-input.mwrm`, the optional stock-free RAM trial package.
+The draft base also accepts the existing output-only 0.3.0-experimental package.
+For panel automation, build a development twin with the same USB and DSP flags plus `--dev`.
+Use the existing
+[USB tools](../sdk/machines/octatrack/hw/README.md) to capture counters,
+routing and underruns on a unit.
+
+The pinned [OctaBam optimization](https://github.com/sambanks/octabam/commit/4b0cd42a10a01d8b63f29b11bf9d17d6706a6481)
+uses SRAM staging and a single load per USB input sample. This candidate
+uses that receiver and the optimized DSP loop. OctaBam also queues the
+high-speed output transfer directly from a ring in USB channel order.
+Modwerk's configurable producer still copies to packet buffers to supply
+the selected output routing. Bryan timed the combined OctaBam changes at
+about 34 to 24 µs per frame on his MKII with ABCD and Main/Cue. That is
+upstream timing. Modwerk needs its own loaded-project and DMA overlap runs.
+
+### Candidate checks
+
+Development base `3e4fa8ce4370` and package `35f2a26cf5eb` built on
+21 November 2026. The shipped 0.3.0-experimental package rebuilt
+byte-for-byte. Module doctor and the catalogue compatibility check passed.
+
+The DSP host ran OFF, AB, CD and ABCD in both frame banks over synthetic
+24-bit values with dirty upper bytes. The selected inputs matched bit-for-bit,
+the remaining slots kept their analog fixture values, and the marker was
+consumed. The real-time Octatrack emulator loaded the package with an ABCD
+and Main/Cue preset (`bdad3889b242`), enumerated both descriptor shapes,
+accepted input alternate settings 1 and 0, and restored the original four
+interfaces after Undo. During the streaming attempt the input counters
+remained zero. The released 0.3 output-only package also returned zero
+nonempty audio packets in the same emulator setup. The [MKII RAM trials](verification/2026-11-21-octatrack-usb-input.md) verified all four INPUTS modes, both recorder pairs, playback of R1 over USB and 17 min 34 s of four-channel duplex audio with Vibrato running.

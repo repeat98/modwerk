@@ -259,6 +259,16 @@ describe('private consented Octatrack diagnostics',()=>{
       {...ids,event:'device_log',log:{loads:[],incidents:[],stall:{...stall,report:Array(97).fill(0)}}},{...ids,event:'device_log',log:{loads:[],incidents:[],dump:[1]}}]
     for(const value of cases)expect((await send(fresh(value),token)).status).toBe(400)
   })
+  it('accepts only fixed reconnect outcomes from a disconnected trial', async () => {
+    const { consent, send } = await fixture()
+    await consent()
+    const failure = { event: 'sync_failed', phase: 'trial', step: 'trial', error: 'disconnected', reconnect: 'timeout' }
+    for (const reconnect of ['timeout', 'closed', 'mismatch', 'unreadable', 'lost-again'])
+      expect((await send({ ...failure, id: crypto.randomUUID(), reconnect })).status).toBe(200)
+    for (const fields of [{ reconnect: 'arbitrary text' }, { reconnect: undefined }, { event: 'kept' },
+      { phase: 'busy' }, { step: 'stage' }, { error: 'device' }])
+      expect((await send({ ...failure, ...fields, id: crypto.randomUUID() })).status).toBe(400)
+  })
   it('rejects raw browser/build data and cross-event USB fields instead of storing them',async()=>{
     const {consent,send}=await fixture(), token='c'.repeat(64);await consent(true,token)
     const browser={id:crypto.randomUUID(),event:'browser_error',phase:'browser',area:'octatrack',kind:'TypeError'}

@@ -292,6 +292,50 @@
    "index": 54,
    "event": "ev_in_use",
    "kind": "call"
+  },
+  {
+   "index": 55,
+   "event": "ev_usb_isr",
+   "kind": "raise"
+  },
+  {
+   "index": 56,
+   "event": "ev_usb_bus_end",
+   "kind": "raise"
+  },
+  {
+   "index": 57,
+   "event": "ev_usb_control",
+   "kind": "raise"
+  },
+  {
+   "index": 58,
+   "event": "ot_usb_functions",
+   "kind": "table",
+   "room": 1,
+   "record": 32
+  },
+  {
+   "index": 59,
+   "event": "ev_usb_frame",
+   "kind": "raise"
+  },
+  {
+   "index": 60,
+   "event": "ot_settings",
+   "kind": "table",
+   "room": 8,
+   "record": 24
+  },
+  {
+   "index": 61,
+   "event": "ev_audio_frame_prepare",
+   "kind": "call"
+  },
+  {
+   "index": 62,
+   "event": "ev_frame_deadline",
+   "kind": "raise"
   }
  ]
 }

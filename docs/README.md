@@ -81,6 +81,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.
 - [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md): creator settings and private report details.
 - [AGENT_BOARD.md](AGENT_BOARD.md): the agent board: claims every developer's agent sees and makes (module ports, hook, table and migration numbers), the questions and findings agents leave each other, and the commands that check them.
+- Coding agents replay merged fixes locally and on GitHub. [Agent evals](AGENT_EVALS.md)
 - [AGENT_SESSIONS.md](AGENT_SESSIONS.md): the review an agent makes of its own session before it finishes, and sharing the conversation of an agent session with the owner, what is removed before it leaves the computer, and who reads it for how long.
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
@@ -97,6 +98,8 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 History, not current instructions.
 
 - The Analog BD Undo recording and BBD Delay buffer check are in the [Octatrack 0.7.10 test record](verification/2026-11-19-octatrack-0710-checks.md).
+- [Unused module cost](verification/2026-11-20-octatrack-unused-module-cost.md): what 24 installed, unused modules cost the frame interrupt, module by module, and resting machines, 20 November 2026.
+- The DSP stall on a project load with modules restored from the card, and its 0.7.11 fix, are in the [project-load record](verification/2026-11-19-octatrack-project-load-dsp.md).
 - [FRACT consolidation](verification/2026-11-04-fract-consolidation.md): source draft, native FLEX support, source checks and review limits for #926, 4 November 2026.
 - [OCTATRACK_USB_CHECKPOINT.md](OCTATRACK_USB_CHECKPOINT.md) and [OCTATRACK_BETA_HANDOVER.md](OCTATRACK_BETA_HANDOVER.md): handovers frozen on 12 October 2026.
 - [REPITCH_ORIGINAL_TEMPO_CHECK.md](REPITCH_ORIGINAL_TEMPO_CHECK.md): a check of 8 October 2026.

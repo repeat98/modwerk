@@ -1,0 +1,1 @@
+Maintainer-approved merges of a module's first release go through again; since 19 November each one failed with a server error before it reached GitHub. Maintainer badges on member profiles show again too, because the lookup behind them failed the same way.

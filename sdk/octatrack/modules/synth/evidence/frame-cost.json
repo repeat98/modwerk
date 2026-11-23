@@ -1,0 +1,34 @@
+{
+  "module": "synth",
+  "version": "0.1.5-experimental",
+  "base": "dce1d30e (0.8 development twin)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; stock alone 79.4 %), picks on empty C02; owner's MKII",
+  "seconds": 8,
+  "measuredAt": "2026-11-22T11:53:49.405Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "rest": 0,
+  "first": 31.3,
+  "each": 0.5,
+  "points": [
+    81,
+    107.9,
+    112.8,
+    113.3,
+    112.1
+  ],
+  "adds": [
+    26.9,
+    31.8,
+    32.3,
+    31.1
+  ],
+  "notes": [
+    "package sha256 8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de",
+    "Measured on that package. The current package 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9 differs from it in one byte only, the machine descriptor's CPU price (reserved[0], offset 27,925: 6 to 4); its code and data are the same."
+  ]
+}

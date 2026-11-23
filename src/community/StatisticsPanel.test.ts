@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { usageMachineBreakdown } from './statistics-insights'
+import { usageCsv, usageMachineBreakdown } from './statistics-insights'
 import { UsageDashboard } from './StatisticsPanel'
 import { CommunityInsights } from './CommunityInsights'
 import type { UsageDay, UsageStatistics } from './usage-contract'
@@ -16,6 +16,20 @@ const usage: UsageStatistics = { generatedAt: '2026-10-06T12:00:00Z', collection
 const dashboard = (value: UsageStatistics) => renderToStaticMarkup(createElement(UsageDashboard, { data: value }))
 
 describe('usage dashboard breakdowns', () => {
+  it('stacks recorded actions across the switch and exports missing coverage separately from zero', () => {
+    const data: UsageStatistics = { ...usage, from: '2026-11-10', to: '2026-11-13', days: 4,
+      rows: [row('2026-11-10',0,0),row('2026-11-12',0,0)], installActivity: { guideFrom:'2026-11-11',syncFrom:'2026-11-10',
+        counts: [{day:'2026-11-12',event:'base_first_connection',count:3},{day:'2026-11-12',event:'base_usb_update_done',count:4},
+          {day:'2026-11-12',event:'usb_sync_kept',count:5}] } }
+    const html = dashboard(data), csv = usageCsv(data).trimEnd().split('\n')
+    expect(html).toContain('2026-11-12 · 14 recorded actions')
+    expect(html).toContain('2026-11-10 · 2 recorded actions · partial coverage')
+    expect(html).toContain('Confirmed base installs: unavailable')
+    expect(html).toContain('class="install-change"')
+    expect(csv[1]).toMatch(/,,,0,2,partial$/)
+    expect(csv[3]).toMatch(/,3,4,5,14,complete$/)
+    expect(csv[4]).toMatch(/,0,0,0,0,partial$/)
+  })
   it('reconciles older unattributed events and labels expanded coverage', () => {
     const data = { ...usage, machineCoverageExpanded: '2026-10-27T10:00:00Z',
       rows: [row('2026-10-05', 12, 4)],
