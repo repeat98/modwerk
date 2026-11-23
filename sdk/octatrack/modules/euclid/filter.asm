@@ -122,7 +122,7 @@ eu_type_done:
         move    x:(r6+$e),a
         and     #>$7f00,a
         asl     #$8,a,a
-        move    #>$7f0000,x0
+        move    #$7f,x0                  ; (short immediate: bits 23-16)
         cmp     x0,a
         move    #>$7fffff,x0
         teq     x0,a
@@ -145,8 +145,8 @@ eu_den_held:
         move    x:(r0),x0
         move    x0,x:(r7+$1d)           ; park x
         move    x:(r7+$2e),a            ; running g2
+        move    x0,x1                   ; input: x is still in x0 (fills a's gap)
         move    a,x:(r7+$1c)            ; g2 this sample
-        move    x:(r7+$1d),x1           ; input
 ; t8 = (x - (2R+g)*s0 - s1)/8, pre-scaled so nothing clamps before hp
         move    x:(r7+$34),x0           ; s0
         move    x:(r7+$1f),y1           ; c4 = (R + g2)/2
@@ -213,8 +213,8 @@ eu_den_held:
         move    x:(r0+n0),x0
         move    x0,x:(r7+$1d)           ; park x
         move    x:(r7+$2e),a            ; running g2
+        move    x0,x1                   ; input: x is still in x0 (fills a's gap)
         move    a,x:(r7+$1c)            ; g2 this sample
-        move    x:(r7+$1d),x1           ; input
 ; t8 = (x - (2R+g)*s0 - s1)/8, pre-scaled so nothing clamps before hp
         move    x:(r7+$36),x0           ; s0
         move    x:(r7+$1f),y1           ; c4 = (R + g2)/2
@@ -278,9 +278,7 @@ eu_den_held:
         asl     #$1,a,a
         add     b,a
         move    a,x:(r0+n0)
-        move    #>$2,n0
-        move    (r0)+n0
-        move    #>$1,n0
+        lua     (r0+$2),r0              ; the frame advance: one stereo frame, n0 stays 1
 eu_loopend:
         nop
         rts
@@ -290,7 +288,7 @@ eu_loopend:
 eu_amp_setup:
         move    x:(r6+$0),a
         and     #>$7fffff,a
-        move    #>$7f0000,x0
+        move    #$7f,x0                  ; (short immediate: bits 23-16)
         cmp     x0,a
         move    #>$7fffff,x0
         teq     x0,a
@@ -298,7 +296,7 @@ eu_amp_setup:
         move    x:(r6+$e),a
         and     #>$7f00,a
         asl     #$8,a,a
-        move    #>$7f0000,x0
+        move    #$7f,x0                  ; (short immediate: bits 23-16)
         cmp     x0,a
         move    #>$7fffff,x0
         teq     x0,a
@@ -329,9 +327,7 @@ eu_amp_setup:
         asl     #$1,a,a
         add     b,a
         move    a,x:(r0+n0)
-        move    #>$2,n0
-        move    (r0)+n0
-        move    #>$1,n0
+        lua     (r0+$2),r0              ; the frame advance: one stereo frame, n0 stays 1
 eu_amp_loopend:
         nop
         rts
