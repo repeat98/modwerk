@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Basic Beat Slicer controller. All instrument access is through the proposed
- * shared base editor API; no stock address, PCM reader or native writer here.
+ * shared base editor API. Native UI drawing is isolated in device_font.c;
+ * there is no PCM reader or sample writer in this package.
  */
 #include "../../../runtime/loader/modwerk_module.h"
 #include "../../../machines/octatrack/include/modwerk_sample_editor.h"
@@ -18,7 +19,13 @@ static struct modwerk_sample_grid proposal;
 static const uint32_t spacings[6]={1,2,4,16,32,64};
 static uint32_t token,active,tempo_source,spacing,reply,geometry,dirty,captured;
 static uint32_t pending_confirm;
-static int encoder_counts[2];
+static uint32_t snap;
+/* The base supplies a fresh stock frame on every composition. Keep our pixels,
+ * not the caller's frame pointer, so idle draws still cover the stock editor. */
+static unsigned char popup[1024] __attribute__((aligned(4)));
+static unsigned char popup_mask[1024] __attribute__((aligned(4)));
+static uint32_t popup_key[10], popup_valid;
+static int encoder_counts[3];
 #define COUNTS_PER_STEP 4
 static uint32_t consumed[2];
 enum { DEVICE_SHORT_TRIM=16 };
@@ -27,8 +34,13 @@ enum { DEVICE_SHORT_TRIM=16 };
 static void close_editor(void)
 {
     if(active && editor)editor->cancel(token);
-    active=0;token=0;editor=0;pending_confirm=0;
-    encoder_counts[0]=encoder_counts[1]=0;
+    active=0;token=0;editor=0;pending_confirm=0;popup_valid=0;
+    encoder_counts[0]=encoder_counts[1]=encoder_counts[2]=0;
+}
+static const struct modwerk_sample_editor_options_api *options_api(void)
+{
+    return editor && editor->bytes>=sizeof(struct modwerk_sample_editor_options_api)?
+        (const struct modwerk_sample_editor_options_api *)(const void *)editor:0;
 }
 static unsigned refresh(unsigned validate)
 {
@@ -68,7 +80,10 @@ static void confirm_when_ready(void)
        (!plan.count && !view.count)){pending_confirm=0;return;}
     proposal.count=plan.count;
     for(uint32_t i=0;i<BS_MAX_SLICES;++i)proposal.starts[i]=plan.starts[i];
-    reply=editor->replace(token,&proposal);
+    const struct modwerk_sample_editor_options_api *options=options_api();
+    reply=snap?(options && options->replace_options?
+        options->replace_options(token,&proposal,MODWERK_SAMPLE_SNAP_ZERO):MODWERK_SAMPLE_UNSUPPORTED):
+        editor->replace(token,&proposal);
     pending_confirm=reply==MODWERK_SAMPLE_BUSY;
     if(reply==MODWERK_SAMPLE_CONFIRMING) {
         /* The base owns the copied plan and the remaining stock question. */
@@ -81,6 +96,7 @@ void bs_device_open(uint32_t opened,const struct modwerk_sample_editor_api *api)
     if(!opened || !api || api->abi!=MODWERK_SAMPLE_EDITOR_ABI || api->bytes<sizeof *api ||
        !api->copy || !api->confirm || !api->cancel || !api->replace)return;
     editor=api;token=opened;active=1;dirty=1;captured=0;
+    if(!options_api() || !options_api()->replace_options)snap=0;
     geometry=BS_INVALID;reply=MODWERK_SAMPLE_OK;
     refresh(0);
 }
@@ -113,15 +129,20 @@ static int adjust(int encoder,int delta)
     pending_confirm=0;
     if(encoder==0)tempo_source=(uint32_t)step_value((int)tempo_source,delta,2);
     else if(encoder==1)spacing=(uint32_t)step_value((int)spacing,delta,(int)(sizeof spacings/sizeof spacings[0]));
+    else if(encoder==2) {
+        const struct modwerk_sample_editor_options_api *options=options_api();
+        if(!options || !options->replace_options){snap=0;reply=MODWERK_SAMPLE_UNSUPPORTED;return 1;}
+        snap=(uint32_t)step_value((int)snap,delta,2);
+    }
     else {close_editor();return 0;}
     reply=MODWERK_SAMPLE_OK;dirty=1;refresh(0);return 1;
 }
 int module_enc(int encoder,int delta)
 {
     if(!active)return 0;
-    /* Unassigned C-F fields belong to this popup too; they do not dismiss it
+    /* Unassigned D-F fields belong to this popup too; they do not dismiss it
      * or change the stock page hidden underneath. */
-    if(encoder>=2 && encoder<6)return 1;
+    if(encoder>=3 && encoder<6)return 1;
     if(encoder<0 || encoder>=6){close_editor();return 0;}
     pending_confirm=0;
     if(reply==MODWERK_SAMPLE_BUSY)reply=MODWERK_SAMPLE_OK;
@@ -171,55 +192,73 @@ static char *number(char *out,uint32_t value)
 }
 static void center(unsigned char *frame,uint32_t x,uint32_t width,uint32_t y,const char *value)
 {
-    uint32_t n=0;while(value[n])++n;
-    uint32_t pixels=n?4u*n-1u:0;
+    uint32_t pixels=bs_device_text_width(value);
     bs_device_small_text(frame,x+(pixels<width?(width-pixels)/2u:0u),y,value);
 }
 static void right(unsigned char *frame,uint32_t edge,uint32_t y,const char *value)
 {
-    uint32_t n=0;while(value[n])++n;
-    uint32_t pixels=n?4u*n-1u:0;
+    uint32_t pixels=bs_device_text_width(value);
     bs_device_small_text(frame,pixels<=edge+1u?edge+1u-pixels:0u,y,value);
 }
-void module_draw(unsigned char *frame)
+static void render_popup(unsigned char *frame,unsigned char *mask)
 {
-    if(!active || !frame)return;
     char line[32],*at;
-    /* Composite over the stock AED frame: cover its text while retaining a narrow popup border. */
-    bs_device_clear(frame,3,1,122,62);
-    bs_device_text_at(frame,16,4,"CREATE BEAT GRID");
-    bs_device_invert(frame,4,3,120,9);
-    bs_device_dashed_box(frame,6,15,81,38);
-    bs_device_dashed_box(frame,33,15,1,38);
-    bs_device_dashed_box(frame,60,15,1,38);
-    bs_device_dashed_box(frame,6,34,81,1);
-    center(frame,7,26,18,"BPM");
-    center(frame,34,25,18,"BEATS");
-    center(frame,6,81,56,"YES:OK NO:BACK");
+    bs_device_popup(frame,mask);
+    bs_device_dashed_box(frame,11,15,73,38);
+    bs_device_dashed_box(frame,35,15,1,38);
+    bs_device_dashed_box(frame,59,15,1,38);
+    bs_device_dashed_box(frame,11,34,73,1);
+    center(frame,12,23,18,"BPM");
+    center(frame,36,23,18,"BEATS");
+    center(frame,60,23,18,"SNAP");
+    center(frame,60,23,26,snap?"ON":"OFF");
+    center(frame,11,73,56,"YES:OK NO:BACK");
     if(!captured || dirty) {
-        center(frame,7,26,26,"WAIT");
-        bs_device_box(frame,3,1,122,62);return;
+        center(frame,12,23,26,"WAIT");
+        return;
     }
-    center(frame,7,26,26,tempo_source?"PROJ":"SAMPLE");
+    center(frame,12,23,26,tempo_source?"PROJ":"SAMPLE");
     number(line,spacings[spacing]);
-    center(frame,34,25,26,line);
+    center(frame,36,23,26,line);
     uint32_t bpm=tempo_source?view.project_bpm24:view.sample_bpm24;
     if(bpm>=720 && bpm<=7200) {
         at=number(line,bpm/24u);*at++='.';
         uint32_t fraction=(bpm%24u*100u+12u)/24u;
         *at++=(char)('0'+fraction/10u);*at++=(char)('0'+fraction%10u);*at=0;
     } else text(line,"NONE");
-    right(frame,120,20,line);
+    right(frame,114,20,line);
     at=number(line,geometry==BS_OK?plan.count:0);text(at," SLICE");
-    right(frame,120,31,line);
+    right(frame,114,31,line);
     if(geometry==DEVICE_SHORT_TRIM)text(line,"SHORT");
     else if(geometry==BS_TOO_MANY)text(line,"OVER64");
     else if(geometry!=BS_OK)text(line,"CHECK");
     else if(reply==MODWERK_SAMPLE_BUSY)text(line,"WAIT");
+    else if(reply==MODWERK_SAMPLE_UNSUPPORTED)text(line,"NO SNAP");
     else if(reply!=MODWERK_SAMPLE_OK)text(line,"REFUSED");
     else if(!plan.count && !view.count)text(line,"EMPTY");
     else text(line,view.count?"REPLACE":"CREATE");
-    right(frame,120,42,line);
-    /* Border is restored last, providing a complete-render capture marker. */
-    bs_device_box(frame,3,1,122,62);
+    right(frame,114,42,line);
+
+}
+
+void module_draw(unsigned char *frame)
+{
+    if(!active || !frame)return;
+    uint32_t key[10]={captured,dirty,tempo_source,spacing,
+        tempo_source?view.project_bpm24:view.sample_bpm24,
+        geometry,plan.count,reply,view.count,snap};
+    unsigned changed=!popup_valid;
+    for(unsigned i=0;i<10;++i)if(key[i]!=popup_key[i])changed=1;
+    if(changed) {
+        render_popup(popup,popup_mask);
+        for(unsigned i=0;i<10;++i)popup_key[i]=key[i];
+        popup_valid=1;
+    }
+    const unsigned char *home=bs_device_home();
+    if(!home)return;
+    for(unsigned i=0;i<1024u;++i) {
+        unsigned m=popup_mask[i];
+        frame[i]=m==255u?popup[i]:m?
+            (unsigned char)((home[i]&~m)|(popup[i]&m)):home[i];
+    }
 }

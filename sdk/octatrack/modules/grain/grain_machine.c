@@ -496,6 +496,25 @@ static int pos_step(int slot, int detents, int value)
     return e >> 3;
 }
 
+/* PTCH (slot 0, Part 40..88 con 64 = 0 semitonos). El paso de serie de la base acumulaba y aceleraba los detents: en el
+ * emulador 3 detents subian 1, 10 subian 4 y 30 bajaban 11, y con FUNC los valores saltaban sin llegar a 0 (author, 22/11).
+ * Aqui: un semitono por detent. Con FUNC, de octava en octava (-24, -12, 0, +12, +24): FUNC + girar lleva siempre a 0
+ * exacto. Con el mando pulsado, como el paso de serie, de 7 en 7. Girando con un trig pulsado (p-lock) no pasa por aqui. */
+static int ptch_step(int slot, int detents, int value)
+{
+    int v = value;
+    if (slot != 0) return value + detents;
+    if (KEY_HELD(K_FUNC)) {
+        if (detents > 0) v = v < 52 ? 52 : v < 64 ? 64 : v < 76 ? 76 : 88;
+        else if (detents < 0) v = v > 76 ? 76 : v > 64 ? 64 : v > 52 ? 52 : 40;
+    } else if (U32(0x46c7d8eeu + 24u * 56u)) {
+        v += detents * 7;
+    } else {
+        v += detents;
+    }
+    return v < 40 ? 40 : v > 88 ? 88 : v;
+}
+
 /* Las ruedas de DIR y PAN (casillas 1 y 2 de la pagina 2): las dibuja la propia Octatrack con su rutina de ruedas
  * (0x400479b4, la que la pagina usa cuando la casilla no tiene otra), pero con el valor de verdad, que GRAIN guarda en
  * NEIGHBOR; en sus casillas FLEX hay un 0 que la comprobacion de arranque acepta. Argumentos, vistos en el emulador: la
@@ -542,6 +561,10 @@ static uint32_t grain_page_any(void)
         {   /* el paso de POS (slot 1) y de SIZE (slot 2): pos_step */
             uint32_t f = (uint32_t)(uintptr_t)pos_step;
             for (unsigned i = 0; i < 4; ++i) page[0x38 + 0x12a + 4 + i] = (uint8_t)(f >> (24 - 8 * i));
+        }
+        {   /* el paso de PTCH (slot 0): ptch_step */
+            uint32_t f = (uint32_t)(uintptr_t)ptch_step;
+            for (unsigned i = 0; i < 4; ++i) page[0x38 + 0x12a + i] = (uint8_t)(f >> (24 - 8 * i));
         }
         modwerk_page_put32(page, 0xa2u, 40u);    /* PTCH: minimo 40 (stock FLEX: 4..124, 64 = 0) */
         /* la rutina de dibujo de DIR y PAN (casillas 7 y 8; matriz de dibujo B, P + 0xfa + 4 * casilla) */

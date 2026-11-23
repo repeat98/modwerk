@@ -96,7 +96,7 @@ function nativeChange(change, machine) {
     || /^sdk\/imports\/packages\/.*\.elemod$/.test(path)
     || /^src\/catalog\/(?:module-contract(?:-v3)?|module-folder|module-authors|versions|zoom-effect-ids|elemod-site-recipe)\.ts$/.test(path)
     || /^src\/devices\/(?:machine-contract\.ts|machines\.generated\.json)$/.test(path)
-    || /^scripts\/(?:elemod-compiler-flags|elemod-dependencies|machine-folders)\.mjs$/.test(path)
+    || /^scripts\/(?:elemod-audio-stack|elemod-compiler-flags|elemod-dependencies|machine-folders)\.mjs$/.test(path)
 }
 function compilerJob(text, name) {
   const lines = text?.split('\n') ?? [], start = lines.indexOf('  ' + name + ':')

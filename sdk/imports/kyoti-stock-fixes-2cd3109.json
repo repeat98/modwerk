@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "recorded": "2026-11-23",
+  "decision": "Zac-Kyoti's stock OS 1.40C fixes (MIT) in every Octatrack base, as octabam pins them at 2cd3109 (its modules batch-bugfixes and erase-empty-trigless-locks): EMPTY_PATTERN_LED_FIX, PART_CHANGE_CARRYOVER_FIX and ERASE_EMPTY_TRIGLESS_LOCKS. The three sources and his LICENSE are copied unchanged into vendor/kyoti-stock-fixes/. The base builds its copies in sdk/machines/octatrack/elekloader/stock-fixes/, which differ only in their entry labels and the Part fix's two snapshot bytes (in .bss); sdk/tests/test_stock_fixes.py checks that and, with ColdFire binutils, the bytes his manifests pin. His MIDI_PLAYS_FREE_FIX (patch_trigscale.s) is not imported: Direct Jump Kyoti carries it at 0x4009b6f2, and the base's own entry (plays_free.s) follows his analysis on the next instruction, so the two never patch the same bytes. Not imported: his manifests, standalone builders, emulator tools and the rest of his repository.",
+  "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+  "revision": "2cd3109811c1d2b354f80366ffc154b1854c0a3a",
+  "license": "MIT",
+  "files": [
+    {
+      "from": "LICENSE",
+      "to": "vendor/kyoti-stock-fixes/LICENSE",
+      "sourceGitBlob": "8cd09176a276a3854ae947ab148b9b327d77e381",
+      "sha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05"
+    },
+    {
+      "from": "octabam-modules/batch-bugfixes/patch_pattern_led.s",
+      "to": "vendor/kyoti-stock-fixes/patch_pattern_led.s",
+      "sourceGitBlob": "bf4dc0c7e5cacda86522f1456faf7de96349a8df",
+      "sha256": "e5c2b85c77f872df830ffa3c3250c16397fd5bc2a970f122f6b02b6625ab07a1"
+    },
+    {
+      "from": "octabam-modules/batch-bugfixes/patch_partreapply.s",
+      "to": "vendor/kyoti-stock-fixes/patch_partreapply.s",
+      "sourceGitBlob": "f4008913b9d4d98cfdda57cf33894ae0edd8fe06",
+      "sha256": "daf88547e50959944d48b6535b624591f35deb129a349ebd5f6bd6309256ba71"
+    },
+    {
+      "from": "octabam-modules/erase-empty-trigless-locks/patch_triglock.s",
+      "to": "vendor/kyoti-stock-fixes/patch_triglock.s",
+      "sourceGitBlob": "63a92c838bf0d289dabbc29cb44d8207f84a25cb",
+      "sha256": "92a67e8587fc4fcfb290e2fee7254841b8396f13d0f8eaea82be4cc0c73a464c"
+    }
+  ]
+}

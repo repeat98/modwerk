@@ -196,6 +196,34 @@ def check_scan(cpu, symbols, lane, packet):
     assert max(struct.unpack(">32i", cpu.mem_read(packet + 16, 128))) > 0
 
 
+def check_ptch(image, symbols):
+    """PTCH's knob step (0.1.2): one semitone a detent; FUNC jumps between -24, -12, 0, +12 and +24; a pressed knob moves 7."""
+    cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+    cpu.ctl_set_cpu_model(m68k_const.UC_CPU_M68K_CFV4E)
+    for at, size in ((IMAGE, 0x10000), (0x200000, 0x10000), (0x46C7D8EE & ~0xFFF, 0x1000)):
+        cpu.mem_map(at, size)
+    cpu.mem_write(IMAGE, image)
+    func_key, knob_key = 0x46C7D8EE + 24 * 0x2D, 0x46C7D8EE + 24 * 56
+
+    def step(detents, value, func=False, pressed=False):
+        cpu.mem_write(func_key, struct.pack(">I", 1 if func else 0))
+        cpu.mem_write(knob_key, struct.pack(">I", 1 if pressed else 0))
+        cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
+        cpu.mem_write(STACK, struct.pack(">4I", RETURN, 0, detents & 0xFFFFFFFF, value))
+        cpu.emu_start(symbols["ptch_step"], RETURN, count=2000)
+        result = cpu.reg_read(m68k_const.UC_M68K_REG_D0) & 0xFFFFFFFF
+        return result - (1 << 32) if result & 0x80000000 else result
+
+    cases = [((1, 64), 65), ((-1, 64), 63), ((3, 64), 67), ((-30, 64), 40), ((1, 88), 88), ((-1, 40), 40),
+             ((1, 65, True), 76), ((-1, 65, True), 64), ((1, 63, True), 64), ((1, 64, True), 76), ((-1, 64, True), 52),
+             ((-1, 52, True), 40), ((1, 76, True), 88), ((1, 88, True), 88), ((-1, 40, True), 40), ((-1, 70, True), 64),
+             ((1, 64, False, True), 71), ((-1, 44, False, True), 40)]
+    for args, want in cases:
+        got = step(*args)
+        if got != want:
+            raise AssertionError(f"PTCH step {args} gave {got}, expected {want}")
+
+
 def check_assign(image, symbols):
     """Count stock calls and check both Part copies across a machine change."""
     cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
@@ -263,13 +291,14 @@ def check_stereo(image, symbols):
     """Exercise the packed big-endian read and ADDX carry in the shipped instructions."""
     engine, params, sample, output, storage = 0x200000, 0x202000, 0x202040, 0x203000, 0x300000
     pcm = bytes((i * 59 + (i >> 3) * 97) & 255 for i in range(614400))
-    # SHA-256 of 16 output frames and the six GranGrain structs from the previous
-    # draft package, 329b40ef. Alternate forward and reverse voices.
+    # SHA-256 of 16 output frames and the six GranGrain structs. Alternate forward and reverse voices.
+    # 0.1.2: regenerated for the window tables 3 dB lower (gen_tables.py); the instructions are unchanged, and the
+    # previous hashes (draft package 329b40ef) still pass with the previous tables.
     cases = [
-        (2, 0, True, "567e95e8a2887e420566f353d0f5a16f2a03d8dc03245f011f1fd64c0b9395a0"),
-        (2, 0x1f59ac3a, True, "5bb741c2795c85e1ed3ac4ab9f616f380f5f79af691da2c5f2fb5beecfc6edd7"),
-        (2, 0x1f59ac3a, False, "34140881c9dfc31c4edcb656e95b8554776ec03d40da6febfcde6de9240c4869"),
-        (3, 0x067ab234, True, "85130a1c13ca4acbe83c7d8f32f5d18b13411bfeb53cb30e3c9464139919f9ca"),
+        (2, 0, True, "5b1609ec0a954c56f0e988f2658c65667171b4546fa4f8055cd0748b536c7314"),
+        (2, 0x1f59ac3a, True, "3c010356fd141176b9a7436066c827248547d4c0c23ad0439d3ebdbe705ebfa2"),
+        (2, 0x1f59ac3a, False, "c87dd1ec362717d95f765e60b3e4e2cfb7baff35833544e6ecff3d393d750ba1"),
+        (3, 0x067ab234, True, "f245e88277f869ccebf775b0f54e24fbc2bbab9ed9d9a263068a21ce22074859"),
     ]
     for width, fraction, panned, expected in cases:
         cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
@@ -321,8 +350,10 @@ if __name__ == "__main__":
             check_track(image, symbols, pool, 0, pool, audition=True)
         check_stereo(image, symbols)
         check_assign(image, symbols)
+        check_ptch(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
     print("[PASS] With the pool open on T5 or T1 every track stays granular; only an audition START (0xe0) takes the plain Flex path")
     print("[PASS] Compiled SCAN label and cursor match on 24-bit stereo at all 128 settings and 128 legacy values")
     print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")
+    print("[PASS] PTCH moves one semitone a detent, FUNC + turn stops at -24, -12, 0, +12 and +24, a pressed knob moves 7")
     print("[PASS] T1/T5 assignment refreshes Flex once, restores both Part copies and queues no control writes on exit")

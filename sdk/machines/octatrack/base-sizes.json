@@ -428,6 +428,16 @@
      "container": 812568
     }
    }
+  },
+  {
+   "base": "0.8",
+   "identity": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7",
+   "layouts": {
+    "off": {
+     "main": 1347681,
+     "container": 830980
+    }
+   }
   }
  ]
 }
