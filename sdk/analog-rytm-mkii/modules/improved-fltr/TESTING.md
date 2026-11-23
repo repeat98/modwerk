@@ -4,7 +4,22 @@ Names: the runs below up to IFC2 used the first layout, **BND** (TYP 7, linked) 
 
 ## Emulator, current layout
 
-IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 4 dB a row with +15 dB at the top, at five settings, and stock BP; each box against a reference recorded from screens checked by eye) pass. `sdk/tests/test_improved_fltr_table.py` keeps `src/width-table.h` in step with the calibration. Not on the unit yet in this layout.
+IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 4 dB a row with +15 dB at the top, at five settings, and stock BP; each box against a reference recorded from screens checked by eye) pass. `sdk/tests/test_improved_fltr_table.py` keeps `src/width-table.h` in step with the calibration.
+
+## Unit, current layout
+
+**IFC3** (sha256 dafd5332: the private combo set FXC8 on a dev base + Improved FLTR d401815c0 + the private filter-measuring machine), RAM-booted on Nathaniel Pavel's MKII (flash FXCC, same layout), 23 Nov 2026, by the rig: if-band-words, if-typ-turn and the edge check pass.
+
+| setting | asked | measured -3 dB edges |
+| --- | --- | --- |
+| BW, FRQ 48, RES 72 | 220..880 Hz | 232..861 Hz |
+| BW, FRQ 48, RES 96 (4 oct) | 220..3520 Hz | 247..3577 Hz |
+| BW, FRQ 36, RES 96 (5 oct) | 110..3520 Hz | 130..3374 Hz |
+| BW, FRQ 60, RES 66 (6 st) | 440..622 Hz | 446..621 Hz |
+| BWL, FRQ 60, RES 51 | 440..1750 Hz | 469..1759 Hz |
+| BWL, FRQ 72, RES 51 | 880..3501 Hz | 880..3657 Hz |
+
+The same edges as IFC2's runs of the same settings (then BND+ and BND) within about 1 %. Not on the unit: the FILTER graph's look (emulator screens only) and a person's listening.
 
 Code review (23 Nov 2026, the BW/BWL change), fixed: RES's text uses the page's noted FRQ and TYP only for the track they came from; the graph's top moved to +15 dB so a 4-semitone band's peak is drawn, narrower ones clip (listed); the memory figure measured (3,492 bytes); the graph cases compare against references; the width table has a test.
 
