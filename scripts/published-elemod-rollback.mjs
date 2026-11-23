@@ -2,7 +2,7 @@
 import { execFileSync } from 'node:child_process'
 import { isDeepStrictEqual } from 'node:util'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
-import { readVendoredElekloader } from './elekloader-vendor.ts'
+import { assembleCatalog, readVendoredElekloader } from './elekloader-vendor.ts'
 
 const runsUrl = 'https://api.github.com/repos/repeat98/modwerk/actions/workflows/pages.yml/runs?branch=main&status=success&per_page=1'
 const catalogUrl = 'https://modwerk.app/elekloader/catalog.json'
@@ -23,7 +23,7 @@ async function releaseCommit() {
 }
 
 export function publishedElemodRollback(root, baseCommit) {
-  let release
+  let release, publishedCatalog
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' })
   return async (document, folder) => {
     release ??= Promise.all([releaseCommit(), loadJson(catalogUrl), readVendoredElekloader(root)])
@@ -33,6 +33,7 @@ export function publishedElemodRollback(root, baseCommit) {
     const id = document.machine + '-' + document.id
     const paths = [folder, 'src/community/module-changelogs/' + id + '.json']
     if (!git('ls-tree', '--name-only', published, '--', path).trim()
+      || JSON.parse(git('show', published + ':' + path)).version !== document.version
       || git('diff', '--name-only', '--no-ext-diff', published, '--', ...paths)
       || git('ls-files', '--others', '--exclude-standard', '--', ...paths))
       throw new Error(id + ': a rollback must restore the module files from the last successful production release')
@@ -40,9 +41,13 @@ export function publishedElemodRollback(root, baseCommit) {
     const device = LINK_DEVICES.find(item => item.machine === document.machine)?.key
     const pins = catalog => catalog.mods.filter(pin => pin.id === document.id && pin.device === device)
       .sort((a, b) => a.file.localeCompare(b.file))
-    const expected = pins(live)
-    if (!device || !expected.length || expected.some(pin => pin.version !== document.version)
+    // A published module page and its downloadable package can have different versions.
+    // Recover the package records served by the same deployment that supplied the source.
+    publishedCatalog ??= assembleCatalog(file => git('show', published + ':' + file),
+      git('ls-tree', '--name-only', '-r', published, '--', 'sdk/imports').trimEnd().split('\n')).catalog
+    const expected = pins(publishedCatalog)
+    if (!device || !expected.length || !isDeepStrictEqual(pins(live), expected)
       || !isDeepStrictEqual(pins(local.catalog), expected))
-      throw new Error(id + ': a rollback must restore every package pinned for this version in the live catalog')
+      throw new Error(id + ': a rollback must restore every package pinned by the last release and the live catalog')
   }
 }
