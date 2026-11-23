@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "euclid",
-  "version": "0.1.5-experimental",
+  "version": "0.1.6-experimental",
   "sourceSha256": "5c76eb1d1f9d2f69bb90b6c8ad281746605b8d7abf705d0469d736b861781ed8",
   "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
   "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",

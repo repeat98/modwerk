@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.6-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Uses a little less DSP time with exactly the same sound: its filter loop waits less on the DSP between instructions.",
+      "Controls, defaults and saved projects are unchanged.",
+      "Known issue: checked on an MKII by an automated run only; not yet tested by ear or on the MKI."
+    ]
+  },
+  {
     "version": "0.1.5-experimental",
     "date": "2026-11-18",
     "changes": [
