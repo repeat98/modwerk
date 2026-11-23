@@ -56,6 +56,11 @@ const records = import.meta.glob<DevicePriceRecord>(
   '../../sdk/octatrack/modules/*/evidence/cpu-price.json',
   { eager: true, import: 'default' },
 )
+type FrameCostRecord = { module?: string; version?: string; base?: string; scene?: string; first?: number; each?: number; rest?: number }
+const frameCostRecords = import.meta.glob<FrameCostRecord>(
+  '../../sdk/octatrack/modules/*/evidence/frame-cost.json',
+  { eager: true, import: 'default' },
+)
 const modulePoolReadings = new Map(modulePoolEvidence.measurements.map(record => [record.module, record]))
 const activeLoadReadings = new Map<string, ActiveRecord>(activeLoadEvidence.measurements.map(record => [record.module, record]))
 const stackedCpuReadings = new Map(stackedCpuEvidence.measurements.map(record => [record.module, record]))
@@ -126,6 +131,16 @@ export function measuredActiveCpu(document: ModuleDocument) {
       source: 'sdk/octatrack/modules/amiga/TESTING.md',
     }
   }
+}
+
+/** The module's instance curve (evidence/frame-cost.json, device:price --curve), when it was measured on this version. */
+export function measuredFrameCost(document: ModuleDocument) {
+  const source = 'sdk/octatrack/modules/' + document.id + '/evidence/frame-cost.json'
+  const record = frameCostRecords['../../' + source]
+  const { first, each } = record ?? {}
+  if (record?.module !== document.id || record.version !== document.version || !record.base || !record.scene
+    || typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)) return
+  return { first, each, base: record.base, scene: record.scene, source }
 }
 
 export function measuredStackedCpuLimit(document: ModuleDocument) {
