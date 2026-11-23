@@ -38,7 +38,11 @@ node scripts/cycle-scan.mjs check                  # anywhere; npm run check run
 the dearest setting's instructions, cycles and stalls, bound to the module's source by the hash `performance.json`'s
 `sourceSha256` uses. It writes nothing when the tree it scans holds other module source than this repository. `check` fails
 a record whose module source has changed since (scan it again) and a `performance.json` recording fewer than 90 % of the
-instructions the scan saw executing; it lists the DSP modules without a record, without failing them. The records sit
-here, not in the module folders, which belong to their authors.
+instructions the scan saw executing; it lists the DSP modules without a record, without failing them. It also compares
+what the base's DSP admission charges the module's package (`dsp.c`'s `charged()`: a hardware figure as it is, an emulator
+figure at 7/4) with the scan's dearest cycles. A charge less than 5 % above the model is listed as a near miss; one below
+it is refused for a module first listed from 24 November 2026 and reported for an earlier one. On 23 November 2026 E-Verb
+(669 against 664.9) and MINIVERB (720 against 698.6) were near misses, and LOFI2's hardware figure, 637, was under its
+654.3 at DOWN/max. The records sit here, not in the module folders, which belong to their authors.
 
 It is a model, not a measurement: the unit stays the judge ([MODULE_PERFORMANCE.md](../../docs/MODULE_PERFORMANCE.md)).
