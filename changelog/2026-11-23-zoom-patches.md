@@ -1,0 +1,1 @@
+The Zoom pedal page has a Patches view for the MS-70CDR: open the patch the pedal plays or any of the fifty, change each slot's effect, switch it on or off, turn its knobs (live in slots 1-3, in all six on MIDISTOMP 2.0.4), rename it and save it. The effects' names and knobs are read from the pedal's own files.

@@ -11,6 +11,7 @@ import { useZoomLink } from '../hooks/useZoomLink'
 import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import { ZoomLoad } from './ZoomLoad'
+import { ZoomPatches } from './ZoomPatches'
 import { HubSetHead, HubSetList, type SetAction } from './HubSets'
 import { ModuleGrid } from './ModuleGrid'
 import { ZoomEffectPreview } from '../devices/ZoomEffectDetail'
@@ -22,6 +23,7 @@ import './zoom-hub.css'
 
 const VIEWS: { view: ZoomHubView; title: string; icon: IconName }[] = [
   { view: 'status', title: 'Status', icon: 'grid' },
+  { view: 'patches', title: 'Patches', icon: 'sliders' },
   { view: 'backups', title: 'Backups', icon: 'download' },
   { view: 'setup', title: 'Setup', icon: 'sliders' },
 ]
@@ -237,6 +239,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
           </section>
         </div>)}
+        {panel('patches', <ZoomPatches key={pedalKey} link={link} identity={connected && !other && !updating ? identity : undefined} active={view === 'patches'} />)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
           {error && <p role="alert" className="hub-error">{error}</p>}

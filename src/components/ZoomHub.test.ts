@@ -35,6 +35,8 @@ describe('the Zoom pedal page', () => {
     expect(zoomHubHref('zoom-ms-70cdr')).toBe('#zoom-ms-70cdr/pedal')
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/backups')).toMatchObject({ device: { id: 'zoom-ms-70cdr' }, view: 'backups' })
     expect(parseZoomHubRoute('zoom-ms-50g/pedal')?.view).toBe('status')
+    expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/patches')?.view).toBe('patches')
+    expect(zoomHubHref('zoom-ms-70cdr', 'patches')).toBe('#zoom-ms-70cdr/pedal/patches')
     expect(parseZoomHubRoute('octatrack/pedal')).toBeUndefined()
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/samples')).toBeUndefined()
   })

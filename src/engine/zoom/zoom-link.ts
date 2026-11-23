@@ -4,6 +4,7 @@
 // The commands are in zoom-protocol.ts.
 import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
+import { PATCH, PATCH_PROGRAMS, canEditPatches, effectKnobs, isPatchDump, liveSlots, patchEffectId, type EffectKnobs } from './zoom-patch'
 
 // Tabs of the site take turns on the pedal, as octatrack-link.ts's USB jobs do; without Web Locks, `op` keeps one job at a time in this tab.
 const locked = <T>(work: () => Promise<T>): Promise<T> => {
@@ -20,7 +21,11 @@ export type ZoomLinkState = {
   readonly notice?: { tone: 'error' | 'info'; text: string }
   /** While reading: what, and how far. */
   readonly progress?: { label: string; done: number; total: number }
+  /** The program (0-49) the pedal is on, once a program change has said so (one it sent, or one this page sent). */
+  readonly program?: number
 }
+/** An effect a patch can name, read from the pedal: its file, the file's name and size (`key`, for a cache), its knobs. */
+export type ZoomPatchEffect = { id: number; gid: number; file: string; key: string; knobs?: EffectKnobs }
 
 /** The parts of Web MIDI the link uses (MIDIAccess in a browser, a fake in tests). */
 export type MidiPort = { readonly id: string; readonly name?: string | null; readonly state?: string }
@@ -46,6 +51,9 @@ export class ZoomLink {
   private waitFile?: (m: number[]) => void
   private waitIdentity?: (m: number[]) => void
   private waitMst?: (m: number[]) => void
+  private waitPatch?: (m: number[]) => void
+  private programByte = false
+  private editModeAt = -Infinity
   private nonce = 0
   private op: Promise<unknown> = Promise.resolve()
   /** Effect headers already read (upper-case name -> size and header); a write or delete forgets that file. */
@@ -128,7 +136,10 @@ export class ZoomLink {
   private receive(data: number[]) {
     for (const b of data) {
       if (b >= 0xf8) continue
-      if (b === 0xf0) { this.sysex = [b]; continue }
+      if (b === 0xf0) { this.sysex = [b]; this.programByte = false; continue }
+      // A program change from the pedal (one turned on it, or the echo of one sent): which patch it plays now.
+      if (b >= 0xc0 && b <= 0xcf && !this.sysex) { this.programByte = true; continue }
+      if (this.programByte) { this.programByte = false; if (b <= 0x7f && this.state.status !== 'idle') this.set({ ...this.state, program: b }); continue }
       if (!this.sysex) continue
       if (b === 0xf7) { const m = [...this.sysex, b]; this.sysex = null; this.dispatch(m); continue }
       if (b <= 0x7f) this.sysex.push(b)
@@ -139,6 +150,7 @@ export class ZoomLink {
     if (m[1] === 0x7e && m[3] === 0x06 && m[4] === 0x02) { this.waitIdentity?.(m); return }
     const id = this.state.identity?.deviceId
     if (id !== undefined && (isFileReply(m, id) || isFlashReply(m, id))) this.waitFile?.(m)
+    else if (id !== undefined && isPatchDump(m, id)) this.waitPatch?.(m)
   }
 
   // Paced like the project's editor: a long message gets 22 ms, a short one 3 ms.
@@ -216,11 +228,11 @@ export class ZoomLink {
       // Closing the tab mid-write can leave the effect list deleted: the browser asks first.
       if (status === 'writing') globalThis.addEventListener?.('beforeunload', stay)
       this.operationConnection = connection
-      this.set({ status, identity, connection, progress: { label, done: 0, total: 0 } })
+      this.set({ status, identity, connection, program: this.state.program, progress: { label, done: 0, total: 0 } })
       try { await this.drain(); return await work() } finally {
         globalThis.removeEventListener?.('beforeunload', stay)
         this.operationConnection = undefined
-        if (this.state.connection === connection && this.getState().status === status) this.set({ status: 'ready', identity, connection })
+        if (this.state.connection === connection && this.getState().status === status) this.set({ status: 'ready', identity: this.state.identity, connection, program: this.state.program })
       }
     }))
     this.op = run.catch(() => undefined)
@@ -464,6 +476,137 @@ export class ZoomLink {
     }
   }, 'writing')
 
+  // ---- Patches (zoom-patch.ts): the MS-70CDR's 146-byte dumps, in editor mode.
+  private patchCommand(body: number[]) {
+    const id = this.state.identity?.deviceId
+    if (id !== undefined) this.send(zoomSysex(id, body))
+  }
+  private editMode() { this.patchCommand(PATCH.editMode); this.editModeAt = now() }
+  private goTo(program: number) {
+    this.output?.send([0xc0, program & 0x7f], Math.max(now(), this.nextSend))
+    this.nextSend = Math.max(now(), this.nextSend) + 3
+    this.set({ ...this.state, program })
+  }
+  /** The patch being played (the edit buffer), or null when no dump came in time. */
+  private async dump(timeout = 1300): Promise<number[] | null> {
+    if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
+    this.editMode()
+    await sleep(20)
+    return new Promise(resolve => {
+      const timer = setTimeout(() => { this.waitPatch = undefined; resolve(null) }, timeout)
+      this.waitPatch = m => { clearTimeout(timer); this.waitPatch = undefined; resolve(m) }
+      this.patchCommand(PATCH.read)
+    })
+  }
+  private async mustDump(timeout?: number) {
+    const d = await this.dump(timeout)
+    if (!d) throw new Error('The pedal didn’t send its patch. Check the cable, close other editors, then try again.')
+    return d
+  }
+  private refusePatches(write = false) {
+    const identity = this.state.identity
+    if (!canEditPatches(identity?.deviceId) || isUpdateMode(identity)) throw new Error('Patches are mapped only for the MS-70CDR' + (identity ? '; this is ' + (isUpdateMode(identity) ? 'a pedal in update mode' : 'an ' + identity.model) : '') + '.' + (write ? ' Nothing was written.' : ''))
+  }
+  /** How many slots take a live knob message on this pedal (zoom-patch.ts liveSlots). */
+  readonly liveSlots = () => liveSlots(this.state.identity?.firmware)
+  /** The patch the pedal is playing, as it has it now (edits not stored included). */
+  readonly readPatch = () => this.exclusive('Reading the patch', async () => { this.refusePatches(); return this.mustDump() })
+  /** Go to a program and read it. */
+  readonly selectProgram = (program: number) => this.exclusive('Opening patch ' + (program + 1), async () => {
+    this.refusePatches()
+    this.goTo(program)
+    await sleep(60)
+    return this.mustDump()
+  })
+  /**
+   * Every stored patch: the pedal has no command for that, so it goes to each program in turn and plays it (mute the
+   * amp). Then it goes back to the program it was on (the one a program change said, else the one whose patch matches
+   * the edit buffer) and writes the edit buffer back, so changes not stored are kept. `onEach` sees each as it comes.
+   */
+  readonly readPatches = (onEach?: (program: number, dump: number[] | null) => void) => this.exclusive('Reading the patches', async () => {
+    this.refusePatches()
+    const buffer = await this.mustDump(), from = this.state.program, patches: (number[] | null)[] = []
+    const read = async (program: number, settle: number, timeout: number) => { this.goTo(program); await sleep(settle); return this.dump(timeout) }
+    for (let program = 0; program < PATCH_PROGRAMS; program++) {
+      this.progress('Reading the patches', program + 1, PATCH_PROGRAMS)
+      patches[program] = await read(program, 45, 900)
+      onEach?.(program, patches[program])
+    }
+    if (!patches.some(Boolean)) throw new Error('The pedal sent none of its patches.')
+    for (const [program, dump] of patches.entries()) if (!dump) { patches[program] = await read(program, 90, 1400); onEach?.(program, patches[program]) }
+    const same = (a: number[] | null) => !!a && a.every((b, i) => b === buffer[i])
+    const back = from ?? patches.findIndex(same)
+    if (back >= 0) {
+      this.goTo(back)
+      await sleep(60)
+      if (!same(patches[back])) { this.editMode(); this.send(buffer); await sleep(160) }
+    }
+    return { patches, program: back >= 0 ? back : undefined }
+  })
+  /** Write a patch into the edit buffer (encodePatch: on top of the pedal's own dump), then read it back. The pedal
+   * plays it at once; it stays until another program is chosen, unless stored (or the pedal's AUTO SAVE is on). */
+  readonly writePatch = (dump: number[]) => this.exclusive('Writing the patch', async () => {
+    this.refusePatches(true)
+    if (!isPatchDump(dump, this.state.identity!.deviceId)) throw new Error('That isn’t a patch for this pedal; nothing was written.')
+    this.editMode()
+    await sleep(20)
+    this.send(dump)
+    await sleep(60)
+    return this.mustDump()
+  }, 'writing')
+  /** Write a patch into the edit buffer and store it into `program` (a flash write: the pedal goes quiet for about
+   * two seconds), then go to that program and read it back from flash. */
+  readonly storePatch = (program: number, dump: number[]) => this.exclusive('Saving patch ' + (program + 1), async () => {
+    this.refusePatches(true)
+    if (!isPatchDump(dump, this.state.identity!.deviceId)) throw new Error('That isn’t a patch for this pedal; nothing was written.')
+    if (this.state.program !== program) { this.goTo(program); await sleep(60) }
+    this.editMode()
+    await sleep(20)
+    this.send(dump)
+    await sleep(160)
+    this.patchCommand(PATCH.store(program))
+    await sleep(600)
+    this.goTo(program)
+    await sleep(120)
+    const back = await this.dump(2600) ?? (await sleep(700), await this.dump(2600))
+    if (!back) throw new Error('Saved, but the pedal was too busy to send the patch back. Open the patch again to check it.')
+    return back
+  }, 'writing')
+  /** Turn one knob live (0x31): `field` 2-10 are the knobs. Only in the slots that take it (liveSlots) and only while
+   * nothing else is talking to the pedal; false when it wasn't sent (then write the whole patch). */
+  readonly knob = (slot: number, field: number, value: number) => {
+    if (this.state.status !== 'ready' || !canEditPatches(this.state.identity?.deviceId) || slot >= this.liveSlots()) return false
+    if (now() - this.editModeAt > 1000) this.editMode()
+    this.patchCommand(PATCH.knob(slot, field, value))
+    return true
+  }
+  /**
+   * Every effect on the pedal by the id a patch stores for it (each effect file's header gives it), with the knob
+   * tables of the ids `wanted` read from their files: Modwerk carries no tables of Zoom's effects, the pedal's own
+   * files are the source. `known(key)` returns knobs already read for a file (by name and size), so it isn't read again.
+   */
+  readonly patchEffects = (wanted: Iterable<number> = [], known: (key: string) => EffectKnobs | undefined = () => undefined) => this.exclusive('Reading the effects', async () => {
+    this.refusePatches()
+    const want = new Set(wanted), found = new Map<number, ZoomPatchEffect>()
+    const files = (await this.list()).filter(f => /\.zdl$/i.test(f.name))
+    for (const [i, file] of files.entries()) {
+      this.progress('Reading the effects on the pedal', i + 1, files.length)
+      const head = await this.head(file)
+      const id = head && patchEffectId(head.gid, head.fxid)
+      if (!id || found.has(id)) continue
+      const key = file.name.toUpperCase() + ':' + file.size
+      found.set(id, { id, gid: head.gid, file: file.name, key, knobs: known(key) })
+    }
+    const unread = [...found.values()].filter(e => !e.knobs && want.has(e.id))
+    for (const [i, effect] of unread.entries()) {
+      this.progress('Reading ' + effect.file, i + 1, unread.length)
+      effect.knobs = effectKnobs(await this.read(effect.file))
+    }
+    return found
+  })
+  /** One effect's knob table, from its file on the pedal. */
+  readonly effectKnobs = (file: string) => this.exclusive('Reading ' + file, async () => { this.refusePatches(); return effectKnobs(await this.read(file)) })
+
   /** Every file, read and checksum-checked, in a zip with the list order: the backup to restore from. */
   readonly backup = () => this.exclusive('Backing up', async () => {
     const files = await this.list(), entries: { name: string; data: number[] }[] = []
@@ -492,3 +635,4 @@ async function midiAllowed() {
     return status?.state === 'granted'
   } catch { return false }
 }
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

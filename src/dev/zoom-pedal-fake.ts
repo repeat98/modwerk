@@ -2,15 +2,19 @@
 // in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access. With firmware 1.10 it is in update
 // mode: it takes the flash commands into a 4 MB flash where, as in NOR flash, a write only clears bits until erased.
 // With `midistomp` it also answers MIDISTOMP's hello (version, feature bits) and, given `load`, its load request.
+// With `patches` (50 dumps, fakePatch) it keeps them as the MS-70CDR does: a program change loads one into the edit
+// buffer, which it sends (29) and takes (28) in editor mode (50), stores (32) and turns one knob of (31, kept in `knobs`).
 import { crc32, pack7, unpack7, type MidistompLoad } from '../engine/zoom/zoom-protocol'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, patches = undefined as number[][] | undefined, program: startProgram = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
   let firmware = started, starting = 0
+  let program = startProgram, buffer = patches?.[program]?.slice(), editor = false
+  const knobs: number[][] = []
   let writes = 0
   let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
   const input: MidiIn & { state: string } = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
@@ -49,6 +53,8 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
       if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
+      if (patches && m[0] === 0xc0) { program = m[1]; buffer = patches[program].slice(); editor = false; return reply([0xc0, program]) }
+      if (patches && m[1] === 0x52 && m[3] === deviceId && m[4] !== 0x60) return patchCommand(m)
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
       const cmd = m[5], name = cmd === 0x20 ? String.fromCharCode(...m.slice(16, m.indexOf(0, 16))) : ''   // read: 9 zero bytes, then the name
@@ -95,6 +101,13 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       reply([...mst, 0x47, nonce, ...pack7(bytes), 0xf7])
     }
   }
+  function patchCommand(m: number[]) {
+    if (m[4] === 0x50) editor = true
+    else if (m[4] === 0x29 && editor && buffer) reply(buffer)
+    else if (m[4] === 0x28 && editor && m.length === 146) buffer = m.slice()
+    else if (m[4] === 0x32 && buffer) patches![m[8]] = buffer.slice()
+    else if (m[4] === 0x31 && editor) knobs.push(m.slice(5, 10))
+  }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
   /** Unplugged, then plugged in again running `next` (1.10: update mode; the base's tag after a flash), as Web MIDI
    * tells it; the first `boot` identity requests go unanswered, as while the pedal shows its boot screen. */
@@ -102,7 +115,7 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
     input.state = output.state = 'disconnected'; access.onstatechange?.({})
     firmware = next; starting = boot; input.state = output.state = 'connected'; access.onstatechange?.({})
   }
-  return { access, sent, input, output, files, flash, replug }
+  return { access, sent, input, output, files, flash, replug, patches, knobs, get program() { return program }, get buffer() { return buffer }, turn(next: number) { program = next; buffer = patches![next].slice(); reply([0xc0, next]) } }
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */
@@ -125,3 +138,34 @@ export function fakeEffectList(groups: Record<number, string[]>): FakePedalFile 
   }
   return { name: 'FLST_SEQ.ZDT', data: [...data, ...Array(4108 - data.length).fill(0)] }
 }
+
+/** A stand-in MS-70CDR patch dump named `name`: the editor's empty patch (146 bytes) with that name, for zoom-patch.ts
+ * to fill. */
+export function fakePatch(name: string, deviceId = 0x61): number[] {
+  const d = [0xf0, 0x52, 0x00, deviceId, 0x28, ...Array(140).fill(0), 0xf7]
+  d[26] = 1; d[67] = 1   // as the editor’s empty patch
+  d[129] = 0x40; d[130] = 0x05; d[131] = 0x0f
+  ;[132, 134, 135, 136, 137, 138, 139, 140, 142, 143].forEach((at, i) => { d[at] = (name.padEnd(10).charCodeAt(i)) & 0x7f })
+  return d
+}
+
+const knobTable = (effect: string, knobs: [string, number, number][], cost = 34.5) => {
+  const entry = (name: string, max: number, def: number, last = false) => {
+    const e = Array(0x30).fill(0)
+    Array.from(name).forEach((c, i) => { e[i] = c.charCodeAt(0) })
+    ;[max, def].forEach((v, k) => { for (let i = 0; i < 4; i++) e[0x0c + 4 * k + i] = (v >>> (8 * i)) & 0xff })
+    if (last) e[0x2c] = 0x04
+    return e
+  }
+  const self = entry(effect, 0xffffffff, 0), f = new DataView(new ArrayBuffer(4))
+  f.setFloat32(0, cost, true)
+  for (let i = 0; i < 4; i++) self[0x28 + i] = f.getUint8(i)
+  return [...entry('OnOff', 1, 1), ...self, ...knobs.flatMap(([n, max, def], i) => entry(n, max, def, i === knobs.length - 1))]
+}
+/** A stand-in effect file with a knob table (zoom-patch.ts effectKnobs) after its header: [name, max, default] per knob. */
+export const fakeKnobbedEffect = (name: string, gid: number, fxid: number, effect: string, knobs: [string, number, number][]) => {
+  const file = fakeEffect(name, gid, fxid, '1.00', 3000)
+  file.data.splice(0x400, 0x200, ...knobTable(effect, knobs), ...Array(Math.max(0, 0x200 - 0x30 * (knobs.length + 2))).fill(0))
+  return file
+}
+
