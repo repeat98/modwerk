@@ -41,9 +41,22 @@ The empty readings before and after each run agreed within 0.3 points. The 17-mo
 note, "the CPU at 90 % or more for 1.5 s"; its moment was not separated from the install. No crash, stall, freeze or
 skipped track was logged, and every trial rolled back.
 
+## The release image `eb6679620d0c9ed7…`
+
+Built from `823c278f6` with main merged in (the base bytes did not change), 23 November 2026 at about 20:00. A RAM boot
+of the release image itself on the same MKII; nothing was kept or flashed.
+
+- It came up normal, generation 0, with an empty inventory (the card's set belongs to the flashed base).
+- The 16-module and the 17-module sets above, 30 s each: both installed, "no crash, stall, freeze or skipped track
+  logged during the trial", both rolled back.
+- The USB input package `0cb56b0c…` in a 15 s trial: installed, the same verdict, rolled back. No audio ran through it.
+- The tick lines' refusal count rose about one every 4 s in every trial, whatever was installed, matching the link's
+  4 s development pings that a release base refuses; on the development twins it stayed 0.
+- A RAM boot of the flashed image brought back `e11525835106699a…` with its four kept modules.
+
 ## Not run
 
-- The release image (`48133772…` before the cost-table fix, `eb667962…` with it), a Keep and a power cycle on it.
+- A Keep and a power cycle on the release image, and a flash of it.
 - The fast soak: this Mac has no `mido` for `scripts/octatrack-midi-bridge.py`.
 - Step 9's price of every package, and #2049's saving in the meter at rest (it needs a 0.8 twin beside it).
 - Amiga and Grain trials: the loaded project names them, so a trial's end would need another power cycle.
