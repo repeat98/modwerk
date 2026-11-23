@@ -33,10 +33,15 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
   (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PC01 (the author's combined build: RC45's 17 modules on the private base `b3bf8330`, RC45's
+  lockfile, this folder's 0.9.0, `--version PC01`): `.syx`
+  `b0f8b76b63156f36fbc5e3dd4a7f3294aff195f5ec7afd26ae7f1a70c0c991f6`, storage layout `0x253c78e2`
+  (reads RC45's projects; the new bit is appended). RAM-booted on an Analog Rytm MKII on 2026-11-22
+  ([below](#pc01-on-an-analog-rytm-mkii-2026-11-22-as-reported)).
 - Build PF02 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.9.0 alone, Modwerk's linker, `--version PF02`):
   `.syx` `f4e3fb24adf893dddcc4b056964f5187005d786318418a4728dd4e327743cfc4`, main OS `dead3b08…b4eb`.
   The media frames. PF01 (`c7d83de2…db08`), the emulator cases below, has the same main OS bytes
-  (PF02 only adds a claim to `build.json`). Not run on a unit.
+  (PF02 only adds a claim to `build.json`). Not run on a unit; PC01 carries the same source.
 - Build PS17 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.8.0 alone, Modwerk's linker, `--version PS17`):
   `.syx` `0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce`, main OS `6ff61580…8b2e`.
   Screenshots only: rytm-emu reproduces PS16's four media frames byte for byte. Not run on a unit.
@@ -130,7 +135,23 @@ the press:
 
 The rows draw as stock's (media frames, PF02). Not compared: sound (C4's silence is the unchanged
 SILENT PAD+TRIG path), MIDI out, the SOUND BROWSER and other menus, CHAIN, SONG, FILL, a saved
-project across a power cycle, and PAD LEAVES FX in a GLOBAL slot other than 1. Not run on a unit.
+project across a power cycle, and PAD LEAVES FX in a GLOBAL slot other than 1.
+
+### PC01 in rytm-emu, 2026-11-22
+
+The combined build, cold-booted: SEQUENCER CONFIG lists PAD LEAVES FX after MUTE ALL SOUND, before
+Live Rec Retrig Fix's QUANT RTRG TO SEQ. With it checked, from the FX track: SD, BD, TRIG 3 and RTRG +
+SD each brought up their track's page, beside Improved MIDI Control's FX-track page. Unchecked, SD
+and BD from the FX track left it up.
+
+### PC01 on an Analog Rytm MKII, 2026-11-22, as reported
+
+RAM-booted over the development link (not flashed), a scratch project. Reported by the author, with
+AUTO TRK SWITCH unchecked and PAD LEAVES FX checked: on MT, FX, then the MT pad: back on MT; FX, then
+CH: on CH; TRK + pad the same. Plain pad taps selected their track silently, and FUNC + pad played
+without selecting, as SILENT PAD+TRIG documents (a silent press always selects; one that plays follows
+AUTO TRK SWITCH). Not tried on the unit: TRIG keys, RTRG + pad, LIVE RECORDING, AUTO TRK SWITCH
+checked, and a power cycle with the row kept.
 
 ## 0.8.0: muted retrig rolls record, no shared-voice steal, pad lights (2026-11-08)
 

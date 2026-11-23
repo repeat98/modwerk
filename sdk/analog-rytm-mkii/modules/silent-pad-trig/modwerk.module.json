@@ -114,7 +114,7 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.x (PS07, PS08), 0.6.0 (PS10 to PS12), 0.7.0 (PS14, PS16) and 0.8.0 (in the combined build AT04) ran on a unit, as reported. 0.9.0's PAD LEAVES FX has run only in rytm-emu. MIDI out, STEP REC and MIDI notes in are not yet tested on a unit.",
+      "0.5.x (PS07, PS08), 0.6.0 (PS10 to PS12), 0.7.0 (PS14, PS16), 0.8.0 (in the combined build AT04) and 0.9.0 (in the combined build PC01) ran on a unit, as reported. MIDI out, STEP REC and MIDI notes in are not yet tested on a unit.",
       "A note already ringing when you mute keeps ringing, as stock: MUTE ALL SOUND stops new hits and does not cut the voice or the delay and reverb tails. In LIVE RECORDING a muted pad's hit still sets the track's pitch and velocity, so a note the track itself still rings can change pitch.",
       "The SOUND BROWSER's audition reaches the voice by another path, so it still plays on a muted track, on purpose (read in the code, not tested). A muted hit runs no envelope or LFO trig. MIDI out gets no note on or poly pressure from a muted pad, but its release still sends a note off, which a receiver ignores.",
       "FUNC + TRIG is stock in GRID and STEP RECORDING: it places a trig in GRID RECORDING and plays and selects in STEP RECORDING. Elsewhere stock's FUNC + TRIG plays nothing, and the module makes it play where TRIG keys are silent. 0.7.0 renames the row from SILENT PAD LIVEREC to SILENT P+T LIVEREC.",
@@ -156,13 +156,26 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.9.0-experimental",
     "sourceSha256": "b8aa46c73675b12a5500435435db73c2ccb437f5ccca8ea99e1a71b11b7d363c",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-22",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) ran 0.9.0 on an Analog Rytm MKII, OS 1.74, in the combined build PC01 (RC45's 17 modules with this source), RAM-booted, 22 Nov 2026, as reported: with PAD LEAVES FX checked and AUTO TRK SWITCH unchecked, FX then the MT pad brought up MT, and FX then CH brought up CH; TRK + pad behaved the same; plain pads selected silently and FUNC + pad played without selecting, as SILENT PAD+TRIG documents. Earlier versions: 0.8.0 (AT04), 0.7.0 (PS14, PS16), 0.6.0 (PS10 to PS12), 0.5.x (PS07, PS08); details in TESTING.md.",
+      "limitations": [
+        "0.9.0 ran on a unit only in PC01, a combined build RAM-booted over the development link, not alone and not flashed, so the row's survival across a power cycle was not tested on a unit.",
+        "The run was with AUTO TRK SWITCH unchecked; TRIG keys, RTRG + pad, LIVE RECORDING and AUTO TRK SWITCH checked were tested only in rytm-emu. Results are as reported by the author, not itemized measurements.",
+        "PC01 SysEx b0f8b76b63156f36fbc5e3dd4a7f3294aff195f5ec7afd26ae7f1a70c0c991f6; firmware was not read back from the device.",
+        "Earlier versions' limits stay as TESTING.md records them: MIDI out, STEP REC and MIDI notes in were not tested on a unit."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

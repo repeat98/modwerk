@@ -69,7 +69,7 @@ and changes nothing else; 0.6.0 adds MUTE ALL SOUND; 0.7.0 lets FUNC + TRIG play
 silent and has the LIVE REC row cover the TRIG keys too, renaming it SILENT P+T LIVEREC; 0.8.0 lets
 RTRG + a muted pad record its whole roll in LIVE RECORDING without taking a shared voice; 0.9.0
 adds PAD LEAVES FX and renames the module Improved Configs. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit; 0.5.1 also ran in rytm-emu (build PS08). 0.6.0
-ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as PS14 and as PS16, which renames the row and its storage field, as reported. 0.8.0 ran on a unit in the combined build AT04, as reported.
+ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as PS14 and as PS16, which renames the row and its storage field, as reported. 0.8.0 ran on a unit in the combined build AT04, and 0.9.0 in PC01, as reported.
 
 ## Controls
 
@@ -219,8 +219,9 @@ the pads, the TRIG keys or the SEQUENCER CONFIG menu.
 See [TESTING.md](TESTING.md). 0.9.0's PAD LEAVES FX ran in rytm-emu (build PF01, emulator results,
 not hardware): with the FX track up and the row checked, SD, BD, TRIG 3, RTRG + SD, FUNC + SD, a
 silent SD with SILENT PAD+TRIG and SD in LIVE RECORDING each brought up their track's page; unchecked
-SD and TRIG 3 left the FX track up as stock; with AUTO TRK SWITCH unchecked SD left it up too. Not yet
-on a unit. 0.8.0 ran on an Analog Rytm MKII in AT04, a combined build, as
+SD and TRIG 3 left the FX track up as stock; with AUTO TRK SWITCH unchecked SD left it up too. On an
+Analog Rytm MKII, in the combined build PC01, as reported: from the FX track, the MT and CH pads (selecting
+silently with SILENT PAD+TRIG) and TRK + pad each brought up their track's page. 0.8.0 ran on an Analog Rytm MKII in AT04, a combined build, as
 reported: with MUTE ALL SOUND, OH playing and CH muted, RTRG + CH in LIVE RECORDING recorded every
 retrig with no sound and no click, OH kept ringing, and the CH pad lit on each hit; outside LIVE
 RECORDING muted pads stayed silent. In rytm-emu (AT04E, CH forced muted) the same roll was
