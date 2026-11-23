@@ -17,9 +17,10 @@ if (!out || !ids.length || (importing && ids.length !== 2)) throw new Error('Usa
 if (!relative(root, out).startsWith('..')) throw new Error('Write the set outside the repository: built files are never committed.')
 const vite = await createServer({ root, logLevel: 'error', appType: 'custom', server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true } })
 try {
+  const { usbAudioForSelection } = await vite.ssrLoadModule('/src/config/usb-audio.ts')
   const { prepareCardSet } = await vite.ssrLoadModule('/src/engine/elekloader/module-set.ts')
   const { CARD_SET_FILE, CARD_RECOVERY_FILE, forCardImport } = await vite.ssrLoadModule('/src/engine/elekloader/card-set.ts')
-  const source = importing ? readFileSync(ids[1]) : (await prepareCardSet({ name: 'Card set', moduleIds: ids, removedStockFx: [] }, async entry => new Uint8Array(readFileSync(join(root, 'public', entry.path))))).file
+  const source = importing ? readFileSync(ids[1]) : (await prepareCardSet({ name: 'Card set', moduleIds: ids, removedStockFx: [], usbAudio: usbAudioForSelection(ids) }, async entry => new Uint8Array(readFileSync(join(root, 'public', entry.path))))).file
   mkdirSync(out, { recursive: true })
   const retained = join(out, CARD_RECOVERY_FILE)
   const file = forCardImport(source, existsSync(retained) ? readFileSync(retained) : undefined)

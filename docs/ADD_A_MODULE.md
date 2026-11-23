@@ -66,7 +66,9 @@ release notes in `CHANGELOG.json`; `npm run module:new` starts it there. Every
 folder in `sdk/octatrack/modules/` is validated for publication even when absent
 from `sdk/catalog.json`, so a draft there blocks catalogue generation for
 everyone. Move it there, and its notes into `src/community/module-changelogs/`,
-only when the publication requirements are met.
+only when the publication requirements are met. A listed module's update
+waits as a draft PR, where CI and `pr:ready -- --draft` warn about its missing
+evidence; marking it ready requires it.
 
 **Hear it.** `npm run module:dev -- <id>` builds the module from its source and
 tries it on your unit over USB: a trial in RAM, undone when it ends or on

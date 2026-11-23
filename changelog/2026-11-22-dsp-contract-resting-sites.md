@@ -1,0 +1,1 @@
+SDK: the DSP register contract (`module:doctor`'s "dsp registers") reads a package whose detours rest (runtime.json `"rests"`) as the loader does, without the rest flag in each site's length byte, instead of stopping with an index error. Tape Echo is the first DSP effect to ship such a package.

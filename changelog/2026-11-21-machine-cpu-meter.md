@@ -1,0 +1,1 @@
+A track machine can name the CPU meter it adds (resources.cpuMeter, its descriptor's reserved[1]), measured on a unit against the same Part on Flex; modules:check recomputes it from its readings in evidence/cpu-meter.json and holds the descriptor to it.

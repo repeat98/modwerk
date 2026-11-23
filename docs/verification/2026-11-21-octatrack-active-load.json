@@ -1,0 +1,951 @@
+{
+  "schemaVersion": 1,
+  "instrument": "Octatrack MKII",
+  "developmentBase": "8850f5399c453b9c166e4686c9c8f718409a547258ed803c9b83a97dd5239f6c",
+  "method": "Frame-interrupt share from guard and DSP medians from six or ten stats samples per window. The frame guard retained its normal limit. Each displayed comparison has repeat readings and verified restoration.",
+  "measurements": [
+    {
+      "module": "output-matrix",
+      "version": "0.1.1-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "20f409df8ad2c5096d8b4a2bc451337fbba8edd7436f830230eeac68ac486069",
+      "edition": "release source rebound to the development base",
+      "scene": "FLEX06 A01, Part 1, six sequenced audio tracks, master off, T1 FX2 set to NONE in every reading. The reference was stock NORMAL routing. All eight tracks were assigned to the indicated destination.",
+      "restoration": {
+        "mode": "NORMAL",
+        "partsRoutingSha256": "470d576cef36b450370fbf2f82cdbdd056ac314cc5f8758ca58ae3f6df61f49b",
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "ALL routes in MATRIX mode",
+          "core": "T5–8",
+          "routes": [
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6
+          ],
+          "readings": [
+            {
+              "before": {
+                "frame": 49.7,
+                "frames": 36652,
+                "skipped": 0,
+                "dsp1to4": 40.3,
+                "dsp5to8": 40.5,
+                "dsp1to4Samples": [
+                  38.6,
+                  38.6,
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  32.7,
+                  32.7,
+                  40.3,
+                  40.3
+                ],
+                "dsp5to8Samples": [
+                  40.5,
+                  40.5,
+                  40.5,
+                  40.5,
+                  40.5,
+                  39.5,
+                  39.5,
+                  39.2,
+                  39.2,
+                  40.5
+                ]
+              },
+              "after": {
+                "frame": 62.8,
+                "frames": 35125,
+                "skipped": 0,
+                "dsp1to4": 40.3,
+                "dsp5to8": 47.0,
+                "dsp1to4Samples": [
+                  39.4,
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  32.7,
+                  32.7,
+                  32.7,
+                  40.3
+                ],
+                "dsp5to8Samples": [
+                  47.5,
+                  47.5,
+                  47.5,
+                  47.5,
+                  47.5,
+                  46.3,
+                  46.3,
+                  46.5,
+                  46.5,
+                  46.5
+                ]
+              }
+            },
+            {
+              "before": {
+                "frame": 49.8,
+                "frames": 35339,
+                "skipped": 0,
+                "dsp1to4": 38.05,
+                "dsp5to8": 40.45,
+                "dsp1to4Samples": [
+                  38.3,
+                  38.3,
+                  35.3,
+                  35.3,
+                  37.8,
+                  37.8,
+                  37.8,
+                  40.3,
+                  40.3,
+                  40.5
+                ],
+                "dsp5to8Samples": [
+                  40.5,
+                  38.3,
+                  38.3,
+                  40.4,
+                  40.4,
+                  40.4,
+                  40.5,
+                  40.5,
+                  40.5,
+                  40.5
+                ]
+              },
+              "after": {
+                "frame": 62.8,
+                "frames": 35554,
+                "skipped": 0,
+                "dsp1to4": 37.55,
+                "dsp5to8": 47.5,
+                "dsp1to4Samples": [
+                  40.3,
+                  40.3,
+                  37.3,
+                  37.3,
+                  37.3,
+                  36.3,
+                  36.3,
+                  37.8,
+                  37.8,
+                  40.3
+                ],
+                "dsp5to8Samples": [
+                  47.5,
+                  47.5,
+                  47.5,
+                  47.5,
+                  45.1,
+                  45.1,
+                  47.5,
+                  47.5,
+                  47.5,
+                  47.5
+                ]
+              }
+            }
+          ],
+          "cpuGauge": true
+        },
+        {
+          "name": "MAIN routes",
+          "core": "T5–8",
+          "routes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "readings": [
+            {
+              "before": {
+                "frame": 49.7,
+                "frames": 36652,
+                "skipped": 0,
+                "dsp1to4": 40.3,
+                "dsp5to8": 40.5,
+                "dsp1to4Samples": [
+                  38.6,
+                  38.6,
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  32.7,
+                  32.7,
+                  40.3,
+                  40.3
+                ],
+                "dsp5to8Samples": [
+                  40.5,
+                  40.5,
+                  40.5,
+                  40.5,
+                  40.5,
+                  39.5,
+                  39.5,
+                  39.2,
+                  39.2,
+                  40.5
+                ]
+              },
+              "after": {
+                "frame": 62.8,
+                "frames": 35066,
+                "skipped": 0,
+                "dsp1to4": 40.3,
+                "dsp5to8": 41.85,
+                "dsp1to4Samples": [
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  39.4,
+                  39.4,
+                  34.2,
+                  34.2,
+                  40.3,
+                  40.3
+                ],
+                "dsp5to8Samples": [
+                  42.1,
+                  42.1,
+                  42.1,
+                  42.1,
+                  42.1,
+                  40.3,
+                  40.3,
+                  41.6,
+                  41.6,
+                  41.6
+                ]
+              }
+            },
+            {
+              "before": {
+                "frame": 49.8,
+                "frames": 35339,
+                "skipped": 0,
+                "dsp1to4": 38.05,
+                "dsp5to8": 40.45,
+                "dsp1to4Samples": [
+                  38.3,
+                  38.3,
+                  35.3,
+                  35.3,
+                  37.8,
+                  37.8,
+                  37.8,
+                  40.3,
+                  40.3,
+                  40.5
+                ],
+                "dsp5to8Samples": [
+                  40.5,
+                  38.3,
+                  38.3,
+                  40.4,
+                  40.4,
+                  40.4,
+                  40.5,
+                  40.5,
+                  40.5,
+                  40.5
+                ]
+              },
+              "after": {
+                "frame": 62.8,
+                "frames": 35088,
+                "skipped": 0,
+                "dsp1to4": 40.3,
+                "dsp5to8": 42.1,
+                "dsp1to4Samples": [
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  40.3,
+                  33.3,
+                  33.3,
+                  40.3,
+                  40.3,
+                  40.3
+                ],
+                "dsp5to8Samples": [
+                  42.1,
+                  42.1,
+                  42.1,
+                  42.1,
+                  40.6,
+                  40.6,
+                  41.4,
+                  41.4,
+                  42.1,
+                  42.1
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "releasePackageSha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b"
+    },
+    {
+      "module": "analog-bassdrum",
+      "version": "0.1.7-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "9d13b64aff0c4caf0d933d7db82ff07e67806189171149250b0e7ca1df456b90",
+      "releasePackageSha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
+      "edition": "release source rebound to the development base",
+      "scene": "FLEX06 B01, saved Part 1, Analog Bassdrum on T1 with one trig on each of 16 steps at 140 BPM. The stock scratch pattern had no trigs. The 808 engine continued running between hits.",
+      "restoration": {
+        "trackLaneRestored": true,
+        "partRestored": true,
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "one sequenced 808 voice",
+          "core": "T1–4",
+          "cpuGauge": true,
+          "readings": [
+            {
+              "before": {
+                "frame": 25.4,
+                "frameMax": 34.4,
+                "frames": 21010,
+                "skipped": 0,
+                "dsp1to4": 43.2,
+                "dsp5to8": 38.1,
+                "dsp1to4Samples": [
+                  43.2,
+                  43.2,
+                  43.2,
+                  43.2,
+                  42.6,
+                  42.6
+                ]
+              },
+              "after": {
+                "frame": 35.5,
+                "frameMax": 64.4,
+                "frames": 21010,
+                "skipped": 0,
+                "dsp1to4": 48.9,
+                "dsp5to8": 38.2,
+                "dsp1to4Samples": [
+                  48.9,
+                  48.9,
+                  48.9,
+                  48.7,
+                  48.7,
+                  49.0
+                ]
+              },
+              "installedQuiet": {
+                "frame": 35.3,
+                "frameMax": 53.9,
+                "frames": 21494,
+                "skipped": 0,
+                "dsp1to4": 48.3,
+                "dsp5to8": 38.2,
+                "dsp1to4Samples": [
+                  48.3,
+                  48.3,
+                  48.3,
+                  48.3,
+                  48.3,
+                  48.3
+                ]
+              }
+            },
+            {
+              "before": {
+                "frame": 25.4,
+                "frameMax": 34.3,
+                "frames": 20991,
+                "skipped": 0,
+                "dsp1to4": 43.2,
+                "dsp5to8": 38.1,
+                "dsp1to4Samples": [
+                  43.2,
+                  43.2,
+                  43.2,
+                  43.2,
+                  43.2,
+                  43.2
+                ]
+              },
+              "after": {
+                "frame": 35.5,
+                "frameMax": 64.5,
+                "frames": 21102,
+                "skipped": 0,
+                "dsp1to4": 48.7,
+                "dsp5to8": 38.2,
+                "dsp1to4Samples": [
+                  48.7,
+                  48.7,
+                  48.7,
+                  48.7,
+                  48.7,
+                  48.7
+                ]
+              },
+              "installedQuiet": {
+                "frame": 35.3,
+                "frameMax": 53.9,
+                "frames": 20986,
+                "skipped": 0,
+                "dsp1to4": 48.3,
+                "dsp5to8": 38.2,
+                "dsp1to4Samples": [
+                  48.3,
+                  48.3,
+                  48.3,
+                  48.3,
+                  48.3,
+                  48.3
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module": "sidechain-compressor",
+      "version": "0.2.2-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "9f22861f282565e9a95e272220faf49bc403cf0ac7065f50cd5e941217481622",
+      "releasePackageSha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
+      "edition": "release source rebound to the development base",
+      "scene": "FLEX06 A01, saved Part 2, six sequenced audio tracks. The COMPRESSOR on T5 FX1 was keyed from T1. Threshold and filter controls remained at their defaults.",
+      "restoration": {
+        "partRestored": true,
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "one keyed compressor compared with stock COMPRESSOR",
+          "core": "T5–8",
+          "readings": [
+            {
+              "before": {
+                "frame": 49.4,
+                "frameMax": 86.8,
+                "frames": 35399,
+                "skipped": 0,
+                "dsp1to4": 48.05,
+                "dsp5to8": 41.05,
+                "dsp5to8Samples": [
+                  41.2,
+                  41.2,
+                  40.9,
+                  40.9,
+                  40.9,
+                  39.9,
+                  39.9,
+                  41.2,
+                  41.2,
+                  41.2
+                ]
+              },
+              "after": {
+                "frame": 50.2,
+                "frameMax": 86.6,
+                "frames": 34945,
+                "skipped": 0,
+                "dsp1to4": 49.45,
+                "dsp5to8": 42.6,
+                "dsp5to8Samples": [
+                  42.6,
+                  42.6,
+                  42.6,
+                  42.6,
+                  42.1,
+                  42.1,
+                  40.9,
+                  40.9,
+                  42.6,
+                  42.6
+                ]
+              }
+            },
+            {
+              "before": {
+                "frame": 49.3,
+                "frameMax": 85.7,
+                "frames": 36870,
+                "skipped": 0,
+                "dsp1to4": 46.1,
+                "dsp5to8": 40.5,
+                "dsp5to8Samples": [
+                  39.9,
+                  40.5,
+                  40.5,
+                  41.2,
+                  41.2,
+                  41.2,
+                  41.2,
+                  39.2,
+                  39.2,
+                  39.2
+                ]
+              },
+              "after": {
+                "frame": 50.1,
+                "frameMax": 86.4,
+                "frames": 35649,
+                "skipped": 0,
+                "dsp1to4": 50,
+                "dsp5to8": 42.6,
+                "dsp5to8Samples": [
+                  42.6,
+                  42.6,
+                  42.6,
+                  42.6,
+                  42,
+                  42,
+                  40.8,
+                  40.8,
+                  42.6,
+                  42.6
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "one keyed compressor compared with an empty slot",
+          "cpuGauge": true,
+          "readings": [
+            {
+              "before": {
+                "frame": 49.4,
+                "frameMax": 86.7,
+                "frames": 35445,
+                "skipped": 0,
+                "dsp1to4": 48,
+                "dsp5to8": 38.65,
+                "dsp5to8Samples": [
+                  38.5,
+                  37.2,
+                  37.2,
+                  38.8,
+                  38.8,
+                  38.8,
+                  38.8,
+                  38.8,
+                  37.9,
+                  37.9
+                ]
+              },
+              "after": {
+                "frame": 50.2,
+                "frameMax": 86.6,
+                "frames": 34945,
+                "skipped": 0,
+                "dsp1to4": 49.45,
+                "dsp5to8": 42.6,
+                "dsp5to8Samples": [
+                  42.6,
+                  42.6,
+                  42.6,
+                  42.6,
+                  42.1,
+                  42.1,
+                  40.9,
+                  40.9,
+                  42.6,
+                  42.6
+                ]
+              },
+              "installedQuiet": {
+                "frame": 50.2,
+                "frameMax": 86.4,
+                "frames": 35206,
+                "skipped": 0,
+                "dsp1to4": 46.5,
+                "dsp5to8": 38.599999999999994,
+                "dsp5to8Samples": [
+                  38.8,
+                  38.8,
+                  38.8,
+                  38.8,
+                  38.8,
+                  38.4,
+                  38.4,
+                  37.4,
+                  37.4,
+                  37.4
+                ]
+              }
+            },
+            {
+              "before": {
+                "frame": 49.5,
+                "frameMax": 85.5,
+                "frames": 34922,
+                "skipped": 0,
+                "dsp1to4": 47.150000000000006,
+                "dsp5to8": 38.3,
+                "dsp5to8Samples": [
+                  37.1,
+                  37.1,
+                  38.8,
+                  38.8,
+                  38.9,
+                  38.9,
+                  38.3,
+                  38.3,
+                  38.3,
+                  37.5
+                ]
+              },
+              "after": {
+                "frame": 50.1,
+                "frameMax": 86.4,
+                "frames": 35649,
+                "skipped": 0,
+                "dsp1to4": 50,
+                "dsp5to8": 42.6,
+                "dsp5to8Samples": [
+                  42.6,
+                  42.6,
+                  42.6,
+                  42.6,
+                  42,
+                  42,
+                  40.8,
+                  40.8,
+                  42.6,
+                  42.6
+                ]
+              },
+              "installedQuiet": {
+                "frame": 50.2,
+                "frameMax": 87.2,
+                "frames": 35058,
+                "skipped": 0,
+                "dsp1to4": 48.8,
+                "dsp5to8": 38.5,
+                "dsp5to8Samples": [
+                  38.8,
+                  38.8,
+                  38.8,
+                  38.9,
+                  38.9,
+                  37.5,
+                  37.5,
+                  38.2,
+                  38.2,
+                  38.2
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module": "usb-audio-out-tracks-main-cue",
+      "version": "0.3.0-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "b2ba89425a132eb76f7829f88fefca62c518a8e2d86a5a1fc0d1b5f7005c690d",
+      "releasePackageSha256": "0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f",
+      "edition": "published runtime image with the stereo MAIN install preset",
+      "scene": "FLEX06 A01, saved Part 2. Core Audio on macOS pulled a stereo MAIN stream over USB in both runs. The stock comparison played the same pattern without USB Audio.",
+      "restoration": {
+        "partRestored": true,
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "a 44.1 kHz stereo MAIN stream",
+          "cpuGauge": true,
+          "readings": [
+            {
+              "before": {
+                "frame": 49.5,
+                "frameMax": 86.2,
+                "frames": 34852,
+                "skipped": 0,
+                "dsp1to4": 47.65,
+                "dsp5to8": 40.05
+              },
+              "after": {
+                "frame": 62.8,
+                "frameMax": 98.7,
+                "frames": 35422,
+                "skipped": 0,
+                "dsp1to4": 48.75,
+                "dsp5to8": 40.15,
+                "stream": {
+                  "sampleRate": 44100,
+                  "channels": 2,
+                  "capturedFrames": 904704
+                }
+              },
+              "installedQuiet": {
+                "frame": 52.0,
+                "frameMax": 89.2,
+                "frames": 34941,
+                "skipped": 0,
+                "dsp1to4": 48.8,
+                "dsp5to8": 40.15
+              }
+            },
+            {
+              "before": {
+                "frame": 49.5,
+                "frameMax": 86.1,
+                "frames": 34852,
+                "skipped": 0,
+                "dsp1to4": 46.650000000000006,
+                "dsp5to8": 40.45
+              },
+              "after": {
+                "frame": 62.8,
+                "frameMax": 97.8,
+                "frames": 34981,
+                "skipped": 0,
+                "dsp1to4": 48.4,
+                "dsp5to8": 40.5,
+                "stream": {
+                  "sampleRate": 44100,
+                  "channels": 2,
+                  "capturedFrames": 906240
+                }
+              },
+              "installedQuiet": {
+                "frame": 52.0,
+                "frameMax": 87.7,
+                "frames": 34920,
+                "skipped": 0,
+                "dsp1to4": 46.95,
+                "dsp5to8": 40.5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module": "vector",
+      "version": "0.3.2-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "releasePackageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "edition": "exact published runtime package",
+      "scene": "FLEX06 B02, T1, Flex slot 1, 140 BPM. The generator committed a 13-trig phrase. The identical phrase, parameter locks and sample played on VECTOR and on stock FLEX after Undo.",
+      "restoration": {
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "a generated 13-trig FLEX phrase",
+          "cpuGauge": true,
+          "patternSha256": "ce7fbbbbe99500d3a7a992e458f702fd7062f53dabdc1d8bce9d3d2f4386e2b3",
+          "readings": [
+            {
+              "before": {
+                "frame": 30.6,
+                "frameMax": 54.8,
+                "frames": 21550,
+                "skipped": 0,
+                "dsp1to4": 48.65,
+                "dsp5to8": 40.6
+              },
+              "after": {
+                "frame": 31.2,
+                "frameMax": 58.5,
+                "frames": 21222,
+                "skipped": 0,
+                "dsp1to4": 48.3,
+                "dsp5to8": 40.6
+              }
+            },
+            {
+              "before": {
+                "frame": 30.6,
+                "frameMax": 55.2,
+                "frames": 21159,
+                "skipped": 0,
+                "dsp1to4": 48.6,
+                "dsp5to8": 40.6
+              },
+              "after": {
+                "frame": 31.2,
+                "frameMax": 58.4,
+                "frames": 21039,
+                "skipped": 0,
+                "dsp1to4": 48.849999999999994,
+                "dsp5to8": 40.6
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module": "syntiz",
+      "version": "0.1.0-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
+      "releasePackageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
+      "edition": "exact published runtime package",
+      "scene": "FLEX06 B01 at 140 BPM. One SYNTIZ track at a time, on T1 and then T2 in separate trials. SRC defaults, AMP HOLD 0.50 and REL 63, one trig on each of the 16 steps. The reference window had the machine selected with no trigs and no active render.",
+      "restoration": {
+        "trackLaneRestored": true,
+        "partRestored": true,
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "one sequenced SYNTIZ track",
+          "cpuGauge": true,
+          "readings": [
+            {
+              "track": 1,
+              "before": {
+                "frame": 23.6,
+                "frameMax": 31.3,
+                "frames": 21070,
+                "skipped": 0,
+                "dsp1to4": 39.4,
+                "dsp5to8": 38.1
+              },
+              "after": {
+                "frame": 32.1,
+                "frameMax": 59.6,
+                "frames": 21147,
+                "skipped": 0,
+                "dsp1to4": 42.8,
+                "dsp5to8": 38.1,
+                "guardedTrackRenderPeak": 40.2
+              }
+            },
+            {
+              "track": 2,
+              "before": {
+                "frame": 23.7,
+                "frameMax": 31.3,
+                "frames": 21548,
+                "skipped": 0,
+                "dsp1to4": 48.9,
+                "dsp5to8": 40.5
+              },
+              "after": {
+                "frame": 32.1,
+                "frameMax": 59.5,
+                "frames": 21329,
+                "skipped": 0,
+                "dsp1to4": 48.75,
+                "dsp5to8": 40.5,
+                "guardedTrackRenderPeak": 40.1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module": "poly8",
+      "version": "0.3.3-experimental",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "packageSha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
+      "releasePackageSha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
+      "edition": "exact published runtime package",
+      "scene": "FLEX06 B01 at 140 BPM, with POLY8 on T3 and T4 in separate trials. Default controls and one retrigger on every step of the 16-step pattern. T3 used Flex slot 3 and T4 used Flex slot 4. The figure applies to this retrigger pattern. The maximum eight-voice budget is pending.",
+      "restoration": {
+        "trackLaneRestored": true,
+        "partRestored": true,
+        "liveInventoryRestored": true
+      },
+      "workloads": [
+        {
+          "name": "one POLY8 track with repeated trigs",
+          "cpuGauge": true,
+          "readings": [
+            {
+              "track": 3,
+              "before": {
+                "frame": 27.1,
+                "frameMax": 36.3,
+                "frames": 20994,
+                "skipped": 0,
+                "dsp1to4": 48.9,
+                "dsp5to8": 40.5
+              },
+              "after": {
+                "frame": 69.0,
+                "frameMax": 106.1,
+                "frames": 21055,
+                "skipped": 0,
+                "dsp1to4": 47.0,
+                "dsp5to8": 40.5,
+                "guardedTrackRenderPeak": 73.3
+              },
+              "emptyInventory": {
+                "frame": 25.5,
+                "frameMax": 34.3,
+                "frames": 20987,
+                "skipped": 0,
+                "dsp1to4": 48.9,
+                "dsp5to8": 40.5
+              }
+            },
+            {
+              "track": 4,
+              "before": {
+                "frame": 28.1,
+                "frameMax": 37.4,
+                "frames": 20997,
+                "skipped": 0,
+                "dsp1to4": 48.599999999999994,
+                "dsp5to8": 40.5
+              },
+              "after": {
+                "frame": 69.9,
+                "frameMax": 102.9,
+                "frames": 20968,
+                "skipped": 0,
+                "dsp1to4": 47.0,
+                "dsp5to8": 40.5,
+                "guardedTrackRenderPeak": 74.0
+              },
+              "emptyInventory": {
+                "frame": 26.6,
+                "frameMax": 35.1,
+                "frames": 20982,
+                "skipped": 0,
+                "dsp1to4": 48.9,
+                "dsp5to8": 40.5
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

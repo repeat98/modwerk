@@ -9,6 +9,7 @@ import template from '../../sdk/octatrack/modules/synth/qualification.example.js
 import capture from '../../sdk/octatrack/modules/synth/media/capture.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import approval from '../../sdk/approvals/synth-build-approval.json'
+import usbPackages from '../engine/assets/octatrack-module-packages.json'
 import { parseModuleDocument, requireModuleUiForPublication, requireModuleQualificationForPublication } from './module-contract'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
@@ -20,7 +21,17 @@ const retained = (approval as { retainedUiVersion?: string }).retainedUiVersion
 describe('FM Synth exact experimental release', () => {
   it('publishes only the exact owner-approved experimental release and keeps unknown measurements visible', async () => {
     const document = parseModuleDocument(source)
-    expect(document.tests.hardwareStatus).toBe('untested')
+    if (document.tests.hardwareStatus === 'reported') {
+      const pkg = usbPackages.packages.find(row => row.id === document.id && row.version === document.version)
+      expect(pkg).toBeDefined()
+      const bytes = await readFile(resolve('public', pkg!.path))
+      const digest = createHash('sha256').update(bytes).digest('hex')
+      expect(pkg!.sha256).toBe(digest)
+      const report = await readFile(resolve(folder, document.tests.report), 'utf8')
+      expect(report).toContain(digest)
+    } else {
+      expect(document.tests.hardwareStatus).toBe('untested')
+    }
     expect(document.resources.processing.value).toBeNull()
     // An update may keep an earlier version's captures: its approval names retainedUiVersion (docs/MODULE_UI_CAPTURES.md).
     expect(() => requireModuleUiForPublication(document, retained)).not.toThrow()
