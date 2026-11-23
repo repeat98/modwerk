@@ -46,7 +46,7 @@ export function unpack7(bytes: ArrayLike<number>): number[] {
   return out
 }
 /** Current edit buffer on the original MS-70CDR. The query alone leaves the active patch in place. */
-export const CURRENT_PATCH = { request: 0x29, reply: 0x28 } as const
+export const CURRENT_PATCH = { request: 0x29, reply: 0x28, edit: 0x50 } as const
 export const isCurrentPatchReply = (m: number[], deviceId: number) =>
   deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && m.length === 146 &&
   m[0] === 0xf0 && m[1] === 0x52 && m[2] === 0 && m[3] === deviceId && m[4] === CURRENT_PATCH.reply &&
@@ -54,9 +54,41 @@ export const isCurrentPatchReply = (m: number[], deviceId: number) =>
 
 export type ZoomPatchSlot = { index: number; gid: number; fxid: number; enabled: boolean; values: number[] }
 export type ZoomCurrentPatch = { name: string; slots: ZoomPatchSlot[] }
+export type ZoomPatchChange = { slot: number; parameter: number; value: number } | { slot: number; enabled: boolean }
 
 // Unpacking the SysEx collectors leaves the same little-endian bit fields in each 18-byte slot.
 const PATCH_CONTROLS = [[29, 12], [42, 11], [55, 11], [68, 8], [76, 8], [84, 8], [92, 8], [100, 9], [128, 8]]
+
+export function zoomPatchParameterMax(slot: number, parameter: number): number {
+  // The high bit of the ninth knob in slot 5 is unverified. Preserve it.
+  const width = slot === 4 && parameter === 8 ? 7 : PATCH_CONTROLS[parameter]?.[1] ?? 0
+  return (1 << width) - 1
+}
+
+/** Overlay changed fields on a fresh reply, preserving the name, IDs and unmodelled bytes. */
+export function editCurrentPatch(message: number[], changes: readonly ZoomPatchChange[]): number[] {
+  const patch = parseCurrentPatch(message)
+  if (!patch) throw new Error('The pedal did not return its active patch.')
+  const raw = unpack7(message.slice(5, -1))
+  for (const change of changes) {
+    if (!patch.slots.some(slot => slot.index === change.slot)) throw new Error('The effect slot is no longer in the active patch.')
+    const parameter = 'parameter' in change ? PATCH_CONTROLS[change.parameter] : undefined
+    const value = 'value' in change ? change.value : Number(change.enabled)
+    const max = 'parameter' in change ? zoomPatchParameterMax(change.slot, change.parameter) : 1
+    if (('parameter' in change && !parameter) || !Number.isInteger(value) || value < 0 || value > max) {
+      throw new Error('The parameter value does not fit this patch slot.')
+    }
+    const bit = parameter?.[0] ?? 0
+    const at = change.slot * 18 + (bit >> 3), shift = bit & 7, mask = max << shift
+    const current = raw[at] | raw[at + 1] << 8 | raw[at + 2] << 16
+    const updated = (current & ~mask) | (value << shift)
+    raw[at] = updated & 255
+    raw[at + 1] = (updated >> 8) & 255
+    raw[at + 2] = (updated >> 16) & 255
+  }
+  return [...message.slice(0, 5), ...pack7(raw), 0xf7]
+}
+
 export function parseCurrentPatch(m: number[]): ZoomCurrentPatch | undefined {
   if (!isCurrentPatchReply(m, ZOOM_DEVICE_IDS['zoom-ms-70cdr']) || m.slice(5, -1).some(byte => byte < 0 || byte > 127)) return undefined
   const raw = unpack7(m.slice(5, -1))

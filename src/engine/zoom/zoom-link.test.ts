@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fakeCurrentPatch, fakeEffect, fakeEffectList, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
-import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
+import { MIDISTOMP_FEATURES, crc32, editCurrentPatch, effectInfo, pack7, parseCurrentPatch, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
 
 const connected = async (pedal: ReturnType<typeof fakeZoomPedal>, timeout = 200) => {
   const link = new ZoomLink(() => Promise.resolve(pedal.access), timeout)
@@ -28,6 +28,18 @@ describe('the Zoom file protocol', () => {
       slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '?', cpu: 0, dsp: 0 }] })
   })
   it('reads an effect file header', () => expect(effectInfo(fakeEffect('LOOP.ZDL', 8, 480, '0.03').data)).toEqual({ gid: 8, fxid: 480, version: '0.03' }))
+  it('changes only the requested parameter bits and preserves the unverified bit in slot 5', () => {
+    const patch = fakeCurrentPatch('Overlay', [{ index: 4, gid: 9, fxid: 16, values: [100, 0, 0, 0, 0, 0, 0, 0, 128] }])
+    const raw = unpack7(patch.slice(5, -1))
+    raw[7] = 0xed
+    const initial = [...patch.slice(0, 5), ...pack7(raw), 0xf7]
+    const result = editCurrentPatch(initial, [{ slot: 4, parameter: 8, value: 26 }])
+    const want = raw.slice()
+    want[4 * 18 + 16] = 128 + 26
+    expect(unpack7(result.slice(5, -1))).toEqual(want)
+    expect(parseCurrentPatch(result)?.slots[0].values[8]).toBe(154)
+    expect(() => editCurrentPatch(initial, [{ slot: 4, parameter: 8, value: 128 }])).toThrow('does not fit')
+  })
 })
 
 describe('the Zoom link', () => {
@@ -59,6 +71,18 @@ describe('the Zoom link', () => {
     }
     const link = await connected(fakeZoomPedal({ patch: fakeCurrentPatch('Short', []).slice(0, -2) }), 30)
     await expect(link.currentPatch()).rejects.toThrow('did not return its active patch')
+  })
+
+  it('sends no patch writes for an unsupported firmware or if a patch changed since reading', async () => {
+    for (const firmware of ['D004', 'D005']) {
+      const patch = fakeCurrentPatch('Original', [{ index: 0, gid: 8, fxid: 240, values: [100] }])
+      const pedal = fakeZoomPedal({ patch, firmware }), link = await connected(pedal)
+      const expected = await link.currentPatch()
+      patch.splice(0, patch.length, ...fakeCurrentPatch('New patch', [{ index: 0, gid: 8, fxid: 240 }]))
+      await expect(link.applyPatchChanges(expected, [{ slot: 0, parameter: 0, value: 50 }]))
+        .rejects.toThrow(firmware === 'D004' ? 'patch changed' : 'require the MS-70CDR')
+      expect(pedal.sent.some(message => message[1] === 0x52 && [0x50, 0x28, 0x32].includes(message[4]))).toBe(false)
+    }
   })
 
   it('lists files with each effect’s id and version, and the free space', async () => {

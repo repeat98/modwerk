@@ -2,7 +2,8 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { CURRENT_PATCH, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { CURRENT_PATCH, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, editCurrentPatch, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity, type ZoomCurrentPatch, type ZoomPatchChange } from './zoom-protocol'
+import { zoomEffectControls, type ZoomEffectControls } from './zoom-effect-controls'
 import { storedZip } from './zip'
 
 // Tabs of the site take turns on the pedal, as octatrack-link.ts's USB jobs do; without Web Locks, `op` keeps one job at a time in this tab.
@@ -13,6 +14,8 @@ const locked = <T>(work: () => Promise<T>): Promise<T> => {
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
 export type ZoomFile = { name: string; size: number; inEffectList?: boolean; effect?: { gid: number; fxid: number; version: string } }
+export type ZoomPatchEffect = { file: ZoomFile; controls?: ZoomEffectControls }
+const patchEffectKey = ({ gid, fxid }: { gid: number; fxid: number }) => gid + '/' + fxid
 export type ZoomLinkState = {
   readonly status: ZoomLinkStatus
   readonly connection?: number
@@ -50,6 +53,7 @@ export class ZoomLink {
   private op: Promise<unknown> = Promise.resolve()
   /** Effect headers already read (upper-case name -> size and header); a write or delete forgets that file. */
   private readonly heads = new Map<string, { size: number; effect?: ZoomFile['effect'] }>()
+  private readonly controls = new Map<string, { size: number; controls?: ZoomEffectControls }>()
   /** A reply timed out: one may still arrive, so the next operation first waits for the line to go quiet. */
   private stale = false
   private readonly requestAccess: (() => Promise<MidiAccessLike>) | null
@@ -97,6 +101,7 @@ export class ZoomLink {
       const identity = reply ? parseIdentity(reply) : undefined
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
       this.heads.clear()
+      this.controls.clear()
       this.set({ status: 'ready', identity, connection: ++nextConnection })
       if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
     } catch {
@@ -282,6 +287,7 @@ export class ZoomLink {
   // Delete any old file of that name, write it in blocks, close, then read it back.
   private async write(name: string, data: number[]) {
     this.heads.delete(name.toUpperCase())
+    this.controls.delete(name.toUpperCase())
     let deleting = false
     for (const body of FILE.writeOpen(name)) {
       deleting ||= body[1] === 0x24
@@ -300,6 +306,7 @@ export class ZoomLink {
   // Delete a file, then list again: the pedal's reply alone doesn't show it went.
   private async remove(name: string) {
     this.heads.delete(name.toUpperCase())
+    this.controls.delete(name.toUpperCase())
     let answered = true
     for (const body of FILE.remove(name)) if (!await this.ask(body)) answered = false
     await this.close()
@@ -428,7 +435,9 @@ export class ZoomLink {
   }, 'writing')
 
   /** Read only the current edit buffer, without enabling editor mode or sending a patch change. */
-  readonly currentPatch = () => this.exclusive('Reading the active patch', async () => {
+  readonly currentPatch = () => this.exclusive('Reading the active patch', async () => (await this.readPatch()).patch)
+
+  private async readPatch() {
     const identity = this.state.identity
     if (identity?.deviceId !== ZOOM_DEVICE_IDS['zoom-ms-70cdr'] || isUpdateMode(identity)) {
       throw new Error('Connect the original MS-70CDR in normal mode to read its patch.')
@@ -436,9 +445,59 @@ export class ZoomLink {
     const reply = await this.ask([CURRENT_PATCH.request])
     if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
     const patch = reply && parseCurrentPatch(reply)
-    if (!patch) throw new Error('The pedal did not return its active patch. Try reading it again.')
-    return patch
+    if (!reply || !patch) throw new Error('The pedal did not return its active patch. Try reading it again.')
+    return { patch, reply }
+  }
+
+  /** Use only registered files in the active patch's groups, and read descriptors only for its effects. */
+  readonly patchEffects = (patch: ZoomCurrentPatch, files: readonly ZoomFile[]) => this.exclusive('Reading patch effects', async () => {
+    const wanted = new Set(patch.slots.map(patchEffectKey)), gids = new Set(patch.slots.map(slot => slot.gid))
+    const effects = new Map<string, ZoomPatchEffect | undefined>()
+    if (!wanted.size) return effects
+    const groups = this.effectGroups(await this.effectList())
+    const candidates = files.filter(file => /\.zdl$/i.test(file.name) && gids.has(groups?.get(file.name.toUpperCase()) ?? -1))
+    for (const file of candidates) {
+      const effect = await this.head(file)
+      if (!effect) continue
+      const key = patchEffectKey(effect)
+      if (!wanted.has(key)) continue
+      // A duplicated ID is ambiguous. Never show its parameters as the other effect's.
+      effects.set(key, effects.has(key) ? undefined : { file: { ...file, inEffectList: true, effect } })
+    }
+    for (const entry of effects.values()) {
+      if (!entry) continue
+      const { name, size } = entry.file, key = name.toUpperCase()
+      const cached = this.controls.get(key)
+      if (cached?.size === size) entry.controls = cached.controls
+      else {
+        const bytes = await this.read(name)
+        if (bytes.length !== size) throw new Error('The pedal returned an incomplete read of ' + name + '.')
+        entry.controls = zoomEffectControls(bytes)
+        this.controls.set(key, { size, controls: entry.controls })
+      }
+    }
+    return effects
   })
+
+  /** Update the active buffer only. A patch changed on the pedal must be read again before applying. */
+  readonly applyPatchChanges = (expected: ZoomCurrentPatch, changes: readonly ZoomPatchChange[]) => this.exclusive('Applying patch controls', async () => {
+    this.refuseWrites()
+    const { patch, reply } = await this.readPatch()
+    if (JSON.stringify(patch) !== JSON.stringify(expected)) throw new Error('The patch changed on the pedal. Refresh it before applying edits.')
+    if (!changes.length) return patch
+    const edited = editCurrentPatch(reply, changes)
+    this.send(zoomSysex(reply[3], [CURRENT_PATCH.edit]))
+    await new Promise(resolve => setTimeout(resolve, 20))
+    if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
+    this.send(edited)
+    // Give the edit buffer time to settle before requiring a read-back.
+    await new Promise(resolve => setTimeout(resolve, 160))
+    const applied = (await this.readPatch()).patch
+    if (JSON.stringify(applied) !== JSON.stringify(parseCurrentPatch(edited))) {
+      throw new Error('The pedal returned different patch values after Apply. Refresh to see what it kept.')
+    }
+    return applied
+  }, 'writing')
 
   /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {

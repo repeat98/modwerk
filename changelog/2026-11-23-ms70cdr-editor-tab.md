@@ -1,2 +1,2 @@
-The MS-70CDR Editor tab shows the installed Modwerk modules in the active patch as cards with their current parameter values.
-Sets can sync on development build D004. The Editor distinguishes modules installed on the pedal from modules used in the active patch.
+The MS-70CDR Editor tab shows stock and Modwerk effects in the active patch with knobs, named choices and bypass controls.
+Use Apply to pedal to send staged edits over USB. Sets can also sync on development build D004.

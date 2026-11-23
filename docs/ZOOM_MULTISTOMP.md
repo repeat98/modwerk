@@ -64,14 +64,16 @@ without one; test it on the pedal.
 | Device tools | Shared status and load calls reach the pedal. Review, Trial, Keep and Undo depend on the qualified RAM loader. |
 
 The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) reads
-the active patch over the same USB link. It shows one card per registered
-Modwerk module slot, with values decoded from the patch and parameter
-names from the module catalog. **Refresh patch** reads the current
-values again after a change on the pedal. A set sync changes the installed
-effects. After restarting the pedal, add the effects you want to the
-patch on the pedal. D004 uses the same file commands as the released
-base and supports set sync. The view sends the patch query
-(`29`) alone. [Patch format derived from the upstream editor](https://github.com/themanro/ZoomMultistompZDL/blob/main/tools/patch_editor.html)
+the active patch over the same USB link. Stock and Modwerk effects in the
+patch appear in slot order. Names and parameter ranges come from the pedal's
+registered effect files, read locally. Modwerk modules also use named choices
+from their catalog and [Roman Rusinov's editor](https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/tools/patch_editor.html).
+Turn a knob by dragging up or down or using the arrow keys. **Apply to pedal**
+checks that the patch still matches, changes only the staged values and bypass
+states, then reads them back. The pedal's Auto Save setting controls persistence.
+**Refresh patch** reads the current values after a change on the pedal. Switching
+which effects are in a patch happens on the pedal. D004 supports set sync using
+the same file commands as the released base.
 
 
 ## Devices

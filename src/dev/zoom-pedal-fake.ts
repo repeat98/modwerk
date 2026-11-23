@@ -49,9 +49,9 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
       if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
-      if (m[1] === 0x52 && m[3] === deviceId && m[4] === 0x29) {
-        current = m[4]
-        return patch ? reply(patch) : undefined
+      if (m[1] === 0x52 && m[3] === deviceId && patch) {
+        if (m[4] === 0x29) { current = m[4]; return reply(patch) }
+        if (m[4] === 0x28 && m.length === 146) { patch.splice(0, patch.length, ...m); return }
       }
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
@@ -138,6 +138,19 @@ export function fakeEffect(name: string, gid: number, fxid: number, version: str
   Array.from(version).forEach((c, i) => { data[0x44 + i] = c.charCodeAt(0) })
   data[0x4c] = 0x7f; Array.from('ELF').forEach((c, i) => { data[0x4d + i] = c.charCodeAt(0) })
   return { name, data }
+}
+
+/** Synthetic descriptor across a file block boundary, with no bytes from a pedal. */
+export function withFakeEffectControls(file: FakePedalFile, name: string, parameters: [string, number][]): FakePedalFile {
+  const entries: [string, number][] = [['OnOff', 1], [name, 0xffffffff], ...parameters]
+  for (const [index, [label, max]] of entries.entries()) {
+    const bytes = new Uint8Array(0x30)
+    bytes.set(Array.from(label, char => char.charCodeAt(0)))
+    new DataView(bytes.buffer).setUint32(0x0c, max, true)
+    if (index === entries.length - 1) bytes[0x2c] = 4
+    file.data.splice(500 + index * 0x30, bytes.length, ...bytes)
+  }
+  return file
 }
 
 /** A stand-in effect list: one section per group, the given names in them, zero padding to 4108 bytes. */

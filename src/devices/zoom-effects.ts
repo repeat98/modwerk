@@ -9,7 +9,7 @@ import { DEVICES_BY_ID } from './registry'
 import { moduleReleasedAt } from '../catalog/module-releases'
 import { assetUrl } from '../hosting'
 import { givenIds } from '../engine/zoom/local-ids'
-import { isLocalId, type ZoomCurrentPatch } from '../engine/zoom/zoom-protocol'
+import { isLocalId } from '../engine/zoom/zoom-protocol'
 import type { MachineProfile } from './machine-contract'
 import MACHINES from './machines.generated.json'
 
@@ -55,22 +55,12 @@ export function resolveZoomSelection(device: string, ids: readonly string[]): Zo
 }
 
 type PedalFile = import('../engine/zoom/zoom-link').ZoomFile
-/** Registered catalogue modules on the pedal and the active slots that resolve to them. */
-export function zoomPatchModules(patch: ZoomCurrentPatch, files: readonly PedalFile[], listed: readonly ZoomEffect[]) {
-  const registered = files.filter(file => file.inEffectList && file.effect)
-  const installed = new Map<PedalFile, ZoomEffect>()
-  for (const file of registered) {
-    const id = file.effect!
-    const module = listed.find(({ platform }) => platform.file.toUpperCase() === file.name.toUpperCase() &&
-      platform.effectId.gid === id.gid && (platform.effectId.fxid === id.fxid || isLocalId(id)))
-    if (module) installed.set(file, module)
-  }
-  const cards = patch.slots.flatMap(slot => {
-    const matching = registered.filter(file => file.effect?.gid === slot.gid && file.effect.fxid === slot.fxid)
-    const module = matching.length === 1 ? installed.get(matching[0]) : undefined
-    return module ? [{ slot, module }] : []
-  })
-  return { cards, installed: new Set(installed.values()).size }
+/** Present a registered file under its catalogue name, including an ID reassigned during installation. */
+export function zoomPatchModule(file: PedalFile, listed: readonly ZoomEffect[]) {
+  const id = file.effect
+  if (!file.inEffectList || !id) return undefined
+  return listed.find(({ platform }) => platform.file.toUpperCase() === file.name.toUpperCase() &&
+    platform.effectId.gid === id.gid && (platform.effectId.fxid === id.fxid || isLocalId(id)))
 }
 /**
  * What a sync does to bring the pedal to the set: install the set's effects that are missing or another version, and

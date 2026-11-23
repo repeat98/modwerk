@@ -18,10 +18,26 @@
 .zoom-patch-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .zoom-patch-head h2 { margin: 0; overflow-wrap: anywhere; }
 .zoom-patch-head button { flex: none; }
-.zoom-patch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.zoom-patch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
 .zoom-patch-card { overflow: visible; border: 1px solid var(--line); border-radius: 8px; }
-.zoom-patch-card .hub-cell-head { align-items: baseline; }
+.zoom-patch-card .hub-cell-head { align-items: center; }
 .zoom-patch-card h3 { margin: 0; color: inherit; font-size: 15px; }
+.zoom-patch-enable[aria-pressed="true"] { color: var(--accent); }
 .zoom-patch-card dl { margin: 10px 0 0; }
 .zoom-patch-card dl div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); }
 .zoom-patch-card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.zoom-patch-apply { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
+.zoom-patch-apply p { flex: 1 1 16rem; margin: 0; }
+.zoom-parameters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 80px), 1fr)); gap: 16px 10px; border-top: 1px solid var(--line); margin-top: 12px; padding-top: 14px; }
+.zoom-parameter { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 6px; color: var(--text-secondary); text-align: center; font-size: 12px; overflow-wrap: anywhere; }
+.zoom-parameter-value { color: var(--text); font-variant-numeric: tabular-nums; }
+.zoom-parameter-choice { justify-content: start; }
+.zoom-parameter-choice select { width: 100%; min-height: 36px; margin-top: 5px; padding: 5px 28px 5px 8px; font-size: 12px; background-position: right 8px center; }
+.zoom-parameter-dial { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--control-border); border-radius: 50%; background: var(--field); color: var(--accent); }
+.zoom-parameter-dial::before { content: ''; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-hover); }
+.zoom-parameter-dial::after { content: ''; position: absolute; inset: 7px 20px; border-radius: 2px; background: linear-gradient(currentColor 8px, transparent 8px); transform: rotate(var(--rotation)); }
+.zoom-parameter-dial:has(input:not(:disabled)):hover { border-color: var(--accent); }
+.zoom-parameter-dial:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+.zoom-parameter-dial:has(input:disabled) { color: var(--muted); }
+.zoom-parameter-dial input { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ns-resize; touch-action: none; }
+.zoom-parameter-dial input:disabled { cursor: default; }

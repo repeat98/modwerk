@@ -2,7 +2,7 @@
 import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fakeCurrentPatch, fakeEffect, fakeEffectList, fakeZoomPedal } from '../dev/zoom-pedal-fake'
+import { fakeCurrentPatch, fakeEffect, fakeEffectList, fakeZoomPedal, withFakeEffectControls } from '../dev/zoom-pedal-fake'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { parseZoomHubRoute, zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
 import { ZoomLink } from '../engine/zoom/zoom-link'
@@ -42,15 +42,16 @@ describe('the Zoom pedal page', () => {
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/samples')).toBeUndefined()
   })
 
-  it('shows only registered Modwerk modules in the current patch, in slot order', async () => {
+  it('shows stock and Modwerk controls in patch order and applies only staged changes', async () => {
     const patch = fakeCurrentPatch('Afterglow', [
-      { index: 0, gid: 7, fxid: 16 },
+      { index: 0, gid: 7, fxid: 16, values: [250, 35] },
       { index: 1, gid: 8, fxid: 993, values: [78, 52, 24, 0, 1, 144] },
       { index: 2, gid: 8, fxid: 414 },
       { index: 5, gid: 8, fxid: 993, enabled: false, values: [25, 50, 70, 0, 0, 98] },
     ])
-    const fake = fakeZoomPedal({ patch, files: [
-      fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 993, '0.03'),
+    const fake = fakeZoomPedal({ patch, firmware: 'D004', files: [
+      withFakeEffectControls(fakeEffect('DELAY.ZDL', 7, 16, '1.00'), 'Tape Echo', [['Time', 2000], ['Feedback', 100]]),
+      withFakeEffectControls(fakeEffect('LOOP.ZDL', 8, 993, '0.03'), 'Loop', [['Loop', 100], ['Dry', 100], ['Fade', 100], ['Undo', 1], ['Long', 1], ['Tempo', 250]]),
       fakeEffect('SCOPE.ZDL', 8, 414, '0.03'), fakeEffect('SPECTRUM.ZDL', 8, 468, '0.02'),
       fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'SPECTRUM.ZDL'] }),
     ] })
@@ -61,22 +62,36 @@ describe('the Zoom pedal page', () => {
     for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
     const cards = [...open().querySelectorAll('.zoom-patch-card')]
     expect(open().querySelector('h2')?.textContent).toBe('Afterglow')
-    expect(cards.map(card => card.getAttribute('aria-label'))).toEqual(['Loop, slot 2', 'Loop, slot 6'])
-    expect(cards[0].textContent).toMatch(/Dry52.*LongOn.*Tempo144/)
-    expect(cards[1].textContent).toContain('Bypassed')
-    expect(cards[1].textContent).toMatch(/Dry50.*LongOff.*Tempo98/)
+    expect(cards.map(card => card.getAttribute('aria-label'))).toEqual(['Tape Echo, slot 1', 'Loop, slot 2', 'Unknown effect, slot 3', 'Loop, slot 6'])
+    expect(cards[0].textContent).toContain('Stock effect')
+    expect(cards[0].querySelector<HTMLInputElement>('input[aria-label="Time"]')).toMatchObject({ type: 'range', max: '2000', value: '250' })
+    expect(cards[1].querySelector<HTMLSelectElement>('select')?.selectedOptions[0].textContent).toBe('On')
+    expect(cards[2].querySelector('input, select')).toBeNull()
+    expect(cards[3].textContent).toContain('Bypassed')
+    expect(cards[3].querySelector<HTMLSelectElement>('select')?.selectedOptions[0].textContent).toBe('Off')
     expect(container.querySelector('iframe')).toBeNull()
     expect(container.querySelector('[aria-current=page]')?.textContent).toBe('Editor')
+    const patchCommands = () => fake.sent.filter(m => m[1] === 0x52 && m[4] !== 0x60).map(m => m[4])
+    expect(patchCommands()).toEqual([0x29])
 
-    patch.splice(0, patch.length, ...fakeCurrentPatch('Stock only', [{ index: 0, gid: 8, fxid: 16 }]))
+    const long = cards[3].querySelector('select')!
+    await act(() => { long.value = '1'; long.dispatchEvent(new Event('change', { bubbles: true })) })
+    await click(cards[0].querySelector('button')!)
+    expect(patchCommands()).toEqual([0x29])
+    await click(button('Apply to pedal'))
+    for (let i = 0; i < 100 && !open().textContent?.includes('Patch changes applied'); i++) await settle()
+    expect(open().textContent).toContain('Patch changes applied and read back.')
+    expect(patchCommands()).toEqual([0x29, 0x29, 0x50, 0x28, 0x29])
+    expect(await link.currentPatch()).toMatchObject({
+      slots: [{ enabled: false }, { values: [78, 52, 24, 0, 1, 144, 0, 0, 0] }, { fxid: 414 }, { enabled: false, values: [25, 50, 70, 0, 1, 98, 0, 0, 0] }],
+    })
     await idle(link)
+
+    patch.splice(0, patch.length, ...fakeCurrentPatch('Stock only', [{ index: 0, gid: 7, fxid: 16 }]))
     await click(button('Refresh patch'))
-    for (let i = 0; i < 100 && open().querySelector('h2')?.textContent !== 'Stock only'; i++) await settle()
-    expect(open().querySelector('.zoom-patch-card')).toBeNull()
-    expect(open().textContent).toContain('2 Modwerk modules are installed on the pedal. Add one to this patch, then refresh.')
-    expect(fake.sent.filter(m => m[1] === 0x52 && m[4] !== 0x60)).toEqual([
-      [0xf0, 0x52, 0, 0x61, 0x29, 0xf7], [0xf0, 0x52, 0, 0x61, 0x29, 0xf7],
-    ])
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    expect(open().querySelector('h2')?.textContent).toBe('Stock only')
+    expect([...open().querySelectorAll('.zoom-patch-card')].map(card => card.getAttribute('aria-label'))).toEqual(['Tape Echo, slot 1'])
     await idle(link)
   })
 
