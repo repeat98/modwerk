@@ -25,3 +25,7 @@ On a compatible emulated project, use MICRO OSC on T1 with SRC B locks 78, 79, 7
 The original voice and new adapter use the included MIT licence. The mathematical sine table and synthetic two-tone fixture can be reproduced without tuning files. No third-party oscillator, sample, catalogue or firmware is bundled. COLUNDI is a research identifier. Permission for official branding or catalogue distribution is unconfirmed. Any future palette needs a documented source, redistribution terms and permission covering its intended use before inclusion.
 
 Experimental prototype. Hardware qualification and release remain open.
+
+## Maintainer feedback — DSP and resonator exploration, 23 November 2026
+
+The ColdFire machine remains the reference for sequencer timing. Private DSP56300 tests produced both test pitches and measured a one-mode resonator on the same core. The resonator cost more per block and left a low-level tail. DSP source registration, whole-system load and an independent FX design remain open for review. [Architecture decision, measurements and next experiment](ARCHITECTURE.md)
