@@ -46,6 +46,8 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 ## Octatrack
 
+- [CLYPS bank and copy/paste requirements](CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) covers bank-local arrangements, reference copying and independent pattern duplication.
+
 - [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md): what fails on a real unit: the base, the USB link, RAM boot, the DSP loader.
 - [OCTATRACK_TWO_SLOT_BASE.md](OCTATRACK_TWO_SLOT_BASE.md): base updates a power cut can't brick: two slots, a boot stub, the update on the unit's screen.
 - [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md): working a unit over USB from an agent.
