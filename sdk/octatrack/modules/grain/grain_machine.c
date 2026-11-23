@@ -947,6 +947,29 @@ static void full_draw(unsigned t, volatile uint8_t *part, int sel)
     wave_area(t, part, FX0 + 1, 127, 9, 54);
 }
 
+/* EDGE has three values, and stock's selector for three or four values draws four positions: its 4 px block never reached the
+ * right end with three (the author, 23 November 2026). The bar is 15 px wide (x 82..96, rows 47..51 of the 128 x 64 frame, with a
+ * lit line on each side at x 81 and 97): a checkerboard of lit pixels (x + y even) with the selected value as an unlit block.
+ * Find where stock put its block (x 82, 86 or 89 for values 0, 1 and 2) and draw the interior again with three blocks of 5 px,
+ * so the last value ends at the right edge. */
+static void edge_bar(unsigned char *frame)
+{
+    int xb = -1;
+    for (int x = 82; x <= 94 && xb < 0; ++x) {
+        unsigned run = 1;
+        for (int k = 0; k < 4; ++k) run &= ~(frame[(x + k) * 8 + 7 - (48 >> 3)] >> (48 & 7)) & 1u;
+        if (run) xb = x;
+    }
+    if (xb < 0) return;
+    unsigned v = xb <= 83 ? 0u : xb <= 87 ? 1u : 2u;
+    static const uint8_t first[3] = { 82, 87, 92 }, last[3] = { 86, 91, 96 };
+    unsigned char *saved = fbp;
+    fbp = frame;
+    for (int y = 47; y <= 51; ++y)
+        for (int x = 82; x <= 96; ++x) dpx(x, y, !(x >= first[v] && x <= last[v]) && !((x + y) & 1));
+    fbp = saved;
+}
+
 void grain_draw(unsigned char *frame)
 {
     static const char *const names[6] = { "PTCH", "POS", "SIZE", "DENS", "SPRY", "SCAN" };
@@ -971,6 +994,7 @@ void grain_draw(unsigned char *frame)
                 was_setup = lit < 45;
             }
             setup_visible = (uint8_t)was_setup;
+            if (was_setup) edge_bar(frame);
             if (was_setup && !U32(POOL_WINDOW)) pool_direct = 0;        /* de vuelta en una pagina: el pool, cerrado */
         }
         if (press) {
