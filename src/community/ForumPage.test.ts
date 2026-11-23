@@ -10,7 +10,7 @@ import type { ForumVisit } from './forum-contract'
 vi.mock('./api', () => ({ api: vi.fn(), apiFetch: vi.fn(), post: vi.fn(), onCommunityReconnect: vi.fn() }))
 vi.mock('./GetStarted', () => ({ GetStarted: () => null }))
 vi.mock('./MembersOnline', () => ({ ForumOnlineNow: () => null }))
-vi.mock('./ForumShowcase', () => ({ ForumShowcase: () => null }))
+vi.mock('./ForumShowcase', () => ({ ForumShowcase: () => createElement('section', { 'aria-label': 'Showcase' }) }))
 vi.mock('./ForumHighlights', () => ({ ForumHighlights: () => null }))
 vi.mock('./ForumDirectory', () => ({ ForumDirectory: () => null }))
 vi.mock('./ForumRecentPosts', () => ({ ForumRecentPosts: () => null }))
@@ -32,6 +32,15 @@ beforeEach(() => {
 afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.unstubAllGlobals() })
 const render = (route = 'forum') => act(async () => root.render(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations: [], onCopy: () => {} }))))
 const banner = () => container.querySelector('.forum-since-visit')
+
+it('puts discussions first on the home page and the gallery first in the Showcase topic', async () => {
+  const discussions = () => container.querySelector('.forum-discussions')!
+  const showcase = () => container.querySelector('[aria-label="Showcase"]')!
+  await render()
+  expect(discussions().compareDocumentPosition(showcase()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  await render('forum?category=showcase')
+  expect(showcase().compareDocumentPosition(discussions()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})
 
 it('waits for a stored session before building the page under its heading', async () => {
   await act(async () => root.render(createElement(CommunityContext.Provider, { value: { session: { available: false, admin: false, user: null }, settled: false, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route: 'forum', configurations: [], onCopy: () => {} }))))

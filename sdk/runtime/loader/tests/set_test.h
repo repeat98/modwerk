@@ -13,6 +13,13 @@ static void set_append(void)
 {
     put32(set_offer+set_bytes,n);memcpy(set_offer+set_bytes+4,p,n);set_bytes+=4u+((n+3u)&~3u);put32(set_offer+8,set_bytes);
 }
+/* MWMS v2: `n` frame cost entries after the packages (set_package.h); the machine's copy, as loader.c hands it over. */
+static unsigned costs_seen=~0u;static uint8_t costs_copy[24];
+void modwerk_machine_frame_costs(const uint8_t *table,unsigned n) { costs_seen=n;if(n<=2u) memcpy(costs_copy,table,12u*n); }
+static void set_costs(unsigned n,const uint8_t *entries)
+{
+    set_offer[5]=2;put32(set_offer+set_bytes,n);memcpy(set_offer+set_bytes+4,entries,12u*n);set_bytes+=4u+12u*n;put32(set_offer+8,set_bytes);
+}
 static void set_make(void)
 {
     set_start();
@@ -68,6 +75,23 @@ static void set_checks(void)
     set_make();set_offer[set_bytes-1]=1;CHECK(!s->prepare(0,set_offer,set_bytes));CHECK(s->discard(0));
     set_make();set_offer[89]=RUNTIME_ABI+1u;CHECK(!s->prepare(0,set_offer,set_bytes));CHECK(s->discard(0));
     CHECK(s->leave(0) && modwerk_runtime_free(0)==free_before && !memcmp(stock,before,sizeof stock));
+    /* v2: the frame cost table reaches the machine once the baseline matches, whether or not the set is kept; a bad
+     * entry, an unsorted table or a stale baseline leaves the machine's table as it was, and allocates nothing. */
+    { static const uint8_t two[24]={0,0,0,5, 0,77,0,4, 0,15,0,0, 0x9f,0x48,0x2b,0xb9, 0,114,0,0, 0,0,0,0};
+      static const uint8_t bad[6][12]={{0,0,0,5,0x10,0,0,0},{0,0,0,5,0x07,0xd1,0,0},{0,0,0,0,0,1,0,0},{0,0,0,5,0,0,0x07,0xd1},
+                                       {0,0,0,5,0,0,0,0,0x07,0xd1},{0,0,0,5,0,0,0,0,0,0,0,1}}; /* ... rest past 2000, padding not 0 */
+      uint8_t down[24];memcpy(down,two+12,12);memcpy(down+12,two,12);
+      CHECK(s->enter(0));
+      set_make();set_costs(2,two);CHECK(s->prepare(0,set_offer,set_bytes) && costs_seen==2u && !memcmp(costs_copy,two,24) && s->discard(0));
+      for(unsigned k=0;k<7u;++k) {
+          costs_seen=~0u;set_make();set_costs(k<6u?1u:2u,k<6u?bad[k]:down);
+          CHECK(!s->prepare(0,set_offer,set_bytes) && modwerk_runtime_refusal()==RUNTIME_MALFORMED && costs_seen==~0u && s->discard(0));
+      }
+      costs_seen=~0u;set_make();set_costs(2,two);set_offer[48]^=1;CHECK(!s->prepare(0,set_offer,set_bytes) && costs_seen==~0u && s->discard(0));
+      costs_seen=~0u;set_make();set_costs(2,two);set_bytes-=4;put32(set_offer+8,set_bytes);CHECK(!s->prepare(0,set_offer,set_bytes) && costs_seen==~0u && s->discard(0));
+      costs_seen=~0u;set_make();set_costs(0,two);CHECK(s->prepare(0,set_offer,set_bytes) && !costs_seen && s->discard(0)); /* empty: none kept */
+      costs_seen=~0u;set_make();CHECK(s->prepare(0,set_offer,set_bytes) && costs_seen==~0u && s->discard(0));              /* v1: as it was */
+      CHECK(s->leave(0) && modwerk_runtime_free(0)==free_before && !memcmp(stock,before,sizeof stock)); }
     /* A later invalid package discards all earlier candidates, leaving live
      * dispatch and every predecessor byte intact. */
     set_make();set_offer[80+4+((be32(set_offer+80)+3u)&~3u)+4+8]=0xff;

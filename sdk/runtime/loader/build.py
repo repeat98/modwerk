@@ -373,7 +373,7 @@ def runtime_declaration(folder, effect=False):
     rests = doc.get('rests', [])
     if (doc.get('schema') != 1 or not {'schema'} < set(doc) <= {'schema', 'subscribe', 'contribute', 'raise', 'rests'}
             or not isinstance(doc.get('subscribe', []), list) or not isinstance(doc.get('contribute', []), list)
-            or not (doc.get('subscribe', []) + doc.get('contribute', []) or (effect and rests))
+            or not (doc.get('subscribe', []) or doc.get('contribute', []) or doc.get('raise', []) or (effect and rests))
             or not all(entry(e) for e in doc.get('subscribe', []))
             or not all(contribution(e) for e in doc.get('contribute', []))
             or not isinstance(doc.get('raise', []), list) or not all(isinstance(e, str) for e in doc.get('raise', []))
@@ -848,14 +848,15 @@ def octabam_machine(args):
     copies = [(symbols[c.symbol], c.span.address, c.span.length, stock_digest(c.span)[0]) for u in units for c in u.stock_copies]
     # Detours that rest with the machine (its port's or runtime.json's "rests"): the base answers ev_in_use for a
     # machine, so while no track of the project is it they hold stock's bytes (HOOKS.md).
-    rest = {int(a, 16) for a in machine_ports.declaration(m.name).get('rests', ())}
+    declared = machine_ports.declaration(m.name)
+    rest = {int(a, 16) for a in declared.get('rests', ())}
     if rest - {d.site for d in m.detours}:
         raise ValueError('%s: "rests" names only its own detours: %s' % (m.name, ', '.join('%#x' % a for a in sorted(rest - {d.site for d in m.detours}))))
     sites = [s + (True,) if s[0] in rest else s for s in sites]
     unevented(sites, copies)
     if args.stock:
         check_stock(sites + [(address, digest, b'', [], 0, n) for _, address, n, digest in copies], args.stock, args.upstream)
-    hooks = subscribe([NONE] * len(HANDLERS), entries, symbols)
+    hooks = subscribe([NONE] * len(HANDLERS), entries, symbols, raises=declared.get('raise', ()))
     # Authored runs that coincide with stock are reconstructed from the user's OS (a reviewed recipe), so the package
     # passes the unchanged strict stock-free scans: module-adapters/machine-recipes.json, or a private capture.
     import stock_recipe
@@ -932,13 +933,17 @@ def octabam_tables(args):
 def machine_inputs(name, adapters):
     """The exact inputs a machine package's image comes from: its port's reviewed sources and the builders."""
     import machine_ports
-    entry = machine_ports.port(name) or {}
+    port_file = adapters / 'machine-ports.json'
+    entry = machine_ports.port(name, port_file) or {}
     root = Path(__file__).resolve().parents[3]
     ports = {'vector': ('vector_runtime.py',), 'synth': ('fm_runtime.py',), 'quantizer': ('quantizer_runtime.py',),
              'analog-bassdrum': ('analog_bd_runtime.py', 'analog_bd_write_lease.py', 'stock_hook_write_lease.h')}
-    files = [Path(__file__).resolve(), adapters / 'machine_ports.py', adapters / 'machine-ports.json'] + [
+    files = [Path(__file__).resolve(), adapters / 'machine_ports.py'] + [
         adapters / n for n in ports.get(name, ()) if (adapters / n).is_file()]
-    out = {str(f.relative_to(root)): hashlib.sha256(f.read_bytes()).hexdigest() for f in files}
+    out = {f.relative_to(root).as_posix(): hashlib.sha256(f.read_bytes()).hexdigest() for f in files}
+    # Only this machine's row feeds its package and controller policy.
+    port_input = json.dumps(entry, sort_keys=True, separators=(',', ':')).encode()
+    out[port_file.relative_to(root).as_posix()] = hashlib.sha256(port_input).hexdigest()
     out.update(entry.get('sources', {}))
     return dict(sorted(out.items()))
 

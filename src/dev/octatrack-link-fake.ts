@@ -54,6 +54,8 @@ export interface FakeUnit {
   orphanTransaction?: number
   /** Previews only: a passed self-test with the set saved on the card, and live meters (requests 21 and 30). */
   status?: boolean
+  /** Optional LCD frames for the local Screen preview. */
+  screen?: () => Promise<DataView>
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
@@ -108,9 +110,10 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         if (setup.request === 3) return { status: 'ok', data: new DataView(identityBytes(unit.base).buffer) }
         if (setup.request === 29) { // CAPABILITIES, MWCP v1: loader ABI 8, the feature bits, 24 sites, 8 copies
           const caps = new DataView(new ArrayBuffer(12)); caps.setUint32(0, 0x4d574350); caps.setUint8(4, 1); caps.setUint8(5, 8)
-          caps.setUint16(6, 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0)); caps.setUint16(8, 24); caps.setUint16(10, 8)
+          caps.setUint16(6, 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0) | (unit.screen ? 8192 : 0)); caps.setUint16(8, 24); caps.setUint16(10, 8)
           return { status: 'ok', data: caps }
         }
+        if (setup.request === 7 && unit.screen) return { status: 'ok', data: await unit.screen() }
         if (setup.request === 38 && unit.moduleSets) {
           const bytes = new Uint8Array(40), view = new DataView(bytes.buffer)
           view.setUint32(0, 0x4d575344); view.setUint8(4, 1); view.setUint8(5, 1); view.setUint16(6, unit.modules.length)
@@ -278,6 +281,36 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
  * There is no pretend base build: a preview must never save a file
  * that looks like firmware.
  */
+/** Feed existing documentation captures through the same USB decoder, pop-out and recorder as a real unit. */
+function sampleScreens() {
+  const urls = [
+    new URL('../../sdk/octatrack/modules/synth/media/ot-location.png', import.meta.url),
+    new URL('../../sdk/octatrack/modules/synth/media/ot-controls.png', import.meta.url),
+    new URL('../../sdk/octatrack/modules/synth/media/ot-voices.png', import.meta.url),
+  ]
+  const frames = new Map<number, DataView>()
+  return async () => {
+    const index = Math.floor(performance.now() / 2000) % urls.length
+    const cached = frames.get(index)
+    if (cached) return cached
+    const source = new Image()
+    source.src = urls[index].href
+    await source.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = 128; canvas.height = 64
+    const ctx = canvas.getContext('2d')!
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(source, 0, 0, 128, 64)
+    const pixels = ctx.getImageData(0, 0, 128, 64).data, frame = new Uint8Array(1028)
+    frame.set(ascii('MWLC'))
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 128; x++) {
+      if (pixels[4 * (128 * y + x)] > 127) frame[4 + 8 * x + 7 - (y >> 3)] |= 1 << (y & 7)
+    }
+    const view = new DataView(frame.buffer)
+    frames.set(index, view)
+    return view
+  }
+}
 export function previewKit() {
   const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
   const params = new URLSearchParams(window.location.search), kind = params.get('unit')
@@ -285,6 +318,7 @@ export function previewKit() {
   const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
   unit.installed = { moduleIds: params.get('inventory') === 'empty' ? [] : ['everb', 'airwindows-chorus', 'poly8'], removedStockFx: [] }
   unit.status = params.get('status') !== 'old'
+  if (params.get('preview') === 'screen') unit.screen = sampleScreens()
   // &base=older: a unit on an older base, so the base dialog offers the update over USB; &slots=one|two: what the
   // base's SLOTS says (one copy: Send, Restart, Save; two slots: Send, Save, Restart), absent for a base before them.
   if (params.get('base') === 'older') unit.base = unit.flashed = unit.active = 'aa'.repeat(32)

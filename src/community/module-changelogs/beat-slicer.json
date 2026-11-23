@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.68-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "New: encoder C turns SNAP OFF or ON. ON moves each slice boundary to the nearest zero crossing after you press YES; OFF keeps exact beats.",
+      "New: FUNC+AED opens stock CREATE SLICE GRID; press it again to switch to CREATE BEAT GRID.",
+      "The popup is drawn in the stock style and font, and costs less to draw.",
+      "NO, or a failed analysis, leaves your old slices as they were. SNAP starts OFF and is not saved.",
+      "Needs Modwerk base 0.8 over USB."
+    ]
+  },
+  {
     "version": "0.1.66-experimental",
     "date": "2026-10-27",
     "changes": [

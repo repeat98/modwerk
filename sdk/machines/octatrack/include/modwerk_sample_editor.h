@@ -6,6 +6,7 @@
 #ifndef MODWERK_SAMPLE_EDITOR_H
 #define MODWERK_SAMPLE_EDITOR_H
 #include <stdint.h>
+#include <stddef.h>
 #define MODWERK_SAMPLE_EDITOR_ABI 1u
 #define MODWERK_SAMPLE_EDITOR_SLICES 64u
 #define MODWERK_SAMPLE_ACTION_BYTES 64u
@@ -15,7 +16,8 @@ enum modwerk_sample_reply {
     MODWERK_SAMPLE_OK, MODWERK_SAMPLE_BUSY, MODWERK_SAMPLE_STALE,
     MODWERK_SAMPLE_UNSUPPORTED, MODWERK_SAMPLE_INVALID,
     MODWERK_SAMPLE_PRESERVATION, MODWERK_SAMPLE_CONFIRMING,
-    MODWERK_SAMPLE_APPLIED, MODWERK_SAMPLE_NO_CHANGE, MODWERK_SAMPLE_FAULT
+    MODWERK_SAMPLE_APPLIED, MODWERK_SAMPLE_NO_CHANGE, MODWERK_SAMPLE_FAULT,
+    MODWERK_SAMPLE_ANALYZING, MODWERK_SAMPLE_ANALYSIS_FAILED, MODWERK_SAMPLE_ANALYSIS_LIMIT
 };
 struct modwerk_slice_record { uint32_t start, end, loop; };
 struct modwerk_sample_view {
@@ -49,6 +51,21 @@ struct modwerk_sample_editor_api {
      * confirm() above offers preservation-only edits. */
     unsigned (*replace)(uint32_t token, const struct modwerk_sample_grid *);
 };
+/* Keep the ABI-1 prefix type and sizeof unchanged for existing source builds. */
+struct modwerk_sample_editor_options_api {
+    struct modwerk_sample_editor_api base;
+    /* Optional ABI-1 tail, available only when bytes covers this member.
+     * SNAP uses the opening's native waveform channel selection. This copies
+     * a replacement proposal and shows the same CREATE/REPLACE question.
+     * Only YES starts base-owned bounded analysis; no PCM/pointer/callback
+     * crosses the interface. A stale/cancelled/failed job publishes nothing.
+     * The final slice end may align outside trim, within actual sample bounds.
+     * No additional alignment question, implicit save or user Undo is added. */
+    unsigned (*replace_options)(uint32_t token,const struct modwerk_sample_grid *,uint32_t options);
+} __attribute__((aligned(4)));
+#define MODWERK_SAMPLE_EDITOR_V1_BYTES sizeof(struct modwerk_sample_editor_api)
+#define MODWERK_SAMPLE_SNAP_ZERO 1u
+#define MODWERK_SAMPLE_EDITOR_HAS_OPTIONS 1
 /* One typed contribution to the proposed base-owned action table. The record
  * is 64 bytes and four-byte aligned on ColdFire; label is inline, printable,
  * NUL + zero padding. ColdFire C otherwise permits two-byte struct alignment.

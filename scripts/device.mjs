@@ -49,10 +49,10 @@ import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
-import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
-import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
+import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
@@ -363,8 +363,10 @@ async function missing() {
  * bases: the next start leaves the set's first module out, or holds every module, as after a crash in its restore),
  * saved (the card set's result, modset.c: 1 restored, 10 left out, 11 held; development bases), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
- * inventory (the installed modules, INVENTORY),
+ * inventory (the installed modules, INVENTORY), restore (what this start's restore did with each saved module, RESTORE),
+ * adopt / adopt:off (development bases: from the next start, restore the card's set another base wrote, writing none),
  * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
+ * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
@@ -372,7 +374,7 @@ async function missing() {
  * (spaces in NAME as _; it waits until the track runs it). */
 /** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
  * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
-export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|restore|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -401,6 +403,8 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if (step === 'missing') console.log(await missing())
     else if (step === 'inventory') console.log(JSON.stringify(await transport.inventory() ?? 'this base does not answer INVENTORY'))
     else if (step === 'off') console.log(JSON.stringify(await transport.off() ?? 'this base does not answer OFF')) // switched off in PROJ > MODWERK > MODULES
+    else if (step === 'restore') console.log(JSON.stringify(await transport.restore() ?? 'this base does not answer RESTORE')) // what this start's restore did with each saved module
+    else if (step.startsWith('adopt')) await devIn(43, step === 'adopt:off' ? 0 : 1, 1) // development bases: from the next start, restore the card's set another base wrote, and write none
     else if (step === 'xwatch') { // probe X bases (dev request 26): does anything write X:$7a92-$7fff? per core
       for (const core of [1, 0]) {
         for (const until = Date.now() + 10000; !(await devIn(26, 0x100 | core, 1))[0]; await wait(100))
@@ -439,6 +443,11 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       const b = Buffer.from(await devIn(29, Number(step.slice(6)) || 0, 28)), pc = n => `${(n / 478.91).toFixed(1)} %`
       const [max, late, busy, frames, skips, tracks, share] = [0, 4, 8, 12, 16, 20, 24].map(at => b.readUInt32BE(at))
       console.log(`frame max ${pc(max)}, latest start ${pc(late)}, in the frame interrupt ${frames ? pc(busy * 256 / frames) : '-'} over ${frames} frames, skipped ${skips} on ${[...Array(8).keys()].filter(t => tracks >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'}, share ${pc(share)}`)
+    }
+    else if ((m = /^late(?::(on|off))?$/.exec(step))) { // LATE (dev request 42): the late-entry wait's counts since the last read; late:off / late:on switch it
+      const b = Buffer.from(await devIn(42, m[1] === 'off' ? 1 : m[1] === 'on' ? 2 : 0, 20)), us = n => `${(n / 132).toFixed(1)} us`
+      const [latest, hits, waits, longest, on] = [0, 4, 8, 12, 16].map(at => b.readUInt32BE(at))
+      console.log(`late-entry wait ${on ? 'on' : 'off'}: latest entry ${us(latest)} late, ${hits} in the window (80-190 us), ${waits} waited, longest wait ${us(longest)}`)
     }
     else if (step === 'cpu' || step.startsWith('cpu:')) { // CPU (dev request 30): cpu:PERCENT sets the CPU budget's allowance
       const b = Buffer.from(await devIn(30, Number(step.slice(4)) || 0, 76)), pc = n => (n / 478.91).toFixed(1)
@@ -496,6 +505,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +
           `T5-8 ${r.dsp5to8.map(v => v / 10).join('/')}% playing ${r.playing}/${r.samples}` + (r.frameGap !== undefined ? ` frame gap ${r.frameGap} us, tick gap ${r.tickGap} frames` : ''))
+        if (log.sheds) console.log(`  live: ${log.sheds.count} renders skipped since the start (MWSK)${log.sheds.lateOver !== undefined ? `, ${log.sheds.lateOver} frame entries later than the late-entry wait can hold` : ''}`)
         if (log.crash) console.log(`  crash record ${log.crash.count}: vector ${log.crash.vector} PC 0x${log.crash.pc.toString(16)} code ${log.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${log.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}` + lined(crashNames(namesFor(identity.base), log.crash.pc, log.crash.stack)))
         if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words` + [describeStallFrames(log.stall.frames, log.stall)].filter(Boolean).map(line => '\n    ' + line).join(''))
       }
@@ -757,8 +767,9 @@ if (command === 'serve') {
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
     // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
     if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
-    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages)
-    console.log(`set: ${packages.length} changes, ${data.length} bytes`)
+    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
+    console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
     try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
     catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
