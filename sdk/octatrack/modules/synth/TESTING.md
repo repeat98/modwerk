@@ -9,18 +9,28 @@ frame-prepare clock and LFO gate (the LFO depth site and the clock are 0.1.4's a
 keeps #1928's faster `fm_frame`, and cuts what a silent FM track costs. The owner waived the ask-the-author step for
 this optimization work on 22 November 2026; the engine and its credit stay Tim Hastie's.
 
-## The package `8cf43bfb` (prepared 22 November 2026, not tested on a unit)
+## The package `791e26c5` (built 23 November 2026; its code was `8cf43bfb`'s, prepared 22 November)
 
 `public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,598 bytes, SHA-256
-`8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de`, module `e8c3e4fa`, 24 sites of which nine rest, 39
-stock copies, no bss; hooks `ot_machines` and `ev_in_use` (order 40). Built on this branch with main's builder (`node
+`791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9`, module `e8c3e4fa`, 24 sites of which nine rest, 39
+stock copies, no bss; hooks `ot_machines` and `ev_in_use` (order 40).
+
+It differs from the package of 22 November, `8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de`, in one
+byte: `cmp` finds offset 27,925 (0x6d15), 6 to 4, `reserved[0]` of the `mw_machine` descriptor (the byte after its
+source kind, before its label "FM SYNTH"), which `machine_ports.py` writes from `"cpuPrice"` in FM Synth's entry of
+`machine-ports.json`. Same size, same module id; no hash inside the package covers that byte. The new price is below
+("The price, measured on 0.1.5"). Every unit reading of 0.1.5 below that names `8cf43bfb` was taken on that package,
+whose code and data are this package's except for that byte. The recipe was recaptured from the stock OS 1.40C for the
+new image (`build.py --octabam-machine synth --capture-stock-recipe`): the same 39 copies at the same offsets, only its
+`imageSha256` moved, and every machine recipe's pin of `machine-ports.json` moved with it. Built on this branch with main's builder (`node
 scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-packages.py`); its recipe recaptured from
 the stock OS 1.40C (the same 39 copies, at new offsets); `--check --stock`: every package identical, the strict
 stock-free scans pass. It needs a base with resting sites (0.7.10 or later; an older base refuses the package).
 
-**On a unit so far:** only its cost. On 22 November 2026 the owner's MKII with the 0.8 development twin `dce1d30e`
-recorded `evidence/frame-cost.json` for this package (Dev17 C04 at 126 BPM, 79.4 % with stock alone: `rest` 0, `first`
-31.3, `each` 0.5). The playback cases in the table below were not run on it.
+**On a unit so far:** only its cost, both times on `8cf43bfb`. On 22 November 2026 the owner's MKII with the 0.8
+development twin `dce1d30e` recorded `evidence/frame-cost.json` (Dev17 C04 at 126 BPM, 79.4 % with stock alone: `rest`
+0, `first` 31.3, `each` 0.5), and on 23 November its CPU price (below). The playback cases in the table below were not
+run on it.
 
 **Rests** (stock's bytes while `fm_in_use` answers 0):
 
@@ -84,7 +94,7 @@ and signature cases (a one-off comparison, not committed); `machine_composition_
 
 | Case | Why this change makes it a risk | How run | Result |
 | --- | --- | --- | --- |
-| Installed, no FM track, C01 playing | the nine sites must cost nothing | frame share against the empty base | not run: `8cf43bfb` not on a unit yet (pass on `5b425a33`) |
+| Installed, no FM track, C01 playing | the nine sites must cost nothing | frame share against the empty base | not run on `8cf43bfb` or `791e26c5` (pass on `5b425a33`) |
 | FM on T2, C01 (notes) | the awake path must cost no more than the rest alone | frame share and CPU meter against `2ac17c3a` | not run |
 | FM on T2, C02 (no trigs, the note released) | the released-silence path must cut the silent track's cost | frame share against the empty C02 | not run |
 | STOP, then PLAY | the no-voice path after a kill, then the first note | frame share while stopped, the first note by ear | not run |
@@ -93,6 +103,56 @@ and signature cases (a one-off comparison, not committed); `machine_composition_
 | HOLD shorter than INF on the first notes after a wake | the clock's rebase | listen to the note lengths | not run |
 | Legacy FMSYNTH marker project | the slot sweep must keep it awake; its track keeps the full path | the saved marker fixture | not run |
 | Silent paths against the full path | a silent path must ship what the full path ships | `test_silence.py` | pass |
+
+## The price, measured on 0.1.5 (23 November 2026)
+
+Measured by the coordinating agent session for the owner, who chose to measure the price again the documented way
+(docs/MODULE_PERFORMANCE.md, "A machine that renders on the ColdFire names its CPU price"): Octatrack MKII, OS 1.40C,
+RAM-booted development twin `856cbbcf` of base 0.8 (`base/octatrack-next` `9ac83b232`, release identity `5368bb0b`),
+the FM Synth 0.1.5 package `8cf43bfb` installed alone in a trial that rolled back by itself. Project Dev17, bank C,
+pattern C02 (no trigs on any track before), Part 2, 126 BPM. FM Synth on T1 at its default sound (PTCH, RATO 1, INDX
+32, DEC 198 on the screen), the seven other tracks without trigs, FILTER and DELAY on every track.
+`npm run device -- do 'PLAY w2500 guard w6000 guard STOP'`, the second `guard` line's "in the frame interrupt", three
+times with a trig on every step of T1 (mask `ffff`) and three times with T1's trigs removed (mask `0000`):
+
+| T1 | Run | In the frame interrupt | Frames | Skipped | Longest frame |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| a trig on every step | 1 | 30.8 % | 16,875 | 0 | 58.8 % |
+| a trig on every step | 2 | 30.8 % | 16,877 | 0 | 59.5 % |
+| a trig on every step | 3 | 30.8 % | 16,875 | 0 | 59.9 % |
+| no trigs | 1 | 27.6 % | 16,872 | 0 | 36.8 % |
+| no trigs | 2 | 27.6 % | 16,875 | 0 | 36.6 % |
+| no trigs | 3 | 27.6 % | 16,872 | 0 | 36.5 % |
+
+The lines cited, from the run's log (the second `guard` line of each run):
+
+```
+[10:10:34] C02 T1 mask with trigs: ffff
+  with trigs #1: ... frame max 58.8 %, latest start 0.0 %, in the frame interrupt 30.8 % over 16875 frames, skipped 0 on -, share 80.0 %
+  with trigs #2: ... frame max 59.5 %, latest start 0.0 %, in the frame interrupt 30.8 % over 16877 frames, skipped 0 on -, share 80.0 %
+  with trigs #3: ... frame max 59.9 %, latest start 0.0 %, in the frame interrupt 30.8 % over 16875 frames, skipped 0 on -, share 80.0 %
+[10:11:11] C02 T1 mask after removing: 0000
+  without trigs #1: ... frame max 36.8 %, latest start 0.0 %, in the frame interrupt 27.6 % over 16872 frames, skipped 0 on -, share 80.0 %
+  without trigs #2: ... frame max 36.6 %, latest start 0.0 %, in the frame interrupt 27.6 % over 16875 frames, skipped 0 on -, share 80.0 %
+  without trigs #3: ... frame max 36.5 %, latest start 0.0 %, in the frame interrupt 27.6 % over 16872 frames, skipped 0 on -, share 80.0 %
+[10:11:50] trial: verdict: no crash, stall, freeze or skipped track logged during the trial rolled back (pass --accept to keep it)
+[10:11:51] inventory: []
+```
+
+The difference is 3.2 points of a frame, rounded up to **4**: `resources.cpuPrice` and `"cpuPrice"` in
+`machine-ports.json`, so the descriptor's `reserved[0]`. The Part's working and saved copies and the other tracks'
+masks were as before afterwards, and nothing stayed installed.
+
+0.1.3 measured 4.6 points on 17 November (base 0.7.7 twin, a default Part with seven empty STATIC tracks; below) and was
+priced 6 with room for longer notes. 0.1.5 reads lower in this scene, and is priced by its own reading. The two scenes
+differ (base, project, the other tracks' machines and effects), so the two figures are not a measurement of the change
+between the versions.
+
+What it changes, reasoned from the base's source (`machine_registry.c`), not tried with this package: the base admits a
+Part's machines against a CPU budget of 45 % of a frame; at 4 a Part's eight tracks book 32 %, so the budget refuses no
+FM Synth track (at 6 it refused the eighth). The busy check, which judges a pick by the CPU meter plus its price against
+85 %, still applies. A base with base 0.8's frame-cost table admits FM Synth by its curve (`evidence/frame-cost.json`)
+instead.
 
 ## MKII runs of the combined package `5b425a33` (22 November 2026)
 

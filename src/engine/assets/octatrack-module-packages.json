@@ -214,7 +214,7 @@
       "name": "FM Synth",
       "module": "e8c3e4fa",
       "bytes": 31598,
-      "sha256": "8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de",
+      "sha256": "791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9",
       "path": "octatrack-modules/synth/0.1.5-experimental.mwrm"
     },
     {

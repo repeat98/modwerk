@@ -208,12 +208,12 @@
   },
   "resources": {
     "cpuPrice": {
-      "value": 6,
+      "value": 4,
       "unit": "percent-of-frame",
       "measure": "machine-render",
       "tool": "npm run device -- do 'PLAY w2500 guard w6000 guard STOP'",
-      "date": "2026-11-17",
-      "conditions": "Octatrack MKII, development twin 945cc074 of base 0.7.7, FM Synth 0.1.3 with SYNTIZ, Amiga and POLY8 installed, one FM Synth track at its default sound with a trig on every step of a 16-step pattern, seven empty STATIC tracks: the frame interrupt's share was 36.8 % against 32.2 % without the trigs, 4.6 points, priced 6 with room for longer notes",
+      "date": "2026-11-23",
+      "conditions": "Octatrack MKII, OS 1.40C, development twin 856cbbcf of base 0.8 (base/octatrack-next 9ac83b232), FM Synth 0.1.5 package 8cf43bfb installed alone in a rolled-back trial, project Dev17, pattern C02 with Part 2 at 126 BPM: FM Synth on T1 at its default sound with a trig on every step, the seven other tracks without trigs, FILTER and DELAY on every track. The frame interrupt's share was 30.8 % against 27.6 % without T1's trigs (three readings each way, none skipped), 3.2 points, priced 4",
       "source": "TESTING.md"
     },
     "recorded": "Build extents and source estimates; unknown chip timing/memory under owner release exception",
@@ -259,7 +259,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.5 rests while nothing in the project uses FM Synth and ships a silent FM track's silence without the FM engine. The owner's MKII ran the rest (2ac17c3a: 39.3 % against 39.2 % empty, 0.1.4 45.0 %; a pick woke it before the commit) and the combination with #1928 (5b425a33: 38.9 % unused), whose frame path is dropped here; this package (8cf43bfb) is not yet tested on a unit. TESTING.md gives the readings and open cases, including chip worst-case timing and complete memory bounds.",
+    "summary": "0.1.5 rests while nothing in the project uses FM Synth and ships a silent FM track's silence without the FM engine. The owner's MKII ran the rest (2ac17c3a: 39.3 % against 39.2 % empty, 0.1.4 45.0 %; a pick woke it before the commit) and the combination with #1928 (5b425a33: 38.9 % unused), whose frame path is dropped here; on the unit this package's code (8cf43bfb, which differs from it only in the price byte) has had only its cost read: its frame-cost curve and its CPU price, 4 % of a frame a track. TESTING.md gives the readings and open cases, including chip worst-case timing and complete memory bounds.",
     "hardwareStatus": "untested",
     "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
     "gates": [
