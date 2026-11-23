@@ -2,7 +2,7 @@
 
 Version: 0.1.9-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
 
-This revision updates author credits only. The historical evidence below is retained; no new hardware or DSP qualification is claimed.
+0.1.9 ran on a unit on 23 November 2026 (the overload scene and its instance curve, below); the earlier evidence is retained. No DSP qualification is claimed.
 
 ## 0.1.9-experimental: bounded by the frame's deadline, dry while rested (prepared 22 November 2026, not tested on a unit)
 
@@ -35,14 +35,54 @@ so no tape from before the rest is read and the echo builds from the new input.
 | --- | --- | --- | --- |
 | Rest, wake and deadline in the emulator | the new exit must leave the frame as stock expects and the wake must start clean | the 0.1.8 scratch ColdFire probe (stock 1.40C image, detours in place, module at `0x47300000`) with three local cases added: 10 rested frames, deadlines 1, 8,192 and `0xfffff000` with DTIM3 at 0 | rested: all 8 tracks' audio equal to the input, the scratch buffer and ring untouched, sp, toggle and iterator as stock's, active cleared; the wake and every later block bit-exact with native arithmetic from a fresh state; deadlines 1 and `0xfffff000` held all 8, 8,192 none; held blocks' audio and tape equal to a reference of the dry gain and the record path; level continuity at MIX 32, 64, 96 and 127 (track 1 alone, no tape history yet, a hold and ten rested frames among 200): every block within 1 LSB of the full path's dry, the held tape under 0.0001 FS from the full block's; every 0.1.8 case passed again (peak 2,930 instructions a track block) |
 | Software build | the new exit and arguments must assemble and link | `generate_cpu.py --check`, `npm run module:dev -- tapeecho --build-only`, `npm run coldfire:isa` | built; inside the MCF54455 set |
-| Rest on a busy pattern | the output must be dry with no tail | the base's PATTERN IS BUSY scene, by ear and USB recording | not tested for this version |
-| Wake after rest | no stale echo; a dry level step at MIX above 64 is expected | pattern change back to a light one | not tested for this version |
-| Deadline holds | holds must keep the frame entry out of the late window; each is 0.36 ms without echo | `te_guard` `holds` and the base's late counters, two Tape Echos on a busy Part | not tested for this version |
-| Hardware | | | not tested for this version |
+| Rest on a busy pattern | the output must be dry with no tail | the base's PATTERN IS BUSY scene, by ear and USB recording | not run: the overload scene below ran with the predicted brake firing, but nobody listened or recorded the output; the owner listens after release |
+| Wake after rest | no stale echo; a dry level step at MIX above 64 is expected | pattern change back to a light one | not run: the takes stopped on the stacked pattern; by ear stays with the owner |
+| Deadline holds | holds must keep the frame entry out of the late window; each is 0.36 ms without echo | the base's late counters, two Tape Echos (T1, T8) on the stacked pattern below | pass on the counters: latest entry 109-118 µs late against 144-146 µs with 0.1.6, 16 late entries held against 17-20; `te_guard` not read, holds not heard |
+| Overload scene | the reason for 0.1.9: two Tape Echos took a busy Part into the DSP's late window | the scene below, three 15 s takes against two of 0.1.6 | pass: longest frame 129.1-131.2 % against 138.8-139.3 %, no stall or crash |
+| 0.1.6 to 0.1.9 on a saved project | a saved Tape Echo slot must come back with its controls | sync 0.1.9 over 0.1.6, load a project saved with 0.1.6 | not run: the unit was held for the price runs; the controls and their layout are unchanged since 0.1.6 |
+| An older base | 0.1.9 needs the two-argument ev_frame_deadline (event 62) | site preflight (`requiresCapabilities` 6144) and the base's hook-count refusal | not run on a unit: no 0.7.13 base was flashed; the package row asks for loader capabilities 2048 and 4096, which no published base before 0.8 reports |
 
 The rest case's exit is checked up to `0x400037e0`, not through stock's following tracks with modelled DMA. The repository's
 probe (`tools/harness/tapeecho_cpu_probe.cpp`) has not taken 0.1.8's state layout yet (it still writes `filters`), so
 `verify_tapeecho_cpu.py` does not build against 0.1.8 or 0.1.9; the runs above used the local scratch probe.
+
+### On a unit (23 November 2026, owner's MKII, development twin `856cbbcf` of base 0.8, `base/octatrack-next` 9ac83b232)
+
+Both runs used the plain test package `9219d9e5` (`npm run module:dev -- tapeecho --build-only`). The release package
+(`octatrack:module-packages`, sha256 `29aa9aca…`) differs from it only in its nine stock-copy records: 130 bytes of the image ship
+as zeros that the base fills from the unit's own OS, each checked by SHA-256; filled, its image, relocations, sites, hook words
+and DSP words equal the plain package's. The release package itself has not run on a unit.
+
+**Overload scene, 10:15-10:18.** Tape Echo on T1 and T8 FX2, Euclid 0.1.5 T2 FX1, Mini Verb 0.2.3 T3 FX2, Air Chorus 0.1.3 T4 FX2,
+E-Verb 0.1.2 T5 FX2, Vibrato 0.1.0 T6 FX1, FM Synth 0.1.5 on T8; picks made stopped on the empty pattern C02, Part 1, then the
+stacked pattern C01 (all eight tracks trig on steps 1/5/9/13) played 15 s a take. The base's predicted brake fired (a `brake`
+incident with bit 23); both trials rolled back.
+
+| | Tape Echo 0.1.6 (control, 2 takes) | Tape Echo 0.1.9 (3 takes) |
+| --- | --- | --- |
+| longest frame | 138.8-139.3 % | 129.1-131.2 % |
+| frame-interrupt share | 69.0 % | 55.6 % |
+| latest frame entry | 144-146 µs late | 109-118 µs late |
+| late entries held (each a skipped DSP frame) | 17-20 | 16 |
+| renders the guard replaced | 2,277-2,542 | 2,661-2,896 |
+| stalls / crashes | 0 | 0 |
+
+**Instance curve, 10:26** (`npm run device:price -- --curve T1,T3,T6,T7 --pick-pattern 2 --measure-pattern 4 --limit 115
+--seconds 8`; `evidence/frame-cost.json`):
+
+| | first | each | longest frame +1/+2/+3/+4 | at rest frame / meter | in use (one slot, T1) frame / meter |
+| --- | --- | --- | --- | --- | --- |
+| 0.1.9, plain package 9219d9e5 | 11.5 | 4.1 | +9.6 / +15.6 / +19.7 / +21.8 | +0.6 / +1.5 | +3.7 / +9.7 |
+| 0.1.6 (921e7a60), same run | 9.1 | 5.0 | +7.6 / +14.1 / +19.1 / +23.1 | +0.2 / +0.1 | +3.5 / +5.2 |
+
+In ordinary use 0.1.9 measured **dearer** than 0.1.6 for one to three instances and cheaper at four; each point is a single 8 s
+longest-frame reading, and twin 28 on 22 November had 0.1.9 at 10.7/4.2 against 0.1.6's 13.6/4.0, so the readings scatter by a few
+points. On one slot in use the CPU meter rose 9.7 points against 5.2 for 0.1.6. 0.1.9's gain is under overload, above: the
+frame-interrupt share fell from 69.0 % to 55.6 % and the latest entry from about 145 to 110 µs late. It is not cheaper in
+normal use.
+
+**Not run:** listening (hold, rest and wake by ear), Keep and a power cycle, `npm run test:procedure`, the six- and
+seven-instance limit.
 
 ## 0.1.8-experimental: cheaper on the ColdFire, bounded under overload (prepared 22 November 2026, not tested on a unit)
 

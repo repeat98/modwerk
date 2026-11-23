@@ -2,7 +2,7 @@
   "kind": "owner-approved-update",
   "id": "tapeecho",
   "version": "0.1.9-experimental",
-  "sourceSha256": "e192bed1b3866f88f49f81af600dc4db5227f47bca76fbca3a017540c9d97637",
+  "sourceSha256": "db9c74c4ee8b91d9b61658528b74020ded25e6dbba7fc4e0a82de6e5b021c193",
   "approvedBy": "repeat98",
   "approvedOn": "2026-11-23",
   "waived": [
@@ -12,6 +12,6 @@
     "release-documentation"
   ],
   "ownerStatement": "Approved by repeat98 on 23 Nov 2026 (\"yes, approve tape echo 0.1.9\"), answering: \"Do you approve releasing it? Its hardware evidence would be today's runs on the unit; listening and Keep + power cycle stay with you.\"",
-  "reason": "Tape Echo 0.1.9 (0.1.7's rests, 0.1.8's cheaper ColdFire path and overload hold, 0.1.9's ev_frame_deadline hold and rest) ships with base 0.8, which it requires. Unit evidence is base 0.8's overload scene on development twin 856cbbcf (base/octatrack-next 9ac83b232), owner's MKII, 23 Nov 2026: three 15 s takes of 0.1.9 against two of 0.1.6 with seven other modules; longest frame 129.1-131.2 % against 138.8-139.3 %, frame-interrupt share 55.6 % against 69.0 %, latest frame entry 109-118 us late against 144-146 us, no stall or crash, the base's predicted brake fired and both trials rolled back. That run used the plain test package 9219d9e5 (npm run module:dev), not this release package. Not run: listening, the hold and rest by ear, Keep and a power cycle, test:procedure, the six- and seven-instance limit; 0.1.9's frame-cost curve is being measured by the owner. No chip cycle or complete memory measurement exists for this version. The controls and pages are unchanged since 0.1.6, which already showed 0.1.2's captures. This binds only this exact version and native source.",
+  "reason": "Tape Echo 0.1.9 (0.1.7's rests, 0.1.8's ColdFire changes and overload hold, 0.1.9's ev_frame_deadline hold and rest) ships with base 0.8, which it requires. Unit evidence, owner's MKII, development twin 856cbbcf of base 0.8 (base/octatrack-next 9ac83b232), 23 Nov 2026, plain test package 9219d9e5 of this source (the release package differs only in its stock-copy records; evidence/frame-cost.json): in base 0.8's overload scene (seven other modules, 15 s takes, three of 0.1.9 against two of 0.1.6) the longest frame was 129.1-131.2 % against 138.8-139.3 %, the frame-interrupt share 55.6 % against 69.0 %, the latest frame entry 109-118 us late against 144-146 us, no stall or crash, and the base's predicted brake fired; both trials rolled back. Its instance curve in ordinary use is first 11.5, each 4.1 % of a frame against 0.1.6's 9.1 and 5.0 in the same run: dearer for one to three instances, cheaper at four, each a single 8 s reading (twin 28 on 22 Nov read 10.7/4.2 against 13.6/4.0); on one slot in use the CPU meter rose 9.7 points against 5.2. Not run: listening, the hold and rest by ear, Keep and a power cycle, test:procedure, the six- and seven-instance limit. No chip cycle or complete memory measurement exists for this version. The controls and pages are unchanged since 0.1.6, which already showed 0.1.2's captures. This binds only this exact version and native source.",
   "retainedUiVersion": "0.1.2-experimental"
 }
