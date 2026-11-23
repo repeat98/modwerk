@@ -38,11 +38,11 @@ Keep source worktrees in a persistent location, not `/tmp`, which a restart can 
 
 ### Open a draft early
 
-For base work, use the [machine’s cumulative draft](#change-a-base) from the first commit. For other work, open the pull request as a draft (`gh pr create --draft`) once a first commit shows the direction, and push to it as you go, so the work is on GitHub and the owner and reviewers can comment while a change of course is cheap (owner, 20 November 2026). Say in the description what is still open, and read the comments before you continue. A draft may be red: the `needs-work` label and the merge bot skip drafts. Mark it ready (`gh pr ready`) when the work and the developer's testing are done and `pr:ready` says Ready. A fix finished in one sitting can open ready.
+Use the [machine’s cumulative draft](#change-a-base) for base work. For other work, open a draft (`gh pr create --draft`) once a commit shows the direction. Push as you go, list what remains and read reviewers’ comments. The merge bot and `needs-work` label skip drafts. A fix finished in one sitting can open ready.
 
 ### Ready means mergeable
 
-Submit only what the owner can merge as it is, and what the bot merges on its own for an author update. Run this before you mark a pull request ready, before every push to a ready one, and again after you merge `main`:
+Run this before marking a PR ready, before each push to a ready PR, and after merging `main`.
 
 ```sh
 npm run pr:ready                       # a new module or any other change
@@ -50,9 +50,11 @@ npm run pr:ready -- --commit "Message" # check and commit fully staged work in o
 npm run pr:ready -- --author <login>   # a registered author's update: also the bot's merge scope
 ```
 
-It fetches current `main` and runs PR CI's change-scoped checks with `npm run check -- --base <main>`. With `--commit`, stage the whole change first. A passing check commits that tree with your Git hooks, verifies tree and parent, and checks the PR scope and board claims. A failed check leaves the change staged. The default checks a clean, committed branch and regenerates stale catalogues or notices after a failure. Add `--author` for the publication bot's scope check. Once **Ready**, push and watch `gh pr checks <number> --watch` until green. A test file failing in the full run is rerun alone; passing there, it is listed as flaky.
+The command fetches `main` and runs CI’s scoped checks. With `--commit`, stage the whole change. Success commits it with your hooks, verifies tree and parent, and checks scope and board claims. Failure leaves it staged. The default checks a clean commit and regenerates stale catalogues or notices after a failure. Files that fail the full test run and pass alone are listed as flaky.
 
-These stumbling blocks have each cost a contributor and the owner a repair round:
+Once **Ready**, push and run `gh pr view <URL> --json state,headRefOid,isDraft`. When the open PR points to the tested commit and testing is complete and recorded, run `gh pr ready <URL>` if it is a draft. Read it again, confirm the same head has `isDraft: false`, then watch `gh pr checks <URL> --watch` until green. If it stays a draft, name the remaining task and its owner. This includes contributor PRs into `base/<machine>-next`. The owner promotes the cumulative PR from that branch into `main`.
+
+Common checks and failures follow.
 
 - **main moved.** An author update merges automatically only when its CI ran against the current `main`; the scope job's name records both commits. When `main` moves first, merge it, run `pr:ready` again and push.
 - **A narrow clone kept a stale ref.** `pr:ready` updates the remote's `main` tracking ref even in a single-branch clone. A manual `git fetch origin main` can update only `FETCH_HEAD` under a narrow fetch refspec; fetch `refs/heads/main:refs/remotes/origin/main` before following a `git merge origin/main` instruction in that setup.
