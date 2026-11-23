@@ -135,7 +135,8 @@ int host_copy(const char *to, const char *from)
 static int posted, post_refuse, stock_writes, clears;
 static char last_message[32];
 int host_post_write(void) { if (post_refuse) return post_refuse == 7 ? -7 : -3; ++posted; return 1; }
-const char *host_projdir(void) { return "/SET/PROJ"; }
+static const char *host_dir = "/SET/PROJ";      /* the project in use, as stock's projdir() answers */
+const char *host_projdir(void) { return host_dir; }
 void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[W(slot)], 0, BLOCK); memset(&cs1[S(slot)], 0, BLOCK); cs1[FLAGS + slot] = 0; }
 void host_message(const char *t) { snprintf(last_message, sizeof last_message, "%s", t); }
 static int list_draws;
@@ -430,7 +431,7 @@ int main(void)
     arr_mode = 1; as_tick(0); job();               /* arranger mode on, SYNC */
     mode_wanted = 0; arr_mode = 0; as_tick(0);     /* LOAD switches it off and clears the byte as it starts ... */
     job();                                         /* ... and saves the project before loading it */
-    as_project_load();
+    as_project_load(); as_project_loaded();
     check("left in arranger mode: during the load, the byte stock applies at its end says arranger", mode_wanted == 1);
     as_project_new(); mark(0x10); arr_mode = mode_wanted;  /* stock's end of the load applies it */
     settle(); job(); as_tick(0); as_tick(0);
@@ -439,7 +440,7 @@ int main(void)
     as_key(0x2d, 1); as_key(0x2e, 1); as_key(0x2e, 0); as_key(0x2d, 0); arr_mode = 0; as_tick(0);  /* FUNC + PATTERN: off */
     job();                                         /* SYNC in pattern mode */
     mode_wanted = 0; as_tick(0); job();            /* LOAD: off, save, load */
-    as_project_load();
+    as_project_load(); as_project_loaded();
     check("switched off by the musician: LOAD leaves pattern mode", mode_wanted == 0);
     as_project_new(); mark(0x10); settle(); job(); for (int i = 0; i < 130; ++i) as_tick(0);
     check("and nothing turns it on", arr_mode == 0 && book() == 2);
@@ -478,7 +479,7 @@ int main(void)
     while (book() != 0) { tap(LEFT); job(); as_tick(0); }
     job();
     int p0 = posted;
-    as_project_load(); as_project_new(); mark(0x10); settle(); job(); as_tick(0);
+    as_project_load(); as_project_loaded(); as_project_new(); mark(0x10); settle(); job(); as_tick(0);
     check("left on book 1: it stays on book 1, with no job", book() == 0 && posted == p0 && marked(0x10));
     tap(RIGHT); job(); as_tick(0);                 /* book 2 again for the label checks */
 
@@ -506,6 +507,26 @@ int main(void)
     int d = list_draws;
     post_refuse = 0; change_window = 0x46c7d384u; tap(LEFT); change_window = 0; job(); as_tick(0);
     check("a switch that ends with the list closed draws nothing", list_draws == d);
+
+    /* LOAD of another project (the developer's MKI, 24 November 2026): stock's project directory is still the last
+     * project's at ev_banks_load and the new one's from ev_banks_loaded */
+    change_window = 0x46c7d384u;
+    while (book() < 2) { tap(RIGHT); job(); as_tick(0); }
+    while (book() > 2) { tap(LEFT); job(); as_tick(0); }
+    change_window = 0;
+    chosen = 4; job();                                /* project A left on book 3, arrangement 5 */
+    as_project_load();                                /* ev_banks_load: the directory still A's */
+    host_dir = "/SET/PROJB";
+    as_project_loaded(); as_project_new(); mark(0x30); chosen = 0;   /* project B, never used with the module */
+    settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);
+    check("project B comes up on book 1, not on project A's book 3", book() == 0 && marked(0x30));
+    job();
+    check("and B's arrbook.work says book 1, nothing of A's", find("/SET/PROJB/arrbook.work") && find("/SET/PROJB/arrbook.work")->work[4] == 0);
+    as_project_load();                                /* back to A: the directory still B's */
+    host_dir = "/SET/PROJ";
+    as_project_loaded(); as_project_new(); mark(0x10); chosen = 0;
+    settle(); job(); as_tick(0); for (int i = 0; i < 300; ++i) as_tick(0);
+    check("back in project A: book 3, arrangement 5", book() == 2 && chosen == 4);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

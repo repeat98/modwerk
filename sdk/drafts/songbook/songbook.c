@@ -124,6 +124,9 @@ struct as_state {
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
+    uint8_t load_read;       /* a LOAD began: the new project's arrbook.work still to be read (ev_banks_loaded) */
+    uint8_t load_posted;
+    uint8_t reloading;       /* RELOAD read the (same) project's arrbook.work already: a later ev_banks_load keeps it */
     uint8_t place[24];       /* arrbook.work: magic, book, the 16 last choices */
     uint16_t ticks;
     char path[260];
@@ -151,6 +154,7 @@ void as_host_keep_memory(void) { saved_st = st; }     /* another build runs a tr
 void as_host_back_memory(void) { st = saved_st; }     /* ... and this one comes back with its memory as it was */
 #endif
 
+static void load_read(struct as_state *s);
 static struct as_state *ready(void)
 {
     struct as_state *s = st_at;
@@ -393,6 +397,12 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
     struct as_state *s = ready();
     int rc = 0;
+    if (s->load_read && !s->loading) load_read(s);       /* a load whose ev_banks_loaded did not come */
+    if (s->load_read) {                                   /* mid-LOAD, the new project not read yet: none of the module's */
+        if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);   /* files written (LOAD saved the last project before */
+        remember(s);                                      /* it began); book 1 is stock's own */
+        return rc;
+    }
     if (s->pending >= 0) s->hush = 1;                     /* our job: its NOW SAFE TO EJECT! is closed after */
     if (s->book == 0 && !s->damaged) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
     else if (s->book == 0) {
@@ -472,16 +482,28 @@ void as_project_load(void)
      * book in use, so the module keeps it: a write in between must not save them as arr01-08. */
     s->loading = 1;
     s->reloaded_slots = 0;
-    /* Where was the project left? Read here, in stock's load job on its card task, from the project being loaded (on
-     * RELOAD, already the saved copy): ev_banks_loaded never came on the developer's MKI. Arranger mode goes into the
-     * byte stock applies when the load ends (LOAD clears it as it starts), so stock itself turns the mode back on.
-     * The book is switched to once stock has finished. */
+    s->ready = 1;
+    if (s->reloading) return;                             /* RELOAD read its own (the same) project already */
+    /* Where the new project was left is read once it is the project in use: at ev_banks_loaded, or else by the first
+     * card job after the load. Here the project directory may still be the last project's: read here, a project
+     * loaded after another came up on the other's book (the developer's MKI, 24 November 2026; HOOKS.md: mark stale at
+     * ev_banks_load, read at ev_banks_loaded). */
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
+    s->restore = -1;
+    s->mode_on = 0;
+    s->load_read = 1;
+    s->load_posted = 0;
+}
+
+/* The new project's arrbook.work: the book, the choices and arranger mode it was left on. The book is switched to once
+ * stock has finished; arranger mode goes into the byte stock applies as its load ends. */
+static void load_read(struct as_state *s)
+{
+    s->load_read = 0;
     int b = read_place(s);
     s->restore = (int8_t)(b > 0 ? b : -1);
     s->restore_ticks = 0;
-    if (s->mode_on) wr8(ARR_MODE_WANTED, 1);
-    s->ready = 1;
+    if (s->mode_on && s->loading) wr8(ARR_MODE_WANTED, 1);
 }
 
 /* A new project: empty, on book 1; nothing of the last one is read. */
@@ -496,6 +518,7 @@ void as_project_new(void)
     s->backup = 0;
     s->damaged = 0;
     s->ready = 1;
+    s->reloading = 0;
     int loading = s->loading && s->since_hook < 3600;     /* LOAD and RELOAD run this step too (the developer's MKI) */
     s->loading = 0;
     s->since_hook = 0;
@@ -513,8 +536,9 @@ unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
     ev(2);
-    s->since_hook = 0;                                    /* the choices were read as the load began; the slots are */
-    ++s->loads;                                           /* replaced only after the new-project step */
+    s->since_hook = 0;
+    if (s->load_read) load_read(s);                       /* the project in use now: where it was left */
+    ++s->loads;                                           /* the slots are replaced only after the new-project step */
     remember(s);
     return 0;
 }
@@ -540,6 +564,8 @@ unsigned as_project_reloaded(void)
 {
     struct as_state *s = ready();
     ev(3);
+    s->reloading = 1;
+    s->load_read = 0;
     s->since_hook = 0;
     for (unsigned n = SLOTS + 1; n <= BOOKS * SLOTS; ++n) {
         arr_path(s->path, n, "strd");
@@ -677,6 +703,8 @@ void as_tick(void *api)
             if (s->mode_pref && !rd32(ARR_MODE)) arr_mode_on();
         }
     }
+    if (s->load_read && !s->loading && !s->load_posted && s->since_hook > 60 && s->pending < 0 && stopped()
+        && post_write() >= 0) s->load_posted = 1;         /* the new project's arrbook.work, read by the card task */
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }
     if (s->book && s->pending < 0 && ++s->ticks >= 120) { s->ticks = 0; remember(s); }
 }

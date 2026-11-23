@@ -6,7 +6,7 @@ Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gat
 
 ## Host gate
 
-`verify.py`: 89 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 92 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
@@ -176,6 +176,19 @@ empty slots over arr01-08. Fixed: book 1 read only in part is written as books 2
 model now writes as stock does; `verify.py` (89 checks) adds the sync on a partly read book 1, which the previous code
 fails (with the corrected model, three checks). Host-tested only.
 
+### A LOAD of another project (found on the unit with the setlists build, 24 November 2026)
+
+The module read `arrbook.work` at `ev_banks_load`, where stock's project directory is still the last project's: a
+project loaded after another came up on the other's book and choices, and that state was later saved into the new
+project's `arrbook.work` (seen on the developer's MKI with the setlists build, whose setlists file is read the same way;
+earlier unit tests only reloaded the same project). Fixed: a LOAD marks the place stale at `ev_banks_load` and reads it
+at `ev_banks_loaded` (HOOKS.md), or in the first card job after the load if that hook does not come; RELOAD keeps
+reading its own (same) project at `ev_project_reloaded`; until the new project is read, a card job writes none of the
+module's files (LOAD saved the last project before it began; book 1 stays stock's own). `verify.py` (92 checks): A left
+on book 3, LOAD of project B (the directory switching at `ev_banks_loaded`) comes up on book 1 with B's arrbook.work
+saying book 1, and A loaded back is on book 3, arrangement 5; the previous code fails two of them. Host-tested only on
+this build.
+
 ## Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |
@@ -192,6 +205,7 @@ fails (with the corrected model, three checks). Host-tested only.
 | Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI, package 08d0833a removed on book 1, then a power cycle (an earlier build had left book 2 in book 1, the load fault since fixed) | pass: the stock arrangements were book 1's |
 | An arr09+ file there but failing to open once | taken for a missing file, its empty slot was written back (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
 | A reinstall or Undo between that failed read and the next sync | the module forgot the book was read only in part (owner's review) | host test (verify.py); on the MKI, `37f7e94f…`: distinct books 1 and 2 through a power cycle and a trial + Undo, each followed by a sync | pass on the MKI (both books as made); the failed read itself only in the host test |
+| LOAD of another project | the module read the new project's arrbook.work while stock's directory was still the last project's | host test (verify.py), two project directories | pass in the host test; the setlists build showed it on the developer's MKI |
 | A sync on book 1 read only in part | stock's writer writes all 8 slots on a sync, the empty ones too | host test (verify.py), with stock's writer modelled as it works | pass in the host test; not run on a unit |
 | Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
 | A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |
