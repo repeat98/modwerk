@@ -1,8 +1,8 @@
 # Performance
 
-How to measure a module before it is listed. The [module guides](module-guides/README.md) hold the rules for every module; `npm run perf:audit` and `module:doctor` judge what you measure here.
+Before listing a module, check its measurements with `npm run perf:audit` and `module:doctor`. [Module guides](module-guides/README.md)
 
-For a large Octatrack set, measure the same saved Part with an empty inventory and with the set installed, both stopped and playing. Compare the module runtime in `profile:3`, the CPU meter in `stats` and the frame interrupt in `guard`. All three readings are in the [24-module MKII comparison](verification/2026-11-19-octatrack-idle-dispatch.md); which of those modules cost the frame while unused, and why, is in the [unused-module record](verification/2026-11-20-octatrack-unused-module-cost.md).
+Measure the same saved Part stopped and playing, first empty and then with the set installed. Compare module runtime (`profile:3`), CPU (`stats`) and frame interrupt (`guard`). [24-module MKII comparison](verification/2026-11-19-octatrack-idle-dispatch.md) · [Cost of unused modules](verification/2026-11-20-octatrack-unused-module-cost.md)
 
 ### What admission and the frame guard are for
 
@@ -20,9 +20,9 @@ The owner's goals (22 November 2026), which every change to admission, the frame
 
 ### Build a private Octatrack CPU baseline
 
-Use `build_core.py` to choose the features in a private development build. The `octatrack:base` wrapper checks the published beta's identity, including when given `--out`. For a comparison on current main, the following profile includes USB development instrumentation, the DSP loader, site events, table owners and on-demand resident hooks.
+Use `build_core.py` to select a private development profile. `octatrack:base` checks the published beta’s identity even with `--out`.
 
-Start at the checkout root after `npm ci` on Node 24. Have Python 3.12+, the reviewed `m68k-elf` tools on PATH, the pinned Elekloader checkout from `npm run upstream:tools`, and the built Octabam DSP assembler. Set `OT_STOCK` to your own OS 1.40C file. Use an existing directory outside Git for `BASELINE_PARENT`; the builder requires a **new** output directory for each run.
+From the checkout root, run `npm ci` on Node 24. Use Python 3.12+, the reviewed `m68k-elf` tools on PATH, the pinned Elekloader from `npm run upstream:tools` and the built Octabam DSP assembler. Set `OT_STOCK` to your OS 1.40C file and `BASELINE_PARENT` to an existing directory outside Git. Each run needs a new output directory.
 
 ```sh
 export ELEKLOADER_DSP_ASM="$HOME/.cache/modwerk-upstream/octabam/vendor/dsp56300/build/source/dsp_host/dsp_asm"
@@ -33,9 +33,9 @@ python3 -B sdk/machines/octatrack/elekloader/build_core.py \
   --resident-stock-hooks --resident-on-demand
 ```
 
-For a minimal comparison **without resident hooks**, omit the last two flags. Before the 0.8 fix that profile stopped at the unresolved symbol `modwerk_machine_assigned`, which only the resident controller defined; the machine registry now defines it when the controller is absent, and `sdk/tests/test_machine_events.py` keeps both profiles linking. Record the enabled flags alongside the revision so these two profiles can be distinguished.
+Omit the last two flags for a baseline without resident hooks. Since 0.8 the registry provides `modwerk_machine_assigned` when the resident controller is absent. `sdk/tests/test_machine_events.py` checks both profiles. Record the flags and revision.
 
-A successful build verifies the linked and packed private image. Keep its output outside Git. CPU figures require a run on a named build with the same saved Part, transport state and empty inventory. Label these figures as a development-base baseline; stock OS 1.40C has no Modwerk `stats` reading.
+For a CPU baseline, run the named development build with the same saved Part, transport state and empty inventory. Stock OS 1.40C has no `stats` meter.
 
 ### Measure a module
 
