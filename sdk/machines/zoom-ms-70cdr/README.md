@@ -45,13 +45,13 @@ To install that same build through the existing browser dialog, start the
 local development server with the same label and tools:
 
 ```sh
-MODWERK_ZOOM_PROBE_LABEL=D004 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
+MODWERK_ZOOM_PROBE_LABEL=D005 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
   npm run dev -- --host 127.0.0.1
 ```
 
 From the pedal page, back up the files. The owner puts the pedal in update
 mode and opens **Install base**. The dialog must name **ZDL load probe
-D004** before the owner flashes. After restarting, read the identity
+D005** before the owner flashes. After restarting, read the identity
 through `device_status` or `npm run zoom -- status`.
 
 The status returns `zdlHeaderReads` as an unsigned number. It is the same
@@ -72,6 +72,25 @@ diagnostics branch at `0xC00F485C` and then runs the original diagnostics.
 The aligned code fits in the gap at `0xC00F4B00` on the pinned base. On MIDI,
 `F0 7D 4D 53 54 07 <nonce> F7` returns
 `F0 7D 4D 53 54 48 <nonce> <five 7-bit groups, low first> F7`.
+
+### Trace the ZDL stream
+
+D005 records the latest eight completed loader calls around the ELF reader.
+The probe calls each original routine with its original arguments, then
+records the requested and returned item counts, the seek offset and origin,
+or the close result. The trace contains neither effect bytes nor addresses.
+
+```sh
+npm run unit -- run --expect 20s -- node scripts/zoom.ts stream-trace
+```
+
+Take one snapshot at idle and another after a load. `completed` counts all
+recorded calls since boot. The eight displayed events are oldest first. If
+a load interrupted a snapshot, take another reading once the pedal is idle.
+For a seek, origins 0, 1 and 2 name the start, current position and end. A
+close is conditional on the loader's cleanup path. The memory stream's
+close callback returns zero, and the surrounding loader owns teardown.
+See the [call map](../../../docs/verification/2026-11-23-ms70cdr-stream-probe.md).
 
 - **Modules:** `sdk/zoom/modules/<id>/`, one folder per effect for the whole
   ZDL family, each naming the pedal it is developed on and every pedal's

@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, parseZdlHeaderReads, ZOOM_DEVICE_IDS, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, parseZdlHeaderReads, parseZdlStreamTrace, ZOOM_DEVICE_IDS, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 // Tabs of the site take turns on the pedal, as octatrack-link.ts's USB jobs do; without Web Locks, `op` keeps one job at a time in this tab.
@@ -207,13 +207,24 @@ export class ZoomLink {
     return reply ? parseLoad(reply[0]) ?? null : null
   })
 
-  /** Reads the development probe without opening the SYSTEM screen. Other builds omit it. */
-  readonly zdlHeaderReads = () => this.quiet(async () => {
+  private async developmentReply(command: number, replyCommand: number) {
     const { status, identity, connection } = this.state
     if (status !== 'ready' || identity?.deviceId !== ZOOM_DEVICE_IDS['zoom-ms-70cdr'] ||
       !/^D[A-Z0-9]{3}$/.test(identity.firmware)) return undefined
-    const reply = await this.mst(MST.zdlHeaderReads, 1, MST.zdlHeaderReadsReply)
-    if (reply && this.state.connection === connection) return parseZdlHeaderReads(reply[0])
+    const reply = await this.mst(command, 1, replyCommand)
+    if (reply && this.state.connection === connection) return reply[0]
+  }
+
+  /** Reads the development probe without opening the SYSTEM screen. Other builds omit it. */
+  readonly zdlHeaderReads = () => this.quiet(async () => {
+    const reply = await this.developmentReply(MST.zdlHeaderReads, MST.zdlHeaderReadsReply)
+    return reply && parseZdlHeaderReads(reply)
+  })
+
+  /** Latest completed loader operations. Fetch again if a load raced the snapshot. */
+  readonly zdlStreamTrace = () => this.quiet(async () => {
+    const reply = await this.developmentReply(MST.zdlStreamTrace, MST.zdlStreamTraceReply)
+    return reply && parseZdlStreamTrace(reply)
   })
 
   /** One file operation at a time, shown as reading while it runs. */

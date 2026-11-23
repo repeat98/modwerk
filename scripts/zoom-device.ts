@@ -61,6 +61,11 @@ export async function zoomCommand(link: ZoomLink, command: string, file: string 
     return { ...after.identity, ...(load ? { load } : {}), ...(zdlHeaderReads !== undefined ? { zdlHeaderReads } : {}) }
   }
   if (isUpdateMode(identity)) throw new Error('The pedal is in update mode (bootloader ' + identity.firmware + '): unplug it and plug it in again to use its files.')
+  if (command === 'stream-trace') {
+    const trace = await link.zdlStreamTrace()
+    if (!trace) throw new Error('No stream trace answered. Use a build with the stream probe, and retry after the load is idle.')
+    return { model: identity.model, firmware: identity.firmware, ...trace }
+  }
   if (command === 'list') return { files: await link.listFiles({ versions: true }), free: await link.freeSpace() ?? null }
   const stamp = new Date().toISOString().replace(/[:.]/g, '-'), save = async (path: string, data: Uint8Array) => {
     await mkdir(dir, { recursive: true, mode: 0o700 })

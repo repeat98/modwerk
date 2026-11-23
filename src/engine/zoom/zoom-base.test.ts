@@ -126,9 +126,12 @@ describe('the Zoom base builder', () => {
         ['-EL', '-D', '-b', 'binary', '-m', 'tic6x', '--adjust-vma=' + code.addr, file], { encoding: 'utf8' })
       const [draw, midi] = disassembly.split(/ldbu\s+\.D2T1\s+\*\+b14\(226\),a4/i)
       expect(midi).toBeDefined()
-      for (const wrapper of [draw, midi]) {
-        expect(wrapper).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\(32\)/i)
-        expect(wrapper).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\(32\),b3/i)
+      expect(draw).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\(32\)/i)
+      expect(draw).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\(32\),b3/i)
+      expect(midi).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\[b6\]/i)
+      expect(midi).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\[b6\],b3/i)
+      for (const [target, calls] of [['c00d3bc8', 2], ['c00d3bb0', 1], ['c00d3ba4', 1], ['c00d3be0', 1]] as const) {
+        expect(draw.match(new RegExp('callp.*0x' + target + ',b3', 'g'))).toHaveLength(calls)
       }
       expect(midi).toMatch(/callp\s+\.S2\s+0xc00ad664,b3/i)
       expect(midi).toMatch(/b\s+\.S2\s+0xc00f3920/i)
@@ -141,8 +144,8 @@ describe('the Zoom base builder', () => {
     const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
     const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
     const overlay = buildLoadProbe(toolPrefix!)
-    const baseline = await buildDevelopmentBase(own, 'D004')
-    const probe = await buildDevelopmentBase(own, 'D004', [overlay])
+    const baseline = await buildDevelopmentBase(own, 'D005')
+    const probe = await buildDevelopmentBase(own, 'D005', [overlay])
     const image = parseAis(probe.main), before = parseAis(baseline.main)
     expect(image.sections).toHaveLength(before.sections.length + 1)
     for (const call of overlay.write!) {

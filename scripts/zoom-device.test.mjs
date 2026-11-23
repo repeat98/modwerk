@@ -80,6 +80,23 @@ describe('the Zoom commands (CLI and MCP)', () => {
     await expect(zoomCommand(link, 'backup', 'pedal.zip', { dir })).rejects.toThrow(/EEXIST/)   // never over an older backup
     expect(writes(pedal)).toEqual([])
   })
+  it('reads a stream trace through the CLI only when requested', async () => {
+    const pedal = fakeZoomPedal({ firmware: 'D005', zdlHeaderReads: 1 })
+    const send = pedal.output.send
+    pedal.output.send = request => {
+      send(request)
+      if (request[1] !== 0x7d || request[5] !== 0x08) return
+      const reply = [0xf0, 0x7d, 0x4d, 0x53, 0x54, 0x49, request[6], ...Array(133).fill(0), 0xf7]
+      const deliver = data => pedal.input.onmidimessage?.({ data: Uint8Array.from(data) })
+      deliver(reply.map((byte, i) => i === 6 ? (byte + 1) & 127 : byte))
+      deliver(reply)
+    }
+    const link = await connected(pedal)
+    expect(await zoomCommand(link, 'status', undefined, { dir })).toMatchObject({ zdlHeaderReads: 1 })
+    expect(pedal.sent.some(m => m[1] === 0x7d && m[5] === 0x08)).toBe(false)
+    expect(await zoomCommand(link, 'stream-trace', undefined, { dir })).toEqual({ model: 'MS-70CDR', firmware: 'D005', completed: 0, events: [] })
+    expect(writes(pedal)).toEqual([])
+  })
   it('installs and removes only when confirmed, keeping the effect list from before', async () => {
     const pedal = fakeZoomPedal({ files: effects() }), link = await connected(pedal), file = join(dir, 'nam1smok.zdl')
     await writeFile(file, Uint8Array.from(fakeEffect('X', 8, 900, '0.26', 2000).data))

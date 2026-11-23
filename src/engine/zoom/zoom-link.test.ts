@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
-import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, parseZdlHeaderReads, unpack7 } from './zoom-protocol'
+import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, parseZdlHeaderReads, parseZdlStreamTrace, unpack7 } from './zoom-protocol'
 
 const connected = async (pedal: ReturnType<typeof fakeZoomPedal>, timeout = 200) => {
   const link = new ZoomLink(() => Promise.resolve(pedal.access), timeout)
@@ -33,6 +33,28 @@ describe('the Zoom file protocol', () => {
     expect(parseZdlHeaderReads([...header, 127, 127, 127, 127, 15, 0xf7])).toBe(0xffffffff)
     expect(parseZdlHeaderReads([...header, 0, 0, 0, 0, 16, 0xf7])).toBeUndefined()
     expect(parseZdlHeaderReads([...header, 0, 0, 0, 0, 0xf7])).toBeUndefined()
+  })
+  it('decodes partial and wrapped stream traces in completion order', () => {
+    const word = (value: number) => Array.from({ length: 5 }, (_, i) => (value >>> (7 * i)) & 127)
+    const slot = (kind: number, first = 0, second = 0, result = 0) => [kind, ...word(first), ...word(second), ...word(result)]
+    const reply = (count: number, slots: number[][]) => [0xf0, 0x7d, 0x4d, 0x53, 0x54, 0x49, 17, ...word(count), ...slots.flat(), 0xf7]
+    const empty = slot(0), close = slot(5), header = slot(1, 52, 1, 1), seek = slot(4, -16, 2, -1), view = slot(3, 32, 20, 14)
+    expect(parseZdlStreamTrace(reply(0, Array(8).fill(empty)))).toEqual({ completed: 0, events: [] })
+    expect(parseZdlStreamTrace(reply(4, [header, seek, view, close, empty, empty, empty, empty]))).toEqual({
+      completed: 4, events: [
+        { operation: 'header', itemSize: 52, requested: 1, returned: 1 },
+        { operation: 'seek', offset: -16, origin: 2, result: -1 },
+        { operation: 'view', itemSize: 32, requested: 20, returned: 14 },
+        { operation: 'close', result: 0 },
+      ],
+    })
+    const slots = Array.from({ length: 8 }, (_, i) => slot(2, 1, i, i))
+    const events = [3, 4, 5, 6, 7, 0, 1, 2].map(i => ({ operation: 'copy', itemSize: 1, requested: i, returned: i }))
+    for (const count of [11, 3]) expect(parseZdlStreamTrace(reply(count, slots))).toEqual({ completed: count, events })
+    expect(parseZdlStreamTrace(reply(9, [close, empty, ...slots.slice(2)]))).toBeUndefined()
+    const malformed = reply(11, slots)
+    malformed[17] = 16
+    expect(parseZdlStreamTrace(malformed)).toBeUndefined()
   })
   it('reads an effect file header', () => expect(effectInfo(fakeEffect('LOOP.ZDL', 8, 480, '0.03').data)).toEqual({ gid: 8, fxid: 480, version: '0.03' }))
 })
