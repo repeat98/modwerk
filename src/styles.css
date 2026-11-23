@@ -170,9 +170,9 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-cover:focus-visible { outline-offset: -3px; }
 @media (min-width: 821px) {
   .module-library { max-width: 70rem; }
-  .module-library .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr)); gap: 16px; }
-  .module-library .module-card .module-preview { height: 152px; }
-  .module-library .module-card-body { padding: 12px 14px 10px; }
+  .module-library .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr)); gap: 18px; }
+  .module-library .module-card .module-preview { height: 144px; }
+  .module-library .hover-info > span { -webkit-line-clamp: 4; }
 }
 
 /* Library module cards: cover, name row with Add, one meta line, the description, a stats line, then the hardware
@@ -2325,18 +2325,17 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .app-toolbar .search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
   .app-toolbar .toolbar-count, .app-toolbar .preview-badge { background: var(--surface); }
   .app-toolbar .configuration-button:hover { background: var(--surface-hover); }
-  .sidebar-scroll :is(.develop-card, .instrument-item, .instrument-action, .instrument-editing, .library-selection) { border: 0; }
-  .sidebar-scroll .instrument-item, .sidebar-scroll .instrument-editing { background: var(--surface); }
+  .sidebar-scroll :is(.develop-card, .library-selection) { border: 0; }
+  .sidebar-scroll .instrument-item:where(:not(.is-unit)) { border: 0; background: var(--surface); }
   .sidebar-scroll .instrument-item:hover { background: var(--surface-hover); }
   .sidebar-scroll .instrument-item[aria-current="page"] { background: var(--accent-soft); }
-  .sidebar-scroll .instrument-editing { grid-template-columns: 1fr; gap: .125rem; }
   .sidebar-scroll .instrument-editing strong, .sidebar-scroll .instrument-head small { overflow-wrap: anywhere; white-space: normal; }
   .sidebar-scroll .configuration-launcher .configuration-browse { box-shadow: none; }
   .sidebar-scroll .library-selection-device { border: 0; }
   .sidebar-nav .sidebar-feature-new { border: 0; background: var(--accent-soft); }
   .sidebar-nav .sidebar-online { border: 0; background: #27332d; }
   .sidebar-nav .sidebar-online.is-unknown { background: transparent; color: var(--faint); font-weight: 500; }
-  .primary-nav > a.active, .primary-nav .sidebar-nav-row:has(> a.active) { box-shadow: inset 2px 0 var(--accent); }
+  .primary-nav > a.active, .sidebar-resources .sidebar-nav-row:has(> a.active) { box-shadow: inset 2px 0 var(--accent); }
   .workspace-content { padding-inline: clamp(1rem, 2.5vw, 2.5rem); }
   .configuration-button { flex-shrink: 1; min-width: 0; max-width: 100%; }
   .configuration-button > span:first-of-type { overflow: hidden; text-overflow: ellipsis; }
