@@ -56,7 +56,7 @@ const records = import.meta.glob<DevicePriceRecord>(
   '../../sdk/octatrack/modules/*/evidence/cpu-price.json',
   { eager: true, import: 'default' },
 )
-type FrameCostRecord = { module?: string; version?: string; base?: string; scene?: string; first?: number; each?: number; rest?: number }
+type FrameCostRecord = { module?: string; version?: string; base?: string; scene?: string; first?: number; each?: number; rest?: number; points?: number[] }
 const frameCostRecords = import.meta.glob<FrameCostRecord>(
   '../../sdk/octatrack/modules/*/evidence/frame-cost.json',
   { eager: true, import: 'default' },
@@ -133,13 +133,17 @@ export function measuredActiveCpu(document: ModuleDocument) {
   }
 }
 
-/** The module's instance curve (evidence/frame-cost.json, device:price --curve), when it was measured on this version. */
+/** The module's instance curve (evidence/frame-cost.json, device:price --curve), when it was measured on this version
+ * and the frame still had room with the first copy: past 100 % the guard drops renders, so the reading is the
+ * overload, not the module's cost (FM Synth 0.1.5's first pick read 107.9 %, #2030). */
 export function measuredFrameCost(document: ModuleDocument) {
   const source = 'sdk/octatrack/modules/' + document.id + '/evidence/frame-cost.json'
   const record = frameCostRecords['../../' + source]
-  const { first, each } = record ?? {}
+  const { first, each, points } = record ?? {}
+  const firstReading = points?.[1]
   if (record?.module !== document.id || record.version !== document.version || !record.base || !record.scene
-    || typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)) return
+    || typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)
+    || typeof firstReading !== 'number' || !(firstReading < 100)) return
   return { first, each, base: record.base, scene: record.scene, source }
 }
 
