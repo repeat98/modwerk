@@ -6,7 +6,7 @@
   "changes": [
     "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. FILTER TYP turns past PK to BW, a base-width band on the voice's analog filter: FRQ sets the high-pass edge, RES's knob reads WID and sets how far above it the low-pass edge sits, shown in hertz; the FILTER graph draws the band as measured."
   ],
-  "runtimeSourceSha256": "807c1d56594072871af6fb9efbd8098878400c5769338e737bf861fd038bc43c",
+  "runtimeSourceSha256": "c290730e7e51eafa197bdef9ee0b090d2de55a72cc00bbdf0c931b4d2da14681",
   "packages": [
     {
       "os": "1.74",
