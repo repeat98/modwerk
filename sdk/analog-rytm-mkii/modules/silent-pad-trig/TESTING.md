@@ -1,4 +1,6 @@
-# Silent Pad+Trig Settings — test report
+# Improved Configs (formerly Silent Pad+Trig Settings) — test report
+
+0.9.0 renames the module Improved Configs; its id, rows, fields and files stay.
 
 Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL TRK, as in
 rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and
@@ -6,7 +8,7 @@ the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 ren
 second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
 After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds. 0.7.0 renames the second row SILENT P+T LIVEREC; sections before 0.7.0 keep SILENT PAD LIVEREC.
 
-- Module: `silent-pad-trig` 0.8.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.9.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -25,10 +27,20 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
 - 0.6.0's `src/silent-pad-trig.s` is `54402bee…d71f`, fingerprint `cb882beb…5193`
   (`evidence.sourceSha256`).
 - 0.7.0's `src/silent-pad-trig.s` is `a98f7e1e…1a8e`, fingerprint `4e0e6f07…5680`.
-- 0.8.0's `src/silent-pad-trig.s` is `e00acb55…50f4`, fingerprint `ad162c3d…b5e6`
+- 0.8.0's `src/silent-pad-trig.s` is `e00acb55…50f4`, fingerprint `ad162c3d…b5e6`.
+- 0.9.0's `src/silent-pad-trig.s` is `8ad80456…c76a`, fingerprint `b8aa46c7…363c`
   (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PC01 (the author's combined build: RC45's 17 modules on the private base `b3bf8330`, RC45's
+  lockfile, this folder's 0.9.0, `--version PC01`): `.syx`
+  `b0f8b76b63156f36fbc5e3dd4a7f3294aff195f5ec7afd26ae7f1a70c0c991f6`, storage layout `0x253c78e2`
+  (reads RC45's projects; the new bit is appended). RAM-booted on an Analog Rytm MKII on 2026-11-22
+  ([below](#pc01-on-an-analog-rytm-mkii-2026-11-22-as-reported)).
+- Build PF02 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.9.0 alone, Modwerk's linker, `--version PF02`):
+  `.syx` `f4e3fb24adf893dddcc4b056964f5187005d786318418a4728dd4e327743cfc4`, main OS `dead3b08…b4eb`.
+  The media frames. PF01 (`c7d83de2…db08`), the emulator cases below, has the same main OS bytes
+  (PF02 only adds a claim to `build.json`). Not run on a unit; PC01 carries the same source.
 - Build PS17 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.8.0 alone, Modwerk's linker, `--version PS17`):
   `.syx` `0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce`, main OS `6ff61580…8b2e`.
   Screenshots only: rytm-emu reproduces PS16's four media frames byte for byte. Not run on a unit.
@@ -79,6 +91,66 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
+
+## 0.9.0: PAD LEAVES FX, renamed Improved Configs (2026-11-22)
+
+What stock does, read from OS 1.74's code: every track change goes through one routine,
+`0x400d4ba0` (track, stay on FX). For a track 0 to 11 it sets the track the pads and knobs play,
+then the screen's track unless that is the track already or "stay on FX" is set. Its callers: the
+TRK view (`0x400d4f72`, TRK + pad or TRIG) passes "leave"; the FX key (`0x400d4fac`) selects track
+12; and KeyboardView's pending select (`0x400c6de8`, from view + 176 and + 180), which both key
+handlers fill when a press selects a track (the pad's with AUTO TRK SWITCH checked or RTRG held,
+`0x400c7a4e`; the TRIG key's with AUTO TRK SWITCH, TRIG 1-12 only), setting "stay on FX" exactly
+when the screen's track is 12 (`0x400c7b5c`, `0x400c7eb4`). Nothing else writes either track: MIDI
+notes in, CHROMATIC pads and the PERF and SCENE views select nothing. Silent Pad+Trig's silent
+select reaches the same stores through its AUTO TRK SWITCH sites.
+
+The module replaces both flag computations (`moveq #12; cmpl; seq %d0`, 6 bytes each, before
+`negl %d0; moveb %d0,+180`) with a `jsr`: the same flag while PAD LEAVES FX is unchecked (-1 for
+stock's 0xff, 0 for 0, so the stored byte is identical), 0 while it is checked. An independent
+review checked the equivalence, the registers the code after each site reads, and the menu row,
+and found no defect (two documentation nits, fixed).
+
+### In rytm-emu (2ac0f1f), PF01, 2026-11-22
+
+From one snapshot after the boot notices, PAD LEAVES FX checked (C) or unchecked (U) through the
+menu, AUTO TRK SWITCH checked (its default) unless noted, then FX and the press. The screen after
+the press:
+
+| Case | Press after FX | Screen |
+| --- | --- | --- |
+| U1 | SD | FX track (stock) |
+| C1 | SD | SD's SRC page |
+| U2 | TRIG 3 | FX track (stock) |
+| C2 | TRIG 3 | RS's SRC page |
+| C3 | BD, the track FX would return to | BD's SRC page |
+| C4 | SD, with SILENT PAD+TRIG checked too | SD's SRC page |
+| C5 | SD, with AUTO TRK SWITCH unchecked | FX track (stock: the pad selects nothing) |
+| C6 | RTRG held, SD | SD's SRC page |
+| C7 | FUNC held, SD | SD's SRC page |
+| C8 | SD in LIVE RECORDING (RECORD + PLAY first) | SD's SRC page, recording |
+| C9 | SD, then FX again | FX track |
+| C10 | TRK held, SD | SD's SRC page (stock's own path) |
+
+The rows draw as stock's (media frames, PF02). Not compared: sound (C4's silence is the unchanged
+SILENT PAD+TRIG path), MIDI out, the SOUND BROWSER and other menus, CHAIN, SONG, FILL, a saved
+project across a power cycle, and PAD LEAVES FX in a GLOBAL slot other than 1.
+
+### PC01 in rytm-emu, 2026-11-22
+
+The combined build, cold-booted: SEQUENCER CONFIG lists PAD LEAVES FX after MUTE ALL SOUND, before
+Live Rec Retrig Fix's QUANT RTRG TO SEQ. With it checked, from the FX track: SD, BD, TRIG 3 and RTRG +
+SD each brought up their track's page, beside Improved MIDI Control's FX-track page. Unchecked, SD
+and BD from the FX track left it up.
+
+### PC01 on an Analog Rytm MKII, 2026-11-22, as reported
+
+RAM-booted over the development link (not flashed), a scratch project. Reported by the author, with
+AUTO TRK SWITCH unchecked and PAD LEAVES FX checked: on MT, FX, then the MT pad: back on MT; FX, then
+CH: on CH; TRK + pad the same. Plain pad taps selected their track silently, and FUNC + pad played
+without selecting, as SILENT PAD+TRIG documents (a silent press always selects; one that plays follows
+AUTO TRK SWITCH). Not tried on the unit: TRIG keys, RTRG + pad, LIVE RECORDING, AUTO TRK SWITCH
+checked, and a power cycle with the row kept.
 
 ## 0.8.0: muted retrig rolls record, no shared-voice steal, pad lights (2026-11-08)
 
@@ -461,6 +533,10 @@ those bytes; all are rytm2_mods' and their stock bytes match its `mod.json`. 0.3
 | `0x400c7e90` | 6 | jsr | `silent_pad_trig_autotrk` | the TRIG key handler's AUTO TRK SWITCH call |
 | `0x400c7950` | 6 | jmp | `silent_pad_trig_func_gate` | the pad handler's FUNC test |
 | `0x400ec184` | 8 | jmp | `silent_pad_trig_menu_add` | the SEQUENCER CONFIG menu's constructor (jmp + nop) |
+| `0x400c7b5c` | 6 | jsr | `silent_pad_trig_fx_pad` | the pad handler's "stay on FX" flag (0.9.0) |
+| `0x400c7eb4` | 6 | jsr | `silent_pad_trig_fx_trig` | the TRIG key handler's "stay on FX" flag (0.9.0) |
+
+Later versions add the sites `build.json` lists (fifteen in 0.9.0).
 
 rytm2_mods declares the two AUTO TRK SWITCH sites as `keep2`. The stock instruction there is an
 absolute `jsr`, so `keep2` and `jsr` write the same six bytes; this folder uses `jsr`, which
