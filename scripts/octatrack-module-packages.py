@@ -211,6 +211,38 @@ def titled(data, name):
                            name=name, abi=8, hashed=True, title=name[:15])
 
 
+REST_FLAG = 0x80  # loader.h RUNTIME_SITE_RESTS: bit 7 of an ABI 7 site's length byte
+
+
+def resting_references(data, addresses):
+    """A row's "restingReferences": 0x addresses of 4-byte data sites (symbol references: stock pointers the module
+    rewrites, such as a renderer table entry) that rest with the module as the detours its runtime.json "rests" names
+    do. The loader puts back any resting site the same way, masked and a whole aligned word at a time, then calls
+    modwerk_machine_site_restored, which retargets what stock copied from a renderer entry; the pinned builder flags
+    detours only. So these get the flag here, in a package that already rests (a site the builder flagged).
+    Here, not in the builder, whose source the base pins."""
+    abi = struct.unpack_from('>H', data, 4)[0]
+    if data[:4] != b'MWRM' or abi not in (7, 8):
+        raise ValueError('restingReferences: an ABI 7 or 8 package only.')
+    image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
+    at = (72 if abi == 7 else 76) + 4 * hooks + image + 4 * count  # the first site record (build.py package())
+    wanted, out, rests = {int(a, 16): a for a in addresses}, bytearray(data), 0
+    if len(wanted) != len(addresses):
+        raise ValueError('restingReferences: each address once.')
+    for _ in range(sites):
+        address, length, relocations = struct.unpack_from('>I', data, at)[0], data[at + 4], data[at + 7]
+        rests |= length & REST_FLAG
+        if wanted.pop(address, None) is not None:
+            if length & ~REST_FLAG != 4 or address & 3:
+                raise ValueError('restingReferences: %#x is no aligned 4-byte data site.' % address)
+            out[at + 4] |= REST_FLAG
+        at += 40 + (length & ~REST_FLAG) + 2 * relocations
+    if wanted or not rests:
+        raise ValueError('restingReferences: ' + (', '.join(wanted.values()) + ' is no site of the package' if wanted else
+                                                  'the package rests nothing of its own (no runtime.json "rests")'))
+    return bytes(out)
+
+
 def main():
     spec = importlib.util.spec_from_file_location(
         'octatrack_module_packages', APP / 'sdk/machines/octatrack/elekloader/module_packages.py')
@@ -295,6 +327,17 @@ def main():
         return data
     if ordinary:
         builder.build = reconstructed_build
+    # A row's "restingReferences" (resting_references()): last, on the package as built.
+    built = getattr(builder, 'build', None)
+    def resting_build(entry, out, *args, **kwargs):
+        data = built(entry, out, *args, **kwargs)
+        if not entry.get('restingReferences'):
+            return data
+        data = resting_references(data, entry['restingReferences'])
+        out.write_bytes(data)
+        return data
+    if built:
+        builder.build = resting_build
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)
