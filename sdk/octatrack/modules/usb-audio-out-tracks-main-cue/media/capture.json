@@ -1,16 +1,15 @@
 {
   "firmware": "1.40C",
-  "sourceRevision": "506d0ecf7c97a17c1906422c25cafafb77b3086d",
-  "moduleVersion": "0.3.0-experimental",
-  "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6\u00d7 integer scale.",
-  "output": "Decoded LCD blocks from the emulator panel transmit stream using Octabam PanelLink.",
-  "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
+  "sourceRevision": "69521896d7abda1384118ab3d94d449e74b7660c",
+  "moduleVersion": "0.4.0-experimental",
+  "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1 (beta flags plus --dev), stopped transport, scratch card. USB Audio 0.4.0 installed over the emulator's USB host and kept on that card, since the base's USB attach watchdog ends a trial under the emulator's scripted host. Install preset 0 (classic COMPUTER, 20 channels); SEND TO switched to OUTBOX 8 on the panel before the last capture.",
+  "output": "The base's composed LCD frame (development request 7), each pixel 6×6, lit 240 on 24.",
+  "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
   "emulatorSha256": "a2151c36f1f1f4e04b9eb9a43c61a4a36079c6384092fa2547e45709418b32dc",
-  "cardSha256": "cb03f60e670ed47afffa454f46539aa90cdf7a0cbf2e5dbd559e35dba9d38043",
-  "keyMs": 150,
+  "keyMs": 120,
   "plan": [
     {
-      "wait": 3000
+      "wait": 4000
     },
     {
       "press": [
@@ -18,23 +17,9 @@
       ]
     },
     {
-      "wait": 3000
-    },
-    {
       "press": [
-        "NO"
+        "PROJ"
       ]
-    },
-    {
-      "wait": 300
-    },
-    {
-      "press": [
-        "MENU"
-      ]
-    },
-    {
-      "wait": 200
     },
     {
       "press": [
@@ -62,9 +47,6 @@
       ]
     },
     {
-      "wait": 200
-    },
-    {
       "press": [
         "DOWN"
       ]
@@ -93,9 +75,6 @@
       "press": [
         "YES"
       ]
-    },
-    {
-      "wait": 300
     },
     {
       "capture": "ot-settings.png"
@@ -104,9 +83,6 @@
       "press": [
         "YES"
       ]
-    },
-    {
-      "wait": 300
     },
     {
       "capture": "ot-usb-audio.png"
@@ -127,10 +103,70 @@
       ]
     },
     {
-      "wait": 300
+      "capture": "ot-track-tap.png"
     },
     {
-      "capture": "ot-track-tap.png"
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-inputs.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
     },
     {
       "press": [
@@ -163,16 +199,24 @@
       ]
     },
     {
-      "wait": 300
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
     },
     {
       "capture": "ot-outbox-pairs.png"
     }
   ],
   "screenshots": {
-    "ot-settings.png": "470c542f70e1121220d954b5c44f1972f6420d5dca7dfadfc801e02ff3307e0b",
-    "ot-usb-audio.png": "eab450c221d757813f9d23987466566454e252dfcee9316199ae21eebce0c5de",
-    "ot-track-tap.png": "bfaa7930eb1f537ec6b4069a0c5c22e4c3f74d2c70ba258dd7f836cd7846a461",
-    "ot-outbox-pairs.png": "a0fc17d440e47a71a08feb3f8f7d83dfe25c64a39620d04f8ac5c9519e8cfd74"
+    "ot-settings.png": "2e603aeab3c5026a65d7fc6d2eb1ae09e628e13c1bc3b278190589b9e333aa63",
+    "ot-usb-audio.png": "936314c50d0a60d681e75dccd6db281c5075c6a8277e355bfa7afec5cb74001e",
+    "ot-track-tap.png": "5f97889964f9a18410e64f5a584c2d62b55a1ae7374b108735ec7199875194f2",
+    "ot-inputs.png": "362aa5e0521c398f0d88e7280fd840ebca56e377ffcc2456a21fdd3f820bd3b4",
+    "ot-outbox-pairs.png": "59e85934dd853afb90ab5af7e5c22c3e711a5354881e72a6d393de1137c23797"
   }
 }
