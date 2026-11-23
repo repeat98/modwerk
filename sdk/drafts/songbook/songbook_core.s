@@ -2107,23 +2107,6 @@ as_tick:
 .L272:
 	clr.b %d3
 	move.b %d3,16(%a2)
-	move.b 1074531136,%d0
-	move.b 1074531137,%d2
-	move.b 1074531138,%d1
-	mvz.b 1074531139,%d3
-	move.l %d3,%a0
-	moveq #24,%d3
-	lsl.l %d3,%d0
-	mvz.b %d2,%d2
-	mvz.b %d1,%d1
-	swap %d2
-	clr.w %d2
-	lsl.l #8,%d1
-	or.l %d2,%d0
-	move.l %a0,%d2
-	or.l %d2,%d0
-	or.l %d1,%d0
-	jeq .L266
 	move.b 1074531232,%d0
 	move.b 1074531233,%d2
 	move.b 1074531234,%d1
@@ -2149,6 +2132,23 @@ as_tick:
 	move.b %d3,1074531238
 	move.b %d0,1074531239
 .L273:
+	move.b 1074531136,%d0
+	move.b 1074531137,%d2
+	move.b 1074531138,%d1
+	mvz.b 1074531139,%d3
+	move.l %d3,%a0
+	moveq #24,%d3
+	lsl.l %d3,%d0
+	mvz.b %d2,%d2
+	mvz.b %d1,%d1
+	swap %d2
+	clr.w %d2
+	lsl.l #8,%d1
+	or.l %d2,%d0
+	move.l %a0,%d2
+	or.l %d2,%d0
+	or.l %d1,%d0
+	jeq .L266
 	jsr 1073966616
 	jra .L266
 .L332:
@@ -2191,15 +2191,15 @@ as_tick:
 	jra .L287
 .L335:
 	mvz.w 46(%a2),%d0
-	moveq #29,%d1
-	cmp.l %d0,%d1
+	moveq #29,%d3
+	cmp.l %d0,%d3
 	jcc .L277
 	jsr stopped
 	tst.l %d0
 	jeq .L277
+	moveq #1,%d0
 	move.b %d2,5(%a2)
-	moveq #1,%d2
-	move.b %d2,16(%a2)
+	move.b %d0,16(%a2)
 	clr.l -(%sp)
 	jsr 1073884372
 	addq.l #4,%sp
@@ -2383,9 +2383,9 @@ as_tick:
 	cmp.l #18000,%d1
 	jls .L277
 .L295:
-	st %d3
+	st %d1
 	move.b 50(%a2),%d0
-	move.b %d3,34(%a2)
+	move.b %d1,34(%a2)
 	tst.b %d0
 	jne .L294
 	jra .L276

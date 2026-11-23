@@ -687,10 +687,10 @@ void as_tick(void *api)
              * stock does then, now over this book. Only for a return after a load, never for LEFT/RIGHT. */
             if (s->reapply && rd32(ARR_MODE)) arr_apply(1);
             s->reapply = 0;
-            if (rd32(CHANGE_WINDOW)) {
-                if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);  /* the cursor on it, as stock opens the list */
-                draw_change();
-            }
+            /* The list's cursor on it, open or not: stock keeps the cursor while the list is closed, and after a LOAD
+             * it would open on the last project's row (the developer's MKI, 24 November 2026). */
+            if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);
+            if (rd32(CHANGE_WINDOW)) draw_change();
         }
     }
     /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */
