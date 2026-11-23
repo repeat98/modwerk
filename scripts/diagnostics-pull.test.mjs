@@ -34,6 +34,10 @@ describe('diagnostics pull', () => {
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
   })
+  it('shows how a disconnected trial ended in Problems', () => {
+    const event = entry(1, 'tester', { event: 'sync_failed', phase: 'trial', error: 'disconnected', step: 'trial', reconnect: 'closed' })
+    expect(summary({ events: [event], counts: [] }).split('Problems (')[1]).toContain('error=disconnected step=trial reconnect=closed')
+  })
   it('lists failures before a USB connection with the reported reason and optional client', () => {
     const link = (n, failure, client) => entry(n, 'tester', { event: 'link_failed', phase: 'idle', failure, client })
     const text = summary({ events: [link(1, 'no-device'), entry(2), link(3, 'claim-failed', { browser: 'chrome', major: 150, os: 'linux' })], counts: [] })
@@ -133,6 +137,12 @@ describe('diagnostics pull', () => {
     expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 1, cpu: 48640, dsp5to8: 96 }])[0])
       .toContain('refused SC Ringmod (module memory, by the module pool, module memory 760 KiB used, largest free block 1.5 KiB)')
   })
+  it('names the USB Audio package in both the installed list and a refused restore', () => {
+    const set = { seq: 1, boot: 1, second: 0, kind: 'set', a: 1,
+      machines: [0xb1, 0x28, 0x8f, 0x29], fx: [], keys: [], screen: 0, tempo24: 0 }
+    expect(unitLines([set])[0]).toContain('1 installed: USB Audio')
+    expect(unitLines([{ ...set, a: 0, screen: 0xb1288f29, tempo24: 5 }])[0]).toContain('refused USB Audio (busy)')
+  })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false })
@@ -159,6 +169,19 @@ describe('diagnostics pull', () => {
       at(5, 1, 'freeze', 0, { playing: true }), at(6, 1, 'freeze', 25919), at(7, 2, 'freeze')])
     expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual(
       [['3', true], ['4', false], ['5', false], ['6', false], ['7', false]])
+  })
+  it.each([
+    [0x3ffffffe, false], [0x40000000, true], [0x40fffffc, true], [0x41000000, false],
+  ])('only prints instruction bytes the crash handler captured at PC %i', (pc, captured) => {
+    const crash = { count: 1, vector: 4, pc, code: [0x12345678], memory: [0x87654321] }
+    const events = [entry(1, 'tester', { event: 'device_log', log: { crash } })]
+    const text = summary({ events, counts: [] })
+    expect(text).toContain(`crash record 1: vector 4 pc 0x${pc.toString(16)}`)
+    if (captured) expect(text).toContain('code 12345678 uncached 87654321')
+    else {
+      expect(text).toContain('instruction bytes unavailable (PC outside SDRAM)')
+      expect(text).not.toMatch(/12345678|87654321/)
+    }
   })
   it('names a crash incident’s program counter from the symbols kept for its base, and from no other base’s', () => {
     const at = (seq, kind, a) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),

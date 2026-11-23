@@ -265,6 +265,9 @@ export class OctatrackLink {
     const reading: LinkDiagnostic = {event,phase:status,...(identity ? {base:identity.base} : {}),...(active ? {active} : {}),...fields}
     for (const listener of this.diagnosticListeners) { try { listener(reading) } catch { /* Diagnostics never affect USB work. */ } }
   }
+  private recordReconnectFailure(reconnect: NonNullable<LinkDiagnostic['reconnect']>, connection = this.connection) {
+    if (connection === this.connection && this.state.reconnecting) this.diagnostic('sync_failed', { error: 'disconnected', step: 'trial', reconnect })
+  }
   // Every state carries the base update's step, so the restarts in between (idle, then ready again) keep showing it.
   private set(state: LinkState) { this.state = { ...state, baseUpdate: this.baseStep, slots: this.slotsRead }; for (const listener of this.listeners) listener() }
   private setFor(connection: number, state: LinkState) { if (connection === this.connection) this.set(state) }
@@ -332,11 +335,13 @@ export class OctatrackLink {
       this.reconnectTimer = setTimeout(() => {
         if (!this.state.reconnecting) return
         this.expectReconnect = false
+        this.recordReconnectFailure('timeout')
         this.set({ status: 'idle', notice: { tone: 'error', text: `The Octatrack didn’t come back on USB after reconnecting. It undoes ${module} by itself as soon as playback is stopped.` } })
       }, RECONNECT_WAIT_MS)
       this.set({ ...this.state, status: 'trial', reconnecting: true, notice: undefined })
       return
     }
+    this.recordReconnectFailure('lost-again')
     this.set({ status: 'idle', notice: status === 'sending' ? { tone: 'error', text: 'USB disconnected. The Octatrack undoes the unfinished load as soon as playback is stopped.' }
       : status === 'testing' || status === 'trial' ? { tone: 'error', text: `USB disconnected. The Octatrack undoes ${module} by itself as soon as playback is stopped.` }
       : status === 'finishing' ? { tone: 'error', text: 'USB disconnected before Keep or Undo was confirmed. Reconnect to read the Octatrack’s state.' }
@@ -364,9 +369,13 @@ export class OctatrackLink {
       await this.openDevice(device, connection)
       this.live(connection)
       const index = findVendorInterface(device.configuration)
-      if (index === undefined) { await device.close().catch(() => {}); return this.setFor(connection, { status: 'stock' }) }
+      if (index === undefined) {
+        await device.close().catch(() => {})
+        this.recordReconnectFailure('unreadable', connection)
+        return this.setFor(connection, { status: 'stock' })
+      }
       this.index = index; this.transport = new UsbVendorTransport(device, index)
-      if (!await this.claim()) return
+      if (!await this.claim(resuming)) return
       try {
         const identity = await this.transport.identify()
         this.live(connection)
@@ -395,6 +404,7 @@ export class OctatrackLink {
         }
         let notice: LinkState['notice']
         if (resuming && !resumed) {
+          this.recordReconnectFailure(!session ? 'unreadable' : session.status.phase === 'normal' ? 'closed' : 'mismatch', connection)
           clearTimeout(this.reconnectTimer); this.expectReconnect = false
           notice = { tone: 'error', text: `The Octatrack reconnected, but ${module ?? 'the sync'} was no longer open there, so nothing changed. Sync again.` }
         }
@@ -419,12 +429,16 @@ export class OctatrackLink {
         else this.set({ status: 'ready', identity, active: session?.status.active, notice })
         this.diagnostic('connected')
       }
-      catch { this.setFor(connection, { status: 'ready', identity: undefined }) } // a Modwerk base this page does not speak
+      catch {
+        this.recordReconnectFailure('unreadable', connection)
+        this.setFor(connection, { status: 'ready', identity: undefined }) // a Modwerk base this page does not speak
+      }
       finally { if (!resumed) await this.release() } // a resumed trial keeps the interface, as a sync does until Keep or Undo
       if (resumed) this.startKeepalive()
     } catch (error) {
       if (connection !== this.connection) { if (device.opened) await device.close().catch(() => {}); return }
       console.error(error)
+      this.recordReconnectFailure('unreadable', connection)
       this.device = undefined
       // Refused by the browser or the system: that reason, standing in for the open failure the state shows next.
       if (['SecurityError', 'NotAllowedError'].includes(errorName(error))) this.diagnostic('link_failed', { failure: 'permission-denied' })
@@ -432,14 +446,22 @@ export class OctatrackLink {
     }
   }
   /** Claimed only while talking, so other tabs and `npm run device` can use the unit in between. */
-  private async claim() {
+  private async claim(resuming = false): Promise<boolean> {
     const connection = this.connection, device = this.device, index = this.index
     if (!device || index === undefined) return false
     try {
       await device.claimInterface(index)
-      if (connection !== this.connection) { await device.releaseInterface(index).catch(() => {}); return false }
+      if (connection !== this.connection || resuming && !this.state.reconnecting) { await device.releaseInterface(index).catch(() => {}); return false }
       return true
     } catch {
+      // The trial still holds the tab lock. Retry under it until the existing reconnect deadline.
+      if (resuming) {
+        if (connection !== this.connection || this.device !== device || !this.state.reconnecting) return false
+        this.diagnostic('link_failed', { failure: 'claim-failed' })
+        await wait(BUSY_RETRY_MS)
+        if (connection !== this.connection || this.device !== device || !this.state.reconnecting) return false
+        return this.claim(true)
+      }
       this.setFor(connection, { status: 'busy', identity: this.state.identity })
       setTimeout(() => { if (connection === this.connection && this.state.status === 'busy') void this.retry() }, BUSY_RETRY_MS)
       return false
