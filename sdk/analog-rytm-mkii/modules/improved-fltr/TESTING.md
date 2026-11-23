@@ -1,5 +1,7 @@
 # Improved FLTR: testing
 
+**0.1.0-experimental** is the one-type build below: IF11 in the emulator, IFD2 and IFC5 on the unit, all from the source this package is built from (`src/` and `build.json` unchanged since 9ce6ed504). Its package linked alone on the plain base gives the screenshot image IFS2 byte for byte. Not run on this version: the package flashed from the site, a project save and load, a power cycle, the audio load.
+
 Layouts: since IF10 there is one type, **BW** (TYP 7: FRQ the base, RES's knob reads WID and sets the width above it). IFC3 ran the two-type layout (BW = RES the cutoff, BWL = linked), the runs up to IFC2 the first layout, **BND** (TYP 7, linked) and **BND+** (TYP 8, RES the cutoff) with a tap of RES between them. Since IF07 the types are **BW** (TYP 7, RES the cutoff, as BND+ was) and **BWL** (TYP 8, linked, as BND was), the tap is gone, and the graph draws the band itself. The audio path is the same code with the two type values swapped.
 
 ## Emulator, current layout (one BW type)
