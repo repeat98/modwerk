@@ -1,0 +1,28 @@
+Waiting for the unit: verify-2032 (record/verify-2032-stock-fixes) has it (verify #2032 stock fixes on 0.8: large-set trial + KITS clone, then restore bank P patterns; nothing kept) since 15:03, held until 15:39. You are number 1 in line; this goes ahead by itself when the turn comes (npm run unit -- status shows the queue).
+Your turn on the unit, after 11 min in line.
+[15:25:43] amiga-031 exit 1
+amiga                       at rest frame +0.1, cpu +0.3
+amiga                       not written: a machine's price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)
+amiga                       curve on T1 T3: +28.2, +35 -> rest 0, first 28.2, each 6.8 (stopped after T3: longest frame 116.3 %, 3 renders skipped)
+amiga                       admission: empty admitted, longest frame 50.8 %, 0 dropped, 0 stalls; medium admitted, longest frame 108.8 %, 0 dropped, 0 stalls
+                            NOT RELEASABLE: its first instance was read at 109.5 % of a frame: past 100 % the guard drops renders, so that is the overload, not the module's cost. Read it on a pattern with room (--measure-pattern)
+amiga                       wrote first 28.2, each 6.8 into evidence/frame-cost.json, and regenerated sdk/machines/octatrack/frame-costs.json
+[15:28:18] amiga-030 exit 1
+amiga                       at rest frame +0, cpu +0.1
+amiga                       curve on T1 T3: +30.1, +38.4 -> rest 0, first 30.1, each 8.3 (stopped after T3: longest frame 120 %, 6 renders skipped)
+amiga                       admission: empty admitted, longest frame 51 %, 0 dropped, 0 stalls; medium admitted, longest frame 111.9 %, 0 dropped, 0 stalls
+                            NOT RELEASABLE: its first instance was read at 111.7 % of a frame: past 100 % the guard drops renders, so that is the overload, not the module's cost. Read it on a pattern with room (--measure-pattern)
+[15:31:58] syntiz-011 exit 0
+syntiz                      at rest frame +0, cpu -0.3
+syntiz                      not written: a machine's price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)
+syntiz                      curve on T1 T3 T6 T7: +16.2, +24.1, +29.6, +30.9 -> rest 0, first 18.6, each 5.5
+syntiz                      admission: empty admitted, longest frame 56 %, 0 dropped, 0 stalls; medium admitted, longest frame 95.4 %, 0 dropped, 0 stalls
+syntiz                      wrote first 18.6, each 5.5 into evidence/frame-cost.json, and regenerated sdk/machines/octatrack/frame-costs.json
+[15:35:06] syntiz-010 exit 1
+syntiz                      at rest frame +0, cpu -0.1
+syntiz                      curve on T1 T3 T6: +20.7, +32.6, +37.7 -> rest 0, first 27.5, each 5.1 (stopped after T6: longest frame 118.1 %, 1 renders skipped)
+syntiz                      admission: empty admitted, longest frame 64.2 %, 0 dropped, 0 stalls; medium admitted, longest frame 101.9 %, 0 dropped, 0 stalls
+                            NOT RELEASABLE: its first instance was read at 101.1 % of a frame: past 100 % the guard drops renders, so that is the overload, not the module's cost. Read it on a pattern with room (--measure-pattern)
+done
+
+[exited with code 0]

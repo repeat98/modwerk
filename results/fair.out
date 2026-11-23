@@ -1,0 +1,59 @@
+Waiting for the unit: verify-2032 (record/verify-2032-stock-fixes) has it (verify #2032 stock fixes on 0.8: large-set trial + KITS clone, then restore bank P patterns; nothing kept) since 15:03, held until 15:39. You are number 2 in line; this goes ahead by itself when the turn comes (npm run unit -- status shows the queue).
+Waiting for the unit: ot-next (base/octatrack-next) has it (cost batch: Amiga 0.3.1 + SYNTIZ 0.1.1 through the #2043 procedure, and 0.3.0 / 0.1.0 curves for comparison, twin 678843cc, rolled-back trials, nothing kept) since 15:23, expected until about 15:53. You are number 1 in line; this goes ahead by itself when the turn comes (npm run unit -- status shows the queue).
+Your turn on the unit, after 20 min in line.
+bank base now 400e21e0
+A01 Part byte 00
+pick: T4 FX1 FILTER (running 117 ms after YES) 
+bank A working Part 1 FX: 04000404040404040808080f1e080808
+bank base now 40218860
+T1 TSTR 01
+T2 TSTR 01
+T3 TSTR 01
+T4 TSTR 01
+T5 TSTR 01
+T6 TSTR 01
+T7 TSTR 01
+T8 TSTR 01
+restcheck exit 0
+euclid frame_hook (rests)        stock 43f9800000f0
+   euclid-t0        4ef940d85428  DIFFERS
+   euclid-t6        43f9800000f0  = stock
+   euclid-t12       43f9800000f0  = stock
+   euclid-stopped   43f9800000f0  = stock
+   repitch-t0       43f9800000f0  = stock
+--
+repitch rate_gate (rests)        stock 082f000400436608
+   euclid-t0        082f000400436608  = stock
+   euclid-t6        082f000400436608  = stock
+   euclid-t12       082f000400436608  = stock
+   euclid-stopped   082f000400436608  = stock
+   repitch-t0       4ef940d844004e71  DIFFERS
+--
+repitch tstr_resolve (stays)     stock 712a00147404
+   euclid-t0        712a00147404  = stock
+   euclid-t6        712a00147404  = stock
+   euclid-t12       712a00147404  = stock
+   euclid-stopped   712a00147404  = stock
+   repitch-t0       4ef940d845d0  DIFFERS
+--
+project names module effects:
+  Tape Echo 1 ['bank 0 working Part 1 FX2 T4']
+  Air Chorus 1 ['bank 0 working Part 1 FX2 T5']
+TSTR = REPITCH in: 0 []
+[15:39:15] euclid-015: at rest frame +1.5, cpu +1.9; in use frame +5.1, cpu +5.6, DSP +3.8/+5.3
+[15:40:00] euclid: at rest frame +0, cpu +0.2; in use frame +5.2, cpu +4.8, DSP +8.5/-2
+[15:40:45] euclid-015: at rest frame +1.5, cpu +1; in use frame +5.1, cpu +4.8, DSP +10.4/-2.7
+[15:41:30] euclid: at rest frame +0, cpu +0.7; in use frame +5.1, cpu +5.3, DSP +4.5/+0.7
+[15:42:00] repitch-021: at rest frame +2.1, cpu -1.7
+[15:42:30] repitch: at rest frame +2.1, cpu -1.1
+[15:43:00] repitch-021: at rest frame +2.1, cpu -2.1
+[15:43:30] repitch: at rest frame +2.1, cpu -2.2
+T1 TSTR back 01
+T2 TSTR back 01
+T3 TSTR back 01
+T4 TSTR back 01
+T5 TSTR back 01
+T6 TSTR back 01
+T7 TSTR back 01
+T8 TSTR back 01
+done

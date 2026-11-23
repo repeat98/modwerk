@@ -1,0 +1,21 @@
+OCTATRACK 1.40C, base 678843ccf3d658ba…
+normal, generation 14, active 678843ccf3d658ba… 
+DIAG {
+  ticks: 136964,
+  value: 0,
+  active: false,
+  frames: 309,
+  refusals: 311,
+  resets: 1,
+  primes: 309,
+  completions: 309,
+  submitState: 11,
+  submitAwaited: false,
+  lastToken: '0x00008000',
+  lastReceived: 48,
+  primeStatus: '0x00000007',
+  queueNext: '0x48c81d80',
+  frameHead: '0x4d575550',
+  abandons: 0
+} 
+SLOTS {"layout":"two","running":null,"fellBack":false,"confirmed":false,"slots":[{"generation":21,"whole":true,"confirmed":true,"tries":1},{"generation":20,"whole":true,"confirmed":true,"tries":1}]}
