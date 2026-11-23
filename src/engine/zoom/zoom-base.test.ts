@@ -116,7 +116,7 @@ describe('the Zoom base builder', () => {
   })
 
   const toolPrefix = process.env.MODWERK_ZOOM_C6X_PREFIX
-  it.runIf(toolPrefix)('saves the draw return address above the callee’s free stack word', () => {
+  it.runIf(toolPrefix)('preserves both return addresses and resumes the original MIDI diagnostics', () => {
     const code = buildLoadProbe(toolPrefix!).section![0]
     const dir = mkdtempSync(join(tmpdir(), 'modwerk-zoom-abi-'))
     try {
@@ -124,11 +124,14 @@ describe('the Zoom base builder', () => {
       writeFileSync(file, Buffer.from(code.data as string, 'hex'))
       const disassembly = execFileSync(toolPrefix! + 'objdump',
         ['-EL', '-D', '-b', 'binary', '-m', 'tic6x', '--adjust-vma=' + code.addr, file], { encoding: 'utf8' })
-      expect(disassembly).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\(32\)/i)
-      expect(disassembly).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\(32\),b3/i)
-      expect(disassembly).toMatch(/ldbu\s+\.D2T1\s+\*\+b14\(226\),a4/i)
-      expect(disassembly).toMatch(/callp\s+\.S2\s+0xc00ad664,b3/i)
-      expect(disassembly).toMatch(/b\s+\.S2\s+0xc00f3920/i)
+      const [draw, midi] = disassembly.split(/ldbu\s+\.D2T1\s+\*\+b14\(226\),a4/i)
+      expect(midi).toBeDefined()
+      for (const wrapper of [draw, midi]) {
+        expect(wrapper).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\(32\)/i)
+        expect(wrapper).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\(32\),b3/i)
+      }
+      expect(midi).toMatch(/callp\s+\.S2\s+0xc00ad664,b3/i)
+      expect(midi).toMatch(/b\s+\.S2\s+0xc00f3920/i)
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
