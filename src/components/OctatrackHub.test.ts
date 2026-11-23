@@ -12,6 +12,8 @@ import { OctatrackActivity, OctatrackLoadWidget, OctatrackSidebarStatus } from '
 import { recordLoad } from '../hooks/useOctatrackLoad'
 import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { MODULE_SKIP_HINT } from '../firmware-notices'
+import { MODULES } from '../catalog/modules'
+import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 
 vi.mock('./OctatrackDiagnostics', () => ({ OctatrackDiagnosticsSettings: () => null }))
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))
@@ -128,6 +130,27 @@ describe('the Octatrack page', () => {
     link.health.mockResolvedValue({ ...reading, saved: 6, savedCount: 1 })
     await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'status', link, inventory: { moduleIds: ['miniverb'], removedStockFx: [] }, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
     expect(open().textContent).toContain('Not all loaded at startup · 1 module running. Sync your modules to put the rest back.')
+  })
+  it('names each module the start left out and why, from a base that reports it, and keeps the plain line without it', async () => {
+    const set = newConfiguration('Live', ['miniverb', 'synth']), props = callbacks(), known = MODULES[0]
+    const render = (link: OctatrackLink) => act(() => root.render(createElement(OctatrackHub, { ...props, view: 'status', link, inventory: { moduleIds: [], removedStockFx: [] }, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
+    const link = Object.assign(unit(), { restoreOutcomes: vi.fn(async () => ({ result: 10, count: 3, modules: [
+      { module: sha(new TextEncoder().encode(known.id)).slice(0, 8), name: 'IGNORED', loaded: false, refusal: 0x100, check: 0, bytes: 9000, largestFree: 0 },
+      { module: '0000abcd', name: 'Tape Echo', loaded: false, refusal: 2, check: 1, bytes: 40960, largestFree: 8192 },
+      { module: '00001234', name: 'Euclid', loaded: true, refusal: 0, check: 0, bytes: 1000, largestFree: 0 }] })) })
+    link.health.mockResolvedValue({ ...reading, saved: 10, savedCount: 3, live: 1 })
+    await render(link)
+    expect(link.restoreOutcomes).toHaveBeenCalledOnce()
+    expect(open().textContent).toContain('Not all loaded at startup · 1 of 3 modules running. Sync your modules to put the rest back.')
+    expect([...open().querySelectorAll('.hub-left-out li')].map(item => item.textContent)).toEqual([
+      known.name + ' The last start crashed or froze while loading it, so it was left out. A sync tries it again.',
+      'Tape Echo It needs 40 KB of module memory; the largest free block was 8 KB. Remove a module, then sync.'])
+    // A base from before the request stalls it: the plain line, as before.
+    const older = Object.assign(unit(), { restoreOutcomes: vi.fn(async () => undefined) })
+    older.health.mockResolvedValue({ ...reading, saved: 6, savedCount: 1, live: 1 })
+    await render(older)
+    expect(open().textContent).toContain('Not all loaded at startup · 1 module running. Sync your modules to put the rest back.')
+    expect(open().querySelector('.hub-left-out')).toBeNull()
   })
 
   it('keeps local samples while other pages open, and pauses their preview', async () => {

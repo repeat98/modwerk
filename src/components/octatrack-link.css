@@ -272,6 +272,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 }
 .hub-cell-health h3:not(:first-child) { margin-top: 16px; }
 .hub-test { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text); font-size: 14px; line-height: 1.4; }
+.hub-left-out { min-height: 0; max-height: 9em; overflow: auto; margin: 6px 0 0; padding: 0 0 0 16px; list-style: none; font-size: 13px; line-height: 1.4; }
+.hub-left-out li + li { margin-top: 4px; }
+.hub-left-out small { display: block; color: var(--muted); font-size: 12px; }
 .hub-peaks { display: grid; gap: 4px; margin: 10px 0 0; }
 .hub-peaks div { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
 .hub-peaks dd { display: grid; grid-template-columns: minmax(0, 1fr) 34px; align-items: center; gap: 8px; margin: 0; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }

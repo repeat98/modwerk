@@ -60,6 +60,11 @@ function client(v: unknown) {
   return object(v) && fields(v, ['browser','major','os']) && DIAGNOSTIC_BROWSERS.some(browser => browser === v.browser) && DIAGNOSTIC_SYSTEMS.some(os => os === v.os)
     && (!('major' in v) || typeof v.major === 'number' && Number.isInteger(v.major) && v.major >= 1 && v.major <= 999)
 }
+/** The modules a start left out (RESTORE, request 43): a catalogue id or `other`, the loader's refusal and check. */
+function restoreList(v: unknown) {
+  return Array.isArray(v) && v.length >= 1 && v.length <= 128 && v.every(item => object(item) && exactly(item, 'check,id,refusal')
+    && (item.id === 'other' || MODULES.some(known => known.id === item.id)) && upTo(item.refusal, 0xffff) && upTo(item.check, 0xff))
+}
 /** Which of the newer fields each USB event may carry; any other USB event carries none of them. */
 const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
   load: { allowed: ['live'], required: ['live'] },
@@ -68,7 +73,8 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect'])
+    && (!('restore' in value) || value.event === 'health' && 'reading' in value && restoreList(value.restore))
     && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
     && (value.error === 'disconnected'
       ? value.event === 'sync_failed' && value.phase === 'trial' && value.step === 'trial' && TRIAL_RECONNECT_FAILURES.some(reason => reason === value.reconnect)

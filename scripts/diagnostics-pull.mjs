@@ -150,6 +150,8 @@ export function members(events) {
       if ((saved >= 1 && saved <= 6 || saved === 10 || saved === 11) && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
         member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
     }
+    // A base with RESTORE (request 43) says itself which modules that start left out and why: it replaces the guess.
+    if (data.restore?.length && data.reading && member.reloads.at(-1)?.saved === data.reading.saved) member.reloads.at(-1).restore = data.restore
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
     // The unit's log arrives in pieces and can arrive twice: keep each record once, by its log and seq. A base that
@@ -226,7 +228,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       '', `@${name}  last ${when(member.last)}` + (member.bases.length ? '  base ' + member.bases.map(baseName).join(' → ') : ''),
       ...(reports.get(name) ?? []).map(issue => `  report #${issue.number} ${issue.state.toLowerCase()}: ${issue.title}`),
       ...restarts(member),
-      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
+      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.restore?.length ? ` (left out ${r.restore.map(m => `${m.id}: ${REFUSALS[m.refusal] ?? 'refusal ' + m.refusal}`).join(', ')})`
+        : r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
       ...member.selftest ? [`  last self-test ${member.selftest.state === 2 ? 'passed' : 'failed (bits ' + member.selftest.failed + ')'}` + (member.selftest.ran ? '' : ', no DSP module ran')] : [],
       ...member.peak ? [`  highest self-test peaks ${when(member.peak.at)}: CPU ${percent(member.peak.cpu)}, DSP T1-4 ${percent(member.peak.tracks1to4)}, T5-8 ${percent(member.peak.tracks5to8)}`] : [],
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
