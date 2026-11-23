@@ -16,18 +16,18 @@
   "presentation": {
     "label": "RESONATOR",
     "family": "Resonator",
-    "summary": "Four tuned resonant modes that ring at a note or at one of Aleksi Perälä's 128 Colundi frequencies, excited by the track's own audio.",
-    "overview": "The track's audio (left and right summed) excites four resonators. PTCH sets the root and INTV the step between the four modes; TUNE decides whether those count semitones (NOTE) or degrees of the Colundi sequence (COLUN), whose 128 absolute frequencies run from 10.8 Hz to 12 kHz. The root and the fourth mode sit in the centre, the second left and the third right. Drums, noise and loops ring at the chosen pitches; a parameter-locked PTCH plays the resonator from the sequencer.",
+    "summary": "Eight tuned partials for one to four voices: a chord of strings, tubes, bars, plates, drums or bells, or Aleksi Perälä's Colundi frequencies, excited by the track's own audio.",
+    "overview": "The track's audio (left and right summed, filtered by TONE) excites eight resonant partials. VOIC shares them between one and four voices; TYPE gives every voice a body, from a pure mode through strings and tubes to bars, plates, drums and bells. PTCH sets the root and CHRD the other voices' notes. COLUN on makes PTCH a degree of the Colundi sequence (128 absolute frequencies from 10.8 Hz to 12 kHz) and snaps each voice to the nearest Colundi frequency; with COLUN off, SCALE snaps the notes into a key, so chords turn diatonic. Lock PTCH or CHRD on trigs to play the ring from the sequencer.",
     "highlights": [
-      "COLUN mode: PTCH picks one of the 128 Colundi frequencies, 78 = 440 Hz, 79 = 441 Hz",
-      "Exact pitch: measured within 0.0002 Hz at 440 Hz in the DSP emulator",
-      "Rings from 25 ms to 10 s and ends in digital silence",
-      "No buffers: FX1 or FX2 on any track"
+      "COLUN: PTCH picks one of the 128 Colundi frequencies (78 = 440 Hz), chords snap to Colundi",
+      "TYPE: PURE, STRNG, TUBE, BAR, PLATE, DRUM and BELL bodies; VOIC: one to four voices",
+      "CHRD: 14 chords and stacks, p-lockable per trig; SCALE keeps them in a key",
+      "Rings from 25 ms to 10 s and ends in digital silence; FX1 or FX2 on any track"
     ],
     "usage": [
-      "Put RESONATOR on FX1 of a drum or loop track. With the defaults (PTCH 57, INTV 7, MIX 64) each hit rings a stack of fifths on A.",
-      "Hold FUNC and press FX1 for TUNE: COLUN makes PTCH a Colundi degree (shown as DEG). Lock PTCH on trigs to play a Colundi melody through the ring.",
-      "Raise DCAY for longer rings and GAIN for quiet material; DAMP shortens the upper modes, INTV UNI leaves one resonance."
+      "Put RESONATOR on FX1 of a drum or loop track. The defaults ring one string voice on A under each hit.",
+      "Hold FUNC and press FX1 for the setup page: VOIC adds chord voices, COLUN ON makes PTCH a Colundi degree.",
+      "Turn TYPE for the body (BAR and BELL for metal, DRUM for skins) and TONE to choose which partials ring."
     ]
   },
   "controls": [
@@ -36,40 +36,44 @@
       "default": 57,
       "count": 128,
       "labels": null,
-      "doc": "Root pitch. NOTE: MIDI note 0-127 (69 = A at 440 Hz). COLUN: Colundi degree 0-127 (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG."
+      "doc": "Root. A MIDI note (69 = A at 440 Hz), snapped into SCALE's key when one is set. With COLUN on, a Colundi degree 0-127 (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG."
     },
     {
-      "name": "INTV",
-      "default": 7,
-      "count": 25,
+      "name": "TYPE",
+      "default": 1,
+      "count": 7,
       "labels": [
-        "UNI",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-        "21",
-        "22",
-        "23",
-        "24"
+        "PURE",
+        "STRNG",
+        "TUBE",
+        "BAR",
+        "PLATE",
+        "DRUM",
+        "BELL"
       ],
-      "doc": "Steps between the four modes, in semitones (NOTE) or Colundi degrees (COLUN). UNI is a single resonance. A mode above note or degree 127 stays at 127."
+      "doc": "Each voice's body, as its partials: PURE (one sine-like mode), STRNG (harmonics), TUBE (odd harmonics, a closed pipe), BAR (a struck beam), PLATE, DRUM (a membrane), BELL (hum, prime, tierce, quint ...)."
+    },
+    {
+      "name": "CHRD",
+      "default": 4,
+      "count": 14,
+      "labels": [
+        "OCT",
+        "5TH",
+        "SUS2",
+        "SUS4",
+        "MAJ",
+        "MIN",
+        "MAJ7",
+        "MIN7",
+        "DOM7",
+        "DIM",
+        "AUG",
+        "ADD9",
+        "5THS",
+        "4THS"
+      ],
+      "doc": "The voices' notes above the root: OCT, 5TH, SUS2, SUS4, MAJ, MIN, MAJ7, MIN7, DOM7, DIM, AUG, ADD9, 5THS, 4THS. VOIC sets how many of the four notes sound; one voice plays the root only."
     },
     {
       "name": "DCAY",
@@ -77,13 +81,6 @@
       "count": 128,
       "labels": null,
       "doc": "Ring time to -60 dB: 25 ms at 0, about 0.5 s at 64, 10 s at 127."
-    },
-    {
-      "name": "DAMP",
-      "default": 32,
-      "count": 128,
-      "labels": null,
-      "doc": "Shortens the ring of the upper modes, each a step more than the one below; 0 rings all four for DCAY."
     },
     {
       "name": "GAIN",
@@ -100,14 +97,169 @@
       "doc": "Dry/wet. 0 is exact passthrough and 127 only the ring; the dry falls as (1 - MIX/128)^2: -12 dB at 64, -26 dB at 100."
     },
     {
-      "name": "TUNE",
+      "name": "COLUN",
       "default": 0,
       "count": 2,
       "labels": [
-        "NOTE",
-        "COLUN"
+        "OFF",
+        "ON"
       ],
-      "doc": "On the SETUP page. NOTE: PTCH and INTV count semitones. COLUN: they count degrees of the Colundi sequence."
+      "doc": "Setup page. ON: PTCH is a degree of the Colundi sequence and each voice snaps to the nearest of its 128 frequencies (a MAJ chord on 440 Hz rings 440, 528, 639 and 880 Hz). The voices' bodies keep their own overtones."
+    },
+    {
+      "name": "VOIC",
+      "default": 0,
+      "count": 4,
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "doc": "Setup page. How many voices share the eight partials: 1 voice has all 8, 2 voices 4 each, 3 voices 3, 3 and 2, 4 voices 2 each."
+    },
+    {
+      "name": "TONE",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Setup page. Filters what excites the partials: left of centre a low-pass from 20 kHz down to 150 Hz (only the low partials ring), centre flat, right a high-pass from 20 Hz up to 3 kHz (only the high ones ring)."
+    },
+    {
+      "name": "DAMP",
+      "default": 32,
+      "count": 128,
+      "labels": null,
+      "doc": "Setup page. Shortens each voice's higher partials, each a step more than the one below; 0 rings them all for DCAY."
+    },
+    {
+      "name": "SCALE",
+      "default": 0,
+      "count": 121,
+      "labels": [
+        "OFF",
+        "CMAJ",
+        "CMIN",
+        "CDOR",
+        "CPHR",
+        "CLYD",
+        "CMIX",
+        "CHMI",
+        "CMMI",
+        "CPMA",
+        "CPMI",
+        "C#MAJ",
+        "C#MIN",
+        "C#DOR",
+        "C#PHR",
+        "C#LYD",
+        "C#MIX",
+        "C#HMI",
+        "C#MMI",
+        "C#PMA",
+        "C#PMI",
+        "DMAJ",
+        "DMIN",
+        "DDOR",
+        "DPHR",
+        "DLYD",
+        "DMIX",
+        "DHMI",
+        "DMMI",
+        "DPMA",
+        "DPMI",
+        "D#MAJ",
+        "D#MIN",
+        "D#DOR",
+        "D#PHR",
+        "D#LYD",
+        "D#MIX",
+        "D#HMI",
+        "D#MMI",
+        "D#PMA",
+        "D#PMI",
+        "EMAJ",
+        "EMIN",
+        "EDOR",
+        "EPHR",
+        "ELYD",
+        "EMIX",
+        "EHMI",
+        "EMMI",
+        "EPMA",
+        "EPMI",
+        "FMAJ",
+        "FMIN",
+        "FDOR",
+        "FPHR",
+        "FLYD",
+        "FMIX",
+        "FHMI",
+        "FMMI",
+        "FPMA",
+        "FPMI",
+        "F#MAJ",
+        "F#MIN",
+        "F#DOR",
+        "F#PHR",
+        "F#LYD",
+        "F#MIX",
+        "F#HMI",
+        "F#MMI",
+        "F#PMA",
+        "F#PMI",
+        "GMAJ",
+        "GMIN",
+        "GDOR",
+        "GPHR",
+        "GLYD",
+        "GMIX",
+        "GHMI",
+        "GMMI",
+        "GPMA",
+        "GPMI",
+        "G#MAJ",
+        "G#MIN",
+        "G#DOR",
+        "G#PHR",
+        "G#LYD",
+        "G#MIX",
+        "G#HMI",
+        "G#MMI",
+        "G#PMA",
+        "G#PMI",
+        "AMAJ",
+        "AMIN",
+        "ADOR",
+        "APHR",
+        "ALYD",
+        "AMIX",
+        "AHMI",
+        "AMMI",
+        "APMA",
+        "APMI",
+        "A#MAJ",
+        "A#MIN",
+        "A#DOR",
+        "A#PHR",
+        "A#LYD",
+        "A#MIX",
+        "A#HMI",
+        "A#MMI",
+        "A#PMA",
+        "A#PMI",
+        "BMAJ",
+        "BMIN",
+        "BDOR",
+        "BPHR",
+        "BLYD",
+        "BMIX",
+        "BHMI",
+        "BMMI",
+        "BPMA",
+        "BPMI"
+      ],
+      "doc": "Setup page. OFF, or one of 12 keys x 10 scales (MAJ, MIN, DOR, PHR, LYD, MIX, HMI harmonic minor, MMI melodic minor, PMA and PMI pentatonic). The root and chord notes snap to the nearest note of the key; COLUN ignores it."
     }
   ],
   "compatibility": {
@@ -116,10 +268,11 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Not tested on a unit yet: pitch, decay, silence and overload are checked in the DSP emulator only (verify.py).",
-      "Pitches assume 44.1 kHz, the rate every Modwerk effect assumes.",
-      "The input is summed to mono; the ring is spread across the stereo field.",
-      "A sustained tone at a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring."
+      "Two 15-minute RAM trials ran on the owner's unit with no crash, stall, freeze or skipped track (0.1.0 drafts of 23 Nov 2026); this eight-partial version has not run on a unit yet.",
+      "A pitch, chord or type change settles within eight DSP blocks (2.9 ms): one partial retunes per block.",
+      "Pitches assume 44.1 kHz. The input is summed to mono; the ring is spread across the stereo field.",
+      "A sustained tone on a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring.",
+      "Until the module is listed, the panel shows TYPE, CHRD, COLUN, VOIC and SCALE as numbers (COLUN 0 off, 1 on; VOIC 0-3 is one to four voices)."
     ],
     "effectId": 7
   },
@@ -146,7 +299,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py passes in dsp_host (pitch, decay, silence, overload, split, dirty state); not run on a unit yet.",
+    "summary": "verify.py passes in dsp_host (pitch, chords, Colundi snapping, scale, bodies, decay, silence, overload, split, dirty state); 0.1.0 ran a 15-minute RAM trial on the owner's unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [
@@ -162,12 +315,12 @@
   },
   "media": [],
   "access": {
-    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. PTCH, INTV, DCAY, DAMP, GAIN and MIX are on the FX main page, TUNE on its SETUP page.",
+    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. PTCH, TYPE, CHRD, DCAY, GAIN and MIX are on the FX main page; COLUN, VOIC, TONE, DAMP and SCALE on its SETUP page.",
     "steps": [
       "Select an audio track that plays a sample.",
       "Hold FUNC and press FX1 (or FX2) to open its SETUP. Turn LEVEL to RESONATOR and press YES.",
-      "Press FX1 (or FX2) for the main page: PTCH, INTV, DCAY, DAMP, GAIN, MIX.",
-      "Hold FUNC and press FX1 (or FX2) again for TUNE: NOTE or COLUN."
+      "Press FX1 (or FX2) for the main page: PTCH, TYPE, CHRD, DCAY, GAIN, MIX.",
+      "Hold FUNC and press FX1 (or FX2) again for the setup page: COLUN, VOIC, TONE, DAMP, SCALE."
     ],
     "screenshots": []
   }

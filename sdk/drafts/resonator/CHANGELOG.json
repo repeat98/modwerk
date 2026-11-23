@@ -3,9 +3,11 @@
     "version": "0.1.0-experimental",
     "date": "2026-11-23",
     "changes": [
-      "Four tuned modes ring at a note or at one of the 128 Colundi frequencies, excited by the track.",
-      "TUNE on the SETUP page switches PTCH and INTV between semitones and Colundi degrees.",
-      "Lock PTCH on trigs to play the ring from the sequencer."
+      "Eight tuned partials ring with the track, shared by one to four voices (VOIC).",
+      "TYPE gives every voice a body: PURE, STRNG, TUBE, BAR, PLATE, DRUM or BELL.",
+      "CHRD picks the voices' chord; lock it per trig for chord changes, and SCALE keeps it in a key.",
+      "COLUN on the setup page makes PTCH a Colundi degree and snaps every voice to a Colundi frequency.",
+      "TONE chooses which partials ring; MIX takes the dry out quickly (-26 dB at 100)."
     ]
   }
 ]
