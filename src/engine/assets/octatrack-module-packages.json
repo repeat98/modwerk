@@ -201,17 +201,21 @@
     {
       "id": "synth",
       "machine": true,
+      "restingReferences": [
+        "0x400d6434",
+        "0x400d6458"
+      ],
       "abi": 8,
       "features": 131,
       "sites": 24,
       "copies": 39,
       "fills": 0,
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "name": "FM Synth",
       "module": "e8c3e4fa",
-      "bytes": 30498,
-      "sha256": "7d59f80928cee4690781039ae521c15e5d2bbedf70b0e88616c7bcf2bcecffc3",
-      "path": "octatrack-modules/synth/0.1.4-experimental.mwrm"
+      "bytes": 31598,
+      "sha256": "791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9",
+      "path": "octatrack-modules/synth/0.1.5-experimental.mwrm"
     },
     {
       "id": "quantizer",
