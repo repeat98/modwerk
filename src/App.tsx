@@ -565,7 +565,7 @@ export default function App() {
     : forumRoute ? 'Forum' : betaInvitationRoute ? 'Join the beta' : accountRoute ? 'Account' : developerRoute ? 'Creator settings'
     : adminRoute ? 'Admin workspace' : route.startsWith('submit') ? 'Start developing'
     : route.startsWith('module-set') ? 'Module sets' : missingRoute ? 'Page unavailable' : 'Modules'
-  const resourcesCurrent = projectsRoute || faqRoute || ['base', 'credits', 'modding-guidelines'].includes(route) || (!DEVELOP_HIGHLIGHT && route.startsWith('submit'))
+  const resourcesCurrent = forumRoute || projectsRoute || faqRoute || ['base', 'credits', 'modding-guidelines'].includes(route) || (!DEVELOP_HIGHLIGHT && route.startsWith('submit'))
   useEffect(() => {
     if (resourcesCurrent && resourcesRef.current) resourcesRef.current.open = true
   }, [resourcesCurrent, route])
@@ -583,7 +583,6 @@ export default function App() {
             <nav className="sidebar-nav primary-nav" aria-label="Main navigation">
               <a href="#overview" className={overviewRoute ? 'active' : ''} aria-current={overviewRoute ? 'page' : undefined}><Icon name="home" /><span>Overview</span></a>
               <a href={libraryHref()} className={libraryCurrent ? 'active' : ''} aria-current={onLibrary && !libraryCategory ? 'page' : libraryCurrent ? 'location' : undefined}><Icon name="grid" /><span>Module library</span></a>
-              <div className="sidebar-nav-row"><a href="#forum" className={forumRoute ? 'active' : ''} aria-current={forumRoute ? 'location' : undefined}><Icon name="message" /><span>Forum</span></a><MembersOnlineChip presence={presence} /></div>
             </nav>
             <section className="sidebar-workspace" aria-label="Your workspace">
               {octatrackUi && <div className="sidebar-section-label">Your workspace</div>}
@@ -608,6 +607,7 @@ export default function App() {
             <details className="sidebar-resources" ref={resourcesRef} open>
               <summary>Resources</summary>
               <nav className="sidebar-nav" aria-label="Resources">
+                <div className="sidebar-nav-row"><a href="#forum" className={forumRoute ? 'active' : ''} aria-current={route === 'forum' ? 'page' : forumRoute ? 'location' : undefined}><Icon name="message" /><span>Forum</span></a><MembersOnlineChip presence={presence} /></div>
                 <a href="#projects" aria-current={projectsRoute ? 'page' : undefined}><Icon name="external" /><span>Other projects</span></a>
                 {!DEVELOP_HIGHLIGHT && <a href="#submit" aria-current={route.startsWith('submit') ? 'page' : undefined}><Icon name="plus" /><span>Start developing</span></a>}
                 <a href="#base" aria-current={route === 'base' ? 'page' : undefined}><Icon name="shield" /><span>Base firmware</span><span className="sidebar-feature-new">New</span></a>
@@ -686,7 +686,7 @@ export default function App() {
           {libraryNav && <><label className={'search' + (searchExpanded ? ' is-open' : '')}><Icon name="search" size={15} /><input ref={searchRef} type="search" aria-label={route==='module-sets'?'Search module sets':'Search modules'} placeholder={route==='module-sets'?'Search sets':'Search modules'} value={query} onChange={(event) => setQuery(event.target.value)} onBlur={() => { if (!query) setSearchOpen(false) }} onKeyDown={(event) => { if (phoneLayout && event.key === 'Escape') closeSearch() }} /></label><button ref={searchToggleRef} type="button" className="toolbar-icon search-toggle" aria-label={route==='module-sets'?'Search module sets':'Search modules'} onClick={openSearch}><Icon name="search" size={20} /></button><button type="button" className="search-cancel" onClick={closeSearch}>Cancel</button></>}
           <div className="toolbar-actions">
             <NotificationBell next={route} />
-            <a className={'configuration-button' + (configurationCount ? '' : ' is-empty')} href={configurationHref} aria-label={"Open " + w.set + ", " + configurationCount + " modules selected"} aria-current={configuration || machineView === 'configuration' ? 'page' : undefined}><Icon name="sliders" size={16} /><span>{octatrackUi ? activeFor(configurationTarget)?.name ?? w.Set : w.Set}</span><span className="toolbar-count">{configurationCount}</span></a>
+            {!(layout === 'desktop' && octatrackUi && configuration) && <a className={'configuration-button' + (configurationCount ? '' : ' is-empty')} href={configurationHref} aria-label={"Open " + w.set + ", " + configurationCount + " modules selected"} aria-current={configuration || machineView === 'configuration' ? 'page' : undefined}><Icon name="sliders" size={16} /><span>{octatrackUi ? activeFor(configurationTarget)?.name ?? w.Set : w.Set}</span><span className="toolbar-count">{configurationCount}</span></a>}
             <MobileMenu onConfigurations={() => octatrackUi ? window.location.assign('#module-sets') : setConfigurationsOpen(true)} route={route} online={online} selectedCount={configurationCount} configurationHref={configurationHref} admin={session.admin} developer={!!developer?.user} highlightDevelop={DEVELOP_HIGHLIGHT} onSupport={SUPPORT_URL ? () => setSupportOpen(true) : undefined} />
             {desktop && <button type="button" className="desktop-menu-button" aria-label="App menu" title="App menu" onClick={event => openAppMenu(desktop, event.currentTarget)}><Icon name="more" size={18} /></button>}
           </div>
