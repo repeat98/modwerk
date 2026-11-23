@@ -2,37 +2,38 @@
   "schemaVersion": 1,
   "machine": "model-cycles",
   "interface": "0.3",
-  "status": "Modwerk's Model:Cycles base for OS 1.13, built from the pinned core-mc 0.3 source with eight handlers per hook, and selected by the SHA-256 in sdk/machines/model-cycles/base-binding.json. In development: not yet run on a unit.",
+  "status": "Modwerk's Model:Cycles base for OS 1.13: the pinned core-mc 0.3 source and Modwerk's ev_key_leds, selected by the SHA-256 in sdk/machines/model-cycles/base-binding.json. In development.",
   "events": [
     {
       "name": "ev_tick",
       "when": "the UI compose check, about 30 times a second, before stock's own check",
-      "handler": "void f(void *ctrl); Set *((unsigned char *)ctrl + 0x20) = 1 to ask for a redraw. Not a clock: timing follows the instrument's transport.",
-      "room": 8
+      "handler": "void f(void *ctrl); Set *((unsigned char *)ctrl + 0x20) = 1 to ask for a redraw. Not a clock: timing follows the instrument's transport."
     },
     {
       "name": "ev_draw",
       "when": "after the OS has composed the 128x64 frame",
-      "handler": "void f(void *bmp, void *ctrl); Draw over the frame with fw_fill and fw_text; y = 0 is the bottom row. Stock's outputs are kept.",
-      "room": 8
+      "handler": "void f(void *bmp, void *ctrl); Draw over the frame with fw_fill and fw_text; y = 0 is the bottom row. Stock's outputs are kept."
     },
     {
       "name": "ev_key",
       "when": "each key event, before stock's key dispatch",
-      "handler": "int f(void *brain, void *ev); Return nonzero to take the event: no later handler and not stock sees it. ev+12 is the key id, ev+16 its flags. Declare every gesture a handler takes in the module's claims.",
-      "room": 8
+      "handler": "int f(void *brain, void *ev); Return nonzero to take the event: no later handler and not stock sees it. ev+12 is the key id, ev+16 its flags. Declare every gesture a handler takes in the module's claims."
     },
     {
       "name": "ev_enc",
       "when": "each knob turn, before stock's encoder dispatch",
-      "handler": "int f(void *brain, void *ev); Return nonzero to take the turn: no later handler and not stock sees it. ev+12 is the knob, ev+16 the delta.",
-      "room": 8
+      "handler": "int f(void *brain, void *ev); Return nonzero to take the turn: no later handler and not stock sees it. ev+12 is the knob, ev+16 the delta."
     },
     {
       "name": "ev_boot",
       "when": "once at boot, after the mods' RAM image is copied, their .bss cleared and the instruction and branch caches invalidated, before the OS starts",
       "handler": "void f(void); Fill tables the OS reads while it starts. The OS clears its own .bss right after.",
-      "room": 8,
+      "since": "0.3"
+    },
+    {
+      "name": "ev_key_leds",
+      "when": "every key-LED frame, after the frame clears the LEDs and before the stock views set theirs",
+      "handler": "void f(void *mgr); Set an LED with fw_led_set(mgr, led, state): 2 lights it, 1 turns it off; TRIG n is LED n; the first setter wins. A module whose LEDs change sets *((unsigned char *)ctrl + 0x21) = 1 in its ev_tick handler to ask for a frame.",
       "since": "0.3"
     }
   ],
@@ -187,6 +188,12 @@
       "since": "0.2",
       "prototype": "extern const volatile uint32_t fw_fs_ids[];",
       "purpose": "the files by id: {id, inode} pairs, by id"
+    },
+    {
+      "name": "fw_led_set",
+      "since": "0.3",
+      "prototype": "extern void fw_led_set(void *mgr, int32_t led, int32_t state);",
+      "purpose": "set a key LED in an ev_key_leds handler: state 2 on, 1 off; the first setter wins (Modwerk's mc/core.h)"
     }
   ],
   "claims": [],

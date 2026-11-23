@@ -74,20 +74,29 @@ class MachineBases(unittest.TestCase):
         hashes = {pathlib.Path(item["from"]).name: item["sha256"] for item in record["files"]}
         self.assertEqual({name: hashes[name] for name in release["build"]["sources"]}, release["build"]["sources"])
 
-    def test_model_cycles_hooks_are_the_sites_and_room_the_base_builds(self):
-        # events.json is the registry; the base's copy of core-mc's mod.json must dispatch the same hooks at the same
-        # guarded sites, each with the room the registry gives it.
+    def test_model_cycles_hooks_are_the_sites_the_base_builds(self):
+        # events.json is the registry: hooks 0-4 are core-mc's own sites, unchanged, and every later one is a site
+        # base.json adds. Each hook's guard is the SHA-256 of the stock bytes its site replaces, and the base declares
+        # its collection; the core contract lists the same hooks.
         events = json.loads((APP / "sdk/machines/model-cycles/events.json").read_text())["events"]
-        copy = json.loads((APP / "sdk/machines/model-cycles/elekloader/copies/core-mc/mod.json").read_text())
-        stock = {site["addr"]: bytes.fromhex(site["stock"]) for site in copy["sites"]}
+        mod = json.loads((APP / "sdk/machines/model-cycles/elekloader/core-mc/mod.json").read_text())
+        add = json.loads((APP / "sdk/machines/model-cycles/elekloader/base.json").read_text())["add"]
+        guards = {site["addr"]: (len(bytes.fromhex(site["stock"])), hashlib.sha256(bytes.fromhex(site["stock"])).hexdigest())
+                  for site in mod["sites"]}
+        added = {site["addr"]: (site["len"], site["stockSha256"]) for site in add["sites"]}
         self.assertEqual([event["index"] for event in events], list(range(len(events))))
-        self.assertEqual({event["event"]: event["room"] for event in events}, copy["collections"])
+        self.assertEqual([event["event"] for event in events[:5]], list(mod["collections"]))
+        collections = dict(mod["collections"], **add["collections"])
         for event in events:
-            self.assertIn(event["site"], stock, event["event"])
-            self.assertEqual(event["length"], len(stock[event["site"]]), event["event"])
-            self.assertEqual(event["guard"], hashlib.sha256(stock[event["site"]]).hexdigest(), event["event"])
+            site = guards if event["index"] < 5 else added
+            self.assertIn(event["site"], site, event["event"])
+            self.assertEqual((event["length"], event["guard"]), site[event["site"]], event["event"])
+            self.assertIn(event["event"], collections)
+            self.assertNotIn("room", event, "a call hook's table takes every subscriber")
+        # A collection's number is the entry size in bytes (a handler's address), as in the release.
+        self.assertEqual(set(collections.values()), {4})
         interface = json.loads((APP / "sdk/model-cycles/core-profile/interface.json").read_text())
-        self.assertEqual({entry["name"]: entry["room"] for entry in interface["events"]}, copy["collections"])
+        self.assertEqual([entry["name"] for entry in interface["events"]], [event["event"] for event in events])
 
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())

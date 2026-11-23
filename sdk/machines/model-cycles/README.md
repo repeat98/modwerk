@@ -1,10 +1,10 @@
 # Model:Cycles SDK
 
-The Model:Cycles is in research for stock OS 1.13. Its Modwerk base is in development: built from core-mc 0.3's source; it boots on a unit and behaves as stock. No module exists yet, and the page stays beta-only.
+The Model:Cycles is in research for stock OS 1.13. Its Modwerk base is in development: built from core-mc 0.3's source with a key-LED hook added; with a test module on its LED hook it runs on a unit and in digiemu. No module exists yet, and the page stays beta-only.
 
 ## Modwerk stack
 
-The Model:Cycles follows the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). Its [Modwerk base](elekloader/README.md) starts from drumkilla's core-mc 0.3 at Elekloader v0.11.0, imported unchanged, with room for eight handlers per hook instead of four. Modwerk adds no hooks, sources or sites yet. The base owns the five sites below; a module subscribes to them and never patches them. What several modules will share (pages behind a stock key, menu rows, per-kit state) goes into the base before the first module that needs it ([choose how a module hooks in](../../../docs/module-guides/README.md#choose-how-a-module-hooks-in)). A site only one module needs stays that module's own declared site (`platform.claims`).
+The Model:Cycles follows the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). Its [Modwerk base](elekloader/README.md) starts from drumkilla's core-mc 0.3 at Elekloader v0.11.0, imported unchanged. Modwerk adds one hook, `ev_key_leds`, as the Digitakt II has it. The base owns the six sites below; a module subscribes to them and never patches them. What several modules will share (pages behind a stock key, menu rows, per-kit state) goes into the base before the first module that needs it ([choose how a module hooks in](../../../docs/module-guides/README.md#choose-how-a-module-hooks-in)). A site only one module needs stays that module's own declared site (`platform.claims`).
 
 Next: the first module, Control All Config. The USB link, loading without a reflash and base updates over USB are not started.
 
@@ -19,15 +19,16 @@ The registry is [events.json](events.json), in the Octatrack's format; the [core
 | `ev_key` | `int f(void *brain, void *ev)` | Each key event, before stock. Nonzero takes it. `ev+12` key id, `ev+16` flags. |
 | `ev_enc` | `int f(void *brain, void *ev)` | Each knob turn, before stock. Nonzero takes it. `ev+12` knob, `ev+16` delta. |
 | `ev_boot` | `void f(void)` | Once at boot, before the OS starts: supervisor mode, interrupts and data cache off, no firmware call, only the mods' own RAM. |
+| `ev_key_leds` | `void f(void *mgr)` | Each key-LED frame, after the LEDs are cleared and before the stock views set theirs. `fw_led_set(mgr, led, state)`: 2 on, 1 off; TRIG n is LED n; the first setter wins. Modwerk's, in `include/mc/core.h`. |
 
-Handlers are C functions: arguments on the stack, d0-d1/a0-a1 free, everything else kept. Lower `order` runs first; each hook holds eight handlers. DMA timer 0 stays as the stock OS has it (`NO_DTIM0`), so a mod cannot use it as a time base.
+Handlers are C functions: arguments on the stack, d0-d1/a0-a1 free, everything else kept. Lower `order` runs first; a hook takes every subscriber (the 4 in `mod.json`'s collections is an entry's size in bytes, not a count). DMA timer 0 stays as the stock OS has it (`NO_DTIM0`), so a mod cannot use it as a time base.
 
-The core also exports 25 firmware locations (`fw_project`, `fw_key_held`, `fw_fill`, `fw_text`, the kits, the +Drive's file system), declared in [`include/model-cycles/core.h`](include/model-cycles/core.h) for C and `core.inc` for assembly. A module that uses them names no address of its own. There is no SETTINGS, render, LED or project-storage hook yet.
+The core also exports 25 firmware locations (`fw_project`, `fw_key_held`, `fw_fill`, `fw_text`, the kits, the +Drive's file system), declared in [`include/model-cycles/core.h`](include/model-cycles/core.h) for C and `core.inc` for assembly. A module that uses them names no address of its own. A module whose LEDs change asks for a key-LED frame by setting `ctrl + 0x21` to 1 in its `ev_tick` handler. There is no SETTINGS, render or project-storage hook yet.
 
 ## Memory
 
 - Shared DDR: `0x47E00000–0x47E40000` (262,144 bytes for core and linked mods).
-- Modwerk base footprint: 180 bytes `.run` plus 16 bytes `.bss`, and 76 bytes `.boot`; the linker remains authoritative for combined sizes and overlap.
+- Modwerk base footprint: 220 bytes `.run` plus 16 bytes `.bss`, and 76 bytes `.boot`; the linker remains authoritative for combined sizes and overlap.
 - No `.fast` copy table and no large-buffer area (`bulk`) yet: the pinned kit's Model:Cycles profile does not carry `bulk`.
 
 ## Build and recovery
@@ -42,6 +43,6 @@ A normal OS update uses Elektron Transfer. For recovery, hold FUNC while powerin
 
 ## Status
 
-- The base builds from the imported source; with the reviewed toolchain its package equals the core-mc 0.3 release except for the larger collections.
-- Boots and behaves as stock on a unit and in digiemu ([record](../../../docs/verification/2026-11-23-model-cycles-base.md)). Recovery with the stock `.syx` after it is not tested.
+- The base builds from the imported source and keeps everything of the core-mc 0.3 release; Modwerk adds `ev_key_leds`.
+- With a test module on `ev_key_leds`, it runs on a unit and in digiemu as expected ([record](../../../docs/verification/2026-11-23-model-cycles-base.md)). Recovery with the stock `.syx` after it is not tested.
 - No module. The first planned is Control All Config.
