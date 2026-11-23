@@ -11,7 +11,8 @@
 //   as band.s places it, from FRQ and TYP as the page shows them (a held trig's locks included).
 // - The FILTER graph: for BW and BWL, band.s's graph site calls improved_fltr_band_graph, which draws
 //   the band as measured on a unit (tools/calibration.json): the edges, the 6 dB/oct slopes and the
-//   level, 3 dB a row with +9 dB at the top, FRQ's scale (13.8 Hz .. 21.1 kHz) across.
+//   level, 4 dB a row with +15 dB at the top (narrower bands' peaks clip there), FRQ's scale
+//   (13.8 Hz .. 21.1 kHz) across.
 // Stock with a band type in a kit plays it as PK (its own clamp) and draws a blank TYP knob.
 
 #include <stdint.h>
@@ -47,8 +48,8 @@
 // The graph's box (stock's, 0x40038e00..0x40038e12): x0 and y0 its left and bottom border, bottom-up.
 #define GR_W 51                         // inside: x0 + 1 .. x0 + 51
 #define GR_H 11                         //         y0 + 1 .. y0 + 11
-#define GR_TOP_DB (9 * 8)               // the top row, dB x 8
-#define GR_ROW_DB (3 * 8)               // a row
+#define GR_TOP_DB (15 * 8)              // the top row, dB x 8: a 4-semitone band's +13 dB fits
+#define GR_ROW_DB (4 * 8)               // a row
 #define S_MIN (-8 * 256)                // fltr_att's first s (8.8), sixteenths
 #define S_MAX (4 * 256)
 
@@ -72,7 +73,7 @@ const uint32_t improved_fltr_glyph[21] __attribute__((aligned(4))) = {
 // as the page shows them, a held trig's locks included, and a mark that it drew.
 volatile int32_t improved_fltr_seen_frq, improved_fltr_seen_typ, improved_fltr_seen;
 
-static int asked, page_up;
+static int asked, page_up, page_track = -1;   // the track the noted values are from
 
 // ---- the band, as band.s places it ----
 
@@ -215,7 +216,7 @@ FLTR_UI static int fltr_text(struct core_text *t)
     }
     if (t->id != ID_RES)
         return CORE_TEXT_PASS;
-    if (page_up) {                              // the page's own FRQ and TYP, as its graph drew them
+    if (page_up && page_track == selected_track()) {   // the page's own FRQ and TYP, as its graph drew them
         typ = improved_fltr_seen_typ;
         frq = improved_fltr_seen_frq;
     } else if ((sw = sound_words(selected_track()))) {
@@ -288,8 +289,10 @@ FLTR_UI void improved_fltr_draw(void *bmp, void *ctrl)
 {
     (void)bmp;
     (void)ctrl;
-    if (asked && improved_fltr_seen)
+    if (asked && improved_fltr_seen) {
         page_up = 1;
+        page_track = selected_track();          // a track change with no key: the next text sees it
+    }
     asked = 0;
     improved_fltr_seen = 0;
 }

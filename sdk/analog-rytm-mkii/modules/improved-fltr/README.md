@@ -16,7 +16,7 @@ Version **0.1.0-experimental** for Analog Rytm MKII OS **1.74**, on Modwerk's ba
 | FILTER FRQ | In BW and BWL: the high-pass edge (the base). Its scale is stock's: a semitone a step, 440 Hz at 60 (Filter Hz shows it in hertz). |
 | FILTER RES | In BW and BWL: the low-pass edge, shown in hertz. BW: the cutoff itself, on FRQ's scale. BWL: its distance above FRQ, 0 to 127 for 0 to 59.5 semitones. |
 | FILTER ENV | Moves the analog cutoff, so it moves both edges, in either type. |
-| The FILTER graph | BW and BWL: the band's response as measured, both edges, the slopes and the level, 3 dB a row. |
+| The FILTER graph | BW and BWL: the band's response as measured, both edges, the slopes and the level, 4 dB a row with +15 dB at the top. |
 
 The other FILTER knobs and every other type are stock's.
 
@@ -56,7 +56,7 @@ Requires Modwerk's base (core-ar2 0.7) on OS 1.74. Use your own original stock O
 - **Level.** A wider band is quieter: about 7 dB down at 4.5 octaves, 14 dB at 7 octaves. Set VOL by ear; there is no make-up gain.
 - **Accuracy.** On a unit the edges landed within about 7 % of FRQ and RES (two runs; the analog filter itself moves a few percent from run to run), a 5-octave band's low edge up to 18 % high.
 - **Slopes.** 6 dB/oct each side, the analog filter's own: a 2-pole band-pass split in two.
-- **The graph** is drawn from the calibration, not measured live: the analog filter moves a few percent from run to run.
+- **The graph** is drawn from the calibration, not measured live: the analog filter moves a few percent from run to run. Its top is +15 dB: bands narrower than about 3 semitones peak higher (up to +26 dB at one semitone) and are drawn clipped there.
 - **The envelope** moves the analog cutoff: in BW it moves both edges too.
 - **RES carries over** when TYP moves between a band type and a stock type: its value keeps its number and takes the new type's meaning. A BW band's RES (an edge high up) read as stock resonance can self-oscillate loudly on LP2..PK; a stock RES 0 read in BWL is the narrowest, most resonant band. Set RES after changing TYP.
 - **At the top.** The analog cutoff stops at stock's top (FRQ 127, 21.1 kHz): a wide band with a high base then starts below FRQ. RES shows the low-pass edge as played, OPEN above 21.1 kHz.
@@ -65,7 +65,7 @@ Requires Modwerk's base (core-ar2 0.7) on OS 1.74. Use your own original stock O
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Memory: under 1 KB of code and data. Audio: a few instructions a voice a block in the filter routine.
+See [TESTING.md](TESTING.md). Memory: 3,492 bytes (3,472 of code and tables, 20 of variables; the graph's shape tables are most of it). Audio: a few instructions a voice a block in the filter routine.
 
 ## Authorship and licences
 

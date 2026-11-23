@@ -4,7 +4,9 @@ Names: the runs below up to IFC2 used the first layout, **BND** (TYP 7, linked) 
 
 ## Emulator, current layout
 
-IF08 (sha256 566159c6; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 3 dB a row, at five settings; stock BP unchanged) pass. Not on the unit yet in this layout.
+IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 4 dB a row with +15 dB at the top, at five settings, and stock BP; each box against a reference recorded from screens checked by eye) pass. `sdk/tests/test_improved_fltr_table.py` keeps `src/width-table.h` in step with the calibration. Not on the unit yet in this layout.
+
+Code review (23 Nov 2026, the BW/BWL change), fixed: RES's text uses the page's noted FRQ and TYP only for the track they came from; the graph's top moved to +15 dB so a 4-semitone band's peak is drawn, narrower ones clip (listed); the memory figure measured (3,492 bytes); the graph cases compare against references; the width table has a test.
 
 ## Emulator (rytm-emu, not hardware evidence)
 

@@ -61,7 +61,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
+    "memoryBytes": 3492,
     "fastBytes": null,
     "load": {
       "display": "Not measured yet",
