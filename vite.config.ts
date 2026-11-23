@@ -12,7 +12,7 @@ import { buildLoadProbe } from './sdk/machines/zoom-ms-70cdr/dev/load-probe.ts'
 export default defineConfig(({ command, mode }) => {
  const api = loadEnv(mode, process.cwd(), 'VITE_').VITE_COMMUNITY_API_URL
  const probeLabel = command === 'serve' ? process.env.MODWERK_ZOOM_PROBE_LABEL : undefined
- if (probeLabel && !/^D[A-Z0-9]{3}$/.test(probeLabel)) throw new Error('Use a four-character Zoom development label, for example D002.')
+ if (probeLabel && !/^D[A-Z0-9]{3}$/.test(probeLabel)) throw new Error('Use a four-character Zoom development label, for example D003.')
  const zoomProbe = probeLabel ? { label: probeLabel, patch: buildLoadProbe(process.env.MODWERK_ZOOM_C6X_PREFIX ?? 'tic6x-elf-') } : null
  const origin = api ? new URL(api).origin : ''
  if (api && !['https:', 'http:'].includes(new URL(api).protocol)) throw new Error('Invalid community API protocol.')

@@ -1,4 +1,6 @@
-import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { deflateRawSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
@@ -114,12 +116,27 @@ describe('the Zoom base builder', () => {
   })
 
   const toolPrefix = process.env.MODWERK_ZOOM_C6X_PREFIX
+  it.runIf(toolPrefix)('saves the draw return address above the callee’s free stack word', () => {
+    const code = buildLoadProbe(toolPrefix!).section![0]
+    const dir = mkdtempSync(join(tmpdir(), 'modwerk-zoom-abi-'))
+    try {
+      const file = join(dir, 'probe.bin')
+      writeFileSync(file, Buffer.from(code.data as string, 'hex'))
+      const disassembly = execFileSync(toolPrefix! + 'objdump',
+        ['-EL', '-D', '-b', 'binary', '-m', 'tic6x', '--adjust-vma=' + code.addr, file], { encoding: 'utf8' })
+      expect(disassembly).toMatch(/stw\s+\.D2T2\s+b3,\*b15--\(32\)/i)
+      expect(disassembly).toMatch(/ldw\s+\.D2T2\s+\*\+\+b15\(32\),b3/i)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   it.runIf(app && toolPrefix)('adds the probe section and guarded calls to the labelled build', async () => {
     const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
     const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
     const overlay = buildLoadProbe(toolPrefix!)
-    const baseline = await buildDevelopmentBase(own, 'D002')
-    const probe = await buildDevelopmentBase(own, 'D002', [overlay])
+    const baseline = await buildDevelopmentBase(own, 'D003')
+    const probe = await buildDevelopmentBase(own, 'D003', [overlay])
     const image = parseAis(probe.main), before = parseAis(baseline.main)
     expect(image.sections).toHaveLength(before.sections.length + 1)
     for (const call of overlay.write!) {

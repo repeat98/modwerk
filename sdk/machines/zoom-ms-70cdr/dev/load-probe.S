@@ -17,9 +17,11 @@ probe_read:
 ; Add an eight-digit read count at the right of the SYSTEM title.
         .balign 32
 probe_draw:
-        stw     .D2T2   b3,*--b15(32)
+        ; B15 points to the next free word. Keep the return address in
+        ; our frame, above the stack word the two callees can use.
+        stw     .D2T2   b3,*b15--(32)
         callp   .S2     midistomp_diag_draw,b3
-        stw     .D2T1   a4,*+b15(4)
+        stw     .D2T1   a4,*+b15(20)
         mvkl    .S1     read_count,a0
         mvkh    .S1     read_count,a0
         ldw     .D1T1   *a0,a1
@@ -44,8 +46,8 @@ digit:
         mvk     .S1     78,a6
         mvk     .L2     1,b6
         callp   .S2     draw_text,b3
-        ldw     .D2T1   *+b15(4),a4
-        ldw     .D2T2   *b15++(32),b3
+        ldw     .D2T1   *+b15(20),a4
+        ldw     .D2T2   *++b15(32),b3
         nop     4
         bnop    .S2     b3,5
 

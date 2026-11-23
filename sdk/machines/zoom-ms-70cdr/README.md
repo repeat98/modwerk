@@ -45,13 +45,13 @@ To install that same build through the existing browser dialog, start the
 local development server with the same label and tools:
 
 ```sh
-MODWERK_ZOOM_PROBE_LABEL=D002 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
+MODWERK_ZOOM_PROBE_LABEL=D003 MODWERK_ZOOM_C6X_PREFIX=tic6x-elf- \
   npm run dev -- --host 127.0.0.1
 ```
 
 From the pedal page, back up the files. The owner puts the pedal in update
 mode and opens **Install base**. The dialog must name **ZDL load probe
-D002** before the owner flashes. After restarting, read the identity
+D003** before the owner flashes. After restarting, read the identity
 through `device_status` or `npm run zoom -- status`.
 
 In **System**, read the eight hexadecimal digits at the right of the
