@@ -12,7 +12,8 @@
 //       frozen UI or skipped track during the trial fails it (exit 1) and it is rolled back even with --accept
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
-//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
+//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back);
+//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial
 //   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
@@ -65,6 +66,7 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
+  split: { type: 'boolean', default: false },
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
@@ -768,10 +770,19 @@ if (command === 'serve') {
     // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
     if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
     const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
-    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
-    console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
-    try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
-    catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
+    const offer = async packages => {
+      const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
+      console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
+      try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
+      catch (error) {
+        // 38 catalogue packages outgrew the module pool on 23 November 2026 (MKII, 0.8.1 twin): halves of 17 and 16 ran
+        const split = values.split && packages.length > 1 && /RUNTIME_MEMORY/.test(error.message)
+        console.log((split ? `too large for one trial (RUNTIME_MEMORY), in halves: ` : 'refused: ') + error.message)
+        await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status))
+        if (split) for (const half of [packages.slice(0, Math.ceil(packages.length / 2)), packages.slice(Math.ceil(packages.length / 2))]) await offer(half)
+      }
+    }
+    await offer(packages)
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
   }
   if (command === 'flash') {

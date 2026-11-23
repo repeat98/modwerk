@@ -1,0 +1,1 @@
+The first-session guide for contributors now explains the path from a shared draft to a release and who does what, coding agents share prototypes as draft pull requests instead of holding them back, and they recap each step for the developer in plain words.

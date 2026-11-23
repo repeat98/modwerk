@@ -52,7 +52,7 @@ npm run pr:ready -- --author <login>   # a registered author's update: also the 
 
 The command fetches `main` and runs CI’s scoped checks. With `--commit`, stage the whole change. Success commits it with your hooks, verifies tree and parent, and checks scope and board claims. Failure leaves it staged. The default checks a clean commit and regenerates stale catalogues or notices after a failure. Files that fail the full test run and pass alone are listed as flaky.
 
-Once **Ready**, push and run `gh pr view <URL> --json state,headRefOid,isDraft`. When the open PR points to the tested commit and testing is complete and recorded, run `gh pr ready <URL>` if it is a draft. Read it again, confirm the same head has `isDraft: false`, then watch `gh pr checks <URL> --watch` until green. If it stays a draft, name the remaining task and its owner. This includes contributor PRs into `base/<machine>-next`. The owner promotes the cumulative PR from that branch into `main`.
+Once **Ready**, push and run `gh pr view <URL> --json state,headRefOid,isDraft`. When the open PR points to the checked commit and required testing is recorded, run `gh pr ready <URL>` yourself if it is a draft. Confirm the same head has `isDraft: false` before reporting completion, then watch `gh pr checks <URL> --watch` until green. If it stays a draft, name the blocker and who owns it. This includes contributor PRs into `base/<machine>-next`. The owner promotes the cumulative PR from that branch into `main`.
 
 Common checks and failures follow.
 
