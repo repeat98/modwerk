@@ -34,11 +34,17 @@ Developer's report (twwwy), 24 November 2026, the same twin and package, Kits al
 another Kit while playing and listen at the switch, then FUNC+CUE; a knob changed, SAVE KIT into an empty Kit, another
 Kit loaded and the saved one again: "they all work". Verdict of that trial: no crash, stall, freeze or skipped track.
 
+With Pattern Sample Locks: Pattern Sample Locks 0.1.9 `6fea272e…` kept on the same twin (with the developer's OK), then
+Kits as a trial beside it. FUNC+PART drew PART EDIT with LOCKS (LOCK SAMPLES, CLEAR LOCKS) and KITS; PART was left out
+(agent's screen). Developer's report (twwwy), 24 November 2026, given: SAVE KIT from KITS and the Kit back after
+another load; LOCK SAMPLES and CLEAR LOCKS from LOCKS; a Kit loaded with PART while playing, listening at the switch;
+FUNC+PASTE+PART after a pattern paste: "they all work". Verdict of that trial: no crash, stall, freeze or skipped
+track; Locks stayed kept and Kits was rolled back.
+
 Developer's report (twwwy), 21 November 2026, a base 0.7.13 development twin `5b9c4b1e…` with the same package beside
 kept Pattern Sample Locks 0.1.9 `6fea272e…`: "they all works. the menu works too".
 
-Not tested: FUNC+PASTE+PART on an MKI (FUNC+PASTE+MIDI), Kits with Pattern Sample Locks on base 0.8, a Keep, the
-flashed base 0.8, a power cycle.
+Not tested: FUNC+PASTE+PART on an MKI (FUNC+PASTE+MIDI), a Keep of Kits, the flashed base 0.8, a power cycle.
 
 ## Kits 0.1.1-experimental on base 0.7.9: agent's run, 19 November 2026
 
