@@ -46,10 +46,11 @@ boot, power-on included: a development image is meant to be driven. YES on the r
 arm; the screen is stock's. (Bases before 21 Nov 2026 drew a 2 x 5 notch at x 126-127 of the header
 bar while armed; the test runner's screen compares skip it, so references recorded with it still pass.)
 
-Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, `confirm` and `ramboot` need the arm,
+Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, pads, `confirm` and `ramboot` need the arm,
 and stop as soon as a person touches the panel: a press or turn on the panel while armed lets go
-of every key the link holds and refuses the link's keys and turns for about 3 s (status
-`a person is at the unit`). A press of the key whose event was just dispatched, in the same tick,
+of every key and pad the link holds and refuses the link's keys, turns and pads for about 3 s (status
+`a person is at the unit`). A person playing a pad is not seen: the panel's pad messages never reach
+`ev_key` or `ev_enc`, where the link watches for a person. A press of the key whose event was just dispatched, in the same tick,
 is what a module playing a held-back tap again through `core_key` looks like (Quick Mod Assign's
 LFO tap): it counts only when the panel's key bitmap holds that key. A module's own key messages
 (Control In Actions' `CIA1`) are not panel keys. A panel tap held 10 ms still counts.

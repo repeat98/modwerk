@@ -124,8 +124,9 @@
 
 #define RING 8                          // commands waiting for the UI task
 #define CMD_BYTES 48                    // a command's bytes, F0..F7 (the longest, RAMBOOT, is 29)
-#define SLOTS 64                        // posted messages, reused in turn: more than PENDING keys and turns plus
-                                        //   one release_all's pad messages (2 x PADS) and a tick's commands
+#define SLOTS 64                        // posted messages, reused in turn: more than PENDING keys and turns, one
+                                        //   release_all's pad messages (2 x PADS) and a tick's pad posts (at most
+                                        //   PER_TICK + 1: a release in the tick adds 2 for a pad pressed in it)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define PER_TICK 6                      // commands acted on in one tick
 #define HUMAN_TICKS 60                  // about 3 s
@@ -581,7 +582,7 @@ static void COLD act(const uint8_t *m, int len)
                 v = get32(a + 10);
             }
             if (pad >= PADS || what > 2 || (what == 1 ? v < 1 || v > 127 : what == 2 ? v > 255 : v != 0))
-                status = ST_BAD;                // as the panel: a down has a velocity, an up none
+                status = ST_BAD;                // as the panel: a down has a velocity, an up 0 (0x400822be)
             else {
                 post_pad(what == 0 ? MSG_PAD_UP : what == 1 ? MSG_PAD_DOWN : MSG_PRESSURE, (int)pad, (int)v);
                 if (what < 2)

@@ -138,7 +138,7 @@ class Case:
 
     def req(self, n, name, *values, slot=None, gap=GAP_MS):
         if name in ('key', 'enc', 'pad') and n and self.t < self.panel_quiet:
-            self.fail(n, 'the link refuses keys and turns for %d ms after a panel press: wait first' % PANEL_QUIET_MS)
+            self.fail(n, 'the link refuses keys, turns and pads for %d ms after a panel press: wait first' % PANEL_QUIET_MS)
         if name == 'release' and self.t < self.panel_quiet:
             self.t = self.panel_quiet                       # the runner's closing release, once the link takes it
         self.ops.append(Op(self.t, name, values, n, slot))

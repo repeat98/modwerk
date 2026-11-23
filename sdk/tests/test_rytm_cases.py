@@ -50,6 +50,39 @@ class RytmCases(unittest.TestCase):
             ("cc", 1, 101, 5), ("cc", 1, 100, 0),   # SysEx ended running status; an RPN ends the NRPN
             ("cc", 1, 6, 16)])                      # so its data entry is a plain CC
 
+    def test_midi_events_reads_notes_and_poly_pressure(self):
+        data = bytes.fromhex("9d2464 ad241e 2400 9d2400 8d2400 b00740")
+        self.assertEqual(rytm_test.midi_events(data), [
+            ("note", 14, 36, 100), ("polyat", 14, 36, 30),
+            ("polyat", 14, 36, 0),                  # running status; a pressure of 0 is kept
+            ("cc", 1, 7, 64)])                      # a note on with velocity 0 and a note off are no notes
+
+    def test_midi_checks_count_by_kind(self):
+        got = [("note", 14, 36, 100), ("polyat", 14, 36, 30), ("cc", 14, 74, 3)]
+        check = lambda field, op, want, how='count': rytm_test.check_midi(
+            {"field": field, "op": op, "want": (how, want)}, got)[0]
+        self.assertTrue(check("count", "==", 1))    # .count: parameter messages only, as before notes were read
+        self.assertTrue(check("notes", "==", 1))
+        self.assertTrue(check("polyat", "==", 1))
+        self.assertTrue(check("", "has", ("polyat", 36, 30, None), how="has"))
+        self.assertTrue(check("", "lacks", ("polyat", 60, None, None), how="lacks"))
+
+    def test_pad_steps(self):
+        path = pathlib.Path(self.id().replace(".", "_") + ".case")
+        try:
+            path.write_text("pad BD down 100\npad SD pressure 255\npad BD up\nmidi m begin\nmidi m end\n"
+                            "expect m has polyat 36 30\nexpect m.polyat > 1\n")
+            case = rytm_test.Case(path)
+            self.assertEqual([op.values for op in case.ops if op.name == "pad"], [(0, 1, 100), (1, 2, 255), (0, 0, 0)])
+            for bad in ("pad BD down 0", "pad BD down 128", "pad BD pressure 256", "pad BD up 5", "pad BD down",
+                        "pad XX up", "midi m begin\nmidi m end\nexpect m has note 128",
+                        "target: emu\nemu press LFO 500\npad BD down 100"):
+                path.write_text(bad + "\n")
+                with self.assertRaises(rytm_test.CaseError, msg=bad):
+                    rytm_test.Case(path)
+        finally:
+            path.unlink(missing_ok=True)
+
     def test_nrpn_step_and_emu_steps(self):
         case = rytm_test.find_cases([TOOLS / "cases/link-midi-out.case"])[0]
         ccs = [op.values for op in case.ops if op.name == "cc"]
