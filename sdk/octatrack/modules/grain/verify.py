@@ -37,14 +37,15 @@ CC = shutil.which('cc') or shutil.which('gcc')
 if not CC:
     sys.exit('[SKIP] no C compiler: the host gate did not run')
 
-# 0.1.2 renders (EDGE WRAP, the sample is a ring and every grain is 3 dB lower) and 0.2.0 renders of CLMP and BNCE; settings
+# 0.1.2 renders (EDGE WRAP, the sample is a ring and every grain is 3 dB lower) and 0.2.0 renders of CLMP, BNCE and STOP; settings
 # (pos size dens spray shape dir pan sync) and EDGE -> SHA-256 of the 8 s stereo render
 REFERENCES = {
     'default': ((), '1', 'ffafa70b40fee69e868b8d14749ddaa0754a2d67fcd4d75eba45526628d47314'),
     'perc-sync': (('40', '40', '70', '20', '2', '0', '0', '1'), '1', '9c4ba3c3429c80ec79aa93a43120f9380522763d6223b697491dc290c6f12762'),
     'pan-dir': (('40', '70', '110', '50', '0', '64', '127', '0'), '1', '2fe9531b4c53c71aa0f9cd2f3e5ea40083ca8ad49dff6f08311b16bb61e9adb3'),
     'clamp-spray': (('40', '70', '110', '127', '0', '64', '0', '0'), '0', '38374c95b9662ca6f285a20674ef88c1d32db2bc42161630e50903dd4038d5dd'),
-    'bounce-spray': (('40', '70', '110', '127', '0', '64', '0', '0'), '2', 'f56eb94eeff6d832269df640c67a3746ee5af3ed14f0e42bb1f0348a8c6d84b5'),
+    'bounce-spray': (('40', '70', '110', '127', '0', '64', '0', '0'), '3', 'f56eb94eeff6d832269df640c67a3746ee5af3ed14f0e42bb1f0348a8c6d84b5'),
+    'stop-spray': (('40', '70', '110', '127', '0', '64', '0', '0'), '2', 'd7692b6a14c0049b36981db52fd516724a03910b60aaa9510ab14f249e638377'),
 }
 CASES = [('40', '70', '90', '30', '0', '0', '0', '0'), ('40', '70', '110', '50', '0', '64', '0', '0'),
          ('40', '70', '110', '50', '0', '0', '127', '0'), ('40', '70', '110', '50', '0', '127', '80', '0'),
@@ -80,13 +81,13 @@ with tempfile.TemporaryDirectory() as td:
     stereo_input(source)
     for pw, pf in PITCHES:
         for i, args in enumerate(CASES):
-            for edge in ('0', '1', '2'):
+            for edge in ('0', '1', '2', '3'):
                 env = {'PW': pw, 'PF': pf, 'EDGE': edge}
                 a = run(fast, td / 'a.wav', args, source, env)
                 b = run(plain, td / 'b.wav', args, source, env)
                 check(f'stereo, pitch {pw} {pf}, case {i + 1}, EDGE {edge}: optimized paths match the plain ones', a == b)
     for i, args in enumerate(CASES[:3]):   # the same on a mono tone
-        for edge in ('0', '1', '2'):
+        for edge in ('0', '1', '2', '3'):
             a = run(fast, td / 'a.wav', args, env={'EDGE': edge})
             b = run(plain, td / 'b.wav', args, env={'EDGE': edge})
             check(f'mono, case {i + 1}, EDGE {edge}: optimized paths match the plain ones', a == b)

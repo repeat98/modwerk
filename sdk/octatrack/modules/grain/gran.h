@@ -32,12 +32,13 @@ typedef struct {
     uint8_t sizef;                  /* fraccion de SIZE (octavos del mando): solo para la pantalla. El motor original lee SIZE
                                      * entera (sw_gran: asrl #8), asi que un ajuste copiado del original suena igual */
     uint8_t posf;                   /* fraccion de POS en 1/256 (escenas, LFOs); 0 = POS entera, igual que el original */
-    uint8_t edge;                   /* EDGE, que pasa en los bordes del sample: 0 CLMP, 1 WRAP, 2 BNCE (mas alla de 2 vale 0) */
+    uint8_t edge;                   /* EDGE, que pasa en los bordes del sample: 0 CLMP, 1 WRAP, 2 STOP, 3 BNCE (mas alla de 3 vale 0) */
 } GranParams;
 /* EDGE. CLMP: el grano nace dentro del sample (lo que se sale por un lado se queda en su borde) y, ya sonando, sigue por el
  * otro lado al llegar a un borde. WRAP: el sample es un anillo, tambien en el nacimiento (0.1.2). BNCE: nace como en CLMP y,
- * al llegar a un borde, rebota y vuelve en sentido contrario. */
-enum { GRAN_EDGE_CLAMP = 0, GRAN_EDGE_WRAP = 1, GRAN_EDGE_BOUNCE = 2 };
+ * al llegar a un borde, rebota y vuelve en sentido contrario. STOP: nace como en CLMP (lo que se sale por el final, en el
+ * ultimo frame) y, al llegar a un borde, el grano se queda sin sample y calla: como Grain 0.1.0 y 0.1.1. */
+enum { GRAN_EDGE_CLAMP = 0, GRAN_EDGE_WRAP = 1, GRAN_EDGE_STOP = 2, GRAN_EDGE_BOUNCE = 3 };
 
 typedef struct {
     uint32_t idx, fr, left, ph, phs, start, rev;

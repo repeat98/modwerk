@@ -173,13 +173,13 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
         g->start = d6;
         g->rev = gran_dir(e, p->dir);
         if (t->edge != GRAN_EDGE_WRAP) {
-            /* CLMP and BNCE: a grain is born inside the sample. What POS plus SPRY pushes past an edge stays on that
-             * edge: at the end, a forward grain reads on from the beginning (the end and the beginning are the same
-             * point) and a backward or bouncing one reads back from the last frame. */
+            /* CLMP, BNCE and STOP: a grain is born inside the sample. What POS plus SPRY pushes past an edge stays on
+             * that edge: at the end, a forward CLMP grain reads on from the beginning (the end and the beginning are the
+             * same point); a backward, bouncing or stopping one starts on the last frame (as in 0.1.1). */
             if (at < 0)
                 at = 0;
             else if ((uint32_t)at >= s->count)
-                at = (g->rev || t->edge == GRAN_EDGE_BOUNCE) ? (int32_t)s->count - 1 : 0;
+                at = (g->rev || t->edge != GRAN_EDGE_CLAMP) ? (int32_t)s->count - 1 : 0;
             g->idx = (uint32_t)at;
         }
         g->pan = 0;             /* v018: paneo al azar dentro de +-PAN/16 */
@@ -713,6 +713,9 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
                     g->rev ^= 1u;
                     w = -w - (f != 0);
                     f = 0u - f;
+                } else if (t->edge == GRAN_EDGE_STOP) {
+                    /* STOP: the cursor stays outside the sample, where frames read as silence (mix_grain advances a grain
+                     * that is out of range without reading), as in 0.1.1. */
                 } else if (w >= 0) g->idx %= count;
                 else { uint32_t d = (0u - g->idx) % count; g->idx = d ? count - d : 0u; }
             }

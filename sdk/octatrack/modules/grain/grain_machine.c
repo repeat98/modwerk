@@ -322,7 +322,7 @@ static Prepared *prepare_frame(unsigned track, const View *v, const GranSample *
     live_at[track] = live_tick;
     p->dir = dir;
     p->pan = pan;
-    /* EDGE: SETUP E (TSTR, 0..2 pasa la comprobacion de stock). Fuera de 0..2 (una Part antigua) vale CLMP. */
+    /* EDGE: SETUP E (TSTR, 0..3 pasa la comprobacion de stock). Fuera de 0..3 (una Part antigua) vale CLMP. */
     p->edge = v->setup[4] > GRAN_EDGE_BOUNCE ? GRAN_EDGE_CLAMP : v->setup[4];
     eng.t[track].edge = p->edge;
     unsigned sync = v->setup[3];
@@ -417,7 +417,7 @@ static void number(char *out, unsigned n)
 static void word(char *out, const char *text) { while ((*out++ = *text++)) {} }
 static void shape_text(char *out, int v) { word(out, v <= 0 ? "NORM" : v == 1 ? "TRI" : v == 2 ? "PERC" : "SQR"); }
 static void mode_text(char *out, int v) { word(out, v <= 0 ? "RAND" : "SYNC"); }
-static void edge_text(char *out, int v) { word(out, v <= 0 ? "CLMP" : v == 1 ? "WRAP" : "BNCE"); }
+static void edge_text(char *out, int v) { word(out, v <= 0 ? "CLMP" : v == 1 ? "WRAP" : v == 2 ? "STOP" : "BNCE"); }
 static void pan_text(char *out, int v) { if (v <= 0) word(out, "OFF"); else number(out, (unsigned)v); }
 /* SCAN: valor del mando - 64, en 1/32: "-2.00" .. "+2.00" (1.00 = la velocidad del sample, 2.00 = el doble). Con 0..127 el
  * ultimo paso quedaba en 63/32 = 1.96; el tope (127) vale ahora +2.00 exacto y el resto no cambia. */
@@ -442,7 +442,7 @@ static const struct { uint8_t slot, start, count; char name[6]; void (*text)(cha
     {1, 0, 128, "POS", 0}, {2, 64, 128, "SIZE", 0}, {3, 64, 128, "DENS", 0}, {4, 0, 128, "SPRY", 0},
     {5, 64, 128, "SCAN", scan_text},
     {6, 0, 4, "SHAP", shape_text}, {7, 0, 128, "DIR", 0}, {8, 0, 128, "PAN", pan_text}, {9, 0, 2, "MODE", mode_text},
-    {10, 0, 3, "EDGE", edge_text}, {11, 0, 1, "", blank_text}};
+    {10, 0, 4, "EDGE", edge_text}, {11, 0, 1, "", blank_text}};
 static uint8_t defaults[12];
 static uint8_t page[MODWERK_PAGE_BYTES] __attribute__((aligned(4)));
 static uint32_t page_built;
@@ -947,29 +947,6 @@ static void full_draw(unsigned t, volatile uint8_t *part, int sel)
     wave_area(t, part, FX0 + 1, 127, 9, 54);
 }
 
-/* EDGE has three values, and stock's selector for three or four values draws four positions: its 4 px block never reached the
- * right end with three (the author, 23 November 2026). The bar is 15 px wide (x 82..96, rows 47..51 of the 128 x 64 frame, with a
- * lit line on each side at x 81 and 97): a checkerboard of lit pixels (x + y even) with the selected value as an unlit block.
- * Find where stock put its block (x 82, 86 or 89 for values 0, 1 and 2) and draw the interior again with three blocks of 5 px,
- * so the last value ends at the right edge. */
-static void edge_bar(unsigned char *frame)
-{
-    int xb = -1;
-    for (int x = 82; x <= 94 && xb < 0; ++x) {
-        unsigned run = 1;
-        for (int k = 0; k < 4; ++k) run &= ~(frame[(x + k) * 8 + 7 - (48 >> 3)] >> (48 & 7)) & 1u;
-        if (run) xb = x;
-    }
-    if (xb < 0) return;
-    unsigned v = xb <= 83 ? 0u : xb <= 87 ? 1u : 2u;
-    static const uint8_t first[3] = { 82, 87, 92 }, last[3] = { 86, 91, 96 };
-    unsigned char *saved = fbp;
-    fbp = frame;
-    for (int y = 47; y <= 51; ++y)
-        for (int x = 82; x <= 96; ++x) dpx(x, y, !(x >= first[v] && x <= last[v]) && !((x + y) & 1));
-    fbp = saved;
-}
-
 void grain_draw(unsigned char *frame)
 {
     static const char *const names[6] = { "PTCH", "POS", "SIZE", "DENS", "SPRY", "SCAN" };
@@ -994,7 +971,6 @@ void grain_draw(unsigned char *frame)
                 was_setup = lit < 45;
             }
             setup_visible = (uint8_t)was_setup;
-            if (was_setup) edge_bar(frame);
             if (was_setup && !U32(POOL_WINDOW)) pool_direct = 0;        /* de vuelta en una pagina: el pool, cerrado */
         }
         if (press) {

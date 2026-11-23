@@ -102,7 +102,9 @@ static int check_edge(void)
 {
     const uint32_t count = 32768;
     GranSample sample = {.count = count, .bytes = 2, .channels = 1, .locate = read_frame};
-    for (unsigned mode = GRAN_EDGE_CLAMP; mode <= GRAN_EDGE_BOUNCE; mode += GRAN_EDGE_BOUNCE - GRAN_EDGE_CLAMP) {
+    static const unsigned birth_modes[3] = { GRAN_EDGE_CLAMP, GRAN_EDGE_BOUNCE, GRAN_EDGE_STOP };
+    for (unsigned mi = 0; mi < 3u; ++mi) {
+        unsigned mode = birth_modes[mi];
         unsigned zeros = 0, tops = 0, born = 0;
         for (unsigned seed = 0; seed < 400; ++seed) {
             for (unsigned end = 0; end <= 1; ++end) {
@@ -127,7 +129,7 @@ static int check_edge(void)
             }
         }
         if (mode == GRAN_EDGE_CLAMP && !zeros) { fputs("EDGE CLMP: no grain stayed on an edge\n", stderr); return 1; }
-        if (mode == GRAN_EDGE_BOUNCE && !tops) { fputs("EDGE BNCE: no grain stayed on the last frame\n", stderr); return 1; }
+        if (mode != GRAN_EDGE_CLAMP && !tops) { fprintf(stderr, "EDGE %u: no grain stayed on the last frame\n", mode); return 1; }
         (void)born;
     }
     /* BNCE turns a grain round at the end (forwards) and at the start (backwards), reading the edge frame twice. */
@@ -150,6 +152,23 @@ static int check_edge(void)
                 return 1;
             }
     }
+    /* STOP: a grain that reaches an edge reads nothing more (forwards past the end, backwards past the start). */
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+        GranSample logged = {.count = count, .bytes = 2, .channels = 1, .locate = log_frame};
+        GranParams params = {.pos = reverse ? 0 : 127, .posf = reverse ? 0 : 255, .size = 20, .dens = 0,
+                             .dir = reverse ? 127 : 0, .edge = GRAN_EDGE_STOP};
+        GranEngine engine;
+        gran_init(&engine);
+        gran_params(&engine, 0, &params, &logged, 120 * 24);
+        gran_trigger(&engine, 0);
+        ring_n = 0;
+        int32_t out[32];
+        gran_render(&engine, 0, &params, &logged, 1, 0, out, 8);
+        if (ring_n != 1 || ring_log[0] != (reverse ? 0u : count - 1u)) {
+            fprintf(stderr, "STOP %s: %u frames read, the first %" PRIu32 "\n", reverse ? "backwards" : "forwards", ring_n, ring_n ? ring_log[0] : 0u);
+            return 1;
+        }
+    }
     /* CLMP keeps the ring for a grain that is already sounding. */
     GranSample logged = {.count = count, .bytes = 2, .channels = 1, .locate = log_frame};
     GranParams params = {.pos = 127, .posf = 255, .size = 20, .dens = 0, .edge = GRAN_EDGE_CLAMP};
@@ -169,7 +188,7 @@ int main(void)
     if (check_ring(0) || check_ring(1)) return 1;
     puts("[PASS] A grain reading past the end continues at the beginning, and one reading back past the beginning at the end");
     if (check_edge()) return 1;
-    puts("[PASS] EDGE: CLMP and BNCE are born inside the sample; BNCE turns round at an edge; CLMP carries on");
+    puts("[PASS] EDGE: CLMP, BNCE and STOP are born inside the sample; BNCE turns round at an edge, STOP stops there, CLMP carries on");
     /* One frame, partial pages, both sides of the former overflow, a
      * four-minute file at 44.1 kHz and the largest supported Flex sample. */
     const uint32_t lengths[] = {1, 88201, 7938000, 8388608, 8388672, 10584000, 44860416};
