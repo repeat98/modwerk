@@ -352,6 +352,10 @@ const VIEW_WORDS = 32, VIEW_AT = 26, VIEW_SAVE = VIEW_AT + VIEW_WORDS, L1_SAVE =
 // Each track's machine type from the kit (tail words after the step words), where the player dispatcher reads them.
 export const DT2_MACHINE_TYPES_AT = L1_SAVE + 1
 const TYPE_WORDS = 16
+// Each track's machine knobs C and E at full resolution (value << 8), one word a track (C | E << 16), after the
+// types: a player reads them instead of the parameter record, which gets C as 0 or 1 only.
+export const DT2_MACHINE_KNOBS_AT = DT2_MACHINE_TYPES_AT + TYPE_WORDS
+const KNOB_WORDS = 16
 const REPLY_RECORDS = [0x266220, 0x267220] // L1 byte addresses
 
 /** Frame receivers the base calls at the receive site, through its frame slots: up to DT2_FRAME_RECEIVERS. */
@@ -364,7 +368,8 @@ export const DT2_FRAME_RECEIVERS = 4
  *   registered), copies the step words after it (DT2_MACHINE_WIRE: the samples per sixteenth step at 1X, each track's
  *   at its speed, then the view track) to the words from `dataAddress + 0x20`, where machine players read them (6,000,
  *   120 BPM, and no view track until the first frame), each track's machine type to `dataAddress + 4 *
- *   DT2_MACHINE_TYPES_AT`, and the machine view from `dataAddress + 4 * 26` into both reply records;
+ *   DT2_MACHINE_TYPES_AT`, each track's knobs C and E to `dataAddress + 4 * DT2_MACHINE_KNOBS_AT`, and the
+ *   machine view from `dataAddress + 4 * 26` into both reply records;
  * - calls each of the DT2_FRAME_RECEIVERS frame slots at `slotsAddress`, in order: a registered receiver's slot jumps
  *   to it (`receivers`, short-word program counters), an empty one returns at once. A receiver is called with I3 at the
  *   received frame and L0-L2 zero; it may change R0, R1, I0-I2, M0, L0-L2, ASTATX and STKYX, keeps every other
@@ -417,6 +422,11 @@ copied: DM(I1, M0) = R0
   R0 = DM(I0, M0)
   NOP
 typed: DM(I1, M0) = R0
+  I1 = ${dataAddress + 4 * DT2_MACHINE_KNOBS_AT}
+  LCNTR = ${KNOB_WORDS}, DO knobbed UNTIL LCE
+  R0 = DM(I0, M0)
+  NOP
+knobbed: DM(I1, M0) = R0
   I1 = ${dataAddress + 4 * VIEW_AT}
   I0 = ${REPLY_RECORDS[0] + 4 * DT2_MACHINE_VIEW}
   I2 = ${REPLY_RECORDS[1] + 4 * DT2_MACHINE_VIEW}
@@ -443,7 +453,7 @@ displaced: NOP
 `)
   const code = blocks[0].bytes
   code.set(displaced, (symbols.get('displaced')! - programCounter(codeAddress)) * 2)
-  const data = new Uint8Array(4 * (DT2_MACHINE_TYPES_AT + TYPE_WORDS))
+  const data = new Uint8Array(4 * (DT2_MACHINE_KNOBS_AT + KNOB_WORDS))
   for (let word = 0; word < STEP_WORDS - 1; word++) new DataView(data.buffer).setUint32(4 * (8 + word), 6000, true)
   new DataView(data.buffer).setUint32(4 * (8 + STEP_WORDS - 1), VIEW_NONE, true)
   // The view block until a player writes it: no player's magic, a recognisable pattern.

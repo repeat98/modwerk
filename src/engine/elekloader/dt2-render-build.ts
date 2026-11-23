@@ -2,7 +2,7 @@
 import { DIGITAKT_MK2 } from '../../../vendor/elekloader/kit/src/devices.ts'
 import { Syx, packMain, verify, write } from '../../../vendor/elekloader/kit/src/syx.ts'
 import {
-  buildDt2RenderSection, combineDt2Plans, DT2_ADDED_TYPES, DT2_FIRST_ADDED_TYPE, DT2_MACHINE_TYPES_AT, planDt2FrameReceive,
+  buildDt2RenderSection, combineDt2Plans, DT2_ADDED_TYPES, DT2_FIRST_ADDED_TYPE, DT2_MACHINE_KNOBS_AT, DT2_MACHINE_TYPES_AT, planDt2FrameReceive,
   planDt2MachinePlayers, planDt2MachineSelectors, unpackDt2SharcSection,
   type Dt2MachinePlayer, type Dt2RenderPlan,
 } from '../elektron/dt2-sharc.ts'
@@ -65,6 +65,7 @@ export const DT2_BASE_SHARC = {
   selectors: 0x200c0100, playerSlots: 0x200c0f00, frameSlots: 0x200c0f80, dispatcher: 0x200c1000, dispatcherData: 0x200c2000,
   wire: 0x200c2800, wireData: 0x200c2c00,
   stepSamples: 0x200c2c20, viewTrack: 0x200c2c64, view: 0x200c2c68, trackTypes: 0x200c2c00 + 4 * DT2_MACHINE_TYPES_AT,
+  trackKnobs: 0x200c2c00 + 4 * DT2_MACHINE_KNOBS_AT,
   end: 0x200c3000,
 }
 

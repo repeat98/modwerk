@@ -49,10 +49,10 @@ struct dt2_machine {
 
 /* The audio-frame tail words the base sends the sound chip for machine players (machine-frame.c): the magic, the
  * samples per sixteenth step at the pattern's tempo (1X), each of the 16 tracks' step at its speed, the view track,
- * then each track's machine type. */
+ * each track's machine type, then each track's knobs C and E at full resolution (C | E << 16, each value << 8). */
 enum {
     DT2_MACHINE_WIRE = 16,
-    DT2_MACHINE_WIRE_WORDS = 35,
+    DT2_MACHINE_WIRE_WORDS = 51,
 };
 #define DT2_MACHINE_WIRE_MAGIC UINT32_C(0x4d4b0001)
 

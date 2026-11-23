@@ -36,6 +36,10 @@
 #define DSP_QUEUE 0x400cd48cu              /* the transfer's halfword queue */
 #define SOUND_TYPE(track) (*(const volatile uint8_t *)(0x426532ecu + 0x450u * (track) + 0xa2u)) /* the kit's track sound */
 #define FIRST_TAIL_HALF 0x402u
+#define KNOB_TARGETS ((const volatile uint16_t *)0x80003362u) /* track t's parameter j at [KNOB_VALUES * t + j] */
+#define KNOB_VALUES 71u
+#define KNOB_C 27u                         /* the sound's parameter slots of SAMPLE's knobs C and E */
+#define KNOB_E 31u
 
 #define REPLY_VIEW 600u                    /* the reply word where the receiver puts the machine view */
 
@@ -93,6 +97,14 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
      * voice track plays its lead's sound, so it takes its lead's type (voices.c). */
     for (unsigned int track = 0; track < TRACKS; ++track) {
         put(tail, DT2_MACHINE_WIRE + 19 + track, SOUND_TYPE(core_voice_lead(track)));
+    }
+    /* Each track's machine knobs C and E at full resolution (value << 8), from the parameter targets the stock
+     * smoother follows: the kit's value with the note's trig locks, and on a linked voice track its lead's
+     * (voices.c). The sound chip's own copy of C (SAMPLE's crossfade) arrives as 0 or 1 only. One word a track:
+     * C | E << 16. */
+    for (unsigned int track = 0; track < TRACKS; ++track) {
+        const volatile uint16_t *const target = KNOB_TARGETS + KNOB_VALUES * track;
+        put(tail, DT2_MACHINE_WIRE + 35 + track, (uint32_t)target[KNOB_C] | (uint32_t)target[KNOB_E] << 16);
     }
     /* The machine view the sound chip's receiver put in the last reply (words 600-631): the reply arrives as 16-bit
      * units, each sound-chip word low half first. */

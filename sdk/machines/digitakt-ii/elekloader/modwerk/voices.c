@@ -8,6 +8,11 @@
  * note-off to the track that holds that note. The record already names the lead's sound (+0x3c, or a sound lock's),
  * so the voice track plays the lead's sound with that trig's own locks; nothing in the kit changes.
  *
+ * While linked, a voice track belongs to its lead: it plays only the notes its lead sends, always with the lead's
+ * machine (machine-frame.c sends the sound chip the lead's type for it), and its own notes (its trigs) go to no
+ * track, so its own machine and sample never sound over, between or after its lead's notes. Its own sound and
+ * pattern stay as they are and play again once VOICES puts it back on its own.
+ *
  * Record fields used (read from the sequencer's constructor at 0x400d6d24 and the frame's note handling from
  * 0x4002e1b2): +0x00 kind (0 and 1 take the note path), +0x04 1 for a note-on, +0x10 the track, +0x14 the note's
  * source (1 for the sequencer), +0x1c/+0x20 the trig's lock rows and row index, +0x24 the record's own row,
@@ -32,6 +37,7 @@ enum {
     VALUES = 71,
     PATTERN_TRACK_VIEW = 0x30,
     NONE = 0xff,
+    SEQUENCER = 1,           /* a record's source (+0x14) for the sequencer's notes */
 };
 
 #define TARGETS ((volatile int16_t *)0x80003362u)          /* track t's value j at [VALUES * t + j] */
@@ -45,7 +51,6 @@ static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group *
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
 static volatile uint16_t leads;     /* leads with a group; written last by regroup */
-static volatile uint16_t borrowed;  /* voice tracks whose last note-on came from their lead */
 static int16_t last[TRACKS][VALUES];
 
 static void regroup(void)
@@ -54,7 +59,6 @@ static void regroup(void)
     /* The frame interrupt reads the groups: route nothing while they change (the menu and a project load run in
      * tasks), and publish the leads last. */
     leads = 0;
-    borrowed = 0;
     for (unsigned int t = 0; t < TRACKS; ++t) {
         lead_of[t] = NONE;
     }
@@ -74,42 +78,43 @@ static void regroup(void)
         }
         found |= (uint16_t)(1u << lead);
         next_voice[lead] = (uint8_t)lead;
+        /* The voices start as exact copies of the lead (every parameter, its sample slot included), so each note of
+         * a chord sounds alike whichever track plays it; later turns on the lead follow in core_voice_frame. */
         for (unsigned int j = 0; j < VALUES; ++j) {
-            last[lead][j] = TARGETS[VALUES * lead + j];
+            const int16_t value = TARGETS[VALUES * lead + j];
+            last[lead][j] = value;
+            for (unsigned int v = lead + 1; v < t; ++v) {
+                TARGETS[VALUES * v + j] = value;
+            }
         }
     }
     leads = found;
 }
 
-/* The track a note-on of `lead` goes to: the first track of the group, from where the last search stopped, that holds
- * no note and is not muted; failing that, the next one in turn that is not muted, which ends its note as stock ends a
- * track's note for a new one. */
+/* The track a note-on of `lead` goes to: the first track of the group from the lead on that holds no note and is not
+ * muted, so the lead takes the first note of a chord (the trig keys and most MIDI senders send a chord's notes from
+ * the lowest up) and each next track the next; with every track busy, the next one in turn that is not muted, which
+ * ends its note as stock ends a track's note for a new one. */
 static unsigned int pick(unsigned int lead, uint32_t mutes)
 {
     unsigned int size = 0;
     while (lead + size < TRACKS && lead_of[lead + size] == lead) {
         ++size;
     }
+    for (unsigned int t = lead; t < lead + size; ++t) {
+        if (!((mutes >> t) & 1u) && !NOTE_SOURCE[t]) {
+            return t;
+        }
+    }
     const unsigned int start = next_voice[lead] - lead;
-    unsigned int fallback = NONE;
     for (unsigned int k = 0; k < size; ++k) {
         const unsigned int t = lead + (start + k) % size;
-        if ((mutes >> t) & 1u) {
-            continue;
-        }
-        if (fallback == NONE) {
-            fallback = t;
-        }
-        if (!NOTE_SOURCE[t]) {
-            fallback = t;
-            break;
+        if (!((mutes >> t) & 1u)) {
+            next_voice[lead] = (uint8_t)(lead + ((t - lead + 1u) % size));
+            return t;
         }
     }
-    if (fallback == NONE) {
-        return lead;
-    }
-    next_voice[lead] = (uint8_t)(lead + ((fallback - lead + 1u) % size));
-    return fallback;
+    return lead;
 }
 
 /* The pitch a record's note-off names, read as the frame's note-off path compares it with the held pitch
@@ -131,9 +136,9 @@ void core_voice_event(uint8_t *record)
         return;
     }
     if (!((leads >> lead) & 1u)) {
-        /* A voice track's own note-on: from now it plays its own machine again. */
-        if (*(const uint32_t *)(record + 4) == 1u) {
-            borrowed &= (uint16_t)~(1u << lead);
+        /* A linked voice track's own note (its trigs): to no track (16), so only its lead's notes play there. */
+        if (lead_of[lead] != NONE) {
+            *(uint32_t *)(record + 0x10) = TRACKS;
         }
         return;
     }
@@ -143,6 +148,19 @@ void core_voice_event(uint8_t *record)
     }
     unsigned int to = lead;
     if (*(const uint32_t *)(record + 4) == 1u) {
+        /* The keys play one note at a time: letting go of a key while another is held sends the held note again.
+         * In a group that note is still ringing on its own track, so a note-on from the keys or MIDI (any source but
+         * the sequencer, whose repeated notes should ring over) for a pitch a track of the group holds goes nowhere. */
+        const uint32_t source = *(const uint32_t *)(record + 0x14);
+        if (source != SEQUENCER) {
+            const int32_t pitch = record_pitch(record);
+            for (unsigned int t = lead; t < TRACKS && lead_of[t] == lead; ++t) {
+                if (NOTE_SOURCE[t] == source && NOTE_PITCH[t] == pitch) {
+                    *(uint32_t *)(record + 0x10) = TRACKS;
+                    return;
+                }
+            }
+        }
         to = pick(lead, mutes);
     } else {
         const uint32_t source = *(const uint32_t *)(record + 0x14);
@@ -158,7 +176,6 @@ void core_voice_event(uint8_t *record)
         absorb |= (uint16_t)(1u << lead);
     } else {
         *(uint32_t *)(record + 0x10) = to;
-        borrowed |= (uint16_t)(1u << to);
     }
 }
 
@@ -190,11 +207,11 @@ void core_voice_frame(void)
     }
 }
 
-/* The track whose sound a track plays: its lead while the track plays a note its lead sent it, else itself
- * (machine-frame.c sends that track's machine type for the sound chip's player dispatch). */
+/* The track whose machine a track plays: its lead while it is linked, else itself (machine-frame.c sends that track's
+ * machine type for the sound chip's player dispatch). */
 unsigned int core_voice_lead(unsigned int track)
 {
-    return track < TRACKS && lead_of[track] != NONE && ((borrowed >> track) & 1u) ? lead_of[track] : track;
+    return track < TRACKS && lead_of[track] != NONE ? lead_of[track] : track;
 }
 
 /* ---- SETTINGS > VOICES ------------------------------------------------------------------------------------------ */

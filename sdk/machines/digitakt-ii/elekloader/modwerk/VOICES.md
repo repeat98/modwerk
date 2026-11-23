@@ -4,9 +4,9 @@ A lead track plays its notes on the tracks after it, so notes overlap instead of
 
 ## What the musician does
 
-SETTINGS shows a row named after the track you are on, `T1 VOICES` to `T16 VOICES`, from 1 (stock) to 8. LEFT and RIGHT change it. With 3 on track 1, tracks 1, 2 and 3 form a group: each new note track 1 plays goes to the first of them that holds no note, in turn, or to the next one in turn when all three hold a note.
+SETTINGS shows a row named after the track you are on, `T1 VOICES` to `T16 VOICES`, from 1 (stock) to 8. LEFT and RIGHT change it. With 3 on track 1, tracks 1, 2 and 3 form a group: each new note track 1 plays goes to the first of them, from the lead on, that holds no note, so the lead takes a chord's first note (the trig keys send a chord from the lowest note up); with all three busy, to the next one in turn.
 
-- The voice tracks play the lead's sound, with each trig's own locks, and follow knob turns made on the lead. Their own sounds, trigs and pages are not changed: back at 1 they play as before.
+- The voice tracks belong to the lead while linked: they play the lead's sound with its machine, with each trig's own locks, and follow knob turns made on the lead. Their own trigs are silent while linked (the base sends their notes to no track), so their own machine never sounds between or after the lead's notes. Their own sounds, trigs and pages are not changed: back at 1 they play as before.
 - A muted lead plays nothing. A muted voice track is skipped.
 - A track that is already a voice of an earlier lead leads nothing, and a group ends at track 16.
 - The setting is the project's: saved with it (project archive tag `VOC1`), reset to 1 everywhere by a project saved without it.
@@ -33,7 +33,7 @@ Because the record names its sound, a note moved to another track plays the lead
 
 **Knobs.** The per-track parameter targets are 71 int16 a track from `0x80003362` (142 bytes a track; the smoother at `0x400d9406` follows them each frame from `0x80003340`). A note-on loads the note's sound and locks into its track's targets. Once a frame, before the transfer, `core_voice_frame` compares the lead's targets with the last frame's and copies the values that changed to its voice tracks. In a frame where a note stayed on the lead, it only takes the lead's new values, so a trig lock on the lead does not spread to the voices.
 
-**Sound chip.** The machine wire's per-track types (`machine-frame.c`) give a voice track its lead's type while the note it plays came from its lead, so an added machine's player also plays the notes its lead sends to voice tracks. A note-on of the voice track's own (its trigs) gives it its own type back.
+**Sound chip.** The machine wire's per-track types (`machine-frame.c`) give a voice track its lead's type for as long as it is linked, so an added machine's player plays every note its lead sends there, and the track's own machine never takes over its voices mid-note. A voice track's own note records go to track 16 (none) at the same entry.
 
 ## Checked
 
