@@ -45,6 +45,8 @@ Emulator only (coupled ColdFire and sound-chip run from a ready point saved with
 | This base, every track at 1 | The first note is identical to `a3ced45e`'s, sample for sample (40,000 samples aligned on the first sound). The run as a whole hashes differently because the scripted key taps land at a slightly different moment against the audio (the first note 58 ms later); the second note again cuts the first (peak 0.063). |
 | This base, track 1 at 3 (`MODWERK_VOICES_TEST=3`, a test-only build flag that sets track 1 at the first project load) | The second note rings over the first instead of cutting it: peak 0.0955 and a 10 ms RMS of 0.064 where the notes overlap (two tones), against 0.063 and 0.025 without linking. |
 
+| The test project's own pattern played (PLAY, about 1.2 s), every track at 1 and with track 1 at 3 | The two runs' PCM is identical (`5af68b89…`): with track 1 leading, the sequencer's notes on the project's other tracks play exactly as without. |
+
 Not checked yet: sequencer trigs on a linked lead (only live trig-key notes above), the SETTINGS row on screen, MIDI chords, knob turns reaching the voices, muted voices, save and reload of the setting.
 
 ## Open
