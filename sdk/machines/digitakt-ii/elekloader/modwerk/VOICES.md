@@ -31,7 +31,7 @@ Record fields (sequencer constructor at `0x400d6d24`; the frame's note handling 
 
 Because the record names its sound, a note moved to another track plays the lead's sound there. Stock keeps per track the source and pitch of the note it holds (`0x47db4310`, `0x47db4560`, cleared by the note-off that matches both), so the base sends a note-off to the group's track that holds that source and pitch, and prefers a track whose source word is 0 for a note-on.
 
-**Knobs.** The per-track parameter targets are 71 int16 a track from `0x80003362` (142 bytes a track; the smoother at `0x400d9406` follows them each frame from `0x80003340`). A note-on loads the note's sound and locks into its track's targets. Once a frame, before the transfer, `core_voice_frame` compares the lead's targets with the last frame's and copies the values that changed to its voice tracks. In a frame where a note stayed on the lead, it only takes the lead's new values, so a trig lock on the lead does not spread to the voices.
+**Knobs.** The per-track parameter targets are 71 int16 a track from `0x80003362` (142 bytes a track; the smoother at `0x400d9406` follows them each frame from `0x80003340`). A note-on loads the note's sound and locks into its track's targets. Once a frame, before the transfer, `core_voice_frame` compares the lead's targets with the last frame's and copies the values that changed to its voice tracks. In a frame where a sequencer note stayed on the lead, it only takes the lead's new values, so a trig lock on the lead does not spread to the voices; notes from the keys or MIDI carry no locks and never hold a turn back. As a safety net, each frame one voice track of the group that holds no note is copied from the lead in full, so the next note there starts from the lead's settings. Found on a unit (Morpha, build `e6ffc45b`): while chords were played and knobs turned, later chord notes no longer sounded like the lead; the frames skipped for every lead note had swallowed turns.
 
 **Sound chip.** The machine wire's per-track types (`machine-frame.c`) give a voice track its lead's type for as long as it is linked, so an added machine's player plays every note its lead sends there, and the track's own machine never takes over its voices mid-note. A voice track's own note records go to track 16 (none) at the same entry.
 
@@ -53,7 +53,7 @@ Not checked yet: sequencer trigs on a linked lead (only live trig-key notes abov
 
 ## Open
 
-- A knob turned in the same frame as a note-on on the lead does not reach the voices until it moves again.
+- A knob turned in the same frame as a sequencer note-on on the lead reaches a ringing voice only when it moves again (a voice with no note gets it from the idle copy).
 - A knob turned on the lead overrides a voice's trig lock on that parameter while the voice's note plays.
 - The setting is per project, not per kit or pattern.
 - Chords from the trig keys in chromatic mode are not checked: in the emulator a second key held with the first added no note on either build.

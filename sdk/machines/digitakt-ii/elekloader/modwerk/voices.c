@@ -21,8 +21,9 @@
  *
  * Knob turns on the lead reach its voices: once a frame, before the transfer, the base compares the lead's 71
  * parameter targets (int16 from 0x80003362, 142 bytes a track, which the stock smoother at 0x400d9406 follows) with
- * the last frame's and copies the values that changed to each voice track. A frame in which a note started on the
- * lead itself only takes the lead's new values (its trig locks) without copying them.
+ * the last frame's and copies the values that changed to each voice track. A frame in which a sequencer note started
+ * on the lead itself only takes the lead's new values (its trig locks) without copying them, and each frame one voice
+ * track holding no note is copied from the lead in full.
  *
  * The setting is the project's (core_project_archive, tag VOC1), saved with the project and reset by a project
  * saved without it. With every track at 1 nothing here changes a note. Emulator-checked only; see VOICES.md.
@@ -49,6 +50,7 @@ enum {
 static uint8_t voices[TRACKS];      /* the project's setting, 0 or 1 for a track that plays only its own notes */
 static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group */
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
+static uint8_t sync_next[TRACKS];   /* per lead: the voice track the idle copy looks at next */
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
 static volatile uint16_t leads;     /* leads with a group; written last by regroup */
 static int16_t last[TRACKS][VALUES];
@@ -173,9 +175,23 @@ void core_voice_event(uint8_t *record)
         }
     }
     if (to == lead) {
-        absorb |= (uint16_t)(1u << lead);
+        /* A sequencer note on the lead loads its trig locks into the lead's targets: take them without copying them
+         * to the voices. A note from the keys or MIDI carries no locks, so a knob turned in the same frame still
+         * reaches the voices. */
+        if (*(const uint32_t *)(record + 4) == 1u && *(const uint32_t *)(record + 0x14) == SEQUENCER) {
+            absorb |= (uint16_t)(1u << lead);
+        }
     } else {
         *(uint32_t *)(record + 0x10) = to;
+    }
+}
+
+/* A whole track's targets from a lead's last values. Its own function, indexed, so the compiler does not reuse a
+ * post-incremented address register in one instruction (sdk/runtime/m68k_codegen.py refuses that). */
+static __attribute__((noinline)) void copy_values(volatile int16_t *to, const volatile int16_t *from)
+{
+    for (unsigned int j = 0; j < VALUES; ++j) {
+        to[j] = from[j];
     }
 }
 
@@ -192,17 +208,31 @@ void core_voice_frame(void)
             for (unsigned int j = 0; j < VALUES; ++j) {
                 last[lead][j] = from[j];
             }
-            continue;
+        } else {
+            for (unsigned int j = 0; j < VALUES; ++j) {
+                const int16_t value = from[j];
+                if (value == last[lead][j]) {
+                    continue;
+                }
+                last[lead][j] = value;
+                for (unsigned int t = lead + 1; t < TRACKS && lead_of[t] == lead; ++t) {
+                    TARGETS[VALUES * t + j] = value;
+                }
+            }
         }
-        for (unsigned int j = 0; j < VALUES; ++j) {
-            const int16_t value = from[j];
-            if (value == last[lead][j]) {
-                continue;
-            }
-            last[lead][j] = value;
-            for (unsigned int t = lead + 1; t < TRACKS && lead_of[t] == lead; ++t) {
-                TARGETS[VALUES * t + j] = value;
-            }
+        /* A safety net: each frame one voice track of the group that holds no note becomes an exact copy of the lead
+         * again, so the next note there starts from the lead's settings even if a change was missed. */
+        unsigned int end = lead + 1;
+        while (end < TRACKS && lead_of[end] == lead) {
+            ++end;
+        }
+        unsigned int v = sync_next[lead];
+        if (v <= lead || v >= end) {
+            v = lead + 1;
+        }
+        sync_next[lead] = (uint8_t)(v + 1 < end ? v + 1 : lead + 1);
+        if (v < end && !NOTE_SOURCE[v]) {
+            copy_values(TARGETS + VALUES * v, last[lead]);
         }
     }
 }
