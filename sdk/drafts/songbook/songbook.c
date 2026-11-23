@@ -155,6 +155,19 @@ void as_host_back_memory(void) { st = saved_st; }     /* ... and this one comes 
 #endif
 
 static void load_read(struct as_state *s);
+/* A LOAD of a project other than the one in use: stock's load job's record names it (0x460bdec1, from the LOAD request
+ * 0x40023b68) while the project name projdir() builds on (0x100f8378) still names the last one. */
+#define CUR_NAME 0x100f8378u
+#define JOB_NAME 0x460bdec1u
+static int loading_other(void)
+{
+    for (uint32_t i = 0; i < 256u; ++i) {
+        uint8_t a = rd8(CUR_NAME + i), b = rd8(JOB_NAME + i);
+        if (a != b) return 1;
+        if (!a) return 0;
+    }
+    return 0;
+}
 static struct as_state *ready(void)
 {
     struct as_state *s = st_at;
@@ -397,7 +410,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
     struct as_state *s = ready();
     int rc = 0;
-    if (s->load_read && !s->loading) load_read(s);       /* a load whose ev_banks_loaded did not come */
+    if (s->load_read && s->load_posted) load_read(s);    /* the module's own job, after the whole load */
     if (s->load_read) {                                   /* mid-LOAD, the new project not read yet: none of the module's */
         if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);   /* files written (LOAD saved the last project before */
         remember(s);                                      /* it began); book 1 is stock's own */
@@ -484,10 +497,11 @@ void as_project_load(void)
     s->reloaded_slots = 0;
     s->ready = 1;
     if (s->reloading) return;                             /* RELOAD read its own (the same) project already */
-    /* Where the new project was left is read once it is the project in use: at ev_banks_loaded, or else by the first
-     * card job after the load. Here the project directory may still be the last project's: read here, a project
-     * loaded after another came up on the other's book (the developer's MKI, 24 November 2026; HOOKS.md: mark stale at
-     * ev_banks_load, read at ev_banks_loaded). */
+    /* Where the new project was left is read once stock's project directory names it: at ev_banks_loaded when the load
+     * is of the project in use (RELOAD, LOAD of the same one), else by a card job the module posts after the whole
+     * load. Loading another project, the directory still names the last one at ev_banks_load and at ev_banks_loaded
+     * (the developer's MKI, 24 November 2026: the project came up on the other's book, read at either hook); stock
+     * takes the new name from its load job's own record. */
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
     s->restore = -1;
     s->mode_on = 0;
@@ -503,7 +517,8 @@ static void load_read(struct as_state *s)
     int b = read_place(s);
     s->restore = (int8_t)(b > 0 ? b : -1);
     s->restore_ticks = 0;
-    if (s->mode_on && s->loading) wr8(ARR_MODE_WANTED, 1);
+    if (s->mode_on && s->loading) wr8(ARR_MODE_WANTED, 1);   /* stock applies it as its load ends; after the load
+                                                               * the tick turns it on once quiet */
 }
 
 /* A new project: empty, on book 1; nothing of the last one is read. */
@@ -537,7 +552,7 @@ unsigned as_project_loaded(void)
     struct as_state *s = ready();
     ev(2);
     s->since_hook = 0;
-    if (s->load_read) load_read(s);                       /* the project in use now: where it was left */
+    if (s->load_read && !loading_other()) load_read(s);  /* the same project: its directory is right already */
     ++s->loads;                                           /* the slots are replaced only after the new-project step */
     remember(s);
     return 0;

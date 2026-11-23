@@ -35,6 +35,7 @@ static uint8_t cs1[0x16200];             /* 0x10000000 .. : the slots, their fla
 static uint8_t rec[20];                  /* 0x100f8f10 */
 static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
+static char cur_name[256] = "PROJ", job_name[256] = "PROJ";   /* the project in use; the one a load job loads */
 static uint8_t chosen;               /* 0x100b14d1: the arrangement chosen */
 static uint8_t arr_mode;             /* 0x460d1aec's low byte: arranger mode */
 static uint8_t mode_wanted;          /* 0x80000010: the mode stock applies when a load ends */
@@ -56,6 +57,8 @@ uint8_t host_rd8(uint32_t a)
     if (a == 0x460d1e73u) return msg_up;
     if (a >= 0x460d1e70u && a < 0x460d1e73u) return 0;
     if (a >= 0x400c0ba0u && a < 0x400c0bb0u) return list[a - 0x400c0ba0u];
+    if (a >= 0x100f8378u && a < 0x100f8378u + 256u) return (uint8_t)cur_name[a - 0x100f8378u];   /* stock's project name */
+    if (a >= 0x460bdec1u && a < 0x460bdec1u + 256u) return (uint8_t)job_name[a - 0x460bdec1u];   /* its load job's */
     fprintf(stderr, "read of 0x%08x\n", a);
     return 0;
 }
@@ -515,17 +518,18 @@ int main(void)
     while (book() > 2) { tap(LEFT); job(); as_tick(0); }
     change_window = 0;
     chosen = 4; job();                                /* project A left on book 3, arrangement 5 */
-    as_project_load();                                /* ev_banks_load: the directory still A's */
-    host_dir = "/SET/PROJB";
-    as_project_loaded(); as_project_new(); mark(0x30); chosen = 0;   /* project B, never used with the module */
+    strcpy(job_name, "PROJB");                        /* LOAD of project B: its job names B */
+    as_project_load(); as_project_loaded(); as_project_new(); mark(0x30); chosen = 0;   /* B, never used */
+    host_dir = "/SET/PROJB"; strcpy(cur_name, "PROJB");   /* the directory names B only once the load is over */
     settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);
     check("project B comes up on book 1, not on project A's book 3", book() == 0 && marked(0x30));
     job();
     check("and B's arrbook.work says book 1, nothing of A's", find("/SET/PROJB/arrbook.work") && find("/SET/PROJB/arrbook.work")->work[4] == 0);
-    as_project_load();                                /* back to A: the directory still B's */
-    host_dir = "/SET/PROJ";
-    as_project_loaded(); as_project_new(); mark(0x10); chosen = 0;
-    settle(); job(); as_tick(0); for (int i = 0; i < 300; ++i) as_tick(0);
+    strcpy(job_name, "PROJ");
+    as_project_load(); as_project_loaded(); as_project_new(); mark(0x10); chosen = 0;   /* back to A */
+    host_dir = "/SET/PROJ"; strcpy(cur_name, "PROJ");
+    settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);   /* the module's job reads A's arrbook.work */
+    job(); for (int i = 0; i < 300; ++i) as_tick(0);  /* and the switch to its book */
     check("back in project A: book 3, arrangement 5", book() == 2 && chosen == 4);
 
     printf("%d checks, %d failed\n", checks, failures);
