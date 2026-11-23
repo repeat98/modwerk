@@ -181,13 +181,28 @@ fails (with the corrected model, three checks). Host-tested only.
 The module read `arrbook.work` at `ev_banks_load`, where stock's project directory is still the last project's: a
 project loaded after another came up on the other's book and choices, and that state was later saved into the new
 project's `arrbook.work` (seen on the developer's MKI with the setlists build, whose setlists file is read the same way;
-earlier unit tests only reloaded the same project). Fixed: a LOAD marks the place stale at `ev_banks_load` and reads it
-at `ev_banks_loaded` (HOOKS.md), or in the first card job after the load if that hook does not come; RELOAD keeps
-reading its own (same) project at `ev_project_reloaded`; until the new project is read, a card job writes none of the
-module's files (LOAD saved the last project before it began; book 1 stays stock's own). `verify.py` (92 checks): A left
-on book 3, LOAD of project B (the directory switching at `ev_banks_loaded`) comes up on book 1 with B's arrbook.work
-saying book 1, and A loaded back is on book 3, arrangement 5; the previous code fails two of them. Host-tested only on
-this build.
+earlier unit tests only reloaded the same project). Three faults, found and fixed one after another on the developer's
+MKI (OS 1.40C, base 6d23e888):
+
+1. Reading at `ev_banks_loaded` instead (build `76c3abfc1`) was not enough: on the unit B still came up on A's book and
+   arrangement, and A then on B's. Loading another project, stock's project name (0x100f8378) names the last project
+   at both hooks; the new one is in the load job's record (0x460bdec1). Now, when the two differ, the place is read by
+   a card job the module posts after the whole load; a LOAD of the project in use and RELOAD read as before; until the
+   new project is read, a card job writes none of the module's files (build `a6fd6a1eb`). On the unit, both projects
+   then came back on their own book, but on arrangement 1.
+2. After such a load the arranger's run state (0x800066a0) stayed set with nothing playing, and stock's choice of
+   arrangement refuses while it is set: the module's two seconds of retries gave up. Now, on a return after a load
+   only, after half a second of refusals and stopped, the module runs stock's arranger reset (0x4009ae48, which stock
+   runs for each new project) and chooses then (build `e6998c4c5`). On the unit, A then came back on book 3,
+   arrangement 6, and B on book 2, arrangement 1, but B's closed list kept A's cursor (row 6).
+3. The list's cursor is now set after a switch whether the list is open or not (build `85d544a68`).
+
+On build `85d544a68` (package `81eb7172`), as the developer reported it: A left on book 3 on an arrangement with rows,
+LOAD of B came up on book 2, arrangement 1, with the list's cursor on 1; LOAD of A came back on book 3 and its
+arrangement, cursor on it; PLAY played that arrangement from its first row; CHANGE LEFT and RIGHT switched books as
+before. `verify.py` (96 checks) models both project directories, the name switching only after the load and a run
+state left set; the previous builds fail their cases.
+
 
 ## Edge cases
 
@@ -205,7 +220,7 @@ this build.
 | Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI, package 08d0833a removed on book 1, then a power cycle (an earlier build had left book 2 in book 1, the load fault since fixed) | pass: the stock arrangements were book 1's |
 | An arr09+ file there but failing to open once | taken for a missing file, its empty slot was written back (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
 | A reinstall or Undo between that failed read and the next sync | the module forgot the book was read only in part (owner's review) | host test (verify.py); on the MKI, `37f7e94f…`: distinct books 1 and 2 through a power cycle and a trial + Undo, each followed by a sync | pass on the MKI (both books as made); the failed read itself only in the host test |
-| LOAD of another project | the module read the new project's arrbook.work while stock's directory was still the last project's | host test (verify.py), two project directories | pass in the host test; the setlists build showed it on the developer's MKI |
+| LOAD of another project | the module read the new project's arrbook.work while stock's directory was still the last project's | host test (verify.py), two project directories; the developer's MKI | pass, build 85d544a68 (package 81eb7172), as the developer reported it |
 | A sync on book 1 read only in part | stock's writer writes all 8 slots on a sync, the empty ones too | host test (verify.py), with stock's writer modelled as it works | pass in the host test; not run on a unit |
 | Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
 | A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |

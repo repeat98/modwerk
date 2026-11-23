@@ -63,6 +63,20 @@ only checks the arrangement files (0x4008fc54 calls the reader with its third ar
 (0x40085342), calls the new-project step 0x400909d8 (ev_project_new) first, then the project data and banks, and
 last loads arr01-08 into the slots (0x4008fd28, mask 0xff). Until then the slots hold what they held before.
 
+## LOAD of another project: the project directory and the arranger
+
+Stock's project directory (0x40025230, built on the project name at 0x100f8378) still names the last project at
+ev_banks_load and at ev_banks_loaded when another project is loaded: the LOAD request (0x40023b68) puts the new name
+into its job's record (0x460bdec1), and the name in use changes only later (the developer's MKI, 24 November 2026: a
+file read at either hook was the last project's). The module compares the two names and reads the new project's
+arrbook.work in a card job of its own after the load.
+
+After such a load the arranger's run state (0x800066a0: 1 playing, 2 held by a STOP, set by 0x4009f784) can stay
+set with nothing playing, and select_arr (0x400a03a0) refuses every choice while it is set (seen on the same unit:
+the book came back on arrangement 1). Stock's arranger reset (0x4009ae48: run state 0, row states cleared, CHAIN -1)
+runs at start-up (0x4001fc84) and for each new project (0x40025af2); the module runs it before its choice on a
+return after a load, once half a second of refusals has passed and nothing plays.
+
 ## Card jobs
 
 `0x40022cd4(0)` posts job 7, SYNC TO CARD's "write the project". It returns a negative code without posting: -7 with
