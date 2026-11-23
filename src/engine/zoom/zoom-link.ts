@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { CURRENT_PATCH, ZOOM_DEVICE_IDS, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { CURRENT_PATCH, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 // Tabs of the site take turns on the pedal, as octatrack-link.ts's USB jobs do; without Web Locks, `op` keeps one job at a time in this tab.
@@ -333,7 +333,7 @@ export class ZoomLink {
   private async dropNew(file: string) { try { await this.drain(); await this.remove(file) } catch { /* the next install of it names it in the list */ } }
   private refuseWrites() {
     const identity = this.state.identity
-    if (!canWriteFiles(identity)) throw new Error('Installing and removing effects is tested only on the MS-70CDR with Zoom’s firmware 2.10 or the base; this is ' + (identity ? 'an ' + identity.model + ' with firmware ' + (identity.firmware || 'unknown') : 'an unknown pedal') + '. Nothing was written.')
+    if (!canWriteFiles(identity)) throw new Error(ZOOM_FILE_WRITE_REQUIREMENT + (identity ? ' Connected firmware is ' + (identity.firmware || 'unknown') + ' on ' + identity.model + '.' : ''))
   }
 
   /**

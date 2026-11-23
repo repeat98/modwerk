@@ -55,16 +55,22 @@ export function resolveZoomSelection(device: string, ids: readonly string[]): Zo
 }
 
 type PedalFile = import('../engine/zoom/zoom-link').ZoomFile
-/** Join the active patch with the registered files actually read from the pedal. Several slots can use one file. */
+/** Registered catalogue modules on the pedal and the active slots that resolve to them. */
 export function zoomPatchModules(patch: ZoomCurrentPatch, files: readonly PedalFile[], listed: readonly ZoomEffect[]) {
-  return patch.slots.flatMap(slot => {
-    const matching = files.filter(file => file.inEffectList && file.effect?.gid === slot.gid && file.effect.fxid === slot.fxid)
-    if (matching.length !== 1) return []
-    const file = matching[0]
+  const registered = files.filter(file => file.inEffectList && file.effect)
+  const installed = new Map<PedalFile, ZoomEffect>()
+  for (const file of registered) {
+    const id = file.effect!
     const module = listed.find(({ platform }) => platform.file.toUpperCase() === file.name.toUpperCase() &&
-      platform.effectId.gid === slot.gid && (platform.effectId.fxid === slot.fxid || isLocalId(slot)))
+      platform.effectId.gid === id.gid && (platform.effectId.fxid === id.fxid || isLocalId(id)))
+    if (module) installed.set(file, module)
+  }
+  const cards = patch.slots.flatMap(slot => {
+    const matching = registered.filter(file => file.effect?.gid === slot.gid && file.effect.fxid === slot.fxid)
+    const module = matching.length === 1 ? installed.get(matching[0]) : undefined
     return module ? [{ slot, module }] : []
   })
+  return { cards, installed: new Set(installed.values()).size }
 }
 /**
  * What a sync does to bring the pedal to the set: install the set's effects that are missing or another version, and

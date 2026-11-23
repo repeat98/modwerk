@@ -37,8 +37,10 @@ export function ZoomPatchEditor({ link, files, listed, busy, inventoryError, onR
     </div>
     {(read?.error || inventoryError) ? <p role="alert" className="hub-error">{read?.error || inventoryError}</p>
       : !modules ? <p role="status" className="hub-empty">{read?.patch ? 'Reading installed modules…' : 'Reading the active patch…'}</p>
-      : !modules.length ? <p className="hub-empty">This patch has no installed Modwerk modules.</p>
-      : <div className="zoom-patch-cards">{modules.map(({ slot, module }) =>
+      : !modules.cards.length ? <p className="hub-empty">{modules.installed
+        ? <>{modules.installed} {modules.installed === 1 ? 'Modwerk module is' : 'Modwerk modules are'} installed on the pedal. Add one to this patch, then refresh.</>
+        : 'Install a Modwerk module from a set, then add it to this patch on the pedal.'}</p>
+      : <div className="zoom-patch-cards">{modules.cards.map(({ slot, module }) =>
         <article key={slot.index} className="hub-cell zoom-patch-card" aria-label={module.name + ', slot ' + (slot.index + 1)}>
           <div className="hub-cell-head">
             <h3>{module.name}</h3>

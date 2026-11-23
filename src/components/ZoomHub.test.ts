@@ -68,11 +68,12 @@ describe('the Zoom pedal page', () => {
     expect(container.querySelector('iframe')).toBeNull()
     expect(container.querySelector('[aria-current=page]')?.textContent).toBe('Editor')
 
-    patch.splice(0, patch.length, ...fakeCurrentPatch('Empty', []))
+    patch.splice(0, patch.length, ...fakeCurrentPatch('Stock only', [{ index: 0, gid: 8, fxid: 16 }]))
     await idle(link)
     await click(button('Refresh patch'))
-    for (let i = 0; i < 100 && open().querySelector('h2')?.textContent !== 'Empty'; i++) await settle()
-    expect(open().textContent).toContain('This patch has no installed Modwerk modules.')
+    for (let i = 0; i < 100 && open().querySelector('h2')?.textContent !== 'Stock only'; i++) await settle()
+    expect(open().querySelector('.zoom-patch-card')).toBeNull()
+    expect(open().textContent).toContain('2 Modwerk modules are installed on the pedal. Add one to this patch, then refresh.')
     expect(fake.sent.filter(m => m[1] === 0x52 && m[4] !== 0x60)).toEqual([
       [0xf0, 0x52, 0, 0x61, 0x29, 0xf7], [0xf0, 0x52, 0, 0x61, 0x29, 0xf7],
     ])
@@ -315,7 +316,7 @@ describe('syncing the set to the pedal', () => {
   const listed = async (id: string, file: string, fxid: number, data: number[]) => ({ id, name: id, version: '0.1.0', machine: device.id, presentation: { summary: '' }, media: [{ kind: 'thumbnail', path: 'thumbnail.svg' }],
     platform: { kind: 'zdl', file, effectId: { gid: 8, fxid }, effectVersion: '0.03', dspCost: 8, binary: { sha256: await sha(data), bytes: data.length, release: { repository: 'https://github.com/x/y', tag: 't', asset: file } }, screen: 'static', pedals: [] } }) as unknown as ZoomEffect
 
-  it.each([false, true])('repairs a set with a missing or unlisted file (unlisted: %s)', async orphan => {
+  it.each([['2.10', false], ['D004', true]] as const)('syncs a set on %s with a missing or unlisted file (unlisted: %s)', async (firmware, orphan) => {
     vi.stubGlobal('confirm', () => true)
     const loop = fakeEffect('LOOP.ZDL', 8, 467, '0.03', 1300), scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), dirt = fakeEffect('DIRT.ZDL', 8, 469, '0.03', 700)
     const effects = [await listed('loop', 'Loop.ZDL', 467, loop.data), await listed('scope', 'Scope.ZDL', 468, scope.data), await listed('dirt', 'Dirt.ZDL', 469, dirt.data)]
@@ -323,7 +324,7 @@ describe('syncing the set to the pedal', () => {
     vi.stubGlobal('fetch', async (url: string) => new Response(Uint8Array.from(served[url.split('/').pop()!])))
     const files = [fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 467, '0.02', 1300), dirt, fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'DIRT.ZDL'] })]
     if (orphan) files.push(scope)
-    const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
+    const fake = fakeZoomPedal({ firmware, files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
     const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['loop', 'scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
     await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
@@ -395,6 +396,6 @@ describe('syncing the set to the pedal', () => {
     await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
     for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
     expect(button('Sync to MS-70CDR').disabled).toBe(true)
-    expect(button('Sync to MS-70CDR').title).toMatch(/tested only on the MS-70CDR with Zoom’s firmware 2\.10/)
+    expect(open().querySelector('.hub-sync p')?.textContent).toMatch(/Effect file changes require the MS-70CDR with Zoom 2\.10/)
   })
 })

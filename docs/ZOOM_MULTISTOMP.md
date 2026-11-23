@@ -67,7 +67,10 @@ The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) reads
 the active patch over the same USB link. It shows one card per registered
 Modwerk module slot, with values decoded from the patch and parameter
 names from the module catalog. **Refresh patch** reads the current
-values again after a change on the pedal. The view sends the patch query
+values again after a change on the pedal. A set sync changes the installed
+effects. After restarting the pedal, add the effects you want to the
+patch on the pedal. D004 uses the same file commands as the released
+base and supports set sync. The view sends the patch query
 (`29`) alone. [Patch format derived from the upstream editor](https://github.com/themanro/ZoomMultistompZDL/blob/main/tools/patch_editor.html)
 
 
