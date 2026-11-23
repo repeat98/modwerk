@@ -11,9 +11,10 @@ const folder = 'sdk/analog-rytm-mkii/modules/example/'
 const document = { machine: 'analog-rytm-mkii', id: 'example', version: '1.0.0' }
 const pin = { device: 'analog-rytm-mk2', id: 'example', version: '1.0.0', file: 'example.elemod', title: 'Example', requires: [], conflicts: [], sha256: 'a'.repeat(64), os: '1.74', license: 'MIT', source: { repo: 'repeat98/modwerk', tag: 'example' } }
 let root
-afterEach(() => { vi.unstubAllGlobals(); vi.resetAllMocks(); rmSync(root, { recursive: true, force: true }) })
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.resetAllMocks(); rmSync(root, { recursive: true, force: true }) })
 
 function fixture(publishedPin = pin) {
+  vi.stubEnv('MODWERK_PAGES_RUN', '')
   root = mkdtempSync(join(tmpdir(), 'modwerk-published-'))
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim()
   mkdirSync(join(root, folder), { recursive: true })
@@ -70,4 +71,14 @@ it('fails closed when published history or live metadata is unavailable', async 
   await expect(verify()).rejects.toThrow('successful production')
   fetch.mockResolvedValue(new Response(null, { status: 503 }))
   await expect(verify()).rejects.toThrow('HTTP 503')
+})
+
+it('checks the authenticated CI record and still requires the live catalog', async () => {
+  const { verify, run } = fixture()
+  vi.stubEnv('GITHUB_ACTIONS', 'true')
+  vi.stubEnv('MODWERK_PAGES_RUN', JSON.stringify(run))
+  await expect(verify()).resolves.toBeUndefined()
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual(['https://modwerk.app/elekloader/catalog.json'])
+  vi.stubEnv('MODWERK_PAGES_RUN', JSON.stringify({ ...run, head_branch: 'topic' }))
+  await expect(verify()).rejects.toThrow('successful production')
 })

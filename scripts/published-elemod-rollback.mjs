@@ -14,8 +14,8 @@ async function loadJson(url) {
 }
 
 async function releaseCommit() {
-  const { workflow_runs } = await loadJson(runsUrl)
-  const run = workflow_runs?.[0]
+  const record = process.env.GITHUB_ACTIONS === 'true' && process.env.MODWERK_PAGES_RUN
+  const run = record ? JSON.parse(record) : (await loadJson(runsUrl)).workflow_runs?.[0]
   if (run?.repository?.full_name !== 'repeat98/modwerk' || run.path !== '.github/workflows/pages.yml'
     || run.head_branch !== 'main' || run.conclusion !== 'success' || !/^[0-9a-f]{40}$/.test(run.head_sha))
     throw new Error('Could not identify the last successful production Pages release')
