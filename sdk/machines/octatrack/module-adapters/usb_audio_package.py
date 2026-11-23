@@ -487,8 +487,9 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                dict(event='ev_usb_bus_end', fn='mwua_bus_end', order=50), dict(event='ev_usb_control', fn='mwua_control', order=50),
                dict(event='ev_usb_frame', fn='mwua_frame', order=50), dict(event='ot_settings', fn='mwua_setting', order=50)]
     hooks = loader.subscribe([loader.NONE] * len(loader.HANDLERS), entries, symbols)
-    # Inventory kind 7 is the configurable package. Kinds 1-6 identify the older
-    # fixed layouts so the site can still select their exact Undo package.
+    # Inventory kind 8 is the configurable package with USB input, 7 the output-only
+    # one (0.3.0). Kinds 1-6 identify the older fixed layouts. The site picks each
+    # one's exact Undo package by its kind.
     copies, fills = [], []
     if release or capture:
         if layout is not None:
@@ -543,7 +544,7 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                 raise ValueError('The installed image differs from the compiled module.')
     data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8,
                           copies=copies, fills=fills,
-                          layout=7 if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
+                          layout=(8 if input_port else 7) if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
     if release and stock:
         packages = load('usb_audio_package_scan', HERE.parent / 'elekloader/module_packages.py')
         scanner = load('usb_audio_image_scan', HERE.parent / 'elekloader/check_stock_free.py')
