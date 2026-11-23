@@ -3,7 +3,7 @@
 # pressure follow it; the roll's velocity does not (equal at both pressures).
 # The menu opens on the row it was left on, hence UP x4. Expects BD's VEL.CUR OFF and ALWAYS ON off;
 # sets VEL.CUR to 1 (one RIGHT) and back (one LEFT). Leaves BD's aftertouch at 0.
-name: rtrg-velcur-set
+name: pad-pressure-rtrg-velcur-set
 state: changes
 
 hold RTRG

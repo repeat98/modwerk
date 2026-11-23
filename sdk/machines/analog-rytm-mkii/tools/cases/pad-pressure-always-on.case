@@ -3,7 +3,7 @@
 # VEL.CUR 1 stock already sends it there and the curve sets the velocity: the base keeps that.
 # Expects BD's VEL.CUR OFF and ALWAYS ON off; turns ALWAYS ON on (YES on its row) and VEL.CUR to 1 for the
 # second half, and puts both back. Leaves BD's aftertouch at 0.
-name: always-on
+name: pad-pressure-always-on
 state: changes
 
 hold RTRG

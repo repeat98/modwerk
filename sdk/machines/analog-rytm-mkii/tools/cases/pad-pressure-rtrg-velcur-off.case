@@ -3,7 +3,7 @@
 # menu RTRG opens drops it, so the sound's aftertouch (0x800067de, BD first) and MIDI poly pressure stay
 # still. With the base both follow, and the roll's velocity still follows too.
 # Expects BD's VEL.CUR OFF and ALWAYS ON off. Plays a BD roll and leaves its aftertouch at 0.
-name: rtrg-velcur-off
+name: pad-pressure-rtrg-velcur-off
 state: changes
 
 hold RTRG

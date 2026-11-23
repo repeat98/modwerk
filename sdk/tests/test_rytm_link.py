@@ -21,7 +21,7 @@ class RytmLink(unittest.TestCase):
     def test_commands_match_the_base(self):
         base = defines("CMD_")
         names = {"IDENT": "ident", "DISARM": "disarm", "KEY": "key", "ENC": "enc", "RELEASE_ALL": "release",
-                 "CONFIRM": "confirm", "RAMBOOT": "ramboot", "SCREEN": "screen", "MEM": "mem"}
+                 "CONFIRM": "confirm", "RAMBOOT": "ramboot", "PAD": "pad", "SCREEN": "screen", "MEM": "mem"}
         self.assertEqual({names[n]: v for n, v in base.items() if n in names}, rytm_link.CMD)
 
     def test_statuses_match_the_base(self):

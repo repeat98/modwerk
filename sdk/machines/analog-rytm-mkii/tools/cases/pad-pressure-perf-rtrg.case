@@ -2,7 +2,7 @@
 # pressure moves performance 1's amount (a u16 at 0x8000e57c, the pressure byte times 128, written through
 # 0x400b2c6a) as it does without RTRG. Stock froze it while RTRG was held. Pressure 0 brings it back.
 # Enters PERF mode with PERF and leaves it with PERF (the screen does not change: where pressure goes shows it).
-name: perf-rtrg
+name: pad-pressure-perf-rtrg
 state: changes
 
 key PERF

@@ -3,7 +3,7 @@
 # off. After a boot BD plays note 36 (0x24) on CHRO's pads. Needs PAD DEST and PRESSURE DST sending to USB.
 # Then a roll with RTRG held: the base sends its pressure on the played note too (stock: none).
 # Enters CHROMATIC with CHRO and leaves it with CHRO (the screen does not change: a pad's note shows it). Leaves BD's aftertouch at 0.
-name: chromatic
+name: pad-pressure-chromatic
 state: changes
 
 key CHRO

@@ -3,7 +3,7 @@
 # track at 0x800067de (BD first), written as the pad's pressure byte times 128 (stock's setter 0x4011f490);
 # on MIDI it goes out as `An note pressure/2` when PAD DEST and PRESSURE DST send to USB (INT+EXT, the
 # default). Plays BD and leaves its aftertouch at 0.
-name: pad-plain
+name: pad-pressure-pad-plain
 state: changes
 
 midi m begin
