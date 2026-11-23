@@ -218,9 +218,14 @@ export function parseLoad(m: number[]): MidistompLoad | undefined {
   return { window: word(12), cpu: tenths(0), audio: tenths(1), audioMax: tenths(2), system: tenths(3), perform: tenths(4), late: word(11), midi: tenths(13), lateTotal: word(14), dsp: slots.reduce((sum, slot) => sum + slot.dsp, 0), slots }
 }
 
-/** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
- * version 1.1x and takes the flash commands below. */
-export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && identity.deviceId === 0x61 && identity.firmware.startsWith('1.1')
+/** Update mode (hold Up and Down while plugging in USB): the bootloader answers the identity request with version 1.1x
+ * and the model byte from the pedal's flash, and takes the flash commands below. Seen on the MS-70CDR and on an MS-50G
+ * (23 November 2026: 0x58, 1.10, recorded while Effect Manager 2.3.3 wrote its effects). */
+const UPDATE_MODE_SEEN = [ZOOM_DEVICE_IDS['zoom-ms-70cdr'], ZOOM_DEVICE_IDS['zoom-ms-50g']]
+export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && UPDATE_MODE_SEEN.includes(identity.deviceId) && identity.firmware.startsWith('1.1')
+/** Where the base may be flashed: an MS-70CDR in update mode. The base is built from the MS-70CDR's OS, and the
+ * modding guidelines allow no firmware flips, so another pedal in update mode is refused. */
+export const canFlashBase = (identity?: ZoomIdentity) => isUpdateMode(identity) && identity!.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr']
 /** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, or on
  * the base (Zoom's 2.10, patched). Every other pedal or firmware is only read. */
 export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag)
