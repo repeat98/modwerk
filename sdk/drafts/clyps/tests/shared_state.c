@@ -194,10 +194,28 @@ static void bank_events(int fail_first)
     assert(missing && playing == 0);
 }
 
+/* A Bank H notification may coincide with a popup in a stopped row edit. */
+static void interrupted_bank_edit(void)
+{
+    tap(ARR); tap(6); tap(ARR); tap(YES); tap(3);
+    tap(0x1b); tap(YES); tap(2);
+    assert(editing && draft == 2 && rows[3] == 6);
+    BANK_PRE(1u << 7, 0);
+    popup = 1;
+    assert(!module_key(NO, 1));
+    BANK_POST();
+    popup = 0;
+    assert(!module_key(NO, 0));
+    tap(ARR);
+    assert(visible && !editing && !armed);
+    assert(defined == 8 && rows[3] == 6 && requested == 6 && playing == 6);
+}
+
 int main(int argc, char **argv)
 {
     if (argc == 2) {
         if (strcmp(argv[1], "popup") == 0) interrupted_editor();
+        else if (strcmp(argv[1], "popup-bank") == 0) interrupted_bank_edit();
         else bank_events(strcmp(argv[1], "failed-bank") == 0);
         return 0;
     }

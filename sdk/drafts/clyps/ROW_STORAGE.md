@@ -1,5 +1,6 @@
 # Bank-local rows · decision record · 23 November 2026
 
+**D18 now requires 16 independent rows in every Bank A–P.** [Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md). The file layout remains proposed. The current runtime holds sixteen volatile rows in total and qualifies source selection only on A01 in bank A. A row refers to stock sequence slots. Parts, their assignments and their sound data remain stock-owned.
 
 | Model | Interaction and engineering cost | Disposition |
 |---|---|---|

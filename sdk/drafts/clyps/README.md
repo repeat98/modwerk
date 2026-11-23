@@ -1,5 +1,6 @@
 # CLYPS — experimental Octatrack performance module (community draft)
 
+[Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
 
 **Build the eight-track engine.** From the repository root run:
 

@@ -100,3 +100,9 @@ The final package also passed the matched T2 slice against the fresh, same-MAIN 
 On the same final package, the GATE4 project fixture selected bank B, observed project initialization and the bank pre/post callbacks, and found R04 undefined with CLYPS still installed. Waiting for the stock card task before OFF returned 786432 bytes. The initial short OFF timeout had expired while the stock operation was still running. A direct attempt to invoke the stock bank reader synchronously from emulator main timed out; it provides no native bank-only I/O result. The independent host short-read case covers that path. Fresh FLEX on the first admitted package went from 0 to 1930 on T1. STATIC T2 measured 2117 before and 2337 after, failing the pre-launch silence assertion as in the historical stock control. E1 remains locked.
 
 On the final package, Track Solo and Grain both passed fresh native replays. OFF restored the same stock Arranger signature (336/336) and the complete pool. Every package and card used in these tests stayed local.
+
+Both final native RELOAD fixtures passed. The stored B project cleared R04. Missing stored state kept bank A and its confirmed R04. OFF restored 786432 bytes in both cases.
+
+## Artist requirements checkpoint
+
+Discovery now runs five tests. The added stopped popup/Bank H case injects both events into the production callbacks during a draft edit, then checks ARR re-entry, confirmed row, playback and pending state. The independent C clipboard fixture checks row and same-track cell snapshots, source isolation, overwrite refusal, cancellation/clear, invalid targets and cross-bank refusal. This fixture works on staging rows only. The firmware has no clipboard binding, sidecar writer or native duplication command. Hardware A–H: NOT TESTED.

@@ -56,3 +56,5 @@ Reset volatile rows only on the stock project-initialization event. Ordinary ban
 ## Development candidate on the cumulative base
 
 The contributor fork now carries the implementation on integration/clyps-shared-sequencer, commit 7419b7598, based on a9674ed84. Its Board claim covers candidate slots 63–65. Source and scheduling use two call events. An independent modal-input marker allows an eligible UI to take its own controls before stock shortcuts. The versioned feature requirement prevents an equal-width loader missing that capability from publishing the package. The shipping registry and official base are subject to maintainer review. See NATIVE_REPLAY.md for the matched development build and control.
+
+On 23 November PR #1910 head c3706472be93ff0d02a7293412ab3992b3b60be7 still ended its event registry at 62 (events.json blob c572264f6142843e6f93bfb6d08233c6f9909439). The contributor candidate's 63–65 contract remains pending.
