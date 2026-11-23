@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { CURRENT_PATCH, ZOOM_DEVICE_IDS, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 // Tabs of the site take turns on the pedal, as octatrack-link.ts's USB jobs do; without Web Locks, `op` keeps one job at a time in this tab.
@@ -36,7 +36,6 @@ let nextConnection = 0
 
 export class ZoomLink {
   private operationConnection?: number
-  private editorSignal?: AbortSignal
   private state: ZoomLinkState
   private readonly listeners = new Set<() => void>()
   private access?: MidiAccessLike
@@ -44,7 +43,7 @@ export class ZoomLink {
   private output?: MidiOut
   private sysex: number[] | null = null
   private nextSend = 0
-  private waitFile?: (m: number[]) => void
+  private waitReply?: (m: number[]) => void
   private waitIdentity?: (m: number[]) => void
   private waitMst?: (m: number[]) => void
   private nonce = 0
@@ -75,7 +74,7 @@ export class ZoomLink {
   }
 
   async connect() {
-    if (this.editorSignal?.aborted === false || !this.requestAccess || this.state.status === 'connecting' || this.state.status === 'reading') return
+    if (!this.requestAccess || this.state.status === 'connecting' || this.state.status === 'reading') return
     this.set({ status: 'connecting' })
     try {
       this.access ??= await this.requestAccess()
@@ -99,7 +98,7 @@ export class ZoomLink {
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
       this.heads.clear()
       this.set({ status: 'ready', identity, connection: ++nextConnection })
-      if (!isUpdateMode(identity)) void this.quiet(() => this.editorSignal?.aborted === false ? Promise.resolve() : this.hello())
+      if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
     }
@@ -112,7 +111,7 @@ export class ZoomLink {
     if (this.retrying) return
     this.retrying = true
     try {
-      for (let i = 0; i < 10 && this.editorSignal?.aborted !== false && this.state.status === 'idle' && this.pedalPresent(); i++) {
+      for (let i = 0; i < 10 && this.state.status === 'idle' && this.pedalPresent(); i++) {
         if (i) await new Promise(resolve => setTimeout(resolve, this.retry))
         if (this.state.status === 'idle') await this.connect()
       }
@@ -139,7 +138,7 @@ export class ZoomLink {
     if (isMstReply(m)) { this.waitMst?.(m); return }
     if (m[1] === 0x7e && m[3] === 0x06 && m[4] === 0x02) { this.waitIdentity?.(m); return }
     const id = this.state.identity?.deviceId
-    if (id !== undefined && (isFileReply(m, id) || isFlashReply(m, id))) this.waitFile?.(m)
+    if (id !== undefined && (isFileReply(m, id) || isFlashReply(m, id) || isCurrentPatchReply(m, id))) this.waitReply?.(m)
   }
 
   // Paced like the project's editor: a long message gets 22 ms, a short one 3 ms.
@@ -153,8 +152,14 @@ export class ZoomLink {
     const id = this.state.identity?.deviceId
     if (id === undefined || !this.output) return Promise.resolve(null)
     return new Promise(resolve => {
-      const timer = setTimeout(() => { this.waitFile = undefined; this.stale = true; resolve(null) }, timeout)
-      this.waitFile = m => { clearTimeout(timer); this.waitFile = undefined; resolve(m) }
+      const timer = setTimeout(() => { this.waitReply = undefined; this.stale = true; resolve(null) }, timeout)
+      const patch = body[0] === CURRENT_PATCH.request
+      this.waitReply = m => {
+        if (isCurrentPatchReply(m, id) !== patch) return
+        clearTimeout(timer)
+        this.waitReply = undefined
+        resolve(m)
+      }
       this.send(zoomSysex(id, body))
     })
   }
@@ -171,9 +176,9 @@ export class ZoomLink {
     if (!this.stale) return
     const quiet = Math.min(300, this.timeout)
     await new Promise<void>(resolve => {
-      const done = () => { this.waitFile = undefined; resolve() }
+      const done = () => { this.waitReply = undefined; resolve() }
       let timer = setTimeout(done, quiet)
-      this.waitFile = () => { clearTimeout(timer); timer = setTimeout(done, quiet) }
+      this.waitReply = () => { clearTimeout(timer); timer = setTimeout(done, quiet) }
     })
     this.stale = false
   }
@@ -201,24 +206,6 @@ export class ZoomLink {
     this.op = run.catch(() => undefined)
     return run
   }
-  /** Give the embedded editor a turn on MIDI until it leaves the pedal page. */
-  readonly openPatchEditor = (signal: AbortSignal, ready: () => void) => {
-    this.editorSignal = signal
-    return this.quiet(async () => {
-      if (signal.aborted) return
-      await new Promise<void>(resolve => {
-        signal.addEventListener('abort', () => resolve(), { once: true })
-        ready()
-      })
-    }).finally(() => {
-      if (this.editorSignal !== signal) return
-      this.editorSignal = undefined
-      if (this.state.status !== 'idle') return
-      if (this.pedalPresent()) void this.reconnect()
-      else this.start()
-    })
-  }
-
   /** The base's load now (MIDISTOMP's load command), null when it doesn't answer, undefined when the link is busy. */
   readonly load = () => this.quiet(async () => {
     if (this.state.status !== 'ready' || !this.state.identity?.midistomp) return undefined
@@ -439,6 +426,19 @@ export class ZoomLink {
     await this.remove(file.name)
     return { previousList: list, removed: head! }
   }, 'writing')
+
+  /** Read only the current edit buffer, without enabling editor mode or sending a patch change. */
+  readonly currentPatch = () => this.exclusive('Reading the active patch', async () => {
+    const identity = this.state.identity
+    if (identity?.deviceId !== ZOOM_DEVICE_IDS['zoom-ms-70cdr'] || isUpdateMode(identity)) {
+      throw new Error('Connect the original MS-70CDR in normal mode to read its patch.')
+    }
+    const reply = await this.ask([CURRENT_PATCH.request])
+    if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
+    const patch = reply && parseCurrentPatch(reply)
+    if (!patch) throw new Error('The pedal did not return its active patch. Try reading it again.')
+    return patch
+  })
 
   /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {

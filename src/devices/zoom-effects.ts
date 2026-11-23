@@ -9,6 +9,7 @@ import { DEVICES_BY_ID } from './registry'
 import { moduleReleasedAt } from '../catalog/module-releases'
 import { assetUrl } from '../hosting'
 import { givenIds } from '../engine/zoom/local-ids'
+import { isLocalId, type ZoomCurrentPatch } from '../engine/zoom/zoom-protocol'
 import type { MachineProfile } from './machine-contract'
 import MACHINES from './machines.generated.json'
 
@@ -54,6 +55,17 @@ export function resolveZoomSelection(device: string, ids: readonly string[]): Zo
 }
 
 type PedalFile = import('../engine/zoom/zoom-link').ZoomFile
+/** Join the active patch with the registered files actually read from the pedal. Several slots can use one file. */
+export function zoomPatchModules(patch: ZoomCurrentPatch, files: readonly PedalFile[], listed: readonly ZoomEffect[]) {
+  return patch.slots.flatMap(slot => {
+    const matching = files.filter(file => file.inEffectList && file.effect?.gid === slot.gid && file.effect.fxid === slot.fxid)
+    if (matching.length !== 1) return []
+    const file = matching[0]
+    const module = listed.find(({ platform }) => platform.file.toUpperCase() === file.name.toUpperCase() &&
+      platform.effectId.gid === slot.gid && (platform.effectId.fxid === slot.fxid || isLocalId(slot)))
+    return module ? [{ slot, module }] : []
+  })
+}
 /**
  * What a sync does to bring the pedal to the set: install the set's effects that are missing or another version, and
  * remove listed effects the set no longer has. A file is a listed effect only by its name and its header's group and ID:

@@ -15,11 +15,13 @@
 .zoom-pick { cursor: pointer; }
 .zoom-pick.is-disabled { opacity: .5; pointer-events: none; }
 
-.zoom-editor-frame {
-  display: block;
-  width: 100%;
-  height: max(720px, calc(100dvh - 11rem));
-  background: var(--surface, #242429);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
+.zoom-patch-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.zoom-patch-head h2 { margin: 0; overflow-wrap: anywhere; }
+.zoom-patch-head button { flex: none; }
+.zoom-patch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.zoom-patch-card { overflow: visible; border: 1px solid var(--line); border-radius: 8px; }
+.zoom-patch-card .hub-cell-head { align-items: baseline; }
+.zoom-patch-card h3 { margin: 0; color: inherit; font-size: 15px; }
+.zoom-patch-card dl { margin: 10px 0 0; }
+.zoom-patch-card dl div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); }
+.zoom-patch-card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }

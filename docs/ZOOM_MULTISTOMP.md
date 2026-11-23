@@ -63,9 +63,13 @@ without one; test it on the pedal.
 | Diagnostics | USB load support and the development loader counter are in place. Device self-test and a consent-gated diagnostic log remain to be wired. |
 | Device tools | Shared status and load calls reach the pedal. Review, Trial, Keep and Undo depend on the qualified RAM loader. |
 
-The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) runs
-Roman Rusinov's ZoomMultistompZDL Patch Editor within the pedal page. The
-editor requests MIDI access for its own origin. On the pedal page, Modwerk gives the editor the MIDI turn until you leave the tab. [Upstream Patch Editor](https://github.com/themanro/ZoomMultistompZDL#quickstart--edit-your-pedal-from-the-browser)
+The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) reads
+the active patch over the same USB link. It shows one card per registered
+Modwerk module slot, with values decoded from the patch and parameter
+names from the module catalog. **Refresh patch** reads the current
+values again after a change on the pedal. The view sends the patch query
+(`29`) alone. [Patch format derived from the upstream editor](https://github.com/themanro/ZoomMultistompZDL/blob/main/tools/patch_editor.html)
+
 
 ## Devices
 

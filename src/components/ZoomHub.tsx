@@ -166,7 +166,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const asked = useRef(onPedal?.key)
   useEffect(() => {
     if (!pedalKey) asked.current = undefined
-    else if (!editing && status === 'ready' && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() }
+    else if (status === 'ready' && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() }
   })
   const save = () => run(async () => {
     if (!link) return
@@ -181,7 +181,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     : onBase ? <>Connected · {identity?.midistomp ? 'MIDISTOMP ' + identity.midistomp.version : ZOOM_BASE.name}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
     : connected ? <>Connected · firmware {identity?.firmware || 'unknown'}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
     : notice ? notice.text : 'Not connected'
-  const action = editing ? null : status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
+  const action = status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
     : canBase && connected && !onBase && !other ? <button className="button button-primary" disabled={busy} onClick={onInstall}>Install base</button> : null
   const led = connected ? 'on' : busy ? 'load' : 'off'
   const panel = (name: ZoomHubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : VIEWS.find(item => item.view === name)!.title}>{content}</section>
@@ -240,7 +240,9 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
           </section>
         </div>)}
-        {editing && hasEditor && panel('editor', <ZoomPatchEditor link={link} connecting={status === 'connecting'} />)}
+        {editing && hasEditor && panel('editor', connected && !updating && !other && link
+          ? <ZoomPatchEditor key={pedalKey} link={link} busy={busy} files={files} listed={listed} inventoryError={!files ? error : undefined} onRetryInventory={read} />
+          : <p className="hub-empty">{updating ? 'Plug the MS-70CDR in normally to read its patch.' : 'Connect your MS-70CDR to see its active patch.'}</p>)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
           {error && <p role="alert" className="hub-error">{error}</p>}

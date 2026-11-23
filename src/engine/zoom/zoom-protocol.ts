@@ -45,6 +45,37 @@ export function unpack7(bytes: ArrayLike<number>): number[] {
   for (let i = 0; i < bytes.length; i += 8) for (let j = 1; j < 8 && i + j < bytes.length; j++) out.push(bytes[i + j] | (bytes[i] & (1 << (7 - j)) ? 0x80 : 0))
   return out
 }
+/** Current edit buffer on the original MS-70CDR. The query alone leaves the active patch in place. */
+export const CURRENT_PATCH = { request: 0x29, reply: 0x28 } as const
+export const isCurrentPatchReply = (m: number[], deviceId: number) =>
+  deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && m.length === 146 &&
+  m[0] === 0xf0 && m[1] === 0x52 && m[2] === 0 && m[3] === deviceId && m[4] === CURRENT_PATCH.reply &&
+  m[145] === 0xf7
+
+export type ZoomPatchSlot = { index: number; gid: number; fxid: number; enabled: boolean; values: number[] }
+export type ZoomCurrentPatch = { name: string; slots: ZoomPatchSlot[] }
+
+// Unpacking the SysEx collectors leaves the same little-endian bit fields in each 18-byte slot.
+const PATCH_CONTROLS = [[29, 12], [42, 11], [55, 11], [68, 8], [76, 8], [84, 8], [92, 8], [100, 9], [128, 8]]
+export function parseCurrentPatch(m: number[]): ZoomCurrentPatch | undefined {
+  if (!isCurrentPatchReply(m, ZOOM_DEVICE_IDS['zoom-ms-70cdr']) || m.slice(5, -1).some(byte => byte < 0 || byte > 127)) return undefined
+  const raw = unpack7(m.slice(5, -1))
+  const name = String.fromCharCode(...raw.slice(111, 121)).replace(/[^ -~]/g, ' ').trimEnd()
+  const count = (raw[109] >> 2) & 7
+  if (count > 6) return undefined
+  const slots: ZoomPatchSlot[] = []
+  for (let index = 0; index < count; index++) {
+    const read = (at: number, width: number) => {
+      const byte = 18 * index + (at >> 3)
+      return ((raw[byte] | raw[byte + 1] << 8 | raw[byte + 2] << 16) >>> (at & 7)) & ((1 << width) - 1)
+    }
+    const gid = read(25, 4), fxid = read(1, 10)
+    if (!gid && !fxid) continue
+    slots.push({ index, gid, fxid, enabled: !!read(0, 1), values: PATCH_CONTROLS.map(([offset, width]) => read(offset, width)) })
+  }
+  return { name, slots }
+}
+
 export function crc32(bytes: ArrayLike<number>): number {
   let c = 0xffffffff
   for (let i = 0; i < bytes.length; i++) { c ^= bytes[i]; for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1 }

@@ -2,7 +2,7 @@
 import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../dev/zoom-pedal-fake'
+import { fakeCurrentPatch, fakeEffect, fakeEffectList, fakeZoomPedal } from '../dev/zoom-pedal-fake'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { parseZoomHubRoute, zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
 import { ZoomLink } from '../engine/zoom/zoom-link'
@@ -42,23 +42,40 @@ describe('the Zoom pedal page', () => {
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/samples')).toBeUndefined()
   })
 
-  it('gives the Editor the MIDI turn only while its tab is open', async () => {
-    const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 50, 10)
-    const reads = vi.spyOn(link, 'listFiles')
+  it('shows only registered Modwerk modules in the current patch, in slot order', async () => {
+    const patch = fakeCurrentPatch('Afterglow', [
+      { index: 0, gid: 7, fxid: 16 },
+      { index: 1, gid: 8, fxid: 993, values: [78, 52, 24, 0, 1, 144] },
+      { index: 2, gid: 8, fxid: 414 },
+      { index: 5, gid: 8, fxid: 993, enabled: false, values: [25, 50, 70, 0, 0, 98] },
+    ])
+    const fake = fakeZoomPedal({ patch, files: [
+      fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 993, '0.03'),
+      fakeEffect('SCOPE.ZDL', 8, 414, '0.03'), fakeEffect('SPECTRUM.ZDL', 8, 468, '0.02'),
+      fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'SPECTRUM.ZDL'] }),
+    ] })
+    const link = new ZoomLink(() => Promise.resolve(fake.access), 100)
     await render('editor', link)
-    await settle()
-    const frame = open().querySelector('iframe')!
-    expect(frame.getAttribute('src')).toBe('https://themanro.github.io/ZoomMultistompZDL/tools/editor.html')
-    expect(frame.getAttribute('allow')).toBe('midi https://themanro.github.io')
-    expect(container.querySelector('[aria-current=page]')?.textContent).toBe('Editor')
-    await link.connect()
-    expect(fake.sent).toEqual([])
-    expect(reads).not.toHaveBeenCalled()
-    await render('status', link)
+    expect(open().textContent).toContain('Connect your MS-70CDR')
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!)
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    const cards = [...open().querySelectorAll('.zoom-patch-card')]
+    expect(open().querySelector('h2')?.textContent).toBe('Afterglow')
+    expect(cards.map(card => card.getAttribute('aria-label'))).toEqual(['Loop, slot 2', 'Loop, slot 6'])
+    expect(cards[0].textContent).toMatch(/Dry52.*LongOn.*Tempo144/)
+    expect(cards[1].textContent).toContain('Bypassed')
+    expect(cards[1].textContent).toMatch(/Dry50.*LongOff.*Tempo98/)
     expect(container.querySelector('iframe')).toBeNull()
-    await act(() => link.connect())
-    await settle()
-    expect(reads).toHaveBeenCalledTimes(1)
+    expect(container.querySelector('[aria-current=page]')?.textContent).toBe('Editor')
+
+    patch.splice(0, patch.length, ...fakeCurrentPatch('Empty', []))
+    await idle(link)
+    await click(button('Refresh patch'))
+    for (let i = 0; i < 100 && open().querySelector('h2')?.textContent !== 'Empty'; i++) await settle()
+    expect(open().textContent).toContain('This patch has no installed Modwerk modules.')
+    expect(fake.sent.filter(m => m[1] === 0x52 && m[4] !== 0x60)).toEqual([
+      [0xf0, 0x52, 0, 0x61, 0x29, 0xf7], [0xf0, 0x52, 0, 0x61, 0x29, 0xf7],
+    ])
     await idle(link)
   })
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
+import { fakeCurrentPatch, fakeEffect, fakeEffectList, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
 import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
 
@@ -41,6 +41,26 @@ describe('the Zoom link', () => {
     const silent = await connected(fakeZoomPedal({ silent: true }), 30)
     expect(silent.getState().notice?.text).toMatch(/didn’t answer/)
   })
+  it('reads all six slots as a typed patch without entering editor mode', async () => {
+    const slots = Array.from({ length: 6 }, (_, index) => ({
+      index, gid: 8, fxid: 1018 - 27 * index, enabled: index % 2 === 0,
+      values: [4095 - index, 2047 - index, 2047 - index, 255, 194, 129, 128, 511 - index, 130 + index],
+    }))
+    const pedal = fakeZoomPedal({ patch: fakeCurrentPatch('Live Six', slots) }), link = await connected(pedal)
+    expect(await link.currentPatch()).toEqual({ name: 'Live Six', slots })
+    expect(pedal.sent.filter(m => m[1] === 0x52)).toEqual([[0xf0, 0x52, 0, 0x61, 0x29, 0xf7]])
+  })
+
+  it('leaves other models and update mode alone and reports a missing patch reply', async () => {
+    for (const pedal of [fakeZoomPedal({ deviceId: 0x58 }), fakeZoomPedal({ firmware: '1.10' })]) {
+      const link = await connected(pedal, 30)
+      await expect(link.currentPatch()).rejects.toThrow('normal mode')
+      expect(pedal.sent.some(m => m[1] === 0x52)).toBe(false)
+    }
+    const link = await connected(fakeZoomPedal({ patch: fakeCurrentPatch('Short', []).slice(0, -2) }), 30)
+    await expect(link.currentPatch()).rejects.toThrow('did not return its active patch')
+  })
+
   it('lists files with each effect’s id and version, and the free space', async () => {
     const files = [fakeEffect('LOOP.ZDL', 8, 480, '0.03'), fakeEffect('DELAY.ZDL', 7, 16, '1.00'), { name: 'FLST_SEQ.ZDT', data: Array(4108).fill(0) }]
     const link = await connected(fakeZoomPedal({ files, free: 123_456 }))

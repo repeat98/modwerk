@@ -8,7 +8,7 @@ import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, patch = undefined as number[] | undefined, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
   let firmware = started, starting = 0
   let writes = 0
@@ -49,6 +49,10 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
       if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
+      if (m[1] === 0x52 && m[3] === deviceId && m[4] === 0x29) {
+        current = m[4]
+        return patch ? reply(patch) : undefined
+      }
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
       const cmd = m[5], name = cmd === 0x20 ? String.fromCharCode(...m.slice(16, m.indexOf(0, 16))) : ''   // read: 9 zero bytes, then the name
@@ -103,6 +107,27 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
     firmware = next; starting = boot; input.state = output.state = 'connected'; access.onstatechange?.({})
   }
   return { access, sent, input, output, files, flash, replug }
+}
+
+/** A synthetic current-patch reply. Slots are zero-based. */
+export function fakeCurrentPatch(name: string, slots: { index: number; gid: number; fxid: number; enabled?: boolean; values?: number[] }[]) {
+  const data = new Uint8Array(122)
+  data[109] = (Math.max(-1, ...slots.map(slot => slot.index)) + 1) << 2
+  data.set(Array.from(name.slice(0, 10).padEnd(10), c => c.charCodeAt(0)), 111)
+  const offsets = [29, 42, 55, 68, 76, 84, 92, 100, 128]
+  for (const { index, gid, fxid, enabled = true, values = [] } of slots) {
+    const start = index * 18
+    data[start] = (fxid << 1) | Number(enabled)
+    data[start + 1] = fxid >> 7
+    data[start + 3] = gid << 1
+    values.forEach((value, parameter) => {
+      const position = offsets[parameter], byte = start + (position >> 3), bits = value << (position & 7)
+      data[byte] |= bits
+      data[byte + 1] |= bits >> 8
+      data[byte + 2] |= bits >> 16
+    })
+  }
+  return [0xf0, 0x52, 0, 0x61, 0x28, ...pack7(data), 0xf7]
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */
