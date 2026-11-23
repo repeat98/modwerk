@@ -352,6 +352,11 @@ filter never comes back to exact zero after a send, so this drops a residue belo
 bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
 `0x4000361a`) restarts the count. A pick is still judged as if the quiet delays could wake (the stock reserve's margin in `status.c` holds them), since a scene that opens the sends takes the whole saving back from the next frame: the skip buys margin, never admission. The A/B harness and the unit figures are in `delay-harness/`.
 
+`status.s` also replaces stock's recorder control-record update (`mw_rec_update`, `0x4000432c`), which a recording
+track runs about 1.5 times a frame: it writes the two CS1 fields it reads (`[r+300]`, `[r+308]`) only when their value
+changes, and reads them under stock's own interrupt mask, so CS1, the 44-byte records and the registers end as stock
+leaves them (Bryan T's idea). The A/B harness is in `rec-harness/`.
+
 `machine_registry.c` rests the module of a machine no track of the project uses (the loader asks it through
 `modwerk_machine_in_use`, events.json's judged `ot_machines`): its handlers leave the hooks that rest and its detours
 marked `rests` hold stock's bytes, so an installed machine nobody plays costs the frame interrupt nothing of its own.

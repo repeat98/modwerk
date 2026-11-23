@@ -216,7 +216,10 @@ DYNLOAD_HOOKS = (
     # filter, beside Tape Echo's at 0x4000361a, which ends where it starts.
     (0x4000332a, 6, '35712ed931e7b9f14e5721c866bf66a4ccded8e9b4626aadc3adc68d33f729fd', 'mw_delay_read0'),
     (0x400035ba, 8, 'dc58231763e0149114fe595c44a7495bb4b761d125428723426785e031a9ac67', 'mw_delay_read'),
-    (0x4000362a, 6, '6fe3fe068b6c0068ddd69d19f2d916d6bcb80ffb2ba78d2268618e6f7dcf82e3', 'mw_delay_idle'))
+    (0x4000362a, 6, '6fe3fe068b6c0068ddd69d19f2d916d6bcb80ffb2ba78d2268618e6f7dcf82e3', 'mw_delay_idle'),
+    # Modwerk's: the recorder's control-record update writes its two CS1 fields only when they change (status.s); the
+    # base's copy replaces the whole routine (0x4000432c..0x400043f2), which nothing else patches.
+    (0x4000432c, 8, 'f537d32566bd64115d10ae86f44d24d947ff5cf58a554cf0b67ab60a34ad6e4d', 'mw_rec_update'))
 # --dsp-loader: the knob routine of an audio track's main pages (0x40055008) names the default stepper 0x4003240c by
 # `lea 0x4003240c,%aN` for a live turn; the base repoints that operand at fxpage.s's mw_knob_step, which restages a
 # module page's turned knob before it (a select then steps as stock's do from the first visit). Address, the lea's
