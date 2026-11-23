@@ -1,1 +1,0 @@
-An Analog Rytm MKII module whose audio code needs more than 512 B of stack now fails its package build, naming the function, its frames and the fix (buffers in static memory). The audio interrupt runs on whichever task's small stack it arrived on, so deep locals there can crash the unit; every current module is within the limit (the deepest, Wavefolder's render, uses 296 B).

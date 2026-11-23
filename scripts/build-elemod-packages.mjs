@@ -16,7 +16,6 @@ import { elfToElemod } from './elemod-elf.mjs'
 import { loadElemodDependencies } from './elemod-dependencies.mjs'
 import { validateCompilerFlags } from './elemod-compiler-flags.mjs'
 import { buildCoreProbes } from './build-elemod-cores.mjs'
-import { AUDIO_STACK_FLAGS, checkAudioStack, fieldOffsets, loadAudioStack } from './elemod-audio-stack.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2), outputIndex = args.indexOf('--output'), commitIndex = args.indexOf('--source-commit')
@@ -79,8 +78,6 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
   if (!(await Promise.all(roots.map(listing))).flat().some(entry => entry.isDirectory() && !entry.name.startsWith('_'))) continue
   const device = LINK_DEVICES.find(item => item.machine === machine.id)
   if (!device) throw new Error('No linker profile for ' + machine.id)
-  const audioStack = loadAudioStack(root, machine.id)
-  let audioOffsets = null
   const dependencies = await loadElemodDependencies(root, machine)
   const inputs = [...dependencies.values()]
   for (const moduleRoot of roots) for (const entry of (await listing(moduleRoot)).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -112,8 +109,7 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       const includes = ['-I', resolve(folder, 'src'), '-I', resolve(root, 'sdk/machines', machine.id, 'include')]
       for (const [index, source] of build.sources.entries()) {
         const path = await resolveModuleFile(folder, source), object = resolve(work, index + '.o')
-        // The stack flags write .su and .ci files beside the object and leave the object itself unchanged.
-        if (source.endsWith('.c')) run('gcc', [...cflags, ...extraFlags, ...(audioStack ? AUDIO_STACK_FLAGS : []), ...includes, '-c', path, '-o', object])
+        if (source.endsWith('.c')) run('gcc', [...cflags, ...extraFlags, ...includes, '-c', path, '-o', object])
         else if (source.endsWith('.S')) run('gcc', [...cflags, ...extraFlags, '-Wa,-mcpu=54455', ...defines.filter((_, i) => i % 2).map(define => '-Wa,--defsym,' + define), ...includes, '-c', path, '-o', object])
         else run('as', ['-mcpu=54455', '-I', resolve(folder, 'src'), ...defines, '-o', object, path])
         inputs.push(object)
@@ -121,12 +117,6 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       // GCC 16.2's late-combine miscompile: refuse any C object that steps a register its destination reuses.
       const compiled = inputs.filter((_, index) => build.sources[index].endsWith('.c'))
       if (compiled.length) execFileSync('python3', ['-B', resolve(root, 'sdk/runtime/m68k_codegen.py'), '--objdump', cross + 'objdump', ...compiled], { stdio: 'inherit' })
-      if (audioStack) {
-        audioOffsets ??= fieldOffsets(audioStack, { run, work, includes: ['-I', resolve(root, 'sdk/machines', machine.id, 'include')], cflags })
-        const objects = await Promise.all(build.sources.map(async (source, index) => ({ source: await resolveModuleFile(folder, source), object: resolve(work, index + '.o'), callgraph: resolve(work, index + '.ci'), c: source.endsWith('.c') })))
-        const results = checkAudioStack({ config: audioStack, offsets: audioOffsets, build, objects, label: selectedId })
-        if (process.env.MODWERK_AUDIO_STACK_REPORT) for (const r of results) console.log('audio stack ' + selectedId + ' ' + r.what + ': ' + r.bytes + ' B (' + r.chain.join(' -> ') + ')' + (r.unknown.length ? ' + not counted: ' + r.unknown.join(', ') : ''))
-      }
       const generated = []
       if (build.derive) {
         if (build.derive.kind !== 'fast_audio') throw new Error('Unsupported local derivation: ' + build.derive.kind)
