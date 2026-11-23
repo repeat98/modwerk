@@ -1,17 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "tapeecho",
-  "version": "0.1.6-experimental",
-  "sourceSha256": "3c3f70d7f2cc5a44d0bab31db964b3eed7e756bc314bc5286b99ce35bb84e861",
+  "version": "0.1.9-experimental",
+  "sourceSha256": "e192bed1b3866f88f49f81af600dc4db5227f47bca76fbca3a017540c9d97637",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-27",
+  "approvedOn": "2026-11-23",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds",
     "release-documentation"
   ],
-  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release Tape Echo 0.1.6-experimental with BBD's MIX law and default MIX 40 (#969).",
-  "reason": "Owner released the Tape Echo MIX law change for issue #969 after software verification: the ColdFire kernels match the native oracle bit for bit and every Tape Echo gate passes on the emulator. No chip-cycle or complete memory measurement exists for this version and the earlier freeze at seven instances remains open. This binds only this exact version and native source; on 27 Oct 2026 the USB package was measured on a unit (levels at MIX 0/40/64/90/127, MIX sweeps without clicks; TESTING.md), while the card build, a seventh instance and listening stay untested.",
+  "ownerStatement": "Approved by repeat98 on 23 Nov 2026 (\"yes, approve tape echo 0.1.9\"), answering: \"Do you approve releasing it? Its hardware evidence would be today's runs on the unit; listening and Keep + power cycle stay with you.\"",
+  "reason": "Tape Echo 0.1.9 (0.1.7's rests, 0.1.8's cheaper ColdFire path and overload hold, 0.1.9's ev_frame_deadline hold and rest) ships with base 0.8, which it requires. Unit evidence is base 0.8's overload scene on development twin 856cbbcf (base/octatrack-next 9ac83b232), owner's MKII, 23 Nov 2026: three 15 s takes of 0.1.9 against two of 0.1.6 with seven other modules; longest frame 129.1-131.2 % against 138.8-139.3 %, frame-interrupt share 55.6 % against 69.0 %, latest frame entry 109-118 us late against 144-146 us, no stall or crash, the base's predicted brake fired and both trials rolled back. That run used the plain test package 9219d9e5 (npm run module:dev), not this release package. Not run: listening, the hold and rest by ear, Keep and a power cycle, test:procedure, the six- and seven-instance limit; 0.1.9's frame-cost curve is being measured by the owner. No chip cycle or complete memory measurement exists for this version. The controls and pages are unchanged since 0.1.6, which already showed 0.1.2's captures. This binds only this exact version and native source.",
   "retainedUiVersion": "0.1.2-experimental"
 }
