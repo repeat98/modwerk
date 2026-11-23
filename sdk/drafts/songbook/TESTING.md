@@ -197,7 +197,10 @@ MKI (OS 1.40C, base 6d23e888):
    arrangement 6, and B on book 2, arrangement 1, but B's closed list kept A's cursor (row 6).
 3. The list's cursor is now set after a switch whether the list is open or not (build `85d544a68`).
 4. The module's job after such a load also takes the return to the project's book (one card job of its own, not two),
-   and closes that job's NOW SAFE TO EJECT! (found with the setlists build, 24 November 2026).
+   and closes that job's NOW SAFE TO EJECT! (found with the setlists build, 24 November 2026). On build `fc5637002`
+   (package `3edb5955`), as the developer reported it: A left on book 3 came back on its arrangement after a LOAD of B
+   and back, the list's cursor on it, PLAY from its first row, no NOW SAFE TO EJECT!, one job more than a load with
+   nothing to bring back.
 
 On build `85d544a68` (package `81eb7172`), as the developer reported it: A left on book 3 on an arrangement with rows,
 LOAD of B came up on book 2, arrangement 1, with the list's cursor on 1; LOAD of A came back on book 3 and its
