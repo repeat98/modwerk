@@ -161,3 +161,19 @@ matched all 69 bytes and 26 decoded messages; relative timing still differed
 by up to 7.3 samples. Native independent MIDI source launching remains
 unimplemented. See NATIVE_REPLAY.md for both control commands and the
 separate stock MIDI builder.
+
+The same-base peer replays passed for Track Solo, Grain, POLY8, VECTOR,
+Panorama/Zoom and the foreign-edit interlock. Scene selection matched all
+five stock A/B pairs. The master LEVEL probe and six load windows passed
+with zero frame skips or sheds. FLEX T1 measured 0 before launch and 1930
+after. STATIC T2 measured 2117 before and 2337 after, failing the required
+pre-launch silence. The catalogue compatibility result covers 44 published
+modules and 946 pairs. The candidate's 20 machine-event host checks passed.
+One of 23 runtime-loader checks failed at USB Audio source reconstruction;
+two checks were skipped.
+
+The disposable GATE3-to-GATE4 change and stored reload selected bank B,
+cleared the R04-defined flag and recovered the pool after OFF. Missing
+stored files left bank A and R04 intact. The late EOF experiment and the
+recovery contract model remain host-only. The native reload tests use
+stock files; the offline CLYPS codec is absent from the module.

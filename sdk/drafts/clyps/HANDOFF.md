@@ -1,3 +1,39 @@
+## Current integration checkpoint · 23 November 2026
+
+**DRAFT / NOT_FLASH_CANDIDATE / HARDWARE NOT TESTED.** Use the contributor
+branch `integration/clyps-current-base-nov23` at
+`5c32cbacd2b1efea3d70e9b543a9a43cfe634651` for native development.
+Its parents are the cumulative #1910 revision and the preserved integration
+candidate. The source-only module remains on Draft #1997.
+[Build identities and current results](evidence/nov23-reliability.json).
+
+Two builds reproduced MAIN, its symbol map, base.elemod and the complete proof.
+The matched MKII T2 slice passed at wrap 90 (384 events, 400 writes,
+786432 bytes free after OFF). Popup re-entry retained R04. The SDK
+catalogue checker excludes the draft. The integration branch's release
+package reconstruction check fails because the USB Audio recipe pins
+the generated event header SHA-256 to the cumulative revision. Preserve
+that review gate when proposing new event declarations.
+
+The unchanged eight-lane strict grader passed at both 5 ms and 1 ms on
+this MAIN. The old pair was reproduced byte for byte with absolute clock
+witnesses. Its stock and module reads fell on opposite sides of the same
+five frame-consumer clears. See [timing and MIDI results](TESTING.md).
+The early/late diagnostic gates remain failed. Native MIDI note/CC semantics
+matched on the two-lane fixture; candidate and fixed-A01 stock differ by
+one running-status byte and by up to 64.1 samples in relative message-end
+timing. No native MIDI source switch has been implemented.
+
+The production-callback EOF fixture reproduces loss of the row-defined mask
+after destination initialization. The isolated mock and offline codec are
+under `offline/`. See [bank records and recovery](ROW_STORAGE.md).
+No archive reader or writer is linked into the runtime.
+
+Next engineering gate: inject a late abort on a disposable same-bank
+project change and qualify a stock terminal callback. Confirm that the old
+incarnation, bank and source epoch were restored before re-enabling R04;
+otherwise keep selection suspended with the old generation recoverable.
+
 # CLYPS contributor checkpoint · 23 November 2026
 
 [Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.

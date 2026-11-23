@@ -149,3 +149,13 @@ in running status may preserve message semantics but still fails exact-byte
 comparison. Report message-end timing separately, in emulator samples at
 44.1 kHz. This fixture sends two note patterns and CC1 locks. It does not
 qualify arpeggiator carry, external clock, or physical MIDI.
+
+For the 23 November current-base run, use the refreshed candidate commit
+from evidence/nov23-reliability.json. The seed was a copy of the prior
+synthetic GATE3 shelf (its hash is recorded as `seed`). prepare_slice.py
+replaced MODWERK0.SET using the new base proof. Run the full base recipe
+again into an independent empty directory and compare MAIN.raw,
+symbols.json, proofs.json and base.elemod with cmp. For the old failing
+pair use the previous MAIN and its original shelved card. Compare the
+instrumented and unchanged JSON receipts byte for byte before interpreting
+the extra timing observations.
