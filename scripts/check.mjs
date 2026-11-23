@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { stripVTControlCharacters } from 'node:util'
+import { checkBaseBound } from './base-bound.mjs'
 import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
@@ -144,9 +145,11 @@ if (!buildOnly && !suiteOnly && passed) {
 }
 // Every active Octatrack module must still install beside every other (declarations only, no firmware).
 if (!buildOnly && !suiteOnly && plan.native && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
-// How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs).
+// How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs), and
+// whether its base-bound packages name it (scripts/base-bound.mjs): both follow a base change, so one run names both.
 if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope.base)) {
   try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
+  try { console.log(checkBaseBound(root)) } catch (error) { console.error(error.message); passed = false }
 }
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 // The bundle imports the generated media too, so a frontend-only change needs the writes as much as a module change does.
