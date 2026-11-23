@@ -1,7 +1,9 @@
 # MS-70CDR ZDL stream probe
 
 D005 targets the original MS-70CDR with the pinned 2.10 updater and
-MIDISTOMP V2.0.1. These are static observations from the privately built
+MIDISTOMP V2.0.1. Source `6af58d609`, Main SHA-256
+`d1a2b0c4ba583abf3a45e9e8ec9b56c086f35721dce026473fe7c8e96525ca6c`.
+The preset bytes matched D004 and the released base. These are static observations from the privately built
 image. The probe adds no file or patch operation.
 
 | Operation | Loader sites | Static result |
@@ -18,4 +20,14 @@ that races publication is discarded; an idle retry returns a coherent
 snapshot. Firmware and extracted stock bytes stay on the developer's
 computer.
 
-Hardware trace and branch coverage are pending.
+| Local verification | Result |
+| --- | --- |
+| Pinned updater and patch sites | The full build changed the guarded instruction words and added one private probe section. Other loaded bytes and the preset matched the baseline. |
+| Assembled C674x probe | Ziddle's CPU core (archive `1793487371`) ran the exact linked probe with stand-ins for the original callees and MIDI sender. All five wrappers preserved their original arguments, return value, B3, stack and callee-saved registers. Initially enabled and disabled interrupts returned to their original state. |
+| MIDI and trace ring | The same exercise made 13 calls, verified all eight wrapped slots and both wire replies, accepted interleaved MIDI clock, rejected malformed commands and omitted a snapshot interrupted by a publication. |
+| Host tools | 97 focused tests passed, including the CLI dispatch, old identity and counter behavior, trace ordering and invalid replies. TypeScript and targeted lint passed. |
+| Base test procedure | The SDK checks and exact-build identification passed with the unit disabled. |
+
+Hardware trace and branch coverage are pending. The first run must
+observe the real seek and read results and find a cleanup path that calls
+close. [TI C674x instruction set, including interrupt control](https://www.ti.com/lit/ug/sprufe8b/sprufe8b.pdf)
