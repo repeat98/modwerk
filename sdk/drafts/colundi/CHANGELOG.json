@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Adds an experimental two-degree sine voice driven by sequencer START."
+    ]
+  }
+]

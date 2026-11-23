@@ -2,6 +2,10 @@
 #include "mono.h"
 #include "modwerk_events.h"
 
+#ifdef COLUNDI_PCM_METER
+#include "emu/meter.h"
+#endif
+
 /* One short test note cannot sustain indefinitely across a missed leave. */
 static ColundiVoice voices[8];
 static unsigned remaining[8];
@@ -25,6 +29,9 @@ static int note(unsigned track, unsigned sample, unsigned flags)
     uintptr_t expected = 0x80000510u + 48u * track;
     if (lane != expected && lane != expected + 384u) return 0;
     unsigned degree = *(volatile uint16_t *)(lane + 2u) >> 8;
+#ifdef COLUNDI_PCM_METER
+    meter_start(track, degree);
+#endif
     colundi_note(&voices[track], 0, degree, 0);
     if (voices[track].word) remaining[track] = 4096;
     return 0;
@@ -51,6 +58,9 @@ static int render(unsigned track, unsigned ping, unsigned start, unsigned end)
         uint32_t sample = (uint32_t)(uint16_t)pcm[i] << 16;
         *packet++ = sample;
         *packet++ = sample;
+#ifdef COLUNDI_PCM_METER
+        meter_sample(track, packet[-1]);
+#endif
     }
     *cursor = (uint32_t)(uintptr_t)packet;
     return 0;
