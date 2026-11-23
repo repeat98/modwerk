@@ -66,7 +66,7 @@ Requires Modwerk's base (core-ar2 0.7) on OS 1.74. Use your own original stock O
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Memory: 3,492 bytes (3,472 of code and tables, 20 of variables; the graph's shape tables are most of it). Audio: a few instructions a voice a block in the filter routine.
+See [TESTING.md](TESTING.md). Memory: 3,652 bytes (3,628 of code, tables and names, 24 of variables; the graph's shape tables are most of it). Audio: a few instructions a voice a block in the filter routine.
 
 ## Authorship and licences
 

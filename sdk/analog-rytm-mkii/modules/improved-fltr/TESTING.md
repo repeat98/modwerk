@@ -4,7 +4,7 @@ Layouts: since IF10 there is one type, **BW** (TYP 7: FRQ the base, RES's knob r
 
 ## Emulator, current layout (one BW type)
 
-IF10 (sha256 b48c1ddd; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BW, FRQ 48: RES 52 -> 0xf860 / 0x0133, RES 72 -> 0x01c0 / 0xf9ea, BP switch code), if-typ-turn (TYP's knob: PK, BW, stops), if-graph (five widths, references) and if-screens (RES's knob reads WID on BW and RES on stock BP, references) pass.
+IF11 (sha256 56772127; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BW, FRQ 48: RES 52 -> 0xf860 / 0x0133, RES 72 -> 0x01c0 / 0xf9ea, BP switch code), if-typ-turn (TYP's knob: PK, BW, stops), if-graph (five widths, references) and if-screens (the whole lower half: RES's knob reads WID on BD's BW, RES on SD's stock LP2, WID again back on BD, RES on stock BP; the band picture on TYP; references) pass. Review of the one-type change (23 Nov 2026), fixed: the TYP picture inside the screen check, the label following a held trig's TYP lock on the FILTER page, stale two-type text, the old unit run relabelled.
 
 ## Emulator, two-type layout
 
