@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "synth",
-  "version": "0.1.4-experimental",
+  "version": "0.1.5-experimental",
   "status": "released",
-  "basedOn": "a378920a64d73896ea9b7023fe672b487453bda0",
+  "basedOn": "fa4156543aa241e9fedb6782691d595388ea9e2c",
   "originalImport": "synth-949f3be.json",
   "folder": "sdk/octabam/modules/synth",
   "issues": [],
@@ -21,7 +21,7 @@
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "bdc2a328672a68b144da4f35ea84cc8b876b63a39abf118dad443d47d15a9ba9"
+      "draftSha256": "db3cd8b0ca3dad25aebc1463c49e7a76dcef1cc34d00a965bc2fb7ac9006cfed"
     },
     {
       "path": "upstream/quantizer/manifest.py",
@@ -37,10 +37,21 @@
       "path": "upstream/synth/manifest.py",
       "previousSha256": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
       "draftSha256": "786154c440d71f372abb49f527d345d5d6d74e96959a4af2f3ce248683753314"
+    },
+    {
+      "path": "registration.c",
+      "previousSha256": "c7f969f6536ef3b03727c02a05ce48755662c2eae0fbb4aaba80708d02c06f76",
+      "draftSha256": "32ba275df30f29a696201be5c0812e3dabb18c61881afd796242f9552f66752b"
+    },
+    {
+      "path": "registration.s",
+      "previousSha256": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
+      "draftSha256": "dc59fba32b15230b20338266ce8f2b6b664152b8c104f50158526140bfbe80fb"
     }
   ],
   "changes": [
-    "The machine names its CPU price, 6 % of a frame a track: \"cpuPrice\" in its machine-ports.json entry, which machine_ports.py writes as reserved[0] of its descriptor. The module's code is 0.1.3's."
+    "Rest while nothing in the project uses FM Synth: fm_in_use answers ev_in_use, and its frame-path detours and its STATIC renderer and FLEX start entries hold stock's bytes meanwhile.",
+    "A silent FM track (no voice of ours, or a released voice at silence) ships its silence without the FM loop; #1928's faster fm_frame. #1928's frame-prepare clock and LFO gate are dropped: the rest covers the case they were for."
   ],
-  "publication": "0.1.4-experimental: the machine's CPU price for the base's CPU budget, measured with 0.1.3 on an MKII; no change to the module's code"
+  "publication": "0.1.5-experimental: #1928 and #1974 combined, then a silent-track path (22 November 2026) whose saving did not show on the unit (#2030); needs the owner's approval again. See TESTING.md."
 }

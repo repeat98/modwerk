@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "f112f45e4541a9b7aa87a186c62a3156143c86c9",
+  "sourceCommit": "43a4225ddaa03ba025042ad81796ecc25b68bb39",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "2d9de2b0bc2a341e011c1407910fcc73a1f52adda5b5bc5e5b175a723d599c00",
+  "sourceTreeSha256": "b743c3b1bd25cc8e09312b3d9d59387af56e660d4e78bf485e57f00d1c22bb13",
   "compilerSha256": "0b303a1e9517e96e93720ee99b01f4c2d46fdf94d84e8e332d9326d241e98066",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -20,7 +20,7 @@
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
     "quantizer": "0.1.4-experimental",
-    "synth": "0.1.4-experimental",
+    "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
@@ -75,8 +75,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1338948,
-      "sha256": "d577d95eb453db8121e4b844fb132d8a2e7faa7a45569f04f76528b6ba6b2336"
+      "bytes": 1343068,
+      "sha256": "97f1fc21dc5aaed8b731915440e1258cf3d8f34436f4d3900526173426f2992a"
     },
     "utility-packages.json": {
       "bytes": 11735,
