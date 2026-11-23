@@ -4,7 +4,7 @@
 
 IF06 (sha256 a7e5523a: Modwerk dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP), rig cases in the rig's `cases/improved-fltr/`, all pass:
 
-- **if-band-words:** the frame's analog words on the BD voice, against values worked out by hand from `band.s` and the width table. FRQ 48, BND, RES 52: cutoff 0xf860, resonance 0x010d, switch code BP (0x02). FRQ 48, BND+, RES 72: 0xf800, 0x0165, BP. FRQ 48, PK, RES 0 (stock path): 0xe000, 0x0000.
+- **if-band-words:** the frame's analog words on the BD voice, against values worked out by hand from `band.s` and the width table. FRQ 48, BND, RES 52: cutoff 0xf860, resonance 0x010d (0x0133 with the P2 table), switch code BP (0x02). FRQ 48, BND+, RES 72: 0xf800, 0x0165, BP. FRQ 48, PK, RES 0 (stock path): 0xe000, 0x0000.
 - **if-link-tap:** BND+ (RES 72) tapped: BND, RES 0x3334 (the edge kept), and the engine words carry the new RES and TYP at once (no glide); one RES step up, tapped again: BND+, RES 0x4878. The header reads LP LINKED / LP FREE; RES shows the edge in hertz.
 - **if-typ-turn:** TYP's knob from PK: BND, then BND+, then stays at BND+ (stock's turn and setter, the id table's maximum opened to 8); the switch code is BP.
 - **if-screens, if-graph:** the band picture on TYP for 7 and 8; the graph draws both band types between their edges at four widths; stock BP unchanged.
@@ -17,4 +17,17 @@ Not run in the emulator: sound (its analog model is not the unit's), MIDI CC 76 
 
 ## Unit
 
-Not run yet.
+**IFC1** (sha256 870680c8: the private combo set FXC8 on a dev base + Improved FLTR bdaf2d8d4 + a private filter-measuring machine), RAM-booted on Nathaniel Pavel's MKII, 23 Nov 2026, by the rig (not by a person); the BD voice's USB channel recorded. All five cases passed: the band words, the link tap (stored values and glide land at once), the TYP turn to BND+ through stock's knob, and two measurements:
+
+- **The band's edges** (noise through the filter, each setting fitted as a 2-pole band-pass against the open filter):
+
+| setting | asked | measured -3 dB edges |
+| --- | --- | --- |
+| BND+, FRQ 48, RES 72 | 220..880 Hz | 223..854 Hz |
+| BND+, FRQ 48, RES 96 (4 oct) | 220..3520 Hz | 235..3280 Hz |
+| BND+, FRQ 36, RES 96 (5 oct) | 110..3520 Hz | 123..3166 Hz |
+| BND+, FRQ 60, RES 66 (6 st) | 440..622 Hz | 436..615 Hz |
+| BND, FRQ 60, RES 51 | 440..1750 Hz | 439..1777 Hz |
+| BND, FRQ 72, RES 51 | 880..3501 Hz | 908..3613 Hz |
+
+- **The resonance curve** between 0x2000 and 0xe000 in 0x0400 steps at 880 Hz and 440 Hz (Q 3.3 at 0x2000, 0.61 at 0x0000, 0.26 at 0xf000, 0.10 at 0xe000; the two frequencies agree). Folded into `tools/calibration.json`; the width table it gives places the widest bands about 6 % wider than the one measured above, which ran on the earlier table (wide bands came out up to 10 % narrow at each edge). Not yet run on the unit with the new table.

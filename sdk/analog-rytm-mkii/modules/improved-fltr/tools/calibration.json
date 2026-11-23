@@ -1,16 +1,89 @@
 {
-  "about": "Band-pass Q of the Analog Rytm MKII's analog filter against the resonance word the filter routine sends (frame +74 + 2v), measured on a unit (Nathaniel Pavel's MKII, OS 1.74, 22 Nov 2026) with the private Filter Probe: white noise into the BD voice, the BD voice's USB channel recorded, each step fitted with a 2-pole band-pass. Values are the mean of the runs at 220 Hz, 880 Hz and 3.5 kHz where the band was inside 25 Hz..16 kHz. Stock's RES knob sends value x 256 (0x0000..0x7f00); words from 0x8000 are below RES 0 (the word is signed).",
+  "about": "Band-pass Q of the Analog Rytm MKII's analog filter against the resonance word the filter routine sends (frame +74 + 2v), measured on a unit (Nathaniel Pavel's MKII, OS 1.74) with the private Filter Probe: white noise into the BD voice, the BD voice's USB channel recorded, each step fitted with a 2-pole band-pass. Words 0x2000 down to 0xe000 in 0x0400 steps: the P2 run (23 Nov 2026, image IFC1), the mean of 880 Hz and 440 Hz. Words above 0x2000: the P1 run (22 Nov 2026), the mean at 220 Hz, 880 Hz and 3.5 kHz. Stock's RES knob sends value x 256 (0x0000..0x7f00); words below 0 (0x8000..0xffff) are signed and widen the band-pass.",
   "points": [
-    { "word": 16384, "q": 17.7 },
-    { "word": 14336, "q": 11.3 },
-    { "word": 12288, "q": 7.6 },
-    { "word": 10240, "q": 5.06 },
-    { "word": 8192, "q": 3.48 },
-    { "word": 6144, "q": 2.08 },
-    { "word": 4096, "q": 1.45 },
-    { "word": 2048, "q": 0.94 },
-    { "word": 0, "q": 0.62 },
-    { "word": -4096, "q": 0.23 },
-    { "word": -8192, "q": 0.095 }
+    {
+      "word": 16384,
+      "q": 17.7
+    },
+    {
+      "word": 14336,
+      "q": 11.3
+    },
+    {
+      "word": 12288,
+      "q": 7.6
+    },
+    {
+      "word": 10240,
+      "q": 5.06
+    },
+    {
+      "word": 8192,
+      "q": 3.325
+    },
+    {
+      "word": 7168,
+      "q": 2.702
+    },
+    {
+      "word": 6144,
+      "q": 2.1015
+    },
+    {
+      "word": 5120,
+      "q": 1.7555
+    },
+    {
+      "word": 4096,
+      "q": 1.4365
+    },
+    {
+      "word": 3072,
+      "q": 1.1765
+    },
+    {
+      "word": 2048,
+      "q": 0.9427
+    },
+    {
+      "word": 1024,
+      "q": 0.7809
+    },
+    {
+      "word": 0,
+      "q": 0.6072
+    },
+    {
+      "word": -1024,
+      "q": 0.4817
+    },
+    {
+      "word": -2048,
+      "q": 0.4047
+    },
+    {
+      "word": -3072,
+      "q": 0.3162
+    },
+    {
+      "word": -4096,
+      "q": 0.2602
+    },
+    {
+      "word": -5120,
+      "q": 0.1991
+    },
+    {
+      "word": -6144,
+      "q": 0.1588
+    },
+    {
+      "word": -7168,
+      "q": 0.1177
+    },
+    {
+      "word": -8192,
+      "q": 0.1043
+    }
   ]
 }
