@@ -6,7 +6,7 @@
       "Costs the Octatrack nothing while nothing in the project uses FM Synth: it rests until a track does.",
       "An FM track in any Part, a legacy FMSYNTH sample in any slot or GLIDE turned on keeps it awake. Picking FM SYNTH wakes it at once.",
       "An FM track that is silent, before a note or after its release has faded, costs much less.",
-      "Its CPU price is now 4 % of a frame a track, measured on this version (0.1.4: 6), so the base's CPU budget no longer refuses an FM Synth track of a Part on its own. A unit that is already busy can still refuse one.",
+      "Its CPU price is now 4 % of a frame a track (was 6), so the CPU budget no longer refuses an FM Synth track on its own. A busy unit can still refuse one.",
       "Sound and controls are unchanged."
     ]
   },
