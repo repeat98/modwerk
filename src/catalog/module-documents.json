@@ -3912,7 +3912,7 @@
       "id": "usb-audio-out-tracks-main-cue",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "name": "USB Audio",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "category": "midi-usb",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3968,22 +3968,22 @@
         "location": "USB",
         "conflicts": [],
         "limitations": [
-          "Output only, fixed 44.1 kHz / 24-bit; USB input and Crossbar variants are excluded.",
+          "Fixed 44.1 kHz / 24-bit. USB input (INPUTS: AB, CD or ABCD) needs a high-speed connection to a computer; full speed and Outbox 8 are output only. Crossbar variants are excluded.",
           "Like every DRAM module, gives up about 10 MB of sample memory: projects that filled Flex/recorder memory can show OUT OF MEMORY. Shorten recorder reservations or load long samples into Static (#433).",
           "At full speed, track feeds fall back to a stereo sum and Main + Cue to Main.",
           "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1–7. With a master track, tracks 1–7 lead track 8 by 32 samples.",
-          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, worst-case ColdFire cycles and complete memory bounds remain untested."
+          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, the MKI, worst-case ColdFire cycles and complete memory bounds remain untested."
         ]
       },
       "resources": {
-        "recorded": "20 November 2026, configurable release package",
+        "recorded": "23 November 2026, configurable release package with USB input",
         "storage": {
           "label": "Runtime memory",
           "display": "Full bound unmeasured",
           "value": null,
           "unit": "bytes",
           "method": "unmeasured",
-          "conditions": "USB Audio 0.3 allocates 10,288 initialized bytes and 94,152 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
+          "conditions": "USB Audio 0.4 allocates 17,852 bytes of code and data and 110,552 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
           "source": "README.md"
         },
         "processing": {
