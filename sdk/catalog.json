@@ -9,7 +9,7 @@
     },
     {
       "id": "tapeecho",
-      "version": "0.1.6-experimental",
+      "version": "0.1.9-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
     },
     {
@@ -154,7 +154,7 @@
     },
     {
       "id": "beat-slicer",
-      "version": "0.1.66-experimental",
+      "version": "0.1.68-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
     },
     {

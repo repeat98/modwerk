@@ -180,6 +180,10 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
 .hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
+.hub-screen canvas { width: min(100%, 48rem); height: auto; image-rendering: pixelated; background: #181818; }
+.hub-screen-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.hub-screen-rate { display: inline-flex; align-items: center; gap: .4rem; }
+.hub-screen-rate select { min-height: 32px; padding: 0 .4rem; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: 12px; background: var(--sidebar); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
 .hub-hero .device-photo { width: clamp(8.5rem, 15cqi, 11rem); height: auto; flex: none; }
@@ -268,6 +272,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 }
 .hub-cell-health h3:not(:first-child) { margin-top: 16px; }
 .hub-test { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text); font-size: 14px; line-height: 1.4; }
+.hub-left-out { min-height: 0; max-height: 9em; overflow: auto; margin: 6px 0 0; padding: 0 0 0 16px; list-style: none; font-size: 13px; line-height: 1.4; }
+.hub-left-out li + li { margin-top: 4px; }
+.hub-left-out small { display: block; color: var(--muted); font-size: 12px; }
 .hub-peaks { display: grid; gap: 4px; margin: 10px 0 0; }
 .hub-peaks div { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
 .hub-peaks dd { display: grid; grid-template-columns: minmax(0, 1fr) 34px; align-items: center; gap: 8px; margin: 0; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }

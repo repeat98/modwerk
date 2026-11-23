@@ -7,6 +7,14 @@ const entry = (n, username = 'tester', data = { event: 'health', phase: 'ready' 
   ({ eventId: 'e' + n, username, createdAt: new Date(Date.UTC(2026, 9, 15, 0, 0, n)).toISOString(), data })
 
 describe('diagnostics pull', () => {
+  it('prints the staging command, byte offset and measured residual, including zero', () => {
+    const failure = { event: 'sync_failed', phase: 'sending', step: 'stage', error: 'transport' }
+    const events = [{command: 'chunk', chunkOffset: 0, remainingBytes: 0}, {command: 'verify'}]
+      .map((upload, i) => entry(i, 'tester', {...failure, upload}))
+    const text = summary({events, counts: []})
+    expect(text).toContain('command=chunk chunkOffset=0 remainingBytes=0')
+    expect(text).toMatch(/command=verify($|\n)/)
+  })
   it('pages from the last record of a full page and drops the overlap', async () => {
     const all = Array.from({ length: 700 }, (_, n) => entry(n))
     const asked = []
@@ -120,6 +128,11 @@ describe('diagnostics pull', () => {
       entry(3, 'tester', { event: 'connected', phase: 'ready' }),
       entry(4, 'tester', { event: 'health', phase: 'ready', reading: { saved: 6, savedCount: 2, live: 2 }, modules: mods(['miniverb', 'poly8']) })]
     expect(summary({ events, counts: [] })).toContain('refused (missing ring-sc)')
+    // A base with RESTORE names every module it left out and why, instead of the guess.
+    events.push(entry(5, 'tester', { event: 'connected', phase: 'ready' }),
+      entry(6, 'tester', { event: 'health', phase: 'ready', reading: { saved: 10, savedCount: 3, live: 1 }, modules: mods(['poly8']),
+        restore: [{ id: 'miniverb', refusal: 0x100, check: 0 }, { id: 'other', refusal: 2, check: 1 }] }))
+    expect(summary({ events, counts: [] })).toContain('left out after a failed start (left out miniverb: the last start crashed or froze loading it, other: module memory)')
   })
   it('reports a full set incident as a lower bound because the log holds fourteen IDs', () => {
     const set = { seq: 1, boot: 1, second: 0, kind: 'set', screen: 0, tempo24: 0,

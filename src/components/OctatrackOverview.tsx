@@ -7,6 +7,9 @@ import type { DiagnosticReading } from '../community/octatrack-diagnostics-contr
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { SELFTEST_FAILURES, selftestFaults } from '../engine/elekloader/selftest'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
+import { useRestoreOutcomes } from '../hooks/useOctatrackHealth'
+import { leftOutAtStartup } from '../engine/elekloader/restore-outcomes'
+import type { RestoreReport } from '../engine/elekloader/upload-usb'
 import { OctatrackLoad } from './OctatrackLoad'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
 
@@ -18,8 +21,11 @@ const OUTCOME: Record<SyncRecord['outcome'], [string, string]> = { kept: ['Kept'
 
 /** What the card holds, from the self-test record (modset.c: 7 saved and read back, 1 restored at startup, 6 some refused
  * at startup, 10 some left out and 11 all held because the last start crashed or froze while loading them, 3 the skip key held,
- * 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). */
-function cardLine(health: DiagnosticReading) {
+ * 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). After a partial restore, a base with the RESTORE
+ * request names each module left out and why; an older one keeps the plain line. */
+function cardLine(health: DiagnosticReading, restore?: RestoreReport): { text: string; led: string; left?: ReturnType<typeof leftOutAtStartup> } {
+  const left = (health.saved === 6 || health.saved === 10) && restore ? leftOutAtStartup(restore, MODULES) : undefined
+  if (left) return { text: `Not all loaded at startup · ${health.live} of ${modules(restore!.count)} running. Sync your modules to put the rest back.`, led: 'leaving', left }
   return health.saved === 7 ? { text: `Saved and checked · ${modules(health.savedCount)}`, led: 'on' } : health.saved === 1 ? { text: `Restored at startup · ${modules(health.savedCount)}`, led: 'on' }
     : health.saved === 6 ? { text: `Not all loaded at startup · ${modules(health.savedCount)} running. Sync your modules to put the rest back.`, led: 'leaving' }
     : health.saved === 10 ? { text: `Not all loaded at startup: the last start crashed or froze while loading one, so it was left out · ${modules(health.savedCount)} running. Sync your modules to try it again.`, led: 'leaving' }
@@ -53,7 +59,8 @@ export function OctatrackOverview({ link, inventory, sets, needs, health, active
   const unitIds = connected ? inventory?.moduleIds : last?.moduleIds
   const onUnit = sets.find(set => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds, unitIds))
   const history = active ? syncHistory() : []
-  const test = connected && health ? selftestLine(health) : undefined, card = connected && health ? cardLine(health) : undefined
+  const restore = useRestoreOutcomes(connected ? link : null, health)
+  const test = connected && health ? selftestLine(health) : undefined, card = connected && health ? cardLine(health, restore) : undefined
   const unread = !connected ? 'Connect your Octatrack to read it.' : health === undefined ? 'Reading…' : 'This base doesn’t report it.'
   const row = (record: SyncRecord) => { const [label, led] = OUTCOME[record.outcome], set = sets.find(item => item.name === record.name)
     return <li key={record.at + record.name}><span className={'unit-led is-' + led} aria-hidden="true" /><span className="hub-history-name"><strong>{record.name}</strong><small title={record.message}>{label} · {modules(record.modules)}{record.message && <> · {record.message}</>}</small></span>
@@ -72,6 +79,8 @@ export function OctatrackOverview({ link, inventory, sets, needs, health, active
           <div key={name}><dt>{name}</dt><dd><meter min={0} max={1000} value={value} aria-label={name + ' peak during the test'} aria-valuetext={percent(value)} />{percent(value)}</dd></div>)}</dl>}
         <h3>On the card</h3>
         {card ? <p className="hub-test"><span className={'unit-led is-' + card.led} aria-hidden="true" />{card.text}</p> : <p className="hub-empty">{unread}</p>}
+        {card?.left && <ul className="hub-left-out" aria-label="Left out at startup">{card.left.map((item, index) =>
+          <li key={(item.id ?? item.name) + index}><strong>{item.name}</strong> <small>{item.reason}</small></li>)}</ul>}
       </section>
       <section className="hub-cell hub-cell-unit" aria-labelledby="hub-on-title">
         <div className="hub-cell-head"><h3 id="hub-on-title">{connected ? 'On your Octatrack' : 'Last seen on it'}{unitIds && <> · {unitIds.length}</>}</h3>

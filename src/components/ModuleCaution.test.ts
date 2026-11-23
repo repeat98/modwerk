@@ -24,6 +24,7 @@ describe('Octatrack CPU cautions', () => {
   it.each([
     ['poly8', 'heavy', 'Heavy CPU', '41.9 percentage points of audio-frame load added with one POLY8 track with repeated trigs'],
     ['usb-audio-out-tracks-main-cue', 'high', 'High CPU', '13.3 percentage points of audio-frame load added with a 44.1 kHz stereo MAIN stream'],
+    ['tapeecho', 'high', 'High CPU', '11.5 percentage points of audio-frame load for the first copy and 4.1 for each further one'],
   ])('shows the CPU badge and accessible workload for %s', (id, tier, label, workload) => {
     const doc = new DOMParser().parseFromString(renderToStaticMarkup(createElement(CautionBadge, { id })), 'text/html')
     const badge = doc.querySelector('.module-caution-badge')
