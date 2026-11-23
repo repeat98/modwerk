@@ -18,7 +18,7 @@ Four tuned resonant modes that ring at the pitches you choose, excited by the tr
 - **DCAY** 0–127, default 64: the ring to -60 dB, 25 ms at 0, about 0.5 s at 64, 10 s at 127.
 - **DAMP** 0–127, default 32: shortens the upper modes, each a step more than the one below.
 - **GAIN** 0–127, default 32: the ring's level, 0 dB at 32, +24 dB at 127. Loud rings soft-clip at -3.5 dBFS.
-- **MIX** 0–127, default 64: 0 is exact passthrough, 127 is only the ring.
+- **MIX** 0–127, default 64: 0 is exact passthrough, 127 is only the ring. The dry falls fast: -12 dB at 64, -26 dB at 100.
 - **TUNE** NOTE / COLUN, on the SETUP page: what PTCH and INTV count.
 
 The root and the fourth mode sit in the centre, the second left, the third right. The input is summed to mono.

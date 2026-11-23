@@ -169,6 +169,10 @@ def main():
     tone_r = [round(0.6 * Q * math.sin(2 * math.pi * 123 * i / FS)) for i in range(n)]
     l, r, _ = run(work, mem, syms, [69, 7, 127, 32, 127, 0, 1], tone, tone_r, tag="dry")
     gate("MIX 0 is exact passthrough", l == tone and r == tone_r)
+    l, _, _ = run(work, mem, syms, [69, 7, 127, 32, 0, 100, 1], tone, tag="mix100")
+    dry = max(map(abs, l[n // 2:])) / max(map(abs, tone))
+    gate("MIX 100 keeps the dry at (1 - 100/128)^2", abs(dry / (28 / 128) ** 2 - 1) < 0.01,
+         f"({20 * math.log10(dry):.1f} dB; GAIN 0 silences the ring)")
     for tune in (0, 1):
         l, r, _ = run(work, mem, syms, [127, 24, 127, 0, 127, 127, tune], [0] * n, tag=f"zero{tune}")
         gate(f"zero in, zero out (TUNE {tune})", not any(l) and not any(r))

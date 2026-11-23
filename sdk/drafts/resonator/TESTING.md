@@ -18,6 +18,7 @@ Not tested. The module patches no stock code and claims no keys or screens; the 
 |---|---|
 | No mpysu; the sample loop is straight-line | pass |
 | MIX 0 is bit-exact passthrough (TUNE COLUN, every other knob high) | pass |
+| MIX 100 with the ring silenced (GAIN 0): dry at (28/128)^2 | -26.4 dB |
 | Zero in, zero out at full GAIN and DCAY, both TUNE settings | pass |
 | NOTE 69, ten-second ring | 440.0000 Hz |
 | COLUN degree 78 / 79 | 440.0000 / 441.0001 Hz |

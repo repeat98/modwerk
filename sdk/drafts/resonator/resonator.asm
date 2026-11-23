@@ -125,12 +125,20 @@ rzspread:
         move    x:(r6+$4),x0
         mpy     x0,x0,a
         move    a,x:(r7+$1d)
-; MIX: 0 is exact dry passthrough, 127 fully wet.
+; MIX m: the dry falls as (1 - m)^2, so the ring takes over well before 127
+; (dry -26 dB at 100). k = 2m - m^2 is the wet share. 0 is exact dry
+; passthrough, 127 only the ring.
         move    x:(r6+$5),a
         and     #>$7f0000,a
         move    #>$7f0000,x0
         cmp     x0,a
-        bne     rzmixv
+        beq     rzmixfull
+        move    a1,x0
+        mpy     x0,x0,b
+        asl     a
+        sub     b,a
+        bra     rzmixv
+rzmixfull:
         move    #>$7fffff,a
 rzmixv:
         move    a1,x:(r7+$1e)

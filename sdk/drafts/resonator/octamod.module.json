@@ -97,7 +97,7 @@
       "default": 64,
       "count": 128,
       "labels": null,
-      "doc": "Dry/wet. 0 is exact passthrough, 127 is only the ring."
+      "doc": "Dry/wet. 0 is exact passthrough and 127 only the ring; the dry falls as (1 - MIX/128)^2: -12 dB at 64, -26 dB at 100."
     },
     {
       "name": "TUNE",

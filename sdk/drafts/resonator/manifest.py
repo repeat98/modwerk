@@ -43,7 +43,7 @@ MODULE = Module(
         Param(b"GAIN", 32, 128, active=True, formatter=P,
               doc="Ring level: 32 is 0 dB, 127 is +24 dB; loud rings soft-clip"),
         Param(b"MIX", 64, 128, active=True, formatter=P,
-              doc="Dry/wet; 0 is exact passthrough, 127 only the ring"),
+              doc="Dry/wet; 0 is exact passthrough, dry -26 dB at 100, 127 only the ring"),
         Param(b"TUNE", 0, 2, active=True, formatter=S, labels=("NOTE", "COLUN"),
               doc="NOTE: PTCH and INTV in semitones; COLUN: in Colundi degrees"),
         Param(), Param(), Param(), Param(), Param(),
