@@ -1,0 +1,1 @@
+The site now publishes a release only when every change merged since the last release was approved, not just the newest one. A module merged without review can no longer go live along with the next approved change.

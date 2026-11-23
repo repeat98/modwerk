@@ -290,6 +290,22 @@
       "usedIn": [
         "modules/tuner"
       ]
+    },
+    {
+      "id": "model-tg",
+      "name": "Model-TG (granular engine)",
+      "spdx": "MIT",
+      "noticeFile": "model-tg.txt",
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/TinyGregAudio/Model-TG/70b39dd6787770ebefc7a2d78dea1678ec012679/LICENSE",
+          "revision": "70b39dd6787770ebefc7a2d78dea1678ec012679",
+          "path": "LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/grain: the granular engine (window and table formulas, grain scheduling)"
+      ]
     }
   ],
   "moduleComponents": {
@@ -329,6 +345,9 @@
     ],
     "tuner": [
       "tim-hastie-tuner"
+    ],
+    "grain": [
+      "model-tg"
     ]
   }
 }

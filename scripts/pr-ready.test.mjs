@@ -3,9 +3,29 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
+import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
+  it('merges a clean main itself and leaves a conflicting one untouched, naming its files', () => {
+    const root = mkdtempSync(join(tmpdir(), 'modwerk-merge-main-'))
+    const git = (...args) => execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false',
+      '-c', 'core.hooksPath=' + join(root, '.git', 'unused-hooks'), ...args], { cwd: root, stdio: 'pipe', encoding: 'utf8' }).trimEnd()
+    const commit = (file, text) => { writeFileSync(join(root, file), text); git('add', file); git('commit', '-q', '-m', file) }
+    try {
+      git('init', '-q', '--initial-branch=main'); commit('shared', 'base\n')
+      git('switch', '-q', '-c', 'topic'); commit('mine', 'topic\n')
+      git('switch', '-q', 'main'); commit('theirs', 'main\n'); git('switch', '-q', 'topic')
+      expect(mergeMain(git, 'main')).toEqual({ merged: true, conflicts: [] })
+      expect(() => git('merge-base', '--is-ancestor', 'main', 'HEAD')).not.toThrow()
+      git('switch', '-q', 'main'); commit('shared', 'main side\n'); git('switch', '-q', 'topic'); commit('shared', 'topic side\n')
+      const before = git('rev-parse', 'HEAD')
+      expect(mergeMain(git, 'main')).toEqual({ merged: false, conflicts: ['shared'] })
+      expect(git('rev-parse', 'HEAD')).toBe(before)
+      expect(git('status', '--porcelain')).toBe('')
+      expect(readiness({ behind: true, conflicts: ['shared'], remote: 'origin' }).problems).toEqual([expect.stringMatching(/^Merging current main conflicts in shared\. Run git merge origin\/main/)])
+    } finally { rmSync(root, { recursive: true, force: true }) }
+  })
+
   it('commits only a fully staged tree that passed one full check', () => {
     const root = mkdtempSync(join(tmpdir(), 'modwerk-checked-commit-')), file = join(root, 'feature')
     const git = (...args) => execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
@@ -93,6 +113,17 @@ describe('pr:ready verdict', () => {
     expect(verdict.notes.join(' ')).toContain('directly to base/<machine>-next')
     expect(verdict.notes.join(' ')).not.toContain('gh pr create --draft')
     expect(verdict.notes.join(' ')).not.toContain('open or update the PR')
+  })
+  it('prompts the agent to verify GitHub after full readiness on a contribution', () => {
+    for (const input of [{}, { instrument: ['public/octatrack-modules/synth/example.mwrm'] }]) {
+      const notes = readiness(input).notes.join(' ')
+      expect(notes).toContain('gh pr view <URL> --json state,headRefOid,isDraft')
+      expect(notes).toContain('gh pr ready <URL>')
+      expect(notes).toContain('verify isDraft is false')
+    }
+    for (const input of [{ draftOnly: true }, { checkPassed: false }, { baseDraft: true }]) {
+      expect(readiness(input).notes.join(' ')).not.toContain('gh pr ready <URL>')
+    }
   })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))

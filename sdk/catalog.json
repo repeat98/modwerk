@@ -221,6 +221,11 @@
       "id": "screen-off",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-19T14:20:00Z"
+    },
+    {
+      "id": "grain",
+      "version": "0.1.2-experimental",
+      "addedAt": "2026-11-20T12:00:00Z"
     }
   ]
 }

@@ -22,7 +22,9 @@ describe('the effect list', () => {
   })
 })
 
-describe('installing and removing over the link', () => {
+// Real timers: a write the fake pedal drops is found by waiting out the link's 200 ms reply timeout, so the failure cases take
+// 1-2 s locally and passed 5 s once on a loaded CI runner. They wait on time, not on a hang.
+describe('installing and removing over the link', { timeout: 15_000 }, () => {
   it('installs a new effect: the file first, then the effect list, both read back', async () => {
     const fake = pedal(), link = await connect(fake), effect = fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26', 2000)
     const result = await link.installFile('nam1smok.zdl', effect.data)

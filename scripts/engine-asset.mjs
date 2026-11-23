@@ -20,6 +20,8 @@ export function engineAsset(bytes, path, document, previousVersion, addedIds = [
   // Rebuilt package provenance and the version label change for editorial
   // releases. Preserve every byte, address, recipe, limit and test verdict.
   delete value.sourceCommit
+  // Package files carried a copy of module-build.json's version pins until 21 November 2026; the pins there stay protected.
+  if (path !== 'src/engine/assets/module-build.json') delete value.moduleVersions
   const omitted = [...new Set([...addedIds, ...otherIds])]
   for (const id of omitted) if (value.moduleVersions) delete value.moduleVersions[id]
   if (value.moduleVersions?.[document.id] === document.version) value.moduleVersions[document.id] = previousVersion

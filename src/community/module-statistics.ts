@@ -61,14 +61,15 @@ export function compareModules(a: SortableModule, b: SortableModule, sort: strin
   return 0
 }
 const shortDate = (date: string) => new Date(date).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'})
+const moduleCoverage = 'Each included module counts once. Octatrack also counts modules in downloaded card sets and modules added or updated by a kept USB sync.'
 /** What a period's download count covers; daily counts began later than some windows reach back. */
 export function periodCoverage(days: Exclude<DownloadDays, 0>, dailyStarted: string | null | undefined, now = Date.now()) {
   const started = Date.parse(dailyStarted ?? '')
   const partial = Number.isFinite(started) && started > now - days * 86400000
-  return 'Counts firmware download requests in the last ' + days + ' days' + (partial ? ' (daily counts began ' + shortDate(dailyStarted!) + ')' : '') + '. Each included module counts once per request.'
+  return 'Counts firmware download requests in the last ' + days + ' days' + (partial ? ' (daily counts began ' + shortDate(dailyStarted!) + ')' : '') + '. ' + moduleCoverage
 }
 export function downloadCoverage(started: string | null | undefined) {
-  return started ? 'Counts firmware download requests since ' + shortDate(started) + '. Each included module counts once per request.' : 'Counts firmware download requests since tracking began. Each included module counts once per request.'
+  return 'Counts firmware download requests since ' + (started ? shortDate(started) : 'tracking began') + '. ' + moduleCoverage
 }
 /** The coverage note for the download count a period shows. */
 export function downloadNote(days: DownloadDays, statistics: ModuleStatistics | undefined) {

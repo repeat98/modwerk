@@ -1,0 +1,1 @@
+Octatrack module releases no longer rewrite every compiled package file. The build's source commit and version pins now live only in `module-build.json`, so two releases of different modules stop conflicting in eleven package files at once. Package bytes and the checks that bind them to their source are unchanged.

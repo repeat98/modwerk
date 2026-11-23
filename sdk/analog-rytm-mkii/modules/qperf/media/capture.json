@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "qperf",
-  "moduleVersion": "0.2.2-experimental",
+  "moduleVersion": "0.3.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-17T20:00:00Z",
-  "imageSha256": "1b9ea783a4db43e2bfbbc98cbe225d9dd0e1f82d8045304abf68eef6d011645e",
-  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant 1c14b6b0) + this folder's QPER Live Rec 0.2.2-experimental, materialised against stock OS 1.74, --version QL21",
+  "capturedAt": "2026-11-21T21:30:00Z",
+  "imageSha256": "295cc4269722fea7b5e204ec6e3a75a978ba42477089fcfc513252496327b39f",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant 1c14b6b0) + this folder's QPER Live Rec 0.3.0-experimental, materialised against stock OS 1.74, --version QX07",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -18,13 +18,13 @@
     {
       "path": "media/apply-quick-perf-rec.png",
       "frame": "end.png",
-      "plan": "DTBOOT_END_PNG=apply-quick-perf-rec.png dtboot ql21.syx --instr 10700M --every 1000M --press NO@7003M ... --press NO@9103M (8 presses, 300M apart) --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press YES@10633M:12M",
+      "plan": "DTBOOT_END_PNG=apply-quick-perf-rec.png dtboot qx07.syx --instr 10700M --every 1000M --press NO@7003M ... --press NO@9103M (8 presses, 300M apart) --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press YES@10633M:12M",
       "sha256": "ba47455ee9c438eb5c608071791b6649683a0df9bb639f9246e898557b5bc71c"
     },
     {
       "path": "media/clear-quick-perf-rec.png",
       "frame": "end.png",
-      "plan": "DTBOOT_END_PNG=clear-quick-perf-rec.png dtboot ql21.syx --instr 10700M --every 1000M --press NO@7003M ... --press NO@9103M (8 presses, 300M apart) --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press NO@10633M:12M",
+      "plan": "DTBOOT_END_PNG=clear-quick-perf-rec.png dtboot qx07.syx --instr 10700M --every 1000M --press NO@7003M ... --press NO@9103M (8 presses, 300M apart) --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press NO@10633M:12M",
       "sha256": "123985db4933e426efdace5853be57b6778272b6f1b3e8489ab46536d4c6d687"
     }
   ]

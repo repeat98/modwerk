@@ -46,21 +46,35 @@ class DeviceTest(unittest.TestCase):
             def end(self, failures): seen['ended'] = True
 
         def run(args, pkgs, install, uninstall, **kw):
-            install(pkgs); uninstall(pkgs, [])
-            seen['kw'] = kw
-            return dict(failures=[])
+            failures = []
+            install(pkgs); uninstall(pkgs, failures)
+            seen['kw'], seen['failures'] = kw, failures
+            return dict(failures=failures)
 
-        with mock.patch.object(sys, 'argv', ['octatrack-test.py', '--share', '9', 'e.mwrm']), \
-                mock.patch.object(octatest, 'Trial', FakeTrial), \
-                mock.patch.object(octatest.qualify, 'package', return_value=dict(path='e.mwrm')), \
-                mock.patch.object(octatest.qualify, 'send', side_effect=AssertionError('the session\'s try and remove Keep')), \
-                mock.patch.object(octatest.qualify, 'run', run), \
-                mock.patch.object(octatest.qualify, 'finish') as finish:
-            octatest.main()
+        def main(card_sets):
+            # The only request the run itself makes is the read-only card set read, before the install and after the rollback.
+            def send(sequence):
+                if sequence != 'saved': raise AssertionError('the session\'s try and remove Keep')
+                return card_sets.pop(0) + '\n'
+            with mock.patch.object(sys, 'argv', ['octatrack-test.py', '--share', '9', 'e.mwrm']), \
+                    mock.patch.object(octatest, 'Trial', FakeTrial), \
+                    mock.patch.object(octatest.qualify, 'package', return_value=dict(path='e.mwrm')), \
+                    mock.patch.object(octatest.qualify, 'send', send), \
+                    mock.patch.object(octatest.qualify, 'run', run), \
+                    mock.patch.object(octatest.qualify, 'finish') as finish:
+                octatest.main()
+            return finish
+
+        finish = main(['card set 4, 0 modules saved, 0 live', 'card set 4, 0 modules saved, 0 live'])
         self.assertNotIn('--accept', seen['command'])
         self.assertTrue(seen['started'] and seen['ended'])
         self.assertEqual(seen['kw'], dict(selftest=True, inventory=True))
+        self.assertEqual(seen['failures'], [])
         self.assertEqual(finish.call_args.kwargs['command'], 'device:test')
+        # A card set that reads differently afterwards (here: saved) means the run reached the card, with the card left in.
+        main(['card set 4, 0 modules saved, 0 live', 'card set 7, 1 modules saved, 1 live'])
+        self.assertEqual(len(seen['failures']), 1)
+        self.assertIn('the trial must leave the card alone', seen['failures'][0])
 
     @unittest.skipIf(sys.platform == 'win32', 'the trial is ended with SIGINT, which a Windows child process cannot be sent')
     def test_the_trial_is_rolled_back_and_checked(self):

@@ -110,7 +110,8 @@ describe('starter prompts', () => {
     expect(create).toContain('#your-development-setup')
     expect(create).toContain('a device reviewer or repository maintainer reviews and merges its first release')
     expect(readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')).toContain('### Who reviews a first release')
-    expect(readFileSync('AGENTS.md', 'utf8')).toContain('[Device reviewers](docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release) or repository maintainers approve and merge')
+    // The rule, not its sentence: AGENTS.md sends a first release to its reviewers' section, and someone approves it there.
+    expect(readFileSync('AGENTS.md', 'utf8')).toMatch(/\[Device reviewers\]\(docs\/DEVELOPER_WORKFLOW\.md#who-reviews-a-first-release\)[^.]*\bapprove/)
     expect(readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')).toContain('deviceReviewers')
     expect(create).toContain('verify the live version and a saved download')
     for (const skill of [create, update]) expect(skill).toMatch(/Record only (what was observed|the results they report)/)
