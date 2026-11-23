@@ -228,6 +228,10 @@ export interface OctatrackDiagnostic {
   result?: typeof DIAGNOSTIC_RESULTS[number]
   refusal?: number
   reading?: DiagnosticReading
+  /** On `health` after a start that loaded only part of the card's set (`reading.saved` 6 or 10): each module that start
+   * left out (the base's RESTORE request), by catalogue id or `other`, with the loader's refusal (256 the boot guard) and
+   * check. Never a module's name. */
+  restore?: { id: string; refusal: number; check: number }[]
   /** Public catalogue versions; inventory names and project references never enter this list. */
   modules?: { id: string; catalogVersion: string }[]
   packages?: { sha256: string; bytes: number }[]

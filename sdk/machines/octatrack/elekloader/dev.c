@@ -24,6 +24,8 @@
  *          0x80000000 block and battery RAM. Anything else is not answered.
  *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
  *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
+ *   ADOPT  0xC1, bRequest 43, wValue 1 or 0, wLength 1: from the next start on, this
+ *          base restores the card's set another base wrote, and writes no set (1), or not (0).
  *
  * Replies are never a whole number of 64-byte packets (vendor.h). */
 #include "boot.h"
@@ -104,6 +106,14 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
                                                             * leaves it, blaming its first package (1) or none (0) */
         void modwerk_modset_guard_test(unsigned blame);
         modwerk_modset_guard_test(s[2]);
+        out[0] = 1;
+        *reply = out;
+        return 1;
+    }
+    if (s[1] == 43 && want == 1 && s[2] <= 1u && !s[3]) { /* ADOPT TEST: from the next start on (1) or not (0), modset.c
+                                                            * restores the card's set another base wrote, and writes none */
+        void modwerk_modset_adopt_test(unsigned on);
+        modwerk_modset_adopt_test(s[2]);
         out[0] = 1;
         *reply = out;
         return 1;

@@ -461,6 +461,14 @@ uint32_t modwerk_ep0_dispatch(void)
         modwerk_ep0_reply = out;
         return n;
     }
+    /* RESTORE (0xC1, bRequest 43, wValue the first entry, wLength 168): what this start's restore did with each package
+     * of the card's set, loaded or left out and why (modset.c modwerk_modset_restore_list), where the unit says only SOME
+     * MODULES FAILED; 5 a page, so a host asks on from wValue 5 while a page comes back full. Read-only; older bases stall it. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 43 && SETUP[2] < RUNTIME_MODULES && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && (SETUP[6] | SETUP[7] << 8) == 8u + MODSET_RESTORE_ENTRY * MODSET_RESTORE_PAGE) {
+        modwerk_ep0_reply = out;
+        return modwerk_modset_restore_list(out, SETUP[2], MODSET_RESTORE_PAGE);
+    }
 #ifdef MODWERK_SAVED_SET_EXPORT
     if (r.action == MV_STALL && SETUP[1] >= 31u && SETUP[1] <= 33u) {
         uint32_t lock = modwerk_machine_lock();

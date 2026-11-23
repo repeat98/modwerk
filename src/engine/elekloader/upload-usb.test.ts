@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  findVendorInterface, parseInventory, parseMissing, parseOff, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
+  findVendorInterface, parseInventory, parseMissing, parseOff, parseRestore, RESTORE_GUARD, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
   VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_RESULT_BYTES, VENDOR_SUBCLASS,
 } from './upload-usb'
 
@@ -260,5 +260,44 @@ describe('the modules a project names that are not installed', () => {
     expect((await new UsbVendorTransport(unit(false), 6).off())!.map(module => module.module)).toEqual([1, 2, 3, 4, 5, 6, 7].map(id => id.toString(16).padStart(8, '0')))
     expect(asked).toEqual([0, 5])
     expect(await new UsbVendorTransport(unit(true), 6).off()).toBeUndefined() // a base from before the MODULES page
+  })
+  it('reads RESTORE, what the start’s restore did with every saved module, in pages of 5 ("MWR"), and nothing from an older base', async () => {
+    // Each package: state (1 loaded, 2 left out), check, refusal u16, id, bytes, largest free run, name 16 (modset.c).
+    const reply = (ids: number[], count: number) => {
+      const view = new DataView(new ArrayBuffer(8 + 32 * ids.length))
+      ;[0x4d, 0x57, 0x52, ids.length, count >> 8, count & 255, 10, 1].forEach((b, i) => view.setUint8(i, b))
+      ids.forEach((id, i) => { const at = 8 + 32 * i
+        view.setUint8(at, id % 2 ? 2 : 1); view.setUint8(at + 1, id % 2 ? 1 : 0); view.setUint16(at + 2, id === 1 ? 0x100 : id % 2 ? 2 : 0)
+        view.setUint32(at + 4, id); view.setUint32(at + 8, 1000 * id); view.setUint32(at + 12, id % 2 ? 512 : 0)
+        ;[...'Supercalifragil'].forEach((c, k) => view.setUint8(at + 16 + k, c.charCodeAt(0))) })
+      return view
+    }
+    expect(parseRestore(reply([1, 2, 3], 3))).toEqual({ result: 10, count: 3, modules: [
+      { module: '00000001', name: 'Supercalifragil', loaded: false, refusal: RESTORE_GUARD, check: 1, bytes: 1000, largestFree: 512 },
+      { module: '00000002', name: 'Supercalifragil', loaded: true, refusal: 0, check: 0, bytes: 2000, largestFree: 0 },
+      { module: '00000003', name: 'Supercalifragil', loaded: false, refusal: 2, check: 1, bytes: 3000, largestFree: 512 }] })
+    const wrongVersion = reply([], 0); wrongVersion.setUint8(7, 2)
+    for (const bad of [new DataView(new ArrayBuffer(8)), wrongVersion, new DataView(reply([1], 1).buffer, 0, 39)])
+      expect(() => parseRestore(bad)).toThrow(VendorTransportError)
+    const state = reply([2], 1); state.setUint8(8, 3); expect(() => parseRestore(state)).toThrow(VendorTransportError)
+    expect(() => parseOff(reply([1], 1))).toThrow(VendorTransportError)
+    const asked: number[] = []
+    const unit = (older: boolean, count: number): ControlDevice => ({
+      async controlTransferOut() { throw new Error('read-only') },
+      async controlTransferIn(setup, length) {
+        expect(setup).toMatchObject({ request: 43 }); expect(length).toBe(168)
+        if (older) return { status: 'stall' }
+        asked.push(setup.value)
+        const ids = Array.from({ length: Math.max(0, Math.min(5, count - setup.value)) }, (_, i) => setup.value + i + 1)
+        return { status: 'ok', data: reply(ids, count) }
+      },
+    })
+    const seven = await new UsbVendorTransport(unit(false, 7), 6).restore()
+    expect(seven!.modules.map(module => module.module)).toEqual([1, 2, 3, 4, 5, 6, 7].map(id => id.toString(16).padStart(8, '0')))
+    expect([seven!.count, seven!.result, asked]).toEqual([7, 10, [0, 5]])
+    asked.length = 0
+    expect((await new UsbVendorTransport(unit(false, 5), 6).restore())!.modules).toHaveLength(5)
+    expect(asked).toEqual([0]) // a full page that holds the whole set: no second ask
+    expect(await new UsbVendorTransport(unit(true, 0), 6).restore()).toBeUndefined() // a base from before RESTORE
   })
 })
