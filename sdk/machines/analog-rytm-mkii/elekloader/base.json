@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections), the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and the lean engine (base/perf-*: the audio interrupt's work that cannot change the block is left out, the CPU/OVR mark and the screen rate under a backed-up UI; elekloader/README.md), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in three variants: send-bus (the default, with add), voices (add without what its leave names: the FX track's lock words, the send bus, its pages, its clock and the FX list, so a set with a digital voice machine and no send effect keeps the voices and pays nothing for a bus it does not use; only the send bus writes those words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays without them, and stock's next save of all its locks frees their lanes, while word 0 keeps marking those controls locked, so back on send-bus they play the kit's stored words instead, as after a trip through plain) and plain (core-ar2 0.7's source with common alone, for a build with neither, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release. Its version is 0.7.1 (version below, in place of the imported recipe's 0.7): from that version on the builder links a set in the 3.7 MiB mod area 0x47B50000-0x47F00000 (the kit's coreDdr, src/engine/elektron/kit-devices.ts), where the send bus's work area ends (sendbus.c's MODS_END); a 0.7 base keeps 0x47BE0000-0x47C00000.",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections), the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), the lean engine (base/perf-*: the audio interrupt's work that cannot change the block is left out, the CPU/OVR mark and the screen rate under a backed-up UI; elekloader/README.md) and pad pressure (base/pad-pressure.s: a held pad's pressure reaches the sound's aftertouch and MIDI during a retrig roll, and CHROMATIC pads send it on the played note), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in three variants: send-bus (the default, with add), voices (add without what its leave names: the FX track's lock words, the send bus, its pages, its clock and the FX list, so a set with a digital voice machine and no send effect keeps the voices and pays nothing for a bus it does not use; only the send bus writes those words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays without them, and stock's next save of all its locks frees their lanes, while word 0 keeps marking those controls locked, so back on send-bus they play the kit's stored words instead, as after a trip through plain) and plain (core-ar2 0.7's source with common alone, for a build with neither, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release. Its version is 0.7.1 (version below, in place of the imported recipe's 0.7): from that version on the builder links a set in the 3.7 MiB mod area 0x47B50000-0x47F00000 (the kit's coreDdr, src/engine/elektron/kit-devices.ts), where the send bus's work area ends (sendbus.c's MODS_END); a 0.7 base keeps 0x47BE0000-0x47C00000.",
   "core": "core-ar2",
   "version": "0.7.1",
   "include": "sdk/machines/analog-rytm-mkii/include",
@@ -43,7 +43,8 @@
       "../base/perf-modulation.s",
       "../base/perf-engine.s",
       "../base/perf-cpu-mark.c",
-      "../base/perf-screen-rate.c"
+      "../base/perf-screen-rate.c",
+      "../base/pad-pressure.s"
     ],
     "sites": [
       {
@@ -220,6 +221,37 @@
         "stockSha256": "cecd19b005e5e41f0f1047318808a77400f63c9caa49b22c372e4b99f688ed50",
         "op": "jsr",
         "target": "le_frame_gate"
+      },
+      {
+        "addr": "0x400c628e",
+        "len": 6,
+        "stockSha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+        "op": "jsr",
+        "target": "mw_pad_pressure_out"
+      },
+      {
+        "addr": "0x400e2924",
+        "len": 2,
+        "stockSha256": "a8e774a529ecac8cd402f40263e3be8f3998c6a4fd734961cf0ad590e2926d6a",
+        "op": "bytes",
+        "new": "7000",
+        "kind": "code"
+      },
+      {
+        "addr": "0x400c755a",
+        "len": 4,
+        "stockSha256": "0e4a2031c12bcd049eb2737a1b852fc71ee88d3cfcdef80cbdf3829739dae732",
+        "op": "bytes",
+        "new": "4e714e71",
+        "kind": "code"
+      },
+      {
+        "addr": "0x400c6228",
+        "len": 2,
+        "stockSha256": "5c1c81956ea56ef91a593bbb23f800b4f506699661623acf9944ad0d0da4ac21",
+        "op": "bytes",
+        "new": "4e71",
+        "kind": "code"
       }
     ],
     "cflags": [

@@ -10,8 +10,8 @@ GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines.
 Modwerk's own sources sit beside them in `base/`, and `base.json`'s `common` and `add` merge them into the imported
 recipe when the build stages it, so the imported files stay exact. `common` goes into every variant: the machine list's
 sections (`sections.c`; [machine list sections](../README.md#machine-list-sections)), the amp envelope's record
-(`amp.s`; [amp envelope record](../README.md#amp-envelope-record)), the FX track's edit save (`fxguard.s`) and the
-[lean engine](#lean-engine) (`perf-*`). `add` holds the FX track's lock
+(`amp.s`; [amp envelope record](../README.md#amp-envelope-record)), the FX track's edit save (`fxguard.s`), the
+[lean engine](#lean-engine) (`perf-*`) and [pad pressure](#pad-pressure) (`pad-pressure.s`). `add` holds the FX track's lock
 words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
 [send effects](../README.md#send-effects)). A site names the stock bytes it replaces by length and SHA-256 only; the
 build fills them from your OS. `dev` goes only into development bases (`npm run machine:base -- analog-rytm-mkii --dev`,
@@ -59,6 +59,39 @@ There is no wake-up latency: each test runs at the start of its part in the same
 runs stock's work. The worst-case block is stock's plus the tests; their cost alone has not been measured. Measured as the module on the author's MKII, one 12-track pattern beside
 17 modules: 85.4 % of the block on stock, 72.1 % with it; longest block 99.4 % and 89.8 %
 ([repeat98/modwerk#1937](https://github.com/repeat98/modwerk/pull/1937)).
+
+## Pad pressure
+
+Every variant carries three pad pressure fixes (`common`; Nathaniel Pavel, from the Pad Pressure Fix module 0.2.0, which
+leaves the library once a base with them ships, 22 November 2026). They are always on, with no setting. Behaviour is the
+module's 0.2.0 exactly: the same four sites, bytes and code (`pad-pressure.s`, 44 B of `.run`).
+
+| Held pad | Stock OS 1.74 | With the base |
+| --- | --- | --- |
+| Retrig roll, VEL.CUR OFF (RTRG held or ALWAYS ON) | pressure sets the roll's velocity only | it also reaches the sound's AFTERTOUCH and MIDI poly pressure |
+| Retrig roll, VEL.CUR set, ALWAYS ON | the curve sets the velocity, pressure reaches aftertouch and MIDI | the same |
+| Retrig roll, VEL.CUR set, RTRG held | the RETRIG menu takes the pressure and drops it | it reaches aftertouch and MIDI |
+| CHROMATIC mode | poly pressure goes out 24 semitones above the played note, and follows UP and DOWN | on the played note, until its note off |
+
+- `0x400c755a` (KeyboardView) and `0x400c6228` (ChromPadsView): the branch past the aftertouch and MIDI path after the
+  roll velocity write becomes no-ops.
+- `0x400e2924` (the RETRIG menu's pressure method, `0x400e27cc`): returns 0, so the pad view below also gets the event.
+- `0x400c628e` (ChromPadsView): the poly pressure call goes through `mw_pad_pressure_out`, which sends the held note less
+  24, the note off's note, and nothing once the pad is released or the note lies outside 0..127.
+
+**VEL.CUR OFF goes past stock.** Stock chose velocity alone there; the base lets one squeeze move both the roll's velocity
+and the aftertouch targets. Set VEL.CUR (1 is almost flat) for aftertouch alone. A setting to get stock's choice back may
+come later; none is wanted now. With RTRG held, pressure also reaches what is under the RETRIG menu, as without RTRG: in
+PERF mode the performance pads, whose pressure now moves the performance while RTRG is held (stock froze it), and a timed
+popup under the menu closes on pad pressure, as it does without RTRG. A receiver that relied on stock's CHROMATIC poly
+pressure 24 semitones up sees it move to the played note. Note on, note off, channels, pressure values, MIDI in and the
+retrig timing are stock's.
+
+No module patches these sites. Silent Pad+Trig gates the two MIDI pressure sends after them (`0x400c75f2`,
+`0x400c626e`), so a pad it mutes sends no pressure, in rolls too; Live Rec Retrig Fix patches other RETRIG menu sites and
+records the roll's velocity, which is written as on stock. The module's evidence (rytm-emu, and the author's unit with
+PP01 and CA02) is kept in [its verification records](../../../../docs/verification/2026-11-06-rytm-pad-pressure-fix-0-2-0.md),
+the fold-in's emulator run in [its own](../../../../docs/verification/2026-11-22-rytm-base-pad-pressure.md).
 
 ## Beside elekloader's core-ar2
 
@@ -124,11 +157,11 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`46e2e4f6`) has 36,901 bytes of `.run` and 4,364 of `.bss` (3,875 and 192 of them since
-the lean engine), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
+The send-bus variant (`b485034b`) has 36,945 bytes of `.run` and 4,364 of `.bss` (3,875 and 192 of them since
+the lean engine, 44 of `.run` pad pressure), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
 [mod area](../README.md#memory-and-budgets) stays for modules and the effect that runs, whose work area is the RAM they
-leave free (`sendbus.c`). The voices variant (`e1f399a9`) has 18,771 bytes of `.run` and 3,024 of `.bss`, and plain (`5ca4480f`) 14,671
-and 1,557, the lean engine included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
+leave free (`sendbus.c`). The voices variant (`1a8a1488`) has 18,815 bytes of `.run` and 3,024 of `.bss`, and plain (`2977431b`) 14,715
+and 1,560, the lean engine and pad pressure included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
 than on send-bus.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
