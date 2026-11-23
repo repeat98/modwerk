@@ -11,7 +11,8 @@ import type { DeviceLog } from '../engine/elekloader/device-log.ts'
 export type LogReading = DeviceLog | null | undefined
 export interface TrialVerdict { failed: boolean; lines: string[] }
 
-/** The incidents that fail a trial: the unit crashed, a DSP core stalled, the UI stood still or the frame guard skipped tracks.
+/** The incidents that fail a trial: the unit crashed, a DSP core stalled, the UI stood still, the frame guard skipped tracks,
+ * the brake caught, or a frame entry came late (held, or later than the wait can hold).
  * HOT and CPU (the CPU meter at 90 %) are printed but pass: stock alone can reach them. USB (the unit offered itself on USB
  * again because the host never enumerated it, #1985) is printed and passes: the link, not the module. START, SET and BASE are the trial's own
  * bookkeeping, or a restart that already ended the trial with an error. */
@@ -27,7 +28,9 @@ const SAID: Record<string, (a: number) => string> = {
   cpu: () => 'the CPU meter over its limit',
   brake: a => a >>> 23 & 1 ? `a pattern predicted past the frame ceiling began with the module machines silenced (${a & 0x7fffff} since boot)`
     : `the frame fell behind and the brake silenced the module machines (${a & 0xffffff} since boot)`,
-  late: a => `a late frame entry was held, so the DSP skipped a frame, heard as a click (${a} since boot)`,
+  // Low 24 bits: entries held since boot; top byte: entries later than the wait can hold (255 at most; 0 on older bases).
+  late: a => (a & 0xffffff ? `a late frame entry was held, so the DSP skipped a frame, heard as a click (${a & 0xffffff} since boot)` : 'no late frame entry held')
+    + (a >>> 24 ? `; ${a >>> 24 === 255 ? '255 or more' : a >>> 24} frame entr${a >>> 24 === 1 ? 'y' : 'ies'} since boot came later than the wait can hold (190 µs), which can stall the DSP` : ''),
   usb: a => `the host never enumerated the unit, so it offered itself on USB again (OTGSC 0x${(a >>> 16).toString(16)}, PORTSC1 0x${(a & 0xffff).toString(16)})`,
 }
 
@@ -47,6 +50,10 @@ export function trialVerdict(before: LogReading, after: LogReading, names?: (add
     return `${fails ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
   })
   if (counted) lines.push(`FAIL the frame guard skipped ${counted} render${counted === 1 ? '' : 's'} during the trial (tracks it skipped on since the start: ${tracks(after!.sheds!.tracks)})`)
+  // The same for frame entries later than the late-entry wait can hold: past the wait is the cliff, and octabam's two such
+  // entries both stalled the DSP. Its LATE incident is rate-limited too, so the live count decides where the base pages it.
+  const over = before?.sheds?.lateOver !== undefined && after?.sheds?.lateOver !== undefined ? after.sheds.lateOver - before.sheds.lateOver : 0
+  if (over > 0) lines.push(`FAIL ${over} frame entr${over === 1 ? 'y' : 'ies'} came later than the late-entry wait can hold (190 µs) during the trial, which can stall the DSP`)
   // A crash or stall record whose count moved, when no incident of its kind says so (a log that wrapped, or a record kept before its incident).
   const crash = after?.crash, stall = after?.stall
   if (crash && crash.count !== (before?.crash?.count ?? 0) && !incidents.some(incident => incident.kind === 'crash'))

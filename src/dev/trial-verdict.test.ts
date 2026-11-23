@@ -65,6 +65,20 @@ describe('trial verdict', () => {
     expect(trialVerdict(log(10), log(14, [incident(13, 'shed', 0x05000003)])).failed).toBe(true)
   })
 
+  it('fails when a frame entry came later than the late-entry wait can hold, by the live count where the base pages it', () => {
+    const paged = (lateOver?: number) => ({ sheds: { count: 33, tracks: 0, ...(lateOver === undefined ? {} : { lateOver }) } })
+    const verdict = trialVerdict({ ...log(10), ...paged(1) }, { ...log(10), ...paged(3) })
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toBe('FAIL 2 frame entries came later than the late-entry wait can hold (190 µs) during the trial, which can stall the DSP')
+    expect(trialVerdict({ ...log(10), ...paged(3) }, { ...log(10), ...paged(3) }).failed).toBe(false) // none during it
+    expect(trialVerdict({ ...log(10), ...paged() }, { ...log(10), ...paged() }).failed).toBe(false) // a base that pages none
+    // The LATE incident carries them in its top byte, with or without entries held, and fails either way.
+    const alone = trialVerdict(log(10), log(11, [incident(11, 'late', 1 << 24)]))
+    expect(alone.failed).toBe(true)
+    expect(alone.lines[0]).toMatch(/^FAIL .*no late frame entry held; 1 frame entry since boot came later than the wait can hold/)
+    expect(trialVerdict(log(10), log(11, [incident(11, 'late', 255 << 24 | 4)])).lines[0]).toMatch(/\(4 since boot\); 255 or more frame entries since boot/)
+  })
+
   it('notes a hot CPU without failing, and ignores the trial\'s own set and start records', () => {
     const verdict = trialVerdict(log(10), log(13, [incident(11, 'set', 2), incident(12, 'hot', 6), incident(13, 'start')]))
     expect(verdict).toEqual({ failed: false, lines: ['note (boot 7 +3s) the CPU at 90 % or more for 3 s', 'no fault logged'] })

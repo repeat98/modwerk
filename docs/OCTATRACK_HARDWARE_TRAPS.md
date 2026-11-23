@@ -195,6 +195,11 @@ delta, `0x40` with the fader position), masked as the UART interrupt does.
 This is what octemu's emulated panel sends too. Remote PLAY, STOP and
 auto-stop work this way (development base `54f2ce5c`).
 
+**The transport has two stopped states.** Long `0x800065b8` and the 16 track
+bytes at `0x80006500` read 0 after a panel STOP, 1 playing, and 2 (position
+kept) after PLAY while playing or any MIDI STOP, until a panel STOP (MKII, 23
+November 2026). Running is `== 1`; octabam read 2 as the STOP key's.
+
 **Moving the cursor in an FX chooser does not pick; YES does.**
 
 **A script's YES can land somewhere else.**
@@ -697,8 +702,7 @@ early-startup change passed emulator boots and quick power cycles on a
 tester's MKII, then stalled at the logo after several minutes powered off
 (reported 18 October 2026). Moving the small activation helper into the
 resident OS image fixed repeated cold starts on that unit; the module itself
-still runs from RAM. The mechanism is not known: it does not show a defect
-in RAM execution, the loader or the cache. Keep startup gates and activation
+still runs from RAM. Keep startup gates and activation
 helpers resident where you can, publish a callback only once its runtime is
 ready, and qualify a startup change after a sustained power-off as well as
 a quick restart. The emulator models neither cache, reset settling nor RAM
@@ -753,14 +757,11 @@ What `ot_emu` does not show:
   unless given `--card-rw`. Hold remote keys for unit ticks, not wall time:
   under `--dsp` it runs far slower than the clock.
 
-**Keep one link open and drive it by name.** [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)
-covers the persistent session, named panel steps, state reads and screenshots;
-use screenshots only for what the state reads cannot show.
+**Keep one link open and drive it by name** ([OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)).
 
 Tools that work on this Mac:
-- Development bases (`build_core.py --dev`): `npm run device -- key`,
-  `enc`, `fader`, `state`, `screen [--png FILE]`, `loader`, `report`,
-  `probe`, plus USB audio (MAIN and CUE).
+- Development bases (`build_core.py --dev`): the device steps, plus USB
+  audio (MAIN and CUE).
 - Recording: the repaired `rec.swift` (`sdk/machines/octatrack/hw/prepare_tools.py`,
   then `swiftc -O rec.swift -o rec; rec SECONDS OUT.wav Octatrack`).
 - `dsp_asm` for `--dsp-loader` builds: build `source/dsp_host/dsp_asm` from

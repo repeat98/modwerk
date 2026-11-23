@@ -48,7 +48,9 @@ struct diag_load {
  * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
  * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), USB the controller when the unit
  * offered itself again because the host never enumerated it (usb_attach.h: OTGSC in the high half, PORTSC1 in the low),
- * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, BRAKE with
+ * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, in the low
+ * 24 bits, and in the top byte how many entries since boot came later than the wait can hold (190 µs or more, 255 at
+ * most; 0 on bases before it was counted), BRAKE with
  * bit 23 set how many patterns began with module machines silenced as predicted past the frame ceiling (status.c),
  * SET how many modules are installed, their ids in
  * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep); after a
@@ -78,10 +80,12 @@ typedef char diag_incident_layout[sizeof(struct diag_incident) == 92u ? 1 : -1];
 typedef char diag_log_layout[sizeof(struct diag_log) == 40u + 92u + 32u * DIAG_LOADS + 92u * DIAG_INCIDENTS ? 1 : -1];
 #define DIAG_IMAGE_BYTES (sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES + DIAG_TRACE_BYTES) /* what LOG pages */
 /* Then, in the last page's spare bytes: the frame guard's skips since the start and their tracks as they stand now
- * ("MWSK", count, track mask). A SHED incident comes at most once in HOT_GAP, so skips can be logged inside a later
- * trial's window; a host compares two reads of this count instead (owner's MKII, 21 November 2026). */
+ * ("MWSK", count, track mask), then the frame entries since the start later than the late-entry wait can hold
+ * (machine_registry.c's mw_late_over; zero on bases before it). A SHED or LATE incident comes at most once in HOT_GAP,
+ * so either can be logged inside a later trial's window; a host compares two reads of these counts instead (owner's
+ * MKII, 21 November 2026). The four words fill the last page exactly. */
 #define DIAG_SHEDS_MAGIC 0x4d57534bu
-#define DIAG_SHEDS_BYTES 12u
+#define DIAG_SHEDS_BYTES 16u
 typedef char diag_sheds_fit[DIAG_IMAGE_BYTES % DIAG_PAGE + DIAG_SHEDS_BYTES <= DIAG_PAGE ? 1 : -1];
 
 void modwerk_diag_tick(void);                          /* ev_tick */
