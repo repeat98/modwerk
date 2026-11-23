@@ -109,8 +109,7 @@ function keepStage(stage: CardStage | null) {
 }
 
 /**
- * The one place to install the Modwerk base, as a guide: a first view (`launch`, when the Your Octatrack page opens it
- * by itself), then the card stages Download, Copy, Install and Connect for a first install, or one update over USB for a
+ * The one place to install the Modwerk base, as a guide: a first view (`launch`, for the standalone install preview), then the card stages Download, Copy, Install and Connect for a first install, or one update over USB for a
  * unit on an older base. The card is the only way onto the original OS; every later update goes over USB, with the card
  * as the fallback. The Connect stage completes by itself when the unit comes back with the downloaded base, and the
  * guide resumes there (or at the card step it left) after a reload. `buildBase` is the builder's seam, absent until the
@@ -211,7 +210,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   useEffect(() => { if (firmwareError) step('os-file-refused') }, [firmwareError]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (accepted) step('risk-accepted') }, [accepted]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (signIn) step('sign-in-asked') }, [signIn]) // eslint-disable-line react-hooks/exhaustive-deps
-  // The guide opens in such a browser only when the member asks for it (useBaseInstallPrompt), so this is an attempt.
+  // The guide opens in such a browser only after someone chooses to install, so this counts as an attempt.
   useEffect(() => { if (state.status === 'unsupported') { report('failed', 'no-webusb'); link.noWebUsb() } }, [state.status]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (outdated) report('failed', 'site-outdated') }, [outdated]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (wrongBase) report('failed', 'wrong-base') }, [wrongBase]) // eslint-disable-line react-hooks/exhaustive-deps
