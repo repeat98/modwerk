@@ -1,10 +1,11 @@
-# Silent Pad+Trig Settings
+# Improved Configs
 
 ## Overview
 
-Silent Pad+Trig Settings adds three checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, just after AUTO TRK
-SWITCH. The first two let a pad or TRIG key press pick a track without sounding it; the third makes a
-mute silence everything you play:
+Improved Configs (Silent Pad+Trig Settings until 0.8.0; the id stays `silent-pad-trig`) adds four
+checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, just after AUTO TRK SWITCH. The first two let a
+pad or TRIG key press pick a track without sounding it; the third makes a mute silence everything
+you play; the fourth lets a pad take you off the FX track:
 
 - **SILENT PAD+TRIG** covers every state but LIVE and STEP RECORDING: stopped, playing, GRID
   RECORDING and the other modes. A pad or TRIG key 1-12 press selects its track and stays silent,
@@ -15,12 +16,22 @@ mute silence everything you play:
   plays from a pad, TRIG key or MIDI note. Checked, those start no voice on it either, so nothing
   reaches the main outs, delay or reverb, and a pad or TRIG key sends no MIDI note on or poly pressure. Recording is untouched: tap a muted track in LIVE
   RECORDING and the trig goes down in silence.
+- **PAD LEAVES FX** changes what a pad does with the FX track selected. On stock, a pad that selects
+  its track there (with AUTO TRK SWITCH checked, or with RTRG held) changes the track the pads and
+  knobs play but leaves the screen on the FX track, while TRK + pad leaves it. Checked, every pad
+  or TRIG 1-12 press that selects a track leaves the FX track for that track's page, as TRK + pad
+  does: a plain press, a silent one from the rows above, FUNC + pad, RTRG + pad and presses in LIVE
+  RECORDING alike, also on the track the FX track would return to.
 
 Wherever one of the first two applies, hold FUNC and press the pad to play it at the pad's own
 velocity, and FUNC + TRIG to play its track at the TRIG page's VEL, as a plain TRIG press does on
 stock; in LIVE RECORDING both also record. Those two leave STEP RECORDING stock and aftertouch
-untouched: holding a pad down modulates its track without sounding it. All three are unchecked by
+untouched: holding a pad down modulates its track without sounding it. All four are unchecked by
 default, and unchecked, everything is stock.
+
+PAD LEAVES FX works on its own or with any of the other rows: with AUTO TRK SWITCH unchecked and no
+row above checked, a pad selects nothing on stock, and with PAD LEAVES FX checked it still selects
+nothing and leaves the FX track up.
 
 | Input | Stopped, playing, or GRID REC (SILENT PAD+TRIG) | LIVE REC (SILENT P+T LIVEREC) | STEP REC |
 | --- | --- | --- | --- |
@@ -48,7 +59,7 @@ MIDI note and leaves no held note, so its release cuts nothing the sequencer pla
 mode the pads play as stock, and TRIG 1-12 select silently there too. MUTE mode, TRK + pad, QPER +
 pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the sequencer itself are as stock.
 
-Version **0.8.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
+Version **0.9.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
 Nathaniel Pavel's (@npp1993) own mod, not a port. It was first written as Pad Select (`pad-select` 0.2, row
 PAD+TRIG SEL TRK) in a local checkout of [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)
 that was never published there; Modwerk is its home. 0.4.x had one checkbox covering both columns
@@ -56,8 +67,9 @@ above; 0.5.0 splits it in two so silent pads while editing and silent pads while
 can be chosen separately; 0.5.1 renames its second row from SILENT LIVE REC to SILENT PAD LIVEREC
 and changes nothing else; 0.6.0 adds MUTE ALL SOUND; 0.7.0 lets FUNC + TRIG play where TRIG keys are
 silent and has the LIVE REC row cover the TRIG keys too, renaming it SILENT P+T LIVEREC; 0.8.0 lets
-RTRG + a muted pad record its whole roll in LIVE RECORDING without taking a shared voice. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit; 0.5.1 also ran in rytm-emu (build PS08). 0.6.0
-ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as PS14 and as PS16, which renames the row and its storage field, as reported. 0.8.0 ran on a unit in the combined build AT04, as reported.
+RTRG + a muted pad record its whole roll in LIVE RECORDING without taking a shared voice; 0.9.0
+adds PAD LEAVES FX and renames the module Improved Configs. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit; 0.5.1 also ran in rytm-emu (build PS08). 0.6.0
+ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as PS14 and as PS16, which renames the row and its storage field, as reported. 0.8.0 ran on a unit in the combined build AT04, and 0.9.0 in PC01, as reported.
 
 ## Controls
 
@@ -69,9 +81,10 @@ ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as
 | FUNC + pad | Where SILENT PAD+TRIG or SILENT P+T LIVEREC applies, plays the pad's track at the pad's own velocity (the fixed velocity with FIX on); in LIVE RECORDING it also records. |
 | FUNC + TRIG 1-13 | Where SILENT PAD+TRIG or SILENT P+T LIVEREC applies, plays the track at the TRIG page's VEL, as a plain TRIG press does on stock; in LIVE RECORDING it also records. GRID and STEP RECORDING keep stock's FUNC + TRIG. |
 | Pad held down | Aftertouch, as stock: modulates the track's AFTERTOUCH destinations, also after a silent press. |
+| PAD LEAVES FX | Checkbox after MUTE ALL SOUND. With the FX track selected, a pad or TRIG 1-12 press that selects its track also leaves the FX track for it, as TRK + pad does. YES toggles it, RIGHT checks, LEFT unchecks. Unchecked by default. |
 
-All three settings are kept per GLOBAL slot, in core-ar2's mod storage (one bit each,
-`silent_pad_trig_on`, `silent_pt_live_rec_on` and `silent_mute_on`), and saved with the project's globals. No knob, page or effect slot is added.
+All four settings are kept per GLOBAL slot, in core-ar2's mod storage (one bit each,
+`silent_pad_trig_on`, `silent_pt_live_rec_on`, `silent_mute_on` and `pad_leaves_fx_on`), and saved with the project's globals. No knob, page or effect slot is added.
 
 ## Usage
 
@@ -82,10 +95,11 @@ on a sound, tap its pad and keep pressing to modulate the track without playing 
 
 ### Quick tutorial
 
-1. Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG, SILENT P+T LIVEREC and MUTE ALL SOUND; check any with YES or LEFT/RIGHT.
+1. Use a build containing Improved Configs. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG, SILENT P+T LIVEREC, MUTE ALL SOUND and PAD LEAVES FX; check any with YES or LEFT/RIGHT.
 2. With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently; FUNC + TRIG 5 plays it at VEL.
 3. With SILENT P+T LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad and TRIG key taps stay silent and record nothing; hold FUNC and tap a pad or TRIG key to play and record it. Uncheck both to get stock behaviour everywhere.
 4. With MUTE ALL SOUND checked, mute BD in MUTE mode, press RECORD + PLAY and tap BD: you hear nothing. Stop, unmute BD and play: the trigs you tapped are there.
+5. With PAD LEAVES FX and AUTO TRK SWITCH checked, press FX to show the FX track, then tap SD: the SD track's page comes up, as with TRK + SD. FX takes you back to the FX track.
 
 ### Changes to stock flows
 
@@ -123,6 +137,18 @@ While a setting is checked, and only where it applies:
   also zeroed the track's level and sends would cut a ringing note too, so a ringing note is left
   as stock leaves it. Uncheck the box for stock. Compared with it unchecked: muted and
   unmuted pads, RTRG + pad, MIDI notes, solo through MIDI CC 93, LIVE RECORDING and shared voices.
+- **The FX track**, with PAD LEAVES FX: stock keeps the FX track up when a pad or TRIG key selects
+  a track, so a pad changes what the knobs play without the screen showing it; only TRK + pad and
+  the FX key change the screen. Checked, a press that selects a track leaves the FX track as TRK +
+  pad does, in every case that selects (AUTO TRK SWITCH, RTRG + pad, the silent rows, FUNC + pad,
+  LIVE RECORDING), and on the track the FX track would return to too, so the pads cannot be played
+  from the FX track without leaving it while AUTO TRK SWITCH is checked. That is the point of the
+  row: a press that changes the track shows it. A new gesture would leave the plain press as it
+  is, which is what the row changes. TRIG 13, the FX key, TRK + pad, CHROMATIC, PERF and SCENE
+  pads and MIDI notes in select nothing new and stay stock; with AUTO TRK SWITCH unchecked, a pad
+  that plays selects nothing and the FX track stays up, while a silent press from the SILENT rows
+  always selects, so it leaves the FX track. Uncheck the row for stock. Compared with it unchecked
+  in rytm-emu (TESTING.md).
 - **With AUTO TRK SWITCH unchecked**, a silent press still selects its track; FUNC + pad and FUNC + TRIG, which play, follow AUTO TRK SWITCH as stock and do not.
 
 In 0.5.0 every mode that takes the pads, TRIG keys or FUNC was compared with stock in rytm-emu,
@@ -154,6 +180,9 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - A muted tap sends no MIDI note on or poly pressure, but its release still sends a note off, which
   a receiver ignores. That keeps a note held across a mute from sticking. The pad's pressure still
   reaches the sound, so it can modulate a note that is ringing.
+- A unit that ran 0.8.0 starts 0.9.0 with its rows unchecked when this module is linked alone:
+  the new row's storage field changes the storage layout, so check the rows again once. A build
+  made with the previous build's lockfile keeps them.
 - A unit that ran 0.6.x starts 0.7.0 with its rows unchecked when this module is linked alone: the
   LIVE REC row's storage field is renamed (`silent_pt_live_rec_on`), which changes the storage
   layout, so check the rows again once. The same held from 0.5.x to 0.6.0 and from 0.4.x to 0.5.x.
@@ -171,20 +200,29 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked. In
   rytm-emu, a card last saved by this build boots on stock OS 1.74 with the stock menu and pads
   that play.
-- Takes the plain pad and TRIG 1-12 press, FUNC + pad, FUNC + TRIG 1-13 and three SEQUENCER CONFIG rows
+- Takes the plain pad and TRIG 1-12 press, FUNC + pad, FUNC + TRIG 1-13 and four SEQUENCER CONFIG rows
   (`platform.claims`). Another module that changes what those keys play would clash with it.
 
-The module patches ten sites, all in stock code no other library module or the core patches:
+The module patches fifteen sites, all in stock code no other library module or the core patches:
 the play routine both key handlers share (`0x400c772e`), the pad and TRIG key handlers' AUTO TRK
 SWITCH calls (`0x400c7a3e`, `0x400c7e90`), the pad handler's FUNC test (`0x400c7950`), the
 SEQUENCER CONFIG menu's constructor (`0x400ec184`) and the voice trigger call in the routine every
 pad, TRIG key and MIDI note plays through (`0x40084114`), and both pad views' MIDI note on
-(`0x400c6fb0`, `0x400c58f0`) and poly pressure (`0x400c75f2`, `0x400c626e`). The core-ar2 0.3 interface has no event for
+(`0x400c6fb0`, `0x400c58f0`) and poly pressure (`0x400c75f2`, `0x400c626e`), the FUNC + TRIG test
+(`0x400c7ce0`), the audio block's trig loop (`0x40120a66`) and pad glow store (`0x4012155a`), and
+the pad and TRIG key handlers' choice to stay on the FX track (`0x400c7b5c`, `0x400c7eb4`). Stock
+selects a track only through `0x400d4ba0` (track, stay on FX); TRK + pad passes "leave", and the
+two handlers pass "stay" whenever the FX track is up, which PAD LEAVES FX turns into "leave". The core-ar2 0.3 interface has no event for
 the pads, the TRIG keys or the SEQUENCER CONFIG menu.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). 0.8.0 ran on an Analog Rytm MKII in AT04, a combined build, as
+See [TESTING.md](TESTING.md). 0.9.0's PAD LEAVES FX ran in rytm-emu (build PF01, emulator results,
+not hardware): with the FX track up and the row checked, SD, BD, TRIG 3, RTRG + SD, FUNC + SD, a
+silent SD with SILENT PAD+TRIG and SD in LIVE RECORDING each brought up their track's page; unchecked
+SD and TRIG 3 left the FX track up as stock; with AUTO TRK SWITCH unchecked SD left it up too. On an
+Analog Rytm MKII, in the combined build PC01, as reported: from the FX track, the MT and CH pads (selecting
+silently with SILENT PAD+TRIG) and TRK + pad each brought up their track's page. 0.8.0 ran on an Analog Rytm MKII in AT04, a combined build, as
 reported: with MUTE ALL SOUND, OH playing and CH muted, RTRG + CH in LIVE RECORDING recorded every
 retrig with no sound and no click, OH kept ringing, and the CH pad lit on each hit; outside LIVE
 RECORDING muted pads stayed silent. In rytm-emu (AT04E, CH forced muted) the same roll was
@@ -216,8 +254,8 @@ Both rows came back after a power-off and two cold boots, and GLOBAL slot 2 kept
 SEQUENCER CONFIG 30 times caused no trouble. 0.5.1 (PS08) changes only the second row's label: its
 full text shows, its box lines up with the other rows', and a card saved by PS07 with the row
 checked boots PS08 with it still checked. 0.3.0 (build PS04) and 0.4.0 (PS05), with one setting,
-and 0.5.0 (PS07) ran on an Analog Rytm MKII, as reported. Memory (0.8.0): a 1524-byte
-`.run` in the 128 KiB shared mod area (0.7.0: 1196), no `.bss`, no fast SRAM, three storage bits.
+and 0.5.0 (PS07) ran on an Analog Rytm MKII, as reported. Memory (0.9.0): a `.run` about 100 bytes larger than 0.8.0's 1524 in the shared mod area (link
+report: 117,316 B spare alone against 0.8.0's 117,416), no `.bss`, no fast SRAM, four storage bits.
 Each key press costs a few compares; the audio block's trig loop a few compares per track (13 a
 block) and its pad glow store a table read per track (12 a block); the tick reads MUTE ALL SOUND
 about 20 times a second (static reading, not a measurement).
@@ -241,23 +279,27 @@ No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are rytm-emu frames of PS14, core-ar2 0.7 and Silent Pad+Trig 0.7.0 on
+These captures are rytm-emu frames of PF02, core-ar2 0.7 and Improved Configs 0.9.0 on
 stock OS 1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
-module changes which presses sound, not the sound itself, so there is no audio demonstration.
+module changes which presses sound and which page they show, not the sound itself, so there is no
+audio demonstration.
 
 ![CONTROL menu listing CONTROL INPUT 1, CONTROL INPUT 2 and SEQUENCER CONFIG.](media/control-menu.png)
 
-Open the GLOBAL menu and choose CONTROL: SEQUENCER CONFIG, which holds the three rows, is its third item.
+Open the GLOBAL menu and choose CONTROL: SEQUENCER CONFIG, which holds the four rows, is its third item.
 
-![SEQUENCER CONFIG list with SILENT PAD+TRIG, SILENT P+T LIVEREC and MUTE ALL SOUND after AUTO TRK SWITCH, boxes empty, MUTE ALL SOUND highlighted.](media/seq-config.png)
+![SEQUENCER CONFIG list with SILENT PAD+TRIG, SILENT P+T LIVEREC, MUTE ALL SOUND and PAD LEAVES FX after AUTO TRK SWITCH, boxes empty, PAD LEAVES FX highlighted.](media/seq-config.png)
 
-SEQUENCER CONFIG gains three rows after AUTO TRK SWITCH, all unchecked by default; MUTE ALL SOUND is the last.
+SEQUENCER CONFIG gains four rows after AUTO TRK SWITCH, all unchecked by default; PAD LEAVES FX is the last.
 
-![SEQUENCER CONFIG list with SILENT PAD+TRIG and MUTE ALL SOUND checked, SILENT P+T LIVEREC empty, MUTE ALL SOUND highlighted.](media/seq-config-checked.png)
+![SEQUENCER CONFIG list with SILENT PAD+TRIG and PAD LEAVES FX checked, SILENT P+T LIVEREC and MUTE ALL SOUND empty, PAD LEAVES FX highlighted.](media/seq-config-checked.png)
 
-Press YES (or RIGHT) on a row to check it; each is set on its own and the GLOBAL slot keeps all three.
+Press YES (or RIGHT) on a row to check it; each is set on its own and the GLOBAL slot keeps all four.
 
-![SD track's SRC page with SNARE as the title, shown after a silent SD pad press.](media/silent-press.png)
+![FX track's DELAY page with TIM, X, WID, FDB, HPF, LPF, REV and VOL.](media/fx-track.png)
 
-Back on the main screen with SILENT PAD+TRIG checked, tapping the SD pad selects the SD track
-without a sound; FUNC + SD plays it.
+With SILENT PAD+TRIG and PAD LEAVES FX checked, press FX: the FX track's page is up.
+
+![SD track's SRC page with SNARE as the title, shown after a silent SD pad press from the FX track.](media/silent-press.png)
+
+Then tap SD: the SD track's page comes up, as with TRK + SD, and the press is silent; FUNC + SD plays it.
