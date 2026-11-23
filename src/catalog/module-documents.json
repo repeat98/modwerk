@@ -4480,7 +4480,7 @@
       "id": "synth",
       "key": "SYNTH MACHINE",
       "name": "FM Synth",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -4520,7 +4520,7 @@
         "label": "Two-operator FM",
         "family": "Synth machines",
         "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-        "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.4 names its CPU price for the base's CPU budget, 6 % of a frame a track; 0.1.3 made the render path cheaper on the CPU with no change of function; 0.1.2 preserved the MIDI chromatic drawer stack and added 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+        "overview": "FM SYNTH plays one to four paraphonic voices through the track's AMP and effects. Version 0.1.5 rests while nothing in the project uses it.",
         "highlights": [
           "Dedicated machine chooser entry; no sample required.",
           "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
@@ -4725,18 +4725,18 @@
           }
         },
         "cpuPrice": {
-          "value": 6,
+          "value": 4,
           "unit": "percent-of-frame",
           "measure": "machine-render",
           "tool": "npm run device -- do 'PLAY w2500 guard w6000 guard STOP'",
-          "date": "2026-11-17",
-          "conditions": "Octatrack MKII, development twin 945cc074 of base 0.7.7, FM Synth 0.1.3 with SYNTIZ, Amiga and POLY8 installed, one FM Synth track at its default sound with a trig on every step of a 16-step pattern, seven empty STATIC tracks: the frame interrupt's share was 36.8 % against 32.2 % without the trigs, 4.6 points, priced 6 with room for longer notes",
+          "date": "2026-11-23",
+          "conditions": "Octatrack MKII, OS 1.40C, development twin 856cbbcf of base 0.8 (base/octatrack-next 9ac83b232), FM Synth 0.1.5 package 8cf43bfb installed alone in a rolled-back trial, project Dev17, pattern C02 with Part 2 at 126 BPM: FM Synth on T1 at its default sound with a trig on every step, the seven other tracks without trigs, FILTER and DELAY on every track. The frame interrupt's share was 30.8 % against 27.6 % without T1's trigs (three readings each way, none skipped), 3.2 points, priced 4",
           "source": "TESTING.md"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.1.4 differs from 0.1.3 only in its descriptor's CPU price, measured on an MKII with 0.1.3 (TESTING.md). 0.1.3 changes only the render path's cost (measured on an MKII, TESTING.md). Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
+        "summary": "0.1.5 rests while nothing in the project uses FM Synth. On the owner's MKII with base 0.8 (23 November 2026, package 791e26c5) installed on no track it added 0.1 to 0.2 points and a pick while it rested was admitted; a track that had played notes kept costing about 11 frame points while silent or stopped, so the silent-track path did not lower the cost (follow-up #2030). Its CPU price is 4 % of a frame a track. TESTING.md gives the readings and open cases, including chip worst-case timing and complete memory bounds.",
         "hardwareStatus": "untested",
         "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
         "gates": [
