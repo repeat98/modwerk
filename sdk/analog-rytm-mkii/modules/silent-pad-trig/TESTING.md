@@ -1,7 +1,6 @@
 # Improved Configs (formerly Silent Pad+Trig Settings) — test report
 
-0.9.0 renames the module Improved Configs; its id, rows, fields and files stay. The sections
-below keep the name each build had.
+0.9.0 renames the module Improved Configs; its id, rows, fields and files stay.
 
 Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL TRK, as in
 rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and

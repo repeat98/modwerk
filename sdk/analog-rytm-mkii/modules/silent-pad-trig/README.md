@@ -146,7 +146,8 @@ While a setting is checked, and only where it applies:
   row: a press that changes the track shows it. A new gesture would leave the plain press as it
   is, which is what the row changes. TRIG 13, the FX key, TRK + pad, CHROMATIC, PERF and SCENE
   pads and MIDI notes in select nothing new and stay stock; with AUTO TRK SWITCH unchecked, a pad
-  selects nothing and the FX track stays up. Uncheck the row for stock. Compared with it unchecked
+  that plays selects nothing and the FX track stays up, while a silent press from the SILENT rows
+  always selects, so it leaves the FX track. Uncheck the row for stock. Compared with it unchecked
   in rytm-emu (TESTING.md).
 - **With AUTO TRK SWITCH unchecked**, a silent press still selects its track; FUNC + pad and FUNC + TRIG, which play, follow AUTO TRK SWITCH as stock and do not.
 
@@ -297,7 +298,7 @@ Press YES (or RIGHT) on a row to check it; each is set on its own and the GLOBAL
 
 ![FX track's DELAY page with TIM, X, WID, FDB, HPF, LPF, REV and VOL.](media/fx-track.png)
 
-With both checked, press FX: the FX track's page is up.
+With SILENT PAD+TRIG and PAD LEAVES FX checked, press FX: the FX track's page is up.
 
 ![SD track's SRC page with SNARE as the title, shown after a silent SD pad press from the FX track.](media/silent-press.png)
 

@@ -127,7 +127,7 @@
       "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
       "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
       "Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off straight from SEQUENCER CONFIG and the change is lost (seen on a unit, with KIT RELOAD ON CHG behaving the same).",
-      "PAD LEAVES FX leaves the FX track on every press that selects a track, the track the FX track would return to included, so with AUTO TRK SWITCH checked the pads cannot be played from the FX track without leaving it. With AUTO TRK SWITCH unchecked a plain pad selects nothing and the FX track stays up. MIDI notes in, CHROMATIC, PERF and SCENE pads never select a track and stay stock."
+      "PAD LEAVES FX leaves the FX track on every press that selects a track, the one FX would return to included. With AUTO TRK SWITCH unchecked a pad that plays selects nothing and FX stays up; a silent press from the SILENT rows always selects, so it leaves FX. MIDI notes in, CHROMATIC, PERF and SCENE pads never select and stay stock."
     ]
   },
   "platform": {
@@ -268,7 +268,7 @@
     {
       "path": "media/fx-track.png",
       "kind": "screenshot",
-      "caption": "With both checked, press FX: the FX track's page is up.",
+      "caption": "With SILENT PAD+TRIG and PAD LEAVES FX checked, press FX: the FX track's page is up.",
       "alt": "FX track's DELAY page with TIM, X, WID, FDB, HPF, LPF, REV and VOL.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
