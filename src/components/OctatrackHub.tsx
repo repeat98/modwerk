@@ -20,6 +20,8 @@ import { OctatrackBackups } from './OctatrackBackups'
 import { CardSetButton } from './UnitPanel'
 import { OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
 import { OctatrackOverview } from './OctatrackOverview'
+import { OctatrackScreen } from './OctatrackScreen'
+import { RuntimeFeature } from '../engine/elekloader/upload-usb'
 import { OctatrackSamples } from './OctatrackSamples'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
 import { MODULE_SKIP_HINT, USB_BROWSERS } from '../firmware-notices'
@@ -31,7 +33,7 @@ const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
 const BUSY = ['sending', 'testing', 'trial', 'finishing']
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
-export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'diagnostics' | 'set'
+export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'screen' | 'diagnostics' | 'set'
 export type { SetAction }
 /** The Octatrack's own pages, in the list above the module sets; `#configuration` is the set you edit. */
 const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; icon: IconName }[] = [
@@ -39,6 +41,7 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'backups', title: 'Backups', href: '#octatrack/backups', icon: 'download' },
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
+  { view: 'screen', title: 'Screen', href: '#octatrack/screen', icon: 'image' },
   { view: 'diagnostics', title: 'Diagnostics', href: '#octatrack/diagnostics', icon: 'shield' },
 ]
 // Samples is unfinished: its panel stays (and keeps its tests), but nothing leads to it until it is ready.
@@ -163,6 +166,8 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
         {panel('status', <OctatrackOverview link={link} inventory={inventory} sets={sets} needs={needs} health={health} active={view === 'status'} selected={selected} onOpen={onSelect} onSync={onSync} onSaveUnit={onSaveUnit} onReport={onReport} />)}
         {panel('backups', <OctatrackBackups link={link} />)}
         {panel('samples', <OctatrackSamples active={view === 'samples'} />)}
+        {panel('screen', <OctatrackScreen key={identity?.base} active={view === 'screen'} link={connected ? link : null}
+          supported={!!((identity?.capabilities?.features ?? 0) & RuntimeFeature.screen)} />)}
         {panel('setup', <>
           <h2 className="hub-view-title">Setup</h2>
           <section className="hub-section hub-base" aria-labelledby="setup-base-title">

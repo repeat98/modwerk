@@ -24,7 +24,7 @@ export const MISSING_PAGE = 13 // entries a MISSING reply holds; wValue is the f
 export const VENDOR_INVENTORY = 27 // the modules installed on the unit, in MISSING's form (sdk/runtime/loader/loader.c)
 export const VENDOR_CAPABILITIES = 29 // loader capabilities; older bases stall this read-only request
 export const CAPABILITIES_BYTES = 12
-export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024, judgedRests: 2048, frameCosts: 4096 } as const
+export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024, judgedRests: 2048, frameCosts: 4096, screen: 8192 } as const
 export interface RuntimeCapabilities { abi: number; features: number; maxSites: number; maxCopies: number }
 /** MWCP v1. Unknown feature bits are retained: they do not imply features this client requires. */
 export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
@@ -250,6 +250,15 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status === 'stall') return undefined
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the base slots request.')
     return parseBaseSlots(reply.data)
+  }
+  async screen(signal?: AbortSignal): Promise<Uint8Array> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(7, 0), 1028)
+    signal?.throwIfAborted()
+    const data = reply.data
+    if (reply.status !== 'ok' || data?.byteLength !== 1028 || data.getUint32(0) !== 0x4d574c43)
+      throw new VendorTransportError('The Octatrack did not return a complete screen.')
+    return new Uint8Array(data.buffer, data.byteOffset + 4, 1024)
   }
   /** Cached, read-only live meters. Older bases explicitly stall this request. */
   async load(signal?: AbortSignal): Promise<LoadReading | undefined> {

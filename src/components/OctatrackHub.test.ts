@@ -36,7 +36,7 @@ describe('the Octatrack page', () => {
     vi.mocked(moduleSetReview).mockReturnValue({ changes: { add: ['synth'], remove: ['miniverb'], stockOff: [], stockOn: [] }, updates: [], needsSync: true, problem: undefined })
     const render = (view: HubView, selectedId = first.id) => act(() => root.render(createElement(OctatrackHub, { ...props, view, link, inventory, sets: [first, second], selectedId, header: null, grid: createElement('p', null, 'Module grid'), card: null })))
     await render('status')
-    expect([...container.querySelectorAll('.hub-nav-item')].map(item => item.textContent)).toEqual(['Status', 'Backups', 'Setup', 'Diagnostics'])
+    expect([...container.querySelectorAll('.hub-nav-item')].map(item => item.textContent)).toEqual(['Status', 'Backups', 'Setup', 'Screen', 'Diagnostics'])
     expect(container.querySelector('.hub-nav-item[aria-current="page"]')?.textContent).toBe('Status')
     expect(container.querySelectorAll('.hub-view:not([hidden])')).toHaveLength(1)
     expect(container.querySelector('.hub-set.is-selected em')?.textContent).toBe('Editing · On your Octatrack')
@@ -80,6 +80,21 @@ describe('the Octatrack page', () => {
     expect(props.onFill).toHaveBeenCalledWith(['miniverb', 'synth'])
     await act(() => [...container.querySelectorAll<HTMLButtonElement>('.hub-nav-foot button')].find(item => item.textContent === 'New module set')!.click())
     expect(props.onNew).toHaveBeenCalledOnce()
+  })
+
+  it('opens Screen without polling and requires a base that advertises LCD capture', async () => {
+    const read = vi.fn()
+    const show = (features: number) => {
+      const link = Object.assign(unit({ ...ready, identity: { ...ready.identity!, capabilities: { abi: 10, features, maxSites: 24, maxCopies: 8 } } }), { screen: read })
+      return act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'screen', link, sets: [], header: null, grid: null, card: null })))
+    }
+    await show(0)
+    expect(open().querySelector('h2')?.textContent).toBe('Screen')
+    expect(button('Start preview').disabled).toBe(true)
+    expect(open().textContent).toContain('needs a Modwerk base with screen capture')
+    await show(8192)
+    expect(button('Start preview').disabled).toBe(false)
+    expect(read).not.toHaveBeenCalled()
   })
 
   it('shows the unit’s status from its own records and this browser’s syncs', async () => {
