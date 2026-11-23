@@ -34,6 +34,10 @@ describe('diagnostics pull', () => {
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
   })
+  it('shows how a disconnected trial ended in Problems', () => {
+    const event = entry(1, 'tester', { event: 'sync_failed', phase: 'trial', error: 'disconnected', step: 'trial', reconnect: 'closed' })
+    expect(summary({ events: [event], counts: [] }).split('Problems (')[1]).toContain('error=disconnected step=trial reconnect=closed')
+  })
   it('lists failures before a USB connection with the reported reason and optional client', () => {
     const link = (n, failure, client) => entry(n, 'tester', { event: 'link_failed', phase: 'idle', failure, client })
     const text = summary({ events: [link(1, 'no-device'), entry(2), link(3, 'claim-failed', { browser: 'chrome', major: 150, os: 'linux' })], counts: [] })
