@@ -97,3 +97,5 @@ On the final package the stock timed popup closed, ARR reopened CLYPS, R04 recal
 ## Artist requirements checkpoint
 
 Discovery now runs five tests. The added stopped popup/Bank H case injects both events into the production callbacks during a draft edit, then checks ARR re-entry, confirmed row, playback and pending state. The independent C clipboard fixture checks row and same-track cell snapshots, source isolation, overwrite refusal, cancellation/clear, invalid targets and cross-bank refusal. This fixture works on staging rows only. The firmware has no clipboard binding, sidecar writer or native duplication command. Hardware A–H: NOT TESTED.
+
+The final package also passed the matched T2 slice against the fresh, same-MAIN stock control. Wrap 90, 384 ordered calls, 400 relative writes, the seven unaffected lanes, SRC/ARR, STOP cancellation, bank and Part checks and pool recovery all passed.
