@@ -251,8 +251,8 @@ async function main(argv) {
   if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : draftOnly ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
-    ? 'Ready: local checks passed. Finish the GitHub handoff after the exact build has run on a unit.'
-    : 'Ready: local checks passed. Verify the PR status on GitHub after pushing.')
+    ? 'Ready: local checks passed. Once unit results for the exact build are recorded, mark the draft ready on GitHub and verify its status.'
+    : 'Ready: local checks passed. Push the checked commit, mark any draft ready on GitHub, and verify its status.')
   return verdict.ok ? 0 : 1
 }
 
