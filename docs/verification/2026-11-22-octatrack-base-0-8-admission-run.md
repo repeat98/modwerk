@@ -131,6 +131,44 @@ reserve), CPU NOW the meter. The bar was filled with the judged load above the r
 showed almost full: the busy stock pattern, not modules, took the room. Changed after this run: the bar holds the
 modules' share only, and "PART IS BUSY" replaces CPU NOW when the Part's own load is the reason (not yet seen on a unit).
 
+## The evening and night: twins 23 to 32
+
+Same unit and project. Picks on empty C02 and medium C03 (six everyday sets, 26 picks a pattern, each pick made stopped
+after 5 s of play, 2.5 s of play after each, then 15 s), FM Synth 0.1.5 charged its own curve (31.3 / 0.5, rest 0).
+Nothing was kept; every twin after 27 was booted from the running one without a power cycle.
+
+| Twin | What changed | Empty C02 | Medium C03 | Dropped |
+|---|---|---|---|---|
+| 23 | reserve from the bank's busiest pattern, rest of installed modules | 0/26 | 0/26 | 0 |
+| 24 | reserve from the playing pattern (owner), near-free picks; line still 120 | 26/26 | about 20/26 | 37,312, 1 and 5 in three sets |
+| 25 | line 110 (owner), late window from 80 µs | 26/26 | 12/26 | 0 |
+| 27 | machines hushed on a pattern predicted past 122 %, 7 netted on the measured side | 26/26 | 14/26 | 14 |
+| 28 | 2.5 netted on the measured side | 26/26 | 13/26 | 0 |
+| 29 | a played pattern's measured stock + 8 when under the ladder | 26/26 | 16/26 | 13 |
+| 30 | a further machine instance charged whole on the reserve | 26/26 | 16/26 | 16 |
+| 31 | 2.5 netted on a measured stock; what played since a pick counts | 26/26 | 14/26 | 0 |
+| 32 | margin 4 on a measured stock; a further machine pays its trig starts | 26/26 | 6/26 | 0 |
+| 33 | readings since a pick restart when modules move; a set change starts afresh | 26/26 | 18/26 | 0 |
+
+Twin 23 judged every pattern by the bank's busiest (C01, eight stacked) plus FM Synth 0.1.4's 20.3 at rest: over the line
+before any pick. Every drop after it came from the set with two Amigas on trigging tracks (a second Amiga adds 4.3 to 7.4,
+`each` is 4). Twin 32's medium refusals depend on the sets before them (a first Tape Echo refused at 77 % in the set run,
+admitted alone): the readings since a pick survived a rollback and a reload, fixed in twin 33. Twin 28's first empty-pattern sets are invalid: C02 still held the trigs VECTOR's
+curve had written (60 % instead of 38 % with stock alone); `device:price` now stops when a module leaves trigs.
+Twin 33's remaining medium refusals sit within a point or two of the line and go either way between sets (Amiga on T1
+refused in set 1, admitted in set 3; FM Synth on T3 refused in set 2, admitted in set 6): expected scatter in the
+readings at the line, not a fault.
+
+**The overload scene** (set L on empty C02, then the stacked C01 played; stall 56 on twin 24): twin 24 stalled once,
+with an entry the base read under 110 µs late. Twin 25 (window from 80 µs), three takes: no stall, 4,368 to 4,501
+renders dropped, 9 to 12 entries held, 5 to 8 full-scale clicks in 15 s. Twin 27 (machines hushed), three takes: no
+stall, 0 dropped, 5 to 10 entries held and as many clicks (peak 0.79); with the machines silent, stock C01 and the
+effects alone play at 127 %, most of it Tape Echo's work in the delay routine.
+
+**Curves** (C04, picks on C02, limit 112): BBD 0.7 / 0.4, Lo-Fi 1 / 0, Ring SC 0.8 / 0, Tape Head 0 / 0, VECTOR 0.2 / 0
+(it writes trigs; stock plays them), Grain 33.9 (one instance fits). Tape Echo 0.1.9 (deadline and rest; draft, local)
+10.7 / 4.2 against 0.1.6's 13.6 / 4.0 in the same run.
+
 ## Not tested
 
 The late-entry wait switched on under the stalling pattern change, the brake under overload, the line above 120 % with the

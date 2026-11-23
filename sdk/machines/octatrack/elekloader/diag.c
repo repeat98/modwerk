@@ -26,6 +26,7 @@ extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its 
 extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
 extern volatile uint32_t mw_frame_hushes;                         /* status.c: patterns begun with them silenced */
 extern volatile uint32_t mw_frame_skips;                          /* ... and the late entries held, each a DSP frame skipped */
+extern volatile uint32_t mw_late_over;                            /* ... and the entries later than the wait can hold */
 extern volatile uint16_t mw_late_ring[8];                         /* ... and the last entries' lateness */
 extern volatile uint32_t mw_late_count;
 extern volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;   /* ep0.c: the attach watchdog (usb_attach.h) */
@@ -85,7 +86,7 @@ static unsigned installed(uint32_t *ids, unsigned most)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, skip_at, hushes, hush_at;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, late_overs, skip_at, hushes, hush_at;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 static volatile uint16_t trace[DIAG_TRACE_FRAMES][2]; /* the last frames (diag.h's struct diag_trace), in ordinary memory */
 static volatile uint32_t traced;
@@ -232,8 +233,11 @@ static void diag_tick(void)
     if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
     uint32_t hushed = mw_frame_hushes; /* a pattern predicted past the ceiling began with them silenced: flagged, once in HOT_GAP */
     if (hushed != hushes && (!hush_at || ticks - hush_at >= HOT_GAP)) add(l, DIAG_BRAKE, 1u << 23 | (hushed & 0x7fffffu), 1), hush_at = ticks, hushes = hushed;
-    uint32_t held = mw_frame_skips; /* a late entry held, which skips a DSP frame (a click): at most one incident in HOT_GAP */
-    if (held != frame_skips && (!skip_at || ticks - skip_at >= HOT_GAP)) add(l, DIAG_LATE, held, 1), skip_at = ticks, frame_skips = held;
+    /* A late entry held, which skips a DSP frame (a click), or one later than the wait can hold (diag.h's LATE): at most
+     * one incident in HOT_GAP. */
+    uint32_t held = mw_frame_skips, over = mw_late_over;
+    if ((held != frame_skips || over != late_overs) && (!skip_at || ticks - skip_at >= HOT_GAP))
+        add(l, DIAG_LATE, (over < 255u ? over : 255u) << 24 | (held < 0xffffffu ? held : 0xffffffu), 1), skip_at = ticks, frame_skips = held, late_overs = over;
     uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */
     if (reoffered != reoffers) { if (!reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1); reoffers = reoffered; } /* a boot's first: five with no host would crowd the log */
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
@@ -327,7 +331,7 @@ unsigned modwerk_diag_read(uint8_t *out, unsigned page)
 {
     const volatile uint8_t *log = (const volatile uint8_t *)LOG, *crash = (const volatile uint8_t *)CRASH, *stall = (const volatile uint8_t *)STALL,
         *frames = (const volatile uint8_t *)TRACE;
-    const uint32_t sheds[3] = {DIAG_SHEDS_MAGIC, mw_frame_sheds, mw_frame_shed_tracks};
+    const uint32_t sheds[4] = {DIAG_SHEDS_MAGIC, mw_frame_sheds, mw_frame_shed_tracks, mw_late_over};
     for (unsigned i = 0, at = page * DIAG_PAGE; i < DIAG_PAGE; ++i, ++at)
         out[i] = at < sizeof(struct diag_log) ? log[at]
                : at < sizeof(struct diag_log) + DIAG_CRASH_BYTES ? crash[at - sizeof(struct diag_log)]

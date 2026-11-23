@@ -260,8 +260,9 @@ unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint1
     return n;
 }
 /* status.c's stock reserve: what the current Part's module machines cost but track `skip` (8: none), each track by its
- * `each` and the first of a machine by its `first` too, less `net` (the sample a track would otherwise play), never
- * below 0. */
+ * `each` and the first of a machine by its `first` too, the first less `net` (the sample its track would otherwise
+ * play), never below 0. A further one is charged whole: on a trigging track its trig starts cost about what the sample's
+ * did (modwerk-bd, twins 27 and 29: a second Amiga on C03 added 4.3 and 7.4 against its each of 4). */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net)
 {
     if (!valid_bank()) return 0;
@@ -273,7 +274,7 @@ uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net)
         int first = 1;
         for (unsigned u = 0; u < t; ++u) if (who[u] == who[t]) first = 0;
         uint32_t cost = frame_cost(who[t], first, 0);
-        sum += cost > net ? cost - net : 0u;
+        sum += !first ? cost : cost > net ? cost - net : 0u;
     }
     return sum;
 }
@@ -290,7 +291,7 @@ unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], cons
         while (j < k && seen[j] != who) ++j;
         if (j == k) seen[k] = who, tracks[k] = 0, cost[k] = 0, label[k] = who->label, ++k;
         uint32_t c = frame_cost(who, !tracks[j], 0);
-        tracks[j] = (uint8_t)(tracks[j] | 1u << t), cost[j] += c > net ? c - net : 0u;
+        cost[j] += tracks[j] ? c : c > net ? c - net : 0u, tracks[j] = (uint8_t)(tracks[j] | 1u << t);
     }
     return k;
 }
@@ -1115,6 +1116,11 @@ volatile uint32_t mw_late_wait_on = 1;
 /* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
 volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
 volatile uint32_t mw_frame_skips; /* every wait since boot, each a DSP frame skipped (diag.c's `late` incident) */
+/* Since boot, the entries LATE_HI late or more (short of IDLE, so after a frame), which the wait cannot hold. octabam's
+ * frame log (FAILURE_MODES.md at 42856db2, Sam Banks) had two such entries, 205 and 209 µs late, and both stalled the
+ * DSP for good, while 23 from 155 to 223 µs skipped a frame and ran on. Counted, not braked: diag.c logs it with the
+ * `late` incident and pages it beside the guard's skips (MWSK), and a trial fails when it rises. */
+volatile uint32_t mw_late_over;
 /* A held entry stamps its lateness before the wait, so after one held to LATE_HI a body of 283 to 363 µs puts the next
  * entry in the window again, and so on: the frame interrupt would never leave level 5. Between a pattern's steps the
  * frames are light and break such a chain (on the unit no more than eight entries in a row were held, at a pattern
@@ -1148,7 +1154,10 @@ void mw_frame_enter(void)
             now += waited;
             if (++wait_run >= WAIT_RUN && !mw_frame_brake) mw_frame_brake = 1, mw_frame_brakes = mw_frame_brakes + 1u;
         }
-    } else wait_run = 0;
+    } else {
+        wait_run = 0;
+        if (l >= LATE_HI) mw_late_over = mw_late_over + 1u; /* l < GRID - NEAR, and 0 after IDLE */
+    }
     mw_frame_t0 = now;
     /* ev_frame_deadline (owner, 22 November 2026): by when work at IPL 5 (stock's delay routine, a ColdFire effect's
      * detours in it) must end for the next entry to be no more than 60 µs late: this frame's grid time (its entry less

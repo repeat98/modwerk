@@ -131,17 +131,20 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
+static uint32_t test_epoch; /* the loader's owner epoch: a set installed, removed or undone */
+uint32_t modwerk_runtime_owner_epoch(void) { return test_epoch; }
+static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
+unsigned modwerk_machine_pattern(void) { return test_pattern; }
 static unsigned test_busiest, test_tracks, test_trigging; /* machine_registry.c: the playing pattern's busiest step, tracks that trig */
 unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint16_t id[2])
 {
     most[0] = (uint8_t)test_busiest, tracks[0] = (uint8_t)(test_tracks > test_busiest ? test_tracks : test_busiest);
-    id[0] = 32u, id[1] = 32u;
+    id[0] = id[1] = (uint16_t)(test_pattern ? test_pattern : 32u);
     return 1u;
 }
 unsigned modwerk_machine_trigging(void) { return test_trigging; }
 static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
-static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
-unsigned modwerk_machine_pattern(void) { return test_pattern; }
+
 uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
 /* ... and as the predicted brake lists them: one machine on T2 that books all of it */
@@ -569,6 +572,7 @@ int main(void)
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
       transport_stopped = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 430u;
+      frame_newest = 430u;                                               /* each reading is the newest too */
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       transport_stopped = 1, frame_newest = 300u;
       CHECK(frame_played == 430u && modwerk_status_frame_load() == 430u);
@@ -682,6 +686,10 @@ int main(void)
       /* A machine takes a track that would play a sample: against the reserve it adds what it costs less that share. */
       test_machines_booked = 0, frame_newest = 100u, frame_adjust = 0, memset(modwerk_test_live_fx, 0, 16);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 260u, 0, 0) && open == CLOSED);  /* 30 + 26 - 7 = 49 % */
+      { uint32_t x = mw_frame_line - 300u + 10u;                          /* the line and 1 % past it, whole */
+        CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", x, 0, 0));         /* a machine's first: less the sample's share */
+        CHECK(modwerk_status_pick_busy(5, 2, "Amiga", x, 0, 0));          /* a further one: whole */
+        for (unsigned i = 0; i < 180u; ++i) memory_tick(); }
       CHECK(modwerk_status_pick_busy(5, 0, "Echo", 200u, 0, 0) && refused_booked == 300u && refused[4] == 200u); /* an effect: 30 + 20 % */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       /* The set's measured stock figures take the compiled ones' place: a base whose stock got cheaper gives modules
@@ -800,6 +808,59 @@ int main(void)
       CHECK(modwerk_status_pick_busy(1, 1, "Amiga", 266u, 100u, 0));    /* a swap: the track played a machine, no share off */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       test_trigging = 0, frame_newest = 0, mw_stock_reserve = RESERVE_ADAPTIVE; }
+    /* A pattern played four seconds is judged by its own stock as measured, with the margin, when that is under the
+     * ladder's; other trigs, or another pattern, go by the ladder; a pattern change restarts the four seconds. */
+    { mw_stock_reserve = RESERVE_ADAPTIVE, test_busiest = 4, test_tracks = 4, test_rest = 25u, test_pattern = 34u;
+      transport_stopped = 0, frame_adjust = 0, frame_newest = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 788u;
+      for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
+      CHECK(frame_played == 788u && played_stock == 763u && played_shape == (4u << 4 | 4u));
+      transport_stopped = 1, frame_played = 0;
+      CHECK(modwerk_status_frame_load() == 828u);                        /* 76.3 + 4 + 2.5, not 79.8 + 8 + 2.5 */
+      test_tracks = 5;
+      CHECK(modwerk_status_frame_load() == 929u);                        /* other trigs: the ladder, 79.8 + 2.6 + 8 + 2.5 */
+      test_tracks = 4, test_pattern = 35u;
+      CHECK(modwerk_status_frame_load() == 903u);                        /* another pattern: the ladder */
+      transport_stopped = 0, play_readings = 0;
+      for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
+      test_pattern = 34u, cpu_note_played();                             /* back before four seconds: none kept */
+      CHECK(play_readings == 1u && played_pattern == 34u && played_stock == 763u);
+      /* Against a measured stock, a machine's first instance nets what the sample was worth there (2.5 %), not a
+       * sample track's share of the ladder (7 %); a further one, nothing, but its trig starts on a trigging track (twin 30,
+       * C03: Amiga on 73.8 + 4 + 2.5, then a second one). */
+      played_stock = 738u, transport_stopped = 1, frame_played = 0, frame_newest = 0;
+      CHECK(!modwerk_status_pick_busy(0, 1, "Amiga", 266u, 0, 0));        /* 77.8 + 2.5 + 24.1 = 104.4 */
+      test_machines_booked = 241u, test_trigging = 1u << 2;
+      CHECK(modwerk_status_pick_busy(2, 2, "Amiga", 40u, 0, 0));          /* and 4 with its starts' 2.5: 110.9 */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_trigging = 0;
+      CHECK(!modwerk_status_pick_busy(2, 2, "Amiga", 40u, 0, 0));         /* on a track with no trigs: 108.4 */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_machines_booked = 0;
+      /* What played since the last pick counts when it is more than the kept figure with the picks on top. */
+      mw_stock_reserve = 0, transport_stopped = 0, play_readings = 0, frame_played = 763u, frame_adjust = 0;
+      modwerk_status_cpu_entered(266u);
+      frame_newest = 1042u, cpu_note_played(), frame_newest = 1020u, cpu_note_played();
+      transport_stopped = 1, frame_newest = 380u;
+      CHECK(played_since == 1042u && modwerk_status_frame_load() == 1042u); /* not 76.3 + 26.6 */
+      modwerk_status_cpu_entered(40u);
+      CHECK(!played_since && modwerk_status_frame_load() == 1069u);      /* a pick since: the kept figure and both */
+      /* A rollback or a reload takes modules off without a pick: what played before with them no longer counts; a
+       * set installed, removed or undone starts the picks' account afresh (twin 32: a first Tape Echo at 77 % refused as
+       * PART IS BUSY against the last set's 110 %). */
+      transport_stopped = 0, frame_newest = 1100u, cpu_note_played();
+      CHECK(played_since == 1100u);
+      test_machines_booked = 300u, frame_newest = 780u, cpu_note_played(); /* the modules moved: what plays now */
+      CHECK(played_since == 780u);
+      test_machines_booked = 0, test_epoch = test_epoch + 1u, cpu_note_played();
+      CHECK(!frame_adjust && played_since == 780u && play_readings == 1u);
+      test_epoch = test_epoch + 1u, modwerk_status_cpu_entered(99u), cpu_note_played();
+      CHECK(frame_adjust == 99);                                         /* a pick right after an install stays */
+      frame_adjust = 0, transport_stopped = 1;
+      frame_adjust = 0, mw_stock_reserve = RESERVE_ADAPTIVE, test_pattern = 34u;
+      test_rest = 0, test_busiest = 0, test_tracks = 0, test_pattern = 0, played_shape = 0xffffffffu, played_pattern = 0xffffu;
+      transport_stopped = 1, frame_played = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* Playing, what a pick replaces leaves the last four seconds too: a swap for a lighter module is never refused. */
     { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1150u;

@@ -22,7 +22,7 @@ const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
 volatile uint8_t modwerk_test_running[16];
 volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
-volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes; /* the frame guard */
+volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes, mw_late_over; /* the frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
 
@@ -138,6 +138,17 @@ int main(void)
     CHECK(LOG->incidents == before + 6u);
     tick();
     CHECK(LOG->incidents == before + 7u && last()->kind == DIAG_LATE && last()->a == 9u);
+    /* An entry later than the wait can hold logs the same incident with nothing more held: the count in the top byte,
+     * under the same limit. */
+    mw_late_over = 1u;
+    for (unsigned t = 0; t < HOT_GAP - 1u; ++t) tick();
+    CHECK(LOG->incidents == before + 7u);
+    tick();
+    CHECK(LOG->incidents == before + 8u && last()->kind == DIAG_LATE && last()->a == (1u << 24 | 9u));
+    mw_late_over = 300u;
+    for (unsigned t = 0; t < HOT_GAP; ++t) tick();
+    CHECK(LOG->incidents == before + 9u && last()->kind == DIAG_LATE && last()->a == (255u << 24 | 9u)); /* 255 at most */
+    before += 2u;
     /* A pattern begun with module machines silenced, as predicted: a brake incident with bit 23, once in HOT_GAP. */
     mw_frame_hushes = 2u;
     tick();
@@ -197,11 +208,14 @@ int main(void)
     const volatile uint8_t *cb = (const volatile uint8_t *)modwerk_test_crash, *sb = (const volatile uint8_t *)modwerk_test_stall; /* the host's byte order */
     CHECK(modwerk_diag_read(page, at / DIAG_PAGE) == DIAG_PAGE && page[at % DIAG_PAGE] == cb[0] && page[at % DIAG_PAGE + 3u] == cb[3] && (cb[0] == 'M' || cb[3] == 'M'));
     CHECK(modwerk_diag_read(page, stall_at / DIAG_PAGE) == DIAG_PAGE && page[stall_at % DIAG_PAGE] == sb[0] && page[stall_at % DIAG_PAGE + 3u] == sb[3]);
-    /* Then the guard's skips as they stand ("MWSK", count, tracks), then zeros. */
-    mw_frame_sheds = 0x01020304u, mw_frame_shed_tracks = 0x21u;
+    /* Then the guard's skips as they stand ("MWSK", count, tracks), the entries later than the wait can hold, then zeros. */
+    mw_frame_sheds = 0x01020304u, mw_frame_shed_tracks = 0x21u, mw_late_over = 0x0a0b0c0du;
     CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 'M' && page[end % DIAG_PAGE + 3u] == 'K' &&
           page[end % DIAG_PAGE + 4u] == 1u && page[end % DIAG_PAGE + 7u] == 4u && page[end % DIAG_PAGE + 11u] == 0x21u &&
-          page[end % DIAG_PAGE + DIAG_SHEDS_BYTES] == 0 && page[DIAG_PAGE - 1u] == 0);
+          page[end % DIAG_PAGE + 12u] == 0x0au && page[end % DIAG_PAGE + 15u] == 0x0du);
+    CHECK(end % DIAG_PAGE + DIAG_SHEDS_BYTES == DIAG_PAGE); /* the last page, filled */
+    { unsigned zeros = 1; modwerk_diag_read(page, end / DIAG_PAGE + 1u); for (unsigned i = 0; i < DIAG_PAGE; ++i) zeros &= !page[i]; CHECK(zeros); }
+    mw_late_over = 0;
     CHECK(DIAG_PAGE % 64u != 0u);
 
     /* The frames before a stall: the last DIAG_TRACE_FRAMES, oldest first, the newest last; a gap and a run past the

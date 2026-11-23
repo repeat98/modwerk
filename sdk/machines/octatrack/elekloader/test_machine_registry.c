@@ -520,7 +520,7 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 6, 7) == 1 && cpu_in == 50u);                    /* a second LIGHT: each */
       uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
       CHECK(modwerk_machine_frame_booked(8, 0) == 50u && modwerk_machine_frame_booked(7, 0) == 30u && modwerk_machine_frame_booked(6, 0) == 30u);
-      CHECK(modwerk_machine_frame_booked(8, 25u) == 5u);                         /* each less a sample's share, never below 0 */
+      CHECK(modwerk_machine_frame_booked(8, 25u) == 25u);                        /* the first less a sample's share, a further one whole */
       CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 20u);                   /* one of two leaves: each */
       cpu_now = hot_line - 89u;
       CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_box_gone == 30u);  /* the last LIGHT out, unpriced A in: 120 */
@@ -880,17 +880,32 @@ static void check_late_entry(void)
      * lateness is 0.5 µs under the interval's excess: GRID. */
     static const uint16_t outside[] = {1, 60, 70, 75, 80, 191, 195, 200, 250, 340};
     for (unsigned i = 0; i < sizeof outside / sizeof *outside; ++i) {
+        uint32_t over = mw_late_over;
         CHECK(!late_by(outside[i]) && entry_late == outside[i] * US - 66u && mw_late_max == entry_late);
         CHECK(!mw_late_hits && !mw_late_waits);
+        /* Past the window it is counted since boot (octabam's two such entries, 205 and 209 µs, both stalled); below, not. */
+        CHECK(mw_late_over - over == (outside[i] > 190u ? 1u : 0u));
     }
     CHECK(!late_by(75) && !entry(FRAME - 75u * US) && !entry_late && !entry(FRAME));
     /* In it (81 µs; stall 56's entry, under 110 µs by this clock; the two logged stalls' 149 and 155 µs; 189 µs) it waits
      * until it is 190 µs late: 110 µs at most. */
     static const uint16_t inside[] = {81, 105, 111, 120, 149, 155, 189, 190};
     for (unsigned i = 0; i < sizeof inside / sizeof *inside; ++i) {
+        uint32_t over = mw_late_over;
         CHECK(late_by(inside[i]) && entry_late == inside[i] * US - 66u && mw_late_max == entry_late);
-        CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late);
+        CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late && mw_late_over == over);
     }
+    /* A held entry's next one, two frames on, is on the grid: not counted. One past the window after a skipped frame
+     * (two frames and 250 µs) is; four frames or more without an entry start again at 0 and are not. */
+    { uint32_t over = mw_late_over;
+      CHECK(late_by(149) && !entry(2u * FRAME - 149u * US) && mw_late_over == over);
+      late_fresh(5000000u);
+      CHECK(!entry(FRAME) && !entry(2u * FRAME + 250u * US) && mw_late_over == over + 1u);
+      CHECK(!entry(5u * FRAME + 250u * US) && !entry_late && mw_late_over == over + 1u);
+      /* Switched off, the wait counts the window's entries as before and still only later ones as past it. */
+      late_fresh(5000000u); mw_late_wait_on = 0;
+      CHECK(!entry(FRAME) && !entry(FRAME + 149u * US) && mw_late_over == over + 1u);
+      late_fresh(5000000u); }
     /* The DSP skips the frame after a waited entry: the next comes two frames less the lateness later, on the grid. */
     CHECK(late_by(149) && !entry(2u * FRAME - 149u * US) && !entry_late && !entry(FRAME) && mw_late_waits == 1u);
     /* A chain of held entries, each frame ending in the window again: WAIT_RUN in a row brake the module machines. */
