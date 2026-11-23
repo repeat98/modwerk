@@ -22,6 +22,7 @@ parser.add_argument('--project-reload', choices=('stored', 'missing'))
 parser.add_argument('--project-change', action='store_true')
 parser.add_argument('--row-popup', action='store_true')
 parser.add_argument('--scene-select', action='store_true')
+parser.add_argument('--crossfader', action='store_true', help='Compare stock fader position and morph weights')
 parser.add_argument('--arranger-recovery', action='store_true')
 parser.add_argument('--observe-queue', action='store_true')
 parser.add_argument('--home-control', choices=('home', 'stop'))
@@ -307,7 +308,7 @@ with tempfile.TemporaryDirectory() as tmp:
             assert call('modwerk_runtime_free',0) == free
             args.output.write_text(json.dumps(dict(reopened=True, r04=0, pool=free)))
             sys.exit(0)
-        if args.scene_select:
+        if args.scene_select or args.crossfader:
             # Part 1's two active scene bytes are adjacent. Exercise both physical
             # selectors, including rollback, with and without the module.
             part = 0x400e21e0 + 0x8ed80
@@ -328,11 +329,22 @@ with tempfile.TemporaryDirectory() as tmp:
                 a, b = (before[0]+5)%16, (before[1]+7)%16
                 sequence = [before,choose(0x19,a),choose(0x1a,b),
                             choose(0x19,before[0]),choose(0x1a,before[1])]
+                if args.crossfader:
+                    fader = []
+                    for adc in (1, 128, 255, 1):
+                        cmd(f'key 0x40 {adc}')
+                        advance(120)
+                        fader.append([num(0x460d16c8), peek(cmd, 0x80003c60, 40).hex()])
+                    receipt[role + '_fader'] = fader
+                    assert [item[0] for item in fader] == [0, 64, 127, 0], fader
+                    assert len({item[1] for item in fader}) == 3 and fader[0] == fader[-1]
                 receipt[role] = sequence
                 args.output.write_text(json.dumps(receipt))
                 assert sequence == [before,[a,before[1]],[a,b],[before[0],b],before], sequence
             switch(0)
             assert receipt['stock'] == receipt['installed']
+            if args.crossfader:
+                assert receipt['stock_fader'] == receipt['installed_fader']
             sys.exit(0)
         if args.boundary:
             # Apply identical source edits to the stock A03 composite and A02.

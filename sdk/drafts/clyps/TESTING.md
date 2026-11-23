@@ -177,3 +177,11 @@ cleared the R04-defined flag and recovered the pool after OFF. Missing
 stored files left bank A and R04 intact. The late EOF experiment and the
 recovery contract model remain host-only. The native reload tests use
 stock files; the offline CLYPS codec is absent from the module.
+
+The dedicated crossfader replay (`native_rows.py --crossfader`, using the
+same base and card arguments as --scene-select) drove the native panel ADC
+and read position and all ten stock morph weights. The sequence 0, 64,
+127, 0 matched with the module off and installed. All three positions had
+different weight vectors and the return restored the original weights.
+The stored-reload repeat exited 0 and reproduced its first receipt exactly;
+the original scratch wrapper had failed to save the exit status.
