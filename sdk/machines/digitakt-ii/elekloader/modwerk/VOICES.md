@@ -49,7 +49,15 @@ Emulator only (coupled ColdFire and sound-chip run from a ready point saved with
 
 | Track 1 at 3 playing Granula (an added machine, in progress), two notes, then SIZE (knob C) turned on track 1 while both ring | The second note plays on track 2 as a grain cloud (the voice track takes its lead's machine). A trace of each grain's length: before the turn 256 samples on all four voices (tracks 1 and 2); after it 48,000 on all four, track 2's in the same block as track 1's. The turn on the lead reached its voice. |
 
-Not checked yet: sequencer trigs on a linked lead (only live trig-key notes above), the SETTINGS row on screen, MIDI chords, muted voices, save and reload of the setting.
+On a unit (reported by the author, 23 November 2026), Digitakt II OS 1.17 with this base and the Morpha module (an added machine) on the lead, loaded over USB:
+
+| Build | Reported |
+| --- | --- |
+| `063eea9a` (voices rotating, a voice track's own machine between borrowed notes) | Chords from the keys: each note and each key release moved to another track, each sounding a different wave; letting go of the second key of a two-key chord left a note sounding that jumped to the first key's pitch. Save, load another project and come back: the track kept its settings. |
+| `e6ffc45b` (voice tracks reserved for the lead, filled from the lead, copied at linking; held pitch from the keys dropped) | Chords play; after a while of playing and turning knobs, later chord notes no longer had the lead's settings. |
+| `27dfadf8` (turns copied with key and MIDI notes, idle voices copied in full) | Chords with VOICES 3-4 and knobs turned while playing: every chord note keeps the lead's settings. |
+
+Not checked yet: sequencer trigs on a linked lead on a unit, MIDI chords, muted voices, a stock machine (SAMPLE) as the lead on a unit.
 
 ## Open
 
