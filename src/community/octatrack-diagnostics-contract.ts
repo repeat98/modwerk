@@ -89,7 +89,7 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu'] as const
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
@@ -185,6 +185,11 @@ export const TRIAL_RECONNECT_FAILURES = ['timeout', 'closed', 'mismatch', 'unrea
  * loading it, or starting the trial. */
 export const DIAGNOSTIC_SYNC_STEPS = ['session', 'baseline', 'encode', 'stage', 'activate', 'trial'] as const
 export type DiagnosticSyncStep = typeof DIAGNOSTIC_SYNC_STEPS[number]
+export const STAGING_COMMANDS = ['enter', 'begin', 'chunk', 'verify', 'abort', 'rollback', 'leave'] as const
+export type StagingCommand = typeof STAGING_COMMANDS[number]
+export const isStagingCommand = (value: unknown): value is StagingCommand => STAGING_COMMANDS.some(command => command === value)
+/** Upload v1 schema bounds: a 2 MiB staged set and a 48-byte header, 4-byte offset and 4096-byte payload. */
+export const STAGING_SET_BYTES = 2 * 1024 * 1024, STAGING_FRAME_BYTES = 48 + 4 + 4096
 /** The type of build. An elekloader build names its machine, so a failure says which machine it was for; plain
  * `elekloader` is what records sent before that say, and what a machine missing from the list falls back to. */
 export const DIAGNOSTIC_ELEKLOADER_MACHINES = ['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const
@@ -223,6 +228,10 @@ export interface OctatrackDiagnostic {
   result?: typeof DIAGNOSTIC_RESULTS[number]
   refusal?: number
   reading?: DiagnosticReading
+  /** On `health` after a start that loaded only part of the card's set (`reading.saved` 6 or 10): each module that start
+   * left out (the base's RESTORE request), by catalogue id or `other`, with the loader's refusal (256 the boot guard) and
+   * check. Never a module's name. */
+  restore?: { id: string; refusal: number; check: number }[]
   /** Public catalogue versions; inventory names and project references never enter this list. */
   modules?: { id: string; catalogVersion: string }[]
   packages?: { sha256: string; bytes: number }[]
@@ -236,6 +245,8 @@ export interface OctatrackDiagnostic {
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
    * received, refusals, bus resets, data stages primed, completed and abandoned. */
   usb?: number[]
+  /** Offset into the staged package (CHUNK only). Remaining bytes refer to the entire EP0 OUT frame. */
+  upload?: { command: StagingCommand; chunkOffset?: number; remainingBytes?: number }
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
   log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }

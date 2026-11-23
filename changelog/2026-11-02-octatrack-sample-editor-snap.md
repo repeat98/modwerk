@@ -1,0 +1,1 @@
+The Octatrack beta base adds optional zero-crossing SNAP alignment to confirmed slice-grid creation and replacement. FUNC+AED cycles from stock SLICE GRID through registered sample-editor actions and back; existing ABI-1 clients keep working without the optional API tail.

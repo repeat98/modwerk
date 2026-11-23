@@ -1,6 +1,6 @@
 # Beat Slicer
 
-Version: `0.1.66-experimental` · author: @twwwy · beta, over USB only: it runs on the Modwerk base's sample-editor service ([SAMPLE_EDITOR.md](../../../machines/octatrack/SAMPLE_EDITOR.md)).
+Version: `0.1.68-experimental` · author: @twwwy · beta, over USB only: it runs on the Modwerk base's sample-editor service ([SAMPLE_EDITOR.md](../../../machines/octatrack/SAMPLE_EDITOR.md)).
 
 ## Overview
 
@@ -10,18 +10,20 @@ It adds **CREATE BEAT GRID** to the audio editor's SLICE menu, directly above st
 
 ## Controls
 
-Access on the Modwerk beta base: select a Flex/Static sample or recorder buffer → AED → AMP (SLICE) → YES → CREATE BEAT GRID. Playback may continue.
+Access on the Modwerk beta base: select a Flex/Static sample or recorder buffer → AED → AMP (SLICE) → YES → CREATE BEAT GRID, or FUNC+AED. Playback may continue.
 
 | Control | Behavior |
 | --- | --- |
 | Encoder A | SAMPLE or PROJECT BPM; refuse missing/invalid tempo, with no silent fallback. |
 | Encoder B | 1, 2, 4, 16, 32 or 64 beats per slice. |
 | YES | Validate the opening snapshot and request stock confirmation. NO or changing a control cancels a pending request. Markers change only after the stock YES. |
-| Encoders C–F | Unassigned; leave the popup and parameters unchanged. |
+| Encoder C | SNAP OFF or ON. OFF keeps exact beat positions. ON moves each boundary to the nearest zero crossing, analysed only after the stock YES. Starts OFF after loading and is not saved. |
+| Encoders D–F | Unassigned; leave the popup and parameters unchanged. |
+| FUNC+AED | Opens stock CREATE SLICE GRID; pressing it again switches between that and CREATE BEAT GRID. Switching cancels the preview without creating slices. |
 | NO / BACK | Close the options or decline confirmation without changing markers. |
 | After creation | Use stock DELETE SLICE or DELETE ALL SLICES. No separate slice Undo/history is added. |
 
-The right side of the popup shows the chosen BPM, the number of slices and CREATE or REPLACE, or a refusal (SHORT, OVER64, CHECK, REFUSED, EMPTY). In 4/4, choose **16 BEATS** for four bars.
+The right side of the popup shows the chosen BPM, the number of slices and CREATE or REPLACE, or a refusal (SHORT, OVER64, CHECK, REFUSED, EMPTY, or NO SNAP on a base without zero-crossing analysis). In 4/4, choose **16 BEATS** for four bars.
 
 ## Usage
 
@@ -52,7 +54,7 @@ With existing slices, YES opens **REPLACE SLICES?**; NO there leaves every old s
 
 **Time-stretch when using PROJECT BPM:** the chosen BPM determines grid spacing; stock playback still follows the track's time-stretch setting and sample ATTR BPM. If the sample and project tempos differ, turn off track time-stretch or set the sample ATTR BPM to the audio's actual recorded tempo to avoid unintended stretching. Beat Slicer does not change those playback settings.
 
-The base copies the source's metadata and owns confirmation, publication and rollback of a failed write. The package receives no sample or PCM pointer and contains no sample-writing code. If the source is busy after the stock YES, the base waits and checks again before applying once; NO or another stock gesture cancels that wait.
+The base copies the source's metadata and owns confirmation, publication and rollback of a failed write. The package receives no sample or PCM pointer and contains no sample-writing code; with SNAP ON the base reads the PCM in bounded steps and publishes once, or leaves the old slices. If the source is busy after the stock YES, the base waits and checks again before applying once; NO or another stock gesture cancels that wait.
 
 ## Compatibility and limitations
 
@@ -60,8 +62,8 @@ The base copies the source's metadata and owns confirmation, publication and rol
 - **Recorder Loop Fix 0.1.0:** not offered together. That module alone makes recorder-buffer slice 1 miss with stock CREATE SLICE GRID too, without Beat Slicer ([sambanks/octabam#908](https://github.com/sambanks/octabam/issues/908)). No fix to that module is claimed here.
 - Recording must be stopped for the buffer being edited; unrelated recording and pattern playback may continue.
 - A grid holds at most 64 slices; recording length stays subject to the Octatrack's memory.
-- Exact metadata grid only: no PCM analysis, smoothing or click-free playback claim. No project or sample-settings save is implicit.
-- While the popup is open its drawing takes about 6 % of the ColdFire (about 1 ms a screen frame, owner's MKII); the frame interrupt was unaffected and no machine render was skipped.
+- SNAP OFF writes an exact metadata grid. SNAP ON reads the sample after the stock YES; the opening's waveform channel choice (left, right or both) decides which crossings count. Zero-crossing alignment alone does not promise click-free playback, especially when only one stereo channel crosses. No project or sample-settings save is implicit.
+- 0.1.66's popup drawing took about 6 % of the ColdFire (owner's MKII). 0.1.68 caches the drawing; it has not been measured on a unit yet.
 - Not yet tested on the MKI. Slices kept through a project save and a power cycle are not confirmed on the unit.
 
 ## Tests and measurements
@@ -79,4 +81,4 @@ Original module by @twwwy and contributors, MIT ([LICENSE](LICENSE)). The runtim
 
 ## Screens and audio
 
-The two captures above are 0.1.66 emulator LCD captures ([capture provenance](media/capture.json)), not hardware audio evidence. The popup layout was approved by the author on 25 October 2026. No audio preview.
+The two captures above are the LCD's own pixels on the author's MKII, read over USB with 0.1.68 installed as a trial on a development twin of base 0.7.11 with SNAP (20 November 2026; [capture provenance](media/capture.json)). They are not audio evidence. No audio preview.

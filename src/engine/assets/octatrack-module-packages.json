@@ -241,17 +241,18 @@
       "octabam": true,
       "pinned": true,
       "standalone": true,
+      "requiresCapabilities": 6144,
       "abi": 8,
-      "features": 3,
+      "features": 131,
       "sites": 2,
-      "copies": 7,
+      "copies": 9,
       "fills": 0,
-      "version": "0.1.6-experimental",
+      "version": "0.1.9-experimental",
       "name": "Tape Echo",
       "module": "9f482bb9",
-      "bytes": 112124,
-      "sha256": "921e7a60c3418e7ece96f24c254802b44fee2082713f25e7b964b37f233bbe9e",
-      "path": "octatrack-modules/tapeecho/0.1.6-experimental.mwrm"
+      "bytes": 113368,
+      "sha256": "29aa9aca2db51b5b62c9c37d55dc803891a1bb2f782a9ea84fa8a1289e0fc9a0",
+      "path": "octatrack-modules/tapeecho/0.1.9-experimental.mwrm"
     },
     {
       "id": "euclid",
@@ -340,9 +341,9 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
+      "sha256": "cbd0fa736250c328efdfaa0f015217a42e124cb8f73c4718f5d90f4b2977319c",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a"
+      "requiredBase": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7"
     },
     {
       "id": "output-matrix",
@@ -356,9 +357,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
+      "sha256": "0b9bf60368dd2cb538970de6ea58334bb001f63d1e3eaea9bec3256bb0894372",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a"
+      "requiredBase": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7"
     },
     {
       "id": "cc-map",
@@ -374,7 +375,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a"
+      "requiredBase": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,9 +451,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "de28d726bf54966c4b929deeb15db274a1ae1d1fecb49e1b4d7891e2141c9d6f",
+      "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a"
+      "requiredBase": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7"
     },
     {
       "id": "analog-bassdrum",
@@ -466,9 +467,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
+      "sha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a",
+      "requiredBase": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -483,8 +484,8 @@
       "subscribe": [
         "ot_sample_editor_actions:bs_sample_action:50"
       ],
-      "version": "0.1.66-experimental",
-      "path": "octatrack-modules/beat-slicer/0.1.66-experimental.mwrm",
+      "version": "0.1.68-experimental",
+      "path": "octatrack-modules/beat-slicer/0.1.68-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -492,8 +493,8 @@
       "fills": 0,
       "name": "beat-slicer",
       "module": "c8d078f2",
-      "bytes": 5780,
-      "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+      "bytes": 5332,
+      "sha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643"
     },
     {
       "id": "temp-save",
@@ -748,8 +749,8 @@
       "unitName": "Grain",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.1.2-experimental",
-      "path": "octatrack-modules/grain/0.1.2-experimental.mwrm",
+      "version": "0.1.3-experimental",
+      "path": "octatrack-modules/grain/0.1.3-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -757,8 +758,8 @@
       "fills": 0,
       "name": "Grain",
       "module": "2c224021",
-      "bytes": 30308,
-      "sha256": "f961b458deb9f93bad68435630b4c55110d3d0ef732bdfc7886df461a6250f66"
+      "bytes": 30424,
+      "sha256": "07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865"
     }
   ],
   "usbAudio": {
@@ -774,7 +775,7 @@
       "copies": 3,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a"
+      "requiredBase": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7"
     }
   }
 }

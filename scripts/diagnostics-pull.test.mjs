@@ -7,6 +7,14 @@ const entry = (n, username = 'tester', data = { event: 'health', phase: 'ready' 
   ({ eventId: 'e' + n, username, createdAt: new Date(Date.UTC(2026, 9, 15, 0, 0, n)).toISOString(), data })
 
 describe('diagnostics pull', () => {
+  it('prints the staging command, byte offset and measured residual, including zero', () => {
+    const failure = { event: 'sync_failed', phase: 'sending', step: 'stage', error: 'transport' }
+    const events = [{command: 'chunk', chunkOffset: 0, remainingBytes: 0}, {command: 'verify'}]
+      .map((upload, i) => entry(i, 'tester', {...failure, upload}))
+    const text = summary({events, counts: []})
+    expect(text).toContain('command=chunk chunkOffset=0 remainingBytes=0')
+    expect(text).toMatch(/command=verify($|\n)/)
+  })
   it('pages from the last record of a full page and drops the overlap', async () => {
     const all = Array.from({ length: 700 }, (_, n) => entry(n))
     const asked = []
@@ -64,6 +72,21 @@ describe('diagnostics pull', () => {
     expect(text).toContain("  restarts 2 (the unit's log, starts 5-7)")
     expect(text).toContain(`  set reloads at boot: ${when(entry(2).createdAt)} nothing saved, ${when(entry(5).createdAt)} RESTORED 6/6, ${when(entry(9).createdAt)} another base’s set`)
   })
+  it('reports card write failures after Keep and skips repeat readings of the same failure', () => {
+    const health = (n, saved) => entry(n, 'tester', { event: 'health', phase: 'ready', reading: { saved, savedCount: 3, live: 3 } })
+    const events = [
+      entry(1, 'tester', { event: 'kept', phase: 'ready' }),
+      health(2, 7), health(3, 8), health(4, 8), health(5, 7), health(6, 8), health(7, 9),
+    ]
+    const text = summary({ events: [...events].reverse(), counts: [] })
+    expect(text).toContain('Problems (3, newest first')
+    const problems = text.split('Problems (')[1].split('\n').slice(1, 4)
+    expect(problems).toEqual([
+      `  ${when(entry(7).createdAt)} @tester health ready card=too big`,
+      `  ${when(entry(6).createdAt)} @tester health ready card=save failed`,
+      `  ${when(entry(3).createdAt)} @tester health ready card=save failed`,
+    ])
+  })
   it('keeps the card build’s refused selections out of the problems', () => {
     const check = n => entry(n, 'tester', { event: 'build_failed', phase: 'preparing', buildKind: 'octatrack-firmware', error: 'selection' })
     const text = summary({ events: [check(1), check(2), entry(3, 'other', { event: 'build_failed', phase: 'building', buildKind: 'octatrack-base', error: 'build' })], counts: [] })
@@ -120,6 +143,11 @@ describe('diagnostics pull', () => {
       entry(3, 'tester', { event: 'connected', phase: 'ready' }),
       entry(4, 'tester', { event: 'health', phase: 'ready', reading: { saved: 6, savedCount: 2, live: 2 }, modules: mods(['miniverb', 'poly8']) })]
     expect(summary({ events, counts: [] })).toContain('refused (missing ring-sc)')
+    // A base with RESTORE names every module it left out and why, instead of the guess.
+    events.push(entry(5, 'tester', { event: 'connected', phase: 'ready' }),
+      entry(6, 'tester', { event: 'health', phase: 'ready', reading: { saved: 10, savedCount: 3, live: 1 }, modules: mods(['poly8']),
+        restore: [{ id: 'miniverb', refusal: 0x100, check: 0 }, { id: 'other', refusal: 2, check: 1 }] }))
+    expect(summary({ events, counts: [] })).toContain('left out after a failed start (left out miniverb: the last start crashed or froze loading it, other: module memory)')
   })
   it('reports a full set incident as a lower bound because the log holds fourteen IDs', () => {
     const set = { seq: 1, boot: 1, second: 0, kind: 'set', screen: 0, tempo24: 0,

@@ -33,6 +33,8 @@ import { pathToFileURL } from 'node:url'
 
 export const ROOT = resolve(import.meta.dirname, '..')
 const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs'
+const REFUSED = /^refused: .*$/m // device.mjs set prints a refusal and exits 0, so the large-set steps read their output
+const CURVE_TRACKS = 'T1,T3,T6,T7' // empty tracks of the test bank (docs/MODULE_PERFORMANCE.md)
 const DEFAULT_SCENE = 'the bank, pattern and Part the unit was on, transport stopped (test:procedure)'
 
 /** What the developer, the submitter, judges at their own unit after the agent's steps passed on this build (modwerk-test-on-unit,
@@ -147,11 +149,11 @@ export function plan(step, ctx) {
       if (ctx.target === 'emulator') return { skip: 'steps 6 to 10 run on the emulator (--target emulator)' }
       if (!ctx.emulatorSocket) return { skip: 'no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)' }
       return { commands: [module ? node('scripts/device.mjs', 'try', pkg, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)
-        : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true }
+        : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--split', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true, failOn: REFUSED }
     case 'unit-read':
       return { commands: [node('scripts/device.mjs', 'status', '--socket', ctx.share), node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)] }
     case 'unit-pass':
-      if (!module) return { commands: [node('scripts/device.mjs', 'set', set, '--seconds', '30', '--socket', ctx.share)] }
+      if (!module) return { commands: [node('scripts/device.mjs', 'set', set, '--seconds', '30', '--split', '--socket', ctx.share)], failOn: REFUSED }
       return { commands: [npmRun('device:test', '--share', ctx.share, '--testing-entry', join(ctx.out, 'device-test.md'),
         ...(ctx.tools?.soak ? [] : ['--soak', String(ctx.soakSeconds)]), pkg)] }
     case 'soak': {
@@ -165,7 +167,10 @@ export function plan(step, ctx) {
     case 'cost-unit':
       if (ctx.target === 'emulator') return { skip: EMULATOR_FIGURES }
       if (module && ctx.baseBound) return { skip: 'a base-bound package: device:price leaves it out, since a development twin does not trust it' }
-      return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE, ...(module ? [pkg] : ctx.priceModules ?? []))] }
+      // A module also reads its instance curve and runs the admission test (alone on the empty and the medium pattern: admitted,
+      // nothing dropped), and device:price fails the step when either does not carry a release (owner, 23 November 2026).
+      return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE,
+        ...(module ? ['--curve', CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
     case 'restore':
       return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)], compare: 'unit-read' }
     case 'by-hand': return { todo: BY_HAND[ctx.kind] }
@@ -221,6 +226,8 @@ export async function runSteps(ids, ctx, deps, results = []) {
         outputs.push(run.output ?? '')
         if (run.code !== 0) { code = run.code; result.reason = `exit ${run.code}: ${shown(argv)}`; break }
       }
+      const refused = code === 0 && p.failOn && outputs.join('\n').match(p.failOn)
+      if (refused) { code = 1; result.reason = refused[0].slice(0, 200) }
       if (trial) {
         const end = await trial.stop()
         if (/^accepted$/m.test(end.output ?? '')) { code ||= 1; result.reason ??= 'the trial was kept: it must roll back' }
@@ -256,7 +263,7 @@ export async function runProcedure(ctx, deps) {
     const file = join(ctx.out, 'unit-steps.json')
     const argv = ['npm', 'run', 'unit', '--', 'run', '--note', `test:procedure ${ctx.id ?? 'base'} ${ctx.build.revision.slice(0, 8)}`, '--expect', ctx.kind === 'base' ? '45m' : '15m', '--',
       'node', 'scripts/test-procedure.mjs', ...(ctx.kind === 'base' ? ['--base', ...(other(ctx) ? [ctx.machine] : [])] : [other(ctx) ? ctx.machine + ':' + ctx.id : ctx.id]), '--package', ctx.pkg, '--share', ctx.share, '--out', ctx.out, ...(ctx.passOn ?? []),
-      '--soak-seconds', String(ctx.soakSeconds), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
+      '--soak-seconds', String(ctx.soakSeconds), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
     const started = deps.now(), run = await deps.exec(argv, join(ctx.out, 'logs', 'unit-queue.log'))
     const inner = deps.exists(file) ? JSON.parse(deps.read(file)) : null
     if (inner) results.push(...inner)
@@ -333,6 +340,19 @@ function moduleContext(root, id, machine) {
 }
 const catalogue = root => JSON.parse(readFileSync(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
 
+/** The base's large set (step 7): every package the base trusts by itself, in catalogue order, leaving out a module that
+ * declares a conflict with one already in, either way. The whole catalogue holds declared pairs (Kits and Pattern Sample
+ * Locks, Synth and Quantizer, Vector and Synth), so the unit refused it outright (23 November 2026). */
+export function largeSet(rows, conflictsOf) {
+  const kept = []
+  for (const row of rows.filter(r => !r.requiredBase))
+    if (!kept.some(k => conflictsOf(k.id).includes(row.id) || conflictsOf(row.id).includes(k.id))) kept.push(row)
+  return kept
+}
+const declaredConflicts = root => id => {
+  try { return JSON.parse(readFileSync(join(root, 'sdk/octatrack/modules', id, 'octamod.module.json'), 'utf8')).compatibility?.conflicts ?? [] } catch { return [] }
+}
+
 /** Everything the steps read, from the arguments and the checkout. */
 export function context(root, values, positionals, env = process.env) {
   const git = (...args) => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() } catch { return '' } }
@@ -345,7 +365,7 @@ export function context(root, values, positionals, env = process.env) {
   const rows = catalogue(root)
   let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
     // The session's line socket for device:test's steps; an emulator takes no turn of the unit queue.
-    env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120), scene: values.scene, emulatorSocket: values['emulator-socket'],
+    env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120), scene: values.scene, pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], emulatorSocket: values['emulator-socket'],
     tools: { cycleScan: existsSync(join(root, SCAN_TOOL)), soak: existsSync(join(root, SOAK_TOOL)), unitQueue: !!scripts.unit },
     build: { revision: git('rev-parse', 'HEAD') || 'unknown', dirty: !!git('status', '--porcelain', '--untracked-files=no') } }
   const named = positionals[0]
@@ -364,7 +384,7 @@ export function context(root, values, positionals, env = process.env) {
     ctx.machine = 'octatrack'
     ctx.pkg = resolve(values.package ?? join(root, 'src/engine/assets/octatrack-base.elemod'))
     ctx.version = JSON.parse(readFileSync(join(root, 'sdk/machines/octatrack/base-versions.json'), 'utf8')).bases.at(-1)?.version
-    ctx.setPackages = rows.filter(r => !r.requiredBase).map(r => join(root, 'public', r.path)).filter(path => existsSync(path))
+    ctx.setPackages = largeSet(rows, declaredConflicts(root)).map(r => join(root, 'public', r.path)).filter(path => existsSync(path))
     ctx.priceModules = values['price-modules'] ? values['price-modules'].split(',') : undefined
   } else {
     ctx.machine = positionals[0]
@@ -449,7 +469,7 @@ function realDeps(root) {
 }
 
 const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, published: { type: 'boolean' }, plan: { type: 'boolean' }, out: { type: 'string' },
-  share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, scene: { type: 'string' },
+  share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' },
   'price-modules': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
   stock: { type: 'string' }, elemod: { type: 'string' }, label: { type: 'string' }, link: { type: 'boolean' }, cases: { type: 'string' }, emu: { type: 'string' } }
 
@@ -457,7 +477,7 @@ async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
   if (values.help || (!values.base && !positionals.length)) {
     console.log('Usage: npm run test:procedure -- <module id> | FILE.mwrm | --base [machine]  [--plan] [--package FILE] [--published] [--share SOCKET] [--no-unit]\n' +
-      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--scene TEXT] [--price-modules a,b]\n' +
+      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b]\n' +
       '         another machine: [--stock STOCK.syx --elemod BASE.elemod --label XX01] [--link] [--cases DIR] [--emu DTBOOT]   (docs/TEST_PROCEDURE.md)')
     process.exit(values.help ? 0 : 2)
   }
