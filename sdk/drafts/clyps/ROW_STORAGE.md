@@ -23,3 +23,31 @@ Kits and MIDI Scenes implement project-local work/stored files, writeback and re
 | Module OFF | Remove callbacks, release RAM and return stock control. Retain files. Stock can save/reload while the module is absent; define reconciliation on re-entry before automatic writes. |
 
 **Migration and first implementation slice.** There is no existing durable CLYPS row file. Offer explicit capture of the current sixteen rows from a verified bank into an empty namespace. Each defined nibble maps to CLIP, including zero/A01. An undefined bit stays undefined. Begin with an offline two-bank codec and an in-memory fake filesystem. Test A/R04 and B/R04 isolation, 16/32/64/128 counts, unknown versions, truncation, interrupted writes, failed reads, same-path replacement, undo and exact restoration. Keep the writer out of the module pending maintainer allocation of file names and a committed project/bank lifecycle contract.
+
+### Host reference codec and lifecycle experiment (23 November)
+
+Run `python3.12 -B -m unittest discover -s sdk/drafts/clyps -v`.
+`offline/bank_codec.py` encodes one 2,212-byte big-endian archive. A
+32-byte header stores CLYP, version 1, total size, a 16-byte opaque project
+incarnation and a nonzero 64-bit generation. Sixteen six-byte descriptors
+index bank A through P. Each payload has a defined-row bitmap and 16 × 8
+cells. Values 0–15 select local clips, 16 stops, 17 holds. Undefined rows have
+zero payload. CRC32 covers everything except the final four-byte checksum.
+The fixed-width reader rejects unknown versions, bad descriptors and invalid
+cells. Changing row width requires a schema decision. No path or RAM range
+has been allocated on the instrument.
+
+The fake filesystem stages a complete snapshot, decodes it, then atomically
+replaces either the working or saved slot. Every short prefix is exercised.
+A failed replacement leaves the previous slot readable. Corrupt or unsupported
+existing data blocks writeback. These guarantees assume a serialized writer
+and atomic replacement in memory. Media durability and on-card promotion
+remain open.
+
+The production-callback host fixture injects EOF after project initialization.
+Source selection falls back to stock, but a confirmed A/R04 is lost. The
+isolated transaction model in `offline/project_transition.py` needs a
+nonreused transaction token, a committed project incarnation and a terminal
+result. Abort may re-enable the prior generation only if stock certifies
+that its source bytes are usable again. Otherwise preserve the snapshot and
+keep selection suspended. Stale completion cannot publish a generation.

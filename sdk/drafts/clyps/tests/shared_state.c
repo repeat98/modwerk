@@ -194,6 +194,24 @@ static void bank_events(int fail_first)
     assert(missing && playing == 0);
 }
 
+/* Inject a destination read failure after stock has delivered project init.
+ * This characterizes the current failure. No abort result reaches CLYPS. */
+static void late_project_failure(void)
+{
+    tap(ARR); tap(6); tap(ARR); tap(YES); tap(3);
+    assert(defined == 8 && rows[3] == 6 && playing == 6);
+    FILE *destination = tmpfile();
+    assert(destination);
+    PROJECT_INIT();
+    BANK_PRE(1, 0);
+    assert(fgetc(destination) == EOF && feof(destination));
+    BANK_POST();
+    assert(fclose(destination) == 0);
+    int source = 0;
+    clyps_audio_source(&source, 0, 0);
+    assert(source == 0 && !defined && !playing && !requested);
+}
+
 /* A Bank H notification may coincide with a popup in a stopped row edit. */
 static void interrupted_bank_edit(void)
 {
@@ -216,6 +234,7 @@ int main(int argc, char **argv)
     if (argc == 2) {
         if (strcmp(argv[1], "popup") == 0) interrupted_editor();
         else if (strcmp(argv[1], "popup-bank") == 0) interrupted_bank_edit();
+        else if (strcmp(argv[1], "late-failure") == 0) late_project_failure();
         else bank_events(strcmp(argv[1], "failed-bank") == 0);
         return 0;
     }

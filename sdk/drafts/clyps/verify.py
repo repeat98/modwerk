@@ -34,6 +34,6 @@ with tempfile.TemporaryDirectory() as tmp:
                                     ('RELOAD_POST', 'ev_project_reloaded')]]
     subprocess.run(['cc', *defines, '-Wall', '-Wextra', '-Werror', '-I', SDK / 'runtime/loader',
                     HERE / 'tests/shared_state.c', '-o', test], check=True)
-    for case in ([], ['popup'], ['bank'], ['failed-bank'], ['popup-bank']):
+    for case in ([], ['popup'], ['bank'], ['failed-bank'], ['popup-bank'], ['late-failure']):
         subprocess.run([test, *case], check=True)
     print('Host callbacks passed for 8 lanes x 16 sources and eight ownership transitions.')
