@@ -77,6 +77,9 @@ def declaration(name, folder=None, path=PORTS, *, effect=False):
                 raise ValueError('%s: its runtime.json and its machine port both subscribe to %s' % (name, e['event']))
         doc['subscribe'] += entry.get('subscribe', [])
         doc['contribute'] += entry.get('contribute', [])
+    raises = list((own or {}).get('raise', ())) + list((entry or {}).get('raise', ()))
+    if raises:
+        doc['raise'] = raises
     # Detours that rest with the module: from its runtime.json and its port. A machine (a contribution to a table the
     # base judges, ot_machines) needs no ev_in_use of its own: the base answers for it (HOOKS.md).
     rests = list((own or {}).get('rests', [])) + list((entry or {}).get('rests', []))

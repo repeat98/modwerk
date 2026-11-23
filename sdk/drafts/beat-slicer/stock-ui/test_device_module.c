@@ -45,7 +45,7 @@ static unsigned confirm(uint32_t token,const struct modwerk_sample_grid *grid)
     return mw_sample_editor_replace(&service,token,grid);
 }
 static void cancel(uint32_t token){++cancels;mw_sample_editor_cancel(&service,token);}
-static const struct mw_sample_backend backend={0,lock,unlock,available,published,capture,publish};
+static const struct mw_sample_backend backend={0,lock,unlock,available,published,capture,publish,0};
 static const struct modwerk_sample_editor_api api={MODWERK_SAMPLE_EDITOR_ABI,sizeof api,copy,confirm,cancel,confirm};
 static void draw(unsigned char *frame)
 {memset(frame,0x5a,1024);module_draw(frame);}

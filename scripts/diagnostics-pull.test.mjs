@@ -7,6 +7,14 @@ const entry = (n, username = 'tester', data = { event: 'health', phase: 'ready' 
   ({ eventId: 'e' + n, username, createdAt: new Date(Date.UTC(2026, 9, 15, 0, 0, n)).toISOString(), data })
 
 describe('diagnostics pull', () => {
+  it('prints the staging command, byte offset and measured residual, including zero', () => {
+    const failure = { event: 'sync_failed', phase: 'sending', step: 'stage', error: 'transport' }
+    const events = [{command: 'chunk', chunkOffset: 0, remainingBytes: 0}, {command: 'verify'}]
+      .map((upload, i) => entry(i, 'tester', {...failure, upload}))
+    const text = summary({events, counts: []})
+    expect(text).toContain('command=chunk chunkOffset=0 remainingBytes=0')
+    expect(text).toMatch(/command=verify($|\n)/)
+  })
   it('pages from the last record of a full page and drops the overlap', async () => {
     const all = Array.from({ length: 700 }, (_, n) => entry(n))
     const asked = []
@@ -33,6 +41,10 @@ describe('diagnostics pull', () => {
     expect(text).toContain('Problems (1, newest first')
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
+  })
+  it('shows how a disconnected trial ended in Problems', () => {
+    const event = entry(1, 'tester', { event: 'sync_failed', phase: 'trial', error: 'disconnected', step: 'trial', reconnect: 'closed' })
+    expect(summary({ events: [event], counts: [] }).split('Problems (')[1]).toContain('error=disconnected step=trial reconnect=closed')
   })
   it('lists failures before a USB connection with the reported reason and optional client', () => {
     const link = (n, failure, client) => entry(n, 'tester', { event: 'link_failed', phase: 'idle', failure, client })
@@ -116,6 +128,11 @@ describe('diagnostics pull', () => {
       entry(3, 'tester', { event: 'connected', phase: 'ready' }),
       entry(4, 'tester', { event: 'health', phase: 'ready', reading: { saved: 6, savedCount: 2, live: 2 }, modules: mods(['miniverb', 'poly8']) })]
     expect(summary({ events, counts: [] })).toContain('refused (missing ring-sc)')
+    // A base with RESTORE names every module it left out and why, instead of the guess.
+    events.push(entry(5, 'tester', { event: 'connected', phase: 'ready' }),
+      entry(6, 'tester', { event: 'health', phase: 'ready', reading: { saved: 10, savedCount: 3, live: 1 }, modules: mods(['poly8']),
+        restore: [{ id: 'miniverb', refusal: 0x100, check: 0 }, { id: 'other', refusal: 2, check: 1 }] }))
+    expect(summary({ events, counts: [] })).toContain('left out after a failed start (left out miniverb: the last start crashed or froze loading it, other: module memory)')
   })
   it('reports a full set incident as a lower bound because the log holds fourteen IDs', () => {
     const set = { seq: 1, boot: 1, second: 0, kind: 'set', screen: 0, tempo24: 0,
@@ -165,6 +182,19 @@ describe('diagnostics pull', () => {
       at(5, 1, 'freeze', 0, { playing: true }), at(6, 1, 'freeze', 25919), at(7, 2, 'freeze')])
     expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual(
       [['3', true], ['4', false], ['5', false], ['6', false], ['7', false]])
+  })
+  it.each([
+    [0x3ffffffe, false], [0x40000000, true], [0x40fffffc, true], [0x41000000, false],
+  ])('only prints instruction bytes the crash handler captured at PC %i', (pc, captured) => {
+    const crash = { count: 1, vector: 4, pc, code: [0x12345678], memory: [0x87654321] }
+    const events = [entry(1, 'tester', { event: 'device_log', log: { crash } })]
+    const text = summary({ events, counts: [] })
+    expect(text).toContain(`crash record 1: vector 4 pc 0x${pc.toString(16)}`)
+    if (captured) expect(text).toContain('code 12345678 uncached 87654321')
+    else {
+      expect(text).toContain('instruction bytes unavailable (PC outside SDRAM)')
+      expect(text).not.toMatch(/12345678|87654321/)
+    }
   })
   it('names a crash incident’s program counter from the symbols kept for its base, and from no other base’s', () => {
     const at = (seq, kind, a) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),

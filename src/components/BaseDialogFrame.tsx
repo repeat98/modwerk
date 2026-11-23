@@ -10,12 +10,13 @@ import { useDesktopProgress } from '../desktop-shell'
  * the browser asks before the page is left. `finishedRef` is set by whoever closes it on purpose, so the browser's own
  * close (Escape before the page was clicked) reaches `onClose` as not done. `intro`: a first view (BaseIntro), laid
  * out to fit the window without scrolling (link-hero.css, .is-intro). */
-export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = false, onClose, footer, children }: {
+export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = false, className, onClose, footer, children }: {
   canClose: boolean
   busy: boolean
   focus: string
   finishedRef: RefObject<boolean>
   intro?: boolean
+  className?: string
   onClose: (done: boolean) => void
   footer: ReactNode
   children: ReactNode
@@ -34,7 +35,7 @@ export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = fa
     window.addEventListener('beforeunload', stay)
     return () => window.removeEventListener('beforeunload', stay)
   }, [busy])
-  return <dialog ref={dialog} className={'base-install-dialog' + (intro ? ' is-intro' : '')} aria-labelledby="base-install-title" aria-describedby="base-install-intro" onCancel={event => { event.preventDefault(); if (canClose) finish() }} onClose={() => { if (!finishedRef.current && !dialog.current?.open) onClose(false) }}>
+  return <dialog ref={dialog} className={['base-install-dialog', intro && 'is-intro', className].filter(Boolean).join(' ')} aria-labelledby="base-install-title" aria-describedby="base-install-intro" onCancel={event => { event.preventDefault(); if (canClose) finish() }} onClose={() => { if (!finishedRef.current && !dialog.current?.open) onClose(false) }}>
     {canClose && <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={finish}><Icon name="close" size={18} /></button>}
     {children}
     <footer className="base-install-footer">{footer}</footer>
@@ -54,7 +55,7 @@ export function BaseIntro({ hero, title, intro, promises, needs, missing, route,
     <p id="base-install-intro" className="base-install-intro">{intro}</p>
     <ul className="link-promises">{promises.map(([icon, lead, rest, explainOnPhone]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong><span className={explainOnPhone ? 'link-feature-kept' : 'link-feature-rest'}>{rest}</span></span></li>)}</ul>
     <p className={'link-needs' + (missing ? ' is-missing' : '')}>{needs}</p>
-    {route && <p className="base-install-warning base-install-route" role="note"><Icon name="warn" size={18} /><span>{route}</span></p>}
+    {route && <p className="base-install-route" role="note"><Icon name="help" size={16} /><span>{route}</span></p>}
     {missing && <p className="file-error" role="alert">{missing}</p>}
   </>
 }

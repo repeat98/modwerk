@@ -1,0 +1,1 @@
+The developer MCP gives the USB bridge back after each device tool call, so `npm run device` and the site can reach the unit beside it. An open trial keeps the link until Keep or Undo, and a review until it expires.
