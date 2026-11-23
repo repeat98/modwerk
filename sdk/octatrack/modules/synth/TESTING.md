@@ -18,6 +18,10 @@ scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-pack
 the stock OS 1.40C (the same 39 copies, at new offsets); `--check --stock`: every package identical, the strict
 stock-free scans pass. It needs a base with resting sites (0.7.10 or later; an older base refuses the package).
 
+**On a unit so far:** only its cost. On 22 November 2026 the owner's MKII with the 0.8 development twin `dce1d30e`
+recorded `evidence/frame-cost.json` for this package (Dev17 C04 at 126 BPM, 79.4 % with stock alone: `rest` 0, `first`
+31.3, `each` 0.5). The playback cases in the table below were not run on it.
+
 **Rests** (stock's bytes while `fm_in_use` answers 0):
 
 | Site | What | Why it rests |
