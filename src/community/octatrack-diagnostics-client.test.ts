@@ -31,13 +31,17 @@ describe('beta diagnostic collection',()=>{
     expect(health).not.toHaveBeenCalled();expect(apiFetch).not.toHaveBeenCalled()
     expect(countOctatrackAction).toHaveBeenNthCalledWith(1,'usb_sync_started');expect(countOctatrackAction).toHaveBeenNthCalledWith(2,'usb_sync_failed','refused-3')
   })
-  it.each(['keep', 'undo', 'timeout', 'other trial', 'unplug'] as const)('counts the final sync outcome on %s', async outcome => {
+  it.each([
+    ['keep', undefined], ['undo', undefined], ['timeout', 'timeout'], ['ended', 'closed'],
+    ['other trial', 'mismatch'], ['no interface', 'unreadable'], ['lost again', 'lost-again'], ['unplug', undefined],
+  ] as const)('counts the final sync outcome and reports a failed reconnect on %s', async (outcome, reconnect) => {
     vi.useRealTimers()
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
     cleanup = collectOctatrackDiagnostics('member', link, () => undefined)
     const stop = link.start()
     try {
       await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+      expect(await changeDiagnosticSharing(true)).toBe(true)
       await link.update('module', [{ module: 'module', data: new Uint8Array(4000), reconnects: outcome !== 'unplug' }])
       expect(link.getState().status).toBe('trial')
       unit.orphan = link.getState().active ?? undefined
@@ -47,8 +51,15 @@ describe('beta diagnostic collection',()=>{
         expect(vi.mocked(countOctatrackAction).mock.calls).toEqual([['usb_sync_started']])
         if (outcome === 'timeout') await vi.advanceTimersByTimeAsync(RECONNECT_WAIT_MS)
         else {
+          if (outcome === 'ended') unit.orphan = undefined
           if (outcome === 'other trial') unit.orphanTransaction = 8
-          unit.plug('base')
+          unit.taken = outcome === 'lost again'
+          unit.plug(outcome === 'no interface' ? 'stock' : 'base')
+          if (outcome === 'lost again') {
+            await vi.waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([, options]) =>
+              JSON.parse(String(options?.body)).data.failure === 'claim-failed')).toBe(true))
+            unit.unplug()
+          }
           await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
           if (outcome === 'keep') await link.keep()
           if (outcome === 'undo') await link.undo()
@@ -56,6 +67,12 @@ describe('beta diagnostic collection',()=>{
       }
       const terminal = outcome === 'keep' ? ['usb_sync_kept'] : outcome === 'undo' ? ['usb_sync_undone'] : ['usb_sync_failed', 'disconnected']
       expect(vi.mocked(countOctatrackAction).mock.calls).toEqual([['usb_sync_started'], terminal])
+      const failures = () => vi.mocked(apiFetch).mock.calls.map(([, options]) => JSON.parse(String(options?.body)).data)
+        .filter(event => event.event === 'sync_failed')
+      if (reconnect) await vi.waitFor(() => expect(failures()).toEqual([expect.objectContaining({
+        phase: 'trial', error: 'disconnected', step: 'trial', reconnect, base: unit.base,
+      })]))
+      else expect(failures()).toEqual([])
     } finally { stop() }
   })
   it('collects numeric status after consent and stops on remote revocation',async()=>{

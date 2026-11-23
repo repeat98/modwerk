@@ -114,6 +114,17 @@ describe('pr:ready verdict', () => {
     expect(verdict.notes.join(' ')).not.toContain('gh pr create --draft')
     expect(verdict.notes.join(' ')).not.toContain('open or update the PR')
   })
+  it('prompts the agent to verify GitHub after full readiness on a contribution', () => {
+    for (const input of [{}, { instrument: ['public/octatrack-modules/synth/example.mwrm'] }]) {
+      const notes = readiness(input).notes.join(' ')
+      expect(notes).toContain('gh pr view <URL> --json state,headRefOid,isDraft')
+      expect(notes).toContain('gh pr ready <URL>')
+      expect(notes).toContain('verify isDraft is false')
+    }
+    for (const input of [{ draftOnly: true }, { checkPassed: false }, { baseDraft: true }]) {
+      expect(readiness(input).notes.join(' ')).not.toContain('gh pr ready <URL>')
+    }
+  })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
     expect(asked).toContain('write "nothing" in the PR')
