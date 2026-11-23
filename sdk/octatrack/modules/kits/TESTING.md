@@ -30,6 +30,10 @@ predate these runs). Screens read with `png:` over USB.
 
   A Kit load's longest frame is a stock Part switch's; no skipped render. `evidence/performance.json` holds these.
 
+Developer's report (twwwy), 24 November 2026, the same twin and package, Kits alone as a trial, given: PART to load
+another Kit while playing and listen at the switch, then FUNC+CUE; a knob changed, SAVE KIT into an empty Kit, another
+Kit loaded and the saved one again: "they all work". Verdict of that trial: no crash, stall, freeze or skipped track.
+
 Developer's report (twwwy), 21 November 2026, a base 0.7.13 development twin `5b9c4b1e…` with the same package beside
 kept Pattern Sample Locks 0.1.9 `6fea272e…`: "they all works. the menu works too".
 
