@@ -88,9 +88,7 @@ function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:s
   return <>
     {pageHeading}
     {profile&&<ForumProfile key={profile} username={profile} onLoad={setMember} onFail={profileFail}/>}
-    {home&&session.user?.verified&&<GetStarted machine={machineHint}/>}
-    {home&&<ForumOnlineNow/>}
-    {home&&showcase}
+    {home&&session.user?.verified&&<GetStarted key={session.user.id} machine={machineHint}/>}
     {!profile&&<>
       <div className="forum-toolbar"><nav className="forum-categories" aria-label="Discussion views">
         <a aria-current={sort==='active'&&!saved&&!following&&!moduleView?'page':undefined} href={link({sort:category==='requests'?'active':'',saved:'',following:'',view:''})}>Latest activity</a>
@@ -132,7 +130,7 @@ function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:s
       {listReady&&!error&&<SinceVisit visit={visit} onReadAll={()=>{setVisit(current=>current&&{...current,newThreads:0,newReplies:0,unreadFollowed:0});setRevision(value=>value+1)}}/>}
       {error?<div className="forum-empty" role="alert"><Icon name="message" size={26}/><h2>Discussions could not load</h2><p>{error}</p><button className="button button-quiet" onClick={()=>{setError('');setRevision(value=>value+1)}}>Try again</button></div>:!data||!listReady?<ForumThreadListSkeleton/>:data.threads.length?<ForumThreadList threads={data.threads}/>:<div className="forum-empty"><Icon name={saved?'bookmark':'message'} size={28}/><h2>{unreadOnly?'Nothing unread':filtered?'No matching discussions':profile?'No public threads yet':saved?'No bookmarks yet':following?'No followed discussions yet':'Be the first to start a conversation'}</h2><p>{unreadOnly?'You have read everything here. New replies will show up as they arrive.':filtered?'Try another search or clear your filters.':saved?'Bookmark a thread to keep it close for later.':following?'Follow a thread to find it here. Threads you start or reply to are followed automatically.':profile?'Threads this member starts will appear here.':'Ask a question, share a discovery, or post a configuration you enjoy.'}</p><a className={'button button-quiet' + (!unreadOnly&&!filtered&&!saved&&!following&&!profile&&category==='issues'?' module-issue-action':'')} href={unreadOnly?link({unread:''}):filtered?link({q:'',module:'',status:''}):saved||following||profile?'#forum':startHref}>{!unreadOnly&&!filtered&&!saved&&!following&&!profile&&category==='issues'&&<Icon name="message" size={16}/>} {unreadOnly?'Show all':filtered?'Clear filters':saved||following||profile?'Browse discussions':category==='issues'?'Report an issue':'Start a thread'}</a></div>}
       {(page>0||data?.hasMore)&&<nav className="forum-pagination" aria-label="Discussion pages">{page>0?<a className="button button-quiet" href={link({page:String(page-1)})}><Icon name="back" size={14}/>Previous</a>:<span/>}<span>Page {page+1}</span>{data?.hasMore&&<a className="button button-quiet" href={link({page:String(page+1)})}>Next<Icon name="arrow" size={14}/></a>}</nav>}
-    </section>{overview&&<div className="forum-overview-sidebar">{home&&<ForumHighlights/>}<ForumDirectory machine={machine?.id} href={category=>link({category})}/><ForumRecentPosts machine={machine?.id}/></div>}{profile&&!profileFailed&&<div className="forum-overview-sidebar"><ForumProfileReplies items={member?.recentReplies}/></div>}</div><MemberPrompt/>
+    </section>{overview&&<div className="forum-overview-sidebar">{home&&<><ForumOnlineNow/>{showcase}<ForumHighlights/></>}<ForumDirectory machine={machine?.id} href={category=>link({category})}/><ForumRecentPosts machine={machine?.id}/></div>}{profile&&!profileFailed&&<div className="forum-overview-sidebar"><ForumProfileReplies items={member?.recentReplies}/></div>}</div><MemberPrompt/>
   </>
 }
 

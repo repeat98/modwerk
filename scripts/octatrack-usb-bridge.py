@@ -12,7 +12,9 @@ Any bench client then drives the unit as it drives ot_emu. Control transfers
 only: a SETUP is held until its data stage ("in"/"out") performs the whole
 transfer with libusb; the status stage the client sends next is answered
 locally. Claims only the Modwerk vendor interface. Refuses SET_ADDRESS and
-SET_CONFIGURATION and never resets the bus. Needs pyusb in a venv outside
+SET_CONFIGURATION and never resets the bus. Serves one client at a time and
+answers any other with "err another client is using the bridge" while it is
+connected. Needs pyusb in a venv outside
 the repository (`python3 -m venv ...; pip install pyusb`; on Windows also
 libusb-package, which brings libusb: the unit binds WinUSB by itself).
 """
@@ -21,6 +23,7 @@ import os
 import socket
 import struct
 import sys
+import threading
 
 import usb.core
 import usb.util
@@ -103,6 +106,66 @@ def serve_request(unit, held, line):
         return None, None, 'err the unit went away: %s' % error
 
 
+# The desktop app's bridge refuses a second client the same way (desktop/src/bridge.mjs).
+BUSY = ('err another client is using the bridge (the developer MCP or another device command holds it): '
+        'let it finish or close it, then try again')
+
+
+def serve_client(conn, state):
+    """One client's control transfers, in order, until it hangs up."""
+    held = None
+    try:
+        with conn, conn.makefile('rw', newline='\n') as stream:
+            for line in stream:
+                # A RAM boot or a replug takes the unit away: answer that, and
+                # find it again on the next request.
+                state['unit'], held, answer = serve_request(state['unit'], held, line.strip())
+                stream.write(answer + '\n')
+                stream.flush()
+    except (ConnectionError, OSError):  # the client hung up (Windows resets the socket)
+        pass
+
+
+def refuse_client(conn):
+    """A client arriving while another is served: answer each line it sends with BUSY until it hangs up.
+
+    Its transfers never reach the unit, and it fails at once and by name. Left unread in the listen
+    queue, it would wait out its reply timeout ("No reply to setup ...") with no word on why."""
+    try:
+        with conn, conn.makefile('rw', newline='\n') as stream:
+            for _ in stream:
+                stream.write(BUSY + '\n')
+                stream.flush()
+    except (ConnectionError, OSError):
+        pass
+
+
+def serve_clients(server, state, stop=None):
+    """Serve one client at a time and refuse the others while it is connected.
+
+    Returns once the server closes, or at the next connection after `stop` (a threading.Event) is set."""
+    busy = threading.Lock()
+
+    def serve(conn):
+        try:
+            serve_client(conn, state)
+        finally:
+            busy.release()
+
+    while True:
+        try:
+            conn, _ = server.accept()
+        except OSError:  # the listening socket was closed
+            return
+        if stop is not None and stop.is_set():
+            conn.close()
+            return
+        if busy.acquire(blocking=False):
+            threading.Thread(target=serve, args=(conn,), daemon=True).start()
+        else:
+            threading.Thread(target=refuse_client, args=(conn,), daemon=True).start()
+
+
 def main():
     path = sys.argv[1]
     try:
@@ -118,23 +181,13 @@ def main():
             os.unlink(path)
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         server.bind(path)
-        server.listen(1)
+        server.listen(8)
     print('bridge ready on %s (vendor interface %d)' % (path, unit[1]), flush=True)
+    state = {'unit': unit}
     try:
-        while True:
-            conn, _ = server.accept()
-            held = None
-            try:
-                with conn, conn.makefile('rw', newline='\n') as stream:
-                    for line in stream:
-                        # A RAM boot or a replug takes the unit away: answer that, and
-                        # find it again on the next request.
-                        unit, held, answer = serve_request(unit, held, line.strip())
-                        stream.write(answer + '\n')
-                        stream.flush()
-            except ConnectionError:  # the client hung up (Windows resets the socket)
-                pass
+        serve_clients(server, state)
     finally:
+        unit = state['unit']
         if unit:
             try:
                 usb.util.release_interface(*unit)
