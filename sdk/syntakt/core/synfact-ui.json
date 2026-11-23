@@ -1,0 +1,11 @@
+{
+  "upstream": "https://github.com/GSM1980/synfact-dev/blob/48e870a19a8bcc857b3a72ee6d5a263dc7c09bcc/mods/core-st/mod.json",
+  "core": "2.4.0",
+  "os": "1.42",
+  "sites": [
+    { "event": "ev_tick", "addr": "0x4000a220", "length": 6, "stockSha256": "d9bc03331ce11cb823a5fcdc5a2aa6b7b25c8fccf2f55803bca6b2cc4dc446a0" },
+    { "event": "ev_draw", "addr": "0x4000a286", "length": 6, "stockSha256": "ad9a82e3559cb628cd5a31dd27e0c4679ffcbd4fe0010a92686fa7abb7aea92f" },
+    { "event": "ev_key", "addr": "0x4000b420", "length": 6, "stockSha256": "45bd3ff1d08b81ada459e14389fd5760a1213e1cd272f40e9ea441b16cf1c8dc" },
+    { "event": "ev_enc", "addr": "0x4000b468", "length": 6, "stockSha256": "a87940bfad7ce18e8df53cdadf9d11641b0451d11a35cef1785f0322cdbfef3c" }
+  ]
+}

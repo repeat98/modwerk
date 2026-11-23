@@ -495,6 +495,11 @@
     },
     "research": [
       {
+        "label": "Synfact base (GSM1980)",
+        "url": "https://github.com/GSM1980/synfact-dev/tree/48e870a19a8bcc857b3a72ee6d5a263dc7c09bcc/mods/core-st",
+        "note": "Synfact runs optional banks on OS 1.42. Modwerk’s developer tools can read its loader status over USB MIDI. Hardware verification of this reader is pending."
+      },
+      {
         "label": "elektron-firmware-tool",
         "url": "https://github.com/mischa85/elektron-firmware-tool",
         "note": "Writer. Reads Syntakt OS files (device 0x16). Unchanged -r repack is byte-identical (cmp) to stock OS 1.40A and 1.42, checked 2026-10-12."

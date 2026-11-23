@@ -6,6 +6,22 @@ Status: **research, core started**. The OS files are understood and rebuilt, mod
 
 The core stage is planned as the Syntakt's Modwerk base, so that it ends up with the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): hooks, a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page. Only the boot probe exists. [GOAL.md](GOAL.md) sets out the order, where each piece stands and how contributors take one.
 
+## Synfact base integration
+
+GGSM (GSM1980) develops Synfact for OS 1.42. The first integration reads its loader status on a Syntakt that **already runs Synfact**. Connect one Syntakt over USB MIDI, close other transfer clients, then run:
+
+```sh
+npm run device -- status --machine syntakt
+```
+
+This opens the fixed `/mod-status` object and reports whether a bank is active, its machine count and any loader error. Newer records also give the bank contract, trial slot and rollback flag. A missing record on stock firmware is expected. For the same read through the developer MCP, start it with `--syntakt-midi` and call `device_status` with `{"machine":"syntakt"}`. Hardware verification is open. Record the Synfact core version shown on the unit alongside the result; a bank contract can span several core versions.
+
+The reference for this port is [Synfact core 2.4.0](https://github.com/GSM1980/synfact-dev/tree/48e870a19a8bcc857b3a72ee6d5a263dc7c09bcc/mods/core-st). Its 64 KiB resident MAIN area holds the base. Optional banks have a MAIN allocation and can send an AUDIO engine to the second CPU. Upstream stages banks in two +Drive slots and automatically confirms a successful startup. Modwerk's trial must run in RAM until the player chooses Keep. See the [upstream bank format](https://github.com/GSM1980/synfact-dev/blob/48e870a19a8bcc857b3a72ee6d5a263dc7c09bcc/mods/core-st/SMZ4.md) and [storage and status record](https://github.com/GSM1980/synfact-dev/blob/48e870a19a8bcc857b3a72ee6d5a263dc7c09bcc/mods/core-st/STORAGE.md).
+
+To check the first four Synfact UI hooks against your own official 1.42 file, add `--synfact` to the [probe build](#build). It verifies each stock SHA-256 and ColdFire instruction boundary and records the four sites in `boot-probes.json`. The output firmware runs the existing Modwerk boot probe. The tick, draw, key and encoder sites are candidates for the resident port.
+
+For the resident port, start with shared base hooks after [the whole-gap readback](https://github.com/repeat98/modwerk/pull/1411). Review authorship and licence file by file before importing any of GGSM’s source. The upstream core manifest declares GPL-2.0-or-later and also references shared Elekloader sources. Keep the Modwerk builder and codec. Port CPU2 engine services separately once their stock sites and fallback are verified. Qualify +Drive persistence on a backed-up unit under storage pressure and after stock restore before enabling writes. Optional machines and extended sample storage are outside this base port.
+
 ## Platform
 
 The Syntakt uses the `elemod` platform ([platform decision](../../../docs/SYNTAKT_OS_RESEARCH.md#8-platform-decision-brief)): the same `ELE3` container and SysEx transport as the Digitakt, the main OS as section 3 at 0x40000400 staged at 0x40200000, the same guarded-site linker. What differs: the appended tail lies inside the memory the OS zeroes at reset, so the core's hook is the BSS-clear entry rather than a main-initialisation call; the machine has a second ColdFire, two FPGAs and a UI MCU whose images stay byte-identical in every build.

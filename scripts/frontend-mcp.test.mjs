@@ -141,6 +141,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
   it('requires explicit API/device write opt-ins and rejects caller-selected file paths', async () => {
     await expect(service.call('api_request', { path: '/forum/threads', method: 'POST', body: {}, confirm: true })).rejects.toThrow('--allow-api-writes')
     await expect(service.call('device_status')).rejects.toThrow('--device-socket')
+    await expect(service.call('device_status', { machine: 'syntakt' })).rejects.toThrow('--syntakt-midi')
     await expect(service.call('device_trial', { review: 'anything' })).rejects.toThrow('--allow-device-writes')
     await expect(service.call('firmware_download', { request: {} })).rejects.toThrow('--stock')
     await expect(service.call('firmware_download', { request: {}, stock: '/etc/passwd' })).rejects.toThrow('Unexpected')
