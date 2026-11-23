@@ -17,7 +17,7 @@ description: First-session overview of Modwerk development. Asks which instrumen
    - **Claim** the idea on the agent board, so nobody builds it twice.
    - **Share early.** Once one commit shows the direction, the prototype goes into the repository as a *draft* pull request. A draft is for working together: others read it, comment and help, and no bot merges or labels it. Never hold a prototype back to polish it first.
    - **Test on your own unit** with `/modwerk-test-on-unit`. It runs the test procedure (`docs/TEST_PROCEDURE.md`), the same fixed steps for every module, then the module's own edge cases. The emulator is for trying things; only the unit counts.
-   - **Ready for review** means tested on the exact build and `/modwerk-pr-ready` green. Before that, a fresh agent session that never saw the work reviews the diff (in Claude Code, `/code-review`).
+   - **Ready for review.** A fresh agent session reviews the diff (in Claude Code, `/code-review`). After the exact build is tested and `/modwerk-pr-ready` passes, your agent marks the draft ready and verifies its status on GitHub.
    - **Merge and release.** A device reviewer or maintainer reviews and merges a first release, and it goes live on the site. The author releases later updates themselves.
    - **Who does what:** anyone contributes, claims and opens pull requests; modders release updates to their own modules; device reviewers approve first releases on their instrument; maintainers oversee the repository; the owner releases each base and keeps the guidelines (`docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release`). A module that waits on base or shared code waits on the owner, and the agent says so.
 5. **Name the three ground rules:**
