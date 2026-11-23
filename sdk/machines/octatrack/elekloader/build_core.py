@@ -231,6 +231,9 @@ EVENTS = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(EVENTS
 # before packaging (sdk/runtime/m68k_codegen.py).
 _spec = importlib.util.spec_from_file_location('modwerk_m68k_codegen', APP / 'sdk/runtime/m68k_codegen.py')
 CODEGEN = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(CODEGEN)
+# The stock OS fixes every base carries (stock-fixes/README.md): their sources and guarded stock sites.
+_spec = importlib.util.spec_from_file_location('modwerk_stock_fixes', HERE / 'stock-fixes/stock_fixes.py')
+STOCK_FIXES = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(STOCK_FIXES)
 # Catalogue modules allowed to patch what this base owns, and why (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
 BASE_OWNS = {'usb-audio-out-tracks-main-cue': 'the base owns the USB configuration',
              'midi-scenes': 'its writes meet Elekloader\'s own sites; it needs a port',
@@ -1967,7 +1970,7 @@ def main():
         (source/'remix.inc').write_text(usb.AUDIO_INC)
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
-    folders = (logger, upload, loader, HERE, firmware_codec.HERE) + ((DYNLOAD,) if args.dsp_loader else ())
+    folders = (logger, upload, loader, HERE, HERE / 'stock-fixes', firmware_codec.HERE) + ((DYNLOAD,) if args.dsp_loader else ())
     inputs = {p.relative_to(APP).as_posix(): sha(p.read_bytes()) for folder in folders
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
     for path, digest in profile_inputs.items():
@@ -2250,6 +2253,11 @@ modwerk_retained_end:
             raise ValueError('Stock bytes at %#x are not the CUE CFG clamp/check cue_cfg.s widens.' % addr)
         recipe['sites'].append(dict({k: v for k, v in site.items() if k != 'length'},
                                     addr=hex(addr), stock=stock_at(addr, site['length']).hex()))
+    # Stock OS fixes (stock-fixes/): every base, whatever its flags, so every layout and twin patches the same sites.
+    for name in STOCK_FIXES.SOURCES:
+        shutil.copyfile(HERE / 'stock-fixes' / name, source / name)
+    recipe['sources'] += list(STOCK_FIXES.SOURCES)
+    recipe['sites'] += STOCK_FIXES.recipe_sites(stock_at, sha)
     recipe['sites'] += (usb_profiles.sites(usb, usb_functions, stock_at, args.usb_audio) if usb_profiles else
                        usb_functions.sites(usb, stock_at, args.usb_audio, slots=usb_function_slots) if usb_functions else usb.sites(stock_at, args.dev))
     # RAM boot: the gate at the OS entry, and the DSP park in both payloads.
@@ -2290,8 +2298,6 @@ modwerk_retained_end:
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_crash_tick', order=96))  # crash.c: restart after a crash
-    if args.dev:  # the screen as composed, modules' drawing included
-        recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_dev_draw', order=95))
     if args.dsp_loader:  # the DSP manager's UI work (its own hook was the UI tick, 0x4005221e) and its ColdFire hooks
         recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_dsp_tick', order=92))  # dsp.c's test picks
         recipe['subscribe'].append(dict(event='ev_tick', fn='dl_ui', order=93))

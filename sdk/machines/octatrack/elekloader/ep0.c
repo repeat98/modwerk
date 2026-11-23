@@ -86,6 +86,8 @@ static struct mv_transport transport;
 /* usb_ep0_send fills only the first page of its transfer descriptor:
  * 256-byte alignment keeps every reply inside one 4 KiB page. */
 static uint8_t reply[512] __attribute__((aligned(512))); /* within one 4 KiB page */
+/* EP0 DMA addresses a single page. Filled only when the host asks for a frame. */
+static uint16_t lcd_reply[514] __attribute__((aligned(2048)));
 static struct dtd data_dtd __attribute__((aligned(32)));
 static uint8_t started, receiving;
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
@@ -402,7 +404,21 @@ uint32_t modwerk_ep0_dispatch(void)
         modwerk_ep0_reply = out;
         unsigned n = modwerk_runtime_capabilities(out);
         out[6] |= 1u; /* feature bit 8: this base writes its own container to NOR over USB (flash.c) */
+        out[6] |= 0x20u; /* feature bit 13: composed LCD over USB */
         return n;
+    }
+    /* Same fixed MWLC reply as the development reader. Stock's UI task swaps
+     * the displayed buffer after a flush; it cannot redraw during this ISR.
+     * The front buffer includes menus and overlays (octabam TRAPS, the page plane). */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 7 && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && (SETUP[6] | SETUP[7] << 8) == sizeof lcd_reply) {
+        const uint16_t *front = *(const uint16_t *volatile *)0x400b970cu;
+        if (!front || ((uintptr_t)front & 1u)) return MODWERK_EP0_REFUSE;
+        uint16_t *snapshot = UNCACHED(lcd_reply);
+        snapshot[0] = 0x4d57; snapshot[1] = 0x4c43; /* MWLC, big endian */
+        for (unsigned i = 0; i < 512; ++i) snapshot[i + 2] = front[i];
+        modwerk_ep0_reply = (const uint8_t *)snapshot;
+        return sizeof lcd_reply;
     }
     /* SLOTS (0xC1, bRequest 39, wValue 0, wLength 24): the two-slot layout as the engine last read it (flash.h),
      * zeros before its first look. Read-only; bases before the two slots stall it. */
@@ -460,6 +476,14 @@ uint32_t modwerk_ep0_dispatch(void)
         if (!n) return MODWERK_EP0_REFUSE;
         modwerk_ep0_reply = out;
         return n;
+    }
+    /* RESTORE (0xC1, bRequest 43, wValue the first entry, wLength 168): what this start's restore did with each package
+     * of the card's set, loaded or left out and why (modset.c modwerk_modset_restore_list), where the unit says only SOME
+     * MODULES FAILED; 5 a page, so a host asks on from wValue 5 while a page comes back full. Read-only; older bases stall it. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 43 && SETUP[2] < RUNTIME_MODULES && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && (SETUP[6] | SETUP[7] << 8) == 8u + MODSET_RESTORE_ENTRY * MODSET_RESTORE_PAGE) {
+        modwerk_ep0_reply = out;
+        return modwerk_modset_restore_list(out, SETUP[2], MODSET_RESTORE_PAGE);
     }
 #ifdef MODWERK_SAVED_SET_EXPORT
     if (r.action == MV_STALL && SETUP[1] >= 31u && SETUP[1] <= 33u) {

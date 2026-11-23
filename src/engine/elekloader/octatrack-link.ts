@@ -7,7 +7,7 @@ import { runSelftest, waitUntilSaved } from './selftest.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
-import { findVendorInterface, RuntimeFeature, UsbVendorTransport, VendorTransportError, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport, VendorTransportError, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type RestoreReport, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
 import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
@@ -605,6 +605,11 @@ export class OctatrackLink {
   health(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('diagnostic status', transport => transport.selftest(false), signal, allowed).then(record => record ? diagnosticReading(record) : undefined) }
   /** The existing meter windows, without running a self-test or starting DSP work. */
   liveLoad(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('load', transport => transport.load(signal), signal, allowed) }
+  screen(signal: AbortSignal) {
+    if (!((this.state.identity?.capabilities?.features ?? 0) & RuntimeFeature.screen))
+      return Promise.reject(new Error('Screen preview needs a newer Modwerk base.'))
+    return this.read('screen', transport => transport.screen(signal), signal)
+  }
   /** The unit's own diagnostics log (diag.c); background diagnostics call this only after explicit consent. */
   deviceLog(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('diagnostics log', transport => transport.deviceLog(signal), signal, allowed) }
   /** Private recovery export: holds one link lock for both fixed saved files, with no card writes. */
@@ -619,6 +624,11 @@ export class OctatrackLink {
   /** The modules switched off on the unit (PROJ > MODWERK > MODULES): installed and saved, not running. Undefined from
    * a base before that page. Rejects with LinkBusyError when it couldn't ask just now. */
   off(): Promise<OffModule[] | undefined> { return this.read('switched-off modules', transport => transport.off()) }
+  /** What this start's restore did with each saved module (request 43): loaded, or left out and why. Undefined from a
+   * base before it, which says only SOME MODULES FAILED. Rejects with LinkBusyError when it couldn't ask just now. */
+  restoreOutcomes(signal?: AbortSignal, allowed: () => boolean = () => true): Promise<RestoreReport | undefined> {
+    return this.read('restored modules', transport => transport.restore(signal), signal, allowed)
+  }
   /** The identity of the modules that run now (request 38), which changes when one is switched on the unit itself;
    * undefined from a base without whole sets, or when it couldn't ask this round. */
   async liveSet(): Promise<string | undefined> {

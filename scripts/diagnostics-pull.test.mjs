@@ -128,6 +128,11 @@ describe('diagnostics pull', () => {
       entry(3, 'tester', { event: 'connected', phase: 'ready' }),
       entry(4, 'tester', { event: 'health', phase: 'ready', reading: { saved: 6, savedCount: 2, live: 2 }, modules: mods(['miniverb', 'poly8']) })]
     expect(summary({ events, counts: [] })).toContain('refused (missing ring-sc)')
+    // A base with RESTORE names every module it left out and why, instead of the guess.
+    events.push(entry(5, 'tester', { event: 'connected', phase: 'ready' }),
+      entry(6, 'tester', { event: 'health', phase: 'ready', reading: { saved: 10, savedCount: 3, live: 1 }, modules: mods(['poly8']),
+        restore: [{ id: 'miniverb', refusal: 0x100, check: 0 }, { id: 'other', refusal: 2, check: 1 }] }))
+    expect(summary({ events, counts: [] })).toContain('left out after a failed start (left out miniverb: the last start crashed or froze loading it, other: module memory)')
   })
   it('reports a full set incident as a lower bound because the log holds fourteen IDs', () => {
     const set = { seq: 1, boot: 1, second: 0, kind: 'set', screen: 0, tempo24: 0,

@@ -565,7 +565,9 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-category-description { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.7; margin: -8px 0 22px; }
 .forum-category-description a { color: #b9b5e4; }
 .forum-activity-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; align-items: start; }
-.forum-overview-sidebar { display: grid; gap: 20px; min-width: 0; }
+.forum-overview-sidebar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
+.forum-overview-sidebar .forum-showcase .forum-list-heading { flex-wrap: wrap; }
+.forum-overview-sidebar .forum-online-now { margin: 0; }
 .forum-discussions { min-width: 0; }
 .forum-recent { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .forum-recent .forum-list-heading { gap: 6px; }

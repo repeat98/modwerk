@@ -363,7 +363,8 @@ async function missing() {
  * bases: the next start leaves the set's first module out, or holds every module, as after a crash in its restore),
  * saved (the card set's result, modset.c: 1 restored, 10 left out, 11 held; development bases), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
- * inventory (the installed modules, INVENTORY),
+ * inventory (the installed modules, INVENTORY), restore (what this start's restore did with each saved module, RESTORE),
+ * adopt / adopt:off (development bases: from the next start, restore the card's set another base wrote, writing none),
  * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
  * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
@@ -373,7 +374,7 @@ async function missing() {
  * (spaces in NAME as _; it waits until the track runs it). */
 /** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
  * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
-export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|restore|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -402,6 +403,8 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if (step === 'missing') console.log(await missing())
     else if (step === 'inventory') console.log(JSON.stringify(await transport.inventory() ?? 'this base does not answer INVENTORY'))
     else if (step === 'off') console.log(JSON.stringify(await transport.off() ?? 'this base does not answer OFF')) // switched off in PROJ > MODWERK > MODULES
+    else if (step === 'restore') console.log(JSON.stringify(await transport.restore() ?? 'this base does not answer RESTORE')) // what this start's restore did with each saved module
+    else if (step.startsWith('adopt')) await devIn(43, step === 'adopt:off' ? 0 : 1, 1) // development bases: from the next start, restore the card's set another base wrote, and write none
     else if (step === 'xwatch') { // probe X bases (dev request 26): does anything write X:$7a92-$7fff? per core
       for (const core of [1, 0]) {
         for (const until = Date.now() + 10000; !(await devIn(26, 0x100 | core, 1))[0]; await wait(100))

@@ -1,17 +1,14 @@
 # Driving the Octatrack from an agent
 
-How to work a real Octatrack MKII running a Modwerk development base (`build_core.py --dsp-loader --dev`) over
-USB: start the link, send steps, read the unit, change things without harming the owner's project, and keep
-runs short. The flashed beta base refuses these steps; a twin of it is `build_core.py` with the flags that
+Drive an Octatrack MKII over USB with a development twin. Build it with `build_core.py` and the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
 then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
 Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
 `base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
 Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
 analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
-the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR
---chunk 4096`: the same day a boot sent through `serve` left the unit running but gone from USB until a power cycle, and
-the same image booted one-shot came back. Everything else here was done on the owner's MKII on 11 October 2026. Why things fail is in
+the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR`.
+Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -34,8 +31,8 @@ the same image booted one-shot came back. Everything else here was done on the o
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
   background and logs every step, and you look at the log.
 - Never power-cycle on your own; ask the owner. Never flash.
-- Leave the CF card in for a trial. A twin loads no set another base wrote (`do saved` reads card set 4, FOREIGN) and a
-  trial writes none: `device:test` fails if `saved` reads differently afterwards. `npm run device -- boot <flashed image>`
+- Leave the CF card in for a trial. A twin loads no set another base wrote (`do saved` reads card set 4, FOREIGN;
+  `do adopt` makes its next start load it, writing none) and a trial writes none: `device:test` fails if `saved` reads differently afterwards. `npm run device -- boot <flashed image>`
   returns to the flashed base, which loads the owner's set from the card again. Ask for no card swap or power cycle.
 - A Keep on a RAM-booted base overwrites the owner's kept modules. The kept set lives in two card files,
   `/MODWERK0.SET` and `/MODWERK1.SET`, written alternately and stamped with the writing base's identity
@@ -197,11 +194,11 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `loader` | packets accepted, rejected, errors, jobs, selections, commits, rollbacks, code words per core |
 | `mem:0x80000ec4:16` | RAM in hex, read-only, any length, within 0x40000400-0x40cfffff (short of the pool's end and the loader's statics), 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and the battery RAM's records 0x100f0000-0x100fffff (`dev.c`); the battery-RAM Part copies are outside it |
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
-| `png:/path.png` | a screenshot, 256 x 128: cheaper to read than the text rendering. It shows stock's menus too (PERSONALIZE, read on an MKI twin) |
+| `png:/path.png` | On bases advertising the Screen capability (MWCP bit 13), the Hub and this command read the same on-demand frame. Older development twins also answer the request. A screenshot, 256 x 128: cheaper to read than the text rendering. It shows stock's menus too (PERSONALIZE, read on an MKI twin) |
 | `screen` | the screen as block characters (thousands of tokens; avoid) |
 | `crash` | the last crash record (vector, PC, registers); `crashtest` makes one. The PC and the stack read as names (`mw_frame_exit+0x2c`) when the running base was built with `octatrack:base -- --out` or started with `boot DIR` on this computer; your own names for stock addresses go in `~/.cache/modwerk-local/octatrack/addresses.json` (`{"0x…": "name"}`), never in Git. `diaglog` and `diagnostics:pull` name them the same way |
 | `selftest` | PROJ > MODWERK > SELF TEST over USB: start it (transport stopped), wait, print the verdict, the modules that ran and the CPU and core peaks |
-| `saved` | the card set's result code, modules saved and live, read without a test: 1 restored at this start, 7 saved since. Not its generation, which no request reports. To try a set from the card, `node scripts/octatrack-card-set.mjs --out DIR ID…` writes `MODWERK0.SET` for the published base; on a used card run the same script with `--out CARD --import DIR/MODWERK0.SET` to select that export ahead of `MODWERK1.SET` and keep the recovery slot, then power-cycle (restored so on the MKII, released base `d891acb3`, 11 November 2026) |
+| `saved`, `restore` | the card set's result code, modules saved and live, read without a test: 1 restored at this start, 7 saved since. `restore`: each module of this start's restore, loaded or left out and why. To try a set from the card, `node scripts/octatrack-card-set.mjs --out DIR ID…` writes `MODWERK0.SET` for the published base; on a used card run the same script with `--out CARD --import DIR/MODWERK0.SET` to select that export ahead of `MODWERK1.SET` and keep the recovery slot, then power-cycle |
 | `dspmap`, `dspmap:watch:N` | each core's DSP code arena drawn as 64 cells, a letter per placed block and `.` per free words, then each block's name, start, words and the slots running it (else `preloaded`: code another Part of the bank names). `watch:N` redraws it for N seconds (at most 15) whenever a block comes, goes or moves, so compaction shows: on 24 October 2026 removing a Mini Verb between SPRING REV and DARK REV left a 538-word hole and DARK REV moved down into it 2.1 s later |
 | `profile`, `profile:N` | the base's tick profile (`modwerk_cost`, diag.h): each UI tick hook's µs a tick over N seconds (3, at most 15) and the frame transfer's µs a frame. It reads the address from the build `boot DIR` last started (`~/.cache/modwerk-octatrack/last-boot`) and refuses when another base runs. On 24 October 2026 it showed the controller tick at 814 µs with 26 modules installed, 212 µs after the fix in #880 |
 | `selftest:trace` | the same, printing each half second's phase, progress, the CPU the test recorded and the meter's latest window beside it: what a CPU or core peak came from |
