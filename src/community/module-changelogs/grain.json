@@ -1,5 +1,23 @@
 [
   {
+    "version": "0.1.2-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "The sample is now a ring, like most granular engines: grains that run past one end carry on from the other, so there is no more silence at the edges.",
+      "FUNC + turn on PTCH jumps by octaves and always brings it back to 0.",
+      "Each grain plays 3 dB lower, so dense clouds of long grains of a loud sample no longer distort, except for the odd click at extreme settings."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Opening the sample pool no longer stops Grain: the track keeps playing its grains while you browse.",
+      "FUNC+YES in the pool still previews the sample as plain Flex, until the track's next trig.",
+      "Grain can be picked on busier Parts once your base reads the CPU it really adds (a base update)."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-20",
     "changes": [

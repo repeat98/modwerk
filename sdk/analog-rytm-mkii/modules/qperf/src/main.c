@@ -233,8 +233,13 @@ typedef void (*notice_t)(void *self, void *info);
 #define STEP_MAKE_LOCK_TRIG ((step_make_t)STEP_MAKE_LOCK_TRIG_AT)
 #define ID_FINE ((id_word_t)ID_FINE_AT)
 
-static unsigned char perf_rec[PERFS][REC_POINTS]; // amount >> 7 at each point
+typedef unsigned long __attribute__((may_alias)) amount_pair_t;   // two bytes' worth, or four
+static unsigned char perf_rec[PERFS][REC_POINTS] __attribute__((aligned(4))); // amount >> 7 at each point
 static unsigned char perf_rec_has[PERFS][STEPS];  // a bit for each recorded point
+static int perf_rec_loop;               // the loop's steps the take last played or recorded at
+static int perf_rec_period;             // the take repeats every this many steps: the loop it was
+                                        // last recorded at, or a shorter one it was cut to since
+static int pass_steps, passes;          // the loop's comings round at one length, up to 2
 
 // What the audio block reads when nothing happens, together on four cache lines: stock's
 // audio work evicts module data every block, and each cold line costs about 20 ticks.
@@ -734,6 +739,30 @@ static void wipe(void)
     }
     hot.perf_rec_used = 0;
     hot.perf_rec_hidden = 0;
+    perf_rec_loop = perf_rec_period = perf_rec_steps(live_pattern_data());
+}
+
+// The loop got longer: the take repeats over the new steps at its own period, so 16 to 32
+// plays it twice and 16 to 24 plays steps 1-8 again, whether the length jumps or SCALE's
+// menu steps it one at a time. Steps below the period are the take's own, never cut, so
+// they stay. Points and their bits both, so a gap copies as a gap. Each step copies one
+// already in place, so a loop several periods long tiles too.
+static void extend_take(int from, int to)
+{
+    int p, s;
+    if (from < perf_rec_period)
+        from = perf_rec_period;
+    for (p = 0; p < PERFS; p++) {
+        amount_pair_t *points = (amount_pair_t *)perf_rec[p];
+        if (!(hot.perf_rec_used >> p & 1))
+            continue;
+        for (s = from; s < to; s++) {
+            int t = s - perf_rec_period;
+            points[2 * s] = points[2 * t];                  // POINTS bytes: two words a step
+            points[2 * s + 1] = points[2 * t + 1];
+            perf_rec_has[p][s] = perf_rec_has[p][t];
+        }
+    }
 }
 
 // Hand each driven performance back to what it was before the quick perf rec took it.
@@ -752,11 +781,21 @@ static void release_driven(void)
 // return for a block where nothing happens is qperf_render's quick exit now.
 static void render_all(void)
 {
-    int p, pos, rec, pattern = U8(LIVE_PATTERN_AT);
+    int p, pos, rec, steps, pattern = U8(LIVE_PATTERN_AT);
     if (pattern != hot.perf_rec_pattern) {
         release_driven();
         wipe();
         hot.perf_rec_pattern = pattern;
+    }
+    // A longer loop fills its new steps with the take, once, here; a shorter one plays the
+    // start of it, and once a whole pass has played at it (below) that start is what a
+    // later lengthening repeats, over what the hidden steps held. A cleared take stays as
+    // it was until NO brings it back, and then takes the loop it comes back to.
+    steps = perf_rec_steps(live_pattern_data());
+    if (steps != perf_rec_loop && !hot.perf_rec_hidden) {
+        if (steps > perf_rec_loop && hot.perf_rec_used && perf_rec_period)
+            extend_take(perf_rec_loop, steps);
+        perf_rec_loop = steps;
     }
     // The QPER knob: a resting pot wobbles a step, and stock writes each wobble
     // to the linked performance. So a turn starts only once the knob has left
@@ -791,14 +830,14 @@ static void render_all(void)
     if (!rec || pos < 0) {
         knob_armed = 0;
     } else if (knob_touched && !knob_was && !knob_armed) {
-        knob_armed = perf_rec_steps(live_pattern_data()) * POINTS - pos;
+        knob_armed = steps * POINTS - pos;
         knob_armed_pos = pos;
     } else if (knob_armed) {
-        int loop = perf_rec_steps(live_pattern_data()) * POINTS;
-        knob_armed -= ((pos - knob_armed_pos) % loop + loop) % loop;
+        // It runs to the loop's end: done once the place comes round to the start, or
+        // jumps back there because the loop was cut short of it, so the moves before the
+        // turn are kept. A loop made longer, or shorter ahead of it, moves that end with it.
+        knob_armed = pos < knob_armed_pos ? 0 : steps * POINTS - pos;
         knob_armed_pos = pos;
-        if (knob_armed < 0)
-            knob_armed = 0;
     }
     knob_was = knob_touched != 0;
     for (p = 0; p < PERFS; p++) {
@@ -828,9 +867,23 @@ static void render_all(void)
     if (pos < 0) {
         release_driven();
         hot.last_pos = -1;
+        passes = 0;
         for (p = 0; p < PERFS; p++)
             rec_pos[p] = -1;
         return;
+    }
+    // A shorter loop cuts the take to its start only once a whole pass has played at it:
+    // from one coming round (or PLAY from the start) to the next, the length unchanged.
+    // A menu scrolled through short lengths, or a length set while stopped, cuts nothing.
+    if (steps != pass_steps || hot.perf_rec_hidden) {
+        pass_steps = steps;
+        passes = 0;
+    }
+    if (hot.last_pos < 0 ? pos < POINTS : pos < hot.last_pos && hot.last_pos < steps * POINTS) {
+        if (passes < 2)
+            passes++;
+        if (passes == 2 && steps < perf_rec_period)
+            perf_rec_period = steps;
     }
     hot.last_pos = pos;
     for (p = 0; p < PERFS; p++) {
@@ -840,6 +893,9 @@ static void render_all(void)
                 if (hot.perf_rec_hidden) {
                     wipe();             // a new take replaces the cleared one
                 }
+                // What it holds now repeats with this loop; a first move starts a new take.
+                if (!hot.perf_rec_used || perf_rec_period < perf_rec_loop)
+                    perf_rec_period = perf_rec_loop;
                 record(p, pos, PERF_AMOUNT(p));
             }
             continue;
@@ -876,7 +932,6 @@ static int stirring(void)
 }
 
 // Every performance's amount where we last saw it: two at a time.
-typedef unsigned long __attribute__((may_alias)) amount_pair_t;
 static int amounts_seen(const amount_pair_t *was)
 {
     const volatile amount_pair_t *now = (const volatile amount_pair_t *)PERF_AMOUNTS_AT;
@@ -1238,6 +1293,7 @@ QPERF_UI static void apply_perf_rec(void)
 // QPER + NO: empty the quick perf rec, and bring it back on the next press.
 QPERF_UI static void clear_perf_rec(void)
 {
+    passes = 0;                         // hidden or back: its passes count from here
     if (hot.perf_rec_hidden) {
         hot.perf_rec_hidden = 0;
         show("UNDO CLEAR");

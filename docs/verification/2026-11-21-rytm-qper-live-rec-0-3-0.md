@@ -1,0 +1,9 @@
+# Analog Rytm MKII: QPER Live Rec 0.3.0-experimental — 21 November 2026
+
+Nathaniel Pavel's (@npp1993) QPER Live Rec (id `qperf`), 0.3.0: when the pattern's loop gets longer, the quick perf rec repeats over the new steps at the take's own period, once, at the length change; a shorter loop cuts the take to its start only after a whole pass has played at it, and a QPER knob take follows the loop's new end. Module RAM 16,233 to 16,553 B; the idle quick exit is unchanged. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-qperf-2026-11-21.json` (commit `eded56820`), replacing 0.2.2's pin.
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `3d0d46b0…`) from a clean checkout of the source the package commit carries, exported with `package-elemod-recipe.mjs` and checked with `verify-elemod-release-exports.mjs`.
+- **Package:** `qperf-0.3.0-experimental-os1.74.elemod` `9b7b8801…1011`. Earlier source-only packages stay in `sdk/imports`.
+- **Host:** 33 scenario checks passed; at a fixed length a differential test against 0.2.2 found 0 differences in 32 million blocks; ASan and UBSan found nothing in 18 million blocks with random length changes. Two independent reviews; the first one's three findings are fixed.
+- **Emulator:** rytm-emu 2ac0f1f: 13 checks on the development base passed; QX07 (this source alone on the plain base) gives both media frames byte-identical to 0.2.2's.
+- **On a unit:** the author's Analog Rytm MKII, OS 1.74, QU02 (development base and this source; its module code byte-identical to the package), from RAM, run by the test rig with the take read from RAM: lengthening in the SCALE menu repeated the take, a scroll to INF kept it, a cleared take came back filled, and RECORD + YES after a lengthening applied and lengthened the track. Details in the module's TESTING.md.

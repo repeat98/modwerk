@@ -195,7 +195,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7.1' },
       mods: [
         { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
-        { id: 'qperf', file: 'qperf-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
+        { id: 'qperf', file: 'qperf-0.3.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],

@@ -21,7 +21,8 @@ it('checks real PR publication changes without executing module source', async (
     put(resolve(folder,'octamod.module.json'),JSON.stringify(document))
     put(resolve(root,'sdk/catalog.json'),JSON.stringify(catalog))
   }
-  const run=(...args:string[])=>spawnSync(process.execPath,['scripts/modules.mjs',...args],{cwd:root,encoding:'utf8'})
+  // A draft pull request's CI sets MODWERK_EVIDENCE_PENDING=1 (module-pr.yml), which turns these refusals into warnings.
+  const run=(...args:string[])=>spawnSync(process.execPath,['scripts/modules.mjs',...args],{cwd:root,encoding:'utf8',env:{...process.env,MODWERK_EVIDENCE_PENDING:'0'}})
   const draft=()=>spawnSync(process.execPath,['scripts/modules.mjs','--base','HEAD'],{cwd:root,encoding:'utf8',env:{...process.env,MODWERK_EVIDENCE_PENDING:'1',GITHUB_ACTIONS:''}})
   const failure=()=>{const result=run('--base','HEAD','--write');expect(result.status).not.toBe(0);return result.stderr}
   const git=(...args:string[])=>execFileSync('git',args,{cwd:root,encoding:'utf8'})
