@@ -7,6 +7,8 @@
   {"from": "0x100f8600", "to": "0x100f8f06", "owner": "playmodes", "what": "'PMNV': each pattern's play mode, 256 rows of 9 bytes and a 16-bit sum"},
   {"from": "0x100f9000", "to": "0x100f9044", "owner": "base", "what": "settings.c's 'MWS1': the choice kept for each of eight module settings (PROJ > MODWERK > SETTINGS), by the hash of its label"},
   {"from": "0x100f9044", "to": "0x100f91c8", "owner": "base", "what": "setting_presets.h MWP1 stores panel overrides for up to 32 imported module presets"},
+  {"from": "0x100f9200", "to": "0x100f970c", "owner": "base", "what": "status.c's 'MWER': what each measured module adds to the frame share in use, on waking and at rest, from the site's last MWMS v2 set (set_package.h)"},
+  {"from": "0x100f9710", "to": "0x100f9728", "owner": "base", "what": "diag.c's 'MWLR': the lateness of the last eight frame-interrupt entries before a stall, as the late-entry wait measured them (machine_registry.c)"},
   {"from": "0x100f9800", "to": "0x100fbf00", "owner": "midi-scenes", "what": "'SCS2': the current bank's MIDI scene locks, packed (magic, bank, count, sum, project id, then one long a lock)"},
   {"from": "0x100fbf00", "to": "0x100fc000", "owner": "kits", "what": "each of the 256 patterns' Kit, under the sum at 0x100f85a0"},
   {"from": "0x100fc000", "to": "0x100fe000", "owner": "base", "what": "diag.c's log"},
@@ -15,6 +17,7 @@
   {"from": "0x100ff900", "to": "0x100ffb00", "owner": "base", "what": "dsp.c's stall record"},
   {"from": "0x100ffb00", "to": "0x100ffb30", "owner": "base", "what": "modset.c's boot guard"},
   {"from": "0x100ffb30", "to": "0x100ffd38", "owner": "base", "what": "diag.c's trace of the frames before a stall"},
+  {"from": "0x100ffd38", "to": "0x100ffd40", "owner": "base", "what": "modset.c's 'MWAD' (development bases only, dev.c's ADOPT TEST): restore another base's card set, and write none"},
   {"from": "0x100ffd40", "to": "0x100fff00", "owner": "base", "what": "machine_registry.c's map of the machines a project uses (MWMC, 16 entries of 24 bytes)"}
  ]
 }

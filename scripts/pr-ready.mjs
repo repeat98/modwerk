@@ -77,7 +77,7 @@ export function mergeMain(git, ref) {
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [] }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
@@ -104,7 +104,11 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   else if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
     '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it. Until then, pr:ready -- --draft and the draft\'s CI list missing qualification, captures or approval as warnings.')
   if (baseDraft) notes.push('Watch the existing cumulative draft’s checks with gh pr checks <number> --watch. If main moves before the merge, run this again.')
-  else notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  else {
+    notes.push('Push and open or update the PR using the description template. Check the description locally with node scripts/pr-body.mjs FILE.md.')
+    if (!draftOnly && !problems.length) notes.push('Once the work and testing are complete, run gh pr view <URL> --json state,headRefOid,isDraft. On the checked commit, run gh pr ready <URL> if it is a draft. Read the state again and verify isDraft is false before reporting it ready.')
+    notes.push('Watch gh pr checks <URL> --watch until green. If main moves before the merge, run this again and push.')
+  }
   return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0, baseDraft }
 }
 
@@ -239,15 +243,16 @@ async function main(argv) {
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
   const baseDraft = changed.some(file => BASE.test(file)) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
-  const verdict = readiness({ python, baseDraft, dirty, behind, conflicts, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
+  const draftOnly = process.env.MODWERK_EVIDENCE_PENDING === '1'
+  const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
   if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
-  console.log(!verdict.ok ? 'Not ready yet.' : process.env.MODWERK_EVIDENCE_PENDING === '1' ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
-    ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'
-    : 'Ready: this PR can merge without the owner repairing it.')
+  console.log(!verdict.ok ? 'Not ready yet.' : draftOnly ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
+    ? 'Ready: local checks passed. Finish the GitHub handoff after the exact build has run on a unit.'
+    : 'Ready: local checks passed. Verify the PR status on GitHub after pushing.')
   return verdict.ok ? 0 : 1
 }
 
