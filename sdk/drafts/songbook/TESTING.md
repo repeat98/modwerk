@@ -201,6 +201,11 @@ MKI (OS 1.40C, base 6d23e888):
    (package `3edb5955`), as the developer reported it: A left on book 3 came back on its arrangement after a LOAD of B
    and back, the list's cursor on it, PLAY from its first row, no NOW SAFE TO EJECT!, one job more than a load with
    nothing to bring back.
+5. Fix 3 set only the list's drawn cursor; YES takes the list's choice (0x400c0ba8), which stayed where it was, so YES
+   after a switch or a load could select another arrangement than the one under the cursor (found with the setlists
+   build, where CUE + YES added arrangement 1). Both are set now (build `c642ca255`, package `84a8ba8a`); on the
+   developer's MKI, as they reported it: after a switch away from book 6 and back, and after closing and reopening
+   CHANGE, YES without moving the cursor selected the book's chosen arrangement.
 
 On build `85d544a68` (package `81eb7172`), as the developer reported it: A left on book 3 on an arrangement with rows,
 LOAD of B came up on book 2, arrangement 1, with the list's cursor on 1; LOAD of A came back on book 3 and its
