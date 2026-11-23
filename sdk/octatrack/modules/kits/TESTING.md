@@ -38,7 +38,7 @@ Developer's report (twwwy), 21 November 2026, a base 0.7.13 development twin `5b
 kept Pattern Sample Locks 0.1.9 `6fea272e…`: "they all works. the menu works too".
 
 Not tested: FUNC+PASTE+PART on an MKI (FUNC+PASTE+MIDI), Kits with Pattern Sample Locks on base 0.8, a Keep, the
-flashed base 0.8, a power cycle, sound.
+flashed base 0.8, a power cycle.
 
 ## Kits 0.1.1-experimental on base 0.7.9: agent's run, 19 November 2026
 
