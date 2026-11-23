@@ -42,6 +42,10 @@ describe('diagnostics pull', () => {
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
   })
+  it('shows how a disconnected trial ended in Problems', () => {
+    const event = entry(1, 'tester', { event: 'sync_failed', phase: 'trial', error: 'disconnected', step: 'trial', reconnect: 'closed' })
+    expect(summary({ events: [event], counts: [] }).split('Problems (')[1]).toContain('error=disconnected step=trial reconnect=closed')
+  })
   it('lists failures before a USB connection with the reported reason and optional client', () => {
     const link = (n, failure, client) => entry(n, 'tester', { event: 'link_failed', phase: 'idle', failure, client })
     const text = summary({ events: [link(1, 'no-device'), entry(2), link(3, 'claim-failed', { browser: 'chrome', major: 150, os: 'linux' })], counts: [] })
@@ -173,6 +177,19 @@ describe('diagnostics pull', () => {
       at(5, 1, 'freeze', 0, { playing: true }), at(6, 1, 'freeze', 25919), at(7, 2, 'freeze')])
     expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual(
       [['3', true], ['4', false], ['5', false], ['6', false], ['7', false]])
+  })
+  it.each([
+    [0x3ffffffe, false], [0x40000000, true], [0x40fffffc, true], [0x41000000, false],
+  ])('only prints instruction bytes the crash handler captured at PC %i', (pc, captured) => {
+    const crash = { count: 1, vector: 4, pc, code: [0x12345678], memory: [0x87654321] }
+    const events = [entry(1, 'tester', { event: 'device_log', log: { crash } })]
+    const text = summary({ events, counts: [] })
+    expect(text).toContain(`crash record 1: vector 4 pc 0x${pc.toString(16)}`)
+    if (captured) expect(text).toContain('code 12345678 uncached 87654321')
+    else {
+      expect(text).toContain('instruction bytes unavailable (PC outside SDRAM)')
+      expect(text).not.toMatch(/12345678|87654321/)
+    }
   })
   it('names a crash incident’s program counter from the symbols kept for its base, and from no other base’s', () => {
     const at = (seq, kind, a) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
