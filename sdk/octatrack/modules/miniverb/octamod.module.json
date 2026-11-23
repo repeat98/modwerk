@@ -147,7 +147,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.2.3 output is bit-identical to published 0.2.2 under moving controls, every trigger split and hot input on both DSP cores; its ring wraps at 15,870 words, so it never writes the slot's last 514 words (Sidechain Compressor's key window on T3 and T7): guarded renders show no write past the ring, and the same guard catches 0.2.2. 76 current-source native DSP checks passed. Native/browser parity, isolated packages, hardware and the original THRU noise are not yet verified for this source; see TESTING.md.",
+    "summary": "0.2.4 output is bit-identical to 0.2.3 under the widened identity gate (56 settings: both slots, both payloads, 16-sample blocks, 2 s, ramp, stereo, split, instance state after every block) and to published 0.2.2 in verify.py's 76 checks; it costs about 14 % fewer modeled DSP cycles. An automated unit run on an MKII (device:test with a 120 s soak, device:price) passed; listening, Keep and power cycle are not yet verified for this source; see TESTING.md.",
     "hardwareStatus": "untested",
     "gates": [
       "verify.py: bit-identity with published 0.2.2, the 15,870-word write guard and its 0.2.2 control, exact dry, bounded neutral quantization, raw-wet mixer regression, endpoint spectra, eight-instance isolation, dirty-state guards and 30-second moving render",

@@ -1,168 +1,82 @@
-# Mini Verb 0.2.3-experimental testing
+# Mini Verb 0.2.4-experimental testing
 
-This update keeps Mini Verb out of Sidechain Compressor's key window. Its delay
-ring was modulo 16,384 (`m4 = m5 = $3fff`), so the write head passed over every
-word of its FX2 slot although its lines end at ring position 13,749. On T3 and
-T7 the last 514 words of that slot (+$3DFE..+$3FFF) are Sidechain's cross-core
-key window, so a card build with both corrupted each other. The ring now wraps
-at 15,870 words (`m4 = m5 = $3dfd`); FX2 slot bases are 16K-aligned, which the
-16K ring already relied on. Start-up keeps 0.2.2's 128 dry calls: the first four
-clear nothing, the last 124 clear 128 words each under the ring's modulus (the
-first of them wraps two words to the ring start), and `m4` goes back to linear
-before that path returns. `manifest.py` declares `buffer_words=15870`.
+This update only lowers DSP cost; the output is meant to be identical to 0.2.3, sample for sample. It brings over the
+MINIVERB speed-ups of octabam's DSP audit (Yves Rosius, sambanks/octabam, MIT, Copyright (c) 2026 Sam Banks):
 
-Six program words are added, all outside the sample loop (a compare and a
-branch for the empty calls, and the restored `m4`). No line, tap, delay,
-control, default, FX ID or X state changes. The exact published 0.2.2 source is
-preserved as [upstream/miniverb-0.2.2.asm](upstream/miniverb-0.2.2.asm).
+- `05971e11` and `af7f4112`: each delay-tap offset (`move #>off,n5`) loads right after the access before it instead of
+  just before its own access, so the three cycles the address unit waits before using a freshly written `n5` overlap
+  the work between taps (DSP56300 Family Manual A.2). Straight-line code: nothing between the old and the new place
+  names `n5`. Input diffuser 113's write at offset 0 is `move a,y:(r5)`, with no `n5` load.
+- `0a85c45d`: a constant `#>$XX0000` moved into a data register is the one-word short immediate `#$XX` (bits 23-16):
+  0.75, 0.625 and the branches' 0.5 gains, 127/128 at MIX's and TONE's top, and TONE's 1/16 crossover (Modwerk's own
+  code, the same form).
+- `9268e8ed`: the clear counter's `sub #>$1,a` and RATE's `add #>$1,a` are 6-bit immediates.
 
-No physical device was flashed, played or rebooted for this source. Earlier
-records keep their versions: [0.2.2](evidence/testing-0.2.2.md) (two redundant
-coefficient reloads removed), [0.2.1](evidence/testing-0.2.1.md) (the mixer fix,
-#428 and its owner approval) and [0.2.0](evidence/testing-0.2.0.md).
+octabam's patch places 10 of its 16 hunks on Modwerk's fork with `patch -F0`; the input diffusers, the clear counter,
+the 127/128 constants and the duplicate load of line 4's write offset were placed by hand (Modwerk's fork already keeps
+`y1` for diffusers 173 and 449). The published 0.2.3 source is kept as
+[upstream/miniverb-0.2.3.asm](upstream/miniverb-0.2.3.asm); earlier records are in [evidence/](evidence/testing-0.2.3.md).
 
-## Three cost measures, kept apart
+## Same output
 
-| Measure | 0.2.0 | 0.2.1 | 0.2.2 | 0.2.3 | Source |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Modeled cycles/sample: static sample-loop word span (`tools/build/cycle_count.py`) | 411 | 415 | 411 | **411** | verify.py |
-| Executed instructions/sample, worst matched single instance, both cores | 360.75 | 364.75 | 362.75 | **362.75** (loop unchanged, not re-run) | benchmark.py |
-| Chip cycles/sample on hardware | 665 (core 1) | not measured | not measured | **not measured** | owner's MKII, 11 Oct 2026 |
+| Check | Result | Where |
+| --- | --- | --- |
+| Widened identity gate (`sdk/cycle-scan/verify_ident.py`), reference stamped on main's 0.2.3: own slot and the other, payload B, 15- and 16-sample blocks, 2 s, a ramp of every knob with RATE stepping, stereo input, the split call, the r7 instance block after every block | IDENTICAL, 56 of 56 settings, no instance-block difference | `dsp_host`, 23 Nov 2026 |
+| `verify.py` (this folder) against published 0.2.2, which 0.2.3 matched bit for bit: eight moving instances on both cores, every trig split, hot input at each TONE, exact dry, the 15,870-word write guard, dirty state, a 30 s guarded render | 76 of 76 checks pass | `dsp_host`, 23 Nov 2026 |
 
-The modeled figure counts words: a two-word instruction (a long immediate, an
-absolute address) counts two, and memory contention and pipeline stalls are not
-modeled. The Octatrack USB loader charges a modeled or executed claim at 7/4
-until a hardware figure exists: 411 is charged 720 chip cycles, within the
-smaller core's 726 left for one module beside seven stock slots of 342; 415
-would be 727 and refused.
+Both are emulator results: they show the code computes the same samples, not how it runs on a unit.
 
-The hardware figure is the 0.2.0 row of "Measured on the owner's MKII
-(11 October 2026)" in
-[OCTATRACK_ELEKLOADER_MIGRATION.md](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md):
-idle-pass meters, FX2 on T1 against NONE, the dearest of three knob settings.
-It is 1.62 times 0.2.0's modeled 411 and 1.84 times its executed 360.75, so an
-executed-instruction claim for Mini Verb would be undercharged by the 7/4 rule;
-keep the modeled claim. It is not a measurement of 0.2.1, 0.2.2 or 0.2.3.
+## Cost
 
-## Matched comparison with worst-case SPRING REV
+| Measure | 0.2.3 | 0.2.4 | Source |
+| --- | ---: | ---: | --- |
+| Cycle scan, dearest setting (RATE 0.34, every knob at its minimum), cycles a sample | 698.6 | **600.4** (-98.2, -14 %) | `sdk/cycle-scan/records/miniverb.json` |
+| of them pipeline stalls (address unit) | 159.3 (96) | **71.3** (6) | the same |
+| Executed instructions a sample at that setting | 363.4 | 362.4 | the same |
+| Modeled cycles: static sample-loop word span (`cycle_count.py`), the figure the package declares | 411 | **402** | `cycle_count.measure` |
+| Program words | 538 | 525 | the same |
+| DSP T1-4 added in use on T1 FX2 at defaults (`device:price`, same scene, same twin) | 13.6 points | **11.7** (twice; 11.5 on Part 1) | MKII, below |
 
-[benchmark.py](benchmark.py) follows Air Chorus's matched protocol: one instance
-on each core (positions 0 and 4), audio at X:0, 4,096 blocks of 16 frames,
-identical tone/transient input, the null stub's peak subtracted per split and
-core, trigger splits 0 to 15. SPRING REV runs fixed at defaults, at each TYPE,
-and with the moving schedule (minima, maxima, ramps, endpoint jumps, every
-TYPE); Mini Verb fixed at defaults, TONE 0 and TONE 127, and moving. Statistics
-are in [evidence/stock-comparison-0.2.2.json](evidence/stock-comparison-0.2.2.json). It was not
-re-run for 0.2.3: the sample loop is the same, and the eight-instance renders below
-execute exactly 0.2.2's instructions per block.
+The package declares `cycles` 402, `cyclesKind` modeled: the same measure 0.2.3's 411 was, taken on this source. The
+loader charges a modeled figure at 7/4, so 402 is charged 704 chip cycles (411 was 720), against the 600 the scan
+models at the dearest setting.
 
-| Effect | Unsplit worst | Worst over splits | Worst case | Ratio to SPRING |
-| --- | ---: | ---: | --- | ---: |
-| SPRING REV | 257.5 | **314.0** | TYPE 0, split 4 | 1.000 |
-| Mini Verb 0.2.0 | 357.375 | 360.75 | TONE 0, split 1 | 1.149 |
-| Mini Verb 0.2.1 | 361.375 | 364.75 | TONE 0, split 1 | 1.162 |
-| Mini Verb 0.2.2 | 359.375 | **362.75** | TONE 0, split 1 | **1.155** |
+## Test procedure
 
-Executed instructions/sample, identical on both cores. Splits cost SPRING up to
-56.5 instructions/sample and Mini Verb 3.4. Its dark Tone path (TONE below 64)
-is the dearest; TONE 64 skips the tone pole. On the owner's MKII the dearest
-stock SPRING REV measured 299 / 288 chip cycles/sample (core 1 / core 0), so the
-0.2.0 hardware ratio was about 2.2, not the emulator's 1.15: stock code runs
-near one cycle per instruction and Mini Verb did not. That gap is unexplained
-by these runs.
+Agent's run on the owner's MKII, 23 November 2026, through the unit queue: a development twin of main's base
+(`13fed04b`, `build_core.py --dev` with the beta flags) RAM-booted from the owner session's twin `9138bd29`, a private
+build of this source (`module:dev --build-only`, SHA-256 `cf610384ad37447fbd9dc5fb59d326edeeafb0fb993f3caf376f3d46f55c5f84`,
+declaring 402 modeled cycles), then `9138bd29` booted back. Nothing was kept and no Part was saved.
 
-## Bit-identity with 0.2.2, the window and native DSP regression — 20 October 2026
+Steps 1 to 5 were not run as the procedure runs them: `module:doctor`, `modules:generate` and the package import refuse
+0.2.4 until the owner's build approval (`sdk/approvals/miniverb-build-approval.json`) names this source. Step 4's scan
+record is current. The unit steps ran one by one:
 
-All **76 checks passed** in [verify.py](verify.py); exact source hashes and
-verdicts are in [evidence/dsp-regression-0.2.3.json](evidence/dsp-regression-0.2.3.json).
-The identity gates compare 0.2.3 with the assembled published 0.2.2 program,
-from the first block, start-up included:
+| # | Step | Result |
+| --- | --- | --- |
+| 6 | status, inventory | twin `13fed04b`, empty inventory |
+| 7 | `device:test --soak 120` (Part 2: Part 1's working copy differed from its saved copy, so it refused there) | passed: self-test with the package installed, Mini Verb on FX2 of T1 (453 per mille peak) and T5 (532) admitted in 118 ms each; all at once on eight tracks five placed and three refused by DSP admission, CPU 36.4 %, core peaks 683 and 678 per mille; Part switches 12 of 12; 120 s soak, highest core peak 736 per mille; rolled back |
+| 8 | soak | inside step 7 (no MIDI bridge for `octatrack-soak.mjs` in this run) |
+| 9 | `device:price` | at rest: frame +0.0 to +0.1 points (under the 0.2 limit), CPU +0.1 to +0.3; in use on T1 FX2: frame +0, DSP T1-4 +11.7 points, against published 0.2.3's +13.6 in the same run (about 86 cycles a sample less at defaults, as the scan predicts) |
+| 10 | inventory | unchanged, empty |
+| 11 | by hand | not run: no screenshots or USB recordings in this run; the pages and controls are unchanged from 0.2.3 |
+| 12 | the submitter's own stage | not run yet |
 
-- eight instances, four per core, moving controls, mixed splits 1/3/7/15:
-  bit-identical;
-- one instance per core with moving controls, every split 0 to 15: bit-identical;
-- 0.9 FS 733 Hz input, MIX 32, TONE 0, 64 and 127, split 7, both cores:
-  bit-identical.
+Edge cases:
 
-The window: `dsp_host -guard 15870 -guard-shared` allows each instance to write
-only the first 15,870 words of its allocation, in core-private Y and in the
-shared window where T3's and T7's slots lie. Eight moving instances, the
-dirty-memory start and the 30-second moving render write nothing past it (0
-stray write regions on every instance). The same guard on published 0.2.2
-reports 770 stray write regions on every instance, so the gate catches the
-fault it is for. Over dirty memory, all eight instances stay silent after init,
-so nothing reads the unused tail. Until this version the guard gates counted
-the text `0 stray write regions`, which `770 stray write regions` also contains;
-they now match the whole number.
-
-Every earlier gate still passes with the same values as 0.2.2: exact dry at
-MIX 0, neutral voice within 4 LSB of 0.2.0, the raw-wet mixer regression, Tone
-endpoint spectra, eight-instance isolation and dirty X/Y state. Sound quality
-(`npm run fx:audit`) was not tested; output is bit-identical to 0.2.2, which was
-not audited either.
-
-| Measurement | 0.2.3 | 0.2.2 |
-| --- | ---: | ---: |
-| Assembled program | 538 words | 532 |
-| Eight moving instances, four per core, mixed splits | 23,488 instructions/core/block | 23,488 |
-| Eight neutral instances | 21,220 instructions/core/block | 21,220 |
-| 30-second moving eight-instance guarded render | 82,688 blocks, 23,488 peak; zero clipping or guard violations | 82,688 blocks, 23,488 peak |
-
-Reproduce with the developer's private original MAIN OS, a disposable Octabam
-tree (this checkout's `sdk/octabam` with the patched `vendor/` and
-`out/raw/section_3_MAIN_OS.bin`) and a `dsp_host` built from this checkout's
-`tools/harness/dsp_host/dsp_host.cpp` (SHA-256
-`27257a3ee152d812629dc9880eb9abbb1d05b6df1dfb558f73d0d251bbf2d921`):
-
-```sh
-DSP_HOST=/abs/dsp_host python3 -B sdk/octabam/modules/miniverb/verify.py \
-  --sdk /abs/disposable/octabam --stock /abs/private/section_3_MAIN_OS.bin \
-  --output /abs/private/miniverb-0.2.3-results
-DSP_HOST=/abs/dsp_host python3 -B sdk/octabam/modules/miniverb/benchmark.py \
-  --sdk /abs/disposable/octabam --output /abs/private/miniverb-0.2.3-bench \
-  --asm 'MINIVERB 0.2.0=/abs/upstream/miniverb-0.2.0.asm' \
-  --asm 'MINIVERB 0.2.1=/abs/upstream/miniverb-0.2.1.asm' \
-  --asm 'MINIVERB 0.2.2=/abs/upstream/miniverb-0.2.2.asm' \
-  --asm 'MINIVERB 0.2.3=/abs/miniverb.asm'
-```
-
-The stock MAIN OS SHA-256 is
-`164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`. Raw dumps,
-inputs, meters and WAVs stay private; only statistics are committed.
-
-## Software resource bounds
-
-The audited loop is 411 modeled cycles/sample. Two split process calls per
-16-sample block cost 6,576 loop cycles, plus twice all 127 outside-loop words,
-twice 128 ring-clear stores, 32 initialization stores and a 256-cycle setup,
-branch and return allowance: **7,374 modeled cycles**, rounded up to **8,192
-modeled cycles/instance/block** as before. Four instances per core with the
-inherited 1,415 cycles/sample stock reserve total 55,408 of the arithmetic
-72,560/core/block. This conditional model excludes chip memory contention.
-
-Per instance: 49,920 logical bytes (full inherited X block and the 16K Y
-allocation, of which the ring uses 15,870 words). Shared: both programs 1,076
-words (3,228 bytes) and the 384-byte hardware stack capacity. Eight instances:
-**402,972 logical bytes**. No new ColdFire code,
-table, CPU RAM or allocation.
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Many instances, both cores | moved tap loads and a smaller declared cost change what is admitted beside other instances | `device:test` all-at-once pass, eight tracks | pass: five placed, three refused by admission, no fault |
+| Part switches while playing | every switch re-inits the instance | `device:test`, 12 switches | pass |
+| Trig splits and block sizes | the reordered loop runs for any frame count | identity gate `split/`, `f16/`; `verify.py` all 16 splits | pass (emulator) |
+| Payload B, core 1 | the same code runs on both cores | identity gate `B/` (emulator); unit picks on T1 and T5 | pass |
+| Sidechain Compressor's key window | the ring must still stop at 15,870 words | `verify.py`'s guarded renders and its 0.2.2 control | pass (emulator) |
+| Install and rollback | the package changed | `device:test` trial | pass, inventory unchanged |
+| Sound by ear, two instances by ear, Part and project reload, Keep and power cycle | only a person at the unit can judge | the submitter's stage 12 | not run: left to the owner |
+| MKI | another model | none on this computer | not run |
 
 ## Not yet done for this source
 
-- Native/browser composition parity (`npm run module:verify -- miniverb --os …`),
-  the isolated Docker package build and its import, the USB package and the
-  regenerated Analog BD companion proof.
-- Owner approval of this exact source. Hardware, chip timing, played
-  automation, Part/project persistence, physical reboot, maximum load and the
-  original #428 noise remain unverified.
-- Over USB the base still keeps Mini Verb off T3 and T7 while Sidechain
-  Compressor is installed: it has no reviewed buffer size for any custom FX2
-  effect, so it assumes the whole slot.
-
-## Hardware steps for a private 0.2.3 build
-
-1. Card build with Mini Verb and Sidechain Compressor. Put Mini Verb on T7's
-   FX2 with T7 empty, play a loud sample on T5, and listen to T7 and MAIN: 0.2.2
-   played a ghost of T5 there, 0.2.3 must not. Repeat with T3 and T1. Then set
-   a COMPRESSOR keyed from another core and check the key still follows it.
-2. Then follow the 0.2.1 steps in [evidence/testing-0.2.1.md](evidence/testing-0.2.1.md)
-   with the 0.2.3 image. Report failures and untested steps.
+- Listening, two instances by ear, Part and project reload, a Keep and a power cycle (the submitter's stage 12).
+- A chip-cycle reading at the scan's dearest setting, which would let the declaration become a `hardware` figure.
+- None of octabam's speed-ups has a unit reading upstream: they were proven in `dsp_host` only. The reading above is the first.

@@ -5,7 +5,7 @@
     "changes": [
       "Uses less DSP time with exactly the same sound: the reverb waits less on the DSP between its delay taps, about a sixth less work a sample.",
       "Controls, defaults and saved projects are unchanged.",
-      "Known issue: not yet tested on hardware."
+      "Known issue: checked on an MKII by an automated run only; not yet tested by ear or on the MKI."
     ]
   },
   {
