@@ -10,6 +10,19 @@ IF11 (sha256 56772127; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved 
 
 **IFD2** (sha256 80447e8c: the private combo set FXCD on its dev base efcc7a07 + Improved FLTR 9ce6ed504 + the private filter-measuring machine), RAM-booted on Nathaniel Pavel's MKII (flash FXCD, same layout), 23 Nov 2026, by the rig: if-band-words (BW's analog words, FRQ 48 with RES 52 and 72, and stock PK) and if-typ-turn (TYP's knob stops at BW) pass. The edge measurement did not run: on this base the measuring machine's noise was silent on the unit (it plays in rytm-emu, and played on the unit on the earlier base), so its recordings hold no signal. BW's audio path and width table are the ones IFC3 measured on the unit as BWL (below): edges within 3..7 %.
 
+**IFC5** (sha256 01cf6c15: the private combo set FXC8 on its dev base 47b00b14, where the measuring machine sounds on the unit, + Improved FLTR e7b240584's module, the same code as IFD2's + the measuring machine), RAM-booted the same day (flash FXCD, same layout): if-band-words, if-typ-turn and the edge check pass.
+
+| setting | asked | measured -3 dB edges |
+| --- | --- | --- |
+| BW, FRQ 48, WID 51 (2 oct) | 220..875 Hz | 232..858 Hz |
+| BW, FRQ 48, WID 102 (4 oct) | 220..3482 Hz | 247..3535 Hz |
+| BW, FRQ 36, WID 127 (5 oct) | 110..3426 Hz | 130..3281 Hz |
+| BW, FRQ 60, WID 13 (6 st) | 440..626 Hz | 446..624 Hz |
+| BW, FRQ 60, WID 51 | 440..1750 Hz | 469..1759 Hz |
+| BW, FRQ 72, WID 51 | 880..3501 Hz | 943..3599 Hz |
+
+Top edges within about 3 %, bottom edges 2..18 % high (most for the widest band), as in the earlier runs.
+
 ## Emulator, two-type layout
 
 IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 4 dB a row with +15 dB at the top, at five settings, and stock BP; each box against a reference recorded from screens checked by eye) pass. `sdk/tests/test_improved_fltr_table.py` keeps `src/width-table.h` in step with the calibration.
