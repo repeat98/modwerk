@@ -1,0 +1,25 @@
+OCTATRACK 1.40C, base 678843ccf3d658ba…
+trial: c97b00a44692fd82… running
+  1s: ticks 4517, value 0x0, slot running, refusals 0
+  2s: ticks 4577, value 0x0, slot running, refusals 0
+  3s: ticks 4638, value 0x0, slot running, refusals 0
+  4s: ticks 4698, value 0x0, slot running, refusals 0
+  5s: ticks 4758, value 0x0, slot running, refusals 0
+  6s: ticks 4820, value 0x0, slot running, refusals 0
+  7s: ticks 4880, value 0x0, slot running, refusals 0
+  8s: ticks 4940, value 0x0, slot running, refusals 0
+  9s: ticks 5001, value 0x0, slot running, refusals 0
+  10s: ticks 5061, value 0x0, slot running, refusals 0
+  11s: ticks 5121, value 0x0, slot running, refusals 0
+  12s: ticks 5181, value 0x0, slot running, refusals 0
+  13s: ticks 5242, value 0x0, slot running, refusals 0
+  14s: ticks 5302, value 0x0, slot running, refusals 0
+  15s: ticks 5362, value 0x0, slot running, refusals 0
+  16s: ticks 5423, value 0x0, slot running, refusals 0
+  17s: ticks 5483, value 0x0, slot running, refusals 0
+interrupted: rolling back
+  18s: ticks 5545, value 0x0, slot running, refusals 0
+verdict: no crash, stall, freeze or skipped track logged during the trial
+rolled back (pass --accept to keep it)
+left upload mode in 8 ms
+normal, generation 4, active 678843ccf3d658ba…

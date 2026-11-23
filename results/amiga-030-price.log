@@ -1,0 +1,4 @@
+amiga                       at rest frame +0, cpu +0.1
+amiga                       curve on T1 T3: +30.1, +38.4 -> rest 0, first 30.1, each 8.3 (stopped after T3: longest frame 120 %, 6 renders skipped)
+amiga                       admission: empty admitted, longest frame 51 %, 0 dropped, 0 stalls; medium admitted, longest frame 111.9 %, 0 dropped, 0 stalls
+                            NOT RELEASABLE: its first instance was read at 111.7 % of a frame: past 100 % the guard drops renders, so that is the overload, not the module's cost. Read it on a pattern with room (--measure-pattern)

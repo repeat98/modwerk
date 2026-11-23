@@ -1,0 +1,83 @@
+{
+ "base": "678843cc (base 0.8 development twin, main b5864cce7)",
+ "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples), picks on empty C02, Part 1; owner's MKII",
+ "seconds": 8,
+ "slot": "T1",
+ "measuredAt": "2026-11-23T14:23:09.607Z",
+ "results": [
+  {
+   "id": "amiga",
+   "version": "0.3.1-experimental",
+   "packageSha256": "9cbb74810f20494550534ee3365fe8752481d601f611fd073e8bac13d85d3170",
+   "before": {
+    "frame": 35.8,
+    "frameMax": 80.8,
+    "frames": 22439,
+    "skipped": 0,
+    "cpu": 53.2,
+    "dsp1to4": 39.5,
+    "dsp5to8": 42.3
+   },
+   "atRest": {
+    "frame": 35.9,
+    "frameMax": 81.3,
+    "frames": 22266,
+    "skipped": 0,
+    "cpu": 53.5,
+    "dsp1to4": 38.2,
+    "dsp5to8": 43.4
+   },
+   "atRestAdds": {
+    "frame": 0.1,
+    "cpu": 0.3,
+    "dsp1to4": -1.3,
+    "dsp5to8": 1.1
+   },
+   "curve": {
+    "tracks": [
+     "T1",
+     "T3"
+    ],
+    "points": [
+     81.3,
+     109.5,
+     116.3
+    ],
+    "adds": [
+     28.2,
+     35
+    ],
+    "first": 28.2,
+    "each": 6.8,
+    "notes": [
+     "stopped after T3: longest frame 116.3 %, 3 renders skipped"
+    ],
+    "admission": [
+     {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 50.8,
+      "frame": 32.8,
+      "dropped": 0,
+      "stalls": 0
+     },
+     {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 108.8,
+      "frame": 54.2,
+      "dropped": 0,
+      "stalls": 0
+     }
+    ]
+   },
+   "rolledBack": true
+  }
+ ]
+}

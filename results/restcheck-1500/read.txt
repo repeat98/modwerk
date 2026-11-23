@@ -1,0 +1,87 @@
+euclid frame_hook (rests)        stock 43f9800000f0
+   euclid-t0        4ef940d85428  DIFFERS
+   euclid-t6        4ef940d85428  DIFFERS
+   euclid-t12       4ef940d85428  DIFFERS
+   euclid-stopped   4ef940d85428  DIFFERS
+   repitch-t0       43f9800000f0  = stock
+   repitch-t6       43f9800000f0  = stock
+   repitch-t12      43f9800000f0  = stock
+   repitch-stopped  43f9800000f0  = stock
+   after            43f9800000f0  = stock
+euclid start_hook (rests)        stock 23c0800065b8
+   euclid-t0        4ef940d85448  DIFFERS
+   euclid-t6        4ef940d85448  DIFFERS
+   euclid-t12       4ef940d85448  DIFFERS
+   euclid-stopped   4ef940d85448  DIFFERS
+   repitch-t0       23c0800065b8  = stock
+   repitch-t6       23c0800065b8  = stock
+   repitch-t12      23c0800065b8  = stock
+   repitch-stopped  23c0800065b8  = stock
+   after            23c0800065b8  = stock
+euclid resume_hook (rests)       stock 23c0800065b8
+   euclid-t0        4ef940d85456  DIFFERS
+   euclid-t6        4ef940d85456  DIFFERS
+   euclid-t12       4ef940d85456  DIFFERS
+   euclid-stopped   4ef940d85456  DIFFERS
+   repitch-t0       23c0800065b8  = stock
+   repitch-t6       23c0800065b8  = stock
+   repitch-t12      23c0800065b8  = stock
+   repitch-stopped  23c0800065b8  = stock
+   after            23c0800065b8  = stock
+repitch rate_gate (rests)        stock 082f000400436608
+   euclid-t0        082f000400436608  = stock
+   euclid-t6        082f000400436608  = stock
+   euclid-t12       082f000400436608  = stock
+   euclid-stopped   082f000400436608  = stock
+   repitch-t0       4ef940d844004e71  DIFFERS
+   repitch-t6       4ef940d844004e71  DIFFERS
+   repitch-t12      4ef940d844004e71  DIFFERS
+   repitch-stopped  4ef940d844004e71  DIFFERS
+   after            082f000400436608  = stock
+repitch pitch_gate (rests)       stock 71d6a3460c404000
+   euclid-t0        71d6a3460c404000  = stock
+   euclid-t6        71d6a3460c404000  = stock
+   euclid-t12       71d6a3460c404000  = stock
+   euclid-stopped   71d6a3460c404000  = stock
+   repitch-t0       4ef940d8442c4e71  DIFFERS
+   repitch-t6       4ef940d8442c4e71  DIFFERS
+   repitch-t12      4ef940d8442c4e71  DIFFERS
+   repitch-stopped  4ef940d8442c4e71  DIFFERS
+   after            71d6a3460c404000  = stock
+ev_play_increment site           stock 4ef940ae14b84e71
+   euclid-t0        4ef940ae14b84e71  = stock
+   euclid-t6        4ef940ae14b84e71  = stock
+   euclid-t12       4ef940ae14b84e71  = stock
+   euclid-stopped   4ef940ae14b84e71  = stock
+   repitch-t0       4ef940ae14b84e71  = stock
+   repitch-t6       4ef940ae14b84e71  = stock
+   repitch-t12      4ef940ae14b84e71  = stock
+   repitch-stopped  4ef940ae14b84e71  = stock
+   after            4ef940ae14b84e71  = stock
+repitch tstr_resolve (stays)     stock 712a00147404
+   euclid-t0        712a00147404  = stock
+   euclid-t6        712a00147404  = stock
+   euclid-t12       712a00147404  = stock
+   euclid-stopped   712a00147404  = stock
+   repitch-t0       4ef940d845d0  DIFFERS
+   repitch-t6       4ef940d845d0  DIFFERS
+   repitch-t12      4ef940d845d0  DIFFERS
+   repitch-stopped  4ef940d845d0  DIFFERS
+   after            712a00147404  = stock
+live FX (FX1 T1-8, FX2 T1-8): 04 04 04 04 04 04 04 04 08 08 08 08 08 08 08 08
+map magic b'MWF\x80' gen 00000874 len 780
+  handle 0x06 module 773c84aa SC Ringmod
+  handle 0x09 module d7bf66ce LOFI2
+  handle 0x0b module d4582ab2 Vibrato
+  handle 0x0e module 16332a40 BBD Delay
+  handle 0x0f module 9f482bb9 Tape Echo
+  handle 0x17 module 3cbedc9c Mini Verb
+  handle 0x1b module 873d83cc E-Verb
+  handle 0x1d module d54f5fed Euclid
+  handle 0x1e module 496d848e Air Chorus
+  handle 0x1f module bcf0d674 TapeHead
+project names module effects:
+  Euclid 1 ['bank 0 working Part 1 FX1 T4']
+  Tape Echo 1 ['bank 0 working Part 1 FX2 T4']
+  Air Chorus 1 ['bank 0 working Part 1 FX2 T5']
+TSTR = REPITCH in: 0 []

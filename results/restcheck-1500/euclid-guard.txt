@@ -1,0 +1,1 @@
+frame max 89.9 %, latest start 0.0 %, in the frame interrupt 26.3 % over 206218 frames, skipped 0 on -, share 80.0 %
