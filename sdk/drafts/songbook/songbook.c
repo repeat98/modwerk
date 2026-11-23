@@ -37,7 +37,7 @@
 #define SLOTS 8u
 #define BLOCK 5652u                  /* one arrangement in battery RAM: a 20-byte header, 256 rows of 22 bytes */
 #define WORKING 0x10000004u          /* the 8 working blocks, then the 8 blocks ARR SAVE keeps, then 8 flags */
-#define CHANGED 0x1001614cu          /* one bit a slot: changed since written */
+#define CHANGED 0x1001614cu          /* one bit a slot: edited since read; stock's writer sets it again after writing (0x40091748) */
 #define RECORD 0x100f8f10u           /* the module's battery-RAM record (battery-ram.json): magic, book, backup, sum, serial, events */
 #define CHANGE_WINDOW 0x400c0b40u    /* ARR > CHANGE's window; 0 while closed */
 #define PLAYING 0x800065b8u          /* the transport */
@@ -394,7 +394,12 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
     struct as_state *s = ready();
     int rc = 0;
     if (s->pending >= 0) s->hush = 1;                     /* our job: its NOW SAFE TO EJECT! is closed after */
-    if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
+    if (s->book == 0 && !s->damaged) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
+    else if (s->book == 0) {
+        /* Book 1 read only in part: stock's writer would write every slot its mask names (a sync: all 8), the empty
+         * ones too, over arr01-08 (it chooses by the mask or a missing file, never by this byte). Only the edited ones. */
+        if (rd8(CHANGED)) { if (write_changed(s, 0)) wr8(CHANGED, 0); else rc = -1; }
+    }
     else if ((a2 & 0xffu) || rd8(CHANGED)) {
         /* Another book: its 8 files together, whenever stock asks for any (as stock's writer does with its mask: the
          * SYNC job, and so every switch, asks for all 8). Not only when something is marked changed: the list's

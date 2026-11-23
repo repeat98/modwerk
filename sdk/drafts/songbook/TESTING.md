@@ -1,12 +1,12 @@
 # Songbook testing
 
 Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gate, emulator runs and the developer's own tests on their MKI (flashed base
-`6c189889…`), each on the named build below; the last build tested on the unit is package `08d0833a…` (source
-`f068cd608`), on base 0.7.13.
+`6c189889…`), each on the named build below; the last build tested on the unit is package `37f7e94f…` (source
+`b976e98ff`), on base 0.7.13, 23 November 2026 (the test procedure below); the book 1 fix after it is host-tested only.
 
 ## Host gate
 
-`verify.py`: 88 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 89 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
@@ -129,6 +129,53 @@ the battery record keeps that state too (its byte 6), and the install handler re
 `verify.py` (88 checks): the reinstall and the return after Undo, each between arr11.work's failed open and the next
 sync; without the record byte both overwrite arr11.work. On the unit: not yet.
 
+## The test procedure on the MKI (owner's request, #1737, 23 November 2026)
+
+Package `37f7e94f7fff7b1828fc6a4eb3c8aab21ccf2f84a78739851929ab6b8b7233ba` (source `b976e98ff`), Andrey Sidorkin's
+MKI, flashed base 0.7.13 (`6d23e888…`), USB directly on the Mac, the developer's scratch project, kept beside USB AUDIO
+and Arr Rows 0.2.0.
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Software checks (`module:doctor --draft songbook`) | green |
+| 2 | Beside every other module | by the doctor (a draft) |
+| 3 | Name the build | `37f7e94f…` from `b976e98ff`, rebuilt to the same SHA-256 |
+| 4 | DSP cost model (`cycle-scan.mjs check`) | current (no DSP code) |
+| 5 | Emulator rehearsal | not run on this build (the setlists build ran in ot_emu the same day) |
+| 6, 10 | Read the unit, put back | status and inventory read before and after: USB AUDIO and Arr Rows kept before; Songbook added by the Keep the test needed |
+| 7, 8, 9 | Scripted pass, soak, cost | not run: they need a development base, and its RAM boot (`device boot DIR --chunk 4096`) broke off twice ("chunk was not confirmed", Errno 5), the unit running on but gone from USB until replugged; the flashed base refuses development requests |
+| 11 | By hand | the owner's checks below, through installs, Keep and a trial over USB |
+| 12 | The developer | as they reported it, below |
+
+The owner's checks, as the developer reported them (books 1 and 2 given distinct arrangements first: book 1's first
+arrangement "ONE", last row 147; book 2's "DS SET", last row 046):
+
+- Installed with a Keep (no crash, stall, freeze or skipped track logged), then book switches both ways: both books
+  as made.
+- Reinstall: a power cycle on book 2 (the module loads from the card with fresh memory): back on book 2, both books as
+  made; then SYNC TO CARD on book 2: both books as made.
+- A trial of another build (the setlists build `4016d35e…`) over the kept one, 110 s, a switch to book 1 and back during
+  it (its event log: two switches done, on book 2 at the end), rolled back (Undo); then SYNC TO CARD: both books as made.
+
+Seen on the way:
+
+- Twice, EDIT opened right after the module wrote book 2 (a switch to book 2, a SYNC on book 2) showed an empty
+  arrangement; NO and EDIT again showed every row. Display only, nothing lost; cause not yet found (stock's writer,
+  which the module replaces on books 2-16, calls a per-slot callback the module does not; whether that is it is open).
+- Once, opening the PROJECT menu froze the unit (no USB answer; the base logged no crash or new stall record before the
+  power cycle). Not repeated: the PROJECT menu opened without a freeze afterwards, SYNC TO CARD included. Like the
+  freezes of #1980 (base 0.7.5, no modules); the module does nothing when that menu opens.
+
+### Book 1 read only in part, then a sync (found after the unit run, 23 November 2026)
+
+Stock's arrangement writer writes each slot its mask names (a sync: all 8) or whose file is missing, and then SETS that
+slot's bit in 0x1001614c (0x40091680, 0x40091748); it never chooses by that byte. The host test had modelled it as
+writing the marked slots and clearing the byte, which hid a loss path: with book 1 read only in part (a `.bak` and its
+`arr0N.work` both unreadable), the module still handed every write to stock's writer, and the next sync would write the
+empty slots over arr01-08. Fixed: book 1 read only in part is written as books 2-16 are, only the edited slots. The host
+model now writes as stock does; `verify.py` (89 checks) adds the sync on a partly read book 1, which the previous code
+fails (with the corrected model, three checks). Host-tested only.
+
 ## Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |
@@ -144,12 +191,13 @@ sync; without the record byte both overwrite arr11.work. On the unit: not yet.
 | Beside USB AUDIO (installed with base 0.7.13) | both kept in one set, sharing the base | the developer's MKI, 08d0833a | pass: kept together, no crash, stall or freeze |
 | Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI, package 08d0833a removed on book 1, then a power cycle (an earlier build had left book 2 in book 1, the load fault since fixed) | pass: the stock arrangements were book 1's |
 | An arr09+ file there but failing to open once | taken for a missing file, its empty slot was written back (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
-| A reinstall or Undo between that failed read and the next sync | the module forgot the book was read only in part (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
+| A reinstall or Undo between that failed read and the next sync | the module forgot the book was read only in part (owner's review) | host test (verify.py); on the MKI, `37f7e94f…`: distinct books 1 and 2 through a power cycle and a trial + Undo, each followed by a sync | pass on the MKI (both books as made); the failed read itself only in the host test |
+| A sync on book 1 read only in part | stock's writer writes all 8 slots on a sync, the empty ones too | host test (verify.py), with stock's writer modelled as it works | pass in the host test; not run on a unit |
 | Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
 | A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |
 | A new project (ev_project_new outside a load) | must reset the books, not keep a load's return | host test (verify.py) | not run on a unit |
 | MKII | another panel and key layout | none | not run: no MKII |
-| device:test / device:qualify lifecycle | install, Keep, Undo, removal on the scripted path | none | not run: the development base did not upload over USB |
+| device:test / device:qualify lifecycle | install, Keep, Undo, removal on the scripted path | none | not run: the development base's RAM boot broke off over USB (18 and 23 November 2026); install, Keep and a trial + Undo were run by hand on the flashed base |
 
 ## Stock flows
 

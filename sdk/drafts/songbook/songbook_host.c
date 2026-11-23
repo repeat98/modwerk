@@ -149,13 +149,14 @@ int host_select_arr(unsigned n) { if (select_busy) { --select_busy; return -1; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
-    (void)a1; (void)a2; (void)a3; (void)a4;
+    (void)a1; (void)a3; (void)a4;
     char p[64];
+    /* As stock's writer (0x40091680): a slot whose bit is in the mask, or whose file is missing, is written, and its
+     * bit in 0x1001614c is then SET (0x40091748): that byte says "may differ from the project's saved copy". */
     for (unsigned n = 0; n < SLOTS; ++n) {
         snprintf(p, sizeof p, "/SET/PROJ/arr%02u.work", n + 1);
-        if ((cs1[CHG] >> n & 1) || !find(p)) host_arr_write(p, n);
+        if ((a2 >> n & 1) || !find(p)) { host_arr_write(p, n); cs1[CHG] |= (uint8_t)(1u << n); }
     }
-    cs1[CHG] = 0;
     ++stock_writes;
     return 0;
 }
@@ -264,7 +265,7 @@ int main(void)
     int sw = stock_writes;
     check("arriving at book 1 marks all 8 changed, so stock rewrites arr01-08", cs1[CHG] == 0xff);
     job();
-    check("then stock's writer writes them", stock_writes == sw + 1 && cs1[CHG] == 0);
+    check("then stock's writer writes them", stock_writes == sw + 1 && find("/SET/PROJ/arr03.work")->work[100] == cs1[W(2) + 100]);
 
     /* arr01-08 overwritten while the module was away: book 1 comes back from the backup and repairs them */
     tap(RIGHT); job();                             /* to book 2; the backup is fresh */
@@ -289,6 +290,10 @@ int main(void)
     tap(LEFT); job();
     check("a file that will not read is reported", (as_tick(0), !strcmp(last_message, "BOOK FILE ERROR")));
     fail_read = 0;
+    { uint8_t keep4 = find("/SET/PROJ/arr04.work")->work[9];
+      int w = writes, sw = stock_writes; job();      /* a sync on book 1, read only in part, nothing edited */
+      check("a sync on book 1 read only in part writes none of arr01-08 (stock's writer would write all 8)", writes == w && stock_writes == sw && find("/SET/PROJ/arr04.work")->work[9] == keep4);
+    }
     tap(RIGHT); job(); tap(LEFT); job();
     check("nothing marked changed after it, so arr01-08 stay as they are", cs1[CHG] == 0 && find("/SET/PROJ/arr04.work")->work[9] == (uint8_t)(0x10 + (W(3) + 9) % 7));
     tap(RIGHT); job(); tap(LEFT); job();
