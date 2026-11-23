@@ -56,7 +56,7 @@ In the LOAD KIT and SAVE KIT lists:
 
 - OS 1.40C on the Modwerk base with the sample-memory loan (`ot_sample_memory`), installed over USB. Card firmware cannot include it. This port has not run on a unit or in the emulator yet.
 - Kits borrows 331 pages of sample memory (2,033,664 bytes) while it is installed: about 23 s less of 16-bit mono sample time (11.5 s of stereo). When the sample pool cannot spare them, Kits stays off and the unit behaves as stock.
-- Needs Modwerk base 0.7.13 or newer (the Part Edit menu's record version that leaves PART out, `ot_part_menu`).
+- Needs Modwerk base 0.8 or newer (the Part Edit menu's record version that leaves PART out, `ot_part_menu`).
 - While Kits is on, stock's Part Edit rows (RENAME, RELOAD, SAVE, SAVE ALL) are not in FUNC+PART: use SAVE KIT, RELOAD KIT and RENAME KIT. While Kits is off (no sample memory) its row is left out and the window is stock's.
 - No quick save: octabam's FUNC+YES in SAVE KIT is not here, because Temp Save owns that key's handler and the base has no shared hook for it yet. Save with YES and the name editor. FUNC+YES in either list does what stock or Temp Save does elsewhere.
 - A Kit carries no MIDI scene locks. MIDI Scenes keeps its locks with the Part slot, so they stay with the slot when a Kit is copied into it. A kits.work written by an octabam image with MIDI SCENES (version 2) is not read.

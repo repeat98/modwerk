@@ -1,5 +1,41 @@
 # Kits testing
 
+## Kits 0.1.1-experimental on base 0.8: agent's run, 24 November 2026
+
+Build: this branch with `main` `29c22d7a5` merged (base 0.8, with the Part Edit popup fixes of #1947). A development
+twin of base 0.8 (`build_core.py` with the beta flags and `--dev`, without the controller rows) booted from RAM as
+`95adb64b…` on the developer's MKII (OS 1.40C); the flashed base `254c5a75…` (0.7.12) stays in flash. Package: Kits
+0.1.1 `c1cb63e5…` (`npm run module:dev -- kits --build-only`; the same bytes as the base 0.7.13 twin runs below this
+section's date). No other module installed. Bank C, pattern C02, Part 2, transport stopped unless named. Every install
+was a 120 s trial without a Keep and was rolled back (inventory empty afterwards; the crash 1 and stall 13 records
+predate these runs). Screens read with `png:` over USB.
+
+- `npm run device:test` (Kits 0.1.1): installed, self-test passed, meters (CPU 363, core 1 peak 339, core 0 peak
+  429), twelve Part switches with PART+arrow while playing all landed, a queued change of bank and back landed. The
+  next Part switch did not become active and the run stopped there, as on base 0.7.9 above (PART is LOAD KIT while
+  Kits is active). Verdict: no crash, stall, freeze or skipped track.
+- Kits alone: FUNC+PART draws the one-row Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT; it reopened on
+  the row used last. The status line shows the pattern's Kit (`010 TWO`).
+- FUNC+PASTE+PART: FUNC+REC on C02 (COPY PATTERN), PATTERN+TRIG16, then FUNC+STOP (PASTE PATTERN) and PART with FUNC
+  and STOP still held: `KIT COPIED TO NEXT`, and C16 played `065 TWO`, a copy of C02's `010 TWO` in the next empty
+  Kit, instead of its `009 ONE`. The Part Edit window did not open. A second stock FUNC+STOP pastes again (stock has
+  no paste undo there; Kits' own PTN+FUNC+TRIG paste is the one a repeat undoes).
+- Performance, C16 playing with crossfader sweeps, ten CPU readings and the frame guard per run:
+
+  | Run | CPU meter (mean of 10) | Longest frame interrupt |
+  | --- | --- | --- |
+  | Stock, no Part change | 41.8 % | 40.9 % |
+  | Stock, six Part switches (PART+arrow) | 41.8 % | 49.3 % |
+  | Kits, six LOAD KIT loads | 41.9 % | 49.0 % |
+
+  A Kit load's longest frame is a stock Part switch's; no skipped render. `evidence/performance.json` holds these.
+
+Developer's report (twwwy), 21 November 2026, a base 0.7.13 development twin `5b9c4b1e…` with the same package beside
+kept Pattern Sample Locks 0.1.9 `6fea272e…`: "they all works. the menu works too".
+
+Not tested: FUNC+PASTE+PART on an MKI (FUNC+PASTE+MIDI), Kits with Pattern Sample Locks on base 0.8, a Keep, the
+flashed base 0.8, a power cycle, sound.
+
 ## Kits 0.1.1-experimental on base 0.7.9: agent's run, 19 November 2026
 
 Build: source `f8e443f33` (branch `module/kits-0.1.1`, base sources as `main` `7b2f35abb`). A development twin of base
