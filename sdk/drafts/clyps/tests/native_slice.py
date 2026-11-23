@@ -93,7 +93,7 @@ with tempfile.TemporaryDirectory() as tmp:
             return result.hexdigest()
 
         def row_heads():
-            return [word(word(symbols['modwerk_runtime_event_row'] + 4*(slot-4))) for slot in (40,63,64,65)]
+            return [word(word(symbols['modwerk_runtime_event_row'] + 4*(slot-4))) for slot in (42,40,41,63,64,65)]
 
         # Read the last stock LCD composer plane independently of module state.
         def lettering(x, band, groups):

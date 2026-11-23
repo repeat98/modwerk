@@ -23,6 +23,16 @@
       "order": 50
     },
     {
+      "event": "ev_bank_loaded",
+      "fn": "clyps_bank_loaded",
+      "order": 50
+    },
+    {
+      "event": "ev_project_new",
+      "fn": "clyps_project_init",
+      "order": 50
+    },
+    {
       "event": "ev_seq_wrap",
       "fn": "clyps_wrap",
       "order": 50

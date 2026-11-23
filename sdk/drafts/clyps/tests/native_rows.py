@@ -18,6 +18,9 @@ for field in ('emulator', 'base', 'card', 'symbols', 'output'):
 parser.add_argument('--octabam', type=Path, required=True)
 parser.add_argument('--reference', action='store_true')
 parser.add_argument('--lane-matrix', action='store_true')
+parser.add_argument('--project-reload', choices=('stored', 'missing'))
+parser.add_argument('--project-change', action='store_true')
+parser.add_argument('--row-popup', action='store_true')
 parser.add_argument('--scene-select', action='store_true')
 parser.add_argument('--arranger-recovery', action='store_true')
 parser.add_argument('--observe-queue', action='store_true')
@@ -25,6 +28,8 @@ parser.add_argument('--boundary', choices=('early','late'))
 parser.add_argument('--package', type=Path)
 parser.add_argument('--symbols-module', type=Path)
 args = parser.parse_args()
+if (args.project_change or args.project_reload) and not (args.package and args.symbols_module):
+    parser.error('Project change requires package and matching module symbols')
 if args.boundary and (args.lane_matrix or not args.reference and not (args.symbols_module and args.package)):
     parser.error('Boundary candidate requires its MWRM and matching linked symbol map')
 if not __debug__ or args.lane_matrix and args.reference:
@@ -34,6 +39,30 @@ syms = json.loads(args.symbols.read_text())
 with tempfile.TemporaryDirectory() as tmp:
     scratch = Path(tmp) / 'test.img'
     shutil.copyfile(args.card, scratch)
+    if args.project_change or args.project_reload:
+        sys.path.insert(0, str(args.octabam.resolve() / 'tools/emu'))
+        import emu_card
+        tree = Path(tmp) / 'fixture'
+        tree.mkdir()
+        emu_card.extract_image(args.card.read_bytes(), tree)
+        seed = tree / 'MODWERK/GATE3'
+        if args.project_change:
+            second = tree / 'MODWERK/GATE4'
+            shutil.copytree(seed, second)
+            work = second / 'project.work'
+        elif args.project_reload == 'stored':
+            for work_file in seed.glob('*.work'):
+                shutil.copyfile(work_file, work_file.with_suffix('.strd'))
+            work = seed / 'project.strd'
+        else:
+            for stored in seed.glob('*.strd'):
+                stored.unlink()  # Temporary fixture only.
+        if args.project_change or args.project_reload == 'stored':
+            data = work.read_bytes()
+            assert data.count(b'\nBANK=0\r') == 1
+            work.write_bytes(data.replace(b'\nBANK=0\r', b'\nBANK=1\r'))
+        scratch.write_bytes(emu_card.build_image(tree))
+
     def project(card):
         sys.path.insert(0, str(args.octabam.resolve() / 'tools/emu'))
         import emu_card
@@ -55,17 +84,17 @@ with tempfile.TemporaryDirectory() as tmp:
                     cmd('run 3')
             raise RuntimeError('Main task did not become idle')
 
-        def switch_once(on, target):
+        def switch_once(on, target, polls=100):
             assert call('modwerk_modset_switch', target, on) == 1
-            for _ in range(100):
+            for _ in range(polls):
                 cmd('run 15')
                 actual = num(syms['modwerk_modset_switch_result'])
                 if actual != 1:
                     break
             return actual
 
-        def switch(on):
-            result = switch_once(on, MODULE)
+        def switch(on, polls=100):
+            result = switch_once(on, MODULE, polls)
             assert result == 0, (on, result)
             cmd('run 100' if on else 'run 1200')
 
@@ -80,7 +109,7 @@ with tempfile.TemporaryDirectory() as tmp:
                     block(0x400e21e0+0x9504a, 4*0x18b2)]
 
         def callbacks():
-            words = [num(syms['modwerk_runtime_event_row'] + 4*(k-4)) for k in (40,63,64,65)]
+            words = [num(syms['modwerk_runtime_event_row'] + 4*(k-4)) for k in (42,40,41,63,64,65)]
             return [num(a) for a in words]
 
         def tap(code):
@@ -189,6 +218,82 @@ with tempfile.TemporaryDirectory() as tmp:
         cmd('run 2000')
         print('clean start',hex(num(0x460d1e70)),hex(num(0x460d175c)),flush=True)
         assert not num(0x460d1e70) and not num(0x460d175c)
+        if args.project_change or args.project_reload:
+            switch(1)
+            tap(ARR); tap(1); tap(ARR); tap(YES); tap(3)
+            witness = json.loads(args.symbols_module.read_text())
+            assert hashlib.sha256(args.package.read_bytes()).hexdigest() == witness['sha256']
+            origin = callbacks()[0] - witness['offsets']['clyps_project_init']
+            defined_at = origin + witness['offsets']['defined']
+            assert num(defined_at, 2) == 8 and num(0x80000002, 1) == 0
+            tap(ARR); tap(0); tap(NO)  # Yield stock controls at home.
+            heads = callbacks()[:3]
+            cmd('watch ' + ','.join(hex(pc) for pc in heads))
+            cmd('hits')
+            if args.project_change:
+                # Mirror loadProjectLive: post the work to the stock engine.
+                syms['post_project_load'] = 0x40023c7c
+                name = 0x100f8378
+                cmd(f'poke {name:#x} ' + b'GATE4\0'.hex())
+                call('post_project_load', name)
+            else:
+                # Stock PROJECT menu, first category, third action (RELOAD).
+                for key in [0x1c, 0x34, *([0x33]*4), 0x21, *([0x33]*8), 0x20, 0x20, YES]:
+                    tap(key)
+                    advance(150)
+                advance(600)
+                assert num(0x460e5cd0), 'stock reload confirmation did not open'
+                tap(YES)
+            seen = set()
+            for _ in range(160):
+                advance(100)
+                seen.update(int(hit.split(':')[1], 16) for hit in cmd('hits').split()[2:])
+            heads = callbacks()
+            receipt = dict(bank=num(0x80000002, 1), defined=num(defined_at, 2),
+                           active=call('modwerk_runtime_active'),
+                           observed=[pc in seen for pc in heads[:3]])
+            args.output.write_text(json.dumps(receipt))
+            assert receipt['active'] == 1 and heads[0] == origin + witness['offsets']['clyps_project_init']
+            if args.project_reload == 'missing':
+                assert receipt['bank'] == 0 and receipt['defined'] == 8, receipt
+            else:
+                assert receipt['bank'] == 1 and receipt['defined'] == 0, receipt
+            switch(0, polls=2000)  # Let the stock card task finish first.
+            assert call('modwerk_runtime_free',0) == free
+            receipt['off_pool'] = free
+            args.output.write_text(json.dumps(receipt))
+            sys.exit(0)
+        if args.row_popup:
+            switch(1)
+            tap(ARR)
+            tap(ARR)
+            tap(YES)
+            tap(3)      # Save home references as R04.
+            tap(0x1b)   # Zoom, then edit T1.
+            tap(YES)
+            tap(1)      # Stage A02.
+            # Open the stock timed message with the current project name.
+            syms['stock_toast'] = 0x4005a2b8
+            call('stock_toast', 0x100f8378, 0x60)
+            advance(40)
+            assert num(0x460d1e70), 'stock message failed to open'
+            assert not num(syms['modwerk_runtime_api']) & (1 << 27)
+            for _ in range(100):
+                advance(50)
+                if not num(0x460d1e70):
+                    break
+            assert not num(0x460d1e70), 'stock message still open'
+            tap(ARR)
+            assert num(syms['modwerk_runtime_api']) & (1 << 27), 'ARR did not reopen'
+            tap(1)      # Set T1=A02, then recall R04 to prove A01 survived.
+            assert num(syms['modwerk_runtime_api']) & 0xfff == 1
+            tap(ARR)
+            tap(3)
+            assert num(syms['modwerk_runtime_api']) & 0xffffff == 0
+            switch(0)
+            assert call('modwerk_runtime_free',0) == free
+            args.output.write_text(json.dumps(dict(reopened=True, r04=0, pool=free)))
+            sys.exit(0)
         if args.scene_select:
             # Part 1's two active scene bytes are adjacent. Exercise both physical
             # selectors, including rollback, with and without the module.
@@ -268,7 +373,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 switch(1)
                 witness = json.loads(args.symbols_module.read_text())
                 assert hashlib.sha256(args.package.read_bytes()).hexdigest() == witness['sha256']
-                origin = callbacks()[0] - witness['offsets']['clyps_bank_load']
+                origin = callbacks()[0] - witness['offsets']['clyps_project_init']
                 def diag():
                     return num(syms['modwerk_runtime_api'])
 

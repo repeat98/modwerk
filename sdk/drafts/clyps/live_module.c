@@ -34,6 +34,7 @@
 static volatile uint32_t playing, requested;
 static uint32_t rows[16];
 static uint16_t defined;
+static volatile unsigned bank_read_active;
 static unsigned track, row_view, armed, visible, refused, slot;
 static uint32_t consumed[2];
 static unsigned locked;
@@ -44,9 +45,9 @@ static unsigned src_list, src_cursor;
 static int stock_window(void)
 {
     /* Stock message-window handle (OS 1.40C message routine), shared SETUP
-     * window, sample browser and the popup observed by Grain. */
+     * window, sample browser, Grain popup and stock YES/NO dialog. */
     return LONG(0x460d1e70u) || LONG(0x460d175cu) ||
-           LONG(0x460e70e0u) || LONG(0x460e5e30u);
+           LONG(0x460e70e0u) || LONG(0x460e5e30u) || LONG(0x460e5cd0u);
 }
 
 static int stock_src_available(void)
@@ -103,7 +104,7 @@ static int grid(unsigned pattern)
 
 static int supported(void)
 {
-    return !BYTE(0x80000034u) && !ARRANGER && !LONG(0x80006546) && !(BYTE(0x80000028) & 1) &&
+    return !bank_read_active && !BYTE(0x80000034u) && !ARRANGER && !LONG(0x80006546) && !(BYTE(0x80000028) & 1) &&
            BYTE(0x800065bd) == 0 && BYTE(0x800065be) == 0 &&
            BYTE(0x800065bf) == 0 && BYTE(0x800065c0) == 0 && grid(0);
 }
@@ -118,21 +119,36 @@ static int valid(unsigned refs)
     return 1;
 }
 
+/* These notifications bracket the stock card task's serialized bank reader.
+ * Only bank A is qualified. Never read its grid while stock replaces it. */
 void clyps_bank_load(unsigned mask, uint32_t caller)
 {
-    (void)mask;
     (void)caller;
+    bank_read_active = mask & 1u;
+}
+
+unsigned clyps_bank_loaded(void)
+{
+    bank_read_active = 0;
+    return 0;
+}
+
+/* Stock initializes project state on change and reload as well as on NEW. */
+void clyps_project_init(void)
+{
+    unsigned sr = critical();
     playing = requested = 0;
     src_list = src_cursor = 0;
     defined = visible = locked = armed = row_view = refused = track = slot = 0;
-    consumed[0] = consumed[1] = 0;
-    last_row = pending_row = first_row = zoom = editing = missing = 0;
+    /* Held edges retain their original owner across the UI transition. */
+    last_row = pending_row = first_row = zoom = editing = draft = missing = 0;
+    restore(sr);
 }
 
 void clyps_wrap(void)
 {
     unsigned refs = requested;
-    if (!refs && !playing && !pending_row)
+    if (bank_read_active || (!refs && !playing && !pending_row))
         return;
     if (valid(refs) && RUNNING && !GRID_REC && !LIVE_REC && !REC_HELD) {
         playing = refs;
@@ -188,6 +204,8 @@ static void check_src_context(void)
 {
     if ((visible && stock_window()) ||
         (src_list && (!stock_src_available() || BYTE(0x100b14ccu) != track))) {
+        /* Only YES in Row Edit publishes draft to rows[]. */
+        editing = draft = armed = missing = row_view = 0;
         src_list = visible = 0;
         locked = !!(playing || requested);
     }
@@ -198,7 +216,7 @@ static void check_src_context(void)
 void module_tick(struct modwerk_runtime_api *api)
 {
     check_src_context();
-    if ((playing || requested || pending_row || last_row) && !supported()) {
+    if (!bank_read_active && (playing || requested || pending_row || last_row) && !supported()) {
         playing = requested = last_row = pending_row = 0;
         refused = 1;
     }

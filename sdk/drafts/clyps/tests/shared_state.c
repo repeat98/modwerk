@@ -1,9 +1,12 @@
 /* Compile the actual UI and S1 handlers with synthetic OS reads. */
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #define CLYPS_HOST_TEST
 #include "../live_module.c"
-static unsigned selected, run, popup, pool, page, midi, scene, record, message, setup;
+static unsigned selected, run, popup, pool, page, midi, scene, record, message, setup, dialog;
+/* A bank image may replace the grid of the saved source at slot A07. */
+static unsigned incompatible_a07;
 static uint32_t host_long(uintptr_t a)
 {
     switch (a) {
@@ -11,6 +14,7 @@ static uint32_t host_long(uintptr_t a)
     case 0x460e5e30: return popup;
     case 0x460d1e70: return message;
     case 0x460d175c: return setup;
+    case 0x460e5cd0: return dialog;
     case 0x460e70e0: return pool;
     case 0x460d1736: return record;
     default: return 0;
@@ -23,6 +27,7 @@ static uint8_t host_byte(uintptr_t a)
     if (a == 0x80000015) return midi;
     if (a == 0x46100b1b) return scene;
     if (a >= BANK_BASE && a < BANK_BASE + 16*PATTERN_BYTES) {
+        if (incompatible_a07 && a == BANK_BASE + 6*PATTERN_BYTES + 0x8e51) return 32;
         unsigned offset = (a-BANK_BASE) % PATTERN_BYTES;
         if (offset==0x8e51 || offset==0x8e53) return 16;
         if (offset==0x8e52 || offset==0x8e54) return 2;
@@ -37,7 +42,7 @@ static void tap(int code)
 /* Requests on either side of a native wrap callback, using real SRC/ARR handlers. */
 static void row_boundary(void)
 {
-    clyps_bank_load(0,0);
+    clyps_project_init();
     run=0;
     tap(ARR);
     for (unsigned t=0;t<8;++t) {
@@ -73,11 +78,123 @@ static void row_boundary(void)
     assert(locked && playing==all);
     run=0; tap(YES);
     assert(!locked && !requested && !playing);
-    clyps_bank_load(0,0);
+    clyps_project_init();
     assert(!defined);
 }
-int main(void)
+static void interrupted_editor(void)
 {
+    tap(ARR); tap(ARR); tap(YES); tap(3);
+    tap(0x1b); tap(YES); tap(1);
+    assert(editing && draft == 1 && rows[3] == 0);
+    struct modwerk_runtime_api api = {0};
+    popup = 1;
+    module_tick(&api);
+    assert(!visible);
+    popup = 0;
+    tap(ARR);
+    assert(visible && !editing && !locked && rows[3] == 0 && defined == 8);
+    clyps_project_init();
+
+    tap(ARR); tap(2); tap(ARR); tap(YES); tap(3); /* R04 = A03 */
+    tap(0x1b); tap(YES); tap(4); tap(YES);       /* confirmed A05 */
+    assert(rows[3] == 4);
+    run = 1;
+    tap(3); /* R04 queued while A03 plays */
+    for (unsigned repeat = 0; repeat < 3; ++repeat) {
+        tap(YES);
+        assert(editing);
+        assert(module_key(6, 1)); /* unconfirmed A07, held through popup */
+        unsigned *window = repeat == 1 ? &dialog : &popup;
+        *window = 1;
+        assert(!module_enc(6, 1));
+        assert(!module_key(0x140, 0)); /* base modal-ownership query */
+        assert(!module_key(YES, 1) && !module_key(YES, 0));
+        assert(!visible && !editing && !armed && !src_list);
+        assert(module_key(0x106, 0));
+        assert(!module_key(ARR, 1));
+        *window = 0;
+        assert(!module_key(ARR, 1)); /* stock-owned repeat after close */
+        assert(!module_key(ARR, 0));
+        tap(ARR);
+        assert(visible && !editing && rows[3] == 4 && (defined & 8));
+        assert(playing == 2 && requested == 4 && pending_row == 4);
+        tap(ARR);
+        if (!zoom) tap(0x1b);
+    }
+    clyps_wrap();
+    assert(playing == 4 && !pending_row && last_row == 4);
+}
+
+/* One byte models the stored grid at slot 7. An empty file fails the read.
+ * Stock's API gives the result to its caller only; the post hook has no args. */
+static int read_test_bank(unsigned mask, FILE *file)
+{
+    BANK_PRE(mask, 0);
+    assert(defined == 8 && rows[3] == 6);
+    int pattern = 0;
+    clyps_audio_source(&pattern, 0, 0);
+    assert(pattern == ((mask & 1) ? 0 : 6));
+    if (mask & 1) {
+        struct modwerk_runtime_api api = {0};
+        module_tick(&api);
+        clyps_wrap();
+    }
+    unsigned char grid_length;
+    int complete = fread(&grid_length, 1, 1, file) == 1;
+    if (complete && (mask & 1)) incompatible_a07 = grid_length != 16;
+    BANK_POST();
+    return complete;
+}
+
+static void bank_events(int fail_first)
+{
+    tap(ARR); tap(6); tap(ARR); tap(YES); tap(3);
+    assert(defined == 8 && rows[3] == 6);
+    FILE *file = tmpfile();
+    assert(file);
+    if (fail_first) {
+        assert(!read_test_bank(1, file) && feof(file));
+        assert(defined == 8 && rows[3] == 6 && playing == 6);
+    }
+    assert(fputc(32, file) != EOF);
+    rewind(file);
+    assert(read_test_bank(2, file)); /* The incompatible grid belongs to B. */
+    assert(!incompatible_a07 && defined == 8 && rows[3] == 6 && playing == 6);
+
+    RELOAD_PRE();
+    BANKS_PRE();
+    assert(!read_test_bank(1, file)); /* EOF, with R04 already defined. */
+    assert(feof(file) && !incompatible_a07);
+    BANKS_POST();
+    RELOAD_POST();
+    int during = 0;
+    clyps_audio_source(&during, 0, 0);
+    assert(during == 6 && defined == 8 && rows[3] == 6 && requested == playing);
+
+    rewind(file);
+    assert(read_test_bank(1, file)); /* Same slot in A now has an unsupported grid. */
+    assert(incompatible_a07 && fclose(file) == 0);
+    tap(3);
+    assert(refused && defined == 8 && rows[3] == 6);
+    int pat = 0;
+    clyps_audio_source(&pat, 0, 0);
+    assert(pat == 0); /* Never redirect into the newly unsupported grid. */
+    incompatible_a07 = 0;
+    tap(3);
+    assert(!refused && playing == 6 && last_row == 4);
+    PROJECT_INIT();
+    assert(!defined && !requested && !playing && !visible);
+    tap(ARR); tap(ARR); tap(3);
+    assert(missing && playing == 0);
+}
+
+int main(int argc, char **argv)
+{
+    if (argc == 2) {
+        if (strcmp(argv[1], "popup") == 0) interrupted_editor();
+        else bank_events(strcmp(argv[1], "failed-bank") == 0);
+        return 0;
+    }
     row_boundary();
     unsigned char frame[1024];
     tap(ARR);
@@ -93,7 +210,7 @@ int main(void)
 
     for (unsigned lane=0; lane<8; ++lane) {
         selected=lane;
-        clyps_bank_load(0,0);
+        clyps_project_init();
         run=1;
         assert(!module_key(SRC,1) && !module_key(SRC,0));
         tap(ARR); tap(SRC);
@@ -123,7 +240,7 @@ int main(void)
         assert(!locked && !playing && !requested && !visible);
     }
     for (unsigned i=0;i<8;++i) {
-        clyps_bank_load(0,0); selected=1;
+        clyps_project_init(); selected=1;
         tap(ARR); tap(SRC);
         assert(src_list);
         unsigned *condition[]={&popup,&pool,&page,&midi,&scene,&record,&message,&setup};

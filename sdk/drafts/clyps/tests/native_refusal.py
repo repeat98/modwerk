@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
         def inventory():
             # The control has the same registry and 66 slots as the candidate.
-            rows = [word(word(symbols['modwerk_runtime_event_row'] + 4*(n-4))) for n in (40,63,64,65)]
+            rows = [word(word(symbols['modwerk_runtime_event_row'] + 4*(n-4))) for n in (42,40,41,63,64,65)]
             return dict(callbacks=rows, active=call('modwerk_runtime_active'),
                         pool=call('modwerk_runtime_free', 0), owners=word(symbols['core:owners']))
 

@@ -46,6 +46,6 @@ package = package[:4] + struct.pack('>H', 9) + package[6:76] + struct.pack('>HBB
 args.output.write_bytes(package)
 if args.symbols:
     args.symbols.write_text(json.dumps(dict(sha256=hashlib.sha256(package).hexdigest(),
-        offsets={name:symbols[name] for name in ('clyps_bank_load','playing','requested')}),indent=2))
+        offsets={name:symbols[name] for name in ('clyps_project_init','playing','requested','defined')}),indent=2))
 print(json.dumps(dict(sha256=hashlib.sha256(package).hexdigest(), image=len(image), bss=bss,
                       relocations=len(offsets), hooks={e['event']:events.index(e['event'], registry) for e in bindings})))

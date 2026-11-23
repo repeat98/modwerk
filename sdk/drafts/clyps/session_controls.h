@@ -2,6 +2,9 @@
  * Track-local SRC, ARR Meta, and modal editing input callbacks. Included by
  * the module after its platform and sequencer adapters are defined.
  */
+/* Stock can close its popup on key-down. Keep repeats and release with it. */
+static uint32_t popup_keys[2];
+
 int module_key(int code, int pressed)
 {
     /* Revision 2 of the private bus offers an early copy of each event.
@@ -10,18 +13,23 @@ int module_key(int code, int pressed)
     int early = !!(code & 0x100);
     code &= ~0x100;
     if ((unsigned)code >= 64)
-        return visible || locked;
+        return !stock_window() && (visible || locked);
     unsigned i = (unsigned)code >> 5;
     uint32_t bit = 1u << ((unsigned)code & 31u);
-    if (early && !visible && !locked && !(consumed[i] & bit))
-        return 0;
     if (!pressed) {
         unsigned taken = consumed[i] & bit;
         consumed[i] &= ~bit;
+        popup_keys[i] &= ~bit;
         return !!taken;
     }
     if (consumed[i] & bit)
         return 1;
+    if (stock_window()) {
+        popup_keys[i] |= bit;
+        return 0;
+    }
+    if ((popup_keys[i] & bit) || (early && !visible && !locked))
+        return 0;
     if (visible && !src_list && clyps_meta_track_key((unsigned)code))
         return 0;
     if (code == PLAY || code == STOP) {
@@ -141,6 +149,7 @@ int module_key(int code, int pressed)
 int module_enc(int encoder, int delta)
 {
     check_src_context();
+    if (stock_window()) return 0;
     if (visible && !editing && (encoder & ~0x100) == 6 && alone(64)) {
         unsigned value = clyps_focus_step(src_list ? src_cursor : row_view ? slot : track,
                                           delta, src_list || row_view ? 15 : 7);
