@@ -14,7 +14,6 @@ class OfflineBanks(unittest.TestCase):
         self.a.save("working", self.rows)
         self.a.save("saved", self.rows)
         self.rows[0][4] = self.rows[0][3].copy()
-        self.rows[0][4][0] = 15
         self.rows[0][4][0] = self.rows[7][3][0]
         self.assertEqual(self.rows[0][3][0], 0)
         self.a.save("working", self.rows)
@@ -24,6 +23,23 @@ class OfflineBanks(unittest.TestCase):
         self.assertEqual(banks[0][4], tuple(self.rows[0][4]))
         self.assertIsNone(banks[15][0])
         self.assertIsNone(decode(self.a.files["saved"], self.a.identity)[1][0][4])
+
+    def test_independent_layout(self):
+        # Build the expected wire bytes directly from the v1 specification.
+        from struct import pack
+        from zlib import crc32
+        from offline.bank_codec import encode
+        header = b"CLYP" + pack(">HH", 1, 2212) + self.a.identity + pack(">Q", 23)
+        index = b"".join(pack(">BBHH", i, 16, 128 + 130 * i, 130) for i in range(16))
+        payload = bytearray(2080)
+        for i in (0, 1, 2, 7):
+            payload[i*130 + 1] = 8
+            start = i*130 + 2 + 3*8
+            payload[start:start+8] = bytes([i, 16, 17, 0, 1, 2, 3, 4])
+        expected = header + index + payload
+        expected += pack(">I", crc32(expected))
+        self.assertEqual(encode(self.a.identity, 23, self.rows), expected)
+        self.assertEqual(decode(expected, self.a.identity)[0], 23)
 
     def test_failure_recovery(self):
         self.a.save("working", self.rows)
