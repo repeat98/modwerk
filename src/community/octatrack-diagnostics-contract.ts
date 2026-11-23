@@ -177,7 +177,9 @@ export interface DeviceIncident {
 }
 export const DEVICE_LOG_LOADS = 40, DEVICE_LOG_INCIDENTS = 10 /* a record's most, so one fits the 8 KiB request */
 export const DIAGNOSTIC_USB_PHASES = ['unsupported', 'idle', 'connecting', 'stock', 'busy', 'ready', 'sending', 'testing', 'trial', 'finishing'] as const
-export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancelled', 'stale', 'save', 'rollback', 'unknown'] as const
+export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancelled', 'stale', 'save', 'rollback', 'unknown', 'disconnected'] as const
+/** How a disconnected trial stopped waiting. Timeout includes a returning interface that could not be claimed in time. */
+export const TRIAL_RECONNECT_FAILURES = ['timeout', 'closed', 'mismatch', 'unreadable', 'lost-again'] as const
 /** `sync_failed`: the step of a sync that failed (octatrack-link.ts load), so a failure with no device refusal still
  * says where it stopped: opening the session, reading the installed set, packing the set, sending it, the unit
  * loading it, or starting the trial. */
@@ -230,6 +232,7 @@ export interface OctatrackDiagnostic {
    * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
+  reconnect?: typeof TRIAL_RECONNECT_FAILURES[number]
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
    * received, refusals, bus resets, data stages primed, completed and abandoned. */
   usb?: number[]
