@@ -4,6 +4,46 @@ Branch `handover/octatrack-cost-batch-2026-11-23`, never to be merged. It holds 
 the owner's MKII, and `results/`. A job on the owner's PC commits the last results here when the queued unit runs
 end (see "Still running").
 
+## Correction from the Mac, 23 Nov
+
+Read from `results/fair/` without hardware (no unit on the Mac).
+
+- **Repitch: the fair result is inconclusive, not a bug proof.** fair.sh step 2 never moved TSTR: every bank C Part 1
+  track still read `01` (AUTO) after six tries (`fair.out`, `T1 TSTR 01` … `T8 TSTR 01`), and the rest check's own
+  scan of the working Part reads TSTR `01` on all eight STATIC tracks (`restcheck-data/parts.txt`). So the sample
+  TSMODE path could still keep Repitch awake: `rate_gate` and `pitch_gate` stayed patched at 0, 6, 12 s and after
+  STOP, and 0.2.1 and 0.2.2 both read +2.1 at rest. Next step 1's "bug in `ev_in_use`" does not follow from this run.
+  Step 5 (back to AUTO) was a no-op too, so Dev17 C04 is still on AUTO as before.
+- **Why the TSTR step did nothing.** The lane offset and the values are right: `0x80000510 + 48 × (track−1) + 28` is
+  the byte `rp_find` reads (`repitch.s`, `LANES`), 0 OFF, 1 AUTO, 2 NORM, 3 BEAT. The turn is not: SRC SETUP's TSTR
+  (encoder E) ignores small turns, and `docs/OCTATRACK_DRIVING.md` (key table, 27 Oct 2026) records seven `encE+2`
+  doing nothing and `encE+40` going OFF to BEAT. fair.sh sent `encE+1`. If a corrected run still moves nothing at
+  `encE+60`, check with `png:` that FUNC+SRC opened SRC SETUP.
+- **`scripts/fair-tstr.sh`** (Repitch only): grows the turn from 6 until the lane byte moves, shrinks it when the value
+  jumps past, and logs every turn to `fair-tstr/tstr-steps.log`. Then it cross-checks the Part's own byte. It runs the
+  rest check and the alternated at-rest A/B only when all eight tracks read `02`, and it puts every track back on AUTO,
+  saying so per track. Copy it and `amiga-room.sh` to `~/.cache/modwerk-local/ot/rel-08/`, then
+  `npm run unit -- run --note "Repitch rest A/B with TSTR NORM, twin 678843cc, nothing kept" --expect 15m -- bash ~/.cache/modwerk-local/ot/rel-08/fair-tstr.sh`.
+- **Amiga 0.3.1 on a pattern with room.** C04 is too busy: stock alone read 81.3 %, so Amiga's first copy read 109.5 %,
+  past the procedure's 100 % (`CURVE_ROOM`). `scripts/amiga-room.sh` lists bank C's patterns (Part, steps 1-16 of
+  T1-T8) and measures on the first Part 1 pattern with trigs on the curve tracks T1, T3, T6 and T7 and none on the
+  sample tracks T2 and T4 (or `MEASURE=N`). If none exists, it stops: make one by grid recording first. For pattern N
+  the command it runs in `~/modwerk/.wrangler/amiga-031` is (then the same without `--write` in `cost-record` on
+  `amiga-030.mwrm`):
+
+  ```sh
+  node scripts/octatrack-price.mjs --socket $Q/dev.sock --share $Q/share.sock --write --curve T1,T3,T6,T7 \
+    --pick-pattern 2 --measure-pattern N --limit 115 --base "678843cc (base 0.8 development twin, main b5864cce7)" \
+    --scene "Dev17 C0N at 126 BPM, Part 1, trigs on T1/T3/T6/T7 and none on T2/T4, picks on empty C02; owner's MKII" \
+    --out $L/amiga-031-room-price.json $L/pk/amiga-031.mwrm
+  ```
+
+  Run it with `npm run unit -- run --note "Amiga 0.3.1 curve on a pattern with room, twin 678843cc, nothing kept"
+  --expect 15m -- bash ~/.cache/modwerk-local/ot/rel-08/amiga-room.sh`. The first point (stock alone) should read
+  under about 65 %, so the first copy stays under 100 %.
+- **Euclid's evidence went to #1868.** The fair trial ran package `affa5eda…`, #1868's rest build. #2057 is a different
+  change (octabam's DSP speed-ups) under the same version number 0.1.6, so one of them needs another version.
+
 ## Where 0.8 stands
 
 - Base 0.8 is merged (#1910) and live since 13:03. The cost procedure (#2043) is merged: from 24 November every
