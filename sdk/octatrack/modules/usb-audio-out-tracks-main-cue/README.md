@@ -69,12 +69,14 @@ measurements. Elektron rights remain reserved for locally recovered stock.
 
 ## Screens and audio
 
-These MKII emulator captures show the settings list, USB Audio fields, track tap and Outbox source assignments. [Capture details](media/capture.json).
+These MKII emulator captures show the settings list, the USB Audio fields, the track tap, the inputs and the Outbox source assignments. [Capture details](media/capture.json).
 
 ![The SETTINGS list with USB AUDIO selected](media/ot-settings.png)
 
 ![USB Audio fields and their selected values](media/ot-usb-audio.png)
 
 ![PRE LEVEL and POST LEVEL choices](media/ot-track-tap.png)
+
+![OFF, AB, CD and ABCD choices for INPUTS](media/ot-inputs.png)
 
 ![Sources for the four Outbox stereo pairs](media/ot-outbox-pairs.png)
