@@ -98,7 +98,19 @@ int host_arr_write(const char *path, unsigned slot)
     ++writes;
     return 0;
 }
-int host_arr_read(const char *path, unsigned slot)
+static const char *fail_open_path;      /* one file whose opens fail fail_opens more times while it stays there */
+static int fail_opens, fail_exists;     /* fail_exists: the exists check fails too (answers "not there") */
+int host_open_read(const char *path)
+{
+    if (fail_open_path && !strcmp(path, fail_open_path) && fail_opens > 0) { --fail_opens; return -1; }
+    return find(path) ? 0 : -1;
+}
+int host_exists(const char *path)
+{
+    if (fail_exists && fail_open_path && !strcmp(path, fail_open_path)) return 0;
+    return find(path) != 0;
+}
+int host_read_slot(const char *path, unsigned slot)
 {
     struct file *f = find(path);
     if (!f) return 0;
@@ -311,6 +323,31 @@ int main(void)
       find("/SET/PROJ/arr07.bak")->work[100] = (uint8_t)(want + 1);  /* the stale backup differs from arr07.work */
       tap(LEFT); job(); as_tick(0);
       check("after a partial backup, book 1 comes from arr01-08, nothing marked", book() == 0 && cs1[W(6) + 100] == want && cs1[CHG] == 0); }
+
+    /* the owner's review (#1737): an existing arrangement file that fails to open once is not "no such file" */
+    tap(RIGHT); job(); as_tick(0);                 /* book 2 */
+    mark(0x20); cs1[CHG] = 0xff; job();            /* book 2's songs saved to arr09-16 */
+    { uint8_t keep11 = find("/SET/PROJ/arr11.work")->work[100];
+      tap(RIGHT); job(); as_tick(0);               /* book 3 */
+      fail_open_path = "/SET/PROJ/arr11.work"; fail_opens = 1;
+      last_message[0] = 0;
+      tap(LEFT); job(); as_tick(0);                /* back to book 2: arr11.work does not open this once */
+      check("arr11.work there but not opened: reported as a book file error", book() == 1 && !strcmp(last_message, "BOOK FILE ERROR"));
+      int w0 = writes; job();                      /* the next sync, nothing edited */
+      check("the next sync writes none of book 2's files", writes == w0);
+      check("and arr11.work keeps its saved arrangement", find("/SET/PROJ/arr11.work")->work[100] == keep11);
+      cs1[W(0) + 100] ^= 0x5a; cs1[CHG] = 0x01; job();   /* an edit of slot 1 on that book */
+      check("an edit on that book is still saved, to arr09.work only", find("/SET/PROJ/arr09.work")->work[100] == cs1[W(0) + 100] && find("/SET/PROJ/arr11.work")->work[100] == keep11);
+      fail_open_path = 0; fail_opens = 0;
+      tap(RIGHT); job(); tap(LEFT); job(); as_tick(0);
+      check("opened again later, arr11.work reads into slot 3", book() == 1 && cs1[W(2) + 100] == keep11);
+      tap(RIGHT); job();
+      fail_open_path = "/SET/PROJ/arr11.work"; fail_opens = 1; fail_exists = 1;
+      tap(LEFT); job(); as_tick(0);                /* the open and the exists check fail once, the second open works */
+      check("a failed open and a failed exists check: the second open reads it", book() == 1 && cs1[W(2) + 100] == keep11 && cs1[CHG] == 0);
+      fail_open_path = 0; fail_opens = 0; fail_exists = 0; }
+    mark(0x20); cs1[CHG] = 0xff; job();            /* book 2 saved as before the edit, for the cases below */
+    tap(LEFT); job(); as_tick(0);                  /* back to book 1 */
 
     /* reinstalls and power cycles */
     tap(RIGHT); job();

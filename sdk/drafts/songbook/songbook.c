@@ -49,6 +49,7 @@
 #define F_OPEN 0x40016864u           /* (fo, path, mode, buffer, size) -> < 0 failed */
 #define F_CLOSE 0x4001677cu          /* (fo) -> < 0 failed */
 #define F_COPY 0x40016388u           /* (to, from, 0) -> < 0 failed, -12 no such file */
+#define FS_EXISTS 0x46c823fau        /* -> the file system's exists(path): nonzero when there (F_COPY's own -12 test) */
 #define ARR_WRITE 0x40089644u        /* (fo, slot) -> < 0 failed: one slot in stock's file format */
 #define ARR_READ 0x4008b4d4u         /* (fo, slot, 0) -> < 0 failed: one file into a slot */
 #define CLEAR_ARR 0x400a041cu        /* clear_arr(slot): empty rows, no saved copy, default name */
@@ -78,7 +79,9 @@ void host_wr8(uint32_t a, uint8_t v);
 int host_post_write(void);
 const char *host_projdir(void);
 int host_arr_write(const char *path, unsigned slot);
-int host_arr_read(const char *path, unsigned slot);
+int host_open_read(const char *path);
+int host_exists(const char *path);
+int host_read_slot(const char *path, unsigned slot);
 int host_copy(const char *to, const char *from);
 int host_put(const char *path, const void *src, unsigned n);
 int host_get(const char *path, void *dst, unsigned n);
@@ -181,7 +184,10 @@ static void arr_apply(int on) { host_arr_apply(on); }
 static int select_arr(unsigned n) { return host_select_arr(n); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
-static int arr_read(struct as_state *s, unsigned slot) { return host_arr_read(s->path, slot); }
+static int open_read(struct as_state *s) { return host_open_read(s->path); }
+static int file_exists(struct as_state *s) { return host_exists(s->path); }
+static int read_slot(struct as_state *s, unsigned slot) { return host_read_slot(s->path, slot) > 0; }
+static void close_read(struct as_state *s) { (void)s; }
 static int copy_file(struct as_state *s) { return host_copy(s->path2, s->path); }
 static int put_place(struct as_state *s) { return host_put(s->path, s->place, sizeof s->place); }
 static int get_place(struct as_state *s) { return host_get(s->path, s->place, sizeof s->place); }
@@ -226,14 +232,10 @@ static int arr_write(struct as_state *s, unsigned slot)
     return f_close(s) >= 0 && ok;
 }
 
-/* s->path into a slot, by stock's own reader. 1 read, 0 no such file (the slot is untouched), -1 failed. */
-static int arr_read(struct as_state *s, unsigned slot)
-{
-    if (f_open(s, "r") < 0) return 0;
-    int ok = ((int (*)(void *, unsigned, int))ARR_READ)(s->fo, slot, 0) >= 0;
-    f_close(s);
-    return ok ? 1 : -1;
-}
+static int open_read(struct as_state *s) { return f_open(s, "r"); }
+static int file_exists(struct as_state *s) { return (*(int (**)(const char *))FS_EXISTS)(s->path) != 0; }
+static int read_slot(struct as_state *s, unsigned slot) { return ((int (*)(void *, unsigned, int))ARR_READ)(s->fo, slot, 0) >= 0; }
+static void close_read(struct as_state *s) { f_close(s); }
 
 /* s->path to s->path2 by stock's own copy. 1 copied, 0 no such file, -1 failed. */
 static int copy_file(struct as_state *s)
@@ -324,6 +326,20 @@ static int write_book(struct as_state *s, unsigned book)
         ok &= arr_write(s, n);
     }
     return ok;
+}
+
+/* s->path into a slot, by stock's own reader. 1 read, 0 no such file (the slot is untouched), -1 failed.
+ * An open that fails is "no such file" only when the file system says the file is not there and a second open fails
+ * too: a file that is there but did not open is a failure, so its book is written back only where edited and its
+ * saved arrangement survives (found by the owner in review, #1737). */
+static int arr_read(struct as_state *s, unsigned slot)
+{
+    if (open_read(s) < 0) {
+        if (file_exists(s) || open_read(s) < 0) return file_exists(s) ? -1 : 0;
+    }
+    int ok = read_slot(s, slot);
+    close_read(s);
+    return ok ? 1 : -1;
 }
 
 /* A book's 8 files into the slots; a file not there yet gives an empty arrangement, and so does one that does not

@@ -6,7 +6,7 @@ Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gat
 
 ## Host gate
 
-`verify.py`: 80 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 86 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
@@ -109,6 +109,18 @@ files were written, so a partial one is never read back. `verify.py` (80 checks)
 arr05.bak and a backup write failing after three files; the previous code fails the missing-file case (arr03.work
 saved empty). On the unit: not yet.
 
+### An arrangement file that is there but fails to open (found by the owner in review, #1737, 22 November 2026)
+
+Every failed open counted as "no such file": a book's file that failed to open once (a card fault) gave an empty slot
+with no error, and the next sync wrote that empty slot over the saved arrangement. Fixed: a failed open is "no such
+file" only when stock's own exists check (the file system's, at 0x46c823fa, as stock's copy uses for its -12) says the
+file is not there and a second open fails too. A file that is there but did not open is a read failure, so the book
+is reported (BOOK FILE ERROR) and written back only where edited. `verify.py` (86 checks): arr11.work failing to open
+once on the way back to book 2 (reported, the next sync writes nothing, arr11.work keeps its arrangement, an edit of
+another slot is still saved, the file reads again later), and the open and the exists check failing together with the
+second open working; the previous rule fails six of them (arr11.work saved empty). Not covered: a card on which the
+open and the exists check keep failing for a file that is there, which still reads as missing. On the unit: not yet.
+
 ## Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |
@@ -123,6 +135,7 @@ saved empty). On the unit: not yet.
 | A trial of another build over the kept one, switching during it | the kept copy came back with stale memory on an early build | the developer's MKI, 06f593e3 | pass: the kept copy reread its record |
 | Beside USB AUDIO (installed with base 0.7.13) | both kept in one set, sharing the base | the developer's MKI, 08d0833a | pass: kept together, no crash, stall or freeze |
 | Removing the module on book 1 | stock's next save writes the slots as arr01-08 | the developer's MKI, package 08d0833a removed on book 1, then a power cycle (an earlier build had left book 2 in book 1, the load fault since fixed) | pass: the stock arrangements were book 1's |
+| An arr09+ file there but failing to open once | taken for a missing file, its empty slot was written back (owner's review) | host test (verify.py) | pass in the host test; not run on a unit |
 | Removing the module on a book other than 1 | stock would write that book into arr01-08 | README asks to step back to book 1 first | not run: documented limitation |
 | A book file that does not read | must not be written back | host test (verify.py) | not run on a unit |
 | A new project (ev_project_new outside a load) | must reset the books, not keep a load's return | host test (verify.py) | not run on a unit |

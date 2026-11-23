@@ -40,7 +40,9 @@ Battery RAM 0x100f8f06-0x100f8ffc was free; the module claims 0x100f8f10-0x100f8
   saves it anyway.
 - `0x4008fd28(dir, mask)` reads the masked slots' files when a project is loaded. A power cycle does not: on the
   developer's MKI the arrangements in battery RAM came back as they were (book 3 stayed book 3).
-- `0x40016388(to, from, 0)` copies a file; SAVE and RELOAD PROJECT use it for arr01-08 (-12: no such file).
+- `0x40016388(to, from, 0)` copies a file; SAVE and RELOAD PROJECT use it for arr01-08 (-12: no such file, decided by the
+  file system's exists(path) behind the pointer at `0x46c823fa`, before any open; the open `0x40016864` passes the file
+  system's own error codes through, so a failed open alone does not say the file is missing).
 - File layer: open 0x40016864 `(file, path, mode, buffer, size)`, close 0x4001677c; the project directory
   0x40025230(0, 0); `clear_arr` 0x400a041c(n).
 
