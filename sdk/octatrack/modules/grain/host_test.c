@@ -72,6 +72,7 @@ int main(int argc, char **argv)
     GranParams p = { 40, 70, 90, 30, 0, 0, 0, 0, 0 };
     uint8_t *pv = &p.pos;
     for (int i = 0; base + i < argc && i < 10; ++i) pv[i] = (uint8_t)atoi(argv[base + i]);   /* ... sync freeze scan */
+    if (getenv("EDGE")) p.edge = (uint8_t)atoi(getenv("EDGE"));
     static GranEngine e;
     gran_init(&e);
     gran_trigger(&e, 0);

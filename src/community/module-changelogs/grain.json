@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "New EDGE knob in SRC SETUP (E): CLMP keeps a grain inside the sample when SPRY pushes it past an edge, WRAP makes the sample a ring as in 0.1.2, BNCE turns a grain round at an edge."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-11-22",
     "changes": [

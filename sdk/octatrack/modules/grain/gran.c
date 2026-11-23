@@ -80,6 +80,7 @@ void gran_params(GranEngine *e, unsigned track, const GranParams *p, const GranS
     t->spray = gran_position(count, (uint32_t)(p->spray > 127 ? 127 : p->spray) << 8);
     if (t->scan >= count) t->scan %= count;   /* a shorter sample may replace the playing sample */
     t->count = count;
+    t->edge = p->edge > GRAN_EDGE_BOUNCE ? GRAN_EDGE_CLAMP : p->edge;
     t->len = gran_size[p->size > 127 ? 127 : p->size];
     d = p->dens > 127 ? 127 : p->dens;
     if (p->sync && tempo24) {
@@ -152,15 +153,18 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
             at += (int32_t)scaled_product(t->spray >> 5, r, 11);
             at -= (int32_t)(t->spray >> 1);
         }
-        /* The sample is a ring, as in typical granular engines (the author, 22 November 2026): a grain born past the
-         * end starts near the beginning and one born before the beginning starts near the end. POS is below count and
-         * SPRY's offset is within +-count/2, so one correction is enough; the last test only guards very short samples. */
-        if (at < 0)
-            at += (int32_t)s->count;
-        if ((uint32_t)at >= s->count)
-            at -= (int32_t)s->count;
-        if ((uint32_t)at >= s->count)
-            at = (int32_t)s->count - 1;
+        /* EDGE WRAP: the sample is a ring, as in typical granular engines (the author, 22 November 2026): a grain born
+         * past the end starts near the beginning and one born before the beginning starts near the end. POS is below
+         * count and SPRY's offset is within +-count/2, so one correction is enough; the last test only guards very
+         * short samples. With CLMP and BNCE the birth is fixed once the direction is known (below). */
+        if (t->edge == GRAN_EDGE_WRAP) {
+            if (at < 0)
+                at += (int32_t)s->count;
+            if ((uint32_t)at >= s->count)
+                at -= (int32_t)s->count;
+            if ((uint32_t)at >= s->count)
+                at = (int32_t)s->count - 1;
+        }
         g->idx = (uint32_t)at;
         g->fr = 0;
         g->left = t->len;
@@ -168,6 +172,16 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
         g->phs = 0x1000000u / t->len;
         g->start = d6;
         g->rev = gran_dir(e, p->dir);
+        if (t->edge != GRAN_EDGE_WRAP) {
+            /* CLMP and BNCE: a grain is born inside the sample. What POS plus SPRY pushes past an edge stays on that
+             * edge: at the end, a forward grain reads on from the beginning (the end and the beginning are the same
+             * point) and a backward or bouncing one reads back from the last frame. */
+            if (at < 0)
+                at = 0;
+            else if ((uint32_t)at >= s->count)
+                at = (g->rev || t->edge == GRAN_EDGE_BOUNCE) ? (int32_t)s->count - 1 : 0;
+            g->idx = (uint32_t)at;
+        }
         g->pan = 0;             /* v018: paneo al azar dentro de +-PAN/16 */
         if (p->pan) {           /* PAN 0..127: 127 da exactamente el PAN maximo del original */
             uint32_t amt = p->pan > 127 ? 127 : p->pan;
@@ -691,7 +705,15 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
             mix_grain(t, s, g, w, f, win, mix, start, seg, count, stereo, packed, step, span);
             start += seg; m -= seg;
             if (g->idx >= count && count) {
-                if (w >= 0) g->idx %= count;
+                if (t->edge == GRAN_EDGE_BOUNCE) {
+                    /* BNCE: reflect about the edge that was crossed and turn the grain round (its step is negated the
+                     * way a reverse grain's is). A reflection that would leave the sample lands on its last frame. */
+                    uint32_t r = w >= 0 ? 2u * count - 1u - g->idx : 0u - g->idx - 1u;
+                    g->idx = r < count ? r : count - 1u;
+                    g->rev ^= 1u;
+                    w = -w - (f != 0);
+                    f = 0u - f;
+                } else if (w >= 0) g->idx %= count;
                 else { uint32_t d = (0u - g->idx) % count; g->idx = d ? count - d : 0u; }
             }
         }
