@@ -357,8 +357,8 @@ stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECH
   (`keybus_read` in `controller_board.c`): installed but unused, the bus is off.
 - While a live package requires it, the base charges the tap on both cores as a per-core constant, before every FX
   slot, the way a source engine is charged: 43 chip cycles a sample for a core's four tracks, the one-pass tap timed
-  at 42.2 on an MKII ([evidence](../sdk/machines/octatrack/evidence/keybus-tap-timing-20261123.json)); the older
-  41-instruction tap timed at 51, and 7/4 of a static count gave 72. Cycles do not scale with instructions. Sidechain alone
+  at 42.2 on an MKII ([evidence](../sdk/machines/octatrack/evidence/keybus-tap-timing-20261123.json)); the old
+  41-instruction tap took 51, and 7/4 of a static count gave 72. Cycles do not scale with instructions. Sidechain alone
   is not charged for it, as on main (review, change 1); a reader installed beside Sidechain is. The price is paid at
   the pick, never at install (owner, 24 October 2026): a reader always goes in, and the FX allocator adds the price to
   any set that names a reader's effect while the tap is not charged (`modwerk_controller_keybus_pending`), so that
