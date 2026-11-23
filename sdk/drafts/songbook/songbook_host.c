@@ -550,7 +550,7 @@ int main(void)
     settle(); job(); for (int i = 0; i < 300; ++i) as_tick(0);
     job(); for (int i = 0; i < 300; ++i) as_tick(0);
     check("a run state left set after the load: reset once, and back on book 3, arrangement 5", book() == 2 && chosen == 4 && resets == 1 && arr_state == 0);
-    check("and the closed list's cursor on arrangement 5", list[7] == 4 && list[3] == 0);
+    check("and the closed list's cursor on arrangement 5, and the arrangement YES takes too", list[7] == 4 && list[3] == 0 && list[11] == 4);
     arr_state = 2; select_busy = 0;
     tap(LEFT); job(); for (int i = 0; i < 200; ++i) as_tick(0);
     check("a LEFT/RIGHT switch never resets the arranger", resets == 1);

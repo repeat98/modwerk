@@ -67,6 +67,7 @@
 #define ARR_MODE_ON 0x4005200cu      /* stock's switch into arranger mode (FUNC + PATTERN's, 0x4006103e); nothing if on */
 #define LIST_TOP 0x400c0ba0u         /* ARR > CHANGE: the first row shown */
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
+#define LIST_CHOICE 0x400c0ba8u      /* ARR > CHANGE: the arrangement under the cursor, as YES selects it (0x400612b4) */
 
 #define REC_MAGIC 0x41534231u        /* "ASB1" */
 #define PLACE_MAGIC 0x41534250u      /* "ASBP": arrbook.work, the book in use and each book's last choice */
@@ -703,7 +704,10 @@ void as_tick(void *api)
             s->reapply = 0;
             /* The list's cursor on it, open or not: stock keeps the cursor while the list is closed, and after a LOAD
              * it would open on the last project's row (the developer's MKI, 24 November 2026). */
-            if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);
+            if (rd32(LIST_TOP) == 0) {                    /* the row drawn and the one YES takes (the cursor */
+                wr32(LIST_CURSOR, s->last[s->book]);      /* alone left YES on another arrangement: the developer's */
+                wr32(LIST_CHOICE, s->last[s->book]);      /* MKI, 24 November 2026) */
+            }
             if (rd32(CHANGE_WINDOW)) draw_change();
         }
     }
