@@ -14,7 +14,7 @@
 | Type 7, BW, is the band: a 2-pole band-pass whose -3 dB edges are FRQ (the high-pass edge,
 | the base) and the low-pass edge. Measured on a unit (22 Nov 2026): below stock's RES 0 the
 | resonance word (signed) widens the band-pass, the same at every cutoff.
-| the low-pass edge sits RES (the knob reads WID) x 15/32 semitones above FRQ (0..59.5), so FRQ
+| The low-pass edge sits RES (the knob reads WID) x 15/32 semitones above FRQ (0..59.5), so FRQ
 | moves the whole band.
 | Words are 8.8 semitones (stock's FRQ: one value a semitone). The width w = edge - FRQ is held to
 | 1..60 semitones; the filter's cutoff is the edges' midpoint (their geometric mean in hertz), held
@@ -77,7 +77,7 @@ band_edges:
         lsl.l   #4,%d2
         sub.l   %d0,%d2
         asr.l   #5,%d2
-2:      cmp.l   #W_MIN,%d2
+        cmp.l   #W_MIN,%d2
         bge.s   3f
         move.l  #W_MIN,%d2
 3:      cmp.l   #W_MAX,%d2

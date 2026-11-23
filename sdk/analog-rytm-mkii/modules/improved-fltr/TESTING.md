@@ -10,7 +10,7 @@ IF10 (sha256 b48c1ddd; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved 
 
 IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved AMP): if-band-words (BWL RES 52 and BW RES 72 give the same analog words as before), if-typ-turn (TYP's knob: PK, BW, BWL, stops), if-screens and if-graph (the measured band drawn in the FILTER graph with its frame, 4 dB a row with +15 dB at the top, at five settings, and stock BP; each box against a reference recorded from screens checked by eye) pass. `sdk/tests/test_improved_fltr_table.py` keeps `src/width-table.h` in step with the calibration.
 
-## Unit, current layout
+## Unit, two-type layout
 
 **IFC3** (sha256 dafd5332: the private combo set FXC8 on a dev base + Improved FLTR d401815c0 + the private filter-measuring machine), RAM-booted on Nathaniel Pavel's MKII (flash FXCC, same layout), 23 Nov 2026, by the rig: if-band-words, if-typ-turn and the edge check pass.
 
@@ -23,7 +23,7 @@ IF09 (sha256 4f0e0ac4; dev base 7ee5867d + Improved FLTR + Filter Hz + Improved 
 | BWL, FRQ 60, RES 51 | 440..1750 Hz | 469..1759 Hz |
 | BWL, FRQ 72, RES 51 | 880..3501 Hz | 880..3657 Hz |
 
-The same edges as IFC2's runs of the same settings (then BND+ and BND) within about 1 %. Not on the unit: the FILTER graph's look (emulator screens only) and a person's listening.
+The same edges as IFC2's runs of the same settings (then BND+ and BND) within about 1 %. The current BW's audio path is that layout's BWL (RES the width above FRQ), so the BWL rows carry over; its BW rows (RES the cutoff) do not. The one-type build has not run on the unit yet.
 
 Code review (23 Nov 2026, the BW/BWL change), fixed: RES's text uses the page's noted FRQ and TYP only for the track they came from; the graph's top moved to +15 dB so a 4-semitone band's peak is drawn, narrower ones clip (listed); the memory figure measured (3,492 bytes); the graph cases compare against references; the width table has a test.
 

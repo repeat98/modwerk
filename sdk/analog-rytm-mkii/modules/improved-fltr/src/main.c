@@ -309,11 +309,17 @@ FLTR_UI static void set_name(char *to, const char *from)
         ;
 }
 
-// ev_tick, about 20 Hz: RES's names follow the selected sound's TYP (as edited); a change redraws.
+// ev_tick, about 20 Hz: RES's names follow the selected sound's TYP: as the FILTER page shows it (a
+// held trig's lock included) while that page is up, else as edited. A change redraws.
 FLTR_UI void improved_fltr_tick(char *ctrl)
 {
-    volatile int16_t *sw = sound_words(selected_track());
-    int width = sw && band_type(sw[IDX_TYP] >> 8);
+    int track = selected_track(), width;
+    volatile int16_t *sw;
+
+    if (page_up && page_track == track)         // the FILTER page: TYP as it shows it (a held trig's lock)
+        width = band_type(improved_fltr_seen_typ);
+    else
+        width = (sw = sound_words(track)) && band_type(sw[IDX_TYP] >> 8);
 
     if (width == named_width)
         return;
