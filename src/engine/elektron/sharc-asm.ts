@@ -30,7 +30,9 @@
  *   [IF cond] ureg = ureg                  type 5b (32-bit: never in the last 11 instructions of a loop)
  *   [IF cond] JUMP target                  type 8a, absolute, not delayed
  *   [IF cond] CALL target                  type 8a, absolute, not delayed, pushing the return address
- *   [IF cond] RTS                          type 11a, not delayed
+ *   [IF cond] RTS                          type 11a, not delayed, no computation (bit 39 clear: with it set the word
+ *                                          decodes as type 11c, and a conditional RTS whose condition fails hung the
+ *                                          unit and stops the emulator; an unconditional or taken one ran either way)
  *   LCNTR = count, DO label UNTIL LCE      type 12a (label: the loop's last instruction)
  *   NOP
  *   CCALL target                           a linked call as the stock render loop makes one (the call, then the old
@@ -286,7 +288,7 @@ function encode(text: string, line: number, pc: number): Encoded[] {
     const target = expr(m[2]), call = m[1].toUpperCase() === 'CALL' ? 1n << 39n : 0n
     return one(48, labels => (0x06n << 40n) | call | (BigInt(condition) << 33n) | (u32(target(labels)) & 0xffffffn))
   }
-  if (/^RTS$/i.test(body)) return one(48, () => (0x0an << 40n) | (1n << 39n) | (BigInt(condition) << 33n))
+  if (/^RTS$/i.test(body)) return one(48, () => (0x0an << 40n) | (BigInt(condition) << 33n))
   const compute = computation(body)
   if (compute !== null) return one(48, () => (0x01n << 40n) | (BigInt(condition) << 33n) | BigInt(compute))
   if (condition !== TRUE) {
