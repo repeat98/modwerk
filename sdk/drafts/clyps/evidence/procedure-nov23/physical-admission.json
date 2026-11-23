@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-23",
+  "started": "2026-11-23T15:46:16.948Z",
+  "finished": "2026-11-23T15:46:21.955Z",
+  "build": {
+    "revision": "2949c6f87cb59aa48394cabaad48888b35bce4a7",
+    "dirty": false
+  },
+  "target": {
+    "kind": "module",
+    "id": "clyps",
+    "machine": "octatrack",
+    "draft": true
+  },
+  "unit": {
+    "reason": "left alone with --no-unit"
+  },
+  "steps": [
+    {
+      "id": "software",
+      "status": "failed",
+      "reason": "exit 1: npm run module:doctor -- --draft clyps"
+    },
+    {
+      "id": "compat",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "build",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "cost-model",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "emulator",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "unit-read",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "unit-pass",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "soak",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "cost-unit",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "restore",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "by-hand",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    },
+    {
+      "id": "developer",
+      "status": "not run",
+      "reason": "stopped: step 1 (Software checks) failed"
+    }
+  ]
+}

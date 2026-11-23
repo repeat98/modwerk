@@ -206,3 +206,28 @@ Edge cases
 | STOP, OFF and stock Arranger | Queued source changes or handlers could survive removal | T2 slice and Arranger recovery fixtures | Pass. STOP cancelled the queued change; OFF restored callback heads and all 786432 pool bytes. Stock Arranger playback matched before and after removal. |
 | Shared hook interaction | Panel, source or wrap registration could conflict with base owners | Candidate build by named hooks, callback heads before/after OFF and upstream-only compile | Pass on the candidate for bindings and T2 unload. Blocked on upstream main for the three proposed bindings; catalogue-only compatibility excludes CLYPS. |
 | Physical MKII | Audio, cost, USB trial and persistence require the real instrument | Separate authorization required | Not run. Trial, soak, pricing, rollback and inventory, MAIN/CUE listening and persistence remain open. |
+
+### Physical MKII admission recheck after #1910 merged — 23 November 2026
+
+**BLOCKED before opening a device session.** macOS enumerated an Elektron Octatrack DPS-1 over USB. The artist identified the intended instrument as MKII / OS 1.40C. Its revision, running base, module inventory and saved Part were not read from the unit. No transport, trial, project or card command was sent. There was no physical rollback to verify.
+
+The draft was recovered at 188bda33a5d71f2001b941b80bcd1f6b724b8d41. The current upstream SDK tested was 4035fdfa857d1c83929bd9b2776871ab17432559, after #1910 merged. With that main merged locally at 2949c6f87cb59aa48394cabaad48888b35bce4a7, the CLYPS source tree was identical. The plan printed twelve steps. The host-only procedure reproduced step 1 FAIL on both checkouts. The draft doctor could not open the staged octamod.module.json. Compiling the draft against the new upstream SDK separately failed on the incomplete modwerk_modal_input struct and undefined MODWERK_MODAL_INPUT_ABI. The upstream Octatrack registry and SDK lack the candidate wrap, per-track audio source and modal-input bindings.
+
+| Official step | Status | Observation |
+| --- | --- | --- |
+| 1 Software checks | FAIL | Draft manifest missing during staging |
+| 2 Compatibility | BLOCKED | Runner stopped at 1. Standalone catalogue check passed for 44 active modules and 946 pairs. It excludes the CLYPS draft. |
+| 3 Identify build | BLOCKED | No official CLYPS build |
+| 4 DSP cost model | BLOCKED | Runner stopped at 1 |
+| 5 Emulator rehearsal | BLOCKED | Runner stopped at 1 |
+| 6 Read unit | NOT TESTED | USB enumeration only |
+| 7 Scripted trial | NOT TESTED | No eligible package |
+| 8 Soak | NOT TESTED | No trial |
+| 9 Cost | NOT TESTED | No CPU, frame or guard samples |
+| 10 Restore | NOT TESTED | No device-state change initiated |
+| 11 Manual cases | NOT TESTED | Physical playback, isolated T2 launch, early/late timing, ARR/popup, STOP and removal all unmeasured |
+| 12 Artist stage | NOT TESTED | No physical session |
+
+Two local builds with the contributor SDK at 5c32cbacd2b1efea3d70e9b543a9a43cfe634651 produced identical MWRM SHA-256 32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9. Both used the draft's candidate builder. All ten host tests passed.
+
+To unblock admission, land the shared wrap callback, exclusive audio source selector and modal-input opt-in with loader capability enforcement in the supported development base, then bind the staged module manifest and SDK builder to that contract. Restart the procedure at step 1. The existing integration proposal uses slots 63–65 and feature 0x4000, pending allocation. Before a device trial, independently identify the running base, inventory, saved scratch Part and supported rollback route.
