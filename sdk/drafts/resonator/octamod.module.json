@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "id": "resonator",
+  "key": "RESONATOR",
+  "name": "Resonator",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "name": "Jannik Aßfalg",
+    "credits": [
+      "Jannik Aßfalg"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "RESONATOR",
+    "family": "Resonator",
+    "summary": "Four tuned resonant modes that ring at a note or at one of Aleksi Perälä's 128 Colundi frequencies, excited by the track's own audio.",
+    "overview": "The track's audio (left and right summed) excites four resonators. PTCH sets the root and INTV the step between the four modes; TUNE decides whether those count semitones (NOTE) or degrees of the Colundi sequence (COLUN), whose 128 absolute frequencies run from 10.8 Hz to 12 kHz. The root and the fourth mode sit in the centre, the second left and the third right. Drums, noise and loops ring at the chosen pitches; a parameter-locked PTCH plays the resonator from the sequencer.",
+    "highlights": [
+      "COLUN mode: PTCH picks one of the 128 Colundi frequencies, 78 = 440 Hz, 79 = 441 Hz",
+      "Exact pitch: measured within 0.0002 Hz at 440 Hz in the DSP emulator",
+      "Rings from 25 ms to 10 s and ends in digital silence",
+      "No buffers: FX1 or FX2 on any track"
+    ],
+    "usage": [
+      "Put RESONATOR on FX1 of a drum or loop track. With the defaults (PTCH 57, INTV 7, MIX 64) each hit rings a stack of fifths on A.",
+      "Hold FUNC and press FX1 for TUNE: COLUN makes PTCH a Colundi degree (shown as DEG). Lock PTCH on trigs to play a Colundi melody through the ring.",
+      "Raise DCAY for longer rings and GAIN for quiet material; DAMP shortens the upper modes, INTV UNI leaves one resonance."
+    ]
+  },
+  "controls": [
+    {
+      "name": "PTCH",
+      "default": 57,
+      "count": 128,
+      "labels": null,
+      "doc": "Root pitch. NOTE: MIDI note 0-127 (69 = A at 440 Hz). COLUN: Colundi degree 0-127 (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG."
+    },
+    {
+      "name": "INTV",
+      "default": 7,
+      "count": 25,
+      "labels": [
+        "UNI",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24"
+      ],
+      "doc": "Steps between the four modes, in semitones (NOTE) or Colundi degrees (COLUN). UNI is a single resonance. A mode above note or degree 127 stays at 127."
+    },
+    {
+      "name": "DCAY",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Ring time to -60 dB: 25 ms at 0, about 0.5 s at 64, 10 s at 127."
+    },
+    {
+      "name": "DAMP",
+      "default": 32,
+      "count": 128,
+      "labels": null,
+      "doc": "Shortens the ring of the upper modes, each a step more than the one below; 0 rings all four for DCAY."
+    },
+    {
+      "name": "GAIN",
+      "default": 32,
+      "count": 128,
+      "labels": null,
+      "doc": "Ring level: 32 is 0 dB, 64 is +12 dB, 127 is +24 dB. Loud rings soft-clip at -3.5 dBFS."
+    },
+    {
+      "name": "MIX",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Dry/wet. 0 is exact passthrough, 127 is only the ring."
+    },
+    {
+      "name": "TUNE",
+      "default": 0,
+      "count": 2,
+      "labels": [
+        "NOTE",
+        "COLUN"
+      ],
+      "doc": "On the SETUP page. NOTE: PTCH and INTV count semitones. COLUN: they count degrees of the Colundi sequence."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX1 / FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Not tested on a unit yet: pitch, decay, silence and overload are checked in the DSP emulator only (verify.py).",
+      "Pitches assume 44.1 kHz, the rate every Modwerk effect assumes.",
+      "The input is summed to mono; the ring is spread across the stereo field.",
+      "A sustained tone at a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring."
+    ],
+    "effectId": 7
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "verify.py passes in dsp_host (pitch, decay, silence, overload, split, dirty state); not run on a unit yet.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code, tables, gate and documentation by Jannik Aßfalg, MIT. The Colundi sequence (128 frequencies) is Aleksi Perälä's, from colundi.net, used with the owner's permission recorded on 23 Nov 2026. No firmware, extracted routines or stock tables are included."
+  },
+  "media": [],
+  "access": {
+    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. PTCH, INTV, DCAY, DAMP, GAIN and MIX are on the FX main page, TUNE on its SETUP page.",
+    "steps": [
+      "Select an audio track that plays a sample.",
+      "Hold FUNC and press FX1 (or FX2) to open its SETUP. Turn LEVEL to RESONATOR and press YES.",
+      "Press FX1 (or FX2) for the main page: PTCH, INTV, DCAY, DAMP, GAIN, MIX.",
+      "Hold FUNC and press FX1 (or FX2) again for TUNE: NOTE or COLUN."
+    ],
+    "screenshots": []
+  }
+}

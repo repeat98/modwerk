@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Four tuned modes ring at a note or at one of the 128 Colundi frequencies, excited by the track.",
+      "TUNE on the SETUP page switches PTCH and INTV between semitones and Colundi degrees.",
+      "Lock PTCH on trigs to play the ring from the sequencer."
+    ]
+  }
+]
