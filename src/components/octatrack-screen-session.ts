@@ -19,7 +19,7 @@ export function paintLcd(frame: Uint8Array, image: ImageData) {
   }
 }
 
-type Events = {
+export type Events = {
   ready: () => void
   detached: (open: boolean) => void
   recording: (on: boolean) => void
@@ -34,12 +34,13 @@ export class ScreenSession {
   private mirror?: CanvasRenderingContext2D
   private recorder?: MediaRecorder
   private lastFrame?: Uint8Array
-  private fps: ScreenFrameRate
+  fps: ScreenFrameRate
   private readonly pixels: CanvasRenderingContext2D
   private readonly image: ImageData
   private readonly output: CanvasRenderingContext2D
   private readonly link: OctatrackLink
-  private readonly events: Events
+  /** Swapped when the page leaves (leaveSession) and when it comes back (adoptSession). */
+  events: Events
   constructor(link: OctatrackLink, canvas: HTMLCanvasElement, events: Events, fps: ScreenFrameRate = DEFAULT_SCREEN_FPS) {
     this.fps = fps
     this.link = link
@@ -54,7 +55,10 @@ export class ScreenSession {
     this.output = output
     output.imageSmoothingEnabled = false
   }
-  get hasAudience() { return !!this.recorder || !!this.popup && !this.popup.closed }
+  get canvas() { return this.output.canvas }
+  get detached() { return !!this.popup && !this.popup.closed }
+  get recording() { return !!this.recorder }
+  get hasAudience() { return this.recording || this.detached }
 
   setFrameRate(fps: ScreenFrameRate) {
     if (!this.recorder) this.fps = fps
@@ -158,3 +162,17 @@ export class ScreenSession {
     popup?.close()
   }
 }
+
+// Leaving the Hub unmounts the screen page. A popped-out session keeps reading and recording until its popup closes.
+let kept: ScreenSession | undefined
+export function leaveSession(session: ScreenSession, save: (blob: Blob) => void) {
+  if (!session.detached) return session.close()
+  const end = () => { if (kept === session) kept = undefined; session.canvas.remove(); session.close() }
+  session.events = { ready() {}, recording() {}, saved: save, failed: end, detached: open => { if (!open) end() } }
+  // Parked like a hidden Hub panel, where the recorder is known to keep getting frames.
+  session.canvas.hidden = true
+  document.body.append(session.canvas)
+  kept = session
+}
+export const keptSession = () => kept
+export function adoptSession() { const session = kept; kept = undefined; return session }

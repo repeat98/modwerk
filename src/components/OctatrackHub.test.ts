@@ -97,7 +97,7 @@ describe('the Octatrack page', () => {
     expect(open().querySelector('.hub-screen-empty a')?.getAttribute('href')).toBe('#octatrack/setup')
     await show(8192)
     expect(button('Start preview').disabled).toBe(false)
-    expect(open().querySelector('canvas')?.hidden).toBe(true)
+    expect(open().querySelector('canvas')).toBeNull() // The LCD canvas is made on Start preview.
     expect(read).not.toHaveBeenCalled()
   })
 
