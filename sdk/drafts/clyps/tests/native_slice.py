@@ -12,7 +12,12 @@ parser = argparse.ArgumentParser(description=__doc__)
 for name in ('emulator', 'main', 'symbols', 'synthetic_card', 'output'):
     parser.add_argument(name, type=Path)
 parser.add_argument('--stock', action='store_true')
+parser.add_argument('--midi-wire', type=Path, help='Record UART0 transmit writes on a two-channel fixture')
+parser.add_argument('--stock-midi-home', action='store_true',
+                    help='Keep stock global A01 throughout as a MIDI-only control')
 args = parser.parse_args()
+if args.stock_midi_home and not (args.stock and args.midi_wire):
+    parser.error('--stock-midi-home requires --stock and --midi-wire')
 if not __debug__:
     parser.error('Assertions are required')
 symbols = json.loads(args.symbols.read_text())
@@ -53,6 +58,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 advance(35)
 
         events, writes, wraps = [], [], []
+        wire = []
         tick = 0
         recording = False
 
@@ -72,7 +78,9 @@ with tempfile.TemporaryDirectory() as tmp:
                     elif pc in (AUDIO, MIDI) and hit[7] in (0x400a2d82, 0x400a39ca):
                         events.append([tick, pc, hit[8], hit[11], hit[10]])
                 for raw in cmd('writes').split()[2:]:
-                    _, pc, addr, value, width, _ = raw.split(':')
+                    sample, pc, addr, value, width, _ = raw.split(':')
+                    if args.midi_wire and int(addr, 16) == 0xfc06000c:
+                        wire.append([float(sample), int(value, 16)])
                     writes.append([int(pc,16), int(addr,16), int(width), int(value,16)])
 
         def until(target):
@@ -113,6 +121,26 @@ with tempfile.TemporaryDirectory() as tmp:
         cmd('run 2000')
         tap(0x11)
         tap(0x22)
+        if args.midi_wire:
+            # OS 1.40C STEP_LOCKS and MIDI_TRACKS layouts (Octabam).
+            for lane, mask, note in ((0, 0x1111, 48), (1, 0x0404, 67)):
+                record = bank + 0x48d0 + lane * 0x8b0
+                cmd(f'poke {record:#x} {mask:016x}')
+                for step in range(16):
+                    if mask & (1 << step):
+                        cmd(f'poke {record+0x30+32*step:#x} {note:02x}')
+                        if lane == 1:
+                            cmd(f'poke {record+0x30+32*step+21:#x} {32+step:02x}')
+                for part in range(4):
+                    setup = bank + 0x8f262 + part * 0x18b2 + lane * 0x24
+                    cmd(f'poke {setup:#x} {lane + 1:02x}')
+                    if lane == 1:
+                        cmd(f'poke {setup+0x15:#x} 01')
+                        enables = bank + 0x8f162 + part * 0x18b2 + lane * 32 + 30
+                        cmd(f'poke {enables:#x} 3c')
+            cmd('poke 0x8000000c 00000000')
+            cmd('poke 0x46c78d6a 0000')
+            cmd('watchmem 0xfc06000c 1')
         # Compose stock A02 from A01, changing only T2's trigger mask.
         # Both runs get identical synthetic pattern bytes before PLAY.
         for pos in range(0, stride, 128):
@@ -137,16 +165,17 @@ with tempfile.TemporaryDirectory() as tmp:
         tap(0x28)
         until(30)
         if args.stock:
-            cmd('poke 0x800065c0 01')
+            if not args.stock_midi_home:
+                cmd('poke 0x800065c0 01')
         else:
             tap(0x31)
             assert state() == 0x010000, hex(state())
             assert lettering(70, 3, queued) and lettering(32, 2, play), 'SRC queue display'
         until(142)
-        recording = False
+        recording = bool(args.midi_wire)
         assert len(wraps) == 1 and 30 < wraps[0] < 142, wraps
         for clock, pc, lane, step, source in events:
-            expected = int(clock >= wraps[0] and (args.stock or (pc == AUDIO and lane == 1)))
+            expected = int(not args.stock_midi_home and clock >= wraps[0] and (args.stock or (pc == AUDIO and lane == 1)))
             assert source == expected, (clock, pc, lane, source, expected)
         for phase in (False, True):
             assert {e[2] for e in events if e[1] == AUDIO and (e[0] >= wraps[0]) == phase} == set(range(8))
@@ -154,10 +183,19 @@ with tempfile.TemporaryDirectory() as tmp:
             assert state() == 0x010010, hex(state())
             assert lettering(32, 3, play), 'SRC playing display'
             cmd('knob 0x36 -1')
-            cmd('run 65')
+            if args.midi_wire:
+                advance(65)
+            else:
+                cmd('run 65')
             tap(0x31)
             assert state() == 0x10, hex(state())
+        if args.midi_wire:
+            until(158)  # Both UART witnesses stop at the same stock tick.
         tap(0x27)
+        if args.midi_wire:
+            advance(250)
+            recording = False
+            args.midi_wire.write_text(json.dumps(wire))
         if not args.stock:
             assert state() == 0x010010, hex(state())
             tap(0x1f)
@@ -174,3 +212,16 @@ with tempfile.TemporaryDirectory() as tmp:
             result['writes'].append([pc, addr, width, (value-times[0][3]) & 0xffffffff])
         args.output.write_text(json.dumps(result))
         assert result['final_pool'] == pool, result['final_pool']
+
+        if args.midi_wire:
+            # One further transport on the unloaded base, after the slice checks.
+            cmd('hits')
+            cmd('writes')
+            tick = 0
+            wire.clear()
+            recording = True
+            tap(0x28)
+            until(158)
+            tap(0x27)
+            advance(250)
+            args.midi_wire.with_suffix('.off.json').write_text(json.dumps(wire))

@@ -141,3 +141,23 @@ was in RAM by tick 89 +1 ms; the queued-only diagnostic was still zero at
 +15 ms, then the wrap committed at tick 90 +16 ms. The after-wrap replay
 matched all 848 calls, 816 relative writes and 298 states, but the diagnostic
 appeared at 187 instead of the expected 188. Both failures remain open.
+
+### Audio and stock MIDI on the refreshed candidate
+
+The disposable two-FLEX-voice fixture (generated kick and bass) sends six
+channel-1 note 48 pairs and four channel-2 note 67 pairs with MIDI T2's
+CC1 locks at 34 and 42. All 27 decoded messages match both independent
+stock controls, including their order, channels and note lifetimes. The
+candidate sent 69 UART bytes; both controls sent 70. The only byte edit is
+an extra 0x90 status at zero-based index 38 in each control. MIDI running
+status yields the same decoded note. Maximum relative message-end timestamp
+deviation was 48.1 emulator samples against the stock global-pattern
+composite and 64.1 against fixed A01. The exact wire/timing comparison
+**fails** in both cases. The global-pattern control alone cannot explain
+the extra status. Absolute device latency and physical clock are unmeasured.
+
+On a subsequent transport after OFF, candidate and global stock control
+matched all 69 bytes and 26 decoded messages; relative timing still differed
+by up to 7.3 samples. Native independent MIDI source launching remains
+unimplemented. See NATIVE_REPLAY.md for both control commands and the
+separate stock MIDI builder.
