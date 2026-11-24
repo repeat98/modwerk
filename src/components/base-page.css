@@ -2,7 +2,7 @@
 .base-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem 1.5rem; padding-block: .25rem 1.125rem; border-bottom: 1px solid var(--line); }
 .base-heading h1 { font-size: 1.75rem; }
 .base-sequence, .base-screens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.base-device, .base-sequence, .base-recovery, .base-section > .base-reference {
+.base-device, .base-sequence {
   background: var(--surface); border: 1px solid var(--line); border-radius: .625rem;
 }
 
@@ -12,7 +12,7 @@
 .base-picker .faq-machines button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-hover); }
 
 .base-stack { max-width: 40rem; margin-block: 1.75rem; }
-.base-stack :is(h2, h3), .ot-controls h3, .base-install-title { margin: 0 0 1rem; font-size: 1.375rem; line-height: 1.25; }
+.base-stack :is(h2, h3), .ot-controls h3, .ot-install h3 { margin: 0 0 1rem; font-size: 1.375rem; line-height: 1.25; }
 .base-stack-diagram { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: 1.25rem; }
 .base-stack-diagram > img { display: block; width: min(100%, 25rem); height: auto; justify-self: center; }
 .base-stack-layers { display: grid; gap: .75rem; margin: 0; }
@@ -53,9 +53,6 @@
 .base-keys kbd { font: inherit; }
 
 .base-reference { border-block: 1px solid var(--chrome-edge); }
-.base-recovery { padding: 1rem 1.25rem; }
-.base-section > .base-reference { padding-inline: 1.25rem; }
-.base-workflow > .base-reference { margin-top: .75rem; }
 .base-reference > summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.75rem; padding: .375rem .25rem; color: var(--text-secondary); font-size: .875rem; font-weight: 550; list-style: none; cursor: pointer; }
 .base-reference > summary::-webkit-details-marker { display: none; }
 .base-reference > summary::after { content: ''; flex: none; width: .4rem; height: .4rem; margin-right: .45rem; border: solid var(--muted); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
@@ -112,13 +109,19 @@
 .ot-controls .base-screen h4 { margin-bottom: .25rem; color: var(--text); font-size: 1.0625rem; font-weight: 650; }
 .ot-controls .base-screen figcaption > p { max-inline-size: 39ch; }
 .ot-controls > details { margin-top: 1rem; }
-.base-install-title + .base-device-facts { margin-top: 0; }
+.ot-install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1.5rem 3rem; margin-block: 2.25rem 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--control-border); }
+.ot-install p { max-inline-size: 48ch; margin: 0 0 .625rem; color: var(--text-secondary); font-size: .875rem; line-height: 1.55; }
+.ot-install .base-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: 1rem; }
+.ot-install .base-actions > a:not(.button) { color: var(--accent); font-size: .875rem; text-decoration: underline; text-underline-offset: .15em; }
+.ot-install-topics > details { border-width: 0 0 1px; }
+.ot-install-topics > details:first-child { border-top-width: 1px; }
 @container (max-width: 52rem) {
   .base-device.ot-intro { grid-template-columns: 1fr; gap: 1.5rem; }
   .ot-controls > .base-screens { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ot-intro h2 { font-size: 1.75rem; }
 }
 @container (max-width: 38rem) {
+  .ot-install { grid-template-columns: 1fr; }
   .base-picker { display: grid; }
   .base-device, .base-device-facts { padding-inline: 1rem; }
   .base-device { align-items: flex-start; flex-direction: column; }

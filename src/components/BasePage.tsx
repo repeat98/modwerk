@@ -182,21 +182,25 @@ export function BasePage({ machine: device }: { machine?: string }) {
         </details>
       </section>
       <BaseChangelog machine="octatrack" />
-      <h3 className="base-install-title">Installation and recovery</h3>
-      <DeviceFacts device={DEVICES_BY_ID.octatrack}>
-        <div><dt>What you need</dt><dd><a href="#faq/base-firmware">Original OS 1.40C</a> and a CompactFlash card. For USB sync, use Chrome or Edge on a computer and a USB cable.</dd></div>
-        <div><dt>Before you install</dt><dd>Back up your projects. Keep the original OS and a card reader or MIDI interface for recovery. <a href="#faq/risks">Installation risks</a></dd></div>
-      </DeviceFacts>
-      <section className="base-workflow"><h3>From setup to your first set</h3>
-        <ol className="base-sequence">
-          <li><h4>Install the base</h4><p>In Setup, build the .bin and copy it to the card. On the Octatrack, choose <strong>PROJECT › SYSTEM › OS UPGRADE</strong>.</p></li>
-          <li><h4>Pick your modules</h4><p>Add effects, machines or tools from the <a href="#library">module library</a> to your set.</p></li>
-          <li><h4>Load your set</h4><p>Choose <strong>Sync to Octatrack</strong> over USB, or <a href="#faq/card-set">load {CARD_SET_FILE} from the card</a>. Your modules stay after a restart.</p></li>
-        </ol>
-      </section>
-      <section className="base-workflow base-recovery"><h3>Updates and recovery</h3>
-        <p>When Setup offers <strong>Install latest base</strong>, update and sync your set again. To remove the base, <a href="#faq/return-to-stock">reinstall Elektron’s original OS</a>.</p>
-        <details className="base-reference"><summary>Startup shortcuts and recovery options</summary><Steps steps={SAFETY} /></details>
+      <section className="ot-install" aria-labelledby="ot-install-title">
+        <div className="ot-install-intro">
+          <h3 id="ot-install-title">Installation and recovery</h3>
+          <p>Back up your projects. For the first install, have your <a href="#faq/base-firmware">original OS 1.40C file</a> and a CompactFlash card ready.</p>
+          <p>Keep the original OS and a card reader or MIDI interface for recovery.</p>
+          <div className="base-actions"><a className="button button-primary" href="#octatrack/setup">Open Octatrack setup <Icon name="arrow" size={15} /></a><a href="#faq/risks">Installation risks</a></div>
+        </div>
+        <div className="ot-install-topics">
+          <details className="base-reference"><summary>Install the base from a card</summary>
+            <p>Build the .bin in Setup and copy it to your CompactFlash card. On the Octatrack, open <strong>PROJECT › SYSTEM › OS UPGRADE</strong>.</p>
+          </details>
+          <details className="base-reference"><summary>Load or change your module set</summary>
+            <p>Choose your modules in the <a href="#library">library</a>. Connect a USB cable and select <strong>Sync to Octatrack</strong> in Chrome or Edge on your computer. You can also <a href="#faq/card-set">load {CARD_SET_FILE} from the card</a>. The set survives a restart.</p>
+          </details>
+          <details className="base-reference"><summary>Update the base</summary>
+            <p>When Setup offers <strong>Install latest base</strong>, install the update and sync your module set again.</p>
+          </details>
+          <details className="base-reference"><summary>Recover or return to the original OS</summary><Steps steps={SAFETY} /></details>
+        </div>
       </section>
     </section>}
 
@@ -245,6 +249,6 @@ export function BasePage({ machine: device }: { machine?: string }) {
         <strong>{deviceTitle(device)}</strong><span>{baseState(device)}</span><Icon name="arrow" size={15} />
       </a></li>)}</ul>
     </section>}
-    <footer className="base-footer">Share module sets as JSON. Keep firmware files on your computer. <a href="#faq">Help &amp; FAQ</a></footer>
+    {machine !== 'octatrack' && <footer className="base-footer">Share module sets as JSON. Keep firmware files on your computer. <a href="#faq">Help &amp; FAQ</a></footer>}
   </div>
 }
