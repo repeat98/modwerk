@@ -25,8 +25,8 @@
       "Rings from 25 ms to 10 s and ends in digital silence; FX1 or FX2 on any track"
     ],
     "usage": [
-      "Put RESONATOR on FX1 of a drum or loop track. The defaults ring one string voice on A under each hit.",
-      "Hold FUNC and press FX1 for the setup page: VOIC adds chord voices, COLUN ON makes PTCH a Colundi degree.",
+      "Put RESONATOR on FX1 of a drum or loop track. The defaults ring a major triad of string voices on A under each hit.",
+      "Hold FUNC and press FX1 for the setup page: COLUN ON makes PTCH a Colundi degree, TYPE picks the body, VOIC the number of voices, SCALE a key.",
       "Turn TYPE for the body (BAR and BELL for metal, DRUM for skins) and TONE to choose which partials ring."
     ]
   },
@@ -37,21 +37,6 @@
       "count": 128,
       "labels": null,
       "doc": "Root. A MIDI note (69 = A at 440 Hz), snapped into SCALE's key when one is set. With COLUN on, a Colundi degree 0-127 (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG."
-    },
-    {
-      "name": "TYPE",
-      "default": 1,
-      "count": 7,
-      "labels": [
-        "PURE",
-        "STRNG",
-        "TUBE",
-        "BAR",
-        "PLATE",
-        "DRUM",
-        "BELL"
-      ],
-      "doc": "Each voice's body, as its partials: PURE (one sine-like mode), STRNG (harmonics), TUBE (odd harmonics, a closed pipe), BAR (a struck beam), PLATE, DRUM (a membrane), BELL (hum, prime, tierce, quint ...)."
     },
     {
       "name": "CHRD",
@@ -83,6 +68,13 @@
       "doc": "Ring time to -60 dB: 25 ms at 0, about 0.5 s at 64, 10 s at 127."
     },
     {
+      "name": "TONE",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Filters what excites the partials: left of centre a low-pass from 20 kHz down to 150 Hz (only the low partials ring), centre flat, right a high-pass from 20 Hz up to 3 kHz (only the high ones ring)."
+    },
+    {
       "name": "GAIN",
       "default": 32,
       "count": 128,
@@ -107,8 +99,23 @@
       "doc": "Setup page. ON: PTCH is a degree of the Colundi sequence and each voice snaps to the nearest of its 128 frequencies (a MAJ chord on 440 Hz rings 440, 528, 639 and 880 Hz). The voices' bodies keep their own overtones."
     },
     {
+      "name": "TYPE",
+      "default": 1,
+      "count": 7,
+      "labels": [
+        "PURE",
+        "STRNG",
+        "TUBE",
+        "BAR",
+        "PLATE",
+        "DRUM",
+        "BELL"
+      ],
+      "doc": "Each voice's body, as its partials: PURE (one sine-like mode), STRNG (harmonics), TUBE (odd harmonics, a closed pipe), BAR (a struck beam), PLATE, DRUM (a membrane), BELL (hum, prime, tierce, quint ...)."
+    },
+    {
       "name": "VOIC",
-      "default": 0,
+      "default": 2,
       "count": 4,
       "labels": [
         "1",
@@ -117,20 +124,6 @@
         "4"
       ],
       "doc": "Setup page. How many voices share the eight partials: 1 voice has all 8, 2 voices 4 each, 3 voices 3, 3 and 2, 4 voices 2 each."
-    },
-    {
-      "name": "TONE",
-      "default": 64,
-      "count": 128,
-      "labels": null,
-      "doc": "Setup page. Filters what excites the partials: left of centre a low-pass from 20 kHz down to 150 Hz (only the low partials ring), centre flat, right a high-pass from 20 Hz up to 3 kHz (only the high ones ring)."
-    },
-    {
-      "name": "DAMP",
-      "default": 32,
-      "count": 128,
-      "labels": null,
-      "doc": "Setup page. Shortens each voice's higher partials, each a step more than the one below; 0 rings them all for DCAY."
     },
     {
       "name": "SCALE",
@@ -268,11 +261,11 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Two 15-minute RAM trials ran on the owner's unit with no crash, stall, freeze or skipped track (0.1.0 drafts of 23 Nov 2026); this eight-partial version has not run on a unit yet.",
+      "Three 15-minute RAM trials ran on the owner's unit (drafts of 23 Nov 2026), the first two to their end with no crash, stall, freeze or skipped track; the third, the eight-partial build, was unplugged by the owner at about 8 minutes. This layout (no DAMP, TONE on page 1) has not run on a unit.",
       "A pitch, chord or type change settles within eight DSP blocks (2.9 ms): one partial retunes per block.",
       "Pitches assume 44.1 kHz. The input is summed to mono; the ring is spread across the stereo field.",
       "A sustained tone on a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring.",
-      "Until the module is listed, the panel shows TYPE, CHRD, COLUN, VOIC and SCALE as numbers (COLUN 0 off, 1 on; VOIC 0-3 is one to four voices)."
+      "A development package shows TYPE, CHRD, COLUN, VOIC and SCALE as numbers until #2084 (draft label formatters) is merged; the listed module shows their names."
     ],
     "effectId": 7
   },
@@ -315,12 +308,12 @@
   },
   "media": [],
   "access": {
-    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. PTCH, TYPE, CHRD, DCAY, GAIN and MIX are on the FX main page; COLUN, VOIC, TONE, DAMP and SCALE on its SETUP page.",
+    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. PTCH, CHRD, DCAY, TONE, GAIN and MIX are on the FX main page; COLUN, TYPE, VOIC and SCALE on its SETUP page.",
     "steps": [
       "Select an audio track that plays a sample.",
       "Hold FUNC and press FX1 (or FX2) to open its SETUP. Turn LEVEL to RESONATOR and press YES.",
-      "Press FX1 (or FX2) for the main page: PTCH, TYPE, CHRD, DCAY, GAIN, MIX.",
-      "Hold FUNC and press FX1 (or FX2) again for the setup page: COLUN, VOIC, TONE, DAMP, SCALE."
+      "Press FX1 (or FX2) for the main page: PTCH, CHRD, DCAY, TONE, GAIN, MIX.",
+      "Hold FUNC and press FX1 (or FX2) again for the setup page: COLUN, TYPE, VOIC, SCALE."
     ],
     "screenshots": []
   }

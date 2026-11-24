@@ -30,7 +30,7 @@
 ;   mode m at 7m: C, S, ul, vl, uh, vh, G      ($00-$37)
 ;   $38/$3f right sum (low, high)  $39 wet gain  $3a mix  $3b tone state
 ;   $3c tone k  $3d low-pass weight  $3e direct weight  $40 mode counter
-;   per block: $41 PTCH $42 chord row $43 DCAY $44 DAMP/4 $45 COLUN
+;   per block: $41 PTCH $42 chord row $43 DCAY $44 damping step $45 COLUN
 ;   $46 SCALE $47 key $48 snap row $49 root note $4a target $4b/$4c search
 ;   $4d sin $4e cos $4f note $50 mode $51 voice $52 partial $53 type row
 ;   $54 voice row $55 partial ratio $56 partial level $57 voice theta
@@ -63,45 +63,46 @@ proc:
         move    x:(r6+$1),a
         and     #>$7f0000,a
         asr     #$10,a,a
-        move    #>6,x0
-        cmp     x0,a
-        tgt     x0,a
-        asl     #$3,a,a
-        move    a1,x:(r7+$53)
-        move    x:(r6+$2),a
-        and     #>$7f0000,a
-        asr     #$10,a,a
         move    #>13,x0
         cmp     x0,a
         tgt     x0,a
         asl     #$2,a,a
         move    a1,x:(r7+$42)
-        move    x:(r6+$3),a
+        move    x:(r6+$2),a
         and     #>$7f0000,a
         asr     #$10,a,a
         move    a1,x:(r7+$43)
+; Damping: each partial above a voice's first rings 4 decay steps shorter
+; than the one below (a fixed, gentle damping; DCAY sets the rest).
+        move    #>4,x0
+        move    x0,x:(r7+$44)
 ; COLUN, slot 6 (knob field of $c): nonzero is on.
         move    x:(r6+$c),a
         and     #>$7f0000,a
         move    a1,x:(r7+$45)
-; VOIC, slot 7 (companion field of $c): 0..3 is one to four voices.
+; TYPE, slot 7 (companion field of $c).
         move    x:(r6+$c),a
         and     #>$007f00,a
         asr     #$8,a,a
+        move    #>6,x0
+        cmp     x0,a
+        tgt     x0,a
+        asl     #$3,a,a
+        move    a1,x:(r7+$53)
+; VOIC, slot 8 (knob field of $d): 0..3 is one to four voices.
+        move    x:(r6+$d),a
+        and     #>$7f0000,a
+        asr     #$10,a,a
         move    #>3,x0
         cmp     x0,a
         tgt     x0,a
         asl     #$3,a,a
         move    a1,x:(r7+$54)
-; DAMP, slot 9 (companion field of $d), as DAMP/4.
+; SCALE, slot 9 (companion field of $d): 0 off, else s = v - 1, key = s / 10,
+; scale = s mod 10.
         move    x:(r6+$d),a
         and     #>$007f00,a
-        asr     #$a,a,a
-        move    a1,x:(r7+$44)
-; SCALE, slot 10: 0 off, else s = v - 1, key = s / 10, scale = s mod 10.
-        move    x:(r6+$e),a
-        and     #>$7f0000,a
-        asr     #$10,a,a
+        asr     #$8,a,a
         move    a1,x:(r7+$46)
         tst     a
         beq     rzscoff
@@ -267,7 +268,7 @@ rzhigh:
         bsr     rzsin
         move    a,x:(r7+$4d)
 rzcoef:
-; Decay index DCAY - partial * DAMP/4, at least 0; partial * dm read from a0
+; Decay index DCAY - partial * 4, at least 0; partial * step read from a0
 ; (the integer product, doubled by mpy's alignment, then halved).
         move    x:(r7+$52),x0
         move    x:(r7+$44),y0
@@ -330,9 +331,9 @@ rzmixfull:
         move    #>$7fffff,a
 rzmixv:
         move    a1,x:(r7+$3a)
-; TONE, slot 8: the exciter one-pole's corner from the table; below 64 its
+; TONE, slot 3: the exciter one-pole's corner from the table; below 64 its
 ; low-pass output, above 64 the high-pass (input minus low-pass), 64 flat.
-        move    x:(r6+$d),a
+        move    x:(r6+$3),a
         and     #>$7f0000,a
         asr     #$10,a,a
         move    a1,x1

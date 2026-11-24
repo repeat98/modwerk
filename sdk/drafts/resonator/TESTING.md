@@ -10,7 +10,7 @@ The owner's Octatrack, OS 1.40C, Modwerk base e11525835106699a, 23 November 2026
 |---|---|---|---|
 | 0.1.0, four modes, INTV and TUNE (fcabecbac) | 900 s | the owner played it on a loop | verdict: no crash, stall, freeze or skipped track. The owner: "not bad", but the dry was still clear at MIX 100 (fixed: the dry now falls as (1 - MIX)^2) |
 | four modes, CHRD, COLUN, TONE, SCALE (uncommitted; trial 261c20de) | 900 s | the owner played it | verdict: no crash, stall, freeze or skipped track. The owner: not user-friendly. COLUN's state unclear, TONE barely audible, no resonator types, SCALE and CHRD undescriptive, voice count unclear. This version answers each |
-| this version, eight partials, TYPE and VOIC (trial 3511769c) | 900 s, running when this was written | the owner | not reported yet |
+| eight partials, TYPE and VOIC, DAMP on page 2 (2dbc0da58; trial 3511769c) | unplugged by the owner at about 493 s | the owner | the owner: TYPE belongs on page 2, DAMP on page 1, CHRD and COLUN need stepped and two-state switches, SCALE seemed to do nothing (with one voice it moves only the root), DAMP mostly duplicates DCAY. This version: DAMP gone (fixed damping), TONE on page 1, VOIC defaults to three voices, labels via #2084 |
 
 The base's refusal counter read 18 before the second trial and 19 before the third; its causes were not captured. The panel shows stepped knobs as numbers in a development package, which made the second trial hard to read.
 
@@ -45,7 +45,7 @@ Not tested. The module patches no stock code and claims no keys or screens; the 
 | Once tuned, a trig split at frame 7; garbage in the r7 block before init | bit-identical to the plain render |
 | One PURE voice: L == R; a four-voice chord: L differs from R; TONE 0 vs 127 differ | pass |
 
-Pitch is the least-squares period over every rising zero crossing from 1 s to 6 s; chord and body partials are the phase step of one-second demodulations at each expected frequency, within 0.05 Hz.
+Pitch is the least-squares period over every rising zero crossing from 1 s to 6 s; chord and body partials are the phase step of half-second demodulations from 0.5 s to 2 s at each expected frequency, within 0.05 Hz.
 
 ## Sound quality
 

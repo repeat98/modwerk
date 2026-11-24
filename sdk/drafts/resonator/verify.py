@@ -132,10 +132,10 @@ def run(work, mem, syms, knobs, left, right=None, extra=(), tag="r"):
     return o[0::2], o[1::2], (float(meter.group(1)) if meter else None)
 
 
-DEFAULTS = {"PTCH": 57, "TYPE": 1, "CHRD": 4, "DCAY": 64, "GAIN": 32, "MIX": 64,
-            "COLUN": 0, "VOIC": 0, "TONE": 64, "DAMP": 32, "SCALE": 0}
-SLOTS = {"PTCH": 0, "TYPE": 1, "CHRD": 2, "DCAY": 3, "GAIN": 4, "MIX": 5,
-         "COLUN": 6, "VOIC": 7, "TONE": 8, "DAMP": 9, "SCALE": 10}
+DEFAULTS = {"PTCH": 57, "CHRD": 4, "DCAY": 64, "TONE": 64, "GAIN": 32, "MIX": 64,
+            "COLUN": 0, "TYPE": 1, "VOIC": 2, "SCALE": 0}
+SLOTS = {"PTCH": 0, "CHRD": 1, "DCAY": 2, "TONE": 3, "GAIN": 4, "MIX": 5,
+         "COLUN": 6, "TYPE": 7, "VOIC": 8, "SCALE": 9}
 CHORD = {name: i for i, name in enumerate(T["CHORD_NAMES"])}
 TYPE = {name: i for i, name in enumerate(T["TYPE_NAMES"])}
 SCALE = {name: i for i, name in enumerate(T["SCALE_LABELS"])}
@@ -166,22 +166,22 @@ def freq(y, start, stop):
     return FS / period
 
 
-def tone_hz(y, f0, start=FS, blocks=4):
-    """The frequency of the partial near f0 (within 0.5 Hz): the phase step of
-    Hann-windowed one-second demodulations at f0. Returns (Hz, level)."""
+def tone_hz(y, f0, start=FS // 2, blocks=3, blen=FS // 2):
+    """The frequency of the partial near f0 (within 1/(2 blen/FS) Hz): the phase step
+    of Hann-windowed demodulations at f0. Returns (Hz, level)."""
     zs = []
     rot = complex(math.cos(2 * math.pi * f0 / FS), -math.sin(2 * math.pi * f0 / FS))
-    win = [0.5 - 0.5 * math.cos(2 * math.pi * i / FS) for i in range(FS)]
+    win = [0.5 - 0.5 * math.cos(2 * math.pi * i / blen) for i in range(blen)]
     for b in range(blocks):
-        at = start + b * FS
+        at = start + b * blen
         ph = complex(math.cos(2 * math.pi * f0 * at / FS), -math.sin(2 * math.pi * f0 * at / FS))
         z = 0j
-        for i in range(FS):
+        for i in range(blen):
             z += win[i] * y[at + i] * ph
             ph *= rot
         zs.append(z)
     steps = [math.atan2((b / a).imag, (b / a).real) for a, b in zip(zs, zs[1:])]
-    return f0 + sum(steps) / len(steps) / (2 * math.pi), abs(zs[0]) / FS
+    return f0 + sum(steps) / len(steps) / (2 * math.pi * blen / FS), abs(zs[0]) / blen
 
 
 def t60_measured(y):
@@ -229,13 +229,13 @@ def main():
     gate("MIX 100 keeps the dry at (1 - 100/128)^2", abs(dry / (28 / 128) ** 2 - 1) < 0.01,
          f"({20 * math.log10(dry):.1f} dB; GAIN 0 silences the ring)")
     for col in (0, 1):
-        l, r, _ = run(work, mem, syms, knobs(PTCH=127, TYPE=TYPE["BELL"], DCAY=127, DAMP=0, GAIN=127, MIX=127,
+        l, r, _ = run(work, mem, syms, knobs(PTCH=127, TYPE=TYPE["BELL"], DCAY=127, GAIN=127, MIX=127,
                                               COLUN=col, TONE=127, SCALE=60, VOIC=3), [0] * n, tag=f"zero{col}")
         gate(f"zero in, zero out (COLUN {col})", not any(l) and not any(r))
 
     ring = 10 * FS
     meter = None
-    one = dict(TYPE=TYPE["PURE"], VOIC=0, DCAY=127, DAMP=0, GAIN=127, MIX=127)
+    one = dict(TYPE=TYPE["PURE"], VOIC=0, DCAY=127, GAIN=127, MIX=127)
     for name, kn, want in (("NOTE 69", knobs(PTCH=69, **one), 440.0),
                            ("COLUN 78", knobs(PTCH=78, COLUN=1, **one), 440.0),
                            ("COLUN 79", knobs(PTCH=79, COLUN=1, **one), 441.0),
@@ -247,8 +247,8 @@ def main():
     print(f"dsp_host meter: {meter} instructions/sample max")
 
     nh = T["note_hz"]
-    long = 6 * FS
-    lit = dict(DCAY=127, DAMP=0, GAIN=127, MIX=127)
+    long = 3 * FS
+    lit = dict(DCAY=127, GAIN=127, MIX=127)
     pure4 = dict(TYPE=TYPE["PURE"], VOIC=3, **lit)
     for name, kn, wants in (
             ("MAJ on A3, four voices", knobs(PTCH=57, CHRD=CHORD["MAJ"], **pure4), [nh(57), nh(61), nh(64), nh(69)]),
@@ -274,27 +274,27 @@ def main():
         gate(f"{name}", ok, "(" + ", ".join(f"{f:.2f}" for f, _ in got) + " Hz)")
 
     want = T["t60"](64)
-    l, _, _ = run(work, mem, syms, knobs(TYPE=TYPE["PURE"], VOIC=0, DCAY=64, DAMP=0, GAIN=127, MIX=127),
+    l, _, _ = run(work, mem, syms, knobs(TYPE=TYPE["PURE"], VOIC=0, DCAY=64, GAIN=127, MIX=127),
                   burst(3 * FS), tag="decay")
     got = t60_measured(l)
     gate("DCAY 64 rings for the table's T60", abs(got / want - 1) < 0.05, f"({got:.3f} s, table {want:.3f} s)")
 
     for d, secs in ((64, 6), (100, 30)):
-        l, r, _ = run(work, mem, syms, knobs(TYPE=TYPE["BAR"], CHRD=CHORD["MAJ7"], VOIC=3, DCAY=d, DAMP=0, GAIN=127,
+        l, r, _ = run(work, mem, syms, knobs(TYPE=TYPE["BAR"], CHRD=CHORD["MAJ7"], VOIC=3, DCAY=d, GAIN=127,
                                              MIX=127, TONE=127), burst(secs * FS, amp=0.9), tag="tail")
         last = l[-FS // 2:] + r[-FS // 2:]
         gate(f"DCAY {d} tail ends in digital silence after {secs} s", not any(last),
              f"(last half second peaks {max(map(abs, last))} LSB)")
 
     hot = [round((Q - 1) * math.sin(2 * math.pi * 440 * i / FS)) for i in range(4 * FS)]
-    l, r, _ = run(work, mem, syms, knobs(PTCH=69, CHRD=CHORD["OCT"], TYPE=TYPE["STRNG"], VOIC=3, DCAY=127, DAMP=0,
+    l, r, _ = run(work, mem, syms, knobs(PTCH=69, CHRD=CHORD["OCT"], TYPE=TYPE["STRNG"], VOIC=3, DCAY=127,
                                          GAIN=127, MIX=127), hot, tag="hot")
     peak = max(map(abs, l + r))
     gate("full-scale sine at resonance stays inside the soft clip", peak <= round(2 * Q / 3) + 4,
          f"(peak {peak - round(2 * Q / 3):+d} LSB from 2/3 FS)")
 
     x = [0] * 16 * 16 + burst(FS)   # the eight modes tune in, one per block, before the input starts
-    busy = knobs(PTCH=60, TYPE=TYPE["PLATE"], CHRD=CHORD["MIN7"], VOIC=3, DCAY=90, DAMP=40, GAIN=64, MIX=100,
+    busy = knobs(PTCH=60, TYPE=TYPE["PLATE"], CHRD=CHORD["MIN7"], VOIC=3, DCAY=90, GAIN=64, MIX=100,
                  COLUN=1, TONE=90)
     whole = run(work, mem, syms, busy, x, tag="whole")
     split = run(work, mem, syms, busy, x, extra=("-split", "7"), tag="split")
