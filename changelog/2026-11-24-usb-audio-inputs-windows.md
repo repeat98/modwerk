@@ -1,0 +1,1 @@
+USB Audio: the module page, its INPUTS caption and the module README now say that INPUTS (audio from the computer into the Octatrack) works on macOS but not yet on Windows, and how to clear the error Windows shows: INPUTS OFF, unplug, restart Windows, and remove the hidden Octatrack devices if it stays.
