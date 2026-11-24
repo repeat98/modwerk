@@ -41,7 +41,7 @@ describe('downloaded module guides', () => {
     const guide = downloadedModuleGuide(module)!
     expect(guide.steps.map(step => step.text)).toEqual(document.presentation.usage)
     if (publishedUsbAudioPackage) {
-      expect(guide.screenshots.map(item => item.path.split('/').pop()).sort()).toEqual(['ot-outbox-pairs.png', 'ot-settings.png', 'ot-track-tap.png', 'ot-usb-audio.png'])
+      expect(guide.screenshots.map(item => item.path.split('/').pop()).sort()).toEqual(['ot-inputs.png', 'ot-outbox-pairs.png', 'ot-settings.png', 'ot-track-tap.png', 'ot-usb-audio.png'])
     } else {
       expect(guide.screenshots).toEqual([])
       expect(guide.noUiReason).toBeTruthy()

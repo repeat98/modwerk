@@ -16,5 +16,11 @@
       "arith": 6.31,
       "transfer": 0.06
     }
+  },
+  "defaults": {
+    "setting": "MON=OFF/def",
+    "instructions": 73,
+    "cycles": 106.69,
+    "stalls": 11
   }
 }

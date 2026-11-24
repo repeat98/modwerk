@@ -1,0 +1,1 @@
+The Octatrack API guide and the module guide now say that module settings for the whole instrument live in the base's `ot_settings` table, and the cycle scan's import record names each file's licence (MIT for the scanner and its page, GPL-3.0-only for `dsp_host.cpp`).
