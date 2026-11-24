@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { POINT, UNDER_REPORT, atSetting, check, dearest, inUsePoints, judge, unitLine, unitMarkdown, unitReport } from './cycle-scan.mjs'
+import { CHARGE_COVERS_MODEL_FROM, POINT, UNDER_REPORT, atSetting, charged, check, dearest, inUsePoints, judge, judgeCharge, unitLine, unitMarkdown, unitReport } from './cycle-scan.mjs'
 
 const record = (more = {}) => ({ schema: 1, module: 'fx', version: '0.1.0', sourceSha256: 'a'.repeat(64),
   dearest: { setting: 'MODE=B/max', settings: 4, instructions: 400, cycles: 650, stalls: 90, stallsByKind: { arith: 60 } },
@@ -34,6 +34,25 @@ describe('cycle scan records', () => {
     expect(none.fail).toEqual([])
     expect(none.info[0]).toMatch(/records no instructions a sample/)
     expect(judge({ id: 'other', record: record(), sourceSha256: 'a'.repeat(64), performance: performance(410) }).fail[0]).toMatch(/not a cycle-scan record for this module/)
+  })
+  it('charges as the base does: a hardware figure as it is, an emulator figure at 7/4 rounded', () => {
+    expect([charged(382, 'executed'), charged(411, 'modeled'), charged(637, 'hardware'), charged(81, 'executed')]).toEqual([669, 720, 637, 142])
+  })
+  it('passes a charge with room, names a near miss, and refuses one under the model for a module listed from the date', () => {
+    const row = (cycles, cyclesKind = 'executed', version = '0.1.0') => ({ id: 'fx', version, cycles, cyclesKind })
+    expect(judgeCharge({ id: 'fx', record: record(), row: row(400), listed: '2026-12-01' })).toEqual({ fail: [], info: [] })
+    expect(judgeCharge({ id: 'fx', record: record(), row: row(380), listed: '2026-12-01' }).info[0]).toMatch(/charges 665 .*against 650 .*a near miss/)
+    expect(judgeCharge({ id: 'fx', record: record(), row: row(600, 'hardware'), listed: CHARGE_COVERS_MODEL_FROM + 'T00:00:00Z' }).fail[0])
+      .toMatch(/charges 600 cycles a sample \(600 hardware\) against 650 .*under the model/)
+    expect(judgeCharge({ id: 'fx', record: record(), row: row(360), listed: undefined }).fail).toHaveLength(1)
+  })
+  it('reports, not refuses, an under-charge on a module listed before the date, and skips what it cannot compare', () => {
+    const early = judgeCharge({ id: 'fx', record: record(), row: { id: 'fx', version: '0.1.0', cycles: 600, cyclesKind: 'hardware' }, listed: '2026-10-12T23:40:23Z' })
+    expect(early.fail).toEqual([])
+    expect(early.info[0]).toMatch(/Reported, not refused \(listed before 2026-11-24\)/)
+    expect(judgeCharge({ id: 'fx', record: record(), row: undefined, listed: '2026-12-01' }).info[0]).toMatch(/declares no DSP cycles/)
+    expect(judgeCharge({ id: 'fx', record: record(), row: { id: 'fx', version: '0.0.9', cycles: 100, cyclesKind: 'executed' }, listed: '2026-12-01' }))
+      .toEqual({ fail: [], info: [expect.stringMatching(/package is 0\.0\.9, the cycle scan 0\.1\.0/)] })
   })
   it('keeps the run at a named setting beside the dearest', () => {
     const report = { name: 'fx', runs: [{ label: 'A', variant: 'def', instr: 100.123, cycles: 150.126, stall: 10, stalls: {} },
