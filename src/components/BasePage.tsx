@@ -20,6 +20,8 @@ const screen = (file: string) => assetUrl('base/' + file)
 // PROJ > MODWERK, the status, MODULE COST and MODULES were read off an MKII running development twins of base 0.7.1's and
 // 0.7.2's source (device.mjs png:, 16 November 2026); MODULE COST and MODULES with module effects installed, two on tracks.
 const OCTATRACK_SCREENS: Screen[] = [
+  { src: screen('ot-project-menu.png'), alt: 'Octatrack PROJECT menu with MODWERK selected and its five menu entries visible', title: 'The MODWERK menu',
+    caption: 'Open the new PROJECT menu entry for status, diagnostics and module controls.', keys: 'PROJ › MODWERK' },
   { src: screen('ot-machine-list.png'), alt: 'AMIGA below the stock machines in SELECT MACHINE TYPE', title: 'Machines and effects',
     caption: 'Installed machines join the track menu. Effects appear in FX1 and FX2.', keys: 'Double-tap TRACK' },
   { src: screen('ot-modules.png'), alt: 'MODULES showing four enabled modules and Tapehead switched off', title: 'Module switches',
@@ -28,12 +30,12 @@ const OCTATRACK_SCREENS: Screen[] = [
     caption: 'See total CPU, plus DSP load and memory for tracks 1–4 and 5–8.', keys: 'CUE + PROJ' },
   { src: screen('ot-module-cost.png'), alt: 'MODULE COST showing Mini Verb on tracks 1–4 and E-Verb on tracks 5–8', title: 'DSP per module',
     caption: 'Find which effect uses the most processing time on each DSP chip.', keys: 'PROJ › MODWERK › MODULE COST' },
+  { src: screen('ot-self-test.png'), alt: 'Octatrack SELF TEST page ending in ALL PASSED', title: 'Module self-test',
+    caption: 'Check the running modules and read any problems the unit finds.', keys: 'PROJ › MODWERK › SELF TEST' },
 ]
 const OCTATRACK_REFERENCE_SCREENS: Screen[] = [
   { src: screen('ot-startup.png'), alt: 'Octatrack startup display with the Modwerk mark', title: 'Startup',
     caption: 'The Modwerk mark appears when the base starts.' },
-  { src: screen('ot-self-test.png'), alt: 'Octatrack SELF TEST page ending in ALL PASSED', title: 'Run a self-test',
-    caption: 'The unit checks its running modules and reports any problems.', keys: 'PROJ › MODWERK › SELF TEST' },
   { src: screen('ot-base-update.png'), alt: 'Octatrack BASE UPDATE display receiving a new base at 49 percent', title: 'Follow a base update',
     caption: 'Keep the power on during the transfer. BASE SAVED confirms the update. NOT SAVED leaves the previous base in place.' },
 ]
@@ -169,22 +171,16 @@ export function BasePage({ machine: device }: { machine?: string }) {
             <button type="button" className="text-button" onClick={() => document.getElementById('base-changelog-title')?.focus()}>Read changelog</button>
           </div>
         </div>
-        <figure className="ot-menu">
-          <div className="base-lcd"><img src={screen('ot-project-menu.png')} width={768} height={384} alt="Octatrack PROJECT menu with MODWERK selected and STATUS, MODULE COST, MISSING, SELF TEST and MODULES listed" /></div>
-          <figcaption><kbd>PROJ</kbd><span>Open MODWERK in the PROJECT menu</span></figcaption>
-        </figure>
-      </header>
-      <div className="ot-guide">
         <FirmwareStack machine="octatrack" />
-        <section className="ot-controls" aria-labelledby="ot-controls-title">
-          <h3 id="ot-controls-title">Octatrack controls</h3>
-          <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack module controls" />
-          <details className="base-reference"><summary>Startup, self-test and display messages</summary>
-            <ScreenGallery screens={OCTATRACK_REFERENCE_SCREENS} label="More Octatrack base screens" />
-            <dl className="base-also">{OCTATRACK_ALSO.map(([name, text]) => <div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>
-          </details>
-        </section>
-      </div>
+      </header>
+      <section className="ot-controls" aria-labelledby="ot-controls-title">
+        <h3 id="ot-controls-title">Octatrack controls</h3>
+        <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack module controls" />
+        <details className="base-reference"><summary>Startup, updates and display messages</summary>
+          <ScreenGallery screens={OCTATRACK_REFERENCE_SCREENS} label="More Octatrack base screens" />
+          <dl className="base-also">{OCTATRACK_ALSO.map(([name, text]) => <div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>
+        </details>
+      </section>
       <BaseChangelog machine="octatrack" />
       <h3 className="base-install-title">Installation and recovery</h3>
       <DeviceFacts device={DEVICES_BY_ID.octatrack}>

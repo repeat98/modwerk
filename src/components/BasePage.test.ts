@@ -95,7 +95,9 @@ it('puts setup and recovery prerequisites before the optional Octatrack referenc
   const controls = container.querySelector('.ot-controls')!
   const history = container.querySelector('.base-changelog')!
   expect(controls.compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(controls.querySelectorAll(':scope > ul img')).toHaveLength(4)
+  expect(container.querySelector('.ot-intro .base-stack-diagram img')?.getAttribute('src')).toContain('firmware-stack.svg')
+  expect(controls.querySelector(':scope > ul img')?.getAttribute('src')).toContain('ot-project-menu.png')
+  expect(controls.querySelectorAll(':scope > ul img')).toHaveLength(6)
   await act(() => container.querySelector<HTMLButtonElement>('.ot-intro .text-button')!.click())
   expect(document.activeElement?.id).toBe('base-changelog-title')
   expect(container.querySelector('.base-facts')?.textContent).toContain('OS 1.40C')
