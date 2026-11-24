@@ -5,7 +5,7 @@ import { deviceHref, type DeviceProfile } from '../devices/registry'
 import { ZOOM_EFFECTS, fetchZoomEffect, zoomSyncPlan, type ZoomEffect } from '../devices/zoom-effects'
 import type { Configuration } from '../config/workspace'
 import type { ZoomFile, ZoomLink } from '../engine/zoom/zoom-link'
-import { EFFECT_LIST, EFFECT_LIST_SIZE, ZOOM_BASE, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, canWriteFiles, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, ZOOM_BASE, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, canEditPatches, canWriteFiles, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { avoidFor, rememberId } from '../engine/zoom/local-ids'
@@ -243,7 +243,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
           </section>
         </div>)}
         {editing && hasEditor && panel('editor', connected && !updating && !other && link
-          ? <ZoomPatchEditor key={pedalKey} link={link} busy={busy} writable={writable} files={files} listed={listed} inventoryError={!files ? error : undefined} onRetryInventory={read} />
+          ? <ZoomPatchEditor key={pedalKey} link={link} busy={busy} writable={canEditPatches(identity)} files={files} listed={listed} inventoryError={!files ? error : undefined} onRetryInventory={read} />
           : <p className="hub-empty">{updating ? 'Plug the MS-70CDR in normally to read its patch.' : 'Connect your MS-70CDR to see its active patch.'}</p>)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
