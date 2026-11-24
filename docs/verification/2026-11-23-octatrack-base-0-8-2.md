@@ -77,5 +77,28 @@ name a track for them. So the site names the track and FX slot.
   Base-bound packages relinked with unchanged bytes; Analog BD's reviewed recipe still matches.
 - Host: `test_diag.c` (a second record names only its new track), `test_status.c` (a frame-admission refusal moves its track's counter: on a twin a POLY8 pick refused on T3 had logged recent tracks 0), `test_dsp.c` (T6's FX2 slot) and `test_selftest.c`
   (the slot above an admission's refusal, none above a controller's) pass; each fails without the change.
-- Not run on a unit: a CPU refusal and an in-use refusal on the release image, read back through the log and the site.
+- On a unit: a development twin of this source, below. Not run: the release image itself, and an in-use refusal.
   The steps above now apply to `8f179f5e` instead of `c5791ec9`.
+
+### On the owner's MKII, 24 November 2026
+
+Source `6663f66d1`; `test:procedure -- --base --no-unit` passed steps 1-4 on it (package `566cc2d6…`). Development twin
+`58babe99` (`build_core.py`, the beta flags without the controller rows, plus `--dev`, OS 1.40C, outside Git); a twin of
+`bfe28f137`, `b2d608af`, ran the first CPU case. The unit started and ended on its flashed base `eb667962` (0.8.1) with nine
+kept modules. Three RAM boots, the CF card in, nothing kept or flashed. The loaded project's Part 1 was checked equal to its
+saved copy (6,322 bytes) before each case and after it, and its saved copy never changed.
+
+| What | Twin | Observed |
+| --- | --- | --- |
+| POLY8 0.3.3 in a trial, picked on T1, then on T3, stopped | `b2d608af` | T1 admitted; T3 refused: "CPU FULL, T3 SRC, POLY8 NEEDS +46%, CPU 95%". CPU record `a=0x04000001`: T3 since the start, no recent track (the fault `751daf8fa` fixes). RELOAD put Part 1 back; the trial rolled back. |
+| The same | `58babe99` | The same box. Record `a=0x04040001`: T3 since the start and since the last record, count 1. The record's machines show T3 on its old machine: a refused pick never reaches the track, so the pull prints "this time T3 stock", not POLY8. |
+| Mini Verb in a trial on T6 FX2, the trial left to end | `b2d608af` | Rolled back: a trial's rollback parks the effect (T6 FX2 read NONE until RELOAD), so it is no in-use refusal. Self-test record: refusal 0, slot 0. |
+| 18 packages as one set, 225,044 bytes, 30 s | `58babe99` | Installed, no crash, stall, freeze or skipped track; rolled back to none. |
+| The other 20, 225,208 bytes, 30 s | `58babe99` | The same; CPU at 90 % or more for 1.5 s, no fault. |
+| Back on the flashed base | `eb667962` | The same nine modules and handles; card set 1, 9 saved, 9 live. |
+
+- Not run: an in-use refusal on a unit (it needs a module installed outside a trial, which on a twin takes a Keep that
+  rewrites the card's kept-set file); the soak (it drives the loaded project over USB MIDI); the price; the release image.
+- `test:procedure -- --base`'s large set (39 packages) was refused `RUNTIME_CONFLICT` on this twin: it holds RINGMOD SC,
+  which a twin without controller rows does not admit, and its 449,088 bytes pass the module pool (0.8.1: 396,428 did not
+  fit). Run as the two sets above, without RINGMOD SC.
