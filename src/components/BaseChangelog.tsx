@@ -136,6 +136,18 @@ function ReleaseDate({ note }: { note: string }) {
   return <time dateTime={date}>{formatDate.format(new Date(date))}</time>
 }
 
+function ArchivedRelease({ release }: { release: BaseRelease }) {
+  return <details className="base-reference base-archived-release">
+    <summary>
+      <span className="base-release-heading">
+        <span>{release.version && <span className="base-release-version">{release.version}</span>} {release.title}</span>
+        <ReleaseDate note={release.note} />
+      </span>
+    </summary>
+    <div><ReleaseChanges release={release} /></div>
+  </details>
+}
+
 function ReleaseChanges({ release }: { release: BaseRelease }) {
   const repository = issueRepository()
   return <>
@@ -158,7 +170,7 @@ function ReleaseChanges({ release }: { release: BaseRelease }) {
 export function BaseChangelog({ machine }: { machine: keyof typeof releases }) {
   const [latest, ...earlier] = releases[machine]
   return <section className="base-changelog" aria-labelledby="base-changelog-title">
-    <h3 id="base-changelog-title">Changelog</h3>
+    <h3 id="base-changelog-title" tabIndex={-1}>Changelog</h3>
     <article className="base-latest-release" aria-labelledby="base-latest-title">
       <header className="base-release-heading">
         <h4 id="base-latest-title">{latest.version && <span className="base-release-version">{latest.version}</span>} {latest.title}</h4>
@@ -166,17 +178,12 @@ export function BaseChangelog({ machine }: { machine: keyof typeof releases }) {
       </header>
       <ReleaseChanges release={latest} />
     </article>
-    <details className="base-reference base-release-history">
-      <summary>Earlier releases ({earlier.length})</summary>
-      <div>{earlier.map(release => <details key={release.note} className="base-reference base-archived-release">
-        <summary>
-          <span className="base-release-heading">
-            <span>{release.version && <span className="base-release-version">{release.version}</span>} {release.title}</span>
-            <ReleaseDate note={release.note} />
-          </span>
-        </summary>
-        <div><ReleaseChanges release={release} /></div>
-      </details>)}</div>
-    </details>
+    <div className="base-release-history">
+      {earlier.slice(0, 2).map(release => <ArchivedRelease key={release.note} release={release} />)}
+      {earlier.length > 2 && <details className="base-reference">
+        <summary>Older releases ({earlier.length - 2})</summary>
+        <div>{earlier.slice(2).map(release => <ArchivedRelease key={release.note} release={release} />)}</div>
+      </details>}
+    </div>
   </section>
 }

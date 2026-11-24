@@ -20,24 +20,22 @@ const screen = (file: string) => assetUrl('base/' + file)
 // PROJ > MODWERK, the status, MODULE COST and MODULES were read off an MKII running development twins of base 0.7.1's and
 // 0.7.2's source (device.mjs png:, 16 November 2026); MODULE COST and MODULES with module effects installed, two on tracks.
 const OCTATRACK_SCREENS: Screen[] = [
-  { src: screen('ot-machine-list.png'), alt: 'AMIGA below the stock machines in SELECT MACHINE TYPE', title: 'Find a new machine',
-    caption: 'Module machines appear below the stock machines. Module effects appear in the FX1 and FX2 lists.', keys: 'Double-tap a TRACK key' },
-  { src: screen('ot-status.png'), alt: 'Octatrack status display with bars for CPU, DSP and memory usage', title: 'Check the load',
-    caption: 'Read the base version and see how much processing power and DSP memory your set uses.', keys: 'CUE + PROJ' },
-  { src: screen('ot-modules.png'), alt: 'MODULES showing four modules on and Tapehead off', title: 'Switch modules on or off',
-    caption: 'Stop playback and press YES to toggle a module. Its setting survives a restart or sync.', keys: 'PROJ › MODWERK › MODULES' },
+  { src: screen('ot-machine-list.png'), alt: 'AMIGA below the stock machines in SELECT MACHINE TYPE', title: 'Play a module machine',
+    caption: 'Install Amiga and it appears below the stock machines. Module effects join the FX1 and FX2 lists.', keys: 'Double-tap TRACK' },
+  { src: screen('ot-modules.png'), alt: 'MODULES showing four enabled modules and Tapehead switched off', title: 'Switch a module off',
+    caption: 'Stop playback, select a module and press YES. The card remembers your choice after a restart or sync.', keys: 'PROJ › MODWERK › MODULES' },
+  { src: screen('ot-status.png'), alt: 'Octatrack status display with CPU and separate DSP and memory bars for tracks 1–4 and 5–8', title: 'Check your set’s load',
+    caption: 'Read the base version, CPU load and DSP memory use for each group of four tracks.', keys: 'CUE + PROJ' },
+  { src: screen('ot-module-cost.png'), alt: 'MODULE COST showing Mini Verb on tracks 1–4 and E-Verb on tracks 5–8', title: 'Find a costly effect',
+    caption: 'See how much DSP each module uses on each chip. A tilde marks an estimate. A dash means no track uses it there.', keys: 'PROJ › MODWERK › MODULE COST' },
 ]
 const OCTATRACK_REFERENCE_SCREENS: Screen[] = [
-  { src: screen('ot-startup.png'), alt: 'Octatrack display at startup: the Modwerk mark between NEW and BETA, above the word MODWERK', title: 'Startup',
-    caption: 'The Modwerk mark docks while the Octatrack starts, so you can see at a glance that the base is running.' },
-  { src: screen('ot-project-menu.png'), alt: 'Octatrack PROJECT menu with a fifth row, MODWERK, listing STATUS, MODULE COST, MISSING, SELF TEST and MODULES', title: 'PROJ › MODWERK',
-    caption: 'A fifth row in the PROJECT menu with five pages: the load, each module’s share of it, the modules a project misses, a self-test, and your modules switched on and off. The rest of the menu, SYSTEM included, stays as Elektron made it.', keys: 'PROJ' },
-  { src: screen('ot-module-cost.png'), alt: 'Octatrack MODULE COST page: Tape Echo, Mini Verb, E-Verb and Air Chorus, with Mini Verb at about 20 percent on tracks 1-4 and E-Verb at about 21 percent on tracks 5-8', title: 'Module cost',
-    caption: 'What each installed module costs on each DSP chip, for the tracks that use it, so you can see which to drop when a set gets heavy. A ~ marks an estimate; - means no track uses it there.', keys: 'PROJ › MODWERK › MODULE COST' },
-  { src: screen('ot-self-test.png'), alt: 'Octatrack SELF TEST page ending in ALL PASSED', title: 'Self-test',
-    caption: 'Checks the modules the Octatrack runs and says ALL PASSED, or what is wrong. Status on Your Octatrack runs the same test from this site.', keys: 'PROJ › MODWERK › SELF TEST' },
-  { src: screen('ot-base-update.png'), alt: 'Octatrack BASE UPDATE screen: RECEIVING NEW BASE at 49 percent, DO NOT TOUCH, KEEP THE POWER ON', title: 'Base update',
-    caption: 'While a new base arrives over USB, the whole screen says so and every key and knob is held back until it is saved. It ends on BASE SAVED, or NOT SAVED with the base you had still in place.' },
+  { src: screen('ot-startup.png'), alt: 'Octatrack startup display with the Modwerk mark', title: 'Startup',
+    caption: 'The Modwerk mark appears when the base starts.' },
+  { src: screen('ot-self-test.png'), alt: 'Octatrack SELF TEST page ending in ALL PASSED', title: 'Run a self-test',
+    caption: 'The unit checks its running modules and reports any problems.', keys: 'PROJ › MODWERK › SELF TEST' },
+  { src: screen('ot-base-update.png'), alt: 'Octatrack BASE UPDATE display receiving a new base at 49 percent', title: 'Follow a base update',
+    caption: 'Keep the power on during the transfer. BASE SAVED confirms the update. NOT SAVED leaves the previous base in place.' },
 ]
 
 /** What the base shows that has no picture here: each appears only with modules installed or during a transfer. */
@@ -86,16 +84,14 @@ const ORIGINAL_OS: Partial<Record<BaseMachine, string>> = {
 
 function FirmwareStack({ machine }: { machine: BaseMachine }) {
   const original = ORIGINAL_OS[machine]
+  const Heading = machine === 'octatrack' ? 'h3' : 'h2'
   return <section className="base-stack" aria-labelledby="base-stack-title">
-    <h2 id="base-stack-title">Firmware stack</h2>
-    <div className="base-stack-content">
-      <img src={screen('firmware-stack.webp')} alt="" width={960} height={464} />
-      <dl className="base-stack-layers">
-        <div><dt>Modules</dt><dd>The effects, machines and tools you choose.</dd></div>
-        <div><dt>Modwerk base</dt><dd>The shared support that lets modules work with the original OS.</dd></div>
-        <div><dt>Original OS</dt><dd>{original && <>{original}. </>}Your copy stays on your computer.</dd></div>
-      </dl>
-    </div>
+    <Heading id="base-stack-title">The firmware stack</Heading>
+    <dl className="base-stack-layers">
+      <div><dt>Modules</dt><dd>{machine === 'octatrack' ? 'Your choice of machines, effects and tools. Change the set over USB or by card.' : 'The effects, machines or tools you choose for your instrument.'}</dd></div>
+      <div><dt>{machine === 'zoom' ? 'MIDISTOMP base' : 'Modwerk base'}</dt><dd>{machine === 'octatrack' ? 'Install once to add the MODWERK menu and support for loading module sets.' : machine === 'zoom' ? 'Adds MIDI control, clock sync and a mixer to the pedal.' : 'Shared support for modules, built locally from the original OS.'}</dd></div>
+      <div><dt>Original OS</dt><dd>{original ? `Modwerk builds from your own ${original} file in the browser. The file stays on your computer.` : 'The instrument maker’s firmware provides the starting point.'}</dd></div>
+    </dl>
   </section>
 }
 
@@ -153,21 +149,41 @@ export function BasePage({ machine: device }: { machine?: string }) {
   return <div className="base-page">
     <header className="base-heading">
       <h1>Base firmware</h1>
-      <p className="base-definition">The base is your instrument’s original operating system with support for modules built in.</p>
+      <div className="base-picker">
+        <div className="faq-machines" role="group" aria-label="Choose your instrument">{BASE_MACHINES.map(item =>
+          <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => setMachine(item.id)}>{item.label}</button>)}</div>
+      </div>
     </header>
-    <div className="base-picker">
-      <span id="base-picker-label">Choose your instrument</span>
-      <div className="faq-machines" role="group" aria-labelledby="base-picker-label">{BASE_MACHINES.map(item =>
-        <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => setMachine(item.id)}>{item.label}</button>)}</div>
-    </div>
-    <FirmwareStack machine={machine} />
+    {machine !== 'octatrack' && <FirmwareStack machine={machine} />}
 
     {machine === 'octatrack' && <section className="base-section" aria-labelledby="base-octatrack">
-      <SectionHeading id="octatrack" title="Octatrack MKI and MKII" status="Released"
-        action={<a className="button button-primary" href="#octatrack/setup">Set up your Octatrack <Icon name="arrow" size={15} /></a>}>
-        Install the base once from the card. Then change your module set over USB.
-      </SectionHeading>
+      <header className="base-section-heading base-device ot-intro">
+        <div>
+          <h2 id="base-octatrack">Octatrack MKI and MKII <span className="base-status">Released</span></h2>
+          <p>Load a set of machines and effects over USB. The base adds a MODWERK menu under PROJECT where you can check the load and switch modules on or off.</p>
+          <div className="base-actions">
+            <a className="button button-primary" href="#octatrack/setup">Set up your Octatrack <Icon name="arrow" size={15} /></a>
+            <button type="button" className="text-button" onClick={() => document.getElementById('base-changelog-title')?.focus()}>Read changelog</button>
+          </div>
+        </div>
+        <figure className="ot-menu">
+          <div className="base-lcd"><img src={screen('ot-project-menu.png')} width={768} height={384} alt="Octatrack PROJECT menu with MODWERK selected and STATUS, MODULE COST, MISSING, SELF TEST and MODULES listed" /></div>
+          <figcaption><kbd>PROJ</kbd><span>Open MODWERK in the PROJECT menu</span></figcaption>
+        </figure>
+      </header>
+      <div className="ot-guide">
+        <FirmwareStack machine="octatrack" />
+        <section className="ot-controls" aria-labelledby="ot-controls-title">
+          <h3 id="ot-controls-title">On your Octatrack</h3>
+          <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack module controls" />
+          <details className="base-reference"><summary>Startup, self-test and display messages</summary>
+            <ScreenGallery screens={OCTATRACK_REFERENCE_SCREENS} label="More Octatrack base screens" />
+            <dl className="base-also">{OCTATRACK_ALSO.map(([name, text]) => <div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>
+          </details>
+        </section>
+      </div>
       <BaseChangelog machine="octatrack" />
+      <h3 className="base-install-title">Installation and recovery</h3>
       <DeviceFacts device={DEVICES_BY_ID.octatrack}>
         <div><dt>What you need</dt><dd><a href="#faq/base-firmware">Original OS 1.40C</a> and a CompactFlash card. For USB sync, use Chrome or Edge on a computer and a USB cable.</dd></div>
         <div><dt>Before you install</dt><dd>Back up your projects. Keep the original OS and a card reader or MIDI interface for recovery. <a href="#faq/risks">Installation risks</a></dd></div>
@@ -179,13 +195,6 @@ export function BasePage({ machine: device }: { machine?: string }) {
           <li><h4>Load your set</h4><p>Choose <strong>Sync to Octatrack</strong> over USB, or <a href="#faq/card-set">load {CARD_SET_FILE} from the card</a>. Your modules stay after a restart.</p></li>
         </ol>
       </section>
-      <section className="base-workflow"><h3>On your Octatrack</h3>
-        <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack module controls" />
-      </section>
-      <details className="base-reference"><summary>More Octatrack screens and messages</summary>
-        <ScreenGallery screens={OCTATRACK_REFERENCE_SCREENS} label="More Octatrack base screens" />
-        <dl className="base-also">{OCTATRACK_ALSO.map(([name, text]) => <div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>
-      </details>
       <section className="base-workflow base-recovery"><h3>Updates and recovery</h3>
         <p>When Setup offers <strong>Install latest base</strong>, update and sync your set again. To remove the base, <a href="#faq/return-to-stock">reinstall Elektron’s original OS</a>.</p>
         <details className="base-reference"><summary>Startup shortcuts and recovery options</summary><Steps steps={SAFETY} /></details>

@@ -1,2 +1,2 @@
-The Base firmware page now shows how modules, the Modwerk base and the original OS fit together.
-Choose your instrument to see its setup link and latest changes, with measured results and source notes where available. Open earlier releases individually to read their details.
+Explore the Octatrack’s firmware stack beside a guide to the MODWERK menu, with instrument screens and the keys to reach them.
+Each supported base now has detailed release notes, including the measured CPU and DSP changes in Octatrack 0.8.1.
