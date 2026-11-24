@@ -4,7 +4,8 @@
 //
 //   node scripts/cycle-scan.mjs record <id> [<id> ...]   # on your computer: scan each Octatrack module, write its record
 //   node scripts/cycle-scan.mjs check                     # anywhere, CI included: judge every committed record
-//   node scripts/cycle-scan.mjs unit [--markdown]         # anywhere: the records against the unit's in-use readings (report only)
+//   node scripts/cycle-scan.mjs unit [--markdown|--write] # anywhere: the records against the unit's in-use readings (report only;
+//                                                         # --write puts the table into sdk/cycle-scan/README.md, which check holds to it)
 //
 // `record` runs sdk/cycle-scan/interlock_scan.py --sweep on the module and on the stock effect its performance.json compares
 // it with, and writes sdk/cycle-scan/records/<id>.json: the dearest setting's instructions, cycles and stalls a sample,
@@ -62,52 +63,125 @@ export function atSetting(report, setting) {
   return { setting, instructions: round(run.instr), cycles: round(run.cycles), stalls: round(run.stall) }
 }
 
-/** The meter points an in-use reading added on the core of the slot it was taken on (T1-T4 core 1, T5-T8 core 0). */
+/** The meter points an in-use reading added on the core of the slot it was taken on (T1-T4 core 1, T5-T8 core 0): the mean,
+ * and the peak, the core's busiest block, which device:price keeps from 24 November 2026 (null in an older record). */
 export function inUsePoints(result) {
   const track = Number(/^T(\d)/.exec(result?.inUseOn ?? '')?.[1])
   if (!result?.inUseAdds || !track) return null
-  return { on: result.inUseOn, points: track <= 4 ? result.inUseAdds.dsp1to4 : result.inUseAdds.dsp5to8 }
+  const core = track <= 4 ? 'dsp1to4' : 'dsp5to8', peak = result.inUseAdds[core + 'Peak']
+  return { on: result.inUseOn, points: result.inUseAdds[core], peak: typeof peak === 'number' ? peak : null }
 }
 
-/** One module's line of the unit report: its cpu-price.json in-use reading against the record's model at the same
- * setting (the defaults, where a fresh pick starts), plus what the base charges for features its package requires,
- * which run outside the effect's proc and so outside the scan. `price` is evidence/cpu-price.json or null; `extra`
- * [{name, cycles}]. */
-export function unitLine({ id, record, price, extra = [] }) {
+/** The base identities a text names: each hex run of eight or more digits, cut to eight ("development twin d3d71297 of base
+ * 0.7.8 (main 02dfa20ca)" names d3d71297 and 02dfa20c). */
+export const identities = text => (String(text ?? '').match(/\b[0-9a-f]{8,}\b/g) ?? []).map(id => id.slice(0, 8))
+
+/** The case a cycle-scan record models: the version and the published package it covers (the package row of that version),
+ * the setting, and what plays. dsp_host runs the proc block after block, as a playing unit does, and feeds no key bus, so a
+ * key-bus effect is scanned with its key bus silent. `keyBus` says whether the module reads the key bus at all. */
+export function scanCase({ record, row, keyBus = false }) {
+  return { version: record.version, package: row?.version === record.version ? row.sha256 ?? null : null, setting: record.defaults?.setting ?? null,
+    transport: 'playing', keyBus: keyBus ? record.inputs?.keyBus ?? 'silent' : null }
+}
+
+/** The case a device:price reading measured (evidence/cpu-price.json): the version and package, the setting (a fresh pick
+ * starts at the defaults), what played (`inputs`, recorded from 24 November 2026: the transport always, the key bus when the
+ * caller named it; device:price always reads playing) and the base it ran on. */
+export function unitCase({ price, record, keyBus = false }) {
+  return { version: price.version, package: price.result?.packageSha256 ?? null, setting: price.result?.setting ?? record.defaults?.setting ?? null,
+    transport: price.inputs?.transport ?? 'playing', keyBus: keyBus ? price.inputs?.keyBus ?? 'not stated' : null, base: price.base ?? null }
+}
+
+/** Why a reading and a model are not the same case: [] when they are. `extra` is the base charges added to the model, each
+ * with the base identities it was timed on (`bases`): a reading on another base ran another build of that base code. */
+export function notComparable(scan, unit, extra = []) {
+  const why = []
+  if (scan.package && unit.package && scan.package !== unit.package)
+    why.push(`the unit measured package ${unit.package.slice(0, 8)}, not the published ${scan.version} (${scan.package.slice(0, 8)})`)
+  if (scan.setting !== unit.setting) why.push(`the unit read it at ${unit.setting}, the model is at ${scan.setting}`)
+  if (scan.transport !== unit.transport) why.push(`the unit read with the sequencer ${unit.transport}, the scan runs every block`)
+  if (scan.keyBus !== unit.keyBus) why.push(unit.keyBus === 'not stated'
+    ? `the reading does not say what its key bus carried, the scan's was ${scan.keyBus}`
+    : `its key bus was ${unit.keyBus} on the unit and ${scan.keyBus} in the scan`)
+  const seen = identities(unit.base)
+  for (const charge of extra) if (charge.bases?.length && !charge.bases.some(id => seen.includes(id)))
+    why.push(`the unit read on ${seen[0] ?? (unit.base || 'an unnamed base')}, the ${charge.name} charge (${charge.cycles}) was timed on ${charge.bases[0]}`)
+  return why
+}
+
+/** One module's line of the unit report: its cpu-price.json in-use reading against the record's model, only where both are
+ * the same case (notComparable); else the line says why not and gives no ratio. The mean is compared with the model at the
+ * defaults (where a fresh pick starts), the peak, where the reading kept one, with the dearest setting, which bounds every
+ * setting. Both add what the base charges for features the package requires, which run outside the effect's proc and so
+ * outside the scan. `price` is evidence/cpu-price.json or null; `extra` [{name, cycles, bases?}]; `row` the USB package row. */
+export function unitLine({ id, record, price, extra = [], row, keyBus = false }) {
   const line = { id, version: record.version, modelDefaults: record.defaults?.cycles ?? null, modelDearest: record.dearest.cycles,
-    setting: record.defaults?.setting ?? null, outside: extra, notes: [] }
+    setting: record.defaults?.setting ?? null, outside: extra.map(({ name, cycles }) => ({ name, cycles })), notes: [] }
   const reading = inUsePoints(price?.result)
   if (!reading) { line.notes.push('no in-use reading on the unit'); return line }
   if (price.version !== record.version) { line.notes.push(`the unit reading is for ${price.version}, the record for ${record.version}`); return line }
   Object.assign(line, { on: reading.on, points: reading.points, unit: round(reading.points * POINT), base: price.base, measuredAt: price.measuredAt })
+  if (reading.peak != null) Object.assign(line, { peak: reading.peak, unitPeak: round(reading.peak * POINT) })
   if (line.modelDefaults == null) { line.notes.push('the record keeps no defaults run: record it again'); return line }
-  line.model = round(line.modelDefaults + extra.reduce((sum, e) => sum + e.cycles, 0))
+  const charges = extra.reduce((sum, e) => sum + e.cycles, 0)
+  line.model = round(line.modelDefaults + charges)
+  const why = notComparable(scanCase({ record, row, keyBus }), unitCase({ price, record, keyBus }), extra)
+  if (why.length) { line.notComparable = why; return line }
   line.ratio = round(line.unit / line.model)
   if (Math.abs(line.unit / line.model - 1) > OUTLIER) line.outlier = true
+  if (line.unitPeak != null) {
+    line.modelPeak = round(line.modelDearest + charges)
+    line.peakRatio = round(line.unitPeak / line.modelPeak)
+    if (line.unitPeak > line.modelPeak * (1 + OUTLIER)) line.peakAbove = true
+  }
   return line
 }
 
 /** Every record against the unit's in-use readings, and the scanned modules that lack one. */
 export function unitReport(base = root) {
   const dir = join(base, RECORDS), packages = readJson(join(base, 'src/engine/assets/octatrack-module-packages.json')).packages
-  const features = readJson(join(base, 'sdk/machines/octatrack/dsp-sites.json')).features
+  const sites = readJson(join(base, 'sdk/machines/octatrack/dsp-sites.json')), features = sites.features
+  const keyBusBits = features.filter(f => f.name === 'keybus').map(f => f.bit)
+  // A base charge's evidence names the base it was timed on (keybus-tap-timing-*.json's `base`).
+  const timedOn = f => { const path = f.evidence && join(base, 'sdk/machines/octatrack', f.evidence); return path && existsSync(path) ? identities(JSON.stringify(readJson(path).base)) : [] }
   const lines = readdirSync(dir).filter(name => name.endsWith('.json')).sort().map(name => {
     const record = readJson(join(dir, name)), id = record.module, pricePath = join(base, MODULES, id, 'evidence/cpu-price.json')
-    const requires = packages.find(row => row.id === id)?.requires ?? 0
-    const extra = features.filter(f => requires & f.bit && typeof f.hardware === 'number').map(f => ({ name: f.name, cycles: f.hardware }))
-    return unitLine({ id, record, price: existsSync(pricePath) ? readJson(pricePath) : null, extra })
+    const row = packages.find(item => item.id === id), requires = row?.requires ?? 0
+    const extra = features.filter(f => requires & f.bit && typeof f.hardware === 'number').map(f => ({ name: f.name, cycles: f.hardware, bases: timedOn(f) }))
+    // A key-bus reader: its package requires the key bus, or the module owns a key-bus site (Sidechain Compressor's tap).
+    const keyBus = keyBusBits.some(bit => requires & bit) || sites.sites.some(site => site.module === id && keyBusBits.includes(site.feature))
+    return unitLine({ id, record, price: existsSync(pricePath) ? readJson(pricePath) : null, extra, row, keyBus })
   })
   return { lines, missing: lines.filter(line => line.unit == null).map(line => line.id) }
 }
 
 /** The unit report as the Markdown table in sdk/cycle-scan/README.md. */
 export function unitMarkdown({ lines }) {
-  const f = n => n == null ? '–' : String(Math.round(n))
+  const f = n => n == null ? '–' : String(Math.round(n)), base = l => l.outside.length ? ' + ' + l.outside.map(e => `${e.cycles} ${e.name}`).join(' + ') : ''
+  const verdict = l => l.notComparable ? 'not comparable: ' + l.notComparable.join('; ')
+    : l.ratio == null ? l.notes.join('; ') : (l.outlier ? '**outlier**' : 'within ' + OUTLIER * 100 + ' %') + (l.peakAbove ? '; **peak above the dearest model**' : '')
   const rows = lines.map(l => `| ${l.id} ${l.version.replace(/-experimental$/, '')} | ${l.points == null ? '–' : `${l.points} = ${f(l.unit)} (${l.on})`} | ` +
-    `${l.setting ?? '–'} | ${f(l.modelDefaults)}${l.outside.length ? ' + ' + l.outside.map(e => `${e.cycles} ${e.name}`).join(' + ') : ''} | ${f(l.modelDearest)} | ` +
-    `${l.ratio == null ? '–' : l.ratio.toFixed(2)} | ${l.outlier ? '**outlier**' : l.notes.join('; ') || 'within ' + OUTLIER * 100 + ' %'} |`)
-  return ['| Module | Unit, in use (points = cycles a sample) | Defaults run | Model at defaults (+ base features) | Model, dearest | Unit ÷ model | Verdict |',
-    '|---|---|---|---|---|---|---|', ...rows].join('\n')
+    `${l.peak == null ? '–' : `${l.peak} = ${f(l.unitPeak)}`} | ${l.setting ?? '–'} | ${f(l.modelDefaults)}${base(l)} | ${f(l.modelDearest)}${base(l)} | ` +
+    `${l.ratio == null ? '–' : l.ratio.toFixed(2)} | ${l.peakRatio == null ? '–' : l.peakRatio.toFixed(2)} | ${verdict(l)} |`)
+  return ['| Module | Unit, in use (points = cycles a sample) | Unit, peak | Defaults run | Model at defaults (+ base features) | Model, dearest (+ base features) | Unit ÷ model | Peak ÷ dearest | Verdict |',
+    '|---|---|---|---|---|---|---|---|---|', ...rows].join('\n')
+}
+
+export const README = 'sdk/cycle-scan/README.md'
+const TABLE_START = '<!-- generated: node scripts/cycle-scan.mjs unit --write (cycle-scan check fails when it differs) -->', TABLE_END = '<!-- end of the generated table -->'
+/** The README's text with the table between its markers replaced. */
+export function withTable(text, table) {
+  const start = text.indexOf(TABLE_START), end = text.indexOf(TABLE_END)
+  if (start < 0 || end < start) throw new Error(`${README} has lost the generated table's markers`)
+  return text.slice(0, start + TABLE_START.length) + '\n' + table + '\n' + text.slice(end)
+}
+/** A failure when the README's committed table is not what the records and readings generate now, else null. */
+export function tableDrift(base = root) {
+  const path = join(base, README)
+  if (!existsSync(path)) return null
+  const text = readFileSync(path, 'utf8')
+  return withTable(text, unitMarkdown(unitReport(base))) === text ? null
+    : `${README}: the table under "Checked against the unit" is not what the records and the unit readings give now: run node scripts/cycle-scan.mjs unit --write`
 }
 
 /** One record's verdict: {fail: [...], info: [...]}. `sourceSha256` is the module's source now; `performance` its
@@ -175,6 +249,9 @@ export async function check(base = root) {
   }
   const unscanned = readdirSync(join(base, MODULES)).filter(id => !ids.includes(id) && performanceOf(join(base, MODULES, id))?.kind === 'dsp')
   if (unscanned.length) info.push(`no cycle scan yet: ${unscanned.sort().join(', ')}`)
+  // The README's unit table is generated: it fell behind the key-bus charge once (51 there, 43 in dsp-sites.json).
+  const drift = ids.length ? tableDrift(base) : null
+  if (drift) fail.push(drift)
   return { fail, info, records: ids.length }
 }
 
@@ -220,15 +297,21 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const { fail, info, records } = await check()
       for (const line of info) console.log('  · ' + line)
       for (const line of fail) console.error('  ✗ ' + line)
-      console.log(fail.length ? `Cycle scan: ${fail.length} of ${records} records fail.` : `Cycle scan: ${records} records current, none under-reported.`)
+      console.log(fail.length ? `Cycle scan: ${fail.length} failure${fail.length === 1 ? '' : 's'} over ${records} records.` : `Cycle scan: ${records} records current, none under-reported.`)
       if (fail.length) process.exitCode = 1
     } else if (command === 'unit') {
       const report = unitReport()
       if (ids.includes('--markdown')) console.log(unitMarkdown(report))
-      else for (const l of report.lines) console.log(`  ${l.outlier ? '!' : '·'} ${l.id}: ` + (l.unit == null ? l.notes.join('; ') :
-        `unit ${l.unit} cycles a sample (${l.points} points on ${l.on}), model ${l.model} at ${l.setting}` +
-        (l.outside.length ? ` with ${l.outside.map(e => e.name + ' ' + e.cycles).join(', ')}` : '') + `, ${l.ratio}x` + (l.outlier ? ': an outlier' : '')))
-      if (report.missing.length && !ids.includes('--markdown')) console.log(`No in-use reading to compare: ${report.missing.join(', ')}. A report only; nothing fails.`)
-    } else { console.error('Usage: node scripts/cycle-scan.mjs record <id> [<id> ...] | check | unit [--markdown]'); process.exitCode = 2 }
+      else if (ids.includes('--write')) {
+        const path = join(root, README), text = readFileSync(path, 'utf8'), next = withTable(text, unitMarkdown(report))
+        if (next !== text) writeFileSync(path, next)
+        console.log(next === text ? `${README}: the table is current.` : `${README}: wrote the table.`)
+      } else for (const l of report.lines) console.log(`  ${l.notComparable ? '×' : l.outlier || l.peakAbove ? '!' : '·'} ${l.id}: ` + (l.unit == null ? l.notes.join('; ') :
+        `unit ${l.unit} cycles a sample (${l.points} points on ${l.on}${l.peak == null ? '' : `, peak ${l.peak}`}), model ${l.model} at ${l.setting}` +
+        (l.outside.length ? ` with ${l.outside.map(e => e.name + ' ' + e.cycles).join(', ')}` : '') +
+        (l.notComparable ? `: not comparable: ${l.notComparable.join('; ')}` : `, ${l.ratio}x` + (l.outlier ? ': an outlier' : '') +
+          (l.peakRatio == null ? '' : `; peak ${l.unitPeak} against ${l.modelPeak} at the dearest, ${l.peakRatio}x` + (l.peakAbove ? ': above the model' : '')))))
+      if (report.missing.length && !ids.includes('--markdown') && !ids.includes('--write')) console.log(`No in-use reading to compare: ${report.missing.join(', ')}. A report only; nothing fails.`)
+    } else { console.error('Usage: node scripts/cycle-scan.mjs record <id> [<id> ...] | check | unit [--markdown | --write]'); process.exitCode = 2 }
   } catch (error) { console.error(error.message); process.exitCode = 1 }
 }
