@@ -416,7 +416,8 @@ describe('sending a module', () => {
   })
   it('names the track and effect slot that runs a module in use, when the base says which', async () => {
     const { unit, link } = await linked()
-    unit.refusal = 7, unit.inUseSlot = 14 // T6's FX2
+    unit.refusal = 7
+    unit.inUseSlot = 14 // T6's FX2
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes.* Track 6 runs it as its FX2 effect in the current Part\.$/)
     expect(link.getState().notice?.text).not.toContain('Look for')
