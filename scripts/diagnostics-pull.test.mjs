@@ -238,6 +238,15 @@ describe('diagnostics pull', () => {
     expect(lines[0]).toBe('  unit: 2 hot spells under 5 s while stopped left out (key presses and project loads)')
     expect(lines.slice(1).map(l => l.slice(0, 12))).toEqual(['  unit: #3 s', '  unit: #4 s'])
   })
+  it('calls a stopped freeze until a restart after PROJ … RIGHT YES likely USB disk mode, and no other freeze', () => {
+    const walk = [...Array(10).fill(255), 0x1c, 0x20, 0x33, 0x20, 0x21, 0x31], other = [...Array(14).fill(255), 0x27, 0x28]
+    const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: walk, screen: 0, tempo24: 0, playing: false, ...more })
+    const note = ' (likely USB disk mode or an upgrade prompt, beta finding 72: PROJ … RIGHT YES before it; not a hang)'
+    const lines = unitLines([at(1, 1, 'base', 0x049efc39), at(2, 2, 'base', 0x049efc39), at(3, 1, 'freeze'), at(4, 1, 'freeze', 0, { playing: true }),
+      at(5, 1, 'freeze', 0, { keys: other }), at(6, 1, 'freeze', 25919)])
+    expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual([['3', true], ['4', false], ['5', false], ['6', false]])
+  })
   it('leaves a start’s own brake and late-entry records out and counts them, keeping one while playing', () => {
     const at = (seq, kind, a, more = {}) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing: false, ...more })
