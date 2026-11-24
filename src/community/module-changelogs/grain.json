@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Trig keys, CHROMATIC keys and MIDI notes now play the grain cloud instead of the plain Flex sample.",
+      "PTCH now works in Flex's units, so CHROMATIC keys and MIDI notes play in tune. Its range is -12 to +12 semitones, as on Flex.",
+      "A PTCH saved with 0.1.2 now plays at a fifth of its transposition: set it again.",
+      "FUNC + YES in the sample pool still previews the sample as plain Flex."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-11-22",
     "changes": [

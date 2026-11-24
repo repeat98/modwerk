@@ -8,13 +8,12 @@ import { classifyCpuCaution, MODULE_CAUTIONS } from '../catalog/module-cautions'
 import { CautionBadge, ModuleCard } from './ModuleCard'
 
 describe('Octatrack CPU cautions', () => {
-  it('reserves Heavy CPU for POLY8 and Grain and marks five catalog modules High CPU', () => {
+  it('reserves Heavy CPU for POLY8 and Grain and marks four catalog modules High CPU', () => {
     expect(Object.fromEntries(Object.entries(MODULE_CAUTIONS).map(([id, caution]) => [id, caution.badge]))).toEqual({
       poly8: 'Heavy CPU',
       grain: 'Heavy CPU',
       syntiz: 'High CPU',
       tapeecho: 'High CPU',
-      'usb-audio-out-tracks-main-cue': 'High CPU',
       'output-matrix': 'High CPU',
       'analog-bassdrum': 'High CPU',
     })
@@ -23,7 +22,6 @@ describe('Octatrack CPU cautions', () => {
 
   it.each([
     ['poly8', 'heavy', 'Heavy CPU', '41.9 percentage points of audio-frame load added with one POLY8 track with repeated trigs'],
-    ['usb-audio-out-tracks-main-cue', 'high', 'High CPU', '13.3 percentage points of audio-frame load added with a 44.1 kHz stereo MAIN stream'],
     ['tapeecho', 'high', 'High CPU', '11.5 percentage points of audio-frame load for the first copy and 4.1 for each further one'],
   ])('shows the CPU badge and accessible workload for %s', (id, tier, label, workload) => {
     const doc = new DOMParser().parseFromString(renderToStaticMarkup(createElement(CautionBadge, { id })), 'text/html')

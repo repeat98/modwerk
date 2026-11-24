@@ -12,7 +12,8 @@
 //       frozen UI or skipped track during the trial fails it (exit 1) and it is rolled back even with --accept
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
-//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
+//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back);
+//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial
 //   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
@@ -59,12 +60,14 @@ import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
+import { stageRefusal } from './octatrack-step-base.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
+  split: { type: 'boolean', default: false },
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
@@ -768,10 +771,19 @@ if (command === 'serve') {
     // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
     if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
     const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
-    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
-    console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
-    try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
-    catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
+    const offer = async packages => {
+      const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
+      console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
+      try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
+      catch (error) {
+        // 38 catalogue packages outgrew the module pool on 23 November 2026 (MKII, 0.8.1 twin): halves of 17 and 16 ran
+        const split = values.split && packages.length > 1 && /RUNTIME_MEMORY/.test(error.message)
+        console.log((split ? `too large for one trial (RUNTIME_MEMORY), in halves: ` : 'refused: ') + error.message)
+        await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status))
+        if (split) for (const half of [packages.slice(0, Math.ceil(packages.length / 2)), packages.slice(Math.ceil(packages.length / 2))]) await offer(half)
+      }
+    }
+    await offer(packages)
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
   }
   if (command === 'flash') {
@@ -780,6 +792,8 @@ if (command === 'serve') {
     const parsed = formats.parse(new Uint8Array(readFileSync(join(file, 'NOT_FLASH_CANDIDATE.bin'))), OCTATRACK), container = parsed.container
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (identity.base !== expected) throw new Error(`The unit runs base ${identity.base.slice(0, 16)}…, not ${expected.slice(0, 16)}…: RAM-boot it first (boot DIR); a base writes only itself.`)
+    const tooBig = stageRefusal("The base's container", container.length, session.status.capacity)
+    if (tooBig) throw new Error(tooBig)
     let shown = 0
     await session.stage({ base: identity.base, data: container, sha256: sha(container) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
       if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
@@ -805,7 +819,9 @@ if (command === 'serve') {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
-    const arm = async (s, base) => {
+    const arm = async (s, base, flashed = false) => {
+      const tooBig = stageRefusal(join(file, 'MAIN.raw'), image.length, s.status.capacity, flashed)
+      if (tooBig) throw new Error(tooBig)
       let shown = 0
       await s.stage({ base, data: image, sha256: sha(image) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
         if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
@@ -822,7 +838,7 @@ if (command === 'serve') {
       // the boot falls back to the flashed one, which can then arm it properly.
       if (back.base !== expected && back.base !== identity.base) {
         console.log(`came back on the flashed base ${back.base.slice(0, 16)}…: arming again from it`)
-        await arm(back.session, back.base)
+        await arm(back.session, back.base, true)
         backBench.socket.end()
         back = await rebooted()
       }

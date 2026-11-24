@@ -1,6 +1,6 @@
 # Grain
 
-Version 0.1.1-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
+Version 0.1.3-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
 
 ## Overview
 
@@ -16,7 +16,7 @@ SRC (knobs A to F):
 
 | Knob | Range | What it does |
 | --- | --- | --- |
-| PTCH | -24 to +24 semitones | The pitch of the grains. Their length does not change. One semitone a detent; FUNC + turn stops at -24, -12, 0, +12 and +24, so it always comes back to 0; a pressed knob moves seven. |
+| PTCH | -12 to +12 semitones | The pitch of the grains, in Flex's units, so CHROMATIC keys and MIDI notes play in tune. Their length does not change. One semitone a detent; FUNC + turn stops at -12, 0 and +12, so it always comes back to 0; a pressed knob moves seven semitones. |
 | POS | 0 to 127.8 | Where the grains are read: 0 is the start of the sample, 127.8 the end. Turned slowly it moves in eighths (41.0, 41.1, 41.2, 41.3, 41.5, 41.6, 41.7, 41.8, 42.0) and speeds up as you turn faster; a pressed knob jumps by seven. |
 | SIZE | 0 to 127 | The length of each grain, on an exponential scale: 0 is 10 ms, 64 about 100 ms, 127 one second. |
 | DENS | 0 to 127 | How often a grain is born. Low values leave gaps; 64 puts the grains one after another; 127 overlaps four of them (up to six sound at once). With MODE SYNC it picks the division of the bar: 1, 2, 4, 6, 8, 12, 16, 24, 32, 48 or 64 grains. |
@@ -74,7 +74,7 @@ The author supplied a 45-second recording of Grain on their Octatrack MKI. They 
 
 ## Compatibility and limitations
 
-Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. POS parameter locks use whole numbers. Each grain plays 3 dB below full scale, so six long grains of a loud sample stay clean; raise the track volume if a single grain is too quiet. With a SCALE set in PROJECT > CONTROL > SEQUENCER (the scale quantizer that comes with FM Synth and Scale Quantizer), PTCH jumps by several semitones per detent, because the quantizer steps in Flex units: set SCALE to OFF in projects with Grain.
+Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. Sequencer trigs, trig keys, CHROMATIC keys and MIDI notes all play the grains, a note at its pitch (within PTCH's -12 to +12 semitones, as on Flex); only FUNC + YES in the sample pool plays the sample as a plain Flex, as a preview, until the track's next trig. POS parameter locks use whole numbers. Each grain plays 3 dB below full scale, so six long grains of a loud sample stay clean; raise the track volume if a single grain is too quiet. PTCH changed units in 0.1.3: Grain 0.1.2 stored semitones (-24 to +24), 0.1.3 reads Flex's units (5 a semitone), so a PTCH saved with 0.1.2 plays at a fifth of its transposition (+12 becomes +2.4): set it again. A SCALE in PROJECT > CONTROL > SEQUENCER (the scale quantizer that comes with FM Synth and Scale Quantizer) now steps in the same units as Grain; not tested on a unit.
 
 ## Tests and measurements
 
