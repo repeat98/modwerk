@@ -62,3 +62,18 @@ stub and only a unit converted from this base on gets the new one.
 - Emulator: `check_stub.py` passed all six slot states on #2028's build (its description has the record).
 - Not run on a unit: a two-slot conversion writes the stub to NOR at `0x4000` and only a cold start runs it. The A/B and
   release-image steps above now apply to `c5791ec9` instead of `6852c1ff`.
+
+## 24 November 2026: the CPU record's own tracks, and the slot behind an in-use refusal
+
+`diag.c`'s CPU record keeps every track refused since the start in its top byte and adds the tracks refused since the
+previous CPU record in bits 16-23 (per-track counters `cpu_refuse` bumps; no shared word is cleared), the count now in
+the low 16 bits. `dsp.c` keeps the slot whose running effect made an admission return `RUNTIME_IN_USE` and the self-test
+record carries it above the refusal (`selftest.h`, bits 16-23), so the site names the track and FX slot.
+
+- Release 0.8.2 rebuilt: base `ada74e3d084c9f99…` (was `c5791ec9`); browser = native `.bin` `5c7e9eba704b050c…`
+  (831,684 bytes); container 831,668 bytes (200 more). The resident port's `dsp.c` hunks moved 6 lines, re-pinned.
+  Base-bound packages relinked with unchanged bytes.
+- Host: `test_diag.c` (a second record names only its new track), `test_dsp.c` (T6's FX2 slot, forgotten at the next
+  admission) and `test_selftest.c` (the slot above the refusal) pass; each fails without the change.
+- Not run on a unit: a CPU refusal and an in-use refusal on the release image, read back through the log and the site.
+  The steps above now apply to `ada74e3d` instead of `c5791ec9`.
