@@ -117,13 +117,16 @@ export interface SelftestRecord { state: number; failed: number; modules: number
   /** The module behind the first failure: its runtime id (0 none) and its name as the chooser shows it ('' none). */
   culprit: number; culpritName: string
   /** The loader's last refusal (sdk/runtime/loader/loader.h runtime_refusal), why a "rejected" was rejected. */
-  refusal: number }
+  refusal: number
+  /** With refusal 7 (in use), the effect slot that runs the module (selftest.h): 1-8 FX1 of T1-T8, 9-16 FX2, 0 unknown
+   * (bases before 0.8.2 too). */
+  inUseSlot?: number }
 export function parseSelftest(view: DataView): SelftestRecord {
   if (view.byteLength !== SELFTEST_BYTES) throw new VendorTransportError('The self-test record has the wrong length.')
   const u = (i: number) => view.getUint32(4 * i)
   return { state: u(0), failed: u(2), modules: u(3), dsp: u(4), intact: u(5), ran: u(6),
     peaks: { tracks1to4: u(7), tracks5to8: u(8), cpu: u(9) }, done: u(10), total: u(11), frameGap: u(14), saved: u(15), savedCount: u(16), live: u(17),
-    culprit: u(18), culpritName: String.fromCharCode(...new Uint8Array(view.buffer, view.byteOffset + 76, 16)).replace(/\0.*$/s, '').trim(), refusal: u(23) }
+    culprit: u(18), culpritName: String.fromCharCode(...new Uint8Array(view.buffer, view.byteOffset + 76, 16)).replace(/\0.*$/s, '').trim(), refusal: u(23) & 0xffff, inUseSlot: u(23) >>> 16 & 0xff }
 }
 /** A module the unit's project names that is not installed: its effect handle, parameter layout, module id (the
  * first four bytes of the SHA-256 of its catalogue id, hex) and name. */

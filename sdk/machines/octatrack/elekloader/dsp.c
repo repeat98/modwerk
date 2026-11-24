@@ -122,11 +122,16 @@ uint8_t modwerk_test_live_fx[16], *modwerk_test_bank;
 #define PART(bank, i) ((const volatile uint8_t *)((bank) + ((i) < 4 ? 0x8ed80u : 0x9504au - 4u * 6322u) + (i) * 6322u))
 static volatile int nudge;
 
+/* The first slot that runs effect `id`, + 1 (1-8 FX1 of T1-T8, 9-16 FX2), or 0. */
 static int in_use(unsigned id)
 {
-    for (unsigned i = 0; i < 16; ++i) if (LIVE_FX[i] == id) return 1;
+    for (unsigned i = 0; i < 16; ++i) if (LIVE_FX[i] == id) return (int)i + 1;
     return 0;
 }
+/* The slot behind this admission's RUNTIME_IN_USE, for the self-test record (selftest.h `refusal`, bits 16-23).
+ * shortcut: a machine's own in-use refusal (analog_bd_ui.c) names no slot and leaves 0 only when an admission ran
+ * before it; give those refusals a slot too if the site ever names a wrong track. */
+static uint32_t in_use_slot;
 /* Handles (owner, 11 October 2026): a module's effect id is a handle, not the module's for good. The
  * project's map (fxmap.c) names the module behind each; `owner` is who holds each this session. A
  * module goes where the map puts it, else to its preferred id (today's catalogue assignment), else to
@@ -285,9 +290,10 @@ int modwerk_machine_dsp_admit(const struct runtime_dsp *from, struct runtime_dsp
 {
     /* An effect a track runs, or one a transaction may hold between prepare and retirement, stays.
      * A new one may register at any time: no transaction names an effect nobody has picked. */
-    int had = from->count ? handle_of(from->module) : -1;
-    if (from->count && had >= 0 && in_use((unsigned)had)) {
-        if (!modwerk_runtime_restoring()) return RUNTIME_IN_USE; /* the host says why: pick another effect */
+    int had = from->count ? handle_of(from->module) : -1, at = had >= 0 ? in_use((unsigned)had) : 0;
+    in_use_slot = 0;
+    if (from->count && at) {
+        if (!modwerk_runtime_restoring()) { in_use_slot = (uint32_t)at; return RUNTIME_IN_USE; } /* the host says why, and where */
         park((unsigned)had);
     }
     if (from->count && (!dl_publication_idle() || rebinding)) return RUNTIME_BUSY;
@@ -1057,7 +1063,7 @@ void modwerk_selftest_refresh(void)
     modwerk_selftest.live = modwerk_runtime_active();
     { extern volatile uint32_t modwerk_flash_refusal; uint32_t loader = modwerk_runtime_refusal();
       modwerk_selftest.refusal = modwerk_flash_refusal ? 100u + modwerk_flash_refusal : /* flash.h: a refused or failed base write, apart from the loader's */
-          loader ? loader : modwerk_controller_keybus_lost() ? (uint32_t)RUNTIME_FEATURE : (uint32_t)RUNTIME_OK; }
+          loader ? loader | (loader == RUNTIME_IN_USE ? in_use_slot << 16 : 0u) : modwerk_controller_keybus_lost() ? (uint32_t)RUNTIME_FEATURE : (uint32_t)RUNTIME_OK; }
 }
 enum { PLACE, WAIT, HOLD, CODE, CLEAR, EMPTY, RESET };
 /* st_live: what each slot ran before the test; st_base: the batch's background, that with a core the batch emptied

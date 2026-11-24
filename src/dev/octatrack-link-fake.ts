@@ -58,6 +58,8 @@ export interface FakeUnit {
   screen?: () => Promise<DataView>
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
+  /** With refusal 7, the effect slot that runs the module, as base 0.8.2 reports it (1-8 FX1 of T1-T8, 9-16 FX2). */
+  inUseSlot?: number
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
    * the base then drops the staged package. */
   publishRefusal?: number
@@ -158,7 +160,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         }
         if (setup.request !== 21 || refusal === undefined) return { status: 'stall' }
         const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)) // the base's record, idle, with its last refusal
-        record.setUint32(92, refusal)
+        record.setUint32(92, (refusal | (unit.inUseSlot ?? 0) << 16) >>> 0)
         return { status: 'ok', data: record }
       },
     }

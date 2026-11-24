@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, inUseSlotHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, VendorTransportError, parseBaseSlots } from './upload-usb'
 
@@ -413,6 +413,14 @@ describe('sending a module', () => {
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
+  })
+  it('names the track and effect slot that runs a module in use, when the base says which', async () => {
+    const { unit, link } = await linked()
+    unit.refusal = 7, unit.inUseSlot = 14 // T6's FX2
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes.* Track 6 runs it as its FX2 effect in the current Part\.$/)
+    expect(link.getState().notice?.text).not.toContain('Look for')
+    expect(inUseSlotHint(3, ['Tape Echo', 'Tape Echo'])).toBe(' Track 3 runs Tape Echo as its FX1 effect in the current Part.')
   })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')

@@ -168,6 +168,11 @@ export function inUseHint(modules: readonly string[]) {
   const shown = names.length > 5 ? [...names.slice(0, 4), `${names.length - 4} more`] : names
   return ` Look for ${new Intl.ListFormat('en', { type: 'disjunction' }).format(shown)} on the tracks.`
 }
+/** After refusal 7 from a base that names the effect slot running it (0.8.2 on, selftest.h): 1-8 FX1 of T1-T8, 9-16 FX2. */
+export function inUseSlotHint(slot: number, modules: readonly string[]) {
+  const names = [...new Set(modules)]
+  return ` Track ${(slot - 1) % 8 + 1} runs ${names.length === 1 ? names[0] : 'it'} as its FX${slot > 8 ? 2 : 1} effect in the current Part.`
+}
 /** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
  * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
  * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
@@ -888,8 +893,8 @@ export class OctatrackLink {
       try { clean = await this.cleanUp(settled) } catch { clean = false }
     }
     if (connection !== this.connection) return
-    const why = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
-      (await this.transport?.selftest(false).catch(() => undefined))?.refusal : undefined
+    const record = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
+      await this.transport?.selftest(false).catch(() => undefined) : undefined, why = record?.refusal
     if (connection !== this.connection) return
     const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal;
@@ -908,7 +913,7 @@ export class OctatrackLink {
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
     const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) +
-      (why === RUNTIME_IN_USE ? inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
+      (why === RUNTIME_IN_USE ? record?.inUseSlot ? inUseSlotHint(record.inUseSlot, this.replaced) : inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) {
       const notice = { tone: 'error', text } as const
       if (this.transport) this.ready(notice, session ? settled?.status.active : this.state.active)

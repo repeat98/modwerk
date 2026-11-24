@@ -309,6 +309,11 @@ int main(void)
     test_refusal = RUNTIME_CONFLICT;
     modwerk_selftest_refresh();
     CHECK(modwerk_selftest.refusal == RUNTIME_CONFLICT);
+    /* A module a track runs: the slot that runs it rides above the refusal, so the site can name the track. */
+    test_refusal = RUNTIME_IN_USE, in_use_slot = 14u;
+    modwerk_selftest_refresh();
+    CHECK(modwerk_selftest.refusal == (14u << 16 | RUNTIME_IN_USE));
+    in_use_slot = 0;
     test_refusal = RUNTIME_OK;
     test_keybus_lost = 0;
     modwerk_selftest_refresh();
