@@ -1,0 +1,1 @@
+Octatrack base 0.8 reports the frame guard's skip count live with its log, so a module trial fails only for renders skipped during that trial. Before, a skip logged up to ten minutes late could fail the next module's trial. The first frame after a start no longer counts the whole start as one long gap between frames.

@@ -53,7 +53,7 @@ export function unlistedPackages(root){
  if(!existsSync(rows))return // a repository without USB packages, such as a minimal test fixture
  const manifest=JSON.parse(readFileSync(rows,'utf8'))
  walk(manifest.packages)
- for(const key of ['configurable', ...USB_AUDIO_LAYOUTS.map(layout=>layout.id)]){
+ for(const key of ['configurable', 'configurable-0.3', ...USB_AUDIO_LAYOUTS.map(layout=>layout.id)]){
   const path=manifest.usbAudio?.[key]?.path
   if(typeof path==='string' && path.endsWith('.mwrm'))named.add(path)
  }
@@ -74,6 +74,7 @@ const machineProfiles=[]
 for(const entry of await readdir(resolve(root,'sdk/machines'),{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error}))if(entry.isDirectory())machineProfiles.push(parseMachineProfile(await json(resolve(root,'sdk/machines',entry.name,'machine.json'))))
 let machineModules=0
 const machineDocuments=[],machineDependencies=[]
+let verifyRollback
 const sectionSlots=new Map()
 for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod'||profile.sdk?.platform==='zdl')){
  // A Zoom effect is a prebuilt file: no build.json, core interface, dependencies or patch sites.
@@ -105,7 +106,14 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    newVersion=publishesNewVersion({inLibrary:dir===folderRoot,baseVersion:baseText===null?null:JSON.parse(baseText).version,version:document.version})
    const changedPaths=(git('diff','--name-only',baseCommit,'--',prefix)+git('ls-files','--others','--exclude-standard','--',prefix)).trim().split('\n').filter(Boolean),changed=changedPaths.length>0
    if(changed&&!document.tests.documentation)throw new Error(label+': new and updated modules require complete documentation, tutorial and capture provenance')
-   if(git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath){const old=JSON.parse(git('show',baseCommit+':'+oldPath));const codeChanged=changedPaths.some(path=>!isVersionNeutralChange({path,before:path===oldPath?JSON.stringify(old):'',after:path===oldPath?readFileSync(resolve(folder,'modwerk.module.json'),'utf8'):''}));if(codeChanged&&compareModuleVersions(document.version,old.version)<=0)throw new Error(label+': every code or behaviour update requires a greater module version than '+old.version+'; documentation, media and compatibility.conflicts edits do not')}
+   if(baseText!==null){
+    const old=JSON.parse(baseText),order=compareModuleVersions(document.version,old.version)
+    const codeChanged=changedPaths.some(path=>!isVersionNeutralChange({path,before:path===oldPath?baseText:'',after:path===oldPath?readFileSync(resolve(folder,'modwerk.module.json'),'utf8'):''}))
+    if(order<0&&!zdl&&dir===folderRoot){
+     verifyRollback??=(await import('./published-elemod-rollback.mjs')).publishedElemodRollback(root,baseCommit)
+     await verifyRollback(document,prefix)
+    }else if(codeChanged&&order<=0)throw new Error(label+': every code or behaviour update requires a greater module version than '+old.version+'; documentation, media and compatibility.conflicts edits do not')
+   }
   }
   const build=zdl?null:parseElemodBuild(await json(await file(folder,document.platform.build)),document)
   // The pull-request check (--base) holds every Zoom effect to its vendored file; locally a newly scaffolded one passes npm ci's

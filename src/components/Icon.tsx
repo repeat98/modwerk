@@ -1,4 +1,4 @@
-export type IconName = 'menu' | 'home' | 'share' | 'bell' | 'grid' | 'wave' | 'sliders' | 'search' | 'plus' | 'check' | 'arrow' | 'back' | 'download' | 'file' | 'shield' | 'star' | 'close' | 'message' | 'help' | 'heart' | 'bookmark' | 'pin' | 'lock' | 'quote' | 'play' | 'pause' | 'image' | 'mail' | 'sort' | 'filter' | 'external' | 'swap' | 'more' | 'warn'
+export type IconName = 'menu' | 'home' | 'share' | 'bell' | 'grid' | 'wave' | 'sliders' | 'search' | 'plus' | 'check' | 'arrow' | 'back' | 'download' | 'file' | 'shield' | 'star' | 'close' | 'message' | 'help' | 'heart' | 'bookmark' | 'pin' | 'lock' | 'quote' | 'play' | 'pause' | 'image' | 'display' | 'mail' | 'sort' | 'filter' | 'external' | 'swap' | 'more' | 'warn'
 const paths: Record<IconName, string> = {
   menu: 'M3 5h18v14H3zM9 5v14',
   home: 'M3 11 12 4l9 7M5 10v10h5v-6h4v6h5V10',
@@ -28,6 +28,7 @@ const paths: Record<IconName, string> = {
   message: 'M4 4h16v13H9l-5 4z',
   mail: 'M3 5h18v14H3zm0 0 9 7 9-7',
   image: 'M3 5h18v14H3zm0 10 5-5 4 4 3-3 6 6M15.5 9.5h.01',
+  display: 'M3 4h18v13H3zM12 17v4M8 21h8',
   play: 'M7 4.5v15L19.5 12z',
   pause: 'M8 5v14M16 5v14',
   sort: 'M7 4v16m-4-4 4 4 4-4M17 20V4m-4 4 4-4 4 4',

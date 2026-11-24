@@ -13,13 +13,26 @@ and the program apart), the form sdk/runtime/loader/build.py checks. --check com
 published file; hooked DSP code (Sidechain Compressor, Output Matrix) is not built here yet."""
 import argparse, hashlib, json, os, subprocess, sys, tempfile
 from pathlib import Path
+from functools import cache
 
 APP = Path(__file__).resolve().parents[4]
 SDK = APP / 'sdk/octabam'
 sys.path.append(str(APP / 'sdk'))  # firmware_codec
 import firmware_codec  # noqa: E402
-firmware_codec.use_elekloader(os.environ.get('ELEKLOADER_UPSTREAM', str(Path.home() / '.cache/modwerk-upstream/elekloader')))
-from elekloader.sdk.octabam import Octabam  # noqa: E402
+
+
+@cache
+def catalogue_type():
+    """Only reading module manifests needs the separate Elekloader checkout."""
+    firmware_codec.use_elekloader(os.environ.get('ELEKLOADER_UPSTREAM', str(Path.home() / '.cache/modwerk-upstream/elekloader')))
+    from elekloader.sdk.octabam import Octabam
+    return Octabam
+
+
+def __getattr__(name):
+    if name == 'Octabam':  # Existing package builders import the reader from this module.
+        return catalogue_type()
+    raise AttributeError(name)
 
 LITERAL = '$fab1e0'  # the P table's address in a module's source
 ORGS = (0x100000, 0x200000)
@@ -81,7 +94,8 @@ def main():
     ap.add_argument('--out', type=Path, help='write the built packages here (JSON)')
     a = ap.parse_args()
     versions = {m['id']: m['version'] for m in json.loads((APP / 'sdk/catalog.json').read_text())['modules']}
-    ob = Octabam(str(SDK))
+    manifest_reader = catalogue_type()
+    ob = manifest_reader(str(SDK))
     with tempfile.TemporaryDirectory() as work:
         built = [package(ob, name, versions[name], work) for name in FX]
     if a.out: a.out.write_text(json.dumps(dict(packages=built), indent=2) + '\n')

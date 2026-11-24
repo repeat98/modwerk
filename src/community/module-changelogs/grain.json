@@ -1,5 +1,24 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Trig keys, CHROMATIC keys and MIDI notes now play the grain cloud instead of the plain Flex sample.",
+      "PTCH now works in Flex's units, so CHROMATIC keys and MIDI notes play in tune. Its range is -12 to +12 semitones, as on Flex.",
+      "A PTCH saved with 0.1.2 now plays at a fifth of its transposition: set it again.",
+      "FUNC + YES in the sample pool still previews the sample as plain Flex."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "The sample is now a ring, like most granular engines: grains that run past one end carry on from the other, so there is no more silence at the edges.",
+      "FUNC + turn on PTCH jumps by octaves and always brings it back to 0.",
+      "Each grain plays 3 dB lower, so dense clouds of long grains of a loud sample no longer distort, except for the odd click at extreme settings."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-11-21",
     "changes": [

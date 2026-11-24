@@ -1,17 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "grain",
-  "version": "0.1.1-experimental",
+  "version": "0.1.3-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-21",
-  "ownerStatement": "Approved by repeat98 in chat on 21 November 2026 for Grain 0.1.1-experimental (PR #1962). Asked to approve 0.1.1 under the same exception as 0.1.0, with the same waivers plus the pool fix and a meter cost of 17, and whether to ask the author: \"yes to all four, waive the author OK\". Then: \"Ok, let's bring the base and the new grain version live!!\". Asked whether to keep 0.1.0's screenshots, since 0.1.1 draws nothing new, under a release-documentation waiver: \"Waive, keep 0.1.0's\".",
-  "reason": "Grain 0.1.1-experimental, exact native source only (package 1b3728c0\u2026, MKII OS 1.40C): 0.1.0's source plus two changes. The pool audition: only a START carrying the audition flag (0x20; FUNC+YES in the pool, 0xe0 against a sequencer trig's 0xc0 on the owner's MKII) plays the track as a plain Flex, until its next trig, so opening the pool no longer stops Grain. The descriptor names the CPU meter Grain adds, 17 points (reserved[1], resources.cpuMeter): +8.9 measured on the owner's Part at PTCH +24, SIZE and DENS 127 on a 16-bit stereo sample, and +14.5 to +16.5 in 0.1.0's record for dense six-voice 24-bit stereo. On the owner's MKII in RAM: build c841ea87 (this source but for the meter byte) kept Grain rendering with the pool open, took the plain path for a held FUNC+YES and returned on the next trig; package 1b3728c0 was picked and played on T1 on a development twin of base 0.7.13 and loaded and rolled back on the exact 0.7.13 release image. Release documentation is waived: 0.1.1 draws nothing new, so its screenshots are 0.1.0's. The other waivers stay as for 0.1.0: the static zero-wait bound exceeds the frame budget (chip worst-case cycles), no full memory-region inventory (complete memory bounds), and the MIDI flood counted no stuck notes after a channel change and no end-to-end losses (current-build hardware). Known limits: after a pool opened on the Grain track from a page other than SRC and closed, FUNC+SRC cannot pick FLEX or STATIC until SRC or another track is shown; the clicks on every trig at SIZE 86, DENS 127, TRI and SYNC are still being investigated. Not tested: the audition's sound, project save and reload, a full module set, MKI and the owner's listening check. The author's OK for this update was waived by the owner. This exception applies to no other version or source.",
-  "sourceSha256": "03949b15aeb7a09fbf086050340cb1a9d35eace9fb8fecd444c04543e3069054",
+  "approvedOn": "2026-11-23",
+  "ownerStatement": "On 23 November 2026, repeat98 approved Grain 0.1.3-experimental (“I approve 0.1.3”), chose Flex's PTCH units, and after the unit runs on package 07b6e497 said “ok let's bring this update live”, with the waivers listed here.",
+  "reason": "Package 07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865. 0.1.3 makes trig keys, CHROMATIC keys and MIDI notes play Grain's engine instead of plain Flex (the START flag 0x20 counts as the pool's audition only while the pool window is open on the selected track) and reads PTCH in Flex's units (60 an octave), in which stock locks CHROMATIC and MIDI notes. On the owner's MKII (OS 1.40C, development twin 95adb64b of base 0.8) five rolled-back trials showed no crash, stall, freeze or skipped track; the trig cases, the audition and the PTCH knob behaved as TESTING.md records. Nothing was heard: tuning by ear, a recorded CHROMATIC take, SCALE, a 0.1.2 project reloaded and the MKI are untested. The controls and screens are 0.1.2's, so 0.1.2's captures and tutorial stay. Worst-case chip timing and complete memory bounds remain unmeasured, as for 0.1.2.",
+  "retainedUiVersion": "0.1.2-experimental",
+  "sourceSha256": "24fad490769a6e8aaaabe34104956da5e1cb64a690367136a59db9682e874ccc",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds",
     "release-documentation"
-  ],
-  "retainedUiVersion": "0.1.0-experimental"
+  ]
 }

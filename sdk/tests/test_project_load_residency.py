@@ -79,7 +79,8 @@ static unsigned phase, queued_token, observed_valid;
 static uint8_t owed_id[16], observed[16];
 static fx_set observed_held[2], observed_played[2];
 static volatile uint8_t test_live[16];
-static int loading;
+static int loading, project_wait;
+int mw_project_fx_wait(const uint8_t ids[16]) { (void)ids; return project_wait; }
 int modwerk_fxmap_loading(void) { return loading; }   /* fxmap.c: a project load runs */
 static int modwerk_stock_hook_export_idle(void) { return 1; }
 static int modwerk_saved_set_busy(void) { return 0; }
@@ -148,6 +149,12 @@ int main(int argc, char **argv)
         CHECK(begins == 1);
         phase = 0, ticks(8);
         CHECK(begins == 2 && !memcmp(begun, final, 16));
+    } else if (mode == 4) {
+        project_wait = -1;
+        final[4] = CHORUS; show(final); ticks(8);
+        CHECK(begins == 1);
+        project_wait = 1; ticks(1); project_wait = 0; ticks(8);
+        CHECK(begins == 2 && !memcmp(begun, final, 16));
     } else return 2;
     return 0;
 }
@@ -164,7 +171,7 @@ class ProjectLoadResidency(unittest.TestCase):
             built = subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', *SANITIZE, '-DMODWERK_FX_IDS=64',
                                     '-I' + str(ELEK), str(work / 'observer.c'), '-o', str(out)], capture_output=True, text=True)
             self.assertEqual(built.returncode, 0, built.stderr)
-            for mode in (1, 2, 3):
+            for mode in (1, 2, 3, 4):
                 with self.subTest(mode=mode):
                     run = subprocess.run([str(out), str(mode)], capture_output=True, text=True, timeout=60)
                     self.assertEqual(run.returncode, 0, run.stderr)

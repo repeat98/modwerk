@@ -2,7 +2,8 @@ import type { Database, User } from './platform'
 import { needMember, sameDigest, throttle } from './auth'
 import { boundedBody, digest, HttpError, response } from './security'
 import { MODULES } from '../src/catalog/modules'
-import { DIAGNOSTICS_GUEST, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, OCTATRACK_DIAGNOSTICS_ACCEPTED, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
+import { isStagingCommand, STAGING_SET_BYTES, STAGING_FRAME_BYTES } from '../src/community/octatrack-diagnostics-contract'
+import { DIAGNOSTICS_GUEST, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, TRIAL_RECONNECT_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, OCTATRACK_DIAGNOSTICS_ACCEPTED, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
 
 const since = (now: Date, days: number) => new Date(now.getTime() - days * 86400000).toISOString()
 const hash = (v: unknown) => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v)
@@ -18,6 +19,11 @@ const upTo = (v: unknown, most: number) => uint(v) && (v as number) <= most
 const pair = (v: unknown, most: number) => Array.isArray(v) && v.length === 2 && v.every(n => upTo(n, most))
 const bytes = (v: unknown, n: number) => Array.isArray(v) && v.length === n && v.every(b => upTo(b, 255))
 const exactly = (v: Record<string, unknown>, names: string) => Object.keys(v).sort().join(',') === names
+function stagingUpload(v: unknown) {
+  return object(v) && fields(v, ['command','chunkOffset','remainingBytes']) && isStagingCommand(v.command)
+    && (v.command === 'chunk' ? upTo(v.chunkOffset, STAGING_SET_BYTES - 1) : !('chunkOffset' in v))
+    && (!('remainingBytes' in v) || upTo(v.remainingBytes, STAGING_FRAME_BYTES))
+}
 function live(v: unknown) {
   return object(v) && fields(v, ['samples','cpu','dsp1to4','dsp5to8']) && upTo(v.samples, 10000) && ['cpu','dsp1to4','dsp5to8'].every(k => !(k in v) || pair(v[k], 1000))
 }
@@ -54,6 +60,11 @@ function client(v: unknown) {
   return object(v) && fields(v, ['browser','major','os']) && DIAGNOSTIC_BROWSERS.some(browser => browser === v.browser) && DIAGNOSTIC_SYSTEMS.some(os => os === v.os)
     && (!('major' in v) || typeof v.major === 'number' && Number.isInteger(v.major) && v.major >= 1 && v.major <= 999)
 }
+/** The modules a start left out (RESTORE, request 43): a catalogue id or `other`, the loader's refusal and check. */
+function restoreList(v: unknown) {
+  return Array.isArray(v) && v.length >= 1 && v.length <= 128 && v.every(item => object(item) && exactly(item, 'check,id,refusal')
+    && (item.id === 'other' || MODULES.some(known => known.id === item.id)) && upTo(item.refusal, 0xffff) && upTo(item.check, 0xff))
+}
 /** Which of the newer fields each USB event may carry; any other USB event carries none of them. */
 const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
   load: { allowed: ['live'], required: ['live'] },
@@ -62,8 +73,12 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind','step','usb','client','failure'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect'])
+    && (!('restore' in value) || value.event === 'health' && 'reading' in value && restoreList(value.restore))
     && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
+    && (value.error === 'disconnected'
+      ? value.event === 'sync_failed' && value.phase === 'trial' && value.step === 'trial' && TRIAL_RECONNECT_FAILURES.some(reason => reason === value.reconnect)
+      : !('reconnect' in value))
     && (!('live' in value) || live(value.live)) && (!('reason' in value) || DIAGNOSTIC_UNRESPONSIVE.some(reason => reason === value.reason))
     && (!('log' in value) || deviceLog(value.log))
     && typeof value.id === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value.id)
@@ -89,6 +104,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
         && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
         && (!('usb' in value) || value.event === 'sync_failed' && value.error === 'transport' && Array.isArray(value.usb) && value.usb.length === 6 && value.usb.every(uint))
+        && (!('upload' in value) || value.event === 'sync_failed' && value.step === 'stage' && (value.error === 'transport' || value.error === 'device') && stagingUpload(value.upload))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)
         && (value.event !== 'device_log' || !('modules' in value) && !('reading' in value) && !('packages' in value)))

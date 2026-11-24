@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: a base-width band on the analog filter, all analog.",
+      "TYP turns past PK to BW: FRQ sets the band's low edge, RES's knob reads WID and sets how far above it the top edge sits, shown in hertz.",
+      "FRQ, its locks and an LFO on it move the whole band; an LFO or lock on WID changes the width; the filter envelope sweeps the band.",
+      "The FILTER graph draws the band as the filter plays it. Wider bands are quieter: set VOL by ear."
+    ]
+  }
+]

@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Record from your computer into the Octatrack: PROJ > MODWERK > SETTINGS > USB AUDIO > INPUTS sends USB 1/2 to inputs A/B or C/D, or USB 1–4 to all four.",
+      "The Octatrack keeps sending its USB outputs while the inputs are on. INPUTS starts OFF, so nothing changes until you choose it.",
+      "USB input needs a high-speed connection to a computer. Full speed and Outbox 8 stay output only; without a USB stream the inputs read the jacks.",
+      "An Octatrack running USB Audio 0.3.0 gets this version with its next sync. Your layout and Outbox choices stay as they are."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-20",
     "changes": [
