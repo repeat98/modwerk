@@ -17,5 +17,11 @@
       "arith-tcc": 0.06,
       "transfer": 2
     }
+  },
+  "defaults": {
+    "setting": "RATE=1/16/def",
+    "instructions": 141.81,
+    "cycles": 232.44,
+    "stalls": 25.19
   }
 }

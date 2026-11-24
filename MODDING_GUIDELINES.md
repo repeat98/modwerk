@@ -1,15 +1,15 @@
 # Modding guidelines
 
-Modwerk is here because people want more from instruments they love. Modding should be good for them and for the companies that make those instruments: instruments stay useful for longer, and there are more reasons to buy them. These guidelines apply to every module, machine port and piece of research on Modwerk, and to what is shared about them on the site, on Discord and on GitHub.
+Good mods keep instruments useful for longer and give musicians more reasons to buy them.
 
-They decide what Modwerk builds and hosts, and what is shared in its spaces. They don't decide what you do with your own instrument, or what you share elsewhere. That is between you, the maker and that space's rules.
+These rules cover Modwerk modules, machine ports and research, including what anyone shares about them on the site, Discord or GitHub. What you do with your own instrument or share elsewhere is between you, the maker and that space's rules.
 
-Where a maker publishes its own terms for modding its instruments, those come first.
+> The maker's published terms for modding its instruments come first.
 
 ## Never share firmware
 
-- Never upload, post, send or link a maker's firmware. That means OS, update and SysEx files, code or tables taken from them, memory dumps, disassembly listings and built images that contain any of these. It includes leaked or decrypted firmware that someone else has published.
-- Everyone works from their own official download. Modwerk builds firmware on the user's own computer from the OS file they supply, and refers to stock code only by address, length and checksum.
+- **Never upload, post, send or link a maker's firmware.** That means OS, update and SysEx files, code or tables taken from them, memory dumps, disassembly listings and built images that contain any of these. It includes leaked or decrypted firmware that someone else has published.
+- **Everyone works from their own official download.** Modwerk builds firmware on the user's own computer from the OS file they supply, and refers to stock code only by address, length and checksum.
 - Share hashes, file layouts, addresses, notes and your own code instead.
 
 ## Respect the makers
@@ -43,4 +43,8 @@ These rules protect the makers' copyright and the goodwill that lets modding exi
 - If a maker asks for something to be changed or taken down, it is paused while we talk it through.
 - Makers and rights holders can write to [support@modwerk.app](mailto:support@modwerk.app).
 
-Work that breaks these guidelines is refused or taken down. The [code of conduct](https://github.com/repeat98/modwerk/blob/main/CODE_OF_CONDUCT.md) and the [community rules](https://modwerk.app/#community-rules) apply too. The steps behind each rule are in the [developer workflow](https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md), [Add a module](https://github.com/repeat98/modwerk/blob/main/docs/ADD_A_MODULE.md) and [Add a machine](https://github.com/repeat98/modwerk/blob/main/docs/ADD_A_MACHINE.md).
+---
+
+Work that breaks these guidelines is refused or taken down. The [code of conduct](https://github.com/repeat98/modwerk/blob/main/CODE_OF_CONDUCT.md) and the [community rules](https://modwerk.app/#community-rules) apply too.
+
+The steps behind each rule are in the [developer workflow](https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md), [Add a module](https://github.com/repeat98/modwerk/blob/main/docs/ADD_A_MODULE.md) and [Add a machine](https://github.com/repeat98/modwerk/blob/main/docs/ADD_A_MACHINE.md).

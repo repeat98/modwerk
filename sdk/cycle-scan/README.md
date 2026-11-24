@@ -38,10 +38,91 @@ node scripts/cycle-scan.mjs check                  # anywhere; npm run check run
 ```
 
 `record` scans the module and the stock effect its `performance.json` compares it with, and writes `records/<id>.json`:
-the dearest setting's instructions, cycles and stalls, bound to the module's source by the hash `performance.json`'s
-`sourceSha256` uses. It writes nothing when the tree it scans holds other module source than this repository. `check` fails
-a record whose module source has changed since (scan it again) and a `performance.json` recording fewer than 90 % of the
-instructions the scan saw executing; it lists the DSP modules without a record, without failing them. The records sit
-here, not in the module folders, which belong to their authors.
+the dearest setting's instructions, cycles and stalls, and the same at the module's defaults (`defaults_setting.py` names
+that run), bound to the module's source by the hash `performance.json`'s `sourceSha256` uses. It writes nothing when the
+tree it scans holds other module source than this repository. `check` fails a record whose module source has changed since
+(scan it again) and a `performance.json` recording fewer than 90 % of the instructions the scan saw executing; it lists the
+DSP modules without a record, without failing them. It also compares what the base's DSP admission charges the
+module's package (`dsp.c`'s `charged()`: a hardware figure as it is, an emulator figure at 7/4) with the scan's dearest
+cycles. A charge less than 5 % above the model is listed as a near miss; one below it is refused for a module first listed
+from 24 November 2026 and reported for an earlier one. On 23 November 2026 E-Verb (669 against 664.9) and MINIVERB (720
+against 698.6) were near misses, and LOFI2's hardware figure, 637, was under its 654.3 at DOWN/max. The records sit here,
+not in the module folders, which belong to their authors.
+
+## The identity gate: proof that a speed-up changes no sample
+
+A change that only reorders or re-spells DSP code (the remedies in [CYCLE_SCAN.md](CYCLE_SCAN.md)) must render exactly
+what it rendered before. `verify_ident.py` is octabam's widened gate (Yves Rosius, octabam `e4c207a2`, MIT), recorded in
+[`sdk/imports/octabam-verify-ident-e4c207a2.json`](../imports/octabam-verify-ident-e4c207a2.json). Stamp a reference on
+the tree you trust, then check the candidate against it:
+
+```bash
+OCTABAM_ROOT=<trusted worktree>/sdk/octabam python3 sdk/cycle-scan/verify_ident.py miniverb ref
+cp <trusted worktree>/sdk/octabam/out/ident_miniverb_ref.json sdk/octabam/out/
+python3 sdk/cycle-scan/verify_ident.py miniverb check       # IDENTICAL: 56/56 settings bit-identical
+```
+
+It builds a scratch image with the module beside the stock effects every run and renders 40 to 60 settings through
+`dsp_host`: every value of the first small select, hot, cool, zeros, max and the manifest's `dear` knobs, on the module's
+own slot and the other one, on payload B, in 16-sample blocks, over 2 s, with a ramp of every knob, with different L and
+R inputs and with the dispatcher's split call, and it compares the instance block (r7 `$00..$83`) after every block. A
+word the change stopped writing on purpose is named with `--scratch 0c,47`. Two controls fail a run that never reaches the
+module: its fx id must dispatch to other code than the stock image's and NONE's (Modwerk's control: octabam's compares
+with its SEND module, which Modwerk does not have), and `defaults` must render other audio than `max` or `dear`. On ten
+faults planted in Modwerk's modules the old gate caught one and this one all ten
+([record](../../docs/verification/2026-11-23-widened-identity-gate.md)).
+
+CYCLE_SCAN.md's `make verify-ident MOD=<name>` means this script here. The copy under `sdk/octabam/tools/verify/` is the
+old gate as octabam's tree had it at the 16 November import; it asks for SEND and cannot run in Modwerk, and it stays
+because that folder is part of the module-source fingerprint. Neither the gate nor the scan is hardware evidence: a
+bit-identical render on the emulator's DSP core says nothing about timing on a unit.
 
 It is a model, not a measurement: the unit stays the judge ([MODULE_PERFORMANCE.md](../../docs/MODULE_PERFORMANCE.md)).
+
+## Checked against the unit
+
+```bash
+node scripts/cycle-scan.mjs unit              # anywhere: each record against its module's in-use reading; a report, it fails nothing
+node scripts/cycle-scan.mjs unit --markdown   # the table below
+```
+
+Each module's `evidence/cpu-price.json` holds a reading `npm run device:price` took on an MKII: the DSP load meter of the
+slot's core with the effect picked on that slot in place of NONE, against the same scene without it (`inUseAdds`; T1-T4
+are core 1's meter, T5-T8 core 0's). A fresh pick starts from the effect's defaults, so the report compares it with the
+scan's run at the defaults. **Scale:** one point of the meter is 45.32 cycles a sample. `status.c`'s `busy()` gives per
+mille of `FRAME_CYCLES`, 72,520 (4,532 cycles a sample, the board's clock, as `CYCLE_SCAN.md`'s "% of a frame" uses, times
+16 samples a frame), from idle passes whose cycles were calibrated on the unit with `--dsp-burn` (11 October 2026,
+`idle_cycles` there). A module whose package requires a base DSP feature with a hardware charge in
+`sdk/machines/octatrack/dsp-sites.json` (the key bus: 51) has it added to the model, since that work runs outside the
+effect's proc and so outside the scan.
+
+The readings, 18 November 2026, on development twins of base 0.7.8 (Sidechain Compressor's on another twin, `8850f539`),
+one 8-second reading each; modules with no DSP code moved the same meters by -0.6 to +0.6 points (±27 cycles) in the same
+runs, once 2.9. Records scanned 23 November 2026:
+
+| Module | Unit, in use (points = cycles a sample) | Defaults run | Model at defaults (+ base features) | Model, dearest | Unit ÷ model | Verdict |
+|---|---|---|---|---|---|---|
+| airwindows-chorus 0.1.3 | – | defaults/def | 602 | 649 | – | no in-use reading on the unit |
+| bbd 0.1.2 | 10.8 = 489 (T1 FX2) | STGS=1024/def | 469 | 528 | 1.04 | within 10 % |
+| euclid 0.1.5 | 5.5 = 249 (T1 FX2) | RATE=1/16/def | 232 | 232 | 1.07 | within 10 % |
+| everb 0.1.2 | 13.3 = 603 (T1 FX2) | REV=OFF/def | 603 | 665 | 1.00 | within 10 % |
+| lofi2 0.1.1 | 10.3 = 467 (T1 FX2) | RING/def | 425 | 654 | 1.10 | within 10 % |
+| miniverb 0.2.3 | 14.1 = 639 (T1 FX2) | RATE=1.01/def | 641 | 699 | 1.00 | within 10 % |
+| ring-sc 0.2.1 | 7.5 = 340 (T1 FX2) | DUCK/def | 5 + 51 keybus | 122 | 6.04 | **outlier** |
+| sidechain-compressor 0.2.2 | 5.5 = 249 (T5 FX1) | MON=OFF/def | 107 | 107 | 2.34 | **outlier** |
+| tapehead 0.1.2 | 9.3 = 421 (T1 FX2) | COLOR=NORM/def | 425 | 426 | 0.99 | within 10 % |
+| vibrato 0.1.0 | – | SHP=SINE/def | 204 | 207 | – | no in-use reading on the unit |
+
+- **Effects whose work is all in their proc:** the model at the defaults is 1 % above to 10 % below the unit (mean 3 %
+  below), for six modules. LOFI2 (9.95 %) is the widest, and EUCLID's 7 % is within the meter's noise at its size.
+  Upstream found its model 3.0 % *above* its own meter (`CYCLE_SCAN.md` section 1): the two meters differ, and Modwerk's
+  reads 7 to 19 % above octabam's slot costs for the same DSP code (LOFI2, BBD, EUCLID).
+- **Key-bus effects cost far more on the unit than the scan sees.** RINGMOD SC at its defaults runs 2.5 instructions a
+  sample in the scan (`dsp_host` feeds no key bus, so its key path may stay idle), yet the unit read 340 cycles on core 1,
+  where its key-bus tap is charged 51; core 0 read +0.9 points (41). Even its dearest run plus the tap (173) leaves half
+  of it unexplained. Sidechain Compressor read 249 on its own core against 107 modelled, and +6.3 points (285) on the
+  other core, where it has no instance: its detector and the key-bus tap are base-resident code on both cores
+  (`dsp-sites.json`'s `sidechain` and `keybus`), outside the proc. Whether the key path, the tap (timed on 23 October on
+  the older 41-instruction tap) or something else costs the rest needs a unit run.
+- **No reading to compare:** VIBRATO and Air Chorus (`airwindows-chorus`) have no `cpu-price.json` in-use reading yet;
+  Output Matrix has no scan record (its mix is base-resident code too).
