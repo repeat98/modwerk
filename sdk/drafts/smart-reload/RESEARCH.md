@@ -31,3 +31,9 @@ Writing the scene only shows it: on the developer's MKI the Part's saved scene k
 Choosing a scene on the panel (SCENE A/B + TRIG, 0x40052a42..0x40052a9a) writes the same field, calls 0x40027e00, then
 0x40002df4(bank, part, scene, side) with the bank from 0x100b14ce: the scene's locks into the sound. The module makes
 that call after each side it writes. (The row start leaves it to the pattern's start.)
+
+## A `--` side
+
+`--` changes nothing at a row's start, so a row plays the scene the rows before it left; the main screen's rows show
+that scene for a `--` side and recompute it as rows play. After the reload the module takes, per side, the nearest row
+at or above the current one that plays the same bank's Part and sets that side (the developer's choice).

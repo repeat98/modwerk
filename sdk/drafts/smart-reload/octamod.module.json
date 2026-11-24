@@ -16,10 +16,10 @@
     "label": "SMART RELOAD",
     "family": "Scenes",
     "summary": "In arranger mode, RELOAD PART brings back the scenes of the arrangement row you are on instead of the Part's saved ones.",
-    "overview": "An arrangement row can choose scenes A and B. Stock's RELOAD PART (FUNC + CUE) puts the Part's saved scenes back, so after a reload during a song the crossfader no longer morphs between the row's scenes. With Smart Reload, the reload goes as usual and the current row's scenes A and B come straight back. A side set to -- in the row keeps the Part's scene, and in pattern mode nothing changes.",
+    "overview": "An arrangement row can choose scenes A and B. Stock's RELOAD PART (FUNC + CUE) puts the Part's saved scenes back, so after a reload during a song the crossfader no longer morphs between the row's scenes. With Smart Reload, the reload goes as usual and the current row's scenes A and B come straight back. A side set to -- gets the scene the rows above left, as the row plays without a reload, and in pattern mode nothing changes.",
     "highlights": [
-      "RELOAD PART in arranger mode keeps the current row's scenes A and B",
-      "A row side set to -- keeps the Part's own scene, as stock",
+      "RELOAD PART in arranger mode keeps the current row's scenes A and B, heard at once",
+      "A side set to -- gets what the rows above left, as the row plays without a reload",
       "Pattern mode and every other reload stay exactly stock's"
     ],
     "usage": [
@@ -63,7 +63,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 16 checks). On the developer's MKI (OS 1.40C, base eb667962), build ec80422b2: RELOAD PART in arranger mode keeps and plays the current row's scenes, a -- side takes the saved Part's scene, pattern mode stays stock's, as the developer reported it.",
+    "summary": "Host gate (verify.py, 21 checks). On the developer's MKI (OS 1.40C, base eb667962), build 0008101dc beside Arr Rows and Songbook: RELOAD PART in arranger mode keeps and plays the current row's scenes, a -- side the scene the rows above left, the Part menu's RELOAD and pattern mode as expected, as the developer reported it.",
     "hardwareStatus": "reported",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

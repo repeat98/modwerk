@@ -4,7 +4,7 @@ Stock's RELOAD PART (FUNC + CUE on the main screen, or RELOAD in the Part menu) 
 one, its active scenes with it: in arranger mode the scenes the playing row set are replaced by the Part's saved ones
 until the next row. The module steps into the reload at its entry (0x4004aab4, the one site it patches; no hook or other
 module uses it), lets stock reload, then writes the current row's scenes into the reloaded Part as the arranger's row
-start (0x4004a100) does. A row side set to "--", pattern mode, a row of another bank or Part, and a Part with nothing
+start (0x4004a100) does; a "--" side gets the scene the rows above left. Pattern mode, a row of another bank or Part, and a Part with nothing
 saved stay stock's reload. OS 1.40C addresses in smart_reload.c and RESEARCH.md; the logic is host-tested by verify.py.
 """
 
@@ -24,7 +24,7 @@ MODULE = Module(
     author="Andrey-Sidorkin",
     author_url="https://github.com/Andrey-Sidorkin",
     proof=Proof.UNTESTED,
-    proof_note="Host gate (21 checks); the developer's MKI, build ec80422b2 (base eb667962), as the developer reported it.",
+    proof_note="Host gate (21 checks); the developer's MKI, build 0008101dc (base eb667962) beside Arr Rows and Songbook, as the developer reported it.",
     doc="In arranger mode, RELOAD PART brings back the current row's scenes A and B instead of the Part's.",
     linked=(Linked("smart_reload", os.path.join(_HERE, "smart_reload_core.s")),),
     detours=(Detour(RELOAD, stock_guard(RELOAD, 8, "b135c3d26b1fe44c606ada1d8c7b28ee8977c8b535504950904bcaa790480122"),

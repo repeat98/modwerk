@@ -7,8 +7,8 @@ Version 0.1.0-experimental · by @Andrey-Sidorkin · a draft, tested by its auth
 An arrangement row can choose scenes A and B. Stock's RELOAD PART (FUNC + CUE) puts back the scenes saved with the
 Part, so after a reload in the middle of a song the crossfader morphs between the Part's scenes instead of the row's
 until the next row starts. With Smart Reload, in arranger mode, the Part reloads as always and the current row's scenes
-A and B are selected and heard at once. A row side set to `--` keeps the Part's scene, and in pattern mode nothing
-changes.
+A and B are selected and heard at once, as the row plays without a reload: a side set to `--` ("no change") gets the
+scene the rows above left, and in pattern mode nothing changes.
 
 ## Controls
 
@@ -16,7 +16,7 @@ None of its own. It changes what RELOAD PART does in arranger mode:
 
 | Where | Keys | What it does |
 | --- | --- | --- |
-| Main screen, arranger mode | FUNC + CUE | Reloads the Part as stock, then selects the current row's scenes A and B (a `--` side keeps the Part's scene) |
+| Main screen, arranger mode | FUNC + CUE | Reloads the Part as stock, then selects the current row's scenes A and B (a `--` side: the scene the rows above left) |
 | Main screen, pattern mode | FUNC + CUE | Stock's RELOAD PART, unchanged |
 
 The current row is the row playing, or, stopped, the row PLAY continues from.
@@ -42,10 +42,12 @@ The current row is the row playing, or, stopped, the row PLAY continues from.
   decides the scenes; stock's reload undid that until the next row. Considered instead: a new key gesture (another
   key for one more reload is easy to miss on stage, and stock's own reload already does the rest). Only while the
   module is installed and only in arranger mode; pattern mode is stock's. Checked beside it: pattern mode, a row side
-  set to `--`.
-- **`--` means "no change", as stock.** A row whose side is `--` keeps whatever scene is selected, and the arranger
-  writes a row's scenes into the Part itself: save the Part while a row's scenes are active and those become the Part's
-  saved scenes, which RELOAD PART brings back for a `--` side. Save the Part with its own scenes chosen (pattern mode).
+  set to `--`, the Part menu's RELOAD, Arr Rows and Songbook's setlists.
+- **`--` means "no change", as stock.** After a reload a `--` side gets the nearest scene set on that side in the rows
+  above that play the same Part (what the main screen shows for the row), or the Part's own scene when none above sets
+  it. The rows above are taken in order: a row reached by a JUMP or LOOP gets what the rows above it set, not what
+  played just before it. The arranger writes a row's scenes into the Part itself, so a Part saved while a row's scenes
+  are active keeps them as its own.
 - Only the Part in use gets the row's scenes: RELOAD of another Part from the Part menu is stock's. A row whose pattern
   is in another bank or plays another Part, a LOOP/JUMP/HALT or REM row, and no current row leave the reload as stock.
 - **Takes:** stock's RELOAD PART routine, stepped into at its entry; no key gesture of its own (`uiClaims` empty). No
