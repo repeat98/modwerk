@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { packSection } from '../aplib'
 import { contentChecksum, encodeSyx } from './sysex'
 import { ELE3_DEVICES } from './ele3'
-import { mcReply, mcRequest, mcSetIdentity, parseMcIdent, readMcIdentity } from './mc-link'
+import { McRefused, mcReply, mcRequest, mcSetIdentity, parseMcIdent, parseMcLoad, readMcIdentity, readMcLoad } from './mc-link'
 import type { MidiAccessLike, MidiIn, MidiOut } from './os-upgrade-midi'
 
 const put32 = (v: number) => [0, 1, 2, 3, 4].map(i => v >>> 7 * i & 0x7f)
@@ -44,6 +44,24 @@ describe('the Model:Cycles link', () => {
     expect(sent).toHaveLength(1)
     expect(input.onmidimessage).toBeNull()
     expect(await readMcIdentity({ inputs: new Map(), outputs: new Map() })).toBeNull()
+  })
+  it('reads the load in tenths of a percent, with no window share before the first window ends', () => {
+    expect(parseMcLoad(Uint8Array.from(identPayload([738, 801, 849, 12, 9000])))).toEqual({ windowPercent: 73.8, windowPeakPercent: 80.1, peakPercent: 84.9, windows: 12, blocks: 9000 })
+    expect(parseMcLoad(Uint8Array.from(identPayload([0, 0, 812, 0, 400])))).toMatchObject({ windowPercent: null, windowPeakPercent: null, peakPercent: 81.2 })
+    expect(() => parseMcLoad(Uint8Array.from(identPayload([1, 2, 3, 4])))).toThrow('short load')
+  })
+  it('asks for the load with 0x22 and reads a refusal as an older base', async () => {
+    const unit = (status: number, body: number[]) => {
+      const sent: number[][] = []
+      const input: MidiIn = { id: 'i', name: 'Elektron Model:Cycles', onmidimessage: null }
+      const output: MidiOut = { id: 'o', name: 'Elektron Model:Cycles', send(data) { sent.push(data); queueMicrotask(() => input.onmidimessage?.({ data: reply(data[6], body, status, data[7] | 0x40) })) } }
+      return { sent, access: { inputs: new Map([['i', input]]), outputs: new Map([['o', output]]) } as MidiAccessLike }
+    }
+    const ok = unit(0, identPayload([738, 801, 849, 12, 9000]))
+    expect(await readMcLoad(ok.access)).toMatchObject({ windowPercent: 73.8 })
+    expect(ok.sent[0][7]).toBe(0x22)
+    expect(await readMcLoad(unit(2, []).access)).toBe('unsupported')
+    await expect(readMcLoad(unit(3, []).access)).rejects.toBeInstanceOf(McRefused)
   })
   it('computes the set identity from the end of a built image', () => {
     // a generated container, no firmware bytes: the last 64 bytes stand for the linked .run block

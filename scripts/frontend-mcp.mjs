@@ -64,7 +64,7 @@ const TOOLS = [
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
   tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity and the image in --elektron-images that matches its set.'),
-  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available. Read-only.'),
+  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, a Model:Cycles development base’s audio load over its link. Read-only.'),
   tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; Zoom pedals and older Octatrack bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
@@ -223,7 +223,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
-  // The Model:Cycles over its development link (startup --elektron-midi): identity only, no loader yet.
+  // The Model:Cycles over its development link (startup --elektron-midi): identity and load, no loader yet.
   const cyclesSelected = () => options.elektronMidi && !options.deviceSocket && !remote
   async function connected() {
     if (cyclesSelected()) throw new Error('The Model:Cycles has no runtime loader or saved sets yet: device_status reads its identity over the development link.')
@@ -296,25 +296,35 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   // The Model:Cycles: a fresh MIDI port list per read (RtMidi has no hot-plug here), its link's ident, and the built
   // image in --elektron-images whose set identity matches the one the unit took at boot.
-  async function cyclesSnapshot() {
-    const turn = dependencies.elektronAccess ? null : await unitTurn('read Model:Cycles', 10000)
+  const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a development base with the link (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
+  async function withCycles(what, read) {
+    const turn = dependencies.elektronAccess ? null : await unitTurn(what, 10000)
     let access
     try {
       access = await (dependencies.elektronAccess ?? nodeMidiAccess)()
-      const identity = await frontend.readMcIdentity(access)
-      if (!identity) throw new Error('No Model:Cycles answered over USB MIDI. It needs a development base with the link (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.')
-      let build = null
-      if (identity.set && options.elektronImages) {
-        for (const name of (await readdir(options.elektronImages)).filter(name => /\.syx$/i.test(name)).sort()) {
-          const bytes = new Uint8Array(await readFile(join(options.elektronImages, name)))
-          let set
-          try { set = frontend.mcSetIdentity(bytes, identity.set.bytes) } catch { continue }
-          if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
-        }
-      }
-      return { machine: 'model-cycles', state: { status: 'ready', identity }, build, inventory: null }
+      return await read(access)
     } finally { try { access?.close?.() } finally { turn?.release() } }
   }
+  const cyclesSnapshot = () => withCycles('read Model:Cycles', async access => {
+    const identity = await frontend.readMcIdentity(access)
+    if (!identity) throw new Error(noCycles)
+    let build = null
+    if (identity.set && options.elektronImages) {
+      for (const name of (await readdir(options.elektronImages)).filter(name => /\.syx$/i.test(name)).sort()) {
+        const bytes = new Uint8Array(await readFile(join(options.elektronImages, name)))
+        let set
+        try { set = frontend.mcSetIdentity(bytes, identity.set.bytes) } catch { continue }
+        if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
+      }
+    }
+    return { machine: 'model-cycles', state: { status: 'ready', identity }, build, inventory: null }
+  })
+  // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
+  const cyclesLoad = () => withCycles('read Model:Cycles load', async access => {
+    const reading = await frontend.readMcLoad(access)
+    if (!reading) throw new Error(noCycles)
+    return reading === 'unsupported' ? { machine: 'model-cycles', supported: false, reading: null } : { machine: 'model-cycles', supported: true, reading }
+  })
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
     if (unit.getState().status === 'trial') return { state: unit.getState(), before: trial?.before, trial: trial?.id }
@@ -397,7 +407,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     firmware_download: async args => { if (!options.stock) throw new Error('Choose private stock at startup with --stock.'); return buildAndSave(args.request, { stockPath: options.stock, outputDir: dataDir, site, root }) },
     device_status: async () => cyclesSelected() ? cyclesSnapshot() : zoomSelected() ? zoomSnapshot(true) : snapshot(),
     device_load: async () => {
-      if (cyclesSelected()) return { machine: 'model-cycles', supported: false, reading: null }
+      if (cyclesSelected()) return cyclesLoad()
       if (zoomSelected()) {
         const { machine, state, load } = await zoomSnapshot(false)
         return { machine, identity: state.identity, supported: load !== null, reading: load }

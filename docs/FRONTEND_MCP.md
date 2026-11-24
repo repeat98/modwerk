@@ -289,8 +289,13 @@ development base for its link identity over USB MIDI
 counters, the RAM boot's result and the set identity the base took at boot.
 `build` names the `.syx` in `--elektron-images` (a private folder of your own
 builds, never committed) whose set identity matches, or is `null`.
-`device_load` and `device_log` report unsupported, and the loader's tools
-refuse: the Model:Cycles has no loader yet. Close Elektron Transfer first.
+`device_load` reads the audio's share of the CPU from the base's load probe
+(the link's `load`): `windowPercent` over the last half second (`null` until
+the first one has ended), `windowPeakPercent` for its dearest codec block,
+`peakPercent` since boot, and the windows and blocks counted. A development
+base without the probe reports unsupported. `device_log` reports
+unsupported, and the loader's tools refuse: the Model:Cycles has no loader
+yet. Close Elektron Transfer first.
 Tests run against a fake unit (`scripts/mc-device.test.mjs`).
 
 ## A member's unit through a remote session
