@@ -214,6 +214,21 @@ before. `verify.py` (97 checks) models both project directories, the name switch
 state left set; the previous builds fail their cases.
 
 
+## Qualification (0.1.0-experimental, package `84a8ba8a`)
+
+- **ColdFire cost of the dearest event, under ot_emu** (24 November 2026, the adapted emulator, beta base 0.7.13 twin, this
+  package installed over the emulated USB, a new project with empty arrangements): the PC watch on stock's arrangement
+  writer's entry (0x400915ac, where the module's jmp sits) and its return (0x40091a76) during a book switch. Book 1 to 2:
+  13,754,188 instructions (stock writes arr01-08, the module writes book 1's backup arr01.bak-arr08.bak, reads book 2's
+  8 files and fingerprints the 8 slots); book 2 to 1: 7,849,450 (the backup read back). Executed instructions with
+  interrupts and other tasks in that window, not cycles; card time on a unit is not measured. Budget: 100 ms of ColdFire
+  time at 266 MHz (26,600,000), a key press's responsiveness target. The arrangement blocks are fixed-size, so their
+  content does not change the count.
+- **Memory:** the package's unit, 7,292 bytes of code and data and 4,728 of bss (the builder's report), and the 20-byte
+  battery RAM record; no DSP memory.
+- **Hardware:** the developer's MKI results on this exact package are above (build `c642ca255`); the test procedure's
+  steps 7-9 are recorded when they run.
+
 ## Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |

@@ -69,25 +69,154 @@
       "method": "unmeasured",
       "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
       "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A book switch at its dearest (book 1 to another, stopped): stock's save of arr01-08, book 1's backup, the next book read and the slots fingerprinted. Between switches the UI tick re-fingerprints the slots every 2 s off book 1.",
+      "cpu": {
+        "level": "low",
+        "basis": "measured-comparison",
+        "rationale": "A switch runs inside stock's SYNC TO CARD job, stopped: 13.8 million executed ColdFire instructions under ot_emu from book 1 to 2, 7.8 million back, most of it stock's own file writes and reads. Off book 1 the UI tick fingerprints the 8 slots every 2 s (about 543,000 instructions, counted from the unit). Time on the unit is not measured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code: the module only switches which arrangements stock's own player has in its 8 slots.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "7,292 bytes of ColdFire code and data and 4,728 of state, plus a 20-byte battery RAM record; on the card, stock arrangement files for books 2-16, book 1's backup and a 24-byte place file per project.",
+        "source": "TESTING.md"
+      }
     }
   },
   "tests": {
     "report": "TESTING.md",
     "summary": "Host gate (verify.py, 97 checks, a missing, unreadable or partly written book 1 backup, a file that fails to open once and a reload after it among them; several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle and arranger mode after LOAD (build c5027552c, base 0.7.5); LOAD and RELOAD returning to book 2 in arranger mode with book 1 intact, the main screen and PLAY on the returned book (build f068cd608, base 0.7.13, beside USB AUDIO), as the developer reported them; distinct books 1 and 2 kept through a power cycle and through a trial of another build with Undo, each followed by SYNC TO CARD (build b976e98ff, package 37f7e94f, base 0.7.13), as the developer reported them; a LOAD of another project and back, each on its own book and arrangement with the list cursor on it, PLAY and LEFT/RIGHT after it (build 85d544a68, package 81eb7172, base 0.7.13), as the developer reported them.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "85d544a68f634f3ca06cd8f495ac6cec1a75bccd",
+    "evidenceRevision": "c642ca25548f9248a4059f2c5a2e004484447903",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",
       "Owner-reviewed real-hardware evidence with actual coverage and limitations"
-    ]
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "70d4e6764c8f13b344e16f7c51e388083c7e953b26bf201959fd582e7ec5f195",
+      "imageSha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 13754188,
+          "maxConfiguration": 13754188,
+          "maxInstances": 1,
+          "budget": 26600000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "The dearest event is a book switch away from book 1: stock's writer saves arr01-08, the module writes book 1's backup (arr01.bak-arr08.bak) and reads the next book's 8 files, then fingerprints the 8 slots (90,440 bytes). 13,754,188 instructions from the writer's entry (0x400915ac) to its return (0x40091a76) on book 1 to 2; book 2 to 1 (backup read back) 7,849,450.",
+            "parameterModulation": "Not applicable: no parameters or audio; one switch per LEFT/RIGHT press in ARR > CHANGE, stopped, or one return after a project load.",
+            "modeSwitching": "Both directions measured; a switch between two other books writes and reads 8 files each and no backup, so it lies between the two.",
+            "maxLoad": "Executed ColdFire instructions under ot_emu, interrupts and every other task in that window included; one instance (the module is project-wide). Budget: 100 ms of ColdFire time at 266 MHz, a responsiveness target for a key press, as Apply Scene's; the switch runs inside stock's SYNC TO CARD job on the card task, refused while playing.",
+            "inputConditions": "Empty arrangements; the arrangement blocks are fixed-size, so their content does not change the writes, reads or the fingerprint. Executed instructions, not cycles: cache and wait states are not modelled, and card time on the unit is not measured."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and data (one linked unit)",
+            "space": "sdram",
+            "words": 7292,
+            "wordBits": 8,
+            "bytes": 7292,
+            "scope": "shared"
+          },
+          {
+            "name": "ColdFire state (bss)",
+            "space": "sdram",
+            "words": 4728,
+            "wordBits": 8,
+            "bytes": 4728,
+            "scope": "shared"
+          },
+          {
+            "name": "Battery RAM record (battery-ram.json)",
+            "space": "sdram",
+            "words": 20,
+            "wordBits": 8,
+            "bytes": 20,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 12040,
+        "maxInstances": 1,
+        "totalBytes": 12040,
+        "conditions": "The unit as the USB package carries it: 7,292 bytes of code and data and 4,728 of bss (the builder's report), plus the 20-byte battery RAM record at 0x100f8f10. On the card: arr09.work-arr128.work and their .strd copies (stock arrangement files), arr01.bak-arr08.bak and arrbook.work/.strd in the project folder. No DSP memory.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKI",
+        "testedOn": "2026-11-24",
+        "tester": "Andrey-Sidorkin",
+        "sourceRevision": "c642ca25548f9248a4059f2c5a2e004484447903",
+        "imageSha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47",
+        "summary": "On the developer's Octatrack MKI (OS 1.40C, base 0.7.13 6d23e888), this exact package kept over USB beside USB AUDIO and Arr Rows: switching books, the per-book choice with the CHANGE list's cursor and YES on it after a switch and after closing and reopening the list, a LOAD of another project and back (each on its own book and arrangement, one card job of the module's, no NOW SAFE TO EJECT!), PLAY from the returned arrangement. Earlier builds of the same lineage covered SAVE/RELOAD PROJECT, ARR SAVE/RELOAD, FUNC + PLAY clears and undo, a power cycle and arranger mode (TESTING.md). As the developer reported them.",
+        "limitations": [
+          "No MKII.",
+          "The test procedure's scripted pass, soak and cost on the unit (steps 7-9) have not run yet (#2099, fixed in #2103); a trial of this package under the scripted pass ran about two minutes twice with no crash, stall, freeze or skipped track.",
+          "Removing the module on a book other than 1 is a documented limitation, not tested."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "In ARR > CHANGE, press RIGHT: BOOK 2, with 8 empty arrangements.",
+            "Choose arrangement 1, open the editor and add a few rows.",
+            "Back in ARR > CHANGE, press LEFT: BOOK 1, your original arrangements.",
+            "Press RIGHT again: book 2's rows are back.",
+            "Press LEFT to return to book 1 before you finish."
+          ]
+        },
+        "screenshots": [
+          "media/ot-change-book.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
     "declaration": "Original module by Andrey Sidorkin, MIT. No firmware, extracted stock code or built images are included."
   },
-  "media": [],
+  "media": [
+    {
+      "path": "media/ot-change-book.png",
+      "captureType": "emulator",
+      "caption": "ARR > CHANGE after returning to book 1: BOOK 1 at the top right, the list redrawn with book 1's names, arrangement 3 chosen with the cursor on it. LEFT and RIGHT step the book, stopped.",
+      "alt": "ARR > CHANGE list of book 1 with SONG ALPHA, BRAVO and CHARLIE and BOOK 1 at the top right.",
+      "credit": "Andrey Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARR > CHANGE",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu; MKI panel; stopped transport; Modwerk beta base 0.7.5 with the package over the emulated USB; 128x64 LCD as the panel link carries it, integer scale 6."
+      }
+    }
+  ],
   "access": {
     "location": "ARR > CHANGE",
     "steps": [
@@ -97,6 +226,8 @@
       "Save the project as usual: every book is saved with it.",
       "Before removing the module, step back to book 1."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-change-book.png"
+    ]
   }
 }
