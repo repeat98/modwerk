@@ -284,7 +284,7 @@ node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-mi
 ```
 
 With `--elektron-midi` alone, `device_status` asks a Model:Cycles running a
-development base for its link identity over USB MIDI
+Modwerk base (release or development) for its link identity over USB MIDI
 ([LINK.md](../sdk/machines/model-cycles/LINK.md)): link version, port, arm,
 counters, the RAM boot's result and the set identity the base took at boot.
 `build` names the `.syx` in `--elektron-images` (a private folder of your own
@@ -292,13 +292,14 @@ builds, never committed) whose set identity matches, or is `null`.
 `device_load` reads the audio's share of the CPU from the base's load probe
 (the link's `load`): `windowPercent` over the last half second (`null` until
 the first one has ended), `windowPeakPercent` for its dearest codec block,
-`peakPercent` since boot, and the windows and blocks counted. A development
-base without the probe reports unsupported. `device_log` reads the base's
-diagnostics log (the link's `diag`, then `mem`), which is the Octatrack's
+`peakPercent` since boot, and the windows and blocks counted. An older
+development base without the probe reports unsupported. `device_log` reads the base's
+diagnostics log (the link's `diag`, then `log`, which reads nothing outside
+the log, in every base), which is the Octatrack's
 layout and reads with the same parser: `boot`, `seq`, the five-minute
 `loads` and the `incidents`, without the nonce. The Model:Cycles fills
-`cpu` with the audio's share and leaves the DSP fields at 0 (LINK.md). A
-development base without the log reports unsupported. `device_status` also
+`cpu` with the audio's share and leaves the DSP fields at 0 (LINK.md). An
+older development base without the log or `log` reports unsupported. `device_status` also
 gives `loader`: the module pool's free bytes, the last refusal and the live
 modules, or `unsupported` from a base without the loader.
 

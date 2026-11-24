@@ -38,7 +38,7 @@ function logBytes() {
   return bytes
 }
 // A unit with a development base: answers ident with the given set identity, load (0x23) with the given tenths of a
-// percent and counts (link.c CMD_LOAD), and diag (0x22) and mem with a log; without them, as a base before the load
+// percent and counts (link.c CMD_LOAD), and diag (0x22) and log (0x24) with a log; without them, as a base before the load
 // probe or the log (status 2, bad request).
 // With `loader`, the base's own upload transport, controller and runtime loader compiled for the host
 // (base/test_modules.c): up_part (0x31) and up_run (0x32) go to it, mods (0x33) answers an empty pool.
@@ -57,7 +57,7 @@ function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null
     }
     const [status, reply] = data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
       : data[7] === 0x22 ? (log ? [0, [LOG_AT, log.length].flatMap(put32)] : [2, []])
-      : data[7] === 0x21 ? (() => { const at = get32(body, 0), n = get32(body, 5); return [0, [...put32(at), ...put32(n), ...pack7(log.subarray(at - LOG_AT, at - LOG_AT + n))]] })()
+      : data[7] === 0x24 ? (!log ? [2, []] : (() => { const at = get32(body, 0), n = get32(body, 5); return at + n > log.length ? [4, []] : [0, [...put32(at), ...put32(n), ...pack7(log.subarray(at, at + n))]] })())
       : [0, fields.flatMap(put32)]
     queueMicrotask(() => answer(data, status, reply))
   } }
