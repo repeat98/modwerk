@@ -182,12 +182,12 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 
 | Step | What it does |
 |---|---|
-| `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PAGE`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `SCENEA`, `SCENEB`, `PUSHA`-`PUSHF` (`FUNC+PAGE`: PATTERN SCALE, where LEVEL sets the length). The names are the MKII panel's codes: on an MKI the track keys work, but `PROJ`, FUNC + MIXER and the arrows did nothing on 16 November 2026 (its key map differs), so the owner opened PROJECT > SYSTEM > PERSONALIZE by hand |
+| `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PAGE`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `SCENEA`, `SCENEB`, `PUSHA`-`PUSHF` (`FUNC+PAGE`: PATTERN SCALE, where LEVEL sets the length). The names are the MKII panel's codes; an MKI has no `PROJ`, `PART`, `AED` or `ARR` key |
 | `+KEY`, `-KEY` | hold, let go |
 | `encA+3`, `encLEVEL-2`, `fader128` | encoders A-F, LEVEL, the crossfader. Some setup values take several detents a step: MIDI NOTE SETUP's CHAN, BANK and PROG did not move on `encA+3`, and `encA+20` moved CHAN by 6 (21 October 2026); LFO SETUP's WAVE takes about four detents a step; SRC SETUP's TSTR (encoder E) moved only on a large turn (`encE+40` went OFF to BEAT after seven `encE+2` did nothing, 27 October 2026). A step is one signed byte: keep it within ±127, as `encB+200` turned WAVE backwards (24 October 2026) |
 | `w300` | wait 300 ms (rarely needed: the steps below wait for their own result) |
 | `pick:T1:FX2:SPRING_REV` | pick an effect by name (spaces as `_`), FX1 or FX2: the chooser opens, LEVEL scrolls the exact rows, YES; done once the track runs it (about 120 ms after YES); fails at once if the loader refuses. A notice on screen eats its first keys and it times out after 5 s: after removing a module the bank names (MISSING MODULES) send `YES` first |
-| `part1`-`part4` | switch Parts (PART + an arrow), done once the Part changed |
+| `part1`-`part4` | switch Parts (PART + an arrow; an MKI: Parts below), done once the Part changed |
 | `ui` | each track's FX1/FX2 as they run, the current track, Part, transport |
 | `stats` | CPU, each core's mean/peak per mille, idle passes. One reading is not a measurement: on 27 October 2026 (MKII, a dev twin, stopped, nothing changing) it swung between 41 % and 60 % within ten seconds. Take ten readings in each state, or time the hook itself with `modwerk_cost` (`profile`) |
 | `health` | one JSON line for scripts: the DSP frames, the loader's stalls and errors, the UI tick's watch count, CPU, the crash and stall records' counts (battery RAM, so earlier ones stay counted) and the transport. Development bases. [A fast soak](#a-fast-soak) reads it after every operation |
@@ -252,13 +252,9 @@ stall. Each CC was checked on its own against the Part's bytes and the screen: l
 
 ## The panel, as it behaves
 
-For automated panel tests, a KEY reply confirms posted bytes, not the resulting
-stock action. Check the observed menu/transport transition and key release;
-advancing UI/DSP counters and zero DSP errors do not prove responsive controls.
-After a navigation timeout, stop sending test gestures and inspect held-key rows
-(`boot.c`'s `modwerk_post_key`) before retrying. A physical STOP acting as paste
-was observed with FUNC absent from those rows; row readback alone does not
-establish that stock's modifier state is clear.
+A KEY reply confirms posted bytes, not stock's action: check the menu or transport change and the key's release
+(moving UI/DSP counters prove nothing). After a navigation timeout, stop and read the held-key rows (`boot.c`'s
+`modwerk_post_key`) before retrying; they can be clear while stock still holds FUNC (a physical STOP once pasted).
 
 Remote keys wait for a whole physical report. The panel sends two-byte reports, and a USB KEY rung between a
 fader report's two bytes once left TRIG5-7 held or lost a FUNC release
@@ -278,6 +274,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
   NO closes a CPU FULL box together with the list. Check the pick by the Part's bytes (type at Part `+0x22 + track`,
   signature at `+0x3c + 30 * track`). POLY8 turns TSTR and LOOP off in SRC SETUP and leaving it does not turn them
   back on (0.3.1 and 0.3.3); FM Synth and Amiga left no Part byte changed.
+- **Trig keys.** In the TRACKS trig mode TRIG9-16 trig tracks 1-8; TRIG1-8 do not. Holding FUNC, DOWN opens the trig
+  mode menu, a second DOWN moves to CHROMATIC and releasing FUNC picks it (UP twice goes back).
 - **Grid recording.** REC toggles, and a remote REC can be lost: press one trig and read the track's mask in the
   pattern (`+0x6 + 0x91a * track` from the pattern's start, two bytes for steps 1 to 16) before placing the rest.
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
@@ -287,7 +285,9 @@ not isolated: verify each held-row transition and stock modifier release, and st
   (`PART+FUNC+PLAY`): it CLEARS the Part**, both working and saved copies, its knobs, machines and name
   (`PART 1`), and saves that (stock's Part Clear; 11 October 2026). FUNC+PLAY elsewhere clears the pattern.
   To reload, use `reload`: FUNC+PART opens RENAME, RELOAD, SAVE, SAVE ALL, keeps its cursor from last time and
-  stops at RENAME, so UP three times, DOWN, YES. Do not use SAVE or SAVE ALL on a Part you changed. After a RAM boot
+  stops at RENAME, so UP three times, DOWN, YES (`savepart`: DOWN twice). Do not use SAVE or SAVE ALL on a Part you changed.
+  **An MKI has no PART key** (#2099): FUNC + MIDI opens the Part window, an arrow moves its cursor, YES selects;
+  FUNC + BANK there opens the menu. Steps choose by the MKII flag (`0x46c8d18c`); `device:emulator -- --mki`. After a RAM boot
   every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test` and
   `device:qualify` SAVE the Part once before they change anything, while its working copy equals its saved one: the
   same bytes, and their closing RELOAD then works. `reload` reports no failure: compare

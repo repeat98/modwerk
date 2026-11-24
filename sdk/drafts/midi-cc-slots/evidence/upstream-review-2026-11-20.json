@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-20",
+  "upstreamCommit": "6ac9c8ced31ddbcb5c9b82394dabc982ce988e38",
+  "forkSourceCommit": "5d1e29cb",
+  "candidateVersion": "0.0.19-experimental",
+  "kind": "draft source snapshot",
+  "runtimeBuild": {
+    "command": "python3 -B sdk/drafts/midi-cc-slots/build_runtime.py --profile --project-template --current-base --output <private>/package.mwrm",
+    "result": "refused by existing base ownership guard",
+    "site": "0x400905d4",
+    "owner": "ev_bank_load",
+    "nextStep": "replace historical private detour with a shared event subscriber"
+  },
+  "hardware": "not tested on this upstream head",
+  "publicCatalogue": "not registered",
+  "siteOverlay": "not included",
+  "shippedFirmwareOrRuntimePackages": false,
+  "priorEvidence": "Historical reports retain their original module and base identities; no prior pass is transferred."
+}

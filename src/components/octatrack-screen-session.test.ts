@@ -2,7 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { UsbVendorTransport, type ControlDevice } from '../engine/elekloader/upload-usb'
-import { paintLcd, ScreenSession } from './octatrack-screen-session'
+import { adoptSession, leaveSession, paintLcd, ScreenSession } from './octatrack-screen-session'
 
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
@@ -96,4 +96,53 @@ it('shares slow reads with the popup and recorder, and releases both when previe
   expect(events.saved).toHaveBeenCalledOnce()
   expect(events.failed).not.toHaveBeenCalled()
   expect(popup.close).toHaveBeenCalledOnce()
+})
+
+it('keeps a popped-out session reading and recording after the page leaves, until its popup closes', async () => {
+  vi.useFakeTimers()
+  const read = vi.fn(async () => new Uint8Array(1024))
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function(this: HTMLCanvasElement) {
+    return { canvas: this, drawImage: vi.fn(), putImageData: vi.fn(), createImageData: () => ({ data: new Uint8ClampedArray(32768) }) } as unknown as CanvasRenderingContext2D
+  })
+  let hide!: () => void
+  const popup = { document: document.implementation.createHTMLDocument(), closed: false, close: vi.fn(),
+    setTimeout: window.setTimeout.bind(window), clearTimeout: window.clearTimeout.bind(window),
+    addEventListener: (_: string, listener: () => void) => { hide = listener } }
+  vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window)
+  vi.stubGlobal('MediaRecorder', class {
+    static isTypeSupported() { return true }
+    state = 'inactive'
+    ondataavailable!: (event: { data: Blob }) => void
+    onstop!: () => void
+    start() { this.state = 'recording' }
+    stop() { this.state = 'inactive'; this.ondataavailable({ data: new Blob(['video']) }); this.onstop() }
+  })
+  const page = { ready: vi.fn(), detached: vi.fn(), recording: vi.fn(), saved: vi.fn(), failed: vi.fn() }
+  const link = { screen: read } as unknown as OctatrackLink
+  const lone = new ScreenSession(link, document.createElement('canvas'), page, 10)
+  await lone.next()
+  leaveSession(lone, vi.fn()) // Without a popup the session ends with the page.
+  expect(adoptSession()).toBeUndefined()
+  const canvas = Object.assign(document.createElement('canvas'), { captureStream: () => ({ getTracks: () => [] }) })
+  const session = new ScreenSession(link, canvas, page, 10)
+  await session.next()
+  session.popOut(); session.record()
+  const save = vi.fn()
+  leaveSession(session, save)
+  expect(canvas.isConnected).toBe(true)
+  let reads = read.mock.calls.length
+  await vi.advanceTimersByTimeAsync(500)
+  expect(read.mock.calls.length).toBeGreaterThan(reads + 3)
+  expect(adoptSession()).toBe(session) // The page came back
+  expect(session.recording).toBe(true)
+  leaveSession(session, save) // and left again.
+  popup.closed = true; hide()
+  expect(save).toHaveBeenCalledOnce()
+  expect(adoptSession()).toBeUndefined()
+  expect(canvas.isConnected).toBe(false)
+  reads = read.mock.calls.length
+  await vi.advanceTimersByTimeAsync(500)
+  expect(read).toHaveBeenCalledTimes(reads)
+  expect(page.saved).not.toHaveBeenCalled()
+  expect(page.failed).not.toHaveBeenCalled()
 })

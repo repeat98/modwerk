@@ -18,6 +18,12 @@
       "transfer": 4.13
     }
   },
+  "defaults": {
+    "setting": "SHP=SINE/def",
+    "instructions": 119.69,
+    "cycles": 204.44,
+    "stalls": 36.31
+  },
   "stock": {
     "comparator": "CHORUS",
     "setting": "defaults/max",

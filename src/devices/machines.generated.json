@@ -1174,11 +1174,11 @@
     },
     "stack": {
       "base": "started",
-      "link": "started",
+      "link": "done",
       "flash": "done",
-      "loader": "open",
+      "loader": "started",
       "status": "done",
-      "diagnostics": "open",
+      "diagnostics": "started",
       "tools": "started"
     },
     "art": {
