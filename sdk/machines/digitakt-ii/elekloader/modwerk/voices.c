@@ -37,7 +37,8 @@
  * track holding no note is copied from the lead in full.
  *
  * The setting is the project's (core_project_archive, tag VOC1), saved with the project and reset by a project
- * saved without it. With every track at 1 nothing here changes a note. Emulator-checked only; see VOICES.md.
+ * saved without it. With every track at 1 nothing here changes a note. VOICES.md records what was checked in the
+ * emulator and on a unit.
  */
 #include <stdint.h>
 #include "mk2/core.h"
@@ -466,7 +467,7 @@ void core_voice_frame(void)
             /* The voice's sound in the kit and its pattern track's settings follow the lead's (its own steps load them
              * when they play). A sixth of the sound a frame, so a change reaches every voice within a few dozen
              * frames and the frame interrupt stays short. (On a unit with the whole sound compared every frame, page
-             * changes on a linked track grew slow while the pattern ran; the cause is not yet confirmed.) */
+             * changes on a linked track grew slow while the pattern ran; with a sixth a frame, not.) */
             copy_sound(v, lead, SLICE_WORDS * slice, SLICE_WORDS * (slice + 1));
             copy_track_settings(v, lead);
             if (!NOTE_SOURCE[v]) {
