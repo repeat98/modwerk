@@ -3,7 +3,7 @@
   "id": "tapeecho",
   "key": "TAPE ECHO",
   "name": "Tape Echo",
-  "version": "0.1.6-experimental",
+  "version": "0.1.9-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",
@@ -82,7 +82,7 @@
     "location": "FX2",
     "conflicts": [],
     "limitations": [
-      "The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. Recorded gates cover native arithmetic parity, dirty state, eight-instance stress, moving controls and repeat/feedback behavior. Hardware timing and worst-case CPU headroom remain unqualified."
+      "The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. Recorded gates cover native arithmetic parity, dirty state, eight-instance stress, moving controls and repeat/feedback behavior. Hardware timing and worst-case CPU headroom remain unqualified. From 0.1.8 every instance holds for one block when stock's delay routine starts more than a quarter frame late; that hold is not yet observed on a unit. 0.1.9 needs base 0.8's two-argument ev_frame_deadline: it also holds a block that would end past the frame's deadline (a held block plays its dry signal at the level MIX gives it and its own input recorded to the tape through the record path, without the repeat the feedback would have added), and passes every instance dry at MIX's dry level while the base rests it on a pattern past the frame ceiling, starting the tape afresh after; none of this is observed on a unit yet."
     ],
     "effectId": 15
   },
@@ -99,11 +99,11 @@
     },
     "processing": {
       "label": "CPU instruction peak",
-      "display": "22,571 per frame",
+      "display": "22,586 per frame",
       "value": null,
       "unit": "see display",
       "method": "emulator",
-      "conditions": "Eight instances with all controls reversing in BEAT mode. FREE peaked at 19,087. 0.1.6 adds 1,024 to both while MIX, FDBK or AGE is moving. These emulator instruction counts are not hardware cycles or CPU percentages.",
+      "conditions": "Eight instances with all controls reversing in BEAT mode (22,571 in 0.1.7). FREE peaked at 19,178. One instance on the default page costs 1,800 instructions a frame (2,075 in 0.1.7); eight settled instances 14,315 for the whole routine (15,283). These emulator instruction counts are not hardware cycles or CPU percentages.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -111,7 +111,7 @@
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "Tape Echo processes audio continuously on ColdFire. Eight modulated instances peak at 22,571 emulator instructions per frame in BEAT mode, versus 7,628 for eight stock DELAY instances in the same record. High is a relative work estimate, not a CPU percentage.",
+        "rationale": "Tape Echo processes audio continuously on ColdFire. Eight modulated instances peak at 22,586 emulator instructions per frame in BEAT mode, versus 7,628 for eight stock DELAY instances in the same record. High is a relative work estimate, not a CPU percentage.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -139,7 +139,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.6 follows BBD's MIX law so turning Tape Echo on no longer turns the track down (issue #969): up to MIX 64 the echo rises over the whole dry signal, above it the dry fades out; the default is MIX 40. The ColdFire kernels match their native oracle bit for bit on the emulator; the echo path, feedback law and self-oscillation headroom are unchanged. The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open, and no hardware run, chip timing or listening test exists for 0.1.6. See TESTING.md.",
+    "summary": "0.1.9 subscribes to base 0.8's ev_frame_deadline: a block that would end past the frame's deadline is held (its dry signal at the level MIX gives it and its own input recorded to the tape through the record path, without the repeat the feedback would have added), and while the base rests Tape Echo on a pattern past the frame ceiling every instance passes the dry signal at MIX's dry level with no echo, tail or ring write, its tape starting afresh after. Its echo arithmetic is 0.1.8's; on the emulator the hold, the rest and the wake keep the dry level within 1 LSB of the full path's at MIX 32, 64, 96 and 127; on the owner's MKII (base 0.8 twin, 23 November 2026) the overload scene's frame-interrupt share fell from 69.0 % with 0.1.6 to 55.6 %, while one to three instances in ordinary use measured dearer than 0.1.6; not listened to on a unit yet. 0.1.8 produces the same samples as 0.1.7 with less ColdFire work: other effects' tracks leave its hook in assembly, steady blocks skip the control half, and the per-track entry is assembly. One instance on the default page executes 1,800 instructions a frame against 2,075. A new overload hold drops one block of echo when stock's delay routine starts more than a quarter frame late. The ColdFire kernels and the steady path match their native oracle bit for bit on the emulator; nothing is measured on a unit yet. The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. See TESTING.md.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

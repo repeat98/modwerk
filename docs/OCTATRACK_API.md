@@ -57,7 +57,7 @@ The base owns every stock site that more than one module needs and shares it as 
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
 - **Projects, banks and Parts as stock saves and loads them:** `ev_banks_load`/`ev_banks_loaded`, `ev_bank_load`/`ev_bank_loaded`, `ev_project_new`, `ev_bank_write`/`ev_bank_written`, `ev_project_store`/`ev_project_stored`, `ev_project_reload`/`ev_project_reloaded`, `ev_part_saved`, `ev_part_clear`. Each `…ed` hook runs when stock's routine returns. With `ev_modules_ready` (the installed modules changed and the card is free), they let a module keep its own file beside the project, read and written from the engine task, the only one that may use the card.
-- **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`.
+- **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`, `ot_settings` (rows in PROJ > MODWERK > SETTINGS), `ot_part_menu` (rows in the Part Edit window), `ot_sample_memory`, `ot_usb_functions`.
 
 ```json
 { "schema": 1, "subscribe": [{ "event": "ev_play_increment", "fn": "repitch_play_increment", "order": 50 }] }
@@ -79,11 +79,12 @@ C modules include [modwerk_events.h](../sdk/machines/octatrack/include/modwerk_e
 
 ## Keeping state
 
-There is no per-module store yet; the base's store is planned ([shared sites still to build](module-guides/README.md#shared-sites-still-to-build)). Until it lands, keep state only in records your module owns:
+Keep state only in the base's settings table or in records your module owns:
 
+- **A choice for the whole instrument** (not one project's) goes in a row of `ot_settings`, PROJ > MODWERK > SETTINGS. The base keeps the player's choice through a power cycle under the row's label and calls the module's `apply` with it after every change of the installed modules, so the module needs no storage of its own ([HOOKS.md](../sdk/machines/octatrack/HOOKS.md)). There is no store for other per-module state.
 - **Effect knobs** live in the Part's own bytes, so stock saves and reloads them with the project. A new version that changes what a stored value means raises the package's parameter-layout number ([loader README](../sdk/runtime/loader/README.md)).
 - **Project settings** go in your own lines in the project file, through `ev_project_write`, `ev_project_line` and `ev_project_load`, as the Scale Quantizer does with its `#SEQUENCER_SCALE=` lines.
-- **Global settings** that survive a power cycle go in a range of battery RAM that your module holds in [battery-ram.json](../sdk/machines/octatrack/battery-ram.json). `npm run check` refuses an address outside its owner's range.
+- **Other global state** that survives a power cycle goes in a range of battery RAM that your module holds in [battery-ram.json](../sdk/machines/octatrack/battery-ram.json). `npm run check` refuses an address outside its owner's range.
 
 Never write into bytes another module saves, even one listed in your `compatibility.conflicts` ([a module owns what it saves](module-guides/README.md#cross-compatibility)).
 

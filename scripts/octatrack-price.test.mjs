@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { added, allocationReading, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, curveFit, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -84,4 +84,39 @@ it('takes a failed pick for a failure, so the slot is not measured as the effect
   expect(pickFailure('error: No SC Ringmod in the FX2 chooser.\n')).toBe('error: No SC Ringmod in the FX2 chooser.')
   expect(pickFailure('error: RINGMOD SC refused on T1 FX2 (the loader said no; its screen: /tmp/x.png)\n')).toContain('refused')
   expect(pickFailure('T1 FX2 RINGMOD SC (running 119 ms after YES)\n')).toBeNull()
+})
+
+it('fits the next-instance cost to a curve without undercharging any measured point', () => {
+  // Tape Echo on a busy Part (owner's MKII, 22 Nov 2026): a steep second instance, then cheap ones.
+  expect(curveFit([9.2, 16.7, 16.8, 20.5])).toEqual({ first: 13, each: 3.7 })
+  // A machine whose voices add up: each track its own render.
+  expect(curveFit([19.7, 39.1, 58.9])).toEqual({ first: 19.8, each: 19.8 }) // never below each: the wire sends first - each
+  // One or two points: the step there, never below 0; a negative reading counts 0.
+  expect(curveFit([5.6])).toEqual({ first: 5.6, each: 5.6 })
+  expect(curveFit([9.7, 17.2])).toEqual({ first: 9.7, each: 7.5 })
+  expect(curveFit([-0.4, 0.2, 0.1])).toEqual({ first: 0.2, each: 0 })
+  for (const adds of [[9.2, 16.7, 16.8, 20.5], [19.7, 39.1, 58.9], [3, 1, 8]]) {
+    const { first, each } = curveFit(adds)
+    adds.forEach((value, n) => expect(first + n * each).toBeGreaterThanOrEqual(value - 0.05))
+  }
+})
+
+it('picks a machine by its row and puts the track back on STATIC', () => {
+  expect(machinePick('T3')).toContain('T3 T3 w500 LEFT w400 UP*12 w200 DOWN*5 w200 YES')
+  expect(machineToStatic('T3')).toMatch(/UP\*12 w200 YES/)
+  expect(machineToStatic('T3')).not.toMatch(/DOWN/)
+})
+
+it('takes stock\'s reserve from the delays-awake reading and one track\'s share from eight playing tracks', () => {
+  // Owner's MKII, 22 Nov 2026: empty C02 40.8 %, eight sample tracks 98.7 %, delays awake 105.6 %.
+  expect(stockFit({ empty: 40.8, quiet: 98.7, awake: 105.6 })).toEqual({ reserve: 105.6, trackStock: 7.2 })
+  expect(stockFit({ empty: 50, quiet: 40, awake: 39 })).toEqual({ reserve: 40, trackStock: 0 }) // never negative, never under the quiet reading
+})
+
+it('counts a module at rest from REST_NOISE up, the readings\' scatter below it as 0', () => {
+  expect(restCost({ frameMax: 81 }, { frameMax: 101.3 })).toBe(20.3) // FM Synth 0.1.4 on a medium pattern
+  expect(restCost({ frameMax: 80 }, { frameMax: 82.5 })).toBe(2.5)
+  expect(restCost({ frameMax: 80.6 }, { frameMax: 79.3 })).toBe(0)  // lower than before: scatter
+  expect(restCost({ frameMax: 80 }, { frameMax: 80 + REST_NOISE - 0.1 })).toBe(0)
+  expect(restCost(undefined, { frameMax: 90 })).toBe(90 >= REST_NOISE ? 90 : 0)
 })

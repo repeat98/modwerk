@@ -50,6 +50,20 @@
    ]
   },
   {
+   "site": "0x4000cf4a",
+   "length": 6,
+   "guard": "d667a779e117b682edd70e6622bdeebe3c61e1e25ce8ff48b0e2d6cba7c505ca",
+   "routine": "the audio frame builder, immediately before it enters the track and LFO loops. Both paths into their setup join at 0x4000cf40. The six-byte address load has no PC-relative operand.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4000cf50"
+   ],
+   "done": null
+  },
+  {
    "site": "0x4000dfd4",
    "length": 8,
    "guard": "85d5478797bd0d879fe58aa4de88956a8f8fbacdd65ac8faa8a28da95e9c14f4",
@@ -2272,10 +2286,10 @@
    "record": 24,
    "key": null,
    "room": 7,
-   "declaration": "struct modwerk_part_menu {\n    uint32_t abi;                       /* MODWERK_PART_MENU_ABI */\n    const char *label;                  /* its parent row in the left column: up to 7 characters */\n    uint32_t count;                     /* its actions, 1-6 */\n    const char *const *actions;         /* each action's row in the right column: up to 14 characters */\n    void (*choose)(unsigned action);    /* YES on action 0..count-1, after the base has closed the Part Edit window */\n    const uint32_t *icon;               /* 0, or its icon beside the label: 9 rows, bit 18 the leftmost of 19 columns */\n};\n#define MODWERK_PART_MENU_ABI 1u",
+   "declaration": "struct modwerk_part_menu {\n    uint32_t abi;                       /* MODWERK_PART_MENU_ABI */\n    const char *label;                  /* its parent row in the left column: up to 7 characters */\n    uint32_t count;                     /* its actions, 1-6 */\n    const char *const *actions;         /* each action's row in the right column: up to 14 characters */\n    void (*choose)(unsigned action);    /* YES on action 0..count-1, after the base has closed the Part Edit window */\n    const uint32_t *icon;               /* 0, or its icon beside the label: 9 rows, bit 18 the leftmost of 19 columns */\n};\n#define MODWERK_PART_MENU_ABI 1u\n/* A record of abi 2: the record above (its abi MODWERK_PART_MENU_ABI_ASK), then ask. */\nstruct modwerk_part_menu_ask {\n    struct modwerk_part_menu menu;      /* menu.abi = MODWERK_PART_MENU_ABI_ASK */\n    uint32_t (*ask)(void);              /* 0, or asked each time the window opens: MODWERK_PART_MENU_LEAVE_* */\n};\n#define MODWERK_PART_MENU_ABI_ASK 2u\n#define MODWERK_PART_MENU_LEAVE_PART 1u /* PART's row is left out */\n#define MODWERK_PART_MENU_LEAVE_ROW 2u  /* this record's own row is left out (the module is inactive) */",
    "when": "FUNC+PART (MKII), or another of stock's three Part Edit openers, opens the Part Edit window as stock does; with a contribution installed the base draws it as PROJ's menu draws its categories, in two columns: the parents on the left (PART, stock's RENAME, RELOAD, SAVE and SAVE ALL, then one row per contribution) and the highlighted parent's actions on the right",
    "context": "the UI task: choose is short and may open a window of its own",
-   "contract": "Contribute one struct modwerk_part_menu (every field set). UP/DOWN (and LEVEL) move in the focused column, RIGHT or YES on a parent moves into its actions, LEFT goes back, NO closes the window from either column, as PROJ's menu does. YES on one of PART's actions is stock's; YES on a contribution's action closes the Part Edit window, then calls choose(action) once: the module opens what it needs itself and must not close or reopen stock's Part Edit window. The window opens where it was left, as PROJ's menu does: the same parent, the same column and each parent's last action row, also after NO. Labels are read each time the window is drawn: keep them in the image, printable capitals: a parent label at most 7 characters (the left column fits 7 beside an icon), an action at most 14. An icon is optional. A record with a wrong abi, no label, no choose or a count outside 1-6 is skipped. With no contribution the window is stock's.",
+   "contract": "Contribute one struct modwerk_part_menu (every field set). UP/DOWN (and LEVEL) move in the focused column, RIGHT or YES on a parent moves into its actions, LEFT goes back, NO closes the window from either column, as PROJ's menu does. YES on one of PART's actions is stock's; YES on a contribution's action closes the Part Edit window, then calls choose(action) once: the module opens what it needs itself and must not close or reopen stock's Part Edit window. The window opens where it was left, as PROJ's menu does: the same parent, the same column and each parent's last action row, also after NO. Labels are read each time the window is drawn: keep them in the image, printable capitals: a parent label at most 7 characters (the left column fits 7 beside an icon), an action at most 14. An icon is optional. A record with a wrong abi, no label, no choose or a count outside 1-6 is skipped. With no contribution the window is stock's. A record of abi 2 (struct modwerk_part_menu_ask) adds ask, called on the UI task each time the window opens (short, no firmware call): MODWERK_PART_MENU_LEAVE_ROW leaves its own row out while the module is inactive, and MODWERK_PART_MENU_LEAVE_PART leaves PART out while the module takes over what PART's rows act on (Kits plays each pattern's Kit through the Part slots). With PART left out the window opens on the first row shown; with PART left out and one row shown it is drawn as stock's popup, that row's actions in PART's place. With no row shown the window is stock's. A module switched off on PROJ > MODWERK > MODULES is unloaded, so its row is gone with it.",
    "order": "lower first, then module id: the left column's order under PART. 50-90.",
    "subscribers": [],
    "orderEvidence": "Pattern Sample Locks (LOCK, CLEAR) and Kits (SAVE KIT) are the first planned contributors, each with its own parent row; neither reads the other's.",
@@ -2419,6 +2433,37 @@
    "order": "lower first, then module id: the page's row order. 50-90.",
    "subscribers": [],
    "orderEvidence": "Each setting is its module's own and no row reads another's. USB Audio is the first to contribute (ALL CHANNELS, OFF, and MAIN + CUE ONLY in the twenty-channel layout: issue 1512); until its package is published no module does."
+  },
+  {
+   "event": "ev_audio_frame_prepare",
+   "index": 61,
+   "site": "0x4000cf4a",
+   "length": 6,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "once per 16-sample audio frame, after sequencer event staging and before the eight audio tracks calculate LFOs and render their sources, including while transport is stopped",
+   "context": "the audio frame interrupt. Keep the EMAC as found and preserve the C callee-saved registers. A handler must be bounded and must not block.",
+   "contract": "Observe the instrument’s current step and tick here to prepare the upcoming render. Return without starting transport or advancing the sequencer. Each subscriber receives one notification per visit to the frame preparation site. The hook stays active while a module rests, so it can retain timing from before its first note.",
+   "order": "Lower order first, then module ID. All subscribers run. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "Clock readers such as FM Synth and sequenced machines observe stock state independently. Subscribers must not rely on another module’s state."
+  },
+  {
+   "event": "ev_frame_deadline",
+   "index": 62,
+   "site": null,
+   "prototype": "unsigned f(uint32_t deadline, unsigned rest)",
+   "args": [],
+   "results": "or",
+   "when": "every frame-interrupt entry, before any render: no stock site, the base raises it from mw_frame_enter (machine_registry.c) once it knows how late the entry is against the DSP's frame grid",
+   "context": "the frame interrupt: short, no firmware call that can block, the EMAC kept as found. Store the deadline and return",
+   "contract": "deadline is the DTCN3 count (0xfc07c00c, 132 MHz) by which work at IPL 5 (stock's delay routine and a module's detours in it) must end so that the next frame interrupt enters no more than 60 µs late: the next frame's grid time plus 80 µs less a 20 µs margin. Compare with (int32_t)(DTCN3 - deadline): past 0, or within your next block's cost of it, hold that block (dry, or the ring held) rather than run it. An entry in the DSP's late window (80 to 190 µs) skips a DSP frame, heard as a click, or stops the frame exchange for good (owner's MKII, 22 November 2026). rest is nonzero on every frame of a pattern the base predicts past the frame ceiling with this module's effect running, the Part's module machines already silent (owner, 22 November 2026): bypass dry for this frame, doing no work. It is latched at the frame's entry and never changes within it; the handler runs every frame whether rest is set or not, so it sees rest go back to 0 itself and starts its state afresh then. Admission charges the effect as if it ran either way. Every handler runs; the answers are ignored. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1.",
+   "order": "lower first, then module id; every handler runs, so the order does not change the result. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "raisedByBase": true,
+   "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
   }
  ]
 }
