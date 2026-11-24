@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "arr-rows",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "kind": "coldfire",
   "trigger": "key",
   "cycles": {
@@ -9,7 +9,7 @@
     "static": null,
     "measured": 131124,
     "budget": 26600000,
-    "method": "The dearest key press: CUE + FUNC + STOP inserting 56 copied rows at row 0 of a 200-row arrangement (256 after it: the largest undo copy, row move and target pass). Executed instructions between the base's key site 0x40061dc8 and its return 0x40061dce, read with ot_emu's watch/hits (octabam f7d72906, the adapted emulator, --dsp --dsp-rt, MKI panel), on the beta base 0.7.5 built from the developer's 1.40C, package a0e796c2 (source 80e94f2be), 17 November 2026: 131,124 instructions, the module's message box and editor redraw included; its undo 96,899. Instructions, not cycles: at a few cycles each still about two hundred times under the budget."
+    "method": "The dearest key press: CUE + FUNC + STOP inserting 56 copied rows at row 0 of a 200-row arrangement (256 after it: the largest undo copy, row move and target pass). Executed instructions between the base's key site 0x40061dc8 and its return 0x40061dce, read with ot_emu's watch/hits (octabam f7d72906, the adapted emulator, --dsp --dsp-rt, MKI panel), on the beta base 0.7.5 built from the developer's 1.40C, package a0e796c2 (source 80e94f2be), 17 November 2026: 131,124 instructions, the module's message box and editor redraw included; its undo 96,899. Instructions, not cycles: at a few cycles each still about two hundred times under the budget. Measured on 0.1.0-experimental; 0.2.0 adds the move (CUE + LEFT/RIGHT), a single pass over at most 256 rows, cheaper than this insert."
   },
   "stress": {
     "events": 40,

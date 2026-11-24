@@ -80,3 +80,11 @@ Measured from `ot_emu` frames (MKI panel, eight rows, cursor rows 0-8): the list
 a row is 5 px of text and 1 px of gap; the cursor row's text is 3 px lower, between dotted lines, and the row after it
 starts 9 px after the cursor row's text. The first row shown is `0x460d1c64` (the redraw `0x40049738` adds it to each line's index at `0x4004983c`; `0x460d16e8` stays 0 in the editor), the cursor `0x460d16e4`; the cursor
 stays at most five rows below the first row shown. Row numbers occupy x 6-18.
+
+## The editor's cursor and scrolling (0.2.0)
+
+`0x400336bc(row)` is stock's own cursor move in the arrangement editor: it sets the cursor (0x460d16e4), keeps the first
+row shown (0x460d1c64) within six rows of it (scrolling up when the row is above, down when it is more than five
+below), and sets the column limit for the row's type (0x400c0bfc). The arrow keys use it. Writing the cursor alone
+leaves the editor unscrolled (seen on the developer's MKI): moves and undo go through it, first to the row the block
+moves towards, then to the block's other end, then to the cursor.

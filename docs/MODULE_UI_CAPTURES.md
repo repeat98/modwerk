@@ -220,6 +220,11 @@ and framebuffer data are removed by the script.
   `try` stops at "hello was not confirmed … Upload acknowledgement timed out" (Arr Rows' draft, 17 November 2026).
 - On macOS a Unix socket path is limited to 104 characters: with a longer `--usb-host` path (a scratch directory's
   often is) the emulator logs "cannot listen" and exits. Put the socket in `/tmp`.
+- A session that holds the bench itself ends after 120 wall seconds; `--usb-hold-ms` raises that.
+- From base 0.8, a package that reconnects USB (USB Audio) loses its trial about two seconds in under a scripted
+  host: the attach watchdog (#1985) takes the twin off the bus, which undoes the trial, and SETTINGS reads "NO MODULE
+  HAS A SETTING". Keep the package on the emulator's scratch card before capturing its pages (USB Audio 0.4.0,
+  23 November 2026).
 
 ### Capturing the base's own screens
 

@@ -48,13 +48,14 @@ export function moduleScopeProblems(files, { author = null, owner = null, opened
 const gateProblem = files => 'This pull request changes a module and also ' + files.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.'
 const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. Add the base commits directly to the machine’s base/<machine>-next branch and update its cumulative draft (docs/DEVELOPER_WORKFLOW.md#change-a-base). Resume the module on main once that draft has shipped.'
 
-/** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
- * (macOS's own is 3.9) crashes inside scripts/module-compat.py while it loads the Octatrack manifests, with no word on why. */
+/** Why the checks cannot run on this Python, or null. npm run check needs Python 3.12+: macOS's own 3.9 crashes inside
+ * scripts/module-compat.py while it loads the Octatrack manifests, and 3.10 or 3.11 inside sdk:check, which parses Octatrack
+ * build tools written with 3.12's f-strings, both with no word on why. */
 export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
   const [major, minor] = (version ?? '').split('.').map(Number)
-  if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
+  if (!error && (major > 3 || (major === 3 && minor >= 12))) return null
   const found = error ? `${command} did not run (${error})` : `${command} is ${version || 'an unknown version'}`
-  return `npm run check needs Python 3.10 or newer, and ${found}. Install Python 3.10+ and put it first on PATH, then run this again.`
+  return `npm run check needs Python 3.12 or newer, and ${found}. Install Python 3.12+ and put it first on PATH, then run this again.`
 }
 
 /** pythonProblem for the interpreter the gates call (scripts/modules.mjs): python3, or python on Windows. */

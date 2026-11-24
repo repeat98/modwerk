@@ -20,6 +20,8 @@ void arr_draw(unsigned char *frame);
 #define FUNC 0x2d
 #define NO 0x32
 #define UP 0x33
+#define LEFT 0x34
+#define RIGHT 0x21
 
 #define ARR 0x20000000u      /* where the simulated working arrangement lives */
 #define ROWB 22u
@@ -53,6 +55,16 @@ static uint8_t *row(unsigned r) { return &arrangement[0x14 + r * ROWB]; }
 void host_clear_row(int r) { memset(row((unsigned)r), 0, ROWB); clears[cleared++] = r; }
 void host_message(const char *text) { snprintf(last_message, sizeof last_message, "%s", text); }
 void host_redraw(void) { ++redraws; }
+/* Stock's set_cursor (0x400336bc): the cursor, and the first row shown kept within six rows of it. */
+void host_set_cursor(int row)
+{
+    set32(0x460d16e4u, (uint32_t)row);
+    int top = (int)get32(0x460d1c64u);
+    if (row < top) top = row;
+    if (row > top + 5) top = row - 5;
+    if (top < 0) top = 0;
+    set32(0x460d1c64u, (uint32_t)top);
+}
 static unsigned char lcd[1024];
 void host_invert(unsigned char *frame, int x, int y) { frame[x * 8 + 7 - (y >> 3)] ^= (unsigned char)(1u << (y & 7)); }
 static int lit(int x, int y) { return lcd[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
@@ -107,6 +119,16 @@ static void fill(unsigned n)
     set32(0x10000000u, ARR);
     set_rows(n);
     for (unsigned r = 0; r < n; ++r) { row(r)[0] = 0; row(r)[1] = (uint8_t)(r + 1); row(r)[5] = (uint8_t)(0x40 + r); }
+}
+/* Stock's FUNC + DOWN as measured (0x4009e4c8, RESEARCH.md): row p is duplicated, the rows from p move down, every
+ * LOOP/JUMP target past p moves with them; a target equal to p stays, so the original HALT now points at the copy. */
+static void stock_insert(unsigned p)
+{
+    unsigned n = rows();
+    if (n >= 256 || p >= n) return;
+    memmove(row(p + 1), row(p), (n - p) * ROWB);
+    set_rows(n + 1);
+    for (unsigned r = 0; r <= n; ++r) if (row(r)[0] == 1 && row(r)[3] > p) row(r)[3]++;
 }
 static int same(unsigned r, unsigned as) { return row(r)[1] == (uint8_t)(as + 1) && row(r)[5] == (uint8_t)(0x40 + as); }
 
@@ -387,8 +409,8 @@ int main(void)
     struct { volatile uint32_t value; } api = {0};
     hold(CUE, 1);
     arr_tick((void *)&api);
-    check("the diagnostic word: editor, CUE seen by stock and by the events, cursor 8, selection from 3",
-          (api.value & 0x1f) == 0x0b && (api.value >> 16 & 0xff) == 8 && (api.value >> 24) == 3);
+    check("the diagnostic word: editor, CUE seen by stock, cursor 8, selection from 3",
+          (api.value & 7) == 3 && (api.value >> 16 & 0xff) == 8 && (api.value >> 24) == 3);
     hold(CUE, 0);
     arr_tick((void *)&api);
     check("the diagnostic word counts the two disagreements above", (api.value >> 8 & 0xff) >= 2);
@@ -419,6 +441,102 @@ int main(void)
     tap(DOWN); tap(DOWN); tap(DOWN);               /* row 3 */
     hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
     check("replacing row 3 with one row keeps the LOOP below it a LOOP to row 3", row(4)[0] == 1 && row(4)[3] == 3 && rows() == 8);
+
+    /* CUE + LEFT/RIGHT move rows */
+    fill(10);
+    row(7)[0] = 1; row(7)[3] = 3;                  /* a LOOP back to row 3 */
+    row(8)[0] = 1; row(8)[3] = 8;                  /* a HALT */
+    set_cursor(2);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 2-3 */
+    hold(CUE, 1);
+    check("CUE + RIGHT is taken", tap(RIGHT) == 1);
+    hold(CUE, 0);
+    check("the selected rows moved down one, the row below went above them", same(2, 4) && same(3, 2) && same(4, 3) && rows() == 10);
+    check("a LOOP to a moved row follows it", row(7)[3] == 4);
+    check("the cursor and the selection moved with the rows", cursor() == 4);
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("CUE + LEFT moves them back: the move undone", same(2, 2) && same(3, 3) && same(4, 4) && row(7)[3] == 3 && cursor() == 3);
+    tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN);  /* row 8, the HALT; ends the selection */
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("the cursor row alone moves: a HALT stays a HALT", row(7)[0] == 1 && row(7)[3] == 7 && row(8)[3] == 3 && cursor() == 7);
+    /* a LOOP carried past its target turns into a JUMP (allowed) */
+    tap(DOWN);                                     /* row 8: the LOOP to 3 */
+    for (int k = 0; k < 4; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
+    check("four moves up: the LOOP on row 4 still loops back to row 3", row(4)[0] == 1 && row(4)[3] == 3);
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("the fifth carries it past its target: on row 3 it now jumps forward to it, on row 4", row(3)[0] == 1 && row(3)[3] == 4 && same(4, 3));
+    /* the edges, and the keys without CUE */
+    set_cursor(0);
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("at the top, CUE + LEFT changes nothing", same(0, 0) && cursor() == 0);
+    check("LEFT without CUE is stock's (columns)", tap(LEFT) == 0 && tap(RIGHT) == 0);
+    set_cursor(9);
+    hold(CUE, 1); tap(RIGHT); hold(CUE, 0);
+    check("at the bottom, CUE + RIGHT changes nothing", same(9, 9) && cursor() == 9 && rows() == 10);
+
+    /* FUNC + DOWN on a HALT (#1668): stock inserts, the module keeps both rows HALTs */
+    fill(8);
+    row(3)[0] = 1; row(3)[2] = 0; row(3)[3] = 3;   /* a HALT on row 3 */
+    row(6)[0] = 1; row(6)[2] = 2; row(6)[3] = 5;   /* a LOOP to row 5, below it */
+    row(1)[0] = 1; row(1)[2] = 0; row(1)[3] = 3;   /* a JUMP to the HALT */
+    set_cursor(3);
+    hold(FUNC, 1);
+    check("FUNC + DOWN on a HALT goes to stock", tap(DOWN) == 0);
+    stock_insert(3);
+    hold(FUNC, 0);
+    arr_tick(0);
+    check("after stock's insert both rows are HALTs", rows() == 9 && row(3)[3] == 3 && row(4)[0] == 1 && row(4)[3] == 4);
+    check("other targets stay as stock left them", row(7)[3] == 6 && row(1)[3] == 3);
+    arr_tick(0);
+    check("once only", row(4)[3] == 4);
+    /* not a HALT: stock's insert untouched */
+    set_cursor(7);                                 /* the LOOP, now on row 7 to row 6 */
+    hold(FUNC, 1); tap(DOWN); stock_insert(7); hold(FUNC, 0);
+    arr_tick(0);
+    check("FUNC + DOWN on a LOOP is stock's alone", rows() == 10 && row(7)[3] == 6 && row(8)[3] == 6);
+    /* stock did not insert (a full arrangement): nothing is changed */
+    fill(8);
+    row(2)[0] = 1; row(2)[3] = 2;
+    row(3)[0] = 1; row(3)[3] = 2;                  /* looks like stock's result, but no row was added */
+    set_cursor(2);
+    hold(FUNC, 1); tap(DOWN); hold(FUNC, 0);
+    arr_tick(0);
+    check("no insert, no change", rows() == 8 && row(3)[3] == 2);
+    /* FUNC + UP (stock's delete) is never touched */
+    row(5)[0] = 1; row(5)[3] = 5;
+    set_cursor(5);
+    hold(FUNC, 1); tap(UP); hold(FUNC, 0);
+    arr_tick(0);
+    check("FUNC + UP is stock's alone", row(5)[3] == 5 && rows() == 8);
+
+    /* moving rows past the bottom of the screen: the editor scrolls along, as with stock's cursor moves */
+    fill(14);
+    set32(0x460d1c64u, 0); set_cursor(4);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 4-5 selected, cursor on 5 */
+    for (int k = 0; k < 3; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
+    check("three moves down: the rows are on 7-8 and the cursor on 8", same(7, 4) && same(8, 5) && cursor() == 8);
+    check("the editor scrolled to keep the cursor and the row below the block on screen (first row shown 4)", get32(0x460d1c64u) == 4);
+    for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
+    check("six moves back up: rows on 1-2, both on screen with the row above (first row shown 0), the cursor on 2", same(1, 4) && same(2, 5) && cursor() == 2 && get32(0x460d1c64u) == 0);
+    /* a block of four selected upward (cursor on its first row), moved down past the screen: all four stay visible */
+    fill(16);
+    set32(0x460d1c64u, 0); set_cursor(5);
+    hold(CUE, 1); tap(UP); tap(UP); tap(UP); hold(CUE, 0);   /* rows 2-5, cursor on 2 */
+    for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
+    { int top = (int)get32(0x460d1c64u);
+      check("moved down six: rows on 8-11, the cursor on 8, all four on screen", same(8, 2) && same(11, 5) && cursor() == 8 && top <= 8 && top + 5 >= 11); }
+    /* the row the block moves towards stays in view: two rows moved down past the screen, then up past it */
+    tap(NO);                                       /* ends the selection, as on the unit */
+    fill(16);
+    set32(0x460d1c64u, 0); set_cursor(3);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 3-4, cursor on 4 */
+    for (int k = 0; k < 4; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
+    { int top = (int)get32(0x460d1c64u);
+      check("moving down: the block on 7-8 and the row below it, 9, on screen", same(7, 3) && same(8, 4) && top <= 7 && top + 5 >= 9); }
+    set32(0x460d1c64u, 7);                         /* scrolled down meanwhile */
+    for (int k = 0; k < 3; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
+    { int top = (int)get32(0x460d1c64u);
+      check("moving up: the block on 4-5 and the row above it, 3, on screen", same(4, 3) && same(5, 4) && top <= 3 && top + 5 >= 5); }
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;
