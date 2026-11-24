@@ -132,7 +132,7 @@ async function all(...steps) {
 
 // The combined module list and changelog are generated, never committed; write them as npm ci does before anything reads them.
 let passed = await run('prepare')
-// The module gates run in Python 3.10+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
+// The module gates and sdk:check run in Python 3.12+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
 if (!buildOnly && !suiteOnly && passed && (plan.metadata || plan.native)) {
   const python = localPythonProblem(root)
   if (python) { console.error(python); passed = false }

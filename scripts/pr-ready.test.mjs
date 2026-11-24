@@ -64,10 +64,11 @@ describe('pr:ready verdict', () => {
     expect(readiness({}).ok).toBe(true)
     for (const state of [{ dirty: ['a.ts'] }, { behind: true }, { regenerated: ['src/catalog/module-documents.json'] }, { checkPassed: false }]) expect(readiness(state).ok).toBe(false)
   })
-  it('says the checks need Python 3.10+ instead of letting an older one crash inside them', () => {
-    for (const version of ['3.10.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+  it('says the checks need Python 3.12+ instead of letting an older one crash inside them', () => {
+    for (const version of ['3.12.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+    expect(pythonProblem({ version: '3.11.0' })).toContain('python3 is 3.11.0')   // sdk:check parses 3.12 f-strings
     const old = pythonProblem({ command: 'python3', version: '3.9.6' })
-    expect(old).toContain('needs Python 3.10 or newer')
+    expect(old).toContain('needs Python 3.12 or newer')
     expect(old).toContain('python3 is 3.9.6')
     expect(pythonProblem({ command: 'python', error: 'spawn python ENOENT' })).toContain('python did not run (spawn python ENOENT)')
     expect(pythonProblem({ version: null })).toContain('an unknown version')

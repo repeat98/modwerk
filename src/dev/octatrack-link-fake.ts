@@ -52,6 +52,7 @@ export interface FakeUnit {
   /** A published candidate whose page closed during its trial (its digest): only a session that adopts it can roll it back. */
   orphan?: string
   orphanTransaction?: number
+  bootSession?: string
   /** Previews only: a passed self-test with the set saved on the card, and live meters (requests 21 and 30). */
   status?: boolean
   /** Optional LCD frames for the local Screen preview. */
@@ -186,7 +187,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
   return async (_transport?: unknown, _base?: string, options: { timeoutMs?: number } = {}): Promise<LinkSession> => {
     if ((options.timeoutMs ?? 0) > UPLOAD_TIMEOUT_MAX_MS) throw new Error('Upload timeout must be at most ' + UPLOAD_TIMEOUT_MAX_MS + ' ms.') // as UploadSession.connect
     let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: unit.staged ? 'receiving' : unit.orphan ? 'trial' : 'normal', activeKnown: true, generation: unit.orphan ? 1 : 0,
-      lastTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, currentTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: '00'.repeat(32),
+      lastTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, currentTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: unit.bootSession ?? '00'.repeat(32),
       active: unit.orphan ?? unit.active }
     let staged = unit.active, owned = false, data: Uint8Array | undefined
     // The base a staged container holds: its section's image. A base before the two slots writes only itself.

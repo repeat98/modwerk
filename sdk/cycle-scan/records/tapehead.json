@@ -16,5 +16,11 @@
       "arith": 54.56,
       "transfer": 6.75
     }
+  },
+  "defaults": {
+    "setting": "COLOR=NORM/def",
+    "instructions": 273.94,
+    "cycles": 424.88,
+    "stalls": 67.13
   }
 }
