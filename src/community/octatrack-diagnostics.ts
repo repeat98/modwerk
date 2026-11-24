@@ -3,6 +3,7 @@ import { MODULES } from '../catalog/modules'
 import type { Inventory } from '../config/inventory'
 import type { OctatrackLink, LinkDiagnostic } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
+import { PARTLY_RESTORED, restoreDiagnostic } from '../engine/elekloader/restore-outcomes'
 import { browserRequestsPrivacy, countOctatrackAction } from './usage'
 import { diagnosticClient } from './diagnostic-client'
 import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, syncFailureReason, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
@@ -186,10 +187,14 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     try {
       const record = await link!.health(signal, allowed)
       if (!record || !allowed()) return
-      const fingerprint = JSON.stringify(record)
-      if (fingerprint === lastHealth) return
+      // After a start that loaded only part of the set: which modules it left out and why (a base before RESTORE: none).
+      const report = (PARTLY_RESTORED as readonly number[]).includes(record.saved)
+        ? await Promise.resolve().then(() => link!.restoreOutcomes(signal, allowed)).catch(() => undefined) : undefined
+      const restore = restoreDiagnostic(report, MODULES)
+      const fingerprint = JSON.stringify([record, restore])
+      if (fingerprint === lastHealth || !allowed()) return
       lastHealth = fingerprint
-      send({event:'health',...unit(),reading:record})
+      send({event:'health',...unit(),reading:record,...(restore ? {restore} : {})})
     } catch { /* Another tab or an active load owns the unit; skip this round. */ }
   }
   /* The live meters, read with the status every 30 s: a summary every five minutes, at once (at most every ten minutes)

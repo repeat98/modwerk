@@ -20,6 +20,12 @@
       "tcc-r": 0.06
     }
   },
+  "defaults": {
+    "setting": "STGS=1024/def",
+    "instructions": 328.5,
+    "cycles": 468.81,
+    "stalls": 49.56
+  },
   "stock": {
     "comparator": "CHORUS",
     "setting": "defaults/max",

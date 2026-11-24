@@ -1,0 +1,145 @@
+{
+  "moduleVersion": "0.1.4-experimental",
+  "access": {
+    "location": "PROJECT > CONTROL > SEQUENCER: SCALE, ROOT, GLIDE, TRACK and FOLLOW rows.",
+    "steps": [
+      "On the MKII panel, press PROJ to open the project menu.",
+      "Use UP/DOWN to select CONTROL, then press RIGHT to enter its list.",
+      "Select SEQUENCER with UP/DOWN and press YES.",
+      "Scroll DOWN to SCALE and turn LEVEL to choose a scale. OFF restores stock pitch behavior.",
+      "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track\u2019s LEG setting. TRACK and FOLLOW follow (TRACK picks a track, FOLLOW is its ON / OFF)."
+    ],
+    "screenshots": [
+      "media/ot-location.png",
+      "media/ot-scale.png",
+      "media/ot-root.png",
+      "media/ot-glide.png",
+      "media/ot-track-rows.png"
+    ]
+  },
+  "media": [
+    {
+      "path": "media/ot-location.png",
+      "captureType": "emulator",
+      "caption": "Select SEQUENCER in PROJECT > CONTROL and press YES to reach the scale settings.",
+      "alt": "Select SEQUENCER in PROJECT > CONTROL and press YES to reach the scale settings.",
+      "credit": "Octamod contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT > CONTROL",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+      }
+    },
+    {
+      "path": "media/ot-scale.png",
+      "captureType": "emulator",
+      "caption": "SCALE selected in CONTROL SEQUENCER, with MAJOR enabled using LEVEL.",
+      "alt": "SCALE selected in CONTROL SEQUENCER, with MAJOR enabled using LEVEL.",
+      "credit": "Octamod contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "CONTROL SEQUENCER: SCALE",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+      }
+    },
+    {
+      "path": "media/ot-root.png",
+      "captureType": "emulator",
+      "caption": "ROOT selected below SCALE; the example uses C with the MAJOR scale.",
+      "alt": "ROOT selected below SCALE; the example uses C with the MAJOR scale.",
+      "credit": "Octamod contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "CONTROL SEQUENCER: ROOT",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+      }
+    },
+    {
+      "path": "media/ot-glide.png",
+      "captureType": "emulator",
+      "caption": "The scrolled sequencer menu shows all three added rows: SCALE, ROOT and GLIDE.",
+      "alt": "The scrolled sequencer menu shows all three added rows: SCALE, ROOT and GLIDE.",
+      "credit": "Octamod contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "CONTROL SEQUENCER: GLIDE",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+      }
+    },
+    {
+      "path": "media/ot-track-rows.png",
+      "captureType": "emulator",
+      "caption": "Below GLIDE, TRACK set to AUDIO 8 and FOLLOW set to OFF with LEVEL: that track plays unquantized while the others follow the scale.",
+      "alt": "CONTROL SEQUENCER showing GLIDE OFF, TRACK AUDIO 8 and FOLLOW OFF selected.",
+      "credit": "Tim Hastie (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "CONTROL SEQUENCER: FOLLOW",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+      }
+    },
+    {
+      "path": "media/ot-midi-trig-mode.png",
+      "captureType": "emulator",
+      "caption": "The MIDI trig-mode popup stays responsive while FUNC+DOWN is held.",
+      "alt": "Actual Octatrack MIDI trig-mode popup with QUICK MUTE selected.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI trig mode",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+      }
+    }
+  ],
+  "documentation": {
+    "tutorial": {
+      "title": "Quick tutorial: choose a scale",
+      "steps": [
+        "Open PROJECT > CONTROL > SEQUENCER and scroll to SCALE. Turn LEVEL to select MAJOR; OFF restores stock pitch behavior.",
+        "Scroll to ROOT and turn LEVEL to choose C. ROOT transposes the selected scale and the audio chromatic keyboard.",
+        "Close the project menu, select a Flex or Static audio track with a sample assigned, and turn PTCH or play the chromatic trig keys. Notes follow the selected scale; recorded notes play in it too.",
+        "Back in SEQUENCER, set TRACK to AUDIO 1 (or MIDI 1) and FOLLOW to OFF: that track plays unquantized while the others follow the scale."
+      ]
+    },
+    "screenshots": [
+      "media/ot-location.png",
+      "media/ot-scale.png",
+      "media/ot-root.png",
+      "media/ot-glide.png",
+      "media/ot-track-rows.png",
+      "media/ot-midi-trig-mode.png"
+    ],
+    "screenshotStyle": "black-and-white"
+  },
+  "note": "Historical captured version, dates, image hashes and original media paths are preserved. Original PNGs remain at their recorded media paths."
+}

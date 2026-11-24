@@ -29,6 +29,9 @@ the note off.
 Note on, note off, channels, pressure values, MIDI in and the retrig timing are as stock. It has
 no menu row and stores nothing: installed, it is on.
 
+All three fixes are moving into the Modwerk Rytm base, in every variant, always on: every Modwerk Rytm build
+from that base release on has them, and the module then leaves the library.
+
 Version **0.2.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.7. Written by
 Nathaniel Pavel (@npp1993); not a port. It was called Chromatic Aftertouch Fix up to 0.1.0; the id
 `chromatic-aftertouch-fix` stays.

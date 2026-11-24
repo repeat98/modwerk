@@ -18,16 +18,16 @@ vi.mock('./engine/protocol', async original => ({ ...await original<typeof impor
 
 const member: Session = { available: true, admin: false, user: { id: 'plain', displayName: 'Plain', username: 'plain', verified: true, betaTester: false } }
 const visitor: Session = { available: true, admin: false, user: null }
-let root: Root, container: HTMLDivElement, neverHadBase = true, placesLeft = 0
+let root: Root, container: HTMLDivElement, neverHadBase = true
 beforeEach(() => {
-  // The welcome, install guide and beta invitation poll for an open dialog. Keep USB and IndexedDB callbacks on real timers.
+  // Advance other page prompts while USB and IndexedDB callbacks use real timers.
   vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
-  release.on = true; neverHadBase = true; placesLeft = 0
+  release.on = true; neverHadBase = true
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('isSecureContext', true)
   Object.defineProperty(navigator, 'usb', { value: fakeUnit('stock').usb, configurable: true })
   vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).includes('base-install-prompt') ? Response.json({ show: neverHadBase })
-    : String(url).includes('/auth/beta-join') ? Response.json({ placesLeft }) : String(url).includes('/beta-invitations/public') ? Response.json({ status: 'pending' })
+    : String(url).includes('/auth/beta-join') ? Response.json({ placesLeft: 0 }) : String(url).includes('/beta-invitations/public') ? Response.json({ status: 'pending' })
     : new Response('{}', { status: 404 })))
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
@@ -53,127 +53,38 @@ async function open(hash: string, session = member) {
 /** The next visit: the page loads again. */
 async function reload(hash: string, session = member) { await act(async () => root.unmount()); root = createRoot(container); await open(hash, session) }
 const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms))
-async function expectWelcome() {
-  // The first visit may still be loading its route and reading the unit when the clock first advances.
-  await vi.waitFor(async () => {
-    await wait(1500)
-    expect(welcome()).toBeDefined()
-  }, { timeout: 4000 })
-}
 const welcome = () => [...document.querySelectorAll<HTMLDialogElement>('dialog.base-install-dialog[open]')].find(dialog => dialog.querySelector('h2')?.textContent === 'Modules now load over USB, for everyone')
-const guide = () => [...document.querySelectorAll<HTMLDialogElement>('dialog.base-install-dialog[open]')].find(dialog => dialog !== welcome())
+const guide = () => [...document.querySelectorAll<HTMLDialogElement>('dialog.base-install-dialog[open]')].find(dialog => /Modwerk base/i.test(dialog.querySelector('h2')?.textContent ?? ''))
 const button = (dialog: HTMLElement, text: string) => [...dialog.querySelectorAll('button')].find(item => item.textContent === text)
 
-describe('the welcome to modules over USB', () => {
-  it('greets a member who never had the base once, and Later keeps it away, on this visit and the next', async () => {
-    await open('library')
-    await expectWelcome()
-    expect(welcome()!.textContent).toContain('Install the base once')
-    expect(welcome()!.textContent).toContain('From the card, with your original OS file.')
-    expect(welcome()!.textContent).toContain('Sync over USB or the card') // both ways, in a WebUSB browser too
-    expect(welcome()!.textContent).toContain('Base updates over USB after the first install')
-    expect(welcome()!.textContent).not.toMatch(/beta/i)
-    expect(welcome()!.textContent).not.toMatch(/card firmware/i)
-    await act(async () => button(welcome()!, 'Later')!.click())
-    expect(welcome()).toBeUndefined()
-    await wait(2000)
-    expect(document.querySelector('dialog[open]')).toBeNull()
-    await reload('library'); await wait(2000)
-    expect(welcome()).toBeUndefined()
-  }, 15000)
-  it('greets a visitor whose browser never read a base, once', async () => {
-    Object.defineProperty(navigator, 'usb', { value: fakeUnit('none').usb, configurable: true })
-    await open('library', visitor)
-    await expectWelcome()
-    await act(async () => button(welcome()!, 'Later')!.click())
-    await reload('library', visitor); await wait(2000)
-    expect(welcome()).toBeUndefined()
-  }, 15000)
-  it('greets on another machine’s pages too, with a way out for whoever has no Octatrack, but not on account pages', async () => {
-    await open('digitakt')
-    await expectWelcome()
-    expect(welcome()!.textContent).toContain('No Octatrack? Close this and it won’t come back.')
-    await act(async () => button(welcome()!, 'Later')!.click())
-    localStorage.clear()
-    await reload('account'); await wait(2000)
-    expect(welcome()).toBeUndefined()
-  }, 15000)
-  it('is not there while the switch is off', async () => {
-    release.on = false
-    await open('library'); await wait(2000)
-    expect(welcome()).toBeUndefined()
-  })
-  it('never greets someone whose unit or account has the base', async () => {
-    Object.defineProperty(navigator, 'usb', { value: fakeUnit('base').usb, configurable: true })
-    await open('library'); await wait(2000)
-    expect(welcome()).toBeUndefined()
-    Object.defineProperty(navigator, 'usb', { value: fakeUnit('none').usb, configurable: true })
-    neverHadBase = false
-    await reload('library'); await wait(2000)
-    expect(welcome()).toBeUndefined()
-  }, 15000)
-  it('“Set up my Octatrack” lands on Your Octatrack with the install guide open at its first step', async () => {
-    await open('library')
-    await expectWelcome()
-    await act(async () => button(welcome()!, 'Set up my Octatrack')!.click())
-    expect(window.location.hash).toBe('#octatrack')
-    await vi.waitFor(() => expect(guide()?.querySelector('#base-stage-title')?.textContent).toBe('Download the base'))
-    expect(welcome()).toBeUndefined()
-  }, 15000)
-  it('stands in for every build and sync button once: they all lead to Your Octatrack, where it opens before the guide', async () => {
-    await open('library'); await wait(100)
-    // The library's own button (Your Octatrack), the sidebar and the phone dock all lead to #configuration.
-    expect(container.querySelector<HTMLAnchorElement>('.discovery-actions a.button-primary')?.getAttribute('href')).toBe('#configuration')
-    await reload('configuration')
-    await expectWelcome()
-    expect(guide()).toBeUndefined()
-    await act(async () => button(welcome()!, 'Later')!.click())
-    // Not again: the next visit to the same button gets the guide, as before the welcome.
-    await reload('configuration')
-    await wait(1500)
-    await vi.waitFor(() => expect(guide()).toBeDefined(), { timeout: 4000 })
-    expect(welcome()).toBeUndefined()
+describe('the Octatrack USB introduction', () => {
+  it.each([['member', member], ['visitor', visitor]] as const)('keeps browsing quiet for a %s, including on a stock Octatrack', async (_label, session) => {
+    for (const route of ['overview', 'digitakt', 'library', 'configuration', 'octatrack', 'octatrack/setup']) {
+      await open(route, session)
+      await wait(3000)
+      expect(welcome()).toBeUndefined()
+      expect(guide()).toBeUndefined()
+    }
   }, 20000)
-  it('counts as answered once the member opens the install guide by themselves', async () => {
-    await open('library')
-    const install = await vi.waitFor(() => { const action = container.querySelector<HTMLButtonElement>('.instrument-action'); expect(action?.textContent).toBe('Install the base'); return action! })
-    expect(welcome()).toBeUndefined() // the sidebar's button before the welcome's first look, 1.5 s in
-    await act(async () => install.click())
-    await vi.waitFor(() => expect(guide()).toBeDefined())
-    await act(async () => guide()!.querySelector<HTMLButtonElement>('.base-install-close')!.click())
-    await wait(2000)
-    expect(welcome()).toBeUndefined()
-    await reload('library'); await wait(2000)
-    expect(welcome()).toBeUndefined()
-  }, 15000)
-  it('in a browser without WebUSB, still names both ways to sync and says the card is this browser’s', async () => {
-    delete (navigator as { usb?: unknown }).usb
-    await open('library')
-    await expectWelcome()
-    expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome, Edge or another Chromium browser on a computer.')
-    expect(welcome()!.textContent).toContain('Sync over USB or the card')
-    expect(welcome()!.textContent).toContain('Send them over USB from Chrome or Edge, or copy MODWERK0.SET to the card and restart.')
-    expect(button(welcome()!, 'Set up my Octatrack')).toBeDefined()
-    expect(welcome()!.textContent).not.toMatch(/card firmware/i)
-  }, 15000)
-  it('can be read again from Setup', async () => {
+  it('opens the introduction for a first install and continues to the card download', async () => {
     await open('octatrack/setup')
-    await expectWelcome()
-    await act(async () => button(welcome()!, 'Later')!.click())
-    const again = [...container.querySelectorAll('button')].find(item => item.textContent === 'What’s new: modules over USB')!
-    await act(async () => again.click())
-    expect(welcome()).toBeDefined()
+    await vi.waitFor(() => expect(container.querySelector('.instrument-action')?.getAttribute('title')).toBe('Original OS detected. Install once from the card.'))
+    await act(async () => container.querySelector<HTMLButtonElement>('.instrument-action')!.click())
+    await vi.waitFor(() => expect(welcome()).toBeDefined())
+    expect(welcome()!.textContent).toContain('Sync over USB or the card')
+    await act(async () => button(welcome()!, 'Set up my Octatrack')!.click())
+    await vi.waitFor(() => expect(guide()?.querySelector('#base-stage-title')?.textContent).toBe('Download the base'))
   }, 15000)
-  it('and the beta invitation never open together', async () => {
-    placesLeft = 5
-    await open('library')
-    await expectWelcome()
-    expect(document.querySelector('dialog.beta-join')).toBeNull()
+  it('lets a visitor read the instructions on demand in a browser without WebUSB', async () => {
+    delete (navigator as { usb?: unknown }).usb
+    await open('octatrack/setup', visitor)
+    await act(async () => button(container, 'What’s new: modules over USB')!.click())
+    await vi.waitFor(() => expect(welcome()).toBeDefined())
+    expect(welcome()!.textContent).toContain('This browser can’t use USB')
     await act(async () => button(welcome()!, 'Later')!.click())
-    await wait(2000)
-    expect(document.querySelector('dialog.beta-join')).toBeNull() // not on the visit the welcome opened
-    await reload('library'); await wait(1500)
-    expect(document.querySelector('dialog.beta-join[open]')).not.toBeNull()
+    await reload('octatrack/setup', visitor)
+    await wait(3000)
     expect(welcome()).toBeUndefined()
-  }, 20000)
+    expect(guide()).toBeUndefined()
+  }, 15000)
 })

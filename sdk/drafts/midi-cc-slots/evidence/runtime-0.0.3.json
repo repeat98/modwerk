@@ -1,0 +1,35 @@
+{
+  "packageSha256": "519ba9750e9c1da42a0d42763ed2e2b6052ca26908f95124cc3ca0798904d7ac",
+  "sites": 14,
+  "copies": 7,
+  "imageBytes": 420,
+  "relocations": 0,
+  "stockFreeScan": "passed at 16 bytes",
+  "currentBaseDirectOverlap": "none",
+  "installedFileGuards": true,
+  "images": [
+    {
+      "origin": "0x400d6b20",
+      "sha256": "984120afb2d5255a9d708caa83647cd900f0e0fe544a19394bfc5e9fa875fe85"
+    },
+    {
+      "origin": "0x400d7000",
+      "sha256": "88fdf9269a4717dfb0561c0dd9d95b3add39cd55e28475a75fe37829c98b67e4"
+    }
+  ],
+  "hardware": "not tested",
+  "loaderLifecycle": "not tested on device",
+  "status": "software-only",
+  "version": "0.0.3-experimental",
+  "relocatedPanelChecks": 382,
+  "userFirmwareSha256": "01f2462d333d55ccc86a0c819f99e85329c41d8fdfd3ea4498f71adf3b6315f1",
+  "hostLoader": "exact package prepare/publish/Undo/reinstall/removal/reclamation passed; host machine glue only",
+  "notTested": [
+    "physical USB transport",
+    "on-device trial and self-test",
+    "Keep and power-cycle persistence",
+    "Part/project persistence",
+    "shared MIDI channels",
+    "mixed-module runtime behavior"
+  ]
+}

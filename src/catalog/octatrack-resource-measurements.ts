@@ -42,6 +42,7 @@ type ActiveRecord = {
   module: string
   version: string
   releasePackageSha256: string
+  reboundReleasePackageSha256?: string
   packageSha256: string
   scene: string
   restoration: { liveInventoryRestored: boolean }
@@ -53,6 +54,11 @@ type DspLoadReading = {
 
 const records = import.meta.glob<DevicePriceRecord>(
   '../../sdk/octatrack/modules/*/evidence/cpu-price.json',
+  { eager: true, import: 'default' },
+)
+type FrameCostRecord = { module?: string; version?: string; base?: string; scene?: string; first?: number; each?: number; rest?: number; points?: number[] }
+const frameCostRecords = import.meta.glob<FrameCostRecord>(
+  '../../sdk/octatrack/modules/*/evidence/frame-cost.json',
   { eager: true, import: 'default' },
 )
 const modulePoolReadings = new Map(modulePoolEvidence.measurements.map(record => [record.module, record]))
@@ -88,8 +94,13 @@ const activeEvidencePath = 'docs/verification/2026-11-21-octatrack-active-load.j
 function currentActiveLoad(document: ModuleDocument) {
   const record = activeLoadReadings.get(document.id)
   const entry = resourcePackage(document.id)
-  if (record?.version === document.version && entry?.version === document.version && record.releasePackageSha256 === entry.sha256
-    && /^[a-f0-9]{64}$/.test(record.packageSha256) && record.restoration.liveInventoryRestored) return record
+  if (record?.version !== document.version || entry?.version !== document.version
+    || !/^[a-f0-9]{64}$/.test(record.packageSha256) || !record.restoration.liveInventoryRestored) return
+  if (record.releasePackageSha256 === entry.sha256) return record
+  if (record.reboundReleasePackageSha256 === entry.sha256) {
+    return { ...record, scene: record.scene + ' Measured on development base ' + activeLoadEvidence.developmentBase.slice(0, 8)
+      + '. Only the controller addresses changed in this release package.' }
+  }
 }
 
 function pairedLoad(workload: ActiveWorkload, metric: 'frame' | 'dsp1to4' | 'dsp5to8') {
@@ -120,6 +131,20 @@ export function measuredActiveCpu(document: ModuleDocument) {
       source: 'sdk/octatrack/modules/amiga/TESTING.md',
     }
   }
+}
+
+/** The module's instance curve (evidence/frame-cost.json, device:price --curve), when it was measured on this version
+ * and the frame still had room with the first copy: past 100 % the guard drops renders, so the reading is the
+ * overload, not the module's cost (FM Synth 0.1.5's first pick read 107.9 %, #2030). */
+export function measuredFrameCost(document: ModuleDocument) {
+  const source = 'sdk/octatrack/modules/' + document.id + '/evidence/frame-cost.json'
+  const record = frameCostRecords['../../' + source]
+  const { first, each, points } = record ?? {}
+  const firstReading = points?.[1]
+  if (record?.module !== document.id || record.version !== document.version || !record.base || !record.scene
+    || typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)
+    || typeof firstReading !== 'number' || !(firstReading < 100)) return
+  return { first, each, base: record.base, scene: record.scene, source }
 }
 
 export function measuredStackedCpuLimit(document: ModuleDocument) {
