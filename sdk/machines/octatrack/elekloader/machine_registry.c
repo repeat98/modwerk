@@ -311,10 +311,11 @@ static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, 
     return sum;
 }
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
+volatile uint8_t mw_cpu_track_refusals[8]; /* each track's refusals, wrapping: diag.c names the tracks refused since its last CPU record */
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
 {
-    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track, ++mw_cpu_track_refusals[track];
     modwerk_status_cpu_refused(track, who->label, 10u * booked, 10u * cpu_price(who), 10u * mw_cpu_allowance);
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).

@@ -24,6 +24,7 @@ volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
 volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes, mw_late_over; /* the frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
+volatile uint8_t mw_cpu_track_refusals[8];
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
@@ -157,13 +158,17 @@ int main(void)
     tick();
     CHECK(LOG->incidents == before + 8u);
 
-    /* The CPU budget refused a machine on T4: one incident with the track and the count. */
+    /* The CPU budget refused a machine on T4: one incident with the track, the tracks since the last one and the count. */
     before = LOG->incidents;
-    mw_cpu_refusals = 2u, mw_cpu_refusal_tracks = 1u << 3;
+    mw_cpu_refusals = 2u, mw_cpu_refusal_tracks = 1u << 3, mw_cpu_track_refusals[3] = 2u;
     tick();
-    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 2u));
+    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 0x08u << 16 | 2u));
     tick();
     CHECK(LOG->incidents == before + 1u);
+    /* Ten minutes on (HOT_GAP), one on T6: the record names T6 alone as its own, T4 and T6 since the start. */
+    mw_cpu_refusals = 3u, mw_cpu_refusal_tracks |= 1u << 5, ++mw_cpu_track_refusals[5], cpu_at = 0;
+    tick();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_CPU && last()->a == (0x28u << 24 | 0x20u << 16 | 3u));
 
     /* The UI stands still for six seconds while frames run, then moves again. */
     modwerk_status[0] = 100u;

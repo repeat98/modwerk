@@ -46,7 +46,10 @@ struct diag_load {
  * half-seconds at 90 % or more, FREEZE the frames the UI stood still (0: it never came back before a restart),
  * CRASH the program counter, STALL the stall's reason, BASE the first four bytes of the base's identity (right after
  * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
- * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), USB the controller when the unit
+ * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), CPU the CPU budget's refusals
+ * since the start in the low 16 bits (65,535 at most), the tracks refused since the last CPU record in bits 16-23 (so
+ * `machine` names whose price it was) and every track refused since the start in the top byte (bases before 0.8.2: a
+ * 24-bit count and no recent tracks), USB the controller when the unit
  * offered itself again because the host never enumerated it (usb_attach.h: OTGSC in the high half, PORTSC1 in the low),
  * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, in the low
  * 24 bits, and in the top byte how many entries since boot came later than the wait can hold (190 µs or more, 255 at

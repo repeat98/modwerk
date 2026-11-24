@@ -23,6 +23,7 @@ extern volatile uint32_t dl_frames;
 void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
 extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
+extern volatile uint8_t mw_cpu_track_refusals[8];                 /* ... per track, so a record names its own */
 extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
 extern volatile uint32_t mw_frame_hushes;                         /* status.c: patterns begun with them silenced */
 extern volatile uint32_t mw_frame_skips;                          /* ... and the late entries held, each a DSP frame skipped */
@@ -227,8 +228,14 @@ static void diag_tick(void)
     if (skipped != sheds && (!shed_at || ticks - shed_at >= HOT_GAP))
         add(l, DIAG_SHED, (mw_frame_shed_tracks & 0xffu) << 24 | (skipped & 0xffffffu), 1), shed_at = ticks, sheds = skipped;
     uint32_t refusals = mw_cpu_refusals; /* the CPU budget refused a machine: the tracks and the count, as the skips */
-    if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP))
-        add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | (refusals & 0xffffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+    if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP)) {
+        /* Which tracks since the last CPU record, so the record's `machine` says whose price it was: their counters
+         * moved. Only machine_registry.c writes them; the tick that charges may be another task's. */
+        static uint8_t seen[8];
+        uint32_t recent = 0;
+        for (unsigned t = 0; t < 8u; ++t) if (mw_cpu_track_refusals[t] != seen[t]) seen[t] = mw_cpu_track_refusals[t], recent |= 1u << t;
+        add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | recent << 16 | (refusals < 0xffffu ? refusals : 0xffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+    }
     uint32_t braked = mw_frame_brakes; /* the brake caught the frame interrupt falling behind: each time, with the tracks shed */
     if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
     uint32_t hushed = mw_frame_hushes; /* a pattern predicted past the ceiling began with them silenced: flagged, once in HOT_GAP */
