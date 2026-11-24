@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-fltr",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-23",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. FILTER TYP turns past PK to BW, a base-width band on the voice's analog filter: FRQ sets the high-pass edge, RES's knob reads WID and sets how far above it the low-pass edge sits, shown in hertz; the FILTER graph draws the band as measured."
+  ],
+  "runtimeSourceSha256": "c290730e7e51eafa197bdef9ee0b090d2de55a72cc00bbdf0c931b4d2da14681",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-fltr/improved-fltr-0.1.0-experimental-os1.74.elemod",
+      "sha256": "4166dea707e7af17ea49c415750840c02cd5f9f6b9880c1985624c570c78f655"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-fltr/TESTING.md",
+  "requires": []
+}
