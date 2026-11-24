@@ -19,12 +19,15 @@ const withoutSlot = (changes: Record<string, ZoomPatchChange>, slot: number) =>
  * slots' knobs, on/off, a slot's effect, the name) is staged and sent with Apply. Save stores the edit buffer into a
  * program, asking before it overwrites another patch; Read all lists the fifty and opens any of them.
  */
-export function ZoomPatchEditor({ link, files, listed, busy, writable, inventoryError, onRetryInventory }: {
+export function ZoomPatchEditor({ link, files, listed, busy, writable, confirmModel = () => true, inventoryError, onRetryInventory }: {
   link: ZoomLink
   files: readonly ZoomFile[] | undefined
   listed: readonly ZoomEffect[]
   busy: boolean
   writable: boolean
+  /** The first write on a connection asks for the model printed on the pedal (ZoomHub's printedModel): another pedal
+   * running MIDISTOMP answers as an MS-70CDR, and its patches must not get this one's layout. False: write nothing. */
+  confirmModel?: () => boolean
   inventoryError?: string
   onRetryInventory: () => void
 }) {
@@ -122,7 +125,7 @@ export function ZoomPatchEditor({ link, files, listed, busy, writable, inventory
     setUnsaved(true)
   }
   const apply = () => {
-    if (!patch || !pending.length || editingDisabled) return
+    if (!patch || !pending.length || editingDisabled || !confirmModel()) return
     void runOwn('Applying…', async () => {
       await applyPending()
       setNotice({ text: 'Patch changes applied and read back.' })
@@ -130,7 +133,7 @@ export function ZoomPatchEditor({ link, files, listed, busy, writable, inventory
   }
   const save = () => {
     if (!patch || target === undefined || editingDisabled) return
-    if (target !== program && !window.confirm('Save over patch ' + (target + 1) + (names?.[target] ? ', ' + names[target] : '') + '?')) return
+    if (!confirmModel() || (target !== program && !window.confirm('Save over patch ' + (target + 1) + (names?.[target] ? ', ' + names[target] : '') + '?'))) return
     void runOwn('Saving…', async () => {
       if (pending.length) await applyPending()
       const saved = await link.savePatch(target)
@@ -142,7 +145,8 @@ export function ZoomPatchEditor({ link, files, listed, busy, writable, inventory
     })
   }
   const readAll = () => {
-    if (!window.confirm('Reading all 50 patches makes the pedal play each one in turn for a moment: turn your amp down first. The patch you’re on comes back afterwards, with its changes that aren’t saved.')) return
+    // It writes the edit buffer back afterwards, so it asks for the model first too.
+    if (!confirmModel() || !window.confirm('Reading all 50 patches makes the pedal play each one in turn for a moment: turn your amp down first. The patch you’re on comes back afterwards, with its changes that aren’t saved.')) return
     void runOwn('Reading the patches…', async () => {
       const list: (string | undefined)[] = Array(PATCH_PROGRAMS).fill(undefined)
       const { patches, program: back } = await link.readPatches((at, read) => { list[at] = read?.name; setNames([...list]) })
@@ -165,6 +169,7 @@ export function ZoomPatchEditor({ link, files, listed, busy, writable, inventory
   // A knob in a slot that takes live knob messages moves on the pedal now; elsewhere it waits for Apply.
   const turn = (slot: ZoomPatchSlot, parameter: number, value: number) => {
     const key = slot.index + ':' + parameter
+    if (!changes[slot.index + ':effect'] && link.liveSlots() > slot.index && !confirmModel()) return
     if (!changes[slot.index + ':effect'] && link.liveKnob(slot.index, parameter, value)) {
       setNotice(undefined)
       setUnsaved(true)

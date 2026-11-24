@@ -253,7 +253,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
           </section>
         </div>)}
         {editing && hasEditor && panel('editor', connected && !updating && !other && link
-          ? <ZoomPatchEditor key={pedalKey} link={link} busy={busy} writable={canEditPatches(identity)} files={files} listed={listed} inventoryError={!files ? error : undefined} onRetryInventory={read} />
+          ? <ZoomPatchEditor key={pedalKey} link={link} busy={busy} writable={canEditPatches(identity)} confirmModel={printedModel} files={files} listed={listed} inventoryError={!files ? error : undefined} onRetryInventory={read} />
           : <p className="hub-empty">{updating ? 'Plug the MS-70CDR in normally to read its patch.' : 'Connect your MS-70CDR to see its active patch.'}</p>)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>

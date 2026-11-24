@@ -80,7 +80,9 @@ patch. **Read all 50** sends a program change to each patch, so the pedal plays
 each one for a moment, then goes back and writes the edit buffer back, so changes
 not saved are kept; any listed patch then opens with one click. The page follows
 a patch chosen on the pedal itself, which says so only by a program change: until
-one has come, Save asks where. D004 supports set sync using the same file
+one has come, Save asks where. The Editor's first write on a connection asks for
+the model printed on the pedal, as installs do: another pedal running MIDISTOMP
+answers as an MS-70CDR. D004 supports set sync using the same file
 commands as the released base.
 
 
