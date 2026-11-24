@@ -1,0 +1,1 @@
+The developer MCP loads modules onto a Model:Cycles development base over its link: `device_review`, `device_trial`, `device_keep` and `device_undo`, one change a trial, and `device_status` lists the live modules.

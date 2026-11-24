@@ -81,6 +81,10 @@ mc_link.py keep | undo
 mc_link.py remove NAME --seconds 5 [--keep]   # an empty package with NAME's id: that module out, on trial
 ```
 
+The developer MCP does the same with `device_review`, `device_trial`, `device_keep` and `device_undo`
+([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-development-link)), through
+[`mc-link.ts`](../../../src/engine/elektron/mc-link.ts)'s `mcUploadTransport` and the site's `UploadSession`.
+
 A module patches stock code at declared sites: [`tools/build_sites.py`](tools/build_sites.py) `--sites SITES.json` (around the loader's `build.py`) takes them in base.json's format (a `jsr`
 or `jmp` to a function of the module, the stock bytes' SHA-256), and the base checks the running code before it
 patches and puts the stock bytes back at an undo or a removal. [`examples/frames.c`](elekloader/examples/frames.c)
@@ -180,6 +184,7 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try frames.mwrm --seconds 5 --keep`, then `try v2/frames.mwrm --seconds 20` | "F1 n", on trial "F2 n" counting on, after the undo "F1 n" again; 1 live (`594cfd26 frames`) |
 | the same | `try hello.mwrm --seconds 5 --keep` beside frames, then `remove frames --seconds 5 --keep`, `mem 0x40007678 6` | 2 live, "F1 n" and the square; after the removal 1 live (`2cf24dba`), "F1" gone, the square stays, 65200 bytes free; the site holds the stock bytes |
 | `7c794349…` (dev base `d1cc7df8`, the loader at 0x31-0x33), RAM-booted | `try frames.mwrm --seconds 10` | on trial, "F1 n" counting (the OS composes frames without a turn too); undone, 0 live |
+| `7c794349…` RAM-booted again | the developer MCP: `device_review` and `device_trial` with `frames.mwrm` for 15 s, `device_undo`, a second trial and `device_keep`, `device_status` | "F1 n" all 15 s (the MCP's pings); undone to the base's set; kept: 1 live (`594cfd26 frames`) |
 | the same | `try hello.mwrm --seconds 30`, PLAY on trial; STOP 5 s after the tool ends | the pattern plays without dropouts (tester's report); at the end `enter: unsafe (phase trial)`, the square stays while playing and goes about 10 s after the tool ended; 0 live |
 | `7c794349…` RAM-booted from `520f99e7…` | `try big33.mwrm` (33,832 bytes, past the 32 KiB staging), `mods` 15 s later | `begin: limit (too large)`; nothing loaded, 65536 bytes free, no refusal counted (the controller refuses before the loader sees it) |
 | the same | `try --keep` two modules of 31,832 bytes each, then a third | both kept, 1504 bytes free; the third `verify: rejected`, last refusal `memory`, the two still live and drawing |

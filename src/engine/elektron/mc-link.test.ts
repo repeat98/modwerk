@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { packSection } from '../aplib'
 import { contentChecksum, encodeSyx } from './sysex'
 import { ELE3_DEVICES } from './ele3'
-import { McRefused, mcReply, mcRequest, mcSetIdentity, parseMcIdent, parseMcLoad, readMcIdentity, readMcLoad } from './mc-link'
+import { MC_PART_BYTES, McRefused, mcModules, mcRemovalPackage, mcReply, mcRequest, mcSetIdentity, mcUploadBase, mcUploadTransport, parseMcIdent, parseMcLoad, readMcIdentity, readMcLoad, type McCall } from './mc-link'
+import { pack7, unpack7 } from './dn2-link'
 import type { MidiAccessLike, MidiIn, MidiOut } from './os-upgrade-midi'
 
 const put32 = (v: number) => [0, 1, 2, 3, 4].map(i => v >>> 7 * i & 0x7f)
@@ -79,5 +80,49 @@ describe('the Model:Cycles link', () => {
     for (const b of image.subarray(448)) { c ^= b; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ c >>> 1 : c >>> 1 }
     expect(mcSetIdentity(syx, 64)).toEqual({ crc: (c ^ 0xffffffff) >>> 0, bytes: 64 })
     expect(() => mcSetIdentity(syx, 513)).toThrow('larger than the image')
+  })
+})
+
+describe('the Model:Cycles runtime loader over the link', () => {
+  it('binds uploads to the SHA-256 of the set CRC, big-endian (base/modules.c)', () => {
+    // python3: hashlib.sha256(bytes.fromhex('f8812876')).hexdigest()
+    expect(mcUploadBase(0xf8812876)).toBe('ce2bb2aa7f867fb9932446cac1eb45c726561979bb5f75ffe10f6efdbd31b5d9')
+  })
+  it('sends a frame in parts under 128 bytes, then runs it and decodes the 144-byte response', async () => {
+    const frame = Uint8Array.from({ length: 2100 }, (_, i) => (i * 37 + (i >> 8)) & 0xff)
+    const got = new Uint8Array(2100), sizes: number[] = [], response = Uint8Array.from({ length: 144 }, (_, i) => 255 - i)
+    let ran = 0
+    const call: McCall = async (cmd, body = []) => {
+      sizes.push(8 + body.length + 1)
+      const at = body[0] | body[1] << 7 | body[2] << 14
+      if (cmd === 0x31) { got.set(unpack7(Uint8Array.from(body.slice(5))), at); return new Uint8Array() }
+      if (cmd === 0x32) { ran = at; return Uint8Array.from(pack7(response)) }
+      return null
+    }
+    const out = await mcUploadTransport(call).exchange(frame, new AbortController().signal)
+    expect([...got]).toEqual([...frame])
+    expect(ran).toBe(2100)
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(124)
+    expect(sizes.length).toBe(Math.ceil(2100 / MC_PART_BYTES) + 1)
+    expect([...out]).toEqual([...response])
+  })
+  it('stops at a part the unit does not take', async () => {
+    const call: McCall = async () => null
+    await expect(mcUploadTransport(call).exchange(new Uint8Array(48), new AbortController().signal)).rejects.toThrow('did not take')
+  })
+  it('removes a module with an empty package under its id', () => {
+    // mc_link.py empty_package('hello'): python3 -c "import hashlib;print(hashlib.sha256(b'hello').hexdigest()[:8])" is 2cf24dba
+    expect(Buffer.from(mcRemovalPackage('hello')).toString('hex')).toBe('4d57524d0004000000000000000000000000000000000000000000002cf24dba')
+  })
+  it('lists the pool and the live modules, three a reply', async () => {
+    const entry = (id: number, name: string) => [0xff, 0, 0, 1, id >>> 24, id >>> 16 & 0xff, id >>> 8 & 0xff, id & 0xff, ...[...name.padEnd(16, '\0')].map(c => c.charCodeAt(0))]
+    const head = (n: number) => [0, 0, 0xfe, 0x60, 0, 0, 0xfe, 0x60, 0, 0, 0, 0, 0, 0, 0, 4, 0x4d, 0x57, 0x49, n]
+    const pages = [[...head(3), ...entry(0x594cfd26, 'frames'), ...entry(0x2cf24dba, ''), ...entry(1, 'a')], [...head(1), ...entry(2, 'b')]]
+    const firsts: number[] = []
+    const call: McCall = async (_cmd, body = []) => { firsts.push(body[0]); return Uint8Array.from(pack7(Uint8Array.from(pages[firsts.length - 1]))) }
+    const list = await mcModules(call)
+    expect(firsts).toEqual([0, 3])
+    expect(list).toEqual({ free: 65120, largest: 65120, refusal: 'none', active: 4,
+      modules: [{ id: '594cfd26', name: 'frames' }, { id: '2cf24dba', name: '' }, { id: '00000001', name: 'a' }, { id: '00000002', name: 'b' }] })
   })
 })

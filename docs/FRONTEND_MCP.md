@@ -280,7 +280,7 @@ counterpart for; once a Zoom base loads modules over USB, that goes behind
 ### A Model:Cycles over its development link
 
 ```sh
-node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-midi [--elektron-images DIR]
+node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-midi [--elektron-images DIR] [--allow-device-writes]
 ```
 
 With `--elektron-midi` alone, `device_status` asks a Model:Cycles running a
@@ -298,9 +298,23 @@ diagnostics log (the link's `diag`, then `mem`), which is the Octatrack's
 layout and reads with the same parser: `boot`, `seq`, the five-minute
 `loads` and the `incidents`, without the nonce. The Model:Cycles fills
 `cpu` with the audio's share and leaves the DSP fields at 0 (LINK.md). A
-development base without the log reports unsupported. The loader's tools
-refuse: the Model:Cycles has no loader yet. Close Elektron Transfer first.
-Tests run against a fake unit (`scripts/mc-device.test.mjs`).
+development base without the log reports unsupported. `device_status` also
+gives `loader`: the module pool's free bytes, the last refusal and the live
+modules, or `unsupported` from a base without the loader.
+
+The runtime loader takes one change a trial (LINK.md, "Loading modules"):
+`device_review({"moduleIds":["NAME.mwrm"]})` names a runtime package in
+`--elektron-images` (built with `sdk/runtime/loader/build.py`), or
+`remove:NAME` the module built as NAME; it returns a 60-second plan with the
+package's SHA-256 and changes nothing. `device_trial` (with
+`--allow-device-writes`) loads it to RAM on trial, holds the unit's turn and
+sends a request every three seconds, since the unit undoes a trial by itself
+after ten quiet seconds; `device_keep` keeps it until the next power cycle,
+`device_undo` puts the previous set back and checks it is the one reviewed.
+Closing the MCP during a trial undoes it ten seconds later. Nothing is
+saved: there are no saved sets. Close Elektron Transfer first. Tests run
+against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the
+base's own transport, controller and loader compiled for the computer.
 
 ## A member's unit through a remote session
 

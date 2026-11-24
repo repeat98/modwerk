@@ -63,14 +63,14 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity and the image in --elektron-images that matches its set.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity, the image in --elektron-images that matches its set, and its runtime loader’s live modules.'),
   tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, a Model:Cycles development base’s audio load over its link. Read-only.'),
   tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, a Model:Cycles development base’s log over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
-  tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes.', { moduleIds: strings }, ['moduleIds']),
+  tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes. With --elektron-midi alone (a Model:Cycles), moduleIds is one change: a runtime package file NAME.mwrm in --elektron-images, or remove:NAME to take out the module built as NAME.', { moduleIds: strings }, ['moduleIds']),
   tool('device_trial', 'Install a reviewed set through the real frontend link as a trial, with no self-test (as a site sync). Requires --allow-device-writes; never accepts automatically.', { review: string }, ['review'], true),
-  tool('device_keep', 'Explicitly accept the current trial and save it on the card. Requires --allow-device-writes.', { trial: string }, ['trial'], true),
+  tool('device_keep', 'Explicitly accept the current trial and save it on the card (a Model:Cycles keeps it in RAM until the next power cycle). Requires --allow-device-writes.', { trial: string }, ['trial'], true),
   tool('device_undo', 'Undo the current trial and restore its exact reviewed previous packages.', { trial: string }, ['trial'], true),
   tool('zoom_status', 'Connect to the Zoom MultiStomp over MIDI (startup --zoom-midi) through the site\u2019s own ZoomLink and read its model and firmware; on MIDISTOMP also its version, features and load. Read-only.'),
   tool('zoom_list', 'List every file on the Zoom pedal with the group, ID and version of each effect in the group added effects use, and the free space. Read-only.'),
@@ -223,10 +223,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
-  // The Model:Cycles over its development link (startup --elektron-midi): identity, load and log, no loader yet.
+  // The Model:Cycles over its development link (startup --elektron-midi): identity, load, log and the runtime loader.
   const cyclesSelected = () => options.elektronMidi && !options.deviceSocket && !remote
   async function connected() {
-    if (cyclesSelected()) throw new Error('The Model:Cycles has no runtime loader or saved sets yet: device_status reads its identity over the development link.')
+    if (cyclesSelected()) throw new Error('The Model:Cycles has no saved sets: device_status, device_load, device_log, device_review, device_trial, device_keep and device_undo work over its development link.')
     if (zoomSelected()) throw new Error('MIDISTOMP does not provide the runtime set loader or saved-set files. Use zoom_list or zoom_backup for the pedal’s files.')
     if (!options.deviceSocket && !remote) throw new Error('Device tools require an explicitly selected --device-socket or a connected remote session (remote_session_connect).')
     if (remote?.relay.state().ended) { remote = undefined; dropLink(); throw new Error('The remote session has ended.') }
@@ -298,16 +298,17 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   // image in --elektron-images whose set identity matches the one the unit took at boot.
   const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a development base with the link (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
   async function withCycles(what, read) {
-    const turn = dependencies.elektronAccess ? null : await unitTurn(what, 10000)
+    const turn = dependencies.elektronAccess || trialTurn ? null : await unitTurn(what, 10000)
     let access
     try {
       access = await (dependencies.elektronAccess ?? nodeMidiAccess)()
       return await read(access)
     } finally { try { access?.close?.() } finally { turn?.release() } }
   }
-  const cyclesSnapshot = () => withCycles('read Model:Cycles', async access => {
+  const cyclesSnapshot = () => cyclesSerial(() => withCycles('read Model:Cycles', async access => {
     const identity = await frontend.readMcIdentity(access)
     if (!identity) throw new Error(noCycles)
+    const loader = await frontend.withMc(access, 2000, call => cyclesModules(call))
     let build = null
     if (identity.set && options.elektronImages) {
       for (const name of (await readdir(options.elektronImages)).filter(name => /\.syx$/i.test(name)).sort()) {
@@ -317,8 +318,8 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
       }
     }
-    return { machine: 'model-cycles', state: { status: 'ready', identity }, build, inventory: null }
-  })
+    return { machine: 'model-cycles', state: { status: cyclesTrial ? 'trial' : 'ready', identity }, build, inventory: null, loader }
+  }))
   // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
   const cyclesLoad = () => withCycles('read Model:Cycles load', async access => {
     const reading = await frontend.readMcLoad(access)
@@ -335,6 +336,73 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     const { boot, seq, loads, incidents } = read.log
     return { machine: 'model-cycles', supported: true, log: { boot, seq, loads, incidents } }
   })
+  // The Model:Cycles' runtime loader (LINK.md "Loading modules"): one change a trial, read from --elektron-images. The
+  // unit undoes a trial by itself after ten seconds without a link request, so a trial pings every three seconds until
+  // its Keep or Undo. Every exchange goes in turn: a frame's parts from two requests must not interleave.
+  let cyclesChain = Promise.resolve()
+  const cyclesSerial = work => { const run = cyclesChain.then(work, work); cyclesChain = run.catch(() => {}); return run }
+  const cyclesLine = (what, work) => cyclesSerial(() => withCycles(what, async access => {
+    const out = await frontend.withMc(access, 10000, work)
+    if (out === null) throw new Error(noCycles)
+    return out
+  }))
+  const cyclesModules = call => frontend.mcModules(call).catch(error => { if (error instanceof frontend.McRefused && error.status === 2) return 'unsupported'; throw error })
+  let cyclesTrial
+  async function cyclesPackage(change) {
+    const removal = /^remove:([A-Za-z0-9._-]{1,64})$/.exec(change)
+    if (removal) return { module: change, data: frontend.mcRemovalPackage(removal[1]) }
+    if (!options.elektronImages) throw new Error('Give the folder of your runtime packages at startup: --elektron-images DIR.')
+    if (!/^[A-Za-z0-9._-]{1,64}\.mwrm$/.test(change)) throw new Error('Name one runtime package NAME.mwrm in --elektron-images, or remove:NAME.')
+    const data = new Uint8Array(await readFile(join(options.elektronImages, change)))
+    if (data.length < 32 || String.fromCharCode(...data.subarray(0, 4)) !== 'MWRM') throw new Error(change + ' is not a runtime package.')
+    return { module: change, data }
+  }
+  async function cyclesReview(args) {
+    if (cyclesTrial) throw new Error('Finish the current trial first.')
+    if (args.moduleIds.length !== 1) throw new Error('The Model:Cycles takes one change a trial: one package or one remove:NAME.')
+    const change = await cyclesPackage(args.moduleIds[0])
+    const before = await cyclesLine('review Model:Cycles', async call => {
+      const session = await frontend.mcUploadSession(call)
+      if (!session) return null
+      return { base: session.status.base, phase: session.status.phase, active: session.status.active, loader: await cyclesModules(call) }
+    })
+    if (before.phase !== 'normal') throw new Error('The Model:Cycles loader is busy (phase ' + before.phase + '): wait ten seconds and review again.')
+    for (const [id, item] of reviews) if (item.expires < clock()) reviews.delete(id)
+    if (reviews.size >= 10) throw new Error('Finish or expire existing reviews first.')
+    const review = randomUUID()
+    reviews.set(review, { cycles: true, before, change, expires: clock() + 60000 })
+    return { review, expiresInSeconds: 60, machine: 'model-cycles', base: before.base, active: before.active, loader: before.loader,
+      changes: [{ module: change.module, sha256: hash(change.data), bytes: change.data.length, undoAvailable: true }] }
+  }
+  async function cyclesStart(plan) {
+    trialTurn = dependencies.elektronAccess ? null : await unitTurn('device_trial', 10 * 60000) // held until Keep or Undo
+    try {
+      const status = await cyclesLine('trial Model:Cycles', async call => {
+        const session = await frontend.mcUploadSession(call)
+        if (!session) return null
+        if (session.status.base !== plan.before.base || session.status.active !== plan.before.active) throw new Error('The device changed after review; nothing was sent.')
+        return frontend.mcTry(call, plan.change.data)
+      })
+      const id = randomUUID()
+      const ping = setInterval(() => { cyclesLine('keep Model:Cycles trial', call => frontend.mcUploadSession(call)).catch(() => {}) }, 3000)
+      ping.unref?.()
+      cyclesTrial = { id, ping, before: plan.before }
+      return { trial: id, machine: 'model-cycles', state: { phase: status.phase, generation: status.generation, active: status.active } }
+    } finally { if (!cyclesTrial) endTrialTurn() }
+  }
+  async function cyclesFinish(args, keep) {
+    if (!options.allowDeviceWrites || !cyclesTrial || args.trial !== cyclesTrial.id) throw new Error('No matching authorized device trial.')
+    const completed = cyclesTrial
+    clearInterval(completed.ping)
+    try {
+      const after = await cyclesLine((keep ? 'keep' : 'undo') + ' Model:Cycles trial', async call => {
+        const status = await frontend.mcFinish(call, keep)
+        return status && { phase: status.phase, generation: status.generation, active: status.active, loader: await cyclesModules(call) }
+      })
+      if (!keep && after.active !== completed.before.active) throw new Error('Undo did not restore the reviewed set.')
+      return { kept: keep, completed: true, machine: 'model-cycles', ...after }
+    } finally { cyclesTrial = undefined; endTrialTurn() }
+  }
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
     if (unit.getState().status === 'trial') return { state: unit.getState(), before: trial?.before, trial: trial?.id }
@@ -449,6 +517,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return saveSavedBackup(dataDir, { base: after.state.identity.base, active: after.state.active }, snapshots, directory)
     },
     device_review: async args => {
+      if (cyclesSelected()) return cyclesReview(args)
       if (trial) throw new Error('Finish the current trial first.')
       const before = await snapshot(), target = usbTarget('MCP reviewed set', ids(args.moduleIds), before.inventory)
       if (!before.diagnostics) throw new Error('The device does not provide the required self-test status.')
@@ -466,9 +535,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     device_trial: async args => {
       readOnlyRemote()
       if (!options.allowDeviceWrites) throw new Error('Device writes require --allow-device-writes.')
-      if (trial) throw new Error('Finish the current trial first.')
+      if (trial || cyclesTrial) throw new Error('Finish the current trial first.')
       const plan = reviews.get(args.review); reviews.delete(args.review)
       if (!plan || plan.expires < clock()) throw new Error('Review expired; review the connected device again.')
+      if (plan.cycles) return cyclesStart(plan)
       trialTurn = await unitTurn('device_trial', 10 * 60000) // held until Keep, Undo or close; given back if no trial starts
       try {
         const now = await snapshot()
@@ -487,8 +557,8 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         return { trial: trial.id, state: link.getState() }
       } finally { if (!trial) endTrialTurn() }
     },
-    device_keep: async args => finish(args, true),
-    device_undo: async args => finish(args, false),
+    device_keep: async args => cyclesSelected() ? cyclesFinish(args, true) : finish(args, true),
+    device_undo: async args => cyclesSelected() ? cyclesFinish(args, false) : finish(args, false),
     zoom_status: async () => zoomRun('status'),
     zoom_list: async () => zoomRun('list'),
     zoom_backup: async () => zoomRun('backup'),
@@ -598,7 +668,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
-    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); closeZoom() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
+    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); if (cyclesTrial) clearInterval(cyclesTrial.ping) /* the unit undoes it after ten quiet seconds */; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); closeZoom() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }

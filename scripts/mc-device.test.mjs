@@ -1,4 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { spawn, spawnSync } from 'node:child_process'
+import { createInterface } from 'node:readline'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -38,16 +40,26 @@ function logBytes() {
 // A unit with a development base: answers ident with the given set identity, load (0x23) with the given tenths of a
 // percent and counts (link.c CMD_LOAD), and diag (0x22) and mem with a log; without them, as a base before the load
 // probe or the log (status 2, bad request).
-function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null) {
+// With `loader`, the base's own upload transport, controller and runtime loader compiled for the host
+// (base/test_modules.c): up_part (0x31) and up_run (0x32) go to it, mods (0x33) answers an empty pool.
+function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null, loader = null) {
   const input = { id: 'i', name, state: 'connected', onmidimessage: null }
   const fields = [1, 1, 0, 146, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, ...(set ? [set.crc, set.bytes] : [])]
+  const answer = (data, status, reply) => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, status, ...reply, 0xf7]) })
   const output = { id: 'o', name, state: 'connected', send(data) {
     const body = data.slice(8, -1)
+    if (data[7] >= 0x31 && data[7] <= 0x33) {
+      if (!loader) { queueMicrotask(() => answer(data, 2, [])); return }
+      const line = data[7] === 0x31 ? 'P ' + get32(body, 0) + ' ' + Buffer.from(Uint8Array.from(body).subarray(5)).toString('hex') : data[7] === 0x32 ? 'R ' + get32(body, 0) : null
+      if (!line) { queueMicrotask(() => answer(data, 0, pack7(Uint8Array.from([0, 0, 0xfe, 0x60, 0, 0, 0xfe, 0x60, 0, 0, 0, 0, 0, 0, 0, 0, 0x4d, 0x57, 0x49, 0])))); return }
+      loader.ask(line).then(out => answer(data, data[7] === 0x31 ? (Number(out) ? 0 : 4) : out ? 0 : 4, data[7] === 0x31 || !out ? [] : pack7(Uint8Array.from(Buffer.from(out, 'hex')))))
+      return
+    }
     const [status, reply] = data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
       : data[7] === 0x22 ? (log ? [0, [LOG_AT, log.length].flatMap(put32)] : [2, []])
       : data[7] === 0x21 ? (() => { const at = get32(body, 0), n = get32(body, 5); return [0, [...put32(at), ...put32(n), ...pack7(log.subarray(at - LOG_AT, at - LOG_AT + n))]] })()
       : [0, fields.flatMap(put32)]
-    queueMicrotask(() => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, status, ...reply, 0xf7]) }))
+    queueMicrotask(() => answer(data, status, reply))
   } }
   return { inputs: new Map([['i', input]]), outputs: new Map([['o', output]]), onstatechange: null, close() {} }
 }
@@ -104,8 +116,47 @@ describe('the developer MCP’s Model:Cycles identity', () => {
     await service.close(); service = await open(fakeCycles(null))
     expect(await service.call('device_log')).toEqual({ machine: 'model-cycles', supported: false, log: null })
   })
-  it('offers no trial yet', async () => {
-    service = await open(fakeCycles(null), { allowDeviceWrites: true })
-    await expect(service.call('device_review', { moduleIds: [] })).rejects.toThrow(/no runtime loader/)
+  it('reports an older base without the loader, and takes one change a trial', async () => {
+    service = await open(fakeCycles({ crc: 1, bytes: 64 }), { allowDeviceWrites: true })
+    expect((await service.call('device_status')).loader).toBe('unsupported')
+    await expect(service.call('device_review', { moduleIds: [] })).rejects.toThrow(/one change a trial/)
+    await expect(service.call('device_review', { moduleIds: ['../x.mwrm'] })).rejects.toThrow(/NAME.mwrm/)
+    await expect(service.call('device_review', { moduleIds: ['notes.txt'] })).rejects.toThrow(/NAME.mwrm/)
   })
+  // The base's transport, controller and loader on the host (the harness sdk/tests/test_machine_base.py runs): its base
+  // identity is the SHA-256 of the set CRC 0x12345678.
+  const cc = spawnSync('cc', ['--version']).status === 0
+  it.skipIf(!cc)('reviews a package, puts it on trial, undoes it and keeps it, through the base\'s own loader', async () => {
+    const base = join(root, 'sdk/machines/model-cycles/elekloader/base'), rt = join(root, 'sdk/runtime')
+    const exe = join(folder, 'loader')
+    const built = spawnSync('cc', ['-std=c99', '-DMODWERK_HOST', '-DRUNTIME_MODULES=16u', '-DRUNTIME_POOL_BYTES=65536u', '-I', join(rt, 'loader'), '-I', join(rt, 'upload'),
+      join(base, 'test_modules.c'), join(base, 'modules.c'), join(base, 'runtime.c'), join(rt, 'loader/loader.c'), join(rt, 'upload/upload.c'),
+      join(rt, 'upload/wire.c'), join(rt, 'upload/sha256.c'), '-o', exe])
+    expect(built.status, String(built.stderr)).toBe(0)
+    const child = spawn(exe), lines = createInterface({ input: child.stdout }), waiting = []
+    lines.on('line', line => waiting.shift()?.(line))
+    let chain = Promise.resolve()
+    const loader = { ask: line => (chain = chain.then(() => new Promise(resolve => { waiting.push(resolve); child.stdin.write(line + '\n') }))) }
+    try {
+      // ABI 4: a tick hook that returns at once
+      const pkg = Buffer.concat([Buffer.from('MWRM'), Buffer.from([0, 4, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0x59, 0x4c, 0xfd, 0x26]),
+        Buffer.alloc(4), Buffer.from([0x4e, 0x75, 0x4e, 0x71])])
+      await writeFile(join(images, 'frames.mwrm'), pkg)
+      service = await open(fakeCycles({ crc: 0x12345678, bytes: 64 }, undefined, null, null, loader), { allowDeviceWrites: true })
+      expect((await service.call('device_status')).loader).toMatchObject({ free: 65120, active: 0, modules: [] })
+      const review = await service.call('device_review', { moduleIds: ['frames.mwrm'] })
+      expect(review).toMatchObject({ machine: 'model-cycles', changes: [{ module: 'frames.mwrm', bytes: pkg.length, undoAvailable: true }] })
+      expect(review.base).toBe(frontend.mcUploadBase(0x12345678))
+      const trial = await service.call('device_trial', { review: review.review })
+      expect(trial.state.phase).toBe('trial')
+      await expect(service.call('device_trial', { review: review.review })).rejects.toThrow(/current trial/)
+      const undone = await service.call('device_undo', { trial: trial.trial })
+      expect(undone).toMatchObject({ kept: false, completed: true, phase: 'normal', active: review.active })
+      const again = await service.call('device_trial', { review: (await service.call('device_review', { moduleIds: ['frames.mwrm'] })).review })
+      const kept = await service.call('device_keep', { trial: again.trial })
+      expect(kept).toMatchObject({ kept: true, completed: true, phase: 'normal' })
+      expect(kept.active).not.toBe(review.active)
+      await expect(service.call('device_keep', { trial: again.trial })).rejects.toThrow(/No matching/)
+    } finally { child.stdin.end() }
+  }, 30000)
 })
