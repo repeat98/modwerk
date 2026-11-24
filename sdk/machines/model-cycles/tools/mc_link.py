@@ -13,6 +13,7 @@ MKII link's (../analog-rytm-mkii/LINK.md). Nothing here writes flash.
     mc_link.py release          # let go of every key the link holds
     mc_link.py disarm           # no keys or turns from the host until the next boot
     mc_link.py ramboot IMAGE.syx  # upload with stock's OS upgrade, then boot it from RAM: nothing is flashed
+    mc_link.py load               # the audio's share of the CPU: last half second, its dearest block, the dearest since boot
     mc_link.py runid IMAGE.syx    # the set identity ident reports for this image (needs IMAGE.syx.json); no unit
     mc_link.py rundiff IMAGE.syx  # read the running .run block and list each word that differs from the image
 
@@ -24,7 +25,7 @@ import sys
 import time
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'mem': 0x21}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'mem': 0x21, 'load': 0x22}
 STATUS = {0: 'ok', 1: 'not armed', 2: 'bad request', 3: 'busy', 4: 'out of range', 5: 'a person is at the unit'}
 IDENT = ['link version', 'requests received', 'requests dropped', 'ticks', 'port', 'replies sent', 'send failures',
          'armed', 'person at unit', 'person presses', 'posted', 'refused', 'RAM boot mailbox', 'RAM boot status',
@@ -62,6 +63,7 @@ def main():
     ap.add_argument('--port', default='Model:Cycles', help='MIDI port name part (default: Model:Cycles)')
     sub = ap.add_subparsers(dest='cmd', required=True)
     sub.add_parser('ident')
+    sub.add_parser('load')
     s = sub.add_parser('mem')
     s.add_argument('addr', type=lambda v: int(v, 0))
     s.add_argument('count', type=int)
@@ -129,6 +131,13 @@ def run(mido, in_name, out_name, cmd, body, a):
                 sys.exit('unit: ' + STATUS.get(status, 'status %d' % status))
             if cmd in ('key', 'enc', 'release', 'disarm', 'ramboot'):
                 print('ok')
+            elif cmd == 'load':
+                v = [get32(p[5 * i:5 * i + 5]) for i in range(5)]
+                print('last 0.5 s      %d.%d %%' % (v[0] // 10, v[0] % 10))
+                print('dearest block   %d.%d %%' % (v[1] // 10, v[1] % 10))
+                print('dearest since boot %d.%d %%' % (v[2] // 10, v[2] % 10))
+                print('windows %d, blocks %d' % (v[3], v[4]))
+                return v
             elif cmd == 'ident':
                 for i, name in enumerate(IDENT[:len(p) // 5]):  # an older base sends fewer fields
                     v = get32(p[5 * i:5 * i + 5])

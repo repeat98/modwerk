@@ -1066,7 +1066,7 @@
       "flash": "open",
       "loader": "open",
       "status": "open",
-      "diagnostics": "open",
+      "diagnostics": "started",
       "tools": "open"
     },
     "art": {

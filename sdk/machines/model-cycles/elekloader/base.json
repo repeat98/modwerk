@@ -46,10 +46,12 @@
     }
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), and a RAM boot of an uploaded image (the ev_boot gate). Any USB host can drive it: development bases only.",
+    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), a RAM boot of an uploaded image (the ev_boot gate), and the audio load (base/load.c, load.s: a probe around the audio interrupt's call of the audio function). Any USB host can drive it: development bases only.",
     "sources": [
       "../base/link.c",
-      "../base/link.s"
+      "../base/link.s",
+      "../base/load.c",
+      "../base/load.s"
     ],
     "sites": [
       {
@@ -65,6 +67,13 @@
         "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
         "op": "jmp",
         "target": "mw_link_held"
+      },
+      {
+        "addr": "0x40059382",
+        "len": 6,
+        "stockSha256": "bc2910c59a0d8e6999ccd601395bca9fd72e3e23d992899f38377b3b07ac2f81",
+        "op": "jsr",
+        "target": "mw_load_probe"
       }
     ],
     "cflags": [
@@ -75,7 +84,9 @@
       "-DKEY_BITS_AT=0x40f95744"
     ],
     "defsym": {
-      "mw_link_router_resume": "0x400812fe"
+      "mw_link_router_resume": "0x400812fe",
+      "LOAD_TIMER": "0xfc07000c",
+      "LOAD_AUDIO_FN": "0x4005979e"
     },
     "subscribe": [
       {

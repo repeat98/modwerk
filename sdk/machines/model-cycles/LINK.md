@@ -52,6 +52,7 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `release` | 0x12 | lets go of every key the link holds |
 | `ramboot IMAGE.syx` | 0x14 | after stock's OS upgrade has taken the image: checks it, resets and boots it from RAM (below) |
 | `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `load` | 0x22 | the audio's share of the CPU over the last half second, the window's dearest block and the dearest block since boot (tenths of a percent), windows and blocks counted |
 
 The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
@@ -99,6 +100,8 @@ image must carry a development base: only its `ev_boot` handler boots from RAM.
   port)`, which writes 144-byte parts. Its ports: 1 the MIDI setting's choice, 2 USB, 3 DIN, 4 both. Do not run
   Transfer at the same time: a reply could land between the parts of one of stock's.
 
+The audio load (`base/load.c`, `load.s`, development bases): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer.
+
 ## Evidence
 
 On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a Mac over USB:
@@ -116,6 +119,7 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | `924efa4c…` (dev base `cef3a17a`, the set identity, with the TRIG 16 test module) | `ident` after a fresh flash, 24 November 2026 | set CRC 4076761892 (`0xf2fe7324`), 5764 bytes, as `runid` computes; `rundiff`: the running block byte for byte the image's |
 | the same, flashed again later | `ident` after the flash, then after a power cycle | set CRC `0xf2fe7324`, 5764 bytes, both times |
 | `bf6c9ff8…` (a dev base that also kept a copy of the block as the gate saw it; not on this branch) | `ident` after the flash and after a power cycle; `rundiff --at` the copy | the CRC at boot, the CRC at the request and `runid` agree (`0xadac0c2e`, 5916 bytes); the copy matches the image byte for byte |
+| `0b9fe54c…` (dev base `4cd5cdd9`, the load probe) | `load` four times over a minute, a pattern stopped and playing | 73.0 to 74.7 % a half second, the dearest block 79.1 to 80.9 %, 84.9 % since boot, the same stopped and playing; the unit sounds as before (tester's report) |
 
 ## Not tested
 

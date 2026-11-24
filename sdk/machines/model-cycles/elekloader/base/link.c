@@ -59,6 +59,7 @@
 #define KEY_DOWN 1                      // ev_key flags bit 0: down
 
 #define CMD_IDENT 0x01
+#define CMD_LOAD 0x22
 #define CMD_DISARM 0x02
 #define CMD_KEY 0x10
 #define CMD_ENC 0x11
@@ -116,6 +117,9 @@ static uint32_t ticks, sent_count, send_fails, last_port;
 // The set's identity, taken at boot: the CRC32 of the .run block (the base and every linked module, as the linker
 // placed them) before any handler has run, and its length. A host computes the same from a built image.
 static uint32_t run_crc, run_bytes;
+// load.c: the audio load
+extern uint32_t mw_load_avg, mw_load_wmax, mw_load_peak, mw_load_windows, mw_load_blocks;
+extern uint32_t mw_load_tenths(uint32_t ticks);
 extern uint8_t __run_start[], __run_words[];
 
 // ---- arm, the person at the unit, the posted events ---------------------------
@@ -357,6 +361,15 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, MAILBOX[4]);
         p = put32(p, run_crc);
         p = put32(p, run_bytes);
+        send(p, port);
+        return;
+    case CMD_LOAD:                      // the last window's share, its dearest block, the dearest since boot
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, mw_load_avg);
+        p = put32(p, mw_load_tenths(mw_load_wmax));
+        p = put32(p, mw_load_tenths(mw_load_peak));
+        p = put32(p, mw_load_windows);
+        p = put32(p, mw_load_blocks);
         send(p, port);
         return;
     case CMD_RAMBOOT: {

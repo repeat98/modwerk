@@ -29,7 +29,8 @@
   },
   "stack": {
     "base": "started",
-    "link": "started"
+    "link": "started",
+    "diagnostics": "started"
   },
   "research": [
     {
