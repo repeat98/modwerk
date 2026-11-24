@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: MIT
  * SYNTIZ's oscillators (engine.h). Band-limited saws by polyBLEP; a pulse is the difference of two
  * saws a width apart, a square sub the same at half width; the sines are a corrected parabola, so
- * no table is needed. Controls become increments and gains once per block; the per-sample loop
- * only adds, shifts and multiplies values below 2^16. */
+ * no table is needed. Controls become increments and gains when they change (wave_prepare); a block runs one
+ * short loop per oscillator, then one for the output stage, so each keeps its state in registers. The per-sample
+ * loops only add, shift and multiply values below 2^16. */
 #include "engine.h"
 #include "tables.h"
 
@@ -50,19 +51,22 @@ void wave_note(Wave *w, const WaveControls *c)
 }
 
 /* One saw sample at phase p, rising from -32768 to 32767 and falling at the wrap, with the polyBLEP
- * residual over the sample on each side of the fall. inc >> 15 is at least 1 (wave_render). The
+ * residual over the sample on each side of the fall. inc >> 15 is at least 1 and inc below 2^31 (only an
+ * audible increment reaches it), so p + inc < 2 inc says in one compare that p < inc or p > ~inc. The
  * divide runs on two samples a period only. */
 static inline int32_t saw(uint32_t p, uint32_t inc)
 {
     int32_t s = (int32_t)(p ^ 0x80000000u) >> 16;
-    if (p < inc) {
-        uint32_t u = p / (inc >> 15);
-        int32_t t = u > 32767u ? 32767 : (int32_t)u; /* inc >> 15 rounds down: very low notes overshoot */
-        s -= 2 * t - ((t * t) >> 15) - 32768;
-    } else if (p > ~inc) {
-        uint32_t u = ~p / (inc >> 15);
-        int32_t t = u > 32767u ? 32767 : (int32_t)u;
-        s -= ((t * t) >> 15) - 2 * t + 32768;
+    if (p + inc < 2u * inc) {
+        if (p < inc) {
+            uint32_t u = p / (inc >> 15);
+            int32_t t = u > 32767u ? 32767 : (int32_t)u; /* inc >> 15 rounds down: very low notes overshoot */
+            s -= 2 * t - ((t * t) >> 15) - 32768;
+        } else {
+            uint32_t u = ~p / (inc >> 15);
+            int32_t t = u > 32767u ? 32767 : (int32_t)u;
+            s -= ((t * t) >> 15) - 2 * t + 32768;
+        }
     }
     return s;
 }
@@ -110,42 +114,33 @@ static inline int32_t antiderivative(int32_t x)
     int32_t x2 = (ax * ax) >> 13;
     return ((ax * ax) >> 3) - (int32_t)((((uint32_t)(x2 * x2) >> 10) * 9709u) >> 10); /* x^4 / 108 in Q26 */
 }
-/* The output stage's state, copied in for a block so it can live in registers. */
-typedef struct { int32_t sx, sf, dcx, dcy, ex; } Out;
-static inline Out out_load(const Wave *w) { Out o = { w->sx, w->sf, w->dcx, w->dcy, w->ex }; return o; }
-static inline void out_store(Wave *w, const Out *o)
+/* The output stage over a block, in place: lr[2 k] holds the sum, then lr[2 k] and lr[2 k + 1] the sample. The mean
+ * over a sample is a gentle low-pass (-2.4 dB at 10 kHz, -5.8 dB at 15 kHz on a clean signal). A first-order emphasis
+ * before the curve, x + 0.3 (x - x[-1]), gives that treble back (within 0.2 dB to 10 kHz) and the curve still bounds
+ * the peaks (the author's choice B2, 27 Oct 2026). */
+static __attribute__((noinline)) void finish(Wave *w, uint32_t *lr, unsigned n)
 {
-    w->sx = o->sx, w->sf = o->sf, w->dcx = o->dcx, w->dcy = o->dcy, w->ex = o->ex;
-}
-/* The mean over a sample is a gentle low-pass (-2.4 dB at 10 kHz, -5.8 dB at 15 kHz on a clean signal).
- * A first-order emphasis before the curve, x + 0.3 (x - x[-1]), gives that treble back (within 0.2 dB
- * to 10 kHz) and the curve still bounds the peaks (the author's choice B2, 27 Oct 2026). */
-static inline int32_t shape(Out *o, int32_t x)
-{
-    if (x > 131071) x = 131071; else if (x < -131071) x = -131071;
-    int32_t x13 = x >> 2;
-    int32_t e = x13 + (((x13 - o->ex) * 9830) >> 15);
-    o->ex = x13, x13 = e > 40000 ? 40000 : e < -40000 ? -40000 : e;
-    int32_t f = antiderivative(x13), d = x13 - o->sx, y;
-    if (d > 16 || d < -16) y = ((f - o->sf) * 8 / d) * 2;  /* Q27 / Q13 = Q14 */
-    else y = cubic(((x13 + o->sx) / 2) * 4);               /* too close to divide: the curve at the midpoint */
-    o->sx = x13, o->sf = f;
-    return y;
-}
-
-static inline int16_t finish(Out *o, int32_t acc, int32_t g)
-{
-    int32_t x = shape(o, ((acc >> 2) * (g >> 4)) >> 9);
-    o->dcy += (x - o->dcx) * 256 - (o->dcy >> 10), o->dcx = x;
-    x = o->dcy >> 8;
-    return (int16_t)(x > 32767 ? 32767 : x < -32768 ? -32768 : x);
+    int32_t g4 = w->g4, sx = w->sx, sf = w->sf, ex = w->ex, dcx = w->dcx, dcy = w->dcy;
+    for (unsigned k = 0; k < n; ++k) {
+        int32_t x = (((int32_t)lr[2 * k] >> 2) * g4) >> 9;
+        if (x > 131071) x = 131071; else if (x < -131071) x = -131071;
+        int32_t x13 = x >> 2;
+        int32_t e = x13 + (((x13 - ex) * 9830) >> 15);
+        ex = x13, x13 = e > 40000 ? 40000 : e < -40000 ? -40000 : e;
+        int32_t f = antiderivative(x13), d = x13 - sx, y;
+        if (d > 16 || d < -16) y = ((f - sf) * 8 / d) * 2;  /* Q27 / Q13 = Q14 */
+        else y = cubic(((x13 + sx) / 2) * 4);               /* too close to divide: the curve at the midpoint */
+        sx = x13, sf = f;
+        dcy += (y - dcx) * 256 - (dcy >> 10), dcx = y;
+        y = dcy >> 8;
+        lr[2 * k] = lr[2 * k + 1] = (uint32_t)(uint16_t)(y > 32767 ? 32767 : y < -32768 ? -32768 : y) << 16;
+    }
+    w->sx = sx, w->sf = sf, w->ex = ex, w->dcx = dcx, w->dcy = dcy;
 }
 
-/* The subs, shared by every model: a square an octave down (two saws half a turn apart) and a sine
- * two octaves down. */
-typedef struct { uint32_t i1, i2; int32_t g1, g2; } Subs;
-/* A sub below 25 Hz is not heard and only spends headroom (the author, 27 Oct 2026): silent there, fading in
- * up to 30 Hz so a glide or an LFO crossing it does not click. */
+/* The subs, shared by every model but MORPH: a square an octave down (two saws half a turn apart) and a sine
+ * two octaves down. A sub below 25 Hz is not heard and only spends headroom (the author, 27 Oct 2026): silent
+ * there, fading in up to 30 Hz so a glide or an LFO crossing it does not click. */
 #define SUB_LO 2434789u                 /* 25 Hz */
 #define SUB_HI 2921746u                 /* 30 Hz */
 static int32_t heard(int32_t g, uint32_t i)
@@ -154,45 +149,62 @@ static int32_t heard(int32_t g, uint32_t i)
     if (i <= SUB_LO) return 0;
     return (int32_t)((uint32_t)g * ((i - SUB_LO) >> 5) / ((SUB_HI - SUB_LO) >> 5));
 }
-static Subs subs_of(const WaveControls *c, uint32_t inc)
+static void subs_of(Wave *w, const WaveControls *c, uint32_t inc)
 {
-    Subs s = { inc >> 1, inc >> 2, 0, 0 };
-    s.g1 = heard(c->sub * 258, s.i1), s.g2 = heard(c->sub2 * 258, s.i2);
-    return s;
+    w->si1 = inc >> 1, w->si2 = inc >> 2;
+    w->sg1 = heard(c->sub * 258, w->si1), w->sg2 = heard(c->sub2 * 258, w->si2);
 }
-static inline int32_t subs_tick(uint32_t q[2], const Subs *s) /* q: the block's copies of sub, sub2 */
+/* The oscillators' passes sum into acc[2 k], the L long of each sample (wave_play). The subs add theirs; a silent
+ * one only moves its phase on. */
+static __attribute__((noinline)) void subs_add(Wave *w, int32_t *acc, unsigned n)
 {
-    int32_t a = 0;
-    if (s->g1) a += (s->g1 * ((saw(q[0], s->i1) - saw(q[0] + 0x80000000u, s->i1)) >> 1)) >> 15;
-    if (s->g2) a += (s->g2 * sine(q[1])) >> 15;
-    q[0] += s->i1, q[1] += s->i2;
-    return a;
+    uint32_t q = w->sub, i = w->si1;
+    int32_t g = w->sg1;
+    if (g) for (unsigned k = 0; k < n; ++k, q += i) acc[2 * k] += (g * ((saw(q, i) - saw(q + 0x80000000u, i)) >> 1)) >> 15;
+    else q += i * n;
+    w->sub = q;
+    q = w->sub2, i = w->si2, g = w->sg2;
+    if (g) for (unsigned k = 0; k < n; ++k, q += i) acc[2 * k] += (g * sine(q)) >> 15;
+    else q += i * n;
+    w->sub2 = q;
+}
+static inline void subs(Wave *w, int32_t *acc, unsigned n)
+{
+    if (w->sg1 | w->sg2) subs_add(w, acc, n);
+    else w->sub += w->si1 * n, w->sub2 += w->si2 * n;
 }
 
 /* The unison pairs' detune: a frequency ratio 1 +/- d, d = 0.0595 (a semitone) at 127, quadratic. */
 static inline uint32_t detune_q16(unsigned det) { return (det * det * 3962u) >> 14; }
 
-static void render_saw(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
+static void prepare_saw(Wave *w, const WaveControls *c, uint32_t inc)
 {
     uint32_t d = detune_q16(c->det), di = scale(inc, d), dw = scale(inc, 2u * d);
-    uint32_t i1 = inc + di, i2 = inc - di, i3 = inc + dw, i4 = inc - dw;
-    int32_t gu = c->uni * 181, gw = c->wide * 181; /* 0.7 each at 127 */
-    if (!audible(i1) || !audible(i2)) gu = 0;
-    if (!audible(i3) || !audible(i4)) gw = 0;
-    Subs s = subs_of(c, inc);
-    int32_t g = gain_of(c->drive);
-    uint32_t p0 = w->ph[0], p1 = w->ph[1], p2 = w->ph[2], p3 = w->ph[3], p4 = w->ph[4], q[2] = { w->sub, w->sub2 };
-    Out o = out_load(w);
-    for (unsigned k = 0; k < n; ++k) {
-        int32_t acc = saw(p0, inc);
-        p0 += inc;
-        if (gu) acc += (gu * ((saw(p1, i1) + saw(p2, i2)) >> 1)) >> 14, p1 += i1, p2 += i2;
-        if (gw) acc += (gw * ((saw(p3, i3) + saw(p4, i4)) >> 1)) >> 14, p3 += i3, p4 += i4;
-        acc += subs_tick(q, &s);
-        out[k] = finish(&o, acc, g);
-    }
-    w->ph[0] = p0, w->ph[1] = p1, w->ph[2] = p2, w->ph[3] = p3, w->ph[4] = p4, w->sub = q[0], w->sub2 = q[1];
-    out_store(w, &o);
+    w->i[0] = inc + di, w->i[1] = inc - di, w->i[2] = inc + dw, w->i[3] = inc - dw;
+    w->ga = c->uni * 181, w->gb = c->wide * 181; /* 0.7 each at 127 */
+    if (!audible(w->i[0]) || !audible(w->i[1])) w->ga = 0;
+    if (!audible(w->i[2]) || !audible(w->i[3])) w->gb = 0;
+}
+/* A saw a block: acc[2 k] set from phase *ph. */
+static __attribute__((noinline)) void saw_set(int32_t *acc, uint32_t *ph, uint32_t inc, unsigned n)
+{
+    uint32_t p = *ph;
+    for (unsigned k = 0; k < n; ++k, p += inc) acc[2 * k] = saw(p, inc);
+    *ph = p;
+}
+/* A detuned pair, ph[0] at ia and ph[1] at ib, added at gain g. */
+static __attribute__((noinline)) void saw_pair(int32_t *acc, uint32_t *ph, uint32_t ia, uint32_t ib, int32_t g, unsigned n)
+{
+    uint32_t pa = ph[0], pb = ph[1];
+    for (unsigned k = 0; k < n; ++k, pa += ia, pb += ib) acc[2 * k] += (g * ((saw(pa, ia) + saw(pb, ib)) >> 1)) >> 14;
+    ph[0] = pa, ph[1] = pb;
+}
+static void play_saw(Wave *w, int32_t *acc, unsigned n)
+{
+    saw_set(acc, &w->ph[0], w->inc, n);
+    if (w->ga) saw_pair(acc, &w->ph[1], w->i[0], w->i[1], w->ga, n);
+    if (w->gb) saw_pair(acc, &w->ph[3], w->i[2], w->i[3], w->gb, n);
+    subs(w, acc, n);
 }
 
 /* PULSE's width as a turn: PW 64 is a square, 0 and 127 a 3 % pulse; PWM sweeps a triangle of
@@ -206,127 +218,138 @@ static uint32_t width(Wave *w, const WaveControls *c, unsigned n)
     return (uint32_t)q << 17;
 }
 
-static void render_pulse(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
+static void prepare_pulse(Wave *w, const WaveControls *c, uint32_t inc)
 {
-    uint32_t d = detune_q16(c->det) >> 1, di = scale(inc, d), wd = width(w, c, n);
-    uint32_t i1 = inc + di, i2 = inc - di;
-    int32_t gu = c->uni * 181;
-    if (!audible(i1) || !audible(i2)) gu = 0;
-    Subs s = subs_of(c, inc);
-    int32_t g = gain_of(c->drive);
-    uint32_t p0 = w->ph[0], p1 = w->ph[1], p2 = w->ph[2], q[2] = { w->sub, w->sub2 };
-    Out o = out_load(w);
-    for (unsigned k = 0; k < n; ++k) {
-        int32_t acc = (saw(p0, inc) - saw(p0 + wd, inc)) >> 1;
-        p0 += inc;
-        if (gu) acc += (gu * ((saw(p1, i1) - saw(p1 + wd, i1) + saw(p2, i2) - saw(p2 + wd, i2)) >> 2)) >> 14,
-            p1 += i1, p2 += i2;
-        acc += subs_tick(q, &s);
-        out[k] = finish(&o, acc, g);
+    uint32_t d = detune_q16(c->det) >> 1, di = scale(inc, d);
+    w->i[0] = inc + di, w->i[1] = inc - di;
+    w->ga = c->uni * 181;
+    if (!audible(w->i[0]) || !audible(w->i[1])) w->ga = 0;
+}
+static void play_pulse(Wave *w, const WaveControls *c, int32_t *acc, unsigned n)
+{
+    uint32_t wd = width(w, c, n), inc = w->inc, p = w->ph[0];
+    for (unsigned k = 0; k < n; ++k, p += inc) acc[2 * k] = (saw(p, inc) - saw(p + wd, inc)) >> 1;
+    w->ph[0] = p;
+    if (w->ga) {
+        uint32_t pa = w->ph[1], pb = w->ph[2], ia = w->i[0], ib = w->i[1];
+        int32_t g = w->ga;
+        for (unsigned k = 0; k < n; ++k, pa += ia, pb += ib)
+            acc[2 * k] += (g * ((saw(pa, ia) - saw(pa + wd, ia) + saw(pb, ib) - saw(pb + wd, ib)) >> 2)) >> 14;
+        w->ph[1] = pa, w->ph[2] = pb;
     }
-    w->ph[0] = p0, w->ph[1] = p1, w->ph[2] = p2, w->sub = q[0], w->sub2 = q[1];
-    out_store(w, &o);
+    subs(w, acc, n);
 }
 
 /* ENS: up to four notes of one shape (a saw at 0, a square at 64, a 5 % pulse at 127: the second
  * saw fades in, then moves), then a dry voice and two taps of a delay swept in quadrature by a
  * 0.2 Hz sine, 11 ms +/- 7.7 ms (about 17 cents of drift at the sweep's fastest).
- * CHOIR: the same with one of TABLE's cycles (tab) for the shape, read as TABLE reads it. */
-static inline __attribute__((always_inline)) void ensemble(Wave *w, const WaveControls *c, uint32_t inc,
-                                                           int16_t *out, unsigned n, const int16_t *tab)
+ * CHOIR: the same with one of TABLE's cycles for the shape, read as TABLE reads it. */
+static void prepare_ens(Wave *w, const WaveControls *c, uint32_t inc, unsigned table)
 {
-    uint32_t i[4] = { inc }, off; unsigned voices = 1;
+    unsigned voices = 1;
+    w->i[0] = inc;
     for (unsigned k = 0; k < 3u; ++k) {
         int s = (int)c->note[k] - 64;
         if (!s) continue;
         if (s < -24) s = -24; else if (s > 24) s = 24;
         uint32_t x = scale(inc, wave_ratio[s + 24]);
-        if (audible(x)) i[voices++] = x;
+        if (audible(x)) w->i[voices++] = x;
     }
-    int32_t kb = tab ? 0 : c->pw < 64u ? c->pw * 512 : 32767;
-    off = c->pw < 64u ? 0x80000000u : 0x80000000u - (uint32_t)(c->pw - 64u) * 30678337u;
+    int32_t kb = table ? 0 : c->pw < 64u ? c->pw * 512 : 32767;
+    w->off = c->pw < 64u ? 0x80000000u : 0x80000000u - (uint32_t)(c->pw - 64u) * 30678337u;
     int32_t gv = voices > 1u ? 22938 : 32767; /* 0.7 a note in a chord */
-    int32_t gn = (int32_t)(((uint32_t)gv << 15) / (32768u + (uint32_t)kb)); /* a note's peak is 1 + kb */
-    Subs s = subs_of(c, inc);
-    int32_t g = gain_of(c->drive);
+    w->ga = (int32_t)(((uint32_t)gv << 15) / (32768u + (uint32_t)kb)); /* a note's peak is 1 + kb */
+    w->gb = kb, w->voices = (uint8_t)voices;
+    w->gd = 32767 - c->chor * 103, w->gt = c->chor * 90; /* at 127: 0.6 dry, 0.35 a tap */
+}
+/* One note of ENS added to acc[2 k]: a saw, less kb of a second one off a turn behind. */
+static __attribute__((noinline)) void ens_note(int32_t *acc, uint32_t *ph, uint32_t i, int32_t gn, int32_t kb, uint32_t off,
+                                               unsigned n)
+{
+    uint32_t p = *ph;
+    for (unsigned k = 0; k < n; ++k, p += i) {
+        int32_t a = saw(p, i);
+        if (kb) a -= (kb * saw(p + off, i)) >> 15;
+        acc[2 * k] += (gn * (a >> 1)) >> 14;
+    }
+    *ph = p;
+}
+/* One note of CHOIR: its cycle, read as TABLE reads it. */
+static __attribute__((noinline)) void choir_note(int32_t *acc, uint32_t *ph, uint32_t i, int32_t gn, const int16_t *tab,
+                                                 unsigned n)
+{
+    uint32_t p = *ph;
+    for (unsigned k = 0; k < n; ++k, p += i) acc[2 * k] += (gn * ((tab[p >> 23] * 16) >> 1)) >> 14;
+    *ph = p;
+}
+static void play_ens(Wave *w, const WaveControls *c, int32_t *acc, unsigned n)
+{
+    const int16_t *tab = c->model == WAVE_CHOIR ? wave_tables[c->table >> 2] : 0;
+    for (unsigned k = 0; k < n; ++k) acc[2 * k] = 0;
+    for (unsigned v = 0; v < w->voices; ++v)
+        if (tab) choir_note(acc, &w->ph[v], w->i[v], w->ga, tab, n);
+        else ens_note(acc, &w->ph[v], w->i[v], w->ga, w->gb, w->off, n);
+    subs(w, acc, n);
+}
+/* The dry voice lr[0..2n) through the chorus, in place. The taps are at least 145 samples back, so they read no sample
+ * of this block. */
+static __attribute__((noinline)) void chorus(Wave *w, uint32_t *lr, unsigned n)
+{
     /* The taps, held for the block: Q8 samples. */
     int32_t sa = sine(w->lfo), sb = sine(w->lfo + 0x40000000u);
     uint32_t t1 = (uint32_t)(485 * 256 + ((340 * 256 / 2) * sa >> 14));
     uint32_t t2 = (uint32_t)(485 * 256 + ((340 * 256 / 2) * sb >> 14));
     w->lfo += 19478u * n;              /* 0.2 Hz */
-    int32_t gd = 32767 - c->chor * 103, gt = c->chor * 90; /* at 127: 0.6 dry, 0.35 a tap */
-    uint32_t f1 = t1 & 255u, f2 = t2 & 255u, m = WAVE_DELAY - 1u, d1 = t1 >> 8, d2 = t2 >> 8;
-    uint32_t p[4] = { w->ph[0], w->ph[1], w->ph[2], w->ph[3] }, q[2] = { w->sub, w->sub2 }, at = w->write;
+    int32_t gd = w->gd, gt = w->gt;
+    uint32_t f1 = t1 & 255u, f2 = t2 & 255u, m = WAVE_DELAY - 1u, d1 = t1 >> 8, d2 = t2 >> 8, at = w->write;
     int16_t *line = w->line;
-    Out o = out_load(w);
-    for (unsigned k = 0; k < n; ++k) {
-        int32_t acc = 0;
-        for (unsigned v = 0; v < voices; ++v) {
-            int32_t a;
-            if (tab) a = tab[p[v] >> 23] * 16;
-            else {
-                a = saw(p[v], i[v]);
-                if (kb) a -= (kb * saw(p[v] + off, i[v])) >> 15;
-            }
-            acc += (gn * (a >> 1)) >> 14;
-            p[v] += i[v];
-        }
-        acc += subs_tick(q, &s);
-        int32_t dry = finish(&o, acc, g);
+    for (unsigned k = 0; k < n; ++k, ++at) {
+        int32_t dry = (int32_t)lr[2 * k] >> 16;
         line[at & m] = (int16_t)dry;
         uint32_t r1 = at - d1, r2 = at - d2;
         int32_t a1 = line[r1 & m], b1 = line[(r1 - 1u) & m];
         int32_t a2 = line[r2 & m], b2 = line[(r2 - 1u) & m];
         int32_t wet = a1 + (((b1 - a1) * (int32_t)f1) >> 8) + a2 + (((b2 - a2) * (int32_t)f2) >> 8);
         int32_t y = ((gd * dry) >> 15) + ((gt * wet) >> 15); /* each product below 2^31, not their sum */
-        out[k] = (int16_t)(y > 32767 ? 32767 : y < -32768 ? -32768 : y);
-        ++at;
+        lr[2 * k] = lr[2 * k + 1] = (uint32_t)(uint16_t)(y > 32767 ? 32767 : y < -32768 ? -32768 : y) << 16;
     }
-    for (unsigned v = 0; v < 4u; ++v) w->ph[v] = p[v];
-    w->sub = q[0], w->sub2 = q[1], w->write = at;
-    out_store(w, &o);
-}
-static void render_ens(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
-{
-    ensemble(w, c, inc, out, n, 0);
-}
-static void render_choir(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
-{
-    ensemble(w, c, inc, out, n, wave_tables[c->table >> 2]);
+    w->write = at;
 }
 
 /* TABLE: one of 32 single cycles of 512 points and 12 bits (tables.h), read without interpolation or
  * band-limiting, so that high notes fold back as the original's do: that grain is the model's character.
  * MORF crossfades toward the next table (MSWP sweeps it with a triangle instead). SYNC replaces the
  * cycle by one running at 1 to 8 times the note and restarted at each of the note's periods (hard sync). */
-static void render_table(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
+static void prepare_table(Wave *w, const WaveControls *c, uint32_t inc)
+{
+    w->ga = c->morph * 258;
+    uint32_t si = c->sync ? scale(inc, 65536u + (uint32_t)c->sync * c->sync * 28u) : inc; /* 1x to 7.9x */
+    w->i[0] = audible(si) ? si : inc;
+}
+static void play_table(Wave *w, const WaveControls *c, int32_t *acc, unsigned n)
 {
     unsigned t = c->table >> 2;
     const int16_t *ta = wave_tables[t], *tb = wave_tables[(t + 1u) & (WAVE_TABLES - 1u)];
-    int32_t m;
+    int32_t m = w->ga;
     if (c->msweep) {
         int32_t x = (int32_t)w->sweep >> 15;
         m = x < 0 ? -x : x;                                   /* 0..65536: a triangle */
         m = m > 32767 ? 32767 : m;
         w->sweep += c->msweep * 3896u * n;
-    } else m = c->morph * 258;
-    uint32_t si = c->sync ? scale(inc, 65536u + (uint32_t)c->sync * c->sync * 28u) : inc; /* 1x to 7.9x */
-    if (!audible(si)) si = inc;
-    Subs s = subs_of(c, inc);
-    int32_t g = gain_of(c->drive);
-    uint32_t pm = w->ph[0], ps = w->ph[1], q[2] = { w->sub, w->sub2 };
-    Out o = out_load(w);
-    for (unsigned k = 0; k < n; ++k) {
-        unsigned i = (c->sync ? ps : pm) >> 23;
-        int32_t a = ta[i], v = a + (((tb[i] - a) * m) >> 15);   /* 12 bits */
-        int32_t acc = v * 16 + subs_tick(q, &s);
-        uint32_t next = pm + inc;
-        ps = next < pm ? 0u : ps + si;                          /* the note's period restarts the synced cycle */
-        pm = next;
-        out[k] = finish(&o, acc, g);
     }
-    w->ph[0] = pm, w->ph[1] = ps, w->sub = q[0], w->sub2 = q[1];
-    out_store(w, &o);
+    uint32_t pm = w->ph[0], ps = w->ph[1], inc = w->inc, si = w->i[0];
+    unsigned sync = c->sync;
+    for (unsigned k = 0; k < n; ++k) {
+        unsigned i = (sync ? ps : pm) >> 23;
+        int32_t v = ta[i];
+        if (m) v += ((tb[i] - v) * m) >> 15;                  /* 12 bits */
+        acc[2 * k] = v * 16;
+        uint32_t next = pm + inc;
+        ps = next < pm ? 0u : ps + si;                        /* the note's period restarts the synced cycle */
+        pm = next;
+    }
+    w->ph[0] = pm, w->ph[1] = ps;
+    subs(w, acc, n);
 }
 
 /* MORPH's crossfade step a sample, Q24: 5 ms at 1 to 2 s at 127, exponential (2^(8.64 v / 127), the fraction's
@@ -353,16 +376,9 @@ static inline int32_t crush(int32_t s, const Crush *r)
 /* MORPH: two of TABLE's cycles mixed by MIX, the second WID semitones above the note (in phase with the first
  * while WID is 0), each at its own resolution. Changing either cycle crossfades from the pair that played over
  * TIME (a change during a crossfade starts from the pair last chosen). No subs: its two pages are full. */
-static void render_morph(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
+static void prepare_morph(Wave *w, const WaveControls *c, uint32_t inc)
 {
-    unsigned t1 = c->table >> 2, t2 = c->wav2 >> 2;
-    if (!w->armed) w->ta = (uint8_t)t1, w->tb = (uint8_t)t2, w->armed = 1, w->fade = 0;
-    if (t1 != w->ta || t2 != w->tb) {
-        if (c->fade) w->fa = w->ta, w->fb = w->tb, w->fade = 1u << 24;
-        w->ta = (uint8_t)t1, w->tb = (uint8_t)t2;
-    }
-    const int16_t *a = wave_tables[t1], *b = wave_tables[t2], *oa = wave_tables[w->fa], *ob = wave_tables[w->fb];
-    uint32_t f = w->fade, step = f ? fade_step(c->fade) : 0, i2 = inc;
+    uint32_t i2 = inc;
     int32_t m = c->mix + (c->mix >> 6);                         /* 0..128 */
     if (c->wid) {
         unsigned s8 = (c->wid * c->wid * 390u) >> 10, s = s8 >> 8; /* 24 (v / 127)^2 semitones, Q8 */
@@ -372,9 +388,22 @@ static void render_morph(Wave *w, const WaveControls *c, uint32_t inc, int16_t *
         if (!audible(i2)) m = 0;                                /* the second cycle past Nyquist: the first alone */
     }
     Crush k1 = crush_of(c->bit1), k2 = crush_of(c->bit2);
-    int32_t g = gain_of(c->drive);
+    w->i[0] = i2, w->ga = m, w->off = fade_step(c->fade);
+    w->sh1 = (uint8_t)k1.shift, w->gd = k1.k, w->sh2 = (uint8_t)k2.shift, w->gt = k2.k;
+}
+static void play_morph(Wave *w, const WaveControls *c, int32_t *acc, unsigned n)
+{
+    unsigned t1 = c->table >> 2, t2 = c->wav2 >> 2;
+    if (!w->armed) w->ta = (uint8_t)t1, w->tb = (uint8_t)t2, w->armed = 1, w->fade = 0;
+    if (t1 != w->ta || t2 != w->tb) {
+        if (c->fade) w->fa = w->ta, w->fb = w->tb, w->fade = 1u << 24;
+        w->ta = (uint8_t)t1, w->tb = (uint8_t)t2;
+    }
+    const int16_t *a = wave_tables[t1], *b = wave_tables[t2], *oa = wave_tables[w->fa], *ob = wave_tables[w->fb];
+    uint32_t f = w->fade, step = f ? w->off : 0, inc = w->inc, i2 = w->i[0];
+    int32_t m = w->ga;
+    Crush k1 = { w->sh1, w->gd }, k2 = { w->sh2, w->gt };
     uint32_t p1 = w->ph[0], p2 = c->wid ? w->ph[1] : p1;
-    Out o = out_load(w);
     for (unsigned k = 0; k < n; ++k) {
         unsigned x1 = p1 >> 23, x2 = p2 >> 23;
         int32_t u = crush(a[x1], &k1), v = crush(b[x2], &k2), y = u + (((v - u) * m) >> 7);
@@ -384,23 +413,48 @@ static void render_morph(Wave *w, const WaveControls *c, uint32_t inc, int16_t *
             f = f > step ? f - step : 0;
         }
         p1 += inc, p2 += i2;
-        out[k] = finish(&o, y * 16, g);
+        acc[2 * k] = y * 16;
     }
     w->ph[0] = p1, w->ph[1] = p2, w->fade = f;
-    out_store(w, &o);
 }
 
 const char *wave_table_name(unsigned t) { return wave_table_names[t & (WAVE_TABLES - 1u)]; }
 
+void wave_prepare(Wave *w, const WaveControls *c, uint32_t inc)
+{
+    w->inc = inc;
+    if (!audible(inc)) return;
+    w->g4 = gain_of(c->drive) >> 4;
+    subs_of(w, c, inc);
+    switch (c->model) {
+    case WAVE_PULSE: prepare_pulse(w, c, inc); break;
+    case WAVE_ENS: prepare_ens(w, c, inc, 0); break;
+    case WAVE_TABLE: prepare_table(w, c, inc); break;
+    case WAVE_MORPH: prepare_morph(w, c, inc); break;
+    case WAVE_CHOIR: prepare_ens(w, c, inc, 1); break;
+    default: prepare_saw(w, c, inc); break;
+    }
+}
+
+void wave_play(Wave *w, const WaveControls *c, uint32_t *lr, unsigned n)
+{
+    if (!audible(w->inc)) { for (unsigned k = 0; k < 2u * n; ++k) lr[k] = 0; return; }
+    int32_t *acc = (int32_t *)lr;
+    switch (c->model) {
+    case WAVE_PULSE: play_pulse(w, c, acc, n); break;
+    case WAVE_ENS: case WAVE_CHOIR: play_ens(w, c, acc, n); break;
+    case WAVE_TABLE: play_table(w, c, acc, n); break;
+    case WAVE_MORPH: play_morph(w, c, acc, n); break;
+    default: play_saw(w, acc, n); break;
+    }
+    finish(w, lr, n);
+    if (c->model == WAVE_ENS || c->model == WAVE_CHOIR) chorus(w, lr, n);
+}
+
 void wave_render(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n)
 {
-    if (!audible(inc)) { for (unsigned k = 0; k < n; ++k) out[k] = 0; return; }
-    switch (c->model) {
-    case WAVE_PULSE: render_pulse(w, c, inc, out, n); break;
-    case WAVE_ENS: render_ens(w, c, inc, out, n); break;
-    case WAVE_TABLE: render_table(w, c, inc, out, n); break;
-    case WAVE_MORPH: render_morph(w, c, inc, out, n); break;
-    case WAVE_CHOIR: render_choir(w, c, inc, out, n); break;
-    default: render_saw(w, c, inc, out, n); break;
-    }
+    uint32_t lr[32];
+    wave_prepare(w, c, inc);
+    wave_play(w, c, lr, n);
+    for (unsigned k = 0; k < n; ++k) out[k] = (int16_t)(lr[2 * k] >> 16);
 }
