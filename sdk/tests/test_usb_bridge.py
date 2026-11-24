@@ -151,7 +151,11 @@ class BridgeTests(unittest.TestCase):
         self.device.ctrl_transfer.return_value = b'\x01'
         self.assertEqual(ask(first, 'in 0 32'), 'in 0 01')  # the served client goes on undisturbed
         self.device.ctrl_transfer.assert_called_once()  # nothing of the refused client reached the unit
-        hang_up(first)
+        # device.mjs serve checks that a bridge listens, hangs up and connects at once: a client arriving while the
+        # last one is still hanging up waits for it instead of being refused.
+        late = client(); threading.Timer(0.2, hang_up, args=(first,)).start()
+        self.assertEqual(ask(late, self.setup()), 'ok')
+        hang_up(late)
         for _ in range(100):  # the next client is served once the first has gone
             third = client()
             reply = ask(third, self.setup())
