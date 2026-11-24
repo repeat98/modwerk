@@ -98,6 +98,30 @@ class MachineBases(unittest.TestCase):
         interface = json.loads((APP / "sdk/model-cycles/core-profile/interface.json").read_text())
         self.assertEqual([entry["name"] for entry in interface["events"]], [event["event"] for event in events])
 
+    def test_model_cycles_diagnostics_log_is_the_octatrack_layout(self):
+        """The site reads the Model:Cycles log with the Octatrack's parser, so its numbers and structs are the
+        Octatrack's word for word (base/diag.h)."""
+        def layout(path):
+            text = path.read_text()
+            parts = [re.search(r"#define %s .*" % name, text).group(0) for name in ("DIAG_MAGIC", "DIAG_VERSION", "DIAG_LOADS", "DIAG_INCIDENTS")]
+            parts.append(re.search(r"enum diag_kind \{[^}]*\};", text).group(0))
+            parts += [re.search(r"struct %s \{.*?\n\};" % name, text, re.S).group(0) for name in ("diag_load", "diag_incident", "diag_log")]
+            return [re.sub(r"\s*/\*.*?\*/", "", part) for part in parts]
+        cycles = layout(APP / "sdk/machines/model-cycles/elekloader/base/diag.h")
+        self.assertEqual(cycles, layout(APP / "sdk/machines/octatrack/elekloader/diag.h"))
+
+    def test_model_cycles_diagnostics_log_on_the_host(self):
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/model-cycles/elekloader/base"
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST", "-I", here,
+                            here / "diag.c", here / "test_diag.c", "-o", temp + "/t"], check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
         mod = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json").read_text())

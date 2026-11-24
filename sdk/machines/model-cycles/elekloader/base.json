@@ -46,12 +46,13 @@
     }
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), a RAM boot of an uploaded image (the ev_boot gate), and the audio load (base/load.c, load.s: a probe around the audio interrupt's call of the audio function). Any USB host can drive it: development bases only.",
+    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), a RAM boot of an uploaded image (the ev_boot gate), the audio load (base/load.c, load.s: a probe around the audio interrupt's call of the audio function) and a diagnostics log in the Octatrack's layout (base/diag.c). Any USB host can drive it: development bases only.",
     "sources": [
       "../base/link.c",
       "../base/link.s",
       "../base/load.c",
-      "../base/load.s"
+      "../base/load.s",
+      "../base/diag.c"
     ],
     "sites": [
       {
@@ -96,6 +97,11 @@
       },
       {
         "event": "ev_key",
+        "fn": "mw_diag_key",
+        "order": 0
+      },
+      {
+        "event": "ev_key",
         "fn": "mw_link_key",
         "order": 1
       },
@@ -108,6 +114,11 @@
         "event": "ev_tick",
         "fn": "mw_link_tick",
         "order": 240
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_diag_tick",
+        "order": 239
       }
     ]
   }

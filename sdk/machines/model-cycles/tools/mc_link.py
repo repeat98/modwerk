@@ -14,6 +14,7 @@ MKII link's (../analog-rytm-mkii/LINK.md). Nothing here writes flash.
     mc_link.py disarm           # no keys or turns from the host until the next boot
     mc_link.py ramboot IMAGE.syx  # upload with stock's OS upgrade, then boot it from RAM: nothing is flashed
     mc_link.py load               # the audio's share of the CPU: last half second, its dearest block, the dearest since boot
+    mc_link.py log [--out FILE]   # the diagnostics log (base/diag.c, the Octatrack's layout): its records; FILE keeps its bytes
     mc_link.py runid IMAGE.syx    # the set identity ident reports for this image (needs IMAGE.syx.json); no unit
     mc_link.py rundiff IMAGE.syx  # read the running .run block and list each word that differs from the image
 
@@ -25,7 +26,7 @@ import sys
 import time
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'mem': 0x21, 'load': 0x22}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'mem': 0x21, 'diag': 0x22, 'load': 0x23}
 STATUS = {0: 'ok', 1: 'not armed', 2: 'bad request', 3: 'busy', 4: 'out of range', 5: 'a person is at the unit'}
 IDENT = ['link version', 'requests received', 'requests dropped', 'ticks', 'port', 'replies sent', 'send failures',
          'armed', 'person at unit', 'person presses', 'posted', 'refused', 'RAM boot mailbox', 'RAM boot status',
@@ -64,6 +65,8 @@ def main():
     sub = ap.add_subparsers(dest='cmd', required=True)
     sub.add_parser('ident')
     sub.add_parser('load')
+    s = sub.add_parser('log')
+    s.add_argument('--out', help='also write the log\'s bytes to this file (keep it outside Git)')
     s = sub.add_parser('mem')
     s.add_argument('addr', type=lambda v: int(v, 0))
     s.add_argument('count', type=int)
@@ -101,6 +104,8 @@ def main():
         return ramboot(mido, ins[0], outs[0], a)
     if a.cmd == 'rundiff':
         return rundiff(mido, ins[0], outs[0], a)
+    if a.cmd == 'log':
+        return log(mido, ins[0], outs[0], a)
     if a.cmd == 'tap':
         run(mido, ins[0], outs[0], 'key', u32(a.id) + u32(1), a)
         time.sleep(0.1)
@@ -131,6 +136,8 @@ def run(mido, in_name, out_name, cmd, body, a):
                 sys.exit('unit: ' + STATUS.get(status, 'status %d' % status))
             if cmd in ('key', 'enc', 'release', 'disarm', 'ramboot'):
                 print('ok')
+            elif cmd == 'diag':
+                return get32(p[0:5]), get32(p[5:10])
             elif cmd == 'load':
                 v = [get32(p[5 * i:5 * i + 5]) for i in range(5)]
                 print('last 0.5 s      %d.%d %%' % (v[0] // 10, v[0] % 10))
@@ -220,6 +227,49 @@ def rundiff(mido, in_name, out_name, a):
             print('%08x  image %s  unit %s  %s+%#x' % (start + i, want[i:i + 4].hex(), got[i:i + 4].hex(), sym[1],
                                                         start + i - sym[0]))
     print('compared %d bytes' % len(want))
+
+
+KINDS = {1: 'START', 2: 'HOT', 3: 'FREEZE', 4: 'CRASH', 5: 'STALL', 6: 'SET', 7: 'BASE', 8: 'SHED', 9: 'CPU',
+         10: 'BRAKE', 11: 'USB', 12: 'LATE'}
+
+
+def log_text(raw):
+    """The log's records as lines (diag.h: big-endian, version 2): loads every five minutes, then incidents."""
+    import struct
+    magic, version, nonce, boot, seq, loads, incidents = struct.unpack_from('>7I', raw)
+    if magic != 0x4d574447 or version != 2:
+        return 'no log (magic %#x, version %d)' % (magic, version)
+    out = ['log version %d, nonce %#010x, boot %d, %d loads, %d incidents' % (version, nonce, boot, loads, incidents)]
+    at = 40 + 92
+    rows = []
+    for i in range(96):
+        r = struct.unpack_from('>3I10H', raw, at + 32 * i)
+        if r[0]:
+            rows.append((r[0], 'load  min %4d  cpu mean %5.1f %%  peak %5.1f %%  windows %d  block gap %d us  '
+                                'blocks without a tick %d' % (r[2], r[3] / 10, r[4] / 10, r[9], r[11], r[12])))
+    at += 32 * 96
+    for i in range(32):
+        r = struct.unpack_from('>4I4H', raw, at + 92 * i)
+        if r[0]:
+            machines = raw[at + 92 * i + 24:at + 92 * i + 48:3][:6]
+            keys = [k for k in raw[at + 92 * i + 64:at + 92 * i + 80] if k != 0xff]
+            a = '%#010x' % r[3] if r[4] == 7 else str(r[3])
+            rows.append((r[0], 'event s %5d  %-6s a %s  cpu %5.1f %%  machines %s  keys %s'
+                         % (r[2], KINDS.get(r[4], r[4]), a, r[5] / 10, list(machines), keys)))
+    out += ['%4d  %s' % row for row in sorted(rows)]
+    return '\n'.join(out)
+
+
+def log(mido, in_name, out_name, a):
+    addr, size = run(mido, in_name, out_name, 'diag', [], a)
+    a.quiet = True
+    raw = b''
+    for at in range(0, size, 128):
+        raw += run(mido, in_name, out_name, 'mem', u32(addr + at) + u32(min(128, size - at)), a)
+    if a.out:
+        open(a.out, 'wb').write(raw)
+    print('log at %#x, %d bytes' % (addr, size))
+    print(log_text(raw))
 
 
 def ramboot(mido, in_name, out_name, a):

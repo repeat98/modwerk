@@ -40,6 +40,7 @@
 // - The screen needs no command here: stock answers Elektron's own screenshot request (F0 00 20 3C 10 00,
 //   command 0x04) over USB.
 #include <stdint.h>
+#include "diag.h"
 
 #define LINK_VERSION 1
 
@@ -59,7 +60,9 @@
 #define KEY_DOWN 1                      // ev_key flags bit 0: down
 
 #define CMD_IDENT 0x01
-#define CMD_LOAD 0x22
+#define LOAD_TIMER_NOW (*(volatile uint32_t *)0xfc07000c)  // DMA timer 0, as load.s reads it
+#define CMD_DIAG 0x22                   // the Digitone II link's number
+#define CMD_LOAD 0x23
 #define CMD_DISARM 0x02
 #define CMD_KEY 0x10
 #define CMD_ENC 0x11
@@ -363,6 +366,12 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, run_bytes);
         send(p, port);
         return;
+    case CMD_DIAG:                      // where the log is and its size: a host reads it with MEM
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, (uint32_t)&mw_diag_log);
+        p = put32(p, sizeof mw_diag_log);
+        send(p, port);
+        return;
     case CMD_LOAD:                      // the last window's share, its dearest block, the dearest since boot
         p = begin(seq, cmd, ST_OK);
         p = put32(p, mw_load_avg);
@@ -632,6 +641,7 @@ void mw_boot_gate(void)
     uint32_t magic = mb[0], clen, ulen, off, plen, i, count, arg;
     run_bytes = (uint32_t)__run_words * 4;  // first: no handler has written to .run yet
     run_crc = crc32(__run_start, run_bytes);
+    mw_diag_start(LOAD_TIMER_NOW ^ run_crc, run_crc);
     if (magic != MB_ASKED && magic != MB_SPENT)
         return;
     mb[0] = 0;                          // one shot, whatever happens next

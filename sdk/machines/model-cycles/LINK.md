@@ -52,7 +52,8 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `release` | 0x12 | lets go of every key the link holds |
 | `ramboot IMAGE.syx` | 0x14 | after stock's OS upgrade has taken the image: checks it, resets and boots it from RAM (below) |
 | `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
-| `load` | 0x22 | the audio's share of the CPU over the last half second, the window's dearest block and the dearest block since boot (tenths of a percent), windows and blocks counted |
+| `diag` | 0x22 | the diagnostics log's address and size (bytes); a host reads it with `mem` (`mc_link.py log`), as the Digitone II's |
+| `load` | 0x23 | the audio's share of the CPU over the last half second, the window's dearest block and the dearest block since boot (tenths of a percent), windows and blocks counted |
 
 The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
@@ -102,6 +103,8 @@ image must carry a development base: only its `ev_boot` handler boots from RAM.
 
 The audio load (`base/load.c`, `load.s`, development bases): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer.
 
+The diagnostics log (`base/diag.c`, `diag.h`, development bases) is the Octatrack's, layout version 2, so the site's parser reads it unchanged (`sdk/tests/test_machine_base.py` checks the layout word for word). Every five minutes a load record: the mean of the half-second windows and the dearest block (per mille), the longest time between two codec blocks (µs) and the longest run of blocks without a UI tick. Incidents: START and BASE (the set identity) at a boot's first tick, HOT for a second at 90 % or more, FREEZE when the UI tick stands still for five seconds while audio runs, each with the six tracks' machines and the last 16 keys pressed. The DSP fields, the tempo, the screen and `playing` stay 0. It lives in the base's memory and starts again at every boot: a freeze that needs a power cycle is lost with it. The audio interrupt keeps the sums; the UI tick alone writes the records. `test_diag.c` runs it on the host.
+
 ## Evidence
 
 On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a Mac over USB:
@@ -119,7 +122,9 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | `924efa4c…` (dev base `cef3a17a`, the set identity, with the TRIG 16 test module) | `ident` after a fresh flash, 24 November 2026 | set CRC 4076761892 (`0xf2fe7324`), 5764 bytes, as `runid` computes; `rundiff`: the running block byte for byte the image's |
 | the same, flashed again later | `ident` after the flash, then after a power cycle | set CRC `0xf2fe7324`, 5764 bytes, both times |
 | `bf6c9ff8…` (a dev base that also kept a copy of the block as the gate saw it; not on this branch) | `ident` after the flash and after a power cycle; `rundiff --at` the copy | the CRC at boot, the CRC at the request and `runid` agree (`0xadac0c2e`, 5916 bytes); the copy matches the image byte for byte |
-| `0b9fe54c…` (dev base `4cd5cdd9`, the load probe) | `load` four times over a minute, a pattern stopped and playing | 73.0 to 74.7 % a half second, the dearest block 79.1 to 80.9 %, 84.9 % since boot, the same stopped and playing; the unit sounds as before (tester's report) |
+| `0b9fe54c…` (dev base `4cd5cdd9`, the load probe) | `load` four times over a minute, a pattern stopped and playing | 73.0 to 74.7 % a half second, the dearest block 79.1 to 80.9 %, 84.9 % since boot, the same stopped and playing; the unit sounds as before (tester's report); `load` was 0x22 in that base |
+| `407fa7d5…` (dev base `bfde5a8e`, the log) | `log` after six minutes with a pattern playing | START, BASE `0x82e35a4a` (as `runid` computes), a load record: mean 73.8 %, dearest block 82.9 %, 600 windows, longest block gap 714 µs, 53 blocks without a tick; the machines in START and BASE read 255: written at the boot gate, before stock had set up its memory |
+| `520f99e7…` (dev base `0740bb23`, START and BASE at the first tick) | `log` right after the flash | START and BASE `0x4f182a66` (as `runid` computes) with the machines 0, 4, 4, 2, 0, 5 and the last window's 74.0 % |
 
 ## Not tested
 
@@ -132,3 +137,4 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 - Keys under FUNC and the flags stock's panel sets on a release.
 - A request while Transfer or another SysEx stream runs.
 - A host that stops reading in the middle of a reply.
+- A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
