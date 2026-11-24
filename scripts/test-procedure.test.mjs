@@ -112,6 +112,9 @@ describe('the steps', () => {
     expect(deps.ran.find(line => line.startsWith('npm run device:test'))).not.toContain('--soak')
     expect(deps.started).toEqual(['node scripts/device.mjs try /out/vibrato.mwrm --seconds 420 --socket /tmp/share.sock'])
     expect(statuses(steps)).toMatchObject({ 'cost-model': 'passed', soak: 'passed' })
+    const elsewhere = fakeDeps()
+    await runProcedure(moduleCtx({ tools, soak: { programs: '32-35', pcChannel: '11' } }), elsewhere)
+    expect(elsewhere.ran).toContain('node scripts/octatrack-soak.mjs --seconds 120 --programs 32-35 --pc-channel 11 --log /out/soak.json')
     const kept = await runProcedure(moduleCtx({ tools }), fakeDeps({ trialOutput: 'trial: 12… running\naccepted' }))
     expect(kept.find(step => step.id === 'soak')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/kept/) })
   })
@@ -144,8 +147,9 @@ describe('the steps', () => {
     const files = {}
     files.onQueue = () => { files['/out/unit-steps.json'] = JSON.stringify([{ id: 'unit-read', title: 'Read the unit', unit: true, status: 'passed', commands: [], seconds: 3 }]) }
     const deps = fakeDeps({ files })
-    const steps = await runProcedure(moduleCtx({ tools: { unitQueue: true } }), deps)
+    const steps = await runProcedure(moduleCtx({ tools: { unitQueue: true }, soak: { programs: '32-35', pcChannel: '11', autoChannel: '11' } }), deps)
     const queued = deps.ran.find(line => line.startsWith('npm run unit'))
+    expect(queued).toContain('--soak-seconds 120 --soak-programs 32-35 --soak-pc-channel 11 --soak-auto-channel 11')
     expect(queued).toMatch(/^npm run unit -- run --note test:procedure vibrato e84798eb --expect 15m -- node scripts\/test-procedure.mjs vibrato --package \/out\/vibrato.mwrm --share \/tmp\/share.sock --out \/out .*--unit-phase \/out\/unit-steps.json$/)
     expect(deps.ran.some(line => line.startsWith('npm run device:test'))).toBe(false) // the inner run does that
     expect(steps.find(step => step.id === 'unit-read').status).toBe('passed')

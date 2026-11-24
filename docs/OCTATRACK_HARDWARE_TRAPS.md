@@ -542,12 +542,12 @@ in [Beat Slicer's testing record](../sdk/octatrack/modules/beat-slicer/TESTING.m
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
 ColdFire computes the destination from the register it has just
 incremented, so the whole COMPRESSOR descriptor landed one byte high. The
-FX1 SETUP page then saw the wrong slots enabled and jumped through an odd
-widget pointer: vector 3 (address error) at `0x40037c2a`, on a dev twin
-built from base 9d5aa74d. Host builds never show it. The base now compiles
-with `-fno-late-combine-instructions`. `sdk/runtime/m68k_codegen.py`
-refuses any C object, in the base and elemod builds, where an instruction
-steps an address register in its source and reuses it in its destination.
+FX1 SETUP page then jumped through an odd widget pointer: vector 3 at
+`0x40037c2a`, on a dev twin of base 9d5aa74d. Host builds never show it.
+The base compiles with `-fno-late-combine-instructions`. An instruction
+that steps an address register in its source and reuses it in its
+destination is refused in a build's C objects (`m68k_codegen.py`) and
+reported in assembly, `.s` kept from C included (`npm run coldfire:isa`).
 
 **Stock copies a table entry; restoring the table is not enough.** A track
 bind (`0x4000bff0`, in the frame builder, on a trig that asks for it) copies

@@ -51,12 +51,37 @@ out.wav` plays a 44.1 kHz WAV through it, both without Zoom firmware. Leave
 whose coefficient knobs (depth, rate, mix) read the firmware refuses to render
 without one; test it on the pedal.
 
+## MS-70CDR stack progress
+
+| Piece | Verified capability and next check |
+| --- | --- |
+| Modwerk base | The browser builds pinned MIDISTOMP from the owner's 2.10 updater. Define the common loader sites and admission limits before publishing the first runtime module. |
+| USB link | The pedal page and the shared developer MCP read identity and installed effects over USB MIDI. |
+| Setup and updates | The pedal page guides backup, a bootloader flash and reconnection. Zoom's updater is the stock recovery route. |
+| Loading without a reflash | The development probe counted ELF-header reads on the original pedal. Qualify read, seek and close, then run one effect from RAM and verify Undo and reboot. Keep needs a separate persistence check. |
+| Status page | Status shows firmware, installed effects and any load snapshot the connected base supplies. |
+| Diagnostics | USB load support and the development loader counter are in place. Device self-test and a consent-gated diagnostic log remain to be wired. |
+| Device tools | Shared status and load calls reach the pedal. Review, Trial, Keep and Undo depend on the qualified RAM loader. |
+
+The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) reads
+the active patch over the same USB link. Stock and Modwerk effects in the
+patch appear in slot order. Names and parameter ranges come from the pedal's
+registered effect files, read locally. Modwerk modules also use named choices
+from their catalog and [Roman Rusinov's editor](https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/tools/patch_editor.html).
+Turn a knob by dragging up or down or using the arrow keys. **Apply to pedal**
+checks that the patch still matches, changes only the staged values and bypass
+states, then reads them back. The pedal's Auto Save setting controls persistence.
+**Refresh patch** reads the current values after a change on the pedal. Switching
+which effects are in a patch happens on the pedal. D004 supports set sync using
+the same file commands as the released base.
+
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |
 | --- | --- | --- |
 | MS-70CDR | 2.10 | Main target: effects, NAM/cab loader and patch editor tested by the owner |
-| MS-50G | 3.10 | NAM and cab effects confirmed by a user ([#1](https://github.com/themanro/ZoomMultistompZDL/issues/1), [#5](https://github.com/themanro/ZoomMultistompZDL/issues/5)); patch editor writes opt-in |
+| MS-50G | 3.10 | NAM and cab effects confirmed by a user ([#1](https://github.com/themanro/ZoomMultistompZDL/issues/1), [#5](https://github.com/themanro/ZoomMultistompZDL/issues/5)); patch editor writes opt-in. Read over USB (23 November 2026): its pedal page in Chrome and `npm run zoom` name it, list 162 files and back them up, the two backups byte-identical and matching another tool's; in update mode the bootloader answers as `0x58`, 1.10 |
 | MS-60B | — | Same family; unconfirmed |
 | G1on / G1Xon / B1on / B1Xon | G1Xon 1.21 | NAM loader effects reported working on a G1Xon ([#6](https://github.com/themanro/ZoomMultistompZDL/issues/6)); others unconfirmed |
 | MS-100BT | — | No USB MIDI; effects installed with third-party Bluetooth tools ([#4](https://github.com/themanro/ZoomMultistompZDL/issues/4)) |
@@ -313,12 +338,17 @@ finds where they are tied to it.
    answering as it. On the unit, its beta pedal page names the pedal and
    firmware, lists the files and backs them all up, byte-identical to another
    tool's backup.
+   MS-50G: done on 3.10 (23 November 2026). Its bootloader counts as update mode (`isUpdateMode`); the base
+   still flashes only an MS-70CDR (`canFlashBase`).
 2. **Write.** Installs and removals stay refused on a pedal and firmware they
    have not run on. Record Effect Manager or the project's editor installing an
    effect there (MIDI Monitor, as for the flash) and compare it with the link's
    messages; then install and remove one effect from the page, power-cycle, and
    check it appeared in its category, went again and left the rest unchanged.
    Only then add the pedal and firmware to `canWriteFiles`.
+   MS-50G 3.10 (23 November 2026): Effect Manager 2.3.3 erases the whole effect file system and rewrites it; wait
+   until the pedal's replies stop before unplugging. A pedal unplugged mid-write showed a file system error until a
+   second write finished.
 3. **Listing.** The profile gets an `sdk` section like the MS-70CDR's, with its
    own guide (`sdk/machines/<id>/README.md`, from the MS-70CDR's) and budgets
    measured on that pedal (the MS-60B chains four effects, not six); then

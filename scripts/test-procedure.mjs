@@ -20,6 +20,8 @@
 //   npm run test:procedure -- … --target emulator --share SOCK --dev-socket SOCK   # steps 6 to 10 against an emulator session
 //                                                       # (npm run device -- serve --emulator): the same cases, never hardware evidence
 //   npm run test:procedure -- … --out DIR --soak-seconds 120 --scene "A01, Part 1, stopped"
+//   npm run test:procedure -- … --soak-programs 32-35 --soak-pc-channel 11 [--soak-auto-channel 11]   # the soak's program
+//                                                       # changes and channels, as the project receives them (octatrack-soak.mjs)
 //
 // With the unit queue (`npm run unit`, when the repository has it) the unit steps run as one turn of it, so no other session
 // takes the unit between reading it and checking it was put back.
@@ -32,6 +34,12 @@ import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 
 export const ROOT = resolve(import.meta.dirname, '..')
+
+// The soak's program changes and MIDI channels: its own defaults (programs 0-3, bank A, on channel 1) unless the
+// project receives them elsewhere, as a project with PROG CH RECEIVE on CH AUTO does (docs/OCTATRACK_DRIVING.md).
+const SOAK_OPTIONS = [['programs', 'programs', 'soak-programs'], ['pcChannel', 'pc-channel', 'soak-pc-channel'], ['autoChannel', 'auto-channel', 'soak-auto-channel']]
+const soakOptions = ctx => SOAK_OPTIONS.flatMap(([key, flag]) => ctx.soak?.[key] ? ['--' + flag, String(ctx.soak[key])] : [])
+const soakFlags = ctx => SOAK_OPTIONS.flatMap(([key, , flag]) => ctx.soak?.[key] ? ['--' + flag, String(ctx.soak[key])] : [])
 const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs'
 const REFUSED = /^refused: .*$/m // device.mjs set prints a refusal and exits 0, so the large-set steps read their output
 const CURVE_TRACKS = 'T1,T3,T6,T7' // empty tracks of the test bank (docs/MODULE_PERFORMANCE.md)
@@ -160,7 +168,7 @@ export function plan(step, ctx) {
       if (ctx.target === 'emulator' && ctx.tools?.soak) return { skip: 'the fast soak sends USB MIDI to the unit\'s port, which the emulator has not' }
       if (!ctx.tools?.soak) return module ? { inside: 'unit-pass', note: 'ran inside the scripted pass as device:test --soak ' + ctx.soakSeconds + '; the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
         : { skip: 'the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
-      const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), '--log', join(ctx.out, 'soak.json'))
+      const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), ...soakOptions(ctx), '--log', join(ctx.out, 'soak.json'))
       // A module soaks inside a trial of its own, rolled back at the end; a base soaks with whatever the unit runs.
       return module ? { commands: [soak], trial: node('scripts/device.mjs', 'try', pkg, '--seconds', String(ctx.soakSeconds + 300), '--socket', ctx.share) } : { commands: [soak] }
     }
@@ -263,7 +271,7 @@ export async function runProcedure(ctx, deps) {
     const file = join(ctx.out, 'unit-steps.json')
     const argv = ['npm', 'run', 'unit', '--', 'run', '--note', `test:procedure ${ctx.id ?? 'base'} ${ctx.build.revision.slice(0, 8)}`, '--expect', ctx.kind === 'base' ? '45m' : '15m', '--',
       'node', 'scripts/test-procedure.mjs', ...(ctx.kind === 'base' ? ['--base', ...(other(ctx) ? [ctx.machine] : [])] : [other(ctx) ? ctx.machine + ':' + ctx.id : ctx.id]), '--package', ctx.pkg, '--share', ctx.share, '--out', ctx.out, ...(ctx.passOn ?? []),
-      '--soak-seconds', String(ctx.soakSeconds), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
+      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
     const started = deps.now(), run = await deps.exec(argv, join(ctx.out, 'logs', 'unit-queue.log'))
     const inner = deps.exists(file) ? JSON.parse(deps.read(file)) : null
     if (inner) results.push(...inner)
@@ -365,7 +373,8 @@ export function context(root, values, positionals, env = process.env) {
   const rows = catalogue(root)
   let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
     // The session's line socket for device:test's steps; an emulator takes no turn of the unit queue.
-    env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120), scene: values.scene, pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], emulatorSocket: values['emulator-socket'],
+    env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120),
+    soak: { programs: values['soak-programs'], pcChannel: values['soak-pc-channel'], autoChannel: values['soak-auto-channel'] }, scene: values.scene, pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], emulatorSocket: values['emulator-socket'],
     tools: { cycleScan: existsSync(join(root, SCAN_TOOL)), soak: existsSync(join(root, SOAK_TOOL)), unitQueue: !!scripts.unit },
     build: { revision: git('rev-parse', 'HEAD') || 'unknown', dirty: !!git('status', '--porcelain', '--untracked-files=no') } }
   const named = positionals[0]
@@ -469,7 +478,8 @@ function realDeps(root) {
 }
 
 const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, published: { type: 'boolean' }, plan: { type: 'boolean' }, out: { type: 'string' },
-  share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' },
+  share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, 'soak-programs': { type: 'string' },
+  'soak-pc-channel': { type: 'string' }, 'soak-auto-channel': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' },
   'price-modules': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
   stock: { type: 'string' }, elemod: { type: 'string' }, label: { type: 'string' }, link: { type: 'boolean' }, cases: { type: 'string' }, emu: { type: 'string' } }
 
@@ -477,7 +487,7 @@ async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
   if (values.help || (!values.base && !positionals.length)) {
     console.log('Usage: npm run test:procedure -- <module id> | FILE.mwrm | --base [machine]  [--plan] [--package FILE] [--published] [--share SOCKET] [--no-unit]\n' +
-      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b]\n' +
+      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b]\n' +
       '         another machine: [--stock STOCK.syx --elemod BASE.elemod --label XX01] [--link] [--cases DIR] [--emu DTBOOT]   (docs/TEST_PROCEDURE.md)')
     process.exit(values.help ? 0 : 2)
   }

@@ -1,15 +1,15 @@
 {
   "kind": "owner-approved-update",
   "id": "quantizer",
-  "version": "0.1.4-experimental",
-  "sourceSha256": "26e51a9c0a88d7852ba3062fe3f888a1e5c19a2faa2d90abe3587ffa20e49a02",
+  "version": "0.1.5-experimental",
+  "sourceSha256": "931d9cd97feb3e46a9ac0d72581d7587980d92d0e9cd9838cc38ae479a66e8d1",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-04",
+  "approvedOn": "2026-11-24",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds"
   ],
   "ownerStatement": "Approve this exact experimental update with the limits disclosed",
-  "reason": "The owner approved Scale Quantizer 0.1.4-experimental source 26e51a9c0a88d7852ba3062fe3f888a1e5c19a2faa2d90abe3587ffa20e49a02 (#1147) after its software checks. The author reports this source's card image passing his test sheet on his MKI: TEST2 on 30 October 2026 and its byte-identical TEST3 rebuild on 1 November 2026 (TESTING.md). Nobody has run its USB package on a unit, and the owner has run neither the USB package nor the card build on hardware. Chip timing and complete memory bounds remain unmeasured."
+  "reason": "The owner approved Scale Quantizer 0.1.5-experimental source 931d9cd97feb3e46a9ac0d72581d7587980d92d0e9cd9838cc38ae479a66e8d1 (#1886), which drops the two panel sites so FM Synth can later install beside it. The author ran package 092a8a13 on his MKI on base 0.7.12 (254c5a75): the upgrade from 0.1.4, FOLLOW from audio and MIDI, and the saved scale after a power cycle passed, and the one-step SCALE drop the owner asked about did not reproduce (TESTING.md). The package rebuilds byte-identical on base 0.8.1. Its cost at rest was not measured again (0.1.4 read 0 points; 0.1.5 has fewer hooks), nothing ran on base 0.8 or an MKII, and chip timing and complete memory bounds remain unmeasured. FM Synth 0.1.5 still declares a conflict with it, so players cannot install the two together yet."
 }

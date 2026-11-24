@@ -25,7 +25,7 @@ import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
 import { moduleCardless } from '../src/catalog/usb-only.ts'
-import { controlProblems } from './module-controls.mjs'
+import { controlProblems, widgetProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
 import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
@@ -114,6 +114,10 @@ function octatrack(id) {
     const problems = controlProblems(knobs, document.controls)
     if (problems.length) fail('controls', problems.slice(0, 3).join('; ') + (problems.length > 3 ? '; and ' + (problems.length - 3) + ' more' : ''), 'make controls[] in octamod.module.json say what manifest.py declares (name, default, count), then npm run modules:generate')
     else ok('controls', knobs.length + ' knob' + (knobs.length === 1 ? '' : 's') + ' in manifest.py, the same in controls[]')
+    const widgets = widgetProblems(knobs), said = widgets.slice(0, 3).join('; ') + (widgets.length > 3 ? '; and ' + (widgets.length - 3) + ' more' : '')
+    if (!widgets.length) ok('widgets', 'every knob is drawn as what it holds: a switch for two to five words, a labelled dial for a longer list, a knob for a range')
+    else if (draft) fail('widgets', said, 'pick each knob\'s formatter by what it holds: docs/module-guides/effects.md#choose-the-widget')
+    else info('widgets', said + ' (fix it in the next release: docs/module-guides/effects.md#choose-the-widget)')
   }
   // Its own host tests (scripts/module-tests.mjs), run as sdk:check runs a listed module's on every pull request.
   const tests = moduleTestFiles(root, folder)
@@ -244,7 +248,7 @@ function octatrack(id) {
 
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
   const compared = withId.length > 0 || (entry && !paused)
-  if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.10+, then npm run modules:compat')
+  if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.12+, then npm run modules:compat')
   else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- --with ' + id + ' lists every one')
   else if (!compared) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
   else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat' + (entry && !paused ? '' : ' -- --with ' + id) + ')')

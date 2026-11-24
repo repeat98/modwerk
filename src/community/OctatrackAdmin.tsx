@@ -68,7 +68,7 @@ export function OctatrackAdminReport({ data, loading, error, refresh, metric, on
       <div><dt>Members on the base</dt><dd>{format(installs.total)}</dd><small>{format(installs.today)} new today · {format(installs.last7)} in 7 days</small><small>Members whose unit has reported a Modwerk base</small></div>
       <div><dt>Sharing diagnostics</dt><dd>{format(sharing.members + sharing.guests)}</dd><small>{plural(sharing.members, 'member')} · {plural(sharing.guests, 'visitor')} · {format(sharing.membersReporting + sharing.guestsReporting)} sent reports in 30 days</small>
         <small className="statistics-change">{format(sharing.membersNew + sharing.guestsNew)} switched on in 7 days</small>
-        {sharing.members > sharing.membersCurrent && <small>{plural(sharing.members - sharing.membersCurrent, 'member')} on an earlier consent text: their new reports wait until they agree again</small>}</div>
+        {sharing.members > sharing.membersCurrent && <small>{plural(sharing.members - sharing.membersCurrent, 'member')} on an earlier consent text, still sharing (they are not asked again)</small>}</div>
       <div><dt>Sharers on the current base</dt><dd>{percent(onCurrent, onBase)}</dd><small>{format(onCurrent)} of {plural(onBase, 'sharer')} who reported a base in 30 days</small></div>
       <div><dt>Syncs kept, 7 days</dt><dd>{percent(kept, started)}</dd><small>{format(kept)} kept of {plural(started, 'sync')} started</small><small>{format(failed)} failed · {format(undone)} undone · everyone</small></div>
     </dl>

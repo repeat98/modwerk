@@ -1,14 +1,14 @@
 {
   "kind": "owner-approved-update",
   "id": "kits",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-16",
+  "approvedOn": "2026-11-24",
   "waived": [
     "chip-worst-case-cycles",
     "current-build-hardware"
   ],
-  "sourceSha256": "49938a21191befd944c3f82fba87aa62333a206672e39dad91f48f7f2e1e249a",
-  "ownerStatement": "Release Kits 0.1.0-experimental. I waive the static cycle bound and the hardware qualification of this exact build for this version.",
-  "reason": "A port of Sam Banks' octabam KITS (MIT, his OK on 13 November 2026) onto base 0.7.4's hooks and ot_sample_memory. On the owner's MKII (a development twin of 0.7.4 with ot_sample_memory, 16 November 2026) it ran as trials: it took its 331 pages of sample memory at install, kept them through a project load, gave them back at removal, loaded Kits while playing beside 14 kept modules, and cost +0.1 points of CPU at rest, with no skipped render, crash or stall (TESTING.md). No static cycle count was made, and device:qualify did not run on the exact release package and base."
+  "sourceSha256": "6d9ce6ebaad7bb57bd0f92840616b44c7008b61018d857b4d59f3aad9dd895c1",
+  "ownerStatement": "Release Kits 0.1.1-experimental. I waive the static cycle bound and the hardware qualification of this exact build for this version.",
+  "reason": "Kits 0.1.1-experimental (#2066, by twwwy) adds SAVE KIT, RELOAD KIT and RENAME KIT to the shared Part Edit menu, on the plan the owner agreed on the agent board; the owner ported Kits 0.1.0 from Sam Banks' octabam KITS (MIT) and approves this update as its maintainer here. On an MKII, as trials on a development twin of base 0.8 (95adb64b), package c1cb63e5 ran alone and beside Pattern Sample Locks 0.1.9 and passed (TESTING.md). Not run: Keep, a power cycle, the flashed base 0.8, or an MKI. No static cycle count was made, and device:qualify did not run on the exact release package and base."
 }

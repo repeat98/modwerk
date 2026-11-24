@@ -1,10 +1,10 @@
 {
   "module": "synth",
   "version": "0.1.5-experimental",
-  "base": "dce1d30e (0.8 development twin)",
-  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; stock alone 79.4 %), picks on empty C02; owner's MKII",
+  "base": "2f0dcfa3 (0.8 development twin of main 6f31dd3c4)",
+  "scene": "Laslo's MKII, project CPUCURVE2 at 120 BPM: curve on A03 (trigs on steps 1/5/9/13 of T1 T3 T6 T7, no sample track plays; stock alone 63.8 %), admission on medium A01 (the same trigs plus T2 and T4 playing a sample; stock alone 78.4 %), picks on empty A02 (40.3 %)",
   "seconds": 8,
-  "measuredAt": "2026-11-22T11:53:49.405Z",
+  "measuredAt": "2026-11-24T11:13:11.712Z",
   "tracks": [
     "T1",
     "T3",
@@ -12,23 +12,44 @@
     "T7"
   ],
   "rest": 0,
-  "first": 31.3,
-  "each": 0.5,
+  "first": 20.4,
+  "each": 0.2,
   "points": [
+    64.2,
     81,
-    107.9,
-    112.8,
-    113.3,
-    112.1
+    84.8,
+    85,
+    83.7
   ],
   "adds": [
-    26.9,
-    31.8,
-    32.3,
-    31.1
+    16.8,
+    20.6,
+    20.8,
+    19.5
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 54,
+      "frame": 34,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 1,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": false
+    }
   ],
   "notes": [
-    "package sha256 8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de",
-    "Measured on that package. The current package 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9 differs from it in one byte only, the machine descriptor's CPU price (reserved[0], offset 27,925: 6 to 4); its code and data are the same."
+    "package sha256 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9",
+    "Read with the fixed device:price of repeat98/modwerk#2110 (STOP before PLAY, the reference read playing: 27.8 % frame, 64.2 % longest). A first run the same hour on the same scene read +17.3, +18.6, +20.5, +19.4 (first 17.3, each 1.9); this record is the second, the higher first.",
+    "The medium admission run was judged by the cost table of the last set synced to the unit (battery RAM), which still booked 31.3: a single-package trial sends no table, so it shows nothing about these figures."
   ]
 }

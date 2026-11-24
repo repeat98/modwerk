@@ -16,3 +16,8 @@ rights is required before publication and is not automatic legal clearance.
 
 Only rendered PNG screenshots and capture metadata belong in this folder.
 No firmware, raw LCD/RAM dump, card, recording or private log is included.
+
+Actual 0.1.5 framebuffer captures were produced on 15 November 2026 and selected
+for this update under the same capture/documentation declaration. Credit: Tim Hastie
+(headless capture). The earlier 0.1.4 record and original PNGs remain preserved;
+none is relabelled as a 0.1.5 capture. Underlying interface rights remain reserved.

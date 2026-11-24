@@ -1,14 +1,15 @@
 # Driving the Octatrack from an agent
 
-Drive an Octatrack MKII over USB with a development twin. Build it with `build_core.py` and the flags that
+Drive an Octatrack, MKI or MKII, over USB with a development twin on your own unit: all of [the test
+procedure](TEST_PROCEDURE.md) runs there, the curve included. Build it with `build_core.py` and the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
 then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
 Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
 `base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
 Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
 analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
-the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR`.
-Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
+the committed file back (twin `80f62ad6`, 13 November 2026).
+On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -42,8 +43,7 @@ Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `
   other file in turn (`modset.c` `slot`), so one Keep on a twin replaces only that file. The kept set's whole-set identity
   (USB request 38, order-free: `journal.h` `runtime_journal_set_digest`) names its exact packages: hash candidate files
   the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). A twin's RAM boot
-  that restores its kept set took 72 s to answer on USB after a power-cycled start, past `boot`'s 60 s wait, and 18 s
-  later; keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
+  that restores its kept set can take 72 s to answer on USB, past `boot`'s 60 s wait: keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
   after its Keep, never enumerated (Windows, `a328967d`, same day). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
@@ -182,12 +182,12 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 
 | Step | What it does |
 |---|---|
-| `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PAGE`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `SCENEA`, `SCENEB`, `PUSHA`-`PUSHF` (`FUNC+PAGE`: PATTERN SCALE, where LEVEL sets the length). The names are the MKII panel's codes: on an MKI the track keys work, but `PROJ`, FUNC + MIXER and the arrows did nothing on 16 November 2026 (its key map differs), so the owner opened PROJECT > SYSTEM > PERSONALIZE by hand |
+| `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PAGE`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `SCENEA`, `SCENEB`, `PUSHA`-`PUSHF` (`FUNC+PAGE`: PATTERN SCALE, where LEVEL sets the length). The names are the MKII panel's codes; an MKI has no `PROJ`, `PART`, `AED` or `ARR` key |
 | `+KEY`, `-KEY` | hold, let go |
 | `encA+3`, `encLEVEL-2`, `fader128` | encoders A-F, LEVEL, the crossfader. Some setup values take several detents a step: MIDI NOTE SETUP's CHAN, BANK and PROG did not move on `encA+3`, and `encA+20` moved CHAN by 6 (21 October 2026); LFO SETUP's WAVE takes about four detents a step; SRC SETUP's TSTR (encoder E) moved only on a large turn (`encE+40` went OFF to BEAT after seven `encE+2` did nothing, 27 October 2026). A step is one signed byte: keep it within ±127, as `encB+200` turned WAVE backwards (24 October 2026) |
 | `w300` | wait 300 ms (rarely needed: the steps below wait for their own result) |
 | `pick:T1:FX2:SPRING_REV` | pick an effect by name (spaces as `_`), FX1 or FX2: the chooser opens, LEVEL scrolls the exact rows, YES; done once the track runs it (about 120 ms after YES); fails at once if the loader refuses. A notice on screen eats its first keys and it times out after 5 s: after removing a module the bank names (MISSING MODULES) send `YES` first |
-| `part1`-`part4` | switch Parts (PART + an arrow), done once the Part changed |
+| `part1`-`part4` | switch Parts (PART + an arrow; an MKI: Parts below), done once the Part changed |
 | `ui` | each track's FX1/FX2 as they run, the current track, Part, transport |
 | `stats` | CPU, each core's mean/peak per mille, idle passes. One reading is not a measurement: on 27 October 2026 (MKII, a dev twin, stopped, nothing changing) it swung between 41 % and 60 % within ten seconds. Take ten readings in each state, or time the hook itself with `modwerk_cost` (`profile`) |
 | `health` | one JSON line for scripts: the DSP frames, the loader's stalls and errors, the UI tick's watch count, CPU, the crash and stall records' counts (battery RAM, so earlier ones stay counted) and the transport. Development bases. [A fast soak](#a-fast-soak) reads it after every operation |
@@ -285,7 +285,9 @@ not isolated: verify each held-row transition and stock modifier release, and st
   (`PART+FUNC+PLAY`): it CLEARS the Part**, both working and saved copies, its knobs, machines and name
   (`PART 1`), and saves that (stock's Part Clear; 11 October 2026). FUNC+PLAY elsewhere clears the pattern.
   To reload, use `reload`: FUNC+PART opens RENAME, RELOAD, SAVE, SAVE ALL, keeps its cursor from last time and
-  stops at RENAME, so UP three times, DOWN, YES. Do not use SAVE or SAVE ALL on a Part you changed. After a RAM boot
+  stops at RENAME, so UP three times, DOWN, YES (`savepart`: DOWN twice). Do not use SAVE or SAVE ALL on a Part you changed.
+  **An MKI has no PART key** (#2099): FUNC + MIDI opens the Part window, an arrow moves its cursor, YES selects;
+  FUNC + BANK there opens the menu. Steps choose by the MKII flag (`0x46c8d18c`); `device:emulator -- --mki`. After a RAM boot
   every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test` and
   `device:qualify` SAVE the Part once before they change anything, while its working copy equals its saved one: the
   same bytes, and their closing RELOAD then works. `reload` reports no failure: compare

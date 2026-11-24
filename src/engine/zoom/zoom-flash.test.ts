@@ -44,6 +44,12 @@ describe('the MS-70CDR flash', () => {
     await expect((await connect(stuck)).flashBase(os())).rejects.toThrow(/step 8 of 356 \(no answer\).*bootloader is untouched/)
   })
 
+  it('refuses an MS-50G in update mode, sending it nothing: the base is the MS-70CDR’s firmware', async () => {
+    const other = fakeZoomPedal({ deviceId: 0x58, firmware: '1.10' }), link = await connect(other)
+    await expect(link.flashBase(os())).rejects.toThrow(/MS-50G in update mode.*only on an MS-70CDR/)
+    expect(other.sent.some(m => m[1] === 0x52)).toBe(false)
+  })
+
   // On a computer with Zoom's stock MS-70CDR 2.10 Mac updater: the browser's `hello` flash sends exactly the 357
   // messages recorded (MIDI Monitor, 9 November 2026) from zoomms' hello updater flashing the owner's MS-70CDR.
   // The recording holds Zoom's OS, so only its hash is here. Firmware never enters CI.
