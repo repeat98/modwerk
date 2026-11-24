@@ -229,6 +229,34 @@ state left set; the previous builds fail their cases.
 - **Hardware:** the developer's MKI results on this exact package are above (build `c642ca255`); the test procedure's
   steps 7-9 are recorded when they run.
 
+## Test procedure on the unit (24 November 2026)
+
+`npm run test:procedure -- songbook` on the developer's MKI (OS 1.40C), development twin `4c7eb79b` of the beta base
+RAM-booted over USB from the flashed `eb667962` (main `3043f8339`, with the MKI Part switch of #2103), package
+`84a8ba8a` (this source), the developer's test project in pattern mode, transport stopped. Steps 1-10 passed:
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Software checks | passed |
+| 2 | Beside every other module | not run: judged by module:doctor (step 1) |
+| 3 | Name the build | passed: `84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47` |
+| 4 | DSP cost model | passed |
+| 5 | Emulator rehearsal | not run: no emulator session |
+| 6 | Read the unit | passed |
+| 7 | Scripted unit pass (device:test) | passed: installed as a trial, placed on the tracks, Parts and banks switched, self-test read, inventory back; no crash, stall, freeze or skipped track |
+| 8 | Soak (120 s, MIDI over USB) | passed |
+| 9 | Cost on the unit (device:price) | passed: frame interrupt 58.1 % before, 57.7 % installed and unused; CPU 68.3 % / 66.9 % (noise): 0 |
+| 10 | Put back | passed |
+| 11 | Agent by hand | partly: see below |
+| 12 | The developer's own stage | the developer's results on this package above |
+
+**What this run does not show.** On that twin the module's own UI hooks were not seen to run: ARR > CHANGE drew no
+BOOK label, RIGHT switched no book, and the module's diagnostic word stayed `0xfccaacd0` across FUNC + PATTERN, which
+the module logs. Steps 7-9 therefore show that the package installs, survives the scripted pass and the soak, and
+costs nothing at rest on that twin, not that its features ran there; the features are the developer's results on the
+flashed base above. Not run in step 11: MAIN and CUE recorded over USB (no recorder on this computer and no USB AUDIO on
+the twin; the module makes no sound).
+
 ## Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |

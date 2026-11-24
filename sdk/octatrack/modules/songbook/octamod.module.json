@@ -90,6 +90,15 @@
         "rationale": "7,292 bytes of ColdFire code and data and 4,728 of state, plus a 20-byte battery RAM record; on the card, stock arrangement files for books 2-16, book 1's backup and a 24-byte place file per project.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-24",
+      "conditions": "MKI (OS 1.40C), the developer's test project in pattern mode, transport stopped, T1 selected; installed as a trial and used by no key press; development twin 4c7eb79b of the beta base (main 3043f8339); 8 s per reading. Frame interrupt 58.1 % before, 57.7 % installed; CPU meter 68.3 % before, 66.9 % at rest: within the reading's noise. On that twin the module's UI hooks were not seen to run (no BOOK label in ARR > CHANGE, RIGHT switched nothing): re-measure on a twin where they do.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
@@ -104,7 +113,7 @@
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "70d4e6764c8f13b344e16f7c51e388083c7e953b26bf201959fd582e7ec5f195",
+      "sourceSha256": "688b91a1b0fb9361b1adf43b92942dada8c88e56b27ff1c9fe049ff4096fca49",
       "imageSha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47",
       "cycles": [
         {

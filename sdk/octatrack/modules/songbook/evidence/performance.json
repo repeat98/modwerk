@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "module": "songbook",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "70d4e6764c8f13b344e16f7c51e388083c7e953b26bf201959fd582e7ec5f195",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 13754188,
+    "budget": 26600000,
+    "method": "Measured under ot_emu (the adapted emulator, MKI panel, beta base 0.7.13 twin, package 84a8ba8a over the emulated USB; emulator, not hardware), executed ColdFire instructions, not chip cycles: the PC watch on stock's arrangement writer's entry (0x400915ac, the module's jmp) and its return (0x40091a76) during the dearest press, LEFT/RIGHT in ARR > CHANGE from book 1 to 2 (stock saves arr01-08, the module writes book 1's backup, reads book 2's 8 files and fingerprints the slots): 13,754,188, interrupts and other tasks in the window included; book 2 to 1: 7,849,450. The switch runs inside stock's SYNC TO CARD job on the card task, outside the audio frame; the module refuses it while playing."
+  },
+  "stress": {
+    "events": 20,
+    "playing": true,
+    "hangs": 0,
+    "method": "ot_emu, the same image and package, 24 November 2026: 20 cycles of PLAY, LEFT/RIGHT in ARR > CHANGE while playing (refused: STOP TO CHANGE BOOK), STOP, a Part change through the MKI's Part window (FUNC + MIDI, an arrow, YES; Parts 2 and 4 in turn, read back from 0x80000003), then the book switch, alternately RIGHT and LEFT, stopped. The writer ran twice per cycle (the switch and a write of stock's own), 40 times in all; ColdFire instructions kept advancing to the end, no hang. The emulator's sequencer does not advance after PLAY, so the transport was set but no steps played; on the unit the switch is refused while playing."
+  }
+}
