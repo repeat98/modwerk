@@ -164,6 +164,10 @@ unsigned wave_admit_track(const volatile uint8_t *part, unsigned track)
 
 static Wave voices[8];
 static uint8_t ready;                   /* a bit a track: its oscillators were reset */
+/* Each track's controls, and what the engine works out from them, kept while the bytes they come from stand: the
+ * model, PTCH, SRC B-F and SETUP A-F. A lock, an LFO or a scene that moves a byte makes a new key. */
+static WaveControls held[8];
+static uint32_t held_key[8][4];
 
 /* Called twice a frame for each SYNTIZ track, before and after its event's sample offset (the second call has
  * end == 16). It writes the header stock's packer expects at the cursor (source count, ring write position,
@@ -175,19 +179,28 @@ int wave_render_track(unsigned track, unsigned ping, unsigned start, unsigned en
     unsigned n = end > start && end <= 16u ? end - start : 0u;
     h[0] = n, h[1] = start, h[2] = 0x04000000u, h[3] = start << 26;
     if (n && track < 8u) {
-        if (!(ready >> track & 1u)) wave_reset(&voices[track]), ready |= (uint8_t)(1u << track);
+        Wave *w = &voices[track];
         const volatile uint16_t *fp = (const volatile uint16_t *)(uintptr_t)U32(FP_PTR);
         const volatile uint8_t *lane = (const volatile uint8_t *)(uintptr_t)(LANE + 72u * track + 0x20u);
         uint8_t src[6], setup[6];
         for (unsigned k = 0; k < 6u; ++k) src[k] = (uint8_t)(fp[k] >> 8), setup[k] = lane[k];
-        WaveControls c;
-        wave_controls_of(&c, model_of(part_base(), track), src, setup);
-        Wave *w = &voices[track];
+        uint16_t ptch = fp[0];
+        unsigned model = model_of(part_base(), track);
+        uint32_t key[4] = { (uint32_t)ptch << 16 | model << 8 | src[1],
+                            (uint32_t)src[2] << 24 | (uint32_t)src[3] << 16 | (uint32_t)src[4] << 8 | src[5],
+                            (uint32_t)setup[0] << 24 | (uint32_t)setup[1] << 16 | (uint32_t)setup[2] << 8 | setup[3],
+                            (uint32_t)setup[4] << 8 | setup[5] };
+        uint32_t *was = held_key[track];
+        if (!(ready >> track & 1u)) wave_reset(w), ready |= (uint8_t)(1u << track), was[0] = ~key[0];
+        if (was[0] != key[0] || was[1] != key[1] || was[2] != key[2] || was[3] != key[3]) {
+            was[0] = key[0], was[1] = key[1], was[2] = key[2], was[3] = key[3];
+            wave_controls_of(&held[track], model, src, setup);
+            wave_prepare(w, &held[track], wave_increment(ptch, setup[0], setup[1], (const volatile uint32_t *)(uintptr_t)CURVE));
+        }
+        const WaveControls *c = &held[track];
         if (end == 16u && U8(EVENTS + track) & 16u && !(raise_ev_trig_muted && raise_ev_trig_muted() >> track & 1u))
-            wave_note(w, &c);           /* a trig a mute module drops starts no note */
-        int16_t b[16];
-        wave_render(w, &c, wave_increment(fp[0], setup[0], setup[1], (const volatile uint32_t *)(uintptr_t)CURVE), b, n);
-        for (unsigned k = 0; k < n; ++k) h[4 + 2 * k] = h[5 + 2 * k] = (uint32_t)(uint16_t)b[k] << 16;
+            wave_note(w, c);            /* a trig a mute module drops starts no note */
+        wave_play(w, c, (uint32_t *)(uintptr_t)(h + 4), n);
     }
     U32(CURSOR) = (uint32_t)(uintptr_t)(h + 4 + 2 * n);
     return 0;
