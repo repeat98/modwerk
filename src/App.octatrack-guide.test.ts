@@ -8,7 +8,6 @@ import App from './App'
 import { CommunityContext } from './community/context'
 import type { Session } from './community/api'
 import { fakeUnit } from './dev/octatrack-link-fake'
-import { OCTATRACK_WELCOME_KEY } from './hooks/useOctatrackWelcome'
 import { waitForBaseInstall } from './config/octatrack-progress'
 import { OCTATRACK_DIAGNOSTICS_VERSION } from './community/octatrack-diagnostics-contract'
 import { publishedBinding as baseBinding } from './engine/elekloader/published-octatrack.fixture'
@@ -17,8 +16,7 @@ import { deviceStore, openDeviceDatabase } from './storage/device'
 import { USB_AUDIO_MODULE, usbAudioPreset } from './config/usb-audio'
 
 // A production build with the Octatrack base path released, for a member who is not a beta tester, on a computer whose
-// browser has WebUSB and an Octatrack on the original OS plugged in. They answered the welcome to modules over USB
-// already (App.octatrack-welcome.test.ts), so Your Octatrack opens the guide.
+// browser has WebUSB and an Octatrack on the original OS plugged in.
 const release = vi.hoisted(() => {
   window.matchMedia = (query: string) => ({ matches: false, media: query, onchange: null, addListener: () => {}, removeListener: () => {}, addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => true }) as unknown as MediaQueryList
   return { on: true }
@@ -33,7 +31,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('isSecureContext', true)
-  localStorage.setItem(OCTATRACK_WELCOME_KEY, 'seen')
   Object.defineProperty(navigator, 'usb', { value: fakeUnit('stock').usb, configurable: true })
   vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).includes('base-install-prompt') ? Response.json({ show: true }) : new Response('{}', { status: 404 })))
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
@@ -69,11 +66,14 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect(guide()).toBeNull()
     await act(async () => root.unmount()); root = createRoot(container)
     await open('octatrack')
-    await wait(1500)
-    await vi.waitFor(() => expect(guide()).not.toBeNull(), { timeout: 5000 })
-    expect(guide()!.querySelector('h2')?.textContent).toBe('Install the Modwerk base')
+    await wait(2500)
+    expect(guide()).toBeNull()
+    await vi.waitFor(() => expect(container.querySelector('.instrument-action')?.getAttribute('title')).toBe('Original OS detected. Install once from the card.'))
+    await act(async () => container.querySelector<HTMLButtonElement>('.instrument-action')!.click())
+    await vi.waitFor(() => expect(guide()?.querySelector('h2')?.textContent).toBe('Modules now load over USB, for everyone'))
+    await act(async () => [...guide()!.querySelectorAll('button')].find(button => button.textContent === 'Set up my Octatrack')!.click())
+    await vi.waitFor(() => expect(guide()?.querySelector('#base-stage-title')?.textContent).toBe('Download the base'))
     expect(guide()!.textContent).not.toMatch(/beta/i)
-    expect(guide()!.textContent).toContain('goes through the card')
     // Each run of the guide is counted without any identifier: here, that it opened.
     const counts = vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/usage/count')).map(([, options]) => JSON.parse(String(options?.body)))
     expect(counts).toContainEqual({ event: 'base_guide_opened' })

@@ -27,20 +27,18 @@ it primes its data stage, and the client never sends such a frame (it
 shortens that chunk by a byte), so older bases work too. `usbtest9`,
 `508b0e52`.
 
-**An EP0 OUT data stage can go unanswered two ways, and the tick
-covers both.** Measured on the owner's MKII, 11 October 2026, about one
-SUBMIT in 50–100 (502 primes: 29 of the first kind, 2 of the second). (1) The
-stage completes inside the ISR after the poll at the start of the transfer
-path, and stock's completion loop takes the bit: no new interrupt, no status
-stage. (2) The stage stops part way: 64 bytes of a 120-byte frame arrived (the
-queue head's overlay token `0x00388080`), the endpoint is still primed, and
-the host waits on a status stage that never comes. libusb gives up after its
-timeout; a browser may wait for ever. `modwerk_ep0_tick` (60 Hz, USB held off
-with the level-4 lock) finishes a stage that has completed and, after half a
-second without completion, refuses the frame and stalls EP0. The host then
-sees a stall and a REFUSED result for its sequence, and submits again (a
-refused frame never ran). Counters: `caught`, `stalled`, `stuck_overlay` in
-ep0.c (read with `mem:`). The cause of (2) on the wire is not known.
+**EP0 OUT can lose a completion interrupt or stop mid-frame.** On the owner's MKII
+(11 October 2026, 502 primes), 29 stages completed after the ISR poll and stock
+took the interrupt. Two stopped mid-frame: a 120-byte SUBMIT received 64 bytes
+(overlay `0x00388080`). The host then waited for status. At 60 Hz under the
+level-4 lock, `modwerk_ep0_tick` catches completed stages or stalls EP0 after
+half a second so the host can retry a refused frame. See `caught`, `stalled`
+and `stuck_overlay` in ep0.c. The cause of the partial transfer is still unknown.
+
+DIAG v3 byte 5 bit 0 advertises a 70-byte read. Pass the failed SUBMIT sequence
+in `wValue` before recovery. Bytes 68–69 give the controller's remaining OUT
+bytes, big-endian. Zero means no bytes outstanding, `0xffff` no matching sample.
+The CHUNK offset counts bytes from the start of the staged set.
 
 **Host frames wait for the boot restore.** The saved module set is
 reinstalled about 3 s after boot and its DSP code loads afterwards. An
@@ -196,6 +194,11 @@ report `0x20 | row` with the row's held keys, `0x30 | encoder` with a signed
 delta, `0x40` with the fader position), masked as the UART interrupt does.
 This is what octemu's emulated panel sends too. Remote PLAY, STOP and
 auto-stop work this way (development base `54f2ce5c`).
+
+**The transport has two stopped states.** Long `0x800065b8` and the 16 track
+bytes at `0x80006500` read 0 after a panel STOP, 1 playing, and 2 (position
+kept) after PLAY while playing or any MIDI STOP, until a panel STOP (MKII, 23
+November 2026). Running is `== 1`; octabam read 2 as the STOP key's.
 
 **Moving the cursor in an FX chooser does not pick; YES does.**
 
@@ -539,12 +542,12 @@ in [Beat Slicer's testing record](../sdk/octatrack/modules/beat-slicer/TESTING.m
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
 ColdFire computes the destination from the register it has just
 incremented, so the whole COMPRESSOR descriptor landed one byte high. The
-FX1 SETUP page then saw the wrong slots enabled and jumped through an odd
-widget pointer: vector 3 (address error) at `0x40037c2a`, on a dev twin
-built from base 9d5aa74d. Host builds never show it. The base now compiles
-with `-fno-late-combine-instructions`. `sdk/runtime/m68k_codegen.py`
-refuses any C object, in the base and elemod builds, where an instruction
-steps an address register in its source and reuses it in its destination.
+FX1 SETUP page then jumped through an odd widget pointer: vector 3 at
+`0x40037c2a`, on a dev twin of base 9d5aa74d. Host builds never show it.
+The base compiles with `-fno-late-combine-instructions`. An instruction
+that steps an address register in its source and reuses it in its
+destination is refused in a build's C objects (`m68k_codegen.py`) and
+reported in assembly, `.s` kept from C included (`npm run coldfire:isa`).
 
 **Stock copies a table entry; restoring the table is not enough.** A track
 bind (`0x4000bff0`, in the frame builder, on a trig that asks for it) copies
@@ -699,8 +702,7 @@ early-startup change passed emulator boots and quick power cycles on a
 tester's MKII, then stalled at the logo after several minutes powered off
 (reported 18 October 2026). Moving the small activation helper into the
 resident OS image fixed repeated cold starts on that unit; the module itself
-still runs from RAM. The mechanism is not known: it does not show a defect
-in RAM execution, the loader or the cache. Keep startup gates and activation
+still runs from RAM. Keep startup gates and activation
 helpers resident where you can, publish a callback only once its runtime is
 ready, and qualify a startup change after a sustained power-off as well as
 a quick restart. The emulator models neither cache, reset settling nor RAM
@@ -755,14 +757,11 @@ What `ot_emu` does not show:
   unless given `--card-rw`. Hold remote keys for unit ticks, not wall time:
   under `--dsp` it runs far slower than the clock.
 
-**Keep one link open and drive it by name.** [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)
-covers the persistent session, named panel steps, state reads and screenshots;
-use screenshots only for what the state reads cannot show.
+**Keep one link open and drive it by name** ([OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)).
 
 Tools that work on this Mac:
-- Development bases (`build_core.py --dev`): `npm run device -- key`,
-  `enc`, `fader`, `state`, `screen [--png FILE]`, `loader`, `report`,
-  `probe`, plus USB audio (MAIN and CUE).
+- Development bases (`build_core.py --dev`): the device steps, plus USB
+  audio (MAIN and CUE).
 - Recording: the repaired `rec.swift` (`sdk/machines/octatrack/hw/prepare_tools.py`,
   then `swiftc -O rec.swift -o rec; rec SECONDS OUT.wav Octatrack`).
 - `dsp_asm` for `--dsp-loader` builds: build `source/dsp_host/dsp_asm` from

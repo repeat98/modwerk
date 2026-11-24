@@ -157,7 +157,8 @@ uint32_t modwerk_machine_mask(void) { return sr; }
 void modwerk_machine_unmask(uint32_t old) { sr = old; }
 void dl_selection_tick(void) {}
 void dl_show_message(const char *s, unsigned n) { (void)s; (void)n; }
-int modwerk_machine_stopped(void) { return 1; }
+static int transport_running;
+int modwerk_machine_stopped(void) { return !transport_running; }
 static unsigned long uncached_calls; /* each owner header check, canonical extent and owns_image takes one */
 void *modwerk_machine_uncached(void *p) { ++uncached_calls; return p; }
 void modwerk_machine_invalidate_code(void) {}

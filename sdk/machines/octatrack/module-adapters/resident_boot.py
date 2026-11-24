@@ -114,13 +114,13 @@ def records_bytes(records, expected_ranges):
     return bytes(out)
 
 
-def prepare(image, device, dsp, layout):
+def prepare(image, device, dsp, layout, *, extra=None):
     """Return boot assembly, guarded pointer sites and hash-only receipt.
 
     No files or firmware are written. `layout` is the real private resident
     dsp_loader.recipe result. The returned source embeds only authored records.
     """
-    from resident_dsp import boot_ranges, resource_ranges
+    from resident_dsp import boot_ranges
     lines = ['        .section .boot,"ax"', '        .globl mw_resident_dsp_boot',
              'mw_resident_dsp_boot:', '        lea -48(%sp),%sp',
              '        movem.l %d0-%d7/%a0-%a3,(%sp)']
@@ -139,13 +139,19 @@ def prepare(image, device, dsp, layout):
         guard = image[pointer - device.main_load:pointer - device.main_load + 4]
         if guard != address.to_bytes(4, 'big'):
             raise ValueError('Original DSP upload pointer changed')
-        # Zeroed Y ranges only: a packaged feature's words (Analog BD's X region) are its package's, written at its RESET.
-        ranges = [(r['space'], r['address'], r['words']) for r in boot_ranges(tag) if r['space'] == 'y']
+        # Pack only authored initialization. Analog BD's private X data is
+        # written by its package at RESET, so it stays out of the base upload.
+        resources = [r for r in boot_ranges(tag) if r['space'] == 'y']
+        records = layout[tag]['residentUploadRecords']
+        if extra and tag in extra:
+            additional = extra[tag]
+            resources += [dict(space=r['space'], address=r['address'], words=len(r['words']), owner=r['owner']) for r in additional]
+            records = records + additional
+        ranges = [(r['space'], r['address'], r['words']) for r in resources]
         for space, address_owned, words in ranges:
             if any(sp == {'x': 1, 'y': 2}[space] and lo < address_owned + words and address_owned < lo + count
                    for sp, lo, count, _ in original_records):
                 raise ValueError('Authored DSP initialization overlaps an original loaded resource')
-        records = layout[tag]['residentUploadRecords']
         authored = records_bytes(records, ranges)
         fragments = []
         for number, (row, owned) in enumerate(zip(records, ranges)):
@@ -186,8 +192,7 @@ def prepare(image, device, dsp, layout):
                             originalSha256=sha(raw), pointer=hex(pointer), pointerSha256=sha(guard),
                             authoredBytes=len(authored), authoredSha256=sha(authored), authoredRoll=roll(authored),
                             packedBytes=sum(f['packedBytes'] for f in fragments), packedFragments=fragments, scratchSymbol=symbol, scratchBytes=total,
-                            records=[dict(space=s, address=hex(a), words=n, owner=next(r['owner'] for r in resource_ranges(tag)
-                                     if r['space'] == s and r['address'] == a), originalLoadedOverlap=False) for s, a, n in ranges],
+                            records=[dict(space=s, address=hex(a), words=n, owner=r['owner'], originalLoadedOverlap=False) for (s, a, n), r in zip(ranges, resources)],
                             resident=layout[tag]['residentHooks']))
     lines += ['        movem.l (%sp),%d0-%d7/%a0-%a3', '        lea 48(%sp),%sp', '        rts',
               'mw_resident_copy:', '        tst.l %d0', '        beq.w mw_resident_copy_done',
