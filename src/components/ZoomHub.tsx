@@ -106,7 +106,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const keepList = (list?: number[]) => list && { url: URL.createObjectURL(new Blob([Uint8Array.from(list)])), name: 'pedal-FLST_SEQ-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.ZDT' }
   // An MS-50G running MIDISTOMP answers exactly as a stock MS-70CDR: the model byte lives in the pedal's flash, set by
   // whichever updater ran last (#2076). So the first write on a connection asks what the pedal's front says; Cancel writes nothing.
-  const modelChecked = useRef<number>()
+  const modelChecked = useRef<number | undefined>(undefined)
   const printedModel = () => {
     if (modelChecked.current === state.connection) return true
     if (!window.confirm('First, look at the front of your pedal: does it say ' + device.name + '? A pedal running MIDISTOMP answers as an ' + device.name
