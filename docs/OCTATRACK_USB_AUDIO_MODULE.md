@@ -123,7 +123,7 @@ browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-
 5. The base without reserve and variants on `base/octatrack-next`, with the transition, a draft until
    extensively tested on a unit.
 
-## USB input in the 0.8 draft
+## USB input (USB Audio 0.4.0)
 
 **PROJ → MODWERK → SETTINGS → USB AUDIO → INPUTS** offers OFF, AB, CD
 and ABCD for a computer host. OFF is the default. AB and CD use the same
@@ -132,7 +132,7 @@ channels 1–4 to the four inputs. The input stream and its implicit feedback
 are available at high speed. Full speed and Outbox keep their output layouts.
 When a block is unavailable, the affected inputs read from the jacks.
 
-The development base owns the frame-transfer interrupt. Its guarded DMA
+Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA
 scheduler sends a staged input block to core 0 before an FX loader packet
 when both are due. The two transfers use disjoint DSP ranges. The RX hook
 consumes the block marker once so a closed stream or a skipped transfer
@@ -140,10 +140,11 @@ leaves the analog input intact. The base gives USB priority on the crossbar
 while a duplex configuration is selected and restores its previous values
 when that configuration leaves.
 
-Build the cumulative draft with `npm run octatrack:base -- --beta --stock OS.bin --out /private/tmp/new-build-dir`.
-The output directory includes `usb-audio-input.mwrm`, the optional stock-free RAM trial package.
-The draft base also accepts the existing output-only 0.3.0-experimental package.
-For panel automation, build a development twin with the same USB and DSP flags plus `--dev`.
+USB Audio 0.4.0-experimental publishes this duplex package (`scripts/octatrack-usb-audio-release.py`).
+It reports inventory kind 8. The output-only 0.3.0 package reports kind 7 and stays published as
+`configurable-0.3` in the package manifest, so the site replaces it on the next sync and uses its
+exact bytes for Undo. `npm run octatrack:base -- --beta --stock OS.bin --out DIR` still writes the same
+package as `usb-audio-input.mwrm`. For panel automation, build a development twin with the same USB and DSP flags plus `--dev`.
 Use the existing
 [USB tools](../sdk/machines/octatrack/hw/README.md) to capture counters,
 routing and underruns on a unit.

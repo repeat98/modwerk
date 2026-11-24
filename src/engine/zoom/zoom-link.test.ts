@@ -149,11 +149,21 @@ describe('MIDISTOMP over USB', () => {
     expect(await link.load()).toBeUndefined()
     expect(pedal.sent.filter(m => m[1] === 0x7d)).toEqual([[0xf0, 0x7d, 0x4d, 0x53, 0x54, 0x01, 1, 0xf7]])
   })
-  it('sends nothing of its own to a pedal in update mode', async () => {
-    const pedal = fakeZoomPedal({ firmware: '1.10' })
-    await connected(pedal)
-    await new Promise(resolve => setTimeout(resolve, 60))
-    expect(pedal.sent.some(m => m[1] === 0x7d)).toBe(false)
+  it('identifies an MS-50G on Zoom’s 3.10, reads its files and backs them up', async () => {
+    const files = [fakeEffect('DELAY.ZDL', 8, 8, '1.00', 3000), fakeEffectList({ 8: ['DELAY.ZDL'] })]
+    const pedal = fakeZoomPedal({ deviceId: 0x58, firmware: '3.10', files }), link = await connected(pedal)
+    expect(link.getState()).toMatchObject({ status: 'ready', identity: { deviceId: 0x58, model: 'MS-50G', firmware: '3.10' } })
+    expect((await link.listFiles({ versions: true })).map(f => [f.name, f.size])).toEqual([['DELAY.ZDL', 3000], ['FLST_SEQ.ZDT', 4108]])
+    expect((await link.backup()).files).toBe(2)
+    expect(pedal.sent.filter(m => m[1] === 0x52).every(m => m[3] === 0x58)).toBe(true)   // every request addressed to the MS-50G
+  })
+  it('sends nothing of its own to a pedal in update mode, an MS-70CDR or an MS-50G', async () => {
+    for (const deviceId of [0x61, 0x58]) {
+      const pedal = fakeZoomPedal({ deviceId, firmware: '1.10' })
+      await connected(pedal)
+      await new Promise(resolve => setTimeout(resolve, 60))
+      expect(pedal.sent.some(m => m[1] === 0x7d)).toBe(false)
+    }
   })
   it('reads the SYSTEM screen’s load, each answer a new window', async () => {
     const pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 2], features: 1, load } }), link = await connected(pedal)

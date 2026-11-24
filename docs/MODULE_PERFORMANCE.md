@@ -59,8 +59,11 @@ core idles on some sequences (pipeline stalls), so a module's instructions a sam
 measuring, run `node scripts/cycle-scan.mjs record <id>` on your computer ([sdk/cycle-scan](../sdk/cycle-scan/README.md)):
 it prices the module's executed path and its stock comparator's from the chip manual and commits
 `sdk/cycle-scan/records/<id>.json`. The check in `npm run check` then fails a record whose module source changed since its
-scan, and a performance.json that records fewer than 90 % of the instructions the scan saw executing at the dearest
-setting. It is a model; the unit stays the judge.
+scan, a performance.json that records fewer than 90 % of the instructions the scan saw executing at the dearest
+setting, and, for a module first listed from 24 November 2026, a package whose DSP admission charge (7/4 of an emulator
+figure, or the hardware figure) is below the scan's dearest cycles. It is a model; the unit stays the judge. A speed-up
+meant to change no sample proves it with the identity gate beside the scan,
+`sdk/cycle-scan/verify_ident.py` (bit-identical audio and instance state over about fifty renders).
 
 **A module that runs only on a key press.** ColdFire code with no MIDI path and no work in the frame interrupt (a save, a slice or a lock applied when a key is pressed) runs in the UI task, outside the audio frame. Its record (`template key`) needs no static bound, no stock benchmark and no flood. The dearest press, measured as executed instructions in `ot_emu` or timed on the unit, must fit 26,600,000 cycles (100 ms at 266 MHz, a responsiveness target), and that press, repeated at least 20 times while the sequencer plays with a STOP and a Part change between, must not hang it. `module:doctor` refuses this record for a MIDI or machine module (owner, 5 November 2026).
 

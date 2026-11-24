@@ -414,3 +414,43 @@ describe('syncing the set to the pedal', () => {
     expect(open().querySelector('.hub-sync p')?.textContent).toMatch(/Effect file changes require the MS-70CDR with Zoom 2\.10/)
   })
 })
+
+describe('the MS-50G’s pedal page (read only)', () => {
+  const device = DEVICES_BY_ID['zoom-ms-50g']
+  const files = [fakeEffect('DELAY.ZDL', 8, 8, '1.00'), fakeEffectList({ 8: ['DELAY.ZDL'] })]
+  const render = (view: ZoomHubView, link: ZoomLink) => act(() => root.render(createElement(ZoomHub, { device, view, link })))
+
+  it('names the pedal and its firmware, backs up its files, and offers no base', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ deviceId: 0x58, firmware: '3.10', files }).access), 200)
+    await link.connect()
+    await render('backups', link)
+    expect(container.querySelector('[role=alert]')?.textContent ?? '').not.toMatch(/not an/)
+    expect(container.textContent).not.toMatch(/Install base/)
+    await click(button('Back up all files'))
+    for (let i = 0; i < 100 && !open().querySelector('a[download]'); i++) await settle()
+    expect(open().querySelector<HTMLAnchorElement>('a[download]')?.download).toMatch(/^zoom-ms-50g-backup-.*\.zip$/)
+    expect(open().textContent).toMatch(/2 files/)
+    await idle(link)
+  })
+
+  it('describes the MS-50G’s own firmware, and no base for it yet', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ deviceId: 0x58, firmware: '3.10', files }).access), 200)
+    await link.connect()
+    await render('setup', link)
+    const rows = [...open().querySelectorAll('.zoom-firmware tbody tr')].map(tr => tr.textContent)
+    expect(rows[0]).toMatch(/^Zoom’s firmware \(3\.10\) with effect files/)
+    expect(rows[1]).toMatch(/Not on the MS-50G yet/)
+    expect(rows[1]).not.toMatch(/own updater|2\.10 updater/)
+    await render('status', link)
+    expect(open().textContent).toMatch(/Zoom’s firmware doesn’t report its load\./)
+    expect(open().textContent).not.toMatch(/The base will/)
+    await idle(link)
+  })
+
+  it('shows an MS-50G in update mode as update mode', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ deviceId: 0x58, firmware: '1.10' }).access), 200)
+    await link.connect()
+    await render('status', link)
+    expect(container.querySelector('[role=status]')?.textContent).toBe('Connected in update mode · bootloader 1.10')
+  })
+})
