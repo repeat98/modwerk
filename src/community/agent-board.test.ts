@@ -233,7 +233,7 @@ describe('agent board', () => {
       expect(() => claimNote(note), note).toThrow()
   })
 
-  it('reserves the approved Zoom keys together and counts them as one owner claim', async () => {
+  it('reserves the approved Zoom keys together, and the owner holds any number of claims', async () => {
     const { boardLogin, db, call, claim } = await fixture()
     const owner = await boardLogin('repeat98'), other = await boardLogin('other')
     db.prepare("UPDATE users SET github_id=? WHERE github_login='repeat98'").run('67785539')
@@ -244,11 +244,8 @@ describe('agent board', () => {
     const mine = async () => (await (await call('/agent-board/claims?holder=repeat98')).json()).claims
     expect(await mine()).toHaveLength(0)
     await call('/agent-board/claims/' + conflict.claim.id, 'DELETE', undefined, other)
-    for (let i = 0; i < CLAIM_LIMIT; i++) expect((await claim(owner, { kind: 'issue', key: String(100 + i) })).status).toBe(201)
-    expect((await reserve(owner)).status).toBe(409)
-    const held = await mine()
-    expect(held).toHaveLength(CLAIM_LIMIT)
-    await call('/agent-board/claims/' + held[0].id, 'DELETE', undefined, owner)
+    for (let i = 0; i <= CLAIM_LIMIT; i++) expect((await claim(owner, { kind: 'issue', key: String(100 + i) })).status).toBe(201)
+    expect(await mine()).toHaveLength(CLAIM_LIMIT + 1)
     const release = await reserve(owner)
     expect(release.status).toBe(200)
     const result = await release.json()
@@ -256,7 +253,7 @@ describe('agent board', () => {
     expect(new Set(result.claims.map((item: { key: string }) => item.key)).size).toBe(28)
     expect((await (await reserve(owner)).json()).claims).toEqual(result.claims)
     expect((await claim(other, { kind: 'module', key: 'zoom/spiral' })).status).toBe(409)
-    expect((await claim(owner, { kind: 'module', key: 'zoom/other' })).status).toBe(409)
+    expect((await claim(owner, { kind: 'module', key: 'zoom/other' })).status).toBe(201)
   })
 
   it('limits how many claims one person holds', async () => {

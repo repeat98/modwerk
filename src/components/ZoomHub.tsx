@@ -63,7 +63,9 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const model = identity?.model ?? device.name, updating = connected && isUpdateMode(identity)
   const writable = canWriteFiles(identity), readOnly = writable ? undefined : 'Installing and removing effects is tested only on the MS-70CDR with Zoom’s firmware 2.10 or the base.'
   // The base answers the identity request with its tag; an MS-70CDR without it can have it installed.
-  const canBase = device.id === 'zoom-ms-70cdr' && !!onInstall, onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
+  // Only the MS-70CDR has a base: MIDISTOMP's releases are built from its firmware, and no pedal takes another's.
+  const baseHere = device.id === 'zoom-ms-70cdr', stock = device.firmware?.releases.at(-1) ?? '2.10'
+  const canBase = baseHere && !!onInstall, onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
   // What was read belongs to the pedal it was read from: gone when that pedal is.
   const pedalKey = state.connection
   // Kept with the link, so it outlives this page: coming back from the library or a set shows it at once.
@@ -214,7 +216,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
       </nav>
       <div className="hub-pane">
         {panel('status', <div className="hub-console">
-          <ZoomLoad key={pedalKey} link={link} identity={connected && !other ? identity : undefined} active={view === 'status'} />
+          <ZoomLoad key={pedalKey} link={link} identity={connected && !other ? identity : undefined} active={view === 'status'} base={baseHere} />
           <section className="hub-cell hub-cell-health" aria-labelledby="zoom-firmware-cell">
             <h3 id="zoom-firmware-cell">Firmware</h3>
             {!connected ? <p className="hub-empty">Connect your pedal to read it.</p>
@@ -257,8 +259,8 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
               <caption>Two routes, as on the Octatrack: effect files on Zoom’s firmware, or a base underneath them.</caption>
               <thead><tr><th scope="col">Route</th><th scope="col">What you get</th><th scope="col">State</th></tr></thead>
               <tbody>
-                <tr><th scope="row">Zoom’s firmware (2.10) with effect files</th><td>Zoom’s pedal as it is, plus effects, NAM captures and cabs added as files. No reflash: remove a file to undo it.</td><td>Works today.</td></tr>
-                <tr><th scope="row"><a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a> as the base, by Luca Matturro</th><td>The firmware underneath, like the Octatrack’s base: routing on two buses, PERFORM mode, a looper, metering, a DSP limit of 300, and the shared tempo and transport the effects use. Built from your own Zoom updater and flashed through Modwerk.</td><td>{!canBase ? 'Coming. Until then, use MIDISTOMP’s own updater.' : onBase ? 'Installed.' : 'Beta: install it below.'} Zoom’s 2.10 updater goes back.</td></tr>
+                <tr><th scope="row">Zoom’s firmware ({stock}) with effect files</th><td>Zoom’s pedal as it is, plus effects, NAM captures and cabs added as files. No reflash: remove a file to undo it.</td><td>Works today.</td></tr>
+                <tr><th scope="row"><a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a> as the base, by Luca Matturro</th><td>The firmware underneath, like the Octatrack’s base: routing on two buses, PERFORM mode, a looper, metering, a DSP limit of 300, and the shared tempo and transport the effects use. Built from your own Zoom updater and flashed through Modwerk.</td><td>{!baseHere ? 'Not on the ' + device.name + ' yet: MIDISTOMP’s releases are built from the MS-70CDR’s firmware, and a pedal never takes another’s.' : !canBase ? 'Coming. Until then, use MIDISTOMP’s own updater. Zoom’s 2.10 updater goes back.' : (onBase ? 'Installed.' : 'Beta: install it below.') + ' Zoom’s 2.10 updater goes back.'}</td></tr>
               </tbody>
             </table>
             {device.id !== 'zoom-ms-70cdr' && <p>This page doesn’t flash this pedal’s firmware yet. Back up all files first (Backups).</p>}

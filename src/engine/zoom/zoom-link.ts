@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canFlashBase, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 // Tabs of the site take turns on the pedal, as octatrack-link.ts's USB jobs do; without Web Locks, `op` keeps one job at a time in this tab.
@@ -447,6 +447,7 @@ export class ZoomLink {
    */
   readonly flashBase = (main: Uint8Array, preset?: Uint8Array, onStep?: (step: 'erase' | 'write' | 'finish', fraction: number) => void) => this.exclusive('Flashing', async () => {
     if (!isUpdateMode(this.state.identity)) throw new Error('Put the MS-70CDR in update mode first: unplug it, hold Up and Down while plugging in USB, then connect again.')
+    if (!canFlashBase(this.state.identity)) throw new Error('This is an ' + this.state.identity!.model + ' in update mode. The base is built from the MS-70CDR’s firmware and goes only on an MS-70CDR.')
     const steps = flashSteps(main, preset), blocks = steps.filter(body => body[0] === 0x02).length
     let sent = 0, shown = ''
     for (const [i, body] of steps.entries()) {
