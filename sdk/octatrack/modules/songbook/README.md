@@ -93,5 +93,5 @@ Emulator capture (ot_emu), not the unit. No audio: the module makes no sound.
 ## Develop
 
 - Hear it: `npm run module:dev -- songbook` builds it and tries it on your unit over USB; `--watch` does that again on every save.
-- Check it: `npm run module:doctor -- --draft songbook`, and `python3 -B sdk/drafts/songbook/verify.py` for the host gate.
+- Check it: `npm run module:doctor -- songbook`, and `python3 -B sdk/octatrack/modules/songbook/verify.py` for the host gate.
 - Before you write ColdFire code: the traps in sdk/octabam/AGENTS.md, and docs/OCTATRACK_API.md for the hooks a module can use.

@@ -231,6 +231,11 @@
       "id": "grain",
       "version": "0.1.3-experimental",
       "addedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "songbook",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-24T09:10:19Z"
     }
   ]
 }
