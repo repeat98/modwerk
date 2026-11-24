@@ -78,4 +78,21 @@ describe('installing the base on an MS-70CDR', () => {
     await click(button('Try again'))
     await until(() => stage() === 'Start the pedal on the base')
   })
+
+  it('won’t flash an MS-50G in update mode, and says why', async () => {
+    const pedal = fakeZoomPedal({ deviceId: 0x58, firmware: '1.10' }), link = new ZoomLink(() => Promise.resolve(pedal.access), 100)
+    await link.connect()
+    const read = async () => ({ 'Main.bin': new Uint8Array(1), 'Preset.bin': new Uint8Array(1) }), build = vi.fn(async () => ({ main: new Uint8Array(0xb0000) }))
+    await act(() => root.render(createElement(ZoomBaseDialog, { link, device: DEVICES_BY_ID['zoom-ms-70cdr'], onClose: () => {}, read, build })))
+    await click(button('Show me how'))
+    const input = container.querySelector<HTMLInputElement>('input[type=file]')!
+    Object.defineProperty(input, 'files', { value: [new File(['zip'], 'u.zip')], configurable: true })
+    await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
+    await until(() => /updater is ready/.test(container.textContent ?? ''))
+    await act(() => { container.querySelector<HTMLInputElement>('.risk-accept input')!.click() })
+    await click(button('Next'))
+    expect(status()).toBe('This is an MS-50G, not an MS-70CDR. The base goes only on an MS-70CDR.')
+    expect(button('Flash the base').disabled).toBe(true)
+    expect(pedal.sent.some(m => m[1] === 0x52)).toBe(false)
+  })
 })
