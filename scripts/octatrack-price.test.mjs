@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { added, allocationReading, curveFit, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, curveFit, curveRoom, notPlaying, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -65,6 +65,7 @@ it('writes a clean reading as the module\'s price, its readings beside it, and t
     const result = { id: 'echo', version: 'file', before: at(30.1, 50), atRest: at(30.3, 50.2), atRestAdds: adds(0.2), inUse: at(31.4, 51), inUseAdds: adds(1.3), inUseOn: 'T1 FX2', rolledBack: true }
     const write = changes => writePrice({ root, result: { ...result, ...changes }, base: '945cc074', scene: 'MKII, bank C pattern C01', seconds: 8, measuredAt: '2026-11-17T20:00:00.000Z' })
     expect(write({ refused: 'NO ROOM' })).toMatch(/not clean/)
+    expect(write({ notPlayed: 'at rest: the transport was stopped' })).toMatch(/not clean/)
     expect(write({ version: '0.1.0' })).toMatch(/published 0.1.0 but the manifest is 0.2.0/)
     writeFileSync(manifest, readFileSync(manifest, 'utf8').replace('"FX2"', '"FX2",\n    "effectId": 15'))
     expect(write({ inUse: undefined, inUseAdds: undefined })).toMatch(/priced on a slot too/)
@@ -119,4 +120,21 @@ it('counts a module at rest from REST_NOISE up, the readings\' scatter below it 
   expect(restCost({ frameMax: 80.6 }, { frameMax: 79.3 })).toBe(0)  // lower than before: scatter
   expect(restCost({ frameMax: 80 }, { frameMax: 80 + REST_NOISE - 0.1 })).toBe(0)
   expect(restCost(undefined, { frameMax: 90 })).toBe(90 >= REST_NOISE ? 90 : 0)
+})
+
+it('refuses a reading the transport did not play, from the session\'s state reply', () => {
+  expect(notPlaying('stopped \n')).toBe(true)
+  expect(notPlaying('stopped recording\n')).toBe(true)
+  expect(notPlaying('playing \n')).toBe(false)
+  expect(notPlaying('playing recording\n')).toBe(false)
+  expect(notPlaying('error: no answer\n')).toBe(false) // an unknown reply is not counted as stopped
+})
+
+it('stops the curve before it starts when the booked first instance leaves no room on the measure pattern', () => {
+  // FM Synth 0.1.5 on Dev17 C04 (81 % stock alone, booked 31.3): read at 107.9 %, the overload and not its cost.
+  expect(curveRoom({ atRest: 81, booked: 31.3, pattern: '1' })).toMatch(/no room on pattern 1: .*112.3 %, past 100 %.*--measure-pattern/)
+  // The same machine on a pattern with room (stock alone 65 %): the curve runs.
+  expect(curveRoom({ atRest: 65, booked: 31.3, pattern: '3' })).toBeNull()
+  // A module nothing books yet: its first reading decides (curveProblem judges it).
+  expect(curveRoom({ atRest: 95, booked: undefined, pattern: '1' })).toBeNull()
 })
