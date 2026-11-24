@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "checkCount": 366,
+  "candidateSha256": "49ce9b6cd40f5d9195472e7a60792784a50060700d32e5110df996713d133c53",
+  "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+  "adaptersSha256": "26b23a72d0c2774cd1da981e4cfcaaa2186ff89e69959b4a68100b9f9051e698",
+  "verifierSha256": "08e68b2422d71ea5f9860dca38f4ecfac9d6e8a0edbc734e548056057c0cc19b",
+  "coverage": "MKII panel; eight distinct channels; all CC assignments; stock controls; STK restore; two actual sequencer locks with live base unchanged",
+  "notTested": [
+    "persistence",
+    "same-channel arbitration",
+    "LFOs",
+    "USB lifecycle",
+    "hardware"
+  ],
+  "groups": {
+    "eightTracksAndEndpointValues": 96,
+    "remainingControllerAssignments": 254,
+    "stockControls": 10,
+    "stockModeRestoration": 2,
+    "trackAssignmentIsolation": 2,
+    "sequencedLocks": 2
+  },
+  "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "unitBytesIncludingLocalReplaySpans": 316,
+  "qualification": "unqualified emulator-only research",
+  "buildReproduction": "byte-identical on a second private build",
+  "date": "2026-10-23"
+}

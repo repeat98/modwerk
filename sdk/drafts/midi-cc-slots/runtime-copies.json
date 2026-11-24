@@ -1,0 +1,38 @@
+[
+  {
+    "offset": 378,
+    "address": "0x4003b3be",
+    "length": 16,
+    "sha256": "2208dade979a9235783eacb36cdde6fac1f68a1c1e97629678e6ef71eaa7643b"
+  },
+  {
+    "offset": 620,
+    "address": "0x4003cf60",
+    "length": 16,
+    "sha256": "49600c806d592d753729983c84557aab4a412eebec0d3a117d71d470fb534a03"
+  },
+  {
+    "offset": 1084,
+    "address": "0x40036964",
+    "length": 18,
+    "sha256": "df84426d2bfb15e3371d8f2eb618782fae49fda4525ff7c30fcf005ac7be41fb"
+  },
+  {
+    "offset": 1120,
+    "address": "0x4003673e",
+    "length": 16,
+    "sha256": "932ffab8fa97d3338e335c1edcc1ef010401c66f3a219d9142afa5cfd50e63fe"
+  },
+  {
+    "offset": 1140,
+    "address": "0x40036964",
+    "length": 18,
+    "sha256": "df84426d2bfb15e3371d8f2eb618782fae49fda4525ff7c30fcf005ac7be41fb"
+  },
+  {
+    "offset": 1176,
+    "address": "0x4003673e",
+    "length": 16,
+    "sha256": "932ffab8fa97d3338e335c1edcc1ef010401c66f3a219d9142afa5cfd50e63fe"
+  }
+]
