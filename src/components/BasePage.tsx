@@ -78,6 +78,26 @@ function baseMachine(device?: string): BaseMachine {
   return !device || device === 'octatrack' || device === 'all' ? 'octatrack' : device === 'zoom-ms-70cdr' ? 'zoom' : device === 'analog-rytm-mkii' ? 'rytm' : 'others'
 }
 const COVERED = new Set(['octatrack', 'zoom-ms-70cdr', 'analog-rytm-mkii'])
+const ORIGINAL_OS: Partial<Record<BaseMachine, string>> = {
+  octatrack: 'OS 1.40C',
+  zoom: 'Zoom 2.10 updater',
+  rytm: 'OS 1.74',
+}
+
+function FirmwareStack({ machine }: { machine: BaseMachine }) {
+  const original = ORIGINAL_OS[machine]
+  return <section className="base-stack" aria-labelledby="base-stack-title">
+    <h2 id="base-stack-title">Firmware stack</h2>
+    <div className="base-stack-content">
+      <img src={screen('firmware-stack.webp')} alt="" width={960} height={464} />
+      <dl className="base-stack-layers">
+        <div><dt>Modules</dt><dd>The effects, machines and tools you choose.</dd></div>
+        <div><dt>Modwerk base</dt><dd>The shared support that lets modules work with the original OS.</dd></div>
+        <div><dt>Original OS</dt><dd>{original && <>{original}. </>}Your copy stays on your computer.</dd></div>
+      </dl>
+    </div>
+  </section>
+}
 
 function ScreenGallery({ screens, label }: { screens: Screen[]; label: string }) {
   return <ul className="base-screens" aria-label={label}>{screens.map(item => <li key={item.src} className="base-screen">
@@ -99,20 +119,23 @@ function Steps({ steps }: { steps: Step[] }) {
   </li>)}</ul>
 }
 
-function SectionHeading({ id, device, title, status, action, children }: {
-  id: string; device: DeviceProfile; title: string; status: string; action: React.ReactNode; children: React.ReactNode
+function SectionHeading({ id, title, status, action, children }: {
+  id: string; title: string; status: string; action: React.ReactNode; children: React.ReactNode
 }) {
   return <header className="base-section-heading base-device">
     <div>
       <h2 id={'base-' + id}>{title} <span className="base-status">{status}</span></h2>
       <p>{children}</p>
-      <div className="base-actions">
-        {action}
-        <button type="button" className="text-button" onClick={() => document.getElementById('base-changelog-title')?.focus()}>View changelog</button>
-      </div>
     </div>
-    <div className="base-device-picture"><DeviceImage device={device} eager /><PhotoCredit device={device} /></div>
+    <div className="base-actions">{action}</div>
   </header>
+}
+
+function DeviceFacts({ device, children }: { device: DeviceProfile; children: React.ReactNode }) {
+  return <div className="base-device-facts">
+    <dl className="base-facts">{children}</dl>
+    <div className="base-device-picture"><DeviceImage device={device} /><PhotoCredit device={device} /></div>
+  </div>
 }
 
 /** What a machine without its own section has: a base under way, or none yet. */
@@ -131,27 +154,24 @@ export function BasePage({ machine: device }: { machine?: string }) {
     <header className="base-heading">
       <h1>Base firmware</h1>
       <p className="base-definition">The base is your instrument’s original operating system with support for modules built in.</p>
-      <dl className="base-overview">
-        <div><dt><Icon name="file" />Original OS</dt><dd>The maker’s firmware file. Your copy stays on your computer.</dd></div>
-        <div><dt><img src={assetUrl('modwerk-mark.svg')} alt="" />Modwerk base</dt><dd>Built in your browser. It provides the controls and connections modules share.</dd></div>
-        <div><dt><Icon name="grid" />Modules</dt><dd>Features you choose, like a tape echo or a drum machine.</dd></div>
-      </dl>
     </header>
     <div className="base-picker">
       <span id="base-picker-label">Choose your instrument</span>
       <div className="faq-machines" role="group" aria-labelledby="base-picker-label">{BASE_MACHINES.map(item =>
         <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => setMachine(item.id)}>{item.label}</button>)}</div>
     </div>
+    <FirmwareStack machine={machine} />
 
     {machine === 'octatrack' && <section className="base-section" aria-labelledby="base-octatrack">
-      <SectionHeading id="octatrack" device={DEVICES_BY_ID.octatrack} title="Octatrack MKI and MKII" status="Released"
+      <SectionHeading id="octatrack" title="Octatrack MKI and MKII" status="Released"
         action={<a className="button button-primary" href="#octatrack/setup">Set up your Octatrack <Icon name="arrow" size={15} /></a>}>
-        Install the base once from the card. After that, you can change your module set over USB without reinstalling the OS.
+        Install the base once from the card. Then change your module set over USB.
       </SectionHeading>
-      <dl className="base-facts">
+      <BaseChangelog machine="octatrack" />
+      <DeviceFacts device={DEVICES_BY_ID.octatrack}>
         <div><dt>What you need</dt><dd><a href="#faq/base-firmware">Original OS 1.40C</a> and a CompactFlash card. For USB sync, use Chrome or Edge on a computer and a USB cable.</dd></div>
         <div><dt>Before you install</dt><dd>Back up your projects. Keep the original OS and a card reader or MIDI interface for recovery. <a href="#faq/risks">Installation risks</a></dd></div>
-      </dl>
+      </DeviceFacts>
       <section className="base-workflow"><h3>From setup to your first set</h3>
         <ol className="base-sequence">
           <li><h4>Install the base</h4><p>In Setup, build the .bin and copy it to the card. On the Octatrack, choose <strong>PROJECT › SYSTEM › OS UPGRADE</strong>.</p></li>
@@ -173,14 +193,15 @@ export function BasePage({ machine: device }: { machine?: string }) {
     </section>}
 
     {machine === 'zoom' && <section className="base-section" aria-labelledby="base-zoom">
-      <SectionHeading id="zoom" device={DEVICES_BY_ID['zoom-ms-70cdr']} title="Zoom MS-70CDR" status="Beta"
+      <SectionHeading id="zoom" title="Zoom MS-70CDR" status="Beta"
         action={<a className="button button-primary" href={zoomHubHref('zoom-ms-70cdr')}>Open the MS-70CDR page <Icon name="arrow" size={15} /></a>}>
         Luca Matturro’s <a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a> base adds MIDI control, clock sync and a mixer. Installing it keeps the effects already on your pedal.
       </SectionHeading>
-      <dl className="base-facts">
+      <BaseChangelog machine="zoom" />
+      <DeviceFacts device={DEVICES_BY_ID['zoom-ms-70cdr']}>
         <div><dt>What you need</dt><dd>Zoom’s MS-70CDR 2.10 Mac updater (.zip) and a USB cable. The zip works in Chrome or Edge on any computer.</dd></div>
         <div><dt>Return to stock</dt><dd>Back up your effects first. Zoom’s original 2.10 updater rewrites the effects area when it restores the pedal.</dd></div>
-      </dl>
+      </DeviceFacts>
       <section className="base-workflow"><h3>Set up MIDISTOMP</h3>
         <ol className="base-sequence">
           <li><h4>Open the updater</h4><p>Hold <strong>Up + Down</strong> while plugging in the pedal to enter its firmware update mode.</p></li>
@@ -191,14 +212,15 @@ export function BasePage({ machine: device }: { machine?: string }) {
     </section>}
 
     {machine === 'rytm' && <section className="base-section" aria-labelledby="base-rytm">
-      <SectionHeading id="rytm" device={DEVICES_BY_ID['analog-rytm-mkii']} title="Analog Rytm MKII" status="Preview"
+      <SectionHeading id="rytm" title="Analog Rytm MKII" status="Preview"
         action={<a className="button button-primary" href={deviceHref('analog-rytm-mkii')}>Open the Rytm library <Icon name="arrow" size={15} /></a>}>
         The base and your selected modules travel in one OS file. Build and install a new file each time you change your set.
       </SectionHeading>
-      <dl className="base-facts">
+      <BaseChangelog machine="rytm" />
+      <DeviceFacts device={DEVICES_BY_ID['analog-rytm-mkii']}>
         <div><dt>What you need</dt><dd>Your original Rytm MKII OS 1.74 file, a USB cable and Elektron Transfer.</dd></div>
         <div><dt>Return to stock</dt><dd>Send Elektron’s original .syx with Elektron Transfer.</dd></div>
-      </dl>
+      </DeviceFacts>
       <section className="base-workflow"><h3>Build and install a set</h3>
         <ol className="base-sequence">
           <li><h4>Choose modules</h4><p>Add drum machines or a send effect from the Rytm library to your set.</p></li>
@@ -215,7 +237,6 @@ export function BasePage({ machine: device }: { machine?: string }) {
         <strong>{deviceTitle(device)}</strong><span>{baseState(device)}</span><Icon name="arrow" size={15} />
       </a></li>)}</ul>
     </section>}
-    {machine !== 'others' && <BaseChangelog key={machine} machine={machine} />}
     <footer className="base-footer">Share module sets as JSON. Keep firmware files on your computer. <a href="#faq">Help &amp; FAQ</a></footer>
   </div>
 }

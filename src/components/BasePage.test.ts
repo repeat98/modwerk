@@ -59,14 +59,14 @@ it('lists the other instruments without repeating the three that have their own 
 
 it('shows the newest change for the chosen base and links earlier changes to shipped notes', async () => {
   await render()
-  expect(container.querySelector('.base-changelog > dl dt')?.textContent).toBe(CURRENT_BASE_VERSION)
+  expect(container.querySelector('.base-latest-release .base-release-version')?.textContent).toBe(CURRENT_BASE_VERSION)
   for (const [machine, note] of [['Octatrack', 'octatrack'], ['MS-70CDR', 'midistomp'], ['Analog Rytm', 'rytm']]) {
     await choose(machine)
     const log = container.querySelector('.base-changelog')!
-    const latest = log.querySelector<HTMLAnchorElement>(':scope > dl a')!
+    const latest = log.querySelector<HTMLAnchorElement>('.base-latest-release .base-release-source')!
     expect(latest.href).toContain(note)
     expect(latest.closest('details')).toBeNull()
-    expect(log.querySelectorAll('details .base-change').length).toBeGreaterThan(0)
+    expect(log.querySelectorAll('.base-archived-release').length).toBeGreaterThan(0)
     for (const link of log.querySelectorAll<HTMLAnchorElement>('a')) {
       const file = new URL(link.href).pathname.split('/changelog/')[1]
       expect(existsSync(join(process.cwd(), 'changelog', file)), file).toBe(true)
@@ -76,9 +76,24 @@ it('shows the newest change for the chosen base and links earlier changes to shi
   expect(container.querySelector('.base-changelog')).toBeNull()
 })
 
+it('shows a top-to-bottom stack with the original OS for the selected instrument', async () => {
+  await render()
+  const stack = container.querySelector('.base-stack')!
+  expect([...stack.querySelectorAll('dt')].map(layer => layer.textContent)).toEqual(['Modules', 'Modwerk base', 'Original OS'])
+  expect(existsSync(join(process.cwd(), 'public', stack.querySelector('img')!.getAttribute('src')!))).toBe(true)
+  expect(stack.textContent).toContain('OS 1.40C')
+  await choose('MS-70CDR')
+  expect(stack.textContent).toContain('Zoom 2.10 updater')
+  await choose('Analog Rytm')
+  expect(stack.textContent).toContain('OS 1.74')
+  await choose('Others')
+  expect(stack.textContent).not.toContain('OS 1.74')
+})
+
 it('puts setup and recovery prerequisites before the optional Octatrack references', async () => {
   await render()
   expect(container.querySelector('.base-device a')?.getAttribute('href')).toBe('#octatrack/setup')
+  expect(container.querySelector('.base-device')?.nextElementSibling?.className).toBe('base-changelog')
   expect(container.querySelector('.base-facts')?.textContent).toContain('OS 1.40C')
   expect(container.querySelector('.base-facts')?.textContent).toContain('card reader or MIDI interface')
   expect(container.querySelector('.base-definition')?.textContent).toContain('original operating system')
