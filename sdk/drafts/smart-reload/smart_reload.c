@@ -90,18 +90,34 @@ static void put_scene(unsigned bank, unsigned part, unsigned side, uint8_t scene
     post_event(UI_QUEUE, side ? EV_SCENE_B : EV_SCENE_A);
 }
 
+/* The last reload, for the diagnostic word (module_tick): bits 0-7 the row, 8-11 why (below), 12-15 the row's bank,
+ * 16-19 its pattern, 20-23 the Part its pattern plays, 24-27 the Part reloaded, 28-31 the bank in use. */
+enum { WHY_PATTERN_MODE = 1, WHY_NO_ROW, WHY_NOT_PATTERN_ROW, WHY_OTHER_BANK, WHY_OTHER_PART, WHY_PATTERN_PART, WHY_DONE,
+       WHY_NOTHING_SAVED };
+static uint32_t last = 0;
+static void note(unsigned why, uint32_t row, unsigned bank, unsigned pattern, unsigned ppart, unsigned part)
+{
+    last = (row & 0xffu) | (uint32_t)(why & 15u) << 8 | (uint32_t)(bank & 15u) << 12 | (uint32_t)(pattern & 15u) << 16
+        | (uint32_t)(ppart & 15u) << 20 | (uint32_t)(part & 15u) << 24 | (uint32_t)(rd8(CUR_BANK) & 15u) << 28;
+}
+struct sr_api { volatile uint32_t value; };
+void sr_tick(void *api) { if (api) ((struct sr_api *)api)->value = last; }
+
 /* The current row's scenes for the Part just reloaded; 0 when the row does not apply. */
 static unsigned row_scenes(unsigned part)
 {
-    if (!rd32(ARR_MODE)) return 0;                       /* pattern mode: stock's reload */
     uint32_t row = rd32(ARR_ROW), arr = rd32(ARR_PTR);
+    if (!rd32(ARR_MODE)) { note(WHY_PATTERN_MODE, row, 0, 0, 0, part); return 0; }   /* pattern mode: stock's */
     unsigned count = (unsigned)rd8(arr + 0x12) << 8 | rd8(arr + 0x13);
-    if (row >= count) return 0;                          /* none (-1), or past the last row */
+    if (row >= count) { note(WHY_NO_ROW, row, 0, 0, 0, part); return 0; }   /* none (-1), or past the last row */
     uint32_t r = arr + 0x14u + row * ROW_BYTES;
-    if (rd8(r) != 0) return 0;                           /* a LOOP/JUMP/HALT or REM row has no scenes */
     unsigned bank = rd8(r + 1) >> 4, pattern = rd8(r + 1) & 15u;
-    if (bank != rd8(CUR_BANK) || part != rd8(CUR_PART)) return 0;
-    if (rd8(BANK_BASE + bank * BANK_STRIDE + pattern * PAT_STRIDE + PAT_PART) != part) return 0;
+    unsigned ppart = rd8(BANK_BASE + bank * BANK_STRIDE + pattern * PAT_STRIDE + PAT_PART);
+    if (rd8(r) != 0) { note(WHY_NOT_PATTERN_ROW, row, bank, pattern, ppart, part); return 0; }   /* LOOP/JUMP/HALT, REM */
+    if (bank != rd8(CUR_BANK)) { note(WHY_OTHER_BANK, row, bank, pattern, ppart, part); return 0; }
+    if (part != rd8(CUR_PART)) { note(WHY_OTHER_PART, row, bank, pattern, ppart, part); return 0; }
+    if (ppart != part) { note(WHY_PATTERN_PART, row, bank, pattern, ppart, part); return 0; }
+    note(WHY_DONE, row, bank, pattern, ppart, part);
     unsigned done = 0;
     for (unsigned side = 0; side < 2; ++side) {
         int8_t scene = (int8_t)rd8(r + 8 + side);
@@ -118,6 +134,7 @@ unsigned sr_reload(unsigned part)
 {
     unsigned rc = stock_reload(part);
     if (rc) row_scenes(part & 3u);
+    else note(WHY_NOTHING_SAVED, rd32(ARR_ROW), 0, 0, 0, part);
     return rc;
 }
 

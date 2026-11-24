@@ -5,6 +5,8 @@
 #include <string.h>
 
 unsigned sr_reload(unsigned part);
+void sr_tick(void *api);
+static unsigned diag(void) { struct { volatile uint32_t value; } api = {0}; sr_tick((void *)&api); return api.value; }
 
 #define N 4096
 static uint32_t keys[N];
@@ -84,6 +86,7 @@ int main(void)
     check("and in the bank's copy of the Part, as the row start writes them", host_rd8(BANKSC(1, 0)) == 1 && host_rd8(BANKSC(1, 0) + 1) == 2);
     check("the Part marked edited again, as the row start marks it", (host_rd8(0x100b145eu) & 1) && (host_rd8(BANK(1) + 0x95048u) & 1));
     check("stock's scene update and two redraws, one per side", changed == 2 && posted == 2);
+    check("the diagnostic word: row 0, done, bank 1, pattern 2, its Part 0, Part 0, bank in use 1", diag() == 0x10021700u);
     check("and each scene into the sound at once, as SCENE A/B + TRIG does: bank, Part, scene, side", sounds == 2
           && sound[0][0] == 1 && sound[0][1] == 0 && sound[0][2] == 1 && sound[1][2] == 2 && sound[1][3] == 1);
 
@@ -111,6 +114,7 @@ int main(void)
     setup(); host_wr8(0x80000002u, 2);
     sr_reload(0);
     check("the row's pattern in another bank: stock's reload only", host_rd8(WORK(0)) == saved_a && changed == 0);
+    check("and the diagnostic word says why: another bank", ((diag() >> 8) & 15u) == 4u);
 
     setup(); host_wr8(BANK(1) + 2u * 0x8ed8u + 0x8e57u, 2);
     sr_reload(0);
