@@ -31,7 +31,8 @@
     "base": "started",
     "link": "started",
     "diagnostics": "started",
-    "loader": "started"
+    "loader": "started",
+    "tools": "started"
   },
   "research": [
     {

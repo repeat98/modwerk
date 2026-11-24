@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { existsSync } from 'node:fs'
-import { readFile, writeFile, mkdir, rename, lstat, rm } from 'node:fs/promises'
+import { readFile, readdir, writeFile, mkdir, rename, lstat, rm } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
@@ -63,7 +63,7 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity and the image in --elektron-images that matches its set.'),
   tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available. Read-only.'),
   tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; Zoom pedals and older Octatrack bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
@@ -223,7 +223,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
+  // The Model:Cycles over its development link (startup --elektron-midi): identity only, no loader yet.
+  const cyclesSelected = () => options.elektronMidi && !options.deviceSocket && !remote
   async function connected() {
+    if (cyclesSelected()) throw new Error('The Model:Cycles has no runtime loader or saved sets yet: device_status reads its identity over the development link.')
     if (zoomSelected()) throw new Error('MIDISTOMP does not provide the runtime set loader or saved-set files. Use zoom_list or zoom_backup for the pedal’s files.')
     if (!options.deviceSocket && !remote) throw new Error('Device tools require an explicitly selected --device-socket or a connected remote session (remote_session_connect).')
     if (remote?.relay.state().ended) { remote = undefined; dropLink(); throw new Error('The remote session has ended.') }
@@ -290,6 +293,27 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!/^[A-Za-z0-9_]{1,8}\.zdl$/i.test(args.file)) throw new Error('Name one effect file: at most 8 letters, digits or underscores, then .ZDL.')
     if (name && !options.zoomEffects) throw new Error('Choose the effect files at startup with --zoom-effects DIR.')
     return name ? join(options.zoomEffects, args.file) : args.file
+  }
+  // The Model:Cycles: a fresh MIDI port list per read (RtMidi has no hot-plug here), its link's ident, and the built
+  // image in --elektron-images whose set identity matches the one the unit took at boot.
+  async function cyclesSnapshot() {
+    const turn = dependencies.elektronAccess ? null : await unitTurn('read Model:Cycles', 10000)
+    let access
+    try {
+      access = await (dependencies.elektronAccess ?? nodeMidiAccess)()
+      const identity = await frontend.readMcIdentity(access)
+      if (!identity) throw new Error('No Model:Cycles answered over USB MIDI. It needs a development base with the link (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.')
+      let build = null
+      if (identity.set && options.elektronImages) {
+        for (const name of (await readdir(options.elektronImages)).filter(name => /\.syx$/i.test(name)).sort()) {
+          const bytes = new Uint8Array(await readFile(join(options.elektronImages, name)))
+          let set
+          try { set = frontend.mcSetIdentity(bytes, identity.set.bytes) } catch { continue }
+          if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
+        }
+      }
+      return { machine: 'model-cycles', state: { status: 'ready', identity }, build, inventory: null }
+    } finally { try { access?.close?.() } finally { turn?.release() } }
   }
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
@@ -371,8 +395,9 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { status: response.status, body }
     },
     firmware_download: async args => { if (!options.stock) throw new Error('Choose private stock at startup with --stock.'); return buildAndSave(args.request, { stockPath: options.stock, outputDir: dataDir, site, root }) },
-    device_status: async () => zoomSelected() ? zoomSnapshot(true) : snapshot(),
+    device_status: async () => cyclesSelected() ? cyclesSnapshot() : zoomSelected() ? zoomSnapshot(true) : snapshot(),
     device_load: async () => {
+      if (cyclesSelected()) return { machine: 'model-cycles', supported: false, reading: null }
       if (zoomSelected()) {
         const { machine, state, load } = await zoomSnapshot(false)
         return { machine, identity: state.identity, supported: load !== null, reading: load }
@@ -384,7 +409,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { base: after.identity.base, supported: reading !== undefined, reading: reading ?? null }
     },
     device_log: async () => {
-      if (zoomSelected()) return { supported: false, log: null }
+      if (zoomSelected() || cyclesSelected()) return { supported: false, log: null }
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
       const log = await unit.deviceLog()
@@ -578,8 +603,8 @@ export function createProtocol(service) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   for (const method of ['log', 'info', 'debug', 'warn', 'error']) console[method] = (...args) => process.stderr.write(formatMcpLog(...args) + '\n')
   try {
-  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
-  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
+  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'elektron-midi': { type: 'boolean' }, 'elektron-images': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
+  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), elektronMidi: values['elektron-midi'], elektronImages: values['elektron-images'] && resolve(values['elektron-images']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
   const protocol = createProtocol(service), input = createInterface({ input: process.stdin, crlfDelay: Infinity })
   let queue = Promise.resolve()
   input.on('line', line => { queue = queue.then(async () => { let reply; try { if (Buffer.byteLength(line) > 64 * 1024) throw new Error('Message too large.'); reply = await protocol(JSON.parse(line)) } catch { reply = { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC message.' } } } if (reply) process.stdout.write(JSON.stringify(reply) + '\n') }) })

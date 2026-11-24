@@ -277,6 +277,22 @@ counterpart for; once a Zoom base loads modules over USB, that goes behind
 `device_review`, `device_trial`, Keep and Undo, as the
 [recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
 
+### A Model:Cycles over its development link
+
+```sh
+node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-midi [--elektron-images DIR]
+```
+
+With `--elektron-midi` alone, `device_status` asks a Model:Cycles running a
+development base for its link identity over USB MIDI
+([LINK.md](../sdk/machines/model-cycles/LINK.md)): link version, port, arm,
+counters, the RAM boot's result and the set identity the base took at boot.
+`build` names the `.syx` in `--elektron-images` (a private folder of your own
+builds, never committed) whose set identity matches, or is `null`.
+`device_load` and `device_log` report unsupported, and the loader's tools
+refuse: the Model:Cycles has no loader yet. Close Elektron Transfer first.
+Tests run against a fake unit (`scripts/mc-device.test.mjs`).
+
 ## A member's unit through a remote session
 
 An administrator can read a member's Octatrack through their browser, with
