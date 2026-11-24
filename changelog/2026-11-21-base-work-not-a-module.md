@@ -1,0 +1,1 @@
+Speed-ups and fixes with nothing new to play, pick or set now go into a machine's base instead of a module, so every player gets them with the next base. A module's first release is always merged by someone other than its author.

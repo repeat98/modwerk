@@ -87,7 +87,7 @@ describe('the unit queue', () => {
     expect(readTurn(directory)).toBe(null)
   })
 
-  it('gives the turn back however the command ends: an error, SIGTERM (the command stops as on Ctrl-C) or a kill', async () => {
+  it('gives the turn back however the command ends: an error, SIGTERM or SIGALRM (the command stops as on Ctrl-C) or a kill', async () => {
     const failed = cli(['run', '--', process.execPath, '-e', 'process.exit(3)'])
     expect(await failed.done).toBe(3)
     expect(readTurn(directory)).toBe(null)
@@ -101,6 +101,19 @@ describe('the unit queue', () => {
     expect(await stopped.done).toBe(130)
     expect(readFileSync(marker, 'utf8')).toBe('rolled back')
     expect(readTurn(directory)).toBe(null)
+
+    // SIGALRM (the `perl -e 'alarm N'` time limit around device-send.py) the same way: before, it ended the queue's process
+    // alone, and the command it started was left running.
+    if (process.platform !== 'win32') {
+      rmSync(marker)
+      const timed = cli(['run', '--note', 'timed read', '--', process.execPath, '-e',
+        `process.on('SIGINT', () => { require('fs').writeFileSync(${JSON.stringify(marker)}, 'rolled back'); process.exit(130) }); console.log('ready'); setInterval(() => {}, 1000)`])
+      await until(() => readTurn(directory)?.holder?.child && timed.out.includes('ready'))
+      timed.child.kill('SIGALRM')
+      expect(await timed.done).toBe(130)
+      expect(readFileSync(marker, 'utf8')).toBe('rolled back')
+      expect(readTurn(directory)).toBe(null)
+    }
 
     // Killed outright, holder and command: the next in line finds the processes gone and takes over by itself.
     const killed = cli(['run', '--note', 'about to crash', '--', process.execPath, '-e', 'setInterval(() => {}, 1000)'])

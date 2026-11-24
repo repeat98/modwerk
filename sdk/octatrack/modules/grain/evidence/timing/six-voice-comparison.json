@@ -1,0 +1,1256 @@
+{
+  "date": "2026-11-21",
+  "device": "Octatrack MKII",
+  "os": "1.40C",
+  "candidateSHA256": "ac1e55403bf37b39c529501d30c610c5f055ef73b04a359c25b07b023d6d51bd",
+  "developmentBase": "fac1523234f4bb0b3098260a17da00d93011a14f3829083cda7bc5fff4ff3be6",
+  "baseVersion": "0.7.11",
+  "timerMHz": 132,
+  "coreMHz": 264,
+  "frameDeadlineTicks": 47891,
+  "frameGuardShareTicks": 38312,
+  "machineBudgetPoints": 45,
+  "grainReservationPoints": 35,
+  "source": {
+    "recorder": "R3",
+    "frames": 37800,
+    "channels": 2,
+    "bitDepth": 24,
+    "pcmSHA256": "8f8ef70b2885193611cd61f5f34ba52cbd2768878774b93338972442a1a02e88"
+  },
+  "checkedPCMPages": [
+    [
+      0,
+      5592235,
+      41,
+      128
+    ],
+    [
+      1,
+      5592235,
+      45,
+      127
+    ],
+    [
+      3,
+      5592235,
+      45,
+      127
+    ],
+    [
+      7,
+      5592235,
+      45,
+      128
+    ],
+    [
+      12,
+      6990293,
+      47,
+      125
+    ],
+    [
+      20,
+      5592235,
+      42,
+      128
+    ],
+    [
+      30,
+      5592235,
+      43,
+      128
+    ]
+  ],
+  "pcmPageColumns": [
+    "page",
+    "absolutePeak24Bit",
+    "distinctLRFramesOutOf64",
+    "nonzeroLowBytesOutOf128"
+  ],
+  "part": {
+    "pattern": "A16",
+    "part": 3,
+    "tempoBPM": 100,
+    "bothTracksUseRecorder": 3,
+    "testTrackTrigMask": "ffff",
+    "otherFlexTrackTrigMask": "0000",
+    "otherSixTracks": "THRU",
+    "stockFX": "NONE"
+  },
+  "midi": {
+    "seconds": 60,
+    "bpm": 100,
+    "channels": [
+      1,
+      5
+    ],
+    "clock": 2400,
+    "noteOns": 200,
+    "noteOffs": 200,
+    "modulationCC1": 50,
+    "notes": {
+      "grid": "alternating eighth notes on channels 1 and 5",
+      "pitchesPerChannel": [
+        72,
+        76,
+        79,
+        74,
+        77,
+        81,
+        76,
+        74
+      ],
+      "velocity": 94,
+      "durationMidiClocks": 8
+    },
+    "cc1": {
+      "intervalMidiClocks": 48,
+      "channels": "alternating 1 and 5",
+      "value": "9 times the zero-based change index, modulo 128"
+    }
+  },
+  "capture": {
+    "sampleRate": 44100,
+    "channels": 20,
+    "captureSeconds": 69,
+    "analysisRangeSeconds": [
+      4,
+      59
+    ],
+    "stemPairs": [
+      "T1",
+      "T5",
+      "MAIN"
+    ],
+    "comparisonBlockFrames": 128
+  },
+  "timingColumns": [
+    "phase",
+    "audioInterrupts",
+    "maxInterruptTicks",
+    "maxLateTicks",
+    "sumInterruptDurationsDiv256",
+    "guardSkipDelta",
+    "firstPassMaxTicks",
+    "secondPassMaxTicks",
+    "cumulativeShedTrackMask"
+  ],
+  "conditions": [
+    {
+      "machine": "stock",
+      "track": 1,
+      "usbAudioCapture": true,
+      "maxObservedGrains": null,
+      "guardSkipsTotal": 0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          3527,
+          35216,
+          0,
+          186059,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playing",
+          168565,
+          35682,
+          0,
+          15195808,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stop",
+          1129,
+          33777,
+          0,
+          103150,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "picker and panel",
+          14473,
+          34211,
+          0,
+          1045506,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stream closed",
+          5343,
+          30530,
+          0,
+          359802,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          70519,
+          16963,
+          0,
+          3452593,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "moduleControls": null,
+      "postStop": {
+        "flexPickerAndTrackSelection": true,
+        "lastSampleSeconds": 29.94,
+        "ticksAndFramesAfterStop": [
+          [
+            7.51,
+            27737,
+            1284310
+          ],
+          [
+            9.66,
+            27859,
+            1289931
+          ],
+          [
+            11.68,
+            27987,
+            1295810
+          ],
+          [
+            13.71,
+            28109,
+            1301389
+          ],
+          [
+            15.73,
+            28230,
+            1306978
+          ],
+          [
+            17.75,
+            28351,
+            1312541
+          ],
+          [
+            19.82,
+            28475,
+            1318226
+          ],
+          [
+            21.84,
+            28597,
+            1323829
+          ],
+          [
+            23.87,
+            28718,
+            1329388
+          ],
+          [
+            25.89,
+            28840,
+            1334967
+          ],
+          [
+            27.9,
+            28961,
+            1340531
+          ],
+          [
+            29.94,
+            29082,
+            1346100
+          ]
+        ],
+        "diagnosticChanges": {
+          "errors": 0,
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0
+        }
+      },
+      "audio": {
+        "frames": 3043328,
+        "checked": 2425500,
+        "sampleTimeGaps": 0,
+        "timestampedBuffers": 5944,
+        "stem": {
+          "rms": [
+            0.5143712635,
+            0.7687033297
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.5124988634,
+            0.6593152316
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.3661574456,
+            0.5472038394
+          ],
+          "peak": [
+            0.7118537426,
+            0.7118530273
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        }
+      }
+    },
+    {
+      "machine": "stock",
+      "track": 5,
+      "usbAudioCapture": true,
+      "maxObservedGrains": null,
+      "guardSkipsTotal": 0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          1932,
+          35385,
+          0,
+          126568,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playing",
+          168067,
+          40049,
+          0,
+          15186206,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stop",
+          735,
+          34886,
+          0,
+          67415,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "picker and panel",
+          13507,
+          34373,
+          0,
+          982899,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stream closed",
+          6797,
+          30976,
+          0,
+          472130,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69117,
+          17084,
+          0,
+          3379052,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "moduleControls": null,
+      "postStop": {
+        "flexPickerAndTrackSelection": true,
+        "lastSampleSeconds": 29.64,
+        "ticksAndFramesAfterStop": [
+          [
+            7.47,
+            39562,
+            1827516
+          ],
+          [
+            9.48,
+            39683,
+            1833062
+          ],
+          [
+            11.5,
+            39804,
+            1838624
+          ],
+          [
+            13.52,
+            39925,
+            1844180
+          ],
+          [
+            15.53,
+            40046,
+            1849736
+          ],
+          [
+            17.55,
+            40167,
+            1855286
+          ],
+          [
+            19.56,
+            40288,
+            1860847
+          ],
+          [
+            21.58,
+            40409,
+            1866399
+          ],
+          [
+            23.6,
+            40530,
+            1871958
+          ],
+          [
+            25.61,
+            40651,
+            1877516
+          ],
+          [
+            27.63,
+            40772,
+            1883077
+          ],
+          [
+            29.64,
+            40892,
+            1888626
+          ]
+        ],
+        "diagnosticChanges": {
+          "errors": 0,
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0
+        }
+      },
+      "audio": {
+        "frames": 3043328,
+        "checked": 2425500,
+        "sampleTimeGaps": 0,
+        "timestampedBuffers": 5944,
+        "stem": {
+          "rms": [
+            0.51222674,
+            0.7629991118
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.512200792,
+            0.658711662
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.3646123903,
+            0.4689059426
+          ],
+          "peak": [
+            0.7118537426,
+            0.7118530273
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        }
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 1,
+      "usbAudioCapture": true,
+      "maxObservedGrains": 6,
+      "guardSkipsTotal": 842,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          1857,
+          35832,
+          0,
+          135025,
+          0,
+          1467,
+          1645,
+          0
+        ],
+        [
+          "playing",
+          168426,
+          50552,
+          2661,
+          22668663,
+          842,
+          16610,
+          17974,
+          1
+        ],
+        [
+          "stop",
+          746,
+          39744,
+          0,
+          92166,
+          0,
+          9744,
+          8964,
+          1
+        ],
+        [
+          "picker and panel",
+          13868,
+          42918,
+          0,
+          1131741,
+          0,
+          11311,
+          13594,
+          1
+        ],
+        [
+          "stream closed",
+          6144,
+          30802,
+          0,
+          426327,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          "post-STOP observation",
+          69129,
+          17001,
+          0,
+          3384794,
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      "moduleControls": {
+        "src": [
+          66,
+          60,
+          127,
+          127,
+          127,
+          127
+        ],
+        "setup": [
+          3,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "direction": 55,
+        "pan": 127
+      },
+      "postStop": {
+        "flexPickerAndTrackSelection": true,
+        "lastSampleSeconds": 29.56,
+        "ticksAndFramesAfterStop": [
+          [
+            7.37,
+            47415,
+            2188250
+          ],
+          [
+            9.39,
+            47536,
+            2193815
+          ],
+          [
+            11.4,
+            47657,
+            2199367
+          ],
+          [
+            13.42,
+            47778,
+            2204932
+          ],
+          [
+            15.44,
+            47899,
+            2210495
+          ],
+          [
+            17.46,
+            48020,
+            2216057
+          ],
+          [
+            19.48,
+            48142,
+            2221619
+          ],
+          [
+            21.49,
+            48262,
+            2227175
+          ],
+          [
+            23.51,
+            48384,
+            2232736
+          ],
+          [
+            25.53,
+            48505,
+            2238296
+          ],
+          [
+            27.54,
+            48626,
+            2243855
+          ],
+          [
+            29.56,
+            48747,
+            2249411
+          ]
+        ],
+        "diagnosticChanges": {
+          "errors": 0,
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0
+        }
+      },
+      "audio": {
+        "frames": 3043328,
+        "checked": 2425500,
+        "sampleTimeGaps": 0,
+        "timestampedBuffers": 5944,
+        "stem": {
+          "rms": [
+            0.7485923143,
+            0.8691130163
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 1398
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.512666953,
+            0.6587285271
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.5328883569,
+            0.6186807475
+          ],
+          "peak": [
+            0.7118537426,
+            0.7118530273
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 1398
+        }
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 5,
+      "usbAudioCapture": true,
+      "maxObservedGrains": 6,
+      "guardSkipsTotal": 1043,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          2087,
+          37358,
+          0,
+          149047,
+          0,
+          1280,
+          726,
+          1
+        ],
+        [
+          "playing",
+          169121,
+          51774,
+          3883,
+          23091498,
+          1039,
+          15950,
+          17420,
+          17
+        ],
+        [
+          "stop",
+          897,
+          43664,
+          0,
+          119477,
+          2,
+          13153,
+          11127,
+          17
+        ],
+        [
+          "picker and panel",
+          14045,
+          44121,
+          0,
+          1139887,
+          2,
+          13067,
+          12480,
+          17
+        ],
+        [
+          "stream closed",
+          5166,
+          30506,
+          0,
+          353929,
+          0,
+          0,
+          0,
+          17
+        ],
+        [
+          "post-STOP observation",
+          69525,
+          17014,
+          0,
+          3402982,
+          0,
+          0,
+          0,
+          17
+        ]
+      ],
+      "moduleControls": {
+        "src": [
+          66,
+          60,
+          127,
+          127,
+          127,
+          0
+        ],
+        "setup": [
+          3,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "direction": 55,
+        "pan": 127
+      },
+      "postStop": {
+        "flexPickerAndTrackSelection": true,
+        "lastSampleSeconds": 29.37,
+        "ticksAndFramesAfterStop": [
+          [
+            7.13,
+            59788,
+            2756609
+          ],
+          [
+            9.16,
+            59909,
+            2762189
+          ],
+          [
+            11.18,
+            60031,
+            2767756
+          ],
+          [
+            13.19,
+            60152,
+            2773314
+          ],
+          [
+            15.21,
+            60273,
+            2778870
+          ],
+          [
+            17.23,
+            60394,
+            2784435
+          ],
+          [
+            19.26,
+            60515,
+            2790004
+          ],
+          [
+            21.28,
+            60637,
+            2795598
+          ],
+          [
+            23.3,
+            60758,
+            2801155
+          ],
+          [
+            25.31,
+            60879,
+            2806712
+          ],
+          [
+            27.33,
+            61000,
+            2812273
+          ],
+          [
+            29.37,
+            61121,
+            2817844
+          ]
+        ],
+        "diagnosticChanges": {
+          "errors": 0,
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0
+        }
+      },
+      "audio": {
+        "frames": 3043328,
+        "checked": 2425500,
+        "sampleTimeGaps": 0,
+        "timestampedBuffers": 5944,
+        "stem": {
+          "rms": [
+            0.7793765278,
+            0.9165423386
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 725
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.5115162728,
+            0.6585492548
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.3641251141,
+            0.4687903325
+          ],
+          "peak": [
+            0.7118537426,
+            0.7118530273
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        }
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 1,
+      "usbAudioCapture": false,
+      "maxObservedGrains": 6,
+      "guardSkipsTotal": 0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          1613,
+          18137,
+          0,
+          84813,
+          0,
+          859,
+          912,
+          17
+        ],
+        [
+          "playing",
+          169672,
+          44556,
+          0,
+          18232748,
+          0,
+          15647,
+          17165,
+          17
+        ],
+        [
+          "stop",
+          1033,
+          36659,
+          0,
+          111039,
+          0,
+          10332,
+          11286,
+          17
+        ],
+        [
+          "picker and panel",
+          14057,
+          35661,
+          0,
+          779091,
+          0,
+          10039,
+          10797,
+          17
+        ],
+        [
+          "post-STOP observation",
+          67918,
+          17955,
+          0,
+          3324206,
+          0,
+          0,
+          0,
+          17
+        ]
+      ],
+      "moduleControls": null,
+      "postStop": {
+        "flexPickerAndTrackSelection": true,
+        "lastSampleSeconds": 27.74,
+        "ticksAndFramesAfterStop": [
+          [
+            5.32,
+            72836,
+            3355965
+          ],
+          [
+            7.34,
+            72957,
+            3361540
+          ],
+          [
+            9.36,
+            73078,
+            3367094
+          ],
+          [
+            11.38,
+            73199,
+            3372665
+          ],
+          [
+            13.39,
+            73320,
+            3378227
+          ],
+          [
+            15.41,
+            73441,
+            3383790
+          ],
+          [
+            17.65,
+            73568,
+            3389593
+          ],
+          [
+            19.67,
+            73697,
+            3395523
+          ],
+          [
+            21.69,
+            73818,
+            3401069
+          ],
+          [
+            23.71,
+            73939,
+            3406645
+          ],
+          [
+            25.73,
+            74060,
+            3412226
+          ],
+          [
+            27.74,
+            74181,
+            3417769
+          ]
+        ],
+        "diagnosticChanges": {
+          "errors": 0,
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0
+        }
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 5,
+      "usbAudioCapture": false,
+      "maxObservedGrains": 6,
+      "guardSkipsTotal": 0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          1782,
+          18417,
+          0,
+          93507,
+          0,
+          645,
+          636,
+          17
+        ],
+        [
+          "playing",
+          169754,
+          44022,
+          0,
+          18579171,
+          0,
+          15013,
+          15890,
+          17
+        ],
+        [
+          "stop",
+          990,
+          32667,
+          0,
+          94869,
+          0,
+          8224,
+          7453,
+          17
+        ],
+        [
+          "picker and panel",
+          14411,
+          38036,
+          0,
+          807404,
+          0,
+          10406,
+          9805,
+          17
+        ],
+        [
+          "post-STOP observation",
+          67600,
+          18833,
+          0,
+          3308615,
+          0,
+          0,
+          0,
+          17
+        ]
+      ],
+      "moduleControls": null,
+      "postStop": {
+        "flexPickerAndTrackSelection": true,
+        "lastSampleSeconds": 27.74,
+        "ticksAndFramesAfterStop": [
+          [
+            5.42,
+            85222,
+            3924927
+          ],
+          [
+            7.44,
+            85343,
+            3930481
+          ],
+          [
+            9.54,
+            85465,
+            3936113
+          ],
+          [
+            11.56,
+            85590,
+            3941832
+          ],
+          [
+            13.57,
+            85711,
+            3947384
+          ],
+          [
+            15.59,
+            85831,
+            3952932
+          ],
+          [
+            17.6,
+            85952,
+            3958491
+          ],
+          [
+            19.66,
+            86074,
+            3964089
+          ],
+          [
+            21.68,
+            86197,
+            3969717
+          ],
+          [
+            23.7,
+            86318,
+            3975280
+          ],
+          [
+            25.73,
+            86440,
+            3980877
+          ],
+          [
+            27.74,
+            86561,
+            3986436
+          ]
+        ],
+        "diagnosticChanges": {
+          "errors": 0,
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0
+        }
+      }
+    }
+  ],
+  "sourceMatchesAfterTesting": true,
+  "restoration": {
+    "checks": {
+      "card": true,
+      "track": true,
+      "tempo": true,
+      "pattern": true,
+      "part": true,
+      "recordModes": true,
+      "slots": true,
+      "inventory": true,
+      "startingWorkingPart": true,
+      "startingPatternData": true,
+      "scratchPartWorking": true,
+      "scratchPartSaved": true,
+      "scratchPatternData": true,
+      "stopped": true
+    },
+    "cardMounted": false,
+    "selectedTrack": 3,
+    "pattern": "A02",
+    "part": 1,
+    "bpm": 140.0,
+    "recorderSlots": 0,
+    "liveModules": 0,
+    "verifiedReturnBase": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+    "returnInventory": {
+      "saved": 0,
+      "live": 0
+    }
+  }
+}

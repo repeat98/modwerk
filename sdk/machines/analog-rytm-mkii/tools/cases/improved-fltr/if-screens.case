@@ -1,0 +1,37 @@
+# Improved FLTR: the FILTER page with BW (the band picture on TYP, the graph, and RES's label reading
+# WID), on SD (stock LP2: the label RES), back on BD (WID again), and with stock's BP (RES, stock's graph), against references recorded from
+# screens checked by eye. Changes the BD sound's FILTER FRQ, RES and TYP; ends on TYP 0 (LP2), FRQ 127,
+# RES 0.
+name: if-screens
+state: changes
+target: emu
+hold TRK
+key BD
+release TRK
+key FLTR
+wait 1500
+cc 74 48
+cc 75 52
+cc 76 7
+wait 3500
+screen bw
+expect bw == ref region 0 30 128 25
+hold TRK
+key SD
+release TRK
+wait 3500
+screen sd_lp2
+expect sd_lp2 == ref region 0 30 128 25
+hold TRK
+key BD
+release TRK
+wait 3500
+screen bd_back
+expect bd_back == ref region 0 30 128 25
+cc 76 2
+wait 3500
+screen stockbp
+expect stockbp == ref region 0 30 128 25
+cc 76 0
+cc 74 127
+cc 75 0

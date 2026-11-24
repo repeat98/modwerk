@@ -103,6 +103,29 @@ modwerk_site_40006820:
         lea     20(%sp),%sp
         rts | the call returns as stock's does when it has nothing to do
 
+| ---- 0x4000cf4a: ev_audio_frame_prepare
+        .globl  modwerk_site_4000cf4a
+modwerk_site_4000cf4a:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_audio_frame_prepare: void f(void)
+        movea.l modwerk_runtime_event_row+228,%a2
+.L4000cf4a_ev_audio_frame_prepare:
+        move.l  (%a2)+,%d0
+        beq     .L4000cf4a_ev_audio_frame_prepare_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L4000cf4a_ev_audio_frame_prepare
+.L4000cf4a_ev_audio_frame_prepare_end:
+.L4000cf4a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4000cf4a_6
+modwerk_stock_4000cf4a_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x4000cf50
+
 | ---- 0x4000dfd4: ev_midi_note_off
         .globl  modwerk_site_4000dfd4
 modwerk_site_4000dfd4:
@@ -1183,6 +1206,12 @@ modwerk_raise_ev_usb_control:
         .globl  modwerk_raise_ev_usb_frame
 modwerk_raise_ev_usb_frame:
         lea     modwerk_runtime_event_row+220,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_frame_deadline: unsigned f(uint32_t deadline, unsigned rest); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_frame_deadline
+modwerk_raise_ev_frame_deadline:
+        lea     modwerk_runtime_event_row+232,%a0
         bra.w   modwerk_raise_row
 
 | a0: the hook's row pointer. C convention: d0 the answers OR'd, d2-d7/a2-a6 kept.
