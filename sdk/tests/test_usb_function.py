@@ -104,8 +104,15 @@ class UsbFunction(unittest.TestCase):
                         rows = list(functions.records(high))
                         self.assertEqual({r[2] for r in rows if r[1] == 4}, set(range(7)))
                         endpoints = {r[2]: r for r in rows if r[1] == 5}
-                        self.assertEqual(endpoints[0x03], bytes((7, 5, 3, 5, 48 * channels, 0, 2)))
-                        self.assertEqual(endpoints[0x83][3], 0x25)
+                        # The input stream is adaptive and the output stream a plain
+                        # asynchronous data endpoint: Windows' usbaudio2 supports no
+                        # implicit feedback and no asynchronous OUT without an explicit
+                        # feedback endpoint, and none is free.
+                        self.assertEqual(endpoints[0x03], bytes((7, 5, 3, 9, 48 * channels, 0, 2)))
+                        self.assertEqual(endpoints[0x83][3], 0x05)
+                        output_only = functions.configuration(base, duplex_descriptors, True, other, layout)
+                        self.assertEqual(endpoints[0x83], next(r for r in functions.records(output_only)
+                                                               if r[1] == 5 and r[2] == 0x83))
 
     def test_slots_hold_each_configuration_and_the_clamps_read_the_live_length(self):
         plain = functions.assembly(base, descriptors)

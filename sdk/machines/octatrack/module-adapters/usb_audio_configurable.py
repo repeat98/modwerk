@@ -173,8 +173,39 @@ def source(root, module, layout, functions, load, sine_curve, package_hooks, *, 
     text = checked(text, 'mwua_bus_end: ', 'mwua_bus_end:\n    clrb uac2_set_pending\n    | ')
     if usb_input:
         text = checked(text, '.set USB_IN, 0\n', '.set USB_IN, 1\n')
-        text = usb_input.package_source(text)
+        text = input_trim(usb_input.package_source(text))
     return text
+
+
+def input_trim(text):
+    """Absorb the drift between the host's clock and the unit's on the input stream.
+
+    The host sends the input stream as an adaptive endpoint, on its own clock.
+    Before each block goes to the DSP, usb_audio_input_trim.c may rewrite it from
+    17 or 15 ring frames; the reader then starts one frame later or earlier.
+    Its count goes out as a sixteenth long of vendor request 0x56."""
+    text = checked(text, '5:  mvzb    usb_inputs,%d4\n', '''5:  movel   %a1,%sp@-
+    mvzb    usb_inputs,%d1
+    movel   %d1,%sp@-
+    movel   %d0,%sp@-               | the fill before this block
+    movel   in_consumed,%sp@-
+    pea     in_ring
+    jsr     mwua_input_trim
+    lea     %sp@(16),%sp
+    addl    %d0,in_consumed         | 1: a frame absorbed, -1: one repeated
+    moveal  %sp@+,%a1
+    mvzb    usb_inputs,%d4
+''')
+    text = checked(text, '    clrb    in_prefill\n', '''    clrb    in_prefill
+    moveq   #1,%d1
+    moveb   %d1,mwua_trim_fresh     | a new cushion: settle again
+''')
+    text = checked(text, 'in_partial:   .long 0 ', '''in_partial:   .long 0
+    .global mwua_trims
+mwua_trims:   .long 0               | drift trims: absorbed << 16 | repeated
+    | ''')
+    text = checked(text, '    moveq   #14,%d0\n.Linput_counters:', '    moveq   #15,%d0\n.Linput_counters:')
+    return checked(text, '    moveal  #SRAM_REPLY,%a0\n    moveq   #60,%d0\n', '    moveal  #SRAM_REPLY,%a0\n    moveq   #64,%d0\n')
 
 
 def records(root, module, supported, functions, usb, function_block, descriptor_records, *, usb_input=None):

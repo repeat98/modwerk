@@ -43,10 +43,10 @@ export interface RuntimePackageManifest {
   usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
-export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 9 : kind === 'configurable-0.4' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
 const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
 const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
-for (const kind of ['configurable', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
+for (const kind of ['configurable', 'configurable-0.4', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
