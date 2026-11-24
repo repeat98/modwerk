@@ -48,6 +48,27 @@ class ColdFireInstructionSetTests(unittest.TestCase):
                 outside[source.relative_to(ROOT).as_posix()] = lines
         self.assertEqual(outside, {}, 'rewrite these instructions for the MCF54455 (docs/OCTATRACK_HARDWARE_TRAPS.md)')
 
+    def test_a_stepped_register_reused_in_one_instruction_is_found_with_its_line(self):
+        # GCC's late-combine byte copy (octabam #1134, docs/OCTATRACK_HARDWARE_TRAPS.md): the destination is formed
+        # from the stepped a0. A push of an argument steps its destination after the source read: well defined.
+        result, lines = isa.check_source(self.source('        nop\n        move.b  (%a0)+,(0,%a0,%d0.l)\n'
+                                                     '        move.l  (8,%sp),-(%sp)\n        rts\n'))
+        self.assertEqual(result, 'stepped')
+        self.assertEqual(len(lines), 1)
+        self.assertTrue(lines[0].startswith('line 2: '), lines)
+
+    def test_a_table_with_the_same_bytes_is_not_code(self):
+        result, lines = isa.check_source(self.source('        rts\ntable:  .word   0x1198,0x0800\n'))
+        self.assertEqual((result, lines), ('ok', []))
+
+    def test_no_octatrack_source_that_assembles_alone_reuses_a_stepped_register(self):
+        found = {}
+        for source in isa.sources(ROOT / tree for tree in isa.OCTATRACK):
+            result, lines = isa.check_source(source)
+            if result == 'stepped':
+                found[source.relative_to(ROOT).as_posix()] = lines
+        self.assertEqual(found, {}, 'step the register in an instruction of its own (sdk/runtime/m68k_codegen.py)')
+
     def test_the_report_exits_zero_unless_strict(self):
         bad = self.source('        lea     (0,%a0,%d0.l*8),%a1\n')
         for argv, code in (([str(bad)], 0), (['--strict', str(bad)], 1)):

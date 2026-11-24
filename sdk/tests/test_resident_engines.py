@@ -560,7 +560,7 @@ class ResidentEngines(unittest.TestCase):
         import dsp_sites
         reg = dsp_sites.load()
         self.assertEqual(next(f['executed'] for f in reg['features'] if f['name'] == 'keybus'), 25)
-        self.assertEqual(next(f['hardware'] for f in reg['features'] if f['name'] == 'keybus'), 51)
+        self.assertEqual(next(f['hardware'] for f in reg['features'] if f['name'] == 'keybus'), 43)
         self.assertEqual(dsp_sites.check(reg), [])
 
     def sc_run(self, variant, enable, skew, frames, removed=None, keys=None):

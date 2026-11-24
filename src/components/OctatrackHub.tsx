@@ -20,6 +20,8 @@ import { OctatrackBackups } from './OctatrackBackups'
 import { CardSetButton } from './UnitPanel'
 import { OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
 import { OctatrackOverview } from './OctatrackOverview'
+import { OctatrackScreen } from './OctatrackScreen'
+import { RuntimeFeature } from '../engine/elekloader/upload-usb'
 import { OctatrackSamples } from './OctatrackSamples'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
 import { MODULE_SKIP_HINT, USB_BROWSERS } from '../firmware-notices'
@@ -31,7 +33,7 @@ const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
 const BUSY = ['sending', 'testing', 'trial', 'finishing']
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
-export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'diagnostics' | 'set'
+export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'screen' | 'diagnostics' | 'set'
 export type { SetAction }
 /** The Octatrack's own pages, in the list above the module sets; `#configuration` is the set you edit. */
 const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; icon: IconName }[] = [
@@ -39,6 +41,7 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'backups', title: 'Backups', href: '#octatrack/backups', icon: 'download' },
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
+  { view: 'screen', title: 'Screen', href: '#octatrack/screen', icon: 'display' },
   { view: 'diagnostics', title: 'Diagnostics', href: '#octatrack/diagnostics', icon: 'shield' },
 ]
 // Samples is unfinished: its panel stays (and keeps its tests), but nothing leads to it until it is ready.
@@ -109,7 +112,9 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const health = useOctatrackHealth(link)
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
   const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) && matchesUsbAudio(lastSync.usbAudio, last) ? lastSync.name : undefined)
-  // The hero: the unit's state in one line and the one action it needs, on every page.
+  const screenView = view === 'screen'
+  const connect = <button key="connect" className={'button ' + (screenView ? 'button-primary' : 'button-quiet')} onClick={() => void link?.connect()}>Connect</button>
+  // Screen puts the relevant connection action beside the preview.
   const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB', <CardSetButton key="card" set={selected && { name: selected.name, moduleIds: selected.moduleIds, removedStockFx: selected.removedStockFx, usbAudio: selected.usbAudio }} onInstall={onInstall} />]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
     : connected && stopped ? [DSP_STOPPED, null]
@@ -117,8 +122,20 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : status === 'connecting' ? ['Looking for your Octatrack…', null]
     : status === 'busy' ? [LINK_BUSY, <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
     : status === 'stock' || status === 'ready' ? [status === 'stock' ? 'Connected · original OS' : 'Connected · a Modwerk base this site can’t talk to', <button key="install" className="button button-primary" onClick={() => onInstall()}>Install the base</button>]
-    : state.notice?.tone === 'error' ? [state.notice.text, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
-    : [<>Not connected{last ? <> · Last seen: {lastName ? <b>{lastName}</b> : modules(last.moduleIds.length)} · {when(last.at)}</> : null}</>, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
+    : state.notice?.tone === 'error' ? [state.notice.text, connect]
+    : [<>Not connected{last ? <> · Last seen: {lastName ? <b>{lastName}</b> : modules(last.moduleIds.length)} · {when(last.at)}</> : null}</>, connect]
+  const screenLink = connected && ((identity.capabilities?.features ?? 0) & RuntimeFeature.screen) ? link : null
+  const screenUnavailable = screenLink ? undefined
+    : !usb ? { title: 'Screen preview needs USB', detail: <>Open Modwerk in {USB_BROWSERS} to mirror your Octatrack’s display.</> }
+    : status === 'stock' || status === 'ready' ? {
+      title: 'Set up screen capture',
+      detail: 'Screen preview needs a Modwerk base with screen capture support.',
+      action: <a className="button button-primary" href="#octatrack/setup">Open Setup<Icon name="arrow" size={16} /></a>,
+    }
+    : status === 'connecting' ? { title: 'Connecting to your Octatrack…' }
+    : busy ? { title: 'Sync in progress', detail: 'Finish the sync before opening the screen preview.' }
+    : status === 'busy' ? { title: 'Octatrack is in use', detail: LINK_BUSY, action }
+    : { title: 'Connect your Octatrack', detail: state.notice?.text ?? 'Use a USB data cable to mirror its display here.', action }
   const panel = (name: HubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : UNIT_VIEWS.find(item => item.view === name)!.title}>{content}</section>
   // Without USB here, the set still reaches an Octatrack on the base as the module file on the card (Setup).
   const syncLine: ReactNode = needsBase ? <span role="alert">{(review?.problem ?? new BaseUpdateRequired()).message}</span>
@@ -134,7 +151,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
         <DeviceImage device={DEVICES_BY_ID.octatrack} eager />
         <div><h2 className="hub-view-title">{model}</h2>
           <p role="status"><span className={'unit-led is-' + led} aria-hidden="true" />{line}</p>
-          {!usb && <div className="hub-browser-note" role="note">
+          {!usb && !screenView && <div className="hub-browser-note" role="note">
             <Icon name="warn" size={16} />
             <div><strong>Open Modwerk in {USB_BROWSERS}</strong>
               <span>Sync modules over USB without removing the card or restarting. In this browser, load your set from the card.</span>
@@ -145,7 +162,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             {lastSync && <div><dt>Last sync from this browser</dt><dd><b>{lastSync.name}</b> · <time dateTime={lastSync.at}>{when(lastSync.at)}</time></dd></div>}
           </dl>}
         </div>
-        {action}
+        {!screenView && action}
       </header>
       <nav className="hub-nav" aria-label="Your Octatrack">
         <select className="hub-set-picker" aria-label="Show" value={view === 'set' && selected ? 'set:' + selected.id : view} onChange={event => { const value = event.target.value; if (value.startsWith('set:')) onSelect(value.slice(4)); else window.location.hash = UNIT_VIEWS.find(item => item.view === value)!.href }}>
@@ -163,6 +180,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
         {panel('status', <OctatrackOverview link={link} inventory={inventory} sets={sets} needs={needs} health={health} active={view === 'status'} selected={selected} onOpen={onSelect} onSync={onSync} onSaveUnit={onSaveUnit} onReport={onReport} />)}
         {panel('backups', <OctatrackBackups link={link} />)}
         {panel('samples', <OctatrackSamples active={view === 'samples'} />)}
+        {panel('screen', <OctatrackScreen key={identity?.base} active={screenView} link={screenLink} unavailable={screenUnavailable} />)}
         {panel('setup', <>
           <h2 className="hub-view-title">Setup</h2>
           <section className="hub-section hub-base" aria-labelledby="setup-base-title">

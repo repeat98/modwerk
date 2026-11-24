@@ -146,10 +146,13 @@ te_tape_block:
         move.l  %d4,%a6
         bra     .Ltape_mix
 
-        .macro TE_TAPE_RECORD x1,x2,ramp
+| pre: dry L is already in d5 (the previous sample's output loaded it).
+        .macro TE_TAPE_RECORD x1,x2,ramp,pre=0
         mulu.l  44(%sp),%d0
         add.l   #1013904223,%d0
+        .if !\pre
         move.l  (%a0),%d5
+        .endif
         mac.l   %d5,%a5,4(%a0),%d6,%acc0
         mac.l   %d6,%a5,(%a2)+,%d3,%acc0
         mac.l   %d3,%d7,%acc0
@@ -191,18 +194,21 @@ te_tape_block:
         move.l  %d4,\x2
         .endm
 
+| The first product loads the next sample's dry L into d5 (the last one
+| reads the word after the block: a load only, of stock's own audio RAM).
         .macro TE_TAPE_WET
+        mac.l   %d3,%a6,8(%a0),%d5,%acc2
         mac.l   %d3,%a6,%acc2
         mac.l   %d3,%a6,%acc2
         mac.l   %d3,%a6,%acc2
-        mac.l   %d3,%a6,%acc2
-        movclr.l %acc2,%d5
-        move.l  %d5,(%a0)+
-        move.l  %d5,(%a0)+
+        movclr.l %acc2,%d6
+        move.l  %d6,(%a0)+
+        move.l  %d6,(%a0)+
         .endm
 
 | Per channel: 4*g*wet + k*dry, g in a6 and k from 52(sp). Dry L/R reload
-| through multiply-with-load while the wet products accumulate.
+| through multiply-with-load while the wet products accumulate, and the
+| last right-channel wet product loads the next sample's dry L into d5.
         .macro TE_TAPE_MIX load
         .if \load
         mac.l   %d3,%a6,52(%sp),%d4,%acc2
@@ -216,10 +222,10 @@ te_tape_block:
         mac.l   %d3,%a6,%acc3
         mac.l   %d3,%a6,%acc3
         mac.l   %d3,%a6,%acc3
-        mac.l   %d3,%a6,%acc3
+        mac.l   %d3,%a6,8(%a0),%d5,%acc3
         mac.l   %d6,%d4,%acc3
-        movclr.l %acc2,%d5
-        move.l  %d5,(%a0)+
+        movclr.l %acc2,%d4
+        move.l  %d4,(%a0)+
         movclr.l %acc3,%d6
         move.l  %d6,(%a0)+
         .endm
@@ -262,21 +268,24 @@ te_tape_block:
 
 .Ltape_wet:
         move.l  #2147483647,%a6
+        move.l  (%a0),%d5
 .Ltape_wet_pair:
-        TE_TAPE_RECORD %d1,%d2,0
+        TE_TAPE_RECORD %d1,%d2,0,1
         TE_TAPE_WET
-        TE_TAPE_RECORD %d2,%d1,0
+        TE_TAPE_RECORD %d2,%d1,0,1
         TE_TAPE_WET
         cmpa.l  48(%sp),%a2
         bne     .Ltape_wet_pair
         bra     .Ltape_done
 .Ltape_mix:
-        TE_TAPE_RECORD %d1,%d2,0
+        move.l  (%a0),%d5
+.Ltape_mix_pair:
+        TE_TAPE_RECORD %d1,%d2,0,1
         TE_TAPE_MIX 1
-        TE_TAPE_RECORD %d2,%d1,0
+        TE_TAPE_RECORD %d2,%d1,0,1
         TE_TAPE_MIX 1
         cmpa.l  48(%sp),%a2
-        bne     .Ltape_mix
+        bne     .Ltape_mix_pair
         bra     .Ltape_done
 .Ltape_dry:
         TE_TAPE_RECORD %d1,%d2,0

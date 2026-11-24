@@ -1,0 +1,1 @@
+The Octatrack base build keeps its USB identity as written bytes in the package, so a layout whose identity happens to end in bytes matching the stock OS no longer stops the build with "The base package has no authored USB identity".

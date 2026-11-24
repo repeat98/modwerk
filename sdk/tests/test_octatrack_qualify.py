@@ -128,7 +128,8 @@ class UnitSteps(unittest.TestCase):
         with mock.patch.object(qualify, 'send', side_effect=lambda s: sent.append(s) or ''), \
              mock.patch.object(qualify, 'part_copy', return_value=saved):
             self.assertTrue(qualify.save_part(1, saved))
-        self.assertIn('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES', sent[0])
+        # device.mjs's savepart step: SAVE from the Part menu, opened the MKII's or the MKI's way (#2099)
+        self.assertEqual(sent[0].split()[-1], 'savepart')
         with mock.patch.object(qualify, 'send', return_value=''), mock.patch.object(qualify, 'part_copy', return_value=bytes(6322)):
             self.assertFalse(qualify.save_part(1, saved))
 

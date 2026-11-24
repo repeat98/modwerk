@@ -17,6 +17,12 @@ static struct mw_sample_editor service;
 static struct mw_sample_capture source;
 static struct runtime_owner owner;
 static unsigned ready=1,held,bad,confirms,cancels,publishes,block_confirm,copies;
+static unsigned renders;
+static unsigned pair_reads,options_calls;
+extern unsigned char bs_host_home[1024],bs_host_mask[1024];
+void bs_uncounted_popup(unsigned char *,unsigned char *);
+void bs_device_popup(unsigned char *frame,unsigned char *mask)
+{++renders;bs_uncounted_popup(frame,mask);}
 static uint32_t lock(void *p){(void)p;if(held)bad=1;held=1;return 7;}
 static void unlock(void *p,uint32_t saved){(void)p;if(!held || saved!=7)bad=1;held=0;}
 static int available(void *p){(void)p;return ready;}
@@ -40,8 +46,17 @@ static unsigned confirm(uint32_t token,const struct modwerk_sample_grid *grid)
     return mw_sample_editor_replace(&service,token,grid);
 }
 static void cancel(uint32_t token){++cancels;mw_sample_editor_cancel(&service,token);}
-static const struct mw_sample_backend backend={0,lock,unlock,available,published,capture,publish};
+static int pair(void *context,const struct mw_sample_capture *before,uint32_t at,int32_t *left,int32_t *right)
+{
+    (void)context;(void)before;(void)at;++pair_reads;
+    left[0]=left[1]=right[0]=right[1]=0;return 1;
+}
+static const struct mw_sample_backend backend={0,lock,unlock,available,published,capture,publish,pair};
 static const struct modwerk_sample_editor_api api={MODWERK_SAMPLE_EDITOR_ABI,sizeof api,copy,confirm,cancel,confirm};
+static unsigned options(uint32_t t,const struct modwerk_sample_grid *g,uint32_t flags)
+{++options_calls;return mw_sample_editor_replace_options(&service,t,g,flags);}
+static const struct modwerk_sample_editor_options_api full_api={
+    {MODWERK_SAMPLE_EDITOR_ABI,sizeof full_api,copy,confirm,cancel,confirm},options};
 static void draw(unsigned char *frame)
 {memset(frame,0x5a,1024);module_draw(frame);}
 static int active(void)
@@ -53,6 +68,7 @@ static int select_spacing(unsigned index)
 int main(void)
 {
     uint32_t token;
+    memset(bs_host_home,0x5a,sizeof bs_host_home);
     CHECK(mw_sample_editor_init(&service,&backend));owner.generation=1;
     source.view.frames=source.view.trim_end=88200;source.view.frame_rate=44100;
     source.view.sample_bpm24=2880;source.view.project_bpm24=2160;
@@ -68,7 +84,7 @@ int main(void)
         CHECK(guarded[0]==0xa5 && guarded[1025]==0xa5);
         CHECK(memcmp(guarded+1,guarded+2,1023)!=0 && !publishes);
         for(unsigned x=0;x<128;++x)for(unsigned y=0;y<64;++y)
-            if(x<3 || x>=125 || y<1 || y>=63) {
+            if(x<8 || x>=120) {
                 unsigned bit=1u<<(y%8u);
                 CHECK((guarded[1+x*8u+7u-y/8u]&bit)==(0x5au&bit));
             }
@@ -92,19 +108,36 @@ int main(void)
     bs_device_open(token,&api);
     unsigned copied=copies;
     unsigned char initial_frame[1024],idle_frame[1024];draw(initial_frame);
+    unsigned rendered=renders;
     ready=0;
-    for(unsigned tick=0;tick<120;++tick)CHECK(active());
+    for(unsigned tick=0;tick<120;++tick) {
+        CHECK(active());draw(idle_frame);
+        CHECK(renders==rendered && !memcmp(initial_frame,idle_frame,sizeof initial_frame));
+    }
+    /* Fresh home pixels replace AED pixels without rerendering the popup. */
+    memset(bs_host_home,0xa5,sizeof bs_host_home);
+    memset(idle_frame,0x13,sizeof idle_frame);module_draw(idle_frame);
+    CHECK(renders==rendered);
+    for(unsigned x=0;x<128;++x)for(unsigned y=0;y<64;++y) {
+        unsigned at=x*8u+7u-y/8u,bit=1u<<(y%8u);
+        unsigned expected=(bs_host_mask[at]&bit)?initial_frame[at]:0xa5u;
+        CHECK((idle_frame[at]&bit)==(expected&bit));
+    }
+    memset(bs_host_home,0x5a,sizeof bs_host_home);
     draw(idle_frame);
     CHECK(copies==copied && !memcmp(initial_frame,idle_frame,sizeof initial_frame));
     CHECK(module_enc(1,4) && module_enc(1,-4));
     CHECK(module_enc(0,4) && module_enc(0,-4));
     CHECK(copies==copied); /* settings use the opening snapshot too */
-    for(int encoder=2;encoder<6;++encoder)CHECK(module_enc(encoder,4) && active());
+    for(int encoder=3;encoder<6;++encoder)CHECK(module_enc(encoder,4) && active());
     draw(idle_frame);CHECK(!memcmp(initial_frame,idle_frame,sizeof initial_frame));
+    rendered=renders;
     /* Fine encoder pulses accumulate; a complete step or arrow changes once. */
     CHECK(module_enc(1,1) && module_enc(1,1) && module_enc(1,1));
     draw(idle_frame);CHECK(!memcmp(initial_frame,idle_frame,sizeof initial_frame));
+    CHECK(renders==rendered);
     CHECK(module_enc(1,1));draw(idle_frame);
+    CHECK(renders==rendered+1);
     CHECK(memcmp(initial_frame,idle_frame,sizeof initial_frame));
     CHECK(module_enc(1,-4));draw(idle_frame);
     CHECK(!memcmp(initial_frame,idle_frame,sizeof initial_frame));
@@ -117,12 +150,26 @@ int main(void)
     draw(idle_frame);
     CHECK(!memcmp(initial_frame,idle_frame,sizeof initial_frame));
     CHECK(copies==copied);
+    CHECK(module_enc(1,-4));draw(idle_frame);
+    rendered=renders;
+    CHECK(module_enc(1,-4));draw(idle_frame); /* clamped endpoint */
+    CHECK(renders==rendered);
+    module_draw(0);CHECK(renders==rendered);
     ready=1;CHECK(tap(0x32));
+    memset(idle_frame,0xa5,sizeof idle_frame);module_draw(idle_frame);
+    for(unsigned i=0;i<sizeof idle_frame;++i)CHECK(idle_frame[i]==0xa5);
     source.view.count=0;
     CHECK(mw_sample_editor_begin(&service,&owner,&token)==MODWERK_SAMPLE_OK);
     ready=0;bs_device_open(token,&api);CHECK(active());
+    draw(initial_frame);rendered=renders; /* initial WAIT */
+    draw(idle_frame);CHECK(renders==rendered);
+    ready=1;CHECK(active());draw(idle_frame);
+    CHECK(renders==rendered+1 && memcmp(initial_frame,idle_frame,sizeof initial_frame));
+    ready=0;
     unsigned previous=confirms;
     CHECK(tap(0x31) && confirms==previous && active() && !publishes);
+    draw(initial_frame);rendered=renders;
+    draw(idle_frame);CHECK(renders==rendered);
     /* YES waits for a genuinely ready source instead of requiring a second
      * button press at an unknowable gap between display-reader jobs. */
     ready=1;CHECK(!active() && service.state==MW_SAMPLE_PROMPT);
@@ -147,7 +194,9 @@ int main(void)
      * tick may retry; cancellation, edits and stale source retire that intent. */
     CHECK(mw_sample_editor_begin(&service,&owner,&token)==MODWERK_SAMPLE_OK);
     bs_device_open(token,&api);block_confirm=1;previous=confirms;
+    draw(initial_frame);
     CHECK(tap(0x31) && active() && confirms==previous+1);
+    draw(idle_frame);CHECK(memcmp(initial_frame,idle_frame,sizeof initial_frame));
     ready=1;CHECK(!active() && service.state==MW_SAMPLE_PROMPT && confirms==previous+2);
     mw_sample_editor_answer(&service,token,0);
     for(unsigned reason=0;reason<3;++reason) {
@@ -328,6 +377,36 @@ int main(void)
     CHECK(!memcmp(&idle_source,&source,sizeof source) &&
           !memcmp(closed_before,closed_frame,sizeof closed_frame));
     CHECK(copies==idle_copies && confirms==idle_confirms && cancels==idle_cancels && publishes==idle_publishes);
+    /* C alone changes the SNAP value; the old API keeps OFF and the complete
+     * SNAP path uses the same copied beat proposal and confirmation question. */
+    source.view.kind=1;source.view.slot=0;source.view.count=0;source.channels=3;
+    source.controls[0]=3;source.view.frames=source.view.trim_end=88200;
+    CHECK(mw_sample_editor_begin(&service,&owner,&token)==MODWERK_SAMPLE_OK);
+    bs_device_open(token,&full_api.base);CHECK(active() && select_spacing(1) && module_enc(0,-127));
+    unsigned char off[1024],on[1024];draw(off);
+    CHECK(module_enc(2,1) && module_enc(2,2));draw(on);CHECK(!memcmp(off,on,sizeof off));
+    CHECK(module_enc(2,1));draw(on);CHECK(memcmp(off,on,sizeof off));
+    for(unsigned x=0;x<128;++x)for(unsigned y=0;y<64;++y)
+        if(x<60 || x>82 || y<26 || y>30) {
+            unsigned at=x*8+7-y/8,bit=1u<<(y%8);
+            CHECK((off[at]&bit)==(on[at]&bit));
+        }
+    unsigned built=renders,read_before=pair_reads;
+    for(unsigned i=0;i<120;++i){CHECK(active());draw(on);}
+    CHECK(renders==built && pair_reads==read_before);
+    CHECK(module_enc(2,INT_MAX) && module_enc(2,INT_MIN) && module_enc(2,4));draw(on);
+    CHECK(tap(0x31) && !active() && options_calls==1 && service.state==MW_SAMPLE_PROMPT);
+    CHECK(pair_reads==read_before && source.view.count==0);
+    CHECK(mw_sample_editor_answer(&service,token,1)==MODWERK_SAMPLE_ANALYZING);
+    unsigned result=MODWERK_SAMPLE_ANALYZING;
+    while(result==MODWERK_SAMPLE_ANALYZING)result=mw_sample_editor_analyze_step(&service);
+    CHECK(result==MODWERK_SAMPLE_APPLIED && source.view.count==2 &&
+          source.view.records[0].end==44099 && source.view.records[1].end==88200);
+    CHECK(mw_sample_editor_begin(&service,&owner,&token)==MODWERK_SAMPLE_OK);
+    bs_device_open(token,&api);CHECK(active());
+    read_before=pair_reads;unsigned calls_before=options_calls;
+    CHECK(module_enc(2,4) && tap(0x31) && !active() && options_calls==calls_before);
+    CHECK(mw_sample_editor_answer(&service,token,0)==MODWERK_SAMPLE_NO_CHANGE && pair_reads==read_before);
     CHECK(!held && !bad);
     puts("PASS: actual controller/grid, frame bounds and shared confirmation for Flex/Static/recorders");return 0;
 }

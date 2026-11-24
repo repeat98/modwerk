@@ -1,0 +1,1 @@
+`npm run coldfire:isa` now also reports any assembly instruction that steps an address register in its source and reuses it in its destination (the GCC late-combine byte copy), so compiler output kept as .s is held to the rule the build already applies to C objects.

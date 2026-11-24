@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 2,
+  "id": "smart-reload",
+  "key": "SMART RELOAD",
+  "name": "Smart Reload",
+  "version": "0.1.0-experimental",
+  "category": "scenes",
+  "author": {
+    "github": "Andrey-Sidorkin",
+    "credits": [
+      "Andrey-Sidorkin"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "SMART RELOAD",
+    "family": "Scenes",
+    "summary": "In arranger mode, RELOAD PART brings back the scenes of the arrangement row you are on instead of the Part's saved ones.",
+    "overview": "An arrangement row can choose scenes A and B. Stock's RELOAD PART (FUNC + CUE) puts the Part's saved scenes back, so after a reload during a song the crossfader no longer morphs between the row's scenes. With Smart Reload, the reload goes as usual and the current row's scenes A and B come straight back. A side set to -- gets the scene the rows above left, as the row plays without a reload, and in pattern mode nothing changes.",
+    "highlights": [
+      "RELOAD PART in arranger mode keeps the current row's scenes A and B, heard at once",
+      "A side set to -- gets what the rows above left, as the row plays without a reload",
+      "Pattern mode and every other reload stay exactly stock's"
+    ],
+    "usage": [
+      "In arranger mode, set scenes A and B in an arrangement row (the SCENE column).",
+      "Play the arrangement, tweak the Part, then press FUNC + CUE: the Part reloads and the row's scenes stay selected."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Only the Part in use is given the row's scenes: RELOAD from the Part menu for another Part is stock's.",
+      "Stopped, the row is the one PLAY continues from; nothing changes when there is none.",
+      "Tested on one MKI only; not with other modules installed."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate (verify.py, 21 checks). On the developer's MKI (OS 1.40C, base eb667962), build 0008101dc beside Arr Rows and Songbook: RELOAD PART in arranger mode keeps and plays the current row's scenes, a -- side the scene the rows above left, the Part menu's RELOAD and pattern mode as expected, as the developer reported it.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Host gate: verify.py (smart_reload_host.c and the generated unit)",
+      "Hardware: RELOAD PART in arranger mode on the developer's MKI (to do)"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code by Andrey Sidorkin (MIT). No Elektron firmware, extracted routines or tables: stock addresses and instruction hashes only."
+  },
+  "media": [],
+  "access": {
+    "location": "Main screen, arranger mode: FUNC + CUE (RELOAD PART)",
+    "steps": [
+      "Switch arranger mode on (FUNC + PATTERN on the MKI) and set scenes A and B in an arrangement row.",
+      "Save the Part (Part menu, SAVE), then play the arrangement.",
+      "Press FUNC + CUE: the Part reloads and the row's scenes A and B stay selected."
+    ],
+    "screenshots": []
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "improved-fltr",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-23T18:00:00Z",
+  "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant 1c14b6b0) + this folder's Improved FLTR 0.1.0-experimental (built by scripts/build-elemod-packages.mjs), materialised against stock OS 1.74, --version IFS2",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f (the author's local build with a RAM-boot patch, as Improved AMP's captures); no card (starts formatted); JIT on; --every 1000M; DTBOOT_TURN_PNG=a after each turn"
+  },
+  "conditions": "Cold boot; eight NO presses from 7003M, 300M apart, close the calibration notices. FILTER at 11003M; 27 turns of TYP (encoder 6) by +6 from 11303M, 20M apart (LP2 to BW: the seventh step); 45 turns of FRQ (encoder 4) by -6 from 12003M (FRQ 47, about 208 Hz); 40 turns of RES (encoder 5) by +6 from 13003M. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. Without Filter Hz in the build FRQ shows stock's number.",
+  "captures": [
+    {
+      "path": "media/band-base.png",
+      "frame": "turn72.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-IFS2-os1.74.syx --instr 14800M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FLTR@11003M:12M --turn 6:6@11303Mx27/20M --turn 4:-6@12003Mx45/20M --turn 5:6@13003Mx40/20M",
+      "sha256": "1639b27fbe127494d85b16a7090a141e3bdf03d910039f1b18591122b68639bc"
+    },
+    {
+      "path": "media/band-width.png",
+      "frame": "turn92.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-IFS2-os1.74.syx --instr 14800M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FLTR@11003M:12M --turn 6:6@11303Mx27/20M --turn 4:-6@12003Mx45/20M --turn 5:6@13003Mx40/20M",
+      "sha256": "cc34b53077703dee3d6a1fcfcb385d1eef812567bb4b82db0889f302317ff63d"
+    },
+    {
+      "path": "media/band-wide.png",
+      "frame": "turn112.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-IFS2-os1.74.syx --instr 14800M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FLTR@11003M:12M --turn 6:6@11303Mx27/20M --turn 4:-6@12003Mx45/20M --turn 5:6@13003Mx40/20M",
+      "sha256": "1455bc3a07a21625561f498e55c2accb167539a8b8d0a56cbefd130b829f0359"
+    }
+  ]
+}

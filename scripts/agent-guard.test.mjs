@@ -8,7 +8,8 @@ const call = (command, run_in_background = false) => refusal({ tool_name: 'Bash'
 describe('agent guard', () => {
   it('lets ordinary commands, short sleeps and the documented serve loop in the background run', () => {
     for (const command of ['npm run pr:ready', 'npm test', 'git log -1', 'sleep 5 && gh pr checks 1', 'tail -n 40 out.log', 'npm run device -- try A.mwrm --seconds 120',
-      'npm run device:price -- --base 945cc074 --scene "bank C pattern C01" vibrato', 'npm run device:price -- --out x.json FILE.mwrm', 'echo "npm run dev"'])
+      'npm run device:price -- --base 945cc074 --scene "bank C pattern C01" vibrato', 'npm run device:price -- --out x.json FILE.mwrm', 'echo "npm run dev"',
+      'grep -n "curve" scripts/octatrack-price.mjs', 'node --check scripts/octatrack-price.mjs', 'npx vitest run scripts/octatrack-price.test.mjs', 'git diff -- scripts/octatrack-price.mjs'])
       expect(call(command), command).toBeNull()
     expect(call('while [ -f scripts/device.mjs ]; do npm run device -- serve --share /tmp/s.sock; sleep 1; done', true)).toBeNull()
     expect(call('npm run dev &')).toBeNull()
@@ -26,6 +27,8 @@ describe('agent guard', () => {
     expect(call('npm run device -- try A.mwrm --seconds 1500')).toMatch(/two minutes/)
     expect(call('npm run device:price -- --base 945cc074 --scene "bank A, pattern 1" --seconds 8')).toMatch(/every USB package/)
     expect(call('npm run device:price')).toMatch(/every USB package/)
+    expect(call('node scripts/octatrack-price.mjs --seconds 8')).toMatch(/every USB package/)
+    expect(call('node -B /x/scripts/octatrack-price.mjs')).toMatch(/every USB package/)
   })
 
   it('runs anything the developer asked for with MODWERK_GUARD=off', () => {
