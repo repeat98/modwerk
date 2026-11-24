@@ -39,6 +39,7 @@
 #define EV_SCENE_A 0x400c0c43u
 #define EV_SCENE_B 0x400c0c42u
 
+#define MESSAGE    0x4005a2b8u   /* (text, 0x30): stock's message box */
 #ifdef SR_HOST
 uint8_t host_rd8(uint32_t a);
 void host_wr8(uint32_t a, uint8_t v);
@@ -52,6 +53,9 @@ static void scenes_changed(void) { host_scenes_changed(); }
 static void scene_sound(unsigned bank, unsigned part, unsigned scene, unsigned side) { host_scene_sound(bank, part, scene, side); }
 static void post_event(uint32_t q, uint32_t e) { host_post_event(q, e); }
 static unsigned stock_reload(unsigned part) { return host_stock_reload(part); }
+#ifdef SR_DEBUG
+static void message(const char *t) { (void)t; }
+#endif
 #else
 static uint8_t rd8(uint32_t a) { return *(volatile uint8_t *)a; }
 static void wr8(uint32_t a, uint8_t v) { *(volatile uint8_t *)a = v; }
@@ -63,6 +67,9 @@ static void scene_sound(unsigned bank, unsigned part, unsigned scene, unsigned s
 static void post_event(uint32_t q, uint32_t e) { ((void (*)(uint32_t, uint32_t))POST_EVENT)(q, e); }
 unsigned sr_stock_reload(unsigned part);     /* below: stock's reload, entered past the site */
 static unsigned stock_reload(unsigned part) { return sr_stock_reload(part); }
+#ifdef SR_DEBUG
+static void message(const char *t) { ((void (*)(const char *, int))MESSAGE)(t, 0x30); }
+#endif
 #endif
 
 static uint32_t rd32(uint32_t a)
@@ -102,7 +109,18 @@ static void note(unsigned why, uint32_t row, unsigned bank, unsigned pattern, un
         | (uint32_t)(ppart & 15u) << 20 | (uint32_t)(part & 15u) << 24 | (uint32_t)(rd8(CUR_BANK) & 15u) << 28;
 }
 struct sr_api { volatile uint32_t value; };
-void sr_tick(void *api) { if (api) ((struct sr_api *)api)->value = last; }
+#ifdef SR_DEBUG
+static char dbg_text[24];
+static uint8_t dbg_pending;
+static void message(const char *t);
+#endif
+void sr_tick(void *api)
+{
+    if (api) ((struct sr_api *)api)->value = last;
+#ifdef SR_DEBUG
+    if (dbg_pending && ++dbg_pending > 30) { dbg_pending = 0; message(dbg_text); }   /* half a second after */
+#endif
+}
 
 /* A side's scene as the row plays it: the row's own, or, for "--" ("no change"), the nearest one set on that side in
  * the rows above that play this bank's Part (a row of another Part sets that Part's scenes, not this one's): what the
@@ -137,6 +155,23 @@ static unsigned row_scenes(unsigned part)
     if (part != rd8(CUR_PART)) { note(WHY_OTHER_PART, row, bank, pattern, ppart, part); return 0; }
     if (ppart != part) { note(WHY_PATTERN_PART, row, bank, pattern, ppart, part); return 0; }
     note(WHY_DONE, row, bank, pattern, ppart, part);
+#ifdef SR_DEBUG
+    {   /* debug build only: the row taken and the scenes chosen, on screen */
+        char *t = dbg_text;
+        int a = side_scene(arr, row, bank, part, 0), b = side_scene(arr, row, bank, part, 1);
+        const char *h = "SR ROW ";
+        while (*h) *t++ = *h++;
+        if (row >= 100u) *t++ = (char)('0' + row / 100u);
+        if (row >= 10u) *t++ = (char)('0' + row / 10u % 10u);
+        *t++ = (char)('0' + row % 10u);
+        *t++ = ' '; *t++ = 'A';
+        if (a < 0) { *t++ = '-'; *t++ = '-'; } else { if (a + 1 >= 10) *t++ = (char)('0' + (a + 1) / 10); *t++ = (char)('0' + (a + 1) % 10); }
+        *t++ = ' '; *t++ = 'B';
+        if (b < 0) { *t++ = '-'; *t++ = '-'; } else { if (b + 1 >= 10) *t++ = (char)('0' + (b + 1) / 10); *t++ = (char)('0' + (b + 1) % 10); }
+        *t = 0;
+        dbg_pending = 1;                                 /* shown by the next tick, after stock's PART n RELOADED */
+    }
+#endif
     unsigned done = 0;
     for (unsigned side = 0; side < 2; ++side) {
         int scene = side_scene(arr, row, bank, part, side);

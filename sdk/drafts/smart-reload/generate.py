@@ -19,6 +19,10 @@ FLAGS = ['-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', 
          *m68k_codegen.FLAGS]
 
 
+if __import__('os').environ.get('SR_DEBUG'):          # a debug build: the row taken shown on screen after a reload
+    FLAGS.append('-DSR_DEBUG')
+
+
 def generate():
     with tempfile.TemporaryDirectory() as td:
         asm = pathlib.Path(td) / 'smart_reload.s'
