@@ -300,6 +300,12 @@ with nothing recorded, that start installs nothing (result 11, MODULES HELD, 0x1
 Another base ignores the record. On development bases `npm run device -- guardtest` (or `guardtest:0`) arms it as a
 crash in the restore would, blaming the set's first module (or none), so a RAM boot shows what a tester's next start would.
 
+A saved-set file the restore cannot open, or any of whose reads fails, is unreadable, not absent (stock's open gives -12
+for a missing file and -10 for an empty one; any other failure counts as unreadable). The start reports DAMAGED (5), and
+the next save writes every such file before it counts as saved, so what it held never comes back over a newer Keep. A
+header that is not whole is never trusted for its generation: a write cut short inside it mixes new bytes with old.
+`test_modset_card.c` cuts the power before every stock file call of a save and fails reads.
+
 ### The base's version
 
 A base has a version for people, `major.minor` or `major.minor.patch`, in [`base-version.json`](base-version.json)

@@ -451,11 +451,11 @@
   },
   {
    "base": "0.8.2",
-   "identity": "c5791ec973ba6e760b7244cb5b5bf47b3edab26cca50c8ea34c15babdafe7f2b",
+   "identity": "39f56803c52277b1322448e55c479d1164b54c1ce67438ec452bcbfc4b3a1f94",
    "layouts": {
     "off": {
-     "main": 1348058,
-     "container": 831468
+     "main": 1348231,
+     "container": 831656
     }
    }
   }

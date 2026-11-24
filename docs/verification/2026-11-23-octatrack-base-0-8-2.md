@@ -62,3 +62,34 @@ stub and only a unit converted from this base on gets the new one.
 - Emulator: `check_stub.py` passed all six slot states on #2028's build (its description has the record).
 - Not run on a unit: a two-slot conversion writes the stub to NOR at `0x4000` and only a cold start runs it. The A/B and
   release-image steps above now apply to `c5791ec9` instead of `6852c1ff`.
+
+## 24 November 2026: a saved-set file the start could not read
+
+`modset.c` told a missing `MODWERK0.SET`/`MODWERK1.SET` from one it failed to read only by accident: `load()` returned 0
+for both. With neither file whole, the restore zeroed the header, generation included, and said NONE_SAVED when both
+failed to open or read; the next Keep sealed generation 1 into the other file, and a file that failed to read at that
+start and read again later, holding a higher generation, won over the Keep at the next start.
+
+- `load()` now returns absent (stock's open -12, no such file, or -10, an empty one: the logger's reading in
+  `stock_140c.c`), read in full but no set, or unreadable (any other open failure, or any read failing). A header that
+  is not whole is never trusted for its generation, since a write cut short inside it mixes new bytes with old.
+- An unreadable file gives DAMAGED (5) instead of NONE_SAVED. With no whole set the next save goes first to the
+  unreadable file, and every file the start could not read gets the set too before the save counts as saved (`pending`
+  stays set and the second write follows at once). If the read-back fails, the save is SAVE_FAILED and retried.
+- A newer file that read whole and then failed the restore's second read leaves nothing running, DAMAGED, and an empty
+  `set[]` with its generation (it used to keep the other file's bytes).
+
+Host tests (no firmware): `test_modset_card.c` (new; modset.c's own sector store and load) cuts the power before every
+stock file call of a save, 328 cuts over eleven installs, removals and switches, with a file's length landing per sector
+and only at close, and runs nine read-error cases; `test_modset.c` adds three on its pretend card. On `f99c1d523`'s
+modset.c 13 and 6 checks fail (NONE_SAVED where DAMAGED belongs, the Keep losing at the next start); the power-cut sweep
+passes there too. With the change all pass, with the elekloader `test_recipe.py` (41), `test_sets.c`, and the
+`sdk/tests` saved-set, card guard, card shelf, volatile service, journal, loader, resident engine board and base-bound
+suites.
+
+- Release 0.8.2 rebuilt (pinned m68k toolchain): base `39f56803c52277b1…` (was `c5791ec9`); browser = native `.bin`
+  `5205b4afbcd20e66…` (831,672 bytes); MAIN 1,348,231 bytes (`d67ce1b5f1ab09bf…`); container 831,656 of 851,712, 20,056
+  free (+188 bytes on `c5791ec9`). Base-bound packages relinked.
+- Not run on a unit: the read failures cannot be made on hardware. Pending on a flashed 0.8.2: a kept set restored across
+  power cycles; a Keep then two power cycles; a card with neither file starting as "Nothing saved" (2), not 5, which
+  checks stock's -12 in this path; PROJ held at power-on, a Keep, a power cycle.

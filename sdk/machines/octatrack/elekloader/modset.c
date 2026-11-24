@@ -9,6 +9,9 @@
  * Elektron's Startup Menu instead; an MKI has no PROJ key); so does another base's set (its configuration hash
  * differs) or a damaged file. The boot guard below does it without a key when the last start crashed or stopped
  * while its restore ran.
+ * A file the start could not read in full is not an absent one: what it holds is unknown and may be newer than anything
+ * read, so nothing restores from it, the result is DAMAGED, and the next save writes it too before it counts as saved,
+ * so a Keep never loses to it. A file that read in full but is not whole stays so: it never wins.
  * A volatile Keep (volatile_service.c) adds its fresh installs to this set only when the set and they are exactly
  * the trial's whole-set identity (journal.h), and is refused otherwise; the set is then saved the same way.
  *
@@ -247,6 +250,9 @@ static int off_add(uint32_t id, const uint8_t *p, uint32_t length)
     off_moving = off_moving + 1u;
     return 1;
 }
+/* The files this start's restore could not read in full (a bit per slot): the next save overwrites each before it counts
+ * as saved. */
+static unsigned unread;
 static void seal(uint32_t count, uint32_t bytes)
 {
     /* A module in the set runs: a host installed it, or it was switched on. It leaves the shelf. */
@@ -400,13 +406,21 @@ void modwerk_modset_adopt_test(unsigned on) { ADOPT[1] = be32(modwerk_base_diges
 #define ADOPTING() 0
 #define adopted 0
 #endif
+/* load()'s results besides a set's bytes (0: no file). LOAD_BAD: a file read in full that holds no set. LOAD_UNREAD: one
+ * that could not be opened or a read of it failed, so what it holds is unknown. A header that is not whole is never
+ * trusted: a write cut short inside it leaves new bytes before old ones. */
+#define LOAD_BAD (-1)
+#define LOAD_UNREAD (-2)
 #if defined MODWERK_HOST && !defined MODWERK_HOST_CARD
-/* The pretend card keeps a file's shelf beside its set: op 2 reads it (its bytes, 0 none), op 3 writes it. */
+/* The pretend card keeps a file's shelf beside its set: op 2 reads it (its bytes, 0 none), op 3 writes it. Op 0 gives a
+ * negative number for a file it cannot read. */
 static int load(unsigned which)
 {
     static uint8_t shelf[SET_BYTES];
     const char *path = which ? "/MODWERK1.SET" : "/MODWERK0.SET";
     int n = modwerk_test_file(0, path, set, SET_BYTES);
+    off_bytes = 0;
+    if (n < 0) return LOAD_UNREAD;
     uint32_t bytes = n >= (int)HEADER && be32(set + 4) == 2u ? (uint32_t)modwerk_test_file(2, path, shelf, SET_BYTES) : 0;
     off_bytes = 0;
     if (bytes >= 512u && !(bytes % 512u) && bytes <= SET_BYTES - (((uint32_t)n + 511u) & ~511u) && off_whole(shelf, bytes) &&
@@ -423,25 +437,26 @@ static int store(unsigned which)
     return modwerk_test_file(1, path, set, used()) && modwerk_test_file(3, path, OFF, off_bytes);
 }
 #else
-/* One slot into `set`: its bytes, or 0 when it is absent or unreadable. */
+/* One slot into `set`: its bytes, 0 when it is absent, or LOAD_BAD or LOAD_UNREAD (above). Stock's open gives -12 for a
+ * file that is not there and -10 for an empty one, as the logger reads it (stock_140c.c); anything else is a failure. */
 static int load(unsigned which)
 {
     struct file_object f;
-    if (olog_stock_open(&f, which ? "/MODWERK1.SET" : "/MODWERK0.SET", "r", octamod_log_io, 512) < 0) return 0;
-    int ok = olog_stock_read(&f, set, 512) == 1;
+    int opened = olog_stock_open(&f, which ? "/MODWERK1.SET" : "/MODWERK0.SET", "r", octamod_log_io, 512);
+    if (opened < 0) return opened == -12 || opened == -10 ? 0 : LOAD_UNREAD;
+    int got = olog_stock_read(&f, set, 512) == 1, ok = got; /* got: every read so far came back */
     uint32_t n = ok && be32(set) == 0x4d575354u ? be32(set + 16) : 0;
     ok = ok && n >= HEADER && n <= SET_BYTES;
-    for (uint32_t at = 512; ok && at < n; at += 512) ok = olog_stock_read(&f, set + at, 512) == 1;
+    for (uint32_t at = 512; ok && at < n; at += 512) ok = got = olog_stock_read(&f, set + at, 512) == 1;
     /* The shelf, after the set's sectors: taken only whole, and only into what the set leaves. */
     static uint8_t first[512];
     off_moving = off_moving + 1u;
     off_bytes = 0;
-    if (ok && be32(set + 4) == 2u && olog_stock_read(&f, first, 512) == 1 && be32(first) == OFF_MAGIC && be32(first + 12) <= SET_BYTES &&
-        be32(first + 16) == be32(set + 8)) {
+    if (ok && be32(set + 4) == 2u && (got = olog_stock_read(&f, first, 512) == 1) && be32(first) == OFF_MAGIC &&
+        be32(first + 12) <= SET_BYTES && be32(first + 16) == be32(set + 8)) {
         uint32_t bytes = (be32(first + 12) + 511u) & ~511u;
         if (bytes >= 512u && bytes <= SET_BYTES - ((n + 511u) & ~511u)) {
             uint8_t *s = set + SET_BYTES - bytes;
-            int got = 1;
             for (unsigned i = 0; i < 512u; ++i) s[i] = first[i];
             for (uint32_t at = 512; got && at < bytes; at += 512) got = olog_stock_read(&f, s + at, 512) == 1;
             if (got && off_whole(s, bytes)) off_bytes = bytes;
@@ -449,7 +464,7 @@ static int load(unsigned which)
     }
     off_moving = off_moving + 1u;
     (void)olog_stock_close(&f);
-    return ok ? (int)n : 0;
+    return !got ? LOAD_UNREAD : ok ? (int)n : LOAD_BAD;
 }
 /* The set into one slot, sector by sector while the gate holds, then read back whole. */
 static int store(unsigned which)
@@ -624,13 +639,17 @@ static void restore(void)
     uint32_t ga = wa ? be32(set + 8) : 0;
     int b = load(1), wb = whole(b);
     uint32_t gb = wb ? be32(set + 8) : 0;
+    unread = (unsigned)(a == LOAD_UNREAD) | (unsigned)(b == LOAD_UNREAD) << 1;
     int hold = guard_check(ga > gb ? ga : gb);
+    /* With no whole set the next save goes first to a file this start could not read: when only one could not be read,
+     * that one save puts what it held out of the way. */
+    unsigned first = unread == 1u;
     /* PROJ or FUNC held, or the guard holds: nothing installed, but the card's newest generation and slot are kept, so a
      * later save wins over it. */
     if (held || (hold && (wa || wb))) {
         slot = wb && (!wa || gb > ga) ? 1u : 0u;
         if (wa || wb) (void)load(slot); /* its shelf stays, for the page and the next save */
-        else off_bytes = 0;
+        else off_bytes = 0, slot = first;
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
         put32(set + 8, ga > gb ? ga : gb);
         if (held) { modwerk_modset_result = SKIPPED; SAY("MODULES SKIPPED"); return; }
@@ -638,15 +657,20 @@ static void restore(void)
         modwerk_diag_refused(0, GUARD_HELD, 0, 0, 0), modwerk_diag_set();
         return;
     }
-    if (!wa && !wb) {
+    if (!wa && !wb) { /* a file there that did not read whole, or could not be read, is DAMAGED: not "nothing saved" */
         if (modwerk_modset_result != FOREIGN) modwerk_modset_result = a || b ? DAMAGED : NONE_SAVED;
-        off_bytes = 0; /* no set of this base's: its shelf goes with it */
+        off_bytes = 0, slot = first; /* no set of this base's: its shelf goes with it */
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
         modwerk_diag_set(); /* nothing restored: the log says so */
         return;
     }
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
-    if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; off_bytes = 0; return; }
+    if (!slot && (int)load(0) != a) { /* it read whole, then not: nothing runs, set[] holds none of it, the generation stays */
+        modwerk_modset_result = DAMAGED, off_bytes = 0;
+        for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
+        put32(set + 8, ga);
+        return;
+    }
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome(i) = 0;
     restored = 0, left_out = left_why = left_used = left_largest = left_check = 0;
     restore_pass();
@@ -832,6 +856,9 @@ void modwerk_modset_service(void)
 #endif
     if (!pending || TICKS < retry_at) return;
     slot ^= 1u;
-    if (store(slot)) pending = 0, modwerk_modset_result = SAVED, modwerk_diag_set(); /* the set as the card holds it, in the unit's log */
-    else slot ^= 1u, retry_at = TICKS + 600u, modwerk_modset_result = SAVE_FAILED; /* ten seconds, then again */
+    if (!store(slot)) slot ^= 1u, retry_at = TICKS + 600u, modwerk_modset_result = SAVE_FAILED; /* ten seconds, then again */
+    /* A file this start could not read gets the set too, at once, before it counts as saved: what it held never comes
+     * back over it. */
+    else if ((unread &= ~(1u << slot)) != 0u) retry_at = 0;
+    else pending = 0, modwerk_modset_result = SAVED, modwerk_diag_set(); /* the set as the card holds it, in the unit's log */
 }
