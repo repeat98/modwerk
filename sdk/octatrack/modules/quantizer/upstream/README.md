@@ -46,7 +46,8 @@ to watch.
   note. The CHROMATIC keyboard of
   a synth track spans octaves -4..+4 (FUNC + LEFT/RIGHT). The engine is
   a DRAM unit in octabam's sample-RAM reserve (10 MB off the sample pool);
-  the page is a pinned ROM cave whose FM SYNTH descriptor is a runtime
+  the page is a DRAM unit too (since 2.21; a pinned ROM cave at
+  `0x400d24d0` until 2.20), whose FM SYNTH descriptor is a runtime
   clone of the stock FLEX record, built in the unit's RAM on first use --
   the repository carries no byte of the stock record. The AMP SETUP page
   (FUNC + AMP) of every audio track has a sixth box, LEG -- the legato
@@ -73,9 +74,10 @@ to watch.
   kept, as in the stock firmware; FX slots are kept. This applies to a
   change to or from FM SYNTH or SY DRUM (either list; until 2.14 also a marker file);
   a stock machine's init is a new project's; a change between stock
-  machines is stock's. Since 2.15 a selection guard keeps a Part within what
-  the unit's processor can play: at most 2 SY DRUM tracks, 1 FM SYNTH track,
-  or FM SYNTH with 1 SY DRUM track -- both lists and copy / paste refuse more,
+  machines is stock's. Since 2.15 a guard keeps a Part within what the
+  unit's processor can play; since 2.16 it is one load budget per Part (two
+  FM SYNTH tracks fit, the FM voices capped beside SY DRUM tracks; at most
+  2 FM SYNTH tracks and 2 SY DRUM tracks, not two of each) -- both lists and copy / paste refuse more,
   with a message (limits from PROCESSOR LOAD readings on the author's MKI).
   `synth/README.md`.
 - **`sy-drum/`** (key `SY DRUM`, since 2.11; requires `SYNTH MACHINE`) -- a
@@ -227,19 +229,40 @@ there, the held-chord crackle and the live-key pops gone, by ear; the tuner
 (UP + TEMPO) works there too (29 Sep 2026). The last two 2.9 fixes (a sequencer trig on a sounding note, the index ramp) are
 emulator-verified and not yet flashed; so is FM SYNTH in the machine list
 (2.10, 8 Oct 2026). 2.15 (the selection guard, the MIDI tracks' scale)
-was flashed on the author's MKI (18 Oct 2026) and works there. 2.16
-(the load budget and the former LFO SETUP V/C column) was tested on Tim's
-MKI on 22 Oct 2026. Tim reported that the voice cap was not shown and the
-V/C speed dial could jump past the valid voice range. The 2.17 candidate
-restores LFO 3 and moves VOIC/CHRD to PLAYBACK SETUP with independent step
-and scene locks. PORT checks confirm the setup detents, restored LFO modulation and
-GRID-lock power-cycle paths. The first candidate had a garbled CHRD label
-(`R/work/r17/logs/gate6-c4-result.txt`). The 23 October bounded fix preserves the formatter
-callback context and replaces the cap letter with dashes; its current disposition is
-in the gate reports. The
-live-recording test has a tool limitation and the emulator cannot establish a
-physical crossfader sweep. The complete gate status
-is in the author's `R/work/r17/REPORT.md` and `VERIFY.md`. It is not yet on a unit.
+was flashed on the author's MKI (18 Oct 2026) and works there. 2.16 ..
+2.20 were builds on the way to 2.21 and are not tagged here (see Tags).
+2.16 (the load budget and the former LFO SETUP V/C column) ran on the
+author's MKI on 22 Oct 2026: the voice cap was not shown and the V/C
+column's VOIC dial could run past the valid voice range, which 2.17
+answers (LFO 3 back, VOIC and CHRD on PLAYBACK SETUP with their own step
+and scene locks). 2.17 and 2.18 ran there on 24 Oct 2026; 2.18's fix for
+the first chord after PLAY worked there, and so did a step-1 lock edited
+while stopped; the SY DRUM PLAYBACK SETUP page not redrawing while SCENE A / B
+was held is fixed in 2.19. 2.19 and 2.20 were emulator-verified and not
+flashed on their own; what they changed is in the 2.21 image but was not
+tested there item by item. 2.21 was flashed on the author's MKI (29 Oct
+2026) and works there: after a power off and on, the first chord the
+sequencer plays on step 1 is a chord, not one note, in an unsaved project
+and after SAVE PROJECT, and later passes and STOP / PLAY play as before. The
+chromatic-key chord fix and the setup-values fix were checked there on the 2.21 test builds of
+27 and 28 Oct 2026, which carry the same code for them: with SCALE set, a
+chord played on the chromatic trig keys of an FM SYNTH track gives the same
+notes on every press, and edited FM SYNTH and SY DRUM PLAYBACK SETUP values
+come back after a power-off, with and without SAVE. 2.21's move of the FM
+SYNTH page into DRAM (the stock DELAY's table tail stock again) is
+emulator-verified. 2.22 was flashed on the author's MKI (1 Nov 2026) and works
+there: an SY DRUM track's level stays put when a sample is loaded into its
+slot, an FM SYNTH track with FOLLOW OFF plays plain semitones beside a
+track that follows the scale, and a project saved on 2.21 with SCALE rows
+OFF loads with those tracks reading FOLLOW OFF. The FM SYNTH level, the
+TRACK and FOLLOW rows and TUNER's DC case were tested the same day on the
+Modwerk builds of the same code. 2.23 was flashed on the author's MKI (14 Nov
+2026) and works there: on a project of eight FLEX tracks with no synth
+track, PROCESSOR LOAD reads 25 / 31 / 45 / 66 % with 0 / 1 / 4 / 8 tracks
+playing, against 33 / 39 / 63 / 75 % on 2.22; a project saved on 2.22 with
+FM SYNTH locks loads with every lock, saves, and comes back after a
+power-off; and a STATIC track streams without a dropout while FM SYNTH
+locks are edited during play.
 Every feature was verified in an
 emulator before flashing (the companion repository
 [timhastie/octa-panel](https://github.com/timhastie/octa-panel) has a
@@ -247,9 +270,10 @@ real-time build of octabam's emulator and a virtual front panel). Read
 octabam's flashing notes first, power-cycle the unit after an OS upgrade,
 and SAVE or SYNC TO CARD after changing project settings.
 
-Combining with other modules: the synth page is pinned at the start of the
-second free gap (`0x400d24d0`), which octabam's `tempo-bus` also uses, so
-the ledger refuses that pair; the synth engine shares the sample-RAM
+Combining with other modules: since 2.21 the FM SYNTH page is a DRAM
+unit; of the second free gap (`0x400d24d0`) the synth only checks that the
+16 bytes the stock DELAY reads there are stock (until 2.20 the page was
+pinned there). The synth engine shares the sample-RAM
 reserve with the other DRAM modules (USB, MIDI SCENES) inside one runtime.
 PROCESSOR LOAD declares conflicts with octabam's CF METER (the same two
 frame-interrupt sites) and TEMPO BUS (the TEMPO popup), and runs beside
@@ -259,33 +283,147 @@ everything in the `octatrick` remix.
 
 Only tagged versions are releases; the numbered builds between two tags
 (2.3 .. 2.7 on the way to 2.8, the 2.9 builds before the tag) were test
-builds on the author's unit and were never tagged.
+builds on the author's unit and were never tagged. 2.16 .. 2.20 were
+builds on the way to 2.21 and are not tagged here either; their entries
+below say what each brought, and 2.21 releases all of it.
 
-- 2.17 (local candidate; PORT checks with limitations, not yet on a unit): LFO 3 is restored on
+- 2.23 (tag `v2.23`, 14 Nov 2026): TWO CHANGES ON 2.22, BOTH IN SYNTH MACHINE
+  AND SY DRUM. (A) THE FRAME GATE (octatrick-modules#4): a project with no
+  FM SYNTH or SY DRUM track no longer pays the engine's per-block work.
+  Until 2.22 both modules ran their hooks on every audio track in every
+  block; now `po_gate` decides once a block, from the current Part's
+  machine and signature bytes, whether anything of the engine can act, and
+  every hook takes its shut path while nothing can; with a synth track
+  present, each idle sample track is shut on its own. FM SYNTH, SY DRUM and
+  sample-track slides render sample-equal to 2.22 in the emulator. On the
+  author's MKI, eight FLEX tracks on one sample with no synth track read
+  25 / 31 / 45 / 66 % in PROCESSOR LOAD with 0 / 1 / 4 / 8 tracks playing,
+  against 33 / 39 / 63 / 75 % on 2.22. (B) FM SYNTH's step and scene locks
+  are held in 128-byte lanes taken on demand from a pool, in rows of two
+  bytes (2.22's rows were sixteen bytes, fourteen of them 0xFF), and the
+  project text is streamed instead of held in a 256 KiB buffer. The lock
+  files on the card keep their format: a 2.22 project loads with its locks.
+  Details: `synth/README.md` (the frame gate).
+
+- 2.22 (tag `v2.22`, 1 Nov 2026): FIVE CHANGES ON 2.21. (A) SCALE QUANTIZER:
+  the sixteen per-track SCALE rows become two SEQUENCER rows, TRACK (AUDIO
+  1..8, MIDI 1..8; picks the track, not saved) and FOLLOW (that track ON or
+  OFF); the bits and the project-file lines are 2.21's, so a saved project
+  keeps its switches. (B) FM SYNTH: a track whose FOLLOW is OFF reads the
+  scale as OFF, so its keys, chords and ROOT are left alone while the other
+  tracks keep the scale (before, only ROOT was skipped and the keys were
+  still snapped). (C) FM SYNTH and SY DRUM: a synth track's level is the
+  engine's; the GAIN attribute of the slot the track is assigned to is
+  ignored, so loading a sample into that slot (or CLEAR SLOT, +12 dB) no
+  longer moves the level on the sounding note; a FLEX track on the same slot
+  still gets the slot's gain. (D) TUNER: the ring's mean is taken off before
+  the analysis, so a track whose effects leave a DC offset larger than its
+  swing reads instead of holding. (E) `poly.s` exports the engine state the
+  quantizer's panel transaction reads whenever SYNTH MACHINE and SCALE
+  QUANTIZER are built together, not only with SY DRUM. Details:
+  `quantizer/README.md` (TRACK and FOLLOW), `synth/README.md`,
+  `tuner/README.md`.
+
+- 2.21 (tag `v2.21`, 29 Oct 2026): THE FIRST RELEASE SINCE 2.15 -- TWO
+  FIXES FROM THE AUTHOR'S MKI, AND 2.16 .. 2.20. By the build that brought
+  it:
+  - **2.21.** (A) On an FM SYNTH track with SCALE set, a chord played on the
+    chromatic trig keys could give different notes on repeated presses
+    (seen with E PHRYGIAN and four keys across the octave). Keys pressed at
+    nearly the same instant, in one scan of the keys, took a recovery path
+    that left out the scale ROOT the direct key path adds, so those notes
+    sounded the ROOT's distance too low; and a key's identity could be
+    paired with another press's pitch. The ROOT is added on that path too,
+    and each key's identity and pitch are now published and taken once,
+    together (the synth and SCALE QUANTIZER share the hand-over). (B) After
+    a power off and on, the first chord the sequencer played on step 1
+    sounded as one note, saved project or not; later passes were right. At
+    power-on the stock queues each track's step 1 while the project loads,
+    before that bank's lock table is ready, so the step lost its VOIC and
+    CHRD locks. A step queued so is now marked and its locks are read when
+    the stock plays it, once the table is ready; SY DRUM's step locks take
+    the same path and have the same fix. The lock source check also compares
+    the bank the UI shows (a consistency fix; alone it did not cure B).
+    (C) A VOIC / CHRD edit could come back after a power-off without SAVE
+    as the value from before the edit: a migration checkpoint still pending was
+    replayed over the newer edit. Edited FM SYNTH and SY DRUM PLAYBACK
+    SETUP values now survive the power-off, with and without SAVE. (D) The FM
+    SYNTH page is a DRAM unit linked into the runtime, as the engine is:
+    until 2.20 it sat at `0x400d24d0`, and the stock DELAY reads the 16
+    bytes there past its own table (found and fixed the same way by Jannik Aßfalg in Modwerk #895);
+    they hold their stock values again. On the author's MKI: B on 29 Oct
+    2026, unsaved and after SAVE; A and C on the 2.21 test builds of 27 and
+    28 Oct 2026, which carry the same code for them; D and SY DRUM's share
+    of B are emulator-verified.
+  - **2.20** (25 -- 26 Oct 2026). Following Jan Kolkmeier's report and fix
+    (Modwerk #883 / #884): an FM SYNTH track's AMP envelope follows LFOs
+    and scene locks on ATK, HOLD and REL, as on a FLEX track (until 2.19
+    only the knob value and a trig's lock counted), and an LFO on PTCH
+    moves an FM SYNTH track's pitch 0.2 semitone per unit of depth, as on
+    FLEX (until 2.19 five times as far; FLEX stops at +-12.8 semitones, an
+    FM SYNTH track goes further). And the whole tree is free of stock bytes:
+    every hook and poke reads the instructions it displaces from the
+    builder's own OS through `stock_guard(site, length)`, each module with
+    its own copy of the reader; the FM SYNTH page is ratified by its length
+    and sha256; comments and READMEs describe the hook sites in words. Those
+    changes build the same bytes.
+  - **2.19** (24 Oct 2026). What an audio track's sequencer plays follows
+    SCALE and ROOT: the PTCH a trig resolves (the step's lock or the Part's
+    value; FLEX, STATIC, FM SYNTH and SY DRUM tracks) is snapped to the scale
+    as the trig fires, nothing stored changes, and LFOs and scenes on PTCH
+    stay continuous by design. Rows AUDIO 1 SCALE .. AUDIO 8 SCALE (ON, the
+    default, / OFF; PROJECT > CONTROL > SEQUENCER, saved with the project)
+    take an audio track out of the scale. The FM SYNTH and SY DRUM PLAYBACK
+    SETUP pages redraw on the SCENE A / B press and release (the 2.18
+    finding on the unit). With octabam's Mute Modes in a remix, FM SYNTH and
+    SY DRUM obey its trig-mute modes (DT-T and OTFX-T: no new note on a
+    silenced track; OTFX-T cuts a sounding one; STOP ends them); that code is
+    assembled only when Mute Modes is in the remix, and the `octatrick` remix
+    has none. Details: `quantizer/README.md`, `synth/README.md`.
+  - **2.18** (24 Oct 2026; on the author's MKI the same day). The FM SYNTH
+    PLAYBACK SETUP page loses the LEN, RATE, TSTR and TSNS boxes (knobs C-F
+    edit nothing there); VOIC, LEG and SY DRUM's MODE step as the stock
+    few-valued boxes do, VOIC's 1..4 spread over the dial; a scene on VOIC
+    or CHRD sweeps every value between the two sides with the crossfader
+    (2.17 switched at the midpoint); the first trig after PLAY no longer
+    has its HOLD gate stretched by the time the sequencer was stopped (the
+    first chord after PLAY could sound wrong); the track key pressed twice
+    on an FM SYNTH or SY DRUM track opens the machine list, not an empty
+    slot list; SY DRUM's PLAYBACK SETUP controls (LSPD LDEP WAVE S&H) are
+    scene targets swept by the crossfader and LFO destinations (PMTR
+    30..33). SCALE QUANTIZER: an audio track's CHROMATIC keyboard marks the
+    note a key sounds, not the key's own place, and a MIDI track's NOT2..4
+    step so that NOTE + offset is the next scale note. Details:
+    `synth/README.md`, `sy-drum/README.md`, `quantizer/README.md`.
+  - **2.17** and **2.16**: their entries below.
+
+  TUNER, DIRECT JUMP and PROCESSOR LOAD build the same code as at 2.15 (2.20
+  changed only how their manifests read the stock bytes, and comments);
+  2.22 changes TUNER (its entry above).
+
+- 2.17 (23 -- 24 Oct 2026; not tagged; ran on the author's MKI on 24 Oct
+  2026, and what he found there is fixed in 2.18): LFO 3 is restored on
   FM SYNTH. VOIC and CHRD move to PLAYBACK SETUP and have separate step and
   scene locks in `fmlockNN.work` / `.strd`. The voice cap uses `--1` and mono CHRD uses `----`,
   and legacy voice/chord defaults and locks migrate out of LFO storage at
-  project load. Scene selection switches at the crossfader midpoint.
-  The 23 October candidate also appends VOIC/CHRD to FM LFO destinations as
+  project load. Scene selection switches at the crossfader midpoint (a
+  sweep since 2.18).
+  VOIC and CHRD are also FM LFO destinations, as
   native PMTR values 30/31, with private application and note-start latching.
   PMTR retains native Part-byte storage and is not trig-lockable. Existing
-  VOIC/CHRD step locks feed the LFO offset. See `synth/README.md` and the fix reports.
+  VOIC/CHRD step locks feed the LFO offset. See `synth/README.md`.
   The synth owns the shared lock-hook dispatch; SY DRUM keeps its existing
   independent storage and handlers. The quantizer reads effective VOIC
-  through the synth's existing published reader. These two small
-  integration changes are the approved exceptions to the original
-  unchanged-module requirement. Other modules are unchanged.
-  `R/work/r17/logs/hook-inventory.txt` records the detours: synth **119**,
+  through the synth's existing published reader. Other modules are
+  unchanged. Detours at 2.17: synth **119**,
   SY DRUM **2**, quantizer **24**, tuner **3**, processor-load **4**; synth
   also has **3** symbol references and **1** source cave, direct-jump **1**
-  source cave. The PORT setup/LFO and GRID-lock persistence checks are
-  emulator-verified; the first candidate's garbled CHRD label
-  (`R/work/r17/logs/gate6-c4-result.txt`) is addressed by the 23 October formatter fix. Live recording and the physical
-  crossfader retain the limits described in `synth/README.md`. This candidate
-  is not ready to flash. See `R/work/r17/REPORT.md` and
-  `VERIFY.md` for the complete gate status. Nothing has been pushed.
+  source cave. The setup / LFO and GRID-lock persistence checks are
+  emulator-verified; a garbled CHRD label in the first build is fixed by
+  the 23 October formatter fix. Live recording and the physical
+  crossfader retain the limits described in `synth/README.md`.
 
-- 2.16 (tag `v2.16`, 18 Oct 2026): THE LOAD BUDGET -- TWO FM SYNTH TRACKS IN
+- 2.16 (18 Oct 2026; not tagged): THE LOAD BUDGET -- TWO FM SYNTH TRACKS IN
   A PART -- AND THE LFO SETUP PAGE NAMES LFO 3'S COLUMN V/C ON AN FM SYNTH
   TRACK. 2.15's guard counted tracks (one FM SYNTH track at most). 2.16
   replaces its three counting rules with one price per Part: an FM SYNTH
@@ -337,7 +475,9 @@ builds on the author's unit and were never tagged.
   + 1 poke, TUNER 3, PROCESSOR LOAD 4 + 1 poke, DIRECT JUMP its cave; the
   stock instructions every detour and poke displaces were checked against OS
   1.40C (148 sites, 144 at 2.15). SY DRUM, SCALE QUANTIZER, TUNER, DIRECT
-  JUMP and PROCESSOR LOAD are 2.15's. Emulator-verified, not yet on a unit.
+  JUMP and PROCESSOR LOAD are 2.15's. Emulator-verified; it ran on the
+  author's MKI on 22 Oct 2026, where the voice cap was not shown and the
+  V/C column's VOIC dial could run past 4 (2.17 answers both).
   Known: with the cursor on the DESIGN row of LFO SETUP (or in the designer) the third row reads
   LFO 3, not V/C, until the cursor moves; the label only (2.17).
 
