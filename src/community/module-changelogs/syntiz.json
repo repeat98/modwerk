@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "SYNTIZ makes the same sound with less ColdFire work in every frame, so its tracks leave more room for the rest of a set.",
+      "Known issue: the lower cost is not yet measured on a unit."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-31",
     "changes": [
