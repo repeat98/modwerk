@@ -42,7 +42,7 @@ MODULE = Module(
         Param(b"TONE", 64, 128, active=True, formatter=B,
               doc="Exciter: left low-pass (only low partials ring), centre flat, right high-pass"),
         Param(b"GAIN", 32, 128, active=True, formatter=P,
-              doc="Ring level: 32 is 0 dB (the ring about 4 dB under the dry on noise), 127 is +24 dB; loud rings soft-clip"),
+              doc="Ring level: 32 is 0 dB (the ring about 4 dB under the dry on noise), 127 is +12 dB; loud rings soft-clip"),
         Param(b"MIX", 64, 128, active=True, formatter=P,
               doc="Dry/wet at constant power; 0 is exact passthrough, dry -26 dB at 100, 127 only the ring"),
         Param(b"COLUN", 0, 2, active=True, formatter=S, labels=("OFF", "ON"),

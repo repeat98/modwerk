@@ -359,9 +359,11 @@ rzmute:
         move    (r3)+n3
         move    a,x:(r3)
 rzaudio:
-; GAIN: (v/128)^2, so 32 is 0 dB and 127 is +24 dB after the x256 below.
-        move    x:(r6+$4),x0
-        mpy     x0,x0,a
+; GAIN: v/512 here, v/32 after the x256 below and the state's 1/16: 0
+; silences the ring, 32 is 0 dB, 127 is +12 dB (the soft clip is reached
+; less, so it aliases less).
+        move    x:(r6+$4),a
+        asr     #$2,a,a
         move    a,x:(r7+$39)
         move    #>$1,n0
         move    #>4,n5

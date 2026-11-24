@@ -79,7 +79,7 @@
       "default": 32,
       "count": 128,
       "labels": null,
-      "doc": "Ring level: 32 is 0 dB, where the ring on noise sits about 4 dB under the dry at any DCAY; 64 is +12 dB, 127 is +24 dB. Loud rings soft-clip at -3.5 dBFS."
+      "doc": "Ring level: 32 is 0 dB, where the ring on noise sits about 4 dB under the dry at any DCAY; 0 is silent, 64 is +6 dB, 127 is +12 dB. Loud rings soft-clip at -3.5 dBFS."
     },
     {
       "name": "MIX",

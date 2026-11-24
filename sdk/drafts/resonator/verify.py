@@ -24,7 +24,7 @@ Gates:
   3. Pitch: NOTE 69 rings at 440 Hz; Colundi degrees 78 and 79 at 440 and
      441 Hz, degree 0 at 10.8 Hz, each within 0.01 Hz, and degree 127 at
      12 kHz within 2 ppm, measured on a ten-second ring.
-  4. Voices and bodies, at GAIN 32, every partial within 0.05 Hz: MAJ on A3 in four
+  4. Voices and bodies, every partial within 0.05 Hz: MAJ on A3 in four
      voices; MAJ on degree 78 snapped to Colundi (440, 528, 639, 880 Hz);
      MAJ on D4 in C MAJ (diatonic: D minor); a root C#4 snapped down to C4;
      a MAJ triad in three voices; two STRNG voices of MAJ (four harmonics
@@ -34,7 +34,10 @@ Gates:
   6. The tail ends in digital silence: a 24-bit state sticks in a dead band
      (#2047 saw it); this one must reach exact zero after the input stops.
   7. A full-scale sine at resonance with GAIN and DCAY at maximum stays
-     bounded by the soft clip (|wet| <= 2/3).
+     bounded by the soft clip (|wet| <= 2/3). The soft clip's aliasing at its
+     hardest audit case (fx:audit's 9.1 kHz tone at -1 dBFS, GAIN 127, DCAY 0,
+     the rest at the dearest setting): every folded harmonic together at most
+     -45 dBc to the fundamental (-47.1 measured; -21.3 with GAIN at +24 dB).
   8. Once the modes are tuned, a trig split changes nothing (the call
      before a trig keeps the last block's tuning by design); a garbage-filled
      block before init changes nothing.
@@ -200,6 +203,14 @@ def tone_hz(y, f0, start=FS // 2, blocks=3, blen=FS // 2):
     return f0 + sum(steps) / len(steps) / (2 * math.pi * blen / FS), abs(zs[0]) / blen
 
 
+def bin_power(y, k):
+    """Goertzel: the power of DFT bin k of y (a rectangular window: the tone sits on the bin)."""
+    c, s1, s2 = 2 * math.cos(2 * math.pi * k / len(y)), 0.0, 0.0
+    for v in y:
+        s1, s2 = v + c * s1 - s2, s1
+    return s1 * s1 + s2 * s2 - c * s1 * s2
+
+
 def t60_measured(y):
     win = 441
     env = [max(abs(v) for v in y[i:i + win]) or 1 for i in range(0, len(y) - win, win)]
@@ -303,7 +314,7 @@ def main():
     print(f"dsp_host meter: {meter} instructions/sample max")
 
     long = 3 * FS
-    lit = dict(DCAY=127, GAIN=32, MIX=127)   # GAIN 32 (0 dB) keeps a long ring out of the soft clip
+    lit = dict(DCAY=127, GAIN=127, MIX=127)
     pure4 = dict(TYPE=TYPE["PURE"], VOIC=3, **lit)
     for name, kn, wants in (
             ("MAJ on A3, four voices", knobs(PTCH=57, CHRD=CHORD["MAJ"], **pure4), [nh(57), nh(61), nh(64), nh(69)]),
@@ -355,6 +366,25 @@ def main():
     peak = max(map(abs, l + r))
     gate("full-scale sine at resonance stays inside the soft clip", peak <= round(2 * Q / 3) + 4,
          f"(peak {peak - round(2 * Q / 3):+d} LSB from 2/3 FS)")
+
+    nfft, m9 = 32768, 6763   # fx:audit's 9.1 kHz tone, on an exact bin of its 32768-point window
+    amp = round(10 ** (-1 / 20) * (Q - 1))
+    sig = [round(amp * math.sin(2 * math.pi * m9 * i / nfft)) for i in range(16384 + nfft)]
+    l, r, _ = run(work, mem, syms, knobs(PTCH=60, CHRD=CHORD["MAJ7"], DCAY=0, TONE=127, GAIN=127, MIX=127, COLUN=1,
+                                         TYPE=TYPE["BELL"], VOIC=3), sig, tag="alias")
+    true_bins = {h * m9 for h in range(1, 40) if h * m9 < nfft // 2}
+    folded = set()
+    for h in range(2, 40):
+        k = (h * m9) % nfft
+        k = nfft - k if k > nfft // 2 else k
+        if h * m9 > nfft // 2 and k not in true_bins and k:
+            folded.add(k)
+    worst = -999.0
+    for y in (l[16384:], r[16384:]):
+        alias = sum(bin_power(y, k) for k in folded)
+        worst = max(worst, 10 * math.log10(alias / bin_power(y, m9) + 1e-30))
+    gate(f"a -1 dBFS 9.1 kHz tone at GAIN 127, DCAY 0: the soft clip aliases at most -45 dBc",
+         worst <= -45, f"({worst:.1f} dBc)")
 
     x = [0] * 16 * 16 + burst(FS)   # the eight modes tune in, one per block, before the input starts
     busy = knobs(PTCH=60, TYPE=TYPE["PLATE"], CHRD=CHORD["MIN7"], VOIC=3, DCAY=90, GAIN=64, MIX=100,
