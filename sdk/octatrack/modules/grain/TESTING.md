@@ -1,6 +1,87 @@
 # GRAIN testing
 
-Grain 0.1.2-experimental · by A Force Truly Evil.
+Grain 0.1.3-experimental · by A Force Truly Evil.
+
+## 0.1.3-experimental: trig keys, CHROMATIC keys and MIDI notes play grains, in tune, 23 November 2026
+
+The package is `07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865` (30,424 bytes), rebuilt with
+`npm run octatrack:module-packages` (`--check`: identical). Two changes against 0.1.2: which START takes the plain Flex
+path, and PTCH's units. The rest of the render path is 0.1.2's.
+
+- **The report (owner, MKII):** Grain played the sample as a plain Flex when triggered from the trig keys, and CHROMATIC
+  mode did not work.
+- **Plain Flex, the cause (OS 1.40C):** stock calls START with `0xc0 | (the track's trig byte & 0x20)` (`0x4000d486`),
+  and every manual trig sets that bit: trig keys (TRACKS mode, TRIG9-16 for tracks 1-8, `0x40044668`), CHROMATIC keys
+  and MIDI notes all go through `0x40005030` with `0x1d`, as the pool's FUNC+YES audition does. 0.1.1 took every START
+  with `0x20` for the audition. **Fix:** a START with `0x20` is the audition only while the pool window is open and the
+  track is the selected one.
+- **Out of tune, the cause:** stock writes a note's pitch into the trig's PTCH lock in Flex's units, 5 a semitone and 60
+  an octave (CHROMATIC: `5 × key + 4`, `0x4004fc58`; MIDI: `5 × note − 100`, `0x4000e74c`; a value past 127 is not
+  applied). Grain 0.1.2 read 1 unit as 1 semitone, so neighbouring keys played 5 semitones apart. **Fix (owner's
+  choice):** PTCH in Flex's units, 4 to 124 (−12 to +12 semitones). The engine steps `2^((PTCH − 64) / 60)` from a
+  128-entry table whose whole semitones are 0.1.2's Model-TG ratios; the knob keeps 0.1.2's feel (a semitone a detent
+  on the 64 + 5n grid, FUNC to −12, 0, +12, a pressed knob seven semitones); the display shows semitones and a tenth
+  between them. A PTCH saved by 0.1.2 now plays at a fifth of its transposition. The migration that added 40 to a PTCH
+  below 40 (Parts from before 0.1.0) is gone: those values are valid now.
+- **Host checks:** `verify_lanes.py` checks a `0xe0` START with the pool shut on all eight tracks (granular) and on another
+  track while the pool is open (granular; the 0.1.2 build fails this), the compiled step for eight PTCH values against
+  `2^((v − 64) / 60)` with their labels, and the knob step in the new units.
+
+### Unit run on `e0bd4977` (the trig fix alone), 23 November 2026
+
+MKII, OS 1.40C, development twin `95adb64b` (base 0.8's source with `--dev` and the beta flags, no trust rows), RAM-booted;
+four timed trials of 200 to 300 s, each rolled back with "no crash, stall, freeze or skipped track logged". Bank E,
+Part 1 (equal to its saved copy, saved once, then reloaded), Grain picked on T1 with slot 1 (16-bit stereo), one trig on
+step 1 for F (removed afterwards). Grain's own memory lies above the development MEM range, so each case was told
+apart by T1's longest guarded render in the `cpu` report, read in a window starting 0.3 s after the press: about 4 % of a
+frame idle, 8 to 17 % for a plain Flex note, 23 to 35 % with Grain's engine. These are my readings, not the sound.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Trig key, pool shut | the reported fault | TRACKS mode, TRIG9 (T1) | pass: engine, 27.9 % |
+| CHROMATIC keys | the report | CHROMATIC on T1: TRIG9, TRIG10, TRIG16, one octave up | engine, 26 to 30 %; lane PTCH 44, 49, 79, 104: 5 units a key, which 0.1.3 then made Grain read in tune |
+| MIDI notes | the same START as a trig key | notes 60, 61, 72, 48 on channel 1 | pass: engine, 32 to 35 % |
+| FUNC+YES in the pool on T1 | the audition must stay plain | double tap T1, FUNC+YES | pass: plain, 16.8 % |
+| Trig key while the pool is open on T1 | a manual trig on the pool's own track | TRIG9 with the pool open | plain, 16.9 % (known limit, below) |
+| Sequencer trig after the audition, pool open | the audition must end at the next trig | FUNC+YES, then PLAY | pass: engine, 26.6 % |
+| Trig key after the pool closed | the audition must not stick | FUNC+YES, NO NO, TRIG9 | pass: engine, 23.0 % |
+| Pool open on T5, trig key on T1 | only the selected track auditions | double tap T5, TRIG9 | pass: engine, 22.7 % |
+| Put back | the owner's bank and Part | reload, step 1 trig removed, trig mode TRACKS, bank D | pass: bank E Part 1 equal to saved, bank D Part 1 working and saved copies byte-identical to before |
+
+**Known limit:** a trig key pressed while the pool window is open on that same track plays a plain Flex, like the
+audition: both arrive as the same START.
+
+### Unit run on `07b6e497` (the release candidate), 23 November 2026
+
+Same unit, twin and setup, RAM-booted again after the unit had come back on the flashed base; one timed trial of 240 s,
+rolled back with "no crash, stall, freeze or skipped track logged", no loader refusal. Every case above was run again with
+the same results (engine 23 to 29 %, plain Flex 8 %, the known limit unchanged). The PTCH knob on T1's SRC page, read in
+the working Part:
+
+| Case | How run | Result |
+| --- | --- | --- |
+| One detent is one semitone | `encA+1`, `encA+2` from 64 | pass: 69, then 79; the knob reads "+1" |
+| FUNC + turn: octaves, always back to 0 | FUNC with `encA-1`, `+1`, `+1`, `-1` | pass: 64, 124, 124, 64 |
+| A note reaches the engine at the knob's value | `encA-3`, `encA+1` (54, "-2"), TRIG9 | pass: the lane's PTCH word is 0x3600, engine |
+| Put back | reload, step 1 trig removed, trig mode TRACKS, bank D, boot of the flashed base `e1152583` | pass: the same eight kept modules restored from the card, bank D Part 1 byte-identical |
+
+### Frame cost on `07b6e497`: not releasable on a medium pattern, 23 November 2026
+
+`npm run device:price -- --write --curve T1,T3 --pick-pattern 2 --measure-pattern 4 grain` on the same unit and twin,
+after a power cycle (the Zoom pedal on USB had kept a RAM boot from coming back): C04 at 126 BPM, trigs on steps
+1/5/9/13 of T1-T4, T6, T7 (the scene FM Synth 0.1.5's curve used), picks on empty C02; Grain on T1 and T3, the two
+tracks whose Flex slots hold loaded samples. At rest Grain adds +0.1 points (it rests). Its first instance adds 33.3
+points of the frame, so the medium pattern read 113.4 %, past the 100 % where the guard drops renders; the pick on T3
+was refused, and alone on the medium pattern the base refused Grain's pick (on the empty pattern it was admitted, longest
+frame 50.9 %, nothing dropped, no stall). That run asked for two tracks and wrote nothing; a second run the same
+evening with `--curve T1` alone read the same (+33.3 points, 114.4 % on the medium pattern, refused there, admitted on
+the empty one at 51.3 %) and wrote `evidence/frame-cost.json` (first 33.3, each 33.3), which admission charges. Bank C's
+Part and both patterns were unchanged afterwards. The render path is 0.1.2's, so 0.1.2 costs the same. This release is
+dated before 24 November 2026 (`RELEASE_COST_FROM`), so the overload is reported, not refused; the next Grain release is
+held to a first instance that fits a medium pattern.
+
+**Not tested:** listening (whether CHROMATIC keys and MIDI notes sound in tune is shown only by the host check of the
+step and stock's units), a recorded CHROMATIC take, SCALE, a project saved with 0.1.2 and reloaded, MKI.
 
 ## 0.1.2-experimental: the sample is a ring, PTCH steps and 3 dB per grain, 22 November 2026
 

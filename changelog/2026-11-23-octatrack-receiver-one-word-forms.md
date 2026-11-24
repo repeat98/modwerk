@@ -1,0 +1,1 @@
+Octatrack base 0.8.1: the code each DSP core runs at the start of every audio frame, to check for a loader packet and update its load meter, takes about 24 fewer cycles a frame on each core. The loader's packet code takes 29 fewer words of DSP memory on each core, and the module code area gains 8 to 10 words.

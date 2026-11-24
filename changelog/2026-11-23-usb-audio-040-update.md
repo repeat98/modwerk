@@ -1,0 +1,1 @@
+Octatrack: a sync now replaces USB Audio 0.3.0 on the unit with 0.4.0, which adds USB input. The two packages report different kinds, so the site tells them apart, and Undo puts back the exact 0.3.0 package.

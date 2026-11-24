@@ -150,6 +150,10 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
   if (declared.source.endsWith('.json')) { // a price device:price wrote: recomputed from its readings, never taken on trust
     const record = readJson(resolve(root, 'sdk/octatrack/modules', id, declared.source))
     if (record?.module !== id || !record.result?.atRestAdds) return { state: 'fail', detail: 'its price names ' + declared.source + ' as its source, which holds no device:price reading of ' + id, fix: howTo }
+    // Tape Echo 0.1.9 carried the price read on 0.1.6: a release from RELEASE_COST_FROM measures its own.
+    const date = releaseDate({ root, document }), logged = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json'))
+    if (record.version !== document.version && logged && (!date || date >= RELEASE_COST_FROM))
+      return { state: 'fail', detail: 'its price was measured on ' + record.version + ', not ' + document.version + ': a release measures its own cost', fix: howTo }
     if (measuredPrice(record.result) !== declared.value) return { state: 'fail', detail: 'it names ' + declared.value + ' % of a frame, but the reading in ' + declared.source + ' gives ' + measuredPrice(record.result), fix: 'write the price with npm run device:price -- --write, never by hand' }
   }
   const disagree = descriptors.find(item => item.price !== declared.value)
@@ -318,4 +322,85 @@ export function atRestStatus({ root, document, glue = null }) {
       : 'subscribe ev_in_use and answer 0 while it acts on no track, and list its frame-interrupt detours under "rests" in runtime.json') +
       ' (sdk/machines/octatrack/HOOKS.md, docs/MODULE_PERFORMANCE.md "A module that no track uses rests"); then measure again with npm run device:price',
   }
+}
+
+// ---- What one more instance costs (owner, 22 November 2026) --------------------------------------------------------------------
+// Base 0.8 charges a module pick by its longest-frame curve: `first` for the first instance on a Part, `each` for every further
+// one (status.c; the site sends them from sdk/machines/octatrack/frame-costs.json). Every refused pick and every skipped render is
+// bad for the player, so a release of an effect or a machine carries its curve, measured on a unit by `npm run device:price --
+// --write --curve T1,T3,T6,T7` (empty tracks of a busy pattern), which writes FRAME_COST_RECORD for its version and its line in
+// frame-costs.json. Releases dated from FRAME_COST_FROM, or not dated yet, fail without it; earlier ones are only reported.
+// Base-bound modules (a USB package row with requiredBase) keep theirs in frame-costs.json, measured by the base's owner.
+export const FRAME_COST_RECORD = 'evidence/frame-cost.json'
+export const FRAME_COSTS_PATH = 'sdk/machines/octatrack/frame-costs.json' // generated: never by hand
+export const FRAME_COSTS_BASE_PATH = 'sdk/machines/octatrack/frame-costs-base.json' // the base's own: base-bound modules and its readings
+export const FRAME_COST_FROM = '2026-11-23' // the day after base 0.8's curves were first measured
+// What a curve must also show (owner, 23 November 2026: every refused pick, silent module, stall and crash costs the player, so a
+// release proves on a unit that it is admitted and plays). FM Synth 0.1.5's first curve reading sat at 107.9 % of a frame, past
+// where the guard drops renders, and no step had ever checked that a module is admitted on an empty and a medium pattern.
+export const RELEASE_COST_FROM = '2026-11-24'
+export const CURVE_ROOM = 100 // percent of a frame: the first instance's reading must stay under it
+/** Why a current-version curve does not carry a release, or null: its first reading past CURVE_ROOM, or no clean admission run. */
+export function curveProblem(record) {
+  const reading = Array.isArray(record.points) ? record.points[1] : undefined
+  if (typeof reading !== 'number') return 'its curve holds no readings (points), so nothing shows the frame had room'
+  if (!(reading < CURVE_ROOM)) return 'its first instance was read at ' + reading + ' % of a frame: past ' + CURVE_ROOM + ' % the guard drops renders, so that is the overload, not the module\'s cost. Read it on a pattern with room (--measure-pattern)'
+  const runs = Array.isArray(record.admission) ? record.admission : []
+  for (const pattern of ['empty', 'medium']) {
+    const run = runs.find(item => item?.pattern === pattern)
+    if (!run) return 'no admission run on the ' + pattern + ' pattern (device:price --curve makes it)'
+    if (run.admitted !== true) return 'alone on the ' + pattern + ' pattern it was ' + (run.admitted === false ? 'refused' : 'not verified') + (run.why ? ' (' + run.why + ')' : '')
+    if (run.dropped !== 0 || run.stalls !== 0) return 'alone on the ' + pattern + ' pattern it dropped ' + run.dropped + ' renders and logged ' + run.stalls + ' stalls or crashes in ' + (run.seconds ?? '?') + ' s'
+  }
+  return null
+}
+export const frameCostHowTo = id => 'measure it on a unit with npm run device:price -- --write --curve T1,T3,T6,T7 --base ID --scene TEXT ' + id +
+  ' (the longest frame it adds on 1-4 empty tracks of a busy pattern, picked on an empty one; docs/MODULE_PERFORMANCE.md), which writes ' + FRAME_COST_RECORD + ' (npm run modules:generate then carries it into ' + FRAME_COSTS_PATH + ')'
+
+/** One module's instance curve: { state: 'ok' | 'info' | 'warn' | 'fail', detail, fix? }. */
+export function frameCostStatus({ root, document, glue = null }) {
+  const id = document.id, machine = machineDescriptors({ root, id, glue }).length > 0 || document.compatibility?.location === 'Track machine'
+  if (!machine && document.compatibility?.effectId == null) return { state: 'info', detail: 'neither an effect nor a machine: admission charges it no instance cost' }
+  const row = readJson(resolve(root, 'src/engine/assets/octatrack-module-packages.json'))?.packages?.find(item => item.id === id)
+  if (row?.requiredBase) return { state: 'info', detail: 'base-bound: its curve is the base\'s, in sdk/machines/octatrack/frame-costs.json' }
+  const record = readJson(resolve(root, 'sdk/octatrack/modules', id, FRAME_COST_RECORD))
+  const valid = record?.module === id && typeof record.first === 'number' && typeof record.each === 'number' && record.first >= record.each && record.each >= 0 &&
+    (record.rest == null || (typeof record.rest === 'number' && record.rest >= 0))
+  // A module with no changelog file predates the release notes (a legacy fixture): reported. One whose current version has no
+  // entry yet is a release in progress, and one dated from FRAME_COST_FROM a new release: both refused.
+  const logged = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json')), date = releaseDate({ root, document })
+  const refused = logged && (!date || date >= FRAME_COST_FROM)
+  if (valid && record.version === document.version) {
+    const detail = 'first ' + record.first + ', each ' + record.each + (record.rest != null ? ', rest ' + record.rest : '') + ' % of a frame (' + record.base + ', ' + String(record.measuredAt).slice(0, 10) + ')'
+    const problem = curveProblem(record)
+    if (!problem) return { state: 'ok', detail: detail + '; admitted alone on the empty and the medium pattern, nothing dropped' }
+    const strict = logged && (!date || date >= RELEASE_COST_FROM)
+    return strict ? { state: 'fail', detail: problem, fix: frameCostHowTo(id) }
+      : { state: 'ok', detail: detail + '; ' + problem + ' (reported, not refused, for a release dated before ' + RELEASE_COST_FROM + ')' }
+  }
+  return { state: refused ? 'fail' : 'warn', detail: (valid ? 'its curve is for ' + record.version + ', not ' + document.version : 'no instance curve measured') +
+    (refused ? '' : '; reported, not refused, for a release dated before ' + FRAME_COST_FROM), fix: frameCostHowTo(id) }
+}
+
+/** frame-costs.json's text: `about`, then `costs` one module a line, sorted, as a diff reads best. */
+export function frameCostsJson(document) {
+  const lines = Object.keys(document.costs).sort().map(key => '    ' + JSON.stringify(key) + ': ' + JSON.stringify(document.costs[key]))
+  const stock = document.stock ? '  "stock": ' + JSON.stringify(document.stock) + ',\n' : ''
+  return '{\n  "about": ' + JSON.stringify(document.about) + ',\n' + stock + '  "costs": {\n' + lines.join(',\n') + '\n  }\n}\n'
+}
+/** The table admission charges (the site sends it with every module set): the base's own list, and every module's measured curve
+ *  for its current version on top (its FRAME_COST_RECORD). Generated by npm run modules:generate, so module releases never
+ *  conflict over one shared file. */
+export function generateFrameCosts(root) {
+  const base = readJson(resolve(root, FRAME_COSTS_BASE_PATH))
+  if (!base) return null // no Octatrack frame-cost table in this tree (a fixture): nothing to generate
+  const costs = { ...base.costs }
+  const modules = resolve(root, 'sdk/octatrack/modules')
+  for (const id of existsSync(modules) ? readdirSync(modules) : []) {
+    const version = readJson(join(modules, id, 'octamod.module.json'))?.version, record = readJson(join(modules, id, FRAME_COST_RECORD))
+    if (!version || record?.module !== id || record.version !== version || typeof record.first !== 'number' || typeof record.each !== 'number') continue
+    costs[id] = { first: record.first, each: record.each, ...(typeof record.rest === 'number' ? { rest: record.rest } : {}), points: record.adds,
+      measured: id + ' ' + version + ' on ' + (record.tracks ?? []).join(' ') + ': ' + record.scene + '; base ' + record.base + '; ' + record.seconds + ' s a reading; ' + String(record.measuredAt).slice(0, 10) + ' (' + FRAME_COST_RECORD + ')' }
+  }
+  return frameCostsJson({ about: 'GENERATED by npm run modules:generate from ' + FRAME_COSTS_BASE_PATH + ' and each module\'s ' + FRAME_COST_RECORD + ': never edit by hand. ' + base.about, ...(base.stock ? { stock: base.stock } : {}), costs })
 }

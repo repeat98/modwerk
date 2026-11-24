@@ -181,6 +181,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
 .hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: 12px; background: var(--sidebar); }
+.octatrack-hub:not(.zoom-hub) > .hub-split { background: var(--surface); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
 .hub-hero .device-photo { width: clamp(8.5rem, 15cqi, 11rem); height: auto; flex: none; }
 .hub-hero .device-photo.is-cutout { padding: 0; }
@@ -231,12 +232,45 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-base h3 { color: var(--text); font-size: 18px; letter-spacing: -.2px; }
 .hub-base > p:first-of-type { color: var(--text); font-size: 15px; }
 .hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
+.hub-section.hub-screen {
+  max-width: 50rem; margin-top: 14px; padding: 10px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+}
+.hub-screen-display { border: 1px solid var(--control-border); border-radius: 7px; background: var(--field); }
+.hub-screen-canvas { border-radius: inherit; }
+.hub-screen canvas:not([hidden]) {
+  display: block; width: 100%; height: auto; border-radius: inherit; background: #181818; image-rendering: pixelated;
+}
+.hub-screen-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  min-height: 15.5rem; aspect-ratio: 2 / 1; padding: 20px; border-radius: inherit; text-align: center;
+  background-image: radial-gradient(rgb(165 173 255 / 12%) .65px, transparent .85px);
+  background-size: 8px 8px;
+}
+.hub-screen-mark {
+  display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 4px; flex: none;
+  border: 1px solid var(--accent-line); border-radius: 10px; background: var(--accent-soft); color: var(--accent-hover);
+}
+.hub-screen .hub-screen-empty h3 { margin: 0; color: var(--text); font-size: 19px; line-height: 1.3; letter-spacing: -.2px; }
+.hub-screen .hub-screen-empty p { max-width: 37ch; margin: 0; color: var(--muted); font-size: 14px; }
+.hub-screen .hub-screen-empty .button { min-height: 44px; margin-top: 6px; }
+.hub-screen-actions, .hub-screen-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.hub-screen-actions { padding: 10px 2px 0; }
+.hub-screen-controls { margin-inline-start: auto; }
+.hub-screen-rate { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.hub-screen-rate select { min-height: 40px; padding: 0 2rem 0 10px; background-color: var(--field); }
+.hub-screen-live { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+.hub-screen-live.is-recording .unit-led { background: #ec9297; box-shadow: none; }
+.hub-screen .hub-screen-demo { margin: 0 2px 8px; }
+.hub-screen .hub-screen-notice, .hub-screen .hub-screen-note { margin: 10px 2px 0; color: var(--muted); }
+.hub-screen .hub-screen-notice { color: var(--text-secondary); }
+.hub-screen-download { min-height: 40px; padding: 0 2px; }
 .hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
 .hub-view p.hub-empty { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */
 .hub-pane:has(> .hub-view-status:not([hidden])) { display: flex; padding: 0; overflow: hidden; }
 .hub-view-status { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; }
-.hub-view-status > .usb-missing { margin: 12px 16px; }
+.hub-view-status > .usb-missing { margin: 12px 16px; background: transparent; }
 .hub-console { flex: 1 0 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: auto minmax(150px, 1fr) minmax(130px, 1fr); grid-template-areas: "cpu cpu dsp1 dsp1 dsp2 dsp2" "chart chart chart chart health health" "unit unit history history history history"; gap: 1px; border-radius: 0 0 12px 0; overflow: hidden; background: var(--line); }
 .hub-cell { min-width: 0; min-height: 0; overflow: auto; padding: 14px 18px; background: var(--surface); }
 .hub-cell-cpu { grid-area: cpu; } .hub-cell-dsp1 { grid-area: dsp1; } .hub-cell-dsp2 { grid-area: dsp2; }
@@ -268,6 +302,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 }
 .hub-cell-health h3:not(:first-child) { margin-top: 16px; }
 .hub-test { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text); font-size: 14px; line-height: 1.4; }
+.hub-left-out { min-height: 0; max-height: 9em; overflow: auto; margin: 6px 0 0; padding: 0 0 0 16px; list-style: none; font-size: 13px; line-height: 1.4; }
+.hub-left-out li + li { margin-top: 4px; }
+.hub-left-out small { display: block; color: var(--muted); font-size: 12px; }
 .hub-peaks { display: grid; gap: 4px; margin: 10px 0 0; }
 .hub-peaks div { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
 .hub-peaks dd { display: grid; grid-template-columns: minmax(0, 1fr) 34px; align-items: center; gap: 8px; margin: 0; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
@@ -454,13 +491,15 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-install-stage { min-height: 240px; font-size: 15px; line-height: var(--reading-line-height); color: var(--text-secondary); }
 .base-install-stage h3 { margin: 0 0 10px; color: var(--text); font-size: 23px; line-height: 1.3; letter-spacing: -.35px; }
 .base-install-stage p { margin: 0 0 16px; }
-.base-install-stage .base-file-ready { display: flex; align-items: center; gap: 8px; color: var(--text); margin-top: 24px; }
 .base-install-stage .risk-acceptance { margin-top: 20px; font-size: 14px; }
 .base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: var(--reading-line-height); }
 .base-install-stage .risk-acceptance label { min-height: 44px; }
-.base-install-stage .base-install-warning, .base-install-route { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 14px; line-height: 1.65; }
+.base-install-stage .base-install-warning { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 14px; line-height: 1.65; }
 .base-install-warning svg { flex-shrink: 0; margin-top: 3px; }
 .base-install-warning strong, .base-install-warning a { color: #ffe0b8; }
+.base-install-route { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.base-install-route svg { margin-top: 2px; color: var(--accent); }
+.base-install-route strong { color: var(--text-secondary); font-weight: 600; }
 .base-install-stage .base-install-note { margin-top: 24px; padding: 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); }
 .base-install-note .status-dot.is-updating { width: 8px; height: 8px; margin-right: 10px; vertical-align: 1px; }
 .base-instructions { display: flex; flex-direction: column; gap: 22px; margin: 24px 0 0; padding-left: 22px; }
@@ -480,6 +519,53 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   .base-install-dialog .base-install-footer > .button:first-child { flex: 0 1 auto; }
   .base-install-dialog .base-install-footer > .button:last-child { flex: 1; }
 }
+
+.base-install-dialog.is-card-guide > .base-install-intro { margin: 6px 0 16px; color: var(--muted); line-height: 1.5; }
+.is-card-guide .base-install-progress { gap: 6px; margin: 0 0 22px; padding: 0; border: 0; }
+.is-card-guide .base-install-progress li { padding: 8px 6px 0; border-top: 3px solid var(--control-border); line-height: 1.3; }
+.is-card-guide .base-install-progress [aria-current="step"] { border-color: var(--accent); color: var(--accent-hover); }
+.is-card-guide .base-install-progress .is-past { border-color: var(--accent-line); }
+.is-card-guide .base-install-stage { min-height: 0; }
+.is-card-guide .base-install-stage h3 { margin-bottom: 6px; }
+.is-card-guide .base-install-footer { margin-top: 16px; }
+.is-card-guide .base-install-footer .button-quiet { min-width: 76px; }
+.is-card-guide .base-install-footer .button-primary:disabled {
+  opacity: 1; border-color: var(--line); background: var(--accent-soft); color: var(--faint); box-shadow: none;
+}
+
+.base-install-download > p:first-of-type { margin-bottom: 12px; font-size: 14px; }
+.base-download-file {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--preview); font-size: 14px; line-height: 1.4;
+}
+.base-download-file-icon {
+  display: grid; place-items: center; flex: none; width: 36px; height: 36px;
+  border-radius: 6px; background: var(--surface-raised); color: var(--accent-hover);
+}
+.base-download-file strong { display: block; color: var(--text); font-weight: 600; }
+.base-download-file .text-button { display: inline-block; padding: 3px 0; }
+.base-download-file-status { display: flex; align-items: center; gap: 5px; margin-left: auto; color: var(--grade-in-use); font-size: 13px; font-weight: 600; }
+.base-download-recovery {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 10px 12px;
+  border-left: 2px solid var(--issue-confirmed); border-radius: 4px; background: #332c26; font-size: 14px; line-height: 1.5;
+}
+.base-download-recovery > svg { margin-top: 1px; color: var(--issue-confirmed); }
+.base-download-recovery h4 { margin: 0 0 2px; color: #ffe0b8; font-size: inherit; font-weight: 600; }
+.base-download-recovery p { margin: 0; }
+.base-download-recovery p + p { margin-top: 4px; }
+.base-download-recovery a { color: #ffe0b8; text-decoration: underline; text-underline-offset: 3px; }
+.base-install-download .risk-acceptance { margin-top: 12px; padding-bottom: 0; border: 0; }
+.base-install-download .risk-acceptance p { margin-bottom: 0; color: var(--muted); }
+.base-install-download .risk-acceptance strong { color: var(--text-secondary); font-weight: 600; }
+.base-install-download .risk-acceptance details { margin-top: 4px; }
+.base-install-download .risk-acceptance summary { min-height: 32px; align-content: center; font-size: 13px; }
+.base-install-download .risk-acceptance .risk-accept { align-items: center; margin-top: 2px; }
+.base-install-download .risk-accept input { margin-top: 0; }
+@media (max-width: 600px) {
+  .is-card-guide .base-install-progress { margin-bottom: 18px; }
+  .is-card-guide .base-install-progress li { padding-inline: 0; text-align: center; }
+}
+
 /* The update over USB: three stages and one restart, one row before, during and after. */
 .base-update-plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; padding: 0; list-style: none; }
 .base-update-plan li { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); font-size: 13px; line-height: 1.5; color: var(--muted); }

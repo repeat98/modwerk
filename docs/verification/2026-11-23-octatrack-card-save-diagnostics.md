@@ -1,0 +1,5 @@
+# Octatrack card-save diagnostics, 23 November 2026
+
+A tester on base 0.8 received a Keep acknowledgement. A later status reading on the same running set reported a card-save failure. The private summary only checked the first status reading after a connection for boot restore results, so the failure was visible in the raw records alone. The synthetic regression in `scripts/diagnostics-pull.test.mjs` reproduces the omission and checks that repeated readings are collapsed and a failure after recovery is shown again.
+
+The card service can defer a write while the unit is busy. To identify the cause on hardware, read the saved generation and the live set before and after Keep, capture the write or read-back result, and check which set a subsequent start restores. The field record establishes the failed check. It does not identify the card operation or show the result of a subsequent start. The earlier short-file issue (#1830) has a different signature and its file-length fix shipped in base 0.8.

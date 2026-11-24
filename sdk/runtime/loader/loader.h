@@ -217,6 +217,7 @@ int modwerk_machine_in_use(const struct runtime_module *m);
  * calls. 0 without resting. */
 int modwerk_runtime_resting_at(uintptr_t address);
 void modwerk_machine_tables_changed(void);          /* masked, after rows changed; weak no-op by default */
+void modwerk_machine_frame_costs(const uint8_t *table, unsigned n); /* MWMS v2's frame cost table (set_package.h); weak no-op */
 /* Masked: a site's bytes went back to stock (`patched` were its module's), so stock data that copied them can follow;
  * weak no-op by default. */
 void modwerk_machine_site_restored(uint32_t address, uint32_t length, const uint8_t *patched, const uint8_t *stock);
