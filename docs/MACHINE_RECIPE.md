@@ -46,6 +46,8 @@ Read this before you plan a core, a base or the first modules for any machine ot
 | Analog Keys, Model:Cycles | research | none | not started | none known | the machine steps first ([add a machine](ADD_A_MACHINE.md)) |
 | Zoom MultiStomp | preview (MS-70CDR); research (MS-50G, MS-60B, G1on) | MIDISTOMP on the MS-70CDR; the MS-50G and MS-60B need builds from their own OS | browser base build and flash over Web MIDI. Shared MCP status and load tools use the same link. Load needs the MIDISTOMP SysEx load reply. | Ziddle (emulator only) | Prove a RAM-only effect trial and rollback on the MS-70CDR before wiring review, trial, Keep and Undo. See the [plan](ZOOM_MULTISTOMP.md#plan). |
 | Zoom G1 FOUR | research | none: effects load on the stock OS | not started: zoom-zt2's file commands work over USB, the pedal page does not speak ZD2 yet | none known | [next steps](ZOOM_ZD2.md#next-steps) |
+| Zoom MS-200D+ | open | none: not a ZD2 pedal, not yet researched as one | not started: the patch SysEx protocol is proven ([report](ZOOM_PATCH_PROTOCOL.md)) but no link code exists in this repository | none known | [next steps](ZOOM_PATCH_PROTOCOL.md#next-steps) |
+| Zoom G5n | open | none: not a ZD2 pedal, not yet researched as one | not started: the patch SysEx protocol is proven ([report](ZOOM_PATCH_PROTOCOL.md)) but no link code exists in this repository | none known | [next steps](ZOOM_PATCH_PROTOCOL.md#next-steps) |
 | LXR-02 | research | published source | planned: SD-card base, USB-MIDI SysEx link | none | [plan](LXR_02.md) |
 | Tonverk | research | none | closed: signed, encrypted updates | none | nothing without Elektron's agreement |
 
