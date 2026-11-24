@@ -10,7 +10,7 @@ import { MODULES } from '../../catalog/modules.ts'
 import { inventoryChanges, type Inventory, type InventoryTarget } from '../../config/inventory.ts'
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, usbAudioInstallPreset, usbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio.ts'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, isConfigurable, usbAudioInstallPreset, usbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio.ts'
 import { baseLayout, isPublishedBase, layoutIdentity, layoutName, MEMBER_LAYOUT, type BaseLayout } from './base-variants.ts'
 import { cardSetGeneration, encodeCardSet } from './card-set.ts'
 import { SET_MAX_ABI } from './set-package.ts'
@@ -43,10 +43,10 @@ export interface RuntimePackageManifest {
   usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
-export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 7 : usbAudioLayout(kind).define + 1
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
 const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
 const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
-LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber('configurable'), 'configurable')
+for (const kind of ['configurable', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
@@ -296,7 +296,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
   }
   // USB Audio: a package for each layout the manifest lists, or else with the base, in its layouts (base-variants.ts).
   const audio = document.usbAudio ?? {}, audioLayouts = Object.keys(audio) as UsbAudioPackageKind[], audioPackages = audioLayouts.length > 0
-  if (audioLayouts.some(layout => layout !== 'configurable' && !USB_AUDIO_LAYOUTS.some(item => item.id === layout)) || published.has(USB_AUDIO_MODULE)) throw invalidPackage()
+  if (audioLayouts.some(layout => !isConfigurable(layout) && !USB_AUDIO_LAYOUTS.some(item => item.id === layout)) || published.has(USB_AUDIO_MODULE)) throw invalidPackage()
   for (const layout of audioLayouts) requirements(audio[layout]!)
   const audioEntry = new Map<RuntimePackage, number>(audioLayouts.map(layout => [audio[layout]!, usbAudioLayoutNumber(layout)]))
   /** What the runtime packages must make the unit match: the set, without USB Audio while the base provides it. */
@@ -355,7 +355,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       const switchedOff = installed && !current.moduleIds.includes(USB_AUDIO_MODULE)
       const changePreset = wanted === 'configurable' && current.usbAudioLayout === wanted && !!audio.configurable?.installPresets &&
         Object.hasOwn(target, 'usbAudio') && current.usbAudioInstallPreset !== usbAudioInstallPreset(target.usbAudio)
-      if (current.usbAudioLayout === 'configurable' && audio.configurable?.installPresets &&
+      if (isConfigurable(current.usbAudioLayout) && entry(current.usbAudioLayout)?.installPresets &&
           current.usbAudioInstallPreset === undefined && !switchedOff && (!wanted || changePreset))
         throw new ModuleSetError('Reconnect the Octatrack to read the USB Audio routing before changing its installation.')
       if (wanted && installed && (wanted !== current.usbAudioLayout || changePreset) && !switchedOff) updates.push(USB_AUDIO_MODULE)
@@ -447,12 +447,12 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       // track may be using; a new module cannot be in use yet.
       function configured(entry: RuntimePackage, preset: number) {
         const data = packages.get(entry)!
-        return entry === audio.configurable && entry.installPresets ? audioWithPreset(data, preset) : data
+        return entry.installPresets ? audioWithPreset(data, preset) : data
       }
       return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? configured(step.add, step.add === audio.configurable ? usbAudioInstallPreset(target.usbAudio) : 0) : removalPackage(step.id),
         // A switched-off package is already held byte-for-byte in the unit's shelf.
         // The atomic set transaction preserves it for rollback without a host copy.
-        undo: step.undo === audio.configurable && step.undo?.installPresets && current.offIds?.includes(step.id) &&
+        undo: step.undo?.installPresets && current.offIds?.includes(step.id) &&
           current.usbAudioInstallPreset === undefined ? undefined : step.undo ? configured(step.undo, current.usbAudioInstallPreset ?? 0) : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}),
         // USB Audio's package changes the unit's USB configuration: the base reconnects once (usb_function.c).
         ...(audioPackages && step.id === USB_AUDIO_MODULE ? { reconnects: true } : {}) })) }
@@ -512,7 +512,7 @@ export function moduleSetKit(link: OctatrackLink) {
     // Undefined from a base before PROJ > MODWERK > MODULES, and when the list can't be read where the modules could
     // (a remote read-only session's scope has no OFF request): the unit's modules are still known, the off ones are not.
     const inventory: Inventory = inventoryFrom(modules, await link.off().catch(() => undefined))
-    if (inventory.usbAudioLayout === 'configurable' && inventory.moduleIds.includes(USB_AUDIO_MODULE)) {
+    if (isConfigurable(inventory.usbAudioLayout) && inventory.moduleIds.includes(USB_AUDIO_MODULE)) {
       if (catalogue.installPresets) {
         for (let attempt = 0; attempt < 4; ++attempt) {
           const presets = await link.settingPresets()
