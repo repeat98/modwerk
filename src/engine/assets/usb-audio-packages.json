@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "version": "0.4.0-experimental",
+  "version": "0.4.1-experimental",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "upstreamRevision": "7b2984c859732ae6c797ae49c7d61d250b1b6519",
   "sources": {
     "audio-manifest.py": "022e37709046b1295412d803584f763b6f142ac7fe86a6b6521c4e48d44271c6",
     "cfg.s": "debd4b34b4d02b40b8b27e13f0322f685f289687110d8eed3b2f73dc2d0a3506",
     "clamp.s": "2a5588143c00cd8d1b3e425ba3c6e12c3258083379f03e03f66fd2538dc85af2",
-    "descriptors.py": "0860b8d051746f49742b660100762660ed5256011fa53a645ad5c02317c2f534",
+    "descriptors.py": "867462903f39a1ab7606510b5a7e08234953ce5e728d10b7f23db905d4d51a2f",
     "midi-manifest.py": "04a43c5fdb0c12dcd38e0306414cf1befb8499c45a69f8f3954fd9533c8a882a",
     "post-manifest.py": "8b468abb9f231035c94196046efd1ee51dd6966b0e5dc2a030f3d8b4daacecbe",
     "usbaudio.s": "c1f39d2a21870cb5596c487388c61a1be1b9e35ec6860a9eb305268eca2287a8",
