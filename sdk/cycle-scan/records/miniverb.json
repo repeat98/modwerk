@@ -17,5 +17,11 @@
       "arith": 47.19,
       "transfer": 10.06
     }
+  },
+  "defaults": {
+    "setting": "RATE=1.01/def",
+    "instructions": 331.5,
+    "cycles": 640.94,
+    "stalls": 151.31
   }
 }
