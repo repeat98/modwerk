@@ -4,8 +4,8 @@
   "revision": "modwerk-base-model-cycles-2026-11-24",
   "cores": [
     {
-      "file": "modwerk-base-model-cycles-2e5243e6.elemod",
-      "sha256": "2e5243e63b149ef41141494a3a87aa48dd200b06f976fc76c0ee4014d53b08e8",
+      "file": "modwerk-base-model-cycles-4d4d91d2.elemod",
+      "sha256": "4d4d91d2e8a155ad7db58a001fcb09ddfcd631870edbb212ee88520556f8840f",
       "id": "core",
       "version": "0.3",
       "device": "model-cycles",
@@ -13,8 +13,8 @@
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "a460a2fd4ebfaddd6e7fb4579f708b3e7bc200a6",
-        "path": "sdk/imports/packages/modwerk-base-model-cycles/modwerk-base-model-cycles-2e5243e6.elemod"
+        "commit": "f6e2afcc80242520fc004c53e5c313a99057b0bb",
+        "path": "sdk/imports/packages/modwerk-base-model-cycles/modwerk-base-model-cycles-4d4d91d2.elemod"
       }
     }
   ],

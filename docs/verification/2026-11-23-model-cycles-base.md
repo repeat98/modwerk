@@ -65,6 +65,13 @@ repeated: the unit reset by itself, TRIG 16 blinked, and `ident` reported the ma
 CRC `0x36fc4fa1`. A power cycle then booted the flashed image: TRIG 16 did not blink. Nothing was flashed for the RAM
 boot.
 
+## The site's build of 4d4d91d2 (24 November 2026)
+
+The catalogue record now pins `modwerk-base-model-cycles-4d4d91d2.elemod`. The kit's `build` in Node (the same
+`prepareBuild` and `buildWithLock` the page runs), given the stock `model-cycles_OS1.13.syx` (`44fe5862…`) and no
+module, writes `ec928894…` (1,006,496 bytes): byte for byte the image Elekloader's Python patcher built, which ran
+flashed on the unit above.
+
 ## The site's build of 2e5243e6 (24 November 2026)
 
 The machine page builds the base through the vendored Elekloader kit 0.7.0, with `modwerk-base-model-cycles-2e5243e6.elemod`
