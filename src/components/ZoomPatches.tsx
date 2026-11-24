@@ -50,6 +50,7 @@ export function ZoomPatches({ link, identity, active }: { link: ZoomLink | null;
     const patch = decodePatch(dump)
     setOpen({ program: at, base: dump, patch, unsaved })
     if (at !== undefined) { setSaveTo(at); setNames(list => list && Object.assign([...list], { [at]: patch.name })) }
+    else setSaveTo(undefined)
     return patch
   }
   const readCurrent = () => {
@@ -80,9 +81,10 @@ export function ZoomPatches({ link, identity, active }: { link: ZoomLink | null;
     const { patches, program: back } = await link.readPatches((at, dump) => { list[at] = dump && decodePatch(dump).name; if (alive.current) setNames([...list]) })
     if (!alive.current) return
     setNames(patches.map(dump => dump && decodePatch(dump).name))
-    if (back === undefined) setNote('The pedal didn’t say which patch it was on, so it stayed on patch 1. Open the one you want.')
+    // No program change said it and none of the fifty matches the edit buffer: it was edited, and readPatches wrote it back.
+    if (back === undefined) setNote('The pedal didn’t say which patch it was on, and its changes match none of the 50, so they’re kept but not saved. Choose where to save them.')
     const dump = await link.readPatch()
-    if (alive.current) await loadEffects(show(dump, back ?? 0, !!open?.unsaved))
+    if (alive.current) await loadEffects(show(dump, back, !!open?.unsaved || back === undefined))
   })
 
   // Opens what the pedal plays when the view first shows, and again when a patch is chosen on the pedal itself.

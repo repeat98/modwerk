@@ -68,6 +68,20 @@ describe('the Zoom pedal page’s Patches', () => {
     expect(decodePatch(fake.patches![2]).slots[0].knobs[0]).toBe(25)
     expect(container.textContent).toContain('Saved as patch 3')
   }, 20_000)
+  it('keeps changes not saved through Read all when the pedal never said its patch number, and asks where to save them', async () => {
+    const { fake, link } = await opened()
+    const edited = decodePatch(fake.buffer!)
+    edited.name = 'Edited'
+    await link.writePatch(encodePatch(edited, fake.buffer!, 0x61))
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await click(button('Read all'))
+    const name = () => container.querySelector<HTMLInputElement>('input[aria-label="Patch name"]')!.value
+    await until(() => link.getState().status === 'ready' && name() === 'Edited')
+    expect(container.textContent).toContain('Choose where to save them')
+    expect(decodePatch(fake.buffer!).name).toBe('Edited')
+    expect(container.textContent).toContain('Not saved')
+    expect(button('Save').disabled).toBe(true)
+  }, 30_000)
   it('switches a slot on with one patch write', async () => {
     const { fake, link } = await opened()
     await click(slot(3).querySelector('.zoom-slot-toggle')!)

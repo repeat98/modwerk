@@ -85,6 +85,17 @@ describe('patches over the link', () => {
     expect((await link.readPatches()).program).toBe(12)
     expect(fake.program).toBe(12)
   }, 20_000)
+  it('keeps an edited buffer when no program change said where it was', async () => {
+    const fake = pedal(), link = await connected(fake)
+    const edited = decodePatch(fake.buffer!)
+    edited.name = 'Edited'
+    await link.writePatch(encodePatch(edited, fake.buffer!, 0x61))   // no turn(): the link never learns the program
+    const { program } = await link.readPatches()
+    expect(program).toBeUndefined()   // so the page asks where to save it
+    expect(link.getState().program).toBeUndefined()   // not the last program read
+    expect(decodePatch(fake.buffer!).name).toBe('Edited')
+    expect(decodePatch(fake.patches![49]).name).toBe('Patch 50')   // written to the buffer, not stored over the last program
+  }, 20_000)
   it('stores a patch and reads it back from the program', async () => {
     const fake = pedal(), link = await connected(fake)
     const d = await link.selectProgram(3), p = decodePatch(d)

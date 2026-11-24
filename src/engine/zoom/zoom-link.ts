@@ -521,7 +521,9 @@ export class ZoomLink {
   /**
    * Every stored patch: the pedal has no command for that, so it goes to each program in turn and plays it (mute the
    * amp). Then it goes back to the program it was on (the one a program change said, else the one whose patch matches
-   * the edit buffer) and writes the edit buffer back, so changes not stored are kept. `onEach` sees each as it comes.
+   * the edit buffer) and writes the edit buffer back, so changes not stored are kept. When neither says it (no program
+   * change seen and the buffer was edited), the edit buffer is written back on the last program read and `program` is
+   * undefined: the caller asks where to save. `onEach` sees each as it comes.
    */
   readonly readPatches = (onEach?: (program: number, dump: number[] | null) => void) => this.exclusive('Reading the patches', async () => {
     this.refusePatches()
@@ -539,8 +541,10 @@ export class ZoomLink {
     if (back >= 0) {
       this.goTo(back)
       await sleep(60)
-      if (!same(patches[back])) { this.editMode(); this.send(buffer); await sleep(160) }
     }
+    if (!same(patches[back >= 0 ? back : PATCH_PROGRAMS - 1])) { this.editMode(); this.send(buffer); await sleep(160) }
+    // goTo noted each program read: the last isn't where the buffer came from, so the program is unknown again.
+    if (back < 0) this.set({ ...this.state, program: undefined })
     return { patches, program: back >= 0 ? back : undefined }
   })
   /** Write a patch into the edit buffer (encodePatch: on top of the pedal's own dump), then read it back. The pedal
