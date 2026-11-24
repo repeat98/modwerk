@@ -54,6 +54,9 @@ enum {
     SOUND_WORDS = SOUND_STRIDE / 4,
     PENDING = 8,             /* recorded notes the frame has not played yet */
     PENDING_FRAMES = 64,     /* after which a pending entry is dropped (the frame plays it within a few) */
+    FRESH_FRAMES = 64,       /* how long a note the frame played first waits for live recording */
+    SOUND_SLICES = 6,        /* the idle copy compares a voice's sound with the lead's a sixth at a time */
+    SLICE_WORDS = SOUND_WORDS / SOUND_SLICES,
     TRACK_STRIDE = 0x6a5,    /* a pattern's track data; its step words first, two bytes a step */
     STEPS = 128,
     TRACK_SETTINGS = 0x480,  /* a pattern track's settings after its steps */
@@ -73,6 +76,7 @@ static uint8_t voices[TRACKS];      /* the project's setting, 0 or 1 for a track
 static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group */
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
 static uint8_t sync_next[TRACKS];   /* per lead: the voice track the idle copy looks at next */
+static uint8_t sync_slice[TRACKS];  /* per lead: the part of the sound the idle copy compares */
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
 static volatile uint16_t leads;     /* leads with a group; written last by regroup */
 static int16_t last[TRACKS][VALUES];
@@ -87,6 +91,14 @@ static struct {
     uint16_t age;
 } pending[PENDING];
 
+/* Per track: a note from the keys or MIDI the frame put there without a pending entry, so before live recording saw
+ * it (on a unit with the pattern running the frame can come first). Its recording then lands on this track. The frame
+ * interrupt writes it; the task clears it when it records the note. */
+static struct {
+    volatile uint8_t age;    /* frames since the note started, 0 for none */
+    int8_t pitch;
+} fresh[TRACKS];
+
 static int reserved(unsigned int track)
 {
     for (unsigned int k = 0; k < PENDING; ++k) {
@@ -97,14 +109,15 @@ static int reserved(unsigned int track)
     return 0;
 }
 
-/* A track's sound in the kit made a copy of another's, a word at a time and only where they differ. Its own function,
- * indexed, so the compiler does not reuse a post-incremented address register in one instruction
- * (sdk/runtime/m68k_codegen.py refuses that). */
-static __attribute__((noinline)) void copy_sound(unsigned int to, unsigned int from)
+/* Words `first` to `end` of a track's sound in the kit made a copy of another's, a word at a time and only where they
+ * differ. Its own function, indexed, so the compiler does not reuse a post-incremented address register in one
+ * instruction (sdk/runtime/m68k_codegen.py refuses that). */
+static __attribute__((noinline)) void copy_sound(unsigned int to, unsigned int from, unsigned int first,
+                                                 unsigned int end)
 {
     volatile uint32_t *const d = (volatile uint32_t *)(KIT_SOUNDS + SOUND_STRIDE * to);
     const volatile uint32_t *const s = (const volatile uint32_t *)(KIT_SOUNDS + SOUND_STRIDE * from);
-    for (unsigned int k = 0; k < SOUND_WORDS; ++k) {
+    for (unsigned int k = first; k < end; ++k) {
         const uint32_t w = s[k];
         if (d[k] != w) {
             d[k] = w;
@@ -178,7 +191,7 @@ static void regroup(void)
          * parameter, its sample slot included), so each note of a chord sounds alike whichever track plays it; later
          * turns on the lead follow in core_voice_frame. */
         for (unsigned int v = lead + 1; v < t; ++v) {
-            copy_sound(v, lead);
+            copy_sound(v, lead, 0, SOUND_WORDS);
             copy_track_settings(v, lead);
         }
         for (unsigned int j = 0; j < VALUES; ++j) {
@@ -299,9 +312,15 @@ void core_voice_event(uint8_t *record)
                     break;
                 }
             }
+            if (to == NONE) {
+                /* Not recorded yet: if live recording sees it later, it records it on the track it plays on. */
+                to = pick(lead, mutes);
+                fresh[to].pitch = (int8_t)pitch;
+                fresh[to].age = 1;
+            }
         }
         if (to == NONE) {
-            to = source == SEQUENCER ? pick_pattern(lead, mutes) : pick(lead, mutes);
+            to = pick_pattern(lead, mutes);
         }
     } else {
         const uint32_t source = *(const uint32_t *)(record + 0x14);
@@ -327,8 +346,9 @@ void core_voice_event(uint8_t *record)
 
 /* Live recording of a lead's note (core_voice_record_entry, the live-record routine at 0x40048fb2): args points at
  * its arguments (sequencer, track, note, velocity, flag, step, ...). The note is recorded on the track of the group it
- * will play on, chosen as the frame will choose it, and a pending entry tells the frame so. A note the group already
- * holds (the keys sending a held note again) is not recorded (track 16: the routine returns at once). */
+ * will play on, chosen as the frame will choose it, and a pending entry tells the frame so. A note the frame has
+ * already played (a fresh entry) is recorded on the track playing it. Any other note the group already holds (the keys
+ * sending a held note again) is not recorded (track 16: the routine returns at once). */
 void core_voice_record(uint32_t *args)
 {
     const uint32_t lead = args[1];
@@ -336,6 +356,13 @@ void core_voice_record(uint32_t *args)
         return;
     }
     const int32_t pitch = (int32_t)args[2];
+    for (unsigned int t = lead; t < TRACKS && lead_of[t] == lead; ++t) {
+        if (fresh[t].age && fresh[t].pitch == pitch) {
+            fresh[t].age = 0;
+            args[1] = t;
+            return;
+        }
+    }
     for (unsigned int t = lead; t < TRACKS && lead_of[t] == lead; ++t) {
         if (NOTE_SOURCE[t] && NOTE_SOURCE[t] != SEQUENCER && NOTE_PITCH[t] == pitch) {
             args[1] = TRACKS;
@@ -366,12 +393,16 @@ void core_voice_record(uint32_t *args)
     }
 }
 
-/* A whole track's targets from a lead's last values. Its own function, indexed, so the compiler does not reuse a
- * post-incremented address register in one instruction (sdk/runtime/m68k_codegen.py refuses that). */
+/* A whole track's targets from a lead's last values, writing only those that differ. Its own function, indexed, so
+ * the compiler does not reuse a post-incremented address register in one instruction (sdk/runtime/m68k_codegen.py
+ * refuses that). */
 static __attribute__((noinline)) void copy_values(volatile int16_t *to, const volatile int16_t *from)
 {
     for (unsigned int j = 0; j < VALUES; ++j) {
-        to[j] = from[j];
+        const int16_t value = from[j];
+        if (to[j] != value) {
+            to[j] = value;
+        }
     }
 }
 
@@ -382,6 +413,11 @@ void core_voice_frame(void)
     for (unsigned int k = 0; k < PENDING; ++k) {
         if (pending[k].used && ++pending[k].age > PENDING_FRAMES) {
             pending[k].used = 0;
+        }
+    }
+    for (unsigned int t = 0; t < TRACKS; ++t) {
+        if (fresh[t].age && ++fresh[t].age > FRESH_FRAMES) {
+            fresh[t].age = 0;
         }
     }
     for (unsigned int lead = 0; lead < TRACKS; ++lead) {
@@ -415,11 +451,23 @@ void core_voice_frame(void)
         if (v <= lead || v >= end) {
             v = lead + 1;
         }
-        sync_next[lead] = (uint8_t)(v + 1 < end ? v + 1 : lead + 1);
+        unsigned int slice = sync_slice[lead];
+        if (slice >= SOUND_SLICES) {
+            slice = 0;
+        }
+        if (v + 1 < end) {
+            sync_next[lead] = (uint8_t)(v + 1);
+        } else {
+            /* Every voice had this part of its sound compared: the next part from the first voice on. */
+            sync_next[lead] = (uint8_t)(lead + 1);
+            sync_slice[lead] = (uint8_t)((slice + 1) % SOUND_SLICES);
+        }
         if (v < end) {
             /* The voice's sound in the kit and its pattern track's settings follow the lead's (its own steps load them
-             * when they play). */
-            copy_sound(v, lead);
+             * when they play). A sixth of the sound a frame, so a change reaches every voice within a few dozen
+             * frames and the frame interrupt stays short. (On a unit with the whole sound compared every frame, page
+             * changes on a linked track grew slow while the pattern ran; the cause is not yet confirmed.) */
+            copy_sound(v, lead, SLICE_WORDS * slice, SLICE_WORDS * (slice + 1));
             copy_track_settings(v, lead);
             if (!NOTE_SOURCE[v]) {
                 copy_values(TARGETS + VALUES * v, last[lead]);
