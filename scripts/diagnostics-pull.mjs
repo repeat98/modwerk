@@ -156,7 +156,7 @@ export function stabilityLines(found, events, versions = new Map(), owner = OWNE
       const b = row(hex(a)); b.units.add(name)
       if (r.kind === 'start') b.starts++
       else if (r.kind === 'stall' || r.kind === 'crash') b[r.kind]++
-      else if (r.kind === 'freeze' && !r.a) r.playing ? b.frozen++ : b.stopped++
+      else if (r.kind === 'freeze' && !r.a) b[r.playing ? 'frozen' : 'stopped']++
     }
     // Hours count only starts whose base the incident log still holds (85 % of load records on 24 November 2026). The base
     // the site saw at upload would credit a just-updated unit's older sessions to the newest base and flatter it.
