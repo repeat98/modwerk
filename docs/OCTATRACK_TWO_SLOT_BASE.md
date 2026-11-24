@@ -112,12 +112,6 @@ current one. The step base is the 13 November base, kept as three assets that ar
 still runs from RAM, so its first arming restarts the unit on the same base from flash and the link arms once more.
 If even the step base does not fit, the dialog sends the user to the card.
 
-From the command line the same route is four steps. `npm run octatrack:base -- --stock OS.bin --step --out STEP` builds
-the step base's folder from the pinned assets and checks its identity; then `npm run device -- boot STEP`, `flash STEP`,
-`boot NEW` and `flash NEW`. `boot` and `flash` refuse an image larger than the running base's capacity before sending
-anything, and name this route. On two slots the new base's flash goes into the slot the unconfirmed step base holds,
-so the base that was confirmed before stays the fallback (MKII, 23 November 2026: `1bcbe613` to 0.8.1).
-
 - A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
   assets and update the pins, in the pull request that first publishes a base too big for the old stage.
 - The packed container is the limit that binds first, and it is RAM's, not the flash's: the base that writes a base
