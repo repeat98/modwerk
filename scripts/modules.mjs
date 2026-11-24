@@ -12,7 +12,7 @@ import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWa
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from '../src/catalog/resource-impact.ts'
 import { USB_WAIVERS_PATH, parseUsbPackageWaivers } from './retained-evidence.mjs'
 import { requireKnownConflicts } from './conflict-ids.mjs'
-import { CPU_PRICE_PENDING_PATH, cpuPriceProblems, parseCpuPricePending, readCpuPricePending } from './module-cpu-price.mjs'
+import { CPU_PRICE_PENDING_PATH, FRAME_COSTS_PATH, cpuPriceProblems, frameCostStatus, generateFrameCosts, parseCpuPricePending, readCpuPricePending } from './module-cpu-price.mjs'
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),modules=resolve(root,'sdk/octatrack/modules')
 const args=process.argv.slice(2),write=args.includes('--write'),baseIndex=args.indexOf('--base'),base=baseIndex<0?null:args[baseIndex+1]
 if(baseIndex>=0&&!base)throw new Error('--base requires a Git commit/ref')
@@ -79,6 +79,13 @@ const priceProblems=cpuPriceProblems({root,documents,catalog,pending:readCpuPric
 if(priceProblems.length)throw new Error('CPU price ('+priceProblems.length+'): '+priceProblems.join('\n'))
 const selected=[],seen=new Set()
 for(const item of catalog.modules){const document=documents.get(item.id);if(!document||item.version!==document.version||seen.has(item.id))throw new Error('Catalog must pin each included module exactly once at its declared version: '+item.id);if(typeof item.addedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(item.addedAt)||!Number.isFinite(Date.parse(item.addedAt)))throw new Error('Catalog entry needs addedAt, the UTC time the module was first added (for example 2026-10-05T12:00:00Z): '+item.id);if(previouslyIncluded&&!previouslyIncluded.has(item.id))requireModuleUiForPublication(document);seen.add(item.id);selected.push(document)}
+// A release of an effect or a machine carries its instance curve for admission (scripts/module-cpu-price.mjs frameCostStatus).
+const curveProblems=[...documents.values()].map(document=>[document.id,frameCostStatus({root,document})]).filter(([,status])=>status.state==='fail').map(([id,status])=>id+': frame cost: '+status.detail+'. Fix: '+status.fix)
+if(curveProblems.length&&process.env.MODWERK_EVIDENCE_PENDING!=='1')throw new Error('Frame cost ('+curveProblems.length+'): '+curveProblems.join('\n'))
+for(const problem of process.env.MODWERK_EVIDENCE_PENDING==='1'?curveProblems:[])console.warn((process.env.GITHUB_ACTIONS?'::warning title=Release evidence still to come::':'Release evidence still to come (draft): ')+problem)
+// The table admission charges, generated from the base's list and each module's measured curve (never edited by hand).
+const frameCosts=generateFrameCosts(root),frameCostsTarget=resolve(root,FRAME_COSTS_PATH)
+if(frameCosts!==null){if(write)await writeFile(frameCostsTarget,frameCosts);else if(readFileSync(frameCostsTarget,'utf8')!==frameCosts)throw new Error(FRAME_COSTS_PATH+' is stale: run npm run modules:generate')}
 const generated=JSON.stringify({schemaVersion:2,revision:catalog.sourceRevision,modules:selected},null,2)+'\n',target=resolve(root,'src/catalog/module-documents.json')
 if(write){await mkdir(dirname(target),{recursive:true});await writeFile(target,generated);const mediaRoot=resolve(root,'public/module-media');await rm(mediaRoot,{recursive:true,force:true});for(const document of selected){for(const item of document.media){const destination=resolve(mediaRoot,document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(resolve(modules,document.id),item.path),destination)}const thumbnail=await file(resolve(modules,document.id),'presentation/thumbnail.svg').catch(error=>{if(error.code==='ENOENT')return null;throw error});if(thumbnail){const destination=resolve(mediaRoot,document.id,document.version,'presentation/thumbnail.svg');await mkdir(dirname(destination),{recursive:true});await copyFile(thumbnail,destination)}}}else if(await readFile(target,'utf8')!==generated)throw new Error('Generated catalog is stale. Run npm run modules:generate and include it in the PR.')
 const machineModules=await generateMachineModules({root,write,baseCommit})

@@ -1,0 +1,35 @@
+{
+  "module": "tapeecho",
+  "version": "0.1.9-experimental",
+  "base": "856cbbcf (0.8 development twin, base/octatrack-next 9ac83b232)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples), picks on empty C02, Part 1; owner's MKII",
+  "seconds": 8,
+  "measuredAt": "2026-11-23T09:26:22.744Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "rest": 0,
+  "first": 11.5,
+  "each": 4.1,
+  "points": [
+    86.6,
+    96.2,
+    102.2,
+    106.3,
+    108.4
+  ],
+  "adds": [
+    9.6,
+    15.6,
+    19.7,
+    21.8
+  ],
+  "notes": [
+    "package sha256 9219d9e56f28e48bd379445ccbb3297cb780916db948d4d5c4f0e76e3f561222 (plain runtime package, npm run module:dev -- tapeecho --build-only, from the 0.1.9 source)",
+    "same run: Tape Echo 0.1.6 (921e7a60) first 9.1, each 5, adds 7.6/14.1/19.1/23.1",
+    "release package sha256 29aa9aca2db51b5b62c9c37d55dc803891a1bb2f782a9ea84fa8a1289e0fc9a0 (octatrack:module-packages, the reviewed standalone recipe) differs from the measured plain package only in its nine stock-copy records: 130 bytes of the image ship as zeros that the base fills from the unit's own OS, each checked by SHA-256; with them filled the image, relocations, sites, hook words and DSP words equal the plain package's, so the curve was measured on the plain build of the same source"
+  ]
+}

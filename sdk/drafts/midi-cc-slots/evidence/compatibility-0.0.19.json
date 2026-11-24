@@ -1,0 +1,173 @@
+{
+  "version": "0.0.19-experimental",
+  "date": "2026-11-05",
+  "sourceIntegration": "eaaf60ca upstream, local compatibility candidate",
+  "receipt": {
+    "format": "modwerk-usb-card-installer-v1",
+    "version": "0.0.19-experimental",
+    "base": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e",
+    "baseSha256": "2ababa2ad4a4622ab1e60a9ff60dd6f9f6abf3db6e4657f1a58afc1b391bdf3c",
+    "moduleIds": [
+      "sidechain-compressor",
+      "playmodes",
+      "mute-modes",
+      "midi-cc-slots"
+    ],
+    "modules": [
+      {
+        "id": "95cff696",
+        "bytes": 2636,
+        "sha256": "eadf2382bc71fc75a4e911c405f394ac505cc94932a1fa2ea9ce159e658b6447"
+      },
+      {
+        "id": "be4ff75a",
+        "bytes": 14846,
+        "sha256": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced"
+      },
+      {
+        "id": "73bab3b1",
+        "bytes": 2754,
+        "sha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00"
+      },
+      {
+        "id": "f36a496d",
+        "bytes": 33434,
+        "sha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451"
+      }
+    ],
+    "files": {
+      "Modwerk-USB-base.bin": {
+        "bytes": 780868,
+        "sha256": "2ababa2ad4a4622ab1e60a9ff60dd6f9f6abf3db6e4657f1a58afc1b391bdf3c"
+      },
+      "MODWERK0.SET": {
+        "bytes": 54272,
+        "sha256": "f0b644c7c28d2cfc913f88a00d80a866734520d04bac0e68063dabe2ec175eae"
+      },
+      "MODWERK1.SET": {
+        "bytes": 54272,
+        "sha256": "9ce61696ccfb5080fe74fec3b84361e39aa5c8247a004b4c3310a55bd107d761"
+      },
+      "THIRD_PARTY_NOTICES.txt": {
+        "bytes": 237211,
+        "sha256": "934bf071d3cc1e842ad9864ed9900bbcad8ed472df4cddc1a907f42b13870f31"
+      },
+      "Midi-Mode-2-LICENSE.txt": {
+        "bytes": 1070,
+        "sha256": "8767b149c8decfe88036c03d94dabf7a6a1a0311a93cfbd9ad7850757a3a644c"
+      }
+    },
+    "hardware": "not tested"
+  },
+  "zipSha256": "65b2f85d73b45dbb63bec4945e7f9d202d59ba6220c6b74bc1bc580c219fc2ed",
+  "subsets": [
+    {
+      "moduleIds": [
+        "midi-cc-slots"
+      ],
+      "zipSha256": "81b66875bb1c518b08f04a88dc292bbc98389ffc25f6858a8a8c3f127621e7c4"
+    },
+    {
+      "moduleIds": [
+        "sidechain-compressor",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "ccc69c70a0d4f429f5f7acaada6160ae73582595d7e9cf2b8bfad51a0e6561c9"
+    },
+    {
+      "moduleIds": [
+        "playmodes",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "fec341bef97435e3aac53f5e1f02a1c7ba0e516ee4d9de06390ace0e96ce759a"
+    },
+    {
+      "moduleIds": [
+        "sidechain-compressor",
+        "playmodes",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "c6ddb359306066df71b7d1ef71930028462bd078a1dca30e68ccd3da52274f19"
+    },
+    {
+      "moduleIds": [
+        "mute-modes",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "c0f78de3ccce9b1b2724224ac7c2c539ab73fbb850919f02666cccb4a0df3047"
+    },
+    {
+      "moduleIds": [
+        "sidechain-compressor",
+        "mute-modes",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "428b60912056c8f4624b7082e2baec069466b08af7fc3d63a82699ec0c84a46b"
+    },
+    {
+      "moduleIds": [
+        "playmodes",
+        "mute-modes",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "94b4d01b762afe7b77ef9f2773ddc33b38ba1ceb061af22949722c92a0d34f50"
+    },
+    {
+      "moduleIds": [
+        "sidechain-compressor",
+        "playmodes",
+        "mute-modes",
+        "midi-cc-slots"
+      ],
+      "zipSha256": "65b2f85d73b45dbb63bec4945e7f9d202d59ba6220c6b74bc1bc580c219fc2ed"
+    }
+  ],
+  "sessionChecks": [
+    "actual worker session returns ZIP",
+    "all eight reviewed companion subsets build and decode",
+    "all ZIP members pass independent CRC reader",
+    "base digest and all four seed packages match",
+    "copyright notices included",
+    "unsupported startup refused",
+    "base matches ordinary Download base output byte-for-byte",
+    "original unchanged"
+  ],
+  "runtime": {
+    "packageSha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451",
+    "sites": 24,
+    "copies": 25,
+    "imageBytes": 28964,
+    "relocations": 533,
+    "stockFreeScan": "passed at 16 bytes",
+    "currentBaseDirectOverlap": "none",
+    "installedFileGuards": true,
+    "images": [
+      {
+        "origin": "0x47e00000",
+        "sha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e"
+      },
+      {
+        "origin": "0x47e10000",
+        "sha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e"
+      }
+    ],
+    "hardware": "not tested",
+    "loaderLifecycle": "not tested on device"
+  },
+  "hostLoader": "prepare, publish, Undo, reinstall, removal and full reclamation passed; host glue only",
+  "hostSavedSet": "four-package restore, corrupt newer-slot fallback, foreign-base/FUNC refusal, MIDI removal and Undo passed; host glue only",
+  "hardware": "not tested",
+  "coldfireExecution": "not tested",
+  "priorEvidence": "compatibility-0.0.18.json retains old identities; its hardware results do not qualify this candidate",
+  "softwareValidation": {
+    "typescript": "passed",
+    "lint": "passed; 13 existing warnings, no errors",
+    "bundle": "passed",
+    "vitest": {
+      "filesPassed": 350,
+      "testsPassed": 2861,
+      "testsSkipped": 2
+    },
+    "moduleDoctor": "not ready: local draft lacks public octamod.module.json"
+  }
+}

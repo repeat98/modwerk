@@ -9,7 +9,7 @@
     },
     {
       "id": "tapeecho",
-      "version": "0.1.6-experimental",
+      "version": "0.1.9-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
     },
     {
@@ -58,23 +58,28 @@
       "addedAt": "2026-11-17T19:20:00Z"
     },
     {
+      "id": "resonator",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-24T11:32:33Z"
+    },
+    {
       "id": "analog-bassdrum",
       "version": "0.1.7-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
       "id": "usb-audio-out-tracks-main-cue",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
       "id": "quantizer",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
       "id": "synth",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "addedAt": "2026-10-06T08:00:28Z"
     },
     {
@@ -104,7 +109,7 @@
     },
     {
       "id": "mute-modes",
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
@@ -154,7 +159,7 @@
     },
     {
       "id": "beat-slicer",
-      "version": "0.1.66-experimental",
+      "version": "0.1.68-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
     },
     {
@@ -184,7 +189,7 @@
     },
     {
       "id": "syntiz",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-10-29T21:00:00Z"
     },
     {
@@ -209,7 +214,7 @@
     },
     {
       "id": "kits",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-11-16T21:00:00Z"
     },
     {
@@ -224,8 +229,13 @@
     },
     {
       "id": "grain",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "addedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "songbook",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-24T09:10:19Z"
     }
   ]
 }

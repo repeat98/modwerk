@@ -1,0 +1,1 @@
+The Octatrack Hub’s Screen tab can preview the LCD over USB at 5, 10, 15 or 30 fps, pop it out for OBS, and save a silent tutorial video on your computer. Screen capture requires a compatible Modwerk base and starts when you select Start preview.

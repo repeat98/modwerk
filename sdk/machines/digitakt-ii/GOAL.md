@@ -46,7 +46,7 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 
 ## Rules that matter most here
 
-- **Only your own code.** Nothing can come in that is derived from digikit, because its AGPL and UI credit terms would bind every build. Ideas and research findings are welcome: write the code yourself and describe it in its own terms. The imported core keeps its GPL-2.0-or-later licence and its provenance in `sdk/imports/`.
+- **Only your own code.** Nothing derived from an AGPL project comes in, because its terms would bind every build. The imported core keeps its GPL-2.0-or-later licence and its provenance in `sdk/imports/`.
 - **Sequencer, LFO and voice sites go through the base.** A module never patches one of these sites. It proposes a base hook first ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 - **What modules share belongs to the base.** That includes Mixer pages, a send bus, a sample pool and per-kit state. A kit record holds 143 bytes of kit data for all mods together.
 - **SHARC code** follows the [SHARC code rules](README.md#sharc-code-rules), and only a unit run proves it.

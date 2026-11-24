@@ -126,7 +126,7 @@ mwua_gain: .space 4
     return text
 
 
-def source(root, module, layout, functions, load, sine_curve, package_hooks):
+def source(root, module, layout, functions, load, sine_curve, package_hooks, *, usb_input=None):
     path = root / 'sdk/octatrack/modules' / module / 'layouts/usbaudio.s'
     raw = path.read_bytes()
     if hashlib.sha256(raw).hexdigest() != SOURCE_SHA:
@@ -171,10 +171,13 @@ def source(root, module, layout, functions, load, sine_curve, package_hooks):
 .Lclock_get:
 ''')
     text = checked(text, 'mwua_bus_end: ', 'mwua_bus_end:\n    clrb uac2_set_pending\n    | ')
+    if usb_input:
+        text = checked(text, '.set USB_IN, 0\n', '.set USB_IN, 1\n')
+        text = usb_input.package_source(text)
     return text
 
 
-def records(root, module, supported, functions, usb, function_block, descriptor_records):
+def records(root, module, supported, functions, usb, function_block, descriptor_records, *, usb_input=None):
     descriptors = SimpleNamespace(**runpy.run_path(str(root / 'sdk/octatrack/modules' / module / 'layouts/descriptors.py')))
     keys = [supported[i] for i in (0,1,3,4,0)]
     names = ('mwua_fs','mwua_hs','mwua_other_fs','mwua_other_hs')
@@ -191,6 +194,15 @@ def records(root, module, supported, functions, usb, function_block, descriptor_
                 if r[:3] == bytes([7,5,0x83]): struct.pack_into('<H',r,4,12*8*4)
             blocks[-1] = b''.join(records)
         rows.append(blocks)
+    if usb_input:
+        profiles = []
+        for (hs, other), output_only in zip(speeds, rows):
+            def block(key, name):
+                return function_block(functions, usb, descriptors, key, hs, other, audio_input=name)
+            blocks = usb_input.descriptor_profiles(keys, output_only, block)
+            profiles.append([(3 if hs and i >= len(keys) else 2, value) for i, value in enumerate(blocks)])
+        return usb_input.records(names, profiles), max(len(value) for row in profiles for _, value in row)
+
     length = len(rows[0][0])
     if any(len(b) != length for row in rows for b in row):
         raise ValueError('USB profiles must have equal descriptor lengths.')

@@ -64,10 +64,11 @@ describe('pr:ready verdict', () => {
     expect(readiness({}).ok).toBe(true)
     for (const state of [{ dirty: ['a.ts'] }, { behind: true }, { regenerated: ['src/catalog/module-documents.json'] }, { checkPassed: false }]) expect(readiness(state).ok).toBe(false)
   })
-  it('says the checks need Python 3.10+ instead of letting an older one crash inside them', () => {
-    for (const version of ['3.10.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+  it('says the checks need Python 3.12+ instead of letting an older one crash inside them', () => {
+    for (const version of ['3.12.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+    expect(pythonProblem({ version: '3.11.0' })).toContain('python3 is 3.11.0')   // sdk:check parses 3.12 f-strings
     const old = pythonProblem({ command: 'python3', version: '3.9.6' })
-    expect(old).toContain('needs Python 3.10 or newer')
+    expect(old).toContain('needs Python 3.12 or newer')
     expect(old).toContain('python3 is 3.9.6')
     expect(pythonProblem({ command: 'python', error: 'spawn python ENOENT' })).toContain('python did not run (spawn python ENOENT)')
     expect(pythonProblem({ version: null })).toContain('an unknown version')
@@ -113,6 +114,17 @@ describe('pr:ready verdict', () => {
     expect(verdict.notes.join(' ')).toContain('directly to base/<machine>-next')
     expect(verdict.notes.join(' ')).not.toContain('gh pr create --draft')
     expect(verdict.notes.join(' ')).not.toContain('open or update the PR')
+  })
+  it('prompts the agent to verify GitHub after full readiness on a contribution', () => {
+    for (const input of [{}, { instrument: ['public/octatrack-modules/synth/example.mwrm'] }]) {
+      const notes = readiness(input).notes.join(' ')
+      expect(notes).toContain('gh pr view <URL> --json state,headRefOid,isDraft')
+      expect(notes).toContain('gh pr ready <URL>')
+      expect(notes).toContain('verify isDraft is false')
+    }
+    for (const input of [{ draftOnly: true }, { checkPassed: false }, { baseDraft: true }]) {
+      expect(readiness(input).notes.join(' ')).not.toContain('gh pr ready <URL>')
+    }
   })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))

@@ -11,29 +11,49 @@ import type { DeviceLog } from '../engine/elekloader/device-log.ts'
 export type LogReading = DeviceLog | null | undefined
 export interface TrialVerdict { failed: boolean; lines: string[] }
 
-/** The incidents that fail a trial: the unit crashed, a DSP core stalled, the UI stood still or the frame guard skipped tracks.
- * HOT and CPU (the CPU meter at 90 %) are printed but pass: stock alone can reach them. START, SET and BASE are the trial's own
+/** The incidents that fail a trial: the unit crashed, a DSP core stalled, the UI stood still, the frame guard skipped tracks,
+ * the brake caught, or a frame entry came late (held, or later than the wait can hold).
+ * HOT and CPU (the CPU meter at 90 %) are printed but pass: stock alone can reach them. USB (the unit offered itself on USB
+ * again because the host never enumerated it, #1985) is printed and passes: the link, not the module. START, SET and BASE are the trial's own
  * bookkeeping, or a restart that already ended the trial with an error. */
-const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed'])
-const WARNS: ReadonlySet<string> = new Set(['hot', 'cpu'])
+const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed', 'brake', 'late'])
+const WARNS: ReadonlySet<string> = new Set(['hot', 'cpu', 'usb'])
+const tracks = (mask: number) => [...Array(8).keys()].filter(t => mask >> t & 1).map(t => 'T' + (t + 1)).join(', ') || '(none named)'
 const SAID: Record<string, (a: number) => string> = {
   crash: a => `crash at PC 0x${a.toString(16)}`,
   stall: a => `DSP stall (${['a test', 'frames stopped', 'eDMA refused a transfer'][a] ?? 'reason ' + a})`,
   freeze: a => a ? `the UI stood still for ${a} frames` : 'the UI stood still and never came back',
-  shed: a => `the frame guard skipped tracks ${[...Array(8).keys()].filter(t => a >>> 24 >> t & 1).map(t => 'T' + (t + 1)).join(', ') || '(none named)'}, ${a & 0xffffff} skips since the start`,
+  shed: a => `the frame guard skipped tracks ${tracks(a >>> 24)}, ${a & 0xffffff} skips since the start`,
   hot: a => `the CPU at 90 % or more for ${a / 2} s`,
   cpu: () => 'the CPU meter over its limit',
+  brake: a => a >>> 23 & 1 ? `a pattern predicted past the frame ceiling began with the module machines silenced (${a & 0x7fffff} since boot)`
+    : `the frame fell behind and the brake silenced the module machines (${a & 0xffffff} since boot)`,
+  // Low 24 bits: entries held since boot; top byte: entries later than the wait can hold (255 at most; 0 on older bases).
+  late: a => (a & 0xffffff ? `a late frame entry was held, so the DSP skipped a frame, heard as a click (${a & 0xffffff} since boot)` : 'no late frame entry held')
+    + (a >>> 24 ? `; ${a >>> 24 === 255 ? '255 or more' : a >>> 24} frame entr${a >>> 24 === 1 ? 'y' : 'ies'} since boot came later than the wait can hold (190 µs), which can stall the DSP` : ''),
+  usb: a => `the host never enumerated the unit, so it offered itself on USB again (OTGSC 0x${(a >>> 16).toString(16)}, PORTSC1 0x${(a & 0xffff).toString(16)})`,
 }
 
 /** The verdict on a trial from the log before and after it. `names` turns a program counter into "symbol+0x1c" (address-names.ts). */
 export function trialVerdict(before: LogReading, after: LogReading, names?: (address: number) => string): TrialVerdict {
   if (before === undefined || after === undefined) return { failed: false, lines: ['no verdict: this base keeps no log (LOG), so a crash or stall in the trial is not seen here'] }
   const seen = before?.seq ?? 0
-  const incidents = (after?.incidents ?? []).filter((incident: DeviceIncident) => incident.seq > seen && (FAILS.has(incident.kind) || WARNS.has(incident.kind)))
+  // A base that pages the guard's live skip count is judged by it: its SHED incidents come at most once in ten minutes, so
+  // one can carry an earlier trial's skips into this one's window (owner's MKII, 21 November 2026).
+  const counted = before?.sheds && after?.sheds ? after.sheds.count - before.sheds.count : undefined
+  const incidents = (after?.incidents ?? []).filter((incident: DeviceIncident) => incident.seq > seen && (FAILS.has(incident.kind) || WARNS.has(incident.kind))
+    && !(incident.kind === 'shed' && counted !== undefined))
   const lines = incidents.map(incident => {
     const name = incident.kind === 'crash' && names?.(incident.a)
-    return `${FAILS.has(incident.kind) ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
+    // A pattern predicted past the ceiling that began with module machines silenced is the base's design (owner), not a fault.
+    const fails = FAILS.has(incident.kind) && !(incident.kind === 'brake' && incident.a >>> 23 & 1)
+    return `${fails ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
   })
+  if (counted) lines.push(`FAIL the frame guard skipped ${counted} render${counted === 1 ? '' : 's'} during the trial (tracks it skipped on since the start: ${tracks(after!.sheds!.tracks)})`)
+  // The same for frame entries later than the late-entry wait can hold: past the wait is the cliff, and octabam's two such
+  // entries both stalled the DSP. Its LATE incident is rate-limited too, so the live count decides where the base pages it.
+  const over = before?.sheds?.lateOver !== undefined && after?.sheds?.lateOver !== undefined ? after.sheds.lateOver - before.sheds.lateOver : 0
+  if (over > 0) lines.push(`FAIL ${over} frame entr${over === 1 ? 'y' : 'ies'} came later than the late-entry wait can hold (190 µs) during the trial, which can stall the DSP`)
   // A crash or stall record whose count moved, when no incident of its kind says so (a log that wrapped, or a record kept before its incident).
   const crash = after?.crash, stall = after?.stall
   if (crash && crash.count !== (before?.crash?.count ?? 0) && !incidents.some(incident => incident.kind === 'crash'))
