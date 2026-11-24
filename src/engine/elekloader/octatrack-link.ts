@@ -160,6 +160,10 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+/** A "rejected" with no loader refusal while the record's `saved` is still 0: this start's restore has not run, and the
+ * base takes no change until it has (modset.c modwerk_modset_check_set). In November 2026 three units synced their whole
+ * set into that window, read "can't run this module file", and had it back from the restore moments later. */
+const NOT_RESTORED = 'The Octatrack hasn’t loaded its saved modules yet, so nothing changed. It loads them a few seconds after it starts, while nothing plays or records. Wait until Status shows them, then sync again if anything is missing.'
 const RUNTIME_IN_USE = 7
 /** After refusal 7, the modules the sync removes or replaces: one of them is on a track. The base does not say which
  * track (November 2026: testers were refused several times in a row looking for it). */
@@ -899,8 +903,8 @@ export class OctatrackLink {
       try { clean = await this.cleanUp(settled) } catch { clean = false }
     }
     if (connection !== this.connection) return
-    const why = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
-      (await this.transport?.selftest(false).catch(() => undefined))?.refusal : undefined
+    const record = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
+      await this.transport?.selftest(false).catch(() => undefined) : undefined, why = record?.refusal
     if (connection !== this.connection) return
     const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal;
@@ -918,7 +922,7 @@ export class OctatrackLink {
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) +
+    const text = recovered && clean ? RECOVERED : (why === 0 && record?.saved === 0 ? NOT_RESTORED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
       (why === RUNTIME_IN_USE ? inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) {
       const notice = { tone: 'error', text } as const

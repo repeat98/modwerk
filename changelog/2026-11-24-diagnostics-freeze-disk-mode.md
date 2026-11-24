@@ -1,0 +1,1 @@
+The owner's diagnostics summary marks a stopped freeze until a restart that follows PROJ … RIGHT YES as likely USB disk mode or an upgrade prompt left open, as such stalls already were, and no longer counts it as a hang. On the 24 November 2026 pull that was 13 of 42 stopped freezes.

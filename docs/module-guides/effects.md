@@ -46,6 +46,21 @@ Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Cho
 - **`dear`:** every knob at its dearest setting. Pressure renders and the stress project read it.
 - **`gates`:** the verifiers `make check` runs when a remix carries your module.
 
+### Choose the widget
+
+The formatter decides how the panel draws a knob, so pick it by what the knob holds. `module:doctor` refuses a draft that breaks these rules and tells a listed module.
+
+| The knob holds | Formatter | The panel draws | Example |
+|---|---|---|---|
+| a range, 0-127 | `PLAIN` | a knob and its number | TIME, DCAY, MIX |
+| a range around a centre (64 is neutral) | `BIPOLAR` | -64…+63; FUNC + turn jumps to the centre | TONE (low-pass left, flat at 64, high-pass right), BAL |
+| two to five choices | `STEPPED`, a word for each | a switch with that many positions | SYNC FREE / BEAT, VOIC 1-4 |
+| six or more named choices | `WIDE_STEPPED`, a word for each | a dial that prints the word | CHRD, TYPE, SCALE |
+
+- **A mode select names itself.** The `mode_slot` knob shows its value's word in place of its name (`mode_names.with_selfname`), so its words say what each mode is: FREE / BEAT, NOTE / COLUN. OFF / ON leaves a switch without a name (Resonator, 24 November 2026).
+- **Distinct things are a select.** Use a knob only where the steps between values make sense to turn through.
+- **A number the musician has to translate** (a MIDI note, a time, a gain in dB) can get its own formatter cave (`FormatterReg`), as Tape Echo's TIME does. Where it does not, the README says what the number means.
+
 ## Behave like the instrument
 
 - [ ] **Safe defaults.** Say what the effect does with every knob at its default. An insert that should be transparent is a bit-exact passthrough at defaults (Euclid's MIX 0 is exact dry passthrough).

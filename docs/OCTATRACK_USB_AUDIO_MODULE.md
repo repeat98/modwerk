@@ -132,6 +132,14 @@ channels 1–4 to the four inputs. The input stream and its implicit feedback
 are available at high speed. Full speed and Outbox keep their output layouts.
 When a block is unavailable, the affected inputs read from the jacks.
 
+INPUTS does not work on Windows yet. On Windows 10 the audio function fails
+with Code 10 (reported 24 November 2026); Windows 11 has not been run with
+INPUTS on. With INPUTS on, the OUT stream is asynchronous with implicit
+feedback from EP3 IN, and Windows' USB Audio 2.0 driver supports neither
+implicit feedback nor an asynchronous OUT stream without an explicit feedback
+endpoint. The module page and README say so; the fix is a change of the OUT
+stream's synchronisation.
+
 Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA
 scheduler sends a staged input block to core 0 before an FX loader packet
 when both are due. The two transfers use disjoint DSP ranges. The RX hook

@@ -59,6 +59,9 @@ export interface FakeUnit {
   screen?: () => Promise<DataView>
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
+  /** This start's restore has not run: the base rejects every change with no loader refusal, its record's `saved` 0
+   * (modset.c modwerk_modset_check_set). */
+  restoring?: boolean
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
    * the base then drops the staged package. */
   publishRefusal?: number
@@ -151,7 +154,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
         }
-        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
+        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back
           const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)), count = unit.installed.moduleIds.length
           ;[[0, 2], [3, count], [7, 410], [8, 655], [9, 470], [14, 47900], [15, 7], [16, count], [17, count]].forEach(([at, value]) => record.setUint32(4 * at, value))
@@ -203,7 +206,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       get status() { return status }, connectionTrusted: true,
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
-        if (unit.refusal) return step('normal', 'rejected')
+        if (unit.refusal || unit.restoring) return step('normal', 'rejected')
         if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
