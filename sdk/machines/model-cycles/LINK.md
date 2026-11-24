@@ -81,7 +81,7 @@ mc_link.py keep | undo
 mc_link.py remove NAME --seconds 5 [--keep]   # an empty package with NAME's id: that module out, on trial
 ```
 
-A module patches stock code at declared sites: `build.py --sites SITES.json` takes them in base.json's format (a `jsr`
+A module patches stock code at declared sites: [`tools/build_sites.py`](tools/build_sites.py) `--sites SITES.json` (around the loader's `build.py`) takes them in base.json's format (a `jsr`
 or `jmp` to a function of the module, the stock bytes' SHA-256), and the base checks the running code before it
 patches and puts the stock bytes back at an undo or a removal. [`examples/frames.c`](elekloader/examples/frames.c)
 detours the call that ends each composed frame and shows the frames counted; `frames2.c` is its next version.

@@ -4,7 +4,7 @@
  * frames and makes the same call; the draw hook shows the count at the top right ("F1 n"). frames2.c is the same
  * module's next version ("F2 n"), to try a replacement.
  *
- *   python3 -B sdk/runtime/loader/build.py sdk/machines/model-cycles/elekloader/examples/frames.c \
+ *   python3 -B sdk/machines/model-cycles/tools/build_sites.py sdk/machines/model-cycles/elekloader/examples/frames.c \
  *       --sites sdk/machines/model-cycles/elekloader/examples/frames.sites.json -o frames.mwrm
  *
  * The package carries the six stock bytes' SHA-256, not the bytes; the base checks the running code before it
