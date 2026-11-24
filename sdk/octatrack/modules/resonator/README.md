@@ -34,10 +34,10 @@ Voice 1 sits in the centre; with more voices their upper partials spread left an
 
 ## Quick tutorial
 
-1. Put RESONATOR on FX1 of a drum loop. The defaults ring a major triad of string voices on A under every hit.
-2. Turn TYPE to BELL or BAR for metal, DRUM for skins; sweep TONE to choose which partials ring.
-3. Lock CHRD on a few trigs for chord changes; on the setup page set SCALE so they stay in a key, VOIC for more or fewer voices.
-4. On the setup page, turn the NOTE switch to COLUN and lock PTCH (now DEG) on trigs: each hit rings at its own Colundi frequency.
+1. Put RESONATOR on FX1 of a drum loop: hold FUNC, press FX1, turn LEVEL to RESONATOR and press YES. The defaults ring a major triad of string voices on A under every hit.
+2. Press FX1 for the main page. Turn DCAY for a longer ring and MIX to bring the ring in; TONE darkens or brightens what sets it off.
+3. Hold FUNC and press FX1 for the setup page: turn TYPE to BELL or BAR for metal, DRUM for skins, VOIC for more or fewer voices, SCALE to keep chords in a key.
+4. Lock CHRD on a few trigs for chord changes, or turn the NOTE switch to COLUN and lock PTCH (now DEG) on trigs: each hit rings at its own Colundi frequency.
 
 ## Compatibility and limitations
 
@@ -48,7 +48,17 @@ Voice 1 sits in the centre; with more voices their upper partials spread left an
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md).
+On the owner's Octatrack MKII (24 November 2026), the test procedure passed twice: the scripted pass with eight instances at once, a soak, Part switches, and the cost on the unit, which is 0.2 % of a frame (the work runs on the DSP). In the DSP emulator it runs at 0.79 of stock SPRING REV's worst case. Details, the edge cases and what was not tested: [TESTING.md](TESTING.md).
+
+## Screens and audio
+
+![The effect chooser with the cursor on Resonator](media/resonator-chooser.png)
+
+![The FX1 page: PTCH, CHRD, DCAY, TONE, GAIN and MIX](media/resonator-main.png)
+
+![The FX1 SETUP page: the NOTE switch, TYPE, VOIC and SCALE](media/resonator-setup.png)
+
+Hardware captures from the owner's unit; no audio preview yet.
 
 ## Authorship and licences
 
@@ -60,6 +70,6 @@ Each partial is a coupled-form resonator: a rotation by its pitch's angle, scale
 
 ## Develop
 
-- Check it: `python3 sdk/drafts/resonator/verify.py` (the render gate) and `npm run module:doctor -- --draft resonator`.
+- Check it: `python3 sdk/octatrack/modules/resonator/verify.py` (the render gate) and `npm run module:doctor -- resonator`.
 - Hear it: `npm run module:dev -- resonator --cycles 256 --cycles-kind executed --state 89` builds it and tries it on your unit over USB.
 - The tables come from `tables.py`; the DSP is `resonator.asm`. Read the traps in sdk/octabam/AGENTS.md before changing it.
