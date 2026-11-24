@@ -20,14 +20,14 @@ const screen = (file: string) => assetUrl('base/' + file)
 // PROJ > MODWERK, the status, MODULE COST and MODULES were read off an MKII running development twins of base 0.7.1's and
 // 0.7.2's source (device.mjs png:, 16 November 2026); MODULE COST and MODULES with module effects installed, two on tracks.
 const OCTATRACK_SCREENS: Screen[] = [
-  { src: screen('ot-machine-list.png'), alt: 'AMIGA below the stock machines in SELECT MACHINE TYPE', title: 'Play a module machine',
-    caption: 'Install Amiga and it appears below the stock machines. Module effects join the FX1 and FX2 lists.', keys: 'Double-tap TRACK' },
-  { src: screen('ot-modules.png'), alt: 'MODULES showing four enabled modules and Tapehead switched off', title: 'Switch a module off',
-    caption: 'Stop playback, select a module and press YES. The card remembers your choice after a restart or sync.', keys: 'PROJ › MODWERK › MODULES' },
-  { src: screen('ot-status.png'), alt: 'Octatrack status display with CPU and separate DSP and memory bars for tracks 1–4 and 5–8', title: 'Check your set’s load',
-    caption: 'Read the base version, CPU load and DSP memory use for each group of four tracks.', keys: 'CUE + PROJ' },
-  { src: screen('ot-module-cost.png'), alt: 'MODULE COST showing Mini Verb on tracks 1–4 and E-Verb on tracks 5–8', title: 'Find a costly effect',
-    caption: 'See how much DSP each module uses on each chip. A tilde marks an estimate. A dash means no track uses it there.', keys: 'PROJ › MODWERK › MODULE COST' },
+  { src: screen('ot-machine-list.png'), alt: 'AMIGA below the stock machines in SELECT MACHINE TYPE', title: 'Machines and effects',
+    caption: 'Installed machines join the track menu. Effects appear in FX1 and FX2.', keys: 'Double-tap TRACK' },
+  { src: screen('ot-modules.png'), alt: 'MODULES showing four enabled modules and Tapehead switched off', title: 'Module switches',
+    caption: 'Stop playback and press YES to switch a module on or off.', keys: 'PROJ › MODWERK › MODULES' },
+  { src: screen('ot-status.png'), alt: 'Octatrack status display with CPU and separate DSP and memory bars for tracks 1–4 and 5–8', title: 'System load',
+    caption: 'See total CPU, plus DSP load and memory for tracks 1–4 and 5–8.', keys: 'CUE + PROJ' },
+  { src: screen('ot-module-cost.png'), alt: 'MODULE COST showing Mini Verb on tracks 1–4 and E-Verb on tracks 5–8', title: 'DSP per module',
+    caption: 'Find which effect uses the most processing time on each DSP chip.', keys: 'PROJ › MODWERK › MODULE COST' },
 ]
 const OCTATRACK_REFERENCE_SCREENS: Screen[] = [
   { src: screen('ot-startup.png'), alt: 'Octatrack startup display with the Modwerk mark', title: 'Startup',
@@ -76,22 +76,25 @@ function baseMachine(device?: string): BaseMachine {
   return !device || device === 'octatrack' || device === 'all' ? 'octatrack' : device === 'zoom-ms-70cdr' ? 'zoom' : device === 'analog-rytm-mkii' ? 'rytm' : 'others'
 }
 const COVERED = new Set(['octatrack', 'zoom-ms-70cdr', 'analog-rytm-mkii'])
-const ORIGINAL_OS: Partial<Record<BaseMachine, string>> = {
+const ORIGINAL_OS: Record<Exclude<BaseMachine, 'others'>, string> = {
   octatrack: 'OS 1.40C',
   zoom: 'Zoom 2.10 updater',
   rytm: 'OS 1.74',
 }
 
-function FirmwareStack({ machine }: { machine: BaseMachine }) {
+function FirmwareStack({ machine }: { machine: Exclude<BaseMachine, 'others'> }) {
   const original = ORIGINAL_OS[machine]
   const Heading = machine === 'octatrack' ? 'h3' : 'h2'
   return <section className="base-stack" aria-labelledby="base-stack-title">
     <Heading id="base-stack-title">The firmware stack</Heading>
-    <dl className="base-stack-layers">
-      <div><dt>Modules</dt><dd>{machine === 'octatrack' ? 'Your choice of machines, effects and tools. Change the set over USB or by card.' : 'The effects, machines or tools you choose for your instrument.'}</dd></div>
-      <div><dt>{machine === 'zoom' ? 'MIDISTOMP base' : 'Modwerk base'}</dt><dd>{machine === 'octatrack' ? 'Install once to add the MODWERK menu and support for loading module sets.' : machine === 'zoom' ? 'Adds MIDI control, clock sync and a mixer to the pedal.' : 'Shared support for modules, built locally from the original OS.'}</dd></div>
-      <div><dt>Original OS</dt><dd>{original ? `Modwerk builds from your own ${original} file in the browser. The file stays on your computer.` : 'The instrument maker’s firmware provides the starting point.'}</dd></div>
-    </dl>
+    <div className="base-stack-diagram">
+      <img src={screen('firmware-stack.svg')} alt="" width={400} height={218} />
+      <dl className="base-stack-layers">
+        <div><dt>Modules</dt><dd>Your choice of machines, effects and tools.</dd></div>
+        <div><dt>{machine === 'zoom' ? 'MIDISTOMP base' : 'Modwerk base'}</dt><dd>{machine === 'octatrack' ? 'Install once to load and manage module sets.' : machine === 'zoom' ? 'Adds MIDI control, clock sync and a mixer.' : 'Adds shared support for your selected modules.'}</dd></div>
+        <div><dt>Original OS</dt><dd>Your own {original} file, read locally.</dd></div>
+      </dl>
+    </div>
   </section>
 }
 
@@ -101,8 +104,8 @@ function ScreenGallery({ screens, label }: { screens: Screen[]; label: string })
       <div className="base-lcd"><img src={item.src} alt={item.alt} loading="lazy" decoding="async" /></div>
       <figcaption>
         <h4>{item.title}</h4>
-        {item.keys && <p className="base-keys"><span className="sr-only">Open with: </span>{item.keys}</p>}
         <p>{item.caption}</p>
+        {item.keys && <p className="base-keys"><span className="sr-only">Open with: </span><kbd>{item.keys}</kbd></p>}
       </figcaption>
     </figure>
   </li>)}</ul>
@@ -154,7 +157,7 @@ export function BasePage({ machine: device }: { machine?: string }) {
           <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => setMachine(item.id)}>{item.label}</button>)}</div>
       </div>
     </header>
-    {machine !== 'octatrack' && <FirmwareStack machine={machine} />}
+    {(machine === 'zoom' || machine === 'rytm') && <FirmwareStack machine={machine} />}
 
     {machine === 'octatrack' && <section className="base-section" aria-labelledby="base-octatrack">
       <header className="base-section-heading base-device ot-intro">
@@ -174,7 +177,7 @@ export function BasePage({ machine: device }: { machine?: string }) {
       <div className="ot-guide">
         <FirmwareStack machine="octatrack" />
         <section className="ot-controls" aria-labelledby="ot-controls-title">
-          <h3 id="ot-controls-title">On your Octatrack</h3>
+          <h3 id="ot-controls-title">Octatrack controls</h3>
           <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack module controls" />
           <details className="base-reference"><summary>Startup, self-test and display messages</summary>
             <ScreenGallery screens={OCTATRACK_REFERENCE_SCREENS} label="More Octatrack base screens" />

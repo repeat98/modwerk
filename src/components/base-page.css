@@ -12,13 +12,13 @@
 .base-picker .faq-machines button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-hover); }
 
 .base-stack { max-width: 40rem; margin-block: 1.75rem; }
-.base-stack :is(h2, h3), .ot-controls h3, .base-install-title { margin: 0 0 1rem; font-size: 1.25rem; line-height: 1.3; }
-.base-stack-layers { display: grid; gap: .3rem; margin: 0; }
-.base-stack-layers > div { margin-inline: 6%; padding: .8rem 1rem; background: var(--surface); border: 1px solid var(--control-border); border-radius: .375rem; }
-.base-stack-layers > div:nth-child(2) { margin-inline: 3%; background: var(--accent-soft); border-color: var(--accent-line); }
-.base-stack-layers > div:last-child { margin-inline: 0; background: var(--sidebar); }
+.base-stack :is(h2, h3), .ot-controls h3, .base-install-title { margin: 0 0 1rem; font-size: 1.375rem; line-height: 1.25; }
+.base-stack-diagram { display: grid; align-items: center; gap: 1rem; }
+.base-stack-diagram > img { display: block; width: min(100%, 25rem); height: auto; justify-self: center; }
+.base-stack-layers { display: grid; gap: .75rem; margin: 0; }
+.base-stack-layers > div:nth-child(2) dt { color: var(--accent-hover); }
 .base-stack-layers dt { font-size: 1rem; font-weight: 650; }
-.base-stack-layers dd { margin: .2rem 0 0; color: var(--text-secondary); font-size: .875rem; line-height: 1.45; }
+.base-stack-layers dd { max-inline-size: 35ch; margin: .2rem 0 0; color: var(--text-secondary); font-size: .875rem; line-height: 1.45; }
 .base-device { display: flex; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; padding: 1rem 1.5rem; }
 .base-section-heading h2 { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .75rem; font-size: clamp(1.25rem, 2.5vw, 1.625rem); line-height: 1.25; }
 .base-status { padding: .15rem .5rem; border-radius: .375rem; border: 1px solid var(--line); color: var(--text-secondary); font-size: .75rem; font-weight: 500; }
@@ -49,7 +49,8 @@
 .base-lcd { display: grid; place-items: center; padding: 1rem; background: var(--field); border-bottom: 1px solid var(--chrome-edge); }
 .base-lcd img { display: block; width: 100%; max-width: 12rem; height: auto; aspect-ratio: 2 / 1; object-fit: contain; image-rendering: pixelated; }
 .base-screen figcaption { padding: .75rem .875rem .875rem; color: var(--text-secondary); font-size: .8125rem; line-height: var(--reading-line-height); }
-.base-keys { margin-bottom: .375rem; color: var(--accent); font: .75rem/1.4 var(--mono); }
+.base-screen .base-keys { margin-top: .5rem; color: var(--muted); font: .75rem/1.5 var(--mono); }
+.base-keys kbd { font: inherit; }
 
 .base-reference { border-block: 1px solid var(--chrome-edge); }
 .base-recovery { padding: 1rem 1.25rem; }
@@ -78,7 +79,7 @@
 .base-release-changes > div { display: grid; grid-template-columns: minmax(6.5rem, 9rem) minmax(0, 1fr); gap: .25rem 1rem; padding: .625rem 0; border-top: 1px solid var(--chrome-edge); }
 .base-release-changes dt { font-size: .875rem; font-weight: 600; }
 .base-release-changes dd { margin: 0; color: var(--text-secondary); font-size: .875rem; line-height: var(--reading-line-height); }
-.base-release-changes p { margin: 0; }
+.base-release-changes p { max-inline-size: 60ch; margin: 0; }
 .base-release-changes a, .base-release-source { color: var(--accent); text-decoration: underline; text-underline-offset: .15em; }
 .base-release-changes a { display: inline-block; margin-top: .125rem; }
 .base-release-source { display: inline-block; margin-top: .25rem; font-size: .875rem; }
@@ -112,15 +113,15 @@
 .ot-controls .base-screen { border: 0; border-radius: 0; background: transparent; }
 .ot-controls .base-lcd { padding: .625rem; border: 0; border-radius: .25rem; background: var(--field); }
 .ot-controls .base-lcd img { max-width: 16rem; }
-.ot-controls .base-screen figcaption { padding: .625rem 0 0; font-size: .875rem; }
-.ot-controls .base-keys { color: var(--accent-hover); }
+.ot-controls .base-screen figcaption { padding: .75rem 0 0; font-size: .875rem; line-height: 1.5; }
+.ot-controls .base-screen h4 { margin-bottom: .25rem; color: var(--text); font-size: 1.0625rem; font-weight: 650; }
+.ot-controls .base-screen figcaption > p { max-inline-size: 39ch; }
 .ot-controls > details { margin-top: 1rem; }
 .base-install-title + .base-device-facts { margin-top: 0; }
 @container (max-width: 52rem) {
   .ot-guide { grid-template-columns: 1fr; gap: 1.5rem; }
   .ot-guide .base-stack { max-width: none; }
-  .base-stack-layers > div { display: grid; grid-template-columns: 7rem 1fr; gap: .625rem; align-items: baseline; }
-  .base-stack-layers dd { margin: 0; }
+  .base-stack-diagram { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); }
   .ot-intro h2 { font-size: 1.75rem; }
 }
 @container (max-width: 38rem) {
@@ -142,8 +143,8 @@
 @container (max-width: 30rem) {
   .base-device.ot-intro { grid-template-columns: 1fr; padding-block: 1.25rem; }
   .ot-menu { justify-self: start; }
-  .base-stack-layers > div { display: block; }
-  .base-stack-layers dd { margin-top: .2rem; }
+  .base-stack-diagram { grid-template-columns: 1fr; }
+  .base-stack-diagram > img { max-width: 17rem; }
   .ot-controls .base-screen figure { grid-template-columns: minmax(6rem, 39%) 1fr; align-items: start; }
   .ot-controls .base-lcd { padding: .3rem; }
 

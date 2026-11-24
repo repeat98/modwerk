@@ -86,7 +86,7 @@ it('shows a top-to-bottom stack with the original OS for the selected instrument
   await choose('Analog Rytm')
   expect(stack().textContent).toContain('OS 1.74')
   await choose('Others')
-  expect(stack().textContent).not.toContain('OS 1.74')
+  expect(container.querySelector('.base-stack')).toBeNull()
 })
 
 it('puts setup and recovery prerequisites before the optional Octatrack references', async () => {
