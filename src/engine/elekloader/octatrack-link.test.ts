@@ -414,6 +414,12 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
   })
+  it('says the saved modules are still loading when a sync comes before this start’s restore', async () => {
+    const { unit, link } = await linked()
+    unit.restoring = true // rejected with no loader refusal, the record's saved still 0
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/hasn’t loaded its saved modules yet, so nothing changed/)
+  })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')
     expect(inUseHint(['Tape Echo', 'Tape Echo'])).toBe(' Look for Tape Echo on the tracks.')
