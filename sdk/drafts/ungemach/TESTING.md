@@ -6,7 +6,14 @@ Everything here was observed by the author (GnocchiBalboa) and the coding agent 
 
 This version's source (commit 8a5d506a, `module/ungemach`) is the engine of the diagnostic build v68d with the measurement code compiled out; its output renders identically to v68 (see Host tests). On the author's live-set MKI, v68d was kept, played and measured (Performance below), and its sound accepted.
 
-On 24 November 2026 the release package of this source, `a8bcdca3`, was priced and qualified on the same MKI (CPU price and Qualification below). The package now carries that price in its descriptor (`reserved[0]` = 15), which is the only byte that differs: `37d7a278`. The power cycle after a Keep and a project opened without the module are still to run.
+On 24 November 2026 the release package of this source, `a8bcdca3`, was priced and qualified on the same MKI (CPU price and Qualification below). The package now carries that price in its descriptor (`reserved[0]` = 15), which is the only byte that differs: `37d7a278`. That package went through the persistence checks the same day (Persistence below).
+
+## Persistence
+
+Package `37d7a278`, the author's MKI, OS 1.40C, flashed base 0.7.10 (`6070a4e4`), 24 November 2026, observed by the author; the inventory was read over USB.
+
+- **Keep and power cycle:** kept with `device -- try --accept`. In a scratch project T1 was set to UNGEMACH, a pattern with trigs on T1 played and the drone sounded; Part and project were saved. After a power cycle the inventory still listed UNGEMACH (`ee55bea9`), the project loaded with T1 on UNGEMACH, and it played as before.
+- **The project without the module:** another project loaded, UNGEMACH removed with `device -- remove --accept` (inventory empty), then the scratch project loaded again without saving. The unit showed a message that UNGEMACH is missing, T1 read FLEX, the sequencer ran normally and T1 stayed silent (no sample on it).
 
 ## Units and base
 
@@ -27,7 +34,7 @@ The cleanup for this draft (removed measurement and PC-only code, unused tables,
 - **One track a Part** (package v32 `d3b5f1e4`, Probe-Octa, 19 November 2026): a second track shows UNGEMACH in the machine list but cannot pick it. After T1 went back to FLEX, T2 could pick it.
 - **Controls** (live-set unit, builds v60 to v68, 21-22 November 2026): every SRC knob and SPRD and PNCH were turned while the pattern played; parameter locks on PTCH ran on every trig; an LFO on DIRT moved it (the diagnostic log showed DIRT's range moving with it); a crossfader scene changing UNGEMACH parameters was moved and held. The author judged PNCH, WAVE, DIRT, RATE and DISS by ear and accepted v68's sound.
 - **Keeps:** each build was kept with `device -- try --accept` and played; the author replugged USB or power-cycled between builds when the bridge needed it.
-- **Not tested:** a project reloaded without the module, a power cycle after a Keep with the project reloaded, MIDI floods, and any MKII. Part and bank changes ran in `device:qualify` (below).
+- **Not tested:** MIDI floods and any MKII. Part and bank changes ran in `device:qualify`; the power cycle and a project without the module under Persistence (below).
 
 ## Performance on the live-set unit
 

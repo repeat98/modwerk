@@ -140,7 +140,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). The release package (24 November 2026, development twin 4c7eb79b): CPU price 14.1 points (15 %), first instance 14.6 % of a frame, admitted alone on an empty and a medium pattern with no dropped render, and device:qualify passed, Part and bank changes included. Not yet run: a project reloaded without the module, a power cycle after a Keep, and any MKII.",
+    "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). The release package (24 November 2026, development twin 4c7eb79b): CPU price 14.1 points (15 %), first instance 14.6 % of a frame, admitted alone on an empty and a medium pattern with no dropped render, and device:qualify passed, Part and bank changes included. Kept, it survived a power cycle with the saved project; with the module removed the project loaded with that track on FLEX and a missing-module message. Not run: any MKII.",
     "hardwareStatus": "reported",
     "evidenceRevision": "8a5d506a212947cff937536337247fe574be2d44",
     "gates": [
