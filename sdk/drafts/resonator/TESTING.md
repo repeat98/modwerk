@@ -12,11 +12,76 @@ The owner's Octatrack, OS 1.40C, Modwerk base e11525835106699a, 23 November 2026
 | four modes, CHRD, COLUN, TONE, SCALE (uncommitted; trial 261c20de) | 900 s | the owner played it | verdict: no crash, stall, freeze or skipped track. The owner: not user-friendly. COLUN's state unclear, TONE barely audible, no resonator types, SCALE and CHRD undescriptive, voice count unclear. This version answers each |
 | eight partials, TYPE and VOIC, DAMP on page 2 (2dbc0da58; trial 3511769c) | unplugged by the owner at about 493 s | the owner | the owner: TYPE belongs on page 2, DAMP on page 1, CHRD and COLUN need stepped and two-state switches, SCALE seemed to do nothing (with one voice it moves only the root), DAMP mostly duplicates DCAY. This version: DAMP gone (fixed damping), TONE on page 1, VOIC defaults to three voices, labels via #2084 |
 
-The base's refusal counter read 18 before the second trial and 19 before the third; its causes were not captured. The panel shows stepped knobs as numbers in a development package, which made the second trial hard to read.
+The "refusals" figure a trial prints is word 4 of the base's USB diagnostics: vendor requests the link refused, which grows with the tools' own traffic (it read 15,087 to 22,410 through the 24 November session), not a module refusal. The panel showed stepped knobs as numbers in a development package then; it shows their words now.
+
+## Test procedure on the unit, 24 November 2026
+
+The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin `8fd6d456` of base 0.8.1 (built from `9d5aec73a` with the beta base's flags and `--dev`), project Dev17, bank C: picks on the empty C02, readings on C04 at 126 BPM (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples), Part 1 equal to its saved copy, the scene Tape Echo 0.1.9's frame cost was read on. The package declares its measured cost (`npm run module:dev -- resonator --build-only --cycles 256 --cycles-kind executed --state 89`); a draft built with the builder's placeholder of 600 modeled cycles is refused at verify (loader refusal 6).
+
+**Build `9d5aec73a`, package `bcdf3d49b012`:** `npm run test:procedure -- resonator --package … --pick-pattern 2 --measure-pattern 4`, 427 s, steps 1 to 10 passed.
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Software checks | passed (`module:doctor --draft`) |
+| 2 | Beside every other module | judged by step 1 for a draft |
+| 3 | Name the build | passed |
+| 4 | DSP cost model | passed (`cycle-scan check`) |
+| 5 | Emulator rehearsal | not run: no emulator session; the unit steps ran directly |
+| 6 | Read the unit | passed: twin `8fd6d456`, nothing installed |
+| 7 | Scripted unit pass | passed: self-test with it installed (CPU peak 55.4 %, longest frame 400 us); alone on FX2 of T1 and T5 admitted in 118 ms (peaks 492 and 578 per mille of a frame); all eight at once while playing admitted (CPU 57.3 %, core peaks 723 and 825 per mille); 12 of 12 Part switches ran their own effects within 3 s |
+| 8 | Soak | passed: 2,400 operations in 122 s, no crash, stall or frozen frame. PROG CH RECV was on 16, so its program changes did nothing: the procedure's soak sends programs 0-3 (bank A) on channel 1, which would have left the unit in bank A for step 9 |
+| 9 | Cost on the unit | passed, below |
+| 10 | Put back | passed: the inventory as at the start |
+| 11 | Agent by hand | below |
+| 12 | Owner's stage | to do |
+
+Step 9, `device:price` on T1 FX2, 8 s a reading:
+
+| | Frame interrupt | CPU meter | DSP T1-4 | DSP T5-8 |
+|---|---|---|---|---|
+| Before | 38.3 % (longest 91.7 %) | 62.0 % | 36.4 % | 47.2 % |
+| Installed, used nowhere | +0 | -0.1 | +3.0 | -1.5 |
+| On T1 FX2 | +0.1 | +0.2 | +6.8 | +0.1 |
+
+Curve on T1, T3, T6 and T7: the longest frame moved -1.3, 0, -0.2 and -1.7 points, so rest 0, first 0, each 0: the work is on the DSP, none in the frame interrupt. Admission: alone on the empty pattern admitted (longest frame 39.6 %), on the medium one admitted (89.2 %), no dropped render, no stall. The figures for `resources.cpuPrice` and `evidence/` are read again with `device:price --write` once the module is listed (`--write` writes only to `sdk/octatrack/modules/`).
+
+Earlier runs of the same day, for the record: on C01, whose busiest step trigs all eight sample tracks, both solo picks were refused with CPU FULL, RESONATOR NEEDS +3 %: an effect `frame-costs.json` does not list is charged 3 % when it wakes, on a reserve of 101 % + 8 for a pattern that has not played, against the 110 % line. Once `first` = 0 is listed, that charge goes. Step 9 first failed because `device:price` ignored `MODWERK_DEV_SOCKET`, and a rerun stopped at step 7 because the previous soak's CCs had edited the Part (both reported with their fix in the tooling pull request).
+
+**Rebuild `2a622a8f5`, package `16600fb3681f`** (the COLUN switch's words, NOTE / COLUN; the DSP code is the same 1,511 words): the same command, 427 s, steps 1 to 10 passed. Step 7: self-test passed (CPU peak 54.8 %, longest frame 396 us); alone on FX2 of T1 and T5 admitted in 118 and 135 ms (peaks 415 and 495 per mille); all eight at once while playing admitted (CPU 56.9 %, core peaks 722 and 755 per mille); 12 of 12 Part switches. Step 8: 2,400 operations, passed. Step 9: frame interrupt +0 at rest and +0.1 in use, CPU meter +0.1 and -0.3; curve -2.5, +0.1, -1.9, -1.8, so rest 0, first 0.1, each 0; admitted on the empty (39.7 %) and the medium pattern (90.0 %), no dropped render, no stall. Step 10: the inventory as at the start.
+
+The DSP columns scatter between single 8-s readings: the two runs read +3.0 / +6.8 (at rest / in use) and -7.6 / +0.4 points on the instance's core for the same DSP code. One reading does not give the DSP cost; dsp_host's 250.8 executed instructions a sample at worst does, and the listing's `device:price --write` should take several readings.
+
+### By hand, in a 30-minute trial of `bcdf3d49b012`
+
+The trial ended with the verdict "no crash, stall, freeze or skipped track logged during the trial" and rolled back; the inventory was empty after it.
+
+- **Screens.** Chosen by the README's steps (FUNC + FX1, LEVEL to Resonator, YES). The main page reads PTCH, CHRD, DCAY / TONE, GAIN, MIX as the README says; stepped knobs show their words (CHRD MAJ, TYPE STRNG, VOIC 3, SCALE OFF). The COLUN switch drew OFF / ON in place of its name: it is the mode select, which names itself with its value, so `2a622a8f5` relabels it NOTE / COLUN, and in a trial of `16600fb3681f` the switch read NOTE, and COLUN when turned on. The chooser lists the draft as "Resonator", in mixed case; to check on the listed build.
+- **MAIN over USB.** 15 s of C04 with Resonator on T2 FX1, recorded on Windows (`sounddevice`, WDM-KS): peaks -14.6 and -13.7 dBFS, no run of exact zeros inside sound, no 16-64-sample block played twice. CUE was not recorded: Windows opened the Octatrack's input only as two channels (WASAPI's 20-channel input refused the format).
+- **DSP frame gap** 395-418 us after every case below (normal 380-420).
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Alone on FX2 of T1 and of T5 (both DSP cores) | its code and 89 state words on either core | step 7 | pass |
+| Eight at once while playing | eight 1,511-word copies and their DSP load | step 7 | pass: all admitted, CPU 57.3 % |
+| FX1 and FX2 of one track (T2) | two state blocks side by side | picked, played 5 s, `health` | pass |
+| DCAY, GAIN and MIX at 127, four voices, a second Resonator on FX2 | the loudest ring and the soft clip | played 10 s, MAIN recorded | pass: peaks -4.1 / -3.8 dBFS (the clip's ceiling), no sample at full scale, no zeros or repeats |
+| TYPE, VOIC and COLUN switched while ringing | a voice retunes one partial a block | encoders while playing | pass |
+| Pattern changes while ringing: C04, C03, C01 (all eight tracks), C04 | tails across patterns, the busy pattern | PATTERN + TRIG while playing | pass: CPU 57-62 % |
+| CHRD locked on steps 5 and 9, PTCH on step 13 | stepped selects locked per trig | grid recording, played 8 s | pass (the locks drew inverted; the sound is the owner's to judge) |
+| FILTER picked over a ringing Resonator, then Resonator again | its state starts from zero on a new pick | picks while playing | pass, 116-118 ms each |
+| MIX and DCAY locked in scene A, crossfader swept | knobs morph between scenes | fader sweeps while playing | pass |
+| Soak with it in use: T2 FX1 and FX2, T4 FX1, T6 FX2; programs C01, C03, C04, C05 on channel 1 | transitions with four instances running | `octatrack-soak.mjs --programs 32,34,35,36 --pc-channel 1`, 120 s | pass: 2,400 operations, 252 pattern changes (124 a minute), CPU at most 75.2 % |
+| The trial ends | the rollback with instances on four slots, and while one rings | the 1,800 s trial of `bcdf3d49b012` expired (stopped, four slots); a 150 s trial of `16600fb3681f` expired while C04 played with DCAY at 127 on T2 | pass: both rolled back with a clean verdict, the inventory empty and the slots NONE. The rollback stopped the transport |
+| LFO on MIX, DCAY and TONE | modulation of continuous knobs | | not run: assigning an LFO by remote keys was not verified on screen |
+| MIX 0 bit-exact on the unit | passthrough | | not run on the unit: MAIN carries every track; verify.py proves it in dsp_host |
+| Beside Analog BD | DSP space on a card build | | not run: a card build; over USB step 7's admission covers it |
+| MKI | | | not run: no MKI here |
+
+Left for the owner at the unit: how it sounds and plays (chords, bodies, Colundi, TONE), the locked chords and the scenes by ear, two instances with different settings, MIDI, and a Part save and reload, a project save and reload, and the Keep with a power cycle: what survives.
 
 ## Stock flows
 
-Not tested. The module patches no stock code and claims no keys or screens; the effect chooser, parameter locks and Part saves still need a run on a unit.
+The module patches no stock code and claims no keys or screens. The effect chooser, parameter locks, scenes and Part switches ran on the unit (above); Part and project saves are the owner's stage.
 
 ## Render gate (verify.py)
 
