@@ -45,6 +45,69 @@ export function unpack7(bytes: ArrayLike<number>): number[] {
   for (let i = 0; i < bytes.length; i += 8) for (let j = 1; j < 8 && i + j < bytes.length; j++) out.push(bytes[i + j] | (bytes[i] & (1 << (7 - j)) ? 0x80 : 0))
   return out
 }
+/** Current edit buffer on the original MS-70CDR. The query alone leaves the active patch in place. */
+export const CURRENT_PATCH = { request: 0x29, reply: 0x28, edit: 0x50 } as const
+export const isCurrentPatchReply = (m: number[], deviceId: number) =>
+  deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && m.length === 146 &&
+  m[0] === 0xf0 && m[1] === 0x52 && m[2] === 0 && m[3] === deviceId && m[4] === CURRENT_PATCH.reply &&
+  m[145] === 0xf7
+
+export type ZoomPatchSlot = { index: number; gid: number; fxid: number; enabled: boolean; values: number[] }
+export type ZoomCurrentPatch = { name: string; slots: ZoomPatchSlot[] }
+export type ZoomPatchChange = { slot: number; parameter: number; value: number } | { slot: number; enabled: boolean }
+
+// Unpacking the SysEx collectors leaves the same little-endian bit fields in each 18-byte slot.
+const PATCH_CONTROLS = [[29, 12], [42, 11], [55, 11], [68, 8], [76, 8], [84, 8], [92, 8], [100, 9], [128, 8]]
+
+export function zoomPatchParameterMax(slot: number, parameter: number): number {
+  // The high bit of the ninth knob in slot 5 is unverified. Preserve it.
+  const width = slot === 4 && parameter === 8 ? 7 : PATCH_CONTROLS[parameter]?.[1] ?? 0
+  return (1 << width) - 1
+}
+
+/** Overlay changed fields on a fresh reply, preserving the name, IDs and unmodelled bytes. */
+export function editCurrentPatch(message: number[], changes: readonly ZoomPatchChange[]): number[] {
+  const patch = parseCurrentPatch(message)
+  if (!patch) throw new Error('The pedal did not return its active patch.')
+  const raw = unpack7(message.slice(5, -1))
+  for (const change of changes) {
+    if (!patch.slots.some(slot => slot.index === change.slot)) throw new Error('The effect slot is no longer in the active patch.')
+    const parameter = 'parameter' in change ? PATCH_CONTROLS[change.parameter] : undefined
+    const value = 'value' in change ? change.value : Number(change.enabled)
+    const max = 'parameter' in change ? zoomPatchParameterMax(change.slot, change.parameter) : 1
+    if (('parameter' in change && !parameter) || !Number.isInteger(value) || value < 0 || value > max) {
+      throw new Error('The parameter value does not fit this patch slot.')
+    }
+    const bit = parameter?.[0] ?? 0
+    const at = change.slot * 18 + (bit >> 3), shift = bit & 7, mask = max << shift
+    const current = raw[at] | raw[at + 1] << 8 | raw[at + 2] << 16
+    const updated = (current & ~mask) | (value << shift)
+    raw[at] = updated & 255
+    raw[at + 1] = (updated >> 8) & 255
+    raw[at + 2] = (updated >> 16) & 255
+  }
+  return [...message.slice(0, 5), ...pack7(raw), 0xf7]
+}
+
+export function parseCurrentPatch(m: number[]): ZoomCurrentPatch | undefined {
+  if (!isCurrentPatchReply(m, ZOOM_DEVICE_IDS['zoom-ms-70cdr']) || m.slice(5, -1).some(byte => byte < 0 || byte > 127)) return undefined
+  const raw = unpack7(m.slice(5, -1))
+  const name = String.fromCharCode(...raw.slice(111, 121)).replace(/[^ -~]/g, ' ').trimEnd()
+  const count = (raw[109] >> 2) & 7
+  if (count > 6) return undefined
+  const slots: ZoomPatchSlot[] = []
+  for (let index = 0; index < count; index++) {
+    const read = (at: number, width: number) => {
+      const byte = 18 * index + (at >> 3)
+      return ((raw[byte] | raw[byte + 1] << 8 | raw[byte + 2] << 16) >>> (at & 7)) & ((1 << width) - 1)
+    }
+    const gid = read(25, 4), fxid = read(1, 10)
+    if (!gid && !fxid) continue
+    slots.push({ index, gid, fxid, enabled: !!read(0, 1), values: PATCH_CONTROLS.map(([offset, width]) => read(offset, width)) })
+  }
+  return { name, slots }
+}
+
 export function crc32(bytes: ArrayLike<number>): number {
   let c = 0xffffffff
   for (let i = 0; i < bytes.length; i++) { c ^= bytes[i]; for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1 }
@@ -226,9 +289,12 @@ export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && UPDATE_MO
 /** Where the base may be flashed: an MS-70CDR in update mode. The base is built from the MS-70CDR's OS, and the
  * modding guidelines allow no firmware flips, so another pedal in update mode is refused. */
 export const canFlashBase = (identity?: ZoomIdentity) => isUpdateMode(identity) && identity!.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr']
-/** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, or on
- * the base (Zoom's 2.10, patched). Every other pedal or firmware is only read. */
-export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag)
+/** D004 adds loader diagnostics to M201 and uses the same effect file service. */
+export const ZOOM_FILE_WRITE_REQUIREMENT = 'Effect file changes require the MS-70CDR with Zoom 2.10, MIDISTOMP 2.0.1, or development build D004.'
+/** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, on the base
+ * (Zoom's 2.10, patched), or on development build D004. Every other pedal or firmware is only read. */
+export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] &&
+  (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag || identity.firmware === 'D004')
 /** The bootloader's answer to a flash command: F0 52 00 <id> 00 <status> F7, 00 done, 08 a write's checksum failed. */
 export const isFlashReply = (m: number[], deviceId: number) => m.length === 7 && m[1] === 0x52 && m[3] === deviceId && m[4] === 0x00
 export const FLASH_OK = 0x00, FLASH_BAD_CRC = 0x08
