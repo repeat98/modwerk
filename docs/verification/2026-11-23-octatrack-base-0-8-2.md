@@ -49,3 +49,16 @@ the ten minutes after (#1985's symptom: about one RAM boot in three on 22 Novemb
   0.8.2 twins), and a byte check of the recorded buffers.
 - A RAM boot of the release image `6852c1ff`, a trial on it, a Keep, a power cycle and a flash.
 - The unit was left off USB after the 0.8.1 twin's RAM boot; a power cycle returns it to the flashed 0.8.
+
+## 24 November 2026: the boot stub with the late-combine guard (#2028)
+
+`build_stub.py` now compiles `stub.s`, `stub.c` and `slots.c` one by one with `-fno-late-combine-instructions` and runs
+`check_mcf54455` on the two C objects, as every other ColdFire C compile of the base does. The stub's code is 890 bytes
+(was 900), `stub_body.c` `5be076c9…` (was `89b61a6d…`); `STUB_VERSION` stays 1, so units already on two slots keep their
+stub and only a unit converted from this base on gets the new one.
+
+- Release 0.8.2 rebuilt: base `c5791ec973ba6e76…` (was `6852c1ff`); browser = native `.bin` `a9d3c56a082c1513…`
+  (831,484 bytes); MAIN 1,348,058 bytes (12 fewer). Base-bound packages relinked with unchanged bytes.
+- Emulator: `check_stub.py` passed all six slot states on #2028's build (its description has the record).
+- Not run on a unit: a two-slot conversion writes the stub to NOR at `0x4000` and only a cold start runs it. The A/B and
+  release-image steps above now apply to `c5791ec9` instead of `6852c1ff`.
