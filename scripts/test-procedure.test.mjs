@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, LAYER, plan, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
+import { context, LAYER, largeSet, plan, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -12,7 +12,7 @@ const moduleCtx = (extra = {}) => ({ kind: 'module', id: 'vibrato', version: '0.
   unit: { available: true }, files: [], manifest: { category: 'effects', compatibility: { effectId: 9, uiClaims: [] } }, ...extra })
 
 /** Fake tools: every command passes and device.mjs's inventory prints the same set, unless `fail` or `inventories` say otherwise. */
-function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['link: 1\nlabel: FLSH', 'link: 1\nlabel: FLSH'], files = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)' } = {}) {
+function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['link: 1\nlabel: FLSH', 'link: 1\nlabel: FLSH'], files = {}, said = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)' } = {}) {
   const ran = [], started = [], envs = []
   let clock = 0, inventory = 0, ident = 0
   return {
@@ -27,7 +27,8 @@ function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['
       envs.push(env)
       if (argv[2] === 'unit' && files.onQueue) files.onQueue(argv)
       const code = fail.some(part => line.includes(part)) ? 1 : 0
-      return { code, output: line.endsWith('do inventory --socket /tmp/share.sock') ? inventories[inventory++] : line.endsWith('rytm_link.py ident') ? idents[ident++] : 'ok' }
+      const output = Object.entries(said).find(([part]) => line.includes(part))?.[1]
+      return { code, output: output ?? (line.endsWith('do inventory --socket /tmp/share.sock') ? inventories[inventory++] : line.endsWith('rytm_link.py ident') ? idents[ident++] : 'ok') }
     },
     start: argv => {
       started.push(argv.join(' '))
@@ -53,7 +54,7 @@ describe('the steps', () => {
       'node scripts/device.mjs status --socket /tmp/share.sock',
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
       'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md --soak 120 /out/vibrato.mwrm',
-      expect.stringMatching(/^npm run device:price -- --share \/tmp\/share.sock --out \/out\/price.json --scene .+ \/out\/vibrato.mwrm$/),
+      expect.stringMatching(/^npm run device:price -- --share \/tmp\/share.sock --out \/out\/price.json --scene .+ --curve T1,T3,T6,T7 \/out\/vibrato.mwrm$/), // the curve and the admission run
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
     ])
     expect(statuses(steps)).toEqual({ software: 'passed', compat: 'passed', build: 'passed', 'cost-model': 'not run', emulator: 'not run', 'unit-read': 'passed',
@@ -120,10 +121,23 @@ describe('the steps', () => {
     const ctx = moduleCtx({ kind: 'base', id: undefined, machine: 'octatrack', version: '0.7', pkg: '/r/octatrack-base.elemod', setPackages: ['/p/a.mwrm', '/p/b.mwrm'] })
     const steps = await runProcedure(ctx, deps)
     expect(deps.ran.slice(0, 2)).toEqual(['npm run sdk:check', 'npm run modules:compat'])
-    expect(deps.ran).toContain('node scripts/device.mjs set /p/a.mwrm,/p/b.mwrm --seconds 30 --socket /tmp/share.sock')
+    expect(deps.ran).toContain('node scripts/device.mjs set /p/a.mwrm,/p/b.mwrm --seconds 30 --split --socket /tmp/share.sock')
     expect(deps.ran.find(line => line.startsWith('npm run device:price'))).toMatch(/--scene .+[^m]$/) // no package named: every USB package
     expect(steps.find(step => step.id === 'unit-pass').title).toBe('Large set and Undo')
     expect(steps.find(step => step.id === 'soak')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/#1770/) })
+  })
+
+  it('takes the large set without declared conflicts, either way, and without base-bound packages', () => {
+    const conflicts = { kits: ['pattern-sample-locks'], synth: ['analog-bassdrum', 'quantizer'], vector: ['analog-bassdrum', 'synth'] }
+    const rows = ['kits', 'pattern-sample-locks', 'synth', 'quantizer', 'vector', 'tuner'].map(id => ({ id }))
+    expect(largeSet([...rows, { id: 'analog-bassdrum', requiredBase: 'ab' }], id => conflicts[id] ?? []).map(row => row.id)).toEqual(['kits', 'synth', 'tuner'])
+  })
+
+  it('fails the large set when the unit refuses it, although device.mjs exits 0', async () => {
+    const refusal = 'set: 3 changes, 9 bytes\nrefused: Device refused verify: rejected. (loader refusal 3 RUNTIME_CONFLICT: …)\ninstalled: none'
+    const deps = fakeDeps({ said: { 'device.mjs set': refusal } })
+    const steps = await runProcedure(moduleCtx({ kind: 'base', id: undefined, version: '0.8.1', pkg: '/r/octatrack-base.elemod', setPackages: ['/p/a.mwrm'] }), deps)
+    expect(steps.find(step => step.id === 'unit-pass')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/^refused: .*RUNTIME_CONFLICT/) })
   })
 
   it('runs the unit steps as one turn of the unit queue when the repository has one', async () => {

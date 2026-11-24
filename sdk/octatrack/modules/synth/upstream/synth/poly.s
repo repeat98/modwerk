@@ -347,7 +347,7 @@ sy_render:
         | engine here, this is mostly the next frame's first call of such a track. d0, d1, a0, a1 are the caller's scratch.
         move.l  4(%sp),%d0               | track
         bsr     fm_fr_native             | a0 := the frame's reads
-        bne     sy_full
+        bne     sy_native
         tst.b   FR_GLIDE(%a0)
         bne     sy_full                  | GLIDE on: a sample's pitch slides (sy_sample)
         move.l  4(%sp),%d0
@@ -363,6 +363,49 @@ sy_render:
 sy_fast:
         bset    %d0,FR_STALE(%a0)        | S_CUR no longer follows this track's pitch (sy_sample snaps it)
         jmp     STOCK_RENDER
+| Modwerk 0.1.5: an FM track with no voice of ours (S_ON 0, FR_ON its mirror: no trig yet, or killed), GLIDE off,
+| on a call that starts none. The full path would only write the record's PTCH word back as it is (sy_sample's
+| snap) and ship this call's silence as fm_clear_source does, so this ships the same silence and returns. S_CUR is
+| not followed: every synth START sets it (sy_synth). FM_NO_SILENT assembles the full path alone (test_silence.py).
+sy_native:
+        .ifndef FM_NO_SILENT
+        move.l  4(%sp),%d0
+        btst    %d0,FR_ON(%a0)
+        bne     sy_full                  | a voice of ours is on
+        tst.b   FR_GLIDE(%a0)
+        bne     sy_full                  | GLIDE on: sy_sample's slide writes the record's word
+        moveq   #16,%d1
+        cmp.l   16(%sp),%d1              | the frame's second call?
+        bne.s   sy_quiet
+        lea     NIBBLE,%a1
+        lea     (%a1,%d0.l),%a1
+        btst    #4,(%a1)
+        bne     sy_full                  | a voice starts
+sy_quiet:
+        movea.l CURSOR,%a1               | the header this call writes, as fm_clear_source writes it
+        move.l  12(%sp),%d0              | start
+        move.l  %d0,4(%a1)               | source ring write position
+        move.l  #0x04000000,%d1
+        move.l  %d1,8(%a1)               | source rate 1.0, Q26
+        move.l  %d0,%d1
+        swap    %d1
+        lsl.l   #8,%d1
+        lsl.l   #2,%d1
+        move.l  %d1,12(%a1)              | source read position, Q26 (start << 26)
+        move.l  16(%sp),%d1
+        sub.l   %d0,%d1
+        move.l  %d1,(%a1)                | source count
+        lea     16(%a1),%a1
+        tst.l   %d1
+        beq.s   2f
+1:      clr.l   (%a1)+                   | L
+        clr.l   (%a1)+                   | R
+        subq.l  #1,%d1
+        bne.s   1b
+2:      move.l  %a1,CURSOR
+        moveq   #0,%d0
+        rts
+        .endif
 sy_full:
         lea     -48(%sp),%sp
         movem.l %d2-%d7/%a2-%a6,(%sp)    | 44(sp) the stock return; args 52 track, 56 ping, 60 start, 64 end
@@ -649,6 +692,24 @@ sy_machine:
 
 | ---- the mono voice's frame: the rate, as the stock renderer computes it -----
 sy_mono_frame:
+        .ifndef FM_NO_SILENT
+| Modwerk 0.1.5: a released mono voice of an FM track at silence (S_GAIN and S_GPREV 0) with no paraphonic voice
+| fading under it. The rest of the full path would only advance state the next START resets (it is cold: S_GPREV 0,
+| sy_cold1) and ship zeros over the silence fm_clear_source already wrote, so it ends here, every write the DSP sees
+| (the AMP override, the LEG lane byte, the record's PTCH and RATE words, the header) done as before. A legacy
+| marker's track keeps the full path: there the stock call shipped the sample's own samples.
+        btst    #1,S_ON(%a3)
+        beq.s   sy_mf_full
+        tst.l   S_GAIN(%a3)
+        bne.s   sy_mf_full
+        tst.w   S_GPREV(%a3)
+        bne.s   sy_mf_full
+        bsr     fm_native_fr             | track d2 (every other register kept)
+        beq.s   sy_mf_full
+        bsr     po_any                   | fading voices (clobbers d0, d1, a0)
+        beq     sy_done
+sy_mf_full:
+        .endif
         bsr     po_fade_frame            | paraphonic voices fading under the mono voice: their envelope (BUILD 32)
         bsr     po_rate_fold             | d0 = the increment for the word d6, any octave (clobbers d0/d1/d3/d4/d7/a0)
         cmpi.l  #INC_MAX,%d0             | safety net: an impossible pitch (a word off the curve's
@@ -951,6 +1012,17 @@ po_tk_step:
         blt     po_tk_done
         move.l  %d3,CK_FPS(%a0)
 po_tk_done:
+        rts
+
+| ---- po_rebase: the frame after a rest (this site held stock's bytes, po_tick missed frames): the step change it
+| would measure across them is dropped (negative: po_tick's plausibility test) and the next whole step measured.
+| Clobbers d1, a0.
+po_rebase:
+        clr.b   (fm_fr+FR_REBASE).l
+        lea     po_clock(%pc),%a0
+        move.l  CK_FRAMES(%a0),%d1
+        addi.l  #0x40000000,%d1
+        move.l  %d1,CK_FSTEP(%a0)
         rts
 
 | ---- po_rate: d0 := C4_INC * rate, the rate as the stock renderer computes it ----
@@ -2641,7 +2713,10 @@ po_l3b_three:
         move.l  %a4,%d1
         subi.l  #LFO_STATE,%d1           | 8 * track
         bne.s   po_l3b_depth
-        bsr     po_tick                  | track 0, LFO 3: the clock, once a frame (clobbers d1, d3, a0)
+        tst.b   (fm_fr+FR_REBASE).l      | Modwerk 0.1.5: FM Synth woke from a rest (registration.c fm_in_use)
+        beq.s   1f
+        bsr     po_rebase
+1:      bsr     po_tick                  | track 0, LFO 3: the clock, once a frame (clobbers d1, d3, a0)
         bsr     fm_frame                 | ... and the frame's masks (clobbers d1, d3, a0)
         moveq   #0,%d1                   | track 0
 po_l3b_depth:
@@ -5522,14 +5597,17 @@ fm_is_native:
         .set    FR_GLIDE, 6              | the GLIDE byte
         .set    FR_STALE, 7              | bit t: stock rendered track t alone since S_CUR was last set
         .set    FR_ON, 8                 | bit t: S_ON of track t is nonzero (written where S_ON is: sy_set, po_kill)
-        .set    FR_SAMPLE, 9             | bit t: a sample track the engine may play or slide (see fm_frame)
+        .set    FR_PENDING, 9            | routed STARTs this frame (fm_frame; 0.1.5 keeps #1928's faster fm_frame)
+        .set    FR_IDLE, 10              | nonzero: fm_in_use answered 0 (FM Synth may rest)
+        .set    FR_REBASE, 11            | nonzero: fm_in_use woke it, po_l3b_three drops the clock's next step
+        .global fm_fr                    | registration.c fm_in_use writes FR_IDLE and FR_REBASE
         .balign 16
 fm_fr:
         .long   0
         .byte   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 | fm_frame: the frame's masks. Track t goes to the engine this frame (FR_ROUTE) when it is an FM track (FR_NAT), or a
-| sample track (FR_SAMPLE) while GLIDE is on (its pitch may slide: sy_sample), while a voice of ours still plays on it
+| sample track while GLIDE is on (its pitch may slide: sy_sample), while a voice of ours still plays on it
 | (FR_ON: a legacy FMSYNTH* sample playing as FM) or when a voice starts on it this frame (sy_render resolves a
 | legacy marker and frees what the track held, as at every START before). A sample track is STATIC, or FLEX without
 | another machine's signature: such a track's render is that machine's (the base's registry), so it never comes here.
@@ -5546,25 +5624,45 @@ fm_fr:
 | sy_fast did). Clobbers d1, d3, a0; d0, d2, d4, a1 kept.
         .balign 16
 fm_frame:
-        lea     -24(%sp),%sp
-        movem.l %d0/%d2/%d4/%a1,8(%sp)   | 0(sp): eight bytes of scratch
         lea     fm_fr(%pc),%a0
         mvz.b   GLIDE_AT,%d1
         move.b  %d1,FR_GLIDE(%a0)
-        move.l  NIBBLE,%d0               | the packer's event bytes
-        move.l  %d0,(%sp)
-        move.l  NIBBLE+4,%d0
-        move.l  %d0,4(%sp)
-        moveq   #0,%d3                   | the tracks a voice starts on
-        moveq   #7,%d4
-.ff_start:
-        mvz.b   (%sp,%d4.l),%d0
-        btst    #4,%d0
-        beq     .ff_nostart
-        bset    %d4,%d3
-.ff_nostart:
-        subq.l  #1,%d4
-        bpl     .ff_start
+        move.l  NIBBLE,%d3
+        or.l    NIBBLE+4,%d3
+        andi.l  #0x10101010,%d3
+        bne.s   .ff_has_starts
+        tst.b   %d1
+        bne.s   .ff_active_no_start
+        tst.b   FR_NAT(%a0)
+        bne.s   .ff_active_no_start
+        tst.b   FR_ON(%a0)
+        bne.s   .ff_active_no_start
+        clr.b   FR_ROUTE(%a0)
+        clr.b   FR_PENDING(%a0)
+        move.b  #-1,FR_STALE(%a0)
+        rts
+.ff_has_starts:
+        lea     -24(%sp),%sp
+        movem.l %d0/%d2/%d4/%a1,8(%sp)
+        move.l  #0x08040201,%d2         | map bits 24,16,8,0 to 24,25,26,27
+        moveq   #24,%d4
+        move.l  NIBBLE+4,%d3            | tracks 5-8
+        andi.l  #0x10101010,%d3
+        lsr.l   #4,%d3
+        mulu.l  %d2,%d3
+        lsr.l   %d4,%d3
+        lsl.l   #4,%d3
+        move.l  NIBBLE,%d0              | tracks 1-4
+        andi.l  #0x10101010,%d0
+        lsr.l   #4,%d0
+        mulu.l  %d2,%d0
+        lsr.l   %d4,%d0
+        or.l    %d0,%d3
+        bra.s   .ff_started
+.ff_active_no_start:
+        lea     -24(%sp),%sp
+        movem.l %d0/%d2/%d4/%a1,8(%sp)
+.ff_started:
         mvz.b   FR_NAT(%a0),%d0          | the tracks read: FM last frame, a voice of ours on, a start, GLIDE: all
         or.l    %d3,%d0
         mvz.b   FR_ON(%a0),%d1
@@ -5633,7 +5731,6 @@ fm_frame:
         bpl     .ff_track
 .ff_done:
         move.b  %d2,FR_NAT(%a0)
-        move.b  %d3,FR_SAMPLE(%a0)
         moveq   #-1,%d1                  | GLIDE on: every sample track
         tst.b   FR_GLIDE(%a0)
         bne     .ff_route
@@ -5644,10 +5741,14 @@ fm_frame:
         and.l   %d3,%d1
         or.l    %d2,%d1
         move.b  %d1,FR_ROUTE(%a0)
+        move.b  (%sp),%d0                | a first FLEX trigger can carry a legacy sample lock
+        and.l   %d1,%d0
+        move.b  %d0,FR_PENDING(%a0)
         not.l   %d1
         mvz.b   FR_STALE(%a0),%d0
         or.l    %d1,%d0
         move.b  %d0,FR_STALE(%a0)
+.ff_return:
         movem.l 8(%sp),%d0/%d2/%d4/%a1
         lea     24(%sp),%sp
         rts

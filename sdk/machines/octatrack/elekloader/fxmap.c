@@ -237,6 +237,8 @@ volatile uint32_t modwerk_fxmap_read, modwerk_fxmap_written; /* lines the last l
 volatile uint32_t modwerk_fxmap_machines_read, modwerk_fxmap_machines_written; /* the same for '#MODWERK_MC=' lines */
 /* Nonzero from the loader's first pass until the load's end has sealed its map: the tracks may already run the loading
  * project's handles under the last project's map (dsp.c's MISSING popup waits). Another task reads it. */
+/* A completed project read, including a legacy project with no handles. A failed read keeps the old Part. */
+volatile uint32_t modwerk_project_loaded;
 static volatile int loading;
 int modwerk_fxmap_loading(void) { return loading; }
 void modwerk_fxmap_begin(uint32_t storing)
@@ -300,6 +302,7 @@ void modwerk_fxmap_loaded(int32_t result)
                 put(&MAP->e[modwerk_fx_legacy[i].id], modwerk_fx_legacy[i].module, 0, modwerk_fx_legacy[i].name);
     }
     seal();
+    ++modwerk_project_loaded;
     loading = 0; /* after the seal: a tick between would see the old generation and a half-written map */
 }
 /* One line per handle the project uses: "#MODWERK_FX=27:873d83cc:1:E-Verb\r\n". */

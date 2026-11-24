@@ -22,8 +22,8 @@
  *          many bytes from there, for the host to decode the UI (device.mjs ui). Read-only, and
  *          only RAM the base knows is RAM: the OS image and base, stock's variables, the
  *          0x80000000 block and battery RAM. Anything else is not answered.
- *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
- *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
+ *   ADOPT  0xC1, bRequest 43, wValue 1 or 0, wLength 1: from the next start on, this
+ *          base restores the card's set another base wrote, and writes no set (1), or not (0).
  *
  * Replies are never a whole number of 64-byte packets (vendor.h). */
 #include "boot.h"
@@ -41,7 +41,6 @@ int modwerk_dsp_meter_read(unsigned core, unsigned first, unsigned words);
 extern volatile uint32_t modwerk_dsp_missing;
 #endif
 
-#define UNCACHED(p) ((uint8_t *)((uintptr_t)(p) + 0x08000000u))
 
 static uint32_t mem_high;
 static int ram(uint32_t at, uint32_t n)
@@ -51,17 +50,6 @@ static int ram(uint32_t at, uint32_t n)
     for (unsigned i = 0; i < 4u; ++i) if (at >= spans[i][0] && at + n <= spans[i][1] && at + n > at) return 1;
     return 0;
 }
-/* One 4 KiB page: usb_ep0_send fills only the first page of its descriptor. */
-static uint8_t screen[1028] __attribute__((aligned(2048)));
-
-/* ev_draw, after the modules' own drawing (order 95). */
-void modwerk_dev_draw(unsigned char *frame);
-void modwerk_dev_draw(unsigned char *frame)
-{
-    uint8_t *s = UNCACHED(screen);
-    for (unsigned i = 0; i < 1024; ++i) s[4 + i] = frame[i];
-}
-
 /* From ep0.c's unknown-request tail, for requests the transport stalls: a
  * reply length with *reply set, or 0 when the request is not one of these. */
 uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *out);
@@ -104,6 +92,14 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
                                                             * leaves it, blaming its first package (1) or none (0) */
         void modwerk_modset_guard_test(unsigned blame);
         modwerk_modset_guard_test(s[2]);
+        out[0] = 1;
+        *reply = out;
+        return 1;
+    }
+    if (s[1] == 43 && want == 1 && s[2] <= 1u && !s[3]) { /* ADOPT TEST: from the next start on (1) or not (0), modset.c
+                                                            * restores the card's set another base wrote, and writes none */
+        void modwerk_modset_adopt_test(unsigned on);
+        modwerk_modset_adopt_test(s[2]);
         out[0] = 1;
         *reply = out;
         return 1;
@@ -221,6 +217,17 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 28;
     }
+    if (s[1] == 42 && want == 20u && s[2] <= 2u && !s[3]) { /* LATE: the late-entry wait (machine_registry.c); wValue 1 turns it
+                                                              * off, 2 on (0 keeps it): since the last read the latest entry,
+                                                              * the entries in the window, the waits, the longest; whether on */
+        extern volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max, mw_late_wait_on;
+        if (s[2]) mw_late_wait_on = s[2] - 1u;
+        uint32_t v[5] = {mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max, mw_late_wait_on};
+        mw_late_max = mw_late_hits = mw_late_waits = mw_late_wait_max = 0;
+        for (unsigned i = 0; i < 20u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
+        *reply = out;
+        return 20;
+    }
     if (s[1] == 30 && want == 76u) { /* CPU: the CPU budget (machine_registry.c); wValue its allowance in percent of a frame
                                         * (0 keeps it): the allowance, what the Part books, the tracks refused; then since
                                         * the last read each guarded render's longest time (track's first pass, then second) */
@@ -271,11 +278,5 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         return 4u * DSP_REPORT_WORDS;
     }
 #endif
-    if (s[1] == 7 && want == sizeof screen && !s[2] && !s[3]) {
-        uint8_t *u = UNCACHED(screen);
-        u[0] = 'M'; u[1] = 'W'; u[2] = 'L'; u[3] = 'C';
-        *reply = u;
-        return sizeof screen;
-    }
     return 0;
 }

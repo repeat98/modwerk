@@ -1,0 +1,1 @@
+Octatrack base 0.8.1: the beta base builds its USB input package again. Its reviewed recipe still pinned the event header from before base 0.8; the refreshed recipe rebuilds the same package as the one tested on a unit on 21 November, and a new check fails whenever a USB Audio recipe pins a file that has since changed.

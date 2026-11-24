@@ -17,9 +17,12 @@ Where the MS-70CDR stands on the stack every machine gets
   also run without it, on Zoom's 2.10.
 - **USB link:** Web MIDI with the pedal's own file commands
   (`src/engine/zoom/zoom-link.ts`): list, back up, install, remove; the base
-  flash in update mode.
+  flash in update mode. With `--zoom-midi` alone, the developer MCP's
+  shared `device_status` and `device_load` use this link.
 - **Loading:** an effect is a file written to the pedal and added to its
-  effect list; a power cycle loads it. Loading without a reboot is not built.
+  effect list; a power cycle loads it. The next loader milestone is one
+  RAM-only effect trial on the development base, with the original chain and
+  files verified after Undo and a separate unkept trial followed by a reboot.
 - **Modules:** `sdk/zoom/modules/<id>/`, one folder per effect for the whole
   ZDL family, each naming the pedal it is developed on and every pedal's
   tested status.
