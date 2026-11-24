@@ -222,15 +222,15 @@
       "machine": true,
       "abi": 8,
       "features": 131,
-      "sites": 9,
-      "copies": 6,
+      "sites": 7,
+      "copies": 5,
       "fills": 0,
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "name": "Scale Quantizer",
       "module": "7e9d5687",
-      "bytes": 7210,
-      "sha256": "33700b9339c0d0e619716cf6358ac83c9912c9881e30721411d2bf79897bbe04",
-      "path": "octatrack-modules/quantizer/0.1.4-experimental.mwrm"
+      "bytes": 7038,
+      "sha256": "092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50",
+      "path": "octatrack-modules/quantizer/0.1.5-experimental.mwrm"
     },
     {
       "id": "tapeecho",
@@ -322,12 +322,12 @@
       "sites": 14,
       "copies": 9,
       "fills": 0,
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2754,
-      "sha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
-      "path": "octatrack-modules/mute-modes/0.2.2-experimental.mwrm"
+      "bytes": 2922,
+      "sha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+      "path": "octatrack-modules/mute-modes/0.2.3-experimental.mwrm"
     },
     {
       "id": "sidechain-compressor",

@@ -2321,6 +2321,20 @@ qz_wr:
         mvz.b   NV_AOFF,%d0             | (2.19)
         lea     qz_fmt5(%pc),%a0
         jbsr     qz_wr_line
+        .ifndef HAVE_SYNTH
+        .set    HAVE_SYNTH, 0
+        .endif
+        .if HAVE_SYNTH
+| (2.23) FM SYNTH's comment line (synth/tools/migration_io.h), here inside stock's own rewrite
+| once its lock files' checkpoints are durable, so the save needs no second rewrite to add it.
+        jsr     fl_mig_marker_due:l
+        tst.l   %d0
+        jbeq     qz_wr_nomark
+        moveq   #1,%d0
+        lea     qz_fmt6(%pc),%a0
+        jbsr     qz_wr_line
+qz_wr_nomark:
+        .endif
         mvs.b   0x8000004f,%d1          | displaced
         move.l  %d1,-(%sp)              | displaced
         jmp     0x400888b2
@@ -2349,6 +2363,7 @@ qz_key4:        .asciz  "#SEQUENCER_MIDI_SCALE_OFF="
 qz_fmt4:        .asciz  "#SEQUENCER_MIDI_SCALE_OFF=%d\r\n"
 qz_key5:        .asciz  "#SEQUENCER_AUDIO_SCALE_OFF="
 qz_fmt5:        .asciz  "#SEQUENCER_AUDIO_SCALE_OFF=%d\r\n"
+qz_fmt6:        .asciz  "#SYNTH_VC_SETUP=%d\r\n"
 qz_lbl_trk:     .asciz  "TRACK"
 qz_lbl_fol:     .asciz  "FOLLOW"
 qz_s_on:        .asciz  "ON"

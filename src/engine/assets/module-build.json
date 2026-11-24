@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "2d234c7700768a9dc084af04eca699fc6187053f",
+  "sourceCommit": "2b29edcdf4c656caa95baf1829a79cacfe8d9f2d",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "5bd2380e03897d0f65dc40de5866fafda2aa89b99c6f191e7232dafe8c85e73f",
+  "sourceTreeSha256": "787ef0ec6f3afb768d7a14897c79421e3f6273e5a5591b80290c9f015e9040c0",
   "compilerSha256": "0b303a1e9517e96e93720ee99b01f4c2d46fdf94d84e8e332d9326d241e98066",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -19,14 +19,14 @@
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.4.0-experimental",
-    "quantizer": "0.1.4-experimental",
+    "quantizer": "0.1.5-experimental",
     "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.2-experimental",
+    "mute-modes": "0.2.3-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -75,8 +75,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1343068,
-      "sha256": "1c24a255d6142b5f7079914bdee7a0943e145998944d5e491795f7d854021b16"
+      "bytes": 1341428,
+      "sha256": "432597b383cb4f92d7f7eacdfa7c8fa313b6f370aa2a158791b72cc06f0036e5"
     },
     "utility-packages.json": {
       "bytes": 11735,
