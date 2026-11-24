@@ -760,6 +760,11 @@
       "module": "2c224021",
       "bytes": 30424,
       "sha256": "07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865"
+    },
+    {
+      "id": "songbook",
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/songbook/0.1.0-experimental.mwrm"
     }
   ],
   "usbAudio": {
