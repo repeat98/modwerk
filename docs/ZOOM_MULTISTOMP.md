@@ -56,7 +56,7 @@ without one; test it on the pedal.
 | Device | Firmware | Status (from the project's reports) |
 | --- | --- | --- |
 | MS-70CDR | 2.10 | Main target: effects, NAM/cab loader and patch editor tested by the owner |
-| MS-50G | 3.10 | NAM and cab effects confirmed by a user ([#1](https://github.com/themanro/ZoomMultistompZDL/issues/1), [#5](https://github.com/themanro/ZoomMultistompZDL/issues/5)); patch editor writes opt-in |
+| MS-50G | 3.10 | NAM and cab effects confirmed by a user ([#1](https://github.com/themanro/ZoomMultistompZDL/issues/1), [#5](https://github.com/themanro/ZoomMultistompZDL/issues/5)); patch editor writes opt-in. Read over USB (23 November 2026): its pedal page in Chrome and `npm run zoom` name it, list 162 files and back them up, the two backups byte-identical and matching another tool's; in update mode the bootloader answers as `0x58`, 1.10 |
 | MS-60B | — | Same family; unconfirmed |
 | G1on / G1Xon / B1on / B1Xon | G1Xon 1.21 | NAM loader effects reported working on a G1Xon ([#6](https://github.com/themanro/ZoomMultistompZDL/issues/6)); others unconfirmed |
 | MS-100BT | — | No USB MIDI; effects installed with third-party Bluetooth tools ([#4](https://github.com/themanro/ZoomMultistompZDL/issues/4)) |
@@ -304,12 +304,17 @@ finds where they are tied to it.
    answering as it. On the unit, its beta pedal page names the pedal and
    firmware, lists the files and backs them all up, byte-identical to another
    tool's backup.
+   MS-50G: done on 3.10 (23 November 2026). Its bootloader counts as update mode (`isUpdateMode`); the base
+   still flashes only an MS-70CDR (`canFlashBase`).
 2. **Write.** Installs and removals stay refused on a pedal and firmware they
    have not run on. Record Effect Manager or the project's editor installing an
    effect there (MIDI Monitor, as for the flash) and compare it with the link's
    messages; then install and remove one effect from the page, power-cycle, and
    check it appeared in its category, went again and left the rest unchanged.
    Only then add the pedal and firmware to `canWriteFiles`.
+   MS-50G 3.10 (23 November 2026): Effect Manager 2.3.3 erases the whole effect file system and rewrites it; wait
+   until the pedal's replies stop before unplugging. A pedal unplugged mid-write showed a file system error until a
+   second write finished.
 3. **Listing.** The profile gets an `sdk` section like the MS-70CDR's, with its
    own guide (`sdk/machines/<id>/README.md`, from the MS-70CDR's) and budgets
    measured on that pedal (the MS-60B chains four effects, not six); then
@@ -371,6 +376,10 @@ install throughout.
    and Mangle followed (10 November 2026). Next: `divf` from TI's RTS source, the
    effect-ID ledger and the DSP limit of 300 under MIDISTOMP 2.
 8. The other pedals: [Another ZDL pedal](#another-zdl-pedal).
-9. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), loading
-   effects without a reboot, in-browser NAM and cab builds, and the patch
-   editor as a device page.
+9. Prove loading without a reboot on the original MS-70CDR. On a development
+   base, try one ZDL from RAM without changing saved patches or effect files.
+   Check the playing chain after Undo, then check an unkept trial after a
+   power cycle. After that, put review, trial, Keep and Undo behind the
+   shared loader and device tools. See the [MS-70CDR SDK guide](../sdk/machines/zoom-ms-70cdr/README.md#modwerk-stack).
+10. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`),
+    in-browser NAM and cab builds, and the patch editor as a device page.

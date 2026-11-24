@@ -27,9 +27,10 @@ static jmp_buf power;
 int olog_stock_open(struct file_object *f, const char *path, const char *mode, void *io, unsigned n)
 {
     (void)io, (void)n;
-    f->word[0] = path[8] == '1', f->word[1] = 0, f->word[2] = mode[0] == 'w';
+    f->word[0] = path[8] == '1', f->word[1] = 0, f->word[2] = mode[0] == 'w', f->word[4] = 0;
     return f->word[2] || card_length[f->word[0]] ? 0 : -1; /* a write keeps what the file held: in place */
 }
+int modwerk_test_card_size(struct file_object *f) { return (int)card_length[f->word[0]]; }
 int olog_stock_read(struct file_object *f, void *out, unsigned n)
 {
     if (f->word[1] + n > card_length[f->word[0]]) return 0;
@@ -42,9 +43,15 @@ int olog_stock_write(struct file_object *f, const void *data, unsigned n)
     if (f->word[1] + n > sizeof card[0]) return 0;
     memcpy(card[f->word[0]] + f->word[1], data, n), f->word[1] += n;
     if (f->word[1] > card_length[f->word[0]]) card_length[f->word[0]] = f->word[1];
+    if (f->word[1] > f->word[4]) f->word[4] = f->word[1];
     return 1;
 }
-int olog_stock_close(struct file_object *f) { (void)f; return 0; }
+/* As stock's: the length from word 4. A shorter one would leave the file's chain ending in freed clusters (#1830). */
+int olog_stock_close(struct file_object *f)
+{
+    if (f->word[2]) { CHECK(f->word[4] >= card_length[f->word[0]]); card_length[f->word[0]] = f->word[4]; }
+    return 0;
+}
 
 /* The loader: which modules run. */
 static uint32_t running[8], offered;

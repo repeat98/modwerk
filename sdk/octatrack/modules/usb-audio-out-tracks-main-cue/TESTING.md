@@ -1,5 +1,26 @@
 # USB Audio testing
 
+## 0.4.0-experimental, 23 November 2026
+
+**Not tested on a unit as this exact package.** The owner released it without that run: "Let's just release it, it's been well tested in the other repos it's fine" ([approval](../../../approvals/usb-audio-out-tracks-main-cue-build-approval.json)).
+
+Package `7c144b24ffebfd651db2eefc7dbd364ac7e1750ad5d90358460ca01c543f13f9` (19,948 bytes) requires base 0.8.1 `eb6679620d0c`. It is byte-identical to `0cb56b0c269c` except at offset 66, the inventory kind (8, was 7), so the site can tell it from 0.3.0. `0cb56b0c269c` ran on an Octatrack MKII on 21 November 2026 on the 0.7.13 draft base `8cd1320411a6` and an instrumented twin of it: all four INPUTS modes routed as expected, R1 and R2 recorded the host's tones, and 17 min 34 s of four-channel duplex audio with Vibrato showed no faults ([record](../../../../docs/verification/2026-11-21-octatrack-usb-input.md)). Nothing of that run was repeated on base 0.8.1.
+
+Software: the Python package tests (the input build reports kind 8), the release `--check` against the owner's OS 1.40C, the site's USB Audio, module-set and migration tests, `module:doctor` and the isolated package build from `2d234c770`.
+
+**Captures.** The five [menu captures](media/capture.json) come from `ot_emu` on a development twin of base 0.8.1 with this package installed over the emulator's USB host. Under the emulator's scripted host, the base's USB attach watchdog (#1985) took the unit off the bus about two seconds into the trial, which undid it; keeping the package on the emulator's scratch card avoided that. The watchdog did not fire under macOS on the 0.8.1 unit runs. This is emulator evidence only.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| A unit on 0.3.0 syncs to 0.4.0, then Undo | new inventory kind, 0.3.0 kept for its exact Undo | `usb-audio-package.test.ts` (synthetic packages) | pass (site logic only); not run on a unit: owner waiver |
+| INPUTS OFF enumerates like 0.3.0 | the input build's descriptors | 21 November run of `0cb56b0c` (OFF: 4 output channels, none in) | pass on the 0.7.13 draft; not run on 0.8.1 |
+| INPUTS AB, CD, ABCD route to the right inputs | the receiver and the DMA scheduler | 21 November run of `0cb56b0c` | pass on the 0.7.13 draft; not run on 0.8.1 |
+| INPUTS row on COMPUTER, gone on OUTBOX 8 | the settings page | emulator captures | pass (emulator) |
+| INPUTS changed while a host streams | reconnect mid-stream | — | not run: owner waiver |
+| Trial ends or the module is removed with ABCD active | crossbar priority and the jacks must come back | — | not run: owner waiver |
+| Full speed or Outbox 8 with INPUTS set | must stay output only | — | not run: no full-speed host or Outbox |
+| MKI, Windows, Linux | other hosts and panels | — | not run: not available |
+
 ## 0.3.0-experimental on an Octatrack MKII, 20 November 2026
 
 The four [menu captures](media/capture.json) show the 0.7.12 release candidate `254c5a75a139` running the migrated Outbox set in the MKII emulator. They show the settings list, USB Audio fields, both stem taps and the four output assignments. The images were taken from the display bytes sent to the emulated panel.

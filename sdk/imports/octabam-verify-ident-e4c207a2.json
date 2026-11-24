@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "e4c207a2ea8145eb5e67ea717e767696b3bddbe4",
+  "kind": "infrastructure-backport",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Sam Banks",
+  "licenseText": "sdk/octabam/LICENSE",
+  "credits": [
+    "Yves Rosius (yvesrosius): the widened gate, octabam commits 88ca7523, 35fc338c, ee85d43b and e4c207a2 (pull request 1172, 19 November 2026)",
+    "Sam Banks (sambanks): octabam, its original identity gate, dsp_host and the remix tools the gate runs on"
+  ],
+  "commits": [
+    "88ca7523",
+    "35fc338c",
+    "ee85d43b",
+    "e4c207a2"
+  ],
+  "notImported": [
+    "tools/remix/audition.py at 91457e65 and bd19a163 (payload B's dump, the required modules in the scratch image): verify_ident.py builds its own scratch image and dumps both payloads, so sdk/octabam/tools stays as it is"
+  ],
+  "modules": [],
+  "files": [
+    {
+      "path": "verify_ident.py",
+      "sourcePath": "tools/verify/verify_ident.py",
+      "sourceSha256": "12425dff7993c3c28d38627bd6cafde80f80109d6e34cab4b00aa18341e53874",
+      "vendoredSha256": "7a6f8d834b95f89233ecf5a1bc08cb88c52824e1952ce37758d9d453b08d6975"
+    }
+  ],
+  "adaptations": [
+    "it lives in sdk/cycle-scan, outside the module-source fingerprint, and runs against sdk/octabam or OCTABAM_ROOT",
+    "the scratch image is the module and what it requires beside the stock effects, with no fallback (Modwerk has no SEND module), built and dumped for payloads A and B every run",
+    "the SEND-alias check is replaced by a placement control: the module's fx id must dispatch to other entry points than in the pristine stock image and than NONE (0x00)",
+    "--ref FILE checks against a reference stamped in another tree"
+  ],
+  "destination": "sdk/cycle-scan"
+}

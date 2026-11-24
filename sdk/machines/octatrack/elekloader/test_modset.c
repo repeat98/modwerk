@@ -85,6 +85,7 @@ static void accept(unsigned k, uint32_t n) { modwerk_modset_candidate(package[k]
 static void cut(void) /* RAM gone, the card and battery RAM kept: a crash restart or a power cycle */
 {
     memset(set, 0, sizeof set); restored = 0; pending = 0; slot = 0; keep_bytes = 0; prepared = installed = entered = 0; restore_tries = 0;
+    restore_count = 0; adopted = 0;
     modwerk_modset_result = 0; notice = 0; notice_after = 0; modwerk_test_ticks = 200;
     modwerk_modset_notice_tick(); /* the ticks before the restore */
 }
@@ -391,9 +392,55 @@ int main(void)
     modwerk_modset_result = SKIPPED;
     card_shelf[slot][OFF_HEADER + OFF_RECORD + 9] ^= 1;
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2 && !off_bytes); /* the older file: both on */
+
+    /* RESTORE: what the restore did with every package, not only the first left out (#1528, #1596). On a fresh card,
+     * Tape Echo, Supercalifragilistic (both named) and 0x303: the guard leaves the first out after a crash while it
+     * installed, the loader refuses the second for module memory, the third loads. */
+    memset(card_bytes, 0, sizeof card_bytes); memset(card_shelf_bytes, 0, sizeof card_shelf_bytes);
+    memset(&modwerk_test_guard, 0, sizeof modwerk_test_guard); memset(set, 0, sizeof set); off_bytes = 0;
+    cut(); restored = 1; refuse_id = 0; refusal_now = RUNTIME_BUSY;
+    make_named(0, 0x301u, "Tape Echo"); make_named(1, 0x302u, "Supercalifragilistic"); make(3, 0x303u, 0);
+    modwerk_modset_candidate(named[0], 72); modwerk_modset_accepted(); modwerk_modset_candidate(named[1], 72); modwerk_modset_accepted();
+    accept(3, 48); modwerk_modset_service(); CHECK(modwerk_modset_count == 3 && !pending);
+    crash_id = 0x301u; boot(); if (!setjmp(crashed)) { modwerk_modset_service(); CHECK(0); } crash_id = 0;
+    uint8_t page[8 + MODSET_RESTORE_ENTRY * MODSET_RESTORE_PAGE];
+    refuse_id = 0x302u; refusal_now = RUNTIME_MEMORY; refused_check_now = RUNTIME_CHECK_POOL; pool_largest = 1024u;
+    cut(); CHECK(modwerk_modset_restore_list(page, 0, MODSET_RESTORE_PAGE) == 8 && !memcmp(page, "MWR", 3) && !page[3] && !page[5]);
+    modwerk_test_said = 0; modwerk_modset_service();
+    refuse_id = 0; refusal_now = RUNTIME_BUSY; refused_check_now = RUNTIME_CHECK_CLAIMS; pool_largest = RUNTIME_POOL_BYTES;
+    CHECK(modwerk_modset_result == LEFT_OUT && installed == 1 && refused_m == 0x301u && refused_c == GUARD_LEFT); /* the log: the first only */
+    CHECK(modwerk_modset_restore_list(page, 0, MODSET_RESTORE_PAGE) == 8 + 3 * MODSET_RESTORE_ENTRY && page[3] == 3 && !page[4] &&
+          page[5] == 3 && page[6] == LEFT_OUT && page[7] == 1);
+    const uint8_t *e = page + 8; /* left out by the guard: why 0x100, no check */
+    CHECK(e[0] == 2 && !e[1] && e[2] == 1 && !e[3] && be32(e + 4) == 0x301u && be32(e + 8) == 72 && !strcmp((const char *)e + 16, "Tape Echo"));
+    e += MODSET_RESTORE_ENTRY; /* refused: the loader's refusal and check, and the pool's largest free run then */
+    CHECK(e[0] == 2 && e[1] == RUNTIME_CHECK_POOL && !e[2] && e[3] == RUNTIME_MEMORY && be32(e + 4) == 0x302u && be32(e + 8) == 72 &&
+          be32(e + 12) == 1024u && !strcmp((const char *)e + 16, "Supercalifragil"));
+    e += MODSET_RESTORE_ENTRY; /* loaded; no name before ABI 6 */
+    CHECK(e[0] == 1 && !e[1] && !e[2] && !e[3] && be32(e + 4) == 0x303u && be32(e + 8) == 48 && !e[16]);
+    CHECK(modwerk_modset_restore_list(page, 2, MODSET_RESTORE_PAGE) == 8 + MODSET_RESTORE_ENTRY && page[3] == 1 && page[5] == 3 &&
+          be32(page + 12) == 0x303u); /* paged */
+    CHECK(modwerk_modset_restore_list(page, 3, MODSET_RESTORE_PAGE) == 8 && !page[3] && page[5] == 3);
+    /* A sync afterwards: the entries still say what this start loaded, the header what the card holds now. */
+    accept(3, 48); modwerk_modset_service();
+    CHECK(modwerk_modset_result == SAVED && modwerk_modset_restore_list(page, 0, MODSET_RESTORE_PAGE) == 8 + 3 * MODSET_RESTORE_ENTRY && page[6] == SAVED);
+    /* PROJ held: nothing restored, nothing listed. */
+    HOLD(PROJ); boot(); modwerk_modset_service(); LET_GO();
+    CHECK(modwerk_modset_result == SKIPPED && modwerk_modset_restore_list(page, 0, MODSET_RESTORE_PAGE) == 8 && !page[5] && page[6] == SKIPPED);
+
+    /* ADOPT TEST (development bases): the card's set another base wrote restores, read-only: that start writes no set. */
+    for (unsigned i = 0; i < 2; ++i) card[i][20] ^= 1;
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+    modwerk_modset_adopt_test(1); modwerk_test_adopt[1] ^= 1; /* another base's request */
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+    modwerk_modset_adopt_test(1); written = writes;
+    boot(); modwerk_modset_service(); CHECK(adopted && modwerk_modset_result == RESTORED && installed == 1); /* the sync's set: 0x303 */
+    accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVE_FAILED && pending && writes == written);
+    modwerk_modset_adopt_test(0); boot(); modwerk_modset_service(); CHECK(!adopted && modwerk_modset_result == FOREIGN && !installed);
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held PROJ or FUNC refused, "
          "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded, "
-         "modules switched off and on at once and kept off across power cycles.");
+         "modules switched off and on at once and kept off across power cycles, every package's restore outcome listed for a host, "
+         "and another base's set restored read-only on a development request.");
     return 0;
 }

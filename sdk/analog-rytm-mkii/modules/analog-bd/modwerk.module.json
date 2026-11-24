@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "analog-bd",
   "name": "Analog BD",
-  "version": "0.2.1-experimental",
+  "version": "0.2.2-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -33,7 +33,7 @@
       "Select the BD track, press FUNC + SRC, scroll to BD ANALOG (the last of the BD section) and press YES.",
       "Play the pad soft and hard: velocity is the accent, harder hits are snappier.",
       "Turn TUN for the pitch and DEC for the length; SWP sets how far the pitch sweeps down.",
-      "Tap encoder B: the label changes from TON to SWT and the bar from 808 to 909. Play it again, and tap again for the 808."
+      "Tap encoder B: its label changes from TON (808 Tone) to SWT (909 Sweep Time). Play it again, and tap again for the 808."
     ]
   },
   "access": {
@@ -57,7 +57,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only, on the Modwerk base's digital voices (send-bus variant).",
+      "Built for OS 1.74 only, on the Modwerk base's digital voices (the voices variant; send-bus when the set also holds a send effect).",
       "Offered on the BD, SD and BT tracks only: on a MKII three 909s hit at the same instant played clean and four overran the audio block.",
       "The level into the voice's analog path and how hard it can be driven are not measured."
     ]
@@ -83,20 +83,20 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.2.1-experimental",
-    "sourceSha256": "4583f70cdd8cf66f0273f681865ddd7c29c9273eba8dab1f371fd66f70a1c9d0",
+    "moduleVersion": "0.2.2-experimental",
+    "sourceSha256": "b73ba4308810126d1c102488838da382c59a57a514d6ae0ddc1c167b41fe30d3",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-16",
+      "testedOn": "2026-11-21",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.2.1 on npp1993's Analog Rytm MKII, OS 1.74, by hand (16 Nov 2026): a private 17-module combo image (RC42, sha256 1ac19211…, this module beside 16 others, 1,564 B of module RAM left), flashed. The tester reports everything working, the sound as before; with three BD ANALOG voices playing the unit gets laggy. 0.2.1 changes only how the knob tables are stored (5,024 B less RAM), so 0.2.0's runs stand for the rest: by hand on the published base 3ece243b (VB01, 12 Nov 2026: machine list, the 808/909 tap, kit reload, sound lock, project save and power cycle) and the author's automated rig (BL01, 11 Nov 2026: 808 and 909 knob sweeps follow the host model; three 909s hit together clean, four overran).",
+      "summary": "0.2.2 on npp1993's Analog Rytm MKII, OS 1.74, by the author's automated rig (21 Nov 2026): development image CD02 (sha256 3ea8d38b…, this module's release source on a development base with a USB test link), flashed, scratch project. No 808 / 909 in the bottom bar for either type, B's label switching TON / SWT and the type coming back, all checked on screen. 0.2.2 changes only that (names 0 in src/machine.c), so 0.2.1's runs stand for the sound: by hand on a 17-module combo (RC42, 16 Nov 2026) and 0.2.0's on the published base (VB01) and the rig (BL01).",
       "limitations": [
-        "0.2.1 was tried by hand on a combo image, not measured by the rig; that its sound matches 0.2.0 is measured on the host and in rytm-emu (TESTING.md).",
+        "0.2.2 ran on a development base with a USB test link, not the published base; its screens on the published voices base are emulator captures (BA23).",
         "The rig's knob sweeps and stress (0.2.0) ran on a development base with a USB test link, not the published base.",
         "Not run on a unit: pads and pressure, the +Drive, an external clock; the 909's DEC and velocity-to-click were not judged by the rig.",
         "The measured load is the 0.1.0 808 on a telemetry base; the 909's cost on a unit is known only as 'three voices fit, four overran', and three make the unit laggy in a large module set."
@@ -106,7 +106,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74: select, keys, 808/909 tap, meter; assembly passes match their C (asm_check, 0 differences); host engine within -41 to -68 dB of repeat98's models, 0.2.1 within -55.8 dBFS of 0.2.0. Unit: by hand (0.1.0, AB04; 0.2.0 on the published base, VB01; 0.2.1 in a 17-module combo, RC42) and the author's rig (BL01: sweeps follow the model, stress as limited).",
+    "summary": "rytm-emu on OS 1.74: select, keys, 808/909 tap, meter; assembly passes match their C (asm_check, 0 differences); host engine within -41 to -68 dB of repeat98's models, 0.2.1 within -55.8 dBFS of 0.2.0. Unit: the author's rig (0.2.2, CD02: no type badge); by hand (0.1.0, AB04; 0.2.0 on the published base, VB01; 0.2.1 in a 17-module combo, RC42) and the author's rig (BL01: sweeps follow the model, stress as limited).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -114,7 +114,7 @@
           "Select the BD track, press FUNC + SRC, scroll to BD ANALOG (the last of the BD section) and press YES.",
           "Play the pad soft and hard: velocity is the accent, harder hits are snappier.",
           "Turn TUN for the pitch and DEC for the length; SWP sets how far the pitch sweeps down.",
-          "Tap encoder B: the label changes from TON to SWT and the bar from 808 to 909. Play it again, and tap again for the 808."
+          "Tap encoder B: its label changes from TON (808 Tone) to SWT (909 Sweep Time). Play it again, and tap again for the 808."
         ]
       },
       "screenshots": [
@@ -151,41 +151,41 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "b5b06ee1f22c6a8d5575b62f8d023d6b05f69c5f0771f1f79ac81c0a828d0e75",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA22: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.1-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "0504d80a1264526548eb381d14152038754c36e02f067677af136aa53e39d3d7",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA23: the Modwerk base's voices variant (dd771eae) and this folder's BD ANALOG 0.2.2-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/synth-808.png",
       "kind": "screenshot",
-      "caption": "BD ANALOG's SYNTH page as the 808: B reads TON and the bar 808.",
-      "alt": "SYNTH page: TUN, TON, ATK, DEC above SWP, LOW, HI, LEV; the bottom bar reads 808.",
+      "caption": "BD ANALOG's SYNTH page as the 808: B reads TON.",
+      "alt": "SYNTH page: TUN, TON, ATK, DEC above SWP, LOW, HI, LEV; the bottom bar shows the level and the pattern.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "b5b06ee1f22c6a8d5575b62f8d023d6b05f69c5f0771f1f79ac81c0a828d0e75",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA22: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.1-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "0504d80a1264526548eb381d14152038754c36e02f067677af136aa53e39d3d7",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA23: the Modwerk base's voices variant (dd771eae) and this folder's BD ANALOG 0.2.2-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/synth-909.png",
       "kind": "screenshot",
-      "caption": "A tap of encoder B switches to the 909: B reads SWT (909 sweep time) and the bar 909.",
-      "alt": "SYNTH page with the header 909 SWEEP TIME, B's value 80, and the bottom bar reading 909.",
+      "caption": "A tap of encoder B switches to the 909: its header reads 909 SWEEP TIME.",
+      "alt": "SYNTH page with the header 909 SWEEP TIME and B's value 80.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "b5b06ee1f22c6a8d5575b62f8d023d6b05f69c5f0771f1f79ac81c0a828d0e75",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA22: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.1-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "0504d80a1264526548eb381d14152038754c36e02f067677af136aa53e39d3d7",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA23: the Modwerk base's voices variant (dd771eae) and this folder's BD ANALOG 0.2.2-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

@@ -1,0 +1,14 @@
+{
+ "schema": 1,
+ "rests": [
+  "0x40002f44",
+  "0x4000361a"
+ ],
+ "subscribe": [
+  {
+   "event": "ev_frame_deadline",
+   "fn": "te_frame_deadline",
+   "order": 50
+  }
+ ]
+}

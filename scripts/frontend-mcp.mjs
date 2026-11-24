@@ -16,6 +16,7 @@ import { openRemoteUnit } from './frontend-mcp-remote.mjs'
 import * as board from './agent-board.mjs'
 import { nodeMidiAccess, zoomCommand } from './zoom-device.ts'
 import { acquire, UnitBusyError } from './unit-queue.mjs'
+import { isUpdateMode, ZOOM_DEVICE_IDS } from '../src/engine/zoom/zoom-protocol.ts'
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 let activeWorkspace = false
@@ -62,9 +63,9 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read the connected base identity, inventory, missing modules and bounded diagnostic status through the real site USB client.'),
-  tool('device_load', 'Read one cached CPU/DSP meter snapshot through the real frontend client. Read-only; never runs a self-test. Older bases report unsupported.'),
-  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; older bases report unsupported.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory.'),
+  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available. Read-only.'),
+  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; Zoom pedals and older Octatrack bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes.', { moduleIds: strings }, ['moduleIds']),
@@ -208,9 +209,22 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     }
   }
   const dropLink = () => { release?.(); bench?.socket.destroy(); link = undefined; release = undefined; bench = undefined; trial = undefined; endTrialTurn(); reviews.clear() }
+  // The USB bridge serves one client at a time (scripts/octatrack-usb-bridge.py), so a link held between tool calls kept
+  // `npm run device` and the site off the unit. Give it back after each call: a trial keeps it until Keep or Undo, and a
+  // review until it expires, so its trial runs on the link it was read through. The next device tool opens a fresh one.
+  let idleTimer
+  function releaseIdleLink() {
+    clearTimeout(idleTimer); idleTimer = undefined
+    if (!link || remote || trial || running || closed) return
+    const pending = Math.max(0, ...[...reviews.values()].map(item => item.expires - clock()))
+    if (pending > 0) { idleTimer = setTimeout(releaseIdleLink, pending + 100); idleTimer.unref?.(); return }
+    release?.(); bench?.socket.destroy(); link = undefined; release = undefined; bench = undefined
+  }
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
+  const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
   async function connected() {
+    if (zoomSelected()) throw new Error('MIDISTOMP does not provide the runtime set loader or saved-set files. Use zoom_list or zoom_backup for the pedal’s files.')
     if (!options.deviceSocket && !remote) throw new Error('Device tools require an explicitly selected --device-socket or a connected remote session (remote_session_connect).')
     if (remote?.relay.state().ended) { remote = undefined; dropLink(); throw new Error('The remote session has ended.') }
     if (link && ['idle', 'disconnected', 'unavailable', 'error'].includes(link.getState().status)) {
@@ -240,10 +254,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (link.getState().status !== 'ready' && !(trial && link.getState().status === 'trial')) throw new Error('Octatrack is not ready: ' + link.getState().status)
     return link
   }
+  const closeZoom = () => { zoom?.access.close?.(); zoom = undefined }
   // The Zoom pedal: a fresh MIDI port list and ZoomLink whenever the last one isn't ready (unplugged, or not found yet).
   async function zoomLink() {
     if (!options.zoomMidi) throw new Error('Zoom tools require --zoom-midi at startup.')
-    if (zoom?.link.getState().status !== 'ready') { zoom?.access.close?.(); zoom = undefined }
+    if (zoom?.link.getState().status !== 'ready') closeZoom()
     if (!zoom) {
       const access = await (dependencies.zoomAccess ?? nodeMidiAccess)()
       zoom = { access, link: new frontend.ZoomLink(async () => access) }
@@ -254,7 +269,21 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   async function zoomRun(command, file, confirmed = false) {
     try { return await zoomCommand(await zoomLink(), command, file, { dir: dataDir, confirmed }) }
     // An unplugged pedal leaves the link ready (these ports have no hot-plug): start again on the next call.
-    catch (error) { zoom?.access.close?.(); zoom = undefined; throw error }
+    catch (error) { closeZoom(); throw error }
+  }
+  async function zoomSnapshot(includeInventory) {
+    // RtMidi has no hot-plug here. Identify the unit afresh so a switched-off or rebooted pedal never returns an old receipt.
+    const turn = dependencies.zoomAccess ? null : await unitTurn('read Zoom', 60000)
+    try {
+      closeZoom()
+      const unit = await zoomLink(), opts = { dir: dataDir }
+      const { load, ...identity } = await zoomCommand(unit, 'status', undefined, opts)
+      const machine = Object.keys(ZOOM_DEVICE_IDS).find(id => ZOOM_DEVICE_IDS[id] === identity.deviceId) ?? null
+      const updateMode = isUpdateMode(identity)
+      const state = { status: updateMode ? 'update-mode' : 'ready', identity }
+      const inventory = includeInventory && !updateMode ? await zoomCommand(unit, 'list', undefined, opts) : null
+      return { machine, state, inventory, load: load ?? null }
+    } finally { try { closeZoom() } finally { turn?.release() } }
   }
   const zoomWrite = (args, name) => {
     if (!options.allowDeviceWrites || args.confirm !== true) throw new Error('Zoom writes require --allow-device-writes and confirm=true.')
@@ -277,14 +306,20 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (after.status !== 'ready' || after.identity?.base !== state.identity.base || after.active !== state.active) throw new Error('The device changed while reading; reconnect and review again.')
     return { state: after, inventory, capabilities: after.identity.capabilities, missing, diagnostics }
   }
+  function usbTarget(name, moduleIds, current) {
+    const installed = [...current.moduleIds, ...(current.offIds ?? [])]
+    const usbAudio = !preparedModules && catalogue.installPresets && frontend.usbAudioSettings.usbAudioForSelection?.(moduleIds, { moduleIds: installed })
+    return { name, moduleIds, removedStockFx: [], ...(usbAudio ? { usbAudio } : {}) }
+  }
   const selection = async args => {
     const selected = ids(args.moduleIds), machine = args.machine ?? 'octatrack'
     if (machine !== 'octatrack') { if (!frontend.isDigiDevice(machine)) throw new Error('This machine has no supported builder.'); frontend.resolveDigiSelection(machine, selected); return frontend.estimateCombination(machine, selected) }
     frontend.resolveSelection(selected)
     // Without `usb` only the catalogue is asked; whether a set fits is the unit's own admission when it is synced.
     if (!args.usb) return { availability: frontend.moduleAvailabilityError(selected, !!args.beta) }
-    const target = { name: 'MCP test set', moduleIds: selected, removedStockFx: [] }, current = args.current ?? { moduleIds: [], removedStockFx: [] }
+    const current = args.current ?? { moduleIds: [], removedStockFx: [] }
     ids(current.moduleIds); ids(current.removedStockFx)
+    const target = usbTarget('MCP test set', selected, current)
     preparedModules?.requireBase([...selected, ...current.moduleIds], args.base)
     const prepared = await catalogue.prepare(target, current, load, args.capabilities, args.base)
     return { review: catalogue.review(target, current, args.capabilities, args.base), changes: prepared.changes.map(change => ({ module: change.module, bytes: change.data.length, sha256: hash(change.data), undoSha256: change.undo && hash(change.undo) })) }
@@ -312,9 +347,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     set_export: async () => ({ configurations: sets, firmwareIncluded: false }),
     set_save: async args => {
       if (sets.length >= 100 && !args.id) throw new Error('Limit of 100 local module sets.')
-      const previous = args.id && sets.find(item => item.id === args.id)
+      const previous = sets.find(item => item.id === args.id)
       if (args.id && !previous) throw new Error('Unknown module set.')
-      const item = frontend.newConfiguration(args.name, ids(args.moduleIds), args.keepStockFx2 ?? true, undefined, args.machine ?? 'octatrack', args.usbAudio)
+      const moduleIds = ids(args.moduleIds), machine = args.machine ?? 'octatrack'
+      const usbAudio = args.usbAudio === undefined && machine === 'octatrack' ? frontend.usbAudioSettings.usbAudioForSelection?.(moduleIds, previous) : args.usbAudio
+      const item = frontend.newConfiguration(args.name, moduleIds, args.keepStockFx2 ?? true, undefined, machine, usbAudio)
       const value = frontend.validateConfiguration({ ...item, ...(previous ? { id: previous.id, createdAt: previous.createdAt } : {}), removedStockFx: args.removedStockFx })
       await save([...sets.filter(entry => entry.id !== value.id), value]); return value
     },
@@ -334,8 +371,12 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { status: response.status, body }
     },
     firmware_download: async args => { if (!options.stock) throw new Error('Choose private stock at startup with --stock.'); return buildAndSave(args.request, { stockPath: options.stock, outputDir: dataDir, site, root }) },
-    device_status: snapshot,
+    device_status: async () => zoomSelected() ? zoomSnapshot(true) : snapshot(),
     device_load: async () => {
+      if (zoomSelected()) {
+        const { machine, state, load } = await zoomSnapshot(false)
+        return { machine, identity: state.identity, supported: load !== null, reading: load }
+      }
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
       const reading = await unit.liveLoad(), after = unit.getState()
@@ -343,6 +384,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { base: after.identity.base, supported: reading !== undefined, reading: reading ?? null }
     },
     device_log: async () => {
+      if (zoomSelected()) return { supported: false, log: null }
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
       const log = await unit.deviceLog()
@@ -362,7 +404,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     },
     device_review: async args => {
       if (trial) throw new Error('Finish the current trial first.')
-      const before = await snapshot(), target = { name: 'MCP reviewed set', moduleIds: ids(args.moduleIds), removedStockFx: [] }
+      const before = await snapshot(), target = usbTarget('MCP reviewed set', ids(args.moduleIds), before.inventory)
       if (!before.diagnostics) throw new Error('The device does not provide the required self-test status.')
       // Legacy INVENTORY gives a layout, not the exact installed package hash. Preserve existing
       // modules rather than pretending the latest site package is their exact rollback image.
@@ -506,11 +548,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       if (closed) throw new Error('The MCP workspace is closed.')
       if (running) throw new Error('Another frontend/device operation is running.')
       running = true
-      try { return await handlers[name](args) } finally { running = false }
+      try { return await handlers[name](args) } finally { running = false; releaseIdleLink() }
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
-    close() { return closing ??= (async () => { closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
+    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); closeZoom() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }

@@ -1,16 +1,16 @@
 {
  "schema": "modwerk-table-layout-v1",
- "packageSha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
- "imageSha256": "cce0dc74bd4c3de07a61dd6206eb499e24560ca94e703cea10dac9bd66870673",
- "compiledImageSha256": "cce0dc74bd4c3de07a61dd6206eb499e24560ca94e703cea10dac9bd66870673",
- "recipeSha256": "f40ca44d329060d96da72b78e6547dc421a1f4cfbc548688ea8a55b5a0ed429d",
+ "packageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+ "imageSha256": "f6a2cd6230e03d7ae548d2d301c8edbb73874b7dc74a9e63ce15110bd901115c",
+ "compiledImageSha256": "f6a2cd6230e03d7ae548d2d301c8edbb73874b7dc74a9e63ce15110bd901115c",
+ "recipeSha256": "c08d7f06fc573c6a4a2e56cc57c7830ec1c13801693bff6dfd9615f41a88113a",
  "family": "mute-modes",
  "stateLayoutRevision": 1,
  "parameterLayoutRevision": 1,
  "arrayOffsets": [
-  1332,
-  1400,
-  1468
+  1388,
+  1456,
+  1524
  ],
  "tableSymbols": [
   "__runtime_table_0",
@@ -20,7 +20,7 @@
  "sources": {
   "sdk/octabam/modules/mute-modes/manifest.py": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd",
   "sdk/octabam/modules/mute-modes/patch_mutemode.s": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100",
-  "sdk/octabam/modules/mute-modes/patch_softmute.s": "4fb8d84a6f848299d3de611e20237901110e77041fc46c2620bd149f44ccb2c1",
-  "sdk/octabam/modules/mute-modes/runtime.json": "848cf42bed75ec3fd101f4d5869185ffb33967a29e1e55eae737c829a9d83a86"
+  "sdk/octabam/modules/mute-modes/patch_softmute.s": "2003ca1fa0aafbbf7a2b6655803603b1621457b32e8904b8e6c165309fdc47e3",
+  "sdk/octabam/modules/mute-modes/runtime.json": "70465cb783005a9b030fc42db621ec16f873fe1b1c5fe7994c5d1e711d01fff8"
  }
 }
