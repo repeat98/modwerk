@@ -1,0 +1,1 @@
+Developers: `module:doctor` checks that each Octatrack effect knob is drawn as what it holds (a switch for two to five words, a labelled dial for a longer list, a knob for a range) and that a mode select's words name it; the effects guide has a table for choosing the widget.
