@@ -1,0 +1,1 @@
+Development: the agent guard refuses only a real `device:price` run without a module (`npm run device:price` or `node scripts/octatrack-price.mjs`), no longer a `grep`, `node --check`, `git diff` or test that merely names the script.

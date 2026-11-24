@@ -29,8 +29,9 @@ export function refusal(input) {
   for (const [, seconds] of plain.matchAll(/\bdevice(?:\.mjs|\s+--)\s+(?:try|set)\b[^;&|]*?--seconds[\s=]+(\d+)/g)) {
     if (Number(seconds) > 120) return 'a ' + seconds + ' s trial holds the unit; trials last about two minutes (--seconds 120 or less, owner, 16 November 2026). Fit the work into a shorter trial.'
   }
-  // device:price with no module measures every USB package, one trial each: the unit is held for most of an hour.
-  for (const [, rest] of plain.matchAll(/(?:\bdevice:price|scripts\/octatrack-price\.mjs)\b([^;&|]*)/g)) {
+  // device:price with no module measures every USB package, one trial each: the unit is held for most of an hour. Only a run
+  // counts: grep, node --check or a test naming the script is not one.
+  for (const [, rest] of plain.matchAll(/(?:\bnpm\s+run\s+device:price|\bnode\s+(?:-(?!-check\b|c\b)\S+\s+)*(?:\S*\/)?scripts\/octatrack-price\.mjs)\b([^;&|]*)/g)) {
     const words = rest.split(/\s+/).filter(word => word && word !== '--'), named = []
     for (let i = 0; i < words.length; i++) {
       if (OPTIONS_WITH_VALUES.has(words[i])) i++
