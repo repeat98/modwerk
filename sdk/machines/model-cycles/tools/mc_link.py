@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Read a Model:Cycles that runs a development base with the link (elekloader/base/link.c).
+"""Read a Model:Cycles that runs a Modwerk base with the link (elekloader/base/link.c), and load modules on it.
+Every base answers ident, load, log, mods, try, keep, undo and remove; mem, key, tap, enc, release, disarm and
+ramboot need a development base.
 
 Talks to the unit over its USB MIDI port (mido with python-rtmidi). The wire format is the Analog Rytm
 MKII link's (../analog-rytm-mkii/LINK.md). Nothing here writes flash.
@@ -37,7 +39,7 @@ import sys
 import time
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'mem': 0x21, 'diag': 0x22, 'load': 0x23}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'mem': 0x21, 'diag': 0x22, 'load': 0x23, 'log': 0x24}
 STATUS = {0: 'ok', 1: 'not armed', 2: 'bad request', 3: 'busy', 4: 'out of range', 5: 'a person is at the unit'}
 IDENT = ['link version', 'requests received', 'requests dropped', 'ticks', 'port', 'replies sent', 'send failures',
          'armed', 'person at unit', 'person presses', 'posted', 'refused', 'RAM boot mailbox', 'RAM boot status',
@@ -186,7 +188,7 @@ def run(mido, in_name, out_name, cmd, body, a):
                 for i in range(0, n, 16):
                     print('%08x  %s' % (addr + i, data[i:i + 16].hex(' ')))
             return
-        sys.exit('No reply within 2 s (is a development base with the link on the unit?)')
+        sys.exit('No reply within 2 s (is a Modwerk base with the link on the unit?)')
 
 
 def rytm():
@@ -291,8 +293,8 @@ def log(mido, in_name, out_name, a):
     addr, size = run(mido, in_name, out_name, 'diag', [], a)
     a.quiet = True
     raw = b''
-    for at in range(0, size, 128):
-        raw += run(mido, in_name, out_name, 'mem', u32(addr + at) + u32(min(128, size - at)), a)
+    for at in range(0, size, 128):      # LOG reads the log alone, in every base (MEM: development bases only)
+        raw += run(mido, in_name, out_name, 'log', u32(at) + u32(min(128, size - at)), a)
     if a.out:
         open(a.out, 'wb').write(raw)
     print('log at %#x, %d bytes' % (addr, size))

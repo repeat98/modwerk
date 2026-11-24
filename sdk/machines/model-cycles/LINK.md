@@ -1,33 +1,39 @@
-# Model:Cycles development link
+# Model:Cycles link
 
-A development base's link over USB MIDI: a host on the computer reads the link's identity and the unit's memory, and
-presses keys and turns encoders as a person at the panel would, and boots an uploaded image from RAM without
-flashing it.
-It is the first piece of the Model:Cycles' USB link the [machine recipe](../../../docs/MACHINE_RECIPE.md) asks for,
+The Model:Cycles' link over USB MIDI. Every Modwerk base carries the part for musicians' units, as the Octatrack's
+does: a host reads the link's identity with the set identity, the audio load and the diagnostics log, and loads
+modules to RAM on trial without a reflash. Development bases add memory reads, panel keys and encoder turns, and
+booting an uploaded image from RAM.
+It is the Model:Cycles' USB link the [machine recipe](../../../docs/MACHINE_RECIPE.md) asks for,
 SysEx because USB MIDI is all the unit offers, and it follows the
 [Analog Rytm MKII's link](../analog-rytm-mkii/LINK.md) by Nathaniel Pavel: the same wire format, the same place in
 the OS. No flash over the link yet: a base still goes on the unit as an OS update.
 
-- Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s),
-  base.json's `dev`.
+- Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s);
+  base.json's `add` (every base) and `dev` (`MODWERK_DEV`).
 - Host side: [`tools/mc_link.py`](tools/mc_link.py) (Python 3 and `mido` with `python-rtmidi`).
 
-## Development bases only
+## Every base, and development bases
 
-Release bases never carry it. Build one with
+Every base answers `ident`, `diag`, `load`, `log` and the loader (`up_part`, `up_run`, `mods`). It costs 37994 bytes
+of `.run` and 115796 of `.bss` in the 256 KiB shared mod area, 96 KB of it the module pool and the upload staging
+(release base `4d4d91d2`). Any USB host can load modules, as on the Octatrack; a trial goes back on its own when the
+host falls quiet for ten seconds, and a power cycle always restores the flashed set.
+
+Development bases add `mem`, `key`, `enc`, `release`, `disarm` and `ramboot` (a release base answers them `bad
+request`). Build one with
 
 ```
 npm run machine:base -- model-cycles --stock STOCK.syx --dev --out NEW-DIR
 ```
 
 which writes `modwerk-base-model-cycles-dev-<sha>.elemod`, checked against no binding: a development base is never
-recorded or released. With the runtime loader it costs about 41 KB of `.run` and 114 KB of RAM in the shared mod
-area, 96 KB of it the module pool and the upload staging (dev base `4d8f07a0`: 41794 bytes `.run`, 116596 `.bss`, 9 sites).
+recorded or released (dev base `3cbee647`: 42258 bytes `.run`, 116596 `.bss`, 9 sites).
 
 ## Arm
 
-The link is armed at every boot: a development image is meant to be driven. `disarm` turns it off until the next
-boot. Reads (`ident`, `mem`) work disarmed; keys and turns need the arm, and stop as soon as a person touches the
+In a development base the link is armed at every boot: a development image is meant to be driven. `disarm` turns it off until the next
+boot. Reads (`ident`, `mem`, `log`) and the loader work disarmed; keys and turns need the arm, and stop as soon as a person touches the
 panel: a press or turn on the panel lets go of every key the link holds and refuses the link's keys and turns for
 about 3 s (status `a person is at the unit`). The Cycles has no settings hook yet, so there is no menu row for the arm.
 
@@ -45,15 +51,16 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, requests received and dropped, the link's tick count, the port the request came on, replies sent, send failures, armed, person at the unit, person presses, posted, refused, the RAM boot's mailbox, status and image CRC, and the set identity: the CRC32 and length of the `.run` block (the base and every linked module), taken at boot before any handler runs |
-| `disarm` | 0x02 | turns the arm off and lets go of every key the link holds |
-| `key ID FLAGS` | 0x10 | a panel key message with the flags as given (bit 0 down); a held key reads as held to `is_key_held` |
-| `enc N DELTA` | 0x11 | an encoder message of DELTA steps (-30 to 30), as the panel posts it |
-| `release` | 0x12 | lets go of every key the link holds |
-| `ramboot IMAGE.syx` | 0x14 | after stock's OS upgrade has taken the image: checks it, resets and boots it from RAM (below) |
-| `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
-| `diag` | 0x22 | the diagnostics log's address and size (bytes); a host reads it with `mem` (`mc_link.py log`), as the Digitone II's |
+| `ident` | 0x01 | link version, requests received and dropped, the link's tick count, the port the request came on, replies sent, send failures, armed, person at the unit, person presses, posted, refused (the five arm fields 0 in a release base), the RAM boot's mailbox, status and image CRC, and the set identity: the CRC32 and length of the `.run` block (the base and every linked module), taken at boot before any handler runs |
+| `disarm` | 0x02 | development bases: turns the arm off and lets go of every key the link holds |
+| `key ID FLAGS` | 0x10 | development bases: a panel key message with the flags as given (bit 0 down); a held key reads as held to `is_key_held` |
+| `enc N DELTA` | 0x11 | development bases: an encoder message of DELTA steps (-30 to 30), as the panel posts it |
+| `release` | 0x12 | development bases: lets go of every key the link holds |
+| `ramboot IMAGE.syx` | 0x14 | development bases: after stock's OS upgrade has taken the image: checks it, resets and boots it from RAM (below) |
+| `mem ADDR N` | 0x21 | development bases: up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `diag` | 0x22 | the diagnostics log's address and size (bytes), as the Digitone II's |
 | `load` | 0x23 | the audio's share of the CPU over the last half second, the window's dearest block and the dearest block since boot (tenths of a percent), windows and blocks counted |
+| `log` | 0x24 | up to 128 bytes of the diagnostics log from an offset into it, as `mem`'s reply (offset, count, bytes); nothing outside the log (`mc_link.py log`) |
 | `up_part` | 0x31 | the runtime loader: a part of an upload frame, an offset and up to 96 bytes packed ([below](#loading-modules)) |
 | `up_run` | 0x32 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
 | `mods` | 0x33 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
@@ -64,7 +71,7 @@ The screen needs no command: stock answers Elektron's own screenshot request ove
 
 ## Loading modules
 
-A development base carries the Octatrack's runtime loader ([`sdk/runtime/loader`](../../runtime/loader/README.md))
+Every base carries the Octatrack's runtime loader ([`sdk/runtime/loader`](../../runtime/loader/README.md))
 and upload controller ([`sdk/runtime/upload`](../../runtime/upload/README.md), wire version 1), with the Cycles'
 glue in [`elekloader/base/runtime.c`](elekloader/base/runtime.c) and the transport in
 [`modules.c`](elekloader/base/modules.c). Where the Octatrack carries one wire frame in an EP0 data stage, the link
@@ -146,9 +153,9 @@ image must carry a development base: only its `ev_boot` handler boots from RAM.
   port)`, which writes 144-byte parts. Its ports: 1 the MIDI setting's choice, 2 USB, 3 DIN, 4 both. Do not run
   Transfer at the same time: a reply could land between the parts of one of stock's.
 
-The audio load (`base/load.c`, `load.s`, development bases): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer.
+The audio load (`base/load.c`, `load.s`, every base): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer.
 
-The diagnostics log (`base/diag.c`, `diag.h`, development bases) is the Octatrack's, layout version 2, so the site's parser reads it unchanged (`sdk/tests/test_machine_base.py` checks the layout word for word). Every five minutes a load record: the mean of the half-second windows and the dearest block (per mille), the longest time between two codec blocks (µs) and the longest run of blocks without a UI tick. Incidents: START and BASE (the set identity) at a boot's first tick, HOT for a second at 90 % or more, FREEZE when the UI tick stands still for five seconds while audio runs, each with the six tracks' machines and the last 16 keys pressed. The DSP fields, the tempo, the screen and `playing` stay 0. It lives in the base's memory and starts again at every boot: a freeze that needs a power cycle is lost with it. The audio interrupt keeps the sums; the UI tick alone writes the records. `test_diag.c` runs it on the host.
+The diagnostics log (`base/diag.c`, `diag.h`, every base) is the Octatrack's, layout version 2, so the site's parser reads it unchanged (`sdk/tests/test_machine_base.py` checks the layout word for word). Every five minutes a load record: the mean of the half-second windows and the dearest block (per mille), the longest time between two codec blocks (µs) and the longest run of blocks without a UI tick. Incidents: START and BASE (the set identity) at a boot's first tick, HOT for a second at 90 % or more, FREEZE when the UI tick stands still for five seconds while audio runs, each with the six tracks' machines and the last 16 keys pressed. The DSP fields, the tempo, the screen and `playing` stay 0. It lives in the base's memory and starts again at every boot: a freeze that needs a power cycle is lost with it. The audio interrupt keeps the sums; the UI tick alone writes the records. `test_diag.c` runs it on the host.
 
 ## Evidence
 
@@ -191,6 +198,15 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | a power cycle | the flashed image (`0x4f182a66`), armed |
 | the same | `disarm`, then `ramboot` (the tool now reads the arm first) | `the link is not armed …; nothing was uploaded`, no question on the unit |
 | the same | the stock `.syx` sent with stock's upgrade, NO at "Upgrade OS now?" | the unit runs on without a reset; `ident`: `0x4f182a66` |
+| `ec928894…` (release base `4d4d91d2`: link, load, log, loader; stock 1.13 + the base alone, as the site builds it), flashed with stock's upgrade | `ident`, `mods`, `load`, `log`, then `key 2 1` and `mem` | set CRC `0x15eddb5a`, 38052 bytes (as `runid` computes), armed 0; pool 65536 free, 0 live; the load (71.6 %); START and BASE `0x15eddb5a` read through `log`; `key` and `mem` `bad request` |
+| the same | `try hello.mwrm --seconds 5`, then `--seconds 3 --keep` | the square for 5 s, gone after the undo; then kept, 1 live |
+| the same | `try frames.mwrm` while a pattern plays | `enter: unsafe`, the kept module unchanged |
+| the same | `try frames.mwrm --seconds 60`, Ctrl-C after about 5 s | "F1 n" counting, gone about 10 s after Ctrl-C; the square stays |
+| the same | `frames` kept, `try v2/frames.mwrm --seconds 10` | "F1 n", 10 s "F2 n", "F1 n" again; 2 live |
+| the same | `try grab.mwrm --seconds 20` (takes every key and turn), then `remove frames --keep` | the unit ignores keys and turns on trial and acts as usual after the undo; "F1" gone, 1 live, 65200 bytes free |
+| the same | `try` the 33,832-byte package; two 31,832-byte modules kept, then a third | `limit (too large)`; 3 live, 1168 bytes free, the third `rejected` (`memory`) |
+| the same, Transfer open and connected | `try grab.mwrm --seconds 10`, `load`, `log`, `ident` | on trial and undone, the load and the log read; 0 requests dropped, 0 send failures; Transfer still connected |
+| the same | a power cycle | 65536 bytes free, 0 live, no module on the screen |
 
 ## Not tested
 
@@ -199,8 +215,9 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 
 - A request over DIN (dropped by design).
 - Keys under FUNC and the flags stock's panel sets on a release.
-- A request while Transfer or another SysEx stream runs (Transfer offers the Model:Cycles no sample upload).
+- A request while Transfer sends (it offers the Model:Cycles no sample upload; tested with Transfer open and connected) or another SysEx stream runs.
 - A host that stops reading in the middle of a reply.
 - A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
 - A site under a task paused inside it (the switch is refused and retried).
+- A site's stock bytes after an undo on a release base (`mem` is development-only; seen on a development base).
 - A trial's pool extent is freed at the next change, not at its undo (seen: 416 bytes held until then).
