@@ -36,10 +36,15 @@
 #define DSP_QUEUE 0x400cd48cu              /* the transfer's halfword queue */
 #define SOUND_TYPE(track) (*(const volatile uint8_t *)(0x426532ecu + 0x450u * (track) + 0xa2u)) /* the kit's track sound */
 #define FIRST_TAIL_HALF 0x402u
+#define KNOB_TARGETS ((const volatile uint16_t *)0x80003362u) /* track t's parameter j at [KNOB_VALUES * t + j] */
+#define KNOB_VALUES 71u
+#define KNOB_C 27u                         /* the sound's parameter slots of SAMPLE's knobs C and E */
+#define KNOB_E 31u
 
 #define REPLY_VIEW 600u                    /* the reply word where the receiver puts the machine view */
 
 extern const struct dt2_machine *const core_machines[DT2_MACHINE_COUNT];
+unsigned int core_voice_lead(unsigned int track);
 
 uint32_t core_machine_samples_per_step = 6000; /* 120 BPM until a pattern's tempo is read */
 volatile uint32_t core_machine_view_track = DT2_MACHINE_VIEW_NONE;
@@ -88,9 +93,18 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
     const uint32_t view_track = core_machine_view_track;
     put(tail, DT2_MACHINE_WIRE + 18, view_track < TRACKS ? view_track : DT2_MACHINE_VIEW_NONE);
     /* Each track's machine type, from the kit (the type byte of track t's sound), for the sound chip's player
-     * dispatcher: the sound chip's own copy of the types is not a table it keeps per track (MACHINES.md). */
+     * dispatcher: the sound chip's own copy of the types is not a table it keeps per track (MACHINES.md). A linked
+     * voice track plays its lead's sound, so it takes its lead's type (voices.c). */
     for (unsigned int track = 0; track < TRACKS; ++track) {
-        put(tail, DT2_MACHINE_WIRE + 19 + track, SOUND_TYPE(track));
+        put(tail, DT2_MACHINE_WIRE + 19 + track, SOUND_TYPE(core_voice_lead(track)));
+    }
+    /* Each track's machine knobs C and E at full resolution (value << 8), from the parameter targets the stock
+     * smoother follows: the kit's value with the note's trig locks, and on a linked voice track its lead's
+     * (voices.c). The sound chip's own copy of C (SAMPLE's crossfade) arrives as 0 or 1 only. One word a track:
+     * C | E << 16. */
+    for (unsigned int track = 0; track < TRACKS; ++track) {
+        const volatile uint16_t *const target = KNOB_TARGETS + KNOB_VALUES * track;
+        put(tail, DT2_MACHINE_WIRE + 35 + track, (uint32_t)target[KNOB_C] | (uint32_t)target[KNOB_E] << 16);
     }
     /* The machine view the sound chip's receiver put in the last reply (words 600-631): the reply arrives as 16-bit
      * units, each sound-chip word low half first. */

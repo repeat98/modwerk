@@ -24,7 +24,9 @@ describe('SHARC assembler', () => {
     ['I0 = R1', '703e883f'],
     ['CALL 0xbe8000', '06be00be8000'],
     ['IF EQ CALL 0xbe8000', '068000be8000'],
-    ['RTS', '0abe00000000'],
+    ['RTS', '0a3e00000000'],
+    // Type 11a with bit 39 clear: the old 0aa0... (type 11c) hung the unit when NE was false.
+    ['IF NE RTS', '0a2000000000'],
     ['IF NE R1 = R2', '702100bf'],
     ['R0 = DM(I0, M0)', '503e00000000'],
     ['R0 = DM(M0, I0)', '403e00000000'],
