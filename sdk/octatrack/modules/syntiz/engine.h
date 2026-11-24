@@ -52,6 +52,18 @@ typedef struct {
     int32_t ex;                         /* its treble emphasis's last input (Q13) */
     uint32_t fade;                      /* MORPH: what remains of the crossfade from the old pair, Q24 */
     uint8_t ta, tb, fa, fb, armed;      /* MORPH: the pair playing, the pair fading out, and whether ta/tb are set */
+    /* What wave_prepare worked out from the controls and the increment, for every block until either changes. */
+    uint32_t inc;                       /* the base increment */
+    int32_t g4;                         /* DRIVE's gain >> 4 */
+    uint32_t si1, si2;                  /* the subs' increments */
+    int32_t sg1, sg2;                   /* their gains, 0 when silent */
+    uint32_t i[4];                      /* SAW: the inner and outer pairs; PULSE: its pair; ENS, CHOIR: a note each;
+                                         * TABLE: the synced cycle (i[0]); MORPH: the second cycle (i[0]) */
+    int32_t ga, gb;                     /* SAW: the pairs' gains; PULSE: ga; ENS, CHOIR: a note's gain, the shape's
+                                         * second saw; TABLE: the crossfade (MORF); MORPH: the mix */
+    int32_t gd, gt;                     /* ENS, CHOIR: dry and tap gains; MORPH: the crushes' factors */
+    uint32_t off;                       /* ENS: the second saw's offset; MORPH: the crossfade's step */
+    uint8_t voices, sh1, sh2;           /* ENS, CHOIR: notes sounding; MORPH: the crushes' shifts */
     int16_t line[WAVE_DELAY];
 } Wave;
 
@@ -61,8 +73,13 @@ void wave_reset(Wave *w);
 /* A trig or a note: restarts the phases when the controls ask for it. */
 void wave_note(Wave *w, const WaveControls *c);
 /* Fills out[0..n) with the track's source for one block at base increment inc (the played pitch,
- * in turns per sample: f / 44100 * 2^32). n up to 64. Controls are read once per block. */
+ * in turns per sample: f / 44100 * 2^32). n up to 16. Controls are read once per block. */
 void wave_render(Wave *w, const WaveControls *c, uint32_t inc, int16_t *out, unsigned n);
+/* wave_render in two steps, for a caller that knows when the controls or inc change: wave_prepare works out what
+ * depends only on them, wave_play renders a block from that and the same controls, as the packer takes it: two
+ * longs a sample in lr[0..2n), L then R, the sample in the high half. */
+void wave_prepare(Wave *w, const WaveControls *c, uint32_t inc);
+void wave_play(Wave *w, const WaveControls *c, uint32_t *lr, unsigned n);
 
 /* TABLE's table names (four letters) by table number 0..31. */
 const char *wave_table_name(unsigned t);
