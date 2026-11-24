@@ -359,7 +359,10 @@ finds where they are tied to it.
    releases are built from the MS-70CDR's 2.10 for all three pedals and answer
    as an MS-70CDR; on an MS-50G or MS-60B that runs one model's firmware on
    another, which the [modding guidelines](../MODDING_GUIDELINES.md) refuse, so
-   the page never flashes that build onto another pedal. Their base is
+   the page never offers that build for another pedal. It can't tell over USB:
+   a pedal running that build answers as an MS-70CDR whatever it is (the model
+   byte is in its flash, #2076), so the page asks for the model printed on the
+   pedal before the base flash and the first effect write. Their base is
    MIDISTOMP's patches on the pedal's own OS from its own updater (MIDISTOMP's
    `models/ms50g.yaml` and `ms60b.yaml` name them): a build per pedal agreed
    with Luca, imported like `ms70cdr-2.10` (`BUILD` in
