@@ -56,3 +56,24 @@ nobody answered "Upgrade OS now?", and the link answered ok and reset the unit. 
 repeated: the unit reset by itself, TRIG 16 blinked, and `ident` reported the mailbox `booted`, `booted from RAM` and
 CRC `0x36fc4fa1`. A power cycle then booted the flashed image: TRIG 16 did not blink. Nothing was flashed for the RAM
 boot.
+
+## The site's build of 2e5243e6 (24 November 2026)
+
+The machine page builds the base through the vendored Elekloader kit 0.7.0, with `modwerk-base-model-cycles-2e5243e6.elemod`
+pinned in `sdk/imports/elekloader-modwerk-base-model-cycles-2026-11-24.json`. `planBuild('model-cycles', '1.13', [])`
+picks that file, not core-mc 0.3 (`digi-build.test.ts`). The kit's `build` in Node, given the stock
+`model-cycles_OS1.13.syx` (`44fe5862…`) and that package with no version name, logs 6 sites, RAM
+`0x47e00000–0x47e00104`, sections 2, 4 and 5 byte for byte, flash end `0x0dc280` (1,064,320 bytes spare), and writes
+`f8b652a0…` (976,800 bytes): byte for byte the image Elekloader's Python patcher built from the same files on
+23 November. Downloads are off, so the page offers no file yet. Not run here: the page itself in a browser (it needs
+a signed-in member).
+
+## Sending from the page's sender over USB (24 November 2026)
+
+The site's own sender (`src/engine/elektron/os-upgrade.ts` over `os-upgrade-midi.ts`, as `usb-upgrade.ts` calls it),
+bundled with Vite and run from Node through the MCP's `nodeMidiAccess` on a Mac, sent `f8b652a0…` (the base
+`2e5243e6` alone, no module) to the unit over USB with Elektron Transfer closed: 478 messages, each answered, in 2.2 s.
+The unit asked UPGRADE OS NOW?; after YES it wrote the flash and booted normally, as stock (tester's report). This is
+also the first run of the base with no subscriber on `ev_key_leds`. Not run: the page's dialog in a browser (its
+button waits for the downloads approval), NO at UPGRADE OS NOW?.
+

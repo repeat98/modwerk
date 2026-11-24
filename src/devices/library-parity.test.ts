@@ -18,13 +18,13 @@ const AllMachinesLibrary = MachineLibrary
 type DigiDevice = NonNullable<Parameters<typeof MachineLibrary>[0]['device']> & { id: DigiMod['device'] }
 type DigiProps = { device: DigiDevice; selectedIds: string[]; onToggle: (id: string) => void } & Omit<Parameters<typeof MachineLibrary>[0], 'device' | 'octatrackModules' | 'octatrackSelected' | 'onToggleOctatrack' | 'digiSelected' | 'onToggleDigi' | 'viewedModuleVersions' | 'moduleBaseline'>
 function DigiLibrary({ device, selectedIds, onToggle, ...rest }: DigiProps) {
-  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], 'digitakt-ii': device.id === 'digitakt-ii' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [], 'analog-rytm-mkii': device.id === 'analog-rytm-mkii' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), viewedModuleVersions: {}, moduleBaseline: null })
+  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], 'digitakt-ii': device.id === 'digitakt-ii' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [], 'analog-rytm-mkii': device.id === 'analog-rytm-mkii' ? selectedIds : [], 'model-cycles': device.id === 'model-cycles' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), viewedModuleVersions: {}, moduleBaseline: null })
 }
 // Likes and downloads show the number beside an icon; the word is there for screen readers only.
 const count = (value: string, word: string) => value + '<span class="sr-only"> ' + word + '</span>'
 const props = {
   query: '', octatrackModules: AVAILABLE_MODULES, octatrackSelected: ['miniverb'],
-  onToggleOctatrack: noop, digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
+  onToggleOctatrack: noop, digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [], 'model-cycles': [] }, onToggleDigi: noop,
   family: 'all', onFamilyChange: noop, sort: 'collection', onSortChange: noop,
   statistics: [{module_id: 'miniverb', average: 4.5, count: 2, likes: 7, downloads: 12, worksReports: 5, downloadsStarted: null}],
   comparison: ['miniverb'], onCompare: noop, onOpenComparison: noop,
@@ -249,7 +249,7 @@ describe('Digi library parity', () => {
       const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digihealth']}))
       expect(other).not.toContain('type="checkbox" checked=""')
     }
-    const dialog = renderToStaticMarkup(createElement(ModuleComparison, {ids:['digitakt-digihealth','digitone-digihealth'], selected: [], digiSelected:{digitakt:['digihealth'],'digitakt-ii':[],digitone:[],'analog-rytm-mkii':[]}, onToggle:noop,onToggleDigi:noop,onClose:noop}))
+    const dialog = renderToStaticMarkup(createElement(ModuleComparison, {ids:['digitakt-digihealth','digitone-digihealth'], selected: [], digiSelected:{digitakt:['digihealth'],'digitakt-ii':[],digitone:[],'analog-rytm-mkii':[],'model-cycles':[]}, onToggle:noop,onToggleDigi:noop,onClose:noop}))
     expect(dialog).toContain('href="/digitakt/module/digihealth/"')
     expect(dialog).toContain('href="/digitone/module/digihealth/"')
     expect(dialog).toContain('aria-pressed="true"')
