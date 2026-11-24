@@ -1,0 +1,1 @@
+Docs: the module guide says when a module can read a newly loaded project's own file: loading another project, stock's project directory still names the last project at ev_banks_load and ev_banks_loaded (found with Songbook on an MKI).

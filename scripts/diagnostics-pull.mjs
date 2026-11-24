@@ -15,6 +15,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
 import { USB_AUDIO_MODULE } from '../src/config/usb-audio.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
+// The pipeline may not import the maintenance bot's policy.mjs (npm run licenses:check), so it names the owner itself.
+const OWNER = 'repeat98'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
@@ -109,9 +111,25 @@ const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NA
  * A freeze until a restart, stopped, in a session whose next start runs another base is the upgrade seen by diag.c's
  * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed but whose keys
  * end in that walk (PROJ … YES YES: pick the file, confirm) is likely the same image flashed again: the 17 November 2026
- * pull had 21 stopped freezes after the walk, all until a restart, 9 before another base and 12 before the same one. */
+ * pull had 21 stopped freezes after the walk, all until a restart, 9 before another base and 12 before the same one.
+ * Any other stopped freeze until a restart after PROJ … RIGHT YES is likely USB disk mode (or an upgrade prompt) left
+ * open, as finding 72's stalls: 13 of the 42 stopped freezes from 25 October to 24 November 2026 followed that walk. */
 export function unitLines(incidents, names = namesFor) {
   const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
+  const { at, base, note } = hangNotes(all)
+  const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
+  // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
+  const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
+  // Base 0.8 on logs a brake and late frame entries at most starts, before anything is installed: the start's own frame lag,
+  // released at STOP (machine_registry.c brake_tick). On 24 November 2026 they filled most of a unit's 12 lines.
+  const starting = r => (r.kind === 'brake' || r.kind === 'late') && r.second === 0 && !r.cpu && !r.playing, lag = all.filter(starting).length
+  return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [],
+    ...lag ? [`  unit: ${lag} brake or late-entry record${lag > 1 ? 's' : ''} at a start left out (the start's own frame lag)`] : [],
+    ...all.filter(r => r.kind !== 'start' && !brief(r) && !starting(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
+    note(r) + (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
+}
+/** One log's incidents, sorted: each start's base, and why a stall or freeze is no hang ('' when it may be one). */
+function hangNotes(all) {
   const at = (r, boot = r.boot) => r.epoch + '/' + boot
   const base = new Map(all.filter(r => r.kind === 'base').map(r => [at(r), r.a]))
   const upgrade = r => r.kind === 'stall' && base.has(at(r)) && base.has(at(r, r.boot - 1)) && base.get(at(r)) !== base.get(at(r, r.boot - 1))
@@ -128,12 +146,65 @@ export function unitLines(incidents, names = namesFor) {
     const keys = last?.keys.filter(k => k !== 255) ?? [], from = keys.lastIndexOf(PROJ), walk = from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : []
     return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
-  const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
-  // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
-  const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
-  return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [], ...all.filter(r => r.kind !== 'start' && !brief(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
-    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : reflashed(r) ? ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
-    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
+  const diskMode = r => {
+    if (r.kind !== 'freeze' || r.a || r.playing) return false
+    const keys = r.keys.filter(k => k !== 255), from = keys.lastIndexOf(PROJ)
+    return rightYes(from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : [])
+  }
+  return { at, base, note: r => upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : reflashed(r) ? ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)'
+    : diskMode(r) ? ' (likely USB disk mode or an upgrade prompt, beta finding 72: PROJ … RIGHT YES before it; not a hang)' : '' }
+}
+
+/** Per base the units ran: starts, the hours their load logs cover, and the hangs no OS upgrade or reflash explains
+ * (a stall counts for the session before the start that found it), with each base's syncs. The owner's development
+ * unit is left out: it stalls on purpose. Named bases (base-versions.json) by version; the rest add up as one line. */
+export function stabilityLines(found, events, versions = new Map(), owner = OWNER) {
+  const rows = new Map(), blank = () => ({ units: new Set(), starts: 0, hours: 0, playing: 0, stall: 0, crash: 0, stopped: 0, frozen: 0, started: 0, kept: 0, lost: 0 })
+  const row = id => rows.get(id) ?? rows.set(id, blank()).get(id)
+  const hex = a => a.toString(16).padStart(8, '0')
+  for (const [name, member] of found) {
+    if (name === owner) continue
+    const all = [...member.incidents?.values() ?? []].sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
+    const { at, base, note } = hangNotes(all)
+    for (const r of all) {
+      const a = base.get(at(r, r.kind === 'stall' && base.has(at(r, r.boot - 1)) ? r.boot - 1 : r.boot))
+      if (a === undefined || note(r)) continue
+      const b = row(hex(a)); b.units.add(name)
+      if (r.kind === 'start') b.starts++
+      else if (r.kind === 'stall' || r.kind === 'crash') b[r.kind]++
+      else if (r.kind === 'freeze' && !r.a) b[r.playing ? 'frozen' : 'stopped']++
+    }
+    // Hours count only starts whose base the incident log still holds (85 % of load records on 24 November 2026). The base
+    // the site saw at upload would credit a just-updated unit's older sessions to the newest base and flatter it.
+    // shortcut: the two logs are matched by epoch and start number; give loads their own base records if they drift apart.
+    for (const r of member.loads?.values() ?? []) {
+      const a = base.get(at(r))
+      if (a === undefined) continue
+      const b = row(hex(a)); b.units.add(name)
+      b.hours += 5 / 60; b.playing += r.samples ? 5 / 60 * r.playing / r.samples : 0
+    }
+  }
+  for (const { username, data } of events) {
+    if (username === owner || !data.base || !['sync_started', 'kept', 'sync_failed'].includes(data.event)) continue
+    const b = row(data.base.slice(0, 8)); b.units.add(username)
+    if (data.event === 'sync_started') b.started++
+    else if (data.event === 'kept') b.kept++
+    else if (data.error === 'transport') b.lost++
+  }
+  const named = [...rows].filter(([id]) => versions.has(id)), other = [...rows].filter(([id]) => !versions.has(id))
+  const sum = list => list.reduce((s, [, r]) => { for (const k in r) s[k] = k === 'units' ? new Set([...s[k], ...r[k]]) : s[k] + r[k]; return s }, blank())
+  // Each layout of a version has its own identity: one line per version.
+  const byVersion = Map.groupBy(named, ([id]) => versions.get(id))
+  const lines = [...byVersion].map(([version, list]) => [version, sum(list)]).sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))
+  if (other.length) lines.push([`${other.length} other bases`, sum(other)])
+  const one = h => h.toFixed(1)
+  return lines.map(([label, r]) => {
+    const hard = r.stall + r.crash + r.stopped + r.frozen
+    // Under 15 logged hours or 20 starts a rate swings with one event: none is printed.
+    return `  ${label}: units ${r.units.size}, starts ${r.starts}, ${one(r.hours)} h logged (${one(r.playing)} playing); stalls ${r.stall}, crashes ${r.crash}, ` +
+      `freezes until a restart ${r.stopped + r.frozen} (${r.frozen} playing)` + (r.hours >= 15 ? `; hard events ${one(100 * hard / r.hours)} per 100 h` : '') +
+      (r.starts >= 20 ? `; stalls ${one(100 * r.stall / r.starts)} per 100 starts` : '') + `; syncs kept ${r.kept} of ${r.started}, link lost ${r.lost}`
+  })
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
@@ -228,7 +299,7 @@ function crashLine({ count, vector, pc, code, memory }) {
   return line + ` code ${hex(code)} uncached ${hex(memory)}`
 }
 
-export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor } = {}) {
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor, versions = new Map() } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
@@ -265,6 +336,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',
     '', `Problems (${problems.length}, newest first, up to 30):`, ...problems.slice(0, 30).map(entry => '  ' + line(entry)),
     ...checks.length ? ['', 'Card-build checks that refused a selection (on every module change; not failures): ' + checks.map(([name, rows]) => `@${name} ${rows.length}`).join(', ')] : [],
+    '', `Stability per base (without @${OWNER}'s development unit; OS upgrades and reflashes left out; hours from the units' load logs):`,
+    ...stabilityLines(found, events, versions),
     '', 'Daily USB sync counts (everyone, sharing or not):',
     ...[...days].map(([day, rows]) => '  ' + day + '  ' + rows.map(row => row.event.replace('usb_sync_', '') + ' ' + row.count).join(', ')),
   ].join('\n')
@@ -303,16 +376,18 @@ async function main() {
   writeFileSync(file, JSON.stringify({ pulledAt: new Date().toISOString(), ...data }, null, 2), { mode: 0o600 })
   chmodSync(file, 0o600)
   // The site serves main's base; a checkout on an older commit would name current bases older.
-  let binding
-  try { binding = execFileSync('git', ['show', 'origin/main:sdk/machines/octatrack/base-binding.json'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) }
-  catch { binding = readFileSync(new URL('sdk/machines/octatrack/base-binding.json', ROOT), 'utf8') }
-  const { identity: base, variants: layouts } = JSON.parse(binding)
+  const fromMain = path => {
+    try { return execFileSync('git', ['show', 'origin/main:' + path], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) }
+    catch { return readFileSync(new URL(path, ROOT), 'utf8') }
+  }
+  const { identity: base, variants: layouts } = JSON.parse(fromMain('sdk/machines/octatrack/base-binding.json'))
+  const versions = new Map(JSON.parse(fromMain('sdk/machines/octatrack/base-versions.json')).bases.flatMap(b => b.identities.map(id => [id.slice(0, 8), b.version])))
   let reports = new Map(), note = ''
   try {
     reports = reportsByMember(JSON.parse(execFileSync('gh', ['issue', 'list', '--label', 'issue-report', '--state', 'all', '--limit', '300',
       '--search', 'created:>=' + from.slice(0, 10), '--json', 'number,title,state,body'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })))
   } catch (error) { note = '\n\nGitHub reports not matched: ' + (error.stderr?.toString().trim() || error.message) }
-  console.log(summary(data, { base, layouts, reports }) + note + '\n\nEvery record: ' + file)
+  console.log(summary(data, { base, layouts, reports, versions }) + note + '\n\nEvery record: ' + file)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

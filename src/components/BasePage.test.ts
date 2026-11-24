@@ -59,14 +59,14 @@ it('lists the other instruments without repeating the three that have their own 
 
 it('shows the newest change for the chosen base and links earlier changes to shipped notes', async () => {
   await render()
-  expect(container.querySelector('.base-changelog > dl dt')?.textContent).toBe(CURRENT_BASE_VERSION)
+  expect(container.querySelector('.base-latest-release .base-release-version')?.textContent).toBe(CURRENT_BASE_VERSION)
   for (const [machine, note] of [['Octatrack', 'octatrack'], ['MS-70CDR', 'midistomp'], ['Analog Rytm', 'rytm']]) {
     await choose(machine)
     const log = container.querySelector('.base-changelog')!
-    const latest = log.querySelector<HTMLAnchorElement>(':scope > dl a')!
+    const latest = log.querySelector<HTMLAnchorElement>('.base-latest-release .base-release-source')!
     expect(latest.href).toContain(note)
     expect(latest.closest('details')).toBeNull()
-    expect(log.querySelectorAll('details .base-change').length).toBeGreaterThan(0)
+    expect(log.querySelectorAll('.base-archived-release').length).toBeGreaterThan(0)
     for (const link of log.querySelectorAll<HTMLAnchorElement>('a')) {
       const file = new URL(link.href).pathname.split('/changelog/')[1]
       expect(existsSync(join(process.cwd(), 'changelog', file)), file).toBe(true)
@@ -76,15 +76,40 @@ it('shows the newest change for the chosen base and links earlier changes to shi
   expect(container.querySelector('.base-changelog')).toBeNull()
 })
 
-it('puts setup and recovery prerequisites before the optional Octatrack references', async () => {
+it('shows a top-to-bottom stack with the original OS for the selected instrument', async () => {
+  await render()
+  const stack = () => container.querySelector('.base-stack')!
+  expect([...stack().querySelectorAll('dt')].map(layer => layer.textContent)).toEqual(['Modules', 'Modwerk base', 'Original OS'])
+  expect(stack().textContent).toContain('OS 1.40C')
+  await choose('MS-70CDR')
+  expect(stack().textContent).toContain('Zoom 2.10 updater')
+  await choose('Analog Rytm')
+  expect(stack().textContent).toContain('OS 1.74')
+  await choose('Others')
+  expect(container.querySelector('.base-stack')).toBeNull()
+})
+
+it('leads with on-device controls and keeps installation prerequisites visible above the task instructions', async () => {
   await render()
   expect(container.querySelector('.base-device a')?.getAttribute('href')).toBe('#octatrack/setup')
-  expect(container.querySelector('.base-facts')?.textContent).toContain('OS 1.40C')
-  expect(container.querySelector('.base-facts')?.textContent).toContain('card reader or MIDI interface')
-  expect(container.querySelector('.base-definition')?.textContent).toContain('original operating system')
-  expect(container.querySelector('.base-workflow')?.closest('details')).toBeNull()
-  expect(container.querySelector('.base-workflow')?.textContent).toContain('Sync to Octatrack')
+  const controls = container.querySelector('.ot-controls')!
+  const history = container.querySelector('.base-changelog')!
+  expect(controls.compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(container.querySelector('.ot-intro .base-stack-diagram img')?.getAttribute('src')).toContain('firmware-stack.svg')
+  expect(controls.querySelector(':scope > ul img')?.getAttribute('src')).toContain('ot-project-menu.png')
+  expect(controls.querySelectorAll(':scope > ul img')).toHaveLength(6)
+  await act(() => container.querySelector<HTMLButtonElement>('.ot-intro .text-button')!.click())
+  expect(document.activeElement?.id).toBe('base-changelog-title')
+  const prerequisites = container.querySelector('.ot-install-intro')!
+  expect(prerequisites.textContent).toContain('OS 1.40C')
+  expect(prerequisites.textContent).toContain('card reader or MIDI interface')
+  expect(prerequisites.closest('details')).toBeNull()
+  expect(prerequisites.querySelector('a[href="#octatrack/setup"]')).toBeTruthy()
+  const moduleSet = container.querySelector('.ot-install-topics a[href="#faq/card-set"]')!.closest('details')!
+  expect(moduleSet.textContent).toContain('Sync to Octatrack')
   const references = [...container.querySelectorAll<HTMLDetailsElement>('.base-reference')]
   expect(references.every(section => !section.open)).toBe(true)
   expect(references.find(section => section.querySelector('a[href="#faq/return-to-stock"]'))?.textContent).toContain('hold PROJ')
+  await act(() => moduleSet.querySelector('summary')!.click())
+  expect(moduleSet.open).toBe(true)
 })

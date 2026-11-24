@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.1.5-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Leaves out two panel hooks, so a later FM Synth update can install beside Scale Quantizer."
+    ]
+  },
+  {
     "version": "0.1.4-experimental",
     "date": "2026-10-30",
     "changes": [

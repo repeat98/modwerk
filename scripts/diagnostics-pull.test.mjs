@@ -245,6 +245,37 @@ describe('diagnostics pull', () => {
     expect(lines[0]).toBe('  unit: 2 hot spells under 5 s while stopped left out (key presses and project loads)')
     expect(lines.slice(1).map(l => l.slice(0, 12))).toEqual(['  unit: #3 s', '  unit: #4 s'])
   })
+  it('calls a stopped freeze until a restart after PROJ … RIGHT YES likely USB disk mode, and no other freeze', () => {
+    const walk = [...Array(10).fill(255), 0x1c, 0x20, 0x33, 0x20, 0x21, 0x31], other = [...Array(14).fill(255), 0x27, 0x28]
+    const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: walk, screen: 0, tempo24: 0, playing: false, ...more })
+    const note = ' (likely USB disk mode or an upgrade prompt, beta finding 72: PROJ … RIGHT YES before it; not a hang)'
+    const lines = unitLines([at(1, 1, 'base', 0x049efc39), at(2, 2, 'base', 0x049efc39), at(3, 1, 'freeze'), at(4, 1, 'freeze', 0, { playing: true }),
+      at(5, 1, 'freeze', 0, { keys: other }), at(6, 1, 'freeze', 25919)])
+    expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual([['3', true], ['4', false], ['5', false], ['6', false]])
+  })
+  it('leaves a start’s own brake and late-entry records out and counts them, keeping one while playing', () => {
+    const at = (seq, kind, a, more = {}) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing: false, ...more })
+    const lines = unitLines([at(1, 'start', 0), at(2, 'brake', 1), at(3, 'late', 0xac000000), at(4, 'brake', 0x800001, { second: 255, cpu: 463, playing: true })])
+    expect(lines[0]).toBe('  unit: 2 brake or late-entry records at a start left out (the start\'s own frame lag)')
+    expect(lines.slice(1).map(l => l.slice(0, 12))).toEqual(['  unit: #4 s'])
+  })
+  it('adds up each version’s starts, logged hours, hangs and syncs, without the owner’s unit or an OS upgrade', () => {
+    const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false, ...more })
+    const load = seq => ({ seq, boot: 1, minute: 5 * seq, cpu: [500, 520], dsp1to4: [300, 310], dsp5to8: [300, 310], samples: 600, playing: 300 })
+    const incidents = [at(1, 1, 'start'), at(2, 1, 'base', 0xaaaaaaaa), at(3, 2, 'start'), at(4, 2, 'base', 0xaaaaaaaa), at(5, 2, 'stall', 1), // start 1's session stalled
+      at(6, 3, 'start'), at(7, 3, 'base', 0xbbbbbbbb), at(8, 3, 'stall', 1), // found after an OS upgrade: no hang
+      at(9, 3, 'freeze', 0, { playing: true }), at(10, 3, 'freeze', 25919)] // one until a restart, one that passed
+    const log = (n, username) => entry(n, username, { event: 'device_log', phase: 'ready', log: { incidents, loads: Array.from({ length: 12 }, (_, i) => load(i + 1)) } })
+    const sync = (n, event, more = {}) => entry(n, 'tester', { event, phase: 'sending', base: 'a'.repeat(64), ...more })
+    const events = [log(1, 'tester'), log(2, 'repeat98'), sync(3, 'sync_started'), sync(4, 'kept'), sync(5, 'sync_started'), sync(6, 'sync_failed', { error: 'transport' })]
+    const text = summary({ events, counts: [] }, { versions: new Map([['aaaaaaaa', '0.8'], ['bbbbbbbb', '0.8.1']]) })
+    expect(text.split('Stability per base')[1].split('\n').slice(1, 3)).toEqual([
+      '  0.8: units 1, starts 2, 1.0 h logged (0.5 playing); stalls 1, crashes 0, freezes until a restart 0 (0 playing); syncs kept 1 of 2, link lost 1',
+      '  0.8.1: units 1, starts 1, 0.0 h logged (0.0 playing); stalls 0, crashes 0, freezes until a restart 1 (1 playing); syncs kept 0 of 0, link lost 0'])
+  })
   it('calls a stall after a stopped PROJ … RIGHT YES walk at 95 %+ with nothing installed likely an OS upgrade or USB disk mode', () => {
     const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false, ...more })

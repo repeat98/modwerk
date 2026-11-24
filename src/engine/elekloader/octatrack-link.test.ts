@@ -422,6 +422,12 @@ describe('sending a module', () => {
     expect(link.getState().notice?.text).not.toContain('Look for')
     expect(inUseSlotHint(3, ['Tape Echo', 'Tape Echo'])).toBe(' Track 3 runs Tape Echo as its FX1 effect in the current Part.')
   })
+  it('says the saved modules are still loading when a sync comes before this start’s restore', async () => {
+    const { unit, link } = await linked()
+    unit.restoring = true // rejected with no loader refusal, the record's saved still 0
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/hasn’t loaded its saved modules yet, so nothing changed/)
+  })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')
     expect(inUseHint(['Tape Echo', 'Tape Echo'])).toBe(' Look for Tape Echo on the tracks.')
@@ -714,6 +720,14 @@ describe('a sync that changes the unit’s USB configuration', () => {
     const { unit, link } = await reconnecting()
     const candidate = unit.orphan
     unit.orphanTransaction = 8
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe(candidate)
+  })
+  it('leaves a matching USB Audio trial from a different boot session with its owner', async () => {
+    const { unit, link } = await reconnecting()
+    const candidate = unit.orphan
+    unit.bootSession = '17'.repeat(32)
     unit.plug('base')
     await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
     expect(unit.orphan).toBe(candidate)

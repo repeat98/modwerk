@@ -140,6 +140,9 @@ def refuse_client(conn):
         pass
 
 
+ADMIT_WAIT = 1.0  # seconds a new client waits for the last one to finish hanging up
+
+
 def serve_clients(server, state, stop=None):
     """Serve one client at a time and refuse the others while it is connected.
 
@@ -152,6 +155,14 @@ def serve_clients(server, state, stop=None):
         finally:
             busy.release()
 
+    def admit(conn):
+        # A client that only checks the bridge listens (device.mjs serve) hangs up at once, and the next one can
+        # arrive before its thread has let go: wait briefly for that before refusing, so only a real holder is refused.
+        if busy.acquire(timeout=ADMIT_WAIT):
+            serve(conn)
+        else:
+            refuse_client(conn)
+
     while True:
         try:
             conn, _ = server.accept()
@@ -160,10 +171,7 @@ def serve_clients(server, state, stop=None):
         if stop is not None and stop.is_set():
             conn.close()
             return
-        if busy.acquire(blocking=False):
-            threading.Thread(target=serve, args=(conn,), daemon=True).start()
-        else:
-            threading.Thread(target=refuse_client, args=(conn,), daemon=True).start()
+        threading.Thread(target=admit, args=(conn,), daemon=True).start()
 
 
 def main():

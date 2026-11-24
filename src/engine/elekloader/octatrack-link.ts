@@ -159,6 +159,10 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+/** A "rejected" with no loader refusal while the record's `saved` is still 0: this start's restore has not run, and the
+ * base takes no change until it has (modset.c modwerk_modset_check_set). In November 2026 three units synced their whole
+ * set into that window, read "can't run this module file", and had it back from the restore moments later. */
+const NOT_RESTORED = 'The Octatrack hasn’t loaded its saved modules yet, so nothing changed. It loads them a few seconds after it starts, while nothing plays or records. Wait until Status shows them, then sync again if anything is missing.'
 const RUNTIME_IN_USE = 7
 /** After refusal 7, the modules the sync removes or replaces: one of them is on a track. The base does not say which
  * track (November 2026: testers were refused several times in a row looking for it). */
@@ -401,7 +405,8 @@ export class OctatrackLink {
         // Back after the base's own reconnect: this page's trial is still open on the unit. Adopt it and carry on.
         const candidate = this.reconnectCandidate
         if (resuming && candidate?.active && session && session.status.active === candidate.active &&
-            identity.base === candidate.base && session.status.currentTransaction === candidate.currentTransaction &&
+            identity.base === candidate.base && session.status.session === candidate.session &&
+            session.status.currentTransaction === candidate.currentTransaction &&
             session.status.generation === candidate.generation && ['pending', 'trial'].includes(session.status.phase)) {
           session.adopt()
           if (session.status.phase === 'pending') await session.startTrial()
@@ -912,7 +917,7 @@ export class OctatrackLink {
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) +
+    const text = recovered && clean ? RECOVERED : (why === 0 && record?.saved === 0 ? NOT_RESTORED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
       (why === RUNTIME_IN_USE ? record?.inUseSlot ? inUseSlotHint(record.inUseSlot, this.replaced) : inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) {
       const notice = { tone: 'error', text } as const
