@@ -113,6 +113,10 @@ static uint8_t ring_len[RING];
 static uint8_t ring_port[RING];
 static volatile uint32_t ring_head, ring_tail, ring_drops, rx_count;
 static uint32_t ticks, sent_count, send_fails, last_port;
+// The set's identity, taken at boot: the CRC32 of the .run block (the base and every linked module, as the linker
+// placed them) before any handler has run, and its length. A host computes the same from a built image.
+static uint32_t run_crc, run_bytes;
+extern uint8_t __run_start[], __run_words[];
 
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed = 1, human_ticks = -1, release_due, ramboot_due;
@@ -351,6 +355,8 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, MAILBOX[0]);
         p = put32(p, MAILBOX[6]);
         p = put32(p, MAILBOX[4]);
+        p = put32(p, run_crc);
+        p = put32(p, run_bytes);
         send(p, port);
         return;
     case CMD_RAMBOOT: {
@@ -611,6 +617,8 @@ void mw_boot_gate(void)
     volatile uint32_t *mb = MAILBOX;
     const uint8_t *c = COPY, *e;
     uint32_t magic = mb[0], clen, ulen, off, plen, i, count, arg;
+    run_bytes = (uint32_t)__run_words * 4;  // first: no handler has written to .run yet
+    run_crc = crc32(__run_start, run_bytes);
     if (magic != MB_ASKED && magic != MB_SPENT)
         return;
     mb[0] = 0;                          // one shot, whatever happens next

@@ -13,6 +13,8 @@ MKII link's (../analog-rytm-mkii/LINK.md). Nothing here writes flash.
     mc_link.py release          # let go of every key the link holds
     mc_link.py disarm           # no keys or turns from the host until the next boot
     mc_link.py ramboot IMAGE.syx  # upload with stock's OS upgrade, then boot it from RAM: nothing is flashed
+    mc_link.py runid IMAGE.syx    # the set identity ident reports for this image (needs IMAGE.syx.json); no unit
+    mc_link.py rundiff IMAGE.syx  # read the running .run block and list each word that differs from the image
 
 Keys and turns need the link armed (at every boot) and stop for about 3 s after a person presses or turns
 something on the panel (status 'a person is at the unit').
@@ -26,7 +28,7 @@ CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12,
 STATUS = {0: 'ok', 1: 'not armed', 2: 'bad request', 3: 'busy', 4: 'out of range', 5: 'a person is at the unit'}
 IDENT = ['link version', 'requests received', 'requests dropped', 'ticks', 'port', 'replies sent', 'send failures',
          'armed', 'person at unit', 'person presses', 'posted', 'refused', 'RAM boot mailbox', 'RAM boot status',
-         'RAM boot image CRC']
+         'RAM boot image CRC', 'set CRC', 'set bytes']
 BOOT = {0: 'none', 1: 'booted from RAM', 2: 'mailbox without a software reset', 3: 'check word', 4: 'lengths',
         5: 'container CRC', 6: 'no MAIN OS section', 8: 'failed after the unpack (reset)'}
 MAILBOX = {0: 'empty', 0x4d574254: 'asked', 0x4d574255: 'spent', 0x4d574253: 'booted'}
@@ -75,7 +77,16 @@ def main():
     sub.add_parser('disarm')
     s = sub.add_parser('ramboot')
     s.add_argument('image')
+    s = sub.add_parser('runid')
+    s.add_argument('image')
+    s = sub.add_parser('rundiff')
+    s.add_argument('image')
+    s.add_argument('--at', type=lambda v: int(v, 0), help='read a copy of the block at this address instead')
     a = ap.parse_args()
+    if a.cmd == 'runid':
+        crc, n = runid(open(a.image, 'rb').read(), json_load(a.image + '.json'))
+        print('set CRC %#010x, set bytes %d' % (crc, n))
+        return
     try:
         import mido
     except ImportError:
@@ -86,6 +97,8 @@ def main():
         sys.exit('No MIDI port matching %r. Outputs: %s' % (a.port, mido.get_output_names()))
     if a.cmd == 'ramboot':
         return ramboot(mido, ins[0], outs[0], a)
+    if a.cmd == 'rundiff':
+        return rundiff(mido, ins[0], outs[0], a)
     if a.cmd == 'tap':
         run(mido, ins[0], outs[0], 'key', u32(a.id) + u32(1), a)
         time.sleep(0.1)
@@ -117,14 +130,16 @@ def run(mido, in_name, out_name, cmd, body, a):
             if cmd in ('key', 'enc', 'release', 'disarm', 'ramboot'):
                 print('ok')
             elif cmd == 'ident':
-                for i, name in enumerate(IDENT):
+                for i, name in enumerate(IDENT[:len(p) // 5]):  # an older base sends fewer fields
                     v = get32(p[5 * i:5 * i + 5])
                     shown = {'port': PORTS, 'RAM boot status': BOOT, 'RAM boot mailbox': MAILBOX}.get(name, {}).get(v, v)
-                    print('%-18s %s' % (name, '%#x' % v if name == 'RAM boot image CRC' else shown))
-                return [get32(p[5 * i:5 * i + 5]) for i in range(len(IDENT))]
+                    print('%-18s %s' % (name, '%#x' % v if name in ('RAM boot image CRC', 'set CRC') else shown))
+                return [get32(p[5 * i:5 * i + 5]) for i in range(min(len(IDENT), len(p) // 5))]
             else:
                 addr, n = get32(p[0:5]), get32(p[5:10])
                 data = unpack(p[10:], n)
+                if getattr(a, 'quiet', False):
+                    return bytes(data)
                 for i in range(0, n, 16):
                     print('%08x  %s' % (addr + i, data[i:i + 16].hex(' ')))
             return
@@ -142,6 +157,60 @@ def rytm():
     spec.loader.exec_module(mod)
     mod.IMAGE_MAX, mod.CONTAINER_MAX = IMAGE_MAX, CONTAINER_MAX
     return mod
+
+
+def json_load(path):
+    import json
+    with open(path) as f:
+        return json.load(f)
+
+
+def main_image(syx):
+    """The image's MAIN OS, unpacked, as the boot loader places it at 0x40000400."""
+    import struct
+    rl = rytm()
+    from firmware_codec import elz                  # rytm() put sdk/ on the path
+    c = rl.syx_container(syx)
+    count, = struct.unpack_from('>I', c, 0x1c)
+    for k in range(min(count, 16)):
+        ident, off, plen, dest = struct.unpack_from('>IIII', c, 0x20 + 16 * k)
+        if ident == rl.MAIN_OS and dest == 0x40000400:
+            return elz.depack_section(c[off:off + plen])
+    raise ValueError('no MAIN OS section at 0x40000400')
+
+
+def runid(syx, build):
+    """(CRC32, length) of the image's .run block: the base and its modules as the linker placed them, which the base's
+    link takes at boot and ident reports as the set identity. build is the patcher's IMAGE.syx.json."""
+    import zlib
+    layout = build['link']['layout']
+    load, (start, end) = layout['run_load'], layout['ddr']
+    image = main_image(syx)
+    blob = image[load - 0x40000400:load - 0x40000400 + end - start]
+    if len(blob) != end - start:
+        raise ValueError('the .run block lies outside the MAIN OS')
+    return zlib.crc32(blob) & 0xffffffff, len(blob)
+
+
+def rundiff(mido, in_name, out_name, a):
+    build = json_load(a.image + '.json')
+    layout = build['link']['layout']
+    load, (start, end) = layout['run_load'], layout['ddr']
+    image = main_image(open(a.image, 'rb').read())
+    want = image[load - 0x40000400:load - 0x40000400 + end - start]
+    names = sorted((int(v, 16), k) for k, v in json_load(a.image + '.map.json').items()
+                   if isinstance(v, str) and v.startswith('0x') and start <= int(v, 16) < end)
+    a.quiet = True
+    got = b''
+    src = a.at or start
+    for at in range(start, end, 128):
+        got += run(mido, in_name, out_name, 'mem', u32(src + at - start) + u32(min(128, end - at)), a)
+    for i in range(0, len(want), 4):
+        if got[i:i + 4] != want[i:i + 4]:
+            sym = max((n for n in names if n[0] <= start + i), default=(start, '?'))
+            print('%08x  image %s  unit %s  %s+%#x' % (start + i, want[i:i + 4].hex(), got[i:i + 4].hex(), sym[1],
+                                                        start + i - sym[0]))
+    print('compared %d bytes' % len(want))
 
 
 def ramboot(mido, in_name, out_name, a):

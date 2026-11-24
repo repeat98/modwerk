@@ -45,13 +45,15 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, requests received and dropped, the link's tick count, the port the request came on, replies sent, send failures, armed, person at the unit, person presses, posted, refused, the RAM boot's mailbox, status and image CRC |
+| `ident` | 0x01 | link version, requests received and dropped, the link's tick count, the port the request came on, replies sent, send failures, armed, person at the unit, person presses, posted, refused, the RAM boot's mailbox, status and image CRC, and the set identity: the CRC32 and length of the `.run` block (the base and every linked module), taken at boot before any handler runs |
 | `disarm` | 0x02 | turns the arm off and lets go of every key the link holds |
 | `key ID FLAGS` | 0x10 | a panel key message with the flags as given (bit 0 down); a held key reads as held to `is_key_held` |
 | `enc N DELTA` | 0x11 | an encoder message of DELTA steps (-30 to 30), as the panel posts it |
 | `release` | 0x12 | lets go of every key the link holds |
 | `ramboot IMAGE.syx` | 0x14 | after stock's OS upgrade has taken the image: checks it, resets and boots it from RAM (below) |
 | `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+
+The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image. One reading on a unit gave another CRC once and could not be repeated (Evidence).
 
 The screen needs no command: stock answers Elektron's own screenshot request over USB.
 
@@ -111,6 +113,9 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `enc 13 10`, `enc 14 10`, `enc 15 10` | CHANCE, then REVERB, then DELAY change |
 | `089e13a9…` flashed (dev base `984a4508`) | `ramboot` with `f39676d6…` (the same base and a test module that blinks TRIG 16) | upload in 3.2 s, status ok, the unit resets by itself; TRIG 16 blinks; `ident`: mailbox `booted`, `booted from RAM`, CRC `0x36fc4fa1`, the uploaded MAIN OS's |
 | the same | a power cycle after it | the flashed image boots, TRIG 16 does not blink |
+| `924efa4c…` (dev base `cef3a17a`, the set identity, with the TRIG 16 test module) | `ident` after a fresh flash, 24 November 2026 | set CRC `0xf2fe6f24`, 5764 bytes: the length as `runid` computes, the CRC not (`0xf2fe7324`); `rundiff` then found the running block byte for byte the image's |
+| the same, flashed again later | `ident` after the flash, then after a power cycle | set CRC `0xf2fe7324`, 5764 bytes, both times, as `runid` computes |
+| `bf6c9ff8…` (a diagnostic dev base that also kept a copy of the block as the gate saw it) | `ident` after the flash and after a power cycle; `rundiff --at` the copy | the boot CRC, the CRC at the request and `runid` agree (`0xadac0c2e`, 5916 bytes); the copy matches the image byte for byte |
 
 ## Not tested
 
