@@ -48,3 +48,11 @@ flash with port USB and one request. Details in `sdk/machines/model-cycles/LINK.
 
 Keys and encoders over the link (dev base `26dee268`, image `ccb406b4…`): on the same unit, `key 2 1` held TRACK as
 a person would and `key 2 0` let it go; `enc 2 10` on the main page turned PITCH.
+
+RAM boot (dev base `984a4508`: 5624 bytes `.run`, 1284 `.bss`, 8 sites; it adds an `ev_boot` handler): on the same
+unit, 24 November 2026, `089e13a9…` (the dev base alone) flashed as an OS update. `mc_link.py ramboot` uploaded
+`f39676d6…` (the dev base and the TRIG 16 test module, MAIN OS CRC `0x36fc4fa1`) with stock's OS upgrade in 3.2 s,
+nobody answered "Upgrade OS now?", and the link answered ok and reset the unit. After a power cycle the attempt was
+repeated: the unit reset by itself, TRIG 16 blinked, and `ident` reported the mailbox `booted`, `booted from RAM` and
+CRC `0x36fc4fa1`. A power cycle then booted the flashed image: TRIG 16 did not blink. Nothing was flashed for the RAM
+boot.

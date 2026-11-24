@@ -1,11 +1,12 @@
 # Model:Cycles development link
 
 A development base's link over USB MIDI: a host on the computer reads the link's identity and the unit's memory, and
-presses keys and turns encoders as a person at the panel would.
+presses keys and turns encoders as a person at the panel would, and boots an uploaded image from RAM without
+flashing it.
 It is the first piece of the Model:Cycles' USB link the [machine recipe](../../../docs/MACHINE_RECIPE.md) asks for,
 SysEx because USB MIDI is all the unit offers, and it follows the
 [Analog Rytm MKII's link](../analog-rytm-mkii/LINK.md) by Nathaniel Pavel: the same wire format, the same place in
-the OS. No flash and no RAM boot yet.
+the OS. No flash over the link yet: a base still goes on the unit as an OS update.
 
 - Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s),
   base.json's `dev`.
@@ -20,7 +21,8 @@ npm run machine:base -- model-cycles --stock STOCK.syx --dev --out NEW-DIR
 ```
 
 which writes `modwerk-base-model-cycles-dev-<sha>.elemod`, checked against no binding: a development base is never
-recorded or released. It costs about 3.3 KB of `.run` and 1.2 KB of RAM in the shared mod area.
+recorded or released. It costs about 5.4 KB of `.run` and 1.3 KB of RAM in the shared mod area (dev base `984a4508`:
+5624 bytes `.run`, 1284 `.bss`, 8 sites).
 
 ## Arm
 
@@ -43,14 +45,39 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, requests received and dropped, the link's tick count, the port the request came on, replies sent, send failures, armed, person at the unit, person presses, posted, refused |
+| `ident` | 0x01 | link version, requests received and dropped, the link's tick count, the port the request came on, replies sent, send failures, armed, person at the unit, person presses, posted, refused, the RAM boot's mailbox, status and image CRC |
 | `disarm` | 0x02 | turns the arm off and lets go of every key the link holds |
 | `key ID FLAGS` | 0x10 | a panel key message with the flags as given (bit 0 down); a held key reads as held to `is_key_held` |
 | `enc N DELTA` | 0x11 | an encoder message of DELTA steps (-30 to 30), as the panel posts it |
 | `release` | 0x12 | lets go of every key the link holds |
+| `ramboot IMAGE.syx` | 0x14 | after stock's OS upgrade has taken the image: checks it, resets and boots it from RAM (below) |
 | `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 
 The screen needs no command: stock answers Elektron's own screenshot request over USB.
+
+## RAM boot
+
+`mc_link.py ramboot IMAGE.syx` boots an image without flashing it, so a module can be tried and dropped again with a
+power cycle. The image is any Model:Cycles OS `.syx`, a stock one or one the kit linked.
+
+1. The host uploads the image with stock's own OS upgrade (Elektron's `F0 00 20 3C 11`, commands 0x50 start and
+   0x51 write, the protocol Transfer uses; the Rytm's helpers in `rytm_link.py`). Stock keeps it at `0x4028da80` and
+   asks "Upgrade OS now?"; nobody answers it.
+2. `ramboot` carries the container's length and CRC32 and the MAIN OS's length and CRC32. The link checks that stock's
+   upload is complete (header byte 0 = 3) and has that length, else status 4.
+3. The bootstrap stages the flashed, packed MAIN OS at `0x40200000` on every boot, over `0x4028da80`. The link copies
+   the container to `0x46000040`, writes the data cache out and switches it off, writes a mailbox at `0x46000000`
+   (magic, the four numbers, a check word) and resets as stock's flash routine does at its end. Nothing is erased or
+   written to flash.
+4. At the next boot the base's `ev_boot` handler, before stock copies `.data` and clears `.bss`, takes the mailbox
+   only after a software reset (RSR), checks the check word, the lengths and the container's CRC32, unpacks its MAIN
+   OS over the flashed one at `0x40000400`, checks that CRC32 and enters it as the bootstrap does. Each mailbox is
+   used once.
+5. A power cycle brings the flashed OS back.
+
+`ident` reports the mailbox (`asked`, `spent`, `booted`), the status (`booted from RAM`; else why not: no software
+reset, check word, lengths, CRC, no MAIN OS, failed after unpacking) and the CRC of the image that runs. The flashed
+image must carry a development base: only its `ev_boot` handler boots from RAM.
 
 ## Where it runs (OS 1.13)
 
@@ -82,8 +109,14 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | `ccb406b4…` (keys and encoders, dev base `26dee268`) | `key 2 1`, then `key 2 0` | the unit acts as with TRACK held, then let go |
 | the same | `enc 2 10` on the main page | PITCH changes as with a turn |
 | the same | `enc 13 10`, `enc 14 10`, `enc 15 10` | CHANCE, then REVERB, then DELAY change |
+| `089e13a9…` flashed (dev base `984a4508`) | `ramboot` with `f39676d6…` (the same base and a test module that blinks TRIG 16) | upload in 3.2 s, status ok, the unit resets by itself; TRIG 16 blinks; `ident`: mailbox `booted`, `booted from RAM`, CRC `0x36fc4fa1`, the uploaded MAIN OS's |
+| the same | a power cycle after it | the flashed image boots, TRIG 16 does not blink |
 
 ## Not tested
+
+- A RAM boot of an image without a development base, or of the stock `.syx`; a mailbox refused at boot (each
+  status other than `booted from RAM`).
+- Answering "Upgrade OS now?" after an upload meant for the RAM boot (it would flash the image as stock does).
 
 - A request over DIN (dropped by design).
 - A person pressing a key while the link holds one (the 3 s refusal), `disarm`, `release`.

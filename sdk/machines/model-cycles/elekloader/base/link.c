@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Model:Cycles' development link over USB MIDI, in development bases only (base.json's dev,
 // npm run machine:base -- model-cycles --dev); release bases never carry it. A host on the computer
-// asks for the link's identity, reads memory, and presses keys and turns encoders as the panel does. No flash and
-// no RAM boot yet.
+// asks for the link's identity, reads memory, presses keys and turns encoders as the panel does, and boots an
+// uploaded image from RAM without writing the flash.
 // After the Analog Rytm MKII's link by Nathaniel Pavel (sdk/machines/analog-rytm-mkii/elekloader/base/link.c),
 // with the same wire format, so its host tool's framing applies.
 //
@@ -29,6 +29,14 @@
 // - Armed at every boot (a development base is meant to be driven); DISARM turns it off until the next boot.
 //   A press or turn on the panel is a person at the unit: the link lets go of what it holds and refuses keys and
 //   turns for about 3 s.
+// - RAM boot: the host uploads an image with stock's OS upgrade (SysEx ID 0x11, 0x50/0x51) and sends RAMBOOT with
+//   the image's four numbers. Stock keeps the upload at 0x4028da80 (a 32-byte header, byte 0 = 3 when complete;
+//   at +0x20 its length, at +0x28 the ELE3 container). The bootstrap stages the flashed, packed MAIN OS at
+//   0x40200000 on every boot, which reaches past 0x4028da80, so the link copies the container to COPY first, writes
+//   the data cache out, switches it off, writes a mailbox and resets as stock's flash routine does (0x40092304's
+//   end). Nothing is erased or written. At the next boot the base's ev_boot gate (before stock copies .data and
+//   clears .bss) checks the mailbox after a software reset, the container's CRC32, unpacks its MAIN OS over the
+//   running one, checks that CRC32 and enters it as the bootstrap does. A power cycle brings the flashed OS back.
 // - The screen needs no command here: stock answers Elektron's own screenshot request (F0 00 20 3C 10 00,
 //   command 0x04) over USB.
 #include <stdint.h>
@@ -55,6 +63,7 @@
 #define CMD_KEY 0x10
 #define CMD_ENC 0x11
 #define CMD_RELEASE_ALL 0x12
+#define CMD_RAMBOOT 0x14
 #define CMD_MEM 0x21
 #define ST_OK 0
 #define ST_NOT_ARMED 1
@@ -66,6 +75,31 @@
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define HUMAN_TICKS 90                  // ticks a person's press blocks the link (about 3 s)
 #define PEND_TICKS 30                   // about 1 s: a posted event never seen at ev_key/ev_enc is given up
+
+// RAM boot.
+#define UPLOAD_STATE (*(const volatile uint8_t *)0x4028da80)  // stock's upload header: 3 when complete
+#define STAGED ((const uint32_t *)0x4028daa0)             // its length, its sum, then the ELE3 container
+#define MAILBOX ((volatile uint32_t *)0x46000000)          // high DDR: the bootstrap's stage (0x40200000 up) and
+#define COPY ((uint8_t *)0x46000040)                      //   the unpacked OS (0x40000400 up) stay below it
+#define MB_ASKED 0x4d574254             // 'MWBT': boot the copy
+#define MB_SPENT 0x4d574255             // 'MWBU': the unpack began
+#define MB_BOOTED 0x4d574253            // 'MWBS': the unpacked image checked out and was entered
+#define MB_CHECK 0x4d634c6b             // the check word's seed
+#define OS_BASE 0x40000400              // MAIN OS: its first long is the entry
+#define IMAGE_MAX 0x400000              // the unpacked MAIN OS, well below COPY
+#define CONTAINER_MAX 0x200000          // the container (the flash takes 0x1e0000 from 0x20000)
+#define MAIN_OS 3                       // the container's section id
+#define BOOT_ARG (*(const uint32_t *)0x4013e4d0)  // where the OS entry keeps what the bootstrap passed it
+#define RSR (*(volatile uint8_t *)0xEC090001)     // reset status: bit 5 software reset
+#define RSR_SOFT 0x20
+// The gate's result, mailbox word 6 (ident reports it): 1 booted from RAM; 2 a mailbox without a software reset;
+// 3 check word; 4 lengths; 5 container CRC; 6 no MAIN OS section; 8 failed after the unpack (reset).
+#define BOOT_RAM 1
+#define BOOT_NOT_SOFT 2
+#define BOOT_BAD_CHECK 3
+#define BOOT_BAD_BOUNDS 4
+#define BOOT_BAD_CRC 5
+#define BOOT_NO_OS 6
 
 #define RING 8                          // commands waiting for the UI task
 #define CMD_BYTES 32                    // a command's bytes, F0..F7 (MEM is 20)
@@ -81,7 +115,8 @@ static volatile uint32_t ring_head, ring_tail, ring_drops, rx_count;
 static uint32_t ticks, sent_count, send_fails, last_port;
 
 // ---- arm, the person at the unit, the posted events ---------------------------
-static int armed = 1, human_ticks = -1, release_due;
+static int armed = 1, human_ticks = -1, release_due, ramboot_due;
+static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
 static uint32_t human_count, posted_count, refused_count;
 static uint8_t held_bits[8];            // keys this link holds down, a bit each
 #define HELD(k) (held_bits[(k) >> 3] >> ((k) & 7) & 1)
@@ -313,8 +348,33 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
+        p = put32(p, MAILBOX[0]);
+        p = put32(p, MAILBOX[6]);
+        p = put32(p, MAILBOX[4]);
         send(p, port);
         return;
+    case CMD_RAMBOOT: {
+        int status = ST_OK, i;
+        if (!armed)
+            status = ST_NOT_ARMED;
+        else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
+            status = ST_HUMAN;
+        else if (n < 20)
+            status = ST_BAD;
+        else {
+            for (i = 0; i < 4; i++)
+                ramboot[i] = get32(a + 5 * i);
+            if (UPLOAD_STATE != 3 || STAGED[0] != ramboot[2] || ramboot[2] < 0x30 || ramboot[2] > CONTAINER_MAX
+                || ramboot[0] - 1 >= IMAGE_MAX)
+                status = ST_RANGE;      // no complete upload of that length
+            else
+                ramboot_due = 1;        // after this reply: the next tick copies and resets
+        }
+        if (status != ST_OK)
+            refused_count++;
+        send(begin(seq, cmd, status), port);
+        return;
+    }
     case CMD_DISARM:
         disarm();
         send(begin(seq, cmd, ST_OK), port);
@@ -372,11 +432,44 @@ static void act(const uint8_t *m, int len, int port)
     }
 }
 
+
+extern void mw_cache_off(void);         // link.s: every dirty line of the data cache out, then the cache off
+extern void mw_link_reset(void) __attribute__((noreturn));
+extern void mw_boot_enter(uint32_t arg) __attribute__((noreturn));
+
+static uint32_t mb_check(const volatile uint32_t *mb)
+{
+    return (mb[1] ^ mb[2]) + (mb[3] ^ mb[4]) + MB_CHECK;
+}
+
+// The container to COPY, the cache out and off, the mailbox straight to DDR, then stock's reset. The upload
+// came through the data cache, and a soft reset does not write dirty lines out (the Rytm's lesson).
+static void __attribute__((noinline, noreturn)) mw_link_ramboot_go(void)
+{
+    volatile uint32_t *mb = MAILBOX;
+    const uint8_t *from = (const uint8_t *)(STAGED + 2);
+    uint32_t i;
+    __asm__ volatile("move.w #0x2700, %%sr" ::: "memory");
+    for (i = 0; i < ramboot[2]; i++)
+        COPY[i] = from[i];
+    mw_cache_off();                     // no memory write may come between its push and its switch: it has none
+    mb[1] = ramboot[2];
+    mb[2] = ramboot[3];
+    mb[3] = ramboot[0];
+    mb[4] = ramboot[1];
+    mb[5] = mb_check(mb);
+    mb[6] = 0;
+    mb[0] = MB_ASKED;
+    mw_link_reset();
+}
+
 void mw_link_tick(char *ctrl)
 {
     int done;
     (void)ctrl;
     ticks++;
+    if (ramboot_due && ++ramboot_due > 3)
+        mw_link_ramboot_go();           // a few ticks: the reply is out
     if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
         human_ticks++;
     if (release_due)
@@ -395,4 +488,169 @@ void mw_link_tick(char *ctrl)
         act(ring[t % RING], ring_len[t % RING], ring_port[t % RING]);
         ring_tail = t + 1;
     }
+}
+
+// ---- RAM boot: the gate ------------------------------------------------------
+static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  // zlib's
+{
+    uint32_t c = ~0u;
+    int k;
+    while (n--) {
+        c ^= *p++;
+        for (k = 0; k < 8; k++)
+            c = (c >> 1) ^ (0xedb88320 & -(c & 1));
+    }
+    return ~c;
+}
+
+static uint32_t be32(const uint8_t *p)
+{
+    return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
+}
+
+// Modwerk's own depacker for a packed section, the format sdk/firmware_codec/elz.py
+// reads: a u32 stream length, a u32 sum (not checked), then the stream. Control bits
+// come most significant first from tag bytes fetched as needed, between whole payload
+// bytes. A 1 bit is a literal byte; a 0 bit a match: an offset (or the last one
+// again) and a length, partly Elias-gamma coded. Returns the bytes written to out;
+// 0 for a stream that is wrong, does not end at its length or would pass max.
+// Timed, not sized: the data cache is off where this runs, so the loop's state
+// should stay in registers: helpers inlined, and `hot`, or its cold caller has GCC
+// size it and reread max from the stack per token. Time on a unit: not measured.
+#define INLINE static inline __attribute__((always_inline))
+struct bits {
+    const uint8_t *p, *end;
+    uint32_t tag;                       // the tag bits left, then a 1 marker
+    int bad;                            // ran out of input, or a gamma value too long
+};
+
+INLINE uint32_t dp_byte(struct bits *s)
+{
+    if (s->p >= s->end) {
+        s->bad = 1;
+        return 0;
+    }
+    return *s->p++;
+}
+
+INLINE uint32_t dp_bit(struct bits *s)
+{
+    if (!(s->tag & 0xff))
+        s->tag = dp_byte(s) << 1 | 1;
+    s->tag <<= 1;
+    return s->tag >> 9 & 1;             // bit 9 and above are not looked at again
+}
+
+INLINE uint32_t dp_gamma(struct bits *s)
+{
+    uint32_t v = 1;
+    for (;;) {
+        v = v << 1 | dp_bit(s);
+        if (dp_bit(s))
+            return v;
+        if (v > 0x2000000 || s->bad) {
+            s->bad = 1;
+            return v;
+        }
+    }
+}
+
+#define DP_BIAS 767                     // added to an offset before it is coded; a coded BIAS ends the stream
+#define DP_REUSE 2                      // the offset gamma value for "the last offset again"
+#define DP_FAR 3328                     // offsets above this code their length one shorter
+static uint32_t __attribute__((noinline, hot)) depack(const uint8_t *sec, uint32_t plen, uint8_t *out, uint32_t max)
+{
+    struct bits s;
+    uint32_t n = 0, last = 1, off, count, g, len = be32(sec);
+    if (plen < 8 || len > plen - 8)
+        return 0;
+    s.p = sec + 8;
+    s.end = s.p + len;
+    s.tag = 0;
+    s.bad = 0;
+    for (;;) {
+        if (dp_bit(&s)) {
+            if (n >= max)
+                return 0;
+            out[n++] = dp_byte(&s);
+        } else {
+            g = dp_gamma(&s);
+            if (g == DP_REUSE)
+                off = last;
+            else {
+                off = (g << 8) + dp_byte(&s);   // 32 bits: the end marker's gamma value wraps to BIAS
+                if (off == DP_BIAS)
+                    break;
+                off = last = off - DP_BIAS;
+            }
+            count = dp_bit(&s) << 1;
+            count |= dp_bit(&s);
+            if (!count)
+                count = dp_gamma(&s) + 2;
+            if (off > DP_FAR)
+                count++;
+            count++;
+            if (off == 0 || off > n || count > max - n)
+                return 0;
+            do {
+                out[n] = out[n - off];
+                n++;
+            } while (--count);
+        }
+        if (s.bad)
+            return 0;
+    }
+    return s.bad || s.p != s.end ? 0 : n;
+}
+
+// ev_boot, first: after the core's boot (the mods' code in place, their .bss zeroed), before stock copies .data and
+// clears .bss. The data cache is off here. Returns to boot the flashed image; does not return when it unpacks and
+// enters the copy.
+void mw_boot_gate(void)
+{
+    volatile uint32_t *mb = MAILBOX;
+    const uint8_t *c = COPY, *e;
+    uint32_t magic = mb[0], clen, ulen, off, plen, i, count, arg;
+    if (magic != MB_ASKED && magic != MB_SPENT)
+        return;
+    mb[0] = 0;                          // one shot, whatever happens next
+    if (magic == MB_SPENT) {
+        mb[6] = 8;                      // the last unpack did not end in the image: this is its reset
+        return;
+    }
+    mb[6] = BOOT_NOT_SOFT;              // a mailbox DDR kept over a power cycle says nothing
+    if (!(RSR & RSR_SOFT))
+        return;
+    clen = mb[1];
+    ulen = mb[3];
+    mb[6] = BOOT_BAD_CHECK;
+    if (mb[5] != mb_check(mb))
+        return;
+    mb[6] = BOOT_BAD_BOUNDS;
+    if (ulen - 1 >= IMAGE_MAX || clen < 0x30 || clen > CONTAINER_MAX)
+        return;
+    mb[6] = BOOT_BAD_CRC;
+    if (crc32(c, clen) != mb[2])
+        return;
+    mb[6] = BOOT_NO_OS;
+    count = be32(c + 0x1c);
+    for (i = 0, e = c + 0x20;; i++, e += 16) {
+        if (i >= count || i >= 16 || (uint32_t)(e + 16 - c) > clen)
+            return;
+        if (be32(e) == MAIN_OS)
+            break;
+    }
+    off = be32(e + 4);
+    plen = be32(e + 8);
+    if (be32(e + 12) != OS_BASE || plen < 8 || off > clen || plen > clen - off)
+        return;
+    arg = BOOT_ARG;                     // inside the image the unpack overwrites
+    __asm__ volatile("move.w #0x2700, %%sr" ::: "memory");
+    mb[0] = MB_SPENT;                   // from here the running image is gone: enter the new one or reset
+    if (depack(c + off, plen, (uint8_t *)OS_BASE, ulen) == ulen && crc32((const uint8_t *)OS_BASE, ulen) == mb[4]) {
+        mb[6] = BOOT_RAM;
+        mb[0] = MB_BOOTED;
+        mw_boot_enter(arg);
+    }
+    mw_link_reset();
 }

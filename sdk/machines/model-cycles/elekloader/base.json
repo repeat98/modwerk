@@ -46,7 +46,7 @@
     }
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, and panel keys and encoder turns from the host while the link is armed (at every boot). Any USB host can drive it: development bases only.",
+    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), and a RAM boot of an uploaded image (the ev_boot gate). Any USB host can drive it: development bases only.",
     "sources": [
       "../base/link.c",
       "../base/link.s"
@@ -78,6 +78,11 @@
       "mw_link_router_resume": "0x400812fe"
     },
     "subscribe": [
+      {
+        "event": "ev_boot",
+        "fn": "mw_boot_gate",
+        "order": 1
+      },
       {
         "event": "ev_key",
         "fn": "mw_link_key",
