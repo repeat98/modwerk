@@ -67,3 +67,13 @@ picks that file, not core-mc 0.3 (`digi-build.test.ts`). The kit's `build` in No
 `f8b652a0…` (976,800 bytes): byte for byte the image Elekloader's Python patcher built from the same files on
 23 November. Downloads are off, so the page offers no file yet. Not run here: the page itself in a browser (it needs
 a signed-in member).
+
+## Sending from the page's sender over USB (24 November 2026)
+
+The site's own sender (`src/engine/elektron/os-upgrade.ts` over `os-upgrade-midi.ts`, as `usb-upgrade.ts` calls it),
+bundled with Vite and run from Node through the MCP's `nodeMidiAccess` on a Mac, sent `f8b652a0…` (the base
+`2e5243e6` alone, no module) to the unit over USB with Elektron Transfer closed: 478 messages, each answered, in 2.2 s.
+The unit asked UPGRADE OS NOW?; after YES it wrote the flash and booted normally, as stock (tester's report). This is
+also the first run of the base with no subscriber on `ev_key_leds`. Not run: the page's dialog in a browser (its
+button waits for the downloads approval), NO at UPGRADE OS NOW?.
+
