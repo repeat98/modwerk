@@ -11,6 +11,7 @@ import { useRestoreOutcomes } from '../hooks/useOctatrackHealth'
 import { leftOutAtStartup } from '../engine/elekloader/restore-outcomes'
 import type { RestoreReport } from '../engine/elekloader/upload-usb'
 import { OctatrackLoad } from './OctatrackLoad'
+import { SupportActions } from './SupportActions'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
 
 const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
@@ -74,7 +75,7 @@ export function OctatrackOverview({ link, inventory, sets, needs, health, active
           {link && identity?.canSubmit && (connected || testing) && <button type="button" className="text-button" disabled={!connected} onClick={() => { setWhy(null); void link.test().then(setWhy) }}>Run self-test</button>}</div>
         {testing ? <p className="hub-test" role="status"><span className="unit-led is-load" aria-hidden="true" />Running · {Math.round((state.progress ?? 0) * 100)}%</p>
           : test ? <p className="hub-test"><span className={'unit-led is-' + test.led} aria-hidden="true" />{test.text}</p> : <p className="hub-empty">{unread}</p>}
-        {why && !testing && <p className="hub-empty" role="alert">{why[0].toUpperCase() + why.slice(1)}.</p>}
+        {why && !testing && <><p className="hub-empty" role="alert">{why[0].toUpperCase() + why.slice(1)}.</p><SupportActions link={link} what="Self-test" error={why[0].toUpperCase() + why.slice(1) + '.'} /></>}
         {test?.peaks && health && <dl className="hub-peaks" aria-label="Peaks during the test">{([['CPU', health.cpu], ['DSP tracks 1–4', health.tracks1to4], ['DSP tracks 5–8', health.tracks5to8]] as const).map(([name, value]) =>
           <div key={name}><dt>{name}</dt><dd><meter min={0} max={1000} value={value} aria-label={name + ' peak during the test'} aria-valuetext={percent(value)} />{percent(value)}</dd></div>)}</dl>}
         <h3>On the card</h3>
