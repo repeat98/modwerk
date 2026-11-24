@@ -130,6 +130,32 @@ export function judge({ id, record, sourceSha256, performance }) {
   return { fail, info }
 }
 
+/** Modules first listed on or after this day are refused when the base would charge less than the scan models; earlier
+ * ones are reported (LOFI2's hardware figure, 637, sits under its modelled 654 at DOWN/max, 23 November 2026). */
+export const CHARGE_COVERS_MODEL_FROM = '2026-11-24'
+/** A charge within this share above the model is listed as a near miss. */
+export const NEAR_MISS = 0.05
+
+/** What the base's DSP admission charges an instance a sample for a package's declared figure: a hardware figure as it
+ * is, an emulator figure (executed instructions, modeled cycles) at 7/4, rounded as the base rounds (dsp.c, charged()). */
+export const charged = (cycles, kind) => kind === 'hardware' ? cycles : Math.floor((cycles * 7 + 3) / 4)
+
+/** The admission charge against the scan's dearest cycles: {fail, info}. `row` is the module's USB package row
+ * (src/engine/assets/octatrack-module-packages.json) or undefined; `listed` its catalogue date or undefined (a draft). */
+export function judgeCharge({ id, record, row, listed }) {
+  const fail = [], info = []
+  if (typeof row?.cycles !== 'number') { info.push(`${id}: its package declares no DSP cycles, so the admission charge is not compared`); return { fail, info } }
+  if (row.version !== record.version) { info.push(`${id}: the package is ${row.version}, the cycle scan ${record.version}: the charge is not compared`); return { fail, info } }
+  const charge = charged(row.cycles, row.cyclesKind), model = record.dearest.cycles, ratio = (charge / model).toFixed(3)
+  const said = `${id}: the base charges ${charge} cycles a sample (${row.cycles} ${row.cyclesKind}${row.cyclesKind === 'hardware' ? '' : ' x 7/4'}) ` +
+    `against ${model} modelled at ${record.dearest.setting}, ${ratio}x`
+  if (charge >= model) { if (charge < model * (1 + NEAR_MISS)) info.push(said + `: a near miss, under ${NEAR_MISS * 100} % of room`); return { fail, info } }
+  const fix = 'declare at least the modelled cycles, or a hardware figure measured at that setting (docs/MODULE_PERFORMANCE.md)'
+  if (!listed || listed.slice(0, 10) >= CHARGE_COVERS_MODEL_FROM) fail.push(said + `: under the model; ${fix}`)
+  else info.push(said + `: under the model. Reported, not refused (listed before ${CHARGE_COVERS_MODEL_FROM}); at its next release: ${fix}`)
+  return { fail, info }
+}
+
 const readJson = path => JSON.parse(readFileSync(path, 'utf8'))
 const documentOf = folder => parseModuleDocument(readJson(join(folder, 'octamod.module.json')))
 const performanceOf = folder => existsSync(join(folder, 'evidence/performance.json')) ? readJson(join(folder, 'evidence/performance.json')) : null
@@ -138,11 +164,14 @@ const performanceOf = folder => existsSync(join(folder, 'evidence/performance.js
 export async function check(base = root) {
   const dir = join(base, RECORDS), fail = [], info = []
   const ids = existsSync(dir) ? readdirSync(dir).filter(name => name.endsWith('.json')).map(name => name.slice(0, -5)).sort() : []
+  const packages = readJson(join(base, 'src/engine/assets/octatrack-module-packages.json')).packages, catalog = readJson(join(base, 'sdk/catalog.json')).modules
   for (const id of ids) {
     const folder = join(base, MODULES, id)
     if (!existsSync(join(folder, 'octamod.module.json'))) { fail.push(`${id}: a cycle-scan record for a module that is not in ${MODULES}`); continue }
-    const verdict = judge({ id, record: readJson(join(dir, id + '.json')), sourceSha256: await modulePerformanceSourceSha256(folder, documentOf(folder)), performance: performanceOf(folder) })
-    fail.push(...verdict.fail); info.push(...verdict.info)
+    const record = readJson(join(dir, id + '.json'))
+    const verdict = judge({ id, record, sourceSha256: await modulePerformanceSourceSha256(folder, documentOf(folder)), performance: performanceOf(folder) })
+    const charge = judgeCharge({ id, record, row: packages.find(row => row.id === id), listed: catalog.find(entry => entry.id === id)?.addedAt })
+    fail.push(...verdict.fail, ...charge.fail); info.push(...verdict.info, ...charge.info)
   }
   const unscanned = readdirSync(join(base, MODULES)).filter(id => !ids.includes(id) && performanceOf(join(base, MODULES, id))?.kind === 'dsp')
   if (unscanned.length) info.push(`no cycle scan yet: ${unscanned.sort().join(', ')}`)
