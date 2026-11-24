@@ -15,8 +15,20 @@
   "authorPins": {
     "quantizer": {
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
-      "version": "2.21 + TRACK/FOLLOW, released with Octatrick 2.22 (v2.22 = 73686de)"
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
+      "version": "2.23 (public v2.23 tag)",
+      "history": [
+        {
+          "repository": "https://github.com/timhastie/octatrick-modules",
+          "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+          "version": "2.21 + TRACK/FOLLOW, released with Octatrick 2.22 (v2.22 = 73686de)"
+        }
+      ],
+      "documentation": {
+        "path": "modules/quantizer/upstream/README.md",
+        "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
+        "reason": "Re-vendor the root README byte for byte from the same public v2.23 revision as the quantizer code; the previous 38,138-byte archive did not match its recorded revision."
+      }
     }
   },
   "status": "verified loader-free browser/native integration; owner merge required for publication",
@@ -521,13 +533,21 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/quantizer/manifest.py",
       "sourceSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-      "vendoredSha256": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+      "vendoredSha256": "785a132fa736d26ec9da160743f5f1c56f10e4661015088b1763bd8bba4ae3ca",
       "localReleaseUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousVendoredSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-        "record": "octabam/modules/quantizer/TESTING.md",
-        "reason": "Re-export the author's manifest (8f6f564: 2.21 + TRACK / FOLLOW) byte for byte; declare every detour and poke guard in Modwerk's stock_guard(address, length, sha256) form, matched to his declaration by site (stockGuards below): 28 detours (2.21 adds qz_panel_stage and qz_panel_commit) and the row-count poke. The wrapper also assembles quantizer.s as a selection without FM Synth (his 2.21 panel transaction is for FM's engine; FM Synth bundles its own copy and conflicts with this module)."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousVendoredSha256": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+        "record": "sdk/octatrack/modules/quantizer/TESTING.md",
+        "reason": "Select the public v2.23 author manifest without FM Synth, retain all 28 declared detour guards and the row-count guard, and omit qz_panel_stage and qz_panel_commit from the standalone installation. The runtime port likewise omits the panel include pass; original upstream source fingerprints and the 0.1.4 adaptation are preserved. The initial wrapper docstring now identifies the same public e908beb0/v2.23 revision and its standalone adaptation; executable Python and the assembled package are unchanged."
+      },
+      "localReleaseHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousVendoredSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
+          "record": "octabam/modules/quantizer/TESTING.md",
+          "reason": "Re-export the author's manifest (8f6f564: 2.21 + TRACK / FOLLOW) byte for byte; declare every detour and poke guard in Modwerk's stock_guard(address, length, sha256) form, matched to his declaration by site (stockGuards below): 28 detours (2.21 adds qz_panel_stage and qz_panel_commit) and the row-count poke. The wrapper also assembles quantizer.s as a selection without FM Synth (his 2.21 panel transaction is for FM's engine; FM Synth bundles its own copy and conflicts with this module)."
+        }
+      ]
     },
     {
       "path": "platform/usb-midi/README.md",
@@ -580,145 +600,210 @@
     {
       "path": "modules/quantizer/upstream/README.md",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "README.md",
-      "sourceBytes": 38138,
-      "sourceSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
-      "sourceGitBlob": "3faca120fc7331fe5a71bed17f71b34e71bd0885",
-      "vendoredSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
+      "sourceBytes": 47687,
+      "sourceSha256": "d5ecf06857c2129cde81d839e2fe872fec2b376ee17493e6a21ff4fdd80a0177",
+      "sourceGitBlob": "d06ef4e82720340897fd363293b241b8202c0b24",
+      "vendoredSha256": "d5ecf06857c2129cde81d839e2fe872fec2b376ee17493e6a21ff4fdd80a0177",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "d97fb507a8eb6ecbf2c549ff088a4628d816bb42a6485eb13e88bf0d60f016f2",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
+        "reason": "Re-vendor the root README byte for byte from the same public v2.23 revision as the quantizer code; the previous 38,138-byte archive did not match its recorded revision."
+      },
+      "assemblyPinRevision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb"
     },
     {
       "path": "modules/quantizer/upstream/LICENSE",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "LICENSE",
       "sourceBytes": 5068,
       "sourceSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
       "sourceGitBlob": "abff1c76e215ecd0c0b20e46a9e71913c77942cc",
       "vendoredSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "a8fe424c82a030f34f2e3f88df1f2585f97ae61710e1b799f2e6e818120396a0",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "a8fe424c82a030f34f2e3f88df1f2585f97ae61710e1b799f2e6e818120396a0",
+          "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/README.md",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/README.md",
       "sourceBytes": 110211,
       "sourceSha256": "f04a9795b2a956ad6d667f159b4f59b01b28cab861e154a093b7eba9bc9b3338",
       "sourceGitBlob": "c549a14e84765fa8059affa5b734bac60648285d",
       "vendoredSha256": "f04a9795b2a956ad6d667f159b4f59b01b28cab861e154a093b7eba9bc9b3338",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "25b9e9a1d1fb4be217514727374922e60010fc0067fe8c5c3f17ced909c8d94e",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "f04a9795b2a956ad6d667f159b4f59b01b28cab861e154a093b7eba9bc9b3338",
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "25b9e9a1d1fb4be217514727374922e60010fc0067fe8c5c3f17ced909c8d94e",
+          "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/core.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/core.s",
       "sourceBytes": 6385,
       "sourceSha256": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
       "sourceGitBlob": "4b04c2483124a3d148acf528baeb5f8a4ec45998",
       "vendoredSha256": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+          "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/keys.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/keys.s",
       "sourceBytes": 1765,
       "sourceSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
       "sourceGitBlob": "2e459942658c81ae34dc8275318d23d09f52f060",
       "vendoredSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
         "previousVendoredSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
-      }
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
+          "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/manifest.py",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/manifest.py",
-      "sourceBytes": 29184,
-      "sourceSha256": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
-      "sourceGitBlob": "66d4c41ee470d2612b77758be534fa65a0378957",
-      "vendoredSha256": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+      "sourceBytes": 29253,
+      "sourceSha256": "bdfd9d1de96cc3a8ea07bb9ebed41db0107fa497501f32bf254c29df400e3016",
+      "sourceGitBlob": "c883ef8ec2be475f6817315b1b78cd5d6a2c46cb",
+      "vendoredSha256": "bdfd9d1de96cc3a8ea07bb9ebed41db0107fa497501f32bf254c29df400e3016",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-        "reason": "The author's manifest at 8f6f564 (released with Octatrick 2.22) byte for byte: tables 3 + 5 (SCALE, ROOT, GLIDE, TRACK, FOLLOW), row-count poke 3 -> 8, the 2.21 detours qz_panel_stage (0x4004fc84) and qz_panel_commit (0x40005162), the two-pass remix.inc; every guard still read as stock_guard(site, length)."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
+          "reason": "The author's manifest at 8f6f564 (released with Octatrick 2.22) byte for byte: tables 3 + 5 (SCALE, ROOT, GLIDE, TRACK, FOLLOW), row-count poke 3 -> 8, the 2.21 detours qz_panel_stage (0x4004fc84) and qz_panel_commit (0x40005162), the two-pass remix.inc; every guard still read as stock_guard(site, length)."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/panel_transaction.inc.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/panel_transaction.inc.s",
       "sourceBytes": 7275,
       "sourceSha256": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
       "sourceGitBlob": "509811714d74532204b72b955c85221a0bb3100d",
       "vendoredSha256": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "reason": "New in the author's 2.21 line (32827c4, byte for byte at 8f6f564): the panel publication adapters quantizer.s includes as remix.inc's second pass; with FM Synth absent (HAVE_PANEL_TRANSACTION 0) they assemble to their replays."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "reason": "New in the author's 2.21 line (32827c4, byte for byte at 8f6f564): the panel publication adapters quantizer.s includes as remix.inc's second pass; with FM Synth absent (HAVE_PANEL_TRANSACTION 0) they assemble to their replays."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/quantizer.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/quantizer.s",
-      "sourceBytes": 112223,
-      "sourceSha256": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
-      "sourceGitBlob": "5d19f93a864df1d6044d3c856c9e737f5d8e4d55",
-      "vendoredSha256": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+      "sourceBytes": 112756,
+      "sourceSha256": "c1a320ad9b807dc9af995e93fbd3e2bdd00324cff93889b016003138bf73e41d",
+      "sourceGitBlob": "f5e4812d039d40b27a1a5bfe20eeab230d9968e4",
+      "vendoredSha256": "c1a320ad9b807dc9af995e93fbd3e2bdd00324cff93889b016003138bf73e41d",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
-        "reason": "The author's 2.21 quantizer plus the TRACK / FOLLOW rows (8f6f564, byte for byte; released with Octatrick 2.22): the sixteen MIDI n / AUDIO n SCALE rows are two, TRACK (AUDIO 1..8, MIDI 1..8; picks the track, RAM, not saved) and FOLLOW (that track's ON / OFF on the same bits); the project-file lines and battery bytes are 2.21's. 2.21 also brings the panel publication transaction (qz_panel_stage / qz_panel_commit)."
-      }
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
+          "reason": "The author's 2.21 quantizer plus the TRACK / FOLLOW rows (8f6f564, byte for byte; released with Octatrick 2.22): the sixteen MIDI n / AUDIO n SCALE rows are two, TRACK (AUDIO 1..8, MIDI 1..8; picks the track, RAM, not saved) and FOLLOW (that track's ON / OFF on the same bits); the project-file lines and battery bytes are 2.21's. 2.21 also brings the panel publication transaction (qz_panel_stage / qz_panel_commit)."
+        }
+      ]
     },
     {
       "path": "modules/quantizer/upstream/quantizer/scale.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "quantizer/scale.s",
       "sourceBytes": 695,
       "sourceSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
       "sourceGitBlob": "fa6d69d5132ddec7fe99982c5255948151590c40",
       "vendoredSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
         "previousVendoredSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
-      }
+        "reason": "The author file at public tag v2.23 (e908beb0) byte for byte. The quantizer adds HAVE_SYNTH and the guarded FM project-comment write; other assembly, license and quantizer documentation bytes remain unchanged. Prior import history is retained."
+      },
+      "authorUpdateHistory": [
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+          "previousVendoredSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+          "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+        }
+      ]
     }
   ],
   "stockGuards": [

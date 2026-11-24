@@ -1,0 +1,645 @@
+{
+ "elemod": 2,
+ "id": "improved-fltr",
+ "version": "0.1.0-experimental",
+ "title": "Improved FLTR",
+ "description": "A base-width type on the FILTER page: the Rytm's analog filter as a high-pass and a low-pass in one, FRQ setting the base and a WID knob the width above it.",
+ "category": "machines",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 3628,
+   "parts": [
+    [
+     "hex",
+     "712c000e0c8000000007660000564feffff848d7000c736c000a756c000c610000640681ffffc000d28130c12602e08341f900000000d683d1c377507368000292830282000000ff4c021800e081d6813cc370024cd7000c4fef00084ef94010d1c2716c000a0680ffffc000d08030c03cec000c712c000eb280640270064ef94010d1c22002e98a9480ea820c82000001006c06243c000001000c8200003c006f06243c00003c002002e280d2806c0272000c8100007f006f06223c00007f004e7523c70000000023c100000000700123c0000000007006b08164200c8100000007661e2f022f072f052f032f2f00544eb9000000004fef001460064ef940038e284ef9400391944fefffe0428048d7441c2c6f0024222f002841ef00162448760a5288240152804c4320044c4320022244780943e9003036091143ffffb88164082202740ab48066d6204e2200538110f218004a8166f6d08e4cd7441c4fef00204e754eb94017fa0a2f004eb9400ae4922f004eb9400b693e508f4e754eb94017fa0a2040700bb0af000464044280602c2f2f0004486801604eb9400a67ca508f20404a8067e622502f00206900284e90588f4a8067d60680000000144e75700123c00000000042804e754feffff0723148d70c0c246f0014202a0004b280662c202a0008e0805f804a806626206a000c7657420010bc0042206a000c11430001206a000c11400002600001247230b280670642806000020c47faff484ab90000000067184e93b0b900000000660e223900000000203900000000601a4e932f004ebaff3a588f4a8067c82040736800407168003ce0815f814a8166b6222a00082401e98a94812202ea810c820007801f6f08223c00003c00600e0c81000001006c06223c00000100e281d0814a806c044280600e0c8000007f006f06203c00007f00d081263c00000c0022004c431801206a000c47f90000000024000682000024002441568a360a22415b89c7fcf400d4832602e082778322332c0024332c0494814c032800e08ad282243c000011304c021800424148414a896d062609e7a960067408948ae4a90c8000007f006f24428043f90000000045f108007204119208005280b28066f04202114200047001600000f043fafdd00c81000003e76300008c24015a820c820000270f630000bc06820000002d0c820001869f63180681000001f4263c000003e84c431001243c00000000605c2002263c000027104c430000263c000003e82f002f084e91508f224020024c43000076644c432002760a4c4300014c43200006810000003012bc002e1341000141e90003243c0000000006800000003013400002602c243c00000000700a4c4010034c4010012f012f084e91508f2040200306800000003010bc002e11400001548822421011670610c0528960f642106000ff26720a4c4120022f02243c000000002f084e91508f204060d64cd70c0c4fef00104e754fefffd4202f00402200e98948d71cfc242f0030246f00342a2f003892802c01ea860c810007801f6f082c3c00003c00600e0c86000001006c062c3c000001002e06e287deaf003c4a876c044287600e0c8700007f006f062e3c00007f0048780001267c400707262f05260a0683000000332f032f05280a52842f042f024e9348780001e086200506800000000c2f002f032f002f042f024e934fef003048780001260506830000000b2f032f0a52852f052f0a2f024e93487800012f03200a0680000000342f002f052f002f024e934fef003097cb45f90000000041f900000000428171706a0041f9000000007d706a002f4000282f4600247a32300bc0fc7f004c450800be806c06204091c76004204791c07c3f2a082008ca86ec802c057b720a0071720a0290854c060800ec80d085d0af00280c80fffff8006d260c80000003ff6f0a7a304c050800e0806016068000000800e88041f90000000071b0080060024280206f002491c0203c0000008890886a0606800000001fea807c0abc806c04700a60064a806c024280284399c04a8b6718200c5280b2806f082001220c53806012200c5380b2806d06200c220c60045281200c487800012f002004d08b2f002f012f002f024eb940070726528b4fef00187033b08b6706220c6000ff1a4cd71cfc4fef002c4e754ab900000000671a4ab9000000006712700123c0000000004ebafb3023c00000000042b90000000042b9000000004e754ebafb184ab9000000006718b0b90000000066107207b2b90000000057c07100448060202f004ebafb0c588f4a8067142040720771680040e080b3804a4057c071004480b0b900000000674c23c0000000004a80670841f900000000600641f90000000043f900000000121812c166fa4a80670841f900000000600641f90000000043f900000000101812c066fa7001206f0004114000204e75206f00087008c0a800104a80662a2028000c0c8000000080671e720fb2806c180680ffffff907207b280640c42b90000000042b90000000042804e755265736f6e616e63650052455300ffffffff000000000030000000310000000000000000000000000001000000010f3900011f5a000130700001428a000155b800016a0a00017f91000196600001ae8a0001c8240001e34300020000000000004000000030000000080000000600000001800000004000000040000000400000004000000040000000400000004000000040000000400000018000000600000008000000300000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001010101010101010101010102020202020202030303030404040505060607070808090a0b0b0c0d0e0f101113141517181a1b1d1f20222426282a2c2f313336383a3d3f4244474a4c4f5254575a5d606265686b6e717477797c7f8285888b8e9194979a9da0a3a6a9acafb2b5b8bbbec100f000fae3fbe3fc79fce3fd36fd79fdb2fde4fe0ffe37fe5afe7afe98feb4fecefee6fefdff13ff27ff3aff4dff5fff70ff80ff90ff9fffadffbcffc9ffd7ffe3fff0fffc00080014001f002a0035003f004a0054005e00670071007a0084008d0096009f00a700b000b800c100c900d100d900e100e900f000f801000107010f0116011d0125012c0133013a01410148014f0156015c0163016a01700177017e0184018b01910197019e01a401aa01b101b701bd01c301ca01d001d601dc01e201e801ee01f401fa02000206020c02120218021e02240229022f0235023b02410246024c02520258025d02630269026f0274027a02800285028b02910296029c02a102a702ad02b202b802bd02c302c802ce02d402d902df02e402ea02ef02f502fa03000305030b03100316031b03210326032c03310336033c03410347034c03520357035d03620367036d03720378037d03830388038d03930398039e03a303a803ae03b303b903be03c303c903ce03d403d903de03e403e903ee03f403f903ff04040409040f04140419041f0424042a042f0434043a043f0444044a044f0454045a045f0464046a046f0475047a047f0485048a048f0495049a049f04a504aa04af04b504ba04bf04c504ca04d004d504da04e004e504ea04f004f504fa05000505050a05100515051a05200525052a05300535053a05400545054a05500555055a05600565056a05700575057a05800585058a05900595059b05a005a505ab05b005b505bb05c005c505cb05d005d505db05e005e505eb05f005f505fb06000605060b06100615061b06200625062b06300635063b06400645064b06500655065b06600665066b06700675067b06800685068b06900695069b06a006a506ab06b006b506bb06c006c506cb06d006d506db06e006e506eb06f006f506fb07000705070b07100715071b07200725072b07300735073b07400745074b07500755075b07600765076b07700775077b07800785078b07900795079b07a007a507ab07b007b507bb07c007c507cb07d007d507db07e007e507eb07f007f507fb08000805080b08100815081b08200825082b08300835083b08400845084b08500855085b08600865086b08700875087b08800885088b08900895089b08a008a508ab08b008b508bb08c008c508cb08d008d508db08e008e508eb08f008f508fb09000905090b09100915091b09200925092b09300935093b09400945094b09500955095b09600965096b09700975097b09800985098b09900995099b09a009a509ab09b009b509bb09c009c509cb09d009d509db09e009e509eb09f009f509fb0a000a050a0b0a100a150a1b0a200a250a2b0a300a350a3b0a400a450a4b0a500a550a5b0a600a650a6b0a700a750a7b0a800a850a8b0a900a950a9b0aa00aa50aab00d000d000a10085007100610055004a00410038003000290023001d00180013000e000a00060001fffdfff9fff6fff3fff0ffedffebffe8ffe5ffe2ffdfffdcffd9ffd6ffd3ffd0ffcdffcbffc9ffc7ffc4ffc2ffc0ffbeffbcffb9ffb7ffb4ffb2ffafffaeffacffaaffa8ffa6ffa5ffa3ffa1ff9fff9dff9bff99041d041d031d0287021c01c90186014c011a00ed00c600a100800061004400290010fff8ffe1ffcbffb6ffa2ff8fff7cff6aff59ff48ff37ff27ff17ff08fef9feeafedbfecdfebffeb1fea4fe96fe89fe7cfe6ffe62fe56fe49fe3dfe30fe24fe18fe0cfe00fdf4fde8fddcfdd1fdc5fdbafdaefda3fd97fd8cfd803f9a3f9a329d2a8f24fb20b51d2b1a7c185315c91372117d0fb00e040c750b1809da08ad077a0639050503e603110243017c00bb0000ff39fe78fdbbfd03fc4efb7cfa95f9b2f8d3f7f9f760f6caf635f5a2f510f480f3eef33cf28bf1dbf12ef081efe1ef65eeeaee70edf6ed7ded05ec8dec15eb8deb01ea75e9ea6b487a00487a004f50454e0057494400524553005769647468005265736f6e616e636500"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 24
+  }
+ },
+ "symbols": {
+  "improved_fltr_graph_off": [
+   "abs",
+   1073975700
+  ],
+  "improved_fltr_graph_on": [
+   "abs",
+   1073974824
+  ],
+  "improved_fltr_resume": [
+   "abs",
+   1074844098
+  ],
+  "W_MIN": [
+   "abs",
+   256
+  ],
+  "W_MAX": [
+   "abs",
+   15360
+  ],
+  "stock": [
+   ".run",
+   98
+  ],
+  "band_edges": [
+   ".run",
+   132
+  ],
+  "put_uint": [
+   ".run",
+   264
+  ],
+  "selected_track": [
+   ".run",
+   356
+  ],
+  "sound_words": [
+   ".run",
+   382
+  ],
+  "fltr_get": [
+   ".run",
+   448
+  ],
+  "asked": [
+   ".bss",
+   20
+  ],
+  "fltr_text": [
+   ".run",
+   460
+  ],
+  "page_up": [
+   ".bss",
+   16
+  ],
+  "page_track": [
+   ".run",
+   1838
+  ],
+  "semis": [
+   ".run",
+   1864
+  ],
+  "fltr_log2u": [
+   ".run",
+   2194
+  ],
+  "fltr_width_log2q": [
+   ".run",
+   3344
+  ],
+  "fltr_width_gain": [
+   ".run",
+   3220
+  ],
+  "fltr_att": [
+   ".run",
+   2000
+  ],
+  "named_width": [
+   ".bss",
+   12
+  ],
+  "improved_fltr_band_graph": [
+   ".run",
+   1070
+  ],
+  "improved_fltr_seen_frq": [
+   ".bss",
+   8
+  ],
+  "improved_fltr_glyph": [
+   ".run",
+   1916
+  ],
+  "improved_fltr_tick": [
+   ".run",
+   1610
+  ],
+  "improved_fltr_key": [
+   ".run",
+   1764
+  ],
+  "improved_fltr_params": [
+   ".run",
+   1844
+  ],
+  "improved_fltr_seen_typ": [
+   ".bss",
+   4
+  ],
+  "improved_fltr_seen": [
+   ".bss",
+   0
+  ],
+  "improved_fltr_res_short": [
+   ".run",
+   1834
+  ],
+  "improved_fltr_draw": [
+   ".run",
+   1562
+  ],
+  "improved_fltr_graph": [
+   ".run",
+   194
+  ],
+  "improved_fltr_res_long": [
+   ".run",
+   1824
+  ],
+  "fltr_width_words": [
+   ".run",
+   3468
+  ],
+  "improved_fltr_store": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "fltr_width_words",
+  "improved_fltr_band_graph",
+  "improved_fltr_draw",
+  "improved_fltr_glyph",
+  "improved_fltr_graph",
+  "improved_fltr_key",
+  "improved_fltr_params",
+  "improved_fltr_res_long",
+  "improved_fltr_res_short",
+  "improved_fltr_seen",
+  "improved_fltr_seen_frq",
+  "improved_fltr_seen_typ",
+  "improved_fltr_store",
+  "improved_fltr_tick"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   50,
+   "abs32",
+   "sec:.run",
+   3468
+  ],
+  [
+   ".run",
+   196,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   202,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   210,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   242,
+   "abs32",
+   "sec:.run",
+   1070
+  ],
+  [
+   ".run",
+   452,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   544,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   554,
+   "abs32",
+   "sec:.run",
+   1838
+  ],
+  [
+   ".run",
+   562,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   568,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   696,
+   "abs32",
+   "sec:.run",
+   1864
+  ],
+  [
+   ".run",
+   790,
+   "abs32",
+   "sec:.run",
+   3599
+  ],
+  [
+   ".run",
+   882,
+   "abs32",
+   "sec:.run",
+   3592
+  ],
+  [
+   ".run",
+   958,
+   "abs32",
+   "sec:.run",
+   3592
+  ],
+  [
+   ".run",
+   976,
+   "abs32",
+   "sec:.run",
+   3596
+  ],
+  [
+   ".run",
+   1046,
+   "abs32",
+   "sec:.run",
+   3596
+  ],
+  [
+   ".run",
+   1286,
+   "abs32",
+   "sec:.run",
+   2194
+  ],
+  [
+   ".run",
+   1292,
+   "abs32",
+   "sec:.run",
+   3344
+  ],
+  [
+   ".run",
+   1304,
+   "abs32",
+   "sec:.run",
+   3220
+  ],
+  [
+   ".run",
+   1416,
+   "abs32",
+   "sec:.run",
+   2000
+  ],
+  [
+   ".run",
+   1564,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   1572,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1582,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   1592,
+   "abs32",
+   "sec:.run",
+   1838
+  ],
+  [
+   ".run",
+   1598,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   1604,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1616,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   1624,
+   "abs32",
+   "sec:.run",
+   1838
+  ],
+  [
+   ".run",
+   1634,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1680,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1688,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1698,
+   "abs32",
+   "sec:.run",
+   3604
+  ],
+  [
+   ".run",
+   1706,
+   "abs32",
+   "sec:.run",
+   3608
+  ],
+  [
+   ".run",
+   1712,
+   "abs32",
+   "sec:.run",
+   1834
+  ],
+  [
+   ".run",
+   1728,
+   "abs32",
+   "sec:.run",
+   3612
+  ],
+  [
+   ".run",
+   1736,
+   "abs32",
+   "sec:.run",
+   3618
+  ],
+  [
+   ".run",
+   1742,
+   "abs32",
+   "sec:.run",
+   1824
+  ],
+  [
+   ".run",
+   1810,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   1816,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   1852,
+   "abs32",
+   "sec:.run",
+   448
+  ],
+  [
+   ".run",
+   1860,
+   "abs32",
+   "sec:.run",
+   460
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4010d1a6",
+   "len": 28,
+   "stock_sha256": "ff62de85f6e09fcadc4b78f4a5feeb0d59a62de6fd4cdfcedbb2d7ae2342951d",
+   "new": "4ef9000000004e714e714e714e714e714e714e714e714e714e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:improved_fltr_store",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c05c8",
+   "len": 4,
+   "stock_sha256": "ab6dd45f1c3a7f5f98b3f5facd25bc0fd899b0d1b9629a7fd59fba9444015981",
+   "new": "00000700",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x40146c04",
+   "len": 4,
+   "stock_sha256": "c1af3133b4bf22a7f75db2d474757db5f24d112cb24b82e75a793ba81fe92546",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_glyph",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40038e20",
+   "len": 8,
+   "stock_sha256": "641214ad96050fbd8977d75fb108e579d6f1ff46fdf70aaf0e94139657134658",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:improved_fltr_graph",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c05b0",
+   "len": 4,
+   "stock_sha256": "f3bb5aea03482ef0647a01fd4476b0b15b856926f51832ceaf326d8d5f6866eb",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_res_long",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c05b8",
+   "len": 4,
+   "stock_sha256": "649e324eaba8562fe515bbc1e1cce0c1ba55d6f44d1bfcda7167c0c4556a7f4e",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_res_short",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_draw",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_draw",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_key",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_key",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_params",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_fltr_params",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "audio:filter cutoff, resonance and type stores",
+   "param:FILTER TYP range to 7",
+   "param:FILTER RES names (WID / Width on BW)",
+   "ui:value text of FILTER TYP and RES",
+   "ui:FILTER TYP picture for type 7",
+   "ui:FILTER page graph for type 7 (drawn by the module)"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

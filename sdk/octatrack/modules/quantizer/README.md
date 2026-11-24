@@ -1,15 +1,15 @@
 # Scale Quantizer
 
-Version: `0.1.4-experimental`, for Octatrack OS 1.40C.
+Version: `0.1.5-experimental`, for Octatrack OS 1.40C.
 
 ## Overview
 
 Scale Quantizer adds SCALE, ROOT, GLIDE, TRACK and FOLLOW to
 PROJECT > CONTROL > SEQUENCER. Pitch edits, parameter locks and chromatic trig
 keys follow the selected scale and root, and so does what the tracks play:
-recorded notes follow a scale change. Version 0.1.4 brings the author's 2.21
-quantizer: MIDI tracks, the per-track switches and the scale-following playback
-([#439](https://github.com/repeat98/modwerk/issues/439)). The per-track
+recorded notes follow a scale change. Version 0.1.5 keeps the MIDI tracks, per-track switches and scale-following playback
+introduced in 0.1.4 ([#439](https://github.com/repeat98/modwerk/issues/439)). It leaves
+out two panel hooks so the separately planned FM Synth update can install beside it. The per-track
 switches are two rows, TRACK and FOLLOW, so the module's five rows fit the
 base's SEQUENCER table on the card and over USB alike.
 
@@ -55,41 +55,41 @@ saved in the project as `#` lines, which a stock unit skips.
 The module adds ColdFire control hooks and no continuous DSP audio engine. RATE
 is not a semitone control.
 
-FM Synth carries its own copy of this quantizer, because its engine shares the
-quantizer's key mailbox and scale accessor, and FM Synth 0.1.4 declares this
-module a conflict, as agreed with the owner on
-[#555](https://github.com/repeat98/modwerk/issues/555) (31 October 2026): both
-would patch the same sites, and a module may not hook into another module's
-code, rows, tables or files. This module's own `conflicts` stays empty, as on
-main; the module whose change makes the pair collide flags it.
+FM Synth carries its own copy of this quantizer. Released FM Synth 0.1.2 to 0.1.4
+still declare a conflict with Scale Quantizer, so do not force that pair into an
+installation. Scale Quantizer 0.1.5 leaves out the two panel hooks that FM Synth's
+copy needs. A later FM Synth release is planned to drop the conflict in its own update
+([#1146](https://github.com/repeat98/modwerk/issues/1146)). This module's own
+`conflicts` list remains empty.
 
-On the Modwerk USB base the eighteen quantizer sites that FM Synth and POLY8
-also use are base events, and the SEQUENCER rows are the base's table; the
-nine other hooks (seven since 2.19, two more for 2.21's panel publication) stay
-guarded patches. The base's SEQUENCER table shows stock's three rows and up to
-eight contributed rows; this module contributes five (SCALE, ROOT, GLIDE,
-TRACK, FOLLOW), and card builds show the same five.
+On the Modwerk USB base, shared quantizer sites use base events and the
+SEQUENCER rows use the base's table. This version has seven guarded stock-code
+sites, down from nine. The module contributes five rows (SCALE, ROOT, GLIDE,
+TRACK and FOLLOW), as on the card build.
 
-The author reports this version's image working on his MKI (30 October 2026 and,
-rebuilt byte-identical on current main, 1 November 2026; TESTING.md), save and
-power-cycle included. Audio measurements, chip timing and
-complete memory bounds remain unmeasured on this version. See
-[TESTING.md](TESTING.md) for exact evidence and limits.
+The author's MKI reports of 30 October and 1 November 2026 concern 0.1.4's
+card image. They are historical evidence, not a hardware result for 0.1.5.
+Current emulator checks and their limitations are in [TESTING.md](TESTING.md).
+Chip timing, complete memory bounds and hardware qualification remain unmeasured
+for this update. Emulator sample-pitch measurements are relative; they do not
+establish fidelity to the original source WAV.
 
 ## Tests and measurements
 
-[TESTING.md](TESTING.md) records the commands, the source revision and every
-result of this version: the native card build, the USB package, the compat and
-doctor runs, the emulator smoke and the author's MKI reports of 30 October and
-1 November 2026 (reported evidence, not a measurement). No chip-cycle measurements are claimed.
+[TESTING.md](TESTING.md) records the source and package checks, current-main USB
+installation/removal, native UI, audio/MIDI FOLLOW, SAVE/power-cycle and explicit
+project-reload observations. It retains failed and invalid fixture attempts with
+their explanations, and the older 0.1.4 hardware reports without upgrading their
+scope. No chip-cycle measurement or complete release qualification is claimed.
 
 ## Authorship and licences
 
 Tim Hastie authored Scale Quantizer in
 [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules),
-pinned here to `8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c` (his 2.21 quantizer
-plus the TRACK / FOLLOW rows, released with Octatrick 2.22), with the hook comments in words
-and every guard read through `stock_guard`). Sam Banks
+pinned here to his release tag `v2.23`, `e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb`, whose
+`quantizer/` is vendored byte for byte (0.1.4 pinned `8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c`,
+his 2.21 quantizer plus the TRACK / FOLLOW rows, released with Octatrick 2.22), with the hook comments
+in words and every guard read through `stock_guard`. Sam Banks
 provided the Octabam wrapper up to 0.1.3. Vendored source remains MIT licensed
 with its original notices in [LICENSE](LICENSE) and
 [upstream/LICENSE](upstream/LICENSE). Nothing inside `upstream/` is edited.
@@ -100,19 +100,36 @@ rights remain reserved. No firmware or extracted stock image is distributed.
 
 ## Screens and audio
 
-These are emulator-rendered LCD captures of this version, with stopped transport
-and an empty disposable card. They document the interface only. [Capture provenance](media/capture.json) records the exact local image,
-emulator, panel plan and PNG hashes. No audio preview or hardware audio evidence
-is supplied.
+These actual 0.1.5 emulator LCD exports use stopped transport and a disposable
+synthetic project with the module installed over USB. They document the interface;
+no stopped image proves audio or hardware behavior. [Capture provenance](media/capture.json)
+separates the base and module-package hashes and records the two session setups.
+The retained exports were visually reviewed, but renderer completion was not traced;
+no complete-frame pixel-equivalence claim is made. The [0.1.4 record](media/0.1.4/capture.json)
+and its original images remain unchanged. No audio preview is supplied.
 
-![Select SEQUENCER in PROJECT > CONTROL.](media/ot-location.png)
+![PROJECT menu with CONTROL and SEQUENCER selected.](media/ot015-location.png)
 
-![SCALE selects MAJOR.](media/ot-scale.png)
+Press PROJ on the MKII panel, choose CONTROL and select SEQUENCER. Press YES to open the scale settings; on an MKI, open the project menu with FUNC+MIXER.
 
-![ROOT selects C.](media/ot-root.png)
+![CONTROL SEQUENCER with SCALE selected and set to MAJOR.](media/ot015-scale.png)
 
-![GLIDE follows SCALE and ROOT.](media/ot-glide.png)
+Scroll DOWN to SCALE and turn LEVEL to choose MAJOR. Choose OFF to restore stock pitch behavior.
 
-![TRACK AUDIO 8 with FOLLOW OFF: that track stays unquantized.](media/ot-track-rows.png)
+![CONTROL SEQUENCER showing SCALE MAJOR and ROOT C selected.](media/ot015-root.png)
 
-![The MIDI trig-mode popup remains responsive.](media/ot-midi-trig-mode.png)
+Scroll to ROOT and turn LEVEL to choose the key. C is shown here with MAJOR selected; ROOT is ignored while SCALE is OFF.
+
+![CONTROL SEQUENCER showing SCALE MAJOR, ROOT C and GLIDE OFF selected.](media/ot015-glide.png)
+
+Scroll to GLIDE and turn LEVEL to set its amount; OFF is shown here. Its effect depends on the track’s LEG setting, and synth-specific glide needs the separate FM Synth module.
+
+![CONTROL SEQUENCER showing GLIDE OFF, TRACK AUDIO 8 and FOLLOW OFF selected.](media/ot015-follow.png)
+
+Use TRACK to choose AUDIO 8, then select FOLLOW and turn LEVEL left for OFF. That track keeps its original pitch while other enabled tracks follow the scale; turn LEVEL right for ON.
+
+### More screenshots
+
+![MIDI trig-mode popup with CHROMATIC selected; the underlying NOTE page shows C#4, velocity 100 and channel 02.](media/ot015-midi-trig-mode.png)
+
+Press MIDI to select a MIDI track, then hold FUNC and press DOWN to open the trig-mode popup. Select CHROMATIC with UP/DOWN and release FUNC to use the trig keys as a keyboard.

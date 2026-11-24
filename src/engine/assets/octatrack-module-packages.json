@@ -222,15 +222,15 @@
       "machine": true,
       "abi": 8,
       "features": 131,
-      "sites": 9,
-      "copies": 6,
+      "sites": 7,
+      "copies": 5,
       "fills": 0,
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "name": "Scale Quantizer",
       "module": "7e9d5687",
-      "bytes": 7210,
-      "sha256": "33700b9339c0d0e619716cf6358ac83c9912c9881e30721411d2bf79897bbe04",
-      "path": "octatrack-modules/quantizer/0.1.4-experimental.mwrm"
+      "bytes": 7038,
+      "sha256": "092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50",
+      "path": "octatrack-modules/quantizer/0.1.5-experimental.mwrm"
     },
     {
       "id": "tapeecho",
@@ -322,12 +322,12 @@
       "sites": 14,
       "copies": 9,
       "fills": 0,
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2754,
-      "sha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
-      "path": "octatrack-modules/mute-modes/0.2.2-experimental.mwrm"
+      "bytes": 2922,
+      "sha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+      "path": "octatrack-modules/mute-modes/0.2.3-experimental.mwrm"
     },
     {
       "id": "sidechain-compressor",
@@ -581,8 +581,8 @@
           "SETUP_ALL"
         ]
       },
-      "version": "0.1.0-experimental",
-      "path": "octatrack-modules/syntiz/0.1.0-experimental.mwrm",
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/syntiz/0.1.1-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -590,8 +590,8 @@
       "fills": 0,
       "name": "syntiz",
       "module": "970f03ad",
-      "bytes": 54416,
-      "sha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8"
+      "bytes": 46944,
+      "sha256": "c3a97ecc50c92b305a45fcd6cf75d3f48a194538891c5398eedfa5f3aad39df5"
     },
     {
       "id": "track-solo",
@@ -764,6 +764,20 @@
   ],
   "usbAudio": {
     "configurable": {
+      "name": "USB Audio",
+      "version": "0.4.0-experimental",
+      "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.0-experimental.mwrm",
+      "bytes": 19948,
+      "sha256": "7c144b24ffebfd651db2eefc7dbd364ac7e1750ad5d90358460ca01c543f13f9",
+      "abi": 8,
+      "features": 131,
+      "sites": 3,
+      "copies": 4,
+      "fills": 0,
+      "installPresets": true,
+      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+    },
+    "configurable-0.3": {
       "name": "USB Audio",
       "version": "0.3.0-experimental",
       "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.3.0-experimental.mwrm",

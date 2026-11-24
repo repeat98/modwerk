@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 2,
+  "id": "ghost-cut",
+  "key": "GHOST CUT",
+  "name": "Ghost Cut",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "jacobphono",
+    "credits": [
+      "jacobphono: Ghost Cut's design, DSP56300 code, integer reference, render gate and documentation (milestone A, the TAPE engine).",
+      "Sam Banks: the octabam SDK, schema and render harness the module is written against.",
+      "Bryan T (bryantysinger): gcTB is adapted from VIBRATO's vb_tab, and the MIX run and the FX1/FX2 decision follow VIBRATO's (MIT; the notice is in LICENSE). Techniques also learnt from BBD Delay (Cam Jones) and octabam's STUTTR (Ilia Murzinov), no code copied."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "MICROLOOPER",
+    "family": "Delay",
+    "summary": "Grab a tempo-synced piece of a track and loop it at any speed, forwards, backwards or as a pendulum, crossfaded in and out.",
+    "overview": "Ghost Cut keeps the last 353 ms of its track in a ring. GRAB (a knob, a scene or the crossfader) freezes a piece of it, 1/64 to 1/4 of a note at the project's tempo, and loops it in place of the track; let go and the track fades back. RATE plays the loop from a quarter speed to almost four times, pitch and speed together like tape. CAPT chooses what GRAB takes: the last LEN (AUTO), the next LEN (MAN), or the ring as it was when you set OFF. DIR loops forwards, backwards or back and forth. A 256-sample crossfade hides the seam, and MIX blends the loop over the dry track.",
+    "highlights": [
+      "GRAB with hysteresis: on at 96, off at 32, so a scene or the crossfader grabs once and lets go cleanly",
+      "LEN follows the tempo: 1/64 to 1/4 of a note, halved until it fits the 353 ms ring",
+      "GRAIN engine: PTCH ±24 semitones apart from RATE, for time-stretched or transposed loops",
+      "DRFT and MOTN: a second head that drifts against the first over 1/4 to 32 bars, in stereo on TAPE",
+      "RATE from 1/4 x to almost 4 x, pitch and speed together; FWD, REV and PEND",
+      "AUTO, MAN and OFF capture; the loop fades in and out over 256 samples",
+      "Exact dry passthrough whenever no loop plays"
+    ],
+    "usage": [
+      "On an audio track, hold FUNC and press FX2, turn LEVEL to GHOST CUT and press YES.",
+      "Play the track and turn GRAB past 96: the last 1/16 loops. Turn it under 32 to let go.",
+      "Turn RATE while it loops for tape-speed pitch, or set DIR on the SETUP page to REV or PEND.",
+      "For the crossfader: hold a scene key and turn GRAB to 127 to lock it in that scene, and leave the other scene's GRAB at 0. Sliding across grabs, sliding back lets go."
+    ]
+  },
+  "controls": [
+    {
+      "name": "LEN",
+      "default": 3,
+      "count": 8,
+      "doc": "Loop length at the next GRAB, in notes at the project's tempo: 1/64, 1/32, 3/64, 1/16, 3/32, 1/8, 3/16, 1/4. A length past the 353 ms ring is halved until it fits, so it stays in time.",
+      "labels": [
+        "1/64",
+        "1/32",
+        "3/64",
+        "1/16",
+        "3/32",
+        "1/8",
+        "3/16",
+        "1/4"
+      ]
+    },
+    {
+      "name": "GRAB",
+      "default": 0,
+      "count": 128,
+      "doc": "96 or more grabs a loop, 32 or less lets it go; between them nothing changes. Lock it per scene to grab with the crossfader.",
+      "labels": null
+    },
+    {
+      "name": "RATE",
+      "default": 64,
+      "count": 128,
+      "doc": "The loop's speed, drawn -64 to +63: 0 is the speed it was played at, -64 a quarter, +63 almost four times (an octave every 32 steps). On TAPE the pitch follows it; on GRAIN it stretches time instead.",
+      "labels": null
+    },
+    {
+      "name": "PTCH",
+      "default": 64,
+      "count": 128,
+      "doc": "GRAIN's pitch in semitones, -24 to +24 (past them it holds there), whatever RATE does. The LFO glides between semitones. TAPE ignores it.",
+      "labels": null
+    },
+    {
+      "name": "DRFT",
+      "default": 0,
+      "count": 128,
+      "doc": "A second read head, up to half the loop after the first at 127, swinging as a triangle over MOTN. On TAPE the first head plays left and the second right, so the loop phases against itself; on GRAIN the second grain reads at the second head. 0 is one head, exactly as without it.",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "The loop over the dry track: 0 is the dry track exactly, 127 the loop alone.",
+      "labels": null
+    },
+    {
+      "name": "ENG",
+      "default": 0,
+      "count": 2,
+      "doc": "TAPE: the pitch follows RATE, like tape. GRAIN: two overlapping grains play the loop at PTCH while RATE moves through it, so pitch and time are apart. Changing it while a loop plays ducks the loop out and back in.",
+      "labels": [
+        "TAPE",
+        "GRAIN"
+      ]
+    },
+    {
+      "name": "CAPT",
+      "default": 0,
+      "count": 3,
+      "doc": "What GRAB loops: AUTO the last LEN, MAN the next LEN (the track plays dry while it records), OFF the ring as it was when CAPT went OFF.",
+      "labels": [
+        "AUTO",
+        "MAN",
+        "OFF"
+      ]
+    },
+    {
+      "name": "GRN",
+      "default": 40,
+      "count": 128,
+      "doc": "GRAIN's grain length, 10 ms at 0 to 79 ms at 127 (at most a quarter of the loop): short grains for clean pitch on drums, long ones for smooth pads. TAPE ignores it.",
+      "labels": null
+    },
+    {
+      "name": "MOTN",
+      "default": 4,
+      "count": 8,
+      "doc": "How slowly DRFT swings: one triangle over 1/4, 1/2, 1, 2, 4, 8, 16 or 32 bars at the project's tempo, starting from no offset at each GRAB.",
+      "labels": [
+        "1/4B",
+        "1/2B",
+        "1B",
+        "2B",
+        "4B",
+        "8B",
+        "16B",
+        "32B"
+      ]
+    },
+    {
+      "name": "DIR",
+      "default": 0,
+      "count": 3,
+      "doc": "FWD loops forwards, REV backwards, PEND forwards then backwards with no seam.",
+      "labels": [
+        "FWD",
+        "REV",
+        "PEND"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "FX2 only: the ring needs an FX2 slot's buffer. On an FX1-sized slot it passes the track dry.",
+      "Mono loop: the ring records the track's mono sum. One wet plays on both sides, except TAPE with DRFT, which plays its two heads left and right.",
+      "The longest loop is 353 ms; a longer LEN is halved until it fits.",
+      "After a GRAB the track stays dry for 2.9 ms while the seam is baked into the ring; the loop then starts where it would be had it played since GRAB.",
+      "The loop starts at GRAB and keeps its own length; it does not restart on the sequencer's steps, so it drifts by under a sample a repeat against the pattern. A GRAB locked on a trig starts it on that step.",
+      "RATE above 1 x has no anti-alias filter and reads with linear interpolation, so high content aliases when sped up.",
+      "GRAIN uses triangular windows on two grains: steady tones keep their pitch, but transients smear and a slight flutter at the grain rate can be heard. FDBK is not built: writing the loop back into itself would undo the baked seam.",
+      "The DSP was rendered in dsp_host. A private RAM trial on a unit confirmed the TAPE loop by developer report; GRAIN and full unit qualification remain untested. The effect has not run on a track in the emulator."
+    ],
+    "effectId": 10
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Milestones A to C: 115 dsp_host gates pass, bit-exact against the integer reference. Static cost is 281 cycles a sample on GRAIN and 188 on TAPE. Four private RAM trials installed and rolled back on an Octatrack without logged faults; the developer reported that TAPE's GRAB and RATE worked. GRAIN and full hardware qualification remain untested. The emulator refused all effect picks, including Vibrato.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code by jacobphono under the MIT licence in LICENSE. No Elektron firmware, extracted routines, tables or samples."
+  },
+  "media": [],
+  "access": {
+    "location": "A track's FX2 chooser (FUNC + FX2).",
+    "steps": [
+      "Select an audio track that plays something.",
+      "Hold FUNC and press FX2, turn LEVEL to GHOST CUT and press YES.",
+      "Press FX2 for the main page: LEN, GRAB, RATE and MIX. Press FX2 again for SETUP: CAPT and DIR."
+    ],
+    "screenshots": []
+  }
+}
