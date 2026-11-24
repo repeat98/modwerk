@@ -77,6 +77,41 @@ describe('the USB install while the MIDI permission is pending', () => {
     expect(u.input.onmidimessage).toBeNull()
   })
 
+  it('A, then B while the permission is pending, then A again: A shows idle and sends again, B sent nothing', async () => {
+    const u = unit(), p = prompt(u.access)
+    await show(A, p.midi)
+    await press()
+    expect(host.textContent).toContain('Looking for the Digitone II')
+    await show(B, p.midi)                               // B chosen, nothing sent for it
+    p.grant()                                           // the cancelled request finishes
+    await flush()
+    await show(A, p.midi)                               // back to A
+    expect(host.textContent).not.toContain('Looking for the Digitone II')
+    expect(u.sent).toEqual([])
+    expect(p.asked()).toBe(1)                           // no send started for B
+
+    u.expect(A.syx)
+    await press()                                       // Send is enabled again for A
+    p.grant()
+    await flush()
+    expect(u.starts).toEqual([A.syx.length])
+    expect(host.textContent).toContain('UPGRADE OS NOW?')
+    expect(u.input.onmidimessage).toBeNull()
+  })
+
+  it('back to A before the cancelled request has finished: A still shows idle, and its old answer sends nothing', async () => {
+    const u = unit(), p = prompt(u.access)
+    await show(A, p.midi)
+    await press()
+    await show(B, p.midi)
+    await show(A, p.midi)                               // the old prompt is still open
+    expect(host.textContent).not.toContain('Looking for the Digitone II')
+    p.grant()
+    await flush()
+    expect(u.sent).toEqual([])
+    expect(host.textContent).not.toContain('Looking for the Digitone II')
+  })
+
   it('sends nothing when the page is left, and a panel mounted later can send', async () => {
     const u = unit(), p = prompt(u.access)
     await show(A, p.midi)

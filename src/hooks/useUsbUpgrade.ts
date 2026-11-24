@@ -81,9 +81,10 @@ let pageRun: Promise<void> | null = null
 /** Sends `build` (its SHA-256: what the page shows now). Choosing another build or leaving the page cancels a run that
  * has not finished, a pending MIDI permission included, and a run only ever sends the bytes of the build it started for. */
 export function useUsbUpgrade(unitName: string, build: string, midi: MidiAccessRequest = browserMidi) {
-  // The state is the build's it was reported for: another build shows idle, without a render of the old state.
-  const [held, setHeld] = useState<{ build: string; state: UsbUpgradeState }>({ build, state: { phase: 'idle' } })
-  const state: UsbUpgradeState = held.build === build ? held.state : { phase: 'idle' }
+  // The state is the build's and the run's it was reported for: another build shows idle, without a render of the old
+  // state, and so does a cancelled run's when the person comes back to its build (A, then B, then A again).
+  const [held, setHeld] = useState<{ build: string; state: UsbUpgradeState; run?: AbortController }>({ build, state: { phase: 'idle' } })
+  const state: UsbUpgradeState = held.build === build && !held.run?.signal.aborted ? held.state : { phase: 'idle' }
   const run = useRef<{ build: string; controller: AbortController } | null>(null)
   useEffect(() => () => { run.current?.controller.abort(); run.current = null }, [build, unitName])
   const send = useCallback(async (syx: Uint8Array, forBuild: string) => {
@@ -91,7 +92,7 @@ export function useUsbUpgrade(unitName: string, build: string, midi: MidiAccessR
     const controller = new AbortController()
     run.current = { build: forBuild, controller }
     const previous = pageRun
-    const setState = (next: UsbUpgradeState) => setHeld({ build: forBuild, state: next })
+    const setState = (next: UsbUpgradeState) => setHeld({ build: forBuild, state: next, run: controller })
     setState({ phase: 'connecting' })
     const mine = (async () => {
       await previous
@@ -103,6 +104,8 @@ export function useUsbUpgrade(unitName: string, build: string, midi: MidiAccessR
     } finally {
       if (pageRun === mine) pageRun = null
       if (run.current?.controller === controller) run.current = null
+      // A cancelled run leaves nothing behind: its last state (connecting, say) is not shown again for its build.
+      if (controller.signal.aborted) setHeld(h => h.run === controller ? { build: h.build, state: { phase: 'idle' } } : h)
     }
   }, [midi, unitName, build])
   const reset = useCallback(() => { if (!run.current) setHeld({ build, state: { phase: 'idle' } }) }, [build])
