@@ -3,7 +3,7 @@
   "id": "arr-rows",
   "key": "ARR ROWS",
   "name": "Arr Rows",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "category": "system",
   "author": {
     "github": "Andrey-Sidorkin",
@@ -16,11 +16,12 @@
     "label": "Select, copy and paste many arrangement rows",
     "family": "Editing",
     "summary": "Select several rows in the arrangement editor and copy, clear, paste or insert them together, also into another arrangement.",
-    "overview": "Stock copies, clears and pastes one arrangement row at a time. Arr Rows adds a selection: hold CUE and press UP or DOWN to mark rows from the cursor, then the usual FUNC + REC, FUNC + PLAY and FUNC + STOP act on all of them. FUNC + STOP replaces the selected rows, or the cursor row, with the copied rows; CUE + FUNC + STOP inserts them and moves what follows down. The copied rows stay until power off, so a section of one arrangement can go into another. Without a selection everything is stock, and the arrangement is saved in stock's own format.",
+    "overview": "Stock copies, clears and pastes one arrangement row at a time. Arr Rows adds a selection: hold CUE and press UP or DOWN to mark rows from the cursor, then the usual FUNC + REC, FUNC + PLAY and FUNC + STOP act on all of them. FUNC + STOP replaces the selected rows, or the cursor row, with the copied rows; CUE + FUNC + STOP inserts them and moves what follows down. CUE + LEFT and CUE + RIGHT move the selected rows up and down. The copied rows stay until power off, so a section of one arrangement can go into another. Without a selection everything is stock, and the arrangement is saved in stock's own format.",
     "highlights": [
       "CUE + UP/DOWN marks rows; their numbers show inverted.",
       "FUNC + REC, FUNC + PLAY and FUNC + STOP act on the selection; repeating a paste, clear or insert in the same place undoes it, as stock does for one row.",
       "CUE + FUNC + STOP inserts the copied rows at the cursor; LOOP and JUMP targets below move with their rows.",
+      "CUE + LEFT/RIGHT move the selected rows, or the cursor row, up or down one place; LOOP and JUMP targets follow their rows.",
       "Copied rows survive ARR CHANGE: paste them into another arrangement.",
       "No stock code patched, no file format change, no setting."
     ],
@@ -29,6 +30,7 @@
       "Put the cursor on the first row you want, hold CUE and press DOWN (or UP) until the rows are marked.",
       "Press FUNC + REC to copy them, or FUNC + PLAY to clear them.",
       "Move the cursor to where they should go and press FUNC + STOP to replace that row with them (or select rows first to replace those), or hold CUE and press FUNC + STOP to insert them.",
+      "Hold CUE and press LEFT or RIGHT to move the selected rows (or the cursor row) up or down one place; the marks and the cursor move with them.",
       "Press the same keys again in the same place to undo the paste, clear or insert."
     ]
   },
@@ -39,6 +41,7 @@
       "Put the cursor on the first row you want, hold CUE and press DOWN (or UP) until the rows are marked.",
       "Press FUNC + REC to copy them, or FUNC + PLAY to clear them.",
       "Move the cursor to where they should go and press FUNC + STOP to replace that row with them (or select rows first to replace those), or hold CUE and press FUNC + STOP to insert them.",
+      "Hold CUE and press LEFT or RIGHT to move the selected rows (or the cursor row) up or down one place; the marks and the cursor move with them.",
       "Press the same keys again in the same place to undo the paste, clear or insert."
     ],
     "screenshots": [
@@ -56,15 +59,18 @@
     "uiClaims": [
       "key:CUE+UP@ARRANGER",
       "key:CUE+DOWN@ARRANGER",
+      "key:CUE+RIGHT@ARRANGER",
+      "key:CUE+LEFT@ARRANGER",
       "key:FUNC+REC@ARRANGER",
       "key:FUNC+PLAY@ARRANGER",
       "key:FUNC+STOP@ARRANGER",
       "key:CUE+FUNC+STOP@ARRANGER",
+      "key:FUNC+DOWN@ARRANGER",
       "screen:ARRANGEMENT EDITOR"
     ],
     "limitations": [
-      "OS 1.40C. Not yet tested on a unit.",
-      "In the arrangement editor, CUE + UP/DOWN still move the cursor as UP/DOWN do, and now also mark rows; after rows were copied here, FUNC + STOP replaces the cursor row with them instead of pasting stock's one copied row until the next stock copy. Remove the module to restore stock behaviour.",
+      "OS 1.40C, tested on an MKI (the developer's own checks: 0.1.0 on base 0.7.5, 0.2.0 build 50bb1e6b2 on base 0.7.13); not tested on an MKII.",
+      "In the arrangement editor, CUE + UP/DOWN still move the cursor as UP/DOWN do, and now also mark rows; CUE + LEFT/RIGHT move rows instead of changing columns; after rows were copied here, FUNC + STOP replaces the cursor row with them instead of pasting stock's one copied row until the next stock copy. Remove the module to restore stock behaviour.",
       "The copied rows live in RAM until power off or until the module is removed.",
       "A paste or insert that would pass 256 rows is refused with stock's ROW LIMIT REACHED."
     ]
@@ -122,9 +128,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 74 checks); stock key routing measured under ot_emu (MKI panel); select, copy, paste, undo, insert and a paste into another arrangement run under ot_emu on the beta base over emulated USB. Not yet tested on a unit.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "0000000000000000000000000000000000000000",
+    "summary": "Host gate (verify.py, 98 checks); stock key routing measured under ot_emu (MKI panel). On the developer's MKI: selecting, copying, clearing, pasting, inserting and undo (0.1.0, base 0.7.5); FUNC + DOWN on a HALT row keeping both HALTs, FUNC + DOWN on other rows and FUNC + UP as stock, and moving rows up and down with the editor scrolling along and the row ahead in view (0.2.0, build 50bb1e6b2, base 0.7.13, beside USB AUDIO), as the developer reported them.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "50bb1e6b2034bc911d0656451f7971972ae19a63",
     "gates": [
       "modules/arr-rows/verify.py"
     ]
