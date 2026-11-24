@@ -763,8 +763,18 @@
     },
     {
       "id": "songbook",
+      "octabam": true,
       "version": "0.1.0-experimental",
-      "path": "octatrack-modules/songbook/0.1.0-experimental.mwrm"
+      "path": "octatrack-modules/songbook/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 129,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "Songbook",
+      "module": "008010d8",
+      "bytes": 7894,
+      "sha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47"
     }
   ],
   "usbAudio": {
