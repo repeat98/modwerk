@@ -104,7 +104,9 @@ const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NA
  * A freeze until a restart, stopped, in a session whose next start runs another base is the upgrade seen by diag.c's
  * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed but whose keys
  * end in that walk (PROJ … YES YES: pick the file, confirm) is likely the same image flashed again: the 17 November 2026
- * pull had 21 stopped freezes after the walk, all until a restart, 9 before another base and 12 before the same one. */
+ * pull had 21 stopped freezes after the walk, all until a restart, 9 before another base and 12 before the same one.
+ * Any other stopped freeze until a restart after PROJ … RIGHT YES is likely USB disk mode (or an upgrade prompt) left
+ * open, as finding 72's stalls: 13 of the 42 stopped freezes from 25 October to 24 November 2026 followed that walk. */
 export function unitLines(incidents, names = namesFor) {
   const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
   const { at, base, note } = hangNotes(all)
@@ -137,7 +139,13 @@ function hangNotes(all) {
     const keys = last?.keys.filter(k => k !== 255) ?? [], from = keys.lastIndexOf(PROJ), walk = from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : []
     return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
-  return { at, base, note: r => upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : reflashed(r) ? ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '' }
+  const diskMode = r => {
+    if (r.kind !== 'freeze' || r.a || r.playing) return false
+    const keys = r.keys.filter(k => k !== 255), from = keys.lastIndexOf(PROJ)
+    return rightYes(from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : [])
+  }
+  return { at, base, note: r => upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : reflashed(r) ? ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)'
+    : diskMode(r) ? ' (likely USB disk mode or an upgrade prompt, beta finding 72: PROJ … RIGHT YES before it; not a hang)' : '' }
 }
 
 /** Per base the units ran: starts, the hours their load logs cover, and the hangs no OS upgrade or reflash explains
