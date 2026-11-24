@@ -1,0 +1,1 @@
+Octatrack: a sync sent in the first moments after the Octatrack starts, before it has loaded its saved modules, now says so: "The Octatrack hasn't loaded its saved modules yet, so nothing changed", and to wait until Status shows them. Before, it said the Octatrack can't run the module file, although nothing was wrong with the modules and the unit loaded them a moment later.
