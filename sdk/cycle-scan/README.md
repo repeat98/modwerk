@@ -4,8 +4,11 @@ Prices the path an Octatrack DSP effect executes: each instruction's cycles from
 the idle cycles the core inserts for some sequences (pipeline stalls, sections A.2 and 3.5), with the sites that stall.
 `cycle_count.py` counts words and `dsp_host -meter` counts instructions; neither sees cycles.
 
-Imported from [sambanks/octabam](https://github.com/sambanks/octabam) at `cc7cffc1` (#1169, GPL-3), recorded in
-[`sdk/imports/octabam-cycle-scan-cc7cffc1.json`](../imports/octabam-cycle-scan-cc7cffc1.json). [CYCLE_SCAN.md](CYCLE_SCAN.md)
+Imported from [sambanks/octabam](https://github.com/sambanks/octabam) at `cc7cffc1` (#1169), recorded in
+[`sdk/imports/octabam-cycle-scan-cc7cffc1.json`](../imports/octabam-cycle-scan-cc7cffc1.json) with each file's licence:
+`interlock_scan.py` (by Yves Rosius) and `CYCLE_SCAN.md` are octabam's own, MIT (Copyright 2026 Sam Banks, its
+`LICENSE`); `dsp_host.cpp` is an addition to the dsp56300 emulator and under its licence, GPL-3.0-only (octabam's
+`THIRD_PARTY.md`, [`../octabam/licenses/dsp56300.txt`](../octabam/licenses/dsp56300.txt)). [CYCLE_SCAN.md](CYCLE_SCAN.md)
 is upstream's page: its results for octabam's effects and how the model compares with their unit (3.0 % above it on
 average over 38 settings of 22 effects). It is kept byte for byte, so its links to `COSTS.md`, the unit's measured
 figures, lead nowhere here: read
