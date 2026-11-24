@@ -1,0 +1,28 @@
+# Improved FLTR: TYP's knob turns past PK to BW (7) and stops there (the id table's maximum, 6 -> 7),
+# through stock's turn and setter, not MIDI (one TYP step is a nudge of 2). Targets 0x8000e5b0 + 2 x 32 (+64) on BD. Changes the BD
+# sound's FILTER TYP; ends on TYP 0 (LP2).
+name: if-typ-turn
+state: changes
+hold TRK
+key BD
+release TRK
+key FLTR
+wait 1500
+cc 76 6
+wait 400
+nudge G +2
+wait 300
+mem a 0x8000e5f0 2
+expect a == 0700
+nudge G +2
+wait 300
+mem b 0x8000e5f0 2
+expect b == 0700
+nudge G +2
+wait 300
+mem c 0x8000e5f0 2
+expect c == 0700
+mem s 0x80006461 1
+expect s == 02
+wait 300
+cc 76 0
