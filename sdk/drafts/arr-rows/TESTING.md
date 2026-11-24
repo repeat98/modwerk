@@ -60,10 +60,11 @@ refusals). The screen was read from the panel link's transmit stream (Octabam's 
 
 ### Stock behaviour, reported by the developer (MKI, stock OS 1.40C, no Modwerk base, 17 November 2026)
 
-What Andrey Sidorkin saw on his own MKI, as he reported it; no module was installed. Both stock bugs below (an
+What Andrey Sidorkin saw on their own MKI, as they reported it; no module was installed. Both stock bugs below (an
 insert on a HALT making an endless LOOP, a delete turning a JUMP into a HALT) and whether the module may take FUNC +
-DOWN are raised with the owner in [#1668](https://github.com/repeat98/modwerk/issues/1668); until he answers, stock
-FUNC + DOWN and FUNC + UP stay untouched.
+DOWN were raised with the owner in [#1668](https://github.com/repeat98/modwerk/issues/1668). The owner's answer
+(18 November 2026): yes to FUNC + DOWN on a HALT row keeping both HALTs, every other FUNC + DOWN and the delete stay
+stock's. 0.2.0 does that (below); FUNC + UP stays untouched.
 
 - Delete (FUNC + UP) of row D while a JUMP points at row T:
   1. T below D on the screen (T > D): the target number dropped by one and still names the same row's content.
@@ -133,12 +134,12 @@ copy and a paste of 20 rows during PLAY left the transport running.
 Build `f9fbcd669` (package `e0916410…`) as a 30-minute trial from 16:14 on the developer's MKI. As Andrey Sidorkin
 reported it: the marks followed the selection, also with the list scrolled, and moving the cursor with LEVEL moved the
 selection with it, as intended; FUNC + STOP and CUE + FUNC + STOP behaved differently, as intended; copies during
-PLAY showed no problem. The diagnostic word logged every copy, paste, insert and undo he made, and at the end both
+PLAY showed no problem. The diagnostic word logged every copy, paste, insert and undo they made, and at the end both
 views agreed that no key was held. Its disagreement count rose on nearly every key press: it compared the two views
 on CUE's and FUNC's own events, before stock switches its layer, so the count was noise; the next build skips those
 two keys.
 
-He asked for a different paste: with no selection FUNC + STOP replaces only the cursor row with the copied rows, and
+They asked for a different paste: with no selection FUNC + STOP replaces only the cursor row with the copied rows, and
 with a selection it replaces the selected rows. Built that way: a paste and an insert are one operation (replace D
 rows at P with the N copied ones; D = 0 for an insert), every row and target mapped from before to after in one step
 (README). Pressing FUNC + STOP again where the cursor was undoes it, also after replacing a selection. Under ot_emu on
@@ -200,3 +201,68 @@ with the module loaded on a base without it (arrNN files compared).
 `npm run module:dev -- arr-rows --build-only` (17 November 2026): 3,864 bytes of code and data, 11,320 of state,
 15 relocations, three hooks, no stock-code sites. No stock code site of the base or any module overlaps the stock
 routines it calls or the editor's key handlers (`scripts/stock-code-sites.py`, 416 sites).
+
+## 0.2.0-experimental: moving rows (local, not yet released)
+
+The developer asked for moving rows on 17 November 2026 and chose CUE + LEFT/RIGHT. Stock gives them no function of
+their own in the editor (measured under ot_emu: CUE + RIGHT changed the column as RIGHT does; CUE + FUNC + UP/DOWN
+did what FUNC + UP/DOWN do). `verify.py`: 85 host checks, among them a move of a selection and of the cursor row,
+targets following their rows, a HALT staying a HALT, a LOOP moved past its target becoming a JUMP (the developer's
+choice), the edges, and LEFT/RIGHT without CUE left to stock. Under ot_emu on the beta base (MKI panel): rows 2-3 of
+`0 1 2 3 4 5 6 7` selected, CUE + RIGHT twice gave `0 1 4 2 3 5 6 7` then `0 1 4 5 2 3 6 7`, CUE + LEFT
+`0 1 4 2 3 5 6 7`; the marks and the cursor followed. Not tested on a unit yet. The screenshots in `media/` are of
+0.1.0-experimental.
+
+On the developer's MKI (17 November 2026, flashed base `6c189889…`): my stage 1 on source `2f2a0043f`, package
+`e96b2e44589001e5c34ee8784daebfb09fcf3fc27b0e158bface7ea8ff9776c2`, a 20-second trial: no crash, stall, freeze or
+skipped track logged, rolled back, inventory `[]` before and after. Then their 30-minute trial from 18:04. As Andrey
+Sidorkin reported it: a selection moved with CUE + RIGHT and back with CUE + LEFT, the marks following; the cursor row
+alone moved the same way with no selection; `LOOP: 003` on row 6 moved up past row 3 became a JUMP to the same row's
+content; LEFT/RIGHT without CUE still changed columns. All as intended.
+The trial's link went quiet at 18:16:48 because the developer switched the unit off after their checks; the trial was
+in RAM, so it ended with the power. Nothing was kept.
+
+### FUNC + DOWN on a HALT row (#1668, 18 November 2026)
+
+The owner agreed in #1668 that the module may keep both rows HALTs. `verify.py`: 92 host checks, among them stock's
+insert (simulated as measured) on a HALT giving two HALTs, other targets left as stock leaves them, a LOOP row and a
+refused insert (no row added) left alone, and FUNC + UP untouched. Under ot_emu on the beta base (MKI panel), package
+built from this branch: a HALT on row 3 (`01000003`), cursor on it, FUNC + DOWN: 7 rows, row 3 `HALT: 003` and row 4
+`HALT: 004` (`01000004`); stock alone gives `LOOP: 003/∞` on row 4 (above). FUNC + DOWN on row 1, above the HALT:
+the HALT moved to row 4 with target 4, as on stock. Not tested on a unit yet.
+
+### On the unit, 22 November 2026 (base 0.7.13, kept beside USB AUDIO)
+
+Package `ec53c063…`, as the developer reported it: a HALT on row 3 and FUNC + DOWN on it gave `HALT: 003` and
+`HALT: 004` (passed); FUNC + DOWN on a pattern row and FUNC + UP behaved as on stock (passed). Moving two selected rows
+with CUE + RIGHT failed: the editor stopped scrolling, the selection went below the screen and the last row was not
+drawn. The move set the cursor itself, without the editor's first shown row. Fixed: moves and undo set the cursor with
+stock's own routine (0x400336bc), which scrolls the editor along (six rows shown). `verify.py`: 95 checks; the previous
+code fails the two new scroll checks.
+
+Package `794f1170…`, as the developer reported it: moving down past the screen now scrolled along (passed); moving up,
+only the selection's last row stayed on screen, the cursor's row, while the rows above it scrolled off. Fixed: after a
+move the module sets the cursor to the block's other end first and then back, so stock scrolls just enough to keep a
+block of up to six rows wholly visible either way. `verify.py`: 96 checks.
+
+Package `d626d9ab…`, as the developer reported it: moved blocks stayed on screen both ways (passed). The developer
+asked to also see the row the block moves towards. Built: before the block's other end and the cursor, the module
+sets the cursor to the row beyond the block (above moving up, below moving down, the END row at the bottom); with up to
+five rows selected, that row and the whole block stay on screen. `verify.py`: 98 checks.
+
+Package `46e75872…` (source `50bb1e6b2`), as the developer reported it, 22 November 2026: moved blocks stayed on
+screen with the row ahead in view, up and down, selected either way (passed).
+
+## Edge cases (0.2.0)
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| FUNC + DOWN on a HALT row | the module fixes the moved row after stock's insert | the developer's MKI, ec53c063 (base 0.7.13) | pass: `HALT: 003` and `HALT: 004` |
+| FUNC + DOWN on a pattern row, FUNC + UP | must stay stock's | the developer's MKI, ec53c063 | pass |
+| FUNC + DOWN with 256 rows (stock refuses the insert) | the fix must not touch rows when no row was added | host test (verify.py) | pass in the host test; not run on a unit |
+| Moving a block past the bottom and the top of the screen | the module moves the cursor; the editor must scroll along | the developer's MKI, 794f1170, d626d9ab, 46e75872 | pass on 46e75872 (failed on the first two, fixed) |
+| A block selected upward (cursor on its first row) | the other end must stay on screen | the developer's MKI, d626d9ab and 46e75872 | pass |
+| Moving at the arrangement's first and last row | nothing above, the END row below | the developer's MKI, 46e75872 | pass |
+| Beside USB AUDIO (installed with base 0.7.13) | both kept in one set | the developer's MKI, 46e75872 | pass: kept together, no crash, stall or freeze |
+| A LOOP moved past its target | turns into a JUMP (the developer's choice) | the developer's MKI, 0.2.0 on base 0.7.5 | pass |
+| MKII | another panel and key layout | none | not run: no MKII |
