@@ -132,7 +132,7 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
 if (import.meta.filename === process.argv[1]) {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: 'string' }, seconds: { type: 'string', default: '8' },
     slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, memory: { type: 'boolean' },
-    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, 'admission-pattern': { type: 'string' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, 'admission-pattern': { type: 'string' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: process.env.MODWERK_DEV_SOCKET ?? '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
   // Admission is judged on the bank's medium pattern, the curve read on one with room (owner, 23 November 2026): by default the same.
   const admissionPattern = args['admission-pattern'] ?? args['measure-pattern']
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds), measuredAt = new Date().toISOString()
