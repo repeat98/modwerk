@@ -4,7 +4,7 @@
 // What a module costs an Octatrack, measured on a unit: the frame interrupt's share, the CPU meter and both DSPs,
 // before the module, with it installed but used nowhere (at rest), and for an effect on one slot (in use).
 //   npm run device:price -- [--memory] [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
-//   --curve T1,T3,T6,T7 [--pick-pattern 2] [--measure-pattern 1] [--limit 125] [--write-costs]: what the longest frame gains with the module on
+//   --curve T1,T3,T6,T7 [--pick-pattern 2] [--measure-pattern 1] [--admission-pattern N] [--limit 125] [--write-costs]: what the longest frame gains with the module on
 //   1, 2, 3… of those empty tracks (machines) or their slots (effects), each picked on the empty pattern and read on the busy one,
 //   and the next-instance cost from it (curveFit: `first`, then `each`); it stops at the first skipped render or past --limit % (lower it
 //   for a run nobody watches: a frame interrupt past about 130 % can stop the DSP frames until a power cycle); --write saves it as the module's evidence/frame-cost.json, --write-costs into the base's own frame-costs-base.json;
@@ -13,7 +13,9 @@
 //   its readings in evidence/cpu-price.json, and leaves the pending list; modules:check recomputes the price from those readings.
 // It needs a development twin of the base (the guard request) behind `npm run device -- serve --share
 // /tmp/modwerk-share.sock`, and the scene is the caller's: select the pattern, leave the transport stopped, and say in
-// the record which (--scene). The unit takes a module only while stopped, so each reading is PLAY, the reading, STOP.
+// the record which (--scene). The unit takes a module only while stopped, so each reading is STOP, PLAY, the reading, STOP, and a
+// reading during which `state` says stopped is refused and ends the run. The curve does not start when the module at rest plus
+// its booked first instance (frame-costs.json) reaches CURVE_ROOM on --measure-pattern: pick a pattern with room.
 // Each module runs as a trial that is rolled back; nothing is kept. Base-bound packages are left out:
 // a twin does not trust them (docs/OCTATRACK_DRIVING.md).
 // A machine's in-use cost is read only by --curve, as the only module of its trial (its row in the list is then the sixth).
@@ -26,7 +28,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
+import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, CURVE_ROOM, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
 import { takeUnitTurn } from './unit-queue.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
@@ -49,6 +51,18 @@ export function allocationReading(text) {
 /** What the second reading added to the first, in points, one decimal. */
 /** What went wrong with a pick, from the session's reply (device.mjs pick's errors), or null when the slot runs it. */
 export const pickFailure = reply => /error|refused|not admitted|timed out/i.test(reply) ? reply.trim().split('\n').find(line => /error|refused|not admitted|timed out/i.test(line)).slice(0, 200) : null
+/** The session's `state` reply says the transport is stopped (device.mjs: "stopped" or "playing"). */
+export const notPlaying = reply => /^\s*stopped\b/.test(reply)
+/** A reading taken while the transport stood: it is refused, never priced. */
+export class NotPlayed extends Error {}
+/** Why the curve cannot start, or null: stock and the module at rest (`atRest`, % of a frame on the measure pattern) plus its
+ *  booked first instance leave no room under CURVE_ROOM, so the first reading would be the overload (FM Synth 0.1.5 at 107.9 %
+ *  on Dev17 C04, 81 % stock alone). Unbooked (a new module): null, the first reading decides. */
+export function curveRoom({ atRest, booked, pattern }) {
+  if (typeof booked !== 'number' || typeof atRest !== 'number') return null
+  return atRest + booked < CURVE_ROOM ? null : `no room on pattern ${pattern}: it reads ${atRest} % with the module at rest, and its booked first instance ` +
+    `${booked} would take it to ${tenth(atRest + booked)} %, past ${CURVE_ROOM} %. Pick a pattern with room with --measure-pattern (fewer sample tracks)`
+}
 export const added = (before, after) => Object.fromEntries(['frame', 'cpu', 'dsp1to4', 'dsp5to8'].map(key => [key, tenth(after[key] - before[key])]))
 
 /** A file trial uses the package header for its name and slots (loader.c). Its runtime id
@@ -93,7 +107,7 @@ export const machineToStatic = track => `NO w200 ${track} w300 ${track} ${track}
 export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
   const id = result.id, folder = resolve(root, 'sdk/octatrack/modules', id), manifest = resolve(folder, 'octamod.module.json')
   if (!existsSync(manifest)) return 'not written: no sdk/octatrack/modules/' + id
-  if (result.refused || !result.rolledBack || result.restore || result.inUseError || !result.atRestAdds) return 'not written: the run was not clean'
+  if (result.refused || !result.rolledBack || result.restore || result.inUseError || result.notPlayed || !result.atRestAdds) return 'not written: the run was not clean'
   const text = readFileSync(manifest, 'utf8'), document = JSON.parse(text)
   if (document.compatibility?.location === 'Track machine' || machineDescriptors({ root, id }).length) return 'not written: a machine\'s price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)'
   if (document.compatibility?.effectId != null && !result.inUseAdds) return 'not written: an effect is priced on a slot too, and this run has no reading on one'
@@ -118,13 +132,18 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
 if (import.meta.filename === process.argv[1]) {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: 'string' }, seconds: { type: 'string', default: '8' },
     slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, memory: { type: 'boolean' },
-    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: process.env.MODWERK_DEV_SOCKET ?? '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, 'admission-pattern': { type: 'string' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: process.env.MODWERK_DEV_SOCKET ?? '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+  // Admission is judged on the bank's medium pattern, the curve read on one with room (owner, 23 November 2026): by default the same.
+  const admissionPattern = args['admission-pattern'] ?? args['measure-pattern']
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds), measuredAt = new Date().toISOString()
   const fxNames = new Map((args['fx-name'] ?? []).map(pair => { const at = pair.indexOf('='); if (at < 1) throw new Error('--fx-name takes ID=NAME, the name the FX chooser shows'); return [pair.slice(0, at), pair.slice(at + 1)] }))
   if ((args.write || args['write-costs']) && !(args.base && args.scene)) throw new Error('--write and --write-costs need --base and --scene: the price names the base and what played (model, project, pattern)')
   if (args['write-costs'] && !args.curve && !args.stock) throw new Error('--write-costs writes a curve (--curve T1,T3,T6,T7) or the stock reserve (--stock)')
   // --write with --curve also writes each effect's or machine's curve: its evidence/frame-cost.json and its frame-costs.json line.
   const catalogue = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
+  // What admission charges a module's first instance now (frame-costs.json): the curve needs that much room to be read.
+  const booked = existsSync(resolve(root, FRAME_COSTS_PATH)) ? JSON.parse(readFileSync(resolve(root, FRAME_COSTS_PATH), 'utf8')).costs ?? {} : {}
+  const bookedFirst = id => booked[id]?.first
   // An ID is a catalogue row; a path to a .mwrm is that file, for a build that is not published yet. In the order given.
   const files = positionals.filter(name => name.endsWith('.mwrm')), ids = positionals.filter(name => !name.endsWith('.mwrm'))
   const unknown = ids.filter(id => !catalogue.some(row => row.id === id)).concat(files.filter(file => !existsSync(file)))
@@ -142,11 +161,14 @@ if (import.meta.filename === process.argv[1]) {
     socket.on('data', chunk => { reply += chunk }).on('end', () => done(reply)).on('error', fail)
   })
   const measure = async () => { // playing: a new guard window, then its mean beside three meter readings
-    await send('PLAY w2000 guard')
-    let text = ''
-    for (let i = 0; i < 3; i++) { await wait(seconds * 1000 / 3); text += await send('stats') }
+    // STOP first: PLAY on a unit that is already playing pauses it, and that reading would be the stopped frame (frame 24 %,
+    // longest 32 % where the pattern plays at 75 %: the first module of a run read a false rest of 13 to 18, 23 November 2026).
+    await send('STOP w500 PLAY w2000 guard')
+    let text = '', stopped = 0
+    for (let i = 0; i < 3; i++) { await wait(seconds * 1000 / 3); text += await send('stats'); if (!notPlaying(await send('state'))) continue; stopped++ }
     const text2 = await send('guard')
     await send('STOP w500')
+    if (stopped) throw new NotPlayed(`the transport was stopped at ${stopped} of 3 checks during a reading, so it measured no pattern: nothing was priced`)
     const load = reading(text2 + text)
     if (!args.memory) return load
     try {
@@ -173,7 +195,7 @@ if (import.meta.filename === process.argv[1]) {
     for (let track = 0; track < 8; track++) masks.push((await send('mem:0x' + (bank + (Number(pattern) - 1) * 0x8ed8 + track * 0x91a).toString(16) + ':8')).trim())
     return masks.join(' ')
   }
-  const patternTrigs = async () => (await trigMasks(args['pick-pattern'])) + ' | ' + (await trigMasks(args['measure-pattern']))
+  const patternTrigs = async () => { let all = ''; for (const pattern of new Set([args['pick-pattern'], args['measure-pattern'], admissionPattern])) all += (await trigMasks(pattern)) + ' | '; return all }
   // --curve: the module on 1, 2, 3… of these empty tracks (their slots for an effect), each picked on the empty pattern
   // (--pick-pattern, where admission has room) and read on the busy one (--measure-pattern): what the longest frame gains.
   const curve = async (row, result) => {
@@ -183,7 +205,10 @@ if (import.meta.filename === process.argv[1]) {
     const name = (fxNames.get(row.id) ?? row.name).replaceAll(' ', '_'), was = {}, points = [result.atRest.frameMax], placed = [], notes = []
     if (fx) for (const track of tracks) { was[track] = (await slotNames(track))[Number(fx)]; if (!was[track]) return { error: 'could not read what ' + track + ' FX' + fx + ' runs' } }
     let skipped = result.atRest.skipped // the guard's count runs since boot: a reading skipped only when it grew
-    for (const track of tracks) {
+    const noRoom = curveRoom({ atRest: result.atRest.frameMax, booked: bookedFirst(row.id), pattern: args['measure-pattern'] })
+    if (noRoom) notes.push(noRoom)
+    let notPlayed
+    for (const track of noRoom ? [] : tracks) {
       // Stopped, admission judges a pick by what the unit last played: play the empty pattern first, so it has room.
       await send(`PATTERN+TRIG${args['pick-pattern']} w600 PLAY w5000 STOP w600`)
       const before = await refusals()
@@ -196,7 +221,8 @@ if (import.meta.filename === process.argv[1]) {
       }
       placed.push(track)
       await send(`PATTERN+TRIG${args['measure-pattern']} w600`)
-      const load = await measure()
+      let load
+      try { load = await measure() } catch (error) { if (!(error instanceof NotPlayed)) throw error; notPlayed = track + ': ' + error.message; notes.push(notPlayed); break }
       points.push(load.frameMax)
       // Past where renders drop the guard's skips distort the reading, and the unit should not sit in overload: stop there.
       const dropped = load.skipped - skipped; skipped = load.skipped
@@ -212,7 +238,7 @@ if (import.meta.filename === process.argv[1]) {
     // on the medium one; an admitted pick then plays a reading. modules:check holds a release to both, with nothing dropped.
     const admission = []
     const troubles = async () => { try { const h = JSON.parse((await send('health')).trim().split('\n').pop()).health; return h.stalls + h.stall + h.crash } catch { return undefined } }
-    for (const [pattern, number] of [['empty', args['pick-pattern']], ['medium', args['measure-pattern']]]) {
+    for (const [pattern, number] of [['empty', args['pick-pattern']], ['medium', admissionPattern]]) {
       const track = tracks[0], run = { pattern, number: Number(number), track, seconds }
       await send(`PATTERN+TRIG${number} w600 PLAY w5000 STOP w600`)
       const before = await refusals()
@@ -225,9 +251,12 @@ if (import.meta.filename === process.argv[1]) {
         if (run.admitted === false) await send(machineToStatic(track))
       }
       if (run.admitted) {
-        const was0 = await troubles(), load = await measure(), now = await troubles()
-        Object.assign(run, { frameMax: load.frameMax, frame: load.frame, dropped: load.skipped - skipped, stalls: was0 === undefined || now === undefined ? null : now - was0 })
-        skipped = load.skipped
+        const was0 = await troubles()
+        let load
+        try { load = await measure() } catch (error) { if (!(error instanceof NotPlayed)) throw error; notPlayed ??= pattern + ' admission: ' + error.message; run.admitted = null; run.why = error.message }
+        const now = await troubles()
+        if (load) Object.assign(run, { frameMax: load.frameMax, frame: load.frame, dropped: load.skipped - skipped, stalls: was0 === undefined || now === undefined ? null : now - was0 })
+        if (load) skipped = load.skipped
         if (!fx) await send(machineToStatic(track))
         else { const back = await send(`pick:${track}:FX${fx}:${was[track].replaceAll(' ', '_')}`); if (pickFailure(back)) notes.push('restore ' + track + ': ' + pickFailure(back)) }
       }
@@ -235,7 +264,7 @@ if (import.meta.filename === process.argv[1]) {
     }
     await send(`PATTERN+TRIG${args['measure-pattern']} w600`)
     const adds = points.slice(1).map(point => tenth(point - points[0]))
-    return { tracks: placed, points, adds, ...curveFit(adds), notes, admission }
+    return { tracks: placed, points, adds, ...curveFit(adds), notes, admission, ...(notPlayed ? { notPlayed } : {}), ...(noRoom ? { noRoom } : {}) }
   }
   // --stock: what stock alone needs, so module admission leaves it room (owner, 22 November 2026) and a base that makes stock
   // cheaper gives modules more by itself: the longest frame on the empty pattern, on the busy one (eight tracks playing samples,
@@ -279,7 +308,7 @@ if (import.meta.filename === process.argv[1]) {
         break
       }
     }
-    if (!result.refused) {
+    if (!result.refused) try {
       await wait(2000)
       result.atRest = await measure(); result.atRestAdds = added(before, result.atRest)
       const fx = { fx1: '1', fx2: '2', both: '2' }[row.slots]
@@ -297,22 +326,27 @@ if (import.meta.filename === process.argv[1]) {
       if (args.curve) {
         result.curve = await curve(row, result)
         if (result.curve.notes?.some(note => note.startsWith('restore'))) result.restore = result.curve.notes.join('; ')
+        if (result.curve.notPlayed) result.notPlayed = result.curve.notPlayed
       }
+    } catch (error) { // the at-rest reading did not play: roll the trial back below, then stop
+      if (!(error instanceof NotPlayed)) throw error
+      result.notPlayed = 'at rest: ' + error.message; delete result.atRestAdds
     }
     await send('STOP w500')
     trial.kill('SIGINT') // rolls the trial back
     await ended
     result.rolledBack = /rolled back/.test(log) || Boolean(result.refused) // a refused module was never in
-    if ((await patternTrigs()) !== trigs) result.restore = 'it wrote trigs into pattern ' + args['pick-pattern'] + ' or ' + args['measure-pattern'] +
+    if ((await patternTrigs()) !== trigs) result.restore = 'it wrote trigs into pattern ' + [...new Set([args['pick-pattern'], args['measure-pattern'], admissionPattern])].join(' or ') +
       ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'
     results.push(result)
     // Written after every module: a unit that hangs on the next one must not take the finished readings with it.
     if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, seconds, slot: args.slot, measuredAt, results }, null, 1) + '\n')
     const signed = value => (value >= 0 ? '+' : '') + value
-    console.log(row.id.padEnd(28) + (result.refused ? 'not installed: ' + result.refused : `at rest frame ${signed(result.atRestAdds.frame)}, cpu ${signed(result.atRestAdds.cpu)}` +
+    if (result.notPlayed) console.log(row.id.padEnd(28) + 'NOT MEASURED: ' + result.notPlayed + '. Stopped; check that the pattern plays (npm run device -- state) and run it again')
+    else console.log(row.id.padEnd(28) + (result.refused ? 'not installed: ' + result.refused : `at rest frame ${signed(result.atRestAdds.frame)}, cpu ${signed(result.atRestAdds.cpu)}` +
       (result.inUseAdds ? `; in use frame ${signed(result.inUseAdds.frame)}, cpu ${signed(result.inUseAdds.cpu)}, DSP ${signed(result.inUseAdds.dsp1to4)}/${signed(result.inUseAdds.dsp5to8)}` : '') + (result.inUseError ? '; in use: ' + result.inUseError : '') +
       (result.restore ? '; ' + result.restore : '') + (result.rolledBack ? '' : '; THE TRIAL DID NOT ROLL BACK: stop and look')))
-    if (!result.rolledBack || result.restore) break // never go on over a unit left in a state nobody chose
+    if (!result.rolledBack || result.restore || result.notPlayed) break // never go on over a unit left in a state nobody chose
   }
   if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, seconds, slot: args.slot, measuredAt, results }, null, 1) + '\n')
   if (args.write) for (const result of results) console.log(result.id.padEnd(28) + writePrice({ root, result, base: args.base, scene: args.scene, seconds, measuredAt }))
@@ -327,7 +361,7 @@ if (import.meta.filename === process.argv[1]) {
     if (!args['write-costs'] && !args.write) continue
     // Fewer than three placed is fine when the curve stopped at overload: the module costs what it measured up to there.
     const overloaded = notes.some(note => note.startsWith('stopped after'))
-    if ((tracks.length < Math.min(3, wanted) && !overloaded) || !tracks.length || !result.rolledBack || result.restore) { console.log(result.id.padEnd(28) + 'curve not written: fewer than three instances, or the run was not clean'); continue }
+    if ((tracks.length < Math.min(3, wanted) && !overloaded) || !tracks.length || !result.rolledBack || result.restore || result.notPlayed) { console.log(result.id.padEnd(28) + 'curve not written: fewer than three instances, or the run was not clean'); continue }
     const manifestPath = resolve(root, 'sdk/octatrack/modules', result.id, 'octamod.module.json')
     const version = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')).version : result.version
     if (result.version !== 'file' && result.version !== version) { console.log(result.id.padEnd(28) + 'curve not written: this measured the published ' + result.version + ' but the manifest is ' + version); continue }

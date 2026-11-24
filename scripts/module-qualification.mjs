@@ -65,7 +65,7 @@ export async function modulePerformanceSourceSha256(folder, document) {
 // module folder, so a folder cannot grant it to itself, and binds this exact
 // version and native source. Hardware is never claimed verified; anything not
 // waived is still required.
-const UPDATE_WAIVABLE=['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation']
+const UPDATE_WAIVABLE=['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation','release-cost']
 async function requireOwnerApprovedUpdate(root, folder, document) {
   let approval
   try { approval=JSON.parse(await readFile(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),'utf8')) } catch(error) { if(error.code==='ENOENT') return null; throw error }
