@@ -30,6 +30,9 @@
 #define WORK_EDITED 0x100b145eu  /* the working Parts' edited bits */
 #define WORK_DIRTY 0x100f8598u
 #define SCENES_CHANGED 0x40027e00u   /* what the row start calls after it set a scene */
+#define SCENE_SOUND 0x40002df4u  /* (bank, part, scene, side): a scene's locks into the sound, as SCENE A/B + TRIG
+                                  * does after it chose one (0x40052a9a); the row start leaves it to the pattern start */
+#define UI_BANK    0x100b14ceu   /* the bank that call is given (0x40052a92) */
 #define POST_EVENT 0x40000c3cu
 #define UI_QUEUE   0x460d17aeu
 #define EV_SCENE_A 0x400c0c43u
@@ -39,17 +42,23 @@
 uint8_t host_rd8(uint32_t a);
 void host_wr8(uint32_t a, uint8_t v);
 void host_scenes_changed(void);
+void host_scene_sound(unsigned bank, unsigned part, unsigned scene, unsigned side);
 void host_post_event(uint32_t q, uint32_t e);
 unsigned host_stock_reload(unsigned part);
 #define rd8(a) host_rd8(a)
 #define wr8(a, v) host_wr8((a), (v))
 static void scenes_changed(void) { host_scenes_changed(); }
+static void scene_sound(unsigned bank, unsigned part, unsigned scene, unsigned side) { host_scene_sound(bank, part, scene, side); }
 static void post_event(uint32_t q, uint32_t e) { host_post_event(q, e); }
 static unsigned stock_reload(unsigned part) { return host_stock_reload(part); }
 #else
 static uint8_t rd8(uint32_t a) { return *(volatile uint8_t *)a; }
 static void wr8(uint32_t a, uint8_t v) { *(volatile uint8_t *)a = v; }
 static void scenes_changed(void) { ((void (*)(void))SCENES_CHANGED)(); }
+static void scene_sound(unsigned bank, unsigned part, unsigned scene, unsigned side)
+{
+    ((void (*)(unsigned, unsigned, unsigned, unsigned))SCENE_SOUND)(bank, part, scene, side);
+}
 static void post_event(uint32_t q, uint32_t e) { ((void (*)(uint32_t, uint32_t))POST_EVENT)(q, e); }
 unsigned sr_stock_reload(unsigned part);     /* below: stock's reload, entered past the site */
 static unsigned stock_reload(unsigned part) { return sr_stock_reload(part); }
@@ -75,6 +84,9 @@ static void put_scene(unsigned bank, unsigned part, unsigned side, uint8_t scene
     wr8(WORK_EDITED, (uint8_t)(rd8(WORK_EDITED) | 1u << part));
     wr32(WORK_DIRTY, 1);
     scenes_changed();
+    /* The sound too, at once: written only, the scene showed while the Part's saved one played until the row came
+     * round again (the developer's MKI, 24 November 2026). */
+    scene_sound(rd8(UI_BANK), part, scene, side);
     post_event(UI_QUEUE, side ? EV_SCENE_B : EV_SCENE_A);
 }
 

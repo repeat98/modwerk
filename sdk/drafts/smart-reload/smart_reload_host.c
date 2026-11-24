@@ -25,6 +25,11 @@ void host_wr8(uint32_t a, uint8_t v)
 }
 static void wr32(uint32_t a, uint32_t v) { for (int i = 0; i < 4; ++i) host_wr8(a + (uint32_t)i, (uint8_t)(v >> (24 - 8 * i))); }
 void host_scenes_changed(void) { ++changed; }
+static unsigned sound[2][4]; static int sounds;   /* the last call per side: bank, part, scene; and how many */
+void host_scene_sound(unsigned bank, unsigned part, unsigned scene, unsigned side)
+{
+    sound[side & 1][0] = bank; sound[side & 1][1] = part; sound[side & 1][2] = scene; sound[side & 1][3] = 1; ++sounds;
+}
 void host_post_event(uint32_t q, uint32_t e) { (void)q; (void)e; ++posted; }
 
 #define ARR 0x10000004u
@@ -55,7 +60,8 @@ static void row(unsigned r, uint8_t type, unsigned bank, unsigned pattern, uint8
 }
 static void setup(void)
 {
-    used = 0; changed = posted = reloads = 0; part_saved = 1;
+    used = 0; changed = posted = reloads = sounds = 0; part_saved = 1; memset(sound, 0, sizeof sound);
+    host_wr8(0x100b14ceu, 1);                            /* the bank the scene call is given */
     wr32(0x10000000u, ARR);
     host_wr8(ARR + 0x12, 0); host_wr8(ARR + 0x13, 3);    /* three rows */
     row(0, 0, 1, 2, 1, 2);                               /* B03, scenes 2 and 3 */
@@ -78,14 +84,17 @@ int main(void)
     check("and in the bank's copy of the Part, as the row start writes them", host_rd8(BANKSC(1, 0)) == 1 && host_rd8(BANKSC(1, 0) + 1) == 2);
     check("the Part marked edited again, as the row start marks it", (host_rd8(0x100b145eu) & 1) && (host_rd8(BANK(1) + 0x95048u) & 1));
     check("stock's scene update and two redraws, one per side", changed == 2 && posted == 2);
+    check("and each scene into the sound at once, as SCENE A/B + TRIG does: bank, Part, scene, side", sounds == 2
+          && sound[0][0] == 1 && sound[0][1] == 0 && sound[0][2] == 1 && sound[1][2] == 2 && sound[1][3] == 1);
 
     setup(); wr32(0x80006698u, 1);
     sr_reload(0);
     check("row 1, scene B \"--\": scene A from the row, B the Part's", host_rd8(WORK(0)) == 3 && host_rd8(WORK(0) + 1) == saved_b && changed == 1);
+    check("only scene A sent to the sound", sounds == 1 && sound[0][2] == 3 && !sound[1][3]);
 
     setup(); wr32(0x460d1aecu, 0);
     sr_reload(0);
-    check("pattern mode: stock's reload only", host_rd8(WORK(0)) == saved_a && host_rd8(WORK(0) + 1) == saved_b && changed == 0);
+    check("pattern mode: stock's reload only", host_rd8(WORK(0)) == saved_a && host_rd8(WORK(0) + 1) == saved_b && changed == 0 && sounds == 0);
 
     setup(); wr32(0x80006698u, 0xffffffffu);
     sr_reload(0);

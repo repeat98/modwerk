@@ -63,7 +63,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 14 checks). Not yet run on a unit.",
+    "summary": "Host gate (verify.py, 16 checks). Not yet run on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [
