@@ -23,9 +23,9 @@ const JOURNEY = [
 ] as const
 
 /**
- * The welcome to modules over USB (useOctatrackWelcome decides when): what is new, the way there in three steps (both
+ * The welcome to modules over USB: what is new, the way there in three steps (both
  * ways to load modules: USB or a file on the card), what it needs, and the first step. Set up opens the base install
- * guide on Your Octatrack. A browser without WebUSB (`usbBrowser` false, or the link says unsupported) is told the
+ * guide for the current install. A browser without WebUSB (`usbBrowser` false, or the link says unsupported) is told the
  * card is its way. `savedSets`: this browser has configurations from before.
  */
 export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp, onLater }: {
@@ -47,7 +47,6 @@ export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp,
       <StagePlan stages={JOURNEY} progressLabel="How it works" />
       {savedSets && <p className="link-hint">Your saved configurations are here as module sets.</p>}
       <details className="base-install-recovery"><summary>Before you install</summary><p>{BASE_RECOVERY_NOTICE}</p></details>
-      <p className="link-hint">No Octatrack? Close this and it won’t come back.</p>
     </section>
   </BaseDialogFrame>
 }

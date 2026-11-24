@@ -1,0 +1,36 @@
+# Improved FLTR: the FILTER graph for BW at five widths from FRQ 48 (220 Hz): RES 20, 52, 72, 102, 127
+# (4.7, 24.4, 33.8, 47.8, 59.5 semitones), each graph box against a reference recorded from screens
+# checked by eye. Changes the BD sound's FILTER FRQ, RES and TYP; ends on TYP 0 (LP2), FRQ 127, RES 0.
+name: if-graph
+state: changes
+target: emu
+hold TRK
+key BD
+release TRK
+key FLTR
+wait 1500
+cc 74 48
+cc 76 7
+cc 75 20
+wait 3500
+screen w20
+expect w20 == ref region 0 30 64 18
+cc 75 52
+wait 3500
+screen w52
+expect w52 == ref region 0 30 64 18
+cc 75 72
+wait 3500
+screen w72
+expect w72 == ref region 0 30 64 18
+cc 75 102
+wait 3500
+screen w102
+expect w102 == ref region 0 30 64 18
+cc 75 127
+wait 3500
+screen w127
+expect w127 == ref region 0 30 64 18
+cc 76 0
+cc 74 127
+cc 75 0

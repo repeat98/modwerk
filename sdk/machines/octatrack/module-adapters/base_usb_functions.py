@@ -39,8 +39,8 @@ def records(data):
         offset += data[offset]
 
 
-def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
-    """Join MSC/vendor/MIDI and an explicitly chosen, output-only audio layout.
+def configuration(base, descriptors, high_speed, other_speed=False, audio=None, *, audio_input=None):
+    """Join MSC/vendor/MIDI and an explicitly chosen audio layout.
 
     `base` and `descriptors` are trusted modules from the same pinned repository
     snapshot. The caller records source identities and keeps generated output
@@ -48,12 +48,15 @@ def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
     """
     if type(high_speed) is not bool or type(other_speed) is not bool or audio is not None and audio not in AUDIO_LAYOUTS:
         raise ValueError('Choose an explicit supported USB output layout and speed.')
-    original = descriptors.audio_config(high_speed, other_speed, audio, with_in=None) if audio else descriptors.midi_config(high_speed, other_speed)
+    if audio_input is not None and (not audio or audio_input not in descriptors.IN_LAYOUT):
+        raise ValueError('USB audio input requires a supported input and output layout.')
+    original = descriptors.audio_config(high_speed, other_speed, audio, with_in=audio_input) if audio else descriptors.midi_config(high_speed, other_speed)
+    interface_end = 3 if not audio else 6 if high_speed and audio_input else 5
     source = list(records(original))
     native_base = list(records(base.configuration(high_speed, other_speed, False)))
     if (not source or source[0][:2] != bytes([9, 7 if other_speed else 2])
             or struct.unpack_from('<H', source[0], 2)[0] != len(original)
-            or source[0][4] != (5 if audio else 3)
+            or source[0][4] != interface_end
             or len(native_base) != 5 or native_base[-1] != bytes([9, 4, 1, 0, 0, 255, 77, 1, 0])
             or source[1:4] != native_base[1:4]):
         raise ValueError('The shared MSC or vendor descriptor contract changed.')
@@ -70,12 +73,12 @@ def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
     for record in tail:
         value = bytearray(record)
         if value[1] == 11:
-            if len(value) != 8 or value[2] not in (1, 3) or value[3] != 2:
+            if len(value) != 8 or (value[2], value[3]) not in ((1, 2), (3, interface_end - 3)):
                 raise ValueError('An unreviewed USB association was added.')
             value[2] += 1
             associations.append(value[2])
         elif value[1] == 4:
-            if len(value) != 9 or value[2] not in range(1, 5 if audio else 3):
+            if len(value) != 9 or value[2] not in range(1, interface_end):
                 raise ValueError('An unreviewed USB interface was added.')
             current = value[2]
             interfaces.add(current)
@@ -85,7 +88,7 @@ def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
                 raise ValueError('The authored MIDI collection reference changed.')
             value[8] = 3
         body.append(bytes(value))
-    if interfaces != set(range(1, 5 if audio else 3)) or associations != ([2, 4] if audio else [2]):
+    if interfaces != set(range(1, interface_end)) or associations != ([2, 4] if audio else [2]):
         raise ValueError('The composed USB functions are incomplete.')
     body = b''.join(body)
     header = bytearray(source[0])
@@ -281,8 +284,8 @@ def header(base, descriptors, audio=None):
 def assembly(base, descriptors, audio=None, slots=False):
     """One ISR chain and page-contained tables, including a 259-byte config.
 
-    With `slots`, each configuration sits at the start of a 512-byte slot and the two clamps read the live
-    length from modwerk_cfg_len: usb_function.c rewrites both when a module's USB function comes or goes.
+    With `slots`, each configuration sits at the start of a 512-byte slot. Its clamp uses the live length
+    for the speed it describes. usb_function.c rewrites the lengths when a function joins, changes or leaves.
 
     Audio -> bounded MIDI receive -> MIDI transmit -> vendor EP0 poll -> stock.
     Without audio the same chain starts at MIDI receive. Each configuration
@@ -312,15 +315,42 @@ def assembly(base, descriptors, audio=None, slots=False):
     if slots:
         if length > SLOT:
             raise ValueError('A USB configuration outgrows its slot.')
-        for constant, live in (('    .set modwerk_cfg_len, %d\n' % length, ''),
-                               ('    cmpil   #modwerk_cfg_len,%d1', '    cmpl    modwerk_cfg_len,%d1'),
-                               ('    movel   #modwerk_cfg_len,%d1', '    movel   modwerk_cfg_len,%d1')):
-            if text.count(constant) != (2 if live else 1):
+        constant = '    .set modwerk_cfg_len, %d\n' % length
+        if text.count(constant) != 1:
+            raise ValueError('The base USB clamp template changed.')
+        text = text.replace(constant, '')
+        for request, resume, full, high in (
+            (1, 0x4001d864, 'fs', 'hs'), (2, 0x4001d8a2, 'hs', 'fs'),
+        ):
+            before = f"""modwerk_usb_clamp{request}:
+    movel   %d2,%d1
+    cmpil   #modwerk_cfg_len,%d1
+    blss    1f
+    movel   #modwerk_cfg_len,%d1
+1:  jmp     {resume:#x}
+"""
+            # Stock reads these same PORTSC speed bits in the continuation
+            # and overwrites d0 there. OTHER_SPEED describes the opposite speed.
+            after = f"""modwerk_usb_clamp{request}:
+    movel   modwerk_cfg_len_{full},%d1
+    movel   0xfc0b0184,%d0
+    andil   #0x0c000000,%d0
+    cmpil   #0x08000000,%d0
+    bnes    1f
+    movel   modwerk_cfg_len_{high},%d1
+1:  cmpl    %d2,%d1
+    blss    2f
+    movel   %d2,%d1
+2:  jmp     {resume:#x}
+"""
+            if text.count(before) != 1:
                 raise ValueError('The base USB clamp template changed.')
-            text = text.replace(constant, live)
+            text = text.replace(before, after)
         if not audio:  # code first: the slots and tables follow it
             text += FRAME_SHIM
-        text += '    .balign 4\n    .global modwerk_cfg_len\nmodwerk_cfg_len:\n    .long %d\n' % length
+        for speed in ('fs', 'hs'):
+            symbol = 'modwerk_cfg_len_' + speed
+            text += f'    .balign 4\n    .global {symbol}\n{symbol}:\n    .long {length}\n'
         text += ('    .global modwerk_cfg_native\nmodwerk_cfg_native:\n    .short %d\n    .byte %d, %d\n'
                  % (length, blobs['modwerk_cfg_fs'][4], int(audio is not None)))
         for name, blob in blobs.items():
