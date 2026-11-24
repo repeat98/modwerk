@@ -60,7 +60,6 @@ import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
-import { stageRefusal } from './octatrack-step-base.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -792,8 +791,6 @@ if (command === 'serve') {
     const parsed = formats.parse(new Uint8Array(readFileSync(join(file, 'NOT_FLASH_CANDIDATE.bin'))), OCTATRACK), container = parsed.container
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (identity.base !== expected) throw new Error(`The unit runs base ${identity.base.slice(0, 16)}…, not ${expected.slice(0, 16)}…: RAM-boot it first (boot DIR); a base writes only itself.`)
-    const tooBig = stageRefusal("The base's container", container.length, session.status.capacity)
-    if (tooBig) throw new Error(tooBig)
     let shown = 0
     await session.stage({ base: identity.base, data: container, sha256: sha(container) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
       if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
@@ -819,9 +816,7 @@ if (command === 'serve') {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
-    const arm = async (s, base, flashed = false) => {
-      const tooBig = stageRefusal(join(file, 'MAIN.raw'), image.length, s.status.capacity, flashed)
-      if (tooBig) throw new Error(tooBig)
+    const arm = async (s, base) => {
       let shown = 0
       await s.stage({ base, data: image, sha256: sha(image) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
         if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
@@ -838,7 +833,7 @@ if (command === 'serve') {
       // the boot falls back to the flashed one, which can then arm it properly.
       if (back.base !== expected && back.base !== identity.base) {
         console.log(`came back on the flashed base ${back.base.slice(0, 16)}…: arming again from it`)
-        await arm(back.session, back.base, true)
+        await arm(back.session, back.base)
         backBench.socket.end()
         back = await rebooted()
       }
