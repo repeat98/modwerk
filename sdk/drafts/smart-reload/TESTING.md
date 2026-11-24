@@ -18,6 +18,8 @@ saved).
 
 ## On the unit
 
+Version 0.1.0-experimental, builds below.
+
 The developer's MKI (OS 1.40C), base `eb667962` (updated by the developer on 24 November 2026), Smart Reload the only
 module, kept over USB; as the developer reported it:
 
