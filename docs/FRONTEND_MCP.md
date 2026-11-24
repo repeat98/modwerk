@@ -293,9 +293,13 @@ builds, never committed) whose set identity matches, or is `null`.
 (the link's `load`): `windowPercent` over the last half second (`null` until
 the first one has ended), `windowPeakPercent` for its dearest codec block,
 `peakPercent` since boot, and the windows and blocks counted. A development
-base without the probe reports unsupported. `device_log` reports
-unsupported, and the loader's tools refuse: the Model:Cycles has no loader
-yet. Close Elektron Transfer first.
+base without the probe reports unsupported. `device_log` reads the base's
+diagnostics log (the link's `diag`, then `mem`), which is the Octatrack's
+layout and reads with the same parser: `boot`, `seq`, the five-minute
+`loads` and the `incidents`, without the nonce. The Model:Cycles fills
+`cpu` with the audio's share and leaves the DSP fields at 0 (LINK.md). A
+development base without the log reports unsupported. The loader's tools
+refuse: the Model:Cycles has no loader yet. Close Elektron Transfer first.
 Tests run against a fake unit (`scripts/mc-device.test.mjs`).
 
 ## A member's unit through a remote session

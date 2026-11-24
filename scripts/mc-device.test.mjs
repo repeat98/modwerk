@@ -23,14 +23,31 @@ function syx(seed) {
   return encodeSyx(stream, id, framing, framing)
 }
 const put32 = v => [0, 1, 2, 3, 4].map(i => v >>> 7 * i & 0x7f)
-// A unit with a development base: answers ident with the given set identity, and load with the given tenths of a
-// percent and counts (link.c CMD_LOAD) or, without them, as a base before the load probe (status 2, bad request).
-function fakeCycles(set, name = 'Elektron Model:Cycles', load = null) {
+const get32 = (p, at) => (p[at] | p[at + 1] << 7 | p[at + 2] << 14 | p[at + 3] << 21 | (p[at + 4] & 0x0f) << 28) >>> 0
+const pack7 = data => { const out = []; for (let i = 0; i < data.length; i += 7) { const c = data.subarray(i, i + 7); out.push(c.reduce((t, b, k) => t | (b & 0x80 ? 0x40 >> k : 0), 0), ...Array.from(c, b => b & 0x7f)) } return out }
+const LOG_AT = 0x47e02404
+// diag.h's log, big-endian: START and BASE, one load record (a made-up log, no unit's).
+function logBytes() {
+  const bytes = new Uint8Array(6148), v = new DataView(bytes.buffer)
+  ;[0x4d574447, 2, 0xabcd, 1, 3, 1, 2].forEach((x, i) => v.setUint32(4 * i, x))
+  const load = 40 + 92, incident = load + 32 * 96
+  ;[3, 1, 5].forEach((x, i) => v.setUint32(load + 4 * i, x)); ;[738, 829, 0, 0, 0, 0, 600, 0, 714, 53].forEach((x, i) => v.setUint16(load + 12 + 2 * i, x))
+  ;[[1, 1, 0], [2, 7, 0x4f182a66]].forEach(([seq, kind, a], n) => { const at = incident + 92 * n; v.setUint32(at, seq); v.setUint32(at + 4, 1); v.setUint32(at + 12, a); v.setUint16(at + 16, kind) })
+  return bytes
+}
+// A unit with a development base: answers ident with the given set identity, load (0x23) with the given tenths of a
+// percent and counts (link.c CMD_LOAD), and diag (0x22) and mem with a log; without them, as a base before the load
+// probe or the log (status 2, bad request).
+function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null) {
   const input = { id: 'i', name, state: 'connected', onmidimessage: null }
   const fields = [1, 1, 0, 146, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, ...(set ? [set.crc, set.bytes] : [])]
   const output = { id: 'o', name, state: 'connected', send(data) {
-    const [status, body] = data[7] === 0x22 ? (load ? [0, load] : [2, []]) : [0, fields]
-    queueMicrotask(() => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, status, ...body.flatMap(put32), 0xf7]) }))
+    const body = data.slice(8, -1)
+    const [status, reply] = data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
+      : data[7] === 0x22 ? (log ? [0, [LOG_AT, log.length].flatMap(put32)] : [2, []])
+      : data[7] === 0x21 ? (() => { const at = get32(body, 0), n = get32(body, 5); return [0, [...put32(at), ...put32(n), ...pack7(log.subarray(at - LOG_AT, at - LOG_AT + n))]] })()
+      : [0, fields.flatMap(put32)]
+    queueMicrotask(() => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, status, ...reply, 0xf7]) }))
   } }
   return { inputs: new Map([['i', input]]), outputs: new Map([['o', output]]), onstatechange: null, close() {} }
 }
@@ -77,9 +94,18 @@ describe('the developer MCP’s Model:Cycles identity', () => {
     await service.close(); service = await open(fakeCycles(null, 'IAC Driver Bus 1'))
     await expect(service.call('device_load')).rejects.toThrow(/No Model:Cycles answered/)
   })
-  it('offers no log or trial yet', async () => {
+  it('reads the diagnostics log through diag and mem, and reports an older base without it as unsupported', async () => {
+    service = await open(fakeCycles(null, undefined, null, logBytes()))
+    const { machine, supported, log } = await service.call('device_log')
+    expect({ machine, supported, boot: log.boot, seq: log.seq }).toEqual({ machine: 'model-cycles', supported: true, boot: 1, seq: 3 })
+    expect(log.loads).toEqual([{ seq: 3, boot: 1, minute: 5, cpu: [738, 829], dsp1to4: [0, 0], dsp5to8: [0, 0], samples: 600, playing: 0, frameGap: 714, tickGap: 53 }])
+    expect(log.incidents.map(i => [i.kind, i.a])).toEqual([['start', 0], ['base', 0x4f182a66]])
+    expect(log).not.toHaveProperty('nonce')
+    await service.close(); service = await open(fakeCycles(null))
+    expect(await service.call('device_log')).toEqual({ machine: 'model-cycles', supported: false, log: null })
+  })
+  it('offers no trial yet', async () => {
     service = await open(fakeCycles(null), { allowDeviceWrites: true })
-    expect(await service.call('device_log')).toEqual({ supported: false, log: null })
     await expect(service.call('device_review', { moduleIds: [] })).rejects.toThrow(/no runtime loader/)
   })
 })

@@ -65,7 +65,7 @@ const TOOLS = [
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
   tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity and the image in --elektron-images that matches its set.'),
   tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, a Model:Cycles development base’s audio load over its link. Read-only.'),
-  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; Zoom pedals and older Octatrack bases report unsupported.'),
+  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, a Model:Cycles development base’s log over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes.', { moduleIds: strings }, ['moduleIds']),
@@ -223,7 +223,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
-  // The Model:Cycles over its development link (startup --elektron-midi): identity and load, no loader yet.
+  // The Model:Cycles over its development link (startup --elektron-midi): identity, load and log, no loader yet.
   const cyclesSelected = () => options.elektronMidi && !options.deviceSocket && !remote
   async function connected() {
     if (cyclesSelected()) throw new Error('The Model:Cycles has no runtime loader or saved sets yet: device_status reads its identity over the development link.')
@@ -325,6 +325,16 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!reading) throw new Error(noCycles)
     return reading === 'unsupported' ? { machine: 'model-cycles', supported: false, reading: null } : { machine: 'model-cycles', supported: true, reading }
   })
+  // The base's diagnostics log (LINK.md `diag`), in the Octatrack's layout; an older development base refuses it.
+  const cyclesLog = () => withCycles('read Model:Cycles log', async access => {
+    const read = await frontend.readMcLog(access)
+    if (!read) throw new Error(noCycles)
+    if (read === 'unsupported') return { machine: 'model-cycles', supported: false, log: null }
+    if (!read.log) throw new Error('The Model:Cycles sent a log in no layout the site reads.')
+    // The nonce identifies the unit's log across connections; like the Octatrack's, it stays out.
+    const { boot, seq, loads, incidents } = read.log
+    return { machine: 'model-cycles', supported: true, log: { boot, seq, loads, incidents } }
+  })
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
     if (unit.getState().status === 'trial') return { state: unit.getState(), before: trial?.before, trial: trial?.id }
@@ -419,7 +429,8 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { base: after.identity.base, supported: reading !== undefined, reading: reading ?? null }
     },
     device_log: async () => {
-      if (zoomSelected() || cyclesSelected()) return { supported: false, log: null }
+      if (cyclesSelected()) return cyclesLog()
+      if (zoomSelected()) return { supported: false, log: null }
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
       const log = await unit.deviceLog()

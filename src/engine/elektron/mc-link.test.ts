@@ -50,7 +50,7 @@ describe('the Model:Cycles link', () => {
     expect(parseMcLoad(Uint8Array.from(identPayload([0, 0, 812, 0, 400])))).toMatchObject({ windowPercent: null, windowPeakPercent: null, peakPercent: 81.2 })
     expect(() => parseMcLoad(Uint8Array.from(identPayload([1, 2, 3, 4])))).toThrow('short load')
   })
-  it('asks for the load with 0x22 and reads a refusal as an older base', async () => {
+  it('asks for the load with 0x23 and reads a refusal as an older base', async () => {
     const unit = (status: number, body: number[]) => {
       const sent: number[][] = []
       const input: MidiIn = { id: 'i', name: 'Elektron Model:Cycles', onmidimessage: null }
@@ -59,7 +59,7 @@ describe('the Model:Cycles link', () => {
     }
     const ok = unit(0, identPayload([738, 801, 849, 12, 9000]))
     expect(await readMcLoad(ok.access)).toMatchObject({ windowPercent: 73.8 })
-    expect(ok.sent[0][7]).toBe(0x22)
+    expect(ok.sent[0][7]).toBe(0x23)
     expect(await readMcLoad(unit(2, []).access)).toBe('unsupported')
     await expect(readMcLoad(unit(3, []).access)).rejects.toBeInstanceOf(McRefused)
   })

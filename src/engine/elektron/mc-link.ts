@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Model:Cycles development link (sdk/machines/model-cycles/LINK.md): the identity a development base reports over
 // USB MIDI SysEx, and the same set identity computed from a built image. The wire format is the Analog Rytm MKII
-// link's; sdk/machines/model-cycles/tools/mc_link.py speaks it from the computer. Read-only: this sends `ident` and
-// `load` alone.
+// link's; sdk/machines/model-cycles/tools/mc_link.py speaks it from the computer. Read-only: this sends `ident`, `load`,
+// `diag` and `mem` alone. The diagnostics log is the Octatrack's layout and reads with its parser, as the Digitone II's.
+import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log'
+import { unpack7 } from './dn2-link'
 import { ELE3_DEVICES, mainImage, readEle3Syx } from './ele3'
 import { findUnit, midiLine, type MidiAccessLike } from './os-upgrade-midi'
 
 export const MC_LINK_HEADER = [0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1] as const
-const IDENT = 0x01, LOAD = 0x22
+const IDENT = 0x01, MEM = 0x21, DIAG = 0x22, LOAD = 0x23
+const MEM_MAX = 128
 const BAD_REQUEST = 2
 const STATUS = ['ok', 'not armed', 'bad request', 'busy', 'out of range', 'a person is at the unit']
 const PORTS: Record<number, string> = { 1: 'MIDI setting', 2: 'USB', 3: 'DIN', 4: 'USB and DIN' }
@@ -86,13 +89,17 @@ export function parseMcLoad(payload: Uint8Array): McLoad {
   return { windowPercent: windows ? avg / 10 : null, windowPeakPercent: windows ? wmax / 10 : null, peakPercent: peak / 10, windows, blocks }
 }
 
-/** One request to the connected Model:Cycles: its reply's payload, or null when no unit or no reply. */
-async function mcCall(access: MidiAccessLike, cmd: number, timeoutMs: number): Promise<Uint8Array | null> {
+type McCall = (cmd: number, body?: number[]) => Promise<Uint8Array | null>
+/** Requests to the connected Model:Cycles over one line: each gives its reply's payload, or null without a reply; the
+ * whole is null without a unit. */
+async function withMc<T>(access: MidiAccessLike, timeoutMs: number, work: (call: McCall) => Promise<T | null>): Promise<T | null> {
   const unit = findUnit(access, 'Model:Cycles')
   if (!unit) return null
-  const line = midiLine(unit.input, unit.output), seq = Date.now() / 100 & 0x7f
-  try {
-    line.send(mcRequest(seq, cmd))
+  const line = midiLine(unit.input, unit.output)
+  let seq = Date.now() / 100 & 0x7f
+  const call: McCall = async (cmd, body = []) => {
+    seq = seq + 1 & 0x7f
+    line.send(mcRequest(seq, cmd, body))
     for (const end = Date.now() + timeoutMs; Date.now() < end;) {
       const message = await line.next(end - Date.now())
       if (!message) break
@@ -100,8 +107,11 @@ async function mcCall(access: MidiAccessLike, cmd: number, timeoutMs: number): P
       if (payload) return payload
     }
     return null
-  } finally { line.close() }
+  }
+  try { return await work(call) } finally { line.close() }
 }
+const mcCall = (access: MidiAccessLike, cmd: number, timeoutMs: number) => withMc(access, timeoutMs, call => call(cmd))
+const put32 = (v: number) => [0, 1, 2, 3, 4].map(i => Math.floor(v / 2 ** (7 * i)) & 0x7f)
 
 /** Ask the connected Model:Cycles for its identity. Needs a development base with the link; null when no unit or no reply. */
 export async function readMcIdentity(access: MidiAccessLike, timeoutMs = 2000): Promise<McIdentity | null> {
@@ -115,6 +125,35 @@ export async function readMcLoad(access: MidiAccessLike, timeoutMs = 2000): Prom
   try {
     const payload = await mcCall(access, LOAD, timeoutMs)
     return payload && parseMcLoad(payload)
+  } catch (error) {
+    if (error instanceof McRefused && error.status === BAD_REQUEST) return 'unsupported'
+    throw error
+  }
+}
+
+/** The diagnostics log (base/diag.c): `diag` names its place and size, `mem` reads it 128 bytes at a time. Its bytes and
+ * the log the Octatrack's parser reads from them; null when no unit or no reply, 'unsupported' from a development base
+ * without the log (it refuses `diag` as a bad request). */
+export async function readMcLog(access: MidiAccessLike, timeoutMs = 2000): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined } | 'unsupported' | null> {
+  try {
+    return await withMc(access, timeoutMs, async call => {
+      const place = await call(DIAG)
+      if (!place) return null
+      const address = get32(place, 0), size = get32(place, 5)
+      if (size < 8 || size > DEVICE_LOG_IMAGE_BYTES) throw new Error(`The Model:Cycles link named a ${size}-byte log.`)
+      const bytes = new Uint8Array(size)
+      for (let at = 0; at < size; at += MEM_MAX) {
+        const n = Math.min(MEM_MAX, size - at), p = await call(MEM, [...put32(address + at), ...put32(n)])
+        if (!p) return null
+        if (p.length < 10 || get32(p, 0) !== address + at || get32(p, 5) !== n) throw new Error('The Model:Cycles link sent another block than asked for.')
+        const data = unpack7(p.subarray(10))
+        if (data.length !== n) throw new Error('The Model:Cycles link sent a short block.')
+        bytes.set(data, at)
+      }
+      const image = new Uint8Array(DEVICE_LOG_IMAGE_BYTES)
+      image.set(bytes)                  // no crash or stall record: zeros, as an older Octatrack base answers
+      return { bytes, log: parseDeviceLog(image) }
+    })
   } catch (error) {
     if (error instanceof McRefused && error.status === BAD_REQUEST) return 'unsupported'
     throw error
