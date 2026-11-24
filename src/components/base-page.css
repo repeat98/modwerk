@@ -141,14 +141,20 @@
   .ot-controls .base-screen figcaption { padding: 0 .25rem 0 .75rem; }
 }
 @container (max-width: 30rem) {
+  .base-picker { width: 100%; }
+  .base-picker .faq-machines { flex-wrap: wrap; }
+  .base-picker .faq-machines button { flex: 1 1 auto; min-height: 2.75rem; padding-inline: .375rem; }
   .base-device.ot-intro { grid-template-columns: 1fr; padding-block: 1.25rem; }
   .ot-menu { justify-self: start; }
   .base-stack-diagram { grid-template-columns: 1fr; }
   .base-stack-diagram > img { max-width: 17rem; }
-  .ot-controls .base-screen figure { grid-template-columns: minmax(6rem, 39%) 1fr; align-items: start; }
-  .ot-controls .base-lcd { padding: .3rem; }
+  .ot-controls .base-screen figure { display: block; }
+  .ot-controls .base-lcd { padding: .75rem; }
+  .ot-controls .base-screen figcaption { padding: .625rem 0 0; }
 
   .base-release-changes > div, .base-device-facts { grid-template-columns: 1fr; }
   .base-device-picture { display: none; }
-  .base-picker .faq-machines button { padding-inline: .25rem; }
+}
+@container (max-width: 19rem) {
+  .base-picker .faq-machines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
