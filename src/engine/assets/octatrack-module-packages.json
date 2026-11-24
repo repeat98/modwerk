@@ -322,12 +322,12 @@
       "sites": 14,
       "copies": 9,
       "fills": 0,
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2754,
-      "sha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
-      "path": "octatrack-modules/mute-modes/0.2.2-experimental.mwrm"
+      "bytes": 2922,
+      "sha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+      "path": "octatrack-modules/mute-modes/0.2.3-experimental.mwrm"
     },
     {
       "id": "sidechain-compressor",
