@@ -17,7 +17,13 @@
 #include "set_package.h"
 
 #define OWNERS (2u * RUNTIME_MODULES) /* live, the transaction's two and those waiting to be reclaimed */
+#ifdef RUNTIME_POOL_AT
+/* A machine whose base area is too small for the pool names RAM nothing else uses (the Digitone II: DDR above what
+ * stock clears at boot). Nothing assumes it zeroed: the ledger is owned[], and prepare zeroes each module's bss. */
+#define pool ((uint8_t *)(uintptr_t)(RUNTIME_POOL_AT))
+#else
 static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
+#endif
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static struct runtime_module *volatile live[RUNTIME_MODULES];
@@ -50,9 +56,12 @@ static struct {
 } change_set;
 #define SET_ROWS change_set.count
 #define SET_CAPABILITY 512u
+/* 4096: MWMS v2, whose frame cost table (set_package.h) the machine keeps for its CPU guard; an older base refuses v2. */
+#define COSTS_CAPABILITY 4096u
 #else
 #define SET_ROWS 0u
 #define SET_CAPABILITY 0u
+#define COSTS_CAPABILITY 0u
 #endif
 /* 1024: the machine refuses to retire a module whose window, page or key layer is still open (RUNTIME_UI_OPEN). */
 #ifdef MODWERK_RUNTIME_UI_ROOTS
@@ -169,7 +178,7 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
 {
     out[0] = 'M'; out[1] = 'W'; out[2] = 'C'; out[3] = 'P';
     out[4] = 1; out[5] = RUNTIME_ABI;
-    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY | JUDGED_CAPABILITY;
+    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY | JUDGED_CAPABILITY | COSTS_CAPABILITY;
     out[6] = (uint8_t)(flags >> 8); out[7] = (uint8_t)flags;
     out[8] = (uint8_t)(RUNTIME_SITES >> 8); out[9] = (uint8_t)RUNTIME_SITES;
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
@@ -179,6 +188,8 @@ static int refuse(enum runtime_refusal why) { refusal = why, refused_check = RUN
 static int refuse_at(enum runtime_check check, enum runtime_refusal why) { refuse(why), refused_check = check; return 0; }
 /* ABI 9: the base features a package may require (loader.h). None unless the machine says so. */
 #ifndef MODWERK_RUNTIME_FEATURES_EXTERNAL
+/* MWMS v2's frame cost table (set_package.h): the machine keeps it; a machine without a CPU guard ignores it. */
+__attribute__((weak)) void modwerk_machine_frame_costs(const uint8_t *table, unsigned n) { (void)table; (void)n; }
 __attribute__((weak)) unsigned modwerk_machine_dsp_features(void) { return 0; }
 /* A machine with no DSP ledger cannot tell what a claim would meet: it refuses every claim. */
 __attribute__((weak)) int modwerk_machine_dsp_claims_admit(unsigned requires, const struct runtime_dsp_claim *claims, unsigned n)
@@ -1502,6 +1513,8 @@ static int __attribute__((used)) set_prepare_context(void *u,const uint8_t *data
     int ok=modwerk_runtime_journal_digest(digest) && same_digest(digest,data+48);
     modwerk_machine_unlock(lock);
     if(!ok) return refuse(RUNTIME_STOCK); /* the reviewed baseline has changed */
+    /* Measurements of modules, not part of the set: kept whether or not the set is kept. */
+    { const uint8_t *table; unsigned n=runtime_set_costs(data,bytes,&table); if(data[5]==2u) modwerk_machine_frame_costs(table,n); }
     for(int i=0;i<count;++i) {
         change_set.preparing=1;ok=prepare_context(u,packages[i],lengths[i],context);change_set.preparing=0;
         if(!ok) return 0; /* discard owns every already-prepared image */

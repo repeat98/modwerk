@@ -139,8 +139,9 @@ int main(int argc,char **argv) {
     } else if(mode==5) {
         for(unsigned i=0;i<65535;i++) legacy(0);
         assert(sequence[0]==65535 && !dl_owned_command_reserve(0,1,10,0,1,0,&a) && !owned_closed[0]);
-        legacy(0);assert(sequence[0]==1 && owned_close_why[0]==OWNED_WHY_WRAP); /* legacy still wraps nonzero */
-        assert(!dl_owned_command_reserve(0,1,10,0,1,0,&a));
+        legacy(0);assert(sequence[0]==1 && !owned_closed[0] && !owned_close_why[0]); /* wraps nonzero, stays open */
+        assert(dl_owned_command_reserve(0,1,10,0,1,0,&a)); /* a job after the wrap starts at sequence 2 */
+        assert(a.first_sequence==2 && a.last_sequence==2 && dl_owned_cancel(&a));
         assert(dl_owned_command_reserve(1,1,10,0,1,0,&a));assert(dl_owned_cancel(&a));
     } else if(mode==6) {
         /* Boundaries in boot-local counters are fixture injection, not ACK facts. */
