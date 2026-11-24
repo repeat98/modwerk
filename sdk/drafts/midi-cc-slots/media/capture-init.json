@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "captured": "2026-10-25",
+  "moduleId": "midi-cc-slots",
+  "moduleVersion": "0.0.8-experimental",
+  "sourceRevision": "d2c05e7608a6b83ad4dd871c43ebaa22f1d93dbd",
+  "packageSha256": "876e3aa98455364181be7e055bfb5dd0d7f3b81f45051f8d85dc8894a5b47fad",
+  "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "limitations": [
+    "Private runtime publication and UI tick shim; first-sector IRQ timing fixture recorded separately.",
+    "Not hardware qualification."
+  ],
+  "images": {
+    "10-init-setup.png": {
+      "sha256": "924beeee2d0e43bf948826cc8f84658cdfa14e1a984893b58566364c0ae4fa8b",
+      "planeSha256": "91888995958ef73a8c4b0f87b8c787c941b3b7b882b7ad2c60342a39c484f20d"
+    },
+    "11-init-confirm.png": {
+      "sha256": "d11f2535670dcf1ee173f89e42e9c82228e740d20483152f15a2e15bd1b36cd3",
+      "planeSha256": "8701f21bb52c7d5a4ba9bd7288823f0ce9aa268ba0c58a3701d055b216be134d"
+    }
+  },
+  "runtimeFixtureSha256": "412ca0a48d51005f600519a19bd24eb70d0459ac161ff5a6e6aac164ddba6ac9",
+  "runtimeModuleSha256": "1a755d2ae64efc196be6886adb97042027103748fdf1dd873a41a826d174675d",
+  "verificationReportSha256": "1d64aa4dc768479f118ef6366ab2b11630882e3998ce8f0ec37558ddacb52a89",
+  "captureScriptSha256": "2ef87eb6174a5accae4b31ac8122db01518973f031fff8b97e897ac034180278",
+  "rendererSha256": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
+  "ataFixtureSha256": "b45fbd3fe92305821296fcc62a3c101deab1f605682389b5c01882e2d097cb20",
+  "rendering": "Unchanged native 128\u00d764 LCD and popup planes, integer scale 6, grayscale 24/240."
+}
