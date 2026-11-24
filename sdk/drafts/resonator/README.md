@@ -13,20 +13,18 @@ Eight tuned partials, shared by one to four voices, ring with the track's own au
 | Main | PTCH (DEG) | CHRD | DCAY | TONE | GAIN | MIX |
 | Setup | COLUN | TYPE | VOIC | SCALE | | |
 
-- **PTCH** 0–127, default 57: the root. A MIDI note (69 = A at 440 Hz), or with COLUN on a Colundi degree (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG.
+- **PTCH** 0–127, default 57: the root. A MIDI note (69 = A at 440 Hz), or with COLUN set to COLUN a Colundi degree (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG.
 - **TYPE** default STRNG: every voice's body. PURE (one mode), STRNG (harmonics 1–8), TUBE (odd harmonics, a closed pipe), BAR (a struck beam), PLATE, DRUM (a membrane), BELL (hum, prime, tierce, quint and up).
 - **CHRD** default MAJ: the other voices' notes. OCT, 5TH, SUS2, SUS4, MAJ, MIN, MAJ7, MIN7, DOM7, DIM, AUG, ADD9, 5THS, 4THS.
 - **DCAY** 0–127, default 64: the ring to -60 dB, 25 ms at 0, about 0.5 s at 64, 10 s at 127. Each voice's higher partials ring a little shorter, as on a real string or bar.
 - **GAIN** 0–127, default 32: the ring's level, in proportion (GAIN/32): 0 silences it, 32 is 0 dB, 64 +6 dB, 127 +12 dB. At 32 the ring on steady noise sits about 4 dB under the dry at any DCAY (three voices). Loud rings soft-clip at -3.5 dBFS: drum hits near full scale reach it at short DCAY even at 32.
 - **MIX** 0–127, default 64: at constant power. 0 is exact passthrough, 127 is only the ring. The dry falls as (1 - MIX/128)^2, -12 dB at 64 and -26 dB at 100, and the ring rises so the two keep their power (the ring -0.3 dB at 64). A loud dry and a loud ring in phase can add past full scale.
-- **COLUN** OFF / ON: PTCH becomes a Colundi degree and every voice snaps to the nearest of the 128 Colundi frequencies. A voice's body keeps its own overtones.
+- **COLUN** NOTE / COLUN, default NOTE: the switch shows its setting. At COLUN, PTCH becomes a Colundi degree and every voice snaps to the nearest of the 128 Colundi frequencies. A voice's body keeps its own overtones.
 - **VOIC** 1–4, default 3: how many voices share the eight partials. One voice has all eight, two voices four each, three voices 3, 3 and 2, four voices two each. One voice plays the root only.
 - **TONE** default centre: filters what excites the partials. Left: a low-pass from 20 kHz down to 150 Hz, so only the low partials ring. Right: a high-pass from 20 Hz up to 3 kHz, so only the high ones ring.
 - **SCALE** OFF, or a key and scale (CMAJ … BPMI: MAJ, MIN, DOR, PHR, LYD, MIX, HMI, MMI, PMA, PMI): the root and chord notes snap to the key, so chords turn diatonic. COLUN ignores it.
 
 Voice 1 sits in the centre; with more voices their upper partials spread left and right. The input is summed to mono.
-
-In a development package without #2084, the panel shows TYPE, CHRD, COLUN, VOIC and SCALE as numbers: COLUN 0 is off, VOIC 0–3 is one to four voices, SCALE is 1 + key × 10 + scale (C MAJ = 1, A MIN = 92).
 
 ## Usage
 
@@ -39,7 +37,7 @@ In a development package without #2084, the panel shows TYPE, CHRD, COLUN, VOIC 
 1. Put RESONATOR on FX1 of a drum loop. The defaults ring a major triad of string voices on A under every hit.
 2. Turn TYPE to BELL or BAR for metal, DRUM for skins; sweep TONE to choose which partials ring.
 3. Lock CHRD on a few trigs for chord changes; on the setup page set SCALE so they stay in a key, VOIC for more or fewer voices.
-4. Turn COLUN on and lock PTCH (now DEG) on trigs: each hit rings at its own Colundi frequency.
+4. On the setup page, turn the NOTE switch to COLUN and lock PTCH (now DEG) on trigs: each hit rings at its own Colundi frequency.
 
 ## Compatibility and limitations
 

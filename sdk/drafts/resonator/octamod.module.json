@@ -26,7 +26,7 @@
     ],
     "usage": [
       "Put RESONATOR on FX1 of a drum or loop track. The defaults ring a major triad of string voices on A under each hit.",
-      "Hold FUNC and press FX1 for the setup page: COLUN ON makes PTCH a Colundi degree, TYPE picks the body, VOIC the number of voices, SCALE a key.",
+      "Hold FUNC and press FX1 for the setup page: the COLUN switch set to COLUN makes PTCH a Colundi degree, TYPE picks the body, VOIC the number of voices, SCALE a key.",
       "Turn TYPE for the body (BAR and BELL for metal, DRUM for skins) and TONE to choose which partials ring."
     ]
   },
@@ -93,10 +93,10 @@
       "default": 0,
       "count": 2,
       "labels": [
-        "OFF",
-        "ON"
+        "NOTE",
+        "COLUN"
       ],
-      "doc": "Setup page. ON: PTCH is a degree of the Colundi sequence and each voice snaps to the nearest of its 128 frequencies (a MAJ chord on 440 Hz rings 440, 528, 639 and 880 Hz). The voices' bodies keep their own overtones."
+      "doc": "Setup page. The switch shows its setting. NOTE: PTCH is a MIDI note. COLUN: PTCH is a degree of the Colundi sequence and each voice snaps to the nearest of its 128 frequencies (a MAJ chord on 440 Hz rings 440, 528, 639 and 880 Hz). The voices' bodies keep their own overtones."
     },
     {
       "name": "TYPE",
@@ -264,8 +264,7 @@
       "Three 15-minute RAM trials ran on the owner's unit (drafts of 23 Nov 2026), the first two to their end with no crash, stall, freeze or skipped track; the third, the eight-partial build, was unplugged by the owner at about 8 minutes. This layout (no DAMP, TONE on page 1) has not run on a unit.",
       "A pitch, chord or type change settles within eight DSP blocks (2.9 ms): one partial retunes per block.",
       "Pitches assume 44.1 kHz. The input is summed to mono; the ring is spread across the stereo field.",
-      "A sustained tone on a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring.",
-      "A development package shows TYPE, CHRD, COLUN, VOIC and SCALE as numbers until #2084 (draft label formatters) is merged; the listed module shows their names."
+      "A sustained tone on a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring."
     ],
     "effectId": 7
   },

@@ -45,8 +45,10 @@ MODULE = Module(
               doc="Ring level: 32 is 0 dB (the ring about 4 dB under the dry on noise), 127 is +12 dB; loud rings soft-clip"),
         Param(b"MIX", 64, 128, active=True, formatter=P,
               doc="Dry/wet at constant power; 0 is exact passthrough, dry -26 dB at 100, 127 only the ring"),
-        Param(b"COLUN", 0, 2, active=True, formatter=S, labels=("OFF", "ON"),
-              doc="ON: PTCH is a Colundi degree and each voice snaps to the nearest Colundi frequency"),
+        # The mode select names itself (mode_names.with_selfname): the switch reads NOTE or COLUN, which says what
+        # PTCH is. OFF / ON read as a nameless switch on the unit (24 Nov 2026).
+        Param(b"COLUN", 0, 2, active=True, formatter=S, labels=("NOTE", "COLUN"),
+              doc="NOTE: PTCH is a MIDI note. COLUN: PTCH is a Colundi degree and each voice snaps to the nearest Colundi frequency"),
         Param(b"TYPE", 1, len(_T["TYPE_NAMES"]), active=True, formatter=W, labels=_T["TYPE_NAMES"],
               doc="Each voice's body: PURE, STRNG, TUBE, BAR, PLATE, DRUM or BELL partials"),
         Param(b"VOIC", 2, 4, active=True, formatter=S, labels=("1", "2", "3", "4"),
