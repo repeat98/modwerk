@@ -171,6 +171,8 @@ def run(mido, in_name, out_name, cmd, body, a):
                 print('windows %d, blocks %d' % (v[3], v[4]))
                 return v
             elif cmd == 'ident':
+                if getattr(a, 'quiet', False):
+                    return [get32(p[5 * i:5 * i + 5]) for i in range(min(len(IDENT), len(p) // 5))]
                 for i, name in enumerate(IDENT[:len(p) // 5]):  # an older base sends fewer fields
                     v = get32(p[5 * i:5 * i + 5])
                     shown = {'port': PORTS, 'RAM boot status': BOOT, 'RAM boot mailbox': MAILBOX}.get(name, {}).get(v, v)
@@ -303,6 +305,13 @@ def ramboot(mido, in_name, out_name, a):
     args = rl.ramboot_args(syx)
     print('image: MAIN OS %d bytes, CRC %#x; container %d bytes' % (args[0], args[1], args[2]))
     msgs = rl.ek_upgrade_messages(syx)
+    # Stock shows "Upgrade OS now?" once it has the image: a link that then refuses the RAM boot leaves that
+    # question on the screen, and YES flashes the image. So the arm is checked before anything is uploaded.
+    a.quiet = True
+    fields = run(mido, in_name, out_name, 'ident', [], a)
+    a.quiet = False
+    if len(fields) <= IDENT.index('armed') or not fields[IDENT.index('armed')]:
+        sys.exit('The link is not armed (disarm holds until the next boot); nothing was uploaded.')
     t0 = time.time()
     with mido.open_input(in_name) as inp, mido.open_output(out_name) as out:
         while inp.poll():
@@ -335,7 +344,10 @@ def ramboot(mido, in_name, out_name, a):
             sys.exit('The unit never said the upload was complete; nothing was flashed.')
     print('uploaded in %.1f s; asking for the RAM boot (do not answer the unit\'s "Upgrade OS now?")' % (time.time() - t0))
     time.sleep(0.5)
-    run(mido, in_name, out_name, 'ramboot', [b for v in args for b in u32(v)], a)
+    try:
+        run(mido, in_name, out_name, 'ramboot', [b for v in args for b in u32(v)], a)
+    except SystemExit as refused:
+        sys.exit('%s\nThe unit keeps the image and asks "Upgrade OS now?": answer NO, or it flashes the image.' % refused)
     print('the unit resets now; after it boots: mc_link.py ident (RAM boot status)')
 
 

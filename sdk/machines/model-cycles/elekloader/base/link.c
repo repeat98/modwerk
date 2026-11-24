@@ -25,7 +25,8 @@
 //   messages do: {type 0 key / 1 encoder, id, flags or a signed step in the top byte, time}. The UI loop
 //   (0x400080e6) plays them through the core's ev_key/ev_enc and stock, so modules see them too. Stock's
 //   is_key_held (0x4007faf4, the panel's bitmap 0x40f95744 through the table 0x4010ae5c) is pointed at
-//   mw_link_held, so a key the link holds reads as held: TRACK + TRIG and FUNC + turn behave as on the panel.
+//   mw_link_held, so a key the link holds reads as held: a held TRACK or FUNC combines with the next press or turn
+//   as on the panel.
 // - Armed at every boot (a development base is meant to be driven); DISARM turns it off until the next boot.
 //   A press or turn on the panel is a person at the unit: the link lets go of what it holds and refuses keys and
 //   turns for about 3 s.

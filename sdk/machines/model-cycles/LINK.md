@@ -109,7 +109,9 @@ power cycle. The image is any Model:Cycles OS `.syx`, a stock one or one the kit
 
 1. The host uploads the image with stock's own OS upgrade (Elektron's `F0 00 20 3C 11`, commands 0x50 start and
    0x51 write, the protocol Transfer uses; the Rytm's helpers in `rytm_link.py`). Stock keeps it at `0x4028da80` and
-   asks "Upgrade OS now?"; nobody answers it.
+   asks "Upgrade OS now?"; nobody answers it. YES there flashes the image, as stock does; NO leaves the unit running
+   the OS it runs. `mc_link.py ramboot` reads the arm first and uploads nothing while the link is disarmed, so a
+   refused RAM boot never leaves that question behind; should the unit refuse it anyway, the tool says to answer NO.
 2. `ramboot` carries the container's length and CRC32 and the MAIN OS's length and CRC32. The link checks that stock's
    upload is complete (header byte 0 = 3) and has that length, else status 4.
 3. The bootstrap stages the flashed, packed MAIN OS at `0x40200000` on every boot, over `0x4028da80`. The link copies
@@ -179,19 +181,26 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try hello.mwrm --seconds 5 --keep` beside frames, then `remove frames --seconds 5 --keep`, `mem 0x40007678 6` | 2 live, "F1 n" and the square; after the removal 1 live (`2cf24dba`), "F1" gone, the square stays, 65200 bytes free; the site holds the stock bytes |
 | `7c794349…` (dev base `d1cc7df8`, the loader at 0x31-0x33), RAM-booted | `try frames.mwrm --seconds 10` | on trial, "F1 n" counting (the OS composes frames without a turn too); undone, 0 live |
 | the same | `try hello.mwrm --seconds 30`, PLAY on trial; STOP 5 s after the tool ends | the pattern plays without dropouts (tester's report); at the end `enter: unsafe (phase trial)`, the square stays while playing and goes about 10 s after the tool ended; 0 live |
+| `7c794349…` RAM-booted from `520f99e7…` | `try big33.mwrm` (33,832 bytes, past the 32 KiB staging), `mods` 15 s later | `begin: limit (too large)`; nothing loaded, 65536 bytes free, no refusal counted (the controller refuses before the loader sees it) |
+| the same | `try --keep` two modules of 31,832 bytes each, then a third | both kept, 1504 bytes free; the third `verify: rejected`, last refusal `memory`, the two still live and drawing |
+| the same, after a power cycle and a new RAM boot | `hello` and `frames` kept, then `try grab.mwrm --seconds 25` (its key and encoder hooks take every event); keys and turns on trial | three modules live: the square, "F1 n" and the last key or turn; the unit does nothing with them; after the undo 2 live, keys and turns act as usual |
+| the same | `key 2 1`, then a person presses TRIG 3; `enc 2 10` at once and again 4 s later | the link lets go of TRACK and the press is taken (the track stays); `a person is at the unit`, then `ok` and PITCH up |
+| the same | `key 2 1`, `release` 3 s later; `disarm`, `enc 2 10`, `ident` | TRACK held, then let go; `not armed`, PITCH unchanged; `armed 0` |
+| the same, disarmed | `ramboot` with the stock `.syx` (old tool: uploaded first) | `not armed`; the unit kept the image and asked "Upgrade OS now?"; YES flashed stock 1.13 |
+| `520f99e7…` flashed again | `ramboot` with the stock `.syx` | no question on the unit; it resets into stock from RAM; `ident` no reply (stock has no link) |
+| the same | a power cycle | the flashed image (`0x4f182a66`), armed |
+| the same | `disarm`, then `ramboot` (the tool now reads the arm first) | `the link is not armed …; nothing was uploaded`, no question on the unit |
+| the same | the stock `.syx` sent with stock's upgrade, NO at "Upgrade OS now?" | the unit runs on without a reset; `ident`: `0x4f182a66` |
 
 ## Not tested
 
-- A RAM boot of an image without a development base, or of the stock `.syx`; a mailbox refused at boot (each
-  status other than `booted from RAM`).
-- Answering "Upgrade OS now?" after an upload meant for the RAM boot (it would flash the image as stock does).
+- A RAM boot of an image without a development base on the flash; a mailbox refused at boot (each status other than
+  `booted from RAM`).
 
 - A request over DIN (dropped by design).
-- A person pressing a key while the link holds one (the 3 s refusal), `disarm`, `release`.
 - Keys under FUNC and the flags stock's panel sets on a release.
-- A request while Transfer or another SysEx stream runs.
+- A request while Transfer or another SysEx stream runs (Transfer offers the Model:Cycles no sample upload).
 - A host that stops reading in the middle of a reply.
 - A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
-- A package past 32 KiB or the pool's 64 KiB; key and encoder hooks that take events; a site under a task paused
-  inside it (the switch is refused and retried); more than two modules at once.
+- A site under a task paused inside it (the switch is refused and retried).
 - A trial's pool extent is freed at the next change, not at its undo (seen: 416 bytes held until then).
