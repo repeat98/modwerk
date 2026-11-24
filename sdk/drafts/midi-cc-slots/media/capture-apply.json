@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "captured": "2026-10-25",
+  "moduleId": "midi-cc-slots",
+  "moduleVersion": "0.0.9-experimental",
+  "sourceRevision": "bc8871f1d05fc38a436532f78696f89b03d1f115",
+  "packageSha256": "04d883c23abc0831e99e802cd30647098a0ae6eb57aa8cda384958c4c6856360",
+  "runtimeFixtureSha256": "0c9ea9983569e8e995513e2f7731b2ee321ff797de8578d5e7fa5169bad8aa9f",
+  "runtimeModuleSha256": "e625786d7261bf15e8ffe753a77f3826abfa97db4b43a03972fc10fe4012802c",
+  "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "verificationReportSha256": "2eec2399b65fa8e2b75515f86cfa6783f61c76eeefb5d19538568bc79ab4a4d7",
+  "captureScriptSha256": "f4bc03d4fb286187f7d53e10a19a10ade117dac20c0550377950ca179d066709",
+  "rendererSha256": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
+  "images": {
+    "12-apply-setup.png": {
+      "sha256": "038ca0a8d98368ac7010f5e63064f4382c99ac4ebb760e5fca0e42a058ed1e0d",
+      "planeSha256": "b20fd442f76d5fedb3f9682dce2399d8b2ca7251e821f2c596dfe9f26160a466"
+    },
+    "13-apply-progress.png": {
+      "sha256": "eacbe0fab37a6132516ed9e05bdf7fbef0bc7b32a46b66826693ee5ce6cae370",
+      "planeSha256": "c3d1a4eda2135a80527e8f3eb6e2718d94719a754b8deae0ca24b8478d36f5ec"
+    }
+  },
+  "rendering": "Native 128\u00d764 LCD and popup planes, unchanged pixels, integer scale 6, grayscale 24/240.",
+  "limitations": [
+    "Guarded private publication, UI tick and separately recorded first-sector IRQ fixture.",
+    "The physical 0.0.8 initialization failed; this version has no physical fix qualification."
+  ]
+}
