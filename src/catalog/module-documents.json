@@ -4106,7 +4106,7 @@
         {
           "path": "media/ot-inputs.png",
           "captureType": "emulator",
-          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks. INPUTS works on macOS, not yet on Windows.",
           "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
