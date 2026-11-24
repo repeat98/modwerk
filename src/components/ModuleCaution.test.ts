@@ -8,10 +8,11 @@ import { classifyCpuCaution, MODULE_CAUTIONS } from '../catalog/module-cautions'
 import { CautionBadge, ModuleCard } from './ModuleCard'
 
 describe('Octatrack CPU cautions', () => {
-  it('reserves Heavy CPU for POLY8 and Grain and marks four catalog modules High CPU', () => {
+  it('reserves Heavy CPU for POLY8 and Grain and marks five catalog modules High CPU', () => {
     expect(Object.fromEntries(Object.entries(MODULE_CAUTIONS).map(([id, caution]) => [id, caution.badge]))).toEqual({
       poly8: 'Heavy CPU',
       grain: 'Heavy CPU',
+      synth: 'High CPU', // its 24 November curve: first copy 20.4 points of a frame
       syntiz: 'High CPU',
       tapeecho: 'High CPU',
       'output-matrix': 'High CPU',
@@ -52,7 +53,8 @@ describe('Octatrack CPU cautions', () => {
   it.each([
     ['poly8', 'Heavy CPU'],
     ['output-matrix', 'High CPU'],
-    ['synth', null],
+    ['synth', 'High CPU'],
+    ['miniverb', null],
   ])('uses the appropriate artwork indicator on the %s card', (id, label) => {
     const module = MODULES.find(item => item.id === id)!
     const card = createElement(ModuleCard, { module, selected: false, compared: false, canCompare: true, baseline: null, onToggle() {}, onCompare() {} })
