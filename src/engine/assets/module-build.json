@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "81eda9fa3c774ebd1a3017e00ad7b39272c78617",
+  "sourceCommit": "2d234c7700768a9dc084af04eca699fc6187053f",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "05fb992d9ff999900808c82c89c9baff87656c9a092a7bef27cf6580a4c9cf42",
+  "sourceTreeSha256": "5bd2380e03897d0f65dc40de5866fafda2aa89b99c6f191e7232dafe8c85e73f",
   "compilerSha256": "0b303a1e9517e96e93720ee99b01f4c2d46fdf94d84e8e332d9326d241e98066",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -18,7 +18,7 @@
     "ring-sc": "0.2.1-experimental",
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
+    "usb-audio-out-tracks-main-cue": "0.4.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
@@ -76,7 +76,7 @@
     },
     "requested-packages.json": {
       "bytes": 1343068,
-      "sha256": "97f1fc21dc5aaed8b731915440e1258cf3d8f34436f4d3900526173426f2992a"
+      "sha256": "1c24a255d6142b5f7079914bdee7a0943e145998944d5e491795f7d854021b16"
     },
     "utility-packages.json": {
       "bytes": 11735,
@@ -84,7 +84,7 @@
     },
     "usb-audio-packages.json": {
       "bytes": 736377,
-      "sha256": "cdfc9c301232c1aee53823f01331975a3c889521f2e80d15bfe1016584870f42"
+      "sha256": "98ddd32032e4ae8270a538d46a50f7a039b938dc96763ccedb769c20821968d6"
     }
   },
   "approval": null,
