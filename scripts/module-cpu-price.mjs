@@ -354,6 +354,15 @@ export function curveProblem(record) {
   }
   return null
 }
+/** The owner's approval of this exact version lists "release-cost" in `waived`: a module too heavy for the medium pattern
+ *  (Grain, POLY8) can still ship an update. It excuses only curveProblem, never a curve read on another version. Only for a
+ *  module without its own qualification record: that is when modules:check validates the approval in full, source hash included. */
+export function releaseCostWaived({ root, document }) {
+  if (document.tests?.qualification || document.tests?.releaseWaiver) return false
+  const approval = readJson(resolve(root, 'sdk/approvals', document.id + '-build-approval.json'))
+  return approval?.kind === 'owner-approved-update' && approval.approvedBy === 'repeat98' && approval.id === document.id &&
+    approval.version === document.version && Array.isArray(approval.waived) && approval.waived.includes('release-cost')
+}
 export const frameCostHowTo = id => 'measure it on a unit with npm run device:price -- --write --curve T1,T3,T6,T7 --base ID --scene TEXT ' + id +
   ' (the longest frame it adds on 1-4 empty tracks of a busy pattern, picked on an empty one; docs/MODULE_PERFORMANCE.md), which writes ' + FRAME_COST_RECORD + ' (npm run modules:generate then carries it into ' + FRAME_COSTS_PATH + ')'
 
@@ -375,6 +384,7 @@ export function frameCostStatus({ root, document, glue = null }) {
     const problem = curveProblem(record)
     if (!problem) return { state: 'ok', detail: detail + '; admitted alone on the empty and the medium pattern, nothing dropped' }
     const strict = logged && (!date || date >= RELEASE_COST_FROM)
+    if (strict && releaseCostWaived({ root, document })) return { state: 'ok', detail: detail + '; ' + problem + ' (waived by the owner for this version: sdk/approvals/' + id + '-build-approval.json)' }
     return strict ? { state: 'fail', detail: problem, fix: frameCostHowTo(id) }
       : { state: 'ok', detail: detail + '; ' + problem + ' (reported, not refused, for a release dated before ' + RELEASE_COST_FROM + ')' }
   }

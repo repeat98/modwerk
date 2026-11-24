@@ -1,0 +1,1 @@
+Development: the owner's approval of one exact module version can waive the release cost rule (`release-cost` in `waived`), so a module too heavy for the medium pattern, such as Grain or POLY8, can still ship an update. The curve itself must still be read on that version.
