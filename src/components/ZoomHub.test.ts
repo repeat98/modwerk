@@ -350,6 +350,26 @@ describe('installing and removing on the pedal page', () => {
     expect(fake.sent.some(m => m[4] === 0x60 && m[5] === 0x23)).toBe(false)
     await idle(fake.link)
   })
+  it('asks for the model printed on the pedal before the first write of a connection, and Cancel writes nothing (#2076)', async () => {
+    const fake = await setup(), asked: string[] = []
+    let answer = false
+    vi.stubGlobal('confirm', (text: string) => { asked.push(text); return /front of your pedal/.test(text) ? answer : true })
+    await click([...open().querySelectorAll('.zoom-files button')][0])
+    await until(() => asked.length > 0)
+    expect(asked).toHaveLength(1)
+    expect(asked[0]).toMatch(/does it say MS-70CDR\? A pedal running MIDISTOMP answers as an MS-70CDR/)
+    expect(fake.files.some(f => f.name === 'LOOP.ZDL'), 'Cancel removed nothing').toBe(true)
+    answer = true
+    await click([...open().querySelectorAll('.zoom-files button')][0])
+    await until(() => !fake.files.some(f => f.name === 'LOOP.ZDL'))
+    expect(asked.filter(text => /front of your pedal/.test(text))).toHaveLength(2)
+    const input = open().querySelector<HTMLInputElement>('input[type=file]')!
+    Object.defineProperty(input, 'files', { value: [new File([Uint8Array.from(fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)], 'nam1smok.zdl')], configurable: true })
+    await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
+    await until(() => /installed and read back/.test(open().textContent ?? ''))
+    expect(asked.filter(text => /front of your pedal/.test(text)), 'asked once a connection, not before every write').toHaveLength(2)
+    await idle(fake.link)
+  })
   it('removes an added effect', async () => {
     const fake = await setup()
     await click([...open().querySelectorAll('.zoom-files button')][0])
