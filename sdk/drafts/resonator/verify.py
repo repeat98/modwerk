@@ -33,6 +33,15 @@ Gates:
      block before init changes nothing.
   9. One PURE voice is centred (L == R); a chord differs L/R; TONE's two
      ends differ.
+ 10. The table's short forms, for every knob value (tables.py's models of
+     rzntheta, rzdecay and rzlerp): each note's theta is bit for bit the 24-bit
+     theta of its frequency; the interpolated decay keeps T60 within 1 %,
+     the input gain within 0.1 dB and TONE's corner within 2 % of their
+     curves. In dsp_host: NOTE 0, 115, 116 and 127 ring at their pitch
+     (both ends of the octave shift); DCAY 66 and 99, between table points,
+     ring for their T60 within 5 %; TONE 30 (low-pass) and 99 (high-pass),
+     between table points, pass a tone at the one-pole's level within
+     0.05 dB.
 """
 import math
 import os
@@ -218,6 +227,18 @@ def main():
     branch = re.compile(r"^(b|j)(sr|ra|mp|cc|cs|ne|eq|lt|le|gt|ge|pl|mi)|^rep|^brk")
     gate("sample loop is straight-line", loop.count("do") == 1 and not [m for m in loop if branch.match(m)])
 
+    nh = T["note_hz"]
+    off = [n for n in range(128) if T["note_word"](n) != T["theta"](nh(n))]
+    cents = max(abs(1200 * math.log2(T["note_word"](n) / (2 * nh(n) / FS * Q))) for n in range(128))
+    gate("every note's theta is exact", not off, f"(worst {cents:.2f} cents from the curve; differing: {off[:5]})")
+    t60 = max(abs(-3 / (FS * math.log10(T["lerp_word"]("R", d) / Q)) / T["t60"](d) - 1) for d in range(128))
+    gate("interpolated decay keeps T60 within 1 %", t60 < 0.01, f"(worst {100 * t60:.2f} %)")
+    gdb = max(abs(20 * math.log10(T["lerp_word"]("G", d) / ((1 - T["radius"](d)) ** 0.75 / 4 * Q))) for d in range(128))
+    gate("interpolated input gain within 0.1 dB", gdb < 0.1, f"(worst {gdb:.3f} dB)")
+    corner = max(abs(-math.log(1 - T["tonek_word"](v) / Q) * FS / (2 * math.pi) / T["tone_hz"](v) - 1)
+                 for v in range(128))
+    gate("interpolated TONE corner within 2 %", corner < 0.02, f"(worst {100 * corner:.2f} %)")
+
     n = 4800
     tone = [round(0.7 * Q * math.sin(2 * math.pi * 330 * i / FS)) for i in range(n)]
     tone_r = [round(0.6 * Q * math.sin(2 * math.pi * 123 * i / FS)) for i in range(n)]
@@ -240,13 +261,13 @@ def main():
                            ("COLUN 78", knobs(PTCH=78, COLUN=1, **one), 440.0),
                            ("COLUN 79", knobs(PTCH=79, COLUN=1, **one), 441.0),
                            ("COLUN 0", knobs(PTCH=0, COLUN=1, **one), 10.8),
-                           ("COLUN 127", knobs(PTCH=127, COLUN=1, **one), 12000.0)):
+                           ("COLUN 127", knobs(PTCH=127, COLUN=1, **one), 12000.0),
+                           *((f"NOTE {k}", knobs(PTCH=k, **one), nh(k)) for k in (0, 115, 116, 127))):
         l, _, meter = run(work, mem, syms, kn, burst(ring), tag="pitch")
         f = freq(l, FS, 6 * FS)
-        gate(f"{name} rings at {want} Hz", abs(f - want) < max(0.01, 2e-6 * want), f"({f:.4f} Hz)")
+        gate(f"{name} rings at {round(want, 3)} Hz", abs(f - want) < max(0.01, 2e-6 * want), f"({f:.4f} Hz)")
     print(f"dsp_host meter: {meter} instructions/sample max")
 
-    nh = T["note_hz"]
     long = 3 * FS
     lit = dict(DCAY=127, GAIN=127, MIX=127)
     pure4 = dict(TYPE=TYPE["PURE"], VOIC=3, **lit)
@@ -278,6 +299,14 @@ def main():
                   burst(3 * FS), tag="decay")
     got = t60_measured(l)
     gate("DCAY 64 rings for the table's T60", abs(got / want - 1) < 0.05, f"({got:.3f} s, table {want:.3f} s)")
+
+    for d in (66, 99):
+        want = T["t60"](d)
+        l, _, _ = run(work, mem, syms, knobs(TYPE=TYPE["PURE"], VOIC=0, DCAY=d, GAIN=127, MIX=127),
+                      burst(4 * FS), tag="decay")
+        got = t60_measured(l)
+        gate(f"DCAY {d}, between table points, rings for its T60", abs(got / want - 1) < 0.05,
+             f"({got:.3f} s, curve {want:.3f} s)")
 
     for d, secs in ((64, 6), (100, 30)):
         l, r, _ = run(work, mem, syms, knobs(TYPE=TYPE["BAR"], CHRD=CHORD["MAJ7"], VOIC=3, DCAY=d, GAIN=127,
@@ -311,6 +340,24 @@ def main():
     dark = run(work, mem, syms, knobs(TONE=0, MIX=127), burst(FS), tag="dark")
     bright = run(work, mem, syms, knobs(TONE=127, MIX=127), burst(FS), tag="bright")
     gate("TONE's two ends differ", dark[:2] != bright[:2])
+
+    # TONE between table points: a tone at a PURE voice's pitch rings at the one-pole's level relative to
+    # TONE 64 (flat, the direct path): its low-pass k / (1 - (1 - k) e^-jw), or the high-pass 1 minus that.
+    for v, note in ((30, 96), (99, 57)):
+        f0 = nh(note)
+        sine = [round(0.01 * Q * math.sin(2 * math.pi * f0 * i / FS)) for i in range(FS)]
+        level = {}
+        for t in (64, v):
+            l, _, _ = run(work, mem, syms, knobs(PTCH=note, TYPE=TYPE["PURE"], VOIC=0, DCAY=40, GAIN=32, MIX=127,
+                                                 TONE=t), sine, tag="tone")
+            level[t] = max(map(abs, l[3 * FS // 4:]))
+        k = T["tonek_word"](v) / Q
+        z = complex(math.cos(2 * math.pi * f0 / FS), -math.sin(2 * math.pi * f0 / FS))
+        h = k / (1 - (1 - k) * z)
+        want = 20 * math.log10(abs(1 - h) if v > 64 else abs(h))
+        got = 20 * math.log10(level[v] / level[64])
+        gate(f"TONE {v}, between table points, passes the one-pole's level", abs(got - want) < 0.05,
+             f"({got:.2f} dB, model {want:.2f} dB)")
 
     if failures:
         sys.exit(f"[FAIL] {len(failures)} gate(s): {', '.join(failures)}")

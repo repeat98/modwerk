@@ -1,16 +1,18 @@
 """Resonator's P table, generated at build time (offsets in OFF; resonator.asm reads them from `$fab1e0`).
 
-  NOTE    128  theta = 2f/fs of MIDI notes 0..127 (A4 = note 69 = 440 Hz)
+  NOTE     24  theta = 2f/fs of MIDI notes 127 down to 116 (A4 = note 69 = 440 Hz) in 48 bits, high
+               word first; with k, r = divmod(127 - n, 12), note n is note 127 - r shifted right
+               k times and rounded, which is exactly the 24-bit theta of every note 0..127
   COL     128  theta of the 128 Colundi frequencies, ascending
-  R       128  pole radius for DCAY 0..127: T60 from 25 ms to 10 s
-  G       128  input gain (1 - r)^0.75 / 4, matched to R
+  R        33  pole radius at DCAY 0, 4 ... 128 (T60 from 25 ms to 10 s); between them linear
+  G        33  input gain (1 - r)^0.75 / 4 at the same points, matched to R
   SEMI     56  four voice offsets in semitones per CHRD chord
   CRATIO   56  the same offsets as frequency ratios / 32 (COLUN snaps those)
   TRATIO   56  eight partial ratios / 32 per TYPE; 0 leaves the partial out
   TAMP     56  eight partial levels per TYPE
-  VMAP     32  the voice of each of the 8 modes, for VOIC 1..4 (mode m -> m mod n)
-  JMAP     32  the partial of each mode, for VOIC 1..4 (m div n)
-  TONEK   128  the exciter one-pole's coefficient per TONE value
+  VJ       32  for VOIC 1..4 and mode m: its voice (m mod n) times 8 plus its partial (m div n)
+  TONEK    34  the exciter one-pole's coefficient at TONE 0, 4 ... 64 (low-pass corners, 64 the
+               20 kHz end) and 64, 68 ... 128 (high-pass corners); between them linear
   SNAP    120  per scale, the step from each pitch class to its nearest scale note
   KERNEL    6  sin(pi t) = t * P(t^2), P's Taylor coefficients / 8, highest first
 
@@ -76,8 +78,9 @@ KEYS = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 SCALE_LABELS = ("OFF",) + tuple(k + s for k in KEYS for s, _ in SCALES)
 assert len(SCALE_LABELS) == 121 and max(map(len, SCALE_LABELS)) <= 5
 
-SIZES = (("NOTE", 128), ("COL", 128), ("R", 128), ("G", 128), ("SEMI", 56), ("CRATIO", 56), ("TRATIO", 56),
-         ("TAMP", 56), ("VMAP", 32), ("JMAP", 32), ("TONEK", 128), ("SNAP", 120), ("KERNEL", 6))
+SIZES = (("NOTE", 24), ("COL", 128), ("R", 33), ("G", 33), ("SEMI", 56), ("CRATIO", 56), ("TRATIO", 56),
+         ("TAMP", 56), ("VJ", 32), ("TONEK", 34), ("SNAP", 120), ("KERNEL", 6))
+STEP = 4   # R, G and TONEK hold every fourth value; the DSP interpolates linearly between them
 OFF = {name: sum(n for _, n in SIZES[:i]) for i, (name, _) in enumerate(SIZES)}
 
 
@@ -93,10 +96,15 @@ def radius(d):
     return 10 ** (-3 / (FS * t60(d)))
 
 
-def tone_hz(v):
+def tone_hz(v, high=None):
     """TONE below 64: the exciter's low-pass corner, 150 Hz up to 20 kHz. Above 64: its high-pass corner,
-    20 Hz up to 3 kHz. 64 is flat."""
-    return 150 * (20000 / 150) ** (v / 64) if v < 64 else 20 * (3000 / 20) ** ((v - 64) / 63)
+    20 Hz up to 3 kHz. 64 is flat. high picks a branch, so the low-pass curve's 20 kHz end at 64 exists."""
+    high = v >= 64 if high is None else high
+    return 20 * (3000 / 20) ** ((v - 64) / 63) if high else 150 * (20000 / 150) ** (v / 64)
+
+
+def tone_k(hz):
+    return 1 - math.exp(-2 * math.pi * hz / FS)
 
 
 def word(x):
@@ -123,6 +131,26 @@ def voice_partial(voices, m):
     return m % voices, m // voices
 
 
+# What the DSP computes from the table (rnd is convergent, as Python's round): resonator.asm's rzntheta, rzdecay
+# (lerp_word on R and G) and rzlerp. verify.py holds them to the ideal curves for every knob value.
+def note_word(n):
+    """rzntheta: the 48-bit theta of note 127 - r, shifted right k = (127 - n) div 12 times, rounded."""
+    k, r = divmod(127 - n, 12)
+    hi, lo = TABLE[OFF["NOTE"] + 2 * r:][:2]
+    return round((((hi << 24) | lo) >> k) / (1 << 24))
+
+
+def lerp_word(name, v):
+    """rzlerp: table name's point v div 4 plus a quarter of the step to the next per v mod 4, rounded."""
+    i, f = divmod(v, STEP)
+    a, b = TABLE[OFF[name] + i], TABLE[OFF[name] + i + 1]
+    return round(a + (b - a) * f / STEP)
+
+
+def tonek_word(v):
+    return lerp_word("TONEK", v + STEP) if v >= 64 else lerp_word("TONEK", v)
+
+
 def table():
     semi, cratio = [], []
     for _, steps in CHORDS:
@@ -133,20 +161,25 @@ def table():
         for r, level in partials(t):
             tratio.append(word(r / 32))
             tamp.append(word(level))
-    vmap = [voice_partial(n, m)[0] for n in range(1, 5) for m in range(MODES)]
-    jmap = [voice_partial(n, m)[1] for n in range(1, 5) for m in range(MODES)]
-    tonek = [word(1 - math.exp(-2 * math.pi * tone_hz(v) / FS)) for v in range(128)]
+    vj = [8 * voice_partial(n, m)[0] + voice_partial(n, m)[1] for n in range(1, 5) for m in range(MODES)]
+    tonek = ([word(tone_k(tone_hz(v, False))) for v in range(0, 65, STEP)]
+             + [word(tone_k(tone_hz(v, True))) for v in range(64, 129, STEP)])
+    note = []
+    for r in range(12):
+        v = round(2 * note_hz(127 - r) / FS * Q * (1 << 24))
+        note += [v >> 24, v & 0xFFFFFF]
     snap = [d & 0xFFFFFF for _, degrees in SCALES for d in snap_steps(degrees)]
     kernel = [word(c / 8) for c in reversed([(-1) ** j * math.pi ** (2 * j + 1) / math.factorial(2 * j + 1)
                                              for j in range(6)])]
-    t = ([theta(note_hz(n)) for n in range(128)] + [theta(hz) for hz in COLUNDI_HZ]
-         + [word(radius(d)) for d in range(128)] + [word((1 - radius(d)) ** 0.75 / 4) for d in range(128)]
-         + semi + cratio + tratio + tamp + vmap + jmap + tonek + snap + kernel)
+    t = (note + [theta(hz) for hz in COLUNDI_HZ]
+         + [word(radius(d)) for d in range(0, 129, STEP)] + [word((1 - radius(d)) ** 0.75 / 4) for d in range(0, 129, STEP)]
+         + semi + cratio + tratio + tamp + vj + tonek + snap + kernel)
     assert len(t) == sum(n for _, n in SIZES)
     return tuple(t)
 
 
 TABLE = table()
 assert len(CHORDS) * 4 == 56 and len(TYPES) * MODES == 56
-assert OFF == {"NOTE": 0, "COL": 128, "R": 256, "G": 384, "SEMI": 512, "CRATIO": 568, "TRATIO": 624, "TAMP": 680,
-               "VMAP": 736, "JMAP": 768, "TONEK": 800, "SNAP": 928, "KERNEL": 1048}, OFF
+assert OFF == {"NOTE": 0, "COL": 24, "R": 152, "G": 185, "SEMI": 218, "CRATIO": 274, "TRATIO": 330, "TAMP": 386,
+               "VJ": 442, "TONEK": 474, "SNAP": 508, "KERNEL": 628}, OFF
+assert len(TABLE) == 634

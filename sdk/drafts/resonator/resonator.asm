@@ -20,7 +20,9 @@
 ; (a = 0) costs nothing extra. A voice's note is the root plus its chord
 ; offset, snapped into SCALE's key, or snapped to the nearest Colundi
 ; frequency with COLUN on; the partial multiplies it by TYPE's ratio. sin
-; and cos come from a Taylor kernel.
+; and cos come from a Taylor kernel. A note's theta is its top-octave twin's
+; (48 bits in the table) shifted down by octaves; decay, input gain and TONE
+; interpolate linearly between every fourth value (tables.py).
 ;
 ; Input: (L+R)/8 through the TONE one-pole: low-pass below 64, flat at 64,
 ; high-pass above. Output: modes 0 and 1 centre, 2/4/6 left, 3/5/7 right.
@@ -31,12 +33,12 @@
 ;   $38/$3f right sum (low, high)  $39 wet gain  $3a mix  $3b tone state
 ;   $3c tone k  $3d low-pass weight  $3e direct weight  $40 mode counter
 ;   per block: $41 PTCH $42 chord row $43 DCAY $44 damping step $45 COLUN
-;   $46 SCALE $47 key $48 snap row $49 root note $4a target $4b/$4c search
-;   $4d sin $4e cos $4f note $50 mode $51 voice $52 partial $53 type row
+;   $46 SCALE $47 key $48 snap row $49 root note $4a target $4b/$4c unused $4d sin $4e cos $4f note
+;   (also rzlerp's index) $50 mode $51 voice $52 partial $53 type row
 ;   $54 voice row $55 partial ratio $56 partial level $57 voice theta
 ;   $58 exciter (read through r3)
-; P table (tables.py OFF): NOTE 0, COL 128, R 256, G 384, SEMI 512, CRATIO 568,
-; TRATIO 624, TAMP 680, VMAP 736, JMAP 768, TONEK 800, SNAP 928, KERNEL 1048.
+; P table (tables.py OFF): NOTE 0 (note 127 first), COL 24, R 152, G 185, SEMI 218, CRATIO 274,
+; TRATIO 330, TAMP 386, VJ 442, TONEK 474, SNAP 508, KERNEL 628.
 init:
         clr     a
         move    r7,r5
@@ -56,6 +58,40 @@ proc:
         tst     a
         beq     rzaudio
 ; ---- main call: knobs to integers (LFO fraction bits dropped)
+; TONE, slot 3: the exciter one-pole's corner, interpolated from the table
+; (the high-pass points follow the low-pass ones' 64); below 64 its low-pass
+; output, above 64 the high-pass (input minus low-pass), 64 flat. Set here,
+; so a split call keeps the last block's, as it keeps the tuning.
+        move    x:(r6+$3),a
+        and     #>$7f0000,a
+        asr     #$10,a,a
+        move    a1,x:(r7+$4f)
+        move    #>474,x0
+        move    #>64,y1
+        cmp     y1,a
+        blt     rztk
+        move    #>475,x0
+rztk:
+        bsr     rzlerp
+        move    a,x:(r7+$3c)
+        move    #>$7fffff,y0
+        clr     b
+        move    x:(r7+$4f),a
+        move    #>64,x0
+        cmp     x0,a
+        blt     rztlow
+        move    y0,x:(r7+$3e)
+        beq     rztflat
+        move    #>$800000,y1
+        move    y1,x:(r7+$3d)
+        bra     rztdone
+rztflat:
+        move    b,x:(r7+$3d)
+        bra     rztdone
+rztlow:
+        move    y0,x:(r7+$3d)
+        move    b,x:(r7+$3e)
+rztdone:
         move    x:(r6+$0),a
         and     #>$7f0000,a
         asr     #$10,a,a
@@ -127,7 +163,7 @@ proc:
         move    a1,y1
         asl     a
         add     y1,a
-        move    #>928,x0
+        move    #>508,x0
         add     x0,a
         move    a1,x:(r7+$48)
 rzscoff:
@@ -144,17 +180,17 @@ rzscoff:
         move    x:(r7+$50),a
         move    x:(r7+$54),x0
         add     x0,a
-        move    #>736,x0
+        move    #>442,x0
         add     x0,a
         move    a1,n2
         move    r5,r2
         move    (r2)+n2
-        move    p:(r2),x0
-        move    x0,x:(r7+$51)
-        move    #>32,n2
-        move    (r2)+n2
-        move    p:(r2),x0
-        move    x0,x:(r7+$52)
+        move    p:(r2),a
+        tfr     a,b
+        and     #>$7,a
+        move    a1,x:(r7+$52)
+        asr     #$3,b,b
+        move    b1,x:(r7+$51)
         move    x:(r7+$50),a
         move    a1,x0
         asl     #$3,a,a
@@ -166,7 +202,7 @@ rzscoff:
         move    x:(r7+$53),a
         move    x:(r7+$52),x0
         add     x0,a
-        move    #>624,x0
+        move    #>330,x0
         add     x0,a
         move    a1,n2
         move    r5,r2
@@ -187,14 +223,14 @@ rzscoff:
         move    x:(r7+$42),a
         move    x:(r7+$51),x0
         add     x0,a
-        move    #>568,x0
+        move    #>274,x0
         add     x0,a
         move    a1,n2
         move    r5,r2
         move    (r2)+n2
         move    p:(r2),x1
         move    x:(r7+$41),a
-        move    #>128,x0
+        move    #>24,x0
         add     x0,a
         move    a1,n2
         move    r5,r2
@@ -210,7 +246,7 @@ rznote:
         move    x:(r7+$42),a
         move    x:(r7+$51),x0
         add     x0,a
-        move    #>512,x0
+        move    #>218,x0
         add     x0,a
         move    a1,n2
         move    r5,r2
@@ -219,12 +255,7 @@ rznote:
         move    x:(r7+$49),a
         add     b,a
         bsr     rzsnap
-        move    #>0,x0
-        add     x0,a
-        move    a1,n2
-        move    r5,r2
-        move    (r2)+n2
-        move    p:(r2),a
+        bsr     rzntheta
 rzvoice:
         move    a,x:(r7+$57)
 ; The partial: the voice's theta times TYPE's ratio. Above 0.9 (about
@@ -282,15 +313,8 @@ rzcoef:
         bge     rzdpos
         clr     a
 rzdpos:
-        move    #>256,x0
-        add     x0,a
-        move    a1,n2
-        move    r5,r2
-        move    (r2)+n2
-        move    p:(r2),y1
-        move    #>128,n2
-        move    (r2)+n2
-        move    p:(r2),y0
+        move    a1,x:(r7+$4f)
+        bsr     rzdecay
         move    x:(r7+$4e),x0
         mpyr    x0,y1,a
         move    a,x:(r3)+
@@ -331,37 +355,6 @@ rzmixfull:
         move    #>$7fffff,a
 rzmixv:
         move    a1,x:(r7+$3a)
-; TONE, slot 3: the exciter one-pole's corner from the table; below 64 its
-; low-pass output, above 64 the high-pass (input minus low-pass), 64 flat.
-        move    x:(r6+$3),a
-        and     #>$7f0000,a
-        asr     #$10,a,a
-        move    a1,x1
-        move    #>800,x0
-        add     x0,a
-        move    a1,n2
-        move    r5,r2
-        move    (r2)+n2
-        move    p:(r2),x0
-        move    x0,x:(r7+$3c)
-        move    #>$7fffff,y0
-        clr     b
-        move    x1,a
-        move    #>64,x0
-        cmp     x0,a
-        blt     rztlow
-        move    y0,x:(r7+$3e)
-        beq     rztflat
-        move    #>$800000,y1
-        move    y1,x:(r7+$3d)
-        bra     rztdone
-rztflat:
-        move    b,x:(r7+$3d)
-        bra     rztdone
-rztlow:
-        move    y0,x:(r7+$3d)
-        move    b,x:(r7+$3e)
-rztdone:
         move    #>$1,n0
         move    #>4,n5
         move    #>7,n2
@@ -656,7 +649,7 @@ rzsin:
         move    x0,x1
         mpy     x0,x0,a
         move    a,y0
-        move    #>1048,n2
+        move    #>628,n2
         move    r5,r2
         move    (r2)+n2
         move    p:(r2)+,y1
@@ -686,59 +679,127 @@ rzsin:
         rts
 
 ; target theta at $4a -> a = the theta of the nearest Colundi frequency, by
-; ratio: binary search for the last entry at or below the target, then the
-; next one up if target^2 > lower * upper. Uses a, b, x0, x1, y0, r2, n2.
+; ratio: binary search for the last entry at or below the target (r4 walks
+; the table, a holds the step, the next one written to n4 an instruction
+; before it is used), then the next one up if target^2 > lower * upper.
+; Uses a, b, x0, y0, r4, n4 (free outside the sample loop).
 rzcol:
-        clr     a
-        move    a1,x:(r7+$4b)
-        move    #>$40,a
-        move    a1,x:(r7+$4c)
-        do      #7,>rzcstep
-        move    x:(r7+$4b),a
-        move    x:(r7+$4c),x0
-        add     x0,a
-        move    a1,x1
-        move    #>128,x0
-        add     x0,a
-        move    a1,n2
-        move    r5,r2
-        move    (r2)+n2
-        move    p:(r2),x0
+        move    #>24,n4
+        move    r5,r4
+        move    (r4)+n4
         move    x:(r7+$4a),b
+        move    #>$40,a
+        do      #7,>rzcstep
+        move    a1,n4
+        asr     a
+        move    p:(r4+n4),x0
         cmp     x0,b
         blt     rzcskip
-        move    x1,x:(r7+$4b)
+        move    (r4)+n4
 rzcskip:
-        move    x:(r7+$4c),a
-        asr     a
-        move    a1,x:(r7+$4c)
+        nop
 rzcstep:
-        move    x:(r7+$4b),a
-        move    #>$7f,x0
+; Entry 127 has no next one up (the table's SEMI follows).
+        move    r4,a
+        move    r5,x0
+        sub     x0,a
+        move    #>151,x0
         cmp     x0,a
         beq     rzcpick
-        move    #>128,x0
-        add     x0,a
-        move    a1,n2
-        move    r5,r2
-        move    (r2)+n2
-        move    p:(r2)+,x0
-        move    p:(r2),y0
+        move    p:(r4)+,x0
+        move    p:(r4)-,y0
         mpy     y0,x0,b
         move    x:(r7+$4a),x0
         mpy     x0,x0,a
         sub     b,a
         ble     rzcpick
-        move    x:(r7+$4b),a
-        move    #>1,x0
-        add     x0,a
-        move    a1,x:(r7+$4b)
+        move    (r4)+
 rzcpick:
-        move    x:(r7+$4b),a
-        move    #>128,x0
+        move    p:(r4),a
+        rts
+
+; a1 = note 0..127 -> a = its theta. With k, r = divmod(127 - note, 12): the
+; 48-bit theta of note 127 - r (table words 2r, high first) shifted right k
+; times, then rounded: exactly the 24-bit theta of the note.
+; Uses a, b, x0, x1, y0, y1, r2, n2.
+rzntheta:
+        move    a1,x0
+        move    #>127,a
+        sub     x0,a
+        move    a1,x1
+        move    #>$0aaaab,y0
+        mpy     x1,y0,b
+        move    b1,y1
+        move    b1,x0
+        move    x0,b
+        asl     #$2,b,b
+        move    b1,y0
+        asl     b
+        add     y0,b
+        move    x1,a
+        sub     b,a
+        asl     a
+        move    a1,n2
+        move    r5,r2
+        move    (r2)+n2
+        move    p:(r2)+,a
+        move    p:(r2),a0
+        asr     y1,a,a
+        rnd     a
+        rts
+
+; $4f = d (0..127) -> y1 = R, y0 = G at d: each point d div 4 plus (d mod 4)
+; quarters of the step to the next, rounded (rzlerp's sum, both tables in one
+; pass: G is 33 words after R). Uses a, b, x0, x1, y0, y1, r2, n2.
+rzdecay:
+        move    x:(r7+$4f),a
+        and     #>$3,a
+        asl     #$15,a,a
+        move    a1,x1
+        move    x:(r7+$4f),a
+        asr     #$2,a,a
+        move    #>152,x0
         add     x0,a
         move    a1,n2
         move    r5,r2
         move    (r2)+n2
+        move    #>32,n2
+        move    p:(r2)+,b
+        move    p:(r2)+n2,a
+        sub     b,a
+        move    a,x0
+        mpy     x1,x0,a
+        add     b,a
+        rnd     a
+        move    a,y1
+        move    p:(r2)+,b
         move    p:(r2),a
+        sub     b,a
+        move    a,x0
+        mpy     x1,x0,a
+        add     b,a
+        rnd     a
+        move    a,y0
+        rts
+
+; $4f = v (0..127), x0 = a table's offset -> a = point v div 4 plus (v mod 4)
+; quarters of the step to the next, rounded. Uses a, b, x0, x1, r2, n2.
+rzlerp:
+        move    x:(r7+$4f),a
+        asr     #$2,a,a
+        add     x0,a
+        move    a1,n2
+        move    r5,r2
+        move    (r2)+n2
+        move    p:(r2)+,b
+        move    p:(r2),a
+        sub     b,a
+        move    a,x0
+        move    x:(r7+$4f),a
+        and     #>$3,a
+        asl     #$15,a,a
+        move    a1,x1
+        mpy     x1,x0,a
+        add     b,a
+        rnd     a
         rts
