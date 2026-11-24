@@ -15,7 +15,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
 import { USB_AUDIO_MODULE } from '../src/config/usb-audio.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
-import { OWNER } from './maintenance-bot/policy.mjs'
+// The pipeline may not import the maintenance bot's policy.mjs (npm run licenses:check), so it names the owner itself.
+const OWNER = 'repeat98'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
