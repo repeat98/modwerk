@@ -88,6 +88,7 @@ src/community/ot-log.ts
 src/community/profile-links.ts
 src/community/remote-session-contract.ts
 src/community/report-closure.ts
+src/community/support-report.ts
 src/community/usage-contract.ts
 src/community/usage-pages.ts
 src/config/beta-invitation.ts

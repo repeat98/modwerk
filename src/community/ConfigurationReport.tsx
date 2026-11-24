@@ -1,4 +1,6 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useContext, useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { OctatrackLinkContext } from '../hooks/useOctatrackLink'
+import { SUPPORT_ATTACHED_EVENTS, supportBase, supportLines } from './support-report'
 import { createPortal } from 'react-dom'
 import { Icon } from '../components/Icon'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -23,7 +25,13 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
   const dialog = useRef<HTMLDialogElement>(null), heading = useId(), success = useRef<HTMLDivElement>(null), logHelp = useId()
   const { session } = useCommunity(), workspace = useWorkspaceReportContext(machine), device = DEVICES_BY_ID[machine]
   const { file, input: logInput, read: readLog, remove: removeLog } = useOtLogFile(), digi = machine !== 'octatrack'
-  const [model, setModel] = useState<OtModel | ''>(''), [flash, setFlash] = useState<FlashState | ''>('')
+  // The USB link fills in what it knows, all of it editable: what the Octatrack runs, the last error the page showed,
+  // and its recent USB events, which the reporter sees and can remove before posting (support-report.ts). IDENTIFY names
+  // the stock OS, not MKI or MKII, so the model stays the reporter's choice.
+  const link = useContext(OctatrackLinkContext), usbLink = digi ? null : link
+  const [attachment] = useState(() => usbLink?.supportAttachment?.(SUPPORT_ATTACHED_EVENTS))
+  const [attach, setAttach] = useState(() => !!attachment?.events.length), lastError = usbLink?.trail?.lastError?.text ?? ''
+  const [model, setModel] = useState<OtModel | ''>(''), [flash, setFlash] = useState<FlashState | ''>(() => usbLink?.getState().identity ? 'usb' : '')
   const [sent, setSent] = useState<BugReportResult | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState('')
   useEffect(() => {
     const element = dialog.current, previousFocus = document.activeElement
@@ -50,7 +58,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
       const context: IssueContext = digi
         ? { machine: machine as 'digitakt' | 'digitone', model: fields.model, flash: fields.flash as FlashState, os: fields.os, moduleVersion: resolved.modules[0]?.version ?? '', modules: resolved.modules, keepStockFx2: null, build: '' }
         : { model: model as OtModel, flash: flash as FlashState, os: file.log?.summary.os ?? REPORT_OS, modules: resolved.modules, keepStockFx2: resolved.keepStockFx2, build: resolved.build }
-      const result = await post<BugReportResult>('/configuration-reports', { title: fields.title, steps: fields.steps, expected: fields.expected, actual: fields.actual, context, visibility: 'forum', notifyUpdates: fields.notifyUpdates === 'on', ...(file.log ? { log: file.log.text } : {}) })
+      const result = await post<BugReportResult>('/configuration-reports', { title: fields.title, steps: fields.steps, expected: fields.expected, actual: fields.actual, context, visibility: 'forum', notifyUpdates: fields.notifyUpdates === 'on', ...(file.log ? { log: file.log.text } : {}), ...(!digi && attach && attachment?.events.length ? { usbEvents: attachment } : {}) })
       setSent(result)
       for (const module of catalogued) refreshModuleIssues(module.id)
       window.dispatchEvent(new Event('modwerk-module-updates'))
@@ -90,8 +98,15 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
           {modules > catalogued.length && catalogued.length > 0 && <p className="service-note">{modules - catalogued.length} {modules - catalogued.length === 1 ? 'module is' : 'modules are'} no longer in the catalog and cannot be notified.</p>}
         </section>
         <label>Title<input name="title" required maxLength={160} placeholder="What went wrong, in one line" /></label>
-        <label>What happened?<textarea name="actual" required maxLength={2000} rows={3} placeholder="What you did and what you heard or saw: sound, screen message, freeze, reboot …" /></label>
+        <label>What happened?<textarea name="actual" required maxLength={2000} rows={3} defaultValue={lastError} placeholder="What you did and what you heard or saw: sound, screen message, freeze, reboot …" /></label>
         {deviceFields}
+        {!digi && !!attachment?.events.length && <section className="issue-report-usb" aria-label="USB events">
+          {attach ? <>
+            <p className="service-note"><strong>Attached: the last {attachment.events.length} USB events from this page.</strong> {attachment.unit ? 'Base ' + supportBase(attachment.unit) + '. ' : ''}Numbers and codes only, no module, set or project names.</p>
+            <details className="issue-report-more"><summary>Show what is attached</summary><pre className="diagnostic-json">{supportLines(attachment).join('\n')}</pre></details>
+            <button type="button" className="button button-quiet" disabled={busy} onClick={() => setAttach(false)}>Remove USB events</button>
+          </> : <p className="service-note">USB events not attached. <button type="button" className="text-button" disabled={busy} onClick={() => setAttach(true)}>Attach them</button></p>}
+        </section>}
         <div className="configuration-report-optional">
           <details className="issue-report-more"><summary>Steps to reproduce <span>Optional</span></summary>
             <label>Steps, one per line<textarea name="steps" maxLength={3000} rows={3} placeholder={'1. Load a project with …\n2. Play both effects …\n3. Turn …'} /></label>
@@ -115,7 +130,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
         </div>
       </div>
       <footer className="configuration-report-footer">
-        <p className="configuration-report-notice">Posts publicly on GitHub under your username: title, description, device, the module list with versions, build fingerprint and any log. Leave out firmware and personal information.</p>
+        <p className="configuration-report-notice">Posts publicly on GitHub under your username: title, description, device, the module list with versions, build fingerprint, any log and any USB events attached. Leave out firmware and personal information.</p>
         {error && <p className="file-error" role="alert">{error}</p>}
         <div className="configuration-report-submit">
           <label className="risk-accept"><input type="checkbox" name="notifyUpdates" defaultChecked />Follow new releases of {catalogued.length === 1 ? 'this module' : 'these ' + count}</label>

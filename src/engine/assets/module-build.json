@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "d5eb2f441a0d53712518851c39d39c98941ac810",
+  "sourceCommit": "35ea8e27cb3f148b0cb7886bc49039c17382a946",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "f6984b63274a0da5181bf2550c6b625e22e44c286aed8990fdb35a9c04938e96",
-  "compilerSha256": "e567263c4de150db3aa2b7cac7f0562d58ed7c9b2333b585bc474dfde6dcb5a7",
+  "sourceTreeSha256": "0140f4665ecafdba822208a82e84ac4baf401a7c4a29a936b2fa315b23af7952",
+  "compilerSha256": "cf83b1dd46431e5bd257abe5aeebf6961075dc2cde35e7c8e48e15e2bbbf09fc",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
@@ -40,7 +40,8 @@
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental"
+    "stem-rec": "0.1.0-experimental",
+    "songbook": "0.1.0-experimental"
   },
   "files": {
     "dsp-packages.json": {
@@ -76,8 +77,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1341428,
-      "sha256": "432597b383cb4f92d7f7eacdfa7c8fa313b6f370aa2a158791b72cc06f0036e5"
+      "bytes": 1362015,
+      "sha256": "dbb595126e31e62a2238ad268f2c5727b893dfed3cb0da9c77034f833e7bb90c"
     },
     "utility-packages.json": {
       "bytes": 11735,

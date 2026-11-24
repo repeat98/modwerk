@@ -2415,3 +2415,5 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .phone-footer :is(.phone-footer-status, .legal-links) { font-size: .8125rem; line-height: 1.5; }
   .phone-footer { border: 0; font-size: .8125rem; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 }
+/* Copy details and Save report beside a USB error (SupportActions). */
+.support-actions { display: inline-flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 0; }

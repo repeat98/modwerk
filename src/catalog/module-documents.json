@@ -4629,7 +4629,7 @@
         {
           "path": "media/ot-inputs.png",
           "captureType": "emulator",
-          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks. INPUTS works on macOS, not yet on Windows.",
           "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
@@ -14035,19 +14035,19 @@
       "id": "kits",
       "key": "KITS",
       "name": "Kits",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "category": "scenes",
       "access": {
         "location": "PART (MKII) or FUNC+MIDI (MKI) from any page",
         "steps": [
           "Press PART on the MKII, or FUNC+MIDI on the MKI, to open LOAD KIT.",
           "Move to a Kit with UP and DOWN or the LEVEL encoder and press YES: the current pattern plays that Kit.",
-          "Press FUNC+PART on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI, to open SAVE KIT; press YES on a Kit, edit its name and confirm to save the current Part into it."
+          "Press FUNC+PART and YES on SAVE KIT on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI; press YES on a Kit, edit its name and confirm to save the current Part into it."
         ],
         "screenshots": [
           "media/ot-status-kit.png",
           "media/ot-load-kit.png",
-          "media/ot-save-kit.png"
+          "media/ot-part-edit-kits.png"
         ]
       },
       "author": {
@@ -14064,7 +14064,7 @@
         "label": "255 Kits per project",
         "family": "Parts and Kits",
         "summary": "255 Kits per project instead of four Parts per bank: each pattern plays its own Kit, saved and loaded by name.",
-        "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save the current Part as a Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
+        "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save, reload or rename the pattern's Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
         "highlights": [
           "LOAD KIT and SAVE KIT lists with the Kits' names, UNDO KIT, and seven-character names.",
           "Each pattern plays its Kit; copying and pasting a pattern carries its Kit.",
@@ -14073,7 +14073,7 @@
         ],
         "usage": [
           "Press PART (MKI: FUNC+MIDI): LOAD KIT lists UNDO KIT and the 255 Kits. Choose one with YES: the current pattern plays it now.",
-          "Press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK): SAVE KIT. Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
+          "Press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK). Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
           "The status line shows the current pattern's Kit as NNN name."
         ]
       },
@@ -14082,13 +14082,10 @@
         "firmware": "1.40C",
         "effectId": null,
         "location": "Project sequencer",
-        "conflicts": [
-          "pattern-sample-locks"
-        ],
+        "conflicts": [],
         "uiClaims": [
           "key:PART",
           "key:FUNC+MIDI",
-          "key:FUNC+PART",
           "key:FUNC+CUE",
           "key:STOP+PART",
           "key:FUNC+STOP+PART",
@@ -14102,19 +14099,17 @@
           "key:FUNC+STOP@KITS",
           "key:FUNC+PLAY@KITS",
           "key:FUNC+BANK@KITS",
-          "key:LEVEL@KITS",
-          "screen:PART EDIT"
+          "key:LEVEL@KITS"
         ],
         "limitations": [
           "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
           "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
-          "FUNC+PART opens SAVE KIT, so the stock Part Edit window and the rows other modules add there cannot be opened while Kits is installed.",
+          "Needs Modwerk base 0.8 or newer: FUNC+PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place. Stock's Part Edit rows are left out while Kits is on; while it is off its row is left out and the window is stock's.",
           "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
           "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
           "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
           "Keep Kits installed while you save, reload or copy a project that uses it: without it, kits.work is not saved or reloaded with the project.",
-          "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once.",
-          "Not offered with Pattern Sample Locks: Kits' SAVE KIT takes FUNC+PART, the Part edit menu Pattern Sample Locks adds its rows to."
+          "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once."
         ]
       },
       "resources": {
@@ -14179,14 +14174,14 @@
             "title": "Quick tutorial",
             "steps": [
               "Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.",
-              "Change a sound on the current track, press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
+              "Change a sound on the current track, press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
               "Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit."
             ]
           },
           "screenshots": [
             "media/ot-status-kit.png",
             "media/ot-load-kit.png",
-            "media/ot-save-kit.png"
+            "media/ot-part-edit-kits.png"
           ],
           "screenshotStyle": "black-and-white"
         }
@@ -14200,52 +14195,52 @@
         {
           "path": "media/ot-status-kit.png",
           "captureType": "hardware",
-          "caption": "With Kits installed the status line names the Kit the pattern plays: 001 ONE, the project's Part 1 read in as a Kit.",
-          "alt": "Pattern screen of A01 on the MIDI NOTE page; the status line reads 001 ONE where stock shows the Part.",
-          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "caption": "With Kits installed the status line names the Kit the pattern plays: 009 ONE.",
+          "alt": "Pattern screen of C16 on the SRC page; the status line reads 009 ONE where stock shows the Part.",
+          "credit": "Modwerk contributors (capture on the developer's MKII)",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "Pattern screen",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
-            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+            "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C16, stopped."
           }
         },
         {
           "path": "media/ot-load-kit.png",
           "captureType": "hardware",
-          "caption": "Press PART: LOAD KIT lists UNDO KIT and the project's Kits. YES on a Kit makes the current pattern play it, at once.",
-          "alt": "LOAD KIT list over the pattern screen: UNDO KIT, 001 ONE (selected), 002 TWO, 003 THREE.",
-          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "caption": "Press PART: LOAD KIT lists the project's Kits. YES on a Kit makes the current pattern play it, at once.",
+          "alt": "LOAD KIT list over the pattern screen: 008 FOUR, 009 ONE, 010 TWO, 011 THREE (selected).",
+          "credit": "Modwerk contributors (capture on the developer's MKII)",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "LOAD KIT (PART)",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
-            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+            "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C16 playing; PART, then DOWN."
           }
         },
         {
-          "path": "media/ot-save-kit.png",
+          "path": "media/ot-part-edit-kits.png",
           "captureType": "hardware",
-          "caption": "Press FUNC + PART: SAVE KIT, with the cursor on the current Kit. YES opens the name editor and saves the current Part into that Kit.",
-          "alt": "SAVE KIT list over the pattern screen: 001 ONE (selected), 002 TWO, 003 THREE, 004 FOUR.",
-          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "caption": "Press FUNC + PART: the Part Edit window holds Kits' actions in PART's place. SAVE KIT saves the current Part into a Kit, RELOAD KIT brings the pattern's Kit back as saved, RENAME KIT renames it.",
+          "alt": "Part Edit popup over the pattern screen: SAVE KIT, RELOAD KIT (selected), RENAME KIT.",
+          "credit": "Modwerk contributors (capture on the developer's MKII)",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
-            "page": "SAVE KIT (FUNC + PART)",
+            "page": "Part Edit (FUNC + PART)",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
-            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+            "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C02, stopped; FUNC+PART, the window reopened on the row used last. NO closed it."
           }
         }
       ]
@@ -15031,6 +15026,248 @@
           "credit": "A Force Truly Evil (recording). Sounds: the author's own.",
           "license": "Recording and sounds by the author (media/LICENSE.md)",
           "source": "original"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "songbook",
+      "key": "SONGBOOK",
+      "name": "Songbook",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "access": {
+        "location": "ARR > CHANGE",
+        "steps": [
+          "Open ARR > CHANGE (MKII: ARR, then CHANGE; MKI: FUNC + PATTERN for arrangement mode, FUNC + BANK, then CHANGE), with the transport stopped.",
+          "Press RIGHT or LEFT to step to the next or previous book (1 to 16); BOOK 2 and so on shows at the top right.",
+          "Pick one of the book's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the book.",
+          "Save the project as usual: every book is saved with it.",
+          "Before removing the module, step back to book 1."
+        ],
+        "screenshots": [
+          "media/ot-change-book.png"
+        ]
+      },
+      "author": {
+        "github": "Andrey-Sidorkin",
+        "credits": [
+          "Andrey-Sidorkin: the module, its research, tests and documentation."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "128 arrangements per project",
+        "family": "Arranger",
+        "summary": "16 books of 8 arrangements per project, every one a stock arrangement file: book 1 is arr01 to arr08, book 16 is arr121 to arr128.",
+        "overview": "Songbook turns the Octatrack's 8 arrangements into 16 books of 8. Book 1 is stock's own arr01 to arr08 and stays exactly as it is; book 2 is arr09 to arr16, and so on up to arr128, all ordinary stock arrangement files in the project folder, written and read by the Octatrack's own code. In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step through the books; inside a book every stock arrangement function works as usual. Setlists of up to 16 songs from any books follow in a later version.",
+        "highlights": [
+          "128 arrangements: 16 books of 8, book 1 untouched.",
+          "Every arrangement is a stock file, arr01 to arr128.",
+          "Switch books with LEFT/RIGHT in ARR > CHANGE, stopped.",
+          "A project opens on book 1, also on a unit without the module."
+        ],
+        "usage": [
+          "Open ARR > CHANGE (MKII: ARR, then CHANGE; MKI: FUNC + PATTERN for arrangement mode, FUNC + BANK, then CHANGE), with the transport stopped.",
+          "Press RIGHT or LEFT to step to the next or previous book (1 to 16); BOOK 2 and so on shows at the top right.",
+          "Pick one of the book's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the book.",
+          "Save the project as usual: every book is saved with it.",
+          "Before removing the module, step back to book 1."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [],
+        "uiClaims": [
+          "key:LEFT@ARR CHANGE",
+          "key:RIGHT@ARR CHANGE",
+          "screen:ARR CHANGE"
+        ],
+        "limitations": [
+          "OS 1.40C, tested on an MKI (the developer's own checks, build f068cd608, base 0.7.13); not tested on an MKII.",
+          "Books change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
+          "Switch back to book 1 before removing the module: without it, stock's next save writes the book in use into arr01 to arr08. Book 1 is kept in a backup (arr01.bak to arr08.bak) and comes back the next time the module is installed and book 1 is chosen.",
+          "A project comes back to the book and arrangement it was saved or left on; a power cycle keeps the book in use. Without the module a project opens on book 1.",
+          "Stock's project copy functions copy book 1 only; copying the project folder copies every book."
+        ]
+      },
+      "resources": {
+        "recorded": "Not measured",
+        "storage": {
+          "label": "Storage",
+          "display": "Not measured",
+          "value": null,
+          "unit": "unknown",
+          "method": "unmeasured",
+          "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "CPU / DSP load",
+          "display": "Not measured",
+          "value": null,
+          "unit": "unknown",
+          "method": "unmeasured",
+          "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "A book switch at its dearest (book 1 to another, stopped): stock's save of arr01-08, book 1's backup, the next book read and the slots fingerprinted. Between switches the UI tick re-fingerprints the slots every 2 s off book 1.",
+          "cpu": {
+            "level": "low",
+            "basis": "measured-comparison",
+            "rationale": "A switch runs inside stock's SYNC TO CARD job, stopped: 13.8 million executed ColdFire instructions under ot_emu from book 1 to 2, 7.8 million back, most of it stock's own file writes and reads. Off book 1 the UI tick fingerprints the 8 slots every 2 s (about 543,000 instructions, counted from the unit). Time on the unit is not measured.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: the module only switches which arrangements stock's own player has in its 8 slots.",
+            "source": "TESTING.md"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "7,292 bytes of ColdFire code and data and 4,728 of state, plus a 20-byte battery RAM record; on the card, stock arrangement files for books 2-16, book 1's backup and a 24-byte place file per project.",
+            "source": "TESTING.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-24",
+          "conditions": "MKI (OS 1.40C), the developer's test project in pattern mode, transport stopped, T1 selected; installed as a trial and used by no key press; development twin 4c7eb79b of the beta base (main 3043f8339); 8 s per reading. Frame interrupt 58.1 % before, 57.7 % installed; CPU meter 68.3 % before, 66.9 % at rest: within the reading's noise. On that twin the module's UI hooks were not seen to run (no BOOK label in ARR > CHANGE, RIGHT switched nothing): re-measure on a twin where they do.",
+          "source": "evidence/cpu-price.json"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Host gate (verify.py, 97 checks, a missing, unreadable or partly written book 1 backup, a file that fails to open once and a reload after it among them; several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle and arranger mode after LOAD (build c5027552c, base 0.7.5); LOAD and RELOAD returning to book 2 in arranger mode with book 1 intact, the main screen and PLAY on the returned book (build f068cd608, base 0.7.13, beside USB AUDIO), as the developer reported them; distinct books 1 and 2 kept through a power cycle and through a trial of another build with Undo, each followed by SYNC TO CARD (build b976e98ff, package 37f7e94f, base 0.7.13), as the developer reported them; a LOAD of another project and back, each on its own book and arrangement with the list cursor on it, PLAY and LEFT/RIGHT after it (build 85d544a68, package 81eb7172, base 0.7.13), as the developer reported them.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "c642ca25548f9248a4059f2c5a2e004484447903",
+        "gates": [
+          "Worst-case cycles under parameter modulation and maximum load",
+          "Exact memory region and maximum-instance totals",
+          "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "In ARR > CHANGE, press RIGHT: BOOK 2, with 8 empty arrangements.",
+                "Choose arrangement 1, open the editor and add a few rows.",
+                "Back in ARR > CHANGE, press LEFT: BOOK 1, your original arrangements.",
+                "Press RIGHT again: book 2's rows are back.",
+                "Press LEFT to return to book 1 before you finish."
+              ]
+            },
+            "screenshots": [
+              "media/ot-change-book.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "688b91a1b0fb9361b1adf43b92942dada8c88e56b27ff1c9fe049ff4096fca49",
+          "imageSha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 13754188,
+              "maxConfiguration": 13754188,
+              "maxInstances": 1,
+              "budget": 26600000,
+              "unit": "cycles/event",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "The dearest event is a book switch away from book 1: stock's writer saves arr01-08, the module writes book 1's backup (arr01.bak-arr08.bak) and reads the next book's 8 files, then fingerprints the 8 slots (90,440 bytes). 13,754,188 instructions from the writer's entry (0x400915ac) to its return (0x40091a76) on book 1 to 2; book 2 to 1 (backup read back) 7,849,450.",
+                "parameterModulation": "Not applicable: no parameters or audio; one switch per LEFT/RIGHT press in ARR > CHANGE, stopped, or one return after a project load.",
+                "modeSwitching": "Both directions measured; a switch between two other books writes and reads 8 files each and no backup, so it lies between the two.",
+                "maxLoad": "Executed ColdFire instructions under ot_emu, interrupts and every other task in that window included; one instance (the module is project-wide). Budget: 100 ms of ColdFire time at 266 MHz, a responsiveness target for a key press, as Apply Scene's; the switch runs inside stock's SYNC TO CARD job on the card task, refused while playing.",
+                "inputConditions": "Empty arrangements; the arrangement blocks are fixed-size, so their content does not change the writes, reads or the fingerprint. Executed instructions, not cycles: cache and wait states are not modelled, and card time on the unit is not measured."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code and data (one linked unit)",
+                "space": "sdram",
+                "words": 7292,
+                "wordBits": 8,
+                "bytes": 7292,
+                "scope": "shared"
+              },
+              {
+                "name": "ColdFire state (bss)",
+                "space": "sdram",
+                "words": 4728,
+                "wordBits": 8,
+                "bytes": 4728,
+                "scope": "shared"
+              },
+              {
+                "name": "Battery RAM record (battery-ram.json)",
+                "space": "sdram",
+                "words": 20,
+                "wordBits": 8,
+                "bytes": 20,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 12040,
+            "maxInstances": 1,
+            "totalBytes": 12040,
+            "conditions": "The unit as the USB package carries it: 7,292 bytes of code and data and 4,728 of bss (the builder's report), plus the 20-byte battery RAM record at 0x100f8f10. On the card: arr09.work-arr128.work and their .strd copies (stock arrangement files), arr01.bak-arr08.bak and arrbook.work/.strd in the project folder. No DSP memory.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-11-24",
+            "tester": "Andrey-Sidorkin",
+            "sourceRevision": "c642ca25548f9248a4059f2c5a2e004484447903",
+            "imageSha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47",
+            "summary": "On the developer's Octatrack MKI (OS 1.40C, base 0.7.13 6d23e888), this exact package kept over USB beside USB AUDIO and Arr Rows: switching books, the per-book choice with the CHANGE list's cursor and YES on it after a switch and after closing and reopening the list, a LOAD of another project and back (each on its own book and arrangement, one card job of the module's, no NOW SAFE TO EJECT!), PLAY from the returned arrangement. Earlier builds of the same lineage covered SAVE/RELOAD PROJECT, ARR SAVE/RELOAD, FUNC + PLAY clears and undo, a power cycle and arranger mode (TESTING.md). As the developer reported them.",
+            "limitations": [
+              "No MKII.",
+              "The test procedure's scripted pass, soak and cost on the unit (steps 7-9) have not run yet (#2099, fixed in #2103); a trial of this package under the scripted pass ran about two minutes twice with no crash, stall, freeze or skipped track.",
+              "Removing the module on a book other than 1 is a documented limitation, not tested."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original module by Andrey Sidorkin, MIT. No firmware, extracted stock code or built images are included."
+      },
+      "media": [
+        {
+          "path": "media/ot-change-book.png",
+          "captureType": "emulator",
+          "caption": "ARR > CHANGE after returning to book 1: BOOK 1 at the top right, the list redrawn with book 1's names, arrangement 3 chosen with the cursor on it. LEFT and RIGHT step the book, stopped.",
+          "alt": "ARR > CHANGE list of book 1 with SONG ALPHA, BRAVO and CHARLIE and BOOK 1 at the top right.",
+          "credit": "Andrey Sidorkin (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "ARR > CHANGE",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+            "setup": "Headless ot_emu; MKI panel; stopped transport; Modwerk beta base 0.7.5 with the package over the emulated USB; 128x64 LCD as the panel link carries it, integer scale 6."
+          }
         }
       ]
     }
