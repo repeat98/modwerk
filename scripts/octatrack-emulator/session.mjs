@@ -1,7 +1,7 @@
 // An Octatrack emulator session that the unit's tools drive like a unit: ot_emu on a development twin, paced to the wall clock
 // so every wait in device:test means the same as on the unit, served by `npm run device -- serve --emulator`.
 //
-//   npm run device:emulator -- --image MAIN.raw [--emulator PATH] [--dsp] [--dir DIR]          # until Ctrl-C
+//   npm run device:emulator -- --image MAIN.raw [--emulator PATH] [--dsp] [--mki] [--dir DIR]  # until Ctrl-C; --mki: an MKI
 //   npm run device:emulator -- --image MAIN.raw -- npm run test:procedure -- <module id>        # the procedure on it, then stop
 //
 // --image is a development twin's MAIN.raw (build_core.py --dev; your own OS stays on your computer). --emulator is the adapted
@@ -18,9 +18,10 @@ import { pathToFileURL } from 'node:url'
 
 const ROOT = resolve(import.meta.dirname, '../..')
 
-/** ot_emu's arguments: the line protocol on stdin (so `pace on` can tie emulated time to the wall clock), the USB bench. */
-export function emulatorArgs({ image, bench, dsp = false }) {
-  return ['--interactive', '--image', image, '--usb-host', bench, '--max', '400000000000', '--mkii', ...(dsp ? ['--dsp', '--dsp-rt', '--frame'] : [])]
+/** ot_emu's arguments: the line protocol on stdin (so `pace on` can tie emulated time to the wall clock), the USB bench. An MKII
+ * unless `mki`: stock then takes the MKI's panel and its gestures (no PART key; device.mjs part() and the Part menu, #2099). */
+export function emulatorArgs({ image, bench, dsp = false, mki = false }) {
+  return ['--interactive', '--image', image, '--usb-host', bench, '--max', '400000000000', ...(mki ? [] : ['--mkii']), ...(dsp ? ['--dsp', '--dsp-rt', '--frame'] : [])]
 }
 
 /** The sockets of a session in DIR, and the environment the unit's tools need to use it. */
@@ -40,10 +41,10 @@ async function main() {
   const split = process.argv.indexOf('--')
   const own = split < 0 ? process.argv.slice(2) : process.argv.slice(2, split), command = split < 0 ? [] : process.argv.slice(split + 1)
   const { values } = parseArgs({ args: own, options: { image: { type: 'string' }, emulator: { type: 'string' }, dsp: { type: 'boolean' },
-    dir: { type: 'string' }, settle: { type: 'string', default: '20' } } })
+    mki: { type: 'boolean' }, dir: { type: 'string' }, settle: { type: 'string', default: '20' } } })
   const emulator = values.emulator ?? process.env.MODWERK_OT_EMU
   if (!values.image || !emulator) {
-    console.error('Usage: npm run device:emulator -- --image MAIN.raw --emulator OT_EMU [--dsp] [--dir DIR] [--settle 20] [-- COMMAND…]\n' +
+    console.error('Usage: npm run device:emulator -- --image MAIN.raw --emulator OT_EMU [--dsp] [--mki] [--dir DIR] [--settle 20] [-- COMMAND…]\n' +
       '(MODWERK_OT_EMU names the adapted ot_emu from scripts/octatrack-emulator/build.py; docs/TEST_PROCEDURE.md, "One set of cases, two targets")')
     process.exit(2)
   }
@@ -56,7 +57,7 @@ async function main() {
   process.on('SIGINT', () => stop(130)); process.on('SIGTERM', () => stop(143))
 
   // 1. The emulator, its emulated time following the wall clock from the start (`pace on`, its stdin left open).
-  const emu = spawn(emulator, emulatorArgs({ image: resolve(values.image), bench: sockets.bench, dsp: values.dsp }), { stdio: ['pipe', 'pipe', 'inherit'] })
+  const emu = spawn(emulator, emulatorArgs({ image: resolve(values.image), bench: sockets.bench, dsp: values.dsp, mki: values.mki }), { stdio: ['pipe', 'pipe', 'inherit'] })
   children.push(emu)
   emu.stdin.write('pace on\n')
   let ready = false

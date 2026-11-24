@@ -1,0 +1,44 @@
+# Improved FLTR: the band types' analog words on the BD voice (frame +58 cutoff, +74 resonance, switch
+# byte +161 bits 1-3 the type code: BP = 0x02). FRQ 48 (220 Hz). BW (TYP 7), RES 52: width
+# 52 x 15/32 = 24.375 st, cutoff 48 + 12.19 st -> frame 0xf860, resonance table[24] + 96/256 of the
+# way to [25] = 0x0133. RES 72: 33.75 st, cutoff 64.9 st -> 0x01c0, 0xf9ea.
+# Then stock's PK (TYP 6), FRQ 48: the stock path, cutoff 0xe000. Changes the BD sound's FILTER FRQ, RES and TYP; ends
+# on TYP 0 (LP2), FRQ 127, RES 0. A wait follows each read: a CC can overtake the link's last read.
+name: if-band-words
+state: changes
+hold TRK
+key BD
+release TRK
+key FLTR
+wait 1500
+cc 74 48
+cc 75 52
+cc 76 7
+wait 400
+mem c7 0x800063fa 2
+mem r7 0x8000640a 2
+mem s7 0x80006461 1
+expect c7 == f860
+expect r7 == 0133
+expect s7 == 02
+wait 300
+cc 75 72
+cc 76 7
+wait 400
+mem c8 0x800063fa 2
+mem r8 0x8000640a 2
+mem s8 0x80006461 1
+expect c8 == 01c0
+expect r8 == f9ea
+expect s8 == 02
+wait 300
+cc 76 6
+cc 75 0
+wait 400
+mem c6 0x800063fa 2
+mem r6 0x8000640a 2
+expect c6 == e000
+expect r6 == 0000
+wait 300
+cc 76 0
+cc 74 127

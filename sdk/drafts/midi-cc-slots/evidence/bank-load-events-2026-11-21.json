@@ -1,0 +1,57 @@
+{
+  "version": "0.0.20-experimental",
+  "date": "2026-11-21",
+  "upstreamBaseIdentity": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+  "package": {
+    "packageSha256": "236d5101468e9c186fec99fa6724eba4baa8fa32e5676affaddae7f7ab6bb622",
+    "bytes": 33988,
+    "imageBytes": 29352,
+    "sites": 23,
+    "copies": 24,
+    "relocations": 560,
+    "hookWords": 42,
+    "subscriptions": {
+      "ev_bank_load": 40,
+      "ev_bank_loaded": 41
+    },
+    "bankLoadPrivatePatchOrCopy": false,
+    "stockGuards": "passed",
+    "baseOwnershipAndPatchOverlap": "passed",
+    "stockFree16Bytes": "passed",
+    "hardware": "not tested",
+    "coldfireExecution": "not tested"
+  },
+  "reproduced": true,
+  "legacy13Sha256": "086fc3c73468bd58db823bf2857106ebe05f7d1197fd226c595d4139eeca000a",
+  "hostLoadTests": {
+    "command": "python3 -B sdk/drafts/midi-cc-slots/test_bank_load.py",
+    "passed": 8,
+    "model": "Actual profile/event C and real-file fixture. Failure restores the previous project identity before the mocked card-job gate opens; this is not native firmware failure evidence.",
+    "sameProjectPolicy": "preserve cache; notifications expose no outcome",
+    "cases": [
+      "failed load retains cached names/clone",
+      "failed load retains dirty edit until ordinary autosave",
+      "failed load retains pending recovery, which can complete",
+      "committed distinct-project change loads once after settling",
+      "same-project notification preserves cache",
+      "nested/unrelated/unmatched caller and mask",
+      "context overflow unwinds safely",
+      "idle profile wakes and retries after pending card work"
+    ]
+  },
+  "codecTests": {
+    "command": "python3 -B -m unittest discover -s sdk/tests -p test_firmware_codec.py",
+    "default": "passed: 12 tests, one skipped for absent default checkout",
+    "withPinnedCheckout": "12 passed, no skips",
+    "checkoutCommit": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40"
+  },
+  "hostLoader": "prepare, publish, Undo, repeated install, removal, full reclamation passed with generated site-event registry; no module instruction execution",
+  "notTested": [
+    "native/emulator stock load-failure and identity commit ordering",
+    "failure leaving a different project identity",
+    "complete current-base lifecycle/coexistence",
+    "current-build timing/stack/MIDI flood",
+    "hardware and reboot"
+  ],
+  "deviceOrCardWrites": false
+}

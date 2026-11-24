@@ -30,7 +30,7 @@ MODULE = Module(
     author="Andrey-Sidorkin",
     author_url="https://github.com/Andrey-Sidorkin",
     proof=Proof.UNTESTED,
-    proof_note="Host gate and stock key routing measured under ot_emu (MKI panel); hardware not yet tested.",
+    proof_note="Host gate (98 checks); the developer's MKI checks, 0.2.0 on build 50bb1e6b2 (base 0.7.13).",
     doc="Select rows in the arrangement editor with CUE + UP/DOWN; copy, clear, paste or insert them together.",
     linked=(
         Linked("arrrows", os.path.join(_HERE, "arr_rows_core.s")),

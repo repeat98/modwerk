@@ -17,6 +17,12 @@
       "arith-tcc": 3.13
     }
   },
+  "defaults": {
+    "setting": "DUCK/def",
+    "instructions": 2.5,
+    "cycles": 5.25,
+    "stalls": 0.63
+  },
   "stock": {
     "comparator": "COMPRESSOR",
     "setting": "defaults/def",
