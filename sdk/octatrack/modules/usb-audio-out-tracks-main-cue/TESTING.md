@@ -1,5 +1,26 @@
 # USB Audio testing
 
+## 0.4.1-experimental (draft), 24 November 2026
+
+**Windows 11 accepted the input stream and played into INPUTS AB for four minutes; the unit then left USB after the trial's Undo.** Release package `6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502`, tried with the install preset Main + INPUTS AB (`1c8f7da4…`, word `0x8143210c`) as a 330 s RAM trial on the owner's Octatrack MKII, on base 0.8.1 `e11525835106` RAM-booted from its release image, the owner's kept set (Tape Echo, Air Chorus, Grain, Analog BD) loaded. Windows 11 (usbaudio2 10.0.26100.9974), agent-run, nothing kept.
+
+- **Enumeration:** the audio function (MI_04) started with `usbaudio2`, status OK, problem 0, through the whole trial (86 samples, every 2 s). Windows read 343 bytes: EP 0x83 attributes 0x05, EP 0x03 0x09 (adaptive), 96 bytes, bInterval 2.
+- **Playback:** WASAPI shared mode played a −30 dBFS 440 Hz tone on both channels of "Line (Elektron Octatrack DPS-1)" for 240.08 s, 10,584,000 frames, no stream status flags.
+- **Drift:** vendor request 0x56 every 5 s over 235 s: the host sent 58.1 ppm more frames than the unit consumed (10,374,491 against 10,373,888). The trim absorbed 606 frames (2.58 a second, none repeated), matching the excess with the fill change (603). The ring stayed between 98 and 119 frames: no underrun, overrun, bad packet or reprime.
+- **Undo:** the trial rolled back with no crash, stall, freeze or skipped track logged, and the unit answered on base `e11525835106` right after. About a second later it left USB; 15 s later Windows reported an unknown device whose port reset failed (`VID_0000&PID_0001`). It had not come back by 14:44, six minutes later; the owner's power cycle is needed. Whether 0.4.0 does the same after a duplex Undo on Windows is not known.
+- **Not run:** INPUTS ABCD (the unit was away), CD, listening (owner), Windows 10 (the reporter's computer), macOS, Linux, the soak, the price and frame cost, Keep and a power cycle. The emulator rehearsal ran on twin `678843ccf3d6`, which refuses USB Audio packages (refusal 3, the published 0.4.0 too).
+
+Host: the trim's tests (`sdk/tests/test_usb_audio_input_trim.py`: bit-for-bit copy with no drift, ±100 ppm and 40 ppm absorbed with no underrun, the interpolated block exact on a ramp and bounded on full-scale input), the descriptor tests, the package tests and the site's USB Audio tests.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Windows enumerates the audio function with INPUTS on | the endpoint attributes | trial with INPUTS AB, PnP status and descriptor on Windows 11 | pass on Windows 11; not run on Windows 10 |
+| Minutes of playback into INPUTS with the host on its own clock | the trim must hold the ring | 240 s tone, 0x56 counters every 5 s | pass: 58.1 ppm absorbed, no underrun |
+| Undo of a duplex trial on Windows | the reconnect after the package leaves | the trial's rollback | fail: the unit left USB, port reset failed |
+| INPUTS ABCD | four channels, 192-byte packets | trial with INPUTS ABCD | not run: the unit was away |
+| Sound of the trims | an interpolated block every 0.4 s at 58 ppm | by ear | not run: the owner's |
+| macOS, Linux | they no longer get implicit feedback | — | not run: not available here |
+
 ## 0.4.0-experimental, 23 November 2026
 
 **Not tested on a unit as this exact package.** The owner released it without that run: "Let's just release it, it's been well tested in the other repos it's fine" ([approval](../../../approvals/usb-audio-out-tracks-main-cue-build-approval.json)).

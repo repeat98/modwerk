@@ -46,7 +46,7 @@ USB Audio 0.4.0-experimental requires Modwerk’s Octatrack base 0.8.1, which ca
 - Built for Octatrack OS 1.40C. Multichannel recording and every USB input need a high-speed USB connection to a computer. At full speed and with OUTBOX 8 the module sends only; when no USB stream arrives, the inputs read their jacks.
 - A change of INPUTS or of the channel count reconnects the USB device. Stop recording in your DAW first.
 - The DRAM platform reserves about 10 MB of sample memory. A project that filled Flex and recorder memory can show OUT OF MEMORY. Shorten its recorder reservation or use a Static machine for long samples. [Memory guidance](https://github.com/repeat98/modwerk/issues/433).
-- The physical Outbox 8, Windows and Linux hosts and the Octatrack MKI remain untested on this release candidate. USB input ran on an MKII with macOS.
+- The physical Outbox 8, Linux hosts and the Octatrack MKI remain untested on this release candidate. USB input ran on an MKII with macOS (0.4.0) and, in 0.4.1, with Windows 11 (INPUTS AB). Windows 10 is untested.
 
 ## Tests and measurements
 
