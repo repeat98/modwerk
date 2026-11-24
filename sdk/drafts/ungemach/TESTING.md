@@ -2,6 +2,10 @@
 
 Everything here was observed by the author (GnocchiBalboa) and the coding agent working with them. A result names its build; "not tested" means not run.
 
+## 0.1.0-experimental, 22 November 2026
+
+This version's source (commit 8a5d506a, `module/ungemach`) is the engine of the diagnostic build v68d with the measurement code compiled out; its output renders identically to v68 (see Host tests). On the author's live-set MKI, v68d was kept, played and measured (Performance below), and its sound accepted. The release package built from this exact commit has not been on a unit yet; `device:qualify`, the CPU price and the persistence checks are still to run on it.
+
 ## Units and base
 
 - **Live-set unit:** Octatrack MKI, OS 1.40C, Modwerk USB base 0.7.10 (`6070a4e4`), the author's own live set: seven Flex tracks with many trigs, LFOs and scenes, plus E-Verb, LOFI2, Analog BD, Mute Modes, Amiga and Mini Verb installed.
