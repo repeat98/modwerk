@@ -32,6 +32,7 @@ describe('USB Audio setup before adding', () => {
     if (publishedUsbAudioPackage) {
       expect(hero).toContain('Add to configuration</button>')
       expect(html).toContain('PROJ → MODWERK → SETTINGS → USB AUDIO')
+      expect(hero).toContain('works on macOS but not yet on Windows: leave it OFF there.')
       expect(setup).toBeUndefined()
     } else {
       expect(hero).toContain('Configure USB Audio</button>')

@@ -3,7 +3,9 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // What a module costs an Octatrack, measured on a unit: the frame interrupt's share, the CPU meter and both DSPs,
 // before the module, with it installed but used nowhere (at rest), and for an effect on one slot (in use).
-//   npm run device:price -- [--memory] [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
+//   npm run device:price -- [--memory] [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--readings 3] [--key-bus live|silent] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
+//   Each state (before, at rest, in use) is --readings readings of --seconds: the record keeps their means, the highest longest
+//   frame and DSP peak, and each figure's spread. --key-bus says whether the scene plays into the key bus a key-bus effect reads.
 //   --curve T1,T3,T6,T7 [--pick-pattern 2] [--measure-pattern 1] [--admission-pattern N] [--limit 125] [--write-costs]: what the longest frame gains with the module on
 //   1, 2, 3… of those empty tracks (machines) or their slots (effects), each picked on the empty pattern and read on the busy one,
 //   and the next-instance cost from it (curveFit: `first`, then `each`); it stops at the first skipped render or past --limit % (lower it
@@ -32,13 +34,32 @@ import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, CURVE_ROOM, FRAME_COSTS_BASE_
 import { takeUnitTurn } from './unit-queue.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
-/** One reading from the session's `guard` line and `stats` lines: percent of a frame, percent of the meter, per mille of a DSP. */
+/** One reading from the session's `guard` line and `stats` lines: percent of a frame, percent of the meter, percent of a DSP.
+ * A `stats` line gives each core's mean and peak (status.c: the busiest frame of its last 1,024-frame window); the reading
+ * keeps the means' mean and the highest peak, since admission has to hold the worst block, not the average one. */
 export function reading(text) {
   const guard = /frame max ([\d.]+) %, latest start ([\d.]+) %, in the frame interrupt ([\d.]+) % over (\d+) frames, skipped (\d+)/.exec(text)
-  const stats = [...text.matchAll(/stats cpu (\d+) T1-4 (\d+)\/\d+ T5-8 (\d+)\/\d+/g)]
+  const stats = [...text.matchAll(/stats cpu (\d+) T1-4 (\d+)\/(\d+) T5-8 (\d+)\/(\d+)/g)]
   if (!guard || !stats.length) throw new Error('No guard and stats reading in: ' + text.slice(0, 200))
+  const meanOf = at => tenth(mean(stats.map(m => m[at] / 10))), peakOf = at => tenth(Math.max(...stats.map(m => m[at] / 10)))
   return { frame: Number(guard[3]), frameMax: Number(guard[1]), frames: Number(guard[4]), skipped: Number(guard[5]),
-    cpu: tenth(mean(stats.map(m => m[1] / 10))), dsp1to4: tenth(mean(stats.map(m => m[2] / 10))), dsp5to8: tenth(mean(stats.map(m => m[3] / 10))) }
+    cpu: meanOf(1), dsp1to4: meanOf(2), dsp5to8: meanOf(4), dsp1to4Peak: peakOf(3), dsp5to8Peak: peakOf(5) }
+}
+/** The figures a reading averages and the ones it keeps the highest of. */
+const MEANS = ['frame', 'cpu', 'dsp1to4', 'dsp5to8'], PEAKS = ['frameMax', 'dsp1to4Peak', 'dsp5to8Peak']
+/** Several readings of one state as one record: the means averaged, the peaks the highest any reading saw, `frames` summed,
+ * `skipped` and the allocation the last reading's (the guard counts skips since boot), and, from two readings on, `readings`
+ * and each figure's `spread` (highest less lowest), so a record shows how far its own readings agreed. One reading is
+ * returned as it is, as before 24 November 2026. */
+export function combined(readings) {
+  if (readings.length < 2) return readings[0]
+  const values = key => readings.map(item => item[key]).filter(value => typeof value === 'number')
+  const out = { ...readings.at(-1), frames: values('frames').reduce((sum, value) => sum + value, 0) }
+  for (const key of MEANS) if (values(key).length) out[key] = tenth(mean(values(key)))
+  for (const key of PEAKS) if (values(key).length) out[key] = Math.max(...values(key))
+  out.readings = readings.length
+  out.spread = Object.fromEntries([...MEANS, ...PEAKS].filter(key => values(key).length).map(key => [key, tenth(Math.max(...values(key)) - Math.min(...values(key)))]))
+  return out
 }
 /** Tracked allocation only. The module pool and each DSP program arena have distinct units and capacities. */
 export function allocationReading(text) {
@@ -48,7 +69,6 @@ export function allocationReading(text) {
   if (!pool || !core1 || !core0) return { unavailable: 'The development base did not report the module pool and both DSP program arenas.' }
   return { modulePoolBytes: Number(pool[1]), dspProgramWordsT1to4: Number(core1[1]), dspProgramWordsT5to8: Number(core0[1]) }
 }
-/** What the second reading added to the first, in points, one decimal. */
 /** What went wrong with a pick, from the session's reply (device.mjs pick's errors), or null when the slot runs it. */
 export const pickFailure = reply => /error|refused|not admitted|timed out/i.test(reply) ? reply.trim().split('\n').find(line => /error|refused|not admitted|timed out/i.test(line)).slice(0, 200) : null
 /** The session's `state` reply says the transport is stopped (device.mjs: "stopped" or "playing"). */
@@ -63,7 +83,15 @@ export function curveRoom({ atRest, booked, pattern }) {
   return atRest + booked < CURVE_ROOM ? null : `no room on pattern ${pattern}: it reads ${atRest} % with the module at rest, and its booked first instance ` +
     `${booked} would take it to ${tenth(atRest + booked)} %, past ${CURVE_ROOM} %. Pick a pattern with room with --measure-pattern (fewer sample tracks)`
 }
-export const added = (before, after) => Object.fromEntries(['frame', 'cpu', 'dsp1to4', 'dsp5to8'].map(key => [key, tenth(after[key] - before[key])]))
+/** What the second reading added to the first, in points, one decimal: the means, and each core's peak where both have one
+ * (a reading taken before 24 November 2026 kept no peak). */
+export const added = (before, after) => Object.fromEntries([...MEANS, 'dsp1to4Peak', 'dsp5to8Peak']
+  .filter(key => typeof before[key] === 'number' && typeof after[key] === 'number').map(key => [key, tenth(after[key] - before[key])]))
+/** What the record says played: device:price reads with the sequencer playing; the key bus's input only when the caller named it. */
+export function priceInputs(keyBus) {
+  if (keyBus !== undefined && !['live', 'silent'].includes(keyBus)) throw new Error('--key-bus takes live (the scene plays into the key bus) or silent')
+  return keyBus ? { transport: 'playing', keyBus } : { transport: 'playing' }
+}
 
 /** A file trial uses the package header for its name and slots (loader.c). Its runtime id
  * also identifies a published module when the filename is a version or was renamed. */
@@ -78,6 +106,9 @@ export function priceFileTarget(file, data, catalogue) {
 }
 
 const OVERLOAD = 125 // percent of a frame: no skips up to ~115 on an MKII, drops from ~120 (22 Nov 2026)
+/** Readings a state by default (--readings): one 8-s reading could not tell a module's cost from the scene's own scatter
+ * (±2.5 points of the longest frame between two readings, REST_NOISE below), and its spread now says how far they agree. */
+export const READINGS = 3
 /** What a module adds to the longest frame while installed on no track or slot (its `rest`), in percent: the reading
  * installed less the one before it. Under REST_NOISE it is the readings' own scatter (±2.5 between two 8-s readings of one
  * scene on the owner's MKII, 22 November 2026) and counts 0, since the base adds every installed module's rest to the
@@ -104,7 +135,7 @@ export const machinePick = (track, row = 5) => `NO w200 ${track} w300 ${track} $
 export const machineToStatic = track => `NO w200 ${track} w300 ${track} ${track} w500 LEFT w400 UP*12 w200 YES w800 NO w300`
 
 /** --write for one module's result: its price into its manifest, its readings beside it, its line off the pending list. What it did. */
-export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
+export function writePrice({ root, result, base, scene, seconds, measuredAt, readings = 1, inputs }) {
   const id = result.id, folder = resolve(root, 'sdk/octatrack/modules', id), manifest = resolve(folder, 'octamod.module.json')
   if (!existsSync(manifest)) return 'not written: no sdk/octatrack/modules/' + id
   if (result.refused || !result.rolledBack || result.restore || result.inUseError || result.notPlayed || !result.atRestAdds) return 'not written: the run was not clean'
@@ -112,12 +143,12 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
   if (document.compatibility?.location === 'Track machine' || machineDescriptors({ root, id }).length) return 'not written: a machine\'s price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)'
   if (document.compatibility?.effectId != null && !result.inUseAdds) return 'not written: an effect is priced on a slot too, and this run has no reading on one'
   if (result.version !== 'file' && result.version !== document.version) return 'not written: this measured the published ' + result.version + ' but the manifest is ' + document.version + '; measure the new build\'s .mwrm'
-  const record = { module: id, version: document.version, base, scene, seconds, measuredAt, result }
+  const record = { module: id, version: document.version, base, scene, ...(inputs ? { inputs } : {}), seconds, ...(readings > 1 ? { readings } : {}), measuredAt, result }
   mkdirSync(dirname(resolve(folder, CPU_PRICE_RECORD)), { recursive: true })
   writeFileSync(resolve(folder, CPU_PRICE_RECORD), JSON.stringify(record, null, 2) + '\n')
   const { before, atRest, inUse } = result
   document.resources.cpuPrice = { value: measuredPrice(result), unit: 'percent-of-frame', measure: 'frame-interrupt', tool: 'npm run device:price -- --write', date: measuredAt.slice(0, 10),
-    conditions: (scene + '; base ' + base + '; ' + seconds + ' s per reading. Frame interrupt ' + before.frame + ' % before, ' + atRest.frame + ' % installed and used nowhere' + (inUse ? ', ' + inUse.frame + ' % on ' + result.inUseOn : '') +
+    conditions: (scene + '; base ' + base + '; ' + (readings > 1 ? readings + ' readings of ' + seconds + ' s a state' : seconds + ' s per reading') + '. Frame interrupt ' + before.frame + ' % before, ' + atRest.frame + ' % installed and used nowhere' + (inUse ? ', ' + inUse.frame + ' % on ' + result.inUseOn : '') +
       '; CPU meter ' + before.cpu + ' % before, ' + atRest.cpu + ' % at rest' + (inUse ? ', ' + inUse.cpu + ' % in use' : '') + '.').slice(0, 1000),
     source: CPU_PRICE_RECORD }
   // shortcut: a hand-formatted manifest (an object on one line) comes back as plain two-space JSON; keep it if review asks.
@@ -132,10 +163,13 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
 if (import.meta.filename === process.argv[1]) {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: 'string' }, seconds: { type: 'string', default: '8' },
     slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, memory: { type: 'boolean' },
-    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, 'admission-pattern': { type: 'string' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: process.env.MODWERK_DEV_SOCKET ?? '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+    curve: { type: 'string' }, 'pick-pattern': { type: 'string', default: '2' }, 'measure-pattern': { type: 'string', default: '1' }, 'admission-pattern': { type: 'string' }, limit: { type: 'string', default: String(OVERLOAD) }, 'write-costs': { type: 'boolean' }, stock: { type: 'boolean' }, socket: { type: 'string', default: process.env.MODWERK_DEV_SOCKET ?? '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' },
+    readings: { type: 'string', default: String(READINGS) }, 'key-bus': { type: 'string' } } })
   // Admission is judged on the bank's medium pattern, the curve read on one with room (owner, 23 November 2026): by default the same.
   const admissionPattern = args['admission-pattern'] ?? args['measure-pattern']
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds), measuredAt = new Date().toISOString()
+  const readings = Number(args.readings), inputs = priceInputs(args['key-bus'])
+  if (!Number.isInteger(readings) || readings < 1 || readings > 9) throw new Error('--readings takes 1 to 9 readings a state')
   const fxNames = new Map((args['fx-name'] ?? []).map(pair => { const at = pair.indexOf('='); if (at < 1) throw new Error('--fx-name takes ID=NAME, the name the FX chooser shows'); return [pair.slice(0, at), pair.slice(at + 1)] }))
   if ((args.write || args['write-costs']) && !(args.base && args.scene)) throw new Error('--write and --write-costs need --base and --scene: the price names the base and what played (model, project, pattern)')
   if (args['write-costs'] && !args.curve && !args.stock) throw new Error('--write-costs writes a curve (--curve T1,T3,T6,T7) or the stock reserve (--stock)')
@@ -153,23 +187,30 @@ if (import.meta.filename === process.argv[1]) {
     : catalogue.filter(row => !row.requiredBase)
   // All the readings are one turn on the unit (scripts/unit-queue.mjs); the trials below run inside it.
   await takeUnitTurn({ note: 'device:price ' + chosen.map(row => row.id).join(' ').slice(0, 100), command: 'npm run device:price -- ' + process.argv.slice(2).join(' ').slice(0, 300),
-    expectMs: Math.max(10, 3 * chosen.length) * 60000 })
+    expectMs: Math.max(10, (2 + readings) * chosen.length) * 60000 })
   const wait = ms => new Promise(done => setTimeout(done, ms))
   const send = line => new Promise((done, fail) => { // one line to the session, its whole reply
     let reply = ''; const socket = connect(args.socket, () => socket.write(line + '\n'))
     socket.setTimeout(30000, () => socket.destroy(new Error('The session did not answer "' + line + '" in 30 s.')))
     socket.on('data', chunk => { reply += chunk }).on('end', () => done(reply)).on('error', fail)
   })
-  const measure = async () => { // playing: a new guard window, then its mean beside three meter readings
-    // STOP first: PLAY on a unit that is already playing pauses it, and that reading would be the stopped frame (frame 24 %,
-    // longest 32 % where the pattern plays at 75 %: the first module of a run read a false rest of 13 to 18, 23 November 2026).
-    await send('STOP w500 PLAY w2000 guard')
-    let text = '', stopped = 0
-    for (let i = 0; i < 3; i++) { await wait(seconds * 1000 / 3); text += await send('stats'); if (!notPlaying(await send('state'))) continue; stopped++ }
-    const text2 = await send('guard')
-    await send('STOP w500')
-    if (stopped) throw new NotPlayed(`the transport was stopped at ${stopped} of 3 checks during a reading, so it measured no pattern: nothing was priced`)
-    const load = reading(text2 + text)
+  // `count` readings of one state (--readings for the before, at-rest and in-use states; the curve, the admission runs and
+  // --stock take one a point). Each is STOP, PLAY, a new guard window, a meter reading about every second, the window, STOP.
+  // STOP first: PLAY on a unit that is already playing pauses it, and that reading would be the stopped frame (frame 24 %,
+  // longest 32 % where the pattern plays at 75 %: the first module of a run read a false rest of 13 to 18, 23 November 2026).
+  const measure = async (count = 1) => {
+    const taken = []
+    for (let n = 0; n < count; n++) {
+      await send('STOP w500 PLAY w2000 guard')
+      let text = '', stopped = 0
+      const samples = Math.max(3, Math.round(seconds))
+      for (let i = 0; i < samples; i++) { await wait(seconds * 1000 / samples); text += await send('stats'); if (notPlaying(await send('state'))) stopped++ }
+      const text2 = await send('guard')
+      await send('STOP w500')
+      if (stopped) throw new NotPlayed(`the transport was stopped at ${stopped} of ${samples} checks during a reading, so it measured no pattern: nothing was priced`)
+      taken.push(reading(text2 + text))
+    }
+    const load = combined(taken)
     if (!args.memory) return load
     try {
       return { ...load, allocation: allocationReading(await send('memory')) }
@@ -293,7 +334,7 @@ if (import.meta.filename === process.argv[1]) {
     const packagePath = row.file ?? resolve(root, 'public', row.path)
     const packageSha256 = createHash('sha256').update(readFileSync(packagePath)).digest('hex')
     if (row.sha256 && packageSha256 !== row.sha256) throw new Error('Package SHA-256 differs from the release catalogue for ' + row.id)
-    const trigs = await patternTrigs(), before = await measure(), result = { id: row.id, version: row.version, packageSha256, before }
+    const trigs = await patternTrigs(), before = await measure(readings), result = { id: row.id, version: row.version, packageSha256, before }
     const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', packagePath, '--seconds', '600', '--socket', args.share])
     let log = ''; trial.stdout.on('data', chunk => { log += chunk }); trial.stderr.on('data', chunk => { log += chunk })
     const ended = new Promise(done => trial.on('exit', done))
@@ -310,7 +351,7 @@ if (import.meta.filename === process.argv[1]) {
     }
     if (!result.refused) try {
       await wait(2000)
-      result.atRest = await measure(); result.atRestAdds = added(before, result.atRest)
+      result.atRest = await measure(readings); result.atRestAdds = added(before, result.atRest)
       const fx = { fx1: '1', fx2: '2', both: '2' }[row.slots]
       if (fx) try { // an effect: on the slot, measured, and the slot's own effect picked back
         const was = (await slotNames())[Number(fx)]
@@ -319,7 +360,7 @@ if (import.meta.filename === process.argv[1]) {
         // package "SC Ringmod"): --fx-name ID=NAME names it. A pick that fails must not be measured as the effect in use.
         const name = fxNames.get(row.id) ?? row.name, failed = pickFailure(await send(`pick:${args.slot}:FX${fx}:${name.replaceAll(' ', '_')}`))
         if (failed) throw new Error('picking ' + name + ': ' + failed)
-        result.inUse = await measure(); result.inUseAdds = added(before, result.inUse); result.inUseOn = args.slot + ' FX' + fx
+        result.inUse = await measure(readings); result.inUseAdds = added(before, result.inUse); result.inUseOn = args.slot + ' FX' + fx
         const back = await send(`pick:${args.slot}:FX${fx}:${was.replaceAll(' ', '_')}`)
         if (/error|refus|timed out/i.test(back)) result.restore = 'picking ' + was + ' back: ' + back.trim().slice(0, 120)
       } catch (error) { result.inUseError = error.message.slice(0, 200) }
@@ -340,16 +381,16 @@ if (import.meta.filename === process.argv[1]) {
       ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'
     results.push(result)
     // Written after every module: a unit that hangs on the next one must not take the finished readings with it.
-    if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, seconds, slot: args.slot, measuredAt, results }, null, 1) + '\n')
+    if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, inputs, seconds, readings, slot: args.slot, measuredAt, results }, null, 1) + '\n')
     const signed = value => (value >= 0 ? '+' : '') + value
     if (result.notPlayed) console.log(row.id.padEnd(28) + 'NOT MEASURED: ' + result.notPlayed + '. Stopped; check that the pattern plays (npm run device -- state) and run it again')
     else console.log(row.id.padEnd(28) + (result.refused ? 'not installed: ' + result.refused : `at rest frame ${signed(result.atRestAdds.frame)}, cpu ${signed(result.atRestAdds.cpu)}` +
-      (result.inUseAdds ? `; in use frame ${signed(result.inUseAdds.frame)}, cpu ${signed(result.inUseAdds.cpu)}, DSP ${signed(result.inUseAdds.dsp1to4)}/${signed(result.inUseAdds.dsp5to8)}` : '') + (result.inUseError ? '; in use: ' + result.inUseError : '') +
+      (result.inUseAdds ? `; in use frame ${signed(result.inUseAdds.frame)}, cpu ${signed(result.inUseAdds.cpu)}, DSP ${signed(result.inUseAdds.dsp1to4)}/${signed(result.inUseAdds.dsp5to8)}` + (result.inUseAdds.dsp1to4Peak === undefined ? '' : ` (peak ${signed(result.inUseAdds.dsp1to4Peak)}/${signed(result.inUseAdds.dsp5to8Peak)})`) : '') + (result.inUseError ? '; in use: ' + result.inUseError : '') +
       (result.restore ? '; ' + result.restore : '') + (result.rolledBack ? '' : '; THE TRIAL DID NOT ROLL BACK: stop and look')))
     if (!result.rolledBack || result.restore || result.notPlayed) break // never go on over a unit left in a state nobody chose
   }
-  if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, seconds, slot: args.slot, measuredAt, results }, null, 1) + '\n')
-  if (args.write) for (const result of results) console.log(result.id.padEnd(28) + writePrice({ root, result, base: args.base, scene: args.scene, seconds, measuredAt }))
+  if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, inputs, seconds, readings, slot: args.slot, measuredAt, results }, null, 1) + '\n')
+  if (args.write) for (const result of results) console.log(result.id.padEnd(28) + writePrice({ root, result, base: args.base, scene: args.scene, seconds, measuredAt, readings, inputs }))
   for (const result of results.filter(result => result.curve && !result.curve.error)) {
     const { first, each, adds, tracks, notes } = result.curve, wanted = args.curve.split(',').length
     const rest = restCost(result.before, result.atRest)

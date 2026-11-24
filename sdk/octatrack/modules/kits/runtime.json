@@ -16,6 +16,7 @@
     {"event": "module_enc", "fn": "kits_level"}
   ],
   "contribute": [
-    {"to": "ot_sample_memory", "data": "kits_pages", "order": 50}
+    {"to": "ot_sample_memory", "data": "kits_pages", "order": 50},
+    {"to": "ot_part_menu", "data": "kits_part_menu", "order": 60}
   ]
 }
