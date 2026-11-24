@@ -9,8 +9,8 @@ No firmware, no Docker, no catalogue entry. It runs the same package builder the
 (sdk/runtime/loader/build.py), unchanged:
 - a DSP effect: its DSP package from its source, as dsp_packages.py builds the catalogue's (ELEKLOADER_DSP_ASM), and
   an FX page recipe derived from its manifest as scripts/build-module-packages.py derives a listed module's. A listed
-  module's recipe comes from the committed assets; a draft has none, so this derives it. Stepped knobs get their
-  stock widget but no label formatter until the module is listed: they show numbers.
+  module's recipe comes from the committed assets; a draft has none, so this derives it, label formatters included:
+  its selects print their words and its MODE and name selects rename the knobs around them, as when it is listed.
 - ColdFire code (units, detours, pokes, runtime.json): build.py --octabam, the runtime package of a catalogue module.
 The DSP figures are what the base budgets the effect by. The defaults are generous (the most state words, a high cycle
 figure); give measured ones as soon as you have them. A development package is for your own unit: never publish it."""
@@ -52,9 +52,47 @@ def penable(active, linked=()):
     return lo, hi
 
 
+def differing(a, b, delta):
+    """scripts/octatrack-module-page.mjs's differing(): the offsets of the words that hold a base, from two links
+    `delta` apart. Any other difference is refused."""
+    if len(a) != len(b) or len(a) % 2:
+        raise ValueError('A formatter links to different sizes.')
+    at, i = [], 0
+    while i < len(a):
+        if a[i:i + 2] != b[i:i + 2]:
+            if i + 4 > len(a) or (int.from_bytes(b[i:i + 4], 'big') - int.from_bytes(a[i:i + 4], 'big')) % (1 << 32) != delta:
+                raise ValueError('A formatter word moves by something other than its base.')
+            at.append(i)
+            i += 2
+        i += 2
+    return at
+
+
+def draft_formatters(m):
+    """The label formatters a listed module's page carries, made as scripts/build-module-packages.py makes its menu
+    recipes (the same emitters, tools/build/label_fmt.py and mode_names.py) and as scripts/octatrack-module-page.mjs
+    turns them into page formatters: code, and the offsets of the names-table address the base fixes up."""
+    sys.path.insert(0, str(SDK / 'tools/build'))
+    import label_fmt, mode_names
+    out = []
+    for slot, param in enumerate(m.params):
+        if not param.prints_labels:
+            continue
+        views = m.name_views_for(slot)
+        names = mode_names.complete(m, slot, views) if views else {}
+        if slot == m.mode_slot:
+            names = mode_names.with_selfname(names, slot, param.labels)
+        emit = (lambda base: mode_names.emit(param.labels, base + P_PARAM_NAMES, names)) if names else \
+            (lambda base: label_fmt.emit(param.labels))
+        at0, moved = emit(0), emit(0x10000)
+        out.append(dict(slot=slot, code=at0.hex(), relocations=[], fixups=differing(at0, moved, 0x10000), clearWidget=False,
+                        wideMaximum=param.count - 1 if slot in m.wide_stepped_slots else None))
+    return out
+
+
 def draft_page(m, Formatter):
     """The FX page recipe of a module the committed assets do not know yet, as scripts/build-module-packages.py derives a
-    listed one's (integers and strings over its donor descriptor), without label formatters. (page, notes)."""
+    listed one's (integers and strings over its donor descriptor, and its label formatters). (page, notes)."""
     if m.menu.stock_dsp:
         raise ValueError(m.name + ' replaces a stock effect in place; its page needs the base, not a development package.')
     donor = m.menu.donor_desc + 0x38
@@ -89,10 +127,12 @@ def draft_page(m, Formatter):
             elif value is not None: notes.append('knob %d draws with a unit renderer (%s), which needs the listed module\'s page' % (slot, value[1]))
     lo, hi = penable(m.active_params, m.linked_params)
     integer(P_PENABLE_LO, 4, lo); integer(P_PENABLE_HI, 4, hi)
-    if m.stepped_slots:
-        notes.append('stepped knobs %s show numbers, not their labels, until the module is listed' % ', '.join(map(str, m.stepped_slots)))
+    formatters = draft_formatters(m)
+    unlabelled = sorted(set(m.stepped_slots) - {f['slot'] for f in formatters})
+    if unlabelled:
+        notes.append('stepped knobs %s have no labels, so they show numbers' % ', '.join(map(str, unlabelled)))
     return dict(id=m.name, donor=donor, donorSha256=guard['donorSha256'], inheritedEnable=list(m.inherited_enable),
-                integers=integers, strings=strings, formatters=[]), notes
+                integers=integers, strings=strings, formatters=formatters), notes
 
 
 def pack_page(build, page):
@@ -136,14 +176,19 @@ def main():
     os.environ.setdefault('ELEKLOADER_DSP_ASM', str(DEFAULT_ASM))
     os.environ.setdefault('ELEKLOADER_UPSTREAM', str(a.upstream))
     build = load('modwerk_build', BUILD)
-    if a.check_page:  # the packing against build.py, and the derived recipe against the committed one (formatters aside)
+    if a.check_page:  # the packing against build.py, and the derived recipe against the committed one
         page = json.loads(subprocess.run(['node', str(PAGE), a.check_page], capture_output=True, text=True, check=True).stdout)
         dsp_packages = load('modwerk_dsp_packages', DSP_PACKAGES)
         m = dsp_packages.Octabam(str(SDK)).modules[a.check_page]
         derived, _ = draft_page(m, sys.modules['remix.schema'].Formatter)
         same = lambda key: sorted(map(json.dumps, derived[key])) == sorted(map(json.dumps, page[key]))
+        # Label formatters only: a ROM unit's formatter (Tape Echo's TIME, Spectrum's SHPE) comes from the base's units.
+        labelled = {f['slot'] for f in derived['formatters']}
+        key = lambda f: json.dumps(dict(f, wideMaximum=f.get('wideMaximum')), sort_keys=True)
+        formatters = sorted(map(key, derived['formatters'])) == sorted(key(f) for f in page['formatters'] if f['slot'] in labelled)
         print('packing ' + ('identical' if pack_page(build, page) == build.page_section(a.check_page) else 'differs'),
-              'recipe ' + ('identical' if all(map(same, ('integers', 'strings'))) and derived['donor'] == page['donor'] else 'differs'))
+              'recipe ' + ('identical' if all(map(same, ('integers', 'strings'))) and derived['donor'] == page['donor'] and formatters
+                           else 'differs'))
         return
     folder = SDK / 'modules' / a.id
     if not (folder / 'manifest.py').exists():
