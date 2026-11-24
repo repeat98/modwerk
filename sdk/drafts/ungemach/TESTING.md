@@ -98,4 +98,9 @@ UNGEMACH changes no stock flow. Its SRC SETUP A to D are empty and stay 0, so a 
 
 ## OT UI captures
 
-Not captured yet.
+Hardware captures, 24 November 2026: the author's MKI, OS 1.40C, the development twin `4c7eb79b` RAM-booted over USB, package `37d7a278` in a trial, the scratch project with T1 on UNGEMACH at its Part defaults, transport stopped. The LCD was read over USB (`png:`) and scaled 3x without changing pixels.
+
+- `media/ot-machine-list.png`: FUNC + SRC on T1, PLAYBACK SETUP with UNGEMACH selected in the machine list and its SPRD and PNCH knobs.
+- `media/ot-src.png`: SRC, the main page with PTCH, DISS, TONE, WAVE, RATE and DIRT.
+
+While the trial ran, the base's `cpu` line booked 15 % for the track, the package's price. When the trial ended with T1 set back to FLEX, the base refused the rollback with "needs-recovery"; a power cycle returns the unit to its flashed base, and nothing was kept.

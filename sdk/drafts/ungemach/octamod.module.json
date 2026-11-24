@@ -152,14 +152,52 @@
     "file": "LICENSE",
     "declaration": "Original work by GnocchiBalboa under MIT. No Elektron firmware, extracted routines, tables, samples or graphics; the page copies stock's FLEX record at run time on the user's unit and never ships it."
   },
-  "media": [],
+  "media": [
+    {
+      "path": "media/ot-machine-list.png",
+      "credit": "GnocchiBalboa; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "captureType": "hardware",
+      "caption": "Select an audio track, hold FUNC and press SRC: PLAYBACK SETUP opens with the machine list. Go DOWN to UNGEMACH and press YES. The right side shows its two setup knobs: SPRD (stereo width) and PNCH (a punch on every trig).",
+      "alt": "PLAYBACK SETUP with the machine list FLEX, THRU, NEIGHBOR, PICKUP and UNGEMACH selected, and the SPRD and PNCH knobs on the right.",
+      "otUi": {
+        "page": "SRC SETUP (PLAYBACK SETUP) machine list",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The author's Octatrack MKI, OS 1.40C, a development twin (4c7eb79b) of the beta base RAM-booted over USB, UNGEMACH 0.1.0-experimental (package 37d7a278) in a trial, track 1 on UNGEMACH at its Part defaults, stopped transport. The LCD read over USB (png), actual pixels scaled 3x. UI capture only."
+      }
+    },
+    {
+      "path": "media/ot-src.png",
+      "credit": "GnocchiBalboa; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "captureType": "hardware",
+      "caption": "Press SRC for the main page. DISS widens the chord from unison to a scream, WAVE goes from dull to shrill, RATE drifts freely up to 63 and pulses with the track from 64. Put a trig on the track, set the AMP HOLD high and press PLAY; try DISS 40 and RATE 16 for a slowly moving dark chord.",
+      "alt": "The SRC page of track 1 with PTCH, DISS and TONE on the top row and WAVE, RATE and DIRT below; the footer reads SRC UNGEMACH.",
+      "otUi": {
+        "page": "SRC main page",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The author's Octatrack MKI, OS 1.40C, a development twin (4c7eb79b) of the beta base RAM-booted over USB, UNGEMACH 0.1.0-experimental (package 37d7a278) in a trial, track 1 on UNGEMACH at its Part defaults, stopped transport. The LCD read over USB (png), actual pixels scaled 3x. UI capture only."
+      }
+    }
+  ],
   "access": {
-    "location": "The track's machine list (double-tap a track key, or SRC SETUP)",
+    "location": "Audio track: FUNC + SRC (PLAYBACK SETUP) → UNGEMACH in the machine list.",
     "steps": [
-      "Double-tap a track key, move to UNGEMACH in the machine list and press YES.",
-      "Put a trig on the track, set the AMP envelope's HOLD high and press PLAY: the drone sounds. The SRC page shows PTCH, DISS, TONE, WAVE, RATE and DIRT.",
-      "Press SRC again for SRC SETUP: SPRD (knob E) and PNCH (knob F)."
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press SRC to open PLAYBACK SETUP. Go DOWN to UNGEMACH and press YES; the right side shows SPRD and PNCH.",
+      "Press SRC for PTCH, DISS, TONE, WAVE, RATE and DIRT. Put a trig on the track, set the AMP envelope's HOLD high and press PLAY: the drone sounds."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-machine-list.png",
+      "media/ot-src.png"
+    ]
   }
 }
