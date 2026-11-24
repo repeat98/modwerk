@@ -340,7 +340,7 @@ def ramboot(mido, in_name, out_name, a):
 
 
 # ---- the runtime loader (base/modules.c) ------------------------------------------------------------------------
-UP_PART, UP_RUN, MODS = 0x30, 0x31, 0x32
+UP_PART, UP_RUN, MODS = 0x31, 0x32, 0x33   # 0x30 is the Digitone II's whole-frame upload
 PART_BYTES = 96                         # a part's bytes: 8 + 5 + 110 packed + 1 = 124, under stock's 128
 CHUNK = 2048                            # bytes of the package in one CHUNK frame
 WIRE = dict(hello=0, enter=1, begin=2, chunk=3, verify=4, commit=5, accept=6, rollback=7, abort=8, leave=9)

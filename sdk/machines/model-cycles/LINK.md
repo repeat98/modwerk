@@ -54,9 +54,9 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 | `diag` | 0x22 | the diagnostics log's address and size (bytes); a host reads it with `mem` (`mc_link.py log`), as the Digitone II's |
 | `load` | 0x23 | the audio's share of the CPU over the last half second, the window's dearest block and the dearest block since boot (tenths of a percent), windows and blocks counted |
-| `up_part` | 0x30 | the runtime loader: a part of an upload frame, an offset and up to 96 bytes packed ([below](#loading-modules)) |
-| `up_run` | 0x31 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
-| `mods` | 0x32 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
+| `up_part` | 0x31 | the runtime loader: a part of an upload frame, an offset and up to 96 bytes packed ([below](#loading-modules)) |
+| `up_run` | 0x32 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
+| `mods` | 0x33 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
 
 The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
@@ -69,7 +69,8 @@ and upload controller ([`sdk/runtime/upload`](../../runtime/upload/README.md), w
 glue in [`elekloader/base/runtime.c`](elekloader/base/runtime.c) and the transport in
 [`modules.c`](elekloader/base/modules.c). Where the Octatrack carries one wire frame in an EP0 data stage, the link
 carries it in parts: `up_part` writes up to 96 bytes at an offset (each message 124 bytes at most, under the 128 of
-stock's own upgrade messages), then `up_run` runs the frame on the UI task. A package up to 32 KiB goes in CHUNK frames
+stock's own upgrade messages), then `up_run` runs the frame on the UI task. 0x30 stays free: the Digitone II's link takes a whole frame there in one
+SysEx (`upload`); the Model:Cycles' limit for one message has not been measured, so it takes parts. A package up to 32 KiB goes in CHUNK frames
 of 2 KiB; the pool holds 64 KiB of modules, 16 at most.
 
 ```
@@ -176,6 +177,7 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try frames.mwrm --seconds 20` (site `0x40007678`), then `mem 0x40007678 6` and the masked-span counters | "F1 n" on the screen, the unit as usual; undone; the site holds `4e b9 40 07 00 a4` again; 11 masked spans, the longest 874 DMA-timer counts (about 6.5 µs, 1 % of a codec block) |
 | the same | `try frames.mwrm --seconds 5 --keep`, then `try v2/frames.mwrm --seconds 20` | "F1 n", on trial "F2 n" counting on, after the undo "F1 n" again; 1 live (`594cfd26 frames`) |
 | the same | `try hello.mwrm --seconds 5 --keep` beside frames, then `remove frames --seconds 5 --keep`, `mem 0x40007678 6` | 2 live, "F1 n" and the square; after the removal 1 live (`2cf24dba`), "F1" gone, the square stays, 65200 bytes free; the site holds the stock bytes |
+| `7c794349…` (dev base `d1cc7df8`, the loader at 0x31-0x33), RAM-booted | `try frames.mwrm --seconds 10` | on trial, "F1 n" counting (the OS composes frames without a turn too); undone, 0 live |
 | the same | `try hello.mwrm --seconds 30`, PLAY on trial; STOP 5 s after the tool ends | the pattern plays without dropouts (tester's report); at the end `enter: unsafe (phase trial)`, the square stays while playing and goes about 10 s after the tool ended; 0 live |
 
 ## Not tested

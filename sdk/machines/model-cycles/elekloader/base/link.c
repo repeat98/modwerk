@@ -69,9 +69,11 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_RAMBOOT 0x14
 #define CMD_MEM 0x21
-#define CMD_UP_PART 0x30               // modules.c: a part of an upload frame
-#define CMD_UP_RUN 0x31                // modules.c: run the frame, the controller's response back
-#define CMD_MODS 0x32                  // modules.c: the pool and the live modules
+// The runtime loader (modules.c). 0x30 stays free: the Digitone II's link takes a whole upload frame there, in one
+// SysEx; the Model:Cycles takes a frame in parts, each message under the 128 bytes of stock's own upgrade messages.
+#define CMD_UP_PART 0x31               // a part of an upload frame
+#define CMD_UP_RUN 0x32                // run the frame, the controller's response back
+#define CMD_MODS 0x33                  // the pool and the live modules
 #define ST_OK 0
 #define ST_NOT_ARMED 1
 #define ST_BAD 2
