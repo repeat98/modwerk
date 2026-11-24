@@ -133,7 +133,7 @@
     "report": "TESTING.md",
     "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). Not yet run: device:qualify, the CPU price, a project reloaded without the module, Part and bank changes, a power cycle after a Keep, and any MKII.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "c07f3b1ccf31e66967c4f328019c607dc2821ce9",
+    "evidenceRevision": "8a5d506a212947cff937536337247fe574be2d44",
     "gates": [
       "python3 -B verify.py"
     ]
