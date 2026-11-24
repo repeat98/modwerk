@@ -1,6 +1,6 @@
 # SYNTIZ
 
-Version: `0.1.0-experimental` · author: @stigmagit · beta, over USB only: it is a track machine of the Modwerk base's
+Version: `0.1.1-experimental` · author: @stigmagit · beta, over USB only: it is a track machine of the Modwerk base's
 machine chooser (`ot_machines`, [HOOKS.md](../../../machines/octatrack/HOOKS.md)).
 
 ## Overview
@@ -106,13 +106,17 @@ you from the machine list to a first note; the models follow it.
 - **Host**: 5,376 extreme renders of the six models under UBSan/ASan with no report; levels, DC and aliasing; the
   pitch within 1.5 cents of stock's curve; every knob byte reaching its control; MORPH at MIX 0 and 127 equal to
   TABLE, sample for sample. `verify.py` runs them and rebuilds the package byte for byte.
-- **ColdFire, under qemu**: instruction counts for a 16-sample frame, defaults / heavy, from 1,931 / 4,044 (SAW) to
-  3,274 / 6,372 (ENS). Counts, not time on the unit.
+- **0.1.1 against 0.1.0**: the same samples, bit for bit, on the host (5.8 million samples under the sanitizers) and
+  through the machine glue on an emulated ColdFire (300 random two-track scenarios). There a playing track at C3 takes
+  1,773 instructions a frame instead of 2,436 at the defaults (SAW), and 205 memory operands instead of 492; the
+  dearest, a heavy ENS, 5,943 instead of 6,854. Counts, not time on the unit: 0.1.1 has not run on a unit yet.
+- **ColdFire, under qemu** (0.1.0): instruction counts for a 16-sample frame, defaults / heavy, from 1,931 / 4,044
+  (SAW) to 3,274 / 6,372 (ENS).
 - **Emulator**: the chooser, the six pages, the model list, LEFT and RIGHT, sequenced notes for every model, and
   SYNTIZ installed beside POLY8, Analog BD, VECTOR and FM Synth on the last chooser row.
 - **The author's MKIIs**, 28 October to 7 November 2026, on private bases that know SYNTIZ: the six models over USB,
   reported as working well by the author and a friend who played it; projects saved with SYNTIZ tracks came back
-  whole after power cycles. This package (`f501a6a4`) has been on his MKII since 31 October: a fourth SYNTIZ track
+  whole after power cycles. The 0.1.0 package (`f501a6a4`) has been on his MKII since 31 October: a fourth SYNTIZ track
   is refused, and on 7 November the base's frame guard measured his live set (two SYNTIZ tracks with filter and
   chorus, a THRU, three samples, a NEIGHBOR with flanger, a master compressor) at 74 % of each frame against 36 %
   without SYNTIZ, about two renders a second dropped and nothing heard; with two samples, 69 % and none dropped.

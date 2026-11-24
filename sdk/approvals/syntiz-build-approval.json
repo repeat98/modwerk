@@ -1,14 +1,16 @@
 {
   "kind": "owner-approved-update",
   "id": "syntiz",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-11",
+  "approvedOn": "2026-11-24",
   "waived": [
     "current-build-hardware",
-    "chip-worst-case-cycles"
+    "chip-worst-case-cycles",
+    "release-documentation"
   ],
-  "sourceSha256": "6fb4883386f10e512da989a97b4d748e69d2ade1bffdfd10bcac30ab1b5bc163",
-  "ownerStatement": "Waiver offered by repeat98 on #1304 on 8 November 2026 (\"I'll waive the rows you asked about for 0.1.0-experimental, as I did for POLY8: chip-worst-case-cycles and current-build-hardware, for this exact source\"); release approved by repeat98 on 11 November 2026 (\"ok no let's release it\"), after the release session's run on his MKII found that a note held with AMP HOLD/REL at INF never ends and that Undo while tracks use SYNTIZ stays in recovery until a power cycle (TESTING.md, README limitations).",
-  "reason": "SYNTIZ renders its tracks' audio on the ColdFire in the frame interrupt, so its cost is a share of every frame, not a per-event cost the audit can bound: a render is about 15 % of a frame, up to 37 % after stock's trig work, and a fourth SYNTIZ track in a Part is refused. The base's frame guard drops a render rather than overrun. The author measured it on his MKII with his own bases and package f501a6a4 (evidence/performance.json, TESTING.md); no static cycle bound and no MIDI flood exist, and those numbers stay null. Waived for this exact source: chip worst-case cycles and the audit's current-build hardware rows (stock benchmark, stress)."
+  "retainedUiVersion": "0.1.0-experimental",
+  "sourceSha256": "39035e7545432df7447ae48fbc08d5cde02a5546a2e0a9f41ee64d0c75d5eebc",
+  "ownerStatement": "Approve SYNTIZ 0.1.1-experimental, the same sound for less ColdFire time, for this exact source, keeping 0.1.0's UI captures.",
+  "reason": "SYNTIZ 0.1.1 (#1978) renders the same samples as 0.1.0 for less ColdFire time: bit-exact over 5.8 million samples on the host and 2.9 million on the emulator. The #2043 cost procedure ran on a base 0.8 development twin (678843cc) on the owner's MKII: the first copy costs 18.6 points against 0.1.0's 27.5 and each further copy 5.5; it was admitted on an empty pattern at 56.0 % and on a medium one at 95.4 % (first reading 97.7 %), with no render dropped and no stall (evidence/frame-cost.json). On that busy scene (Dev17 C04, stock alone at 81.5 %) a second copy already reads 105.6 % of the frame and four copies 112.4 %, so several SYNTIZ tracks still need a pattern with room. Its controls, pages and labels are unchanged from 0.1.0, whose captures are retained. Not run on this build: the test procedure's screenshots, the MAIN/CUE recording and a listening check, the flashed base and an MKI; no static cycle bound exists."
 }
