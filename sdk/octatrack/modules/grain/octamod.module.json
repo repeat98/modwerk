@@ -3,7 +3,7 @@
   "id": "grain",
   "key": "GRAIN",
   "name": "Grain",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "category": "machines",
   "author": {
     "github": "AForceTrulyEvil",
@@ -38,8 +38,8 @@
     {
       "name": "PTCH",
       "default": 64,
-      "count": 89,
-      "doc": "The pitch of the grains, -24 to +24 semitones (stored as 40 to 88, 64 is 0). Their length does not change. SRC knob A.",
+      "count": 125,
+      "doc": "The pitch of the grains, -12 to +12 semitones in Flex's units (stored as 4 to 124, 64 is 0, 5 a semitone), so CHROMATIC keys and MIDI notes play in tune. Their length does not change. SRC knob A.",
       "labels": null
     },
     {

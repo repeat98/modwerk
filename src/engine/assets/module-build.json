@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "81eda9fa3c774ebd1a3017e00ad7b39272c78617",
+  "sourceCommit": "2b29edcdf4c656caa95baf1829a79cacfe8d9f2d",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "05fb992d9ff999900808c82c89c9baff87656c9a092a7bef27cf6580a4c9cf42",
+  "sourceTreeSha256": "787ef0ec6f3afb768d7a14897c79421e3f6273e5a5591b80290c9f015e9040c0",
   "compilerSha256": "0b303a1e9517e96e93720ee99b01f4c2d46fdf94d84e8e332d9326d241e98066",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -18,15 +18,15 @@
     "ring-sc": "0.2.1-experimental",
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
-    "quantizer": "0.1.4-experimental",
+    "usb-audio-out-tracks-main-cue": "0.4.0-experimental",
+    "quantizer": "0.1.5-experimental",
     "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.2-experimental",
+    "mute-modes": "0.2.3-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -75,8 +75,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1343068,
-      "sha256": "97f1fc21dc5aaed8b731915440e1258cf3d8f34436f4d3900526173426f2992a"
+      "bytes": 1341428,
+      "sha256": "432597b383cb4f92d7f7eacdfa7c8fa313b6f370aa2a158791b72cc06f0036e5"
     },
     "utility-packages.json": {
       "bytes": 11735,
@@ -84,7 +84,7 @@
     },
     "usb-audio-packages.json": {
       "bytes": 736377,
-      "sha256": "cdfc9c301232c1aee53823f01331975a3c889521f2e80d15bfe1016584870f42"
+      "sha256": "98ddd32032e4ae8270a538d46a50f7a039b938dc96763ccedb769c20821968d6"
     }
   },
   "approval": null,

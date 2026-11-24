@@ -7,6 +7,7 @@
 // a new directory outside Git: what `npm run device -- boot DIR` and the emulator's run scripts read. Firmware and generated images never enter the checkout.
 //
 //   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--upstream ELEKLOADER] [--write] [--out NEW-DIR]
+//   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --step --out NEW-DIR   # the step base (octatrack-step-base.mjs)
 // Private transport candidates may add --usb-midi and --usb-audio "USB AUDIO OUT TRACKS MAIN CUE". --site-events builds the
 // base that owns sdk/machines/octatrack/events.json's sites and tables and dispatches them to subscribed packages;
 // --table-owners also fills its table-owner storage from module-adapters/table-owners.json (the reviewed table owners).
@@ -46,9 +47,18 @@ const { values: args } = parseArgs({ options: {
   'cached-modules': { type: 'boolean', default: false },
   'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false }, 'part-menu': { type: 'boolean', default: false },
   'module-ui-roots': { type: 'boolean', default: false },
-  beta: { type: 'boolean', default: false },
+  beta: { type: 'boolean', default: false }, step: { type: 'boolean', default: false },
 } })
-if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
+if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR] | --step --out NEW-DIR')
+// --step: the step base's build folder (octatrack-step-base.mjs), for a unit whose base stages less than this one needs.
+if (args.step) {
+  const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'out', 'step'].includes(flag) && args[flag])
+  if (!args.out || own.length) throw new Error('--step takes only --stock and --out NEW-DIR' + (own.length ? ', not ' + own.map(flag => '--' + flag).join(', ') : '') + '.')
+  const { writeStepBase } = await import('./octatrack-step-base.mjs')
+  const built = await writeStepBase(args.stock, resolve(args.out))
+  console.log(`step base ${built.base}: .bin ${built.sha256} (${built.bin.length} bytes)\nsaved ${resolve(args.out)}: NOT_FLASH_CANDIDATE.bin, MAIN.raw, proofs.json`)
+  process.exit(0)
+}
 // The beta base's flags. A regeneration that spelled them out by hand dropped --cached-modules once (20 October 2026),
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
 const BETA = { 'usb-input': true, 'usb-midi': true, 'packaged-usb-audio': true, 'site-events': true, 'table-owners': true,

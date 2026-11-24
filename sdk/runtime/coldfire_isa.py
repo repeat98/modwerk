@@ -18,12 +18,23 @@ apart from a far branch (bra.l or jmp), which the unit runs either way.
 A source that does not assemble alone needs its build (generated includes,
 symbols the linker defines): it is listed as not checked, never as passed.
 
+Each source that assembles is also held to m68k_codegen.py's rule: no
+instruction may step an address register in its source ((An)+ or -(An)) and
+use it again in its destination, as GCC's late-combine wrote
+`move.b (%a0)+,(0,%a0,%d0.l)` for a byte copy (docs/OCTATRACK_HARDWARE_TRAPS.md:
+the unit forms the destination from the stepped register, so every byte
+landed one late; octabam #1134 saw Unicorn do the same). The C objects of a
+build are checked there; this covers assembly, including compiler output kept
+as .s. The assembler's listing names the addresses of instructions, so a
+table is not read as code; an instruction written as .word data is not seen.
+
     python3 -B sdk/runtime/coldfire_isa.py [--cross m68k-elf-] [--strict] [PATH ...]
 
 Without paths: the Octatrack's trees. It reports and exits 0; --strict exits 1
 on a finding. It needs the m68k-elf toolchain and no firmware.
 """
 import argparse
+import importlib.util
 import re
 import subprocess
 import sys
@@ -36,6 +47,11 @@ OCTATRACK = ('sdk/octabam/modules', 'sdk/octabam/platform', 'sdk/machines/octatr
 # What the assembler says when the CPU, not the build context, is the reason.
 _ISA = re.compile(r'invalid instruction for this architecture|invalid on this architecture|invalid index size')
 _MESSAGE = re.compile(r'^(?:.*?):(\d+): Error: (.*?)(?: -- statement `(.*)\' ignored)?$')
+# A listing line (as -al) that starts a statement: its line, its address, its bytes, then the statement.
+_LISTED = re.compile(r'^\s*(\d+) ([0-9A-F]{4,8})(?: [0-9A-F ]*)?\t(.*)$')
+_spec = importlib.util.spec_from_file_location('coldfire_isa_codegen', Path(__file__).resolve().with_name('m68k_codegen.py'))
+CODEGEN = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(CODEGEN)
 
 
 def _errors(source, cross):
@@ -50,16 +66,52 @@ def _errors(source, cross):
         or [(0, made.stderr.strip().splitlines()[-1] if made.stderr.strip() else 'the assembler failed', '')]
 
 
-def check_source(source, cross='m68k-elf-'):
-    """('ok' | 'isa' | 'unchecked', [lines]) for one assembly source.
+def _instructions(listing):
+    """{address: source line} of the statements an assembler listing shows as instructions, not directives or labels."""
+    found = {}
+    for row in listing.splitlines():
+        m = _LISTED.match(row)
+        if not m:
+            continue
+        text = re.sub(r'^\s*(?:[\w.$]+:\s*)*', '', m.group(3).split('|')[0]).strip()  # labels; | starts a comment
+        if text and text[0] not in '.#':
+            found.setdefault(int(m.group(2), 16), int(m.group(1)))
+    return found
 
-    'isa': an instruction the MCF54455 lacks. 'unchecked': it does not assemble alone and needs its build."""
+
+def stepped(source, cross='m68k-elf-'):
+    """['line N: instruction'] of one assembly source's instructions that reuse a stepped address register (the rule of
+    m68k_codegen.hits), or None when it does not assemble alone."""
+    with tempfile.TemporaryDirectory(prefix='modwerk-isa-') as out:
+        obj, listing = Path(out) / 'unit.o', Path(out) / 'unit.lst'
+        made = subprocess.run([cross + 'as', '-mcpu=' + CPU, '-alm=' + str(listing), '-I', str(Path(source).parent), str(source),
+                               '-o', str(obj)], capture_output=True, text=True)
+        if made.returncode:
+            return None
+        text = subprocess.run([cross + 'objdump', '-d', str(obj)], check=True, capture_output=True, text=True).stdout
+        at = _instructions(listing.read_text(errors='replace'))
+    found = []
+    for hit in CODEGEN.hits(text):
+        address = int(re.search(r'\+0x([0-9a-f]+): ', hit).group(1), 16)
+        if address in at:
+            found.append('line %d: %s' % (at[address], hit.split(': ', 1)[1]))
+    return found
+
+
+def check_source(source, cross='m68k-elf-'):
+    """('ok' | 'isa' | 'stepped' | 'unchecked', [lines]) for one assembly source.
+
+    'isa': an instruction the MCF54455 lacks. 'stepped': an instruction that reuses an address register its source
+    steps (m68k_codegen.py). 'unchecked': it does not assemble alone and needs its build."""
     errors = _errors(source, cross)
     found = ['line %d: %s%s' % (line, text, ': ' + statement if statement else '')
              for line, text, statement in errors if _ISA.search(text)]
     if found:
         return 'isa', found
-    return ('unchecked', ['line %d: %s' % (line, text) for line, text, _ in errors[:2]]) if errors else ('ok', [])
+    if errors:
+        return 'unchecked', ['line %d: %s' % (line, text) for line, text, _ in errors[:2]]
+    reused = stepped(source, cross)
+    return ('stepped', reused) if reused else ('ok', [])
 
 
 def sources(paths):
@@ -71,25 +123,31 @@ def sources(paths):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--cross', default='m68k-elf-')
-    parser.add_argument('--strict', action='store_true', help='exit 1 when a source is outside the instruction set')
+    parser.add_argument('--strict', action='store_true',
+                        help='exit 1 when a source is outside the instruction set or reuses a stepped address register')
     parser.add_argument('--verbose', action='store_true', help='also list why each unchecked source did not assemble')
     parser.add_argument('paths', nargs='*', type=Path)
     args = parser.parse_args(argv)
-    counts, unchecked = {'ok': 0, 'isa': 0, 'unchecked': 0}, []
+    counts, unchecked = {'ok': 0, 'isa': 0, 'stepped': 0, 'unchecked': 0}, []
     for source in sources(args.paths or [ROOT / p for p in OCTATRACK]):
         result, lines = check_source(source, args.cross)
         counts[result] += 1
         name = source.resolve().relative_to(ROOT).as_posix() if source.resolve().is_relative_to(ROOT) else str(source)
         if result == 'isa':
             print('%s: outside the MCF%s instruction set\n  %s' % (name, CPU, '\n  '.join(lines)))
+        elif result == 'stepped':
+            print('%s: reuses an address register its source steps, in one instruction (sdk/runtime/m68k_codegen.py)\n  %s'
+                  % (name, '\n  '.join(lines)))
         elif result == 'unchecked':
             unchecked.append((name, lines))
     if unchecked:
         print('Not checked, each needs its own build (generated includes or linker symbols):')
         for name, lines in unchecked:
             print('  ' + name + (': ' + lines[0] if args.verbose and lines else ''))
-    print('%d sources inside the MCF%s instruction set, %d outside, %d not checked.' % (counts['ok'], CPU, counts['isa'], counts['unchecked']))
-    return 1 if args.strict and counts['isa'] else 0
+    print('%d sources inside the MCF%s instruction set, %d outside, %d not checked.'
+          % (counts['ok'] + counts['stepped'], CPU, counts['isa'], counts['unchecked']))
+    print('%d of them reuse an address register their source steps.' % counts['stepped'])
+    return 1 if args.strict and (counts['isa'] or counts['stepped']) else 0
 
 
 if __name__ == '__main__':

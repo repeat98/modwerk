@@ -64,12 +64,12 @@
     },
     {
       "id": "usb-audio-out-tracks-main-cue",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
       "id": "quantizer",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -104,7 +104,7 @@
     },
     {
       "id": "mute-modes",
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
@@ -224,7 +224,7 @@
     },
     {
       "id": "grain",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "addedAt": "2026-11-20T12:00:00Z"
     }
   ]

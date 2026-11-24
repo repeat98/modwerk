@@ -8,7 +8,7 @@
 //
 //   PR_BODY="$(gh pr view <n> --json body --jq .body)" PR_DRAFT=false PR_FILES="$(gh pr diff <n> --name-only)" node scripts/pr-body.mjs
 //   node scripts/pr-body.mjs FILE.md        # a description still in a file, before the pull request is open (as a ready one, with
-//                                           # this branch's files against origin/main)
+//                                           # this branch's files against upstream/main, or origin/main without that remote)
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
@@ -91,10 +91,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const template = readFileSync(new URL('../.github/pull_request_template.md', import.meta.url), 'utf8')
   const local = !!process.argv[2]
   // In CI the workflow passes the draft flag and the file names; locally, a description in a file is checked as a ready pull request
-  // of this branch against origin/main.
+  // of this branch against the base it merges into: upstream/main in a fork's checkout, whose origin/main is the fork's own and can lag
+  // by hundreds of files, else origin/main (as scripts/lane.mjs picks it).
   let files = (process.env.PR_FILES ?? '').split('\n').map(file => file.trim()).filter(Boolean)
   if (local && !process.env.PR_FILES) {
-    try { files = execFileSync('git', ['diff', '--name-only', 'origin/main...HEAD'], { encoding: 'utf8' }).split('\n').filter(Boolean) } catch { files = [] }
+    try {
+      const base = execFileSync('git', ['remote'], { encoding: 'utf8' }).split('\n').includes('upstream') ? 'upstream/main' : 'origin/main'
+      files = execFileSync('git', ['diff', '--name-only', base + '...HEAD'], { encoding: 'utf8' }).split('\n').filter(Boolean)
+    } catch { files = [] }
   }
   const problems = bodyProblems(local ? readFileSync(process.argv[2], 'utf8') : process.env.PR_BODY, template,
     { draft: process.env.PR_DRAFT === 'true', files })
