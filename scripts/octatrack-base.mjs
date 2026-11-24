@@ -7,6 +7,7 @@
 // a new directory outside Git: what `npm run device -- boot DIR` and the emulator's run scripts read. Firmware and generated images never enter the checkout.
 //
 //   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--upstream ELEKLOADER] [--write] [--out NEW-DIR]
+//   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --step --out NEW-DIR   # the step base (octatrack-step-base.mjs)
 // Private transport candidates may add --usb-midi and --usb-audio "USB AUDIO OUT TRACKS MAIN CUE". --site-events builds the
 // base that owns sdk/machines/octatrack/events.json's sites and tables and dispatches them to subscribed packages;
 // --table-owners also fills its table-owner storage from module-adapters/table-owners.json (the reviewed table owners).
@@ -38,7 +39,7 @@ import { keepSymbols } from '../src/dev/address-names.ts'
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
   write: { type: 'boolean', default: false }, out: { type: 'string' },
-  'packaged-usb-audio': { type: 'boolean', default: false }, 'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
+  'usb-input': { type: 'boolean', default: false }, 'packaged-usb-audio': { type: 'boolean', default: false }, 'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
   'table-owners': { type: 'boolean', default: false },
   'resident-stock-hooks': { type: 'boolean', default: false }, 'resident-on-demand': { type: 'boolean', default: false },
   'saved-set-export': { type: 'boolean', default: false },
@@ -46,12 +47,21 @@ const { values: args } = parseArgs({ options: {
   'cached-modules': { type: 'boolean', default: false },
   'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false }, 'part-menu': { type: 'boolean', default: false },
   'module-ui-roots': { type: 'boolean', default: false },
-  beta: { type: 'boolean', default: false },
+  beta: { type: 'boolean', default: false }, step: { type: 'boolean', default: false },
 } })
-if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
+if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR] | --step --out NEW-DIR')
+// --step: the step base's build folder (octatrack-step-base.mjs), for a unit whose base stages less than this one needs.
+if (args.step) {
+  const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'out', 'step'].includes(flag) && args[flag])
+  if (!args.out || own.length) throw new Error('--step takes only --stock and --out NEW-DIR' + (own.length ? ', not ' + own.map(flag => '--' + flag).join(', ') : '') + '.')
+  const { writeStepBase } = await import('./octatrack-step-base.mjs')
+  const built = await writeStepBase(args.stock, resolve(args.out))
+  console.log(`step base ${built.base}: .bin ${built.sha256} (${built.bin.length} bytes)\nsaved ${resolve(args.out)}: NOT_FLASH_CANDIDATE.bin, MAIN.raw, proofs.json`)
+  process.exit(0)
+}
 // The beta base's flags. A regeneration that spelled them out by hand dropped --cached-modules once (20 October 2026),
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
-const BETA = { 'usb-midi': true, 'packaged-usb-audio': true, 'site-events': true, 'table-owners': true,
+const BETA = { 'usb-input': true, 'usb-midi': true, 'packaged-usb-audio': true, 'site-events': true, 'table-owners': true,
   'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true,
   'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true, 'part-menu': true }
 if (args.beta) {
@@ -78,7 +88,7 @@ if (args['resident-on-demand'] && !args['resident-stock-hooks']) throw new Error
 if (args['resident-stock-hooks'] && !args['resident-on-demand']) throw new Error('--resident-stock-hooks needs --resident-on-demand: Analog BD’s engine is its package’s.')
 const work = mkdtempSync(join(tmpdir(), 'modwerk-base-')), core = join(work, 'core')
 const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
-  ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['packaged-usb-audio'] ? ['--packaged-usb-audio'] : []), ...(layout ? ['--usb-audio', layout] : []),
+  ...(args['usb-input'] ? ['--usb-input'] : []), ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['packaged-usb-audio'] ? ['--packaged-usb-audio'] : []), ...(layout ? ['--usb-audio', layout] : []),
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
@@ -177,6 +187,8 @@ if (args.out) {
   writeFileSync(join(args.out, 'NOT_FLASH_CANDIDATE.bin'), browser.bin)
   writeFileSync(join(args.out, 'MAIN.raw'), formats.mainImage(formats.parse(browser.bin, device), device))
   for (const name of ['proofs.json', 'symbols.json']) copyFileSync(join(core, name), join(args.out, name))
+  if (args['usb-input']) python(join(adapters, 'usb_audio_package.py'), '--usb-input', '--release',
+    '--stock', args.stock, '--upstream', args.upstream, '-o', join(args.out, 'usb-audio-input.mwrm'))
   try { keepSymbols(args.out) } catch { /* a crash record from this base then prints without names */ } // src/dev/address-names.ts
   console.log('saved ' + resolve(args.out) + ': NOT_FLASH_CANDIDATE.bin, MAIN.raw, proofs.json, symbols.json')
 }

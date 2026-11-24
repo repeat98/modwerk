@@ -3,7 +3,7 @@
 
 import { MODULE_DOCUMENTS } from './documents'
 import type { ModuleDocument } from './module-contract'
-import { measuredActiveCpu, measuredStackedCpuLimit } from './octatrack-resource-measurements'
+import { measuredActiveCpu, measuredFrameCost, measuredStackedCpuLimit } from './octatrack-resource-measurements'
 
 const HIGH = { tier: 'high', badge: 'High CPU' } as const
 const HEAVY = { tier: 'heavy', badge: 'Heavy CPU' } as const
@@ -14,12 +14,15 @@ export function classifyCpuCaution(document: ModuleDocument): ModuleCaution | un
   const active = measuredActiveCpu(document)
   const stacked = measuredStackedCpuLimit(document)
   const price = document.resources.cpuPrice
-  const frameShare = Math.max(active?.delta ?? 0, price?.value ?? 0)
+  const curve = measuredFrameCost(document)
+  const frameShare = Math.max(active?.delta ?? 0, price?.value ?? 0, curve?.first ?? 0)
   if (frameShare < 10 && !stacked) return
 
   const reading = active && active.delta === frameShare
     ? frameShare + ' percentage points of audio-frame load added with ' + active.workload + '.'
-    : price?.measure === 'machine-render'
+    : curve && curve.first === frameShare
+      ? frameShare + ' percentage points of audio-frame load for the first copy and ' + curve.each + ' for each further one in the hardware instance test.'
+      : price?.measure === 'machine-render'
       ? 'The release budgets ' + frameShare + '% of an audio frame per playing track.'
       : price && frameShare + ' percentage points of audio-frame load in the hardware price test.'
   const detail = [reading, stacked?.detail].filter(Boolean).join(' ')
