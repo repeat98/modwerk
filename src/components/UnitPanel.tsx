@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CARD_SET_FILE, CARD_RECOVERY_FILE, forCardImport } from '../engine/elekloader/card-set'
 import { firmwareFilename } from '../config/firmware-filename'
 import { prepareCardSet } from '../engine/elekloader/module-set'
-import { baseName, layoutName, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { baseName, describeBase, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import { knownBase } from '../config/base-download'
 import type { InventoryTarget } from '../config/inventory'
 import { comesWithBase } from '../config/usb-audio'
@@ -41,11 +41,6 @@ export function CardSetButton({ set, onInstall }: { set?: InventoryTarget; onIns
 }
 
 interface Written { file: Uint8Array; ids: string[]; base: string; layout: BaseLayout; other?: { base: string; from: 'unit' | 'download' } }
-/** A base by its version, with its USB Audio layout when the version alone doesn't tell two bases apart. */
-const describeBase = (base: string, other: string) => {
-  const layout = runningLayout(base)
-  return baseName(base) === baseName(other) && layout ? baseName(base) + ' (' + layoutName(layout) + ')' : baseName(base)
-}
 
 /** After the download: where the file goes, which base it is for, and a way to that base. */
 function CardSetDialog({ name, written, error, notice, onDownload, onInstall, onClose }: { name?: string; written?: Written; error?: string; notice?: string; onDownload: (ids: string[]) => void; onInstall?: (layout: BaseLayout) => void; onClose: () => void }) {
