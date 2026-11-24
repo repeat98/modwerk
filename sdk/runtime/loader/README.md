@@ -58,6 +58,10 @@ bytes: keep it private, like a firmware image. `verify_static.py` then links
 the same module statically with Elekloader and requires the package, placed
 at the same address, to match it byte for byte.
 
+A C module patches stock code with `--sites SITES.json`: each site, in a machine base's `base.json` format (`addr`,
+`len`, `stockSha256`, `op` `jsr` or `jmp`, `target` a function of the module), becomes an ABI 7 site that carries the
+stock bytes' SHA-256 instead of the bytes.
+
 ```sh
 python3 -B sdk/runtime/loader/build.py MODULE.c -o MODULE.mwrm
 npm run device -- try MODULE.mwrm --seconds 10   # scripts/device.mjs

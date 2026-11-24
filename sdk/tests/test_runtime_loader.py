@@ -65,6 +65,21 @@ class LoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'bounds'):
             build.package(b'', 0, [], [], [(0x40000400, b'\0' * 34, b'\0' * 34, [])])
 
+    def test_c_sources_patch_declared_sites_with_hashes_only(self):
+        # --sites: a jsr or jmp to the module's function, NOPs after it, its target word a relocation; the package holds
+        # the stock bytes' SHA-256 and no stock byte (ABI 7)
+        digest = hashlib.sha256(b'stock!').digest()
+        declared = [dict(addr='0x40007678', len=8, stockSha256=digest.hex(), op='jsr', target='frames_end')]
+        sites = build.c_sites(declared, {'frames_end': 0x20})
+        self.assertEqual(sites, [(0x40007678, digest, bytes.fromhex('4eb9000000204e71'), [2], 0, 8)])
+        data = build.package(b'\x4e\x75' * 32, 0, [build.NONE] * 4, [], sites, name='frames', hashed=True, title='frames')
+        self.assertEqual(struct.unpack('>H', data[4:6])[0], 7)
+        self.assertIn(digest, data)
+        self.assertNotIn(b'stock!', data)
+        for bad in (dict(op='bra'), dict(target='nowhere'), dict(len=4), dict(len=7)):
+            with self.assertRaises(ValueError):
+                build.c_sites([dict(declared[0], **bad)], {'frames_end': 0x20})
+
     def test_abi8_constant_initializers_are_explicit_and_bounded(self):
         image = bytes(544)
         digest = hashlib.sha256(b'authored fixture').digest()

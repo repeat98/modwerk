@@ -77,7 +77,13 @@ python3 -B sdk/runtime/loader/build.py sdk/machines/model-cycles/elekloader/exam
 mc_link.py try hello.mwrm --seconds 20 [--keep]
 mc_link.py mods
 mc_link.py keep | undo
+mc_link.py remove NAME --seconds 5 [--keep]   # an empty package with NAME's id: that module out, on trial
 ```
+
+A module patches stock code at declared sites: `build.py --sites SITES.json` takes them in base.json's format (a `jsr`
+or `jmp` to a function of the module, the stock bytes' SHA-256), and the base checks the running code before it
+patches and puts the stock bytes back at an undo or a removal. [`examples/frames.c`](elekloader/examples/frames.c)
+detours the call that ends each composed frame and shows the frames counted; `frames2.c` is its next version.
 
 - `try` loads the package to RAM on trial and pings once a second; at the end it undoes the set, or keeps it with
   `--keep`. Ten seconds without a link request in any phase but the normal one put the previous set back, as an
@@ -167,6 +173,9 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try` again while a pattern plays | `enter: unsafe`, the kept module unchanged |
 | the same | a power cycle | the flashed image runs (set CRC `0x4f182a66`), the square gone |
 | `acb91ea5…` RAM-booted again | `try hello.mwrm --seconds 60`, Ctrl-C on trial, `mods` 15 s later | the square went about 10 s after Ctrl-C; 0 live, no refusal |
+| the same | `try frames.mwrm --seconds 20` (site `0x40007678`), then `mem 0x40007678 6` and the masked-span counters | "F1 n" on the screen, the unit as usual; undone; the site holds `4e b9 40 07 00 a4` again; 11 masked spans, the longest 874 DMA-timer counts (about 6.5 µs, 1 % of a codec block) |
+| the same | `try frames.mwrm --seconds 5 --keep`, then `try v2/frames.mwrm --seconds 20` | "F1 n", on trial "F2 n" counting on, after the undo "F1 n" again; 1 live (`594cfd26 frames`) |
+| the same | `try hello.mwrm --seconds 5 --keep` beside frames, then `remove frames --seconds 5 --keep`, `mem 0x40007678 6` | 2 live, "F1 n" and the square; after the removal 1 live (`2cf24dba`), "F1" gone, the square stays, 65200 bytes free; the site holds the stock bytes |
 | the same | `try hello.mwrm --seconds 30`, PLAY on trial; STOP 5 s after the tool ends | the pattern plays without dropouts (tester's report); at the end `enter: unsafe (phase trial)`, the square stays while playing and goes about 10 s after the tool ended; 0 live |
 
 ## Not tested
@@ -181,6 +190,6 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 - A request while Transfer or another SysEx stream runs.
 - A host that stops reading in the middle of a reply.
 - A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
-- A module with stock-code sites, a replacement of a live module by a new version, a removal, several modules at
-  once, a package past 32 KiB or the pool's 64 KiB; key and encoder hooks that take events; the interrupts' masked
-  spans while a set switches (`mw_masked_max`, read with `mem`).
+- A package past 32 KiB or the pool's 64 KiB; key and encoder hooks that take events; a site under a task paused
+  inside it (the switch is refused and retried); more than two modules at once.
+- A trial's pool extent is freed at the next change, not at its undo (seen: 416 bytes held until then).

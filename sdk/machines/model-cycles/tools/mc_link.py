@@ -20,6 +20,7 @@ MKII link's (../analog-rytm-mkii/LINK.md). Nothing here writes flash.
     mc_link.py mods               # the runtime loader: pool, last refusal, the live modules
     mc_link.py try PKG.mwrm --seconds 20 [--keep]  # load a module to RAM on trial, then undo it (or keep it)
     mc_link.py keep | undo        # within 10 s of a trial's end: keep the set on trial, or put the last one back
+    mc_link.py remove NAME --seconds 5 [--keep]  # the module built as NAME.mwrm out, on trial (an empty package)
 
 Loading (base/modules.c) runs the Octatrack's upload controller (sdk/runtime/upload, wire version 1) over the
 link: each wire frame goes in parts (UP_PART, under 128 bytes a message), then UP_RUN runs it. Kept modules stay
@@ -102,6 +103,10 @@ def main():
     s.add_argument('package')
     s.add_argument('--seconds', type=float, default=20, help='how long the trial runs before the undo (or the keep)')
     s.add_argument('--keep', action='store_true', help='keep the set at the end instead of undoing it')
+    s = sub.add_parser('remove')
+    s.add_argument('name', help='the module\'s name: the stem its package was built with (hello for hello.mwrm)')
+    s.add_argument('--seconds', type=float, default=5)
+    s.add_argument('--keep', action='store_true', help='keep the removal at the end instead of undoing it')
     sub.add_parser('keep')
     sub.add_parser('undo')
     a = ap.parse_args()
@@ -123,7 +128,7 @@ def main():
         return rundiff(mido, ins[0], outs[0], a)
     if a.cmd == 'log':
         return log(mido, ins[0], outs[0], a)
-    if a.cmd in ('mods', 'try', 'keep', 'undo'):
+    if a.cmd in ('mods', 'try', 'remove', 'keep', 'undo'):
         with mido.open_input(ins[0]) as inp, mido.open_output(outs[0]) as out:
             return MODULE_COMMANDS[a.cmd](Link(mido, inp, out), a)
     if a.cmd == 'tap':
@@ -439,8 +444,14 @@ def finish(link, keep):
     print('%s: phase %s, generation %d' % ('kept' if keep else 'undone', PHASES[r['phase']], r['generation']))
 
 
+def empty_package(name):
+    """No image, hooks or sites under the module's id (build.py: the first four bytes of the SHA-256 of its name):
+    the loader removes that module."""
+    return b'MWRM' + struct.pack('>HH6I', 4, 0, 0, 0, 0, 0, 0, int.from_bytes(hashlib.sha256(name.encode()).digest()[:4], 'big'))
+
+
 def try_package(link, a):
-    pkg = open(a.package, 'rb').read()
+    pkg = empty_package(a.name) if a.cmd == 'remove' else open(a.package, 'rb').read()
     r = hello(link)
     session = r['session']
     if PHASES[r['phase']] != 'normal':
@@ -458,7 +469,8 @@ def try_package(link, a):
     while link.must('commit', t, session)['result'] == 12:
         pass
     link.must('leave', t, session)
-    print('%s on trial for %g s (%d bytes)' % (os.path.basename(a.package), a.seconds, len(pkg)))
+    print('%s on trial for %g s (%d bytes)' % ('removing ' + a.name if a.cmd == 'remove' else os.path.basename(a.package),
+                                              a.seconds, len(pkg)))
     end = time.time() + a.seconds
     try:
         while time.time() < end:
@@ -470,7 +482,7 @@ def try_package(link, a):
     mods(link, a)
 
 
-MODULE_COMMANDS = {'mods': mods, 'try': try_package, 'keep': lambda link, a: finish(link, True),
+MODULE_COMMANDS = {'mods': mods, 'try': try_package, 'remove': try_package, 'keep': lambda link, a: finish(link, True),
                    'undo': lambda link, a: finish(link, False)}
 
 

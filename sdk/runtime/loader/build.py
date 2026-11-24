@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Build a runtime module package (MWRM, ABI 4, 6 with DSP code, 7 from a catalogue module's manifest; README.md).
 
-From C sources (handlers found by name, modwerk_module.h):
+From C sources (handlers found by name, modwerk_module.h), with --sites SITES.json for jsr or jmp detours to the
+module at stock-code sites (ABI 7: the sites carry their stock bytes' SHA-256, never the bytes):
 
-    python3 -B sdk/runtime/loader/build.py MODULE.c [MORE.c ...] -o MODULE.mwrm
+    python3 -B sdk/runtime/loader/build.py MODULE.c [MORE.c ...] [--sites SITES.json] -o MODULE.mwrm
 
 From a catalogue module converted by Elekloader (build_ports.py), with its
 patches to stock code; the package then holds stock bytes, so keep it private:
@@ -1018,7 +1019,25 @@ def check_stock(sites, stock, upstream):
             raise ValueError('The stock bytes at %#x are not the ones the module names.' % address)
 
 
-def build_c(sources, cross, module, dsp=None, subscriptions=(), raises=()):
+OPCODES = {'jsr': b'\x4e\xb9', 'jmp': b'\x4e\xf9'}  # absolute long: the target word follows at offset 2
+
+
+def c_sites(declared, symbols):
+    """--sites: stock-code sites for C sources, in a machine base's base.json format (addr, len, stockSha256, op jsr or
+    jmp, target): the new bytes are the op to the module's target, NOPs after it; the package carries the stock bytes'
+    SHA-256 (ABI 7) and no stock byte, and the base checks the running code against it before it patches."""
+    sites = []
+    for site in declared:
+        address, length, op, target = int(site['addr'], 16), site['len'], site.get('op'), site.get('target')
+        if op not in OPCODES or target not in symbols or symbols[target] & 1 or length < 6 or length & 1:
+            raise ValueError('Site %s: op jsr or jmp to a function of the module, at least 6 bytes, an even length.'
+                             % site.get('addr'))
+        code = OPCODES[op] + struct.pack('>I', symbols[target]) + b'\x4e\x71' * ((length - 6) // 2)
+        sites.append((address, bytes.fromhex(site['stockSha256']), code, [2], 0, length))
+    return sites
+
+
+def build_c(sources, cross, module, dsp=None, subscriptions=(), raises=(), declared=()):
     spec = importlib.util.spec_from_file_location('runtime_c_codegen', HERE.parent / 'm68k_codegen.py')
     codegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(codegen)
     with tempfile.TemporaryDirectory() as tmp:
@@ -1034,8 +1053,11 @@ def build_c(sources, cross, module, dsp=None, subscriptions=(), raises=()):
     sited = bool(subscriptions or raises)  # site events or raised events: an ABI 8 package named by its stem
     if sited:
         hooks = subscribe(hooks, subscriptions, symbols, raises=raises)
-    return package(image, bss, hooks, offsets, name=module, dsp=dsp, abi=8 if sited else None, hashed=sited,
-                   title=module[:15] if sited else '')
+    sites = c_sites(declared, symbols)
+    if sites and dsp:
+        raise ValueError('--sites is for ColdFire modules without DSP code.')
+    return package(image, bss, hooks, offsets, sites, name=module, dsp=dsp, abi=8 if sited else None,
+                   hashed=sited or bool(sites), title=module[:15] if sited or sites else '')
 
 
 def build_elemod(args):
@@ -1104,6 +1126,8 @@ def main():
     parser.add_argument('--pinned', action='store_true', help='its ColdFire code names its effect id (ABI 6 flag 2)')
     parser.add_argument('--subscribe', action='append', default=[], metavar='EVENT:FN:ORDER',
                         help='C sources: subscribe FN to a site event of sdk/machines/octatrack/events.json (repeatable)')
+    parser.add_argument('--sites', type=Path, help='C sources: a JSON list of stock-code sites in base.json\'s format '
+                        '(addr, len, stockSha256, op jsr or jmp, target: a function of the module); ABI 7, hashes only')
     parser.add_argument('--raise', action='append', default=[], dest='raises', metavar='EVENT',
                         help='C sources: raise EVENT, an event of sdk/machines/octatrack/events.json with no site; the module '
                         'defines its zero word raise_EVENT in initialized data, which the loader points at the base\'s entry (repeatable)')
@@ -1111,7 +1135,7 @@ def main():
     if args.private_port and args.standalone:
         parser.error('--private-port prepares privately; --standalone builds the published package. Give one.')
     private = private_standalone(args, public=args.standalone) if args.private_port or args.standalone else None
-    if (args.subscribe or args.raises) and not args.sources:
+    if (args.subscribe or args.raises or args.sites) and not args.sources:
         parser.error('--subscribe and --raise are for C sources; an octabam module declares them in its runtime.json, an elemod in its "subscribe".')
     native = args.octabam or args.octabam_group or args.octabam_machine or args.octabam_tables
     if (bool(args.sources) + bool(args.elemod) + bool(args.octabam) + bool(args.octabam_group) + bool(args.octabam_machine)
@@ -1142,7 +1166,8 @@ def main():
             subscriptions = [dict(event=e, fn=f, order=int(o)) for e, f, o in (s.split(':') for s in args.subscribe)]
         except ValueError:
             parser.error('--subscribe takes EVENT:FN:ORDER')
-        data = build_c(args.sources, args.cross, args.output.stem, dsp, subscriptions, args.raises)
+        data = build_c(args.sources, args.cross, args.output.stem, dsp, subscriptions, args.raises,
+                       json.loads(args.sites.read_text()) if args.sites else ())
     else:
         image, relocations = page_section(args.page_from or pkg['id']) if 'id' in pkg and not args.no_page else (b'', [])
         bss, sites, copies, flags, hooks = 0, [], [], (1 if image else 0) | (2 if args.pinned else 0), []
