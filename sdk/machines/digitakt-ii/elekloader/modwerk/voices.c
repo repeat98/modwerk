@@ -6,13 +6,18 @@
  * sequencer trigs, the keyboard and MIDI alike. The base looks at each record as the frame takes it
  * (core_voice_event_entry, at 0x4002dff4) and moves a lead's note-on to the next free track of its group, and a
  * note-off to the track that holds that note. The record already names the lead's sound (+0x3c, or a sound lock's),
- * so the voice track plays the lead's sound with that trig's own locks; nothing in the kit changes.
+ * so the voice track plays the lead's sound with that trig's own locks.
  *
- * While linked, a voice track belongs to its lead: it plays the notes its lead sends, always with the lead's machine
- * (machine-frame.c sends the sound chip the lead's type for it). Its own steps play too, with the lead's sound (the
- * record's sound is pointed at the lead's), so chords recorded across the group play back as recorded; its own key
- * presses go to no track. Its own machine and sample never sound while it is linked, and play again once VOICES puts
- * it back on its own.
+ * While linked, a voice track belongs to its lead: its sound in the kit is a copy of the lead's (machine, filter, amp,
+ * effects, everything), kept up to date each frame and saved with the kit, and it plays the notes its lead sends,
+ * always with the lead's machine (machine-frame.c sends the sound chip the lead's type for it). Its own steps play
+ * too, so chords recorded across the group play back as recorded with the lead's sound; its own key presses go to no
+ * track. It keeps the copied sound once VOICES puts it back on its own. (Pointing a step's note record at the lead's
+ * sound instead was tried: part of a note's settings come from its own track, so it played louder and unfiltered.)
+ *
+ * Notes from the keys and MIDI fill the group from the lead up (the first note on the lead, the next on the next
+ * track), whatever the pattern plays there; the pattern's notes of the lead play on the lead, or, while it holds a
+ * note, on a voice track with no steps of its own, so they never land on recorded chord notes.
  *
  * Live recording: the sequencer's live-record routine (0x40048fb2, core_voice_record_entry) records a lead's note
  * from the keys or MIDI on the track that will play it, so each note of a chord lands as an ordinary step on its own
@@ -46,11 +51,17 @@ enum {
     NONE = 0xff,
     SEQUENCER = 1,           /* a record's source (+0x14) for the sequencer's notes */
     SOUND_STRIDE = 0x450,
+    SOUND_WORDS = SOUND_STRIDE / 4,
     PENDING = 8,             /* recorded notes the frame has not played yet */
-    PENDING_FRAMES = 512,    /* after which a pending entry is dropped */
+    PENDING_FRAMES = 64,     /* after which a pending entry is dropped (the frame plays it within a few) */
+    TRACK_STRIDE = 0x6a5,    /* a pattern's track data; its step words first, two bytes a step */
+    STEPS = 128,
+    TRACK_SETTINGS = 0x480,  /* a pattern track's settings after its steps */
+    TRACK_SETTINGS_BYTES = 16,
 };
 
 #define KIT_SOUNDS 0x426532ecu /* the kit's track sounds (a record's +0x3c without a sound lock), SOUND_STRIDE apart */
+#define CURRENT_PATTERN (*(const volatile uint32_t *)0x4316501cu)
 
 #define TARGETS ((volatile int16_t *)0x80003362u)          /* track t's value j at [VALUES * t + j] */
 #define NOTE_SOURCE ((const volatile uint32_t *)0x47db4310u) /* the source of the note each track holds, 0 none */
@@ -86,6 +97,58 @@ static int reserved(unsigned int track)
     return 0;
 }
 
+/* A track's sound in the kit made a copy of another's, a word at a time and only where they differ. Its own function,
+ * indexed, so the compiler does not reuse a post-incremented address register in one instruction
+ * (sdk/runtime/m68k_codegen.py refuses that). */
+static __attribute__((noinline)) void copy_sound(unsigned int to, unsigned int from)
+{
+    volatile uint32_t *const d = (volatile uint32_t *)(KIT_SOUNDS + SOUND_STRIDE * to);
+    const volatile uint32_t *const s = (const volatile uint32_t *)(KIT_SOUNDS + SOUND_STRIDE * from);
+    for (unsigned int k = 0; k < SOUND_WORDS; ++k) {
+        const uint32_t w = s[k];
+        if (d[k] != w) {
+            d[k] = w;
+        }
+    }
+}
+
+/* A track's settings in the current pattern made the lead's: the TRIG page defaults its steps fall back on (the note
+ * record's constructor at 0x400d6d24 reads them from +0x480 to +0x48b when a step sets no value of its own), then its
+ * length, swing and speed (+0x48c to +0x48f), so the voice's own steps play as the lead's would and stay in time with
+ * them. Without this a recorded chord note on a voice track took that track's own defaults (emulator: 9 dB louder and
+ * no envelope). */
+static void copy_track_settings(unsigned int to, unsigned int from)
+{
+    const uint32_t pattern = CURRENT_PATTERN;
+    if (!pattern) {
+        return;
+    }
+    volatile uint8_t *const d = (volatile uint8_t *)(pattern + TRACK_STRIDE * to + TRACK_SETTINGS);
+    const volatile uint8_t *const s = (const volatile uint8_t *)(pattern + TRACK_STRIDE * from + TRACK_SETTINGS);
+    for (unsigned int k = 0; k < TRACK_SETTINGS_BYTES; ++k) {
+        const uint8_t b = s[k];
+        if (d[k] != b) {
+            d[k] = b;
+        }
+    }
+}
+
+/* Whether a track has steps of its own in the current pattern (a trig on any step). */
+static int has_steps(unsigned int track)
+{
+    const uint32_t pattern = CURRENT_PATTERN;
+    if (!pattern) {
+        return 0;
+    }
+    const volatile uint8_t *const trigs = (const volatile uint8_t *)(pattern + TRACK_STRIDE * track);
+    for (unsigned int s = 0; s < STEPS; ++s) {
+        if (trigs[2 * s + 1] & 5u) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void regroup(void)
 {
     uint16_t found = 0;
@@ -111,8 +174,13 @@ static void regroup(void)
         }
         found |= (uint16_t)(1u << lead);
         next_voice[lead] = (uint8_t)lead;
-        /* The voices start as exact copies of the lead (every parameter, its sample slot included), so each note of
-         * a chord sounds alike whichever track plays it; later turns on the lead follow in core_voice_frame. */
+        /* The voices start as exact copies of the lead, their sounds in the kit and their parameter targets (every
+         * parameter, its sample slot included), so each note of a chord sounds alike whichever track plays it; later
+         * turns on the lead follow in core_voice_frame. */
+        for (unsigned int v = lead + 1; v < t; ++v) {
+            copy_sound(v, lead);
+            copy_track_settings(v, lead);
+        }
         for (unsigned int j = 0; j < VALUES; ++j) {
             const int16_t value = TARGETS[VALUES * lead + j];
             last[lead][j] = value;
@@ -124,18 +192,26 @@ static void regroup(void)
     leads = found;
 }
 
-/* The track a note-on of `lead` goes to: the first track of the group from the lead on that holds no note and is not
- * muted, so the lead takes the first note of a chord (the trig keys and most MIDI senders send a chord's notes from
- * the lowest up) and each next track the next; with every track busy, the next one in turn that is not muted, which
- * ends its note as stock ends a track's note for a new one. */
-static unsigned int pick(unsigned int lead, uint32_t mutes)
+static unsigned int group_size(unsigned int lead)
 {
     unsigned int size = 0;
     while (lead + size < TRACKS && lead_of[lead + size] == lead) {
         ++size;
     }
+    return size;
+}
+
+/* The track a note-on of `lead` from the keys or MIDI goes to: the first track of the group from the lead on that holds
+ * no note from the keys or MIDI (a pattern note there gives way), is not taken by a note just recorded and is not
+ * muted, so the lead takes the first note of a chord (the trig keys and most MIDI senders send a chord's notes from the
+ * lowest up) and each next track the next; with every track busy, the next one in turn that is not muted, which ends
+ * its note as stock ends a track's note for a new one. */
+static unsigned int pick(unsigned int lead, uint32_t mutes)
+{
+    const unsigned int size = group_size(lead);
     for (unsigned int t = lead; t < lead + size; ++t) {
-        if (!((mutes >> t) & 1u) && !NOTE_SOURCE[t] && !reserved(t)) {
+        const uint32_t held = NOTE_SOURCE[t];
+        if (!((mutes >> t) & 1u) && (!held || held == SEQUENCER) && !reserved(t)) {
             return t;
         }
     }
@@ -144,6 +220,23 @@ static unsigned int pick(unsigned int lead, uint32_t mutes)
         const unsigned int t = lead + (start + k) % size;
         if (!((mutes >> t) & 1u)) {
             next_voice[lead] = (uint8_t)(lead + ((t - lead + 1u) % size));
+            return t;
+        }
+    }
+    return lead;
+}
+
+/* The track a pattern note of `lead` goes to: the lead, or, while the lead holds a note, the first free voice track
+ * with no steps of its own (recorded chord notes there keep their track to themselves), so a long note rings on; with
+ * none, the lead, which ends its note as stock does. */
+static unsigned int pick_pattern(unsigned int lead, uint32_t mutes)
+{
+    if (!NOTE_SOURCE[lead]) {
+        return lead;
+    }
+    const unsigned int size = group_size(lead);
+    for (unsigned int t = lead + 1; t < lead + size; ++t) {
+        if (!((mutes >> t) & 1u) && !NOTE_SOURCE[t] && !reserved(t) && !has_steps(t)) {
             return t;
         }
     }
@@ -172,14 +265,9 @@ void core_voice_event(uint8_t *record)
         if (lead_of[lead] == NONE) {
             return;
         }
-        /* A linked voice track's own steps (chord notes recorded there) play with its lead's sound, unless the step
-         * locks a sound of its own; its own key presses go to no track (16). */
-        if (*(const uint32_t *)(record + 0x14) == SEQUENCER) {
-            uint32_t *const sound = (uint32_t *)(record + 0x3c);
-            if (*sound == KIT_SOUNDS + SOUND_STRIDE * lead) {
-                *sound = KIT_SOUNDS + SOUND_STRIDE * lead_of[lead];
-            }
-        } else {
+        /* A linked voice track's own steps (chord notes recorded there) play as they are: its sound is the lead's
+         * copy. Its own key presses go to no track (16). */
+        if (*(const uint32_t *)(record + 0x14) != SEQUENCER) {
             *(uint32_t *)(record + 0x10) = TRACKS;
         }
         return;
@@ -213,7 +301,7 @@ void core_voice_event(uint8_t *record)
             }
         }
         if (to == NONE) {
-            to = pick(lead, mutes);
+            to = source == SEQUENCER ? pick_pattern(lead, mutes) : pick(lead, mutes);
         }
     } else {
         const uint32_t source = *(const uint32_t *)(record + 0x14);
@@ -328,8 +416,14 @@ void core_voice_frame(void)
             v = lead + 1;
         }
         sync_next[lead] = (uint8_t)(v + 1 < end ? v + 1 : lead + 1);
-        if (v < end && !NOTE_SOURCE[v]) {
-            copy_values(TARGETS + VALUES * v, last[lead]);
+        if (v < end) {
+            /* The voice's sound in the kit and its pattern track's settings follow the lead's (its own steps load them
+             * when they play). */
+            copy_sound(v, lead);
+            copy_track_settings(v, lead);
+            if (!NOTE_SOURCE[v]) {
+                copy_values(TARGETS + VALUES * v, last[lead]);
+            }
         }
     }
 }
