@@ -2,6 +2,62 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.4: rests while no track uses it (24 November 2026)
+
+No code change. `runtime.json` marks POLY8's 11 frame-interrupt detours `"rests"` (0x4000bb0e, 0x4000e39e, 0x4000dd44,
+0x400041c4, 0x40007978, 0x4000c0d6, 0x4000c140, 0x4000bfe8, 0x4000f450, 0x4000b7bc, 0x40004d66). Its panel, keyboard
+and octave detours, its pokes and its renderer-table entries stay. On a base that judges machines (#1849, loader
+capability 2048, base 0.7.11 and later) the base rests POLY8 while no track of any Part of the project is POLY8: those
+detours hold stock's bytes and its `ev_play_increment`, `ev_voice_bind` and `ev_voice_bind_run` handlers leave the
+frame. Prepared by the owner in #1863 (20 November 2026), built and tested by Laslo (lasl00) with the owner's OK
+(agent board, 24 November 2026).
+
+**The package:** `public/octatrack-modules/poly8/0.3.4-experimental.mwrm`, 59,808 bytes, SHA-256
+`42180899c82146c15b48bdf049964d37f5d0228bafff1cbef2a062372c2c1db6`, the same bytes #1863's branch built. Built with
+`npm run octatrack:module-packages -- --stock <OS 1.40C> --upstream <elekloader>`, the strict stock-free scans passing.
+Same features and 23 sites as 0.3.3 (`1d9e9eca`); only the resting marks differ.
+
+**On a unit** (Laslo's MKII, OS 1.40C, the 0.8 development twin `2f0dcfa3` of main 6f31dd3c4, beta flags plus `--dev`,
+RAM-booted; project CPUCURVE2 at 120 BPM: A01 trigs every four steps on T1-T4, T6, T7 with T2 and T4 playing a
+generated 2 s stereo loop, A02 empty, A03 trigs on T1 T3 T6 T7 only, every curve track's Flex slot holding the loop).
+Each run a rolled-back trial of the package alone.
+
+| What | 0.3.3 (`1d9e9eca`) | 0.3.4 (`42180899`) |
+| --- | --- | --- |
+| At rest on A01 (`device:price`, 8 s, two runs each): frame interrupt / longest frame added | +1.3 / +4.6; +1.3 / +5.7 | **+0.0 / +0.6; +0.0 / 0** |
+| At rest on A03 (three runs each) | +1.3 / +4.5; +1.2 / +5.3 | **+0.0 / +0.9; +0.0 / -0.4; +0.0 / 0** |
+| The 11 sites (`mem:` against the stock OS) while it rests | patched | **stock's bytes** |
+| The same sites after POLY8 was picked on T1 | patched | patched (woken) |
+| Pick on T1, then T3, stopped after the empty pattern played | T1 admitted, T3 refused | T1 admitted, T3 refused |
+| In use: POLY8 on T1 playing A03, 15 s, frame / longest frame added | +30.3 / +41.3 | +30.2 / +49.2 |
+| In use, 30 s, on a freshly booted twin | +31.7 / +44.6, 0 renders skipped | +32.3 / +47.1, 0 renders skipped |
+| Stalls or crashes in every run | 0 | 0 |
+
+T3 was refused in both versions: the cost table on the unit (the last set synced) books POLY8's first instance at 51
+points, and a second does not fit on A03. In one more 30 s run of 0.3.4, on a twin that had run trials for some hours,
+the guard skipped 1 render (longest frame 112.4 %); the run after a fresh boot skipped none, and 0.3.3 costs the same in
+use, so it is POLY8's load at the frame line, not the rests.
+
+**By ear** (Laslo, the same runs): 0.3.3 and 0.3.4 sound the same on T1. In both, notes sound for about the first 5
+seconds of the 30 s window and then only the loop's own clicks are heard (the loop changes level every 250 ms, a click
+every two steps at 120 BPM, also with stock FLEX on the flashed base), while the frame interrupt stays about 32 points
+up. That is 0.3.3's behaviour as published, not this change; its cause is not known. On the development twin, stock
+FLEX on T1 with no module installed was heavily distorted on the right channel for 3 to 5 s, twice in one 30 s run and
+once in another (not in a third); on the flashed base 0.8 it was not.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, used nowhere | the 11 detours must hold stock's bytes and cost nothing | `device:price` at rest and `mem:` on the 11 sites during a rolled-back trial | pass: +0.0, stock's bytes |
+| Pick POLY8 while it rests | the wake writes 11 sites before the commit | pick on T1 after the empty pattern played, `mem:` after | pass: admitted, the sites patched, it plays |
+| POLY8 playing after a wake | it must cost and sound as 0.3.3 | 15 s and 30 s on A03 against 0.3.3, by ear | pass: the same cost, 0 skipped after a fresh boot, the same sound |
+| Undo of the trial that brought 0.3.4 | resting sites restored while resting | every trial rolled back, `mem:` in the next 0.3.3 trial | pass: rolled back each time |
+| A paste or project load brings a POLY8 track | stock reads POLY8's bytes for up to one UI tick | base host test (#1849) | pass (host); unit not run |
+| A Part or bank change to a Part with POLY8 while playing | must not need a wake | base host test | pass (host); unit not run |
+| A MIDI note on a channel shared with a POLY8 track | the wide-note detours rest only while no track is POLY8 | not run | not run: no MIDI source in this setup |
+| Chords and held chromatic keys after a wake | the panel and keyboard paths share state with the resting ones | not run | not run |
+| A base without capability 2048 | it refuses resting sites without ev_in_use | not run | not run: no older base on the unit |
+| Keep and a power cycle | a kept set must rest after the restart | not run | not run: no Keep on a RAM-booted twin |
+
 ## 0.3.3: less cost on tracks without POLY8 (14 November 2026)
 
 **Unit result** (the owner's MKII, development twin `0277c5c5` of main, 14 November 2026). The scene was the owner's project with four FLEX tracks sounding one loop at 126 BPM and T5-T8 silent, transport playing, POLY8 installed on no track, one module installed at a time. Each reading is a timed trial (`octatrack-price.mjs`) in RAM, rolled back by itself. Without modules the frame interrupt takes 41-42 %; with POLY8:
