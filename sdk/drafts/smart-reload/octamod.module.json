@@ -36,7 +36,7 @@
     "limitations": [
       "Only the Part in use is given the row's scenes: RELOAD from the Part menu for another Part is stock's.",
       "Stopped, the row is the one PLAY continues from; nothing changes when there is none.",
-      "Not yet run on a unit."
+      "Tested on one MKI only; not with other modules installed."
     ],
     "effectId": null
   },
@@ -63,8 +63,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 16 checks). Not yet run on a unit.",
-    "hardwareStatus": "untested",
+    "summary": "Host gate (verify.py, 16 checks). On the developer's MKI (OS 1.40C, base eb667962), build ec80422b2: RELOAD PART in arranger mode keeps and plays the current row's scenes, a -- side takes the saved Part's scene, pattern mode stays stock's, as the developer reported it.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [
       "Host gate: verify.py (smart_reload_host.c and the generated unit)",
