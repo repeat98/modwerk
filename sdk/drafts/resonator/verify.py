@@ -12,12 +12,19 @@ dispatcher, the panel and the sound on a unit.
 Gates:
   1. Every instruction decodes as the mnemonic written (no mpysu); the sample
      loop is straight-line.
-  2. MIX 0 is exact passthrough, MIX 100 leaves the dry at (28/128)^2; zero in
-     is exactly zero out with COLUN off and on.
+  2. MIX 0 is exact passthrough, MIX 100 leaves the dry at (28/128)^2, MIX 127
+     with the ring silenced is digital silence; zero in is exactly zero out
+     with COLUN off and on. The mix is at constant power (dry^2 + ring^2 = 1
+     from the table, for every MIX value). At the default setting, noise at
+     MIX 0, 32, 64, 96 and 127 changes level by under 3 dB per step (the
+     effects guide's check), and the ring alone (MIX 127) sits within 6 dB of
+     the dry on steady noise at DCAY 0, 32, 64, 96 and 127, within 2 dB of
+     each other. MIX 1-3 sit up to 0.15 dB under constant power (the
+     table's first step), from MIX 4 within 0.03 dB.
   3. Pitch: NOTE 69 rings at 440 Hz; Colundi degrees 78 and 79 at 440 and
      441 Hz, degree 0 at 10.8 Hz, each within 0.01 Hz, and degree 127 at
      12 kHz within 2 ppm, measured on a ten-second ring.
-  4. Voices and bodies, every partial within 0.05 Hz: MAJ on A3 in four
+  4. Voices and bodies, at GAIN 32, every partial within 0.05 Hz: MAJ on A3 in four
      voices; MAJ on degree 78 snapped to Colundi (440, 528, 639, 880 Hz);
      MAJ on D4 in C MAJ (diatonic: D minor); a root C#4 snapped down to C4;
      a MAJ triad in three voices; two STRNG voices of MAJ (four harmonics
@@ -233,11 +240,18 @@ def main():
     gate("every note's theta is exact", not off, f"(worst {cents:.2f} cents from the curve; differing: {off[:5]})")
     t60 = max(abs(-3 / (FS * math.log10(T["lerp_word"]("R", d) / Q)) / T["t60"](d) - 1) for d in range(128))
     gate("interpolated decay keeps T60 within 1 %", t60 < 0.01, f"(worst {100 * t60:.2f} %)")
-    gdb = max(abs(20 * math.log10(T["lerp_word"]("G", d) / ((1 - T["radius"](d)) ** 0.75 / 4 * Q))) for d in range(128))
+    gdb = max(abs(20 * math.log10(T["lerp_word"]("G", d) / (T["in_gain"](d) * Q))) for d in range(128))
     gate("interpolated input gain within 0.1 dB", gdb < 0.1, f"(worst {gdb:.3f} dB)")
     corner = max(abs(-math.log(1 - T["tonek_word"](v) / Q) * FS / (2 * math.pi) / T["tone_hz"](v) - 1)
                  for v in range(128))
     gate("interpolated TONE corner within 2 %", corner < 0.02, f"(worst {100 * corner:.2f} %)")
+    power = [10 * math.log10((1 + T["dry_word"](v) / Q) ** 2 + (T["lerp_word"]("WMIX", v) / Q) ** 2)
+             for v in range(128)]
+    dry = max(abs((1 + T["dry_word"](v) / Q) - T["dry_gain"](v)) * Q for v in range(128))
+    gate("MIX at constant power, the dry at (1 - MIX/128)^2",
+         max(map(abs, power)) < 0.15 and max(map(abs, power[4:])) < 0.03 and dry <= 1,
+         f"(dry^2 + ring^2 worst {max(power, key=abs):+.3f} dB, at MIX {max(range(128), key=lambda v: abs(power[v]))}; "
+         f"from MIX 4 {max(map(abs, power[4:])):.3f} dB; dry within {dry:.0f} LSB)")
 
     n = 4800
     tone = [round(0.7 * Q * math.sin(2 * math.pi * 330 * i / FS)) for i in range(n)]
@@ -249,6 +263,26 @@ def main():
     dry = max(map(abs, l[n // 2:])) / max(map(abs, tone))
     gate("MIX 100 keeps the dry at (1 - 100/128)^2", abs(dry / (28 / 128) ** 2 - 1) < 0.01,
          f"({20 * math.log10(dry):.1f} dB; GAIN 0 silences the ring)")
+    l, r, _ = run(work, mem, syms, knobs(GAIN=0, MIX=127), tone, tag="mix127")
+    gate("MIX 127 with the ring silenced is digital silence (no dry left)", not any(l) and not any(r))
+    sweep = burst(3 * FS, frames=FS, amp=0.5, seed=23)
+    levels = []
+    for v in (0, 32, 64, 96, 127):
+        l, r, _ = run(work, mem, syms, knobs(MIX=v), sweep, tag="sweep")
+        levels.append(10 * math.log10(sum(a * a for a in l + r) / (2 * len(l))))
+    steps = [b - a for a, b in zip(levels, levels[1:])]
+    gate("MIX 0, 32, 64, 96, 127 on noise at the default setting: under 3 dB per step",
+         all(abs(x) < 3 for x in steps), "(" + ", ".join(f"{x:+.1f}" for x in steps) + " dB)")
+    steady = burst(8 * FS, frames=8 * FS, amp=0.5, seed=29)
+    dry_rms = math.sqrt(sum(a * a for a in steady[6 * FS:]) / (2 * FS))
+    ring = []
+    for d in (0, 32, 64, 96, 127):
+        l, r, _ = run(work, mem, syms, knobs(MIX=127, DCAY=d), steady, tag="ring")
+        wet = math.sqrt(sum(a * a for a in l[6 * FS:] + r[6 * FS:]) / (4 * FS))
+        ring.append(20 * math.log10(wet / dry_rms))
+    gate("the ring alone on steady noise at DCAY 0-127: within 6 dB of the dry, within 2 dB of each other",
+         all(abs(x) < 6 for x in ring) and max(ring) - min(ring) < 2,
+         "(" + ", ".join(f"{x:+.1f}" for x in ring) + " dB)")
     for col in (0, 1):
         l, r, _ = run(work, mem, syms, knobs(PTCH=127, TYPE=TYPE["BELL"], DCAY=127, GAIN=127, MIX=127,
                                               COLUN=col, TONE=127, SCALE=60, VOIC=3), [0] * n, tag=f"zero{col}")
@@ -269,7 +303,7 @@ def main():
     print(f"dsp_host meter: {meter} instructions/sample max")
 
     long = 3 * FS
-    lit = dict(DCAY=127, GAIN=127, MIX=127)
+    lit = dict(DCAY=127, GAIN=32, MIX=127)   # GAIN 32 (0 dB) keeps a long ring out of the soft clip
     pure4 = dict(TYPE=TYPE["PURE"], VOIC=3, **lit)
     for name, kn, wants in (
             ("MAJ on A3, four voices", knobs(PTCH=57, CHRD=CHORD["MAJ"], **pure4), [nh(57), nh(61), nh(64), nh(69)]),

@@ -25,20 +25,22 @@
 ; interpolate linearly between every fourth value (tables.py).
 ;
 ; Input: (L+R)/8 through the TONE one-pole: low-pass below 64, flat at 64,
-; high-pass above. Output: modes 0 and 1 centre, 2/4/6 left, 3/5/7 right.
+; high-pass above. Output: modes 0 and 1 centre, 2/4/6 left, 3/5/7 right,
+; mixed at constant power: dry (1 - MIX)^2, ring sqrt(1 - dry^2).
 ; Every product uses an operand pair dsp_asm encodes as signed mpy/mac.
 ;
 ; r7 block, 89 words ($00-$58), all zeroed by init:
 ;   mode m at 7m: C, S, ul, vl, uh, vh, G      ($00-$37)
-;   $38/$3f right sum (low, high)  $39 wet gain  $3a mix  $3b tone state
+;   $38/$3f right sum (low, high)  $39 wet gain  $3a ring's mix gain  $3b tone state
 ;   $3c tone k  $3d low-pass weight  $3e direct weight  $40 mode counter
 ;   per block: $41 PTCH $42 chord row $43 DCAY $44 damping step $45 COLUN
-;   $46 SCALE $47 key $48 snap row $49 root note $4a target $4b/$4c unused $4d sin $4e cos $4f note
+;   $46 SCALE $47 key $48 snap row $49 root note $4a target $4b unused
+;   $4c the dry's mix gain minus 1 $4d sin $4e cos $4f note
 ;   (also rzlerp's index) $50 mode $51 voice $52 partial $53 type row
 ;   $54 voice row $55 partial ratio $56 partial level $57 voice theta
 ;   $58 exciter (read through r3)
 ; P table (tables.py OFF): NOTE 0 (note 127 first), COL 24, R 152, G 185, SEMI 218, CRATIO 274,
-; TRATIO 330, TAMP 386, VJ 442, TONEK 474, SNAP 508, KERNEL 628.
+; TRATIO 330, TAMP 386, VJ 442, TONEK 474, SNAP 508, KERNEL 628, WMIX 634.
 init:
         clr     a
         move    r7,r5
@@ -92,6 +94,29 @@ rztlow:
         move    y0,x:(r7+$3d)
         move    b,x:(r7+$3e)
 rztdone:
+; MIX m = v/128, at constant power: the dry falls as d = (1 - m)^2 (-26 dB
+; at 100), the ring rises as sqrt(1 - d^2), interpolated from the table.
+; $4c = d - 1 = m^2 - 2m, exactly -1 at 127 (only the ring); at 0 both
+; products are zero, so the dry passes bit for bit.
+        move    x:(r6+$5),a
+        and     #>$7f0000,a
+        move    a1,y1
+        asr     #$10,a,a
+        move    a1,x:(r7+$4f)
+        move    #>634,x0
+        bsr     rzlerp
+        move    a,x:(r7+$3a)
+        move    y1,x0
+        mpy     x0,x0,b
+        move    x0,a
+        asl     a
+        sub     a,b
+        move    x0,a
+        move    #>$7f0000,y0
+        cmp     y0,a
+        move    #>$800000,y0
+        teq     y0,b
+        move    b,x:(r7+$4c)
         move    x:(r6+$0),a
         and     #>$7f0000,a
         asr     #$10,a,a
@@ -338,23 +363,6 @@ rzaudio:
         move    x:(r6+$4),x0
         mpy     x0,x0,a
         move    a,x:(r7+$39)
-; MIX m: the dry falls as (1 - m)^2, so the ring takes over well before 127
-; (dry -26 dB at 100). k = 2m - m^2 is the wet share. 0 is exact dry
-; passthrough, 127 only the ring.
-        move    x:(r6+$5),a
-        and     #>$7f0000,a
-        move    #>$7f0000,x0
-        cmp     x0,a
-        beq     rzmixfull
-        move    a1,x0
-        mpy     x0,x0,b
-        asl     a
-        sub     b,a
-        bra     rzmixv
-rzmixfull:
-        move    #>$7fffff,a
-rzmixv:
-        move    a1,x:(r7+$3a)
         move    #>$1,n0
         move    #>4,n5
         move    #>7,n2
@@ -551,7 +559,7 @@ rzmixv:
         move    b,x:(r7+$3f)
         move    b0,x:(r7+$38)
 ; ---- left: gain x256 in two limited steps of x16 (the accumulator keeps its
-; eight guard bits), soft clip, then out = dry + 2*MIX*(wet/2 - dry/2).
+; eight guard bits), soft clip, then out = dry + ring*wet + (d - 1)*dry.
         asl     #$4,a,a
         move    a,x0
         move    x0,a
@@ -564,15 +572,13 @@ rzmixv:
         move    #>$2aaaab,y1
         move    x0,a
         mac     -y1,y0,a
-        move    x:(r0),b
-        asr     a
-        asr     b
-        sub     b,a
         move    a,x0
+        move    x:(r0),x1
+        move    x1,b
         move    x:(r7+$3a),y1
-        move    x:(r0),b
         mac     x0,y1,b
-        mac     x0,y1,b
+        move    x:(r7+$4c),y0
+        mac     x1,y0,b
         move    b,x:(r0)+
 ; ---- right, its sum restored to 48 bits like the left's
         move    x:(r7+$3f),a
@@ -589,15 +595,13 @@ rzmixv:
         move    #>$2aaaab,y1
         move    x0,a
         mac     -y1,y0,a
-        move    x:(r0),b
-        asr     a
-        asr     b
-        sub     b,a
         move    a,x0
+        move    x:(r0),x1
+        move    x1,b
         move    x:(r7+$3a),y1
-        move    x:(r0),b
         mac     x0,y1,b
-        mac     x0,y1,b
+        move    x:(r7+$4c),y0
+        mac     x1,y0,b
         move    b,x:(r0)+
 rzframe:
         nop

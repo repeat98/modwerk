@@ -79,14 +79,14 @@
       "default": 32,
       "count": 128,
       "labels": null,
-      "doc": "Ring level: 32 is 0 dB, 64 is +12 dB, 127 is +24 dB. Loud rings soft-clip at -3.5 dBFS."
+      "doc": "Ring level: 32 is 0 dB, where the ring on noise sits about 4 dB under the dry at any DCAY; 64 is +12 dB, 127 is +24 dB. Loud rings soft-clip at -3.5 dBFS."
     },
     {
       "name": "MIX",
       "default": 64,
       "count": 128,
       "labels": null,
-      "doc": "Dry/wet. 0 is exact passthrough and 127 only the ring; the dry falls as (1 - MIX/128)^2: -12 dB at 64, -26 dB at 100."
+      "doc": "Dry/wet at constant power. 0 is exact passthrough and 127 only the ring; the dry falls as (1 - MIX/128)^2 (-12 dB at 64, -26 dB at 100) and the ring rises to keep the power."
     },
     {
       "name": "COLUN",

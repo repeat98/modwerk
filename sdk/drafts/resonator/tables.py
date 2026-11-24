@@ -15,6 +15,8 @@
                20 kHz end) and 64, 68 ... 128 (high-pass corners); between them linear
   SNAP    120  per scale, the step from each pitch class to its nearest scale note
   KERNEL    6  sin(pi t) = t * P(t^2), P's Taylor coefficients / 8, highest first
+  WMIX     33  the ring's mix gain sqrt(1 - d^2) at MIX 0, 4 ... 128, d = (1 - MIX/128)^2 the dry's:
+               constant power; between them linear
 
 The Colundi sequence is Aleksi Perälä's: 128 absolute frequencies from
 colundi.net, here as tubbutec's full Scala file lists them (10.8 Hz base,
@@ -79,7 +81,7 @@ SCALE_LABELS = ("OFF",) + tuple(k + s for k in KEYS for s, _ in SCALES)
 assert len(SCALE_LABELS) == 121 and max(map(len, SCALE_LABELS)) <= 5
 
 SIZES = (("NOTE", 24), ("COL", 128), ("R", 33), ("G", 33), ("SEMI", 56), ("CRATIO", 56), ("TRATIO", 56),
-         ("TAMP", 56), ("VJ", 32), ("TONEK", 34), ("SNAP", 120), ("KERNEL", 6))
+         ("TAMP", 56), ("VJ", 32), ("TONEK", 34), ("SNAP", 120), ("KERNEL", 6), ("WMIX", 33))
 STEP = 4   # R, G and TONEK hold every fourth value; the DSP interpolates linearly between them
 OFF = {name: sum(n for _, n in SIZES[:i]) for i, (name, _) in enumerate(SIZES)}
 
@@ -94,6 +96,26 @@ def t60(d):
 
 def radius(d):
     return 10 ** (-3 / (FS * t60(d)))
+
+
+# The input gain per DCAY: G_SCALE * (1 - r)^G_EXP, cut by up to 2 dB below DCAY 32. A partial's ring on
+# noise goes as G / sqrt(1 - r), a hit's as G: 0.45 holds the ring on noise about 4 dB under the dry at
+# every DCAY (three voices of STRNG at GAIN 32); a ring as loud as the dry would drive hot hits through the
+# soft clip, whose ceiling (2/3 FS) is below a full-scale dry's. Short rings follow hits closest, hence the cut.
+G_EXP, G_SCALE = 0.45, 0.157
+
+
+def in_gain(d):
+    return G_SCALE * (1 - radius(d)) ** G_EXP * 10 ** (-max(0, 32 - d) / 320)
+
+
+def dry_gain(v):
+    """MIX v: the dry's gain (1 - v/128)^2; 127 is 0, only the ring."""
+    return 0.0 if v >= 127 else (1 - v / 128) ** 2
+
+
+def ring_gain(v):
+    return math.sqrt(1 - dry_gain(v) ** 2)
 
 
 def tone_hz(v, high=None):
@@ -151,6 +173,11 @@ def tonek_word(v):
     return lerp_word("TONEK", v + STEP) if v >= 64 else lerp_word("TONEK", v)
 
 
+def dry_word(v):
+    """The dry's gain minus 1, as the main call stores it: m^2 - 2m with m = v/128, -1 exactly at 127."""
+    return -Q if v == 127 else ((v << 16) * (v << 16) * 2 >> 24) - 2 * (v << 16)
+
+
 def table():
     semi, cratio = [], []
     for _, steps in CHORDS:
@@ -172,8 +199,9 @@ def table():
     kernel = [word(c / 8) for c in reversed([(-1) ** j * math.pi ** (2 * j + 1) / math.factorial(2 * j + 1)
                                              for j in range(6)])]
     t = (note + [theta(hz) for hz in COLUNDI_HZ]
-         + [word(radius(d)) for d in range(0, 129, STEP)] + [word((1 - radius(d)) ** 0.75 / 4) for d in range(0, 129, STEP)]
-         + semi + cratio + tratio + tamp + vj + tonek + snap + kernel)
+         + [word(radius(d)) for d in range(0, 129, STEP)] + [word(in_gain(d)) for d in range(0, 129, STEP)]
+         + semi + cratio + tratio + tamp + vj + tonek + snap + kernel
+         + [word(ring_gain(v)) for v in range(0, 129, STEP)])
     assert len(t) == sum(n for _, n in SIZES)
     return tuple(t)
 
@@ -181,5 +209,5 @@ def table():
 TABLE = table()
 assert len(CHORDS) * 4 == 56 and len(TYPES) * MODES == 56
 assert OFF == {"NOTE": 0, "COL": 24, "R": 152, "G": 185, "SEMI": 218, "CRATIO": 274, "TRATIO": 330, "TAMP": 386,
-               "VJ": 442, "TONEK": 474, "SNAP": 508, "KERNEL": 628}, OFF
-assert len(TABLE) == 634
+               "VJ": 442, "TONEK": 474, "SNAP": 508, "KERNEL": 628, "WMIX": 634}, OFF
+assert len(TABLE) == 667
