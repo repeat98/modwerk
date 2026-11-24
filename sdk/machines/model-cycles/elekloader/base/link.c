@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The Model:Cycles' development link over USB MIDI, in development bases only (base.json's dev,
-// npm run machine:base -- model-cycles --dev); release bases never carry it. A host on the computer
-// asks for the link's identity, reads memory, presses keys and turns encoders as the panel does, and boots an
-// uploaded image from RAM without writing the flash.
+// The Model:Cycles' link over USB MIDI. Every base carries its part for musicians' units, as the Octatrack's does: a
+// host asks for the link's identity (with the set identity), the audio load and the diagnostics log (LOG reads only
+// the log), and loads modules without a reflash (UP_PART, UP_RUN, MODS: the runtime loader, modules.c). Development
+// bases (base.json's dev, npm run machine:base -- model-cycles --dev, MODWERK_DEV) add what only a developer's unit
+// should answer: memory reads, panel keys and encoder turns, and booting an uploaded image from RAM.
 // After the Analog Rytm MKII's link by Nathaniel Pavel (sdk/machines/analog-rytm-mkii/elekloader/base/link.c),
 // with the same wire format, so its host tool's framing applies.
 //
@@ -21,6 +22,7 @@
 //   them: 1 the MIDI setting's choice, 2 USB (it writes the USB controller), 3 DIN, 4 both. A request
 //   from USB arrives with port 2 (a unit, 23 November 2026); the link serves USB only and drops its
 //   messages from any other port. The reply goes back on port 2; IDENT reports the port.
+// Development bases only (MODWERK_DEV):
 // - Keys and encoders go on the UI task's queue (its address at 0x40148cd0, queue_put 0x40001fba) as the panel's
 //   messages do: {type 0 key / 1 encoder, id, flags or a signed step in the top byte, time}. The UI loop
 //   (0x400080e6) plays them through the core's ev_key/ev_enc and stock, so modules see them too. Stock's
@@ -64,6 +66,7 @@
 #define LOAD_TIMER_NOW (*(volatile uint32_t *)0xfc07000c)  // DMA timer 0, as load.s reads it
 #define CMD_DIAG 0x22                   // the Digitone II link's number
 #define CMD_LOAD 0x23
+#define CMD_LOG 0x24                    // bytes of the diagnostics log, and nothing else
 #define CMD_DISARM 0x02
 #define CMD_KEY 0x10
 #define CMD_ENC 0x11
@@ -137,6 +140,7 @@ extern unsigned mw_modules_run(uint32_t length, uint8_t *out);
 extern unsigned mw_modules_list(uint32_t first, unsigned most, uint8_t *out);
 extern void mw_modules_tick(void);
 
+#ifdef MODWERK_DEV
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed = 1, human_ticks = -1, release_due, ramboot_due;
 static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
@@ -259,6 +263,8 @@ int mw_link_enc(void *brain, char *event)
     return 0;
 }
 
+#endif
+
 // From link.s, in the MIDI task, for every SysEx stock's router gets. 1: taken.
 int mw_link_rx(const uint8_t *msg, int len, int port)
 {
@@ -342,12 +348,14 @@ static void send(uint8_t *end, int port)
         send_fails++;
 }
 
+#ifdef MODWERK_DEV
 static int readable(uint32_t a, uint32_t n)
 {
     if (n == 0 || n > MEM_MAX || a + n < a)
         return 0;
     return (a >= 0x40000000 && a + n <= DDR_END) || (a >= 0x80000000 && a + n <= 0x80010000);
 }
+#endif
 
 static void act(const uint8_t *m, int len, int port)
 {
@@ -369,11 +377,16 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, (uint32_t)port);
         p = put32(p, sent_count);
         p = put32(p, send_fails);
+#ifdef MODWERK_DEV
         p = put32(p, (uint32_t)armed);
         p = put32(p, human_ticks >= 0 && human_ticks < HUMAN_TICKS);
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
+#else
+        for (int i = 0; i < 5; i++)     // the same fields: a release base has no keys, so never armed
+            p = put32(p, 0);
+#endif
         p = put32(p, MAILBOX[0]);
         p = put32(p, MAILBOX[6]);
         p = put32(p, MAILBOX[4]);
@@ -396,6 +409,26 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, mw_load_blocks);
         send(p, port);
         return;
+    case CMD_LOG: {                     // offset into the log and a count, as MEM's reply: offset, count, bytes
+        uint32_t at, count;
+        if (n < 10) {
+            send(begin(seq, cmd, ST_BAD), port);
+            return;
+        }
+        at = get32(a);
+        count = get32(a + 5);
+        if (count == 0 || count > MEM_MAX || at > sizeof mw_diag_log || count > sizeof mw_diag_log - at) {
+            send(begin(seq, cmd, ST_RANGE), port);
+            return;
+        }
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, at);
+        p = put32(p, count);
+        p = pack(p, (const volatile uint8_t *)&mw_diag_log + at, (int)count);
+        send(p, port);
+        return;
+    }
+#ifdef MODWERK_DEV
     case CMD_RAMBOOT: {
         int status = ST_OK, i;
         if (!armed)
@@ -470,6 +503,7 @@ static void act(const uint8_t *m, int len, int port)
         send(p, port);
         return;
     }
+#endif
     case CMD_UP_PART:                   // offset, then up to 96 bytes packed
         if (n < 7 || !mw_modules_part(get32(a), a + 5, (unsigned)(n - 5))) {
             send(begin(seq, cmd, n < 7 ? ST_BAD : ST_RANGE), port);
@@ -496,7 +530,7 @@ static void act(const uint8_t *m, int len, int port)
     }
 }
 
-
+#ifdef MODWERK_DEV
 extern void mw_cache_off(void);         // link.s: every dirty line of the data cache out, then the cache off
 extern void mw_link_reset(void) __attribute__((noreturn));
 extern void mw_boot_enter(uint32_t arg) __attribute__((noreturn));
@@ -526,12 +560,14 @@ static void __attribute__((noinline, noreturn)) mw_link_ramboot_go(void)
     mb[0] = MB_ASKED;
     mw_link_reset();
 }
+#endif
 
 void mw_link_tick(char *ctrl)
 {
     int done;
     (void)ctrl;
     ticks++;
+#ifdef MODWERK_DEV
     if (ramboot_due && ++ramboot_due > 3)
         mw_link_ramboot_go();           // a few ticks: the reply is out
     if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
@@ -547,6 +583,7 @@ void mw_link_tick(char *ctrl)
         pend_tail = pend_seen = pend_head;
         pend_age = 0;
     }
+#endif
     for (done = 0; done < PER_TICK && ring_tail != ring_head; done++) {
         uint32_t t = ring_tail;
         act(ring[t % RING], ring_len[t % RING], ring_port[t % RING]);
@@ -555,7 +592,7 @@ void mw_link_tick(char *ctrl)
     mw_modules_tick();
 }
 
-// ---- RAM boot: the gate ------------------------------------------------------
+// ---- the boot gate: the set identity; in development bases, the RAM boot -------
 static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  // zlib's
 {
     uint32_t c = ~0u;
@@ -568,6 +605,7 @@ static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  /
     return ~c;
 }
 
+#ifdef MODWERK_DEV
 static uint32_t be32(const uint8_t *p)
 {
     return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
@@ -668,18 +706,17 @@ static uint32_t __attribute__((noinline, hot)) depack(const uint8_t *sec, uint32
     return s.bad || s.p != s.end ? 0 : n;
 }
 
+#endif
+
 // ev_boot, first: after the core's boot (the mods' code in place, their .bss zeroed), before stock copies .data and
 // clears .bss. The data cache is off here. Returns to boot the flashed image; does not return when it unpacks and
 // enters the copy.
-void mw_boot_gate(void)
+#ifdef MODWERK_DEV
+static void ramboot_gate(void)
 {
     volatile uint32_t *mb = MAILBOX;
     const uint8_t *c = COPY, *e;
     uint32_t magic = mb[0], clen, ulen, off, plen, i, count, arg;
-    run_bytes = (uint32_t)__run_words * 4;  // first: no handler has written to .run yet
-    run_crc = crc32(__run_start, run_bytes);
-    mw_modules_identity(run_crc);
-    mw_diag_start(LOAD_TIMER_NOW ^ run_crc, run_crc);
     if (magic != MB_ASKED && magic != MB_SPENT)
         return;
     mb[0] = 0;                          // one shot, whatever happens next
@@ -722,4 +759,16 @@ void mw_boot_gate(void)
         mw_boot_enter(arg);
     }
     mw_link_reset();
+}
+#endif
+
+void mw_boot_gate(void)
+{
+    run_bytes = (uint32_t)__run_words * 4;  // first: no handler has written to .run yet
+    run_crc = crc32(__run_start, run_bytes);
+    mw_modules_identity(run_crc);
+    mw_diag_start(LOAD_TIMER_NOW ^ run_crc, run_crc);
+#ifdef MODWERK_DEV
+    ramboot_gate();
+#endif
 }
