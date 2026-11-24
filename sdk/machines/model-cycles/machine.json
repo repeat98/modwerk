@@ -80,8 +80,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 236,
-        "note": "Pinned Modwerk base: 220 bytes .run plus 16 bytes .bss (and 76 bytes .boot). The linker measures each selected set."
+        "value": 153790,
+        "note": "Pinned Modwerk base: 37994 bytes .run plus 115796 bytes .bss (and 76 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
       }
     ]
   },
