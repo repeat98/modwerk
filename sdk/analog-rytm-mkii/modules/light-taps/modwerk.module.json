@@ -75,9 +75,9 @@
     "memoryBytes": 1016,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "No measurable change: audio load L 71-73 % with and without Light Taps, peak 75 % against 76 %",
+      "method": "hardware",
+      "conditions": "@filefolder's Analog Rytm MKII, OS 1.74, 2026-11-23 (reported). The same project and pattern playing, with light taps and firm hits, for about 30 s per build. A throwaway readout of core-ar2's core_audio_load (never committed) showed the busiest block per second and the peak since boot. LD0A, the plain base and the readout: L 71-73 %, peak 76 %. LD0B, the same plus Light Taps as in LT03, LIGHT TAPS ON: L 71-73 %, peak 75 %. Light Taps runs in the panel task, not the audio interrupt."
     }
   },
   "evidence": {
