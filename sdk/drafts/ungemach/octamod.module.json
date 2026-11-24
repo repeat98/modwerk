@@ -127,11 +127,20 @@
       "method": "hardware",
       "conditions": "Author's Octatrack MKI, OS 1.40C, Modwerk USB base 0.7.10 (6070a4e4), the author's full live-set pattern with seven Flex tracks. A diagnostic build of the same engine timed the whole callback with the 132 MHz DTCN3 timer, as the base's guard does, and reported the mean a frame each second: 37-43 microseconds for long stretches and 49-60 for others, with the same settings (22 November 2026). The value is the highest mean, 60 microseconds, in core cycles (twice the timer's ticks). The longest single frame was not recorded.",
       "source": "TESTING.md"
+    },
+    "cpuPrice": {
+      "value": 15,
+      "unit": "percent-of-frame",
+      "measure": "machine-render",
+      "tool": "npm run device -- do (guard)",
+      "date": "2026-11-24",
+      "conditions": "Author's Octatrack MKI, OS 1.40C, a development twin (4c7eb79b) of the beta base, release package a8bcdca3. A scratch pattern with only T1 playing, a trig on every step and no sample, default UNGEMACH settings: T1 on UNGEMACH read 43.9 % of a frame in the frame interrupt, the same track on FLEX 29.8 % (two 6-second windows each, no skipped frames), so 14.1 points, rounded up. UNGEMACH renders while the sequencer runs whether or not its track trigs: the same pattern without trigs read 43.5-43.6 %.",
+      "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). Not yet run: device:qualify, the CPU price, a project reloaded without the module, Part and bank changes, a power cycle after a Keep, and any MKII.",
+    "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). The release package (24 November 2026, development twin 4c7eb79b): CPU price 14.1 points (15 %), first instance 14.6 % of a frame, admitted alone on an empty and a medium pattern with no dropped render, and device:qualify passed, Part and bank changes included. Not yet run: a project reloaded without the module, a power cycle after a Keep, and any MKII.",
     "hardwareStatus": "reported",
     "evidenceRevision": "8a5d506a212947cff937536337247fe574be2d44",
     "gates": [

@@ -4,7 +4,9 @@ Everything here was observed by the author (GnocchiBalboa) and the coding agent 
 
 ## 0.1.0-experimental, 22 November 2026
 
-This version's source (commit 8a5d506a, `module/ungemach`) is the engine of the diagnostic build v68d with the measurement code compiled out; its output renders identically to v68 (see Host tests). On the author's live-set MKI, v68d was kept, played and measured (Performance below), and its sound accepted. The release package built from this exact commit has not been on a unit yet; `device:qualify`, the CPU price and the persistence checks are still to run on it.
+This version's source (commit 8a5d506a, `module/ungemach`) is the engine of the diagnostic build v68d with the measurement code compiled out; its output renders identically to v68 (see Host tests). On the author's live-set MKI, v68d was kept, played and measured (Performance below), and its sound accepted.
+
+On 24 November 2026 the release package of this source, `a8bcdca3`, was priced and qualified on the same MKI (CPU price and Qualification below). The package now carries that price in its descriptor (`reserved[0]` = 15), which is the only byte that differs: `37d7a278`. The power cycle after a Keep and a project opened without the module are still to run.
 
 ## Units and base
 
@@ -25,7 +27,7 @@ The cleanup for this draft (removed measurement and PC-only code, unused tables,
 - **One track a Part** (package v32 `d3b5f1e4`, Probe-Octa, 19 November 2026): a second track shows UNGEMACH in the machine list but cannot pick it. After T1 went back to FLEX, T2 could pick it.
 - **Controls** (live-set unit, builds v60 to v68, 21-22 November 2026): every SRC knob and SPRD and PNCH were turned while the pattern played; parameter locks on PTCH ran on every trig; an LFO on DIRT moved it (the diagnostic log showed DIRT's range moving with it); a crossfader scene changing UNGEMACH parameters was moved and held. The author judged PNCH, WAVE, DIRT, RATE and DISS by ear and accepted v68's sound.
 - **Keeps:** each build was kept with `device -- try --accept` and played; the author replugged USB or power-cycled between builds when the bridge needed it.
-- **Not tested:** a project reloaded without the module, Part and bank changes with an UNGEMACH track, a power cycle after a Keep with the project reloaded, MIDI floods, `npm run device:qualify`, and any MKII.
+- **Not tested:** a project reloaded without the module, a power cycle after a Keep with the project reloaded, MIDI floods, and any MKII. Part and bank changes ran in `device:qualify` (below).
 
 ## Performance on the live-set unit
 
@@ -57,7 +59,29 @@ LCUT was removed for this reason; the code size of the render loop matters more 
 
 ## CPU price
 
-Not measured yet (`npm run device -- do`, `guard`).
+Measured 24 November 2026 on the author's MKI, OS 1.40C, RAM-booted with a development twin of the beta base (`4c7eb79b`, built with `--dev` from `d0dc7166`), release package `a8bcdca3`, as a trial that was rolled back. A scratch project, bank A: A01 a medium pattern (T1-T7 with trigs on steps 1, 5, 9 and 13, samples on T2 and T3), A02 empty, A03 only T1 with a trig on every step and no sample. UNGEMACH at its Part defaults.
+
+| Reading (`PLAY w2500 guard w6000 guard STOP`, the second line, twice each) | In the frame interrupt | Skipped |
+| --- | --- | --- |
+| T1 UNGEMACH, A03 | 43.9 %, 43.9 % | 0 |
+| T1 UNGEMACH, A02 (no trigs) | 43.6 %, 43.5 % | 0 |
+| T1 FLEX, A03 | 29.8 %, 29.8 % | 0 |
+
+**Price: 14.1 points, so 15 %** (`resources.cpuPrice`, `reserved[0]`). UNGEMACH renders while the sequencer runs whether or not its track trigs, so the price is the machine against the same track on FLEX.
+
+**Instance curve** (`device:price --curve T1`, `evidence/frame-cost.json`): installed on no track it added nothing (rest 0). On A03 the first instance raised the longest frame from 63.1 to 77.7 % (first 14.6). On the medium pattern A01 it read 78.7 to 102.2 % (+23.5): past 100 % that is the overload, not the module's cost, so the curve is A03's. Admission: picked on A02 and played there, admitted, longest frame 70.8 %, 0 dropped renders, 0 stalls; played on A01, admitted, longest frame 97.6 %, 0 dropped, 0 stalls. The `cpu` line after the pick showed the base booking the default 12 % (this package named no price yet).
+
+The price tool's trial did not roll back by itself in any of its three runs (it printed "THE TRIAL DID NOT ROLL BACK"); each time `recover` rolled it back and the inventory read empty.
+
+## Qualification
+
+`device:qualify --keeps-ok --seconds 30` on the same twin and scratch project, release package `a8bcdca3`, 24 November 2026 (on Windows through a small wrapper that maps the script's Unix socket to the session's TCP port; the script itself unchanged). **Result: passed, no failures.**
+
+- UNGEMACH alone, playing: on T1 its longest render 39.2 % of a frame, T1-4 core peak 394 per mille, CPU 602 per mille; on T5 its longest render 65.3 %, T5-8 core peak 419, CPU 612. Mean frame interrupt quiet against triggered: T1 42.7 / 43.2 %, T5 45.0 / 45.4 %.
+- On T1-T8 at once: T1 ran UNGEMACH, T2-T8 were refused (one track a Part, as intended). CPU 608, core peaks 395 and 483 per mille.
+- The six SRC knobs swept while playing; Part switches 12 of 12 ran their own effects within 3 s; a queued pattern change into another bank and back.
+- Afterwards the Part reloaded from its saved copy byte for byte, the module was removed and the inventory was empty. No crash or stall recorded.
+- Not covered: listening, a power cycle and what survives it, MIDI, scenes and recording, UNGEMACH beside other installed modules.
 
 ## Stock flows
 

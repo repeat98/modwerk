@@ -362,6 +362,7 @@ const struct modwerk_machine_setup ungemach_machine = {
         .track_page = ungemach_track_page,
         .render = ungemach_render_track,
         .leave = ungemach_leave,
+        .reserved = {15},   /* the CPU price, % of a frame (resources.cpuPrice): 14.1 measured, rounded up */
     },
     .page = ungemach_setup_page,
     .knob = ungemach_setup_knob,
