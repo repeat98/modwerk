@@ -252,6 +252,22 @@ describe('a release of an effect or a machine carries its instance curve', () =>
     expect(curveProblem({ points: [79, 92], admission: [run('empty'), run('medium')] })).toBeNull()
   })
 
+  it('lets the owner\'s approval of this exact version waive the release cost, and nothing else', () => {
+    const run = (pattern, more = {}) => ({ pattern, admitted: true, frameMax: 80, dropped: 0, stalls: 0, seconds: 8, ...more })
+    const refused = [run('empty'), run('medium', { admitted: false, why: 'CPU FULL' })] // Grain and POLY8 on the medium pattern
+    const approval = (more = {}) => ({ 'sdk/approvals/echo-build-approval.json': { kind: 'owner-approved-update', id: 'echo', version: '0.2.0', approvedBy: 'repeat98', waived: ['current-build-hardware', 'release-cost'], ...more } })
+    const record = version => ({ ['sdk/octatrack/modules/echo/' + FRAME_COST_RECORD]: { module: 'echo', version, base: 'twin', measuredAt: '2026-11-24T10:00:00Z', first: 33.3, each: 33.3, points: [60, 93.3], admission: refused } })
+    const status = (files, document = effect('echo', '0.2.0')) => frameCostStatus({ root: fixture({ ...record('0.2.0'), ...dated('echo', '0.2.0', RELEASE_COST_FROM), ...files }), document, glue: {} })
+    expect(status(approval())).toMatchObject({ state: 'ok', detail: expect.stringContaining('waived by the owner for this version') })
+    expect(status({}).state).toBe('fail')
+    expect(status(approval({ waived: ['current-build-hardware'] })).state).toBe('fail')
+    expect(status(approval({ version: '0.1.3' })).state).toBe('fail') // an approval of another version
+    expect(status(approval({ approvedBy: 'someone' })).state).toBe('fail')
+    expect(status(approval(), { ...effect('echo', '0.2.0'), tests: { qualification: {} } }).state).toBe('fail') // the approval is not validated then
+    // it never stands in for a curve read on this version
+    expect(frameCostStatus({ root: fixture({ ...record('0.1.3'), ...dated('echo', '0.2.0', RELEASE_COST_FROM), ...approval() }), document: effect('echo', '0.2.0'), glue: {} }).state).toBe('fail')
+  })
+
   it('refuses a price measured on another version from RELEASE_COST_FROM', () => {
     const reading = version => ({ 'sdk/octatrack/modules/echo/evidence/cpu-price.json': { module: 'echo', version, result: { atRestAdds: { frame: 0.2 }, inUseAdds: { frame: 1.3 } } } })
     const document = { ...module('echo', 'FX2', { ...share(1.3), source: 'evidence/cpu-price.json' }), version: '0.2.0' }

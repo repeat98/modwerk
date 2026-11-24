@@ -60,7 +60,7 @@ A machine without a USB link runs the steps its tools reach, and the record list
 
 ## What a release measures
 
-Every release of an Octatrack module proves these on a unit, on the version it ships (owner, 23 November 2026). `module:doctor` and `modules:check` refuse a release dated from 24 November 2026 without them, whenever its module was first listed; step 9 runs the unit part.
+Every release of an Octatrack module proves these on a unit, on the version it ships (owner, 23 November 2026). `module:doctor` and `modules:check` refuse a release dated from 24 November 2026 without them, whenever its module was first listed; step 9 runs the unit part. Only the owner can excuse a curve's first reading or admission run, for one exact version: `release-cost` in the module's approval (`sdk/approvals/<id>-build-approval.json`). The curve itself is still read on that version.
 
 | Figure | What it is | Command | Record |
 | --- | --- | --- | --- |
