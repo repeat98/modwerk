@@ -1,0 +1,1 @@
+The Octatrack USB bridge now answers a second client at once with "another client is using the bridge" while one is connected (the developer MCP keeps its connection open), instead of leaving a device command to time out with "No reply to setup …".

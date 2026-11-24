@@ -68,6 +68,14 @@ class ReplaceLiteral(unittest.TestCase):
         self.assertEqual(builder.replace_literal(across, 0, bytes(2) + empty, bytes(range(1, 11)), self.stock_at),
                          [['hex', '0102'], ['hex', '030405060708090a'], ['hex', 'ccdd']])
 
+    def test_the_base_digest_becomes_literal_where_its_end_was_stored_as_stock(self):
+        # build_core.py keeps IDENTIFY's digest authored: a hash ending in 0x00 before zero padding can be stored as
+        # the start of a stock reference, and the site's baseIdentity then refuses the package.
+        digest = bytes(range(1, 32)) + bytes(1)
+        parts = [['hex', digest[:31].hex()], ['stock', '0x00001010', 8]]
+        self.assertEqual(builder.replace_literal(parts, 0, digest, digest, self.stock_at),
+                         [['hex', digest[:31].hex()], ['hex', '00'], ['stock', '0x00001011', 7]])
+
     def test_a_stock_reference_that_differs_or_cannot_be_read_is_refused(self):
         parts = [['stock', '0x00001000', 8]]
         with self.assertRaises(ValueError):

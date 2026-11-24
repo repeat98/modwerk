@@ -11,16 +11,43 @@ import json
 import pathlib
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+ADAPTERS = ROOT / 'sdk/machines/octatrack/module-adapters'
 sys.path.insert(0, str(ROOT / 'sdk/runtime/loader'))
+sys.path.insert(0, str(ADAPTERS))
 import abi9  # noqa: E402
+import build  # noqa: E402
 
-ROWS = ROOT / 'sdk/machines/octatrack/module-adapters/controller-policies.json'
+ROWS = ADAPTERS / 'controller-policies.json'
 MANIFEST = ROOT / 'src/engine/assets/octatrack-module-packages.json'
 
 
 class BaseBoundTrust(unittest.TestCase):
+    def test_machine_fingerprints_follow_their_own_port_declaration(self):
+        port_file = ADAPTERS / 'machine-ports.json'
+        declaration = json.loads(port_file.read_text())
+        before = {name: build.machine_inputs(name, ADAPTERS) for name in ('analog-bassdrum', 'quantizer')}
+        quantizer = declaration['ports']['quantizer']
+        source = next(iter(quantizer['sources']))
+        quantizer['sources'][source] = '0' * 64
+        changed = json.dumps(declaration)
+        read_text, read_bytes = pathlib.Path.read_text, pathlib.Path.read_bytes
+
+        def port_text(path, *args, **kwargs):
+            return changed if path == port_file else read_text(path, *args, **kwargs)
+
+        def port_bytes(path):
+            return changed.encode() if path == port_file else read_bytes(path)
+
+        with patch.object(pathlib.Path, 'read_text', port_text), patch.object(pathlib.Path, 'read_bytes', port_bytes):
+            self.assertEqual(build.machine_inputs('analog-bassdrum', ADAPTERS), before['analog-bassdrum'])
+            after = build.machine_inputs('quantizer', ADAPTERS)
+        key = port_file.relative_to(ROOT).as_posix()
+        self.assertNotEqual(after[key], before['quantizer'][key])
+        self.assertEqual(after[source], '0' * 64)
+
     def test_every_published_base_bound_package_is_trusted_by_the_base(self):
         rows = json.loads(ROWS.read_text())
         packages = {p['id']: p for p in json.loads(MANIFEST.read_text())['packages']}

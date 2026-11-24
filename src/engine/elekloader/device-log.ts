@@ -10,14 +10,20 @@ const LOAD_BYTES: Record<number, number> = { 1: 28, 2: 32 }, CRASH_BYTES = 180, 
 /** After the stall record, on bases that keep it: diag.c's trace of the 128 frames before the stall (magic, the stall's
  * count, then two 16-bit times a frame in DTIM3 counts / 64). An older base answers zeros there. */
 const TRACE_BYTES = 520, TRACE_FRAMES = 128, TRACE_US = 64 / 132
+/** After the trace, in the last page's spare bytes (diag.h DIAG_SHEDS_*): the frame guard's skips since the start and the
+ * tracks they were on, then the frame entries since the start later than the late-entry wait can hold, as they stood
+ * when LOG was read. An older base answers zeros there (base 0.8 drafts before 23 November 2026: zero late entries). */
+const SHEDS_MAGIC = 0x4d57534b, SHEDS_BYTES = 12, LATE_OVER_BYTES = 16
 const logBytes = (version: number) => HEADER + INCIDENT + LOAD_BYTES[version] * LOADS + INCIDENT * INCIDENTS
 export const DEVICE_LOG_BYTES = logBytes(1)
 /** What a version 2 base pages out: the log and the two records; a version 1 base answers zeros past its log. */
 export const DEVICE_LOG_IMAGE_BYTES = logBytes(2) + CRASH_BYTES + STALL_BYTES
 export const DEVICE_LOG_PAGES = Math.ceil((DEVICE_LOG_IMAGE_BYTES + TRACE_BYTES) / DEVICE_LOG_PAGE)
 
-/** `stallSeen`: the stall record's count when the unit started, so a stall record with another count is from this start. */
-export interface DeviceLog { version: number; nonce: number; boot: number; seq: number; stallSeen: number; loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }
+/** `stallSeen`: the stall record's count when the unit started, so a stall record with another count is from this start.
+ * `sheds`: the frame guard's skips since the start and their track mask, live, on bases that page them, with `lateOver`,
+ * the frame entries since the start later than the late-entry wait can hold (190 µs or more). */
+export interface DeviceLog { version: number; nonce: number; boot: number; seq: number; stallSeen: number; loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall; sheds?: { count: number; tracks: number; lateOver?: number } }
 
 function load(view: DataView, at: number, version: number): DeviceLoad {
   const u16 = (i: number) => view.getUint16(at + 12 + 2 * i)
@@ -72,5 +78,10 @@ export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
   const bySeq = <T extends { seq: number }>(a: T, b: T) => a.seq - b.seq
   const end = logBytes(version)
   return { version, nonce: view.getUint32(8), boot: view.getUint32(12), seq: view.getUint32(16), stallSeen: view.getUint32(32), loads: loads.sort(bySeq), incidents: incidents.sort(bySeq),
-    ...(version >= 2 ? { crash: crash(view, end), stall: stall(view, end + CRASH_BYTES) } : {}) }
+    ...(version >= 2 ? { crash: crash(view, end), stall: stall(view, end + CRASH_BYTES) } : {}), ...(version >= 2 ? sheds(view, end + CRASH_BYTES + STALL_BYTES + TRACE_BYTES) : {}) }
+}
+function sheds(view: DataView, at: number): { sheds?: { count: number; tracks: number; lateOver?: number } } {
+  if (view.byteLength < at + SHEDS_BYTES || view.getUint32(at) !== SHEDS_MAGIC) return {}
+  return { sheds: { count: view.getUint32(at + 4), tracks: view.getUint32(at + 8) & 0xff,
+    ...(view.byteLength >= at + LATE_OVER_BYTES ? { lateOver: view.getUint32(at + 12) } : {}) } }
 }

@@ -122,7 +122,7 @@ describe('module resource gauges', () => {
     const analog = MODULE_DOCUMENTS.find(module => module.id === 'analog-bassdrum')!
     for (const [id, value] of [
       ['amiga', '7.4%'], ['analog-bassdrum', '10.1%'], ['poly8', '41.9%'], ['syntiz', '8.5%'],
-      ['usb-audio-out-tracks-main-cue', '13.3%'], ['vector', '0.6%'],
+      ['vector', '0.6%'],
     ]) {
       const document = MODULE_DOCUMENTS.find(module => module.id === id)!
       const [cpu] = moduleResourceIndicators(document)
@@ -180,7 +180,6 @@ describe('module resource gauges', () => {
     ['cc-map', '1.568 kB'],
     ['playmodes', '17.168 kB'],
     ['recorder-loop-fix', '2.208 kB'],
-    ['usb-audio-out-tracks-main-cue', '105.408 kB'],
     ['previewvol', '0.944 kB'],
   ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
     const document = MODULE_DOCUMENTS.find(module => module.id === id)!

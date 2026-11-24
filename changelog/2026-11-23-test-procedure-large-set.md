@@ -1,0 +1,1 @@
+Developer tools: the Octatrack base procedure's large-set step can pass again. It leaves out one module of each declared conflict, runs a set the module pool or a DSP window cannot hold in halves (`device.mjs set --split`), and fails when the unit refuses the set; before, the whole catalogue was always refused, and the step still passed because the refusal exited 0.

@@ -1,0 +1,1 @@
+Development: the emulator capture guide says how to keep a USB Audio package on the scratch card under base 0.8, whose USB attach watchdog otherwise ends the trial, and how to lift the 120-second bench hold.
