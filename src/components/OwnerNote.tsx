@@ -27,7 +27,8 @@ export function closeOwnerNote() {
 /** The diagnostics step follows the note, even if the invitation was dismissed before, unless sharing is already on or
  * impossible here. It is an offer with Not now, never a condition of the beta or of the Octatrack base path. */
 export const askForDiagnostics = (preference: DiagnosticPreference, privacy: boolean) => preference.available && !preference.enabled && !privacy
-/** A tester past the note whose consent predates the current version (#657 reset everyone's) shares nothing until asked again.
+/** A tester past the note without a live choice (none yet, or the last one is over 90 days old) shares nothing until asked
+ * again. A consent under an earlier text version is a live choice and keeps sharing (owner, 14 Nov 2026).
  * One who turned sharing off under the current version made that choice; it isn't asked here. */
 export const diagnosticsLapsed = (preference: DiagnosticPreference, memberId: string, privacy: boolean) =>
   preference.accountId === memberId && preference.ready && !preference.hasChoice && askForDiagnostics(preference, privacy)

@@ -129,7 +129,7 @@ async function expireKey(db: Database, kind: ClaimKind, key: string, now: string
 }
 const expiry = (now: number, linked: boolean) => linked ? null : new Date(now + CLAIM_DAYS * DAY).toISOString()
 
-// Each effect keeps its own unique board key. Only this named release on its owner's branch shares a quota slot.
+// Each effect keeps its own unique board key. The owner reserves this named release's keys together on its branch.
 const zoomBranch = 'codex/zoom-multistomp-effects'
 const zoomKeys = Object.keys(zoomRelease.modules).map(id => 'zoom/' + id)
 const jsonZoomKeys = JSON.stringify(zoomKeys)
@@ -145,21 +145,19 @@ async function reserveZoomCollection(db: Database, userId: string, now: string, 
 
   // One transaction expires stale rows and acquires every missing key. A racing holder rolls back the entire insert.
   const members = JSON.stringify(zoomKeys.map(key => ({ key, id: crypto.randomUUID() })))
-  const capacity = `(SELECT COUNT(*) FROM agent_claims WHERE user_id=? AND ${activeClaim}
-    AND NOT (kind='module' AND branch IS ? AND claim_key IN (${keys}))) < ?`
   await db.batch([
     db.prepare(`UPDATE agent_claims SET released_at=?,released_reason='expired' WHERE kind='module' AND claim_key IN (${keys})
       AND released_at IS NULL AND expires_at<=?`).bind(now, jsonZoomKeys, now),
     db.prepare(`INSERT INTO agent_claims(id,kind,claim_key,user_id,branch,note,created_at,renewed_at,expires_at)
       SELECT json_extract(m.value,'$.id'),'module',json_extract(m.value,'$.key'),?,?,
-      'MS-70CDR collection release',?,?,? FROM json_each(?) m WHERE ${capacity} AND NOT EXISTS
+      'MS-70CDR collection release',?,?,? FROM json_each(?) m WHERE NOT EXISTS
       (SELECT 1 FROM agent_claims c WHERE c.kind='module' AND c.claim_key=json_extract(m.value,'$.key')
       AND c.released_at IS NULL AND c.user_id=? AND c.branch=?)`)
-      .bind(userId, zoomBranch, now, now, expiry(nowMs, false), members, userId, now, zoomBranch, jsonZoomKeys, CLAIM_LIMIT, userId, zoomBranch),
+      .bind(userId, zoomBranch, now, now, expiry(nowMs, false), members, userId, zoomBranch),
   ]).catch(() => { throw new HttpError(409, 'The collection could not be reserved. Check its individual claims and try again.') })
   const { results } = await db.prepare(SELECT + ` WHERE c.user_id=? AND ${zoomMember} AND c.released_at IS NULL`)
     .bind(userId, zoomBranch, jsonZoomKeys).all<ClaimRow>()
-  if (results.length !== zoomKeys.length) throw new HttpError(409, 'The collection needs one free claim slot.')
+  if (results.length !== zoomKeys.length) throw new HttpError(409, 'The collection could not be reserved. Check its individual claims and try again.')
   return response({ claims: results.map(view) })
 }
 
@@ -511,11 +509,11 @@ export async function agentBoardRoutes(request: Request, env: Env, db: Database,
       await db.prepare('UPDATE agent_claims SET renewed_at=?,branch=COALESCE(?,branch),pull_request=COALESCE(?,pull_request),note=CASE WHEN ?=1 THEN ? ELSE note END,expires_at=CASE WHEN COALESCE(?,pull_request) IS NULL THEN ? ELSE NULL END WHERE id=?').bind(now, branch, pr, body.note === undefined ? 0 : 1, note, pr, expiry(nowMs, false), current.id).run()
       return response({ claim: view((await db.prepare(SELECT + ' WHERE c.id=?').bind(current.id).first<ClaimRow>())!), renewed: true })
     }
-    const count = user.github_id === String(authors.accounts.repeat98)
-      ? await db.prepare(`SELECT COUNT(DISTINCT CASE WHEN ${zoomMember} THEN 'zoom-release' ELSE id END) AS n
-        FROM agent_claims WHERE user_id=? AND ${activeClaim}`).bind(zoomBranch, jsonZoomKeys, user.id, now).first<{ n: number }>()
-      : await db.prepare(`SELECT COUNT(*) AS n FROM agent_claims WHERE user_id=? AND ${activeClaim}`).bind(user.id, now).first<{ n: number }>()
-    if ((count?.n ?? 0) >= CLAIM_LIMIT) throw new HttpError(409, `You hold ${CLAIM_LIMIT} claims. Release one you no longer need first (npm run board -- release <id>).`)
+    // The limit keeps one developer's agents from hoarding keys. The owner, who assigns the work, has none (24 Nov 2026).
+    if (user.github_id !== String(authors.accounts.repeat98)) {
+      const count = await db.prepare(`SELECT COUNT(*) AS n FROM agent_claims WHERE user_id=? AND ${activeClaim}`).bind(user.id, now).first<{ n: number }>()
+      if ((count?.n ?? 0) >= CLAIM_LIMIT) throw new HttpError(409, `You hold ${CLAIM_LIMIT} claims. Release one you no longer need first (npm run board -- release <id>).`)
+    }
     const id = crypto.randomUUID()
     try {
       await db.prepare('INSERT INTO agent_claims(id,kind,claim_key,user_id,branch,pull_request,note,created_at,renewed_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id, kind, key, user.id, branch, pr, note, now, now, expiry(nowMs, pr !== null)).run()

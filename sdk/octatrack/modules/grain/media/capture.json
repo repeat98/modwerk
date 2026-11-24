@@ -7,8 +7,8 @@
   "capturedBy": "AForceTrulyEvil",
   "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
   "baseIdentity": null,
-  "packageSha256": "0e4bebd4d54ffd0efd73194159521e7e3b2178aeb2626f83d87f99b8dcde2e43",
-  "sourceRevision": "90cde9cc93232a9b663e53d0f8c656402e23da98",
+  "packageSha256": "e8d7c794905a2ff05a1f44f4d5a221263a8668f4fbf1f1e407a9f849701ae6d1",
+  "sourceRevision": "8f2cb3914708d46453276127797ff5549c8f1d88",
   "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.2.0-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. See each image. Not hardware captures.",
   "palette": {
     "on": [
@@ -32,7 +32,7 @@
     },
     {
       "path": "grain-src.png",
-      "sha256": "e23f54cb22db434f1a0cabcd63cff37e68a390183a92785fbca768c092a41b92",
+      "sha256": "716cf85d20a5f60501a9865f18cde89112119d7a46411889f06851efb12bf690",
       "scale": 2,
       "page": "SRC",
       "state": "Track 1 on Grain with a Flex sample, playing: the SRC page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."

@@ -26,12 +26,12 @@ static int check_sample(uint32_t count)
          * past each end, which wrap round the sample. A zero spread must leave
          * the first read at POS. */
         for (unsigned scattered = 0; scattered <= 1; ++scattered) {
-            GranParams params = {.pos = dial, .posf = dial & 1 ? 255 : 0, .spray = scattered ? 127 - dial / 2 : 0,
-                                 .edge = GRAN_EDGE_WRAP};
+            GranParams params = {.pos = dial, .posf = dial & 1 ? 255 : 0, .spray = scattered ? 127 - dial / 2 : 0};
             uint32_t pos_word = ((uint32_t)dial << 8) | params.posf;
             uint32_t pos = (uint64_t)(count >> 6) * pos_word >> 9;
             uint32_t width = (uint64_t)(count >> 6) * (params.spray << 8) >> 9;
             gran_init(&engine);
+            gran_set_edge(&engine, 0, GRAN_EDGE_WRAP);
             engine.seed += dial * 7171u;
             uint32_t random = (engine.seed * 1664525u + 1013904223u) >> 16;
             int32_t expected = (int32_t)pos + (int32_t)((uint64_t)random * (width >> 5) >> 11)
@@ -109,9 +109,10 @@ static int check_edge(void)
         for (unsigned seed = 0; seed < 400; ++seed) {
             for (unsigned end = 0; end <= 1; ++end) {
                 /* POS at the start or at the last frame with SPRY at its widest: half the births fall off an edge. */
-                GranParams params = {.pos = end ? 127 : 0, .posf = end ? 255 : 0, .spray = 127, .edge = (uint8_t)mode};
+                GranParams params = {.pos = end ? 127 : 0, .posf = end ? 255 : 0, .spray = 127};
                 GranEngine engine;
                 gran_init(&engine);
+                gran_set_edge(&engine, 0, mode);
                 engine.seed += seed * 7171u;
                 gran_params(&engine, 0, &params, &sample, 120 * 24);
                 gran_trigger(&engine, 0);
@@ -136,9 +137,10 @@ static int check_edge(void)
     for (int reverse = 0; reverse <= 1; ++reverse) {
         GranSample logged = {.count = count, .bytes = 2, .channels = 1, .locate = log_frame};
         GranParams params = {.pos = reverse ? 0 : 127, .posf = reverse ? 0 : 255, .size = 20, .dens = 0,
-                             .dir = reverse ? 127 : 0, .edge = GRAN_EDGE_BOUNCE};
+                             .dir = reverse ? 127 : 0};
         GranEngine engine;
         gran_init(&engine);
+        gran_set_edge(&engine, 0, GRAN_EDGE_BOUNCE);
         gran_params(&engine, 0, &params, &logged, 120 * 24);
         gran_trigger(&engine, 0);
         ring_n = 0;
@@ -156,9 +158,10 @@ static int check_edge(void)
     for (int reverse = 0; reverse <= 1; ++reverse) {
         GranSample logged = {.count = count, .bytes = 2, .channels = 1, .locate = log_frame};
         GranParams params = {.pos = reverse ? 0 : 127, .posf = reverse ? 0 : 255, .size = 20, .dens = 0,
-                             .dir = reverse ? 127 : 0, .edge = GRAN_EDGE_STOP};
+                             .dir = reverse ? 127 : 0};
         GranEngine engine;
         gran_init(&engine);
+        gran_set_edge(&engine, 0, GRAN_EDGE_STOP);
         gran_params(&engine, 0, &params, &logged, 120 * 24);
         gran_trigger(&engine, 0);
         ring_n = 0;
@@ -171,9 +174,10 @@ static int check_edge(void)
     }
     /* CLMP keeps the ring for a grain that is already sounding. */
     GranSample logged = {.count = count, .bytes = 2, .channels = 1, .locate = log_frame};
-    GranParams params = {.pos = 127, .posf = 255, .size = 20, .dens = 0, .edge = GRAN_EDGE_CLAMP};
+    GranParams params = {.pos = 127, .posf = 255, .size = 20, .dens = 0};
     GranEngine engine;
     gran_init(&engine);
+    gran_set_edge(&engine, 0, GRAN_EDGE_CLAMP);
     gran_params(&engine, 0, &params, &logged, 120 * 24);
     gran_trigger(&engine, 0);
     ring_n = 0;

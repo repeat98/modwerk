@@ -122,7 +122,19 @@ describe('public legal information',()=>{
  })
  it('renders the modding guidelines from the one repository file, with links that work on GitHub and the site',()=>{
   const source=readFileSync(new URL('../../MODDING_GUIDELINES.md',import.meta.url),'utf8'),page=renderToStaticMarkup(createElement(LegalPage,{route:'modding-guidelines'}))
-  expect(page).toContain('<h2>Never share firmware</h2>');expect(page.match(/<h1>/g)).toHaveLength(1)
-  for(const [,href] of source.matchAll(/\]\(([^)]+)\)/g))expect(href).toMatch(/^(https:\/\/|mailto:)/)
+  expect(page.match(/<h1>/g)).toHaveLength(1)
+  const sections = [...page.matchAll(/<section aria-labelledby="([^"]+)">([\s\S]*?)<\/section>/g)]
+  expect(sections).toHaveLength([...source.matchAll(/^## /gm)].length)
+  for (const [, id, body] of sections) {
+    expect(page).toContain(`href="#${id}"`)
+    expect(body).toContain(`<h2 id="${id}"`)
+    expect(body).toContain('<ul>')
+  }
+  const makerRules = sections.find(([, id]) => id.endsWith('/respect-the-makers'))
+  expect(makerRules?.[2].match(/<li>/g)).toHaveLength(6)
+  for (const [, href] of source.matchAll(/\]\(([^)]+)\)/g)) {
+    expect(href).toMatch(/^(https:\/\/|mailto:)/)
+    expect(page).toContain(`href="${href}"`)
+  }
  })
 })

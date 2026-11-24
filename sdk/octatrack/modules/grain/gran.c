@@ -80,7 +80,6 @@ void gran_params(GranEngine *e, unsigned track, const GranParams *p, const GranS
     t->spray = gran_position(count, (uint32_t)(p->spray > 127 ? 127 : p->spray) << 8);
     if (t->scan >= count) t->scan %= count;   /* a shorter sample may replace the playing sample */
     t->count = count;
-    t->edge = p->edge > GRAN_EDGE_BOUNCE ? GRAN_EDGE_CLAMP : p->edge;
     t->len = gran_size[p->size > 127 ? 127 : p->size];
     d = p->dens > 127 ? 127 : p->dens;
     if (p->sync && tempo24) {

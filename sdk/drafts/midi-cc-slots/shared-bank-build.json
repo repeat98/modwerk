@@ -1,0 +1,20 @@
+{
+  "version": "0.0.20-experimental",
+  "sha256": "236d5101468e9c186fec99fa6724eba4baa8fa32e5676affaddae7f7ab6bb622",
+  "bytes": 33988,
+  "imageBytes": 29352,
+  "abi": 8,
+  "features": 131,
+  "sites": 23,
+  "copies": 24,
+  "hookWords": 42,
+  "requiredBase": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+  "flags": [
+    "--profile",
+    "--project-template",
+    "--current-base",
+    "--shared-bank-events"
+  ],
+  "hardware": "not tested",
+  "scope": "shared-bank notification experiment; historical local-build.json and installer pins are unchanged"
+}
