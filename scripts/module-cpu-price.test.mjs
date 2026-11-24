@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseModuleCpuMeter, parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, RELEASE_COST_FROM, curveProblem, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
+import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, RELEASE_COST_FROM, curveProblem, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending, readingsNote } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
 const roots = []
@@ -65,6 +65,17 @@ describe('every Octatrack module names its CPU price', () => {
     expect(status(0.5)).toMatchObject({ state: 'fail', detail: expect.stringContaining('the reading in evidence/cpu-price.json gives 1.3') })
     const missing = cpuPriceStatus({ root, document: module('other', 'FX2', { ...share(0), source: 'evidence/cpu-price.json' }), pending: new Map(), glue: {} })
     expect(missing).toMatchObject({ state: 'fail', detail: expect.stringContaining('holds no device:price reading of other') })
+  })
+
+  it('says how far a record of several readings a state agreed, and nothing for a record of one', () => {
+    const spread = (frame, dsp1to4Peak) => ({ spread: { frame, frameMax: 3, dsp1to4: 0.4, dsp1to4Peak, dsp5to8Peak: 9 } })
+    const record = { module: 'echo', readings: 3, result: { atRestAdds: { frame: 0.2 }, inUseAdds: { frame: 1.3 }, inUseOn: 'T2 FX2', before: spread(0.3, 2.1), atRest: spread(0.6, 1.2), inUse: spread(0.4, 4.4) } }
+    expect(readingsNote(record)).toBe('; 3 readings a state, the frame interrupt within 0.6 points, the T1-4 DSP peak within 4.4')
+    expect(readingsNote({ ...record, result: { ...record.result, inUseOn: 'T6 FX1' } })).toMatch(/T5-8 DSP peak within 9$/)
+    expect(readingsNote({ module: 'echo', seconds: 8, result: { atRestAdds: { frame: 0 } } })).toBe('')
+    const root = fixture({ 'sdk/octatrack/modules/echo/evidence/cpu-price.json': record })
+    expect(cpuPriceStatus({ root, document: module('echo', 'FX2', { ...share(1.3), source: 'evidence/cpu-price.json' }), pending: new Map(), glue: {} }))
+      .toMatchObject({ state: 'ok', detail: expect.stringContaining('3 readings a state, the frame interrupt within 0.6 points') })
   })
 
   it('takes a machine whose descriptor carries the price it names, literal or #define', () => {
