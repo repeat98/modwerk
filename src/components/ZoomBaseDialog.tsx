@@ -3,7 +3,7 @@ import type { DeviceProfile } from '../devices/registry'
 import { ZoomPedalArt } from '../devices/ZoomPedalArt'
 import type { ZoomStock } from '../engine/zoom/zoom-base'
 import type { ZoomLink } from '../engine/zoom/zoom-link'
-import { ZOOM_BASE, isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { ZOOM_BASE, canFlashBase } from '../engine/zoom/zoom-protocol'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { BaseDialogFrame, BaseIntro, StagePlan, StageProgress, type BasePromise } from './BaseDialogFrame'
@@ -50,7 +50,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
 }) {
   const state = useZoomLink(link), { status, identity } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing'
-  const updateMode = connected && isUpdateMode(identity), onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
+  const updateMode = connected && canFlashBase(identity), onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
   const finished = useRef(false), fileRef = useRef<HTMLInputElement>(null)
   const [view, setView] = useState<'intro' | 'steps'>('intro'), [stage, setStage] = useState<Stage>('updater')
   const [stock, setStock] = useState<ZoomStock>(), [fileError, setFileError] = useState(''), [accepted, setAccepted] = useState(false)
@@ -90,6 +90,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
     : status === 'idle' && state.notice?.tone === 'error' ? <p className="base-install-note" role="status">{state.notice.text} Once it shows its patch screen, connect again.</p>
     : <p className="base-install-note" role="status">Waiting for your pedal…</p>
   const modeLine = updateMode ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} is in update mode.</p>
+    : connected && identity?.model !== device.name ? <p className="file-error" role="status">This is an {identity?.model}, not an {device.name}. The base goes only on an {device.name}.</p>
     : connected ? <p className="base-install-note" role="status">Your pedal is running normally. Unplug it, then plug it in again while holding Up and Down.</p>
     : status === 'connecting' ? <p className="base-install-note" role="status">Looking for your pedal…</p>
     : <p className="base-install-note" role="status">{state.notice && state.notice.tone === 'error' ? state.notice.text : 'Once the pedal is in update mode, this page finds it by itself.'}</p>

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-18",
+    "changes": [
+      "128 arrangements per project: 16 books of 8, book 1 being the Octatrack's own 8.",
+      "In ARR > CHANGE, stopped, LEFT and RIGHT step between books; BOOK 2 and so on shows at the top right.",
+      "Every arrangement is an ordinary arrangement file, arr01 to arr128, saved and reloaded with the project.",
+      "A project reopens on the book, arrangement and arranger mode it was left on."
+    ]
+  }
+]

@@ -23,9 +23,11 @@
   },
   "stack": {
     "base": "started",
-    "link": "started",
+    "link": "done",
     "flash": "done",
+    "loader": "started",
     "status": "done",
+    "diagnostics": "started",
     "tools": "started"
   },
   "sdk": {
