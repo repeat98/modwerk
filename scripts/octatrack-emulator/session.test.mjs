@@ -9,6 +9,8 @@ it('starts ot_emu on its line protocol, so pace on can tie emulated time to the 
   expect(emulatorArgs({ image: '/i/MAIN.raw', bench: '/s/bench.sock' })).toEqual(['--interactive', '--image', '/i/MAIN.raw', '--usb-host', '/s/bench.sock', '--max', '400000000000', '--mkii'])
   // The DSPs need the real-time cores (which need the line protocol) and the frame interrupt.
   expect(emulatorArgs({ image: 'M', bench: 'B', dsp: true }).slice(-3)).toEqual(['--dsp', '--dsp-rt', '--frame'])
+  // --mki: the port boots as an MKI when it is not told it is an MKII (its Part gestures differ, #2099).
+  expect(emulatorArgs({ image: 'M', bench: 'B', mki: true })).not.toContain('--mkii')
 })
 
 it('hands the command its session: the emulator target, the shared bench and the line socket', () => {
