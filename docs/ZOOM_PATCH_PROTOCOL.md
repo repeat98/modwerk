@@ -3,13 +3,14 @@
 Status: **open, with the owner's go-ahead on Discord (November 2026) to research these two pedals.** Both have a
 new profile (`sdk/machines/zoom-ms-200d-plus/`, `sdk/machines/zoom-g5n/`, family `zoom`), `stack.link` started,
 but `status` stays `open` rather than `research`: the contract ties `research` to a started `format`/`load` or
-`mods` step, and none of those three — the ZD2 custom-effect steps — has begun on either pedal. **This is not ZD2
-research.** The MS-200D+
-and G5n are not the ZD2 pedals [ZOOM_ZD2.md](ZOOM_ZD2.md) covers (the Plus and FOUR series' loadable custom-effect
-container); nothing here documents or claims progress on that container, and no custom DSP effect has been built
-or loaded on either pedal. What is proven is the SysEx **patch** protocol underneath the pedal's own stock
-effects: a patch's container format, and reading and writing one over USB MIDI, independent of and prior to any
-ZD2 work.
+`mods` step, and none of those three — the custom-effect steps — has begun on either pedal. **Both are ZD2
+pedals** ([ZOOM_ZD2.md](ZOOM_ZD2.md)): their stock effects are `.ZD2` files (73 in the MS-200D+'s effect corpus;
+169 `.ZD2` file names read from a real G5n over `0x64 06` in a Guitar Lab session [HW], 157 in its corpus), so
+they take the ZD2 road in `src/devices/registry.ts` and get no ZDL pedal page. **This report is not ZD2
+research:** nothing here documents or claims progress on the loadable-effect container, and no custom DSP effect
+has been built or loaded on either pedal. Whether the ZD2 findings for the G1 FOUR hold on these two is [UNK].
+What is proven is the SysEx **patch** protocol underneath the pedal's own stock effects: a patch's container
+format, and reading and writing one over USB MIDI, independent of and prior to any ZD2 work.
 
 Tags: **[HW]** observed on the developer's own MS-200D+ and G5n; **[PUB]** public research by others, ported
 rather than rediscovered; **[UNK]** unknown. Addresses, opcodes, chunk structure and sizes only: no firmware,
@@ -103,8 +104,8 @@ untested on hardware, and the binary route through the parameter bytes themselve
 
 ## What does not carry over
 
-- **This is not the ZD2 container.** Nothing here documents the loadable-effect format `ZOOM_ZD2.md` covers, and
-  no original or ported DSP code has been run on either pedal. `steps.format`/`load`/`mods` stay `open` in both
+- **This is not the ZD2 container.** Both pedals are ZD2 pedals, but nothing here documents the loadable-effect
+  format `ZOOM_ZD2.md` covers, and no original or ported DSP code has been run on either pedal. `steps.format`/`load`/`mods` stay `open` in both
   profiles.
 - **Neither pedal is a ZDL pedal.** The existing pedal page and MCP Zoom bridge (`zoom_status`, `zoom_list`,
   `zoom_backup`, `zoom_install`, `zoom_remove`) speak the ZDL pedals' file-system commands (`0x60`/`0x64` on the
@@ -119,7 +120,7 @@ untested on hardware, and the binary route through the parameter bytes themselve
   layout and encoder this report's write path ports from, for the MS Plus series.
 - [mungewell/zoom-zt2](https://github.com/mungewell/zoom-zt2) (MIT, by Simon Wood): `decode_preset.py`'s
   Construct definitions for the PTCF/TXJ1/TXE1 container, confirming the chunk layout read from both pedals here;
-  its own SysEx tools target the ZD2 pedals, not the MS-200D+ or G5n.
+  its own SysEx tools are written for the G1 FOUR's file commands and were not tried on these two pedals.
 
 ## Next steps
 
@@ -133,6 +134,6 @@ In order:
 3. **A link for these pedals.** `stack.link`'s description is the site and the developer tools identifying the
    unit and reading what is installed; nothing in this repository speaks this protocol yet. That is separate,
    owner-reviewed work once the above is settled, and is not a request to start it from this report alone.
-4. **ZD2 research, if the owner wants it, is a separate effort.** Whether the MS-200D+ is a ZD2 pedal at all —
-   and whether the G5n can run loadable custom effects in any form — is unresearched; this report makes no claim
-   either way.
+4. **ZD2 research is a separate effort.** Both pedals carry `.ZD2` stock effects, but whether either loads a custom
+   one, and whether the G1 FOUR's clean-room route and header target carry over, is unresearched; this report
+   makes no claim either way.

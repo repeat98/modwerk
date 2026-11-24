@@ -1542,7 +1542,7 @@
     "name": "MS-200D+",
     "family": "zoom",
     "status": "open",
-    "summary": "Not a ZD2 pedal yet researched for custom effects. Its patch SysEx protocol (PTCF/EDTB) is read, decoded and written on real hardware, with the write confirmed through a power cycle.",
+    "summary": "A ZD2 pedal (stock effects are .ZD2 files); custom effects are not started. Its patch SysEx protocol (PTCF/EDTB) is read, decoded and written on hardware, the write confirmed through a power cycle.",
     "steps": {
       "format": "open",
       "load": "open",
@@ -1583,7 +1583,7 @@
     "name": "G5n",
     "family": "zoom",
     "status": "open",
-    "summary": "Not a ZD2 pedal yet researched for custom effects. Its patch SysEx protocol (PTCF/EDTB) is read and written on real hardware; the edit-buffer write is confirmed, slot persistence is not yet.",
+    "summary": "A ZD2 pedal (stock effects are .ZD2 files); custom effects are not started. Its patch SysEx protocol (PTCF/EDTB) is read and written on hardware; slot write persistence is not yet isolated.",
     "steps": {
       "format": "open",
       "load": "open",
