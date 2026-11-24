@@ -1,0 +1,114 @@
+{
+  "module": "recorder-loop-fix",
+  "version": "0.1.0-experimental",
+  "base": "8850f5399c453b9c (development twin, ef6099b0a)",
+  "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding",
+  "seconds": 8,
+  "measuredAt": "2026-11-21T07:51:05.800Z",
+  "result": {
+    "id": "recorder-loop-fix",
+    "version": "file",
+    "packageSha256": "43d26b2761a010e5e6a3ad9a2bcb6bb8beba92b245099acb0b4ed70065d208a4",
+    "before": {
+      "frame": 32.7,
+      "frameMax": 70.7,
+      "frames": 22310,
+      "skipped": 0,
+      "cpu": 45.1,
+      "dsp1to4": 45.9,
+      "dsp5to8": 41.1,
+      "allocation": {
+        "modulePoolBytes": 1568,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRest": {
+      "frame": 32.7,
+      "frameMax": 70.8,
+      "frames": 22263,
+      "skipped": 0,
+      "cpu": 45.5,
+      "dsp1to4": 47.4,
+      "dsp5to8": 40.9,
+      "allocation": {
+        "modulePoolBytes": 2208,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0.4,
+      "dsp1to4": 1.5,
+      "dsp5to8": -0.2
+    },
+    "rolledBack": true,
+    "repetitions": [
+      {
+        "measuredAt": "2026-11-21T07:51:05.800Z",
+        "before": {
+          "frame": 32.7,
+          "frameMax": 70.7,
+          "frames": 22310,
+          "skipped": 0,
+          "cpu": 45.1,
+          "dsp1to4": 45.9,
+          "dsp5to8": 41.1,
+          "allocation": {
+            "modulePoolBytes": 1568,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 32.7,
+          "frameMax": 70.8,
+          "frames": 22263,
+          "skipped": 0,
+          "cpu": 45.5,
+          "dsp1to4": 47.4,
+          "dsp5to8": 40.9,
+          "allocation": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        }
+      },
+      {
+        "measuredAt": "2026-11-21T07:51:35.373Z",
+        "before": {
+          "frame": 32.7,
+          "frameMax": 70.5,
+          "frames": 22294,
+          "skipped": 0,
+          "cpu": 45.5,
+          "dsp1to4": 48,
+          "dsp5to8": 42.1,
+          "allocation": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 32.7,
+          "frameMax": 70.2,
+          "frames": 22286,
+          "skipped": 0,
+          "cpu": 45.4,
+          "dsp1to4": 46.1,
+          "dsp5to8": 42,
+          "allocation": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        }
+      }
+    ],
+    "releaseSourceVersion": "0.1.0-experimental",
+    "releaseSourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727"
+  }
+}

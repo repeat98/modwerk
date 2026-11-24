@@ -1,5 +1,6 @@
 import type { Database, Env, User } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
+import { finishPilotCase, pilotRecords, recordPilot } from './eval-pilot'
 import { boardReply, boardUser } from './agent-board'
 import { forum } from './forum'
 import { shoutbox } from './shoutbox'
@@ -73,7 +74,7 @@ function buttons(row: Pick<ActionRow, 'id' | 'tier'>, expanded = false) {
 async function state(db: Database) {
   const rows = (await db.prepare('SELECT key,value FROM maintenance_bot_state').all<{ key: string; value: string }>()).results
   const value = (key: string) => rows.find(row => row.key === key)?.value ?? ''
-  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), upstream: value('upstream') }
+  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), upstream: value('upstream'), pilotReported: value('eval-pilot-reported') === '1' }
 }
 const setState = (db: Database, key: string, value: string) => db.prepare('INSERT INTO maintenance_bot_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key, value).run()
 
@@ -242,7 +243,7 @@ async function webhook(request: Request, env: Env, db: Database) {
 }
 
 type TodoRow = { id: string; target: number; command: string; note: string; urgent: number; status: string; created_at: number; updated_at: number }
-const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
+const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- (?:reply|followups) [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
 
 /** Work for a session at the owner's computer. The bot adds and drops; /modwerk-todo lists and ticks off. */
 async function addTodos(env: Env, db: Database, body: Record<string, unknown>) {
@@ -454,7 +455,7 @@ async function reviewedMerge(env: Env, db: Database, body: Record<string, unknow
     const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim()
     if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
     const repo = env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk'
-    const reply = await fetch('https://api.github.com/repos/' + repo + path, { headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'modwerk-maintenance-bot' }, redirect: 'error', signal: AbortSignal.timeout(15000) })
+    const reply = await fetch('https://api.github.com/repos/' + repo + path, { headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'modwerk-maintenance-bot' }, redirect: 'manual', signal: AbortSignal.timeout(15000) })
     if (!reply.ok) throw new HttpError(502, 'Unable to verify reviewed merge on GitHub.')
     return reply.json()
   }
@@ -490,6 +491,15 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (who && route === '/todos' && method === 'GET') return response(await openTodos(db))
   if (who && todo && method === 'POST') return response(await todoStatus(db, todo[1], await jsonBody(request)))
   if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
+  if (route === '/eval-pilot' && method === 'GET') return response({ records: await pilotRecords(db) })
+  const pilotCase = route.match(/^\/eval-pilot\/([1-9]\d{0,6})$/)
+  if (method === 'POST' && (route === '/eval-pilot' || pilotCase)) {
+    if ((await state(db)).paused) throw new HttpError(409, 'Maintenance is paused.')
+    const body = await jsonBody(request)
+    if (pilotCase) await finishPilotCase(db, Number(pilotCase[1]), body)
+    else await recordPilot(db, body)
+    return response({ ok: true })
+  }
   if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
   if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
   if (route === '/merge' && method === 'POST') return response(await mergeAsOwner(env, await jsonBody(request)))
@@ -509,7 +519,8 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
     const body = await jsonBody(request)
     if (body.fingerprint !== undefined && (typeof body.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(body.fingerprint))) throw new HttpError(400, 'A fingerprint is a SHA-256 hex digest.')
     if (body.upstream !== undefined && (typeof body.upstream !== 'string' || body.upstream.length > 4000)) throw new HttpError(400, 'The upstream heads are a short JSON text.')
-    if (body.fingerprint === undefined && body.upstream === undefined) throw new HttpError(400, 'Send a fingerprint or the upstream heads.')
+    if (body.fingerprint === undefined && body.upstream === undefined && body.pilotReported !== true) throw new HttpError(400, 'Send a fingerprint or the upstream heads.')
+    if (body.pilotReported === true) await setState(db, 'eval-pilot-reported', '1')
     if (typeof body.fingerprint === 'string') await setState(db, 'fingerprint', body.fingerprint)
     if (typeof body.upstream === 'string') await setState(db, 'upstream', body.upstream)
     return response({ ok: true })

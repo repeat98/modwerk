@@ -39,8 +39,8 @@ def records(data):
         offset += data[offset]
 
 
-def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
-    """Join MSC/vendor/MIDI and an explicitly chosen, output-only audio layout.
+def configuration(base, descriptors, high_speed, other_speed=False, audio=None, *, audio_input=None):
+    """Join MSC/vendor/MIDI and an explicitly chosen audio layout.
 
     `base` and `descriptors` are trusted modules from the same pinned repository
     snapshot. The caller records source identities and keeps generated output
@@ -48,12 +48,15 @@ def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
     """
     if type(high_speed) is not bool or type(other_speed) is not bool or audio is not None and audio not in AUDIO_LAYOUTS:
         raise ValueError('Choose an explicit supported USB output layout and speed.')
-    original = descriptors.audio_config(high_speed, other_speed, audio, with_in=None) if audio else descriptors.midi_config(high_speed, other_speed)
+    if audio_input is not None and (not audio or audio_input not in descriptors.IN_LAYOUT):
+        raise ValueError('USB audio input requires a supported input and output layout.')
+    original = descriptors.audio_config(high_speed, other_speed, audio, with_in=audio_input) if audio else descriptors.midi_config(high_speed, other_speed)
+    interface_end = 3 if not audio else 6 if high_speed and audio_input else 5
     source = list(records(original))
     native_base = list(records(base.configuration(high_speed, other_speed, False)))
     if (not source or source[0][:2] != bytes([9, 7 if other_speed else 2])
             or struct.unpack_from('<H', source[0], 2)[0] != len(original)
-            or source[0][4] != (5 if audio else 3)
+            or source[0][4] != interface_end
             or len(native_base) != 5 or native_base[-1] != bytes([9, 4, 1, 0, 0, 255, 77, 1, 0])
             or source[1:4] != native_base[1:4]):
         raise ValueError('The shared MSC or vendor descriptor contract changed.')
@@ -70,12 +73,12 @@ def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
     for record in tail:
         value = bytearray(record)
         if value[1] == 11:
-            if len(value) != 8 or value[2] not in (1, 3) or value[3] != 2:
+            if len(value) != 8 or (value[2], value[3]) not in ((1, 2), (3, interface_end - 3)):
                 raise ValueError('An unreviewed USB association was added.')
             value[2] += 1
             associations.append(value[2])
         elif value[1] == 4:
-            if len(value) != 9 or value[2] not in range(1, 5 if audio else 3):
+            if len(value) != 9 or value[2] not in range(1, interface_end):
                 raise ValueError('An unreviewed USB interface was added.')
             current = value[2]
             interfaces.add(current)
@@ -85,7 +88,7 @@ def configuration(base, descriptors, high_speed, other_speed=False, audio=None):
                 raise ValueError('The authored MIDI collection reference changed.')
             value[8] = 3
         body.append(bytes(value))
-    if interfaces != set(range(1, 5 if audio else 3)) or associations != ([2, 4] if audio else [2]):
+    if interfaces != set(range(1, interface_end)) or associations != ([2, 4] if audio else [2]):
         raise ValueError('The composed USB functions are incomplete.')
     body = b''.join(body)
     header = bytearray(source[0])
@@ -251,8 +254,38 @@ def audio_storage_source(text):
     return text.replace(dma, '    .bss\n' + dma)
 
 
-def assembly(base, descriptors, audio=None):
+# The frame interrupt's block, where usbaudio.s's producer sits when USB Audio is linked in (usb_base.py
+# AUDIO_DETOURS): `clrl 0x46104d4e`, rejoining at +6. A base that takes a module's USB function owns it instead and
+# raises ev_usb_frame there (usb_function.c).
+FRAME_DETOUR = (0x4000d9a0, 6, '37a52c3300cbe2e0b5453bac91ed193defe49493058e8a287b2f9a1c47a325b9', 'modwerk_usb_frame_shim')
+FRAME_SHIM = '''
+| The frame interrupt's block: ev_usb_frame, then the displaced clear.
+    .text
+    .balign 2
+    .global modwerk_usb_frame_shim
+modwerk_usb_frame_shim:
+    lea     %sp@(-16),%sp
+    moveml  %d0-%d1/%a0-%a1,%sp@
+    jsr     modwerk_usb_function_frame
+    moveml  %sp@,%d0-%d1/%a0-%a1
+    lea     %sp@(16),%sp
+    clrl    0x46104d4e
+    jmp     0x4000d9a6
+'''
+SLOT = 512  # a configuration with room for the function a module adds behind it (elekloader/usb_function.c)
+
+
+def header(base, descriptors, audio=None):
+    """What usb_function.c knows of the base's own configuration: its bytes and its interfaces."""
+    blob = configuration(base, descriptors, True, False, audio)
+    return ('#define MODWERK_USB_CFG_BYTES %du\n#define MODWERK_USB_CFG_INTERFACES %du\n' % (len(blob), blob[4]))
+
+
+def assembly(base, descriptors, audio=None, slots=False):
     """One ISR chain and page-contained tables, including a 259-byte config.
+
+    With `slots`, each configuration sits at the start of a 512-byte slot. Its clamp uses the live length
+    for the speed it describes. usb_function.c rewrites the lengths when a function joins, changes or leaves.
 
     Audio -> bounded MIDI receive -> MIDI transmit -> vendor EP0 poll -> stock.
     Without audio the same chain starts at MIDI receive. Each configuration
@@ -277,7 +310,53 @@ def assembly(base, descriptors, audio=None):
     else:
         tails.update(reset_tail='jmp     usbmidi_rx_reset_shim',
                      session_end_tail='jmp     usbmidi_rx_sessend_shim')
-    text = base.ASSEMBLY.format(length=lengths.pop(), **tails)
+    length = lengths.pop()
+    text = base.ASSEMBLY.format(length=length, **tails)
+    if slots:
+        if length > SLOT:
+            raise ValueError('A USB configuration outgrows its slot.')
+        constant = '    .set modwerk_cfg_len, %d\n' % length
+        if text.count(constant) != 1:
+            raise ValueError('The base USB clamp template changed.')
+        text = text.replace(constant, '')
+        for request, resume, full, high in (
+            (1, 0x4001d864, 'fs', 'hs'), (2, 0x4001d8a2, 'hs', 'fs'),
+        ):
+            before = f"""modwerk_usb_clamp{request}:
+    movel   %d2,%d1
+    cmpil   #modwerk_cfg_len,%d1
+    blss    1f
+    movel   #modwerk_cfg_len,%d1
+1:  jmp     {resume:#x}
+"""
+            # Stock reads these same PORTSC speed bits in the continuation
+            # and overwrites d0 there. OTHER_SPEED describes the opposite speed.
+            after = f"""modwerk_usb_clamp{request}:
+    movel   modwerk_cfg_len_{full},%d1
+    movel   0xfc0b0184,%d0
+    andil   #0x0c000000,%d0
+    cmpil   #0x08000000,%d0
+    bnes    1f
+    movel   modwerk_cfg_len_{high},%d1
+1:  cmpl    %d2,%d1
+    blss    2f
+    movel   %d2,%d1
+2:  jmp     {resume:#x}
+"""
+            if text.count(before) != 1:
+                raise ValueError('The base USB clamp template changed.')
+            text = text.replace(before, after)
+        if not audio:  # code first: the slots and tables follow it
+            text += FRAME_SHIM
+        for speed in ('fs', 'hs'):
+            symbol = 'modwerk_cfg_len_' + speed
+            text += f'    .balign 4\n    .global {symbol}\n{symbol}:\n    .long {length}\n'
+        text += ('    .global modwerk_cfg_native\nmodwerk_cfg_native:\n    .short %d\n    .byte %d, %d\n'
+                 % (length, blobs['modwerk_cfg_fs'][4], int(audio is not None)))
+        for name, blob in blobs.items():
+            text += '    .balign %d\n    .global %s\n%s:\n    .byte %s\n    .space %d\n' % (
+                SLOT, name, name, ', '.join('0x%02x' % byte for byte in blob), SLOT - len(blob))
+        blobs = {}
     blobs.update(modwerk_device=base.device(True), modwerk_bos=base.bos(), modwerk_msos20=base.msos20())
     for name, blob in blobs.items():
         alignment = max(64, 1 << (len(blob) - 1).bit_length())
@@ -288,7 +367,7 @@ def assembly(base, descriptors, audio=None):
     return text
 
 
-def sites(base, image_at, audio=None):
+def sites(base, image_at, audio=None, slots=False):
     """Guard the original sites once and reject overlapping ownership.
 
     Returned stock spans are private build inputs, never publication data.
@@ -307,6 +386,12 @@ def sites(base, image_at, audio=None):
         stock = image_at(address, length)
         if len(stock) != length or hashlib.sha256(stock).hexdigest() != digest:
             raise ValueError('USB MIDI site at %#x is not the guarded native source.' % address)
+        out.append(dict(addr=hex(address), stock=stock.hex(), op='jmp', target=target))
+    if slots and not audio:
+        address, length, digest, target = FRAME_DETOUR
+        stock = image_at(address, length)
+        if len(stock) != length or hashlib.sha256(stock).hexdigest() != digest:
+            raise ValueError('The frame block site at %#x is not the guarded native source.' % address)
         out.append(dict(addr=hex(address), stock=stock.hex(), op='jmp', target=target))
     spans = sorted((int(site['addr'], 16), len(bytes.fromhex(site['stock']))) for site in out)
     if any(address + size > following for (address, size), (following, _) in zip(spans, spans[1:])):

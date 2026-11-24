@@ -15,12 +15,12 @@ import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
-import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
+import { MODULE_V3_CATEGORIES } from '../src/catalog/module-contract-v3.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
 import { moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
-import { judgeRecord, ownerWaivedPerformanceRow, stampVerdict } from './perf-audit-analysis.mjs'
+import { judgeRecord, ownerWaivedPerformanceRow, priceLimits, approvalCoversSource, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
@@ -28,7 +28,7 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
-import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
@@ -104,7 +104,7 @@ function octatrack(id) {
   else if (entry && !availableModules(true).some(module => module.id === id)) fail('library', 'the library does not offer it', 'run npm run modules:generate')
   else if (entry) ok('library', isBetaModule(id) ? 'offered to beta testers in the library and configurator' : 'offered in the library and the configurator')
 
-  if (!LIBRARY_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a library category', 'use one of ' + LIBRARY_CATEGORIES.join(', '))
+  if (!MODULE_V3_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a manifest category', 'use one of ' + MODULE_V3_CATEGORIES.join(', '))
   else if (!exists('docs/module-guides/' + document.category + '.md')) fail('category guide', 'docs/module-guides/' + document.category + '.md is missing', 'write the guide for this category')
   else ok('category guide', 'walk docs/module-guides/' + document.category + '.md (and sequencing.md if it acts in time)')
   // The knobs the build writes into the instrument (manifest.py) and the ones the site describes (controls[]) are one list.
@@ -136,9 +136,12 @@ function octatrack(id) {
   // Cycles, a benchmark against stock and a stress run. Required for a module listed from PERFORMANCE_REQUIRED_FROM; older modules are told.
   const approvalPath = 'sdk/approvals/' + id + '-build-approval.json'
   const hardwareApproval = exists(approvalPath) ? json(approvalPath) : null
-  const performanceRequired = entry && (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM
+  // A release from RELEASE_COST_FROM carries the record whatever day its module was first listed (owner, 23 November 2026:
+  // every module goes through the whole cost procedure before a release; Tape Echo, listed 1 October, had none for 0.1.9).
+  const released = releaseDate({ root, document }), releaseInProgress = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json')) && (!released || released >= RELEASE_COST_FROM)
+  const performanceRequired = entry && ((entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM || releaseInProgress)
   if (exists(folder + '/evidence/performance.json')) {
-    const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record)
+    const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record, priceLimits(document))
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
     // A key-press record has no flood, so a module with a MIDI path or ColdFire sound work cannot take it.
     if (record.trigger === 'key' && ['midi-usb', 'machines'].includes(document.category)) fail('performance', "a key-press record (trigger: 'key') is for a module with no MIDI path and no frame-interrupt work, not a " + document.category + ' module', 'npm run perf:audit -- template coldfire, and measure under the flood')
@@ -151,11 +154,13 @@ function octatrack(id) {
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
     // Were these numbers taken on this code? The stamp names the source they were measured on.
     const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json')
-    if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
+    if (stamped.state === 'fail' && !record.sourceSha256 && approvalCoversSource(hardwareApproval, id, document.version, nativeHashes.get(id)))
+      info('performance stamp', 'not stamped: the owner\'s approval binds this exact source, record included (' + approvalPath + ')')
+    else if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
     else if (stamped.state === 'note') info('performance stamp', stamped.detail)
     else ok('performance stamp', stamped.detail)
-  } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
-  else info('performance', 'no evidence/performance.json. Not required before ' + PERFORMANCE_REQUIRED_FROM + '; npm run perf:audit measures the same three things')
+  } else if (performanceRequired) fail('performance', 'a new module, and every release from ' + RELEASE_COST_FROM + ', needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
+  else info('performance', 'no evidence/performance.json. Not required for a module listed before ' + PERFORMANCE_REQUIRED_FROM + ' until its next release (from ' + RELEASE_COST_FROM + '); npm run perf:audit measures the same three things')
 
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
@@ -192,6 +197,16 @@ function octatrack(id) {
   if (price.state === 'fail') fail('cpu price', price.detail, price.fix)
   else if (price.state === 'pending') info('cpu price', price.detail)
   else ok('cpu price', price.detail)
+  // What it costs installed and used nowhere (test procedure step 9): above the limit it must rest (answer ev_in_use), unless a machine.
+  const rest = atRestStatus({ root, document })
+  if (rest.state === 'fail') fail('cost at rest', rest.detail, rest.fix)
+  else if (rest.state === 'ok') ok('cost at rest', rest.detail)
+  else info('cost at rest', rest.detail + (rest.fix ? '. Fix: ' + rest.fix : ''))
+  // What one more instance costs on a Part (base 0.8 admission): a release of an effect or a machine measures its curve on a unit.
+  const curve = frameCostStatus({ root, document })
+  if (curve.state === 'fail') fail('frame cost', curve.detail, curve.fix)
+  else if (curve.state === 'ok') ok('frame cost', curve.detail)
+  else info('frame cost', curve.detail + (curve.fix ? '. Fix: ' + curve.fix : ''))
 
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
@@ -251,7 +266,7 @@ function machineModule({ id, machine, folder, zdl = false }) {
   if (!manifest) lines.push({ state: 'fail', name: 'manifest', detail: folder + '/modwerk.module.json is missing', fix: 'npm run module:new -- <id> --machine ' + machine + ' --author <login>' })
   else {
     lines.push({ state: 'ok', name: 'manifest', detail: manifest.version })
-    if (!LIBRARY_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a library category', fix: 'use one of ' + LIBRARY_CATEGORIES.join(', ') })
+    if (!MODULE_V3_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a manifest category', fix: 'use one of ' + MODULE_V3_CATEGORIES.join(', ') })
     else if (!exists('docs/module-guides/' + manifest.category + '.md')) lines.push({ state: 'fail', name: 'category guide', detail: 'docs/module-guides/' + manifest.category + '.md is missing', fix: 'write the guide for this category' })
     else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md' + (zdl ? ' and "Create an effect" in sdk/machines/' + machine + '/README.md' : ', and the Digitakt and Digitone section in it') })
   }
@@ -303,7 +318,7 @@ function report(title, lines, tiered = false) {
 
 // The agent board (docs/AGENT_BOARD.md): one read per run; a new module needs your claim, and someone else's claim stops it.
 // Open questions and findings on the module or its machine are a line to read, never a red one.
-const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: {} })
+const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: { moduleContext: true } })
 const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
 const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octatrack/modules/' + id))

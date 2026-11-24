@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "method": "For USB releases, the exact published MWRM package has zero DSP program words (the big-endian count at byte 32). The linked module evidence confirms that the module adds no separate DSP effect, engine or base DSP path. The two source-pinned card builds are verified against their approved ColdFire manifests.",
+  "scope": "DSP cycles executed by the module’s own code. A module may still change the input, routing or settings of stock audio processing. The Output Matrix, Sidechain Compressor and Analog Bassdrum require separate DSP measurements.",
+  "modules": [
+    {
+      "module": "repitch",
+      "version": "0.2.1-experimental",
+      "source": "sdk/octatrack/modules/repitch/README.md",
+      "packageSha256": "4b9278462747c87b0d25040a759773c1fff0425804d3f940ced69a475c2a70c9",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "usb-audio-out-tracks-main-cue",
+      "version": "0.3.0-experimental",
+      "source": "sdk/octatrack/modules/usb-audio-out-tracks-main-cue/README.md",
+      "packageSha256": "0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "quantizer",
+      "version": "0.1.4-experimental",
+      "source": "sdk/octatrack/modules/quantizer/README.md",
+      "packageSha256": "33700b9339c0d0e619716cf6358ac83c9912c9881e30721411d2bf79897bbe04",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "synth",
+      "version": "0.1.4-experimental",
+      "source": "sdk/octatrack/modules/synth/manifest.py",
+      "packageSha256": "7d59f80928cee4690781039ae521c15e5d2bbedf70b0e88616c7bcf2bcecffc3",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "previewvol",
+      "version": "0.1.2-experimental",
+      "source": "sdk/octatrack/modules/previewvol/TESTING.md",
+      "packageSha256": "9fd95d9a9a5a1c5932892ab1af36b39994650a51161df3903f36fa8afa6cb1c2",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "cc-map",
+      "version": "0.1.2-experimental",
+      "source": "sdk/octatrack/modules/cc-map/TESTING.md",
+      "packageSha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "vector",
+      "version": "0.3.2-experimental",
+      "source": "sdk/octatrack/modules/vector/TESTING.md",
+      "packageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "playmodes",
+      "version": "0.2.0-experimental",
+      "source": "sdk/octatrack/modules/playmodes/TESTING.md",
+      "sourceSha256": "da8e028b4c6b9cc881fd0c4cc3533e2c5207d59d4fda6aebaf29e22d591a423d",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "mute-modes",
+      "version": "0.2.2-experimental",
+      "source": "sdk/octatrack/modules/mute-modes/manifest.py",
+      "packageSha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "recorder-loop-fix",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/recorder-loop-fix/manifest.py",
+      "packageSha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "poly8",
+      "version": "0.3.3-experimental",
+      "source": "sdk/octatrack/modules/poly8/TESTING.md",
+      "packageSha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "quantize-live-rec-toggle",
+      "version": "0.1.1-experimental",
+      "source": "sdk/octatrack/modules/quantize-live-rec-toggle/manifest.py",
+      "packageSha256": "297f79efa4259486a6df7ce95efa29947b457597cb8f2d2794a214699d7f87fe",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "apply-scene",
+      "version": "0.2.0-experimental",
+      "source": "sdk/octatrack/modules/apply-scene/TESTING.md",
+      "packageSha256": "236231aaaf2914ed4a4932eda74c455f834d9e0791c0833addd5589b31d23869",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "direct-jump-kyoti",
+      "version": "0.2.0-experimental",
+      "source": "sdk/octatrack/modules/direct-jump-kyoti/manifest.py",
+      "packageSha256": "ed3ba88a2f57c7f5ab122a5f572a8a814c91a338c5baa3a56da324c86d71060d",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "dejavu",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/dejavu/manifest.py",
+      "packageSha256": "95079643d3e11914a9fcea21c3417bd95fe7083333660470147d7e89a1f53260",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "arp-key-locks",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/arp-key-locks/manifest.py",
+      "packageSha256": "907a03cf980996b30b0c3ba89ea0e80b889727ba4d407d04e2f95ceb30b44e8c",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "temp-save",
+      "version": "0.1.1-experimental",
+      "source": "sdk/octatrack/modules/temp-save/TESTING.md",
+      "packageSha256": "a389aa93c6408ba99f4049247934dc371c2fcad6cee72e039876a8d3df451ea9",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "beat-slicer",
+      "version": "0.1.66-experimental",
+      "source": "sdk/octatrack/modules/beat-slicer/manifest.py",
+      "packageSha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "tuner",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/tuner/upstream/manifest.py",
+      "packageSha256": "05fef3971afaabec88d5e7238a185b7fd0fce171c91f02ff41ecee7294e9dbd7",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "slow-lfo",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/slow-lfo/manifest.py",
+      "packageSha256": "3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "bar-led",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/bar-led/manifest.py",
+      "packageSha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "stem-rec",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/stem-rec/upstream/manifest.py",
+      "sourceSha256": "caa5d4355c9e3ae0eb8e4d0b4c11117693ebaf837fdde50e0d74bc484a9d7b1e",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "tiempos",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/tiempos/TESTING.md",
+      "packageSha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "syntiz",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/syntiz/manifest.py",
+      "packageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "track-solo",
+      "version": "0.2.5-experimental",
+      "source": "sdk/octatrack/modules/track-solo/manifest.py",
+      "packageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "pattern-sample-locks",
+      "version": "0.1.9-experimental",
+      "source": "sdk/octatrack/modules/pattern-sample-locks/TESTING.md",
+      "packageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "amiga",
+      "version": "0.3.0-experimental",
+      "source": "sdk/octatrack/modules/amiga/manifest.py",
+      "packageSha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "midi-scenes",
+      "version": "0.3.0-experimental",
+      "source": "sdk/octatrack/modules/midi-scenes/manifest.py",
+      "packageSha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "kits",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/kits/manifest.py",
+      "packageSha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "butter-fingers",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/butter-fingers/manifest.py",
+      "packageSha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655",
+      "moduleDspWords": 0
+    },
+    {
+      "module": "screen-off",
+      "version": "0.1.0-experimental",
+      "source": "sdk/octatrack/modules/screen-off/manifest.py",
+      "packageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+      "moduleDspWords": 0
+    }
+  ]
+}

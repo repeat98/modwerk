@@ -43,7 +43,7 @@ Before launch, assign a backup operator and confirm the off-device destination, 
 
 ## Private account-removal requests
 
-Members submit a private request from Your account using their current password and a confirmation. Requests can be withdrawn while pending; duplicate active requests are merged. The Accounts tab in the administrator workspace lists the private queue. A visitor/member session cannot access it. The review note should record approval references and actions, without passwords, email addresses, action links or unnecessary personal details.
+Members submit a private request from Your account using their current password and a confirmation. Requests can be withdrawn while pending; duplicate active requests are merged. Open **Admin workspace → Account requests** for the private queue. A visitor/member session cannot access it. The review note should record approval references and actions, without passwords, email addresses, action links or unnecessary personal details.
 
 Submission and review never delete data. There is no automatic deletion endpoint. For each request:
 

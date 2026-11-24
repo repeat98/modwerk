@@ -16,6 +16,16 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ModulePackagesCliTests(unittest.TestCase):
+    def test_recipe_report_distinguishes_source_changes_and_unavailable_inputs(self):
+        spec = importlib.util.spec_from_file_location('module_packages_cli', ROOT / 'scripts/octatrack-module-packages.py')
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        recorded = {'changed': 'before', 'gone': 'old', 'same': 'one', 'upstream/file': 'old'}
+        current = {'changed': 'after', 'new': 'new', 'same': 'one'}
+        expected = ['changed changed', 'missing gone', 'added new']
+        self.assertEqual(list(cli.recipe_differences(recorded, current, False)), expected)
+        self.assertEqual(list(cli.recipe_differences(recorded, current, True)), [*expected, 'missing upstream/file'])
+
     def test_private_preparation_can_resolve_its_builder_module(self):
         # Exercise the actual wrapper with a private preparation entry point.
         # The published builder can remain older than that staged entry point;
@@ -137,6 +147,29 @@ def main():
         self.assertIs(cli.titled(made, 'tiempos'), made)  # a subscribing (ABI 8) one stays as it is
         with self.assertRaises(ValueError):
             cli.titled(four, 'beat-slicer')  # the name must be the one the package's id was made from
+
+    def test_resting_references_flag_only_the_named_data_sites(self):
+        modules = {}
+        for name, path in (('cli', 'scripts/octatrack-module-packages.py'), ('runtime', 'sdk/runtime/loader/build.py')):
+            spec = importlib.util.spec_from_file_location('module_packages_rests_' + name, ROOT / path)
+            modules[name] = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(modules[name])
+        cli, runtime = modules['cli'], modules['runtime']
+        digest = bytes(32)
+        detour = (0x4000d514, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8)
+        table, start = (0x400d6434, digest, b'\0\0\0\0', [0], 0, 4), (0x400d6458, digest, b'\0\0\0\4', [0], 0, 4)
+        made = lambda *sites: runtime.package(b'\x4e\x75' * 4, 4, [runtime.NONE] * 4, [], sites, name='synth', hashed=True,
+                                              title='FM Synth', abi=8)
+        resting = made(detour + (True,), table, start)
+        flagged = cli.resting_references(resting, ['0x400d6434', '0x400d6458'])
+        self.assertEqual(flagged, made(detour + (True,), table + (True,), start + (True,)))  # as build.py would flag them
+        self.assertEqual(cli.resting_references(resting, ['0x400d6458']), made(detour + (True,), table, start + (True,)))
+        for package, addresses in ((made(detour, table, start), ['0x400d6434']),  # the package rests nothing yet
+                                   (resting, ['0x400d6430']),                      # no such site
+                                   (resting, ['0x4000d514']),                      # a detour, not a data word
+                                   (resting, ['0x400d6434', '0x400d6434'])):
+            with self.assertRaises(ValueError):
+                cli.resting_references(package, addresses)
 
 if __name__ == '__main__':
     unittest.main()

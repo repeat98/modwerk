@@ -38,6 +38,14 @@ extern volatile uint32_t modwerk_modset_switch_result;
 #define MODSET_OFF_ENTRY 56u
 #define MODSET_OFF_PAGE 5u /* entries a USB reply holds (ep0.c's OFF request) */
 unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most);
+/* What this start's restore did with each package of the card's set, in the set's order: "MWR", the entries here, the
+ * set's packages (u16, past the loader's rows too), the restore's result (modset.c's RESTORED to HELD, 0 before it ran)
+ * and 1, then 32 bytes each: state (1 loaded, 2 left out), the loader's check that refused it (loader.h runtime_check),
+ * why (u16: loader.h runtime_refusal, 0x100 the boot guard), module id, package bytes, the module pool's largest free
+ * run when it was left out, and its name as the chooser shows it (15 and a zero). */
+#define MODSET_RESTORE_ENTRY 32u
+#define MODSET_RESTORE_PAGE 5u /* entries a USB reply holds (ep0.c's RESTORE request) */
+unsigned modwerk_modset_restore_list(uint8_t *out, unsigned first, unsigned most);
 /* 1 when the module is switched off (on the shelf), for status.c's MISSING page and dsp.c's track notice: such a module
  * is not missing (owner, 16 November 2026). 0 also while the shelf moves; any task. */
 int modwerk_modset_is_off(uint32_t module);

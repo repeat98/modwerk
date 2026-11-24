@@ -9,12 +9,15 @@
 #define STOCK_ROWS 9u
 #define ROWS (STOCK_ROWS+ACTIONS)
 #define YES 0x31
+#define FUNC 0x2d
+#define AED 0x1e
 typedef void (*callback)(void);
 struct binding {struct runtime_owner owner;struct mw_sample_action_view action;uint32_t live;};
 static struct binding bindings[ACTIONS],pending;
 static uint32_t binding_count,stock_count,action_at,serial,root_task,root_kind,root_slot;
 static uint32_t pending_at,pending_kind,pending_slot,pending_generation;
 static uint32_t question_token,question_active,question_pending,yes_down;
+static uint32_t analysis_token;
 static uint32_t initial;
 static int32_t *remembered;
 static char text[ROWS][32];
@@ -24,12 +27,19 @@ static callback callbacks[ROWS];
  * its direct-dispatch tail. An old callback address is never sufficient. */
 static uint32_t select_active,select_armed,select_serial,select_row,select_task,select_sp,select_return;
 static callback select_callback;
+/* Observe before package key handlers retire a modal; take the chord after
+ * those handlers have had the chance to cancel it. No package pointer escapes. */
+static struct binding shortcut_from;
+static uint32_t shortcut_kind,shortcut_slot,shortcut_generation,shortcut_task;
+static uint32_t func_down,aed_down,aed_fresh,aed_taken;
 #ifdef MW_SAMPLE_MENU_HOST
 uint32_t mw_sample_menu_host_read(uint32_t);
 void mw_sample_menu_host_say(const char *);
 void mw_sample_menu_host_open_stock(uint32_t,uint32_t,int32_t *,const char *const *,const callback *);
 void mw_sample_menu_host_question(const char *,void (*)(uint32_t));
 void mw_sample_menu_host_open_action(uintptr_t,uint32_t,const struct modwerk_sample_editor_api *);
+void mw_sample_menu_host_close_grid(void);
+void mw_sample_menu_host_open_grid(void);
 const char *mw_sample_menu_host_name(uintptr_t,unsigned);
 callback mw_sample_menu_host_callback(uintptr_t,unsigned);
 #endif
@@ -74,6 +84,60 @@ static callback stock_callback(const callback *actions,unsigned row)
 #else
     return actions[row];
 #endif
+}
+static int bind(uintptr_t,struct binding *);
+/* These are stock's SLICE GRID chooser and its ordinary list dismissal,
+ * not the grid's apply callback. They run only on the UI task. */
+static void close_grid(void)
+{
+#ifdef MW_SAMPLE_MENU_HOST
+    mw_sample_menu_host_close_grid();
+#else
+    ((void (*)(void))0x4006d754u)();
+#endif
+}
+static void open_grid(void)
+{
+#ifdef MW_SAMPLE_MENU_HOST
+    mw_sample_menu_host_open_grid();
+#else
+    ((void (*)(void))0x40072cb8u)();
+#endif
+}
+static int stock_grid(void)
+{
+    return read32(0x460e5e30u) && read32(0x460e5e2cu)==0x400cec34u &&
+        read32(0x460e5e28u)==0x400cec08u;
+}
+static int same_action(const struct binding *a,const struct binding *b)
+{
+    return a->owner.module==b->owner.module && a->owner.generation==b->owner.generation &&
+        a->owner.owned_extent==b->owner.owned_extent && a->owner.image_offset==b->owner.image_offset &&
+        a->action.action==b->action.action && a->action.entry_offset==b->action.entry_offset;
+}
+static void capture_shortcut(void)
+{
+    if(mw_sample_editor.state!=MW_SAMPLE_OPEN)return;
+    uint32_t saved=modwerk_machine_lock();
+    const volatile uintptr_t *row=modwerk_runtime_event_row[MODWERK_OT_SAMPLE_EDITOR_ACTIONS-RUNTIME_EVENTS];
+    struct binding b;
+    shortcut_from.live=0;
+    for(unsigned i=0;i<ACTIONS && row[i];++i) {
+        if(!bind(row[i],&b))break;
+        if(b.owner.module==mw_sample_editor.owner.module &&
+           b.owner.generation==mw_sample_editor.owner.generation &&
+           b.owner.owned_extent==mw_sample_editor.owner.owned_extent) {
+            shortcut_kind=read32(0x46c8d1a0u);shortcut_slot=read32(0x46c8d19cu);
+            if(shortcut_kind==mw_sample_editor.before.view.kind &&
+               shortcut_slot==mw_sample_editor.before.view.slot) {
+                uint32_t control=(shortcut_kind?0x46c922c4u:0x46c90a78u)+44u*shortcut_slot;
+                shortcut_generation=read32(control+20u);shortcut_task=read32(0x800068fcu);
+                copy(&shortcut_from,&b,sizeof b);
+            }
+            break;
+        }
+    }
+    modwerk_machine_unlock(saved);
 }
 static void reconcile_question(void);
 static int label_copy(char *out,const char *in)
@@ -209,6 +273,7 @@ void mw_sample_menu_retire_locked(const struct runtime_dsp *from)
 {
     for(unsigned i=0;i<binding_count;++i)if(owned_by(&bindings[i],from))bindings[i].live=0;
     if(owned_by(&pending,from))pending.live=0;
+    if(owned_by(&shortcut_from,from))shortcut_from.live=0;
 }
 static void answer(uint32_t yes)
 {
@@ -220,7 +285,8 @@ static void answer(uint32_t yes)
         question_pending=1;return;
     }
     question_active=question_pending=question_token=0;
-    if(why==MODWERK_SAMPLE_APPLIED)mw_sample_refresh_ui();
+    if(why==MODWERK_SAMPLE_ANALYZING){analysis_token=token;say("ALIGNING GRID");mw_sample_analysis_queue();}
+    else if(why==MODWERK_SAMPLE_APPLIED)mw_sample_refresh_ui();
     else if(yes && why!=MODWERK_SAMPLE_NO_CHANGE)say("SOURCE CHANGED");
 }
 static void reconcile_question(void)
@@ -241,18 +307,99 @@ static void reconcile_question(void)
 int mw_sample_ui_key(int code,int pressed)
 {
     reconcile_question();
+    if(code==FUNC) {
+        if(pressed && !func_down){shortcut_from.live=0;capture_shortcut();}
+        func_down=pressed!=0;
+        if(!pressed)shortcut_from.live=0;
+    } else if(code==AED) {
+        aed_fresh=pressed && !aed_down;aed_down=pressed!=0;
+        if(aed_fresh && func_down)capture_shortcut();
+    } else if(pressed)shortcut_from.live=0;
     if(code==YES)yes_down=pressed!=0;
-    if(pending.live && pressed && code!=YES)pending.live=0;
+    if(analysis_token && pressed) {
+        mw_sample_editor_cancel(&mw_sample_editor,analysis_token);analysis_token=0;
+        if(code==0x32 || code==YES)return 1;
+    }
+    if(pending.live && pressed && code!=YES &&
+       !(code==AED && aed_taken && !aed_fresh))pending.live=0;
     if(question_pending && pressed && code!=YES) {
         answer(0); /* cancel before passing another stock gesture */
         if(code==0x32)return 1;
     }
     return 0;
 }
+int mw_sample_ui_enc(int encoder,int delta)
+{
+    (void)encoder;
+    if(analysis_token && delta) {
+        mw_sample_editor_cancel(&mw_sample_editor,analysis_token);analysis_token=0;
+    }
+    return 0;
+}
+/* After runtime_key (order 90): a conforming action retires its source token
+ * before passing FUNC/AED to stock. The base never closes another package by
+ * guessing its private UI state or injecting keys into unrelated handlers. */
+int mw_sample_ui_shortcut_key(int code,int pressed)
+{
+    if(code!=AED)return 0;
+    if(!pressed){unsigned taken=aed_taken;aed_taken=0;return (int)taken;}
+    if(aed_taken)return 1;
+    if(!func_down || !aed_fresh || serial==UINT32_MAX || pending.live ||
+       question_active || question_pending || select_active || mw_sample_editor.state==MW_SAMPLE_PROMPT)return 0;
+    unsigned native=stock_grid();
+    if(!native && (read32(0x460e5e30u) || (read32(0x460d1e34u)&32u))) {
+        shortcut_from.live=0;return 0; /* never replace an unrelated dialog */
+    }
+    if(!native && !shortcut_from.live)return 0; /* first press remains stock */
+    uint32_t saved=modwerk_machine_lock();
+    const volatile uintptr_t *row=modwerk_runtime_event_row[MODWERK_OT_SAMPLE_EDITOR_ACTIONS-RUNTIME_EVENTS];
+    struct binding next,b;
+    unsigned found=native,has_next=0,valid=0;
+    for(unsigned i=0;i<ACTIONS && row[i];++i) {
+        if(!bind(row[i],&b)){found=0;break;}
+        if(found){copy(&next,&b,sizeof b);has_next=1;break;}
+        if(same_action(&b,&shortcut_from))found=1;
+    }
+    uint32_t kind=read32(0x46c8d1a0u),slot=read32(0x46c8d19cu);
+    uint32_t slots=MW_SAMPLE_FILE_SLOTS+(kind==MODWERK_SAMPLE_FLEX?MW_SAMPLE_RECORDER_COUNT:0u);
+    if(found && (has_next || !native) && kind<=MODWERK_SAMPLE_FLEX && slot<slots &&
+       mw_sample_editor.state==MW_SAMPLE_CLOSED) {
+        uint32_t control=(kind?0x46c922c4u:0x46c90a78u)+44u*slot;
+        valid=native || (kind==shortcut_kind && slot==shortcut_slot &&
+            read32(control+20u)==shortcut_generation && read32(0x800068fcu)==shortcut_task &&
+            mw_sample_owner_current_locked(&shortcut_from.owner));
+        if(valid && has_next) {
+            copy(&pending,&next,sizeof next);pending_at=modwerk_runtime_ticks;
+            pending_kind=kind;pending_slot=slot;pending_generation=read32(control+20u);
+        }
+    }
+    shortcut_from.live=0;
+    modwerk_machine_unlock(saved);
+    if(!valid)return 0;
+    aed_taken=1;
+    if(native) {
+        close_grid();
+        if(read32(0x460e5e30u))pending.live=0;
+    } else if(!has_next)open_grid();
+    return 1;
+}
 void mw_sample_ui_tick(void)
 {
     mw_sample_editor_bootstrap();
     reconcile_question();
+    if(analysis_token) {
+        if(mw_sample_editor.state==MW_SAMPLE_ANALYZE &&
+           mw_sample_editor.serial==analysis_token && !(read32(0x460d1e34u)&32u))
+            mw_sample_analysis_queue();
+        else {
+            unsigned why=mw_sample_editor.serial==analysis_token?mw_sample_editor.completion:MODWERK_SAMPLE_STALE;
+            mw_sample_editor_cancel(&mw_sample_editor,analysis_token);analysis_token=0;
+            if(why==MODWERK_SAMPLE_APPLIED)mw_sample_refresh_ui();
+            else if(why==MODWERK_SAMPLE_ANALYSIS_LIMIT)say("SNAP LIMIT");
+            else if(why==MODWERK_SAMPLE_ANALYSIS_FAILED)say("SNAP FAILED");
+            else if(why!=MODWERK_SAMPLE_NO_CHANGE)say("SOURCE CHANGED");
+        }
+    }
     if(question_pending)answer(1);
     if(pending.live && !select_active && !question_active && !read32(0x460e5e30u)) {
         uint32_t saved=modwerk_machine_lock(),token=0;
@@ -268,11 +415,11 @@ void mw_sample_ui_tick(void)
         uintptr_t base;
         if(why==MODWERK_SAMPLE_OK && image(&pending.owner,&base) && mw_sample_owner_current_locked(&pending.owner)) {
 #ifdef MW_SAMPLE_MENU_HOST
-            mw_sample_menu_host_open_action(base+pending.action.entry_offset,token,&mw_sample_editor_api);
+            mw_sample_menu_host_open_action(base+pending.action.entry_offset,token,mw_sample_editor_public_api());
 #else
             void (*open)(uint32_t,const struct modwerk_sample_editor_api *)=
                 (void (*)(uint32_t,const struct modwerk_sample_editor_api *))(base+pending.action.entry_offset);
-            open(token,&mw_sample_editor_api);
+            open(token,mw_sample_editor_public_api());
 #endif
             modwerk_machine_unlock(saved);return;
         }

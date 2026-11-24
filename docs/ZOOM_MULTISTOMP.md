@@ -41,7 +41,7 @@ without a pedal. It is a developer tool: never hardware evidence, and the site
 never bundles it or offers it to musicians, so it cannot stand in for a pedal
 (owner, 31 October 2026).
 
-`npm run upstream:tools` keeps its source at the archive pinned in
+`npm run upstream:tools -- --for zoom` gets the source archive pinned in
 `sdk/upstream-tools.json`; build it there with
 `cargo build --release --locked -p ziddle-cli` (Rust 1.88 or newer). Modwerk
 uses only the emulator, on your own effect files: `ziddle effect check
@@ -371,6 +371,10 @@ install throughout.
    and Mangle followed (10 November 2026). Next: `divf` from TI's RTS source, the
    effect-ID ledger and the DSP limit of 300 under MIDISTOMP 2.
 8. The other pedals: [Another ZDL pedal](#another-zdl-pedal).
-9. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), loading
-   effects without a reboot, in-browser NAM and cab builds, and the patch
-   editor as a device page.
+9. Prove loading without a reboot on the original MS-70CDR. On a development
+   base, try one ZDL from RAM without changing saved patches or effect files.
+   Check the playing chain after Undo, then check an unkept trial after a
+   power cycle. After that, put review, trial, Keep and Undo behind the
+   shared loader and device tools. See the [MS-70CDR SDK guide](../sdk/machines/zoom-ms-70cdr/README.md#modwerk-stack).
+10. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`),
+    in-browser NAM and cab builds, and the patch editor as a device page.

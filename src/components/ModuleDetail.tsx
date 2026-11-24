@@ -20,7 +20,7 @@ import { ModuleAuthors } from './ModuleAuthors'
 import { ownerCredit } from '../catalog/module-authors'
 import { UsbAudioConfigurator } from './UsbAudioConfigurator'
 import { USB_AUDIO_MIDI_CREDITS } from './credits'
-import { USB_AUDIO_MODULE, usbAudioPreset, type UsbAudioConfiguration } from '../config/usb-audio'
+import { USB_AUDIO_PACKAGED, USB_AUDIO_MODULE, usbAudioPreset, type UsbAudioConfiguration } from '../config/usb-audio'
 
 export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, browse, onBackToResults, usbAudio, configurationName, configurationId, onConfigureUsbAudio, modal }: { modal?: boolean; browse?: CatalogBrowse | null; onBackToResults?: () => void; module: FirmwareModule; selected: boolean; onToggle: () => void; addBlock?: AddBlock; onSwap?: (removeIds: readonly string[]) => void; usbAudio?: UsbAudioConfiguration; configurationName?: string; configurationId?: string; onConfigureUsbAudio?: (value: UsbAudioConfiguration | undefined) => void }) {
   const previewKey = configurationId + JSON.stringify(usbAudio)
@@ -29,14 +29,16 @@ export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, bro
   const details = DETAILS[module.id]
   const moduleDocument = MODULE_DOCUMENTS_BY_ID[module.id]
   const caution = moduleCaution(module.id)
-  return <ModuleDetailLayout modal={modal} browse={browse} onBackToResults={onBackToResults} id={module.id} title={module.name} family={details.family} detail={module.detail}
-    titleBadge={isBetaModule(module.id) ? 'Beta' : module.id === USB_AUDIO_MODULE ? 'Outbox 8 compatible' : undefined}
-    configureTarget={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? 'usb-setup' : undefined}
+  return <ModuleDetailLayout modal={modal} browse={browse} onBackToResults={onBackToResults} id={module.id} title={module.name} family={module.type} detail={module.detail}
+    titleBadge={isBetaModule(module.id) ? 'Beta' : module.id === USB_AUDIO_MODULE && !USB_AUDIO_PACKAGED ? 'Outbox 8 compatible' : undefined}
+    configureTarget={module.id === USB_AUDIO_MODULE && !USB_AUDIO_PACKAGED && onConfigureUsbAudio ? 'usb-setup' : undefined}
     author={module.authorName} authorUrl={module.authorUrl} contributors={module.contributors} description={module.description}
     selected={selected} onToggle={onToggle} addBlock={addBlock} onSwap={onSwap} backHref="#library" backLabel="All modules"
-    preview={<ModuleAudioDetailPreview id={module.id} name={module.name}/>} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? draft.layout : undefined} />}
-    notice={(caution || moduleDocument.build) && <>{caution && <p className="module-caution"><Icon name="warn" size={18} /><span><strong>{caution.title}.</strong> {caution.detail}</span></p>}{moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}</>}
-    overviewIntro={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />}
+    preview={<ModuleAudioDetailPreview id={module.id} name={module.name}/>} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && !USB_AUDIO_PACKAGED && onConfigureUsbAudio ? draft.layout : undefined} />}
+    notice={(caution || moduleDocument.build) && <>{caution && <p className="module-caution" data-tier={caution.tier}><Icon name="warn" size={18} /><span><strong>{caution.badge}.</strong> {caution.detail}</span></p>}{moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}</>}
+    overviewIntro={module.id === USB_AUDIO_MODULE && (USB_AUDIO_PACKAGED
+      ? <section className="detail-section"><h2>USB Audio settings</h2><p>New installs send the stereo Main mix to your computer on USB channels 1–2. After syncing, open PROJ → MODWERK → SETTINGS → USB AUDIO on the Octatrack. Choose your layout and stem tap there. For Outbox 8, map its outputs to USB pairs 1–4 in Elektron’s app, then select each pair’s source on the Octatrack.</p></section>
+      : onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />)}
     guide={<>
       <details className="module-disclosure">
         <summary><span>About & credits</span><Icon name="plus" size={16} /></summary>

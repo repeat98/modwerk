@@ -66,7 +66,9 @@ release notes in `CHANGELOG.json`; `npm run module:new` starts it there. Every
 folder in `sdk/octatrack/modules/` is validated for publication even when absent
 from `sdk/catalog.json`, so a draft there blocks catalogue generation for
 everyone. Move it there, and its notes into `src/community/module-changelogs/`,
-only when the publication requirements are met.
+only when the publication requirements are met. A listed module's update
+waits as a draft PR, where CI and `pr:ready -- --draft` warn about its missing
+evidence; marking it ready requires it.
 
 **Hear it.** `npm run module:dev -- <id>` builds the module from its source and
 tries it on your unit over USB: a trial in RAM, undone when it ends or on
@@ -84,6 +86,7 @@ no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md)
 Each trial ends with a verdict from the unit's own log: a crash, DSP stall,
 frozen UI or skipped track during it fails the trial (exit 1), and it is
 rolled back even with `--accept`; `npm run device -- do diaglog` shows the log.
+Each incident names its boot and the seconds since that boot.
 
 **Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
 the lines a trial and a tester need (category, DSP sources, cross-compatibility,
@@ -234,7 +237,8 @@ reboot where applicable. Give hardware steps and record actual results;
 emulator/host tests do not fill missing hardware qualification. With
 `npm run device -- serve` running, `npm run device:qualify -- --keeps-ok
 --testing-entry run.md <package>` installs the package, places it alone on
-each DSP core and then beside itself on every track, sweeps its knobs, switches
+each DSP core (a machine through the machine list, playing, its render read
+against its CPU price) and then beside itself on every track, sweeps its knobs, switches
 Parts and banks, optionally soaks (`--soak`) and crashes on purpose
 (`--crash`), restores the Part and removes the package. It writes what it saw,
 with the package's SHA-256, as an entry to paste into TESTING.md. The
@@ -294,6 +298,8 @@ the asset hashes that moved; `--check` must then call every package identical.
 published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
+**C/assembly USB source recipes.** A package row's `sourceRecipe` opts into `scripts/source-runtime-package.py`. Its `base` declares only reviewed `imports` (export names) and `runOrigin`; identity, package hash and addresses are read from the committed base at each build, never embedded as runtime identity guards. `python3 -B scripts/source-runtime-package.py --recipe <runtime-build.json> --check` rebuilds and validates without writing output. Reconstruction review pins authored module inputs, explicitly compiled shared units and the linked image with only linker-proven import words normalized; `baseImports` pins those words' offsets, names and addends. Other SDK/base inputs remain in build provenance. Compatible base changes need no recipe recapture; missing/non-runtime exports, changed authored code or overlapping reconstruction spans still fail. Capture with a private original OS is a separate review step, not a scan waiver.
+
 **A first release on an owner approval** (`sdk/approvals/<id>-build-approval.json`, which only the owner writes).
 It binds the native source hash: every file in the folder but `octamod.module.json`, `media/`, Markdown and licences,
 so `evidence/performance.json`, the thumbnail and `manifest.py` are final before the owner signs. Without it
@@ -323,7 +329,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 3. **Measure and test.**
    - Record the worst-case cycles for each processor and the exact memory regions and totals. New FX should aim for DSP cost in the same ballpark as worst-case stock SPRING REV. Plan around that reference before implementation and compare expensive types/settings, moving controls and trigger splits under matched conditions on both cores. This is a design target without a fixed ratio or hard per-effect ceiling; substantially higher cost needs optimization and review of the remaining headroom.
    - For an effect, also check how it sounds: aliasing, clipping, DC and idle behaviour (`npm run fx:audit`, [effects guide](module-guides/effects.md#sound-quality)). Paste the table into TESTING.md, or write "not tested". No gate in CI runs it.
-   - Name its CPU price in `resources.cpuPrice`, measured on a unit: what one playing track of a machine adds (`npm run device -- do`, `guard`), also its descriptor's `reserved[0]`; any other module's frame-interrupt share with `npm run device:price`. `modules:check` refuses a module without one ([format](MODULE_PERFORMANCE.md)).
+   - Name its CPU price in `resources.cpuPrice`, measured on a unit: what one playing track of a machine adds (`npm run device -- do`, `guard`), also its descriptor's `reserved[0]`; any other module's frame-interrupt share with `npm run device:price`. `modules:check` refuses a module without one ([format](MODULE_PERFORMANCE.md)). Every release proves its cost on a unit too ([what](TEST_PROCEDURE.md#what-a-release-measures)).
    - Add a hardware report from a real unit, stating its model, how long it ran, what was tested and the limitations. There is no minimum duration or track count.
    - A fix for a stock bug can be regressed in the emulator: `ot_emu`'s `call <address> [args]` runs a stock routine on a booted image, after `poke` has set up the state (Direct Jump Kyoti's `verify.py`, part 6, runs the MIDI Plays-Free stall on the original OS and on the module image).
    - If you could not test on hardware, say so in the pull request. Only the owner can waive this, for one exact version.

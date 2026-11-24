@@ -1,8 +1,94 @@
 {
   "schemaVersion": 2,
-  "version": "0.2.0-experimental",
+  "version": "0.4.0-experimental",
   "nativeManifest": "manifest.py",
-  "media": [],
+  "media": [
+    {
+      "path": "media/ot-settings.png",
+      "captureType": "emulator",
+      "caption": "Open PROJ, choose MODWERK and open SETTINGS. Highlight USB AUDIO and press YES.",
+      "alt": "SETTINGS lists USB AUDIO with a right-facing selection arrow and YES OPEN.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SETTINGS",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.4.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-usb-audio.png",
+      "captureType": "emulator",
+      "caption": "Open SEND TO to choose a computer or Outbox 8, LAYOUT to choose which tracks or mixes to send, and INPUTS to play audio from the computer into the Octatrack.",
+      "alt": "USB AUDIO shows SEND TO set to COMPUTER, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL, OUTPUT MODE to ALL and INPUTS to OFF.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "USB AUDIO",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.4.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-track-tap.png",
+      "captureType": "emulator",
+      "caption": "On either track layout, open TRACK TAP. Choose PRE LEVEL for stems before track level, or POST LEVEL to record level changes.",
+      "alt": "TRACK TAP shows PRE LEVEL selected and POST LEVEL below it.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TAP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.4.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-inputs.png",
+      "captureType": "emulator",
+      "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+      "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "USB AUDIO INPUTS",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.4.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-outbox-pairs.png",
+      "captureType": "emulator",
+      "caption": "With OUTBOX 8 selected, INPUTS gives way to the four output pairs. Open each pair and choose its source: a track, Main, Cue or OFF for silence.",
+      "alt": "USB AUDIO with SEND TO on OUTBOX 8 shows OUT 1/2 to OUT 7/8 set to TRACK 1 to TRACK 4, with OUT 7/8 highlighted.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "USB AUDIO outputs",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.4.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+      }
+    }
+  ],
   "id": "usb-audio-out-tracks-main-cue",
   "key": "USB AUDIO OUT TRACKS MAIN CUE",
   "name": "USB Audio",
@@ -21,17 +107,17 @@
     "label": "USB AUDIO",
     "family": "USB audio",
     "summary": "Record stereo mixes or individual tracks over USB, or send them to Outbox 8 at 44.1 kHz and 24 bits.",
-    "overview": "Choose one USB output layout in Modwerk: Main, Main + Cue, Track 8 / Master, eight tracks before LEVEL, eight tracks following LEVEL, or eight tracks plus Main and Cue. The updated shared USB stack supports the Outbox 8 44.1 kHz handshake. Modwerk stores a routing plan; apply its USB channel pairs separately in Elektron\u2019s Outbox app. Existing configurations without USB settings keep the classic twenty-channel implementation.",
+    "overview": "Install USB Audio once. Open PROJ > MODWERK > SETTINGS > USB AUDIO to choose a computer layout, a track tap, or four stereo sends for Outbox 8. Existing Modwerk sets supply their saved routing when loaded.",
     "highlights": [
-      "Six selectable stereo output layouts; 2 to 20 USB channels",
-      "Outbox 8 rate handshake and shared audio / MIDI reset handling",
-      "Saved four-pair Outbox routing plan and per-layout CPU estimates"
+      "Stereo mixes or eight track stems, plus optional Main and Cue",
+      "Pre-LEVEL or post-LEVEL stems in both track layouts",
+      "Four assignable Outbox stereo pairs, including duplicates and silence"
     ],
     "usage": [
-      "Open USB Audio setup, choose Computer or Outbox 8, and select the audio to send. Read the signal-tap description and save the setup before adding it.",
-      "For Outbox 8, assign up to four stereo sources to the physical outputs. Match the shown USB pairs in Elektron\u2019s Outbox app; Modwerk does not program the Outbox.",
-      "For Computer, select the Octatrack USB input in your recording software and use the shown stereo channel pairs. Full multichannel operation requires high-speed USB.",
-      "To return to the classic twenty-channel source, choose Computer and Use classic 20-channel setup. This removes the new settings; existing saved configurations without USB settings keep their prior code path."
+      "Install USB Audio and open PROJ > MODWERK > SETTINGS > USB AUDIO.",
+      "Choose COMPUTER and a LAYOUT. In either track layout, choose PRE LEVEL or POST LEVEL under TRACK TAP.",
+      "Choose OUTBOX 8 and select the source or OFF for each output pair. Map the four USB pairs to their physical outputs in the Outbox app.",
+      "Open OUTPUT MODE to silence USB Audio or to send only Main and Cue in the twenty-channel layout."
     ]
   },
   "controls": [],
@@ -39,31 +125,24 @@
     "firmware": "1.40C",
     "effectId": null,
     "location": "USB",
-    "conflicts": [
-      "usb-audio-out-main",
-      "usb-audio-out-main-cue",
-      "usb-audio-out-master",
-      "usb-audio-out-tracks"
-    ],
+    "conflicts": [],
     "limitations": [
-      "Output only, fixed 44.1 kHz / 24-bit; USB input and Crossbar variants are excluded.",
-      "One audio layout per build; shared USB MIDI is included.",
+      "Fixed 44.1 kHz / 24-bit. USB input (INPUTS: AB, CD or ABCD) needs a high-speed connection to a computer; full speed and Outbox 8 are output only. Crossbar variants are excluded.",
       "Like every DRAM module, gives up about 10 MB of sample memory: projects that filled Flex/recorder memory can show OUT OF MEMORY. Shorten recorder reservations or load long samples into Static (#433).",
-      "Outbox assignments are a plan and must be applied in Elektron\u2019s Outbox app.",
       "At full speed, track feeds fall back to a stereo sum and Main + Cue to Main.",
-      "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1\u20137. With a master track, tracks 1\u20137 lead track 8 by 32 samples.",
-      "Current-build Octatrack / Outbox operation, chip timing, complete memory bounds, Windows and Linux host behavior are not tested."
+      "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1–7. With a master track, tracks 1–7 lead track 8 by 32 samples.",
+      "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, the MKI, worst-case ColdFire cycles and complete memory bounds remain untested."
     ]
   },
   "resources": {
-    "recorded": "29 Sep 2026 (upstream record)",
+    "recorded": "23 November 2026, configurable release package with USB input",
     "storage": {
-      "label": "Audio rings",
-      "display": "Depends on USB layout",
+      "label": "Runtime memory",
+      "display": "Full bound unmeasured",
       "value": null,
       "unit": "bytes",
       "method": "unmeasured",
-      "conditions": "Exact linked section sizes are recorded per layout in evidence/layouts.json; the historical 88 KiB figure applies to the classic twenty-channel path. Complete stack / DMA and hardware memory bounds have not been measured.",
+      "conditions": "USB Audio 0.4 allocates 17,852 bytes of code and data and 110,552 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
       "source": "README.md"
     },
     "processing": {
@@ -92,16 +171,16 @@
       "memory": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "The selected source determines the static audio ring footprint. Linked sections are recorded for all six layouts in evidence/layouts.json. This tier describes source allocation sizes, not a complete hardware memory bound.",
+        "rationale": "All layouts use the same release package. Its linked section sizes are recorded in TESTING.md. Complete memory use including stack and DMA remains unmeasured.",
         "source": "README.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Software checks cover six source-only layouts, GNU runtime linking, guarded hooks, packaging and configuration persistence. Owner approved this experimental release without physical hardware testing. Hardware operation, real-chip timing and complete memory bounds remain unmeasured.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "7b2984c859732ae6c797ae49c7d61d250b1b6519",
+    "summary": "0.4.0 is the input build that ran on an Octatrack MKII on 21 November 2026 (all four INPUTS modes, 17 minutes of duplex audio), with a new inventory kind; this exact package was released on the owner's word without a run on base 0.8.1. 0.3.0 recorded all five widths, survived Undo and passed Keep and card restoration after a physical power cycle. See TESTING.md for build identities and limits.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
     "gates": [
       "tools/verify/verify_usb.py",
       "tools/verify/verify_usb_align.py"
@@ -110,12 +189,18 @@
       "tutorial": {
         "title": "Record a mix or send Main + Cue to Outbox",
         "steps": [
-          "Choose and save: open USB Audio setup, choose Outbox 8 and Main + Cue mixes, then Assign in order. Save the setup to the named configuration and build locally from your own OS 1.40C file.",
-          "Connect and route: connect the Octatrack USB port to Outbox 8. In Elektron's Outbox app, match Main / USB 1/2 to physical outputs 1/2 and Cue / USB 3/4 to physical outputs 3/4. Modwerk stores this plan; it does not program the Outbox hardware.",
-          "Use and reset: Main is the final stereo mix; Cue is the separate stereo Cue bus. Outputs 5/6 and 7/8 are off. To use different signals, change and save the source and assignments, rebuild, and update the external app. Stop the stream before changing cabling."
+          "Load the USB Audio module. Open PROJ > MODWERK > SETTINGS > USB AUDIO and select OUTBOX 8 under SEND TO.",
+          "Choose MAIN + CUE under LAYOUT. Set OUT 1/2 to MAIN and OUT 3/4 to CUE. Pick OFF for the remaining outputs.",
+          "In the Outbox app assign the four USB pairs to their corresponding physical outputs. You can now change the source for each pair on the Octatrack."
         ]
       },
-      "screenshots": [],
+      "screenshots": [
+        "media/ot-settings.png",
+        "media/ot-usb-audio.png",
+        "media/ot-track-tap.png",
+        "media/ot-inputs.png",
+        "media/ot-outbox-pairs.png"
+      ],
       "screenshotStyle": "black-and-white"
     }
   },
@@ -130,13 +215,18 @@
     "declaration": "Imported original/MIT-licensed sources with upstream copyright, author attribution and exact commit pins retained. No firmware, extracted stock routines, recordings or screenshots imported. Contributor licensing statements are retained in LICENSE; owner/reviewer verification is required before publication and is not automatic legal clearance."
   },
   "access": {
-    "location": "The Octatrack USB port and your recording host\u2019s audio input selector.",
+    "location": "PROJ > MODWERK > SETTINGS > USB AUDIO",
     "steps": [
-      "Open USB Audio setup, choose Computer or Outbox 8, and select the audio to send. Read the signal-tap description and save the setup before adding it.",
-      "For Outbox 8, assign up to four stereo sources to the physical outputs. Match the shown USB pairs in Elektron\u2019s Outbox app; Modwerk does not program the Outbox.",
-      "For Computer, select the Octatrack USB input in your recording software and use the shown stereo channel pairs. Full multichannel operation requires high-speed USB."
+      "Open SETTINGS, highlight USB AUDIO and press YES. Open a field to see its choices. Press YES to select one or NO to go back.",
+      "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts. INPUTS plays USB channels from the computer into inputs A/B, C/D or all four.",
+      "For Outbox 8, choose OUTBOX 8 and assign the four stereo pairs. In the Outbox app, map USB pairs 1–4 to the four desired physical output pairs. Subsequent source changes take place on the Octatrack."
     ],
-    "screenshots": [],
-    "noUiReason": "This automatic USB output contribution adds no dedicated OT page, chooser entry or panel controls. Access is through the USB connection and the host\u2019s audio input selector. The reviewer must verify this absence of OT UI against the pinned source before publication."
+    "screenshots": [
+      "media/ot-settings.png",
+      "media/ot-usb-audio.png",
+      "media/ot-track-tap.png",
+      "media/ot-inputs.png",
+      "media/ot-outbox-pairs.png"
+    ]
   }
 }

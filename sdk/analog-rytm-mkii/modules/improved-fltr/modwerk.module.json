@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 3,
+  "id": "improved-fltr",
+  "name": "Improved FLTR",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "name": "Nathaniel Pavel",
+    "credits": [
+      "npp1993"
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "IMPROVED FLTR",
+    "family": "Sound",
+    "summary": "A base-width type on the FILTER page: the Rytm's analog filter as a high-pass and a low-pass in one, FRQ setting the base and a WID knob the width above it.",
+    "overview": "Improved FLTR adds BW to the FILTER page's types, after PK. In BW the voice's own analog 2-pole filter runs as a band: FRQ sets the high-pass edge (the base), and RES's knob, which reads WID in this type, sets how far above it the low-pass edge sits, from one semitone to five octaves, with 6 dB/oct slopes. It stays analog: the filter's resonance is taken below stock's RES 0, which widens its band-pass (measured on a unit). FRQ, an LFO on it and the filter envelope move the whole band; an LFO or lock on WID changes its width. WID shows where the band's top edge is, in hertz, and the FILTER graph draws the band as the filter plays it.",
+    "highlights": [
+      "BW after PK in the TYPE list: an analog high-pass and low-pass in one.",
+      "FRQ is the base; WID sets the width above it, 1 semitone to 5 octaves, shown as the top edge in hertz.",
+      "FRQ, LFO and the filter envelope move the whole band; LFO or locks on WID change its width.",
+      "The FILTER graph draws the band as measured on a unit.",
+      "All analog: no digital processing of the voice."
+    ],
+    "usage": [
+      "Use a build containing Improved FLTR. On BD, press FILTER and turn TYP past PK: it reads BW, the knob shows a band, RES's knob now reads WID and the graph draws the band.",
+      "Turn FRQ to about 220 Hz and WID up: the band opens upward from 220 Hz; WID shows its top edge in hertz.",
+      "Turn FRQ: the whole band moves and keeps its width.",
+      "Add filter envelope with ENV: the band sweeps on each hit.",
+      "Lock FRQ or WID on trigs, or point an LFO at either, as on any type."
+    ]
+  },
+  "access": {
+    "location": "FILTER page: TYP (BW), FRQ and RES's knob (WID).",
+    "steps": [
+      "Press FILTER.",
+      "Turn TYP past PK to BW.",
+      "Turn FRQ for the base and WID for the width."
+    ],
+    "screenshots": [
+      "media/band-base.png",
+      "media/band-width.png",
+      "media/band-wide.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "FILTER > TYP",
+      "default": null,
+      "doc": "Past PK: BW, the base-width band. Every other type is stock's.",
+      "labels": null
+    },
+    {
+      "name": "FILTER > FRQ",
+      "default": null,
+      "doc": "In BW: the high-pass edge (the base), on stock's scale (a semitone a step, 440 Hz at 60).",
+      "labels": null
+    },
+    {
+      "name": "FILTER > WID (RES's knob)",
+      "default": null,
+      "doc": "In BW: the width, 0 to 127 for 0 to 59.5 semitones above FRQ (held to 1 semitone at least); it shows the band's top edge in hertz. Its label and name read WID and Width while the selected sound is BW.",
+      "labels": null
+    },
+    {
+      "name": "FILTER > ENV",
+      "default": null,
+      "doc": "In BW: moves the analog cutoff, the band's centre, so both edges move together and the width stays.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on Modwerk's Rytm base.",
+      "A kit with BW plays it as PK on a build without the module (stock's own clamp) and shows a blank TYP picture; nothing else changes.",
+      "Widths from 1 semitone to 5 octaves, 6 dB/oct slopes; a wider band is quieter (about 7 dB down at 4.5 octaves) and there is no make-up gain.",
+      "On a unit the band's top edge landed within about 3 % of WID, its bottom edge 2 to 18 % above FRQ (most for the widest band); the analog filter moves a few percent from run to run.",
+      "The filter envelope moves the whole band; it cannot move the base or the width alone.",
+      "RES keeps its value when TYP changes: a BW width read as stock resonance can self-oscillate loudly; set RES after leaving BW.",
+      "While the selected sound is BW, lists that name parameters (performance, scene) call every RES Width."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_draw",
+      "ev_tick",
+      "ev_key"
+    ],
+    "claims": [
+      "audio:filter cutoff, resonance and type stores",
+      "param:FILTER TYP range to 7",
+      "param:FILTER RES names (WID / Width on BW)",
+      "ui:value text of FILTER TYP and RES",
+      "ui:FILTER TYP picture for type 7",
+      "ui:FILTER page graph for type 7 (drawn by the module)"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 3652,
+    "fastBytes": null,
+    "load": {
+      "display": "About 35 instructions a BW voice an audio block, 5 for any other type; graph and texts in the UI only",
+      "method": "static",
+      "conditions": "Counted in src/band.s: the filter routine's stores are taken by one jump; a stock type adds a compare and two jumps, BW adds the width, centre and table interpolation. Not measured on a unit."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-23",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.1.0's BW ran on npp1993's (the author's) Analog Rytm MKII, OS 1.74, from RAM in the author's private combined test images with a development base and a USB test link, run by the author's automated rig with the author's go, 23 November 2026. IFD2 (the combined set FXCD): the analog words BW sends (cutoff, resonance, BP switch code) as computed, TYP's knob stopping at BW. IFC5 (the combined set FXC8): the same and the band's edges measured with noise through the filter, top edges within about 3 % of WID, bottom edges 2 to 18 % above FRQ.",
+      "limitations": [
+        "Run by an automated rig; the author listened only informally.",
+        "The edges were measured on the FXC8 set; on the newer FXCD set the measuring machine's noise did not sound on the unit, so only the analog words and TYP were checked there.",
+        "The FILTER graph and texts were checked in the emulator, not photographed on the unit.",
+        "Not run: the package flashed, a project save and load, a power cycle, the audio load."
+      ]
+    },
+    "verifiedBy": null,
+    "sourceSha256": "cd05336069af02042e4959e654575fed476b66a1540c83d7f4945a15a6d645de"
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the author's MKII from RAM (IFD2, IFC5; 23 Nov 2026): BW's analog words, TYP's knob, and the band's edges measured (IFC5). rytm-emu: the graph and labels against recorded references, TYP's knob, the analog words; sdk/tests/test_improved_fltr_table.py keeps the width table in step with the calibration.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Improved FLTR. On BD, press FILTER and turn TYP past PK: it reads BW, the knob shows a band, RES's knob now reads WID and the graph draws the band.",
+          "Turn FRQ to about 220 Hz and WID up: the band opens upward from 220 Hz; WID shows its top edge in hertz.",
+          "Turn FRQ: the whole band moves and keeps its width.",
+          "Add filter envelope with ENV: the band sweeps on each hit.",
+          "Lock FRQ or WID on trigs, or point an LFO at either, as on any type."
+        ]
+      },
+      "screenshots": [
+        "media/band-base.png",
+        "media/band-width.png",
+        "media/band-wide.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Nathaniel Pavel's original work, under GPL-3.0-or-later. The source names firmware addresses only; the patch preconditions are addresses, lengths and SHA-256s. The band picture and thumbnail are original."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Improved FLTR",
+      "alt": "Original illustration of a band-pass response with its base and width marked, and a narrower and a wider band in faint lines",
+      "credit": "Nathaniel Pavel",
+      "license": "GPL-3.0-or-later",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/band-base.png",
+      "kind": "screenshot",
+      "caption": "FILTER page, BW: FRQ turned down to 47 (about 208 Hz) with WID at 0, a narrow band at the base.",
+      "alt": "FILTER page with TYP showing a band picture, the graph drawing a narrow peak near the left, and the knob labels FRQ (reading 47) and WID.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+        "setup": "Headless rytm-emu (dtboot) running IFS2: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved FLTR 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit on BD. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
+    },
+    {
+      "path": "media/band-width.png",
+      "kind": "screenshot",
+      "caption": "WID turned up: the band's top edge at 440 Hz, shown on the knob.",
+      "alt": "FILTER page titled WIDTH, the graph drawing a band from the base, and WID reading 440Hz.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+        "setup": "Headless rytm-emu (dtboot) running IFS2: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved FLTR 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit on BD. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
+    },
+    {
+      "path": "media/band-wide.png",
+      "kind": "screenshot",
+      "caption": "WID further up: a wider, lower band with its top edge at 1.05 kHz.",
+      "alt": "FILTER page titled WIDTH, the graph drawing a wide, low band, and WID reading 1.05kHz.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9662fdd912444d489cb1bd1cc1d639d3dc1690a64e793d9af24cc7704c82bc40",
+        "setup": "Headless rytm-emu (dtboot) running IFS2: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved FLTR 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit on BD. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
+    }
+  ]
+}

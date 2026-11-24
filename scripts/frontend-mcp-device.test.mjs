@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
 import { createFrontendTools } from './frontend-mcp.mjs'
+import { acquire, readTurn } from './unit-queue.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const base = 'a'.repeat(64), active = 'b'.repeat(64), candidate = 'c'.repeat(64)
@@ -350,6 +351,44 @@ describe('frontend MCP reviewed device transactions', () => {
     await expect(service.call('device_keep', { trial: result.trial })).rejects.toThrow('matching authorized')
     expect(link.keeps).toBe(1)
   })
+
+  // The USB bridge serves one client at a time: a link held between calls kept npm run device and the site off the unit.
+  async function countingOpens() {
+    await service.close()
+    const counter = { opens: 0 }
+    service = await createFrontendTools({ dataDir: folder, deviceSocket: 'test-only', allowDeviceWrites: true }, frontend, {
+      openLink: async () => { counter.opens++; return link }, now: () => clock,
+    })
+    return counter
+  }
+
+  it('gives the link back after each read and opens a fresh one for the next call', async () => {
+    const counter = await countingOpens()
+    await service.call('device_status'); await service.call('device_load'); await service.call('device_log')
+    expect(counter.opens).toBe(3)
+  })
+
+  it('keeps the link from a review through its trial until Keep, then gives it back', async () => {
+    const counter = await countingOpens()
+    const result = await trial()
+    expect(counter.opens).toBe(1) // the trial runs on the link its review was read through
+    await service.call('device_status')
+    expect(counter.opens).toBe(1) // an open trial keeps it
+    await service.call('device_keep', { trial: result.trial })
+    expect(counter.opens).toBe(1)
+    await service.call('device_status')
+    expect(counter.opens).toBe(2) // given back after Keep
+  })
+
+  it('keeps a reviewed link until the review expires', async () => {
+    const counter = await countingOpens()
+    await review(); await service.call('device_status')
+    expect(counter.opens).toBe(1)
+    clock += 61000
+    await service.call('device_status') // the review has expired: this call gives the link back
+    await service.call('device_status')
+    expect(counter.opens).toBe(2)
+  })
   it('refuses Keep over foreign saved files while leaving the exact trial Undo available', async () => {
     link.diagnostics = { state: 0, failed: 0, saved: 4 }
     const result = await trial()
@@ -422,5 +461,49 @@ describe('frontend MCP remote sessions', () => {
   it('refuses a malformed session id before calling the API', async () => {
     await expect(service.call('remote_session_connect', { session: '../auth' })).rejects.toThrow(/session id/)
     expect(calls).toEqual([])
+  })
+})
+
+describe('frontend MCP and the unit queue', () => {
+  let folder, queue, service, link
+  const requested = ['everb', 'tapehead']
+  // The real queue in a folder of its own; the link is the fake above.
+  const open = async () => createFrontendTools({ dataDir: folder, deviceSocket: 'test-only', allowDeviceWrites: true }, frontend, {
+    openLink: async () => link, unit: { acquire: options => acquire({ ...options, directory: queue, poll: 20, log: () => {} }) } })
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'modwerk-mcp-turn-')); queue = await mkdtemp(join(tmpdir(), 'modwerk-unit-queue-'))
+    link = new FakeLink(); process.env.MODWERK_UNIT_MCP_WAIT = '0.3'
+  })
+  afterEach(async () => {
+    await service?.close(); delete process.env.MODWERK_UNIT_MCP_WAIT
+    await rm(folder, { recursive: true, force: true }); await rm(queue, { recursive: true, force: true })
+  })
+
+  it('holds the turn from the trial to its Undo, and takes it only for the moment of connecting', async () => {
+    service = await open()
+    await service.call('device_status')
+    expect(readTurn(queue)).toBe(null) // connecting took the turn and gave it back
+    const { review } = await service.call('device_review', { moduleIds: requested })
+    const { trial } = await service.call('device_trial', { review })
+    expect(readTurn(queue).holder).toMatchObject({ note: 'frontend MCP device_trial', pid: process.pid, kind: 'run' })
+    await service.call('device_undo', { trial })
+    expect(readTurn(queue)).toBe(null)
+  })
+
+  it('sends nothing while another session has the unit, and says how to wait for the turn', async () => {
+    const other = await mkdtemp(join(tmpdir(), 'modwerk-other-session-'))
+    try {
+      const hold = await acquire({ directory: queue, cwd: other, kind: 'hold', note: 'device:test tapehead', env: {}, log: () => {} })
+      // Connecting would roll back a trial the other session left open (OctatrackLink cleanUp): it waits for the turn too.
+      service = await open()
+      await expect(service.call('device_status')).rejects.toThrow(/Nothing was sent: the unit is in another session.s turn[\s\S]*device:test tapehead[\s\S]*npm run unit -- hold/)
+      hold.release()
+      const { review } = await service.call('device_review', { moduleIds: requested })
+      const again = await acquire({ directory: queue, cwd: other, kind: 'hold', note: 'by hand', env: {}, log: () => {} })
+      await expect(service.call('device_trial', { review })).rejects.toThrow(/another session.s turn/)
+      expect(link.updates).toHaveLength(0)
+      expect(readTurn(queue).holder.note).toBe('by hand')
+      again.release()
+    } finally { await rm(other, { recursive: true, force: true }) }
   })
 })

@@ -1,4 +1,45 @@
-# USB Audio 0.2 testing
+# USB Audio testing
+
+## 0.4.0-experimental, 23 November 2026
+
+**Not tested on a unit as this exact package.** The owner released it without that run: "Let's just release it, it's been well tested in the other repos it's fine" ([approval](../../../approvals/usb-audio-out-tracks-main-cue-build-approval.json)).
+
+Package `7c144b24ffebfd651db2eefc7dbd364ac7e1750ad5d90358460ca01c543f13f9` (19,948 bytes) requires base 0.8.1 `eb6679620d0c`. It is byte-identical to `0cb56b0c269c` except at offset 66, the inventory kind (8, was 7), so the site can tell it from 0.3.0. `0cb56b0c269c` ran on an Octatrack MKII on 21 November 2026 on the 0.7.13 draft base `8cd1320411a6` and an instrumented twin of it: all four INPUTS modes routed as expected, R1 and R2 recorded the host's tones, and 17 min 34 s of four-channel duplex audio with Vibrato showed no faults ([record](../../../../docs/verification/2026-11-21-octatrack-usb-input.md)). Nothing of that run was repeated on base 0.8.1.
+
+Software: the Python package tests (the input build reports kind 8), the release `--check` against the owner's OS 1.40C, the site's USB Audio, module-set and migration tests, `module:doctor` and the isolated package build from `2d234c770`.
+
+**Captures.** The five [menu captures](media/capture.json) come from `ot_emu` on a development twin of base 0.8.1 with this package installed over the emulator's USB host. Under the emulator's scripted host, the base's USB attach watchdog (#1985) took the unit off the bus about two seconds into the trial, which undid it; keeping the package on the emulator's scratch card avoided that. The watchdog did not fire under macOS on the 0.8.1 unit runs. This is emulator evidence only.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| A unit on 0.3.0 syncs to 0.4.0, then Undo | new inventory kind, 0.3.0 kept for its exact Undo | `usb-audio-package.test.ts` (synthetic packages) | pass (site logic only); not run on a unit: owner waiver |
+| INPUTS OFF enumerates like 0.3.0 | the input build's descriptors | 21 November run of `0cb56b0c` (OFF: 4 output channels, none in) | pass on the 0.7.13 draft; not run on 0.8.1 |
+| INPUTS AB, CD, ABCD route to the right inputs | the receiver and the DMA scheduler | 21 November run of `0cb56b0c` | pass on the 0.7.13 draft; not run on 0.8.1 |
+| INPUTS row on COMPUTER, gone on OUTBOX 8 | the settings page | emulator captures | pass (emulator) |
+| INPUTS changed while a host streams | reconnect mid-stream | — | not run: owner waiver |
+| Trial ends or the module is removed with ABCD active | crossbar priority and the jacks must come back | — | not run: owner waiver |
+| Full speed or Outbox 8 with INPUTS set | must stay output only | — | not run: no full-speed host or Outbox |
+| MKI, Windows, Linux | other hosts and panels | — | not run: not available |
+
+## 0.3.0-experimental on an Octatrack MKII, 20 November 2026
+
+The four [menu captures](media/capture.json) show the 0.7.12 release candidate `254c5a75a139` running the migrated Outbox set in the MKII emulator. They show the settings list, USB Audio fields, both stem taps and the four output assignments. The images were taken from the display bytes sent to the emulated panel.
+
+**Release build 0.7.12 `254c5a75a139` passed reconnect, Keep and physical cold restoration.** The MKII recorded and undid eight migrated sets across all five channel counts. Both Track 8/Master trials reconnected, every Undo restored the baseline, and the instrument self-test passed. After Keep and a physical power cycle the release base read the same preset and saved-set checksum from the card without uploading a module. macOS recorded 89,088 stereo frames. A final power cycle restored the original ten modules and their full checksum. The [release record](../../../../docs/verification/2026-11-20-octatrack-usb-audio-package.md#release-verification-on-base-0712) gives the image hashes, channel and frame counts, Outbox pair results and hardware limits.
+
+**Earlier development base 0.7.11 `c7eba65fa9ec` also passed reconnect, Keep and card restoration.** On the owner’s Octatrack MKII, macOS recorded eight RAM trials at 44.1 kHz. The widths in order were 16, 2, 2, 4, 8, 16, 20 and 2 channels. Both Track 8/Master trials recorded 88,576 frames. Every Undo restored the starting set checksum and the base’s four USB interfaces. The panel tick advanced after all eight. The base counted 16 attachments across eight installs and eight Undos. The additional attachment retry did not run during this sequence.
+
+The standalone self-test reported one intact module and zero failures. Keep reported one saved module. The owner power-cycled the unit with its usual card seated. The flashed base restored the ten original modules. RAM-booting the identical 0.7.11 base after the physical power cycle restored the kept Track 8/Master preset `0x80000110` and the exact pre-cycle set checksum without a module upload. macOS then recorded 89,088 stereo frames. A final power cycle restored the ten original modules and their complete starting checksum. The release base ran from RAM throughout. Windows, Linux and physical Outbox outputs were unavailable. The eight-channel USB recording had identical nonzero audio on the two Main assignments and silence on the Off pair in all 88,576 frames.
+
+**Earlier candidate failed on Track 8/Master.** The rebuilt base `e0cbd7173d0b` passed seven RAM trials on the MKII. On the eighth trial it acknowledged the migrated Track 8/Master set and disappeared from USB before recording. The hub failed to enable the port. A software Undo could not be confirmed. The candidate was never kept. The same configurable module recorded at 2, 4, 8, 16 and 20 channels. Both 16-channel post-LEVEL trials returned to the original USB configuration and set checksum after Undo. The UI tick continued advancing after each of the seven successful reconnects. During the eighth trial the owner confirmed that the panel still responded. A cold start restored the original flashed base and all ten modules, with an exact match to the starting saved-set checksum. A physical Outbox was unavailable.
+
+**The previous base `a2ae64eb82bc` failed during Undo.** Two saved 0.2 configurations restored the selected destination, layout and routing on an Octatrack MKII. macOS recorded 89,600 frames each on eight and sixteen channels. Undo restored USB after the Outbox trial. After the sixteen-channel post-LEVEL trial the panel froze and USB disappeared. A cold start restored the responsive instrument and all ten original modules. That earlier candidate did not reach Keep or the cold-start test.
+
+The release package is 11,804 bytes. Its loader header declares 10,288 bytes of initialized image and 94,152 bytes of zero-initialized storage, 230 relocations, and three guarded sites. These figures exclude loader bookkeeping, stack use, and shared base reservations. The [0.3 owner exception](../../../approvals/usb-audio-out-tracks-main-cue-build-approval.json) covers worst-case ColdFire cycles and the complete memory bound including stack and DMA. It is conditional on reconnect, Keep and physical power-cycle verification on the release build.
+
+Build identities, retained freeze diagnostics and the recovery check are in the [unit verification record](../../../../docs/verification/2026-11-20-octatrack-usb-audio-package.md#migrated-sets-on-the-03-release-candidate).
+
+## Historical 0.2 testing
 
 Version: `0.2.0-experimental`. Selected-layout source revision:
 `7b2984c859732ae6c797ae49c7d61d250b1b6519`.

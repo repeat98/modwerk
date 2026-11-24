@@ -191,7 +191,10 @@ static void owned_close(unsigned c,unsigned why) {
     change('    if(++sequence[c]==0) ++sequence[c];',
            '    uint16_t wire_sequence;\n'
            '    if(owned_jobs[c].ticket) wire_sequence=owned_jobs[c].first_sequence+owned_sent[c]++;\n'
-           '    else { if(++sequence[c]==0) { ++sequence[c]; owned_close(c,OWNED_WHY_WRAP); } wire_sequence=sequence[c]; }')
+           '    else { if(++sequence[c]==0) ++sequence[c]; wire_sequence=sequence[c]; }')
+    # A legacy wrap leaves the owned channel open (owner's MKII, 22 Nov 2026: the meter's PEEKs, 24 a second a core,
+    # wrapped it 45 minutes after every boot and closed both cores, so Analog BD read as a conflict until a restart).
+    # Nothing is uncertain there: owned_reserve never lets a job span the wrap, and the legacy ACK carries no sequence.
     change('t[1]=sequence[c];', 't[1]=wire_sequence;')
     change('+sequence[c]+c)&0xffffffu;', '+wire_sequence+c)&0xffffffu;')
     change('    pending[c]=sequence[c]; age[c]=0;', '    pending[c]=wire_sequence; age[c]=0;')
