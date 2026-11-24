@@ -104,12 +104,22 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   })
   useEffect(() => () => { if (changed?.list) URL.revokeObjectURL(changed.list.url) }, [changed])
   const keepList = (list?: number[]) => list && { url: URL.createObjectURL(new Blob([Uint8Array.from(list)])), name: 'pedal-FLST_SEQ-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.ZDT' }
+  // An MS-50G running MIDISTOMP answers exactly as a stock MS-70CDR: the model byte lives in the pedal's flash, set by
+  // whichever updater ran last (#2076). So the first write on a connection asks what the pedal's front says; Cancel writes nothing.
+  const modelChecked = useRef<number>()
+  const printedModel = () => {
+    if (modelChecked.current === state.connection) return true
+    if (!window.confirm('First, look at the front of your pedal: does it say ' + device.name + '? A pedal running MIDISTOMP answers as an ' + device.name
+      + ' whatever pedal it is, so Modwerk can’t tell over USB, and effects for the ' + device.name + ' must not go onto another pedal. Press OK only if it says ' + device.name + '.')) return false
+    modelChecked.current = state.connection
+    return true
+  }
   const install = (file: File) => run(async () => {
     if (!link) return
     const data = new Uint8Array(await file.arrayBuffer()), refused = installRefusal(file.name, data), name = file.name.toUpperCase()
     if (refused) throw new Error(refused)
     const info = effectInfo(data)!
-    if (!window.confirm('Install ' + name + ' (version ' + info.version + ', effect ID ' + info.gid + '/' + info.fxid + ', ' + kb(data.length) + ')? If another effect on the pedal has that ID, this one gets a free ID from 958 to 1023 instead. It is written, read back and added to the pedal’s effect list. Don’t touch the pedal or the cable until it’s done.')) return
+    if (!printedModel() || !window.confirm('Install ' + name + ' (version ' + info.version + ', effect ID ' + info.gid + '/' + info.fxid + ', ' + kb(data.length) + ')? If another effect on the pedal has that ID, this one gets a free ID from 958 to 1023 instead. It is written, read back and added to the pedal’s effect list. Don’t touch the pedal or the cable until it’s done.')) return
     const result = await link.installFile(name, data, { avoid: avoidFor(name) }), moved = result.moved
     if (moved) rememberId(moved.to, name)
     const done = result.unchanged ? name + ' is already this exact file.' : name + ' installed and read back identical. Power-cycle the pedal to load it.'
@@ -133,7 +143,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     if (!plan.install.length && !plan.remove.length) return
     if (!fitsIn(plan, now.free)) throw new Error('Not enough space on your ' + model + ' for this set.')
     const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
-    if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + '. Patches that use these effects will have empty slots. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
+    if (!printedModel() || !window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + '. Patches that use these effects will have empty slots. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
     let previousList: number[] | undefined, step = 0, what = ''
     const steps = plan.remove.length + plan.install.length, say = (next: string) => { what = next; step++; if (alive.current) setSyncing({ what, step, steps }) }
     try {
@@ -157,7 +167,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     await read()
   })
   const uninstall = (file: ZoomFile) => run(async () => {
-    if (!link || !window.confirm('Remove ' + file.name + ' from the pedal? Patches that use it will show an empty slot.')) return
+    if (!link || !printedModel() || !window.confirm('Remove ' + file.name + ' from the pedal? Patches that use it will show an empty slot.')) return
     const result = await link.removeFile(file.name)
     rememberId(result.removed.fxid, file.name.toUpperCase())   // stored patches may still open that ID
     if (alive.current) setChanged({ text: file.name + ' removed. Power-cycle the pedal.', list: keepList(result.previousList) })
