@@ -79,6 +79,14 @@ The trial ended with the verdict "no crash, stall, freeze or skipped track logge
 
 Left for the owner at the unit: how it sounds and plays (chords, bodies, Colundi, TONE), the locked chords and the scenes by ear, two instances with different settings, MIDI, and a Part save and reload, a project save and reload, and the Keep with a power cycle: what survives.
 
+### Release run: device:qualify, 24 November 2026
+
+`npm run device:qualify -- --keeps-ok public/octatrack-modules/resonator/0.1.0-experimental.mwrm` on the same unit, twin and scene: the release package, SHA-256 `16600fb3681f45e8c2708f4f69da1befe24df696b5e0c4f868bd0eb891eb0fb5`, which `npm run octatrack:module-packages` rebuilt byte for byte from the listed source, so every unit result above is on these exact bytes. Each install and removal Kept. Alone on FX2 of T1 and T5 admitted in 120 and 119 ms (peaks 415 and 495 per mille of a frame); all eight at once while playing admitted (CPU 55.5 %, core peaks 722 and 762 per mille); 12 of 12 Part switches; passed, no failures.
+
+The owner's kept set was read first from a RAM boot of the flashed image `e11525835106699a` (0.8): Tape Echo 0.1.9, Air Chorus 0.1.3, Grain 0.1.3 and Analog BD 0.1.7. After the run the flashed image was RAM-booted again and each of those packages Kept with `device.mjs try --accept`; a further RAM boot of it loaded the same four from the card.
+
+The owner waived the hands-on stage (step 12) for this version on 24 November 2026: "can we release it now? I don't need the handson trial". Listening, a Part and project save and reload, and a power cycle with it kept were therefore not run by hand.
+
 ## Stock flows
 
 The module patches no stock code and claims no keys or screens. The effect chooser, parameter locks, scenes and Part switches ran on the unit (above); Part and project saves are the owner's stage.
