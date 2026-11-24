@@ -3,7 +3,7 @@
   "id": "grain",
   "key": "GRAIN",
   "name": "Grain",
-  "version": "0.1.3-experimental",
+  "version": "0.2.0-experimental",
   "category": "machines",
   "author": {
     "github": "AForceTrulyEvil",
@@ -27,7 +27,8 @@
       "DIR sets the share of grains that play backwards, from none to all; SCAN runs a read head through the sample, forwards or backwards.",
       "POS moves in fine steps that speed up as you turn faster, and a pressed knob jumps by seven.",
       "A waveform view with the POS line and the live grains on the SRC page, and a full-screen page for precise work.",
-      "Everything is kept in the Part in values stock's own power-on check accepts, so a project is never lost with or without the module."
+      "Everything is kept in the Part in values stock's own power-on check accepts, so a project is never lost with or without the module.",
+      "EDGE chooses what happens when a grain reaches the start or end of the sample: CLMP, WRAP, STOP or BNCE."
     ],
     "usage": [
       "Double-tap a track key (or open SRC SETUP), choose GRAIN in the machine list and press YES, then pick a Flex sample.",
@@ -112,6 +113,18 @@
         "RAND",
         "SYNC"
       ]
+    },
+    {
+      "name": "EDGE",
+      "default": 0,
+      "count": 4,
+      "doc": "What happens at the start and end of the sample. CLMP: SPRY can't push a grain past an end, and a grain that runs off one end carries on from the other. WRAP: the sample is a loop, so a grain pushed or running off one end comes out of the other (as in 0.1.2). STOP: SPRY can't push a grain past an end, and a grain that reaches an end stops there. BNCE: SPRY can't push a grain past an end, and a grain that reaches an end plays back the other way. Turn several detents to change a value. SRC SETUP knob E.",
+      "labels": [
+        "CLMP",
+        "WRAP",
+        "STOP",
+        "BNCE"
+      ]
     }
   ],
   "compatibility": {
@@ -128,19 +141,20 @@
       "SRC page: a waveform view with the POS line and the grains replaces the six knob dials. Hold SCENE A or B for stock's knobs.",
       "A third press of PLAYBACK, from SRC SETUP, opens the full-screen page instead of going back to SRC; another press closes it. FUNC and PLAYBACK still open SRC SETUP.",
       "A project opened without the module plays Grain tracks as FLEX at stock's defaults.",
-      "After the sample pool was opened on a Grain track from a page other than SRC and closed, FUNC+SRC cannot pick FLEX or STATIC until the SRC page is shown or another track is selected. A double tap on the track key and LEFT changes the machine."
+      "After the sample pool was opened on a Grain track from a page other than SRC and closed, FUNC+SRC cannot pick FLEX or STATIC until the SRC page is shown or another track is selected. A double tap on the track key and LEFT changes the machine.",
+      "A project saved with 0.1.2 opens with EDGE on CLMP: a grain that SPRY threw past an edge is born on that edge instead of wrapping. EDGE on WRAP restores 0.1.2's sound, and STOP the sound of 0.1.0 and 0.1.1 without the click."
     ],
     "effectId": null
   },
   "resources": {
-    "recorded": "2026-11-21",
+    "recorded": "2026-11-24",
     "storage": {
       "label": "Module image and memory",
-      "display": "31,808 bytes of static runtime memory",
-      "value": 31808,
+      "display": "33,012 bytes of static runtime memory",
+      "value": 33012,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Package f961b458 loads 28,944 bytes of code and data and declares 2,864 bytes of BSS. The deepest Grain-only audio path uses 768 stack bytes including return addresses and saved frame pointers (grain_render 176, gran_render 392, stereo_paged 92 and stereo_page 84 by GCC's stack-usage report, plus four return addresses and the frame pointers link.w saves). Stock calls, interrupt nesting and loader overhead are additional.",
+      "conditions": "Package e8d7c794 loads 30,148 bytes of code and data and declares 2,864 bytes of BSS. The deepest Grain-only audio path uses 780 stack bytes including return addresses and saved frame pointers (grain_render 168, gran_render 412, stereo_paged 92 and stereo_page 84 by GCC's stack-usage report, plus four return addresses and the frame pointers link.w saves). Stock calls, interrupt nesting and loader overhead are additional.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -169,7 +183,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 30,308-byte package loads 28,944 bytes of code and data and reserves 2,864 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
+        "rationale": "The 31,524-byte package loads 30,148 bytes of code and data and reserves 2,864 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },
@@ -194,7 +208,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.2 package f961b458, on the author's MKI with the official base 6d23e888 and a card set of seven modules: the set loaded; PTCH, the edges, the pool and the audition behaved as described, and the clipping case played clean. Stock CPU meter, Grain on one track, 24-bit stereo, PTCH +24, DENS and SPRY at maximum, idle 49.5 %: 70-71 % with a 0.03 MB kick, 68-69 % with a 1.55 MB sample; the long sample at PTCH 0 read 66-67 %. No dropouts heard; skipped renders were not counted. Project saved, power cycled and reloaded with this exact package (f961b458): Grain, its settings and the sound came back as left. Historical, 0.1.1 and earlier: 0.1.1 package 1b3728c0 differs from the unit-tested build c841ea87 only by its meter cost (reserved[1]). On the MKII, c841ea87 kept Grain rendering with the pool open and took the plain Flex path only for a FUNC+YES audition, until the next trig. 0.1.0 package ff5ac017, card-free in RAM: Grain played T1, FLEX could be picked after a pool jump, and Grain kept its engine with the pool open on another track. Its audio path differs from the timed builds only by the pool check: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
+    "summary": "0.2.0 package e8d7c794, 0e4bebd4's engine on 0.1.3: the two loops that run for every sample compile to the same instructions as in 0.1.2, and the EDGE code runs only when a grain is born or reaches an edge. On the author's MKI, with the official base 6d23e888 and a card set of seven modules, an eight-tone sample showed the notes the host renders predict in CLMP, WRAP and BNCE (package 8a4555de), and STOP played as expected. A later build (0e4bebd4) loaded, played and passed the rest of the release checklist. Stock CPU meter, DENS and SPRY at maximum, PTCH +24, all four EDGE modes: 65 to 68 %, about 66 to 67 % on average. Not recorded: a unit run of the final package, the frame-cost curve for 0.2.0 and the MKII. Previous release, 0.1.2 package f961b458, on the author's MKI with the official base 6d23e888 and a card set of seven modules: the set loaded; PTCH, the edges, the pool and the audition behaved as described, and the clipping case played clean. Stock CPU meter, Grain on one track, 24-bit stereo, PTCH +24, DENS and SPRY at maximum, idle 49.5 %: 70-71 % with a 0.03 MB kick, 68-69 % with a 1.55 MB sample; the long sample at PTCH 0 read 66-67 %. No dropouts heard; skipped renders were not counted. Project saved, power cycled and reloaded with this exact package (f961b458): Grain, its settings and the sound came back as left. Historical, 0.1.1 and earlier: 0.1.1 package 1b3728c0 differs from the unit-tested build c841ea87 only by its meter cost (reserved[1]). On the MKII, c841ea87 kept Grain rendering with the pool open and took the plain Flex path only for a FUNC+YES audition, until the next trig. 0.1.0 package ff5ac017, card-free in RAM: Grain played T1, FLEX could be picked after a pool jump, and Grain kept its engine with the pool open on another track. Its audio path differs from the timed builds only by the pool check: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
     "hardwareStatus": "reported",
     "evidenceRevision": "db1e077309f4c538a1b1b672960c345c22b07ead",
     "gates": [
@@ -208,7 +222,7 @@
           "Double-tap a track key, choose GRAIN in the machine list and press YES, then double-tap again and pick a Flex sample.",
           "Put a trig on the track and play. Press SRC and turn POS: the grains move through the sample, and the waveform shows where. Turn SIZE down for a fine mist and up for long overlapping grains.",
           "Turn SPRY up to scatter the grains around POS, and DENS up to thicken the cloud. Turn SCAN to let the read head run through the sample by itself.",
-          "Press SRC twice for SRC SETUP: turn PAN for a spread across the stereo field, DIR for a share of backward grains, SHAP to change the grain window, and MODE to SYNC to lock the grains to the tempo.",
+          "Press SRC twice for SRC SETUP: turn PAN for a spread across the stereo field, DIR for a share of backward grains, SHAP to change the grain window, MODE to SYNC to lock the grains to the tempo, and EDGE to choose what happens when a grain reaches the start or end of the sample.",
           "Press SRC once more from SRC SETUP for the full-screen page, with a larger waveform and every value beside its name, for precise settings.",
           "Press SRC again to leave the full-screen page. Press STOP to stop playback."
         ]
@@ -240,9 +254,9 @@
         "page": "Machine list (SRC SETUP)",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.2.0-experimental",
         "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
-        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on FLEX, the cursor moved down to GRAIN in the machine list. Not hardware captures."
+        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.2.0-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on FLEX, the cursor moved down to GRAIN in the machine list. Not hardware captures."
       }
     },
     {
@@ -257,16 +271,16 @@
         "page": "SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.2.0-experimental",
         "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
-        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the SRC page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
+        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.2.0-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the SRC page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
       }
     },
     {
       "path": "media/grain-src-setup.png",
       "captureType": "emulator",
-      "caption": "SRC SETUP (press SRC twice). SHAP: the grain's window, how soft or sharp each grain starts and ends. DIR: at 0 every grain plays forwards; as it rises, more and more grains play backwards, 64 is half and half, and at 127 all play backwards. PAN: random spread across the stereo field. MODE: RAND places grains at random times; SYNC locks them to the tempo, and DENS then picks the note division.",
-      "alt": "Octatrack SRC SETUP page of a Grain track: GRAIN marked in the machine list, SHAP NORM, DIR and PAN dials, and MODE RAND.",
+      "caption": "SRC SETUP (press SRC twice). SHAP: the grain's window. DIR: the share of grains that play backwards, from none (0) to all (127). PAN: random spread across the stereo field. MODE: RAND places grains at random times; SYNC locks them to the tempo. EDGE: what grains do at the start and end of the sample.",
+      "alt": "Octatrack SRC SETUP page of a Grain track: GRAIN marked in the machine list, SHAP NORM, DIR and PAN dials, MODE RAND and EDGE CLMP.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -274,9 +288,9 @@
         "page": "SRC SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.2.0-experimental",
         "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
-        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP. Not hardware captures."
+        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.2.0-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP, with EDGE on CLMP. Not hardware captures."
       }
     },
     {
@@ -291,9 +305,9 @@
         "page": "Full-screen page",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.2.0-experimental",
         "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
-        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
+        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.2.0-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
       }
     },
     {

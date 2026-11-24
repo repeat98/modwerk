@@ -33,6 +33,11 @@ typedef struct {
                                      * entera (sw_gran: asrl #8), asi que un ajuste copiado del original suena igual */
     uint8_t posf;                   /* fraccion de POS en 1/256 (escenas, LFOs); 0 = POS entera, igual que el original */
 } GranParams;
+/* EDGE. CLMP: el grano nace dentro del sample (lo que se sale por un lado se queda en su borde) y, ya sonando, sigue por el
+ * otro lado al llegar a un borde. WRAP: el sample es un anillo, tambien en el nacimiento (0.1.2). BNCE: nace como en CLMP y,
+ * al llegar a un borde, rebota y vuelve en sentido contrario. STOP: nace como en CLMP (lo que se sale por el final, en el
+ * ultimo frame) y, al llegar a un borde, el grano se queda sin sample y calla: como Grain 0.1.0 y 0.1.1. */
+enum { GRAN_EDGE_CLAMP = 0, GRAN_EDGE_WRAP = 1, GRAN_EDGE_STOP = 2, GRAN_EDGE_BOUNCE = 3 };
 
 typedef struct {
     uint32_t idx, fr, left, ph, phs, start, rev;
@@ -52,6 +57,7 @@ typedef struct {
     uint32_t scan, scanf;           /* SCAN: lo que ha corrido el cabezal desde la nota (frames, y fraccion Q16) */
     uint32_t count;                 /* largo del sample (para la pantalla) */
     uint8_t on, trig;
+    uint8_t edge;                   /* EDGE (GRAN_EDGE_*), fijado con gran_set_edge; no va en GranParams para no mover su forma */
     uint32_t sync_tempo24, sync_division;  /* cached inputs for the current SYNC spacing */
 } GranTrack;
 
@@ -61,6 +67,12 @@ typedef struct {
     uint32_t pseed;                 /* gp_seed del PAN (azar propio) */
 } GranEngine;
 
+/* EDGE de una pista: 0 CLMP, 1 WRAP, 2 STOP, 3 BNCE; mas alla de 3 (una Part antigua) vale CLMP. */
+static inline void gran_set_edge(GranEngine *e, unsigned track, unsigned edge)
+{
+    if (track < GRAN_TRACKS)
+        e->t[track].edge = edge > GRAN_EDGE_BOUNCE ? GRAN_EDGE_CLAMP : (uint8_t)edge;
+}
 void gran_init(GranEngine *e);
 /* Una nota: el primer grano sale en la primera muestra del siguiente bloque. */
 void gran_trigger(GranEngine *e, unsigned track);

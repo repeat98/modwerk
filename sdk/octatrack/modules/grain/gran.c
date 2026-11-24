@@ -112,7 +112,8 @@ static uint32_t gran_dir(GranEngine *e, unsigned dir)
     return (e->seed >> 16) >= 65536u - thr;
 }
 
-static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const GranSample *s, unsigned n)
+static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const GranSample *s, unsigned n,
+                       int32_t whole, uint32_t frac)
 {
     uint32_t d6 = t->cd;
 
@@ -152,15 +153,18 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
             at += (int32_t)scaled_product(t->spray >> 5, r, 11);
             at -= (int32_t)(t->spray >> 1);
         }
-        /* The sample is a ring, as in typical granular engines (the author, 22 November 2026): a grain born past the
-         * end starts near the beginning and one born before the beginning starts near the end. POS is below count and
-         * SPRY's offset is within +-count/2, so one correction is enough; the last test only guards very short samples. */
-        if (at < 0)
-            at += (int32_t)s->count;
-        if ((uint32_t)at >= s->count)
-            at -= (int32_t)s->count;
-        if ((uint32_t)at >= s->count)
-            at = (int32_t)s->count - 1;
+        /* EDGE WRAP: the sample is a ring, as in typical granular engines (the author, 22 November 2026): a grain born
+         * past the end starts near the beginning and one born before the beginning starts near the end. POS is below
+         * count and SPRY's offset is within +-count/2, so one correction is enough; the last test only guards very
+         * short samples. With CLMP and BNCE the birth is fixed once the direction is known (below). */
+        if (t->edge == GRAN_EDGE_WRAP) {
+            if (at < 0)
+                at += (int32_t)s->count;
+            if ((uint32_t)at >= s->count)
+                at -= (int32_t)s->count;
+            if ((uint32_t)at >= s->count)
+                at = (int32_t)s->count - 1;
+        }
         g->idx = (uint32_t)at;
         g->fr = 0;
         g->left = t->len;
@@ -168,6 +172,32 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
         g->phs = 0x1000000u / t->len;
         g->start = d6;
         g->rev = gran_dir(e, p->dir);
+        if (t->edge != GRAN_EDGE_WRAP) {
+            /* CLMP, BNCE and STOP: a grain is born inside the sample. What POS plus SPRY pushes past an edge stays on
+             * that edge: at the end, a forward CLMP grain reads on from the beginning (the end and the beginning are the
+             * same point); a backward, bouncing or stopping one starts on the last frame (as in 0.1.1). */
+            if (at < 0)
+                at = 0;
+            else if ((uint32_t)at >= s->count)
+                at = (g->rev || t->edge != GRAN_EDGE_CLAMP) ? (int32_t)s->count - 1 : 0;
+            g->idx = (uint32_t)at;
+        }
+        if (t->edge == GRAN_EDGE_STOP) {
+            /* STOP: a grain that would reach an edge before its window ends is shortened so that the window ends there. The
+             * 0.1.1 grain was cut by the edge in the middle of its window, which clicked (the author, 23 November 2026).
+             * The frames the cursor can still read, in output frames: a pitch up reads several a frame, and a grain
+             * going backwards (its own direction against the note's step) leaves by the start. */
+            uint32_t room = (g->rev ^ (whole < 0 ? 1u : 0u)) ? g->idx + 1u : s->count - g->idx;
+            uint32_t adv = whole < 0 ? 0u - (uint32_t)whole : (uint32_t)whole + (frac != 0);
+            if (!adv) adv = 1u;
+            /* A multiplication and a compare for every grain; the divisions only for a grain that does reach the edge. */
+            if (room < g->left * adv) {
+                room /= adv;
+                if (!room) room = 1;
+                g->left = room;
+                g->phs = 0x1000000u / room;
+            }
+        }
         g->pan = 0;             /* v018: paneo al azar dentro de +-PAN/16 */
         if (p->pan) {           /* PAN 0..127: 127 da exactamente el PAN maximo del original */
             uint32_t amt = p->pan > 127 ? 127 : p->pan;
@@ -691,7 +721,18 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
             mix_grain(t, s, g, w, f, win, mix, start, seg, count, stereo, packed, step, span);
             start += seg; m -= seg;
             if (g->idx >= count && count) {
-                if (w >= 0) g->idx %= count;
+                if (t->edge == GRAN_EDGE_BOUNCE) {
+                    /* BNCE: reflect about the edge that was crossed and turn the grain round (its step is negated the
+                     * way a reverse grain's is). A reflection that would leave the sample lands on its last frame. */
+                    uint32_t r = w >= 0 ? 2u * count - 1u - g->idx : 0u - g->idx - 1u;
+                    g->idx = r < count ? r : count - 1u;
+                    g->rev ^= 1u;
+                    w = -w - (f != 0);
+                    f = 0u - f;
+                } else if (t->edge == GRAN_EDGE_STOP) {
+                    /* STOP: the cursor stays outside the sample, where frames read as silence (mix_grain advances a grain
+                     * that is out of range without reading), as in 0.1.1. */
+                } else if (w >= 0) g->idx %= count;
                 else { uint32_t d = (0u - g->idx) % count; g->idx = d ? count - d : 0u; }
             }
         }
@@ -719,7 +760,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
     for (unsigned i = 0; i < n; ++i)
         mix[i].mid = mix[i].side = 0;
     if (count)
-        gran_spawn(e, t, p, s, n);
+        gran_spawn(e, t, p, s, n, whole, frac);
     if (GRAN_PTR_PATH && stereo)
         mix_voices(t, s, whole, frac, win, mix, n, count, 1, 1);
     else

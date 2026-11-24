@@ -74,6 +74,7 @@ int main(int argc, char **argv)
     for (int i = 0; base + i < argc && i < 10; ++i) pv[i] = (uint8_t)atoi(argv[base + i]);   /* ... sync freeze scan */
     static GranEngine e;
     gran_init(&e);
+    if (getenv("EDGE")) gran_set_edge(&e, 0, (unsigned)atoi(getenv("EDGE")));
     gran_trigger(&e, 0);
     const unsigned secs = 8, total = 44100 * secs;
     FILE *f = fopen(outp, "wb");

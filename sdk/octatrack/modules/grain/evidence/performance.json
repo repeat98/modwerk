@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "grain",
-  "version": "0.1.3-experimental",
+  "version": "0.2.0-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",

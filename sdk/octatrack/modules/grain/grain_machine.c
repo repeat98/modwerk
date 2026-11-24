@@ -330,6 +330,8 @@ static Prepared *prepare_frame(unsigned track, const View *v, const GranSample *
     live_at[track] = live_tick;
     p->dir = dir;
     p->pan = pan;
+    /* EDGE: SETUP E (TSTR, 0..3 pasa la comprobacion de stock). Fuera de 0..3 (una Part antigua) vale CLMP. */
+    gran_set_edge(&eng, track, v->setup[4]);
     unsigned sync = v->setup[3];
     uint32_t tempo = sync ? U32(TEMPO24) : 0u;
     if (sample && c->count == sample->count && c->tempo24 == tempo &&
@@ -422,6 +424,7 @@ static void number(char *out, unsigned n)
 static void word(char *out, const char *text) { while ((*out++ = *text++)) {} }
 static void shape_text(char *out, int v) { word(out, v <= 0 ? "NORM" : v == 1 ? "TRI" : v == 2 ? "PERC" : "SQR"); }
 static void mode_text(char *out, int v) { word(out, v <= 0 ? "RAND" : "SYNC"); }
+static void edge_text(char *out, int v) { word(out, v <= 0 ? "CLMP" : v == 1 ? "WRAP" : v == 2 ? "STOP" : "BNCE"); }
 static void pan_text(char *out, int v) { if (v <= 0) word(out, "OFF"); else number(out, (unsigned)v); }
 /* SCAN: valor del mando - 64, en 1/32: "-2.00" .. "+2.00" (1.00 = la velocidad del sample, 2.00 = el doble). Con 0..127 el
  * ultimo paso quedaba en 63/32 = 1.96; el tope (127) vale ahora +2.00 exacto y el resto no cambia. */
@@ -446,7 +449,7 @@ static const struct { uint8_t slot, start, count; char name[6]; void (*text)(cha
     {1, 0, 128, "POS", 0}, {2, 64, 128, "SIZE", 0}, {3, 64, 128, "DENS", 0}, {4, 0, 128, "SPRY", 0},
     {5, 64, 128, "SCAN", scan_text},
     {6, 0, 4, "SHAP", shape_text}, {7, 0, 128, "DIR", 0}, {8, 0, 128, "PAN", pan_text}, {9, 0, 2, "MODE", mode_text},
-    {10, 0, 1, "", blank_text}, {11, 0, 1, "", blank_text}};
+    {10, 0, 4, "EDGE", edge_text}, {11, 0, 1, "", blank_text}};
 static uint8_t defaults[12];
 static uint8_t page[MODWERK_PAGE_BYTES] __attribute__((aligned(4)));
 static uint32_t page_built;
@@ -560,7 +563,7 @@ static uint32_t grain_page_any(void)
             modwerk_page_control(page, knobs[k].slot, knobs[k].name, knobs[k].start, knobs[k].count, knobs[k].text);
         /* SETUP E y F vacios: su cifra en la palabra de dibujo de p8..p11 (P+0x18a, p8 en el nibble bajo) a 0, como las
          * casillas «---» de THRU/NEIGHBOR (octabam docs/firmware/PARAM_PAGES.md; FLEX = 0x00001751: LEN 1 RATE 5 TSTR 7 TSNS 1) */
-        page[0x38 + 0x18a + 2] = 0;
+        page[0x38 + 0x18a + 2] = 0x05;   /* EDGE (p10) como MODE (p9, la cifra 5: un texto a elegir); p11 sigue vacio */
         /* sin el lacito de las escenas (bit 2 de la cifra de dibujo: une el mando con el de su izquierda; en FLEX, STRT/LEN y
          * RTRG/RTIM). P+0x18e = 0x55311311 (p0 en el nibble bajo): p2 (SIZE) y p5 (SCAN) pasan de 3 a 1 (author, 19/11) */
         page[0x38 + 0x18e + 1] = 0x11; page[0x38 + 0x18e + 2] = 0x11;
@@ -845,10 +848,10 @@ static unsigned part_pos(volatile uint8_t *part, unsigned t)
     unsigned w = ((unsigned)part[0x30u + 30u * t + 1] << 8) + 32u * (part[0x1e0u + 30u * t + 5u] & 7u);
     return w > 0x7fffu ? 0x7fffu : w;
 }
-/* SIZE de la Part con sus octavos (SETUP E), en 1/256 */
+/* SIZE de la Part, en 1/256 (SETUP E guarda EDGE, no octavos de SIZE) */
 static unsigned part_size(volatile uint8_t *part, unsigned t)
 {
-    unsigned w = ((unsigned)part[0x30u + 30u * t + 2] << 8) + 32u * (part[0x1e0u + 30u * t + 4u] & 7u);
+    unsigned w = (unsigned)part[0x30u + 30u * t + 2] << 8;
     return w > 0x7fffu ? 0x7fffu : w;
 }
 

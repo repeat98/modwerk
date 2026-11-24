@@ -1,15 +1,15 @@
 {
   "firmware": "1.40C",
-  "moduleVersion": "0.1.2-experimental",
+  "moduleVersion": "0.2.0-experimental",
   "hardware": false,
   "model": "MKII (emulated)",
-  "capturedOn": "2026-11-22",
+  "capturedOn": "2026-11-23",
   "capturedBy": "AForceTrulyEvil",
   "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
   "baseIdentity": null,
-  "packageSha256": "f961b458deb9f93bad68435630b4c55110d3d0ef732bdfc7886df461a6250f66",
-  "sourceRevision": "46e3ad7aea36f3c2a695537dc9d8015f24d65ab7",
-  "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. See each image. Not hardware captures.",
+  "packageSha256": "e8d7c794905a2ff05a1f44f4d5a221263a8668f4fbf1f1e407a9f849701ae6d1",
+  "sourceRevision": "8f2cb3914708d46453276127797ff5549c8f1d88",
+  "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.2.0-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. See each image. Not hardware captures.",
   "palette": {
     "on": [
       24,
@@ -25,28 +25,28 @@
   "images": [
     {
       "path": "grain-machine-list.png",
-      "sha256": "62f105c4f7c6c32931abf128252dc56c03b06b345a872bb86b00b4e860ad89b1",
+      "sha256": "9bc279818ebc501d5170e4a7de67fd2d202f42ed7a089df42571c0b0c603ab58",
       "scale": 2,
       "page": "Machine list (SRC SETUP)",
       "state": "Track 1 on FLEX, the cursor moved down to GRAIN in the machine list."
     },
     {
       "path": "grain-src.png",
-      "sha256": "cd69da666c8fe0310dd3f84d9d828871b8b4111d4fc96e1204e2aaebaebfbbbe",
+      "sha256": "716cf85d20a5f60501a9865f18cde89112119d7a46411889f06851efb12bf690",
       "scale": 2,
       "page": "SRC",
       "state": "Track 1 on Grain with a Flex sample, playing: the SRC page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."
     },
     {
       "path": "grain-src-setup.png",
-      "sha256": "f4bf4b6af36c651f2b764054e0d49c37551218f178719ccba6f1629f1e45b40f",
+      "sha256": "13fb7149dd1c3a2f117b63f5a44ea026e3954c8885f16f726b1b6c4b0251284d",
       "scale": 2,
       "page": "SRC SETUP",
-      "state": "Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP."
+      "state": "Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP, with EDGE on CLMP."
     },
     {
       "path": "grain-full-screen.png",
-      "sha256": "d123245b2f8f859506ea466d6e5dd27435ec28680f6596779d57ef5962912f38",
+      "sha256": "5b82f3ce5419de340544a743565c62a77b484a1804d3bb56d700b58eed78ee62",
       "scale": 2,
       "page": "Full-screen page",
       "state": "Track 1 on Grain with a Flex sample, playing: the full-screen page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."
