@@ -38,7 +38,7 @@
       "name": "ev_frame_params",
       "since": "1.1",
       "when": "once a frame, in the frame interrupt, before the stock modulators add their values",
-      "handler": "void f(int16_t *values, int stride); track t's value j at values[stride * t + j], stride 101; add to it, held in the parameter's range; the kit and the pages are untouched",
+      "handler": "void f(int16_t *values, int stride); voice slot k's Sound parameter j at values[stride * k + j], 16 slots, stride 101 (OS 1.12 keeps one array per voice: a chord uses several slots, a slot changes tracks); add to it, held in the parameter's range; the kit and the pages are untouched",
       "site": {
         "os": "1.12",
         "address": "0x40027196",
