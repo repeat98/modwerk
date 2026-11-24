@@ -122,6 +122,69 @@ class MachineBases(unittest.TestCase):
             result = subprocess.run([temp + "/t"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_model_cycles_loader_transport_on_the_host(self):
+        """mc_link.py's framing through modules.c's parts into the upload controller and the loader: a module goes on
+        trial, and ten quiet seconds of UI ticks put the previous set back."""
+        import importlib.util, shutil, struct, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        spec = importlib.util.spec_from_file_location("mc_link", APP / "sdk/machines/model-cycles/tools/mc_link.py")
+        mc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mc)
+        here, loader, upload = (APP / "sdk/machines/model-cycles/elekloader/base", APP / "sdk/runtime/loader",
+                                APP / "sdk/runtime/upload")
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-DMODWERK_HOST", "-DRUNTIME_MODULES=16u",
+                            "-DRUNTIME_POOL_BYTES=65536u", "-I", loader, "-I", upload, here / "test_modules.c",
+                            here / "modules.c", here / "runtime.c", loader / "loader.c", upload / "upload.c",
+                            upload / "wire.c", upload / "sha256.c", "-o", temp + "/t"], check=True, capture_output=True)
+            unit = subprocess.Popen([temp + "/t"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+
+            def ask(line):
+                unit.stdin.write(line + "\n")
+                unit.stdin.flush()
+                return unit.stdout.readline().strip()
+
+            class Host(mc.Link):
+                def __init__(self):
+                    pass
+
+                def call(self, cmd, body, timeout=5):
+                    if cmd == mc.UP_PART:
+                        return (0 if int(ask("P %d %s" % (mc.get32(body[:5]), bytes(body[5:]).hex()))) else 4), []
+                    answer = ask("R %d" % mc.get32(body[:5]))
+                    return (0, mc.pack(bytes.fromhex(answer))) if answer else (4, [])
+            try:
+                host = Host()
+                r = host.frame("hello", 0, bytes(32))
+                self.assertEqual(r["base"], hashlib.sha256(bytes.fromhex("12345678")).digest())
+                session, t = r["session"], r["last"] + 1
+                # ABI 4: a tick hook that returns at once, 4 bytes of image, a 3,000-byte tail of zero bss
+                pkg = b"MWRM" + struct.pack(">HHIIIIII", 4, 0, 4, 3000, 0, 1, 0, 0x2CF24DBA) + struct.pack(">I", 0)
+                pkg += bytes.fromhex("4e754e71")
+                host.must("enter", 0, session)
+                host.must("begin", t, session, r["base"] + hashlib.sha256(pkg).digest() + struct.pack(">II", r["generation"], len(pkg)))
+                host.must("chunk", t, session, struct.pack(">I", 0) + pkg)
+                self.assertEqual(host.must("verify", t, session)["received"], len(pkg))
+                host.must("commit", t, session)
+                self.assertEqual(mc.PHASES[host.must("leave", t, session)["phase"]], "trial")
+                self.assertEqual(ask("T %d" % 299), "0")
+                self.assertEqual(ask("T 1"), "1")              # the host fell quiet: the set goes back
+                self.assertEqual(mc.PHASES[host.frame("hello", 0, bytes(32))["phase"]], "normal")
+                # a frame of several parts with bytes over 0x7f arrives whole: the hash checks out, the loader refuses
+                junk = bytes((i * 37 + (i >> 8)) & 0xFF for i in range(5000))
+                r = host.frame("hello", 0, bytes(32))
+                t = r["last"] + 1
+                host.must("enter", 0, session)
+                host.must("begin", t, session, r["base"] + hashlib.sha256(junk).digest() + struct.pack(">II", r["generation"], len(junk)))
+                for at in range(0, len(junk), mc.CHUNK):
+                    host.must("chunk", t, session, struct.pack(">I", at) + junk[at:at + mc.CHUNK])
+                self.assertEqual(mc.RESULTS[host.frame("verify", t, session)["result"]], "rejected")
+            finally:
+                unit.stdin.close()
+                unit.wait()
+
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
         mod = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json").read_text())
@@ -349,12 +412,18 @@ class MachineBases(unittest.TestCase):
                 continue
             for name, add, leave in machine_base.variants(config):
                 for dev in (False, True):
+                    shared = {pathlib.Path(f).name: folder for folder, files in config["dev"].get("shared", {}).items()
+                              for f in files}
                     with tempfile.TemporaryDirectory() as work:
                         core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
                         mod = json.loads((core / "mod.json").read_text())
+                        self.assertNotIn("shared", mod)
+                        for file, folder in shared.items():  # sdk/runtime/ sources, staged for a dev base only
+                            self.assertEqual((pathlib.Path(work) / "mods" / folder / file).is_file(), dev, (name, file))
                     for source in config["dev"]["sources"]:
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
-                        self.assertTrue((APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
+                        self.assertTrue(pathlib.Path(source).name in shared or
+                                        (APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
 
     def test_dev_sites_take_no_bytes_a_release_site_or_the_core_takes(self):
         for machine, config in bases():

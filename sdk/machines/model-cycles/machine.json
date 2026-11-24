@@ -30,7 +30,8 @@
   "stack": {
     "base": "started",
     "link": "started",
-    "diagnostics": "started"
+    "diagnostics": "started",
+    "loader": "started"
   },
   "research": [
     {

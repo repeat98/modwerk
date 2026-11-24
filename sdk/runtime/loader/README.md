@@ -379,9 +379,16 @@ A machine provides, next to its base:
 - Trampolines subscribed to its core's `ev_tick`, `ev_draw`, `ev_key` and
   `ev_enc`. Each reads every position (`modwerk_runtime_module(i)`) once
   and calls its hook.
+- `memcpy` and `memset`: GCC calls them for struct copies and clears, and a
+  base has no C library.
+
+A machine with only USB MIDI carries the upload controller's wire frames in
+SysEx parts over its link (the Model:Cycles:
+[`modules.c`](../../machines/model-cycles/elekloader/base/modules.c)).
 
 The Octatrack's glue is
-[`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c).
+[`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c), the Model:Cycles'
+[`sdk/machines/model-cycles/elekloader/base/runtime.c`](../../machines/model-cycles/elekloader/base/runtime.c).
 Key codes, encoder numbers, the frame layout and stock code addresses are the
 machine's own, so a module is built for one machine and OS.
 

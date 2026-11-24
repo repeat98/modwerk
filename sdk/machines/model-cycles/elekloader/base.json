@@ -46,13 +46,19 @@
     }
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), a RAM boot of an uploaded image (the ev_boot gate), the audio load (base/load.c, load.s: a probe around the audio interrupt's call of the audio function) and a diagnostics log in the Octatrack's layout (base/diag.c). Any USB host can drive it: development bases only.",
+    "about": "The development link (base/link.c, link.s): identity and memory reads over USB MIDI SysEx, after the Analog Rytm MKII's, panel keys and encoder turns from the host while the link is armed (at every boot), a RAM boot of an uploaded image (the ev_boot gate), the audio load (base/load.c, load.s: a probe around the audio interrupt's call of the audio function), a diagnostics log in the Octatrack's layout (base/diag.c), and the runtime loader (base/runtime.c, base/modules.c: the Octatrack's loader and upload controller from sdk/runtime/, wire frames in parts over the link): modules load to RAM on trial and are kept or undone without a reflash. Any USB host can drive it: development bases only.",
     "sources": [
       "../base/link.c",
       "../base/link.s",
       "../base/load.c",
       "../base/load.s",
-      "../base/diag.c"
+      "../base/diag.c",
+      "../base/runtime.c",
+      "../base/modules.c",
+      "../base/loader.c",
+      "../base/upload.c",
+      "../base/wire.c",
+      "../base/sha256.c"
     ],
     "sites": [
       {
@@ -82,7 +88,9 @@
       "-DUI_QUEUE_PTR_AT=0x40148cd0",
       "-DQUEUE_POST_AT=0x40001fba",
       "-DKEY_INDEX_AT=0x4010ae5c",
-      "-DKEY_BITS_AT=0x40f95744"
+      "-DKEY_BITS_AT=0x40f95744",
+      "-DRUNTIME_MODULES=16u",
+      "-DRUNTIME_POOL_BYTES=65536u"
     ],
     "defsym": {
       "mw_link_router_resume": "0x400812fe",
@@ -119,7 +127,42 @@
         "event": "ev_tick",
         "fn": "mw_diag_tick",
         "order": 239
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_runtime_tick",
+        "order": 241
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_runtime_draw",
+        "order": 250
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_runtime_key",
+        "order": 2
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_runtime_enc",
+        "order": 2
       }
-    ]
+    ],
+    "shared": {
+      "base": [
+        "sdk/runtime/loader/loader.c",
+        "sdk/runtime/loader/loader.h",
+        "sdk/runtime/loader/modwerk_module.h",
+        "sdk/runtime/loader/context.h",
+        "sdk/runtime/loader/journal.h",
+        "sdk/runtime/loader/set_package.h",
+        "sdk/runtime/upload/upload.c",
+        "sdk/runtime/upload/upload.h",
+        "sdk/runtime/upload/wire.c",
+        "sdk/runtime/upload/wire.h",
+        "sdk/runtime/upload/sha256.c"
+      ]
+    }
   }
 }

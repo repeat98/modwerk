@@ -21,8 +21,8 @@ npm run machine:base -- model-cycles --stock STOCK.syx --dev --out NEW-DIR
 ```
 
 which writes `modwerk-base-model-cycles-dev-<sha>.elemod`, checked against no binding: a development base is never
-recorded or released. It costs about 5.4 KB of `.run` and 1.3 KB of RAM in the shared mod area (dev base `984a4508`:
-5624 bytes `.run`, 1284 `.bss`, 8 sites).
+recorded or released. With the runtime loader it costs about 41 KB of `.run` and 114 KB of RAM in the shared mod
+area, 96 KB of it the module pool and the upload staging (dev base `4d8f07a0`: 41794 bytes `.run`, 116596 `.bss`, 9 sites).
 
 ## Arm
 
@@ -54,10 +54,46 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `mem ADDR N` | 0x21 | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 | `diag` | 0x22 | the diagnostics log's address and size (bytes); a host reads it with `mem` (`mc_link.py log`), as the Digitone II's |
 | `load` | 0x23 | the audio's share of the CPU over the last half second, the window's dearest block and the dearest block since boot (tenths of a percent), windows and blocks counted |
+| `up_part` | 0x30 | the runtime loader: a part of an upload frame, an offset and up to 96 bytes packed ([below](#loading-modules)) |
+| `up_run` | 0x31 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
+| `mods` | 0x32 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
 
 The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
 The screen needs no command: stock answers Elektron's own screenshot request over USB.
+
+## Loading modules
+
+A development base carries the Octatrack's runtime loader ([`sdk/runtime/loader`](../../runtime/loader/README.md))
+and upload controller ([`sdk/runtime/upload`](../../runtime/upload/README.md), wire version 1), with the Cycles'
+glue in [`elekloader/base/runtime.c`](elekloader/base/runtime.c) and the transport in
+[`modules.c`](elekloader/base/modules.c). Where the Octatrack carries one wire frame in an EP0 data stage, the link
+carries it in parts: `up_part` writes up to 96 bytes at an offset (each message 124 bytes at most, under the 128 of
+stock's own upgrade messages), then `up_run` runs the frame on the UI task. A package up to 32 KiB goes in CHUNK frames
+of 2 KiB; the pool holds 64 KiB of modules, 16 at most.
+
+```
+python3 -B sdk/runtime/loader/build.py sdk/machines/model-cycles/elekloader/examples/hello.c -o hello.mwrm
+mc_link.py try hello.mwrm --seconds 20 [--keep]
+mc_link.py mods
+mc_link.py keep | undo
+```
+
+- `try` loads the package to RAM on trial and pings once a second; at the end it undoes the set, or keeps it with
+  `--keep`. Ten seconds without a link request in any phase but the normal one put the previous set back, as an
+  unplugged Octatrack does: Ctrl-C ends a trial that way.
+- Nothing is saved: a kept module lives until the next power cycle, which always restores the flashed state.
+- The loader refuses while a pattern plays (`unsafe`): stock's is_playing words (`0x40a78874 | 0x40a7883c`).
+- The base identity a BEGIN names is the SHA-256 of the set CRC (`ident`'s `set CRC`, big-endian); `try` checks it.
+- A module's handlers run on the UI task: `module_draw` gets the core's bitmap (`fw_fill`, `fw_text`), `module_key`
+  the panel's key code and whether it went down, `module_enc` the knob and `ev+16`. Key codes and addresses are OS
+  1.13's.
+- What the glue rests on (read from OS 1.13): the kernel is the Octatrack's design (the switch saves d0-a7 at TCB +
+  0x0c, the running task at `0x422fef30`, one ready list a priority from `0x422feec8`), with the twelve tasks the OS
+  creates through `0x400019ec`; caches as the Octatrack's (CACR `0xa50ce100` at boot, data ACR0 `0x4007e020`), so
+  DDR's mirror at +0x0800_0000 is uncached, as the OS's own reverb and delay lines use it; the audio interrupt at
+  level 5, so the loader's level-4 lock leaves it running; sites only in stock code below its `.data` image
+  (`0x4019b590`).
 
 ## RAM boot
 
@@ -125,6 +161,13 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | `0b9fe54c…` (dev base `4cd5cdd9`, the load probe) | `load` four times over a minute, a pattern stopped and playing | 73.0 to 74.7 % a half second, the dearest block 79.1 to 80.9 %, 84.9 % since boot, the same stopped and playing; the unit sounds as before (tester's report); `load` was 0x22 in that base |
 | `407fa7d5…` (dev base `bfde5a8e`, the log) | `log` after six minutes with a pattern playing | START, BASE `0x82e35a4a` (as `runid` computes), a load record: mean 73.8 %, dearest block 82.9 %, 600 windows, longest block gap 714 µs, 53 blocks without a tick; the machines in START and BASE read 255: written at the boot gate, before stock had set up its memory |
 | `520f99e7…` (dev base `0740bb23`, START and BASE at the first tick) | `log` right after the flash | START and BASE `0x4f182a66` (as `runid` computes) with the machines 0, 4, 4, 2, 0, 5 and the last window's 74.0 % |
+| `acb91ea5…` (dev base `4d8f07a0`, the runtime loader), RAM-booted from `520f99e7…` | `ident`, then `mods` | booted from RAM, set CRC `0x6310cf37`, 41860 bytes (as `runid` computes); pool 65536 bytes free, no module live, no refusal |
+| the same | `try hello.mwrm --seconds 20`, a pattern stopped | on trial; the 3x3 square at the top right on every page; undone after 20 s, the square gone; 0 live |
+| the same | `try hello.mwrm --seconds 5 --keep`, then `mods` after 15 s | kept (generation 5), 1 live (`2cf24dba`), 65200 bytes free; the square still there after 15 s |
+| the same | `try` again while a pattern plays | `enter: unsafe`, the kept module unchanged |
+| the same | a power cycle | the flashed image runs (set CRC `0x4f182a66`), the square gone |
+| `acb91ea5…` RAM-booted again | `try hello.mwrm --seconds 60`, Ctrl-C on trial, `mods` 15 s later | the square went about 10 s after Ctrl-C; 0 live, no refusal |
+| the same | `try hello.mwrm --seconds 30`, PLAY on trial; STOP 5 s after the tool ends | the pattern plays without dropouts (tester's report); at the end `enter: unsafe (phase trial)`, the square stays while playing and goes about 10 s after the tool ended; 0 live |
 
 ## Not tested
 
@@ -138,3 +181,6 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 - A request while Transfer or another SysEx stream runs.
 - A host that stops reading in the middle of a reply.
 - A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
+- A module with stock-code sites, a replacement of a live module by a new version, a removal, several modules at
+  once, a package past 32 KiB or the pool's 64 KiB; key and encoder hooks that take events; the interrupts' masked
+  spans while a set switches (`mw_masked_max`, read with `mem`).

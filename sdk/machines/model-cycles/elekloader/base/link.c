@@ -69,6 +69,9 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_RAMBOOT 0x14
 #define CMD_MEM 0x21
+#define CMD_UP_PART 0x30               // modules.c: a part of an upload frame
+#define CMD_UP_RUN 0x31                // modules.c: run the frame, the controller's response back
+#define CMD_MODS 0x32                  // modules.c: the pool and the live modules
 #define ST_OK 0
 #define ST_NOT_ARMED 1
 #define ST_BAD 2
@@ -106,7 +109,7 @@
 #define BOOT_NO_OS 6
 
 #define RING 8                          // commands waiting for the UI task
-#define CMD_BYTES 32                    // a command's bytes, F0..F7 (MEM is 20)
+#define CMD_BYTES 128                   // a command's bytes, F0..F7 (MEM is 20, an UP_PART at most 124)
 #define PER_TICK 4                      // commands acted on in one tick
 #define MEM_MAX 128
 #define HEADER 8                        // F0 7D M W L ver seq cmd
@@ -124,6 +127,12 @@ static uint32_t run_crc, run_bytes;
 extern uint32_t mw_load_avg, mw_load_wmax, mw_load_peak, mw_load_windows, mw_load_blocks;
 extern uint32_t mw_load_tenths(uint32_t ticks);
 extern uint8_t __run_start[], __run_words[];
+// modules.c: loading modules over the link
+extern void mw_modules_identity(uint32_t crc);
+extern unsigned mw_modules_part(uint32_t offset, const uint8_t *packed, unsigned n);
+extern unsigned mw_modules_run(uint32_t length, uint8_t *out);
+extern unsigned mw_modules_list(uint32_t first, unsigned most, uint8_t *out);
+extern void mw_modules_tick(void);
 
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed = 1, human_ticks = -1, release_due, ramboot_due;
@@ -272,7 +281,10 @@ int mw_link_rx(const uint8_t *msg, int len, int port)
 }
 
 // ---- replies ---------------------------------------------------------------
-static uint8_t reply[HEADER + 1 + 5 + (MEM_MAX / 7 + 1) * 8 + 1];
+#define UP_RESPONSE 144                 // the upload controller's response (wire.h MU_WIRE_RESPONSE)
+#define MODS_MOST 3                     // inventory entries in one MODS reply
+static uint8_t reply[HEADER + 1 + (UP_RESPONSE / 7 + 1) * 8 + 1];   // the largest: UP_RUN's (MEM's is 167)
+static uint8_t up_out[UP_RESPONSE];
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -455,6 +467,27 @@ static void act(const uint8_t *m, int len, int port)
         send(p, port);
         return;
     }
+    case CMD_UP_PART:                   // offset, then up to 96 bytes packed
+        if (n < 7 || !mw_modules_part(get32(a), a + 5, (unsigned)(n - 5))) {
+            send(begin(seq, cmd, n < 7 ? ST_BAD : ST_RANGE), port);
+            return;
+        }
+        send(begin(seq, cmd, ST_OK), port);
+        return;
+    case CMD_UP_RUN: {                  // the frame's length; the controller's 144-byte response, packed
+        unsigned got = n < 5 ? 0 : mw_modules_run(get32(a), up_out);
+        if (got != UP_RESPONSE) {
+            send(begin(seq, cmd, n < 5 ? ST_BAD : ST_RANGE), port);
+            return;
+        }
+        send(pack(begin(seq, cmd, ST_OK), up_out, UP_RESPONSE), port);
+        return;
+    }
+    case CMD_MODS: {                    // from the n-th live module: free, largest run, refusal, count, entries
+        unsigned got = mw_modules_list(n >= 5 ? get32(a) : 0, MODS_MOST, up_out);
+        send(pack(begin(seq, cmd, ST_OK), up_out, (int)got), port);
+        return;
+    }
     default:
         send(begin(seq, cmd, ST_BAD), port);
     }
@@ -516,6 +549,7 @@ void mw_link_tick(char *ctrl)
         act(ring[t % RING], ring_len[t % RING], ring_port[t % RING]);
         ring_tail = t + 1;
     }
+    mw_modules_tick();
 }
 
 // ---- RAM boot: the gate ------------------------------------------------------
@@ -641,6 +675,7 @@ void mw_boot_gate(void)
     uint32_t magic = mb[0], clen, ulen, off, plen, i, count, arg;
     run_bytes = (uint32_t)__run_words * 4;  // first: no handler has written to .run yet
     run_crc = crc32(__run_start, run_bytes);
+    mw_modules_identity(run_crc);
     mw_diag_start(LOAD_TIMER_NOW ^ run_crc, run_crc);
     if (magic != MB_ASKED && magic != MB_SPENT)
         return;

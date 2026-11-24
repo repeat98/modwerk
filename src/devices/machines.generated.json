@@ -1064,7 +1064,7 @@
       "base": "started",
       "link": "started",
       "flash": "open",
-      "loader": "open",
+      "loader": "started",
       "status": "open",
       "diagnostics": "started",
       "tools": "open"

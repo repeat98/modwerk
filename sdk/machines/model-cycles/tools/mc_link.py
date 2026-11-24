@@ -17,11 +17,21 @@ MKII link's (../analog-rytm-mkii/LINK.md). Nothing here writes flash.
     mc_link.py log [--out FILE]   # the diagnostics log (base/diag.c, the Octatrack's layout): its records; FILE keeps its bytes
     mc_link.py runid IMAGE.syx    # the set identity ident reports for this image (needs IMAGE.syx.json); no unit
     mc_link.py rundiff IMAGE.syx  # read the running .run block and list each word that differs from the image
+    mc_link.py mods               # the runtime loader: pool, last refusal, the live modules
+    mc_link.py try PKG.mwrm --seconds 20 [--keep]  # load a module to RAM on trial, then undo it (or keep it)
+    mc_link.py keep | undo        # within 10 s of a trial's end: keep the set on trial, or put the last one back
+
+Loading (base/modules.c) runs the Octatrack's upload controller (sdk/runtime/upload, wire version 1) over the
+link: each wire frame goes in parts (UP_PART, under 128 bytes a message), then UP_RUN runs it. Kept modules stay
+until the next power cycle; nothing is written to the flash or the +Drive.
 
 Keys and turns need the link armed (at every boot) and stop for about 3 s after a person presses or turns
 something on the panel (status 'a person is at the unit').
 """
 import argparse
+import hashlib
+import os
+import struct
 import sys
 import time
 
@@ -87,6 +97,13 @@ def main():
     s = sub.add_parser('rundiff')
     s.add_argument('image')
     s.add_argument('--at', type=lambda v: int(v, 0), help='read a copy of the block at this address instead')
+    sub.add_parser('mods')
+    s = sub.add_parser('try')
+    s.add_argument('package')
+    s.add_argument('--seconds', type=float, default=20, help='how long the trial runs before the undo (or the keep)')
+    s.add_argument('--keep', action='store_true', help='keep the set at the end instead of undoing it')
+    sub.add_parser('keep')
+    sub.add_parser('undo')
     a = ap.parse_args()
     if a.cmd == 'runid':
         crc, n = runid(open(a.image, 'rb').read(), json_load(a.image + '.json'))
@@ -106,6 +123,9 @@ def main():
         return rundiff(mido, ins[0], outs[0], a)
     if a.cmd == 'log':
         return log(mido, ins[0], outs[0], a)
+    if a.cmd in ('mods', 'try', 'keep', 'undo'):
+        with mido.open_input(ins[0]) as inp, mido.open_output(outs[0]) as out:
+            return MODULE_COMMANDS[a.cmd](Link(mido, inp, out), a)
     if a.cmd == 'tap':
         run(mido, ins[0], outs[0], 'key', u32(a.id) + u32(1), a)
         time.sleep(0.1)
@@ -312,6 +332,146 @@ def ramboot(mido, in_name, out_name, a):
     time.sleep(0.5)
     run(mido, in_name, out_name, 'ramboot', [b for v in args for b in u32(v)], a)
     print('the unit resets now; after it boots: mc_link.py ident (RAM boot status)')
+
+
+# ---- the runtime loader (base/modules.c) ------------------------------------------------------------------------
+UP_PART, UP_RUN, MODS = 0x30, 0x31, 0x32
+PART_BYTES = 96                         # a part's bytes: 8 + 5 + 110 packed + 1 = 124, under stock's 128
+CHUNK = 2048                            # bytes of the package in one CHUNK frame
+WIRE = dict(hello=0, enter=1, begin=2, chunk=3, verify=4, commit=5, accept=6, rollback=7, abort=8, leave=9)
+RESULTS = ['ok', 'state', 'unsafe (playing?)', 'identity', 'limit (too large)', 'stale', 'length', 'conflict', 'hash',
+           'rejected', 'backend', 'needs recovery', 'progress']
+PHASES = ['normal', 'ready', 'receiving', 'verified', 'pending', 'trial', 'recovery', 'publishing']
+REFUSALS = ['none', 'malformed', 'memory', 'conflict', 'full', 'busy', 'cycles', 'in use', 'stock bytes differ',
+            'event site', 'feature', 'UI open', 'buffer']
+
+
+def pack(data):
+    out = []
+    for i in range(0, len(data), 7):
+        group = data[i:i + 7]
+        out.append(sum(0x40 >> k for k, b in enumerate(group) if b & 0x80))
+        out += [b & 0x7f for b in group]
+    return out
+
+
+class Link:
+    """One open port pair: each request waits for its reply (the link answers on the UI tick)."""
+
+    def __init__(self, mido, inp, out):
+        self.mido, self.inp, self.out, self.seq = mido, inp, out, int(time.time() * 10) & 0x7f
+        while inp.poll():
+            pass
+
+    def call(self, cmd, body, timeout=5):
+        self.seq = (self.seq + 1) & 0x7f
+        self.out.send(self.mido.Message('sysex', data=list(HEADER[1:]) + [self.seq, cmd] + list(body)))
+        end = time.time() + timeout
+        while time.time() < end:
+            m = self.inp.poll()
+            if m is None:
+                time.sleep(0.001)
+                continue
+            if m.type == 'sysex' and bytes(m.data[:5]) == HEADER[1:6] and m.data[5] == self.seq and m.data[6] == cmd | 0x40:
+                return m.data[7], list(m.data[8:])
+        sys.exit('No reply within %d s (is a development base with the loader on the unit?)' % timeout)
+
+    def frame(self, command, transaction, session, body=b''):
+        """One wire request: its parts, then UP_RUN; the controller's response, decoded."""
+        req = b'MWUP' + struct.pack('>HHII', 1, WIRE[command], transaction, len(body)) + session + body
+        for at in range(0, len(req), PART_BYTES):
+            status, _ = self.call(UP_PART, u32(at) + pack(req[at:at + PART_BYTES]))
+            if status:
+                sys.exit('unit: %s (an older base has no loader)' % STATUS.get(status, 'status %d' % status))
+        status, p = self.call(UP_RUN, u32(len(req)), timeout=10)
+        if status:
+            sys.exit('unit: %s, no response to %s' % (STATUS.get(status, 'status %d' % status), command))
+        r = unpack(p, 144)
+        if r[:4] != b'MWUR':
+            sys.exit('unit: not a controller response')
+        f = struct.unpack('>8I', r[16:48])
+        return dict(result=f[0], phase=f[1], known=f[2], generation=f[3], last=f[4], current=f[5], received=f[6],
+                    capacity=f[7], base=r[48:80], session=r[80:112], active=r[112:144])
+
+    def must(self, command, transaction, session, body=b''):
+        r = self.frame(command, transaction, session, body)
+        if r['result'] not in (0, 12):
+            sys.exit('%s: %s (phase %s)' % (command, RESULTS[r['result']] if r['result'] < len(RESULTS) else r['result'],
+                                             PHASES[r['phase']] if r['phase'] < len(PHASES) else r['phase']))
+        return r
+
+
+def mods(link, a):
+    first, shown = 0, 0
+    while True:
+        status, p = link.call(MODS, u32(first))
+        if status:
+            sys.exit('unit: %s (an older base has no loader)' % STATUS.get(status, 'status %d' % status))
+        head = unpack(p, 20)
+        free, largest, refusal, active = struct.unpack('>4I', head[:16])
+        n = head[19]
+        if first == 0:
+            print('pool: %d bytes free, largest run %d; live modules: %d; last refusal: %s'
+                  % (free, largest, active, REFUSALS[refusal] if refusal < len(REFUSALS) else refusal))
+        body = unpack(p, 20 + 24 * n)[20:]
+        for i in range(n):
+            e = body[24 * i:24 * i + 24]
+            name = e[8:24].split(b'\0')[0].decode('ascii', 'replace')
+            print('  module %08x  %s' % (struct.unpack('>I', e[4:8])[0], name or '(no name)'))
+        shown += n
+        if n < 3 or shown >= active:
+            return
+        first += n
+
+
+def hello(link):
+    return link.frame('hello', 0, bytes(32))
+
+
+def finish(link, keep):
+    r = hello(link)
+    session, t = r['session'], r['current'] or r['last']
+    if PHASES[r['phase']] != 'trial':
+        sys.exit('nothing on trial (phase %s)' % PHASES[r['phase']])
+    link.must('enter', 0, session)
+    link.must('accept' if keep else 'rollback', t, session)
+    r = link.must('leave', t, session)
+    print('%s: phase %s, generation %d' % ('kept' if keep else 'undone', PHASES[r['phase']], r['generation']))
+
+
+def try_package(link, a):
+    pkg = open(a.package, 'rb').read()
+    r = hello(link)
+    session = r['session']
+    if PHASES[r['phase']] != 'normal':
+        sys.exit('the loader is busy (phase %s): wait 10 s, or mc_link.py undo' % PHASES[r['phase']])
+    status, p = link.call(CMD['ident'], [])
+    crc = get32(p[5 * IDENT.index('set CRC'):][:5])
+    if r['base'] != hashlib.sha256(crc.to_bytes(4, 'big')).digest():
+        sys.exit('the unit\'s base identity does not match its set CRC %#x' % crc)
+    t = r['last'] + 1
+    link.must('enter', 0, session)
+    link.must('begin', t, session, r['base'] + hashlib.sha256(pkg).digest() + struct.pack('>II', r['generation'], len(pkg)))
+    for at in range(0, len(pkg), CHUNK):
+        link.must('chunk', t, session, struct.pack('>I', at) + pkg[at:at + CHUNK])
+    link.must('verify', t, session)
+    while link.must('commit', t, session)['result'] == 12:
+        pass
+    link.must('leave', t, session)
+    print('%s on trial for %g s (%d bytes)' % (os.path.basename(a.package), a.seconds, len(pkg)))
+    end = time.time() + a.seconds
+    try:
+        while time.time() < end:
+            time.sleep(1)
+            hello(link)                     # a request a second: ten quiet seconds would undo it
+    except KeyboardInterrupt:
+        sys.exit('\nstopped: the unit puts the previous set back within about 10 s')
+    finish(link, a.keep)
+    mods(link, a)
+
+
+MODULE_COMMANDS = {'mods': mods, 'try': try_package, 'keep': lambda link, a: finish(link, True),
+                   'undo': lambda link, a: finish(link, False)}
 
 
 if __name__ == '__main__':
