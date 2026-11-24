@@ -5,12 +5,13 @@ import { deviceHref, type DeviceProfile } from '../devices/registry'
 import { ZOOM_EFFECTS, fetchZoomEffect, zoomSyncPlan, type ZoomEffect } from '../devices/zoom-effects'
 import type { Configuration } from '../config/workspace'
 import type { ZoomFile, ZoomLink } from '../engine/zoom/zoom-link'
-import { EFFECT_LIST, EFFECT_LIST_SIZE, ZOOM_BASE, ZOOM_DEVICE_IDS, canWriteFiles, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, ZOOM_BASE, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, canWriteFiles, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import { ZoomLoad } from './ZoomLoad'
+import { ZoomPatchEditor } from './ZoomPatchEditor'
 import { HubSetHead, HubSetList, type SetAction } from './HubSets'
 import { ModuleGrid } from './ModuleGrid'
 import { ZoomEffectPreview } from '../devices/ZoomEffectDetail'
@@ -22,6 +23,7 @@ import './zoom-hub.css'
 
 const VIEWS: { view: ZoomHubView; title: string; icon: IconName }[] = [
   { view: 'status', title: 'Status', icon: 'grid' },
+  { view: 'editor', title: 'Editor', icon: 'sliders' },
   { view: 'backups', title: 'Backups', icon: 'download' },
   { view: 'setup', title: 'Setup', icon: 'sliders' },
 ]
@@ -57,11 +59,12 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   listed?: readonly ZoomEffect[]
 }) {
   const mobile = useMobileWorkspace()
+  const editing = view === 'editor', hasEditor = device.id === 'zoom-ms-70cdr'
   const state = useZoomLink(link), { status, identity, notice, progress } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
   const expected = ZOOM_DEVICE_IDS[device.id], other = connected && identity && expected !== undefined && identity.deviceId !== expected
   const model = identity?.model ?? device.name, updating = connected && isUpdateMode(identity)
-  const writable = canWriteFiles(identity), readOnly = writable ? undefined : 'Installing and removing effects is tested only on the MS-70CDR with Zoom’s firmware 2.10 or the base.'
+  const writable = canWriteFiles(identity), readOnly = writable ? undefined : ZOOM_FILE_WRITE_REQUIREMENT
   // The base answers the identity request with its tag; an MS-70CDR without it can have it installed.
   // Only the MS-70CDR has a base: MIDISTOMP's releases are built from its firmware, and no pedal takes another's.
   const baseHere = device.id === 'zoom-ms-70cdr', stock = device.firmware?.releases.at(-1) ?? '2.10'
@@ -130,7 +133,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     if (!plan.install.length && !plan.remove.length) return
     if (!fitsIn(plan, now.free)) throw new Error('Not enough space on your ' + model + ' for this set.')
     const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
-    if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + ', which your set no longer has. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
+    if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + '. Patches that use these effects will have empty slots. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
     let previousList: number[] | undefined, step = 0, what = ''
     const steps = plan.remove.length + plan.install.length, say = (next: string) => { what = next; step++; if (alive.current) setSyncing({ what, step, steps }) }
     try {
@@ -150,7 +153,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
       // A failed step stops the sync and the steps before it stay done: say which, and offer the effect list from before the sync.
       throw Object.assign(new Error(what + ' failed (step ' + step + ' of ' + steps + (step > 1 ? '; the steps before it are done' : '') + '). ' + (error as Error).message, { cause: error }), { previousList: previousList ?? (error as { previousList?: number[] }).previousList, unrestored: (error as { unrestored?: number[] }).unrestored })
     } finally { if (alive.current) setSyncing(undefined) }
-    if (alive.current) setChanged({ text: 'Your ' + model + ' has your set. Power-cycle the pedal to load it.', list: keepList(previousList) })
+    if (alive.current) setChanged({ text: 'Your ' + model + ' has your set. Power-cycle the pedal.' + (plan.install.length ? ' Add the installed effects to your patch on the pedal.' : ''), list: keepList(previousList) })
     await read()
   })
   const uninstall = (file: ZoomFile) => run(async () => {
@@ -209,7 +212,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
       <nav className="hub-nav" aria-label={'Your ' + device.name}>
         <div className="hub-nav-group">
           <h2 className="hub-nav-label">{device.name}</h2>
-          <ul className="hub-nav-list">{VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={zoomHubHref(device.id, item.view)} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
+          <ul className="hub-nav-list">{VIEWS.filter(item => item.view !== 'editor' || hasEditor).map(item => <li key={item.view}><a className="hub-nav-item" href={zoomHubHref(device.id, item.view)} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
         </div>
         {sets && onSelect && onNew && onSetAction && <HubSetList sets={sets} selected={selected} open={view === 'set'} contents={names} onSelect={onSelect} onNew={onNew} onSetAction={onSetAction} actions={SET_ACTIONS}
           state={item => { const on = connected && holdsSet(item); return { on, label: on ? 'On your ' + model : undefined } }} />}
@@ -239,6 +242,9 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
           </section>
         </div>)}
+        {editing && hasEditor && panel('editor', connected && !updating && !other && link
+          ? <ZoomPatchEditor key={pedalKey} link={link} busy={busy} writable={writable} files={files} listed={listed} inventoryError={!files ? error : undefined} onRetryInventory={read} />
+          : <p className="hub-empty">{updating ? 'Plug the MS-70CDR in normally to read its patch.' : 'Connect your MS-70CDR to see its active patch.'}</p>)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
           {error && <p role="alert" className="hub-error">{error}</p>}
@@ -282,7 +288,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
             <p>{!connected ? 'Connect your pedal to sync this set.' : updating ? 'The pedal is in update mode: plug it in normally to sync this set.'
               : !plan ? busy ? 'Reading what’s on your pedal…' : <>Read the pedal to see what a sync does. <button type="button" className="text-button" onClick={read}>Read the pedal</button></>
               : syncing ? <><strong>{syncing.what} · {syncing.step} of {syncing.steps}</strong>{progress && <> · {progress.label}{progress.total ? <> {progress.done} of {progress.total}</> : '…'}</>}<br />Don’t unplug or touch the pedal until it’s done.</>
-              : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}{free !== undefined && <> · {plan.adds > 0 && <>needs {Math.ceil(plan.adds / 1024)} KB of </>}{kb(free)} free</>}{!fits && <><br />Not enough space on your {model}: take effects out of the set, or remove effects you added by hand.</>}</>
+              : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}{free !== undefined && <> · {plan.adds > 0 && <>needs {Math.ceil(plan.adds / 1024)} KB of </>}{kb(free)} free</>}{!fits && <><br />Not enough space on your {model}: take effects out of the set, or remove effects you added by hand.</>}{readOnly && <><br />{readOnly}</>}</>
               : selected.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your {model}{free !== undefined && <> · {kb(free)} free</>}</span> : 'No effects in this set.'}</p>
             <button type="button" className="button button-primary" disabled={!plan || busy || !writable || !fits || (!plan.install.length && !plan.remove.length)} title={readOnly} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
           </div>
