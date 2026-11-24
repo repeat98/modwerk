@@ -1,0 +1,1 @@
+The Digitone II has an SDK guide for module developers: the base's hooks, which voice plays which track and when it holds a note, the frame budget measured on a unit, the panel's key codes, how stock builds its parameter pages and how a module page fits their grid. `ev_frame_params`'s contract now says it hands over voice slots, not tracks.

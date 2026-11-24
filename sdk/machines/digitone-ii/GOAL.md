@@ -1,6 +1,6 @@
 # Digitone II: the goal
 
-What the Digitone II's contributors are building, in what order, and how to take a piece. The [OS research](../../../docs/DIGITONE_II_OS_RESEARCH.md) has the addresses and unit runs. The [agent board](../../../docs/AGENT_BOARD.md) shows who is working on what (`npm run board -- list`).
+What the Digitone II's contributors are building, in what order, and how to take a piece. The [OS research](../../../docs/DIGITONE_II_OS_RESEARCH.md) has the addresses and unit runs, and the [SDK guide](README.md) what a module developer needs: the hooks, the voices, the frame budget and the pages. The [agent board](../../../docs/AGENT_BOARD.md) shows who is working on what (`npm run board -- list`).
 
 ## The goal
 
