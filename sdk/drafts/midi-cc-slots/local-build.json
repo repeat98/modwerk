@@ -1,0 +1,15 @@
+{
+  "version": "0.0.19-experimental",
+  "sha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451",
+  "bytes": 33434,
+  "imageBytes": 28964,
+  "abi": 8,
+  "features": 3,
+  "sites": 24,
+  "copies": 25,
+  "profile": true,
+  "projectTemplate": true,
+  "fills": 0,
+  "currentBase": true,
+  "requiredBase": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e"
+}

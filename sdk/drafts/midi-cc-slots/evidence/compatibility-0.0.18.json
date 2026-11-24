@@ -1,0 +1,57 @@
+{
+  "about": "Historical 0.0.18 integration pins. Its hardware evidence is not transferred to later bases.",
+  "pins": {
+    "local-build.json": {
+      "version": "0.0.18-experimental",
+      "sha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451",
+      "bytes": 33434,
+      "imageBytes": 28964,
+      "abi": 8,
+      "features": 3,
+      "sites": 24,
+      "copies": 25,
+      "profile": true,
+      "projectTemplate": true,
+      "fills": 0,
+      "currentBase": true,
+      "requiredBase": "c1ae2ee92a829e06aa9398d35981b8228efdd34c578c9583ef36fba8f5bc637f"
+    },
+    "local-usb-installer.json": {
+      "version": "0.0.18-experimental",
+      "base": "c1ae2ee92a829e06aa9398d35981b8228efdd34c578c9583ef36fba8f5bc637f",
+      "capabilities": {
+        "abi": 10,
+        "features": 903,
+        "maxSites": 128,
+        "maxCopies": 128
+      },
+      "packages": {
+        "95cff696": "ed2431f0ffe91e3def6a0101441ed650cab1db9a25a6bf83bff2dc2555b8cd0e",
+        "be4ff75a": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced",
+        "73bab3b1": "c35b154d7a6ff4d9affc339387d68bde87554aec82a87b60059b6307f5b2b848",
+        "f36a496d": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451"
+      },
+      "companions": [
+        "sidechain-compressor",
+        "playmodes",
+        "mute-modes"
+      ],
+      "nativeSourceTreeSha256": "d0e41ca6a509d05a3c513844cb48655258ddfe6bb0a4f27cc5d04589d40d48e3",
+      "nativeModuleVersions": {
+        "sidechain-compressor": "0.1.2-experimental",
+        "playmodes": "0.2.0-experimental",
+        "mute-modes": "0.2.1-experimental"
+      }
+    },
+    "current-base-adapter.json": {
+      "version": "0.0.18-experimental",
+      "base": "c1ae2ee92a829e06aa9398d35981b8228efdd34c578c9583ef36fba8f5bc637f",
+      "site": "0x4003678a",
+      "length": 8,
+      "sha256": "47052304944b9cfc9cfc341c0fc61d2b8bc4e9bcd990d9608a46aef99cde5bda",
+      "continuation": "0x40036792",
+      "replaces": "0x40036548",
+      "reason": "The current base owns the NOTE SETUP entry for ot_midi_generators; draw MIDI2 labels at the private stock epilogue instead."
+    }
+  }
+}
