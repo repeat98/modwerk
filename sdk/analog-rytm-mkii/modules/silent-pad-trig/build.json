@@ -32,6 +32,11 @@
       "sym": "silent_mute_on",
       "scope": "global",
       "bits": 1
+    },
+    {
+      "sym": "pad_leaves_fx_on",
+      "scope": "global",
+      "bits": 1
     }
   ],
   "claims": [
@@ -39,7 +44,8 @@
     "ui:TRIG 1-13 press",
     "ui:FUNC + pad",
     "ui:FUNC + TRIG 1-13",
-    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
+    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH",
+    "ui:pad or TRIG 1-12 press that selects a track while the FX track is selected"
   ],
   "requires": [],
   "derive": null,
@@ -138,6 +144,20 @@
           "stockSha256": "55e0de62adab1830b94e7bc51f94626af920808911d1cf98b802ab828f37b8dd",
           "op": "jsr",
           "target": "silent_pad_trig_glow"
+        },
+        {
+          "addr": "0x400c7b5c",
+          "len": 6,
+          "stockSha256": "4031d7b6c6d8b24a8fcf06086a4874f8be91ec617823f53c5acc3457d2cc5752",
+          "op": "jsr",
+          "target": "silent_pad_trig_fx_pad"
+        },
+        {
+          "addr": "0x400c7eb4",
+          "len": 6,
+          "stockSha256": "899b1fd53b348b210e24c506209b5e5ff8831a9e95be8966b27b981650bf107c",
+          "op": "jsr",
+          "target": "silent_pad_trig_fx_trig"
         }
       ]
     }

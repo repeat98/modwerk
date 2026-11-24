@@ -24,7 +24,7 @@ export const MISSING_PAGE = 13 // entries a MISSING reply holds; wValue is the f
 export const VENDOR_INVENTORY = 27 // the modules installed on the unit, in MISSING's form (sdk/runtime/loader/loader.c)
 export const VENDOR_CAPABILITIES = 29 // loader capabilities; older bases stall this read-only request
 export const CAPABILITIES_BYTES = 12
-export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024, judgedRests: 2048 } as const
+export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024, judgedRests: 2048, frameCosts: 4096, screen: 8192 } as const
 export interface RuntimeCapabilities { abi: number; features: number; maxSites: number; maxCopies: number }
 /** MWCP v1. Unknown feature bits are retained: they do not imply features this client requires. */
 export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
@@ -38,6 +38,12 @@ const VENDOR_SETTING_PRESETS = 42
 export const VENDOR_OFF = 40 // the modules switched off on the unit (elekloader/modset.c's shelf); older bases stall it
 export const OFF_PAGE = 5 // entries an OFF reply holds; wValue is the first (elekloader/status.h)
 export const OFF_BYTES = 8 + 56 * OFF_PAGE
+export const VENDOR_RESTORE = 43 // what this start's restore did with each saved package (elekloader/modset.c); older bases stall it
+export const RESTORE_PAGE = 5 // entries a RESTORE reply holds; wValue is the first (elekloader/status.h)
+export const RESTORE_BYTES = 8 + 32 * RESTORE_PAGE
+/** A RESTORE entry's refusal when the boot guard left the module out (the last start crashed or froze loading it), past
+ * the loader's own codes (sdk/runtime/loader-refusals.json). */
+export const RESTORE_GUARD = 0x100
 export const SLOTS_BYTES = 24
 /** Where the base lives in the unit's flash (docs/OCTATRACK_TWO_SLOT_BASE.md). `fellBack`: the newest slot's base did
  * not start three times, so the boot stub started the previous one. Null before the base's first look after a start. */
@@ -91,6 +97,7 @@ export class VendorTransportError extends Error {
   }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
+export interface Ep0Diagnostics { counts: number[]; supportsRemaining: boolean; remainingBytes?: number }
 
 export interface VendorIdentity {
   canSubmit: boolean; base: string; model: string
@@ -145,6 +152,26 @@ export function parseOff(view: DataView): { modules: OffModule[]; count: number 
     name: String.fromCharCode(...bytes.subarray(at + 8, at + 24)).replace(/\0.*$/s, '').trim(),
     sha256: [...bytes.subarray(at + 24, at + 56)].map(byte => byte.toString(16).padStart(2, '0')).join('') } }) }
 }
+/** One package of the card's set as this start's restore left it: loaded, or left out with the loader's refusal
+ * (loader.h runtime_refusal, RESTORE_GUARD the boot guard's), the loader's check that refused it (runtime_check: 1 the
+ * module pool, 2 claims, 3 metadata, 4 DSP), its package bytes and the module pool's largest free run then. */
+export interface RestoreOutcome { module: string; name: string; loaded: boolean; refusal: number; check: number; bytes: number; largestFree: number }
+/** RESTORE as a whole: the card set's result now (the self-test record's `saved`), the packages of the set the start
+ * restored, and each one's outcome in the set's order (the loader's rows: 128 at most). */
+export interface RestoreReport { result: number; count: number; modules: RestoreOutcome[] }
+/** RESTORE ("MWR"): the entries in this reply, the set's packages (u16), the card set's result, version 1, then 32 bytes a
+ * package: state (1 loaded, 2 left out), check, refusal u16, module id, package bytes, largest free run, name 16. */
+export function parseRestore(view: DataView): RestoreReport {
+  const n = view.byteLength >= 8 ? view.getUint8(3) : -1
+  if (n < 0 || n > RESTORE_PAGE || view.getUint32(0) >>> 8 !== 0x4d5752 || view.getUint8(7) !== 1 || view.byteLength !== 8 + 32 * n)
+    throw new VendorTransportError('Not a list of restored modules.')
+  const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength)
+  return { result: view.getUint8(6), count: view.getUint16(4), modules: Array.from({ length: n }, (_, i) => {
+    const at = 8 + 32 * i, state = bytes[at]
+    if (state !== 1 && state !== 2) throw new VendorTransportError('Not a list of restored modules.')
+    return { module: view.getUint32(at + 4).toString(16).padStart(8, '0'), name: String.fromCharCode(...bytes.subarray(at + 16, at + 32)).replace(/\0.*$/s, '').trim(),
+      loaded: state === 1, refusal: view.getUint16(at + 2), check: bytes[at + 1], bytes: view.getUint32(at + 8), largestFree: view.getUint32(at + 12) } }) }
+}
 export function parseVendorIdentity(bytes: Uint8Array): VendorIdentity {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const fail = (why: string): never => { throw new VendorTransportError('Unsupported vendor identity: ' + why + '.') }
@@ -190,7 +217,6 @@ export class UsbVendorTransport implements UploadTransport {
   private device: ControlDevice
   private index: number
   private options: { retries?: number; pollMs?: number }
-  private sequence?: number
   private busy = false
   constructor(device: ControlDevice, interfaceNumber: number, options: { retries?: number; pollMs?: number } = {}) {
     if (!Number.isInteger(interfaceNumber) || interfaceNumber < 0 || interfaceNumber > 255) throw new RangeError('Invalid interface number.')
@@ -250,6 +276,15 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status === 'stall') return undefined
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the base slots request.')
     return parseBaseSlots(reply.data)
+  }
+  async screen(signal?: AbortSignal): Promise<Uint8Array> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(7, 0), 1028)
+    signal?.throwIfAborted()
+    const data = reply.data
+    if (reply.status !== 'ok' || data?.byteLength !== 1028 || data.getUint32(0) !== 0x4d574c43)
+      throw new VendorTransportError('The Octatrack did not return a complete screen.')
+    return new Uint8Array(data.buffer, data.byteOffset + 4, 1024)
   }
   /** Cached, read-only live meters. Older bases explicitly stall this request. */
   async load(signal?: AbortSignal): Promise<LoadReading | undefined> {
@@ -362,10 +397,18 @@ export class UsbVendorTransport implements UploadTransport {
   /** DIAG version 3 (request 4, ep0.c): the base's EP0 counters, answered in its USB interrupt even while it refuses
    * submissions: frames received, refusals, bus resets, data stages primed, completed and abandoned. */
   async ep0(): Promise<number[]> {
-    const reply = await this.device.controlTransferIn(this.setup(4, 0), 68), view = reply.data
-    if (reply.status !== 'ok' || !view || view.byteLength !== 68 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
+    return (await this.ep0Diagnostics()).counts
+  }
+  /** The extended read is advertised by the legacy reply and matches only that SUBMIT sequence. */
+  async ep0Diagnostics(sequence?: number): Promise<Ep0Diagnostics> {
+    const length = sequence === undefined ? 68 : 70
+    const reply = await this.device.controlTransferIn(this.setup(4, sequence ?? 0), length), view = reply.data
+    if (reply.status !== 'ok' || !view || view.byteLength !== length || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
       throw new VendorTransportError('The Octatrack did not answer DIAG version 3.')
-    return [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
+    const counts = [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
+    const supportsRemaining = !!(view.getUint8(5) & 1)
+    const remaining = length === 70 && supportsRemaining ? view.getUint16(68) : undefined
+    return { counts, supportsRemaining, remainingBytes: remaining !== undefined && remaining <= UPLOAD_MAX_FRAME ? remaining : undefined }
   }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()
@@ -421,6 +464,20 @@ export class UsbVendorTransport implements UploadTransport {
       if (page.modules.length < OFF_PAGE) return all
     }
   }
+  /** What this start's restore did with each package of the card's set, a page of 5 at a time; undefined from a base
+   * built before RESTORE (it stalls the request), whose unit says only SOME MODULES FAILED. */
+  async restore(signal?: AbortSignal): Promise<RestoreReport | undefined> {
+    const modules: RestoreOutcome[] = []
+    for (let first = 0; ; ) {
+      signal?.throwIfAborted()
+      const reply = await this.device.controlTransferIn(this.setup(VENDOR_RESTORE, first), RESTORE_BYTES)
+      if (reply.status === 'stall' && !first) return undefined
+      if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The device did not answer the restored modules request.')
+      const page = parseRestore(reply.data)
+      modules.push(...page.modules); first += page.modules.length
+      if (page.modules.length < RESTORE_PAGE || first >= page.count) return { result: page.result, count: page.count, modules }
+    }
+  }
   /** Request 38 is a cached, read-only whole-set digest. A stale cache wakes
    * its engine owner; no scan or hash runs in the USB interrupt. */
   async setIdentity(signal?: AbortSignal): Promise<string> {
@@ -447,12 +504,12 @@ export class UsbVendorTransport implements UploadTransport {
       if (page.length < MISSING_PAGE) return all
     }
   }
-  async exchange(frame: Uint8Array, signal: AbortSignal): Promise<Uint8Array> {
+  async exchange(frame: Uint8Array, signal: AbortSignal, onSubmit?: (sequence: number) => void): Promise<Uint8Array> {
     if (this.busy) throw new VendorTransportError('A vendor exchange is already in progress.')
     if (frame.length < UPLOAD_HEADER || frame.length > UPLOAD_MAX_FRAME) throw new RangeError('Frame length is outside the protocol bounds.')
     this.busy = true
     try {
-      const sequence = await this.submit(frame.slice(), signal)
+      const sequence = await this.submit(frame.slice(), signal, onSubmit)
       for (let poll = 0; ; poll++) {
         const state = await this.result(signal)
         if (state.sequence !== sequence) throw new VendorTransportError('The device reports a different submission.')
@@ -462,14 +519,16 @@ export class UsbVendorTransport implements UploadTransport {
       }
     } finally { this.busy = false }
   }
-  private async submit(frame: Uint8Array, signal: AbortSignal) {
-    // Continue from the device's latest sequence; never reuse one, even across transports.
-    this.sequence ??= (await this.result(signal)).sequence
+  private async submit(frame: Uint8Array, signal: AbortSignal, onSubmit?: (sequence: number) => void) {
+    // Another client can have read status while this session was holding a trial.
+    // Reusing its sequence can make a refused SUBMIT look like its ready reply.
+    let sequence = (await this.result(signal)).sequence
     const retries = this.options.retries ?? 8
     for (let attempt = 0; ; attempt++) {
-      const sequence = this.sequence = (this.sequence + 1) & 0xffff
+      sequence = (sequence + 1) & 0xffff
       let sent: { status: string; bytesWritten: number } | undefined
       let transferError: unknown
+      onSubmit?.(sequence)
       try { sent = await this.device.controlTransferOut(this.setup(VENDOR_SUBMIT, sequence), frame) } catch (error) { transferError = error }
       signal.throwIfAborted()
       if (sent?.status === 'ok' && sent.bytesWritten === frame.length) return sequence

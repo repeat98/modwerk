@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.9-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Needs Modwerk base 0.8 or newer.",
+      "When the Octatrack has no time left in a frame, Tape Echo skips that block of echo instead of piling on: the dry sound plays on at the same level.",
+      "On a pattern too busy for the unit, base 0.8 can switch Tape Echo off: the track plays dry, with no echo or tail, and the echo starts fresh from what you play next.",
+      "While no track uses it, it steps out of the Octatrack's delay code. Under heavy load it kept the unit further from its limit than 0.1.6; in ordinary use it measured slightly dearer.",
+      "Known issue: not yet listened to on hardware, and the freeze with seven instances is still open."
+    ]
+  },
+  {
     "version": "0.1.6-experimental",
     "date": "2026-10-27",
     "changes": [

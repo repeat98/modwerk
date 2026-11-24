@@ -1,131 +1,62 @@
 {
-  "firmware": "1.40C",
-  "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-  "emulatorSha256": "870b66f73749a41d042484e47c248f4c53e42ce0481a4c38b95cffac98dc17db",
-  "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded.",
-  "palette": {
-    "on": [
-      240,
-      240,
-      240
-    ],
-    "off": [
-      24,
-      24,
-      24
-    ]
-  },
-  "keyMs": 150,
-  "plan": [
-    {
-      "press": [
-        "NO"
-      ]
-    },
-    {
-      "press": [
-        "NO"
-      ]
-    },
-    {
-      "press": [
-        "NO"
-      ]
-    },
-    {
-      "press": [
-        "MENU"
-      ]
-    },
-    {
-      "press": [
-        "LEFT"
-      ]
-    },
-    {
-      "press": [
-        "DOWN"
-      ]
-    },
-    {
-      "press": [
-        "RIGHT"
-      ]
-    },
-    {
-      "capture": "ot-system.png"
-    },
-    {
-      "press": [
-        "DOWN"
-      ]
-    },
-    {
-      "press": [
-        "DOWN"
-      ]
-    },
-    {
-      "press": [
-        "DOWN"
-      ]
-    },
-    {
-      "press": [
-        "YES"
-      ]
-    },
-    {
-      "capture": "ot-personalize.png"
-    },
-    {
-      "press": [
-        "DOWN"
-      ]
-    },
-    {
-      "press": [
-        "DOWN"
-      ]
-    },
-    {
-      "capture": "ot-mute-ot.png"
-    },
-    {
-      "press": [
-        "RIGHT"
-      ]
-    },
-    {
-      "capture": "ot-mute-otfx.png"
-    },
-    {
-      "press": [
-        "RIGHT"
-      ]
-    },
-    {
-      "capture": "ot-mute-otfx-t.png"
-    },
-    {
-      "press": [
-        "RIGHT"
-      ]
-    },
-    {
-      "capture": "ot-mute-dt-t.png"
-    }
+ "firmware": "1.40C",
+ "moduleVersion": "0.2.3-experimental",
+ "hardware": true,
+ "model": "MKI",
+ "capturedOn": "2026-11-16",
+ "capturedBy": "Zac-Kyoti",
+ "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+ "baseIdentity": "4b3759496183f559fa8d50973b7982d647deff6f47756d5f9177788ff33239e2",
+ "packageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+ "sourceRevision": "9f9af4f90be06d3fa42681a1fd57b931757ce741",
+ "setup": "Each picture is the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE.",
+ "palette": {
+  "on": [
+   255,
+   255,
+   255
   ],
-  "screenshots": {
-    "ot-system.png": "c5974f5b5e462b3abb757cfa4f49b91848cb411841b9b255c201f4dc2c866aee",
-    "ot-mute-ot.png": "f1b49fe1a69443f64e28013e89cd95ffa7533568b2d21a58c208b45a4f214f00",
-    "ot-mute-otfx.png": "497d97df83e7bde1c160e9b9f9955fd146a77c3bd441644280e1d03b09390e4c",
-    "ot-mute-otfx-t.png": "6aaef48eaf3715d9da16d0e9c04b9e08c7f3209288d4b229f94e63cadf9ed04b",
-    "ot-mute-dt-t.png": "4f2117386d263e7d41ec8f9fc41e18a5179abb2e2f0d39a2122324ab71fef03b"
+  "off": [
+   24,
+   24,
+   24
+  ]
+ },
+ "images": [
+  {
+   "path": "ot-system.png",
+   "sha256": "03e0056b6b1cce73cf049cadff2d44592a000a39fd9c86d5f649c870a0508d12",
+   "scale": 2,
+   "page": "PROJECT / SYSTEM",
+   "state": "The Octatrack PROJECT menu on SYSTEM: USB DISK MODE, OS UPGRADE, DATE/TIME, PERSONALIZE (selected), CARD TOOLS, STATUS."
   },
-  "moduleVersion": "0.2.2-experimental",
-  "buildKind": "native card image of this module alone, every stock effect kept",
-  "projectLoadStatus": "missing-project prompts dismissed; no valid project loaded",
-  "harness": "scripts/capture-module-ui.py, unmodified; the plan of 0.1.0's captures",
-  "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9"
+  {
+   "path": "ot-mute-ot.png",
+   "sha256": "743608c16f414ab6992d9bf5511a0c69b1ca4e176f5e1046c58c169224ddf1dc",
+   "scale": 2,
+   "page": "PERSONALIZE",
+   "state": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OT."
+  },
+  {
+   "path": "ot-mute-otfx.png",
+   "sha256": "6e1078a127b775b6c1c6322b86fd646e88b6475dd47a0da2ad2e13d2951da269",
+   "scale": 2,
+   "page": "PERSONALIZE",
+   "state": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OTFX."
+  },
+  {
+   "path": "ot-mute-otfx-t.png",
+   "sha256": "83233865c150f66c9c9234754f729cba566d2948dade1105f5d4ea952b7e3f2a",
+   "scale": 2,
+   "page": "PERSONALIZE",
+   "state": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OTFX-T."
+  },
+  {
+   "path": "ot-mute-dt-t.png",
+   "sha256": "071f887fbd705fba6f6495cd086e6157ddaa129b43c5c4863e21d97de725497e",
+   "scale": 2,
+   "page": "PERSONALIZE",
+   "state": "PERSONAL SETTINGS with the MUTE MODE row selected, set to DT-T."
+  }
+ ]
 }
