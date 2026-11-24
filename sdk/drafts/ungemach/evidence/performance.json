@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "ungemach",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 62546,
+    "budget": 95782,
+    "method": "An event is one track's render for one 16-sample frame, called by the base in the frame interrupt (two calls when a trig falls inside the frame). The budget is the whole frame, the render's deadline: 362.8 us, 95,782 cycles at 264 MHz; the base's guard lets the interrupt use 80 % of it. Measured on the author's MKI, OS 1.40C, 24 November 2026, with device:qualify on a RAM-booted development twin (4c7eb79b) of the beta base, release package a8bcdca3 (the released 37d7a278 differs only in its price byte): the `cpu` line's longest render, both passes of a frame, was 39.2 % of a frame (37,547 cycles) on T1 and 65.3 % (62,546 cycles) on T5 while the pattern played and the knobs were swept. Its mean is far lower: 14.1 points of the frame interrupt over FLEX (resources.cpuPrice), and 37-43 us a frame (9,800-11,400 cycles) in the author's busy live set with diagnostic builds of the same engine (TESTING.md, Performance), 49-60 us in some stretches with the same settings. A static bound is not established."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 228.9,
+    "moduleLongestUs": 281.9,
+    "stockIdlePercent": 70.2,
+    "moduleIdlePercent": 56.1,
+    "method": "The base's frame guard (npm run device -- do guard and device:price --curve), not cfmeter.py, on the development twin 4c7eb79b on the author's MKI, 24 November 2026, release package a8bcdca3: a scratch pattern with only T1 playing, a trig on every step and no sample. T1 on FLEX: longest frame 63.1 % (228.9 us), 29.8 % of each frame in the frame interrupt. T1 on UNGEMACH: longest frame 77.7 % (281.9 us), 43.9 % in the interrupt, 0 renders dropped. Idle is 100 minus the interrupt's share. On the medium pattern (T1-T7 with trigs every four steps, two samples) the longest frame went from 78.7 to 102.2 % with UNGEMACH; played there alone it was admitted with 0 dropped renders and 0 stalls (evidence/frame-cost.json). One UNGEMACH track is about 14 % of a frame, so the longest-frame rise and the idle fall are above the audit's 10 % rule; it is limited to one track a Part, and the waiver is asked of the owner (issue #1790, pull request #2081)."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No MIDI flood ran: UNGEMACH has no MIDI path of its own, notes reach it through the track's PTCH as for FLEX, and nothing on the author's computer sends MIDI to the unit. Its stress runs are the author's full live set (seven Flex tracks with many trigs, LFOs and scenes) played for about ten minutes per session with diagnostic builds of the same engine while every control was turned (22 November 2026: no hang, no dropout heard, 0-15 frames skipped a second at busy moments), and device:qualify (24 November 2026: knob sweeps, 12 Part switches and a bank change while playing, no failure, crash or stall). A flood is still to run."
+  }
+}

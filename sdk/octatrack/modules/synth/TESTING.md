@@ -30,7 +30,13 @@ stock-free scans pass. It needs a base with resting sites (0.7.10 or later; an o
 
 **On a unit so far:** its cost on `8cf43bfb`: on 22 November 2026 the owner's MKII with the 0.8 development twin
 `dce1d30e` recorded `evidence/frame-cost.json` (Dev17 C04 at 126 BPM, 79.4 % with stock alone: `rest` 0, `first` 31.3,
-`each` 0.5), and on 23 November its CPU price (below). On 23 November `791e26c5` itself ran the cases in the table
+`each` 0.5), and on 23 November its CPU price (below). That first instance was read at 107.9 % of a frame, the overload:
+on 24 November 2026 Laslo's MKII with the 0.8 development twin `2f0dcfa3` read the curve of `791e26c5` again on a pattern
+with room (project CPUCURVE2, A03: trigs on T1 T3 T6 T7, no sample track, 63.8 % with stock alone), with the
+`device:price` of #2110, which reads only what played: points 64.2, 81.0, 84.8, 85.0, 83.7, so `rest` 0, `first` 20.4,
+`each` 0.2 (a first run the same hour: 17.3 and 1.9), now `evidence/frame-cost.json`. Admitted alone on the empty
+pattern, nothing dropped. On the medium pattern (A01, 78.4 %) the pick was refused, judged by the table of the last set
+synced to the unit, which still booked 31.3; a single-package trial sends none, so that run says nothing about 20.4. On 23 November `791e26c5` itself ran the cases in the table
 below on twin `856cbbcf` ("MKII runs of `791e26c5`", below): the rest and a pick while it rests pass; the
 released-silence and after-STOP paths did not lower the cost.
 
@@ -142,7 +148,7 @@ stopped (+11.4), over about 45 s; playing notes on C01 it cost +14.6 against T2 
 out to make (the emulator's instruction counts above are for the paths themselves, not for what the unit reached). A
 possible cause, not verified: the default sound's HOLD may be INF, so its voices never release; the owner will check by
 ear. The fix is the follow-up [#2030](https://github.com/repeat98/modwerk/issues/2030). Admission still charges the track its in-use `first`
-(31.3, `evidence/frame-cost.json`), so nothing is over-admitted.
+(`evidence/frame-cost.json`), so nothing is over-admitted.
 
 Run 2's trial verdict was FAIL for one render the guard replaced on T8, a plain FLEX track with no machine, whose
 render the guard substitutes with stock's FLEX render (`machine_registry.c`, #999). Both trials rolled back; T2 and

@@ -1,14 +1,15 @@
 # Driving the Octatrack from an agent
 
-Drive an Octatrack MKII over USB with a development twin. Build it with `build_core.py` and the flags that
+Drive an Octatrack, MKI or MKII, over USB with a development twin on your own unit: all of [the test
+procedure](TEST_PROCEDURE.md) runs there, the curve included. Build it with `build_core.py` and the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
 then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
 Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
 `base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
 Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
 analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
-the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR`.
-Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
+the committed file back (twin `80f62ad6`, 13 November 2026).
+On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -42,8 +43,7 @@ Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `
   other file in turn (`modset.c` `slot`), so one Keep on a twin replaces only that file. The kept set's whole-set identity
   (USB request 38, order-free: `journal.h` `runtime_journal_set_digest`) names its exact packages: hash candidate files
   the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). A twin's RAM boot
-  that restores its kept set took 72 s to answer on USB after a power-cycled start, past `boot`'s 60 s wait, and 18 s
-  later; keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
+  that restores its kept set can take 72 s to answer on USB, past `boot`'s 60 s wait: keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
   after its Keep, never enumerated (Windows, `a328967d`, same day). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
