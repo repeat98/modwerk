@@ -255,6 +255,13 @@ npm run zoom -- install FILE.ZDL --yes | remove NAME.ZDL --yes
 node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --zoom-midi [--zoom-effects DIR] [--allow-device-writes]
 ```
 
+Start with `--zoom-midi` alone for the shared read tools. `device_status`
+identifies the pedal and reads its file inventory, including effect list
+membership where available. In update mode it reads identity only.
+`device_load` returns a reading when the pedal answers MIDISTOMP's load
+command. `device_log` reports unsupported. An Octatrack socket or an active
+remote Octatrack session takes precedence for the shared tools.
+
 `zoom_status` reads the model and firmware (on MIDISTOMP also its version,
 features and load), `zoom_list` the files and the free space, with the
 group, ID and version of effects in the group added effects use, and `zoom_backup` every file into a zip in the

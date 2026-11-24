@@ -1,3 +1,40 @@
+# Beat Slicer 0.1.68: hardware run, 20 November 2026
+
+- **Unit:** the author's Octatrack MKII, OS 1.40C, driven over USB by Claude Code (`scripts/device-send.py`, `npm run device`, the developer MCP's tools); the author listened and drove the 10-minute trial.
+- **Base:** a RAM-booted development twin of Octatrack base 0.7.11 with SNAP (`build_core.py` with the beta flags and `--dev`, source `3055f13f2`), identity `54cab5949013f45d…`. The committed base `57c925651e5e…` is the same source without `--dev`; it was not booted. The flashed base `27c9d36f…` stayed in flash.
+- **Package:** `public/octatrack-modules/beat-slicer/0.1.68-experimental.mwrm`, SHA-256 `195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643`, 5,332 bytes (4,392 of code and data, 3,488 of bss, 179 relocations), module `c8d078f2`.
+- **How it ran:** `npm run device:test`, five timed trials (`npm run device -- try FILE --seconds N`, no `--accept`) and one trial through the developer MCP ended by an explicit `device_undo`. Nothing was kept, saved or flashed.
+- **Source:** T1, Static slot 001 `05_ELoop 3` with slices beforehand, bank H, Part 1, sample BPM 115.00.
+
+| Run | Result |
+|---|---|
+| `device:test` | self-test passed (1/1 intact, longest frame 382 us); 12 of 12 Part switches; CPU 356 per mille all placed and playing; no crash, stall, freeze or skipped track; inventory unchanged |
+| AED > SLICE > YES | CREATE BEAT GRID directly above stock CREATE SLICE GRID |
+| SNAP OFF, 1 beat, stopped | 16 SLICE, REPLACE; YES at REPLACE SLICES? applied at once |
+| SNAP ON, 4 beats, stopped | ALIGNING GRID after the stock YES, gone by 6 s; loader stalls and errors 0; no new crash or stall record |
+| NO at REPLACE SLICES?, SNAP ON | back on the SLICE page, no analysis, slices unchanged |
+| FUNC+AED, three presses, NO | stock chooser, CREATE BEAT GRID (SNAP setting kept), stock; NO closed it. Module removed: stock both times |
+| Trial ends with the popup open | closed onto the SLICE page; inventory empty |
+| Pattern playing: SNAP OFF, then SNAP ON (16 slices) | OFF at once; ON done within 3 s; guard's longest frame 38 % (share 80 %), no frame skipped |
+| MCP trial, then `device_undo` | active `54cab594` > `ff5e28b7` with the trial > `54cab594`, no modules: restored |
+| Author, 10-minute trial (reported) | with SNAP ON the boundary pops "noticeably decrease a lot" against OFF; playback smooth during a SNAP ON replace while playing; FUNC+AED cycles as expected |
+
+## Cost (popup stopped on the SLICE page)
+
+`modwerk_cost` (DTIM3 counts at 132 MHz) read before and after each window.
+
+| Window | UI ticks | Runtime module draw | Longest frame (guard) | CPU meter, six readings |
+|---|---|---|---|---|
+| Installed, popup closed | 604 | 6.3 us a tick | 36.2 % (131.3 us) | 394-396 per mille |
+| Popup open, settings turned 16 times | 695 | 198.1 us a tick (52,298 cycles at 264 MHz) | 36.5 % (132.4 us) | 401-403 per mille |
+
+0.1.66's draw was 1,058 us a tick. An average, not a per-frame maximum; no static bound.
+
+## Open
+
+- The base's CPU budget refusal counter rose by 3 at each slice replace and FUNC+AED sequence, stopped and playing, and also with Beat Slicer removed; `cpu` reported nothing refused afterwards. Not Beat Slicer's; not established what the base counts there.
+- Not run: the committed base itself, a Keep and a power cycle, the slice positions read back, MAIN/CUE recordings for dropouts, Flex and recorder buffers on this package, the MKI.
+
 # Beat Slicer 0.1.66: hardware run, 27 October 2026
 
 - **Unit:** the owner's Octatrack MKII, OS 1.40C, driven over USB by Claude Code (`scripts/device-send.py`, `npm run device`).

@@ -1,14 +1,24 @@
 {
  "schema": 1,
- "about": "The table owners the public base admits (build_core.py --table-owners): each names its exact published package, its table declaration and recipe (module-adapters/table_declarations.py validates them), the declaration's reviewed SHA-256 and who approved it. Hashes and offsets only; no stock bytes.",
+ "about": "Each entry pins one approved package, declaration and recipe. A versioned sourceRoot keeps that declaration reproducible when a later release changes the module.",
  "owners": [
   {
    "module": "mute-modes",
-   "package": "public/octatrack-modules/mute-modes/0.2.2-experimental.mwrm",
-   "declaration": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes.declaration.json",
-   "recipe": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes.recipe.json",
+   "package": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.2/mute-modes.mwrm",
+   "declaration": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.2/declaration.json",
+   "recipe": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.2/recipe.json",
    "reviewedSha256": "078d3bf27d4732fab69fe029188a407121805ab94e8ba9e246f8ba2d764885ec",
-   "approval": "repeat98, 4 Nov 2026: Mute Modes 0.2.2 approved as an owner-reviewed update; no owner unit run of this package"
+   "approval": "repeat98, 4 Nov 2026: Mute Modes 0.2.2 approved as an owner-reviewed update; no owner unit run of this package",
+   "sourceRoot": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.2/source"
+  },
+  {
+   "module": "mute-modes",
+   "package": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.3/mute-modes.mwrm",
+   "declaration": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.3/declaration.json",
+   "recipe": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.3/recipe.json",
+   "reviewedSha256": "334e32907136c79f53c0b732d739ba3f5368a53fc03dde675f3bf6475cc92f4d",
+   "approval": "repeat98, 18 Nov 2026: Mute Modes 0.2.3 table owner approved for package d460c7e2, declaration 334e3290 (https://github.com/repeat98/modwerk/pull/1652#issuecomment-6971850708); the base is rebuilt with it after #1418",
+   "sourceRoot": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.3/source"
   }
  ]
 }

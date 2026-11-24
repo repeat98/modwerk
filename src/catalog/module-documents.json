@@ -245,7 +245,7 @@
       "id": "tapeecho",
       "key": "TAPE ECHO",
       "name": "Tape Echo",
-      "version": "0.1.6-experimental",
+      "version": "0.1.9-experimental",
       "category": "effects",
       "access": {
         "location": "Audio track FX2 SETUP: Tape Echo in the effect chooser.",
@@ -338,7 +338,7 @@
         "location": "FX2",
         "conflicts": [],
         "limitations": [
-          "The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. Recorded gates cover native arithmetic parity, dirty state, eight-instance stress, moving controls and repeat/feedback behavior. Hardware timing and worst-case CPU headroom remain unqualified."
+          "The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. Recorded gates cover native arithmetic parity, dirty state, eight-instance stress, moving controls and repeat/feedback behavior. Hardware timing and worst-case CPU headroom remain unqualified. From 0.1.8 every instance holds for one block when stock's delay routine starts more than a quarter frame late; that hold is not yet observed on a unit. 0.1.9 needs base 0.8's two-argument ev_frame_deadline: it also holds a block that would end past the frame's deadline (a held block plays its dry signal at the level MIX gives it and its own input recorded to the tape through the record path, without the repeat the feedback would have added), and passes every instance dry at MIX's dry level while the base rests it on a pattern past the frame ceiling, starting the tape afresh after; none of this is observed on a unit yet."
         ]
       },
       "resources": {
@@ -354,11 +354,11 @@
         },
         "processing": {
           "label": "CPU instruction peak",
-          "display": "22,571 per frame",
+          "display": "22,586 per frame",
           "value": null,
           "unit": "see display",
           "method": "emulator",
-          "conditions": "Eight instances with all controls reversing in BEAT mode. FREE peaked at 19,087. 0.1.6 adds 1,024 to both while MIX, FDBK or AGE is moving. These emulator instruction counts are not hardware cycles or CPU percentages.",
+          "conditions": "Eight instances with all controls reversing in BEAT mode (22,571 in 0.1.7). FREE peaked at 19,178. One instance on the default page costs 1,800 instructions a frame (2,075 in 0.1.7); eight settled instances 14,315 for the whole routine (15,283). These emulator instruction counts are not hardware cycles or CPU percentages.",
           "source": "TESTING.md"
         },
         "impact": {
@@ -366,7 +366,7 @@
           "cpu": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "Tape Echo processes audio continuously on ColdFire. Eight modulated instances peak at 22,571 emulator instructions per frame in BEAT mode, versus 7,628 for eight stock DELAY instances in the same record. High is a relative work estimate, not a CPU percentage.",
+            "rationale": "Tape Echo processes audio continuously on ColdFire. Eight modulated instances peak at 22,586 emulator instructions per frame in BEAT mode, versus 7,628 for eight stock DELAY instances in the same record. High is a relative work estimate, not a CPU percentage.",
             "source": "TESTING.md"
           },
           "dsp": {
@@ -394,7 +394,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.1.6 follows BBD's MIX law so turning Tape Echo on no longer turns the track down (issue #969): up to MIX 64 the echo rises over the whole dry signal, above it the dry fades out; the default is MIX 40. The ColdFire kernels match their native oracle bit for bit on the emulator; the echo path, feedback law and self-oscillation headroom are unchanged. The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open, and no hardware run, chip timing or listening test exists for 0.1.6. See TESTING.md.",
+        "summary": "0.1.9 subscribes to base 0.8's ev_frame_deadline: a block that would end past the frame's deadline is held (its dry signal at the level MIX gives it and its own input recorded to the tape through the record path, without the repeat the feedback would have added), and while the base rests Tape Echo on a pattern past the frame ceiling every instance passes the dry signal at MIX's dry level with no echo, tail or ring write, its tape starting afresh after. Its echo arithmetic is 0.1.8's; on the emulator the hold, the rest and the wake keep the dry level within 1 LSB of the full path's at MIX 32, 64, 96 and 127; on the owner's MKII (base 0.8 twin, 23 November 2026) the overload scene's frame-interrupt share fell from 69.0 % with 0.1.6 to 55.6 %, while one to three instances in ordinary use measured dearer than 0.1.6; not listened to on a unit yet. 0.1.8 produces the same samples as 0.1.7 with less ColdFire work: other effects' tracks leave its hook in assembly, steady blocks skip the control half, and the per-track entry is assembly. One instance on the default page executes 1,800 instructions a frame against 2,075. A new overload hold drops one block of echo when stock's delay routine starts more than a quarter frame late. The ColdFire kernels and the steady path match their native oracle bit for bit on the emulator; nothing is measured on a unit yet. The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. See TESTING.md.",
         "hardwareStatus": "untested",
         "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
         "gates": [
@@ -2990,7 +2990,7 @@
         "uiClaims": [],
         "limitations": [
           "Needs the Modwerk base's key bus, which only the USB base has (loader ABI 9, `requires keybus`), so it is USB-only: the configurator refuses card firmware with it (the site's rule for a package that requires a base feature). A card image built with it anyway has no key bus, and there the effect keeps its depth at 0 and passes the audio untouched.",
-          "While a Part in the bank uses RINGMOD SC the base's tap copies every track's audio on every block, on both cores, and its price counts toward RINGMOD SC: 51 chip cycles a sample a core, timed on an MKII (charged at 72 before). Installed but used in no Part of the bank, it costs nothing.",
+          "While a Part in the bank uses RINGMOD SC the base's tap copies every track's audio on every block, on both cores, and its price counts toward RINGMOD SC: 43 chip cycles a sample a core (the one-pass tap, timed on an MKII on 23 November 2026; 51 before it, 72 before that). Installed but used in no Part of the bank, it costs nothing.",
           "The key is taken before the key track's own effects.",
           "The key is exact when its track is dispatched before this one on the same DSP core (T1-T4, T5-T8), 16 samples late when after, and 32 samples late across the cores (the key bus's latency, measured on an MKII for Sidechain Compressor; not yet with this module).",
           "A MODE or KEY change fades the effect out, clears the key's state and fades back in over about 1 ms, so a KEY parameter lock shorter than that is not heard.",
@@ -3912,7 +3912,7 @@
       "id": "usb-audio-out-tracks-main-cue",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "name": "USB Audio",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "category": "midi-usb",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3923,13 +3923,14 @@
         "location": "PROJ > MODWERK > SETTINGS > USB AUDIO",
         "steps": [
           "Open SETTINGS, highlight USB AUDIO and press YES. Open a field to see its choices. Press YES to select one or NO to go back.",
-          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts.",
+          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts. INPUTS plays USB channels from the computer into inputs A/B, C/D or all four.",
           "For Outbox 8, choose OUTBOX 8 and assign the four stereo pairs. In the Outbox app, map USB pairs 1–4 to the four desired physical output pairs. Subsequent source changes take place on the Octatrack."
         ],
         "screenshots": [
           "media/ot-settings.png",
           "media/ot-usb-audio.png",
           "media/ot-track-tap.png",
+          "media/ot-inputs.png",
           "media/ot-outbox-pairs.png"
         ]
       },
@@ -3968,22 +3969,22 @@
         "location": "USB",
         "conflicts": [],
         "limitations": [
-          "Output only, fixed 44.1 kHz / 24-bit; USB input and Crossbar variants are excluded.",
+          "Fixed 44.1 kHz / 24-bit. USB input (INPUTS: AB, CD or ABCD) needs a high-speed connection to a computer; full speed and Outbox 8 are output only. Crossbar variants are excluded.",
           "Like every DRAM module, gives up about 10 MB of sample memory: projects that filled Flex/recorder memory can show OUT OF MEMORY. Shorten recorder reservations or load long samples into Static (#433).",
           "At full speed, track feeds fall back to a stereo sum and Main + Cue to Main.",
           "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1–7. With a master track, tracks 1–7 lead track 8 by 32 samples.",
-          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, worst-case ColdFire cycles and complete memory bounds remain untested."
+          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, the MKI, worst-case ColdFire cycles and complete memory bounds remain untested."
         ]
       },
       "resources": {
-        "recorded": "20 November 2026, configurable release package",
+        "recorded": "23 November 2026, configurable release package with USB input",
         "storage": {
           "label": "Runtime memory",
           "display": "Full bound unmeasured",
           "value": null,
           "unit": "bytes",
           "method": "unmeasured",
-          "conditions": "USB Audio 0.3 allocates 10,288 initialized bytes and 94,152 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
+          "conditions": "USB Audio 0.4 allocates 17,852 bytes of code and data and 110,552 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
           "source": "README.md"
         },
         "processing": {
@@ -4019,7 +4020,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "On an Octatrack MKII, macOS recorded all five widths. Track 8/Master reconnected and survived Undo twice. Keep and card restoration after a physical power cycle passed on the same release image. See TESTING.md for build identities and limits.",
+        "summary": "0.4.0 is the input build that ran on an Octatrack MKII on 21 November 2026 (all four INPUTS modes, 17 minutes of duplex audio), with a new inventory kind; this exact package was released on the owner's word without a run on base 0.8.1. 0.3.0 recorded all five widths, survived Undo and passed Keep and card restoration after a physical power cycle. See TESTING.md for build identities and limits.",
         "hardwareStatus": "reported",
         "evidenceRevision": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
         "gates": [
@@ -4039,6 +4040,7 @@
             "media/ot-settings.png",
             "media/ot-usb-audio.png",
             "media/ot-track-tap.png",
+            "media/ot-inputs.png",
             "media/ot-outbox-pairs.png"
           ],
           "screenshotStyle": "black-and-white"
@@ -4062,16 +4064,16 @@
             "page": "SETTINGS",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
           "path": "media/ot-usb-audio.png",
           "captureType": "emulator",
-          "caption": "Open SEND TO to choose a computer or Outbox 8. Open LAYOUT to choose which tracks or mixes to send.",
-          "alt": "USB AUDIO shows SEND TO set to OUTBOX 8, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL and OUTPUT MODE to ALL.",
+          "caption": "Open SEND TO to choose a computer or Outbox 8, LAYOUT to choose which tracks or mixes to send, and INPUTS to play audio from the computer into the Octatrack.",
+          "alt": "USB AUDIO shows SEND TO set to COMPUTER, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL, OUTPUT MODE to ALL and INPUTS to OFF.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4079,9 +4081,9 @@
             "page": "USB AUDIO",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
@@ -4096,16 +4098,33 @@
             "page": "TRACK TAP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+          }
+        },
+        {
+          "path": "media/ot-inputs.png",
+          "captureType": "emulator",
+          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+          "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "USB AUDIO INPUTS",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
           "path": "media/ot-outbox-pairs.png",
           "captureType": "emulator",
-          "caption": "With OUTBOX 8 selected, open each output pair and choose its source. Here the first two pairs carry Main, the third is silent and the last carries Cue.",
-          "alt": "USB AUDIO shows OUT 1/2 MAIN, OUT 3/4 MAIN, OUT 5/6 OFF and OUT 7/8 CUE, with OUT 7/8 highlighted.",
+          "caption": "With OUTBOX 8 selected, INPUTS gives way to the four output pairs. Open each pair and choose its source: a track, Main, Cue or OFF for silence.",
+          "alt": "USB AUDIO with SEND TO on OUTBOX 8 shows OUT 1/2 to OUT 7/8 set to TRACK 1 to TRACK 4, with OUT 7/8 highlighted.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4113,9 +4132,9 @@
             "page": "USB AUDIO outputs",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         }
       ]
@@ -4480,7 +4499,7 @@
       "id": "synth",
       "key": "SYNTH MACHINE",
       "name": "FM Synth",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -4520,7 +4539,7 @@
         "label": "Two-operator FM",
         "family": "Synth machines",
         "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-        "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.4 names its CPU price for the base's CPU budget, 6 % of a frame a track; 0.1.3 made the render path cheaper on the CPU with no change of function; 0.1.2 preserved the MIDI chromatic drawer stack and added 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+        "overview": "FM SYNTH plays one to four paraphonic voices through the track's AMP and effects. Version 0.1.5 rests while nothing in the project uses it.",
         "highlights": [
           "Dedicated machine chooser entry; no sample required.",
           "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
@@ -4725,18 +4744,18 @@
           }
         },
         "cpuPrice": {
-          "value": 6,
+          "value": 4,
           "unit": "percent-of-frame",
           "measure": "machine-render",
           "tool": "npm run device -- do 'PLAY w2500 guard w6000 guard STOP'",
-          "date": "2026-11-17",
-          "conditions": "Octatrack MKII, development twin 945cc074 of base 0.7.7, FM Synth 0.1.3 with SYNTIZ, Amiga and POLY8 installed, one FM Synth track at its default sound with a trig on every step of a 16-step pattern, seven empty STATIC tracks: the frame interrupt's share was 36.8 % against 32.2 % without the trigs, 4.6 points, priced 6 with room for longer notes",
+          "date": "2026-11-23",
+          "conditions": "Octatrack MKII, OS 1.40C, development twin 856cbbcf of base 0.8 (base/octatrack-next 9ac83b232), FM Synth 0.1.5 package 8cf43bfb installed alone in a rolled-back trial, project Dev17, pattern C02 with Part 2 at 126 BPM: FM Synth on T1 at its default sound with a trig on every step, the seven other tracks without trigs, FILTER and DELAY on every track. The frame interrupt's share was 30.8 % against 27.6 % without T1's trigs (three readings each way, none skipped), 3.2 points, priced 4",
           "source": "TESTING.md"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.1.4 differs from 0.1.3 only in its descriptor's CPU price, measured on an MKII with 0.1.3 (TESTING.md). 0.1.3 changes only the render path's cost (measured on an MKII, TESTING.md). Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
+        "summary": "0.1.5 rests while nothing in the project uses FM Synth. On the owner's MKII with base 0.8 (23 November 2026, package 791e26c5) installed on no track it added 0.1 to 0.2 points and a pick while it rested was admitted; a track that had played notes kept costing about 11 frame points while silent or stopped, so the silent-track path did not lower the cost (follow-up #2030). Its CPU price is 4 % of a frame a track. TESTING.md gives the readings and open cases, including chip worst-case timing and complete memory bounds.",
         "hardwareStatus": "untested",
         "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
         "gates": [
@@ -6694,7 +6713,7 @@
       "id": "mute-modes",
       "key": "MUTE_MODES",
       "name": "Mute Modes",
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "category": "system",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -6811,20 +6830,20 @@
           }
         },
         "cpuPrice": {
-          "value": 1.2,
+          "value": 1.7,
           "unit": "percent-of-frame",
           "measure": "frame-interrupt",
-          "tool": "npm run device:price -- --write",
-          "date": "2026-11-21",
-          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 33.9 % installed and used nowhere; CPU meter 45.5 % before, 46.3 % at rest.",
-          "source": "evidence/cpu-price.json"
+          "tool": "npm run device:price",
+          "date": "2026-11-19",
+          "conditions": "MKI, development twin fc4b7abd of base 0.7.9 with this version as the PERSONALIZE table owner (the beta flags plus --dev), the author's project, bank A pattern A02 (12 steps) on Part 1 playing, nothing muted, MUTE MODE at the installed default, 8 s per reading, two runs: frame interrupt 48.9 % before and 50.6 % installed (+1.7), then 49.2 % and 50.7 % (+1.5); CPU meter +1.8 and +1.4. With T1-T4 muted and MUTE MODE OTFX-T the same reading was 33.9 % against 49.3 % for stock's mute (CPU 46.9 against 61.3 %): OTFX-T starts no new notes on muted tracks, so the price is the unmuted case.",
+          "source": "TESTING.md"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "All three author references match (plain 996 B, SC_KEY 1106 B, menu 208 B). The native probe of this version passes 4,353,132 cases, including the hold after KEY moves away and after MUTE MODE leaves OT; stack peaks are as in 0.2.1. On his MKI (3 November 2026) the author flashed the native card image of Sidechain Compressor and this module (MW_MMOH1) and reported the OT-exit hold, the KEYHOLD checks, an ordinary DT-T mute and a power cycle working; on 27 October the image of this module alone passed every mode, Part and project reload and the timestretch mute check.",
+        "summary": "0.2.3 adds the ev_trig_muted answer; the native units are unchanged, and the native probe reproduces 0.2.2's evidence byte for byte. Over USB on the author's MKI (16 November 2026) this version's release package installed on a development twin of base 0.7.5 and passed every mode with a muted track (OT, OTFX, OTFX-T, DT-T), a soloed track in DT-T, a power cycle (restored from the card, MUTE MODE kept) and removal. The ev_trig_muted answer equals the resets mm_voice_bind drops in every frame of loader_mute_keep_fixture (emulator); no machine that asks it had a package yet, so it was not exercised on the unit.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "a2d9882bdda2aef9d11a5728daa7db24ec9aed3a",
+        "evidenceRevision": "9f9af4f90be06d3fa42681a1fd57b931757ce741",
         "gates": [
           "qualification/probe.cpp"
         ],
@@ -6867,23 +6886,23 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.2-experimental",
-          "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
-          "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
+          "moduleVersion": "0.2.3-experimental",
+          "sourceSha256": "3d62945169a36f9205c8dded03bc50ba2cf5696c1237de031f7d1e9a41b55666",
+          "imageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
           "cycles": [
             {
               "processor": "coldfire",
               "worstCase": 3440,
-              "maxConfiguration": 16624,
+              "maxConfiguration": 20976,
               "maxInstances": 1,
               "budget": 95778,
               "unit": "cycles/block",
               "method": "emulator",
               "conditions": {
-                "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases).",
+                "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases). ev_trig_muted (0.2.3), asked through the base's raise after every frame of loader_mute_keep_fixture: every MUTE MODE, mute and solo masks with SOLO_FLAG set and clear, four SIDE-CHAIN KEY layouts, with and without an ev_mute_keep provider (244 asks, 94 dropping trigs): at most 34 instructions per ask, 16 in mm_trig_muted itself.",
                 "parameterModulation": "Not applicable: MUTE MODE is one global PERSONALIZE setting; mute and solo change from the panel or MIDI and are read once per frame.",
                 "modeSwitching": "MUTE MODE changed between frames in every order; mutes and solos set and cleared between frames, including the 0->1 edge that issues each track's note-off.",
-                "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
+                "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184. Over USB a machine that starts its own note asks ev_trig_muted once per trig: at most eight asks per block, 8 x 544 = 4,352 more (16,624 + 4,352 = 20,976).",
                 "inputConditions": "Independent of audio content. Conservative V4 core-path bounds from the actual assembled instructions of this version (16 cycles per ordinary instruction), not chip wall-clock timing; stock callbacks (the note-off and voice routines) are stock cost and excluded."
               },
               "report": "TESTING.md"
@@ -6951,16 +6970,16 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKI",
-            "testedOn": "2026-11-03",
+            "testedOn": "2026-11-16",
             "tester": "Zac Kyoti",
-            "sourceRevision": "a2d9882bdda2aef9d11a5728daa7db24ec9aed3a",
-            "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
-            "summary": "The author flashed the native card image of Sidechain Compressor and this module with every stock effect kept (MAIN OS d8267756, OS VERSION MW_MMOH1) on his MKI. All passed: a track muted in OT stays silent when MUTE MODE is switched to DT-T, and plays normally when unmuted; an ordinary DT-T mute of a sounding track still lets the note play out; in DT-T, a muted track that rested as a COMPRESSOR's KEY stays silent when KEY moves to another track; MUTE MODE survives a power cycle. The same source passed on that unit as the author's standalone image, its Bugbuild, KYOTI V1.7 and the octabam form (OCTABAM39). Earlier: MW_MMKH1 (KEYHOLD, 3 November) and the image of this module alone (MW_MM022, 27 October) passed every mode, solo, timestretched mutes in OTFX, Part and project reload and a power cycle.",
+            "sourceRevision": "9f9af4f90be06d3fa42681a1fd57b931757ce741",
+            "imageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+            "summary": "The author ran this version's USB release package (d460c7e2) on an Octatrack MKI, OS 1.40C: the Modwerk base flashed from a development build of the site (1625fef6), then a development twin of base 0.7.5 with this version as the PERSONALIZE table owner (4b375949) booted from RAM over USB, and the package installed through the session. All passed, as the author reported: with T1 muted while playing, OT cuts at once with its tails, OTFX cuts the dry sound and lets the FX tails ring out, OTFX-T also drops new trigs, DT-T lets the sounding note finish and drops new trigs (the MUTE MODE word and mute word read back over USB each time); soloing T2 in DT-T silences the others; after a power cycle and a new RAM boot the twin restored the module from the card with MUTE MODE still on DT-T; removal (from the main page) was accepted, the MUTE MODE row left PERSONALIZE and a mute cut as stock. Removal with PERSONALIZE open was refused (loader refusal 7), as the table owner guard intends.",
             "limitations": [
               "MKI only; not run on an MKII.",
-              "The card image only; the USB package was not run on a unit.",
-              "Functional checks; no stress run, frame-interrupt load or chip timing capture.",
-              "Beside Sidechain Compressor on the card image; not run beside other modules in this version."
+              "No machine that asks ev_trig_muted (FM Synth 0.1.4) had a package, so the answer itself was checked in the emulator only.",
+              "Sidechain Compressor's package is bound to the flashed base, not the twin, so a muted SIDE-CHAIN key track was not run in this version.",
+              "Functional checks reported by the author; no stress run, frame-interrupt load or chip timing capture."
             ],
             "report": "TESTING.md"
           }
@@ -6974,87 +6993,87 @@
       "media": [
         {
           "path": "media/ot-system.png",
-          "captureType": "emulator",
-          "caption": "PROJECT > SYSTEM. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "PROJECT > SYSTEM on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "PROJECT > SYSTEM with PERSONALIZE selected: MUTE MODE is in PERSONALIZE.",
+          "alt": "The Octatrack PROJECT menu on SYSTEM: USB DISK MODE, OS UPGRADE, DATE/TIME, PERSONALIZE (selected), CARD TOOLS, STATUS.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PROJECT / SYSTEM",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-ot.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: OT. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: OT on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: OT, the stock cut.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OT.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-otfx.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: OTFX. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: OTFX on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: OTFX. The dry sound cuts; FX tails ring out.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OTFX.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-otfx-t.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: OTFX-T. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: OTFX-T on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: OTFX-T. Like OTFX, and new trigs are dropped.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OTFX-T.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-dt-t.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: DT-T. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: DT-T on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: DT-T. A sounding note plays out its amp envelope; new trigs are dropped.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to DT-T.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         }
       ]
@@ -9879,14 +9898,14 @@
       "id": "beat-slicer",
       "key": "BEAT SLICER",
       "name": "Beat Slicer",
-      "version": "0.1.66-experimental",
+      "version": "0.1.68-experimental",
       "category": "system",
       "access": {
-        "location": "AED → AMP (SLICE) → YES → CREATE BEAT GRID",
+        "location": "AED → AMP (SLICE) → YES → CREATE BEAT GRID, or FUNC+AED twice",
         "steps": [
           "Select a file-backed Flex or Static sample, or a completed recorder buffer. Stop recording into the source being edited; playback may continue.",
-          "Open AED, press AMP (SLICE), then YES and select CREATE BEAT GRID.",
-          "Encoder A selects SAMPLE or PROJECT BPM; encoder B selects 1, 2, 4, 16, 32 or 64 beats. YES opens stock CREATE/REPLACE SLICES confirmation; NO goes back. Use stock slice commands to clear markers."
+          "Open AED, press AMP (SLICE), then YES and select CREATE BEAT GRID; or press FUNC+AED twice (the first press opens stock CREATE SLICE GRID).",
+          "Encoder A selects SAMPLE or PROJECT BPM; encoder B 1, 2, 4, 16, 32 or 64 beats; encoder C SNAP OFF or ON. YES opens stock CREATE/REPLACE SLICES confirmation; NO goes back. Use stock slice commands to clear markers."
         ],
         "screenshots": [
           "media/ot-beat-grid-menu.png",
@@ -9909,7 +9928,9 @@
           "Record without planning an exact number of bars; stop between bar boundaries.",
           "Use the original sample BPM or the captured project BPM.",
           "Choose 1, 2, 4, 16, 32 or 64 beats per slice.",
-          "Create grids for Flex, Static and completed recorder buffers during playback."
+          "SNAP ON moves each boundary to the nearest zero crossing; OFF keeps exact beat positions.",
+          "Create grids for Flex, Static and completed recorder buffers during playback.",
+          "FUNC+AED opens stock CREATE SLICE GRID; press it again to switch to CREATE BEAT GRID."
         ],
         "usage": [
           "Start recording on a downbeat. Begin recording on the first beat of a bar so the audio is aligned with the musical grid.",
@@ -9944,6 +9965,16 @@
             "32 BEATS",
             "64 BEATS"
           ]
+        },
+        {
+          "name": "SNAP",
+          "default": 0,
+          "count": 2,
+          "doc": "OFF keeps exact beat positions; ON moves each boundary to the nearest zero crossing after the stock YES. Starts OFF and is not saved.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
         }
       ],
       "compatibility": {
@@ -9962,29 +9993,29 @@
           "The grid starts at the current trim start. A final fragment shorter than the stock 64-frame minimum is included in the preceding slice.",
           "Recording must be stopped for the buffer being edited; unrelated recording and pattern playback may continue.",
           "Not offered together with Recorder Loop Fix 0.1.0: that module can make recorder-buffer slice 1 miss, also with stock CREATE SLICE GRID and without Beat Slicer (sambanks/octabam#908).",
-          "Exact metadata grid only: no PCM analysis, smoothing or click-free playback claim. No project or sample-settings save is implicit.",
+          "SNAP OFF writes an exact metadata grid; SNAP ON reads the sample to find zero crossings after the stock YES. Zero-crossing alignment alone does not promise click-free playback, especially when only one stereo channel crosses. No project or sample-settings save is implicit.",
           "Not yet tested on the MKI. Slices kept through a project save and a power cycle, Static machines and recorder buffers were not run on this exact package (an earlier build was, by the author).",
-          "While the CREATE BEAT GRID popup is open its drawing takes about 6 % of the ColdFire (owner's MKII); the frame interrupt was unaffected and no machine render was skipped."
+          "0.1.66's popup drawing took about 6 % of the ColdFire on the owner's MKII; 0.1.68 caches the drawing and has not been measured yet."
         ]
       },
       "resources": {
-        "recorded": "Owner's MKII, 27 Oct 2026",
+        "recorded": "Author's MKII, 20 Nov 2026",
         "storage": {
           "label": "Storage",
-          "display": "6,380 bytes",
-          "value": 6380,
+          "display": "7,880 bytes",
+          "value": 7880,
           "unit": "bytes",
           "method": "static",
-          "conditions": "From the USB package: 4,992 bytes of ColdFire code and data and 1,388 of bss, one instance. No DSP memory, no heap; the base's sample-editor service owns the slice tables it writes.",
+          "conditions": "From the USB package: 4,392 bytes of ColdFire code and data and 3,488 of bss (the cached popup), one instance. No DSP memory, no heap; the base's sample-editor service owns the slice tables it writes and the SNAP analysis.",
           "source": "evidence/hardware.md"
         },
         "processing": {
           "label": "CPU load",
-          "display": "About 1.1 ms a frame while its popup is open",
-          "value": 1058,
+          "display": "About 0.2 ms a frame while its popup is open",
+          "value": 198,
           "unit": "us",
           "method": "hardware",
-          "conditions": "Owner's MKII, 27 Oct 2026: the module's draw took 975-1,058 us a UI tick (about 6 % of the CPU) while CREATE BEAT GRID was open; nothing else measurably changed, and the CPU meter swung between 41 % and 60 % with the popup open and closed alike. Installed and closed it costs the same as stock. The frame interrupt was unchanged.",
+          "conditions": "Author's MKII, 20 Nov 2026: the module's draw took 198 us a UI tick (about 1.2 % of the CPU) while CREATE BEAT GRID was open and its settings turned, 6.3 us closed; the CPU meter read 401-403 per mille open and 394-396 closed, the longest frame 36.5 % and 36.2 %.",
           "source": "evidence/hardware.md"
         },
         "impact": {
@@ -9992,7 +10023,7 @@
           "cpu": {
             "level": "low",
             "basis": "measured-comparison",
-            "rationale": "Only while its popup is open: its draw took 975-1,058 us a UI tick on the owner's MKII, about 6 % of the CPU, with the frame interrupt unchanged and nothing skipped. The CPU meter swung between 41 % and 60 % with the popup open and closed alike. Closed it costs the same as stock (31 us a tick). The grid itself is at most 65 points, once per change.",
+            "rationale": "Only while its popup is open: its draw took 198 us a UI tick on the author's MKII (about 1.2 % of the CPU; 0.1.66: 1,058 us), with the frame interrupt unchanged and nothing skipped. Closed it costs 6.3 us a tick. SNAP's analysis runs in the base's engine task: during playback the longest frame stayed at 38 % with nothing skipped.",
             "source": "evidence/performance.json"
           },
           "dsp": {
@@ -10004,7 +10035,7 @@
           "memory": {
             "level": "minimal",
             "basis": "measured-comparison",
-            "rationale": "6,380 bytes of ColdFire code, data and state in DRAM (from the package); the slice table it fills is the sample's own.",
+            "rationale": "7,880 bytes of ColdFire code, data and state in DRAM (from the package), including the cached popup; the slice table it fills is the sample's own.",
             "source": "evidence/hardware.md"
           }
         },
@@ -10020,9 +10051,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "On the owner's MKII over USB (27 Oct 2026), on a development twin of the beta base with the sample-editor service, as two timed trials that rolled back: the exact package 6650ef77 listed CREATE BEAT GRID, sliced a Flex sample at 2 and 4 beats from SAMPLE BPM and showed PROJECT BPM, re-sliced while the pattern played, left the slices alone on NO, passed the base self-test and was gone after the rollback. Earlier packages ran on the author's MKII with Flex, Static and recorder buffers. Save/reboot persistence, Static and recorder sources on this package, the MKI and a static cycle bound remain open.",
+        "summary": "On the author's MKII over USB (20 Nov 2026), on a development twin of base 0.7.11 with SNAP, the exact package 195d2b46: device:test passed; timed trials that rolled back replaced a Static sample's slices with SNAP OFF and ON, stopped and while the pattern played (ALIGNING GRID done within 6 s stopped, 3 s playing, nothing skipped), left them on NO, cycled FUNC+AED through stock and CREATE BEAT GRID, and an explicit Undo restored the set. The popup's draw cost 198 us a UI tick (0.1.66: 1,058 us). The author reported the boundary pops much reduced with SNAP ON. Save/reboot persistence, Flex and recorder sources on this package, the MKI and a static cycle bound remain open.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "35301de1360c5b2e940c54823010356809846632",
+        "evidenceRevision": "3055f13f2e23eb8ffbadaf738939a78fc6546798",
         "gates": [
           "modules/beat-slicer/verify.py"
         ],
@@ -10059,24 +10090,24 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.1.66-experimental",
-          "sourceSha256": "d693fde956c33af96ac8a377978b5e29e12e106b4f52512df3f7a812d9a5ee8b",
-          "imageSha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d",
+          "moduleVersion": "0.1.68-experimental",
+          "sourceSha256": "1d373e42a4ea6ea82585404aa558bbc5577528c156845bf8a0dda7df26464a12",
+          "imageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
           "cycles": [
             {
               "processor": "coldfire",
-              "worstCase": 279312,
-              "maxConfiguration": 279312,
+              "worstCase": 52298,
+              "maxConfiguration": 52298,
               "maxInstances": 1,
               "budget": 4330000,
               "unit": "cycles/event",
               "method": "hardware",
               "conditions": {
-                "parameterExtremes": "BEATS 1, 2, 4, 16, 32 and 64 and both BPM sources turned through while the popup was open; grids of 4, 5, 8 and 16 slices on a 9.5 s sample.",
-                "parameterModulation": "Not applicable: the module has no audio parameters; the popup's two settings were turned 16 times in the measured window.",
-                "modeSwitching": "CREATE and REPLACE, stopped and while the pattern played; NO closing without changes; the timed rollback while installed.",
-                "maxLoad": "One instance. The cost is the popup's draw on the UI task, once per composed frame while CREATE BEAT GRID is open; closed it draws nothing. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz.",
-                "inputConditions": "Owner's MKII, development twin b610b11c of the beta base: modwerk_cost[22] (runtime module draw) over 9.9 s, 640 ms in 605 UI ticks, 1,058 us a tick on average (279,312 cycles at 264 MHz). An average, not a per-frame maximum, and no static bound."
+                "parameterExtremes": "BEATS and BPM turned 16 times while the popup was open; SNAP OFF and ON grids of 4 and 16 slices on a Static sample.",
+                "parameterModulation": "Not applicable: the module has no audio parameters; the popup's settings were turned 16 times in the measured window.",
+                "modeSwitching": "CREATE BEAT GRID through FUNC+AED and the SLICE menu, REPLACE with SNAP OFF and ON, stopped and while the pattern played; NO at the question; the timed rollback with the popup open; an explicit Undo.",
+                "maxLoad": "One instance. The cost is the popup's draw on the UI task, once per composed frame while CREATE BEAT GRID is open; closed it costs 6.3 us a tick. SNAP analysis runs in the base's engine task. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz.",
+                "inputConditions": "Author's MKII, development twin 54cab594 of base 0.7.11 with SNAP: modwerk_cost[22] (runtime module draw) over 695 UI ticks, 198.1 us a tick on average (52,298 cycles at 264 MHz). An average, not a per-frame maximum, and no static bound."
               },
               "report": "evidence/performance.json"
             }
@@ -10086,41 +10117,42 @@
               {
                 "name": "ColdFire code and data (device_module, device_font and grid_preview, DRAM)",
                 "space": "sdram",
-                "words": 4992,
+                "words": 4392,
                 "wordBits": 8,
-                "bytes": 4992,
+                "bytes": 4392,
                 "scope": "shared"
               },
               {
                 "name": "State (bss): copied sample view, grid plan, proposal and popup state",
                 "space": "sdram",
-                "words": 1388,
+                "words": 3488,
                 "wordBits": 8,
-                "bytes": 1388,
+                "bytes": 3488,
                 "scope": "shared"
               }
             ],
             "perInstanceBytes": 0,
-            "sharedBytes": 6380,
+            "sharedBytes": 7880,
             "maxInstances": 1,
-            "totalBytes": 6380,
-            "conditions": "From the USB package header (4,992 bytes of code and data, 1,388 of bss, 141 relocations). No stock code is written; the base's sample-editor service owns the slice table writes. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
+            "totalBytes": 7880,
+            "conditions": "From the USB package header (4,392 bytes of code and data, 3,488 of bss, 179 relocations). The popup is cached in bss. No stock code is written; the base's sample-editor service owns the slice table writes and SNAP's analysis. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
             "report": "evidence/hardware.md"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-10-27",
-            "tester": "repeat98",
-            "sourceRevision": "35301de1360c5b2e940c54823010356809846632",
-            "imageSha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d",
-            "summary": "The owner's MKII, OS 1.40C, driven over USB by Claude Code, on a RAM-booted development twin (b610b11c) of the beta base with the sample-editor service at event index 36. Two timed trials of the exact package, each rolled back by itself. Trial 1: CREATE BEAT GRID listed above CREATE SLICE GRID; on a Flex sample (101.04 BPM) BEATS 2 made 8 slices after the stock CREATE SLICES? question; while the pattern played BEATS 4 replaced them with 4 after REPLACE SLICES?; PROJECT BPM showed 119.00 and 5 slices; NO left the slices as they were; the base self-test passed with the module intact; after the rollback the menu was stock and the inventory empty. Trials 2 and 4: the popup's draw cost 975-1,058 us a UI tick while open (about 6 % of the CPU), with or without encoder turns; the frame interrupt was unchanged and nothing skipped; the CPU meter swung between 41 % and 60 % with the popup open and closed alike. On the exact beta base 903f8ed6: a trial, self-test and rollback.",
+            "testedOn": "2026-11-20",
+            "tester": "twwwy",
+            "sourceRevision": "3055f13f2e23eb8ffbadaf738939a78fc6546798",
+            "imageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+            "summary": "The author's MKII, OS 1.40C, driven over USB by Claude Code on a RAM-booted development twin (54cab594) of Octatrack base 0.7.11 with SNAP. device:test passed (self-test, 12 Part switches, playing pass). Timed trials of the exact package, each rolled back: CREATE BEAT GRID above CREATE SLICE GRID; on a Static sample with slices SNAP OFF replaced at once and SNAP ON showed ALIGNING GRID and finished within 6 s stopped and 3 s while the pattern played, with the frame interrupt at most 38 % and nothing skipped; NO at REPLACE SLICES? left the slices; FUNC+AED cycled stock, CREATE BEAT GRID, stock, and stayed stock with the module removed; the trial ended cleanly with the popup open; an MCP trial ended by an explicit Undo restored the active identity with no modules. The popup's draw cost 198 us a UI tick while open (0.1.66: 1,058 us). The author, in a 10-minute trial, reported the boundary pops much reduced with SNAP ON and smooth playback during analysis.",
             "limitations": [
-              "One unit and one Flex sample; Static machines, recorder buffers and slicing during recording were not run on this package.",
-              "A development twin of the beta base, not the exact beta base 903f8ed6.",
-              "No project save, reload or power cycle with the slices kept; no card build, MKI or companion modules.",
-              "The draw cost is an average over 605 frames, not a per-frame maximum; no static bound and no MIDI flood."
+              "One unit and one Static sample; Flex samples and recorder buffers were not run on this package.",
+              "A development twin of base 0.7.11 with SNAP, not the committed base 57c92565.",
+              "No Keep, project save, reload or power cycle with the slices kept; no MKI or companion modules.",
+              "The draw cost is an average over 695 ticks, not a per-frame maximum; no static bound and no MIDI flood.",
+              "The base's CPU budget refusal counter rose at slice replaces and FUNC+AED, also without the module; not explained."
             ],
             "report": "evidence/hardware.md"
           }
@@ -10134,8 +10166,8 @@
       "media": [
         {
           "path": "media/ot-beat-grid-menu.png",
-          "captureType": "emulator",
-          "caption": "Select the sample, open AED and press AMP for SLICE, then YES. Choose CREATE BEAT GRID above CREATE SLICE GRID to divide the current trim range by musical time.",
+          "captureType": "hardware",
+          "caption": "Select the sample, open AED and press AMP for SLICE, then YES. CREATE BEAT GRID sits directly above stock CREATE SLICE GRID. FUNC+AED also reaches it: the first press opens stock CREATE SLICE GRID, the second CREATE BEAT GRID.",
           "alt": "SLICE menu with CREATE BEAT GRID immediately above CREATE SLICE GRID.",
           "credit": "Modwerk contributors; Elektron Octatrack UI",
           "license": "LicenseRef-OT-UI-Documentation",
@@ -10144,16 +10176,16 @@
             "page": "AED SLICE action menu",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.66-experimental",
-            "imageSha256": "a0753aece880813aaacd0708a0f754bc78ff81a81e3cb39c91a13f65dd4b638f",
-            "setup": "Headless adapted ot_emu with DSP/frame enabled, MKII panel, disposable BEATLAB project and Flex PULSE sample. Actual pixels after normal boot and USB module-set load; stopped transport. UI capture only, without functional-suite or Undo qualification."
+            "moduleVersion": "0.1.68-experimental",
+            "imageSha256": "54cab5949013f45d96f23102f3b838932cb663cf0b5332007d608422928aedcb",
+            "setup": "The author's MKII, OS 1.40C, RAM-booted development twin 54cab594 of Octatrack base 0.7.11 with SNAP, package 195d2b46 installed as a timed trial; T1 Static sample 05_ELoop 3 with slices, bank H, Part 1, transport stopped. The LCD's own framebuffer read over USB (png:), 2x, unedited, 20 November 2026."
           }
         },
         {
           "path": "media/ot-create-beat-grid.png",
-          "captureType": "emulator",
-          "caption": "Use encoder A to choose SAMPLE or PROJECT BPM and encoder B to choose beats per slice. Here SAMPLE BPM is 120.25 and spacing is 2 beats; YES opens the native create confirmation, while NO closes without changing markers.",
-          "alt": "CREATE BEAT GRID popup showing BPM SAMPLE, BEATS 2, tempo 120.25, 2 SLICE and CREATE.",
+          "captureType": "hardware",
+          "caption": "Encoder A chooses SAMPLE or PROJECT BPM, B the beats per slice and C SNAP OFF or ON. Here SAMPLE BPM is 115.00, 4 beats, SNAP ON: 4 slices replacing the existing ones. YES opens the stock REPLACE SLICES? question; with SNAP ON the base then aligns the grid to zero crossings. NO closes without changing markers.",
+          "alt": "CREATE BEAT GRID popup showing BPM SAMPLE, BEATS 4, SNAP ON, tempo 115.00, 4 SLICE and REPLACE.",
           "credit": "Modwerk contributors; Elektron Octatrack UI",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -10161,9 +10193,9 @@
             "page": "CREATE BEAT GRID",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.66-experimental",
-            "imageSha256": "a0753aece880813aaacd0708a0f754bc78ff81a81e3cb39c91a13f65dd4b638f",
-            "setup": "Headless adapted ot_emu with DSP/frame enabled, MKII panel, disposable BEATLAB project and Flex PULSE sample. Actual pixels after normal boot and USB module-set load; stopped transport. UI capture only, without functional-suite or Undo qualification."
+            "moduleVersion": "0.1.68-experimental",
+            "imageSha256": "54cab5949013f45d96f23102f3b838932cb663cf0b5332007d608422928aedcb",
+            "setup": "The author's MKII, OS 1.40C, RAM-booted development twin 54cab594 of Octatrack base 0.7.11 with SNAP, package 195d2b46 installed as a timed trial; T1 Static sample 05_ELoop 3 with slices, bank H, Part 1, transport stopped. The LCD's own framebuffer read over USB (png:), 2x, unedited, 20 November 2026."
           }
         }
       ]
@@ -14270,7 +14302,7 @@
       "id": "grain",
       "key": "GRAIN",
       "name": "Grain",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
@@ -14319,8 +14351,8 @@
         {
           "name": "PTCH",
           "default": 64,
-          "count": 89,
-          "doc": "The pitch of the grains, -24 to +24 semitones (stored as 40 to 88, 64 is 0). Their length does not change. SRC knob A.",
+          "count": 125,
+          "doc": "The pitch of the grains, -12 to +12 semitones in Flex's units (stored as 4 to 124, 64 is 0, 5 a semitone), so CHROMATIC keys and MIDI notes play in tune. Their length does not change. SRC knob A.",
           "labels": null
         },
         {

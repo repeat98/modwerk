@@ -358,6 +358,27 @@ def manager(text):
     # The evacuation is a transaction of its own: advance() hands its phase to it, and nothing else starts meanwhile.
     text = _change(text, '    if(!phase) return;\n    if(phase==1) {\n',
                    '    if(!phase) return;\n    if(phase==10) { engine_evacuate(); return; }\n    if(phase==1) {\n', 'manager evacuation')
+    text = _change(text, '    unsigned changed=!observed_valid;\n',
+                   '    int mw_project_fx_wait(const uint8_t ids[16]);\n'
+                   '    int project=mw_project_fx_wait(ids);\n'
+                   '    if(project<0) return;\n'
+                   '    unsigned changed=project || !observed_valid;\n', 'saved project effect priority')
+    # The retained stock effect uses the same upload, bind and retirement as an ordinary move.
+    text = _change(text, 'static int pack_room(void) {',
+                   'static void begin_move(uint32_t token) { auto_serial=token; begin(allocator.active,token,1); phase=2; }\n'
+                   'static int project_room(void) {\n'
+                   '    int mw_project_fx_move(struct dl_allocator *,const uint8_t *,uint32_t);\n'
+                   '    if(automatic!=1 || queued_token || journal_generation || !modwerk_stock_hook_export_idle() || modwerk_saved_set_busy()) return 0;\n'
+                   '    uint32_t token=auto_serial+1u; if(!token) token=0x80000000u;\n'
+                   '    if(!mw_project_fx_move(&allocator,desired,token)) return 0;\n'
+                   '    bytes(queued_ids,desired,16); queued_token=current; queued_auto=automatic;\n'
+                   '    trimmed_for=current; trim_stage=4u; /* one proven move per saved request */\n'
+                   '    begin_move(token); return 1;\n'
+                   '}\nstatic int pack_room(void) {', 'saved project move')
+    text = _change(text, '(stage<3u && pack_room()))', '(stage<3u && pack_room()) || (stage<4u && project_room()))',
+                   'saved project move after trim and pack')
+    text = _change(text, 'auto_serial=token; begin(allocator.active,token,1); phase=2; /* placed: upload, bind, commit, free */',
+                   'begin_move(token); /* placed: upload, bind, commit, free */', 'shared move transaction')
     body = MANAGER.replace('static uint16_t engine_reserved[2];\n', '', 1)
     return _change(text, 'unsigned dl_arena(unsigned c) { return c<2 ? allocator.capacity[c] : 0; }\n',
                    'unsigned dl_arena(unsigned c) { return c<2 ? allocator.capacity[c] : 0; }\n' + body, 'manager arena')

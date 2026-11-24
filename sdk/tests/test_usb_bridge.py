@@ -2,9 +2,15 @@
 """The hardware bridge's unplug/re-enumeration seams, with fake USB only."""
 import errno
 import importlib.util
+import os
 from pathlib import Path
+import shutil
+import socket
 import struct
 import sys
+import tempfile
+import threading
+import time
 from types import ModuleType, SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -111,6 +117,50 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(unit, (self.device, 1)); self.assertEqual(reply, 'in 0 stall')
         self.device.reset.assert_not_called(); self.device.set_configuration.assert_not_called()
         self.util.dispose_resources.assert_not_called()
+
+    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'Unix sockets')
+    def test_a_second_client_is_refused_by_name_while_the_first_is_served(self):
+        # The developer MCP keeps its connection open; a device command beside it used to wait unread in the
+        # listen queue until its reply timeout ("No reply to setup 8006000100001200").
+        folder = tempfile.mkdtemp(); self.addCleanup(shutil.rmtree, folder, True)
+        path = os.path.join(folder, 'bridge.sock')
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM); server.bind(path); server.listen(8)
+        self.addCleanup(server.close)
+        stop = threading.Event()
+        loop = threading.Thread(target=self.bridge.serve_clients, args=(server, {'unit': (self.device, 1)}, stop), daemon=True)
+        loop.start()
+        clients = []
+
+        def client():
+            conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM); conn.settimeout(5); conn.connect(path)
+            stream = conn.makefile('rw', newline='\n'); clients.append((stream, conn)); return stream
+
+        def ask(stream, line):
+            stream.write(line + '\n'); stream.flush(); return stream.readline().strip()
+
+        def hang_up(stream):
+            for pair in [pair for pair in clients if pair[0] is stream]:
+                pair[0].close(); pair[1].close(); clients.remove(pair)
+        self.addCleanup(lambda: [hang_up(stream) for stream, _ in list(clients)])
+
+        first = client()
+        self.assertEqual(ask(first, self.setup()), 'ok')
+        second = client()
+        self.assertEqual(ask(second, self.setup()), self.bridge.BUSY)
+        self.assertEqual(ask(second, 'in 0 32'), self.bridge.BUSY)  # every line, not only the first
+        self.device.ctrl_transfer.return_value = b'\x01'
+        self.assertEqual(ask(first, 'in 0 32'), 'in 0 01')  # the served client goes on undisturbed
+        self.device.ctrl_transfer.assert_called_once()  # nothing of the refused client reached the unit
+        hang_up(first)
+        for _ in range(100):  # the next client is served once the first has gone
+            third = client()
+            reply = ask(third, self.setup())
+            if reply == 'ok':
+                break
+            hang_up(third); time.sleep(0.02)
+        self.assertEqual(reply, 'ok')
+        stop.set(); client()  # wakes accept, which then ends the loop
+        loop.join(5); self.assertFalse(loop.is_alive())
 
 
 if __name__ == '__main__':

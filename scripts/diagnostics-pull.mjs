@@ -47,8 +47,11 @@ export async function pullAll(page, from) {
 export const when = iso => new Date(iso).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
 const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username, data.event, data.phase,
   data.failure && 'failure=' + data.failure, data.client && [data.client.browser, data.client.major].filter(Boolean).join(' ') + '/' + data.client.os,
+  cardSaveFailed(data) && 'card=' + SAVED[data.reading.saved],
   data.error && 'error=' + data.error, data.result && 'result=' + data.result, data.refusal !== undefined && 'refusal=' + data.refusal,
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reconnect && 'reconnect=' + data.reconnect, data.reason && 'reason=' + data.reason,
+  data.upload && 'command=' + data.upload.command, data.upload?.chunkOffset !== undefined && 'chunkOffset=' + data.upload.chunkOffset,
+  data.upload?.remainingBytes !== undefined && 'remainingBytes=' + data.upload.remainingBytes,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
@@ -69,7 +72,7 @@ const SET_ID_CAPACITY = 14
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
   (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a === SET_ID_CAPACITY ? 'at least ' : ''}${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
     (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +
-  (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? ` ${r.a & 0xffffff} machines refused for CPU, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
+  (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? ` ${r.a & 0xffffff} machines refused for CPU, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'brake' ? (r.a >>> 23 & 1 ? ` module machines silenced on a pattern predicted past the frame ceiling (${r.a & 0x7fffff} since boot)` : ` module machines silenced (${r.a & 0xffffff} since boot), the frame fell behind`) : r.kind === 'late' ? ` late frame entries held, each a skipped DSP frame (${r.a & 0xffffff} since boot)` + (r.a >>> 24 ? `, ${r.a >>> 24} later than the wait can hold` : '') : r.kind === 'usb' ? ` the host never enumerated it: offered again (OTGSC 0x${(r.a >>> 16).toString(16)}, PORTSC1 0x${(r.a & 0xffff).toString(16)})` : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
 
@@ -129,11 +132,13 @@ export function unitLines(incidents, names = namesFor) {
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (PROJ or FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
   'left out after a failed start', 'held after a failed start']
+const cardSaveFailed = data => data.event === 'health' && (data.reading?.saved === 8 || data.reading?.saved === 9)
 
 /** Each member's records in order: the bases, set reloads, the last finished self-test and the event counts. */
 export function members(events) {
   const found = new Map()
-  for (const { username, createdAt, data } of [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+  for (const entry of [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+    const { username, createdAt, data } = entry
     const member = found.get(username) ?? { last: '', kinds: {}, bases: [], reloads: [], selftest: undefined }
     member.last = createdAt
     member.kinds[data.event] = (member.kinds[data.event] ?? 0) + 1
@@ -147,6 +152,15 @@ export function members(events) {
       const missing = (saved === 6 || saved === 10) && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
       if ((saved >= 1 && saved <= 6 || saved === 10 || saved === 11) && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
         member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
+    }
+    // A base with RESTORE (request 43) says itself which modules that start left out and why: it replaces the guess.
+    if (data.restore?.length && data.reading && member.reloads.at(-1)?.saved === data.reading.saved) member.reloads.at(-1).restore = data.restore
+    // A write can fail after Keep. Keep its first status reading and let a new set or a recovery start a new occurrence.
+    if (data.event === 'health' && data.reading) {
+      const last = member.lastCardReading
+      if (cardSaveFailed(data) && (last?.reading.saved !== data.reading.saved || last.base !== data.base || last.active !== data.active))
+        (member.saveFailures ??= []).push(entry)
+      member.lastCardReading = data
     }
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
@@ -211,7 +225,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
-  const problems = events.filter(entry => !selection(entry) && (PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
+  const saveFailures = new Set([...found.values()].flatMap(member => member.saveFailures ?? []))
+  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
@@ -224,7 +239,9 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       '', `@${name}  last ${when(member.last)}` + (member.bases.length ? '  base ' + member.bases.map(baseName).join(' → ') : ''),
       ...(reports.get(name) ?? []).map(issue => `  report #${issue.number} ${issue.state.toLowerCase()}: ${issue.title}`),
       ...restarts(member),
-      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
+      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.restore?.length ? ` (left out ${r.restore.map(m => `${m.id}: ${REFUSALS[m.refusal] ?? 'refusal ' + m.refusal}`).join(', ')})`
+        : r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
+      ...member.saveFailures?.length ? ['  card save failures: ' + member.saveFailures.map(({ createdAt, data }) => `${when(createdAt)} ${SAVED[data.reading.saved]}`).join(', ')] : [],
       ...member.selftest ? [`  last self-test ${member.selftest.state === 2 ? 'passed' : 'failed (bits ' + member.selftest.failed + ')'}` + (member.selftest.ran ? '' : ', no DSP module ran')] : [],
       ...member.peak ? [`  highest self-test peaks ${when(member.peak.at)}: CPU ${percent(member.peak.cpu)}, DSP T1-4 ${percent(member.peak.tracks1to4)}, T5-8 ${percent(member.peak.tracks5to8)}`] : [],
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],

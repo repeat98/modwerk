@@ -45,6 +45,22 @@ function controller(refusals: number, progress = 0) {
   return { state, transport: { exchange } }
 }
 
+it.each([['begin', undefined], ['chunk', 0], ['chunk', 63], ['verify', undefined]] as const)('identifies a lost %s at offset %s from its request', async (command, chunkOffset) => {
+  const unit = controller(0), data = new Uint8Array(120)
+  const client = await UploadSession.connect({ async exchange(frame, _signal, onSubmit) {
+    const view = new DataView(frame.buffer, frame.byteOffset)
+    if (view.getUint16(6) === UploadCommand[command] && (command !== 'chunk' || view.getUint32(48) === chunkOffset)) {
+      onSubmit?.(65535)
+      onSubmit?.(0) // the final retry wrapped
+      throw new Error('lost acknowledgement')
+    }
+    return unit.transport.exchange(frame)
+  } }, base)
+  await expect(client.stage({ base, data, sha256: sha(data) }, { chunk: 63 })).rejects.toMatchObject({
+    name: 'UploadUnconfirmedError', upload: { command, chunkOffset, sequence: 0 },
+  })
+})
+
 it('stages a package again after the base dropped it at a refused publication', async () => {
   const unit = controller(1), data = new Uint8Array(100).fill(7), pkg = { base, data, sha256: sha(data) }
   const client = await UploadSession.connect(unit.transport, base)

@@ -9,7 +9,7 @@
     },
     {
       "id": "tapeecho",
-      "version": "0.1.6-experimental",
+      "version": "0.1.9-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
     },
     {
@@ -64,7 +64,7 @@
     },
     {
       "id": "usb-audio-out-tracks-main-cue",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -74,7 +74,7 @@
     },
     {
       "id": "synth",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "addedAt": "2026-10-06T08:00:28Z"
     },
     {
@@ -104,7 +104,7 @@
     },
     {
       "id": "mute-modes",
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
@@ -154,7 +154,7 @@
     },
     {
       "id": "beat-slicer",
-      "version": "0.1.66-experimental",
+      "version": "0.1.68-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
     },
     {
@@ -224,7 +224,7 @@
     },
     {
       "id": "grain",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "addedAt": "2026-11-20T12:00:00Z"
     }
   ]
