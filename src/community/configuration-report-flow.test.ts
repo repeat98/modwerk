@@ -135,6 +135,24 @@ describe('a report about a whole configuration', () => {
     expect(JSON.parse(String(f.row().context_json)).modules.map((item: { id: string }) => item.id)).toEqual(['repitch', 'miniverb'])
   })
 
+  it('carries the USB events the reporter attached to the GitHub issue, and refuses anything else in their place', async () => {
+    const events = [{ at: '2026-11-24T12:00:00.000Z', event: 'sync_started', phase: 'sending', base: 'b'.repeat(64), packages: [{ sha256: 'd'.repeat(64), bytes: 2048 }] },
+      { at: '2026-11-24T12:00:01.000Z', event: 'sync_failed', phase: 'sending', base: 'b'.repeat(64), error: 'device', step: 'stage', result: 'rejected', refusal: 7 }]
+    const usbEvents = { schema: 1, unit: { base: 'b'.repeat(64), version: '0.8.1', layout: 'off', model: 'OCTATRACK 1.40C' }, client: { browser: 'chrome', major: 131, os: 'windows' }, events }
+    const f = await fixture()
+    expect((await f.post(report(undefined, { usbEvents }))).status).toBe(201)
+    expect(JSON.parse(String(f.row().context_json)).usb).toEqual(usbEvents)
+    const markdown = String(f.requests.find(item => item.method === 'POST')!.body!.body)
+    expect(markdown).toContain('### USB events')
+    expect(markdown).toContain('Base: 0.8.1 (USB Audio off) · bbbbbbbb')
+    expect(markdown).toContain(JSON.stringify(events[1]))
+    const other = await fixture()
+    const refused = await other.post(report(undefined, { usbEvents: { ...usbEvents, events: [{ ...events[1], note: 'free text' }] } }))
+    expect(refused.status).toBe(400)
+    expect(await refused.json()).toMatchObject({ error: expect.stringMatching(/USB events are unreadable/) })
+    expect(other.db.prepare('SELECT COUNT(*) AS count FROM issues').get()).toEqual({ count: 0 })
+  })
+
   it('reports a Digitakt configuration against the modules of that machine', async () => {
     const f = await fixture(), device = DEVICES_BY_ID.digitakt
     const ids = ['digitakt-digihealth', 'digitakt-digieq'], natives = ids.map(id => communityModule(id)!)
