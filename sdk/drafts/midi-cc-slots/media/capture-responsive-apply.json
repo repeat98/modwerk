@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "captured": "2026-10-25",
+  "moduleId": "midi-cc-slots",
+  "moduleVersion": "0.0.10-experimental",
+  "sourceRevision": "d0d55e296bed53911b9e0117a2cb74870865606e",
+  "packageSha256": "d738fce658e0c44eea5d959d5771654d302cae40d17419eaed7388b544f5c583",
+  "runtimeFixtureSha256": "d939a8b8829d3b421ae0d54cbfb1948ceb38481542f7a5c6e03796fcb9a69df6",
+  "runtimeModuleSha256": "a15dc4e5aad6777b03b8ecb844000b3415dc72169cb6ec75827ffc8ad7c3fca9",
+  "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "verificationReportSha256": "4f06455371e3fd75f6bf105f0de0f7e5edadc25c9933375025a1fe2375574ec4",
+  "captureScriptSha256": "9bd1f607a032dad74098e6c6f149b4e812e55fd51feb4be72794e5352466ba95",
+  "rendererSha256": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
+  "images": {
+    "14-apply-setup.png": {
+      "sha256": "038ca0a8d98368ac7010f5e63064f4382c99ac4ebb760e5fca0e42a058ed1e0d",
+      "planeSha256": "b20fd442f76d5fedb3f9682dce2399d8b2ca7251e821f2c596dfe9f26160a466"
+    },
+    "15-apply-progress.png": {
+      "sha256": "eacbe0fab37a6132516ed9e05bdf7fbef0bc7b32a46b66826693ee5ce6cae370",
+      "planeSha256": "c3d1a4eda2135a80527e8f3eb6e2718d94719a754b8deae0ca24b8478d36f5ec"
+    }
+  },
+  "rendering": "Native 128\u00d764 LCD and popup planes, unchanged pixels, integer scale 6, grayscale 24/240.",
+  "limitations": [
+    "Guarded private publication, UI tick and separately recorded first-sector IRQ fixture.",
+    "User reports 0.0.9 applied channel 6 correctly after more than ten seconds. Physical timing and page responsiveness of 0.0.10 remain unmeasured."
+  ]
+}
