@@ -1481,6 +1481,7 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
+extern volatile uint8_t mw_cpu_track_refusals[8]; /* machine_registry.c: each track's refusals, for diag.c's CPU record */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
  * less `each`, in the wake field), as the site measured it
@@ -1583,7 +1584,7 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     uint32_t stock = base + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
     uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
-    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u), ++mw_cpu_track_refusals[slot & 7u];
     uint32_t reserve = stock_reserve(0), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
     /* Why, in the box: modules installed and used nowhere, when their cost at rest is more than the pick's and what
      * leaves no room; the Part's own sound; else the Part's modules, one of which to change. */

@@ -116,6 +116,7 @@ uint8_t modwerk_test_live_fx[16];
 volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille = 30u; /* machine_registry.c's */
+volatile uint8_t mw_cpu_track_refusals[8];
 /* machine_registry.c's effect modules that rest: effect 27's module rests while effect_rests; a wake records its id. */
 static int effect_rests; static unsigned effect_wakes, effect_woken;
 int modwerk_machine_effect_resting(unsigned id) { return effect_rests && id == 27u; }
@@ -535,12 +536,13 @@ int main(void)
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
     CHECK(mw_frame_line == 1100u && mw_stock_reserve == RESERVE_ADAPTIVE && mw_track_stock == 70u);
     mw_frame_line = 500u, mw_stock_reserve = 0; /* the figures below in round numbers, the reserve tried on its own */
-    { uint32_t before = mw_cpu_refusals;
+    { uint32_t before = mw_cpu_refusals; uint8_t t6 = mw_cpu_track_refusals[5];
       transport_stopped = 1, frame_newest = 400u;
       CHECK(modwerk_status_frame_load() == 400u);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 99u, 0, 0) && open == CLOSED);   /* 49.9 %: passes */
       CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 120u, 0, 0) && open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 5);
       CHECK(refused_booked == 400u && refused[4] == 120u && refused_allowed == 500u && refused_busy && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 5);
+      CHECK(mw_cpu_track_refusals[5] == (uint8_t)(t6 + 1u)); /* T6's own counter moves, so diag.c's CPU record names T6 */
       CHECK(!strcmp(refused_name, "AMIGA") && strstr(shows(), "AMIGA NEEDS +24%|CPU|80%|PART IS BUSY|")); /* no module: the Part's own load */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(open == CLOSED);

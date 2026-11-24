@@ -230,7 +230,8 @@ static void diag_tick(void)
     uint32_t refusals = mw_cpu_refusals; /* the CPU budget refused a machine: the tracks and the count, as the skips */
     if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP)) {
         /* Which tracks since the last CPU record, so the record's `machine` says whose price it was: their counters
-         * moved. Only machine_registry.c writes them; the tick that charges may be another task's. */
+         * moved. Written only by machine_registry.c's cpu_refuse and status.c's frame admission, never here, so the tick
+         * that charges may be another task's. */
         static uint8_t seen[8];
         uint32_t recent = 0;
         for (unsigned t = 0; t < 8u; ++t) if (mw_cpu_track_refusals[t] != seen[t]) seen[t] = mw_cpu_track_refusals[t], recent |= 1u << t;
