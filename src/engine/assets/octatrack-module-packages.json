@@ -711,6 +711,25 @@
       "sha256": "f311dd620daf296dc6caff7f442533fe6e7262e2a1834bbfbc237fc4d3ff1631"
     },
     {
+      "id": "resonator",
+      "slots": "both",
+      "cycles": 256,
+      "cyclesKind": "executed",
+      "state": 89,
+      "buffer": 0,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/resonator/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Resonator",
+      "module": "5bdf8162",
+      "bytes": 8344,
+      "sha256": "16600fb3681f45e8c2708f4f69da1befe24df696b5e0c4f868bd0eb891eb0fb5"
+    },
+    {
       "id": "butter-fingers",
       "octabam": true,
       "unitName": "Butter Fingers",

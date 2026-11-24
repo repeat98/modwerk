@@ -9,6 +9,7 @@ import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './res
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
 import directDspEvidence from '../../docs/verification/2026-11-21-octatrack-direct-dsp-code.json'
+import poolEvidence from '../../docs/verification/2026-11-21-octatrack-module-pool-allocation.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import retained from '../../sdk/module-resource-estimates.json'
 import waivers from '../../sdk/approvals/module-release-waivers.json'
@@ -191,9 +192,11 @@ describe('module resource gauges', () => {
     expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[2].status).toBe('Estimated')
   })
 
-  it('includes Kits’ observed sample lease with the measured module pool', () => {
+  it('includes Kits’ observed sample lease with the measured module pool, on the version it was read on', () => {
     const kits = MODULE_DOCUMENTS.find(module => module.id === 'kits')!
     const memory = moduleResourceIndicators(kits)[2]
+    // The 21 November reading is Kits 0.1.0's package: a later version shows no measured figure until its own pool is read.
+    if (poolEvidence.measurements.find(record => record.module === 'kits')!.version !== kits.version) return expect(memory.status).not.toMatch(/^Measured/)
     expect(memory).toMatchObject({ value: '2,085.232 kB', status: 'Measured · two pools', score: null })
     expect(memory.description).toContain('51.568 kB in the module pool and 2,033.664 kB in leased sample RAM')
   })
