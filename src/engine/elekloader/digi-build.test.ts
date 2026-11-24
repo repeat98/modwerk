@@ -190,6 +190,17 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Improved FLTR beside Filter Hz and Improved AMP from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz', 'improved-amp', 'improved-fltr'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [
+        { id: 'filter-hz', file: 'filter-hz-1.3.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.3.1' },
+        { id: 'improved-amp', file: 'improved-amp-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
+        { id: 'improved-fltr', file: 'improved-fltr-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
   it('plans QPERF beside Live Rec Retrig Fix and Temp Save from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },

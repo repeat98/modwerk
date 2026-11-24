@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="218" viewBox="0 0 400 218" role="img" aria-labelledby="title description">
+  <title id="title">The firmware stack</title>
+  <desc id="description">Three plates, from the top down: optional modules, the highlighted base, and the original operating system.</desc>
+  <defs>
+    <linearGradient id="graphite" x2=".22" y2="1">
+      <stop stop-color="#373940"/>
+      <stop offset="1" stop-color="#50525d"/>
+    </linearGradient>
+    <linearGradient id="lavender" x2=".12" y2="1">
+      <stop stop-color="#7279c8"/>
+      <stop offset=".75" stop-color="#9b9ff0"/>
+      <stop offset="1" stop-color="#adb1ff"/>
+    </linearGradient>
+    <!-- All three layers share one gently bevelled plate. Transforms set their size and elevation. -->
+    <g id="plate">
+      <path d="M6 55H394V65Q394 74 383 74H17Q6 74 6 65Z" fill="var(--edge, #32333c)"/>
+      <path d="M51 3H349Q356 3 360 9L392 51Q399 63 386 64H14Q1 63 8 51L40 9Q44 3 51 3Z"
+            fill="var(--face, url(#graphite))" stroke="var(--line, #666874)" stroke-width="1.2"/>
+    </g>
+    <rect id="module" width="10" height="10" rx="1.6"/>
+  </defs>
+  <!-- Paint from the foundation upwards so the front of each plate overlaps the next. -->
+  <g transform="translate(0 140)">
+    <use href="#plate"/>
+    <g transform="translate(190 18)" fill="none" stroke="#e4e5ed" stroke-width="2.3" stroke-linejoin="round">
+      <path d="M1 1H13L21 9V27H1ZM13 1V9H21M5 15H16M5 20H16"/>
+    </g>
+  </g>
+  <g transform="translate(10 71) scale(.95)" style="--face:url(#lavender);--edge:#6268ad;--line:#b5baff">
+    <use href="#plate"/>
+    <g transform="translate(200 32)" fill="none" stroke="#292c4a" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M0 -12L15 -5L0 2L-15 -5ZM-15 1L0 8L15 1M-15 7L0 14L15 7"/>
+    </g>
+  </g>
+  <g transform="translate(21 6) scale(.895)">
+    <use href="#plate"/>
+    <g transform="translate(188 20)" fill="none" stroke="#e4e5ed" stroke-width="2.3">
+      <use href="#module"/><use href="#module" x="14"/>
+      <use href="#module" y="14"/><use href="#module" x="14" y="14"/>
+    </g>
+  </g>
+</svg>

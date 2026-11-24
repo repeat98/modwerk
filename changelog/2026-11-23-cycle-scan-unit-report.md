@@ -1,0 +1,1 @@
+The cycle scan now keeps each module's run at its defaults and compares it with the unit's in-use DSP reading (`node scripts/cycle-scan.mjs unit`), a report that fails nothing: six effects agree within 10 %, the two key-bus effects read far above the model.

@@ -112,7 +112,7 @@ function setupGuidance(repository = REPOSITORY, login = '') {
     '  1. A free GitHub account (github.com/signup). Ask for my login and use it as the module author.',
     '  2. Fork ' + repository + ' with the Fork button, install git if I have none, then clone my fork and install its packages (Node 24 through nvm; nvm-windows on Windows):',
     ...cloneCommands(repository, login).split('\n').map(line => '     ' + line),
-    '  3. A coding agent that works on files in that folder: Claude Code (Claude subscription) or Codex (ChatGPT plan), as a desktop app, IDE extension or terminal tool. Octatrack native builds also need Python 3.10+, Docker and my own stock OS 1.40C, which stays on my computer and is never sent to you. Testing on my own unit, connected by USB, is recommended; an emulator works without one.',
+    '  3. A coding agent that works on files in that folder: Claude Code (Claude subscription) or Codex (ChatGPT plan), as a desktop app, IDE extension or terminal tool. Octatrack native builds also need Python 3.12+, Docker and my own stock OS 1.40C, which stays on my computer and is never sent to you. Testing on my own unit, connected by USB, is recommended; an emulator works without one.',
     '  4. Open the cloned folder in that agent, then tell me to copy this whole prompt from my first message and paste it there. Then stop: the agent takes over.',
   ]
 }

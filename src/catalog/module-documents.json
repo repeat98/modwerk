@@ -3912,7 +3912,7 @@
       "id": "usb-audio-out-tracks-main-cue",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "name": "USB Audio",
-      "version": "0.3.0-experimental",
+      "version": "0.4.0-experimental",
       "category": "midi-usb",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3923,13 +3923,14 @@
         "location": "PROJ > MODWERK > SETTINGS > USB AUDIO",
         "steps": [
           "Open SETTINGS, highlight USB AUDIO and press YES. Open a field to see its choices. Press YES to select one or NO to go back.",
-          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts.",
+          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts. INPUTS plays USB channels from the computer into inputs A/B, C/D or all four.",
           "For Outbox 8, choose OUTBOX 8 and assign the four stereo pairs. In the Outbox app, map USB pairs 1–4 to the four desired physical output pairs. Subsequent source changes take place on the Octatrack."
         ],
         "screenshots": [
           "media/ot-settings.png",
           "media/ot-usb-audio.png",
           "media/ot-track-tap.png",
+          "media/ot-inputs.png",
           "media/ot-outbox-pairs.png"
         ]
       },
@@ -3968,22 +3969,22 @@
         "location": "USB",
         "conflicts": [],
         "limitations": [
-          "Output only, fixed 44.1 kHz / 24-bit; USB input and Crossbar variants are excluded.",
+          "Fixed 44.1 kHz / 24-bit. USB input (INPUTS: AB, CD or ABCD) needs a high-speed connection to a computer; full speed and Outbox 8 are output only. Crossbar variants are excluded.",
           "Like every DRAM module, gives up about 10 MB of sample memory: projects that filled Flex/recorder memory can show OUT OF MEMORY. Shorten recorder reservations or load long samples into Static (#433).",
           "At full speed, track feeds fall back to a stereo sum and Main + Cue to Main.",
           "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1–7. With a master track, tracks 1–7 lead track 8 by 32 samples.",
-          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, worst-case ColdFire cycles and complete memory bounds remain untested."
+          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, the MKI, worst-case ColdFire cycles and complete memory bounds remain untested."
         ]
       },
       "resources": {
-        "recorded": "20 November 2026, configurable release package",
+        "recorded": "23 November 2026, configurable release package with USB input",
         "storage": {
           "label": "Runtime memory",
           "display": "Full bound unmeasured",
           "value": null,
           "unit": "bytes",
           "method": "unmeasured",
-          "conditions": "USB Audio 0.3 allocates 10,288 initialized bytes and 94,152 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
+          "conditions": "USB Audio 0.4 allocates 17,852 bytes of code and data and 110,552 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
           "source": "README.md"
         },
         "processing": {
@@ -4019,7 +4020,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "On an Octatrack MKII, macOS recorded all five widths. Track 8/Master reconnected and survived Undo twice. Keep and card restoration after a physical power cycle passed on the same release image. See TESTING.md for build identities and limits.",
+        "summary": "0.4.0 is the input build that ran on an Octatrack MKII on 21 November 2026 (all four INPUTS modes, 17 minutes of duplex audio), with a new inventory kind; this exact package was released on the owner's word without a run on base 0.8.1. 0.3.0 recorded all five widths, survived Undo and passed Keep and card restoration after a physical power cycle. See TESTING.md for build identities and limits.",
         "hardwareStatus": "reported",
         "evidenceRevision": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
         "gates": [
@@ -4039,6 +4040,7 @@
             "media/ot-settings.png",
             "media/ot-usb-audio.png",
             "media/ot-track-tap.png",
+            "media/ot-inputs.png",
             "media/ot-outbox-pairs.png"
           ],
           "screenshotStyle": "black-and-white"
@@ -4062,16 +4064,16 @@
             "page": "SETTINGS",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
           "path": "media/ot-usb-audio.png",
           "captureType": "emulator",
-          "caption": "Open SEND TO to choose a computer or Outbox 8. Open LAYOUT to choose which tracks or mixes to send.",
-          "alt": "USB AUDIO shows SEND TO set to OUTBOX 8, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL and OUTPUT MODE to ALL.",
+          "caption": "Open SEND TO to choose a computer or Outbox 8, LAYOUT to choose which tracks or mixes to send, and INPUTS to play audio from the computer into the Octatrack.",
+          "alt": "USB AUDIO shows SEND TO set to COMPUTER, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL, OUTPUT MODE to ALL and INPUTS to OFF.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4079,9 +4081,9 @@
             "page": "USB AUDIO",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
@@ -4096,16 +4098,33 @@
             "page": "TRACK TAP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
+          }
+        },
+        {
+          "path": "media/ot-inputs.png",
+          "captureType": "emulator",
+          "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+          "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "USB AUDIO INPUTS",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         },
         {
           "path": "media/ot-outbox-pairs.png",
           "captureType": "emulator",
-          "caption": "With OUTBOX 8 selected, open each output pair and choose its source. Here the first two pairs carry Main, the third is silent and the last carries Cue.",
-          "alt": "USB AUDIO shows OUT 1/2 MAIN, OUT 3/4 MAIN, OUT 5/6 OFF and OUT 7/8 CUE, with OUT 7/8 highlighted.",
+          "caption": "With OUTBOX 8 selected, INPUTS gives way to the four output pairs. Open each pair and choose its source: a track, Main, Cue or OFF for silence.",
+          "alt": "USB AUDIO with SEND TO on OUTBOX 8 shows OUT 1/2 to OUT 7/8 set to TRACK 1 to TRACK 4, with OUT 7/8 highlighted.",
           "credit": "Modwerk, Octatrack MKII emulator capture",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4113,9 +4132,9 @@
             "page": "USB AUDIO outputs",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
-            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+            "moduleVersion": "0.4.0-experimental",
+            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+            "setup": "Octatrack MKII panel in ot_emu on a development twin of base 0.8.1, stopped transport, USB Audio 0.4.0 installed over the emulator's USB host on a scratch card. The composed LCD frame at 6× integer scale."
           }
         }
       ]
@@ -6694,7 +6713,7 @@
       "id": "mute-modes",
       "key": "MUTE_MODES",
       "name": "Mute Modes",
-      "version": "0.2.2-experimental",
+      "version": "0.2.3-experimental",
       "category": "system",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -6811,20 +6830,20 @@
           }
         },
         "cpuPrice": {
-          "value": 1.2,
+          "value": 1.7,
           "unit": "percent-of-frame",
           "measure": "frame-interrupt",
-          "tool": "npm run device:price -- --write",
-          "date": "2026-11-21",
-          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 33.9 % installed and used nowhere; CPU meter 45.5 % before, 46.3 % at rest.",
-          "source": "evidence/cpu-price.json"
+          "tool": "npm run device:price",
+          "date": "2026-11-19",
+          "conditions": "MKI, development twin fc4b7abd of base 0.7.9 with this version as the PERSONALIZE table owner (the beta flags plus --dev), the author's project, bank A pattern A02 (12 steps) on Part 1 playing, nothing muted, MUTE MODE at the installed default, 8 s per reading, two runs: frame interrupt 48.9 % before and 50.6 % installed (+1.7), then 49.2 % and 50.7 % (+1.5); CPU meter +1.8 and +1.4. With T1-T4 muted and MUTE MODE OTFX-T the same reading was 33.9 % against 49.3 % for stock's mute (CPU 46.9 against 61.3 %): OTFX-T starts no new notes on muted tracks, so the price is the unmuted case.",
+          "source": "TESTING.md"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "All three author references match (plain 996 B, SC_KEY 1106 B, menu 208 B). The native probe of this version passes 4,353,132 cases, including the hold after KEY moves away and after MUTE MODE leaves OT; stack peaks are as in 0.2.1. On his MKI (3 November 2026) the author flashed the native card image of Sidechain Compressor and this module (MW_MMOH1) and reported the OT-exit hold, the KEYHOLD checks, an ordinary DT-T mute and a power cycle working; on 27 October the image of this module alone passed every mode, Part and project reload and the timestretch mute check.",
+        "summary": "0.2.3 adds the ev_trig_muted answer; the native units are unchanged, and the native probe reproduces 0.2.2's evidence byte for byte. Over USB on the author's MKI (16 November 2026) this version's release package installed on a development twin of base 0.7.5 and passed every mode with a muted track (OT, OTFX, OTFX-T, DT-T), a soloed track in DT-T, a power cycle (restored from the card, MUTE MODE kept) and removal. The ev_trig_muted answer equals the resets mm_voice_bind drops in every frame of loader_mute_keep_fixture (emulator); no machine that asks it had a package yet, so it was not exercised on the unit.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "a2d9882bdda2aef9d11a5728daa7db24ec9aed3a",
+        "evidenceRevision": "9f9af4f90be06d3fa42681a1fd57b931757ce741",
         "gates": [
           "qualification/probe.cpp"
         ],
@@ -6867,23 +6886,23 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.2-experimental",
-          "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
-          "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
+          "moduleVersion": "0.2.3-experimental",
+          "sourceSha256": "3d62945169a36f9205c8dded03bc50ba2cf5696c1237de031f7d1e9a41b55666",
+          "imageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
           "cycles": [
             {
               "processor": "coldfire",
               "worstCase": 3440,
-              "maxConfiguration": 16624,
+              "maxConfiguration": 20976,
               "maxInstances": 1,
               "budget": 95778,
               "unit": "cycles/block",
               "method": "emulator",
               "conditions": {
-                "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases).",
+                "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases). ev_trig_muted (0.2.3), asked through the base's raise after every frame of loader_mute_keep_fixture: every MUTE MODE, mute and solo masks with SOLO_FLAG set and clear, four SIDE-CHAIN KEY layouts, with and without an ev_mute_keep provider (244 asks, 94 dropping trigs): at most 34 instructions per ask, 16 in mm_trig_muted itself.",
                 "parameterModulation": "Not applicable: MUTE MODE is one global PERSONALIZE setting; mute and solo change from the panel or MIDI and are read once per frame.",
                 "modeSwitching": "MUTE MODE changed between frames in every order; mutes and solos set and cleared between frames, including the 0->1 edge that issues each track's note-off.",
-                "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
+                "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184. Over USB a machine that starts its own note asks ev_trig_muted once per trig: at most eight asks per block, 8 x 544 = 4,352 more (16,624 + 4,352 = 20,976).",
                 "inputConditions": "Independent of audio content. Conservative V4 core-path bounds from the actual assembled instructions of this version (16 cycles per ordinary instruction), not chip wall-clock timing; stock callbacks (the note-off and voice routines) are stock cost and excluded."
               },
               "report": "TESTING.md"
@@ -6951,16 +6970,16 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKI",
-            "testedOn": "2026-11-03",
+            "testedOn": "2026-11-16",
             "tester": "Zac Kyoti",
-            "sourceRevision": "a2d9882bdda2aef9d11a5728daa7db24ec9aed3a",
-            "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
-            "summary": "The author flashed the native card image of Sidechain Compressor and this module with every stock effect kept (MAIN OS d8267756, OS VERSION MW_MMOH1) on his MKI. All passed: a track muted in OT stays silent when MUTE MODE is switched to DT-T, and plays normally when unmuted; an ordinary DT-T mute of a sounding track still lets the note play out; in DT-T, a muted track that rested as a COMPRESSOR's KEY stays silent when KEY moves to another track; MUTE MODE survives a power cycle. The same source passed on that unit as the author's standalone image, its Bugbuild, KYOTI V1.7 and the octabam form (OCTABAM39). Earlier: MW_MMKH1 (KEYHOLD, 3 November) and the image of this module alone (MW_MM022, 27 October) passed every mode, solo, timestretched mutes in OTFX, Part and project reload and a power cycle.",
+            "sourceRevision": "9f9af4f90be06d3fa42681a1fd57b931757ce741",
+            "imageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
+            "summary": "The author ran this version's USB release package (d460c7e2) on an Octatrack MKI, OS 1.40C: the Modwerk base flashed from a development build of the site (1625fef6), then a development twin of base 0.7.5 with this version as the PERSONALIZE table owner (4b375949) booted from RAM over USB, and the package installed through the session. All passed, as the author reported: with T1 muted while playing, OT cuts at once with its tails, OTFX cuts the dry sound and lets the FX tails ring out, OTFX-T also drops new trigs, DT-T lets the sounding note finish and drops new trigs (the MUTE MODE word and mute word read back over USB each time); soloing T2 in DT-T silences the others; after a power cycle and a new RAM boot the twin restored the module from the card with MUTE MODE still on DT-T; removal (from the main page) was accepted, the MUTE MODE row left PERSONALIZE and a mute cut as stock. Removal with PERSONALIZE open was refused (loader refusal 7), as the table owner guard intends.",
             "limitations": [
               "MKI only; not run on an MKII.",
-              "The card image only; the USB package was not run on a unit.",
-              "Functional checks; no stress run, frame-interrupt load or chip timing capture.",
-              "Beside Sidechain Compressor on the card image; not run beside other modules in this version."
+              "No machine that asks ev_trig_muted (FM Synth 0.1.4) had a package, so the answer itself was checked in the emulator only.",
+              "Sidechain Compressor's package is bound to the flashed base, not the twin, so a muted SIDE-CHAIN key track was not run in this version.",
+              "Functional checks reported by the author; no stress run, frame-interrupt load or chip timing capture."
             ],
             "report": "TESTING.md"
           }
@@ -6974,87 +6993,87 @@
       "media": [
         {
           "path": "media/ot-system.png",
-          "captureType": "emulator",
-          "caption": "PROJECT > SYSTEM. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "PROJECT > SYSTEM on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "PROJECT > SYSTEM with PERSONALIZE selected: MUTE MODE is in PERSONALIZE.",
+          "alt": "The Octatrack PROJECT menu on SYSTEM: USB DISK MODE, OS UPGRADE, DATE/TIME, PERSONALIZE (selected), CARD TOOLS, STATUS.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PROJECT / SYSTEM",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-ot.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: OT. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: OT on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: OT, the stock cut.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OT.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-otfx.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: OTFX. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: OTFX on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: OTFX. The dry sound cuts; FX tails ring out.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OTFX.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-otfx-t.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: OTFX-T. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: OTFX-T on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: OTFX-T. Like OTFX, and new trigs are dropped.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to OTFX-T.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         },
         {
           "path": "media/ot-mute-dt-t.png",
-          "captureType": "emulator",
-          "caption": "MUTE MODE: DT-T. Native monochrome LCD; stopped CPU-only capture.",
-          "alt": "MUTE MODE: DT-T on the Octatrack LCD.",
-          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "captureType": "hardware",
+          "caption": "MUTE MODE: DT-T. A sounding note plays out its amp envelope; new trigs are dropped.",
+          "alt": "PERSONAL SETTINGS with the MUTE MODE row selected, set to DT-T.",
+          "credit": "Zac Kyoti; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.2-experimental",
-            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
-            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
+            "moduleVersion": "0.2.3-experimental",
+            "imageSha256": "a9cbf819fcdaf523a091a4e6c8b606e651122fa9622c9f5db0282c1dd201d3c3",
+            "setup": "Captured over USB from the LCD of the author's Octatrack MKI (OS 1.40C, a development twin 4b375949 of Modwerk base 0.7.5 with this version as the PERSONALIZE table owner, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 16 November 2026, with this version's release package d460c7e2 installed. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. The author navigated by hand: FUNC + MIXER (PROJECT), DOWN to SYSTEM, RIGHT, DOWN to PERSONALIZE, YES, DOWN to MUTE MODE."
           }
         }
       ]
@@ -14283,7 +14302,7 @@
       "id": "grain",
       "key": "GRAIN",
       "name": "Grain",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
@@ -14332,8 +14351,8 @@
         {
           "name": "PTCH",
           "default": 64,
-          "count": 89,
-          "doc": "The pitch of the grains, -24 to +24 semitones (stored as 40 to 88, 64 is 0). Their length does not change. SRC knob A.",
+          "count": 125,
+          "doc": "The pitch of the grains, -12 to +12 semitones in Flex's units (stored as 4 to 124, 64 is 0, 5 a semitone), so CHROMATIC keys and MIDI notes play in tune. Their length does not change. SRC knob A.",
           "labels": null
         },
         {

@@ -640,6 +640,7 @@ int main(void)
       CHECK(modwerk_status_module_rest(module) == 25u && !modwerk_status_module_rest(module + 1u));
       table[9] = 0;
       modwerk_machine_frame_costs(table, 1);
+      CHECK(!modwerk_status_module_rest(module));                         /* the rewrite, not the copy the last lookup made */
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 120 && open == CLOSED); /* the Part's first */
       modwerk_test_live_fx[11] = 27;                                     /* stock wrote the pick */
       CHECK(!modwerk_status_effect_busy(11, 27, 27) && frame_adjust == 120); /* the same effect again: nothing more */
