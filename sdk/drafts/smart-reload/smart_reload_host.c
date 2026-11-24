@@ -92,8 +92,21 @@ int main(void)
 
     setup(); wr32(0x80006698u, 1);
     sr_reload(0);
-    check("row 1, scene B \"--\": scene A from the row, B the Part's", host_rd8(WORK(0)) == 3 && host_rd8(WORK(0) + 1) == saved_b && changed == 1);
-    check("only scene A sent to the sound", sounds == 1 && sound[0][2] == 3 && !sound[1][3]);
+    check("row 1, scene B \"--\": scene A from the row, B as row 0 above left it", host_rd8(WORK(0)) == 3 && host_rd8(WORK(0) + 1) == 2 && changed == 2);
+    check("both sent to the sound", sounds == 2 && sound[0][2] == 3 && sound[1][2] == 2);
+
+    setup(); row(0, 0, 1, 2, 0xff, 0xff); wr32(0x80006698u, 1);   /* nothing set above row 1's B */
+    sr_reload(0);
+    check("\"--\" with nothing set above: the Part's scene", host_rd8(WORK(0)) == 3 && host_rd8(WORK(0) + 1) == saved_b && changed == 1 && sounds == 1);
+
+    setup(); host_wr8(0x10000004u + 0x13, 4); row(3, 0, 1, 2, 0xff, 0xff); wr32(0x80006698u, 3);   /* rows 0-2 above, row 2 REM */
+    sr_reload(0);
+    check("a \"-----\" row after 2/3 and 4/--: 4 and 3, as it plays", host_rd8(WORK(0)) == 3 && host_rd8(WORK(0) + 1) == 2);
+
+    setup(); host_wr8(0x10000004u + 0x13, 4); row(1, 0, 1, 6, 5, 6); host_wr8(BANK(1) + 6u * 0x8ed8u + 0x8e57u, 2);
+    row(3, 0, 1, 2, 0xff, 0xff); wr32(0x80006698u, 3);    /* row 1 plays Part 3: its scenes are not Part 1's */
+    sr_reload(0);
+    check("a row above of another Part is passed over", host_rd8(WORK(0)) == 1 && host_rd8(WORK(0) + 1) == 2);
 
     setup(); wr32(0x460d1aecu, 0);
     sr_reload(0);

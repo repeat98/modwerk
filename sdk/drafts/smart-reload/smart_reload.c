@@ -5,7 +5,8 @@
  * 0x4002dd56) copies the saved Part over the working one, its active scenes A and B with it. In arranger mode the row
  * playing set those scenes when it started (0x4004a100, the arranger's row start); after the reload they are the
  * Part's saved ones until the next row. The module steps into the reload at its entry, lets stock reload, then writes
- * the row's scenes as the row start does: a side set to "--" in the row keeps the Part's scene, as stock.
+ * the row's scenes as the row start does; a side set to "--" ("no change") takes the scene the rows above left, as
+ * the row plays without a reload, or the Part's when none above sets it.
  *
  * The row is the arranger's current one (0x80006698), the row playing or, stopped, the one PLAY continues from. Only a
  * pattern row of the bank in use whose pattern plays the Part reloaded counts: anything else is stock's reload.
@@ -103,6 +104,24 @@ static void note(unsigned why, uint32_t row, unsigned bank, unsigned pattern, un
 struct sr_api { volatile uint32_t value; };
 void sr_tick(void *api) { if (api) ((struct sr_api *)api)->value = last; }
 
+/* A side's scene as the row plays it: the row's own, or, for "--" ("no change"), the nearest one set on that side in
+ * the rows above that play this bank's Part (a row of another Part sets that Part's scenes, not this one's): what the
+ * arranger leaves selected when it reaches the row in order, and what the main screen shows for the row. -1 when none
+ * is set up to here (the Part's own scene). A JUMP or LOOP into the row may have come from elsewhere: the rows above
+ * are taken in order (the developer's choice, 24 November 2026). */
+static int side_scene(uint32_t arr, uint32_t row, unsigned bank, unsigned part, unsigned side)
+{
+    for (uint32_t k = row + 1u; k-- > 0;) {
+        uint32_t r = arr + 0x14u + k * ROW_BYTES;
+        if (rd8(r) != 0) continue;                       /* LOOP/JUMP/HALT, REM: no scenes */
+        unsigned b = rd8(r + 1) >> 4, p = rd8(r + 1) & 15u;
+        if (b != bank || rd8(BANK_BASE + b * BANK_STRIDE + p * PAT_STRIDE + PAT_PART) != part) continue;
+        int8_t scene = (int8_t)rd8(r + 8 + side);
+        if (scene >= 0) return scene;
+    }
+    return -1;
+}
+
 /* The current row's scenes for the Part just reloaded; 0 when the row does not apply. */
 static unsigned row_scenes(unsigned part)
 {
@@ -120,8 +139,8 @@ static unsigned row_scenes(unsigned part)
     note(WHY_DONE, row, bank, pattern, ppart, part);
     unsigned done = 0;
     for (unsigned side = 0; side < 2; ++side) {
-        int8_t scene = (int8_t)rd8(r + 8 + side);
-        if (scene < 0) continue;                         /* "--": the Part's own scene stays, as stock */
+        int scene = side_scene(arr, row, bank, part, side);
+        if (scene < 0) continue;                         /* none set up to here: the Part's own scene stays */
         put_scene(bank, part, side, (uint8_t)scene);
         ++done;
     }
