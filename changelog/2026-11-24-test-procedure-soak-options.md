@@ -1,0 +1,1 @@
+Developers: `npm run test:procedure` passes the soak's program changes and MIDI channels on (`--soak-programs`, `--soak-pc-channel`, `--soak-auto-channel`), so the soak plays the test scene and the project's channels instead of bank A on channel 1.
