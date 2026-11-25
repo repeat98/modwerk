@@ -16,6 +16,12 @@ export function usbUpgradePort(machine: string): string | undefined {
   return Object.hasOwn(USB_UPGRADE_PORTS, machine) ? USB_UPGRADE_PORTS[machine as DigiMachine] : undefined
 }
 
+/** The port the build page sends to, or undefined: beta first, as every piece of a machine's stack
+ * (docs/MACHINE_RECIPE.md), since a machine's downloads may already be open to everyone (the Rytm's are). */
+export function usbSendPort(machine: string, beta: boolean): string | undefined {
+  return beta ? usbUpgradePort(machine) : undefined
+}
+
 /** The browser's MIDI with SysEx, which asks the person first; null where the browser has none. */
 export function browserMidi(): (() => Promise<MidiAccessLike>) | null {
   const nav = typeof navigator !== 'undefined' ? navigator as Navigator & { requestMIDIAccess?: (options: { sysex: boolean }) => Promise<unknown> } : undefined

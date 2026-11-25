@@ -193,7 +193,8 @@ confirms only when stock answers the last block "done", and `--label` is require
 erased before the YES; after it stock writes the flash on its own and reboots.
 
 The machine page sends a build the same way (stock's OS upgrade over USB MIDI, `src/engine/elektron/usb-upgrade.ts`,
-the Model:Cycles' sender), from its install guide's **Send over USB**, and leaves the YES to the person at the unit:
+the Model:Cycles' sender), from its install guide's **Send over USB** (beta testers only, as the rest of the
+stack until the owner releases it), and leaves the YES to the person at the unit:
 any base, release or not, since the upgrade is stock's. Seen on a MKII (25 November 2026): that sender, run from the
 computer, sent SR01 (958 blocks) in 7.0 s to UPGRADE OS NOW?, and NO there left the running image as it was. A page
 started from GLOBAL > OS UPGRADE gets status 2 for every block; the sender then says to leave every menu.
