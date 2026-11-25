@@ -14,15 +14,27 @@ voice renderer away from TSTR 4, a value only Repitch adds. Needs a base with `e
   twin of 0.7.8 measured the same idea at 0.1 points (17 November 2026, #1694).
 - **Built:** `build.py --octabam repitch` gives module `5c49f0f0`, 708 bytes, two hooks (`ev_play_increment`,
   `ev_in_use`), `rate_gate` and `pitch_gate` flagged resting. The published package and its row are not regenerated yet.
-- **Part changes:** the answer also sweeps every Part of the project, working and saved, one Part a UI tick (all 128
-  within about two seconds), for a STATIC or FLEX track whose SRC SETUP TSTR is REPITCH (the Part's byte at
+- **Part changes:** the answer also sweeps every Part of the project, working and saved, half a Part a UI tick (all 128
+  within about four seconds; trimmed 25 November 2026, below), for a STATIC or FLEX track whose SRC SETUP TSTR is REPITCH (the Part's byte at
   0x1da + 30 * track + 6 * pool + 4, as POLY8's registration writes it), so a Part, pattern or bank change while
   playing finds Repitch awake. Built: module `5c49f0f0`, 872 bytes, 8 of bss.
 - **Known gap, narrower:** a track on TSTR AUTO whose sample carries REPITCH as its own TIMESTRETCH is seen only on the
   live Part (`rp_find`): the Part names the slot, not the attribute, and the sample-slot tables are not mapped in the
   repository. Such a track brought in by a Part or bank change while playing plays up to one UI tick at stock speed,
   rendered dry, until Repitch wakes. A track set to REPITCH directly is covered, and so is a change made a sweep
-  (about two seconds) before it plays.
+  (about four seconds) before it plays.
+- **Sweep trimmed (25 November 2026):** installed alone on the owner's MKII (development twin `493c9cc5` of base
+  0.8.1, stopped, `profile:3`), the first sweep added about 20 µs to every UI tick (178.9 against 159.1 for 0.2.1): one
+  Part a tick was 8 type bytes and up to 8 TSTR bytes of the banks, which the base reads uncached. Now half a Part a
+  tick, its four type bytes in two word reads: at most 6 bank reads a tick instead of 16. While the live Part uses
+  REPITCH there is no sweep at all (the answer is 1 anyway); the sweep then restarts from the first Part and the answer
+  stays 1 until it ends, so a Part with REPITCH elsewhere is never missed. Module `5c49f0f0`, 912 bytes, 8 of bss
+  (`module:dev --build-only`, `e3c37df6`).
+  - **Emulator** (ot_emu, the same twin, the package in a trial, `call` on `repitch_in_use` with `poke`; the base's own
+    rest poll calls it each tick too): nothing anywhere, 300 calls answer 0; REPITCH poked into T6 of bank C's saved
+    Part 2, 1 after 29 calls (a sweep is 256); that byte restored, still 1 at once, 0 after 114 calls (at most two
+    sweeps); T1's SETUP TSTR on REPITCH with a bound voice, 1 at once, the sweep back at the first Part and holding 1;
+    T1 cleared, still 1 at once, 0 after 62 calls. All five pass. Not measured on the unit yet: the tick's µs.
 - **Test procedure:** not run; the unit was off USB, then held by another session, on 20 November 2026. The
   performance record's `sourceSha256` is stale until it is measured again.
 
