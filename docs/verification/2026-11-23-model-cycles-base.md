@@ -19,7 +19,23 @@ bytes"), found when the first test module was linked. Nothing subscribed, so the
 - **On a unit** (the submitter's Model:Cycles, flashed as an OS update, then a power cycle): boots normally and behaves
   as with stock 1.13.
 
-## 4d4d91d2: the base this pull request vendors (24 November 2026)
+## 646706ff: the base this pull request vendors (25 November 2026)
+
+`4d4d91d2` (below) with the owner's review fixes: a RAM boot keeps an accepted request's numbers, the flush pushes
+all four cache ways, a release base sends 0 for the RAM-boot words, and the link writes each reply whole under
+stock's USB lock, holds it while another SysEx is open (for up to a second) and drops none
+([LINK.md](../../sdk/machines/model-cycles/LINK.md), "Stock's send from two tasks"). 76 bytes `.boot`, 38214 `.run`,
+115796 `.bss`, 8 sites. Its image `89edf78e…` (stock 1.13 and the base alone) is byte for byte what the site's kit
+builds from the stock file. On the submitter's Model:Cycles, flashed with stock's upgrade: identity `0x7c774e99`
+and RAM-boot words 0; the loader's edge cases (try, keep, undo, refused while a pattern plays, the 10 s lapse, two
+modules on the draw hook with one removed, `frames.mwrm` on a stock-code site on trial, undone, kept and removed);
+Transfer connected beside the link (419 requests, none dropped, no send failures); stock 1.13 flashed over it and
+the base back from the site's send dialog. The development base of the same source (`d0a26304`, image `1d6c4052…`):
+the site's stock bytes back after each undo and removal, the masked-span counters (longest 7.27 µs), a RAM boot, and
+a FREEZE incident from a test module that held the UI tick for 6 s while the audio ran on. Rows in
+[LINK.md](../../sdk/machines/model-cycles/LINK.md#evidence).
+
+## 4d4d91d2: the base before the review fixes (24 November 2026)
 
 `2e5243e6` (below) with the link, the audio load, the diagnostics log and the runtime loader in every base, as the
 owner asked: 76 bytes `.boot`, 37994 `.run`, 115796 `.bss`, 8 sites. Its image `ec928894…` (stock 1.13 and the base
