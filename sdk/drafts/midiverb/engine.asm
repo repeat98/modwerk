@@ -27,7 +27,8 @@
 ; 0a program playing ($ffffff none)  0b/0c this run's out L/R  0d mix  0e level
 ; 0f half(input)  10 program loading ($ffffff none)  11 its next chunk
 ; 12 loaded (1)  13 its running sum  14 its N  15 its checksum
-; 16 fade calls left  17 the wet's mix  18 its fall a sample
+; 16 fade calls left  17 the wet's mix  18 its fall a sample  19 this build's
+; signature ($4d5603: bump it with any change to this layout)
 ; Program words: units [handler*2][argument]; a run of reads is [0][k] then k
 ; ring offsets; the handlers are the jump table's order below.
 
@@ -46,12 +47,35 @@ mvqZERO:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)            ; nothing plays until a program arrives
         move    a,x:(r7+$10)
+        move    #>$4d5603,a
+        move    a,x:(r7+$19)            ; this build's state
         rts
 
 proc:
         move    #>$ffffff,m4
         move    #>$ffffff,m1
         move    #>$ffffff,m3
+; State another build left: stock runs init only when a slot's effect id
+; changes, so a new version installed over the same id meets the old one's
+; state. Start afresh then, keeping only the slot's buffer base.
+        move    x:(r7+$19),a
+        move    #>$4d5603,x0
+        cmp     x0,a
+        beq     mvqSIGK
+        move    x:(r7+$00),b
+        move    r7,r4
+        clr     a
+        do      #32,>mvqSIGZ
+        move    a,x:(r4)+
+mvqSIGZ:
+        move    b,x:(r7+$00)
+        move    b,x:(r7+$01)
+        move    #>$ffffff,a
+        move    a,x:(r7+$0a)
+        move    a,x:(r7+$10)
+        move    #>$4d5603,a
+        move    a,x:(r7+$19)
+mvqSIGK:
 ; The stream's chunk: k and g from r6+$c.
         move    x:(r6+$c),x1
         move    x1,a
