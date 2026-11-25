@@ -6,23 +6,31 @@ development bases only (`npm run machine:base -- digitone-ii --dev`, base.json's
 
 ```sh
 python3 sdk/machines/digitone-ii/tools/dn2_link.py ident
-python3 sdk/machines/digitone-ii/tools/dn2_link.py mem 0x47f00000 64
 python3 sdk/machines/digitone-ii/tools/dn2_link.py screen --png screen.png
 ```
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks |
-| `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `ident` | 0x01 | the link's own counters: link version, link messages received, dropped (ring full or too long), ticks |
+| `screen OFF` | 0x20 | OFF, the copy's number, then 128 bytes of the frame on the screen from OFF (0, 128 … 896) |
 
-`screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
-so a draw between its reads can tear a frame. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
+**The unit chooses what each request returns.** No request names an address, so a USB client reads the link's counters
+and the screen and nothing else of the instrument's state. Every other command, the earlier `mem` (0x21) included, is
+refused with status 2 and nothing but the status.
+
+`screen 0` copies the frame on the screen and sends its first part; `screen 128` to `screen 896` send the rest of that
+copy, each with the copy's number, so the eight parts are one frame even if stock draws in between, and the host checks
+the number. A part before any `screen 0`, an offset past the frame or between parts, or a frame pointer that does not
+lie wholly in DDR is refused with status 4. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
 Status 0 ok, 2 bad request, 4 out of range. USB only: a link message from DIN is never acted on.
 
-`ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
+`sdk/tests/dn2_link_host.c` compiles `link.c` for the host and checks both requests and every refusal
+(`test_dn2_link.py` runs it). `ident`, the first version's `mem` and its out-of-range refusal answered on a unit over USB
+([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)); this version's `screen` has
+not run on a unit yet.
 
 ## Where it runs (OS 1.12)
 
@@ -32,4 +40,4 @@ Status 0 ok, 2 bad request, 4 out of range. USB only: a link message from DIN is
 - **Work.** `ev_tick` (UI task) answers up to four a tick through stock's `sysex_send` (0x401236d2) on USB.
 - **Waits for stock.** A tick answers nothing while stock is mid-SysEx on USB: the status byte of stock's USB MIDI
   receive parser (0x4011f3c0, the function the USB driver is given) at 0x445090ac reads 0xF0 then. The Rytm's is a word.
-- **Not yet.** The Rytm link's keys, encoders, screen, remote YES and RAM boot.
+- **Not yet.** The Rytm link's keys, encoders, remote YES and RAM boot.
