@@ -144,8 +144,11 @@ export function judgeRecord(record, options = {}) {
 
 /** Whether a record's numbers were measured on the module's current source: its `sourceSha256`, written by
  * `perf:audit check FILE --stamp`, against modulePerformanceSourceSha256. `required` (a module listed from the day stamps began,
- * or a draft judged as a release) turns a missing stamp from a note into a failure; a stamp for other source always fails. */
-export function stampVerdict(record, sourceSha256, required, file = '<module>/evidence/performance.json') {
+ * or a draft judged as a release) turns a missing stamp from a note into a failure; a stamp for other source always fails.
+ * `earlierSha256`, from moduleEarlierPerformanceSourceSha256, is what a stamp written before presentation/ left the hash names. */
+export function stampVerdict(record, sourceSha256, required, file = '<module>/evidence/performance.json', earlierSha256 = undefined) {
+  if (earlierSha256 && record?.sourceSha256 === earlierSha256 && earlierSha256 !== sourceSha256)
+    return { state: 'ok', detail: 'measured on this source (' + earlierSha256.slice(0, 12) + '…, a stamp from before art left it; the next --stamp writes ' + sourceSha256.slice(0, 12) + '…)' }
   const fix = 'measure again on this source, then npm run perf:audit -- check ' + file + ' --stamp'
   if (record?.sourceSha256 === undefined) return required
     ? { state: 'fail', detail: 'its numbers name no source, so nothing shows they were measured on this code', fix: 'npm run perf:audit -- check ' + file + ' --stamp, right after you measure' }
