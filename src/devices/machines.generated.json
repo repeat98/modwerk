@@ -404,7 +404,7 @@
           ]
         }
       ],
-      "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. Modwerk has no Digitone II build path yet and downloads stay disabled.",
+      "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. The page builds Modwerk's Digitone II base alone from that file (beta); downloads stay disabled until the owner turns them on.",
       "recovery": "Hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx over MIDI DIN; recovery mode does not use USB. Checked on toonst's unit with stock 1.12 (23 October 2026, elekloader's build guide); on a second unit only the normal Transfer update back to stock 1.12 was tried (18 November 2026)."
     },
     "research": [
@@ -428,7 +428,38 @@
         "url": "https://github.com/repeat98/modwerk/blob/main/docs/verification/2026-11-18-digitone-ii-core-on-a-unit.md",
         "note": "prodbysmolec's unit: stock 1.12 with core-dn2 0.3 and hello-marker, then hooks-check-dn2, built with toonst's elekloader at 3d7c2e3 and flashed with Transfer; boot, normal playback, all six UI events and the return to stock 1.12 observed."
       }
-    ]
+    ],
+    "sdk": {
+      "platform": "elemod",
+      "modules": "sdk/digitone-ii/modules",
+      "catalog": null,
+      "guide": "sdk/machines/digitone-ii/GOAL.md",
+      "core": {
+        "version": "1.1",
+        "path": "sdk/digitone-ii/core-profile"
+      },
+      "toolchain": "m68k-elf GCC and binutils and the pinned Elekloader kit with the device Modwerk's builder carries; builds start from the owner's exact OS 1.12 .syx.",
+      "budgets": [
+        {
+          "name": "Shared mod memory",
+          "unit": "bytes",
+          "value": 262144,
+          "note": "Digitone II DDR region 0x47F00000–0x47F40000, shared by the base and linked mods."
+        },
+        {
+          "name": "Core image",
+          "unit": "bytes",
+          "value": 6776,
+          "note": "Pinned Modwerk base: 3,656 bytes .run plus 3,120 bytes .bss. The linker measures each selected set."
+        },
+        {
+          "name": "Per-event subscriptions",
+          "unit": "slots",
+          "value": 4,
+          "note": "The Modwerk base allocates four hook entries per shared event collection."
+        }
+      ]
+    }
   },
   {
     "schemaVersion": 1,

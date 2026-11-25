@@ -4,6 +4,7 @@
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
 import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
+import DN2_BASE from '../../../sdk/machines/digitone-ii/base-binding.json' with { type: 'json' }
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
 import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
 import RYTM_VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json' with { type: 'json' }
@@ -18,7 +19,7 @@ import { carryDevices } from './carried-devices'
 
 export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 export type { Builder }
-export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2' } as const
+export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2', 'digitone-ii': 'digitone-mk2' } as const
 export type ElekloaderMachine = keyof typeof MACHINE_DEVICE
 carryDevices()
 export const BUILDER_CATALOG: Catalog = parseCatalog(CATALOG_JSON)
@@ -37,6 +38,11 @@ const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string
   'digitakt-ii': {
     variants: { base: DT2_BASE.identity },
     variant: () => 'base',
+  },
+  // The Digitakt II base's source with the Digitone II's recipe (sdk/machines/digitone-ii/elekloader/): one variant.
+  'digitone-ii': {
+    variants: DN2_BASE.variants,
+    variant: () => 'plain',
   },
   'analog-rytm-mkii': {
     variants: RYTM_BASE.variants,
