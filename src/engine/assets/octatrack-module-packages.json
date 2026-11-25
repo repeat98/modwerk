@@ -20,26 +20,6 @@
       "fills": 0
     },
     {
-      "id": "midiverb",
-      "slots": "fx2",
-      "cycles": 398,
-      "cyclesKind": "executed",
-      "state": 32,
-      "buffer": 15870,
-      "version": "0.1.0-experimental",
-      "path": "octatrack-modules/midiverb/0.1.0-experimental.mwrm",
-      "octabam": true,
-      "abi": 8,
-      "features": 129,
-      "sites": 1,
-      "copies": 0,
-      "fills": 0,
-      "name": "MIDIVERB",
-      "module": "e7e04dd9",
-      "bytes": 52126,
-      "sha256": "5c9cb5930e0bc8add323a0cecb2e60b6391fa45e046984a7aa40f57a524d95e9"
-    },
-    {
       "id": "miniverb",
       "slots": "fx2",
       "cycles": 411,
@@ -833,6 +813,26 @@
       "module": "008010d8",
       "bytes": 7894,
       "sha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47"
+    },
+    {
+      "id": "midiverb",
+      "slots": "fx2",
+      "cycles": 398,
+      "cyclesKind": "executed",
+      "state": 32,
+      "buffer": 15870,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/midiverb/0.1.0-experimental.mwrm",
+      "octabam": true,
+      "abi": 8,
+      "features": 129,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "Midiverb I/II",
+      "module": "e7e04dd9",
+      "bytes": 52126,
+      "sha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968"
     }
   ],
   "usbAudio": {
