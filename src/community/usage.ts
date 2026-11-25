@@ -1,6 +1,6 @@
 import { apiUrl } from '../hosting'
 import { BASE_GUIDE_STEPS, BASE_INSTALL_COUNTS, BASE_INSTALL_FAILURES, SYNC_FAILURE_REASONS, type BaseGuideStep, type SyncFailureReason, DIAGNOSTIC_INVITATION_PLACEMENTS, INVITATION_COUNTS, type BaseInstallStage, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement, type OctatrackCount, type OctatrackStepCount } from './octatrack-diagnostics-contract'
-import type { AnnouncementCountEvent, SignInPromptOutcome, SiteCount, UsageDevice, UsageEvent } from './usage-contract'
+import type { AnnouncementCountEvent, SignInPromptOutcome, SiteCount, SupportPromptCount, UsageDevice, UsageEvent } from './usage-contract'
 import { visitSource } from './visit-source'
 import { usagePage } from './usage-pages'
 import { USAGE_CONSENT_VERSION } from '../legal/policy'
@@ -116,6 +116,10 @@ function forgetCampaignTags() {
 /** How the sign-in prompt was answered, by whether it guarded a firmware build. */
 export function countSignInPrompt(outcome: SignInPromptOutcome) {
   if (anonymousCountsAllowed()) countAnonymously({event: 'sign_in_prompt', detail: outcome})
+}
+/** How the support thank-you was answered, and Ko-fi clicks from the line on install screens: one fixed category. */
+export function countSupportPrompt(outcome: SupportPromptCount) {
+  if (anonymousCountsAllowed()) countAnonymously({event: 'support_prompt', detail: outcome})
 }
 /** After consent, the only outbound fields are a closed event name, two random identifiers and, for builds and downloads,
  * which supported building machine it was. Page views may name a fixed page key. Never pass build/configuration data. */

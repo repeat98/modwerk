@@ -20,7 +20,7 @@
     },
     {
       "id": "airwindows",
-      "name": "Airwindows Chorus",
+      "name": "Airwindows Chorus and Mackity",
       "spdx": "MIT",
       "noticeFile": "airwindows.txt",
       "sources": [
@@ -31,7 +31,8 @@
         }
       ],
       "usedIn": [
-        "modules/airwindows-chorus: Chorus"
+        "modules/airwindows-chorus: Chorus",
+        "modules/mackity: Mackity"
       ]
     },
     {
@@ -326,6 +327,9 @@
       "octa-panel"
     ],
     "airwindows-chorus": [
+      "airwindows"
+    ],
+    "mackity": [
       "airwindows"
     ],
     "lofi2": [

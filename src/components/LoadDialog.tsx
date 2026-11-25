@@ -13,6 +13,8 @@ import { limitedCount, overLimitMessage, SET_MODULE_LIMIT } from '../catalog/set
 import { hasBetaAccess } from '../community/beta-access'
 import { useCommunity } from '../community/context'
 import { trackModuleDownloads } from '../community/usage'
+import { noteSupportInstall } from '../community/support-prompt'
+import { SupportLine } from './SupportDialog'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { installedOnOctatrack } from '../community/installed-follow-up'
 import { StateChip } from './ModuleGrid'
@@ -131,6 +133,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     const kept = link.getState()
     if (kept.status === 'ready' && kept.notice?.tone === 'success') {
       trackModuleDownloads(installing.current)
+      noteSupportInstall()
       if (kept.identity && kept.active) rememberSuccessfulSync({ ...set, moduleIds: [...set.moduleIds], base: kept.identity.base, active: kept.active, at: new Date().toISOString() })
     }
   }
@@ -178,7 +181,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
       </div>}
       {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
       {error && <p className="file-error" role="alert">{error}</p>}
-    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{failed && <SupportActions link={link} what="Sync to Octatrack" error={error || notice?.text} />}{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
+    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{failed && <SupportActions link={link} what="Sync to Octatrack" error={error || notice?.text} />}{followNotice && <p className="link-hint" role="status">{followNotice}</p>}{!failed && notice?.tone === 'success' && <SupportLine />}</>
     : <>
       {(step === 'loading' || step === 'trial') && <ProgressBar value={step === 'loading' && !preparing && progress < 1 ? progress : undefined} label="Syncing" percent />}
       <p className="base-install-intro" role="status">{state.reconnecting ? 'Your Octatrack is reconnecting on USB with its new audio setup…' : step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')

@@ -5,7 +5,8 @@
 //   npm run session -- status                 # whether to ask the developer: ask (the default), always or never
 //   npm run session -- prefer ask|always|never
 //   npm run session -- preview [--skip 3,7]   # what would be sent, written to ~/.cache/modwerk/session-preview.json
-//   npm run session -- share --note "…" [--skip 3,7] [--file <transcript>] [--agent claude-code|codex]
+//   npm run session -- share --note "…" [--skip 3,7] [--new] [--file <transcript>] [--agent claude-code|codex]
+//                                             # --new: leave out what your earlier shares of this session already hold
 //   npm run session -- list | get <id> | delete <id>
 //   npm run session -- review [--file <transcript>]   # where this session spent its time; printed here, nothing is sent
 //   npm run session -- pull                   # the owner: every shared session into ~/.cache/modwerk-local/sessions/,
@@ -103,11 +104,33 @@ export async function findTranscript({ file, agent } = {}) {
   return pick
 }
 
-export async function buildSession({ file, agent, note = '', skip = [] }) {
+/** The entries the developer's own earlier shares already hold, as "who at" keys. Only shares made since `since` (when
+ * this transcript started) can hold any of it, so older ones are not fetched. */
+export async function sharedMoments(get, since = '') {
+  const { sessions } = await get('/agent-sessions'), keys = new Set(), ids = []
+  for (const item of sessions) {
+    if (since && item.createdAt < since) continue
+    const shared = await get('/agent-sessions/' + encodeURIComponent(item.id))
+    for (const entry of shared.session?.entries ?? []) if (entry.at) keys.add(entry.who + ' ' + entry.at)
+    ids.push(item.id.slice(0, 8))
+  }
+  return { keys, ids }
+}
+/** Indexes of the transcript entries an earlier share already sent. */
+export const alreadyShared = (entries, keys) => entries.flatMap((entry, index) => entry.at && keys.has(entry.who + ' ' + entry.at) ? [index] : [])
+
+export async function buildSession({ file, agent, note = '', skip = [], shared }) {
   const info = await lstat(file)
   if (!info.isFile()) throw new Error(file + ' is not a transcript file.')
   const lines = (await readFile(file, 'utf8')).split('\n').filter(Boolean)
   const read = agent === 'codex' ? readCodexRollout(lines) : readClaudeTranscript(lines)
+  // --new: what an earlier share of this session sent stays out, the way --skip leaves entries out.
+  if (shared) {
+    const { keys, ids } = await shared(read.startedAt ?? '')
+    const left = alreadyShared(read.entries, keys)
+    if (ids.length) console.log(`Leaving out ${left.length} entries already in your earlier shares (${ids.join(', ')}).`)
+    skip = [...skip, ...left]
+  }
   let user = ''
   try { user = userInfo().username } catch { /* none */ }
   return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir(), names: developerNames() }, skip)
@@ -204,7 +227,7 @@ export async function pullSessions(folder, get) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { note: { type: 'string' }, skip: { type: 'string' }, file: { type: 'string' }, agent: { type: 'string' } } })
+  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { note: { type: 'string' }, skip: { type: 'string' }, file: { type: 'string' }, agent: { type: 'string' }, new: { type: 'boolean' } } })
   const [command = 'help', arg] = positionals
   const skip = (values.skip ?? '').split(',').filter(Boolean).map(Number).filter(Number.isInteger)
   if (command === 'status') { console.log(sharingLine(await readPreference())); return 0 }
@@ -223,7 +246,8 @@ export async function main(argv = process.argv.slice(2)) {
     // The note is what the owner reads first; an agent once sent the instructions' "…" placeholder as it was.
     if (command === 'share' && placeholderNote(values.note)) { console.error('Write the note: a few sentences on what got in the way in this session (--note "The board refused … until …").'); return 2 }
     const found = await findTranscript({ file: values.file, agent: values.agent })
-    const session = await buildSession({ ...found, note: values.note ?? '', skip })
+    const shared = values.new ? async since => sharedMoments(async path => boardRequest(path, { token: await token() }), since) : undefined
+    const session = await buildSession({ ...found, note: values.note ?? '', skip, shared })
     await writePrivate(previewFile(), JSON.stringify(session, null, 2) + '\n')
     console.log(summary(session, found.file))
     console.log(`What would be sent: ${previewFile()}`)
@@ -233,7 +257,7 @@ export async function main(argv = process.argv.slice(2)) {
       return 1
     }
     if (command === 'preview') return 0
-    if (!session.entries.length) { console.error('This session has no conversation to share yet.'); return 1 }
+    if (!session.entries.length) { console.error(values.new ? 'Your earlier shares already hold all of this session.' : 'This session has no conversation to share yet.'); return 1 }
     const data = gzipSync(JSON.stringify(session))
     if (data.length > SESSION_GZIP_LIMIT) { console.error('The session is too large to share even trimmed. Leave entries out with --skip.'); return 1 }
     const result = await boardRequest('/agent-sessions', { method: 'POST', token: await token(), body: { consent: SESSION_CONSENT_VERSION, data: data.toString('base64') } })
@@ -266,7 +290,7 @@ export async function main(argv = process.argv.slice(2)) {
     console.log(`${count} shared sessions in ${folder} (INDEX.md lists them).`)
     return 0
   }
-  console.log('npm run session -- review | status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--file <transcript>] | list | get <id> | delete <id> | pull')
+  console.log('npm run session -- review | status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--new] [--file <transcript>] | list | get <id> | delete <id> | pull')
   return command === 'help' ? 0 : 2
 }
 

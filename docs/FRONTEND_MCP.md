@@ -35,7 +35,11 @@ Node must resolve to version 24. No HTTP listener, browser extension, cloud MCP
 endpoint or administrator key is installed. The transport implements the
 [MCP stdio protocol](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports).
 
-The frontend is imported through an in-memory Vite bundle. Route
+The frontend is imported through an in-memory Vite bundle. Before each site or
+device tool call the server compares the files that bundle and the package
+manifest were built from, and rebuilds them when a branch switch or a base
+regeneration changed one, so the new base is known without reconnecting (/mcp).
+An open trial keeps its bundle until Keep or Undo. Route
 `console.error`, `warn`, `info` and `debug` through `formatMcpLog(...args)` and
 keep protocol output on stdout. Sanitizing only exceptions leaves warnings
 able to print large data-URL stacks; bounded messages must omit stacks,
