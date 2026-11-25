@@ -90,15 +90,18 @@ class SourceRecipe(unittest.TestCase):
         report = (MODULE / 'release' / proof['hardwareReport']).read_text()
         self.assertIn(proof['sha256'], report)
         self.assertIn(proof['baseIdentity'], report)
+        self.assertIn(manifest['source']['revision'], report)
         self.assertIn('No physical USB device was opened', report)
 
-    def test_historical_receipt_keeps_its_exact_hardware_scope(self):
+    def test_release_row_matches_named_receipt_and_scoped_hardware_report(self):
         history = MODULE / 'release/history/20261110'
         row = json.loads((history / 'package-entry.json').read_text())
         proof = json.loads((history / 'candidate-proof.json').read_text())
         manifest = json.loads((history / 'module-manifest.json').read_text())
         self.assertEqual(row['version'], manifest['version'])
+        self.assertEqual(row['version'], proof['version'])
         self.assertEqual(row['sha256'], proof['sha256'])
+        self.assertEqual(row['bytes'], proof['bytes'])
         self.assertEqual(row['requiredBase'], proof['baseIdentity'])
         self.assertEqual(proof['hardware'], 'FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK')
         self.assertEqual(manifest['tests']['hardwareStatus'], 'reported')

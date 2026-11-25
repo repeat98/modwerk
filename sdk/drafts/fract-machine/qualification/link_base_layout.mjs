@@ -1,8 +1,8 @@
 // Private layout receipt only. Stock bytes remain in memory; no USB or firmware output.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
-import { parseArgs } from 'node:util'
+import { URL, pathToFileURL } from 'node:url'
+import { parseArgs, TextEncoder } from 'node:util'
 
 async function main() {
   const { values } = parseArgs({ options: { 'base-tree': { type: 'string' }, stock: { type: 'string' }, output: { type: 'string' } } })

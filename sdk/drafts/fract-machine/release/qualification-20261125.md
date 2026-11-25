@@ -3,6 +3,9 @@
 Unlisted 0.1.3, released main `2a1bfa6de9d2ab5f1d268d8c19a4669b6a517cce`, base 0.8.1
 `eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0`.
 Normal package SHA-256 `c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`.
+Native module units are at `4ed908fa76a5fa93cc2f053242af4e39d80c0ccf`;
+qualification tooling and records were updated afterwards. Main8fa955d1 was
+merged during preparation; its host-only fixes do not change this released base.
 The author will connect the instrument later. No physical USB device was opened,
 no RAM boot/Keep/flash or project edit was performed during offline preparation.
 
