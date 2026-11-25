@@ -1,0 +1,1 @@
+Development: the Octatrack USB bridge lets a client that arrives while the last one is still hanging up wait up to a second instead of refusing it, so `npm run device -- serve` works against a bridge that is already running (its check that a bridge listens no longer makes its own connection look busy).

@@ -1,0 +1,77 @@
+.guidelines-page {
+  container-type: inline-size;
+  max-width: 64rem;
+  margin-inline: auto;
+  color: var(--text-secondary);
+  line-height: var(--reading-line-height);
+}
+.guidelines-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(12rem, .8fr);
+  column-gap: clamp(2rem, 6cqi, 4.5rem);
+  padding-block: .75rem 1.75rem;
+}
+.guidelines-intro h1 {
+  grid-column: 1 / -1;
+  margin: 0 0 .875rem;
+  color: var(--text);
+  font-size: clamp(2rem, 5cqi, 3rem);
+  letter-spacing: -.035em;
+  line-height: 1.1;
+}
+.guidelines-intro > p { grid-column: 1; max-width: 62ch; margin: 0; color: var(--muted); font-size: .875rem; }
+.guidelines-intro > p:first-of-type { max-width: 50ch; margin-bottom: .625rem; color: var(--text-secondary); font-size: 1.0625rem; }
+.guidelines-intro blockquote {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: start;
+  max-width: 27ch;
+  margin: 0;
+  padding-top: .75rem;
+  border-top: 1px solid var(--accent-line);
+  color: var(--accent-hover);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.guidelines-intro blockquote p { margin: 0; }
+.guidelines-reading {
+  display: grid;
+  grid-template-columns: minmax(10rem, 13.5rem) minmax(0, 1fr);
+  gap: clamp(1.75rem, 6cqi, 4rem);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.guidelines-index { position: sticky; top: 1rem; align-self: start; }
+.guidelines-index p { margin: 0 0 .5rem; color: var(--muted); font-size: .8125rem; font-weight: 600; }
+.guidelines-index ul { margin: 0; padding: 0; list-style: none; }
+.guidelines-index a { display: flex; align-items: center; min-height: 2.75rem; border-bottom: 1px solid var(--chrome-edge); color: var(--text-secondary); font-size: .875rem; }
+.guidelines-index a:hover, .guidelines-index a:focus-visible { color: var(--accent-hover); text-decoration: underline; text-underline-offset: .2em; }
+.guidelines-index a[aria-current="location"] { color: var(--accent-hover); font-weight: 600; }
+.guidelines-index button { display: none; }
+.guidelines-rules { max-width: 64ch; min-width: 0; font-size: .9375rem; }
+.guidelines-rules section + section, .guidelines-rules footer { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.guidelines-rules h2 { scroll-margin-top: 1.25rem; margin: 0 0 .75rem; color: var(--text); font-size: clamp(1.25rem, 2.8cqi, 1.625rem); line-height: 1.2; letter-spacing: -.02em; }
+.guidelines-rules :is(p, ul) { margin: 0; }
+.guidelines-rules p + ul { margin-top: 1rem; }
+.guidelines-rules ul { padding-inline-start: 1.1rem; }
+.guidelines-rules li { padding-inline-start: .25rem; }
+.guidelines-rules li + li { margin-top: .75rem; }
+.guidelines-rules li::marker { color: var(--faint); font-size: .8em; }
+.guidelines-rules li strong:first-child { display: block; color: var(--text); font-weight: 650; }
+.guidelines-rules footer { color: var(--muted); font-size: .875rem; }
+.guidelines-rules footer p + p { margin-top: .6rem; }
+.guidelines-rules a { color: var(--accent); text-decoration: underline; text-underline-offset: .18em; overflow-wrap: anywhere; }
+.guidelines-rules a:hover { color: var(--accent-hover); }
+@container (max-width: 43rem) {
+  .guidelines-intro { display: block; padding-block: .375rem 1.25rem; }
+  .guidelines-intro blockquote { max-width: 52ch; margin-top: .875rem; padding: 0; border: 0; font-size: .9375rem; }
+  .guidelines-reading { display: block; padding-top: 0; }
+  .guidelines-index { position: static; margin-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+  .guidelines-index p, .guidelines-index ul[data-open="false"] { display: none; }
+  .guidelines-index button { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; min-height: 2.75rem; padding: .5rem 0; border: 0; background: transparent; color: var(--accent); text-align: left; font-size: .875rem; font-weight: 600; }
+  .guidelines-index button::after { content: ''; width: .45rem; height: .45rem; margin-right: .375rem; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+  .guidelines-index button[aria-expanded="true"]::after { transform: rotate(225deg); }
+  .guidelines-index li:last-child a { border-bottom: 0; }
+  .guidelines-rules h2 { scroll-margin-top: 4.5rem; }
+}

@@ -174,3 +174,70 @@ flashed base and saved sixteen-module set after this new run needs a user
 power cycle; no post-test power-cycle result is claimed here. The earlier
 power-off/interrupted-run outcomes and later event-36 build qualification
 remain separate.
+
+## Confirmed grid actions and SNAP alignment
+
+The beta base exposes an optional, size-checked ABI-1 API tail for SNAP
+alignment. Existing ABI-1 clients retain the original prefix and `replace`
+behavior. SNAP copies a normal grid proposal and uses the native
+CREATE/REPLACE confirmation; PCM analysis starts only after YES. The base reads
+bounded native sample-frame pairs on engine work, using the opening's
+LEFT/RIGHT/BOTH selection, and publishes the complete table only after the
+source and owner still match. Cancelled, stale, failed or over-limit work leaves
+the old marker table intact. No module PCM pointer or callback crosses the API.
+
+From stock SLICE GRID, FUNC+AED selects the first registered action. Further
+FUNC+AED presses advance through actions in registration order; from the last
+action the chord returns to stock SLICE GRID. With no registered action, the
+chord remains stock. The base handles the chord only for that grid/action cycle
+and leaves unrelated dialogs alone. An action joining the cycle must retire its
+sample-editor token on FUNC/AED before passing the key through to stock, so the
+base can safely advance or return to the grid. The base does not guess an
+action's private modal state or dismiss it on the action's behalf.
+
+Hardware evidence must name the exact complete base build. The 2 November MKII
+SNAP result in the Beat Slicer draft covers one mono16 Static fixture on a
+separately instrumented measurement base; it does not qualify this beta base.
+See the draft's dated hardware record for exact boundaries, timing scope and
+remaining cases.
+
+## Exact beta-base whole-set trial — 3 November 2026
+
+On the owner's Octatrack running OS 1.40C, the exact beta base RAM-booted from
+this PR had identity `efab14e51c4c4a3816cc81f76a15b538940066ae1c4a35e763273abd8fe066d5`.
+The frontend reviewed and trialled the observed 17-module set plus published
+Beat Slicer 0.1.66 (`6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d`,
+5,780 bytes). The base self-test passed: 18/18 intact, seven DSP modules and
+7/7 exercised, zero failures; peak CPU was 53.4%, track groups peaked at 67.0%
+and 71.1%, and the longest frame gap was 417 microseconds.
+
+The first whole-set rollback returned `needs-recovery`. Bounded retries kept the
+same transaction in recovery; retry 17 returned `ok`. The base then confirmed
+normal phase and the original `efab14e5…` active digest. A fresh frontend status
+read independently confirmed the exact base active, an empty inventory and the
+passing 18-module self-test record. The reason for the initial recovery refusal
+is unknown.
+
+No Keep, flash, project/sample save or power cycle occurred. The hardware panel
+was not operated during this trial. 0.1.66 has no SNAP control, so this run
+supplies no SNAP OFF/ON result. The separate panel trials below cover both
+review questions.
+
+## Exact beta-base panel trials — 4 November 2026
+
+The same beta base `efab14e51c4c4a3816cc81f76a15b538940066ae1c4a35e763273abd8fe066d5`
+was RAM-booted on the owner's OS 1.40C Octatrack. Before the boot, the flashed
+base reported 17 live and saved modules. The owner confirmed stopped transport
+and recording and a disposable project. Each trial contained Beat Slicer only.
+
+- Published 0.1.66, package SHA-256 `6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d`:
+  the owner reported that FUNC+AED while CREATE BEAT GRID was open brought up
+  stock CREATE SLICE GRID. Undo returned the beta base to its empty baseline.
+- Private 0.1.68 candidate, package SHA-256 `195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643`:
+  the owner reported creating a grid with SNAP OFF and another with SNAP ON,
+  both completing normally. Undo and a fresh status read returned the beta base
+  to its empty baseline.
+
+These are owner-reported panel outcomes, not measured boundary or audio results.
+No Keep, flash, project/sample save or power cycle occurred in these trials;
+the temporary beta base was still running after Undo.

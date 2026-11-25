@@ -23,4 +23,7 @@ unsigned modwerk_dsp_report(uint32_t *out);
 void modwerk_machine_retarget(volatile uint32_t *slot, unsigned n, uint32_t gone, uint32_t now);
 void modwerk_machine_types_restored(volatile uint32_t *slots, uint32_t address, uint32_t length, const uint8_t *patched,
                                     const uint8_t *stock);
+/* runtime.c: the transport long (0x800065b8) and the 16 track bytes (0x80006500) read stopped: rewound (0) or paused,
+ * the position kept (2). */
+int modwerk_machine_transport_stopped(uint32_t word, const volatile uint8_t *tracks);
 #endif
