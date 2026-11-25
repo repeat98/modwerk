@@ -353,6 +353,29 @@ static int readable(uint32_t a, uint32_t n)
     return (a >= 0x40000000 && a + n <= DDR_END) || (a >= 0x80000000 && a + n <= 0x80010000);
 }
 
+// zlib's CRC32 a nibble at a time (16 words of table): the staged container is up to CONTAINER_MAX bytes, read in the
+// UI task while UPGRADE OS NOW? waits, so eight times fewer steps than the bitwise crc32 the gate uses.
+static uint32_t crc32_nibble(const uint8_t *p, uint32_t n)
+{
+    static const uint32_t t[16] = {
+        0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+        0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c, 0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c };
+    uint32_t c = ~0u;
+    while (n--) {
+        c ^= *p++;
+        c = (c >> 4) ^ t[c & 15];
+        c = (c >> 4) ^ t[c & 15];
+    }
+    return ~c;
+}
+
+// The upload UPGRADE OS NOW? waits for is the one the host describes: the container's length and its CRC32, so a YES
+// never confirms another image of the same size.
+static int staged_is(uint32_t clen, uint32_t ccrc)
+{
+    return STAGED[0] == clen && clen <= CONTAINER_MAX && crc32_nibble((const uint8_t *)(STAGED + 2), clen) == ccrc;
+}
+
 static void COLD act(const uint8_t *m, int len)
 {
     int seq = m[6], cmd = m[7], n = len - HEADER - 1, status = ST_OK;
@@ -410,8 +433,8 @@ static void COLD act(const uint8_t *m, int len)
             status = ST_HUMAN;
         else if (n < 20)
             status = ST_BAD;
-        else if (!flash_waits() || STAGED[0] != get32(m + HEADER + 10))   // the container length
-            status = ST_NO_PROMPT;      // the prompt went away, or it is for another upload: no YES
+        else if (!flash_waits() || !staged_is(get32(m + HEADER + 10), get32(m + HEADER + 15)))
+            status = ST_NO_PROMPT;      // the prompt went away, or it is for another upload (length or CRC): no YES
         else if (pend_head - pend_tail > PENDING - 2)
             status = ST_BUSY;
         else {

@@ -27,7 +27,7 @@ static void stub_queue_post(void *q, const void *msg)
 static int32_t key_index[111];
 static uint8_t key_bits[16];
 static uint8_t usb_state;
-static uint32_t upload_words[64];
+static uint32_t upload_words[8 + 2 + 64];       // stock's header, the struct (length, then a 256-byte container)
 #define upload ((uint8_t *)upload_words)
 
 #define SYSEX_SEND_AT ((uintptr_t)stub_sysex_send)
@@ -184,14 +184,30 @@ int main(void)
 #ifdef CMD_RAMBOOT
     // RAM boot: YES only while UPGRADE OS NOW? waits for the upload the host describes; otherwise the panel is left alone.
     {
-        const uint32_t args[4] = { 0x200000, 0x2f2c3b6e, 0x1d0000, 0x12345678 };
-        int yes = presses_of(KEY_YES);
+        uint8_t *container = (uint8_t *)(upload_words + 10);
+        uint32_t args[4] = { 0x200000, 0x2f2c3b6e, 256, 0 };
+        int yes = presses_of(KEY_YES), posts = posted_count_host, i;
+        for (i = 0; i < 256; i++)
+            container[i] = (uint8_t)(i * 13 + 5);
+        args[3] = crc32(container, 256);                // the host's CRC of the container it sent (zlib's)
+        CHECK(crc32_nibble(container, 256) == args[3]);
+        CHECK(crc32_nibble((const uint8_t *)"123456789", 9) == 0xcbf43926);   // zlib's check value
+        upload_words[8] = 256;
         upload[0] = 0;
         CHECK(request4(CMD_RAMBOOT, args) == ST_NO_PROMPT && presses_of(KEY_YES) == yes && !mw_link_ramboot_due);
         upload[0] = 3;
-        upload_words[8] = 0x1d0004;                     // another upload's container
+        upload_words[8] = 260;                          // another upload's length
         CHECK(request4(CMD_RAMBOOT, args) == ST_NO_PROMPT && presses_of(KEY_YES) == yes && !mw_link_ramboot_due);
-        upload_words[8] = 0x1d0000;
+        upload_words[8] = 256;
+        container[100] ^= 0x01;                         // another container of the same size: one bit apart
+        CHECK(request4(CMD_RAMBOOT, args) == ST_NO_PROMPT && !mw_link_ramboot_due);
+        CHECK(posted_count_host == posts);              // the panel is left alone: nothing posted, no YES
+        container[100] ^= 0x01;
+        args[2] = CONTAINER_MAX + 1;                    // a length past the copy's room is never read
+        upload_words[8] = CONTAINER_MAX + 1;
+        CHECK(request4(CMD_RAMBOOT, args) == ST_NO_PROMPT && posted_count_host == posts);
+        args[2] = 256;
+        upload_words[8] = 256;
         CHECK(request4(CMD_RAMBOOT, args) == ST_OK && presses_of(KEY_YES) == yes + 1 && mw_link_ramboot_due == 1);
         upload[0] = 0;
     }

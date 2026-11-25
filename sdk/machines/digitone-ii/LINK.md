@@ -29,7 +29,7 @@ so a draw between its reads can tear a frame. Stock keeps two frame pointers sid
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
-Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES), 7 `ramboot` found no UPGRADE OS NOW? waiting for the upload it describes (container length) and pressed nothing. USB only: a link message from DIN is never acted on.
+Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES), 7 `ramboot` found no UPGRADE OS NOW? waiting for the upload it describes (container length and CRC32) and pressed nothing. USB only: a link message from DIN is never acted on.
 
 `ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
 
@@ -65,8 +65,9 @@ MKII link's RAM boot ([its LINK.md](../analog-rytm-mkii/LINK.md#ram-boot)), at O
 
 1. The host uploads the image with stock's OS upgrade, then sends `ramboot` with the unpacked MAIN OS's length and
    CRC32 and the container's (the Rytm link's `ramboot_args`). The base presses YES and sets a flag, but only while
-   UPGRADE OS NOW? waits for that upload (stock's upload buffer complete, its struct the container's length);
-   otherwise it answers status 7 and leaves the panel alone.
+   UPGRADE OS NOW? waits for that upload: stock's upload buffer complete, its struct the container's length, and the
+   staged container's CRC32 the one the host sent (read in the UI task, a nibble table at a time, before the YES), so
+   another image of the same size is never confirmed. Otherwise it answers status 7 and leaves the panel alone.
 2. Stock's upgrade job validates the upload and saves the working state. Where it calls the erase-and-write routine
    (0x4010921c -> 0x40139104), the base looks at the flag: clear, stock's routine runs. Set, it waits and drains as
    stock does, writes the data cache's dirty lines out, switches the data cache off and, if the staged upload has the
