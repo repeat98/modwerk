@@ -28,7 +28,7 @@ const buttonNamed = (name: string) => [...document.querySelectorAll('button')].f
 const noop = () => {}
 const library = {
   query: '', octatrackModules: AVAILABLE_MODULES, octatrackSelected: [], onToggleOctatrack: noop,
-  digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
+  digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [], 'model-cycles': [] }, onToggleDigi: noop,
   family: 'all', onFamilyChange: noop, sort: 'updated', onSortChange: noop, statistics: null,
   comparison: [], onCompare: noop, onOpenComparison: noop,
   viewedModuleVersions: {}, moduleBaseline: null,
