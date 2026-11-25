@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * The Model:Cycles' glue for the machine-neutral runtime loader (sdk/runtime/loader, README.md "Porting to another
  * machine"), after the Octatrack's (sdk/machines/octatrack/elekloader/runtime.c), and the trampolines from core-mc's
- * hook bus to the live modules' hooks. Development bases only (base.json's dev).
+ * hook bus to the live modules' hooks. Every base (base.json's add).
  *
  * What it rests on (OS 1.13, read from the code; the Octatrack's kernel and caches are the same design):
  * - Caches: the OS entry sets CACR 0xa50ce100 (0x40000548: the Octatrack's 0xa40ce000 with both invalidate-all bits)
@@ -66,15 +66,19 @@ void *modwerk_machine_uncached(void *p) { return (void *)((uintptr_t)p + ALIAS);
 /* Stock's CACR without the invalidate-all bits, plus ICINVA (bit 8): the instruction and branch caches. */
 void modwerk_machine_invalidate_code(void) { __asm__ __volatile__("movec %0,%%cacr\n\tnop" :: "d"(0xa40ce100u) : "memory"); }
 uint8_t *modwerk_machine_code(uint32_t address) { return (uint8_t *)(uintptr_t)(address + ALIAS); }
-/* CPUSHL pushes a dirty 16-byte line and, with CACR's DPI clear as stock leaves it, invalidates it, so no cached
- * copy overwrites the patch later. */
+/* CPUSHL names a line by its set and way (An[1:0] the way, link.s's RAM boot), not by its address: push every way of
+ * each set the range maps to, as the Octatrack's cached path does. With CACR's DPI clear as stock leaves it, that
+ * pushes and invalidates the range's lines and any others in those sets, so no cached copy overwrites the patch
+ * later. The NOP waits for the pushes to reach memory. */
 void modwerk_machine_flush_data(uint32_t address, uint32_t length)
 {
     for (uint32_t line = address & ~15u; line < address + length; line += 16u)
-        __asm__ __volatile__("cpushl %%dc,(%0)" :: "a"(line) : "memory");
+        for (uint32_t way = 0; way < 4u; ++way)
+            __asm__ __volatile__("cpushl %%dc,(%0)" :: "a"(line | way) : "memory");
+    __asm__ __volatile__("nop" ::: "memory");
 }
 /* How long interrupts stay masked, outermost spans only, in DMA timer 0 counts (135.168 MHz; a codec block, 667 us,
- * is 90,112): read back with the link's MEM. */
+ * is 90,112): read back with the link's MEM, so only development bases report them. */
 #define DTCN0 U32(0xfc07000cu)
 volatile uint32_t mw_masked_max, mw_masked_last, mw_masked_spans;
 static uint32_t masked_at;

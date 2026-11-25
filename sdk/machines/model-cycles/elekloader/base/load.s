@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: GPL-3.0-or-later
-| Development bases only (base.json's dev): the audio load probe. The audio interrupt calls the
+| Every base (base.json's add): the audio load probe. The audio interrupt calls the
 | audio function (voices, mix, effects) at OS 1.13 0x40059382, jsr 0x4005979e (defsym
 | LOAD_AUDIO_FN); the site points that call here. The probe takes the return address off the
 | stack so the audio function sees its arguments where stock put them, reads DMA timer 0

@@ -122,6 +122,22 @@ class MachineBases(unittest.TestCase):
             result = subprocess.run([temp + "/t"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_model_cycles_link_on_the_host(self):
+        """A development base's link on the host: RAMBOOT keeps an accepted request's numbers for the copy, and a reply
+        goes out whole under stock's USB lock, never while another sender's SysEx is open."""
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/model-cycles/elekloader/base"
+        stock = ["-D%s=0" % name for name in ("UI_QUEUE_PTR_AT", "QUEUE_POST_AT", "KEY_INDEX_AT", "KEY_BITS_AT")]
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST",
+                            "-DMODWERK_DEV", *stock, "-I", here, here / "link.c", here / "test_link.c", "-o",
+                            temp + "/t"], check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_model_cycles_loader_transport_on_the_host(self):
         """mc_link.py's framing through modules.c's parts into the upload controller and the loader: a module goes on
         trial, and ten quiet seconds of UI ticks put the previous set back."""
@@ -406,20 +422,38 @@ class MachineBases(unittest.TestCase):
         self.assertEqual([s for s in bus["sources"] if s in voices["sources"]], voices["sources"])
         self.assertEqual([s for s in bus["subscribe"] if s in voices["subscribe"]], voices["subscribe"])
 
+    def test_shared_sources_are_staged_with_the_part_that_names_them(self):
+        # sdk/runtime/ sources: common's and add's in every base that takes them (the Model:Cycles' release base
+        # needs loader.c, upload.c, wire.c and sha256.c), dev's in development bases only
+        checked = 0
+        for machine, config in bases():
+            for name, add, leave in machine_base.variants(config):
+                for dev in ((False, True) if "dev" in config else (False,)):
+                    staged = {"common": True, "add": add, "dev": dev}
+                    shared = [(pathlib.Path(f).name, folder, staged[part]) for part in staged
+                              for folder, files in config.get(part, {}).get("shared", {}).items() for f in files]
+                    if not shared:
+                        continue
+                    with tempfile.TemporaryDirectory() as work:
+                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
+                        self.assertNotIn("shared", json.loads((core / "mod.json").read_text()))
+                        for file, folder, expected in shared:
+                            self.assertEqual((pathlib.Path(work) / "mods" / folder / file).is_file(), expected,
+                                             (machine, name, dev, file))
+                            checked += expected
+        self.assertGreater(checked, 0)
+
     def test_development_bases_stage_dev_on_every_variant_and_releases_never_carry_it(self):
         for machine, config in bases():
             if "dev" not in config:
                 continue
             for name, add, leave in machine_base.variants(config):
                 for dev in (False, True):
-                    shared = {pathlib.Path(f).name: folder for folder, files in config["dev"].get("shared", {}).items()
-                              for f in files}
+                    shared = {pathlib.Path(f).name for part in ("common", "add", "dev")
+                              for files in config.get(part, {}).get("shared", {}).values() for f in files}
                     with tempfile.TemporaryDirectory() as work:
                         core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
                         mod = json.loads((core / "mod.json").read_text())
-                        self.assertNotIn("shared", mod)
-                        for file, folder in shared.items():  # sdk/runtime/ sources, staged for a dev base only
-                            self.assertEqual((pathlib.Path(work) / "mods" / folder / file).is_file(), dev, (name, file))
                     for source in config["dev"]["sources"]:
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
                         self.assertTrue(pathlib.Path(source).name in shared or

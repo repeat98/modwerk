@@ -1,6 +1,6 @@
 | SPDX-License-Identifier: GPL-3.0-or-later
-| Development bases only (base.json's dev, machine:base --dev): the development link's router site
-| (link.c) and the RAM boot's cache, reset and entry. After the Analog Rytm MKII's link (sdk/machines/analog-rytm-mkii/elekloader/base/link.s).
+| Every base (base.json's add): the link's router site (link.c). The RAM boot's cache, reset and
+| entry below run in development bases only: link.c calls them with MODWERK_DEV alone. After the Analog Rytm MKII's link (sdk/machines/analog-rytm-mkii/elekloader/base/link.s).
 
         .section .run, "ax"
 

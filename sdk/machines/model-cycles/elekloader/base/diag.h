@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * Development bases only (base.json's dev): the unit's diagnostics log (diag.c) in the Octatrack's layout, version 2
+ * Every base (base.json's add): the unit's diagnostics log (diag.c) in the Octatrack's layout, version 2
  * (sdk/machines/octatrack/elekloader/diag.h), so the site's parser reads it unchanged (src/engine/elekloader/
  * device-log.ts, big-endian as the ColdFire stores it). sdk/tests/test_machine_base.py checks that the structs and
  * numbers below are the Octatrack's word for word. The link's DIAG gives the log's address and size; a host reads it
- * with MEM. */
+ * with LOG, which reads only the log. */
 #ifndef MODWERK_CYCLES_DIAG_H
 #define MODWERK_CYCLES_DIAG_H
 #include <stdint.h>

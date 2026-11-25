@@ -18,7 +18,7 @@
       }
     ],
     "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. Modwerk's Model:Cycles base is in development and downloads remain disabled.",
-    "recovery": "Hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock .syx over 5-pin MIDI; recovery mode does not use USB."
+    "recovery": "Hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock .syx to MIDI IN, the 3.5 mm TRS jack (a DIN interface through a TRS-to-DIN adapter); recovery mode does not use USB."
   },
   "steps": {
     "format": "done",

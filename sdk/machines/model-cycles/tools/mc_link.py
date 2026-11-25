@@ -393,7 +393,7 @@ class Link:
                 continue
             if m.type == 'sysex' and bytes(m.data[:5]) == HEADER[1:6] and m.data[5] == self.seq and m.data[6] == cmd | 0x40:
                 return m.data[7], list(m.data[8:])
-        sys.exit('No reply within %d s (is a development base with the loader on the unit?)' % timeout)
+        sys.exit('No reply within %d s (is a Modwerk base on the unit?)' % timeout)
 
     def frame(self, command, transaction, session, body=b''):
         """One wire request: its parts, then UP_RUN; the controller's response, decoded."""
