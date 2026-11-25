@@ -165,7 +165,7 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build QF02, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build QF04, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +11](media/sampler-amp.png)
 

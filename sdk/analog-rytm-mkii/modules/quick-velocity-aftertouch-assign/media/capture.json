@@ -4,16 +4,16 @@
   "moduleId": "quick-velocity-aftertouch-assign",
   "moduleVersion": "0.5.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-25T23:00:00Z",
-  "imageSha256": "e56c3e9beea40cde2491d10221cbf9e3ee283018045da7e1d7c916a18d727450",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.5.0-experimental, materialised against stock OS 1.74, --version QF02",
+  "capturedAt": "2026-11-26T00:30:00Z",
+  "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.5.0-experimental, materialised against stock OS 1.74, --version QF04",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QF02 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first seven captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10700M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held from 9403M with SD pressed (links performance 2) and knob A turned five times; PERF; RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 at 9953M and 0 at 10003M as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held from 10603M with YES or NO at 10633M. All nine are byte-identical to the captures of the same plans on the two earlier packages linked side by side (QB01) and to the files they replace.",
+  "conditions": "SETUP: boot QF04 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first seven captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10700M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held from 9403M with SD pressed (links performance 2) and knob A turned five times; PERF; RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 at 9953M and 0 at 10003M as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held from 10603M with YES or NO at 10633M. All nine are byte-identical to the captures of the same plans on the two earlier packages linked side by side (QB01) and to the files they replace.",
   "captures": [
     {
       "path": "media/fix-filter.png",
