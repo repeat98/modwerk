@@ -12,6 +12,13 @@
 #define FIXED_VEL_GET_AT 0x400b7724         // sequencer state -> FIX on
 #define FIXED_VEL_SET_AT 0x400b7702         // sequencer state, on
 #define IS_KEY_HELD_AT 0x40081c28
+// Tracks. Stock selects one only through 0x400d4ba0(track, keep_fx): TRK + pad passes 0;
+// the pad handler (OS 1.74, 0x400c7e84..0x400c7ebc) selects a pad's track when AUTO TRK
+// SWITCH is on, 0x400b606c(globals) answering it in d0's low byte, and passes keep_fx =
+// (the selected track is the FX track 12). The globals are project + 236 (0x400ae49e).
+#define PROJECT_GLOBALS_AT 0x400ae49e
+#define AUTO_TRK_SWITCH_AT 0x400b606c
+#define SELECT_TRACK_AT 0x400d4ba0
 #define STRING_FROM_CSTR_AT 0x401bcff0
 #define STRING_DTOR_AT 0x401bb540
 // Stock's text drawing (as the Modwerk base's send pages use it): printf-style
@@ -146,7 +153,8 @@
 #define PAGES_TOP_VTABLE 0x4023502c
 #define PERF_VTABLE 0x401e26c4           // PerformanceView
 #define PERF_EDIT_VTABLE 0x401e2a54      // PerformanceEditView: what the PERF key opens
-#define SCENE_VTABLE 0x401e305c          // SceneSelectView
+#define SCENE_VTABLE 0x401e305c          // SceneSelectView: its key handler (0x400d1798) takes
+                                         // every pad, engaging or disengaging a scene
 #define SCENE_EDIT_VTABLE 0x401e2ee8     // SceneEditView: what the SCNE key opens
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394

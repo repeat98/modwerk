@@ -250,4 +250,25 @@ On the author's Analog Rytm MKII, OS 1.74: QS02 (above) booted from RAM over the
 | qma-lfo-on-lfo-page (pages on top) | | | pass | WAV moves as on stock (no unit reference recorded yet) |
 | The other 30 rig cases above | | | pass, scene cases' screens identical to QS02 | qma-lfo-tap: only the scratch kit's own sound differs, as on QS02 |
 
+## The author's hand test of QM40, and what changed after it (0.4.0, QM41/QM42, QS04/QS05)
+
+Reported by the author, 25 Nov 2026, QM40 (the plain-base package image, flashed): a SCENE hold with nothing touched opened scene edit on the release, as designed. Inside scene edit, SCENE + knob did nothing, also as designed (stock's scene edit locks only with a scene pad held). With no scene engaged, SCENE + FILTER locked nothing; in rytm-emu QM40 showed `NO ACTIVE SCENE` there, so the unit screen was most likely still scene edit (not confirmed). The author asked for: locks with no scene engaged going to the scene engaged last, and pads during a SCENE hold switching tracks (AUTO TRK SWITCH on), not engaging scenes, with no scene edit after.
+
+rytm-emu, QM41 (`44d63b99…`) and QM42 (`7990c1ee…`, after the review fixes, every screen identical to QM41's), plain base 1c14b6b0, against stock QS00 where stock does something:
+
+| Check | QS00 (stock) | QM40 | QM41 / QM42 |
+| --- | --- | --- | --- |
+| SCENE + B, no scene ever engaged | | `NO ACTIVE SCENE` | SWT locked at 105 in scene 1, its other locks (DEC, MOD, LEV) boxed |
+| Scene 2 engaged, then disengaged, scene mode left, SCENE + B | | `NO ACTIVE SCENE` | SWT locked at 105, the only box: scene 2 (no other locks) |
+| SCENE held, SD tapped | scene edit open (0.2 s), the pad picks scene 2 | SD selected | SD selected |
+| ...SCENE let go | scene edit | scene edit opens (the pad did not count) | the SD page, no scene edit |
+| Scene mode, SCENE held, SD tapped, B turned | scene edit, scene 2 | scene 2 engaged, BD stays | SD selected, SWT box; let go: no scene edit |
+| ...then SCENE held alone and let go | | | scene edit on SCENE 1: the pad engaged no scene |
+| Scene mode, SD tapped (no SCENE) | scene 2 engaged | | scene 2 engaged, as stock |
+| SCENE held, B turned on BD, SD tapped, B turned | | | SWT box on SD |
+
+Rig cases, rytm-emu, QS04 (`e03614c6…`, dev base 25f2c915) and QS05 (`a2e4afd7…`): all 31 pass; s3-noscene now locks into scene 1 instead of the popup.
+
+An independent code review: no serious bug; its three small points are in (a foreign locker held: the pad stays stock's; a redraw after the select; the README says the last scene is kept across kit loads) with the stale comments.
+
 Not tested: scene edit opened by a held SCENE on the unit (needs a person); 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.

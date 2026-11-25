@@ -63,7 +63,7 @@
       "While FIX or SAMPLER is held, the TRIG page's knobs, knobs turned with a trig held and FUNC + a knob do nothing.",
       "FUNC + FIX, the FX track and a performance, scene or trig lock edit keep stock's behaviour.",
       "SCENE held and let go with no knob opens scene edit on the release, not while it is held.",
-      "SCENE + knob needs an active scene: with none, a popup says NO ACTIVE SCENE and nothing changes. With all 48 scene locks in use it says SCENE LOCKS FULL.",
+      "SCENE + knob with no scene engaged locks the scene engaged last (scene 1 until one has been since power-on), without engaging it. With all 48 scene locks in use it says SCENE LOCKS FULL.",
       "While SCENE is held after a knob, every knob turn writes a scene lock, in LIVE RECORDING too, and the TRIG page's knobs do nothing.",
       "The first knob event of a SCENE hold ends SCENE's hold as stock does when scene edit opens: any other key held at that moment loses its clean release.",
       "During a FIX, SAMPLER or LFO hold SCENE does nothing, and during a SCENE hold FIX, SAMPLER and LFO do nothing."
@@ -86,7 +86,8 @@
       "ui:LFO + knob on the sound pages and the FX track",
       "ui:LFO page key shows its page on the release",
       "ui:SCENE + knob on the sound pages and the FX track",
-      "ui:SCENE hold opens scene edit on the release"
+      "ui:SCENE hold opens scene edit on the release",
+      "ui:SCENE + pad in scene mode selects the track"
     ]
   },
   "resources": {
