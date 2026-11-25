@@ -2,7 +2,9 @@
  * Midiverb's ColdFire half. Every frame (the base's ev_frame_record, after stock's parameter builder, scenes and
  * LFOs) it streams each Midiverb track's program, chosen by PROG and BANK, to the DSP through FX2's page 2: one
  * chunk a frame, round and round (engine.asm takes a program from its chunk 0 to its checksum, then plays it).
- * mv_name and mv_bank_name give entry.s what stock's message box shows when PROG or BANK turns. */
+ * While STOP's tail kill holds a track (ev_tail_kill) it sends the kill instead: the DSP silences the reverb and
+ * clears its ring, the program kept. mv_name and mv_bank_name give entry.s what stock's message box shows when
+ * PROG or BANK turns. */
 #include "stream.h"
 
 typedef unsigned char u8;
@@ -15,6 +17,7 @@ extern const u8 __image_start[];
 static const volatile u8 *mv_page IMAGE;
 static u8 mv_k[8] IMAGE;       /* per track: the chunk sent next */
 static u8 mv_g[8] IMAGE;       /* per track: the program being sent, plus one (0: none) */
+static u8 mv_kill IMAGE;       /* the tracks STOP's tail kill holds this frame, bit t */
 
 /* shortcut: finds the module's effect id through its page recipe, which the builder puts before this code (its
  * 'MWPG' head at the module's start) and in which the base keeps the page it installed (fxpage.c: recipe + 48;
@@ -52,14 +55,27 @@ const char *mv_bank_name(unsigned bank)
     return names[bank > 2u ? 2u : bank];
 }
 
+/* ev_tail_kill: STOP, STOP, STOP holds this track (the frame's record builder, before ev_frame_record runs). */
+void mv_tail_kill(u8 *record, unsigned track)
+{
+    (void)record;
+    if (track < 8u) mv_kill |= (u8)(1u << track);
+}
+
 void mv_frame(void)
 {
+    u8 kill = mv_kill;
+    mv_kill = 0;
     int id = mv_id();
     if (id < 0) return;
     volatile u8 *r = (volatile u8 *)(0x80000110u + (U32(0x800000e0u) & 1u) * 512u);
     for (unsigned t = 0; t < 8u; ++t, r += 64) {
         if (r[56] != 0 || r[57] != (u8)id) { mv_g[t] = 0; continue; } /* FX2's id, halfword +56 */
         unsigned g = mv_program(r[30], r[24]);                     /* BANK is slot D, PROG slot A */
+        if (kill >> t & 1u) {                                      /* the kill: chunk $ff, the stream waits */
+            r[48] = 0xff, r[49] = (u8)g, r[50] = r[51] = r[52] = r[53] = 0;
+            continue;
+        }
         if (mv_g[t] != g + 1u) mv_g[t] = (u8)(g + 1u), mv_k[t] = 0;
         const u16 *w = mv_words + mv_start[g];
         unsigned words = (w[0] & 0x7fffu) + 1u, k = mv_k[t], i = 2u * k;

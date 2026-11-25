@@ -28,7 +28,7 @@
 ; 0f half(input)  10 program loading ($ffffff none)  11 its next chunk
 ; 12 loaded (1)  13 its running sum  14 its N  15 its checksum
 ; 16 fade calls left  17 the wet's mix  18 its fall a sample  19 this build's
-; signature ($4d5603: bump it with any change to this layout)
+; signature ($4d5604: bump it with any change to this layout)  1a the tail kill holds
 ; Program words: units [handler*2][argument]; a run of reads is [0][k] then k
 ; ring offsets; the handlers are the jump table's order below.
 
@@ -47,7 +47,7 @@ mvqZERO:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)            ; nothing plays until a program arrives
         move    a,x:(r7+$10)
-        move    #>$4d5603,a
+        move    #>$4d5604,a
         move    a,x:(r7+$19)            ; this build's state
         rts
 
@@ -59,7 +59,7 @@ proc:
 ; changes, so a new version installed over the same id meets the old one's
 ; state. Start afresh then, keeping only the slot's buffer base.
         move    x:(r7+$19),a
-        move    #>$4d5603,x0
+        move    #>$4d5604,x0
         cmp     x0,a
         beq     mvqSIGK
         move    x:(r7+$00),b
@@ -73,7 +73,7 @@ mvqSIGZ:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)
         move    a,x:(r7+$10)
-        move    #>$4d5603,a
+        move    #>$4d5604,a
         move    a,x:(r7+$19)
 mvqSIGK:
 ; The stream's chunk: k and g from r6+$c.
@@ -85,6 +85,32 @@ mvqSIGK:
         lsr     #$8,a
         and     #>$0000ff,a
         move    a1,y1                   ; g
+; STOP's tail kill holds the track (chunk $ff): the reverb goes silent and the
+; ring clears once; the program stays and plays on from silence after it.
+        move    x0,a
+        cmp     #>$ff,a
+        bne     mvqNOKL
+        move    x:(r7+$1a),a
+        tst     a
+        bne     mvqRCVX
+        move    #>$1,a
+        move    a,x:(r7+$1a)
+        clr     a
+        move    a,x:(r7+$16)
+        move    a,x:(r7+$03)
+        move    a,x:(r7+$04)
+        move    a,x:(r7+$06)
+        move    a,x:(r7+$07)
+        move    a,x:(r7+$08)
+        move    a,x:(r7+$09)
+        move    x:(r7+$00),a
+        move    a,x:(r7+$01)
+        move    #>$1f,a
+        move    a,x:(r7+$02)
+        bra     mvqRCVX
+mvqNOKL:
+        clr     a
+        move    a,x:(r7+$1a)
 ; A fade in progress: the program playing fades out over 16 calls; then
 ; nothing plays until the new one has loaded.
         move    x:(r7+$16),a
@@ -268,6 +294,9 @@ mvqREDY:
         clr     a
         move    a,x:(r7+$12)
 mvqPLAY:
+        move    x:(r7+$1a),a
+        tst     a
+        bne     mvqQUIT                 ; the tail kill holds
         move    x:(r7+$0a),a
         move    #>$ffffff,x0
         cmp     x0,a

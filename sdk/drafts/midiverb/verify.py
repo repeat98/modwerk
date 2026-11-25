@@ -62,14 +62,18 @@ def half(x):
     return ((x >> 1) & ~0xFF) + (0x100 if x < 0 else 0)
 
 
-def stream(plan, calls):
-    """The three page-2 words of every call, as stream.c sends them: plan is [(from_call, program or None)]."""
+def stream(plan, calls, kills=()):
+    """The three page-2 words of every call, as stream.c sends them: plan is [(from_call, program or None)];
+    kills [(from_call, to_call)] the calls STOP's tail kill holds the track."""
     out, k, sent = [], 0, None
     for c in range(calls):
         g = next((p for start, p in reversed(plan) if c >= start), None)
         if g is None:
             out.append((0, 0, 0))
             sent = None
+            continue
+        if any(a <= c < b for a, b in kills):
+            out.append(((0xFF << 16) | ((g[0] if isinstance(g, tuple) else g) << 8), 0, 0))
             continue
         if isinstance(g, tuple):        # a deliberately broken stream: (program, word index to corrupt)
             g, broken = g
@@ -91,7 +95,7 @@ def model(chunks, left, right, knobs, block=16):
     """What the engine outputs for one instance, a call a block (no splits)."""
     lev, mix = knobs[1] << 16, knobs[5] << 16
     mix = 0x7FFFFF if mix == 0x7F0000 else mix
-    s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0, fade=0)
+    s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0, fade=0, kill=False)
     area, ring = [0] * 262, [0] * RING
     p = acc = phase = held = 0
     wet_mix = step = 0
@@ -100,7 +104,14 @@ def model(chunks, left, right, knobs, block=16):
     for call, start in enumerate(range(0, len(left), block)):
         c, d, e = chunks[call]
         k, g, A, B = c >> 16, (c >> 8) & 0xFF, (d >> 8) & 0xFFFF, (e >> 8) & 0xFFFF
-        if s["fade"]:
+        if k == 0xFF:                               # the tail kill: silent, the ring cleared once
+            if not s["kill"]:
+                s.update(kill=True, fade=0, counter=31)
+                p = acc = phase = 0
+                y_prev, y_cur = [0, 0], [0, 0]
+                ring = [0] * RING
+        elif s["fade"]:
+            s["kill"] = False
             s["fade"] -= 1
             if not s["fade"]:
                 s["playing"] = NONE
@@ -133,6 +144,8 @@ def model(chunks, left, right, knobs, block=16):
                             s["loaded"] = True
                         else:
                             s["loading"] = NONE
+        if k != 0xFF:
+            s["kill"] = False
         quiet = False
         if s["counter"]:
             s["counter"] -= 1
@@ -140,7 +153,7 @@ def model(chunks, left, right, knobs, block=16):
         else:
             if s["loaded"]:
                 s.update(playing=s["loading"], loading=NONE, loaded=False)
-            quiet = s["playing"] is NONE
+            quiet = s["kill"] or s["playing"] is NONE
         if quiet:                                   # the reverb silent, the dry at its mix
             for n in range(start, min(start + block, len(left))):
                 out_l[n], out_r[n] = mixed(left[n], 0, mix, 0), mixed(right[n], 0, mix, 0)
@@ -221,12 +234,13 @@ def main():
     cases = [
         ("streamed from the start", [(0, a)], sig, right, (0, 32, 0, 0, 0, 127)),
         ("switched to another program", [(0, a), (520, b)], late, late, (0, 64, 0, 0, 0, 90)),
+        ("STOP's tail kill, then on", [(0, a)], sig, right, (0, 32, 0, 0, 0, 90), [(420, 460)]),
         ("no stream: the reverb silent", [(0, None)], sig, right, (0, 32, 0, 0, 0, 90)),
         ("a broken checksum: the reverb silent", [(0, (a, 9))], sig, right, (0, 32, 0, 0, 0, 90)),
     ]
     meter = 0
-    for name, plan, left_in, right_in, knobs in cases:
-        chunks = stream(plan, blocks)
+    for name, plan, left_in, right_in, knobs, *kills in cases:
+        chunks = stream(plan, blocks, kills[0] if kills else ())
         image = G.write_image(asm.words, work / "m.mem", org=asm.org,
                               extra=[(G.P, STREAM_AT, [w for t in chunks for w in t])])
         # One instance a run: the synthetic image hands every instance the same allocator buffer.
