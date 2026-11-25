@@ -25,3 +25,7 @@ Emulator (coupled ColdFire and sound chip, from a ready point saved with each im
 `npm run test:procedure` was not run for this base: the Digitakt II steps it would add (USB link, soak, price) do not exist yet, as for `a3ced45e`.
 
 Not checked on a unit: MIDI chords, sequencer trigs on a lead, a stock machine as the lead, muted voices.
+
+## Pinned for the browser builder
+
+After #2130 merged, the pin record `sdk/imports/elekloader-modwerk-base-digitakt-ii-2026-11-19.json` names this package (SHA-256 `948be0c4…`) at the merge commit `d3eada36c`. `npm run elekloader:update -- --overlay` fetched it from there, checked the catalog (12 cores, 91 mods) and the licence notices, and vendored it as `vendor/elekloader/catalog/modwerk-base-digitakt-ii-948be0c4.elemod`. The `a3ced45e` package left the imports and the vendored catalog, as `1a052a38`'s did when `a3ced45e` was pinned.
