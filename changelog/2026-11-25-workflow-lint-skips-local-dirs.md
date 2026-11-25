@@ -1,0 +1,1 @@
+Development: `npm run lint` skips Codex worktrees under `.codex/` and private `*.local` folders in the checkout, as it already skipped `.claude/`. With one there, ESLint found several TypeScript roots and failed with thousands of parsing errors.

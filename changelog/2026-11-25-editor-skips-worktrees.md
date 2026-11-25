@@ -1,0 +1,1 @@
+Development: VS Code's C/C++ extension and file watcher skip agent worktrees (`.claude/worktrees`, `.codex/worktrees`) and `*.local` folders. On the owner's computer the extension's index held 724,505 files, 78 % of them in worktrees, and kept one core busy for hours (`.vscode/settings.json`).

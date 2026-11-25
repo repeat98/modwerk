@@ -1,0 +1,1 @@
+Every Model:Cycles base now carries the USB link for musicians: identity, audio load, the diagnostics log (read through the new `log` request) and loading modules without a reflash; memory reads, keys and the RAM boot stay in development bases.

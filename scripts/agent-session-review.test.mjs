@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatReview, readCalls, reviewSession } from './agent-session-review.mjs'
+import { formatProcesses, formatReview, heavyProcesses, readCalls, reviewSession } from './agent-session-review.mjs'
 
 const at = seconds => new Date(Date.UTC(2026, 10, 20, 9, 0, seconds)).toISOString()
 const claude = rows => rows.map(row => JSON.stringify(row))
@@ -50,6 +50,38 @@ describe('session review', () => {
     ], 'codex')
     expect(read.prompts).toBe(1)
     expect(read.calls).toEqual([{ tool: 'shell', label: 'shell: make all', start: Date.parse(at(5)), seconds: 60, failed: true }])
+  })
+
+  it('finds what the developer corrected, interrupted and refused', () => {
+    const refused = { type: 'user', timestamp: at(30), message: { content: [{ type: 'tool_result', tool_use_id: 'b', content: "The user doesn't want to proceed with this tool use.", is_error: true }] } }
+    const review = reviewSession(readCalls(claude([
+      prompt('Build the reverb page', 0),
+      use('a', 'Bash', { command: 'npm run check' }, 5), result('a', 20),
+      prompt([{ type: 'text', text: '[Request interrupted by user]' }], 21),
+      prompt('No, the menu row, I said that already', 22),
+      use('b', 'Bash', { command: 'git push --force' }, 25), refused,
+      prompt('Warum dauert das so lange?', 40),
+      prompt('Reply to this <pasted_content id="a1">it still doesn\'t work!</pasted_content>', 50),
+    ])))
+    expect(review).toMatchObject({ prompts: 4, interrupts: 1 })
+    expect(review.denied.map(call => call.label)).toEqual(['Bash: git push --force'])
+    expect(review.friction.map(said => said.text)).toEqual(['No, the menu row, I said that already', 'Warum dauert das so lange?'])
+    const text = formatReview(review).join('\n')
+    expect(text).toContain('stopped the agent 1 times and refused 1 tool calls')
+    expect(text).toContain('> No, the menu row, I said that already')
+    expect(text).not.toContain('Build the reverb page')
+  })
+
+  it('lists development processes that cost much processor time', () => {
+    const rows = heavyProcesses([
+      '  812  98.1  79:12.40    01:55:49 /Users/x/.vscode/extensions/ms-vscode.cpptools-1.35.6/bin/cpptools',
+      '  901   2.0 1-02:00:00 2-00:00:00 /System/Library/WindowServer -daemon',
+      '  77   60.0   0:03.00       00:05 node /work/modwerk/node_modules/.bin/vitest run',
+      '  78    0.0   0:30.00    10:00 node scripts/agent-board.mjs',
+      'garbage',
+    ].join('\n'))
+    expect(rows.map(row => [row.pid, row.seconds])).toEqual([[812, 4752.4], [77, 3]])
+    expect(formatProcesses(rows).join('\n')).toContain('79.2 min   98.1 % now, up 01:55:49  pid 812')
   })
 
   it('says so when a session ran no tools', () => {
