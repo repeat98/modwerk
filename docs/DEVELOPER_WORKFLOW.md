@@ -126,8 +126,9 @@ Follow checks, the author publisher and deployments; then verify the live versio
 
 A base update carries several developers' changes onto players' instruments at once, so it ships as one release and only after a long run on hardware. Each machine has one cumulative draft pull request from `base/<machine>-next`, and the owner decides when it ships (owner, 18 and 19 November 2026).
 
-- **Find the draft first.** Run `gh pr list --state open --head base/<machine>-next` with the machine ID. Add every base fix, hook and rebuild directly to that branch and update the same pull request. From a fork, link your commits on the cumulative draft so a maintainer can apply them with your authorship. If the machine has no open cumulative draft, start one from `base/<machine>-next` into `main`.
-- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
+- **Find the draft first.** Run `gh pr list --state open --head base/<machine>-next`. Add every base fix, hook and rebuild to that branch and update that pull request. From a fork, link your commits on the draft so a maintainer can apply them as yours. With none open, start one from `base/<machine>-next` into `main`.
+- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` in, and never rebase or force-push it. Keep the description's list of what is in it current.
+- **A pull request into the branch** is cut from it and checked with `npm run pr:ready -- --base-branch base/<machine>-next`; without it `pr:ready` merges and compares `main`.
 - **It stays a draft** until the base has been tested extensively on a unit. Each submitter lists pending tests on the draft, then adds the [build, unit and results](TEST_PROCEDURE.md#what-a-base-adds) before release. Only the owner marks it ready and ships it.
 
 ## Manage reports on GitHub
