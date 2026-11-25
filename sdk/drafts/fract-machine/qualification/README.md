@@ -17,6 +17,11 @@ tools. Run it in the pinned isolated native toolchain, with source, stock and
 upstream mounted read-only, no network, dropped capabilities, and a new private
 output directory. It never opens a device:
 
+Before mounting a source archive read-only, use Node 24 to run `npm run prepare`
+in that archive. This recreates ignored catalogue/changelog metadata needed by
+the site's guarded base linker. Keep the original historical snapshot unchanged;
+prepare a private copy when reproducing an older build.
+
 ```sh
 python3 -B sdk/drafts/fract-machine/qualification/build_probe.py \
   --base-tree /private/base72-source --stock /private/OCTATRACK_OS1.40C.syx \
