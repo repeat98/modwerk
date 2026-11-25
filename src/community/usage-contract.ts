@@ -53,6 +53,10 @@ export type VisitSource = typeof VISIT_SOURCES[number]
 export const SIGN_IN_PROMPT_OUTCOMES = ['gate-shown', 'gate-sign-in', 'gate-create-account', 'gate-skipped', 'gate-closed', 'other-shown', 'other-sign-in', 'other-create-account', 'other-closed'] as const
 export type SignInPromptOutcome = typeof SIGN_IN_PROMPT_OUTCOMES[number]
 /** Identifier-free daily totals in site_count_daily, each with exactly one category from its list. */
-export const SITE_COUNTS = { visit_source: VISIT_SOURCES, sign_in_prompt: SIGN_IN_PROMPT_OUTCOMES } as const satisfies Record<string, readonly string[]>
+/** The support thank-you by what earned it (installs, days of use, a base install) and how it was answered (Escape or
+ * the close gesture counts as `closed`), and every other Ko-fi click by where it happened. */
+export const SUPPORT_PROMPT_COUNTS = ['installs-shown', 'installs-kofi', 'installs-later', 'installs-closed', 'installs-never', 'days-shown', 'days-kofi', 'days-later', 'days-closed', 'days-never', 'base-shown', 'base-kofi', 'base-later', 'base-closed', 'base-never', 'line-kofi', 'dialog-kofi', 'bell-kofi', 'announcement-kofi', 'welcome-kofi'] as const
+export type SupportPromptCount = typeof SUPPORT_PROMPT_COUNTS[number]
+export const SITE_COUNTS = { visit_source: VISIT_SOURCES, sign_in_prompt: SIGN_IN_PROMPT_OUTCOMES, support_prompt: SUPPORT_PROMPT_COUNTS } as const satisfies Record<string, readonly string[]>
 export type SiteCount = keyof typeof SITE_COUNTS
 export type SiteCountTotal = { event: SiteCount; detail: string; count: number }
