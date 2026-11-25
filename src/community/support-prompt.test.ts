@@ -77,13 +77,16 @@ describe('support thank-you', () => {
     expect(dueSupportPrompt(Date.now(), null)).toBeNull()
   })
 
-  it('shows costs only once a month is set', () => {
-    expect(renderToStaticMarkup(createElement(SupportCosts, { costs: { month: '', hosting: 40, tokens: 60, covered: 10 } }))).toBe('')
-    const html = renderToStaticMarkup(createElement(SupportCosts, { costs: { month: 'November 2026', hosting: 40, tokens: 60, covered: 25 } }))
-    expect(html).toContain('Hosting €40 · AI tokens €60')
-    expect(html).toContain('Ko-fi covered €25 of €100')
-    expect(html).toContain('width:25%')
-    expect(renderToStaticMarkup(createElement(SupportCosts, { costs: { month: 'December 2026', hosting: 40, tokens: 60, covered: 250 } }))).toContain('width:100%')
+  it('shows the monthly costs, and a Ko-fi bar only once a month’s amount is known', () => {
+    expect(renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 0 } }))).toBe('')
+    const plain = renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 145 } }))
+    expect(plain).toContain('about <strong>€145 a month</strong> for hosting and AI tokens.')
+    expect(plain).not.toContain('Ko-fi covered')
+    const split = renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 100, hosting: 40, tokens: 60, month: 'November 2026', covered: 25 } }))
+    expect(split).toContain('(hosting €40 · AI tokens €60)')
+    expect(split).toContain('Ko-fi covered €25 of €100 in November 2026')
+    expect(split).toContain('width:25%')
+    expect(renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 100, month: 'December 2026', covered: 250 } }))).toContain('width:100%')
   })
 
   it('renders dialogs that close at once and a line that opens Ko-fi in a new tab', () => {

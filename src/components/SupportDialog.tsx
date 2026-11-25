@@ -14,15 +14,17 @@ export function SupportButton({ onClick }: { onClick: () => void }) {
   return <button type="button" className="support-link" aria-haspopup="dialog" onClick={onClick}><span className="support-heart"><Icon name="heart" size={14} /></span>Support Modwerk</button>
 }
 
-/** This month's hosting and token costs and what Ko-fi covered, from `SUPPORT_COSTS`; nothing while it is unset. */
+/** The running costs from `SUPPORT_COSTS`, and a bar for what Ko-fi covered once that month's amount is filled in. */
 export function SupportCosts({ costs = SUPPORT_COSTS }: { costs?: Costs }) {
-  const total = costs.hosting + costs.tokens
-  if (!costs.month || total <= 0) return null
-  const covered = Math.max(0, costs.covered), share = Math.min(100, Math.round(covered / total * 100))
+  if (!(costs.monthly > 0)) return null
+  const split = costs.hosting !== undefined && costs.tokens !== undefined ? ` (hosting ${euro(costs.hosting)} · AI tokens ${euro(costs.tokens)})` : ''
+  const covered = costs.month && costs.covered !== undefined ? Math.max(0, costs.covered) : null
   return <figure className="support-costs">
-    <figcaption><strong>{costs.month}</strong><span>Hosting {euro(costs.hosting)} · AI tokens {euro(costs.tokens)}</span></figcaption>
-    <div className="support-costs-bar" role="img" aria-label={`Ko-fi covered ${euro(covered)} of ${euro(total)}`}><span style={{ width: share + '%' }} /></div>
-    <p>Ko-fi covered {euro(covered)} of {euro(total)}</p>
+    <figcaption>Running costs: about <strong>{euro(costs.monthly)} a month</strong> for hosting and AI tokens{split}.</figcaption>
+    {covered !== null && <>
+      <div className="support-costs-bar" role="img" aria-label={`Ko-fi covered ${euro(covered)} of ${euro(costs.monthly)} in ${costs.month}`}><span style={{ width: Math.min(100, Math.round(covered / costs.monthly * 100)) + '%' }} /></div>
+      <p>Ko-fi covered {euro(covered)} of {euro(costs.monthly)} in {costs.month}</p>
+    </>}
   </figure>
 }
 
@@ -95,11 +97,11 @@ export function SupportMilestonePreview() {
   const [reason, setReason] = useState<SupportPromptReason | null>(PREVIEW_REASONS[0])
   return <section className="configuration-section">
     <h2>Support thank-you preview</h2>
-    <p className="service-note">Development preview. The costs are invented examples; the site shows none until SUPPORT_COSTS is filled in. Below: the line on install screens.</p>
+    <p className="service-note">Development preview with the live SUPPORT_COSTS. Below: the line on install screens.</p>
     <p className="success-note" role="status">Done.</p>
     <SupportLine />
     <div className="dialog-actions">{PREVIEW_REASONS.map(item => <button key={item.kind} type="button" className="button button-quiet" onClick={() => setReason(item)}>{THANKS_TITLE[item.kind](item.count)}</button>)}</div>
-    {reason && <SupportMilestoneDialog key={reason.kind} reason={reason} url={SUPPORT_URL} costs={{ month: 'November 2026 (example)', hosting: 45, tokens: 120, covered: 60 }} onAnswer={() => setReason(null)} />}
+    {reason && <SupportMilestoneDialog key={reason.kind} reason={reason} url={SUPPORT_URL} costs={SUPPORT_COSTS} onAnswer={() => setReason(null)} />}
   </section>
 }
 

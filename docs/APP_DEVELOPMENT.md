@@ -156,7 +156,7 @@ WaveSurfer's full BSD notice is included by `npm run licenses:generate`.
 
 ## Optional site support
 
-`src/config/support.ts` holds the Ko-fi page (empty hides every support entry) and `SUPPORT_COSTS`, monthly costs for the dialogs. “Support Modwerk” in the sidebar opens “Contribute to Modwerk”: credits to octabam and module authors, and links to Discord, the forum, the contribution guide and Ko-fi. Install screens carry a Ko-fi line; frequent users get a thank-you on a later visit (triggers in `src/community/support-prompt.ts`, preview `?preview=support-thanks`). Ko-fi opens in a new tab and takes payment. Clicks count by place ([statistics](STATISTICS.md)).
+`src/config/support.ts` holds the Ko-fi page (empty hides every support entry) and `SUPPORT_COSTS`, the dialogs’ monthly costs. “Support Modwerk” in the sidebar opens “Contribute to Modwerk”: credits to octabam and module authors, and links to Discord, the forum, the contribution guide and Ko-fi. Install screens carry a Ko-fi line; frequent users get a thank-you on a later visit (triggers in `src/community/support-prompt.ts`, preview `?preview=support-thanks`). Ko-fi opens in a new tab and takes payment. Clicks count by place ([statistics](STATISTICS.md)).
 
 ## Module creator support
 
