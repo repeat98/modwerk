@@ -48,6 +48,7 @@ Run this last, when the work and any unit testing are done: before marking a PR 
 npm run pr:ready                       # a new module or any other change
 npm run pr:ready -- --commit "Message" # check and commit fully staged work in one pass
 npm run pr:ready -- --author <login>   # a registered author's update: also the bot's merge scope
+npm run pr:ready -- --body pr.md       # also the description in pr.md, as CI's describe check reads it
 ```
 
 The command fetches `main` and runs CI’s scoped checks. With `--commit`, stage the whole change. Success commits it with your hooks, verifies tree and parent, and checks scope and board claims. Failure leaves it staged. The default checks a clean commit and regenerates stale catalogues or notices after a failure. Files that fail the full test run and pass alone are listed as flaky.
@@ -84,7 +85,7 @@ Common checks and failures follow.
 
 The Octatrack compiler job rebuilds every base-bound package with the pinned Elekloader sources and compares its bytes with the published package. To repeat that check from the repository root, run `bash scripts/test-base-bound.sh <compiler-image-id> [local-elekloader-checkout]`. It uses the committed tree. The SDK summary lists other skipped checks and their prerequisites.
 
-The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. When changing how the checker reads form fields, [exercise inline labels and standalone questions](../scripts/agent-eval/markdown-fields.md). The branch must be current with main to merge.
+The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. Check a description before you open the pull request or save an edit: `npm run pr:body -- pr.md` reads it as CI does for a ready pull request of this branch, with the files it changes against `upstream/main` (else `origin/main`); add `--draft` for a draft and `--changed-since base/<machine>-next` for another base, or pass `-` to read it from stdin (`gh pr view <n> --json body --jq .body | npm run pr:body -- -`). A failure names the row or line to fix. When changing how the checker reads form fields, [exercise inline labels and standalone questions](../scripts/agent-eval/markdown-fields.md). The branch must be current with main to merge.
 
 ### Who reviews a first release
 
