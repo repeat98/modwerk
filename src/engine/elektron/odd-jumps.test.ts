@@ -3,6 +3,10 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { oddJumpsIn, oddJumpsInElemod, oddJumpsInFiles, type Machine } from './odd-jumps'
 import { devices } from '../../../vendor/elekloader/kit/src/devices.ts'
+import { carryDevices } from '../elekloader/carried-devices'
+
+// The devices Modwerk's builder carries (the Digitone II), as the site's worker registers them.
+carryDevices()
 
 // A synthetic machine: its "stock" image is 0x40000000-0x40001000 and its module RAM 0x41000000-0x41001000. No
 // Elektron firmware is involved.
