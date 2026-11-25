@@ -24,7 +24,9 @@
 //                                                       # changes and channels, as the project receives them (octatrack-soak.mjs)
 //
 // With the unit queue (`npm run unit`, when the repository has it) the unit steps run as one turn of it, so no other session
-// takes the unit between reading it and checking it was put back.
+// takes the unit between reading it and checking it was put back. With a unit session, the preflight
+// (scripts/octatrack-preflight.py) reads the unit before step 1 and again as the turn starts: a release base, a changed Part,
+// a busy pick pattern or a dead MIDI bridge then fails step 6 in seconds, with the fix, before anything is installed.
 import { spawn, execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -40,7 +42,9 @@ export const ROOT = resolve(import.meta.dirname, '..')
 const SOAK_OPTIONS = [['programs', 'programs', 'soak-programs'], ['pcChannel', 'pc-channel', 'soak-pc-channel'], ['autoChannel', 'auto-channel', 'soak-auto-channel']]
 const soakOptions = ctx => SOAK_OPTIONS.flatMap(([key, flag]) => ctx.soak?.[key] ? ['--' + flag, String(ctx.soak[key])] : [])
 const soakFlags = ctx => SOAK_OPTIONS.flatMap(([key, , flag]) => ctx.soak?.[key] ? ['--' + flag, String(ctx.soak[key])] : [])
-const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs'
+const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs', PREFLIGHT_TOOL = 'scripts/octatrack-preflight.py'
+const SOAK_MIDI = '127.0.0.1:50124' // the MIDI bridge the soak sends through (its default --midi)
+const NOT_READY = 'stopped: the preflight found the unit not ready (step 6)'
 const REFUSED = /^refused: .*$/m // device.mjs set prints a refusal and exits 0, so the large-set steps read their output
 const CURVE_TRACKS = 'T1,T3,T6,T7' // empty tracks of the test bank (docs/MODULE_PERFORMANCE.md)
 const DEFAULT_SCENE = 'the bank, pattern and Part the unit was on, transport stopped (test:procedure)'
@@ -208,6 +212,7 @@ export async function runSteps(ids, ctx, deps, results = []) {
     const p = plan(step, ctx)
     result.commands = [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown)
     if (p.emulator) result.emulator = true
+    if (ctx.halt) { result.reason = ctx.halt; continue }
     if (stop && stop !== result) { result.reason = `stopped: step ${STEPS.findIndex(s => s.id === stop.id) + 1} (${stop.title}) failed`; continue }
     if (p.skip) { result.reason = p.skip; continue }
     if (step.unit && !ctx.unit?.available) { result.reason = ctx.unit?.reason ?? 'no unit session'; continue }
@@ -261,10 +266,50 @@ export async function runSteps(ids, ctx, deps, results = []) {
   return results
 }
 
+/** The preflight's command: read-only requests (with --midi, one tune request through the soak's MIDI bridge) that find in
+ * seconds what failed unit runs minutes in (25 November 2026). Null where it has nothing to check. A module's pick goes on
+ * the pattern the unit is on (device:test), so a module's run checks that pattern too; the emulator gets neither the pick's
+ * admission nor the soak. */
+export function preflightCommand(ctx) {
+  if (other(ctx) || !ctx.unit?.available) return null
+  const unit = ctx.target !== 'emulator'
+  return py(PREFLIGHT_TOOL, ...(unit && ctx.kind === 'module' ? ['--pick-pattern', String(ctx.pickPattern ?? 2)] : []), ...(unit && ctx.tools?.soak ? ['--midi', SOAK_MIDI] : []))
+}
+
+/** The problems the preflight printed, one with its fix each; none when it passed or had nothing to check. */
+export async function preflight(ctx, deps, log) {
+  const argv = preflightCommand(ctx)
+  if (!argv) return []
+  const run = await deps.exec(argv, log, ctx.env)
+  if (run.code === 0) return []
+  const lines = (run.output ?? '').split('\n').filter(line => line.startsWith('preflight: ')).map(line => line.slice('preflight: '.length))
+  return lines.length ? lines : [`exit ${run.code}: ${shown(argv)}`]
+}
+
+/** Step 6 failed by the preflight's problems: nothing after it ran. */
+function notReady(ctx, results, problems, log) {
+  Object.assign(results.find(result => result.id === 'unit-read'), { status: 'failed', reason: 'the unit is not ready: ' + problems.join('; '), log: relative(ctx.out, log) })
+  return results
+}
+
+/** The unit steps, after the preflight: a problem it finds fails step 6 before anything is installed. */
+export async function unitSteps(ctx, deps, results = []) {
+  const ids = STEPS.filter(step => step.unit).map(step => step.id), log = join(ctx.out, 'logs', '06-preflight.log')
+  const problems = await preflight(ctx, deps, log)
+  if (!problems.length) return runSteps(ids, ctx, deps, results)
+  await runSteps(ids, { ...ctx, halt: NOT_READY }, deps, results)
+  return notReady(ctx, results, problems, log)
+}
+
 /** The whole procedure: the steps before the unit here, the unit steps in one turn of the unit queue when there is one. */
 export async function runProcedure(ctx, deps) {
   const local = STEPS.filter(step => !step.unit && !step.hand).map(step => step.id)
   const unit = STEPS.filter(step => step.unit).map(step => step.id)
+  // The preflight before step 1, unless another session's turn holds the unit: what it reads then is that run's (a Part it
+  // changed), so it waits for this run's own turn, where it runs again.
+  const early = join(ctx.out, 'logs', '00-preflight.log')
+  const problems = ctx.tools?.unitQueue && ctx.target !== 'emulator' && await deps.unitBusy?.() ? [] : await preflight(ctx, deps, early)
+  if (problems.length) return notReady(ctx, await runSteps(STEPS.map(step => step.id), { ...ctx, halt: NOT_READY + ', before step 1' }, deps), problems, early)
   const results = await runSteps(local, ctx, deps)
   const blocked = results.some(result => result.status === 'failed')
   if (!blocked && ctx.unit?.available && ctx.tools?.unitQueue && ctx.target !== 'emulator') {
@@ -280,7 +325,8 @@ export async function runProcedure(ctx, deps) {
       results.find(result => result.id === 'unit-read').status = 'failed'
       results.find(result => result.id === 'unit-read').seconds = Math.round((deps.now() - started) / 100) / 10
     }
-  } else await runSteps(unit, ctx, deps, results)
+  } else if (blocked) await runSteps(unit, ctx, deps, results)
+  else await unitSteps(ctx, deps, results)
   await runSteps(STEPS.filter(step => step.hand).map(step => step.id), ctx, deps, results)
   return results
 }
@@ -454,6 +500,13 @@ function realDeps(root) {
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
     exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
+    // Another session's turn (not a hold of this checkout's): its first line, which the run prints, else null.
+    unitBusy: async () => {
+      const { checkoutOf, describe } = await import('./unit-queue.mjs'), queue = describe()
+      if (queue.state !== 'held' || process.env.MODWERK_UNIT_TURN || queue.holder?.checkout === checkoutOf(root).checkout) return null
+      console.log(`\n${queue.text.split('\n')[0]} The preflight waits for this run's own turn.`)
+      return queue.text.split('\n')[0]
+    },
     start: (argv, log, env) => {
       const { child, state } = launch(argv, log, env)
       let ended = false
@@ -496,7 +549,7 @@ async function main() {
   const deps = realDeps(ROOT)
   if (values['unit-phase']) {
     // One turn of the unit queue: only the unit steps, their results for the run that started it.
-    const results = await runSteps(STEPS.filter(step => step.unit).map(step => step.id), ctx, deps)
+    const results = await unitSteps(ctx, deps)
     writeFileSync(values['unit-phase'], JSON.stringify(results, null, 1) + '\n')
     process.exit(results.some(result => result.status === 'failed') ? 1 : 0)
   }

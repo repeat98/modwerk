@@ -17,8 +17,7 @@ On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` l
 - Never SAVE, SAVE ALL or SYNC TO CARD the owner's project, unless the owner asks to recover something.
 - Do not change the owner's Parts. Test on a bank whose working Part equals its saved Part (bank B in
   LIVE/Dev12: every Part FILTER/DELAY). Check that with `mem` (below) first, and put it back with `reload`
-  afterwards; then both copies must equal the saved copy read before. (Until 11 October 2026 this said
-  PART+FUNC+PLAY, which clears: Dev12's bank B Part 1 is named `PART 1` from it.)
+  afterwards; then both copies must equal the saved copy read before (`scripts/octatrack-preflight.py` checks it).
 - Read the state before you change it, and after you put it back.
 - RELOAD needs a Part that was saved at least once. On one that never was, it shows SAVE PART FIRST! and
   changes nothing, even when its working and saved copies matched before the test. Picking the original effects
@@ -236,7 +235,7 @@ stall. Each CC was checked on its own against the Part's bytes and the screen: l
 - MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
   venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
   networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
-  unit's MIDI port. Restart it after a RAM boot: its port goes dead.
+  unit's MIDI port. After a RAM boot it opens the port again on a failed send (a copy before 25 November 2026 must restart).
 - The project: track channels 1-8, and TRANSP RECV and PROG CH RECV on in PROJECT > MIDI > SYNC. A project with
   them off ignores START and program changes without an error: the summary then shows no pattern changes and the
   stopped CPU. Program changes arrive on the channel PROG CH RECV names; set to CH AUTO, that is MIDI > CHANNELS'
