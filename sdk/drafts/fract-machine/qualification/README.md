@@ -34,6 +34,15 @@ The separate probe reproduces SHA-256
 Keep its upload receipt: a diagnostic protocol marker does not prove that hash.
 Neither this probe nor any firmware/built project belongs in Git or a public download.
 
+For a later released base, first reproduce and stock-verify the normal package
+against that source tree with `scripts/source-runtime-package.py`. Pass both
+`--base-identity <full identity>` and `--normal-sha256 <normal package hash>` to
+`build_probe.py`. Without both, its historical base72/package6ff defaults remain.
+The builder checks the named tree and normal bytes before deriving fresh counter
+addresses from that base's symbols. It still requires unchanged original code
+sections and both stock scans; new output gets its own receipt. This prepares
+another named build, without transferring any earlier hardware result to it.
+
 ## Prepared project cases
 
 `make_bench_projects.py` creates new local files from an existing private project

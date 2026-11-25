@@ -1,4 +1,6 @@
 """Host counter/protocol tests for the private probe; no hardware timing claims."""
+import argparse
+import importlib.util
 import json
 from pathlib import Path
 import shutil
@@ -8,6 +10,38 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / 'sdk/drafts/fract-machine'
+
+
+class RenderProbeBuildGuard(unittest.TestCase):
+    def test_new_base_requires_both_explicit_identities_and_exact_tree(self):
+        spec = importlib.util.spec_from_file_location('probe_build_guard', MODULE / 'qualification/build_probe.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        with tempfile.TemporaryDirectory(prefix='fract-probe-baseline-') as directory:
+            root = Path(directory)
+            binding = root / 'sdk/machines/octatrack/base-binding.json'
+            binding.parent.mkdir(parents=True)
+            binding.write_text(json.dumps({'identity': builder.BASE}))
+            args = argparse.Namespace(base_tree=root, base_identity=None, normal_sha256=None)
+            self.assertEqual(builder.checked_baseline(args), (builder.BASE, builder.NORMAL_SHA))
+            binding.write_text(json.dumps({'identity': '1' * 64}))
+            with self.assertRaisesRegex(ValueError, 'measurement base'):
+                builder.checked_baseline(args)
+            args.base_identity = '1' * 64
+            with self.assertRaisesRegex(ValueError, 'both'):
+                builder.checked_baseline(args)
+            args.normal_sha256 = '2' * 64
+            self.assertEqual(builder.checked_baseline(args), ('1' * 64, '2' * 64))
+            args.base_identity = '3' * 64
+            with self.assertRaisesRegex(ValueError, 'measurement base'):
+                builder.checked_baseline(args)
+            args.base_identity = '1' * 64
+            args.normal_sha256 = 'not-a-sha256'
+            with self.assertRaisesRegex(ValueError, 'SHA-256'):
+                builder.checked_baseline(args)
+            args.base_identity = args.normal_sha256 = ''
+            with self.assertRaisesRegex(ValueError, 'SHA-256'):
+                builder.checked_baseline(args)
 
 
 @unittest.skipUnless(shutil.which('cc'), 'Host C compiler unavailable')

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build a private, base72-only measurement package; never opens USB.
+"""Build a private measurement package for a verified named base; never opens USB.
 
-Run in the pinned isolated toolchain. --base-tree is an archive of c2671568,
-retaining the exact tested package's base inputs. Stock stays local/read-only.
+The defaults retain the historical base72/package6ff reproduction. For a new
+base, name BOTH its identity and the independently reproduced normal package
+SHA-256. Run in the pinned isolated toolchain; stock stays local/read-only.
 """
 import argparse
 import hashlib
@@ -22,13 +23,27 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def checked_baseline(args):
+    expected_base = getattr(args, 'base_identity', None)
+    expected_normal = getattr(args, 'normal_sha256', None)
+    if (expected_base is None) != (expected_normal is None):
+        raise ValueError('Name both --base-identity and --normal-sha256, or neither')
+    if expected_base is None:
+        expected_base, expected_normal = BASE, NORMAL_SHA
+    if any(not re.fullmatch(r'[0-9a-f]{64}', value)
+           for value in (expected_base, expected_normal)):
+        raise ValueError('Base identity and normal package hash must be lowercase SHA-256 values')
+    binding = json.loads((args.base_tree / 'sdk/machines/octatrack/base-binding.json').read_text())
+    if binding['identity'] != expected_base:
+        raise ValueError('Source tree does not match the explicitly named measurement base')
+    return expected_base, expected_normal
+
+
 def build(args):
     out = args.output.resolve()
     if out.exists():
         raise ValueError('Use a new private output directory; existing evidence is preserved')
-    binding = json.loads((args.base_tree / 'sdk/machines/octatrack/base-binding.json').read_text())
-    if binding['identity'] != BASE:
-        raise ValueError('The measurement addresses require the named base72 source archive')
+    expected_base, expected_normal = checked_baseline(args)
     out.mkdir(parents=True)
     root = out / 'source'
     for relative in ('sdk/runtime', 'sdk/firmware_codec', 'sdk/machines/octatrack', 'sdk/drafts/fract-machine'):
@@ -44,7 +59,7 @@ def build(args):
     folder = root / 'sdk/drafts/fract-machine'
     recipe = folder / 'runtime-build.json'
     _, normal = builder.build(root, recipe, out / 'normal.mwrm', args.cross, args.stock, args.upstream)
-    if normal['sha256'] != NORMAL_SHA or normal['stockVerification'] != 'PASS':
+    if normal['sha256'] != expected_normal or normal['stockVerification'] != 'PASS':
         raise ValueError('The exact tested normal package did not reproduce')
     normal_work = out / 'normal-compile'; normal_work.mkdir()
     builder.compile_image(root, recipe, args.cross, normal_work)
@@ -105,13 +120,13 @@ def build(args):
     capture = folder / declaration['reconstruction']
     builder.build(root, recipe, out / 'probe.mwrm', args.cross, args.stock, args.upstream, capture)
     _, probe = builder.build(root, recipe, out / 'probe.mwrm', args.cross, args.stock, args.upstream)
-    receipt = {'schema': 1, 'kind': 'PRIVATE_MEASUREMENT_ONLY', 'normalPackageSha256': NORMAL_SHA,
-               'baseIdentity': BASE, 'normal': normal, 'probe': probe, 'probeSourceSha256': sha(HERE / 'render_probe.c'),
+    receipt = {'schema': 1, 'kind': 'PRIVATE_MEASUREMENT_ONLY', 'normalPackageSha256': expected_normal,
+               'baseIdentity': expected_base, 'normal': normal, 'probe': probe, 'probeSourceSha256': sha(HERE / 'render_probe.c'),
                'originalExecutableSections': sections, 'readOnlyBaseAddresses': addresses,
                'hardware': 'NOT_RUN', 'deviceOpened': False, 'guardDisabled': False,
                'limits': 'Probe is a different package. Original units retain their instruction bytes, but the wrapper adds timer/call overhead. Base frame peak is since boot, not a reset window; guard share is whole-ISR, not free FRACT headroom.'}
     (out / 'probe-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
-    print(json.dumps({'normalSha256': NORMAL_SHA, 'probeSha256': probe['sha256'], 'stockVerification': probe['stockVerification'],
+    print(json.dumps({'normalSha256': expected_normal, 'probeSha256': probe['sha256'], 'stockVerification': probe['stockVerification'],
                       'originalUnitsUnchanged': len(sections), 'deviceOpened': False}))
 
 
@@ -122,4 +137,6 @@ if __name__ == '__main__':
     parser.add_argument('--stock', type=Path, required=True)
     parser.add_argument('--upstream', type=Path, required=True)
     parser.add_argument('--cross', default='m68k-elf-')
+    parser.add_argument('--base-identity', help='Expected new base identity; requires --normal-sha256')
+    parser.add_argument('--normal-sha256', help='Independently reproduced normal package hash; requires --base-identity')
     build(parser.parse_args())
