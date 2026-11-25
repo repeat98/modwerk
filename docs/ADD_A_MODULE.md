@@ -16,6 +16,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 | --- | --- | --- |
 | Port an octabam module | [Octatrack](#octatrack) | the module's folder in octabam at an exact commit |
 | Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module), then `npm run module:dev -- my-filter` to hear it ([the fast loop](#the-fast-loop)) |
+| Port an Airwindows plugin to the Octatrack | [Octatrack](#octatrack) | `npm run module:new -- my-port --kind dsp --port airwindows --upstream <clone>/plugins/LinuxVST/src/<Plugin> --author <github-login>` ([the port template](../sdk/templates/dsp-port/README.md)) |
 | Bring an elekloader mod to Digitakt or Digitone | [Digitakt and Digitone](#digitakt-and-digitone) | the author's released `.elemod` files |
 | Write a new Digitakt or Digitone mod | [Digitakt and Digitone](#digitakt-and-digitone) | `npm run module:new -- my-mod --machine digitakt --author <github-login>` |
 | Write or port an Analog Rytm MKII mod | [the Rytm guide](../sdk/machines/analog-rytm-mkii/README.md) | `npm run module:new -- my-mod --machine analog-rytm-mkii --author <github-login>` |
@@ -83,10 +84,10 @@ a Modwerk base with the USB bridge ([driving the Octatrack](OCTATRACK_DRIVING.md
 `m68k-elf` binutils for ColdFire code and Octabam's `dsp_asm` for DSP code
 (`npm run upstream:tools`, then `make setup` in that octabam checkout), and
 no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md).
-Each trial ends with a verdict from the unit's own log: a crash, DSP stall,
-frozen UI or skipped track during it fails the trial (exit 1), and it is
-rolled back even with `--accept`; `npm run device -- do diaglog` shows the log.
-Each incident names its boot and the seconds since that boot.
+A crash, DSP stall, frozen UI or skipped track in the unit's log fails the
+trial (exit 1) and rolls it back even with `--accept`;
+`npm run device -- do diaglog` shows the log, each incident with its boot and
+seconds since.
 
 **Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
 the lines a trial and a tester need (category, DSP sources, cross-compatibility,
@@ -103,6 +104,10 @@ A test that needs no firmware, unit or emulator goes in the module's folder as
 `module:doctor -- <id>` runs them (a draft's as a release line), and
 `npm run sdk:check` runs every listed module's on each pull request. Name an
 emulator or hardware script otherwise, such as `emulator_test.py`.
+
+A DSP effect's `verify.py` and `perf.py` import the shared `dsp_host` harness,
+`sdk/octatrack/tools/dsp_gate.py`, instead of copying another module's gate
+([how](../sdk/templates/dsp-port/README.md)).
 
 Run this after every edit: about 15 seconds, no firmware, no module code run.
 
@@ -323,8 +328,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 1. **Create the folder.**
    - *Porting:* copy the module's folder from octabam at an exact commit into `sdk/octatrack/modules/<id>/`, and put the author's original files it depends on under `upstream/`. Record every copied file with its source path and SHA-256 in `sdk/imports/<id>-<short-commit>.json`; `sidechain-compressor-f80ecfe.json` is an example. Add the licence to `sdk/octabam/licenses/manifest.json`, then run `npm run licenses:generate`.
-   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.
-   - Either way, read the traps in [octabam's AGENTS.md](../sdk/octabam/AGENTS.md) before writing DSP or ColdFire code. The DSP assembler silently mis-encodes some instructions, and several of these traps assemble cleanly into the wrong machine code.
+   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.   - Either way, read the traps in [octabam's AGENTS.md](../sdk/octabam/AGENTS.md) before writing DSP or ColdFire code. The DSP assembler silently mis-encodes some instructions, and several of these traps assemble cleanly into the wrong machine code.
 2. **Fill in the manifest** from [the template](../public/module-repository.example.json): every control, the access steps, compatibility and conflicts. Add the resource gauges (`resources.impact`, see [gauges](MODULE_RESOURCE_GAUGES.md)) and the qualification record (`tests.qualification`, see [fields](MODULE_QUALIFICATION.md)).
 3. **Measure and test.**
    - Record the worst-case cycles for each processor and the exact memory regions and totals. New FX should aim for DSP cost in the same ballpark as worst-case stock SPRING REV. Plan around that reference before implementation and compare expensive types/settings, moving controls and trigger splits under matched conditions on both cores. This is a design target without a fixed ratio or hard per-effect ceiling; substantially higher cost needs optimization and review of the remaining headroom.
