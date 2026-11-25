@@ -43,6 +43,7 @@ By the core's documentation (emulator-tested, not hardware-tested), both data ar
 
 The Digitakt II core does not start DTIM0 and exposes no audio-render hook yet ([proposal and emulator measurements](../../../docs/verification/2026-11-10-digitakt-ii-pre-send-render.md)). Audio is rendered by the separate SHARC DSP; these hooks are not sample-accurate.
 The [guarded render probe](../../../docs/verification/2026-11-14-digitakt-ii-render-probe.md) records the local OS 1.17 build and dispatcher test.
+**Filters wait for the base's filter types.** A filter module does not patch the per-voice filter on the sound chip: the [filter-type proposal](../../../docs/verification/2026-11-25-digitakt-ii-filter-types.md) lists module filters after the stock types on the FLTR page (base table `core_filters`), each standing in for a stock type's knobs and movement. It awaits owner review.
 
 The proposed Mixer and frame interfaces are declared in [core-profile/interface.json](../../digitakt-ii/core-profile/interface.json).
 
