@@ -53,7 +53,13 @@ const json = path => JSON.parse(read(path))
 const out = value => JSON.stringify(value, null, 2) + '\n'
 function snapshot() {
   const files = {}
-  const walk = folder => { for (const entry of readdirSync(join(root, folder), { withFileTypes: true })) { const path = folder ? folder + '/' + entry.name : entry.name; entry.isDirectory() ? walk(path) : files[path] = readFileSync(join(root, path), 'base64') } }
+  const walk = folder => {
+    for (const entry of readdirSync(join(root, folder), { withFileTypes: true })) {
+      const path = folder ? folder + '/' + entry.name : entry.name
+      if (entry.isDirectory()) walk(path)
+      else files[path] = readFileSync(join(root, path), 'base64')
+    }
+  }
   walk('')
   return files
 }

@@ -59,7 +59,12 @@ function tree(root) {
     exists: path => files.has(path) ? files.get(path) !== null : existsSync(at(path)),
     read, text: path => read(path).toString('utf8'),
     list(folder) {
-      const out = [], walk = path => { for (const entry of readdirSync(at(path), { withFileTypes: true })) entry.isDirectory() ? walk(path + '/' + entry.name) : out.push(path + '/' + entry.name) }
+      const out = [], walk = path => {
+        for (const entry of readdirSync(at(path), { withFileTypes: true })) {
+          if (entry.isDirectory()) walk(path + '/' + entry.name)
+          else out.push(path + '/' + entry.name)
+        }
+      }
       if (existsSync(at(folder))) walk(folder)
       return out.sort()
     },
