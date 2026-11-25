@@ -1,16 +1,17 @@
 # Offline measurement preparation
 
-This is an unlisted qualification kit, not a release or a timing result.
-The normal candidate remains package `6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874`
-on base `72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`.
-Its completed functional tests are in [the hardware report](../release/hardware-20261110.md).
-Do not repeat those tests merely because this kit or its documentation changed.
-The remaining hardware work measures load and stress, plus explicitly untested
-stock/companion and active-replacement cases; it is separate from those results.
+Current preparation is `0.1.3-experimental` on released base 0.8.1, identity
+`eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0`.
+The normal package reproduces SHA-256
+`c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`.
+The base prerequisites #1418 and #1165 have merged; final preparation can proceed.
+Hardware timing, stress, rendered controls and lifecycle tests on this named
+build remain open. [Earlier functional evidence](../release/hardware-20261110.md)
+belongs to package6ff/base72 only. Nothing here grants release approval.
 
 ## Private probe build
 
-`build_probe.py` takes a private archive of source commit `c2671568` preserving
+For historical reproduction, `build_probe.py` takes a private archive of source commit `c2671568` preserving
 the named base72 inputs, the author's original 1.40C and reviewed Elekloader
 tools. Run it in the pinned isolated native toolchain, with source, stock and
 upstream mounted read-only, no network, dropped capabilities, and a new private
@@ -87,10 +88,10 @@ STOP, change Part and reload. Do not record actions the operator did not perform
 
 ## Later hardware capture
 
-Follow [repeat98’s 12 November review plan](../release/review-20261112.md):
-final relinking and timing wait for base PR #1418 and then #1165. This pinned
-base72 probe is retained for reproduction; it must be rebuilt and reviewed
-against the final base/package before that run.
+Follow [repeat98’s 12 November review plan](../release/review-20261112.md).
+Both base prerequisites have merged. Rebuild and review the probe against the
+exact current base and normal package, using both explicit identity arguments;
+the historical base72 probe is retained only for reproduction.
 
 No hardware operation is part of offline preparation. At the later session,
 retain the normal package, current confirmed set and recovery receipts. Check

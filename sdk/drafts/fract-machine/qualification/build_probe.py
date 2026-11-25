@@ -107,7 +107,7 @@ def build(args):
     # its guarded fills from original stock before calling the pinned linker.
     layout_receipt = out / 'base-link.json'
     layout_tool = HERE / 'link_base_layout.mjs'
-    subprocess.run(['node', str(layout_tool), '--stock', str(args.stock),
+    subprocess.run(['node', str(layout_tool), '--base-tree', str(args.base_tree.resolve()), '--stock', str(args.stock),
                     '--output', str(layout_receipt)], check=True)
     linked = json.loads(layout_receipt.read_text())
     if linked['baseIdentity'] != expected_base:
