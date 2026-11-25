@@ -12,6 +12,9 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
 - **Trial, 25 Nov 2026, the owner's Octatrack** on flashed base `eb6679620d0c`, from commit ede56e7b6: package `midiverb.mwrm`, SHA-256 `8184ae0826318eced0dd1053b638dd58db4eb09097fd8ed0fb30c48b87dea653`, built by `npm run module:dev -- midiverb --slots fx2 --cycles 400 --cycles-kind executed --state 32 --buffer 15870`. The base admitted it and ran it as a RAM trial. The owner reported it "working great" (reported, not observed by the agent). Not run: the test procedure, its edge cases, scenes, locks, LFOs, several instances.
 - The first attempts were refused at verify, loader refusal 6 (RUNTIME_CYCLES): 824 declared cycles, then the builder's placeholder. One instance must fit beside seven stock slots on a core: 3,120 − 7 × 342 = 726 chip cycles, a draft's figure charged at 7/4, so at most 414 declared.
 
+- **Streaming build, 25 Nov 2026, the owner's Octatrack on a dev twin** (`e229c6a8`: the 0.8.2 base draft plus `ev_frame_record`, branch `base/frame-record-hook`): packages from cd9edd447 (trial `035816f8`) and 09367269a (trial `55212018`). Reported by the owner, not observed by the agent: the reverb plays and switching banks and programs works ("absolutely LOVE the mod"). Reported problems: (1) after a fresh pick of MIDIVERB on FX2, PROG does not move until the FX2 page is left (to FX1) and entered again: the panel's knob staging, not reproduced yet; (2) after a trial was replaced by a newer build on a track already running it, no reverb until the project was reloaded: a new build met the old one's state (stock runs init only when a slot's id changes); 9a8f80302 checks a state signature on every call, not yet on the unit.
+- **The tick widget forced to PROG's 24 values crashed the owner's unit** (25 Nov 2026, crash record 13: vector 11 at PC 0x524b00a2, the label text read as an address): stock's switch widget holds five positions. PROG stays on the dial.
+
 ## Stock flows
 
 Not tested.
@@ -22,4 +25,4 @@ Not tested (`npm run fx:audit` not run).
 
 ## Performance
 
-`dsp_host`, the 24 trial programs at MIX 127 and LEVL 127, unsplit and split at frames 1, 7 and 15: at most 391.7 executed instructions a sample (2.8 SM BRT, split 1); declared 400. All 63 Midiverb programs cost 194 to 512 (the small rooms, .2–1.2 s, 420–512, are not in the trial). Not measured: hardware cycles, `cycle_count.py`, `benchmark_stock_dsp.py`, a stress run; no `evidence/performance.json` yet.
+`dsp_host`, the streaming engine, every candidate program streamed by its index at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7: 130 of 205 at most 400 executed instructions a sample (Midiverb 37, Midiverb II 45, Midifex 48); the dearest program costs 589. The 75 over 400 are left out (generate.mjs OVER_BUDGET); declared 400. verify.py's dearest case: 356.2. The DSP package is 544 words (the 24-program table build was 3,973). Not measured: hardware cycles, `cycle_count.py`, `benchmark_stock_dsp.py`, a stress run; no `evidence/performance.json` yet.
