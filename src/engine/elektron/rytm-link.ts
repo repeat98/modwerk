@@ -131,8 +131,7 @@ export function rytmSetIdentity(syx: Uint8Array, bytes: number): { crc: number; 
   for (let at = image.length - 12; at >= 0 && at >= image.length - (1 << 20); at--) {
     if (STORE_TRAILER.every((b, i) => image[at + i] === b)) {
       const n = new DataView(image.buffer, image.byteOffset).getUint32(at + 8)
-      if (at + 12 + n === image.length) end = at
-      break
+      if (at + 12 + n === image.length) { end = at; break }   // the trailer itself, not the word inside its text
     }
   }
   if (bytes <= 0 || bytes > end) throw new Error('The set is larger than the image.')

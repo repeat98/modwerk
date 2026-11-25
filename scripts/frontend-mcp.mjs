@@ -376,9 +376,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   // its Keep or Undo. Every exchange goes in turn: a frame's parts from two requests must not interleave.
   let cyclesChain = Promise.resolve()
   const cyclesSerial = work => { const run = cyclesChain.then(work, work); cyclesChain = run.catch(() => {}); return run }
-  const cyclesLine = (what, work) => cyclesSerial(() => withCycles(what, async access => {
+  // askRytm (review only): when no Model:Cycles answers, say so for a Rytm, which answers the link but has no loader yet.
+  const cyclesLine = (what, work, askRytm = false) => cyclesSerial(() => withCycles(what, async access => {
     const out = await frontend.withMc(access, 10000, work)
-    if (out === null) throw new Error(await frontend.readRytmIdentity(access) ? noRytmLoader : noCycles)
+    if (out === null) throw new Error(askRytm && await frontend.readRytmIdentity(access) ? noRytmLoader : noCycles)
     return out
   }))
   const cyclesModules = call => frontend.mcModules(call).catch(error => { if (error instanceof frontend.McRefused && error.status === 2) return 'unsupported'; throw error })
@@ -417,17 +418,13 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   async function cyclesReview(args) {
     if (cyclesTrial) throw new Error('Finish the current trial first.')
-    // A Rytm answers the same link but has no runtime loader yet: say so before asking for a package.
-    await cyclesSerial(() => withCycles('check the Elektron unit', async access => {
-      if (!await frontend.readMcIdentity(access) && await frontend.readRytmIdentity(access)) throw new Error(noRytmLoader)
-    }))
     if (args.moduleIds.length !== 1) throw new Error('The Model:Cycles takes one change a trial: one package or one remove:NAME.')
     const change = await cyclesPackage(args.moduleIds[0])
     const before = await cyclesLine('review Model:Cycles', async call => {
       const session = await frontend.mcUploadSession(call)
       if (!session) return null
       return { base: session.status.base, phase: session.status.phase, active: session.status.active, loader: await cyclesModules(call) }
-    })
+    }, true)
     if (before.phase !== 'normal') throw new Error('The Model:Cycles loader is busy (phase ' + before.phase + '): wait ten seconds and review again.')
     for (const [id, item] of reviews) if (item.expires < clock()) reviews.delete(id)
     if (reviews.size >= 10) throw new Error('Finish or expire existing reviews first.')

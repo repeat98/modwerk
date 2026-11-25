@@ -44,7 +44,8 @@ function logBytes() {
 // A Rytm with a Modwerk base (link.c): ident in the Rytm's layout, eleven numbers, label and OS build, then the RAM
 // boot's status, SRAM CRC, image CRC, the diagnostics' place (0 in a release base) and the set identity; load (0x23),
 // diag (0x22) and log (0x24) as every base answers them, or status 2 (bad request) from an older base without them.
-function fakeRytm({ set = null, release = true, load = null, log = null, name = 'Elektron Analog Rytm MKII' } = {}) {
+// bumps: the log's seq moves by one before each of the first `bumps` closing looks at it, as a record written during the read.
+function fakeRytm({ set = null, release = true, load = null, log = null, name = 'Elektron Analog Rytm MKII', bumps = 0 } = {}) {
   const input = { id: 'i', name, state: 'connected', onmidimessage: null }, requests = {}
   const head = [1, release ? 0 : 1, 0, 0, 0, 0, 0, 3, 228, 32, 0], tail = release ? [0, 0, 0, 0] : [1, 0x6e29194e, 0x5ae21e42, 0x47feffbc]
   const ident = [...head.flatMap(put32), ...ascii('FXCJ'), ...ascii('0176'), ...(set ? [...tail, set.crc, set.bytes] : tail.slice(0, 3)).flatMap(put32)]
@@ -55,11 +56,27 @@ function fakeRytm({ set = null, release = true, load = null, log = null, name = 
     const [status, reply] = data[7] === 0x01 ? [0, ident]
       : data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
       : data[7] === 0x22 ? (log ? [0, [0x47b5ae1c, log.length].flatMap(put32)] : [2, []])
-      : data[7] === 0x24 ? (!log ? [2, []] : (() => { const at = get32(body, 0), n = get32(body, 5); return at + n > log.length ? [4, []] : [0, [...put32(at), ...put32(n), ...pack7(log.subarray(at, at + n))]] })())
+      : data[7] === 0x24 ? (!log ? [2, []] : (() => {
+        const at = get32(body, 0), n = get32(body, 5)
+        if (at + n > log.length) return [4, []]
+        // the read's closing look at seq (16, 4 bytes): a record was written since the pass began
+        if (at === 16 && n === 4 && bumps > 0) { bumps--; new DataView(log.buffer).setUint32(16, new DataView(log.buffer).getUint32(16) + 1) }
+        return [0, [...put32(at), ...put32(n), ...pack7(log.subarray(at, at + n))]]
+      })())
       : [2, []]                         // a release base: every other request is a bad request
     queueMicrotask(() => answer(data, status, reply))
   } }
-  return { inputs: new Map([['i', input]]), outputs: new Map([['o', output]]), requests, onstatechange: null, close() {} }
+  return { input, output, inputs: new Map([['i', input]]), outputs: new Map([['o', output]]), requests, onstatechange: null, close() {} }
+}
+// A Model:Cycles beside it: answers ident only (fifteen numbers, an older base without the set identity).
+function withCycles(rytm) {
+  const input = { id: 'mi', name: 'Elektron Model:Cycles', state: 'connected', onmidimessage: null }
+  const output = { id: 'mo', name: 'Elektron Model:Cycles', state: 'connected', send(data) {
+    const reply = data[7] === 0x01 ? [1, 1, 0, 9, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].flatMap(put32) : []
+    queueMicrotask(() => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, data[7] === 0x01 ? 0 : 2, ...reply, 0xf7]) }))
+  } }
+  rytm.inputs.set('mi', input); rytm.outputs.set('mo', output)
+  return rytm
 }
 
 describe('the developer MCP’s Analog Rytm MKII over its link', () => {
@@ -112,9 +129,24 @@ describe('the developer MCP’s Analog Rytm MKII over its link', () => {
     expect(await service.call('device_log')).toEqual({ machine: 'analog-rytm-mkii', supported: false, log: null })
   })
   it('says the Rytm has no runtime loader yet, and what a missing unit needs', async () => {
+    await writeFile(join(images, 'x.mwrm'), Uint8Array.from([...ascii('MWRM'), ...new Array(60).fill(0)]))
     service = await open(fakeRytm({ set: { crc: 1, bytes: 64 } }), { allowDeviceWrites: true })
     await expect(service.call('device_review', { moduleIds: ['x.mwrm'] })).rejects.toThrow(/no runtime loader yet/)
     await service.close(); service = await open(fakeRytm({ name: 'IAC Driver Bus 1' }))
     await expect(service.call('device_status')).rejects.toThrow(/nor an Analog Rytm MKII/)
+    await service.close(); service = await open(fakeRytm({ name: 'Elektron Analog Rytm' }))   // an MKI is not this link's
+    await expect(service.call('device_status')).rejects.toThrow(/nor an Analog Rytm MKII/)
+  })
+  it('reads the log again while the unit writes a record during the read, and gives up after three passes', async () => {
+    const access = fakeRytm({ log: logBytes(), bumps: 2 })
+    service = await open(access)
+    expect((await service.call('device_log')).log.seq).toBe(5)
+    expect(access.requests[0x24]).toBe(3 * (Math.ceil(6148 / 128) + 1))
+    await service.close(); service = await open(fakeRytm({ log: logBytes(), bumps: 3 }))
+    await expect(service.call('device_log')).rejects.toThrow(/kept changing/)
+  })
+  it('asks a Model:Cycles first when both are connected', async () => {
+    service = await open(withCycles(fakeRytm({ set: { crc: 1, bytes: 64 } })))
+    expect((await service.call('device_status')).machine).toBe('model-cycles')
   })
 })
