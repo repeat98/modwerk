@@ -183,13 +183,16 @@ def mixed(dry, wet, mix, wet_mix):
 
 
 HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR", "stnL", "end"]
+SLOT = 16  # generate.mjs SLOT: a unit's first word is its handler's offset from mvqJTAB
+LABELS = ["mvqRUN_", "mvqST__", "mvqLD__", "mvqSTN_", "mvqIN__", "mvqOUTR", "mvqOUTL", "mvqSTR_", "mvqSTL_", "mvqSNR_",
+          "mvqSNL_", "mvqEND_"]
 
 
 def run(words, ring, p, acc, w_in, out):
     at = lambda off: (p + off) % RING  # noqa: E731
     i = 1  # words[0] is the header
     while True:
-        kind, arg = HANDLERS[words[i] // 2], words[i + 1]
+        kind, arg = HANDLERS[words[i] // SLOT], words[i + 1]
         i += 2
         if kind == "end":
             return wrap(acc), (p + 1) % RING
@@ -224,6 +227,10 @@ def main():
     problems = G.trap_problems(asm, forms=("x0,y1", "y0,x0"))  # TRAPS.md: both orders encode signed
     ok = not problems
     print(("[PASS]" if ok else "[FAIL]") + f" assembler traps: {problems or 'none'}")
+    base = asm.syms["mvqJTAB"]
+    misplaced = [f"{name} at +{asm.syms[name] - base}" for k, name in enumerate(LABELS) if asm.syms[name] - base != SLOT * k]
+    ok &= not misplaced
+    print(("[PASS]" if not misplaced else "[FAIL]") + f" handlers {SLOT} words apart from mvqJTAB: {misplaced or 'all'}")
     blocks = 900
     n = 16 * blocks
     sig = [0] * 5200 + G.burst(2400, n - 5200, amp=0.45)

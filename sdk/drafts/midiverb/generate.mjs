@@ -198,10 +198,12 @@ export function compiledMachine(ops, size) {
 }
 
 // One program as streamed: a header ($8000 | N, N the words after it), the units, a checksum (the low 16 bits of
-// the sum of every word before it, xor $a5a5). Units are [handler * 2][argument]: a run of k reads is [0][k] then
-// k ring offsets; every other operation is [handler * 2][ring offset], handlers in engine.asm's jump table order.
+// the sum of every word before it, xor $a5a5). Units are [handler * SLOT][argument]: a run of k reads is [0][k] then
+// k ring offsets; every other operation is [handler * SLOT][ring offset]: the handler's offset from engine.asm's
+// mvqJTAB, where the handlers sit SLOT words apart in this order, so a unit's word is where it jumps.
 // The engine keeps the whole program above the ring (262 words at most).
 export const HANDLER = ['run', 'st', 'ld', 'stn', 'in', 'outR', 'outL', 'stR', 'stL', 'stnR', 'stnL', 'end'];
+export const SLOT = 16;
 export const PROGRAM_WORDS = 262;
 export function encode(ops) {
   const body = [];
@@ -210,24 +212,23 @@ export function encode(ops) {
       let j = i; while (j < ops.length && ops[j][0] === 'mac') j++;
       body.push(0, j - i, ...ops.slice(i, j).map(([, a]) => a));
       i = j;
-    } else { body.push(2 * HANDLER.indexOf(ops[i][0]), ops[i][1]); i++; }
+    } else { body.push(SLOT * HANDLER.indexOf(ops[i][0]), ops[i][1]); i++; }
   }
-  body.push(2 * HANDLER.indexOf('end'), 0);
+  body.push(SLOT * HANDLER.indexOf('end'), 0);
   const words = [0x8000 | (body.length + 1), ...body];
   if (words.length + 1 > PROGRAM_WORDS) throw new Error(`a program of ${words.length + 1} words passes the ${PROGRAM_WORDS}-word area`);
   return [...words, (words.reduce((t, w) => (t + w) & 0xffff, 0) ^ 0xa5a5)];
 }
 
 // Every program the stream carries: each bank in chart order, less Midiverb II's Defeat (0) and its 20 chorus and
-// flange programs (50-69, which patch their own code from an LFO: not handled yet), less the programs whose DSP
-// cost passes what the base admits for one instance (declared 400; measured in dsp_host on the streaming engine,
-// 25 Nov 2026, the worst of unsplit and split calls at LEVL 127, executed instructions a sample). A faster engine
-// brings these back.
+// flange programs (50-69, which patch their own code from an LFO: not handled yet), less the 31 programs that cost
+// more than 400 executed instructions a sample on the engine with direct dispatch (dsp_host, 25 Nov 2026: each
+// streamed by its index at LEVL 127 and MIX 127, the worst of unsplit and split at frames 1 and 7). The base lets one
+// instance declare at most 414; these cost 401 to 558.
 export const OVER_BUDGET = {
-  MV1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 34, 39, 41, 42, 44, 45, 46, 47],
-  FEX: [6, 8, 12, 21, 23, 24, 27, 28, 34, 35, 39, 49, 50, 51, 52],
-  MV2: [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 27, 30, 31, 32, 33, 34, 35, 37, 39, 40, 45,
-    46, 47, 48, 49],
+  MV1: [9, 10, 11, 13],
+  FEX: [12, 23, 34, 35],
+  MV2: [1, 2, 3, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 27, 30, 31, 32, 33, 34],
 };
 export const BANKS = ['MV1', 'MV2', 'FEX'];
 const FIRST = { MV1: 1, MV2: 0, FEX: 1 };

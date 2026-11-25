@@ -4,13 +4,13 @@ Version 0.1.0-experimental · the Alesis Midiverb (Keith Barr), from Eric Bromba
 
 ## Overview
 
-The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, the Midiverb II and the Midifex. Every program is the original's, played step for step at the original's arithmetic: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding. That grain is part of the sound. 130 programs are in this release: 37 Midiverb, 45 Midiverb II and 48 Midifex.
+The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, the Midiverb II and the Midifex. Every program is the original's, played step for step at the original's arithmetic: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding. That grain is part of the sound. 174 programs are in this release: 59 Midiverb, 56 Midiverb II and 59 Midifex.
 
 ## Controls
 
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
-| A | PROG | 1-48 | 1 | The program in the current bank. Its name shows in a message box while you turn. Past the bank's last program it stays on the last one (Midiverb has 37, Midiverb II 45, Midifex 48). |
+| A | PROG | 1-59 | 1 | The program in the current bank. Its name shows in a message box while you turn. Past the bank's last program it stays on the last one (Midiverb and Midifex have 59, Midiverb II 56). |
 | B | LEVL | 0-127 | 64 | Input level into the 12-bit converter: unity at 32, 64 is +6 dB, 127 about +12 dB. Higher levels use more of the 12 bits and sound cleaner; too high and the reverb crunches. |
 | D | BANK | MV1, MV2, FEX | MV1 | Midiverb, Midiverb II or Midifex programs. The bank's name shows while you turn. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
@@ -36,7 +36,7 @@ The four controls can be locked per step, modulated by the LFOs and set in scene
 - FX2 only, on the Modwerk base 0.8.1 or later. Each instance takes its track's whole FX2 buffer (15,870 words), so it cannot share a core's FX2 memory with Analog BD.
 - It patches one stock site of its own, where the Octatrack finishes each frame's parameters (0x4000d568). Euclid's patch ends there and returns into it, so both install together.
 - It takes the knob's value store while the FX2 page shows, only to name the program or bank; every value is stored as stock stores it.
-- DSP time: at most 400 instructions a sample in the DSP emulator, about 1.3 times stock SPRING REV at its worst (314). The 75 original programs that need more are not in this release, nor the Midiverb II's chorus and flange programs.
+- DSP time: at most 398 instructions a sample in the DSP emulator, about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more are not in this release, nor the Midiverb II's chorus and flange programs.
 - Not like the original: it runs at 22.05 kHz instead of about 23.4 kHz, so reverb times and delays are about 6 % longer; the original's analog filters and noise are not modelled; some long delays are up to 4.5 % shorter to fit the memory; the input is the average of left and right.
 - Known issues on base 0.8.1: after picking it in FX2 SETUP the first NO only closes the memory box; and right after a pick, slow PROG and BANK turns do nothing until you leave the FX2 page and come back. Base 0.8.2 fixes both.
 
