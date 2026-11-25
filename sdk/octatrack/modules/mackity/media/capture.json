@@ -1,0 +1,41 @@
+{
+ "firmware": "1.40C",
+ "moduleVersion": "0.1.0-experimental",
+ "hardware": true,
+ "model": "MKII",
+ "capturedOn": "2026-11-25",
+ "capturedBy": "repeat98",
+ "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+ "baseIdentity": "8fd6d456abf3865b36ac024d19324290dc36cb04a7efe29be4838ce6e825afb3",
+ "packageSha256": "5a58d4cc9ce2e5c2878ddafab9fa4437d4ded051066e1d0788307693330b39ac",
+ "sourceRevision": "ccbb96b6c06ae074159be45d66f69812d450793f",
+ "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 8fd6d456 of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image; baseIdentity is the identity the unit reported). The module ran as a RAM trial of the package named here, built by npm run module:dev -- mackity --build-only --cycles 226 --cycles-kind executed --state 32 from the source revision named here. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session (bank F pattern 1; pick:T2:FX1:MACKITY; T2; FX1; FUNC+FX1).",
+ "palette": {
+  "on": [
+   24,
+   24,
+   24
+  ],
+  "off": [
+   255,
+   255,
+   255
+  ]
+ },
+ "images": [
+  {
+   "path": "mackity-chooser.png",
+   "sha256": "20bfc4bfed6244b16bf5c3bb7885caaa2f1a69020b2752c81908dc842d5a7b3c",
+   "scale": 2,
+   "page": "FX1 SETUP (effect chooser)",
+   "state": "Track 2 with Mackity on FX1: FUNC+FX1 opens the chooser on the current effect, Mackity."
+  },
+  {
+   "path": "mackity-main.png",
+   "sha256": "6e303c4880734a17813ae318bde25906fd3e272de72ba73cac25ac1300c67bd6",
+   "scale": 2,
+   "page": "FX1",
+   "state": "Track 2 with Mackity on FX1 at the defaults (TRIM 13, PAD 127), stopped."
+  }
+ ]
+}

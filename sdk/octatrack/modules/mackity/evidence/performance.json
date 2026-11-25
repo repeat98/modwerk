@@ -2,6 +2,7 @@
   "schema": 1,
   "module": "mackity",
   "version": "0.1.0-experimental",
+  "sourceSha256": "b8a07adaa1100d2e42f8518a493140f405e7bac368e0e2d7f151053a8b858273",
   "kind": "dsp",
   "cycles": {
     "unit": "instructions/sample",

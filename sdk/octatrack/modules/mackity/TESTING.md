@@ -65,6 +65,60 @@ Not tested on the unit by an agent: listening, MIDI, scenes and recording, the
 module beside the other installed modules, the Keep, a power cycle and what
 survives it.
 
+### Test procedure on the unit, 2026-11-25
+
+`npm run test:procedure -- mackity --package mackity.mwrm --pick-pattern 2
+--measure-pattern 4 --soak-seconds 120` on the owner's MKII, RAM-booted on
+development twin `8fd6d456` of base 0.8.1, through the unit queue. Build:
+revision `ccbb96b6c06a`, package SHA-256
+`5a58d4cc9ce2e5c2878ddafab9fa4437d4ded051066e1d0788307693330b39ac` (the same
+package as above). Scene: the project's bank C, Part 1 reloaded in RAM to its
+saved copy (on the owner's OK; the card kept its working copy, which the release
+boot afterwards brought back), picks on the empty C02, readings on C04 (trigs on
+steps 1/5/9/13 of T1-T4, T6, T7). The release image `eb6679620d0c9ed7` was booted
+back afterwards and the inventory read the owner's nine kept modules, as before.
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Software checks (`module:doctor`) | passed |
+| 2 | Beside every other module | not run by the procedure: the doctor's compatibility line (step 1) |
+| 3 | Name the build | passed |
+| 4 | DSP cost model (`cycle-scan check`) | passed |
+| 5 | Emulator rehearsal | not run: no emulator session |
+| 6 | Read the unit | passed |
+| 7 | Scripted unit pass (`device:test`) | passed: alone on FX2 of T1 and T5, eight at once while playing, 12 Part switches, self-test passed, inventory unchanged |
+| 8 | Soak, 120 s | passed: no crash, stall, freeze or skipped track; rolled back |
+| 9 | Cost on the unit (`device:price` with `--curve T1,T3,T6,T7`) | passed: frame interrupt +0.1 points in use on T1 FX2, 0 at rest; CPU meter +0; DSP T1-4 +8.1 points; curve first 0.9, each 0.9; admitted on C02 and C04 with no dropped render and no stall |
+| 10 | Put back | passed |
+| 11 | Agent by hand | the screens below; the rest not run |
+| 12 | Submitter's own stage | not run: the owner asked for it to be released without it ("you can merge and get it live yourself", 25 Nov 2026) |
+
+Two attempts before it stopped short, and why: on C01 (eight busy tracks) the
+pick was refused with CPU FULL ("MACKITY NEEDS +3 %", ColdFire CPU at 99 %), so
+the picks moved to the empty C02; and the soak's first MIDI message was refused
+until the Windows MIDI bridge was reopened after the RAM boot. Neither touched
+the module.
+
+The readings are in `evidence/cpu-price.json` and `evidence/frame-cost.json`.
+
+#### Edge cases
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Eight instances at once | per-instance state in r7, DSP load | device:test, all eight tracks playing | pass: CPU 458, DSP peaks 663/743 per mille |
+| A trig split | glide and snap per call | verify.py `-split 5`; perf.py splits 1-15 | pass (bit-exact; worst 228.2) |
+| A full pattern (CPU FULL) | admission | the pick on C01 | refused cleanly with CPU FULL; no crash |
+| Part switches | knob words change with the Part | device:test, 12 switches | pass: 12 of 12 within 3 s |
+| Silence after audio | a 24-bit limit cycle | verify.py, host test | pass: exact silence |
+| Part/project reload, power cycle | stored knob bytes | not run: no Keep | not run |
+
+### Screens
+
+Read off the unit's LCD with the development session's `png:` step during a RAM
+trial of the same package, on the twin, bank F, T2: `media/mackity-chooser.png`
+(FX1 SETUP, Mackity selected) and `media/mackity-main.png` (its FX1 page). Their
+provenance and hashes are in `media/capture.json`.
+
 ## Stock flows
 
 Not tested. As a buffer-free insert with all its state in the track's own
@@ -123,7 +177,18 @@ same counts. PAD 120 or lower keeps them.
 
 ## Performance
 
-dsp_host's cycle meter reads 225.3 cycles a sample at the defaults and at
-TRIM 127. The work is the same at every setting: the sample loop has no conditional
-branches. Not measured on a unit; the CPU price (`resources.cpuPrice`) and
-`evidence/performance.json` are still to do.
+`python3 -B perf.py` (and `--stress`), then `npm run perf:audit -- check
+evidence/performance.json --stamp`:
+
+| Check | Result |
+|---|---|
+| record | dsp record for mackity@0.1.0-experimental |
+| cycles | 4 x 251 = 1,004 of 3,120 a sample per core (32 %); measured 228.2 per instance |
+| stock benchmark | 228.2 vs LO-FI 290.06 (0.79x); the dearest stock effect is 330.94 |
+| stress | 4 per core, eight tracks, 3 LFOs and 12 locked slots, 2 s, no clobber, no hang |
+
+Unsplit, every case reads 225.30 executed instructions a sample: the sample loop
+has no conditional branch. The stress run's instance at core 1 position 2 put out
+samples from silence: the harness writes a word a block into that audio block, as
+a do-nothing module in the same layout shows. On the unit: see the test procedure
+above.

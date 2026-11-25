@@ -730,6 +730,16 @@
       "sha256": "16600fb3681f45e8c2708f4f69da1befe24df696b5e0c4f868bd0eb891eb0fb5"
     },
     {
+      "id": "mackity",
+      "slots": "both",
+      "cycles": 226,
+      "cyclesKind": "executed",
+      "state": 32,
+      "buffer": 0,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/mackity/0.1.0-experimental.mwrm"
+    },
+    {
       "id": "butter-fingers",
       "octabam": true,
       "unitName": "Butter Fingers",

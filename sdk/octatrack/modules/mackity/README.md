@@ -34,17 +34,16 @@ original's TRIM reaches +40 dB at its top; here it stops 0.4 dB short, so that
 
 ## Quick tutorial
 
-1. Put MACKITY on FX1 of a drum loop's track and press PLAY. At TRIM 13 and
-   PAD 127 the loop keeps its level and gains the desk's slight colour.
-2. Turn TRIM to 40. The loop thickens and its peaks flatten into the clip;
-   turn PAD to about 90 to bring the level back down.
-3. Set TRIM 13 and PAD 127 to return to the clean desk, or select NONE in the
-   FX1 chooser to remove it.
+1. Put MACKITY on FX1 of a drum loop's track: hold FUNC, press FX1, turn LEVEL to Mackity and press YES. At TRIM 13 and PAD 127 the loop keeps its level and gains the desk's colour.
+2. Turn TRIM to 40 on the FX1 page. The loop thickens and its peaks flatten into the clip; turn PAD to about 90 to bring the level back down.
+3. Set TRIM 13 and PAD 127 to return to the clean desk, or select NONE in the FX1 chooser to remove it.
 
 ## Compatibility and limitations
 
-- Not yet tested on a unit. The DSP code is checked bit for bit in the DSP
-  emulator only (TESTING.md).
+- Tested on one MKII by the test procedure (TESTING.md); the MKI, a Part or
+  project reload with it saved and a power cycle were not tested by hand.
+- On a pattern that already fills the CPU, a pick can be refused with CPU FULL:
+  on eight busy tracks it asked for 3 % more than was left.
 - At high TRIM the clip makes harmonics above 22 kHz that fold back below it,
   as the original does at 44.1 kHz. That is part of its sound; it is not
   oversampled.
@@ -62,8 +61,10 @@ original's TRIM reaches +40 dB at its top; here it stops 0.4 dB short, so that
 
 See [TESTING.md](TESTING.md). In short: `verify.py` matches the bit-exact model
 in every case it renders, `test_reference.py` holds that model to the original,
-and dsp_host's meter reads 225.3 cycles a sample at every setting. Nothing has
-run on a unit yet.
+and dsp_host reads 228 instructions a sample at worst (0.79 of stock LO-FI). On
+the owner's MKII the test procedure passed, with a 2-minute soak: Mackity adds
+0.1 % to the frame interrupt on one slot, nothing installed and unused, and
+0.9 points to the longest frame per instance.
 
 ## Authorship and licences
 
@@ -74,13 +75,17 @@ Octatrack adaptation is distributed under the same terms. See [LICENSE](LICENSE)
 
 ## Screens and audio
 
-None yet: screenshots and an audio preview come with the unit test.
+Two captures off the unit's LCD (provenance in media/capture.json). No audio preview yet.
+
+![FX1 SETUP: the effect chooser with the cursor on Mackity](media/mackity-chooser.png)
+
+![The FX1 page running Mackity: TRIM on knob A, PAD on knob B](media/mackity-main.png)
 
 ## Develop
 
 - Hear it: `npm run module:dev -- mackity` builds it and tries it on your unit over USB; `--watch` does that again on every save.
-- Check it: `npm run module:doctor -- --draft mackity`.
-- `python3 -B sdk/drafts/mackity/test_reference.py` runs without tools;
-  `python3 -B sdk/drafts/mackity/verify.py` needs dsp_asm, dsp_host and the
+- Check it: `npm run module:doctor -- mackity`.
+- `python3 -B sdk/octatrack/modules/mackity/test_reference.py` runs without tools;
+  `verify.py` and `perf.py` beside it need dsp_asm, dsp_host and the
   disassembler from an octabam checkout (`npm run upstream:tools`).
 - How the port works, in fixed point: the header of `mackity.asm`.
