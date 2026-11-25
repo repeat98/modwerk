@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
   "id": "quick-velocity-aftertouch-assign",
-  "name": "Improved Mod Assign",
-  "version": "0.4.0-experimental",
+  "name": "Improved Modulation",
+  "version": "0.5.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -17,37 +17,50 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "IMPROVED MOD ASSIGN",
+    "label": "IMPROVED MODULATION",
     "family": "Performance",
-    "summary": "Link a parameter to velocity, aftertouch or the LFO by holding FIX, SAMPLER or LFO and turning its knob; hold SCENE and turn to lock it in the active scene.",
-    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod. Hold SCENE and turn a knob: the parameter is locked in the active scene, as scene edit does with the scene's pad held, without leaving the page.",
+    "summary": "Hold FIX, SAMPLER or LFO and turn a knob to link it to velocity, aftertouch or the LFO; hold SCENE or QPER and turn to lock it in a scene or the linked performance; record performance moves in LIVE RECORDING.",
+    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod. Hold SCENE and turn a knob: the parameter is locked in the active scene, as scene edit does with the scene's pad held, without leaving the page. Hold QPER and turn a knob: it edits that parameter's offset in the performance linked to QPER, and the knob inverts and shows it as it does for a held performance pad. QPER + PLAY clears it and PLAY again undoes that. QPER + RECORD and STOP copy and paste it. QPER + YES writes what you hear into the kit and removes those locks. In LIVE RECORDING the pads, the QPER knob and MIDI performance moves are kept in a quick perf rec that loops with the pattern; RECORD + YES writes it into the pattern as locks, RECORD + NO clears it. (QPER Live Rec, a module of its own up to 0.3.0, is part of it since 0.5.0.)",
     "highlights": [
       "Velocity, aftertouch or the LFO to any parameter in one gesture",
       "Stays on the page you are playing",
       "Uses stock's slots, saved with the kit",
-      "SCENE + knob writes a scene lock from the page"
+      "SCENE + knob writes a scene lock from the page",
+      "Sets a lock in the linked performance with one turn",
+      "QPER + PLAY clears the linked performance",
+      "QPER + YES moves them into the kit",
+      "Records pad and QPER knob moves in LIVE RECORDING and plays them back, 8 points a step"
     ],
     "usage": [
-      "Select a sound track and press FLTR. Hold FIX: FRQ and RES show 0 boxes, the new kit's velocity links.",
-      "Keep FIX held and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.",
-      "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.",
-      "Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.",
-      "Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth, then let go and tap LFO: the LFO page shows DST FRQ.",
-      "Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE: the scene's locks show as boxes. Turn SWT: it becomes a lock in scene 1, and the page stays. Still holding SCENE, press REC to copy the scene."
+      "Select a sound track and press FLTR. Hold FIX and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.",
+      "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay. Hold FIX and press a knob to set its link back to 0.",
+      "Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth.",
+      "Hold SCENE: the active scene's locks show as boxes. Turn SWT: it becomes a lock in that scene, and the page stays. Still holding SCENE, press REC to copy the scene.",
+      "Hold QPER, press pad 1 to link its performance, and keep holding. Turn FLTR's cutoff up and let go of QPER.",
+      "Sweep the QPER knob: the cutoff comes in. When a position sounds right, hold QPER and press YES to keep it in the kit.",
+      "Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.",
+      "Hold RECORD and press YES to write the moves into the pattern."
     ]
   },
   "access": {
-    "location": "The FIX, SAMPLER, LFO and SCENE keys, on a track's pages (FIX and SAMPLER on the sound tracks only) and in PERF, SCNE, MUTE and CHRO.",
+    "location": "The FIX, SAMPLER, LFO, SCENE and QPER keys, on a track's pages (FIX and SAMPLER on the sound tracks only) and in PERF, SCNE, MUTE and CHRO.",
     "steps": [
       "Select a sound track and open its SYNTH, SAMPLE, FILTER, AMP or LFO page.",
       "Hold FIX: linked knobs show their velocity amounts. Turn a knob to link it or change its amount.",
       "Hold SAMPLER for aftertouch: the aftertouch amounts.",
-      "With a scene active, hold SCENE and turn a knob: that parameter is locked in the scene. Hold SCENE without a knob and let go: scene edit opens, as before.",
-      "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity, tap SAMPLER alone to open the recorder, as before."
+      "Hold SCENE and turn a knob: that parameter is locked in the active scene (or the last engaged one). Hold SCENE without a knob and let go: scene edit opens, as before.",
+      "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity, tap SAMPLER alone to open the recorder, as before.",
+      "Hold QPER and press a pad to link that one performance.",
+      "Keep QPER held and turn a knob to set its offset.",
+      "QPER + PLAY clears the linked performance; press PLAY again to undo. QPER + RECORD copies it, QPER + STOP pastes.",
+      "QPER + YES moves them into the kit.",
+      "In PERF mode, hold RECORD and press PLAY, then play the pads: the moves loop. RECORD + YES writes them into the pattern; RECORD + NO empties them, NO again undoes."
     ],
     "screenshots": [
       "media/fix-filter.png",
-      "media/sampler-amp.png"
+      "media/sampler-amp.png",
+      "media/apply-quick-perf-rec.png",
+      "media/clear-quick-perf-rec.png"
     ]
   },
   "controls": [],
@@ -66,7 +79,13 @@
       "SCENE + knob with no scene engaged locks the scene engaged last (scene 1 until one has been since power-on), without engaging it. With all 48 scene locks in use it says SCENE LOCKS FULL.",
       "While SCENE is held after a knob, every knob turn writes a scene lock, in LIVE RECORDING too, and the TRIG page's knobs do nothing.",
       "The first knob event of a SCENE hold ends SCENE's hold as stock does when scene edit opens: any other key held at that moment loses its clean release.",
-      "During a FIX, SAMPLER or LFO hold SCENE does nothing, and during a SCENE hold FIX, SAMPLER and LFO do nothing."
+      "During a FIX, SAMPLER or LFO hold SCENE does nothing, and during a SCENE hold FIX, SAMPLER and LFO do nothing.",
+      "A press with QPER held leaves one link, unlike stock. A kit with several keeps them until then, and shows MORE THAN ONE LINKED.",
+      "The gestures work on the sound pages and in PERF, SCNE, MUTE and CHRO, not in menus.",
+      "Until the QPER knob moves after power on, QPER + YES uses the amounts stock holds.",
+      "Replaces stock's QPER + PLAY, which starts the sequencer.",
+      "Recorded performance moves live in RAM until QPER + YES writes them: a pattern change, project load or power off drops them.",
+      "The move lane holds 64 steps; a track at its own speed gets no locks from it."
     ]
   },
   "platform": {
@@ -77,7 +96,9 @@
       "ev_key",
       "ev_enc",
       "ev_tick",
-      "ev_draw"
+      "ev_draw",
+      "ev_project",
+      "ev_render_out"
     ],
     "claims": [
       "ui:FIX + knob on the sound pages",
@@ -89,22 +110,31 @@
       "ui:SCENE hold opens scene edit on the release",
       "ui:SCENE + pad in scene mode selects the track",
       "ui:SCENE + REC, STOP, PLAY copy, paste, clear the scene",
-      "ui:SCENE + knob in scene edit locks its scene"
+      "ui:SCENE + knob in scene edit locks its scene",
+      "ui:QPER + knob",
+      "ui:QPER + pads and trigs",
+      "ui:QPER + PLAY",
+      "ui:QPER + YES",
+      "ui:QPER + RECORD",
+      "ui:QPER + STOP",
+      "ui:RECORD + YES",
+      "ui:RECORD + NO",
+      "ui:live recording of performance moves"
     ]
   },
   "resources": {
-    "memoryBytes": 7652,
+    "memoryBytes": 25752,
     "fastBytes": 0,
     "load": {
-      "display": "UI only",
-      "method": "static",
-      "conditions": "Read from the code: it subscribes to ev_key, ev_enc, ev_tick and ev_draw only, never to the audio path. Each UI tick it checks whether FIX, SAMPLER or LFO is held and whether its locker is still set, a few compares; a held key's knob turns walk the sound's four mod slots. ev_draw returns at once unless LFO is held with its own locker set, and then redraws one knob's box. Not measured on a unit."
+      "display": "About 0.5 % of the audio block idle (QPER's quick perf rec, measured on a unit); the rest is UI only",
+      "method": "hardware",
+      "conditions": "QPER's part, measured on an Analog Rytm MKII as QPER Live Rec, the audio handler timed on DTIM0: 0.2.0 in the author's 16-module set, stopped: 8.7 us a block before its idle early return, 5.1 us after; 0.2.2 alone against 0.2.1 on the same unit and kit: 3.6 us a block stopped (0.53 %) and 6.8 us playing (1.03 %). With moves to record, a pad held or a take playing back it runs in full each block. The rest of the module runs only on key events, knob turns and UI ticks, never in the audio path (read from the code). The fold changed none of QPER's code."
     }
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.4.0-experimental",
-    "sourceSha256": "935ae0ca84ea9d2ee60104e231d01a69554049a1edcf39b0ea774a3d1b881fde",
+    "moduleVersion": "0.5.0-experimental",
+    "sourceSha256": "84d4ceaa93ee3c02839181340a12b4a51f849210b0c9e32448adbf2887e52130",
     "reports": [
       "TESTING.md"
     ],
@@ -114,11 +144,10 @@
       "testedOn": "2026-11-25",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, 24 and 25 Nov 2026: private development images with this version's source, RAM-booted over the flashed OS, a scratch project open. Modwerk's test rig (keys and knobs over USB, screens read back, with npp1993's go) ran QS02 and QS03: SCENE + knob lock boxes on a sound and the FX track, a knob press clearing, a trig held after the first knob making the trig's lock, FUNC + SCENE (PATTERN), the LFO page in PERF, SCNE, MUTE and CHRO as stock; on QS05 SCENE + knob, SCENE + pad + knob and the scene-mode pad without scene edit. npp1993 then tested by hand: QM40 (the package's own image, flashed) opened scene edit on the release; QS07 (held pads counted from events) and QS09 (scene edit locks, boxes 0.2 s in, REC/STOP/PLAY copy, paste, clear) worked as described.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, 25 Nov 2026: private development images of this version's source, RAM-booted over the flashed OS, scratch project. The test rig (with npp1993's go) ran QS11 and QS13: SCENE + knob, SCENE + pad + knob and the scene-mode pad as on 0.4.0, SCENE + REC at once in scene edit, QPER + pad linking, QPER + knob's lock box, QPER + PLAY clearing and undoing, QPER + YES applying and a second YES undoing. npp1993 tested QS12 by hand: QPER, the quick perf rec (RECORD + PLAY, pads, RECORD + YES), SCENE with knobs, pads, REC/STOP/PLAY and scene edit, and FIX, SAMPLER and LFO worked; the second QPER + YES then said NOTHING TO APPLY, which QS13 changed to an undo.",
       "limitations": [
-        "QS10's last two review fixes (REC/STOP/PLAY wait 0.2 s; a held pad clears when stock's table says up) and this package's own image ran in rytm-emu only, not on a unit.",
-        "QM40 (an earlier source of this version) is the only package image that ran on the unit.",
-        "Not tested: all 48 scene locks in use, a scene pad or QPER held with SCENE, LIVE RECORDING, a kit save and reload of the new locks, the sound.",
+        "QS14 and this package's own image (the final source: the undo keeps values changed since, a link move forgets it, the 3-tick page wait) ran in rytm-emu only.",
+        "QPER's gestures and the quick perf rec were not re-run by hand after the hand test of QS12; their code is QPER Live Rec 0.3.0's apart from the undo.",
         "Duration not recorded."
       ]
     },
@@ -126,17 +155,19 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.4.0: rytm-emu QS00 (stock) against QS02 to QS10 and QM40 to QM46 (scene locks, last engaged scene, pads, scene edit, copy/paste/clear, the LFO page in pad modes) and 31 rig cases; the test rig on the author's unit ran QS02, QS03 and QS05; the author tested QM40, QS07 and QS09 by hand. Earlier: 0.1 and 0.2.0 by hand (save, reload, power cycle), 0.3.x by the rig.",
+    "summary": "0.5.0: the old packages side by side (QB01) against the fold (QF01 to QF04) in rytm-emu, 14 screens byte-identical; the undo and SCENE timing in rytm-emu; 31 rig cases on QS11 to QS14; the test rig on the author's unit (QS11, QS13) and the author's hand test (QS12). Earlier: Improved Mod Assign and QPER Live Rec as in TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Select a sound track and press FLTR. Hold FIX: FRQ and RES show 0 boxes, the new kit's velocity links.",
-          "Keep FIX held and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.",
-          "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.",
-          "Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.",
-          "Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth, then let go and tap LFO: the LFO page shows DST FRQ.",
-          "Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE: the scene's locks show as boxes. Turn SWT: it becomes a lock in scene 1, and the page stays. Still holding SCENE, press REC to copy the scene."
+          "Select a sound track and press FLTR. Hold FIX and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.",
+          "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay. Hold FIX and press a knob to set its link back to 0.",
+          "Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth.",
+          "Hold SCENE: the active scene's locks show as boxes. Turn SWT: it becomes a lock in that scene, and the page stays. Still holding SCENE, press REC to copy the scene.",
+          "Hold QPER, press pad 1 to link its performance, and keep holding. Turn FLTR's cutoff up and let go of QPER.",
+          "Sweep the QPER knob: the cutoff comes in. When a position sounds right, hold QPER and press YES to keep it in the kit.",
+          "Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.",
+          "Hold RECORD and press YES to write the moves into the pattern."
         ]
       },
       "screenshots": [
@@ -146,7 +177,9 @@
         "media/mod-setup.png",
         "media/lfo-filter.png",
         "media/lfo-page.png",
-        "media/scene-lock.png"
+        "media/scene-lock.png",
+        "media/apply-quick-perf-rec.png",
+        "media/clear-quick-perf-rec.png"
       ],
       "captureRecord": "media/capture.json"
     }
@@ -160,7 +193,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Improved Mod Assign",
+      "caption": "Improved Modulation",
       "alt": "FIX plus a knob turn fills the first of four velocity mod slots with +20; SAMPLER plus a knob turn fills the first of four aftertouch slots with +10; LFO plus a knob turn makes SWT the LFO's destination with depth +12. A knob press sets a link to 0, and the links save with the kit.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
@@ -177,9 +210,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -193,9 +226,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -209,9 +242,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -225,9 +258,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -241,9 +274,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -257,9 +290,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -273,9 +306,41 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/apply-quick-perf-rec.png",
+      "kind": "screenshot",
+      "caption": "Main screen after RECORD + YES: the APPLY QUICK PERF REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with an APPLY QUICK PERF REC message box over the parameter page.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/clear-quick-perf-rec.png",
+      "kind": "screenshot",
+      "caption": "Main screen after RECORD + NO: the CLEAR QUICK PERF REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with a CLEAR QUICK PERF REC message box over the parameter page.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.5.0-experimental",
+        "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+        "setup": "Headless rytm-emu (dtboot) running QF04: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.5.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

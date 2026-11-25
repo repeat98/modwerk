@@ -36,7 +36,7 @@
 // by ar2-1.74.h. Stock returns pointers in d0, while m68k-linux GCC
 // expects them in a0, so those routines are declared as returning a word.
 
-#include "ar2-1.74.h"
+#include "qperf-1.74.h"
 
 // The functions marked QPERF_UI run only from the UI task (keys, tick, project; the quick
 // perf rec bake and clear), never from the audio block. cold puts them out of the hot code
@@ -358,6 +358,15 @@ static unsigned linked(void *kit)
     return (unsigned)KIT_QPER_MASK(kit) & 0xfff;
 }
 
+// What the last QPER + YES applied, so a second YES in the same QPER hold puts it back:
+// the kit's values as they were and the locks it removed. Any other QPER action, a lock
+// edit, a new hold or another kit forgets it, as stock's undo for clear and paste does.
+static struct {
+    void *kit;
+    int index, count, valid;
+    struct { unsigned char track, param; short lock; int old, now; } e[SLOTS];
+} applied;
+
 static const unsigned char *lock_table(void *perf)
 {
     return *(const unsigned char **)((char *)perf + PERF_TABLE);
@@ -474,6 +483,7 @@ static void locker_set(void *self, int track, int param, int value)
         show("LOCK MEM FULL!");
         return;
     }
+    applied.valid = 0;
     PERF_SET(perf, lowest_linked(mask), track, param, value);
 }
 
@@ -561,12 +571,34 @@ static void link_moved(unsigned mask)
     hot.perf_rec_busy = 0;
 }
 
+QPERF_UI static int undo_apply(void *kit, unsigned mask)
+{
+    void *perf = (void *)KIT_PERF(kit);
+    int i;
+    if (!applied.valid || applied.kit != kit || mask != 1u << applied.index)
+        return 0;
+    applied.valid = 0;
+    for (i = 0; i < applied.count; i++) {
+        int track = applied.e[i].track, param = applied.e[i].param, id;
+        void *set = (void *)KIT_PARAM_SET(kit, track);
+        id = param_id(set, track, param);
+        if (id && param_read(set, id) == applied.e[i].now)
+            SET_VALUE(set, id, applied.e[i].old, track, 1, 1);     // unless MIDI changed it since
+        PERF_SET(perf, applied.index, track, param, applied.e[i].lock);
+    }
+    show("UNDO APPLY");
+    return 1;
+}
+
 QPERF_UI static void apply_linked(void *kit)
 {
     void *perf = (void *)KIT_PERF(kit);
     const unsigned char *t = lock_table(perf);
     unsigned mask = linked(kit);
     int i, changed = 0;
+    if (undo_apply(kit, mask))
+        return;
+    applied.count = 0;
     for (i = 0; i < SLOTS; i++, t += SLOT_BYTES) {
         int track = t[2], param = t[3], index = t[4], lock, id, value;
         void *set;
@@ -582,10 +614,19 @@ QPERF_UI static void apply_linked(void *kit)
         value = lock * (int)PERF_AMOUNT(index) >> AMOUNT_SCALE;     // as the engine adds it
         if (!value)
             continue;
+        applied.e[applied.count].track = track;
+        applied.e[applied.count].param = param;
+        applied.e[applied.count].lock = lock;
+        applied.e[applied.count].old = param_read(set, id);
+        applied.count++;
+        applied.index = index;
         SET_VALUE(set, id, param_read(set, id) + value, track, 1, 1);
+        applied.e[applied.count - 1].now = param_read(set, id);
         PERF_CLEAR_ONE(perf, index, track, param);
         changed = 1;
     }
+    applied.kit = kit;
+    applied.valid = changed;
     if (changed)
         show_numbered("PERFORMANCE ", mask, " APPLIED");
     else
@@ -630,6 +671,7 @@ QPERF_UI static void perf_action(int key)
         apply_linked(kit);
         return;
     }
+    applied.valid = 0;
     if (!mask) {
         show("NO PERFORMANCE LINKED");
         return;
@@ -1322,6 +1364,7 @@ void qperf_pad(void *event, int perf)
         void *kit = active_kit();
         unsigned one = 1u << perf, mask = linked(kit) == one ? 0 : one;
         KIT_SET_MASK(kit, (int)mask);
+        applied.valid = 0;
         link_moved(mask);
     }
 }
@@ -1371,6 +1414,7 @@ QPERF_UI int qperf_key(void *brain, void *event)
         } else if (!(flags & REPEAT) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
             held = 1;
             swallowed = 0;
+            applied.valid = 0;          // the undo of a YES lasts one hold
             locker_install();
         }
         return 0;
@@ -1424,6 +1468,7 @@ QPERF_UI int qperf_key(void *brain, void *event)
 void qperf_kit_changed(void)
 {
     kit_changed = 1;
+    applied.valid = 0;
 }
 
 QPERF_UI void qperf_project(int how, unsigned dropped)

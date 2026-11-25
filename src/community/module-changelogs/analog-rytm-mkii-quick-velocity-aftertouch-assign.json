@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Now called Improved Modulation, and QPER Live Rec is part of it: QPER locks, copy, paste, clear, YES and the quick perf rec work as before.",
+      "Press QPER + YES again in the same hold to undo the apply; SCENE + REC, STOP or PLAY reacts sooner, at once in scene edit.",
+      "QPER Live Rec leaves the library: install this module in its place, never both."
+    ]
+  },
+  {
     "version": "0.4.0-experimental",
     "date": "2026-11-25",
     "changes": [
