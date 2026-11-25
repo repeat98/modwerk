@@ -316,7 +316,12 @@ package's SHA-256 and changes nothing. `device_trial` (with
 sends a request every three seconds, since the unit undoes a trial by itself
 after ten quiet seconds; `device_keep` keeps it until the next power cycle,
 `device_undo` puts the previous set back and checks it is the one reviewed.
-Closing the MCP during a trial undoes it ten seconds later. Nothing is
+While a pattern plays the unit refuses both (`unsafe`): the trial and its
+pings stay, so stop playback and call the tool again. A ping that fails shows
+as `state.trial.pingError` in `device_status`, and `state.status` turns
+`trial-lost` once no ping has reached the unit for ten seconds or its loader is
+back in the normal phase. A remote session or a rebuilt site bundle waits for
+the trial's end. Closing the MCP during a trial undoes it ten seconds later. Nothing is
 saved: there are no saved sets. Close Elektron Transfer first. Tests run
 against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the
 base's own transport, controller and loader compiled for the computer.

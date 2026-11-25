@@ -336,16 +336,17 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
       }
     }
-    return { machine: 'model-cycles', state: { status: cyclesTrial ? 'trial' : 'ready', identity }, build, inventory: null, loader }
+    const trial = cyclesTrialState()
+    return { machine: 'model-cycles', state: { status: !trial ? 'ready' : trial.lost ? 'trial-lost' : 'trial', identity, ...(trial && { trial }) }, build, inventory: null, loader }
   }))
   // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
-  const cyclesLoad = () => withCycles('read Model:Cycles load', async access => {
+  const cyclesLoad = () => cyclesSerial(() => withCycles('read Model:Cycles load', async access => {
     const reading = await frontend.readMcLoad(access)
     if (!reading) throw new Error(noCycles)
     return reading === 'unsupported' ? { machine: 'model-cycles', supported: false, reading: null } : { machine: 'model-cycles', supported: true, reading }
-  })
+  }))
   // The base's diagnostics log (LINK.md `diag`), in the Octatrack's layout; an older development base refuses it.
-  const cyclesLog = () => withCycles('read Model:Cycles log', async access => {
+  const cyclesLog = () => cyclesSerial(() => withCycles('read Model:Cycles log', async access => {
     const read = await frontend.readMcLog(access)
     if (!read) throw new Error(noCycles)
     if (read === 'unsupported') return { machine: 'model-cycles', supported: false, log: null }
@@ -353,7 +354,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     // The nonce identifies the unit's log across connections; like the Octatrack's, it stays out.
     const { boot, seq, loads, incidents } = read.log
     return { machine: 'model-cycles', supported: true, log: { boot, seq, loads, incidents } }
-  })
+  }))
   // The Model:Cycles' runtime loader (LINK.md "Loading modules"): one change a trial, read from --elektron-images. The
   // unit undoes a trial by itself after ten seconds without a link request, so a trial pings every three seconds until
   // its Keep or Undo. Every exchange goes in turn: a frame's parts from two requests must not interleave.
@@ -366,6 +367,15 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }))
   const cyclesModules = call => frontend.mcModules(call).catch(error => { if (error instanceof frontend.McRefused && error.status === 2) return 'unsupported'; throw error })
   let cyclesTrial
+  // A trial's pings: the last one that reached the unit, the last failure, and whether the unit is known to have
+  // undone it (its loader back in the normal phase, or more than ten seconds without a ping that reached it).
+  const CYCLES_LAPSE = 10000
+  function cyclesTrialState() {
+    if (!cyclesTrial) return null
+    const quiet = clock() - cyclesTrial.lastPing
+    const lost = cyclesTrial.lost ?? (quiet > CYCLES_LAPSE ? 'No ping reached the unit for ' + Math.round(quiet / 1000) + ' s; it undoes a trial after ten quiet seconds.' : null)
+    return { lost, pingError: cyclesTrial.pingError }
+  }
   async function cyclesPackage(change) {
     const removal = /^remove:([A-Za-z0-9._-]{1,64})$/.exec(change)
     if (removal) return { module: change, data: frontend.mcRemovalPackage(removal[1]) }
@@ -401,25 +411,39 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         if (session.status.base !== plan.before.base || session.status.active !== plan.before.active) throw new Error('The device changed after review; nothing was sent.')
         return frontend.mcTry(call, plan.change.data)
       })
-      const id = randomUUID()
-      const ping = setInterval(() => { cyclesLine('keep Model:Cycles trial', call => frontend.mcUploadSession(call)).catch(() => {}) }, 3000)
-      ping.unref?.()
-      cyclesTrial = { id, ping, before: plan.before }
+      const trial = { id: randomUUID(), before: plan.before, lastPing: clock(), pingError: null, lost: null }
+      trial.ping = setInterval(() => {
+        cyclesLine('keep Model:Cycles trial', call => frontend.mcUploadSession(call)).then(session => {
+          if (cyclesTrial !== trial) return
+          if (session.status.phase === 'normal') { clearInterval(trial.ping); trial.lost = 'The unit undid the trial by itself: its loader is back in the normal phase.'; return }
+          trial.lastPing = clock(); trial.pingError = null
+        }, error => { if (cyclesTrial === trial) trial.pingError = error.message })
+      }, 3000)
+      trial.ping.unref?.()
+      cyclesTrial = trial
+      const id = trial.id
       return { trial: id, machine: 'model-cycles', state: { phase: status.phase, generation: status.generation, active: status.active } }
     } finally { if (!cyclesTrial) endTrialTurn() }
   }
   async function cyclesFinish(args, keep) {
     if (!options.allowDeviceWrites || !cyclesTrial || args.trial !== cyclesTrial.id) throw new Error('No matching authorized device trial.')
     const completed = cyclesTrial
-    clearInterval(completed.ping)
+    const done = () => { clearInterval(completed.ping); if (cyclesTrial === completed) cyclesTrial = undefined; endTrialTurn() }
+    // The trial and its pings stay until the unit has finished: a refusal (unsafe while a pattern plays) leaves both,
+    // so the agent can try again, as the Octatrack's finish() does.
+    let after
     try {
-      const after = await cyclesLine((keep ? 'keep' : 'undo') + ' Model:Cycles trial', async call => {
+      after = await cyclesLine((keep ? 'keep' : 'undo') + ' Model:Cycles trial', async call => {
         const status = await frontend.mcFinish(call, keep)
         return status && { phase: status.phase, generation: status.generation, active: status.active, loader: await cyclesModules(call) }
       })
-      if (!keep && after.active !== completed.before.active) throw new Error('Undo did not restore the reviewed set.')
-      return { kept: keep, completed: true, machine: 'model-cycles', ...after }
-    } finally { cyclesTrial = undefined; endTrialTurn() }
+    } catch (error) {
+      if (/Nothing is on trial/.test(error.message)) { done(); throw new Error('The trial is gone: the unit put the previous set back by itself (ten seconds without a ping, or a power cycle). Nothing was ' + (keep ? 'kept' : 'undone') + ' here.', { cause: error }) }
+      throw new Error((keep ? 'Keep' : 'Undo') + ' did not finish: ' + error.message + ' The trial stays on and its pings go on: stop playback if a pattern plays, then call ' + (keep ? 'device_keep' : 'device_undo') + ' again.', { cause: error })
+    }
+    done()
+    if (!keep && after.active !== completed.before.active) throw new Error('Undo did not restore the reviewed set.')
+    return { kept: keep, completed: true, machine: 'model-cycles', ...after }
   }
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
@@ -627,7 +651,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     remote_session_status: async args => ({ ...await adminApi('/admin/remote-sessions/' + sessionId(args.session)), relay: remote?.id === args.session ? remote.relay.state() : null }),
     remote_session_connect: async args => {
       const id = sessionId(args.session)
-      if (trial) throw new Error('Finish the current trial first.')
+      if (trial || cyclesTrial) throw new Error('Finish the current trial first.')
       const { ticket } = await adminApi('/admin/remote-sessions/' + id + '/ticket', 'POST', {})
       const url = new URL(api.href + '/remote-sessions/' + id + '/socket')
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'; url.searchParams.set('ticket', ticket)
@@ -667,10 +691,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!keep && !frontend.sameModules(result.inventory.moduleIds, completed.before.inventory.moduleIds)) throw new Error('Undo did not restore the reviewed inventory.')
     return { kept: keep, completed: true, ...result }
   }
-  // Before each tool call: rebuild the bundle when a file it was built from changed. An open trial keeps the bundle it
-  // started with until Keep or Undo; the link and reviews belong to the old bundle, so they are dropped.
+  // Before each tool call: rebuild the bundle when a file it was built from changed. An open trial (the Octatrack's or
+  // the Model:Cycles') keeps the bundle it started with until Keep or Undo; the link and reviews belong to the old bundle, so they are dropped.
   async function refreshFrontend() {
-    if (trial || await stamp(built.files) === built.stamp) return
+    if (trial || cyclesTrial || await stamp(built.files) === built.stamp) return
     dropLink(); closeZoom()
     try { await loadFrontend() }
     catch (error) { throw new Error('The checkout changed since this server bundled the site (a branch switch or base regeneration), and rebuilding failed: ' + error.message + ' Once the checkout builds again, call the tool again; nothing was sent.', { cause: error }) }
