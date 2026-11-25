@@ -47,7 +47,7 @@ IDENT = ['link version', 'requests received', 'requests dropped', 'ticks', 'port
 BOOT = {0: 'none', 1: 'booted from RAM', 2: 'mailbox without a software reset', 3: 'check word', 4: 'lengths',
         5: 'container CRC', 6: 'no MAIN OS section', 8: 'failed after the unpack (reset)'}
 MAILBOX = {0: 'empty', 0x4d574254: 'asked', 0x4d574255: 'spent', 0x4d574253: 'booted'}
-IMAGE_MAX, CONTAINER_MAX = 0x400000, 0x200000
+IMAGE_MAX, CONTAINER_MAX = 0x400000, 0x1c0000  # as link.c: the container ends below the OS's stores at 0x1e0000
 PORTS = {1: 'MIDI setting', 2: 'USB', 3: 'DIN', 4: 'USB and DIN'}
 
 
