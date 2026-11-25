@@ -12,7 +12,9 @@
 //                   OS upload waits at UPGRADE OS NOW? (a flash needs a person's YES)
 //   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only, refused as key
 //   release 0x12 -> lets go of every key the link holds, armed only
-//   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
+//   screen  0x20 OFF -> 128 bytes of the frame on the screen from OFF (0, 128 ... 896), with the frame's number
+// The device chooses what each request returns: there is no request for an address the host names, so a client
+// reads the link's counters and the screen, and posts keys and turns, and reaches nothing else of the unit.
 // Keys and turns go on the UI task's queue (0x4013747a, queue_put 0x40001896) as the panel's messages do, so the UI
 // loop plays them through the core's ev_key/ev_enc sites and stock: modules see them too. A key the link holds reads
 // as held to stock's is_key_held (0x4011fac4, which base.json points at mw_link_held). Arm: SETTINGS > REMOTE CTRL, ON
@@ -58,17 +60,24 @@
 #define CMD_KEY 0x10
 #define CMD_ENC 0x11
 #define CMD_RELEASE_ALL 0x12
-#define CMD_MEM 0x21
+#define CMD_SCREEN 0x20
 #define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define HUMAN_TICKS 60                  // about 3 s
 #define PEND_TICKS 20                   // about 1 s: a posted event never seen at ev_key/ev_enc is given up
 #define HEADER 8                        // F0 7D M W L ver seq cmd
 #define RING 8                          // requests waiting for the UI task
-#define CMD_BYTES 32                    // a request's bytes, F0..F7 (mem, the longest, is 19)
+#define CMD_BYTES 32                    // a request's bytes, F0..F7 (key and enc, the longest, are 19)
 #define PER_TICK 4                      // requests answered in one tick
-#define MEM_MAX 128
-#define DDR_END 0x48000000
+#define FRAME_BYTES 1024                // 128x64 pixels, 1 bit each
+#define SCREEN_PART 128                 // a screen reply's bytes
+// Stock keeps two frame pointers side by side (OS 1.12, FRAME_POINTERS_AT 0x402a10c8): it sends the one it drew to
+// the display, then swaps them (0x40131fd2), so the frame on the screen is the second.
+#define FRAME_ON_SCREEN (((uint8_t *const volatile *)FRAME_POINTERS_AT)[1])
+#ifndef DDR_START                       // a host test names its own
+#define DDR_START 0x40000000u
+#define DDR_END 0x48000000u
+#endif
 
 static uint8_t ring[RING][CMD_BYTES];
 static uint8_t ring_len[RING];
@@ -97,7 +106,10 @@ void mw_link_rx(const uint8_t *msg, uint32_t len, uint32_t source)
     ring_head = h + 1;                  // published last: the UI task reads it after the bytes
 }
 
-static uint8_t reply[HEADER + 1 + 5 + (MEM_MAX / 7 + 1) * 8 + 1];
+static uint8_t reply[HEADER + 1 + 5 * 9 + (SCREEN_PART / 7 + 1) * 8 + 1];
+// The frame as it was when OFF 0 was asked for: the later parts come from this copy, so the eight parts are one frame.
+static uint8_t frame[FRAME_BYTES];
+static uint32_t frame_number;           // 0 until the first copy
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -294,11 +306,17 @@ int mw_link_enc(void *brain, char *event)
     return human();
 }
 
-static int readable(uint32_t a, uint32_t n)
+// OFF 0 copies the frame on the screen, if stock's pointer to it lies wholly in DDR; 0 when it does not.
+static int take_frame(void)
 {
-    if (n == 0 || n > MEM_MAX || a + n < a)
+    const uint8_t *fb = FRAME_ON_SCREEN;
+    int i;
+    if ((uintptr_t)fb < DDR_START || (uintptr_t)fb > DDR_END - FRAME_BYTES)
         return 0;
-    return (a >= 0x40000000 && a + n <= DDR_END) || (a >= 0x80000000 && a + n <= 0x80010000);
+    for (i = 0; i < FRAME_BYTES; i++)
+        frame[i] = fb[i];
+    frame_number++;
+    return 1;
 }
 
 static void COLD act(const uint8_t *m, int len)
@@ -356,23 +374,24 @@ static void COLD act(const uint8_t *m, int len)
             refused_count++;
         send(begin(seq, cmd, status));
         return;
-    case CMD_MEM:
-        if (n < 10) {
+    case CMD_SCREEN:
+        if (n < 5) {
             send(begin(seq, cmd, ST_BAD));
             return;
         } else {
-            uint32_t a = get32(m + HEADER), count = get32(m + HEADER + 5);
-            if (!readable(a, count)) {
+            uint32_t off = get32(m + HEADER);
+            if (off >= FRAME_BYTES || off % SCREEN_PART || (off == 0 ? !take_frame() : !frame_number)) {
                 send(begin(seq, cmd, ST_RANGE));
                 return;
             }
             p = begin(seq, cmd, ST_OK);
-            p = put32(p, a);
-            p = pack(p, (const volatile uint8_t *)a, (int)count);
+            p = put32(p, off);
+            p = put32(p, frame_number);
+            p = pack(p, frame + off, SCREEN_PART);
             send(p);
         }
         return;
-    default:
+    default:                            // anything else, the old mem (0x21) included
         send(begin(seq, cmd, ST_BAD));
     }
 }

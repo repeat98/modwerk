@@ -13,15 +13,15 @@ import { UPLOAD_RESPONSE } from '../elekloader/upload-wire.ts'
 
 /** F0 7D 'M' 'W' 'L' version: the link's header, a request's and a reply's. */
 export const LINK_HEADER = [0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1] as const
-export const LINK_COMMANDS = { ident: 0x01, mem: 0x21, diag: 0x22, upload: 0x30 } as const
+export const LINK_COMMANDS = { ident: 0x01, screen: 0x20, mem: 0x21, diag: 0x22, upload: 0x30 } as const
 export type LinkCommand = keyof typeof LINK_COMMANDS
 export const LINK_STATUS: Readonly<Record<number, string>> = {
   1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range', 5: 'a person is at the unit',
 }
 /** The most a `mem` request reads. */
 export const MEM_MAX = 128
-/** Stock keeps two frame pointers side by side (OS 1.12): the frame on the screen is the second's. 128x64, 1 bit. */
-export const FRAME_POINTERS = 0x402a10c8, FRAME_BYTES = 1024
+/** The frame on the screen: 128x64, 1 bit, sent by the unit in eight parts of SCREEN_PART bytes. */
+export const FRAME_BYTES = 1024, SCREEN_PART = 128
 
 /** SysEx in and out: whole messages, F0 to F7. next() waits up to `ms` and gives null when none came. */
 export type LinkLine = { send(data: Uint8Array): void; next(ms: number): Promise<Uint8Array | null> }
@@ -104,11 +104,23 @@ async function read(line: LinkLine, address: number, length: number): Promise<Ui
   for (let at = 0; at < length; at += MEM_MAX) out.set(await mem(line, address + at, Math.min(MEM_MAX, length - at)), at)
   return out
 }
-/** The frame on the screen as 64 rows of 128 pixels, top row first (the Rytm's layout). A draw between its eight
- * reads can tear it. */
+/** One part of the frame: `screen 0` makes the unit copy the frame on the screen, and every part carries the copy's
+ * number. A reply for another offset, another copy or of another length is refused, never passed on. */
+async function screenPart(line: LinkLine, offset: number, copy?: number): Promise<{ copy: number; bytes: Uint8Array }> {
+  const p = await ask(line, 'screen', [offset])
+  if (p.length < 10 || get32(p, 0) !== offset) throw new LinkError('screen: reply does not match the requested part')
+  if (copy !== undefined && get32(p, 5) !== copy) throw new LinkError('screen: the unit copied the screen again during the read')
+  const bytes = unpack7(p.subarray(10))
+  if (bytes.length !== SCREEN_PART) throw new LinkError(`screen: expected ${SCREEN_PART} bytes, received ${bytes.length}`)
+  return { copy: get32(p, 5), bytes }
+}
+/** The frame on the screen as 64 rows of 128 pixels, top row first (the Rytm's layout): eight parts of one copy the unit
+ * took, so it never tears. The unit chooses the bytes; no address is asked for. */
 export async function screen(line: LinkLine): Promise<number[][]> {
-  const pointers = await mem(line, FRAME_POINTERS, 8), front = new DataView(pointers.buffer, pointers.byteOffset).getUint32(4)
-  return frameRows(await read(line, front, FRAME_BYTES))
+  const frame = new Uint8Array(FRAME_BYTES), first = await screenPart(line, 0)
+  frame.set(first.bytes)
+  for (let at = SCREEN_PART; at < FRAME_BYTES; at += SCREEN_PART) frame.set((await screenPart(line, at, first.copy)).bytes, at)
+  return frameRows(frame)
 }
 export function frameRows(frame: Uint8Array): number[][] {
   return Array.from({ length: 64 }, (_, y) => Array.from({ length: 128 }, (_, x) => frame[(7 - (y >> 3)) + 8 * x] >> (y & 7) & 1))

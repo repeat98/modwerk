@@ -3,8 +3,7 @@
 """The Digitone II development link's host (sdk/machines/digitone-ii/elekloader/base/link.c).
 
     dn2_link.py ident                # link version, messages received and dropped, ticks
-    dn2_link.py mem 0x47f00000 64    # up to 128 bytes of DDR or SRAM, as hex
-    dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG), read through mem
+    dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG)
     dn2_link.py press KEY [KEY...]   # press and let go, one after the other (dn2_link.py keys lists them, or an id)
     dn2_link.py hold KEY / let KEY   # press, or let go of, one key (FUNC + TRIG: hold FUNC, press TRIG1, let FUNC)
     dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA detents, up to 8 a message
@@ -21,7 +20,7 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'screen': 0x20}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit', 6: 'an OS upload waits at UPGRADE OS NOW?: confirm it at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
@@ -53,10 +52,10 @@ def unpack7(b):
     return bytes(out)
 
 
-# Stock keeps two frame pointers side by side (OS 1.12): it sends the one it drew (0x402a10c8) to the display, then
-# swaps them (0x40131fd2), so the frame on the screen is the second. A frame is 128x64 pixels, 1 bit each, 1024 bytes.
-FRAME_POINTERS = 0x402a10c8
+# A frame is 128x64 pixels, 1 bit each, 1024 bytes; the unit sends it in eight parts. It copies the frame when part 0
+# is asked for and sends every part from that copy, each with the copy's number. No request names an address.
 FRAME_BYTES = 1024
+SCREEN_PART = 128
 
 
 def frame_rows(fb):
@@ -164,30 +163,32 @@ def packed_len(n):
     return n + (n + 6) // 7
 
 
-def mem_reply_fits(addr, n):
-    """A mem reply is this request's only if it echoes addr and carries exactly n bytes (or is a refusal)."""
+def screen_reply_fits(off, number=None):
+    """A screen reply is this request's only if it echoes off, carries exactly one part and, after part 0, the number
+    of part 0's copy (or is a refusal)."""
     def fits(got):
         _, _, status, p = got
         if status:
             return True
-        return len(p) == 5 + packed_len(n) and get32(p, 0) == addr
+        return len(p) == 10 + packed_len(SCREEN_PART) and get32(p, 0) == off and (number is None or get32(p, 5) == number)
     return fits
 
 
-def mem(addr, n, port, line=None):
-    _, _, status, p = ask('mem', addr, n, port=port, accept=mem_reply_fits(addr, n), line=line)
+def screen_part(off, port, line=None, number=None):
+    """(the copy's number, the part's bytes)."""
+    _, _, status, p = ask('screen', off, port=port, accept=screen_reply_fits(off, number), line=line)
     if status:
         sys.exit('refused: ' + STATUS.get(status, str(status)))
-    return unpack7(p[5:])[:n]
+    return get32(p, 5), unpack7(p[10:])[:SCREEN_PART]
 
 
 def screen(port, line=None):
-    """The frame on the screen: its pointer, then the frame in eight reads (a draw between them can tear it)."""
+    """The frame on the screen: part 0 makes the unit copy it, the other seven come from that copy, so it never tears."""
     own = line is None
     line = MidiLine(port) if own else line
     try:
-        front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port, line), 'big')
-        return b''.join(mem(front + at, 128, port, line) for at in range(0, FRAME_BYTES, 128))
+        number, first = screen_part(0, port, line)
+        return first + b''.join(screen_part(at, port, line, number)[1] for at in range(SCREEN_PART, FRAME_BYTES, SCREEN_PART))
     finally:
         if own:
             line.close()
@@ -209,9 +210,6 @@ def main():
     parser.add_argument('--port', default='Digitone II')
     sub = parser.add_subparsers(dest='cmd', required=True)
     sub.add_parser('ident')
-    memp = sub.add_parser('mem')
-    memp.add_argument('addr', type=lambda s: int(s, 0))
-    memp.add_argument('n', type=int)
     for name in ('press', 'hold', 'let'):
         sub.add_parser(name).add_argument('keys', nargs='+')
     turn = sub.add_parser('turn')
@@ -262,8 +260,6 @@ def main():
         if len(v) >= 9:
             line += ', armed %d, person %d, presses by a person %d, posted %d, refused %d' % tuple(v[4:9])
         print(line)
-    else:
-        print('%08x: %s' % (a.addr, mem(a.addr, a.n, a.port).hex()))
 
 
 if __name__ == '__main__':

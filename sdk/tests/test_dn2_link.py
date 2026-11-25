@@ -22,20 +22,22 @@ def pack7(data):
 class Dn2Link(unittest.TestCase):
     def test_requests_are_the_rytm_links_frames(self):
         self.assertEqual(link.request(5, "ident"), bytes([0xF0, 0x7D, 0x4D, 0x57, 0x4C, 1, 5, 0x01, 0xF7]))
-        mem = link.request(9, "mem", 0x47F00000, 64)
-        self.assertEqual(len(mem), 19)
-        self.assertEqual(link.get32(mem, 8), 0x47F00000)
-        self.assertEqual(link.get32(mem, 13), 64)
-        self.assertTrue(all(b < 0x80 for b in mem[1:-1]))
+        shot = link.request(9, "screen", 384)
+        self.assertEqual(len(shot), 14)
+        self.assertEqual((shot[7], link.get32(shot, 8)), (0x20, 384))
+        self.assertTrue(all(b < 0x80 for b in shot[1:-1]))
+
+    def test_there_is_no_request_for_an_address(self):
+        self.assertEqual(set(link.CMD), {"ident", "screen", "disarm", "key", "enc", "release"})
 
     def test_replies_parse_as_link_c_builds_them(self):
-        data = bytes(range(0x70, 0x70 + 20)) + b"\xff\x80"
-        reply = link.HEADER + bytes([9, 0x21 | 0x40, 0]) + link.u32(0x80001000) + pack7(data) + b"\xF7"
+        data = bytes(range(0x70, 0x70 + 126)) + b"\xff\x80"
+        reply = screen_reply(9, 128, 3, data)
         seq, cmd, status, payload = link.parse(reply)
-        self.assertEqual((seq, cmd, status), (9, 0x21, 0))
-        self.assertEqual(link.get32(payload, 0), 0x80001000)
-        self.assertEqual(link.unpack7(payload[5:])[:len(data)], data)
-        self.assertIsNone(link.parse(link.request(9, "mem", 0, 1)))   # a request is not a reply
+        self.assertEqual((seq, cmd, status), (9, 0x20, 0))
+        self.assertEqual((link.get32(payload, 0), link.get32(payload, 5)), (128, 3))
+        self.assertEqual(link.unpack7(payload[10:])[:len(data)], data)
+        self.assertIsNone(link.parse(link.request(9, "screen", 0)))   # a request is not a reply
 
 
 class Dn2Screen(unittest.TestCase):
@@ -70,8 +72,14 @@ class Dn2Keys(unittest.TestCase):
         self.assertTrue(all(b < 0x80 for b in enc[1:-1]))
 
 
-def mem_reply(seq, addr, data, status=0):
-    return link.HEADER + bytes([seq & 0x7f, 0x21 | 0x40, status]) + link.u32(addr) + pack7(data) + b"\xF7"
+def screen_reply(seq, off, number, data, status=0):
+    if status:
+        return link.HEADER + bytes([seq & 0x7f, 0x20 | 0x40, status, 0xF7])
+    return link.HEADER + bytes([seq & 0x7f, 0x20 | 0x40, 0]) + link.u32(off) + link.u32(number) + pack7(data) + b"\xF7"
+
+
+def frame_part(off):
+    return bytes((off + i) * 7 + 1 & 0xff for i in range(128))
 
 
 class FakeLine:
@@ -92,39 +100,51 @@ class FakeLine:
 
 
 class Dn2LinkReplies(unittest.TestCase):
+    def unit(self, number=lambda off: 1, before=lambda f: []):
+        return FakeLine(lambda f: before(f) + [screen_reply(f[6], link.get32(f, 8), number(link.get32(f, 8)),
+                                                            frame_part(link.get32(f, 8)))])
+
+    def test_the_screen_is_eight_parts_of_one_copy(self):
+        line = self.unit()
+        frame = link.screen("x", line)
+        self.assertEqual(frame, b"".join(frame_part(off) for off in range(0, 1024, 128)))
+        self.assertEqual([link.get32(f, 8) for f in line.sent], list(range(0, 1024, 128)))
+
     def test_each_request_takes_a_new_sequence_number(self):
-        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(4))])
-        link.mem(0x40000000, 4, "x", line)
-        link.mem(0x40000004, 4, "x", line)
-        self.assertNotEqual(line.sent[0][6], line.sent[1][6])
+        line = self.unit()
+        link.screen("x", line)
+        self.assertEqual(len({f[6] for f in line.sent}), 8)
 
-    def test_a_late_reply_to_the_previous_chunk_is_not_taken_for_the_current_one(self):
-        old, new = bytes([0xAA] * 128), bytes([0x55] * 128)
-
-        def answer(f):
-            seq, addr = f[6], link.get32(f, 8)
-            # the previous chunk's reply, late, with this request's sequence number, then the real one
-            return [mem_reply(seq, addr - 128, old), mem_reply(seq, addr, new)]
-        self.assertEqual(link.mem(0x40001080, 128, "x", FakeLine(answer)), new)
+    def test_a_late_reply_to_the_previous_part_is_not_taken_for_the_current_one(self):
+        def before(f):
+            off = link.get32(f, 8)
+            return [screen_reply(f[6], off - 128, 1, bytes([0xAA] * 128))] if off else []
+        self.assertEqual(link.screen("x", self.unit(before=before))[128:256], frame_part(128))
 
     def test_a_late_reply_with_the_previous_sequence_number_is_skipped(self):
-        def answer(f):
-            seq, addr = f[6], link.get32(f, 8)
-            return [mem_reply(seq - 1, addr, bytes([1] * 8)), mem_reply(seq, addr, bytes([2] * 8))]
-        self.assertEqual(link.mem(0x40000000, 8, "x", FakeLine(answer)), bytes([2] * 8))
+        def before(f):
+            return [screen_reply(f[6] - 1, link.get32(f, 8), 1, bytes([1] * 128))]
+        self.assertEqual(link.screen("x", self.unit(before=before))[:128], frame_part(0))
+
+    def test_a_part_of_another_copy_is_not_taken(self):
+        # someone else asked for part 0 in between: the unit's copy is number 2 from then on
+        line = self.unit(number=lambda off: 1 if off < 512 else 2)
+        with self.assertRaises(link.LinkError):
+            link.exchange(line, "screen", 512, timeout=0.05, accept=link.screen_reply_fits(512, 1))
+        with self.assertRaises(SystemExit):
+            link.screen("x", line)
 
     def test_a_short_reply_is_never_passed_on(self):
-        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(100))])
+        line = FakeLine(lambda f: [screen_reply(f[6], link.get32(f, 8), 1, bytes(100))])
         with self.assertRaises(link.LinkError):
-            link.exchange(line, "mem", 0x40000000, 128, timeout=0.05,
-                          accept=link.mem_reply_fits(0x40000000, 128))
+            link.exchange(line, "screen", 0, timeout=0.05, accept=link.screen_reply_fits(0))
         with self.assertRaises(SystemExit):
-            link.screen("x", FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(3))]))
+            link.screen("x", FakeLine(lambda f: [screen_reply(f[6], link.get32(f, 8), 1, bytes(3))]))
 
     def test_a_refusal_is_still_reported(self):
-        line = FakeLine(lambda f: [link.HEADER + bytes([f[6], 0x21 | 0x40, 4, 0xF7])])
+        line = FakeLine(lambda f: [screen_reply(f[6], 0, 0, b"", status=4)])
         with self.assertRaises(SystemExit) as e:
-            link.mem(0x50000000, 4, "x", line)
+            link.screen("x", line)
         self.assertIn("out of range", str(e.exception.code))
 
     def test_packed_length_is_link_cs(self):
@@ -132,11 +152,12 @@ class Dn2LinkReplies(unittest.TestCase):
             self.assertEqual(len(pack7(bytes(n))), link.packed_len(n))
 
 
+class Dn2LinkOnTheHost(unittest.TestCase):
+    """base/link.c compiled for the host with stock's sysex_send, queue, key tables, upload buffer and frame pointers
+    stubbed (dn2_link_host.c): ident and screen answer, the old mem and every unknown request are refused with nothing
+    but their status; disarm keeps releases, and a flash needs a person."""
 
-class Dn2LinkKeysOnTheHost(unittest.TestCase):
-    """base/link.c's key handling compiled for the host with stock's queue and tables stubbed (dn2_link_host.c)."""
-
-    def test_disarm_keeps_releases_and_a_flash_needs_a_person(self):
+    def test_the_device_answers_only_its_own_diagnostics(self):
         import shutil
         import subprocess
         import tempfile

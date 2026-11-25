@@ -6,7 +6,6 @@ development bases only (`npm run machine:base -- digitone-ii --dev`, base.json's
 
 ```sh
 python3 sdk/machines/digitone-ii/tools/dn2_link.py ident
-python3 sdk/machines/digitone-ii/tools/dn2_link.py mem 0x47f00000 64
 python3 sdk/machines/digitone-ii/tools/dn2_link.py screen --png screen.png
 python3 sdk/machines/digitone-ii/tools/dn2_link.py press PLAY      # keys: FUNC PLAY STOP TRIG1-16, or an id
 python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-H, LEVEL
@@ -14,21 +13,30 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused |
+| `ident` | 0x01 | the link's own counters: link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused |
 | `disarm` | 0x02 | turns the arm off and lets go of every key the link holds; a release the UI queue cannot take yet follows from the UI tick |
 | `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
 | `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
 | `release` | 0x12 | armed: lets go of every key the link holds |
-| `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `screen OFF` | 0x20 | OFF, the copy's number, then 128 bytes of the frame on the screen from OFF (0, 128 … 896) |
 
-`screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
-so a draw between its reads can tear a frame. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
+**The unit chooses what each request returns.** No request names an address, so a USB client reads the link's counters
+and the screen, posts keys and turns while armed, and reaches nothing else of the instrument's state. Every other
+command, the earlier `mem` (0x21) included, is refused with status 2 and nothing but the status.
+
+`screen 0` copies the frame on the screen and sends its first part; `screen 128` to `screen 896` send the rest of that
+copy, each with the copy's number, so the eight parts are one frame even if stock draws in between, and the host checks
+the number. A part before any `screen 0`, an offset past the frame or between parts, or a frame pointer that does not
+lie wholly in DDR is refused with status 4. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
 Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES). A press or turn the link posted before the upload completed, still in stock's queue when the prompt opens, is taken at `ev_key`/`ev_enc` before stock sees it and counted as refused; the link's releases and a person's YES and NO still reach stock. USB only: a link message from DIN is never acted on.
 
-`ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
+`sdk/tests/dn2_link_host.c` compiles `link.c` for the host and checks every request and refusal (`test_dn2_link.py`
+runs it). `ident`, the first version's `mem` and its out-of-range refusal answered on a unit over USB
+([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)); this version's `screen` has
+not run on a unit yet.
 
 ## Where it runs (OS 1.12)
 
