@@ -3,7 +3,7 @@ import type { DeviceProfile } from '../devices/registry'
 import { ZoomPedalArt } from '../devices/ZoomPedalArt'
 import type { ZoomStock } from '../engine/zoom/zoom-base'
 import type { ZoomLink } from '../engine/zoom/zoom-link'
-import { ZOOM_BASE, isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { ZOOM_BASE, canFlashBase } from '../engine/zoom/zoom-protocol'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { BaseDialogFrame, BaseIntro, StagePlan, StageProgress, type BasePromise } from './BaseDialogFrame'
@@ -50,10 +50,12 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
 }) {
   const state = useZoomLink(link), { status, identity } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing'
-  const updateMode = connected && isUpdateMode(identity), onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
+  const updateMode = connected && canFlashBase(identity), onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
   const finished = useRef(false), fileRef = useRef<HTMLInputElement>(null)
   const [view, setView] = useState<'intro' | 'steps'>('intro'), [stage, setStage] = useState<Stage>('updater')
   const [stock, setStock] = useState<ZoomStock>(), [fileError, setFileError] = useState(''), [accepted, setAccepted] = useState(false)
+  // A pedal running MIDISTOMP answers as an MS-70CDR whatever it is (#2076): only the front of the pedal says which it is.
+  const [printed, setPrinted] = useState(false)
   const [run, setRun] = useState<{ step: keyof typeof STEP_AT | 'done'; fraction: number } | { error: string; at: number } | null>(null)
   const flashing = !!run && 'step' in run && run.step !== 'done'
   const at = STAGES.indexOf(stage)
@@ -90,6 +92,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
     : status === 'idle' && state.notice?.tone === 'error' ? <p className="base-install-note" role="status">{state.notice.text} Once it shows its patch screen, connect again.</p>
     : <p className="base-install-note" role="status">Waiting for your pedal…</p>
   const modeLine = updateMode ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} is in update mode.</p>
+    : connected && identity?.model !== device.name ? <p className="file-error" role="status">This is an {identity?.model}, not an {device.name}. The base goes only on an {device.name}.</p>
     : connected ? <p className="base-install-note" role="status">Your pedal is running normally. Unplug it, then plug it in again while holding Up and Down.</p>
     : status === 'connecting' ? <p className="base-install-note" role="status">Looking for your pedal…</p>
     : <p className="base-install-note" role="status">{state.notice && state.notice.tone === 'error' ? state.notice.text : 'Once the pedal is in update mode, this page finds it by itself.'}</p>
@@ -99,7 +102,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
     <div className="base-install-actions"><button type="button" className="button button-quiet" onClick={() => { finished.current = true; onClose() }}>Later</button><button type="button" className="button button-primary" onClick={() => setView('steps')}>Show me how<Icon name="arrow" size={16} /></button></div>
   </> : <>
     <button type="button" className="button button-quiet" disabled={flashing} onClick={() => stage === 'updater' || stage === 'restart' && onBase ? (finished.current = true, onClose()) : setStage(STAGES[at - 1])}>{stage === 'updater' || stage === 'restart' && onBase ? 'Close' : 'Back'}</button>
-    {stage === 'updater' && (stock ? <button type="button" className="button button-primary" disabled={!accepted} onClick={() => setStage('mode')}>Next<Icon name="arrow" size={16} /></button>
+    {stage === 'updater' && (stock ? <button type="button" className="button button-primary" disabled={!accepted || !printed} onClick={() => setStage('mode')}>Next<Icon name="arrow" size={16} /></button>
       : <button type="button" className="button button-primary" onClick={() => fileRef.current?.click()}><Icon name="file" size={16} />Choose Zoom’s updater</button>)}
     {stage === 'mode' && (status === 'idle' && !updateMode ? <button type="button" className="button button-primary" onClick={() => void link.connect()}>Connect</button>
       : <button type="button" className="button button-primary" disabled={!updateMode} onClick={() => void flash()}><Icon name="arrow" size={16} />Flash the base</button>)}
@@ -121,7 +124,8 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
         {stage === 'updater' && <>
           <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Zoom’s updater</h3>
           <p>The base is built in your browser from Zoom’s own MS-70CDR 2.10 updater for Mac, as you download it (the .zip). The file stays on your computer.</p>
-          {stock ? <><p className="base-file-ready"><Icon name="check" size={18} />Zoom’s 2.10 updater is ready.</p><RiskAcceptance checked={accepted} onChange={setAccepted} /></>
+          {stock ? <><p className="base-file-ready"><Icon name="check" size={18} />Zoom’s 2.10 updater is ready.</p><RiskAcceptance checked={accepted} onChange={setAccepted} />
+            <label className="risk-accept zoom-printed-model"><input type="checkbox" checked={printed} onChange={event => setPrinted(event.target.checked)} /><span>The front of my pedal says {device.name}. A pedal running MIDISTOMP answers as an {device.name} whatever pedal it is, so this page can’t tell over USB, and the base is the {device.name}’s own firmware.</span></label></>
             : <a className="text-button" href={SUPPORT} target="_blank" rel="noreferrer">Download MS-70CDR_v2.10_Mac_E.zip from Zoom <Icon name="arrow" size={14} /></a>}
           {fileError && <p className="file-error" role="alert">{fileError}</p>}
           <input ref={fileRef} type="file" accept=".zip" hidden aria-label="Choose Zoom’s MS-70CDR 2.10 updater" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void choose(file) }} />

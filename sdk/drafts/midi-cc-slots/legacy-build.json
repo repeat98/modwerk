@@ -1,0 +1,14 @@
+{
+  "version": "0.0.13-experimental",
+  "sha256": "086fc3c73468bd58db823bf2857106ebe05f7d1197fd226c595d4139eeca000a",
+  "bytes": 33386,
+  "imageBytes": 28916,
+  "abi": 8,
+  "features": 3,
+  "sites": 24,
+  "copies": 25,
+  "profile": true,
+  "projectTemplate": true,
+  "fills": 0,
+  "ownershipSha256": "2d4c4e25015c935ff68018cdad2487272f3c3bbd2eedeaf5025f11759f253d3e"
+}

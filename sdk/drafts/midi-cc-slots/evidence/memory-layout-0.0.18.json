@@ -1,0 +1,561 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "0.0.18-experimental",
+  "qualification": false,
+  "requiredBase": "c1ae2ee92a829e06aa9398d35981b8228efdd34c578c9583ef36fba8f5bc637f",
+  "packageSha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451",
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "packageBytes": 33434,
+  "imageBytes": 28964,
+  "inputSections": [
+    {
+      "object": "slots.o",
+      "section": ".text",
+      "offset": 0,
+      "bytes": 1834
+    },
+    {
+      "object": "template/profile.c.o",
+      "section": ".text",
+      "offset": 1836,
+      "bytes": 6844
+    },
+    {
+      "object": "template/platform.c.o",
+      "section": ".text",
+      "offset": 8680,
+      "bytes": 2522
+    },
+    {
+      "object": "template/banks.c.o",
+      "section": ".text",
+      "offset": 11204,
+      "bytes": 2660
+    },
+    {
+      "object": "template/profile.c.o",
+      "section": ".rodata.str1.1",
+      "offset": 13864,
+      "bytes": 442
+    },
+    {
+      "object": "template/profile.c.o",
+      "section": ".bss",
+      "offset": 14320,
+      "bytes": 12572
+    },
+    {
+      "object": "template/platform.c.o",
+      "section": ".bss",
+      "offset": 26896,
+      "bytes": 1040
+    },
+    {
+      "object": "template/banks.c.o",
+      "section": ".bss",
+      "offset": 27936,
+      "bytes": 1024
+    }
+  ],
+  "linkerPadding": [
+    {
+      "offset": 1834,
+      "bytes": 2
+    },
+    {
+      "offset": 11202,
+      "bytes": 2
+    },
+    {
+      "offset": 14306,
+      "bytes": 2
+    },
+    {
+      "offset": 14308,
+      "bytes": 12
+    },
+    {
+      "offset": 26892,
+      "bytes": 4
+    },
+    {
+      "offset": 28961,
+      "bytes": 3
+    }
+  ],
+  "linkerSentinelBytes": 1,
+  "targetAbi": {
+    "hook_count": 36,
+    "module_bytes": 510,
+    "site_bytes": 72
+  },
+  "pool": {
+    "headerAndSitesBytes": 2238,
+    "headerPaddingBytes": 2,
+    "imagePaddingBytes": 12,
+    "residentExtentBytes": 31216,
+    "twoSameSizeRevisionsBytes": 62432,
+    "scope": "Incremental loader pool extent only; two revisions coexist during replacement/Undo. Base upload buffers, fixed ownership ledgers and stacks excluded."
+  },
+  "compilerStackFrames": [
+    {
+      "object": "template/banks.c.su",
+      "function": "read_be",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "bank_path",
+      "bytes": 16,
+      "kind": "static"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "inspect_bank",
+      "bytes": 84,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "hash_init.part.0",
+      "bytes": 8,
+      "kind": "static"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "persist_bank",
+      "bytes": 1440,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "mt_preflight_bank",
+      "bytes": 708,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "mt_persist_bank",
+      "bytes": 16,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "mt_restore_bank",
+      "bytes": 16,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "mt_preflight",
+      "bytes": 24,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/banks.c.su",
+      "function": "mt_persist",
+      "bytes": 20,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_directory",
+      "bytes": 12,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_gate",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_file",
+      "bytes": 60,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_bank",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_context",
+      "bytes": 8,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_apply",
+      "bytes": 28,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_wake",
+      "bytes": 8,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_old_redraw",
+      "bytes": 12,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_stopped",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_writable",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_cancel_held",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_confirm_held",
+      "bytes": 4,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_view_key",
+      "bytes": 8,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_ui_context",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_key",
+      "bytes": 16,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_channels",
+      "bytes": 36,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_bank_open",
+      "bytes": 20,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_bank_close",
+      "bytes": 4,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_bank_seek",
+      "bytes": 8,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_bank_read",
+      "bytes": 12,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_bank_write",
+      "bytes": 20,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_bank_size",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mt_reload_project",
+      "bytes": 4,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/platform.c.su",
+      "function": "mm_profile_redraw",
+      "bytes": 56,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "copy",
+      "bytes": 4,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "get32",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "put32",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "crc",
+      "bytes": 12,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mapped",
+      "bytes": 4,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "same",
+      "bytes": 8,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "path",
+      "bytes": 4,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "name_valid",
+      "bytes": 4,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "current",
+      "bytes": 8,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "file",
+      "bytes": 280,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "import_old",
+      "bytes": 348,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "confirm",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "valid_journal.constprop",
+      "bytes": 20,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "valid_profile.constprop",
+      "bytes": 20,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "write_journal",
+      "bytes": 48,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "pack.constprop",
+      "bytes": 68,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "recover",
+      "bytes": 32,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "store",
+      "bytes": 32,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "load_profile",
+      "bytes": 72,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "failed",
+      "bytes": 12,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_service",
+      "bytes": 340,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_changed",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_name",
+      "bytes": 4,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_ready",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_edit",
+      "bytes": 24,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_name_changed",
+      "bytes": 12,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_status",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_initialized",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_busy",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mm_profile_tick",
+      "bytes": 8,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_request",
+      "bytes": 276,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_progress",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_failure",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_runtime_key",
+      "bytes": 16,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_runtime_enc",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_project_loaded",
+      "bytes": 0,
+      "kind": "static"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_clone_begin",
+      "bytes": 8,
+      "kind": "dynamic,bounded"
+    },
+    {
+      "object": "template/profile.c.su",
+      "function": "mt_clone_finish",
+      "bytes": 568,
+      "kind": "dynamic,bounded"
+    }
+  ],
+  "largestSingleCFrameBytes": 1440,
+  "partialDirectCStack": {
+    "scope": "Known direct C calls only; excludes assembly, stock callees, reentry and task/interrupt context.",
+    "frames": 72,
+    "conservativeBytes": 1932,
+    "path": [
+      "mt_clone_begin",
+      "mm_profile_service",
+      "mt_persist_bank",
+      "banks.c:persist_bank",
+      "banks.c:inspect_bank",
+      "mt_bank_open"
+    ],
+    "unknownTargets": [
+      "__indirect_call"
+    ],
+    "method": "Compiler frame sizes plus four bytes per direct call and entry for return addresses; may double-count outgoing reserves. No direct C graph cycle observed."
+  },
+  "completeStackPeakBytes": null,
+  "hardwarePoolDeltaBytes": null,
+  "limitations": [
+    "Compiler frames and the partial direct C graph do not establish the complete task-stack bound.",
+    "Assembly wrappers, stock callees, interrupts and engine/UI task stack headroom remain unbounded here.",
+    "Pool formula follows loader.c with current Octatrack event header; a different base requires a new ABI probe.",
+    "Shared base staging buffers and fixed ledgers already exist; their whole-system lifetime peak remains unaudited.",
+    "No hardware canaries, timing or memory readings were taken by this command."
+  ]
+}

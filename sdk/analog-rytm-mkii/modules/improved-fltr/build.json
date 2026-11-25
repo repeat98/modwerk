@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/band.s",
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_draw",
+      "fn": "improved_fltr_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "improved_fltr_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "improved_fltr_key",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:improved_fltr_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "audio:filter cutoff, resonance and type stores",
+    "param:FILTER TYP range to 7",
+    "param:FILTER RES names (WID / Width on BW)",
+    "ui:value text of FILTER TYP and RES",
+    "ui:FILTER TYP picture for type 7",
+    "ui:FILTER page graph for type 7 (drawn by the module)"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "improved_fltr_resume": "0x4010d1c2",
+        "improved_fltr_graph_on": "0x40038e28",
+        "improved_fltr_graph_off": "0x40039194"
+      },
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4010d1a6",
+          "len": 28,
+          "stockSha256": "ff62de85f6e09fcadc4b78f4a5feeb0d59a62de6fd4cdfcedbb2d7ae2342951d",
+          "op": "jmp",
+          "target": "improved_fltr_store"
+        },
+        {
+          "addr": "0x401c05c8",
+          "op": "bytes",
+          "len": 4,
+          "new": "00000700",
+          "kind": "data",
+          "stockSha256": "ab6dd45f1c3a7f5f98b3f5facd25bc0fd899b0d1b9629a7fd59fba9444015981"
+        },
+        {
+          "addr": "0x40146c04",
+          "len": 4,
+          "stockSha256": "c1af3133b4bf22a7f75db2d474757db5f24d112cb24b82e75a793ba81fe92546",
+          "op": "ptr",
+          "target": "improved_fltr_glyph"
+        },
+        {
+          "addr": "0x40038e20",
+          "len": 8,
+          "stockSha256": "641214ad96050fbd8977d75fb108e579d6f1ff46fdf70aaf0e94139657134658",
+          "op": "jmp",
+          "target": "improved_fltr_graph"
+        },
+        {
+          "addr": "0x401c05b0",
+          "len": 4,
+          "stockSha256": "f3bb5aea03482ef0647a01fd4476b0b15b856926f51832ceaf326d8d5f6866eb",
+          "op": "ptr",
+          "target": "improved_fltr_res_long"
+        },
+        {
+          "addr": "0x401c05b8",
+          "len": 4,
+          "stockSha256": "649e324eaba8562fe515bbc1e1cce0c1ba55d6f44d1bfcda7167c0c4556a7f4e",
+          "op": "ptr",
+          "target": "improved_fltr_res_short"
+        }
+      ]
+    }
+  }
+}

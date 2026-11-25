@@ -3,7 +3,7 @@
   "id": "syntiz",
   "key": "SYNTIZ",
   "name": "SYNTIZ",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "machines",
   "author": {
     "github": "stigmagit",
@@ -412,15 +412,15 @@
     ]
   },
   "resources": {
-    "recorded": "Package f501a6a4, and the author's MKII, 31 Oct to 7 Nov 2026",
+    "recorded": "Storage: package c3a97ecc. CPU: 0.1.0 (f501a6a4) on the author's MKII, 31 Oct to 7 Nov 2026",
     "storage": {
       "label": "Storage",
-      "display": "73,304 bytes",
-      "value": 73304,
+      "display": "66,652 bytes",
+      "value": 66652,
       "unit": "bytes",
       "method": "static",
-      "conditions": "From the USB package f501a6a4: 53,500 bytes of ColdFire code and data (engine 49,051 with the 32 tables, knob map 788, machine glue 3,381, 280 of image alignment and hook records) and 19,804 of bss (eight tracks' oscillator state and the three page records). No DSP memory, no heap, no stock code written.",
-      "source": "evidence/hardware.md"
+      "conditions": "From the USB package c3a97ecc (0.1.1, build.py): 46,008 bytes of ColdFire code and data and 20,644 of bss (eight tracks' oscillator state, held controls and chorus lines, the three page records). Before the link merges repeated strings, the engine is 41,755 bytes (8,360 of code, the rest the 32 tables), the knob map 788, the machine glue 3,479. No DSP memory, no heap, no stock code written.",
+      "source": "TESTING.md"
     },
     "processing": {
       "label": "CPU load",
@@ -428,7 +428,7 @@
       "value": 134.6,
       "unit": "us",
       "method": "hardware",
-      "conditions": "The author's MKII, 7 Nov 2026, the base's frame guard and per-render timers on a development twin (7bce173d) of his base, package f501a6a4: one track's render takes up to 37.1 % of the 362.8 us frame (134.6 us) when it follows stock's trig work in the same frame, at most 16.2 % (58.8 us) otherwise; three heavy tracks together averaged 48.2 % of each frame (31 Oct, twin 04e94075). His live set with two SYNTIZ tracks: 69 % of each frame in the frame interrupt against 34 % without SYNTIZ, no render dropped.",
+      "conditions": "Measured on 0.1.0 (package f501a6a4); 0.1.1 is not yet measured on a unit (TESTING.md: the same samples with about a quarter fewer instructions and half the memory operands in the emulator). The author's MKII, 7 Nov 2026, the base's frame guard and per-render timers on a development twin (7bce173d) of his base, package f501a6a4: one track's render takes up to 37.1 % of the 362.8 us frame (134.6 us) when it follows stock's trig work in the same frame, at most 16.2 % (58.8 us) otherwise; three heavy tracks together averaged 48.2 % of each frame (31 Oct, twin 04e94075). His live set with two SYNTIZ tracks: 69 % of each frame in the frame interrupt against 34 % without SYNTIZ, no render dropped.",
       "source": "evidence/performance.json"
     },
     "impact": {
@@ -436,7 +436,7 @@
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "Each SYNTIZ track renders on the ColdFire in the frame interrupt. Measured on the author's MKII with the base's frame guard: a render costs about 15 % of a frame, up to 37 % after stock's trig work; two heavy tracks beside a THRU, three samples, a NEIGHBOR and a master compressor take the interrupt to 74 % of each frame (36 % without SYNTIZ) and the guard drops about two renders a second, unheard; three heavy tracks with long notes crackle. The base's guard renders a track's silent source rather than overrun; a Part admits three SYNTIZ tracks at most.",
+        "rationale": "Measured on 0.1.0; 0.1.1 renders the same samples with less work a frame, not yet measured on a unit. Each SYNTIZ track renders on the ColdFire in the frame interrupt. Measured on the author's MKII with the base's frame guard: a render costs about 15 % of a frame, up to 37 % after stock's trig work; two heavy tracks beside a THRU, three samples, a NEIGHBOR and a master compressor take the interrupt to 74 % of each frame (36 % without SYNTIZ) and the guard drops about two renders a second, unheard; three heavy tracks with long notes crackle. The base's guard renders a track's silent source rather than overrun; a Part admits three SYNTIZ tracks at most.",
         "source": "evidence/performance.json"
       },
       "dsp": {
@@ -448,15 +448,15 @@
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "73,304 bytes of ColdFire code, tables and state in DRAM, from the package; no heap.",
-        "source": "evidence/hardware.md"
+        "rationale": "66,652 bytes of ColdFire code, tables and state in DRAM, from the package; no heap.",
+        "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: 5,376 extreme renders of the six models under sanitizers, levels, DC, aliasing, pitch within 1.5 cents of stock's curve, every knob byte, package rebuilt byte for byte (verify.py). Emulator: chooser, pages, model list, notes for every model. The author's MKIIs, 28 Oct to 7 Nov 2026, this package since 31 Oct: six models over USB, projects back after power cycles, a fourth track refused, his live set measured with the base's guard (two SYNTIZ tracks beside a THRU, three samples, NEIGHBOR and a compressor: 74 % of a frame, nothing heard). Open: MKI, mute module, MIDI flood.",
-    "hardwareStatus": "reported",
+    "summary": "0.1.1: the same samples as 0.1.0 bit for bit (host matrix of 5.8 million samples under sanitizers, 300 random scenarios through the machine glue on an emulated ColdFire), about a quarter fewer instructions and half the memory operands a frame in the emulator; not yet on a unit. 0.1.0 on the author's MKIIs, 28 Oct to 7 Nov 2026: six models over USB, projects back after power cycles, a fourth track refused, his live set at 74 % of a frame with two SYNTIZ tracks, nothing heard. Open: MKI, mute module, MIDI flood.",
+    "hardwareStatus": "untested",
     "evidenceRevision": "b36c79977dc4470d497c39f723ba8536fb865efe",
     "gates": [
       "modules/syntiz/verify.py"
@@ -478,115 +478,6 @@
         "media/ot-table-src.png"
       ],
       "screenshotStyle": "black-and-white"
-    },
-    "qualification": {
-      "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "6fb4883386f10e512da989a97b4d748e69d2ade1bffdfd10bcac30ab1b5bc163",
-      "imageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
-      "cycles": [
-        {
-          "processor": "coldfire",
-          "worstCase": 35536,
-          "maxConfiguration": 35536,
-          "maxInstances": 3,
-          "budget": 95782,
-          "unit": "cycles/event",
-          "method": "hardware",
-          "conditions": {
-            "parameterExtremes": "The dearest render measured was a SAW with both detuned pairs, both subs and DRIV, filter and chorus on the track, holding a long note: 37.1 % of a frame as the second call of a frame with a trig, 16.2 % at most as a first call (7 Nov 2026). Three tracks at their heaviest (CHOIR and ENS with three chord notes, SAW with both pairs, all with CHOR, SUB, SUB2 and DRIV at maximum) averaged 48.2 % of each frame together (31 Oct). Under qemu the heaviest branch is ENS with a four-note chord and chorus, 6,372 instructions a frame, SAW 4,044 (tools/count_cf.sh); the host matrix renders every model with every control at 0, 1, 63, 64, 65, 126 and 127.",
-            "parameterModulation": "SRC controls are the track's own: locks, scenes and LFOs on them reach the render through the Part's bytes each frame, as a FLEX track's. The author's live runs turned encoders and switched scenes while playing (7 Nov, measure 3 and 4); the cost per render did not depend on it, and no control-update path exists apart from reading the bytes.",
-            "modeSwitching": "Model changes rewrite the DSP halfwords as a lock would; STOP/PLAY, pattern and scene changes were part of the live runs (7 Nov); a trig in the frame splits the render in two calls, and the second is the dearest case recorded. Choosing SYNTIZ for a fourth track is refused (31 Oct, on the unit). RTRG restarts the oscillators at each trig with no extra cost measured.",
-            "maxLoad": "Three SYNTIZ tracks a Part. Three second-call renders in one frame would sum to 106,608 cycles, more than the 95,782-cycle frame: the base's guard then renders a track's silent source for that frame (16 samples) rather than overrun. Measured: three heavy tracks with long notes and four long samples dropped 24 to 75 renders in 120 s, a crackle the author hears (3 Nov); two SYNTIZ tracks beside a THRU, three samples, a NEIGHBOR with flanger and a master compressor, 73.8 % of each frame, 259 dropped in 120 s, unheard (7 Nov); the same with two samples, 69.3 %, none dropped. Budget basis: one frame, 362.8 us, 95,782 cycles at 264 MHz, 80 % of it for the whole frame interrupt (stock about 34-36 % on these sets, 103.7 % in its worst frame).",
-            "inputConditions": "The render takes no input: it makes its samples from the Part's bytes. Silence costs the same as a note (the oscillators run unless RTRG restarts them); a note above Nyquist is silent; the subs are silent below 25 Hz. The author's MKII, OS 1.40C, package f501a6a4, the base's guard with its 80 % share; one run per case; counts of the 132 MHz timer converted to 264 MHz cycles."
-          },
-          "report": "evidence/performance.json"
-        }
-      ],
-      "memory": {
-        "regions": [
-          {
-            "name": "ColdFire code and the 32 tables (engine.o, DRAM)",
-            "space": "sdram",
-            "words": 49051,
-            "wordBits": 8,
-            "bytes": 49051,
-            "scope": "shared"
-          },
-          {
-            "name": "Knob map (machine_map.o)",
-            "space": "sdram",
-            "words": 788,
-            "wordBits": 8,
-            "bytes": 788,
-            "scope": "shared"
-          },
-          {
-            "name": "Machine glue, code and data (machine.o)",
-            "space": "sdram",
-            "words": 3381,
-            "wordBits": 8,
-            "bytes": 3381,
-            "scope": "shared"
-          },
-          {
-            "name": "Image alignment and the two hook records",
-            "space": "sdram",
-            "words": 280,
-            "wordBits": 8,
-            "bytes": 280,
-            "scope": "shared"
-          },
-          {
-            "name": "State (bss): eight tracks' oscillators and chorus lines, the three page records",
-            "space": "sdram",
-            "words": 19804,
-            "wordBits": 8,
-            "bytes": 19804,
-            "scope": "shared"
-          }
-        ],
-        "perInstanceBytes": 0,
-        "sharedBytes": 73304,
-        "maxInstances": 3,
-        "totalBytes": 73304,
-        "conditions": "From the USB package f501a6a4 (build.py: 53,500 bytes of code and data, 19,804 of bss, 174 relocations) and m68k-elf-size of the three objects compiled with build.py's flags (engine 49,051 text, machine_map 788, machine 3,377 text and 4 data; the 280 bytes left are the image's alignment and its hook records). State is allocated for all eight tracks whatever the Part holds, so it is shared, not per instance. No DSP memory, no heap, no stock code written (the base owns the chooser and SRC SETUP). The render runs on the base's frame-interrupt stack; its depth was not measured (no canary).",
-        "report": "evidence/hardware.md"
-      },
-      "hardware": {
-        "kind": "functional",
-        "status": "reported",
-        "model": "MKII",
-        "testedOn": "2026-11-07",
-        "tester": "stigmagit (the author, on his own MKII, driven over USB from his Claude Code session)",
-        "sourceRevision": "b36c79977dc4470d497c39f723ba8536fb865efe",
-        "imageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
-        "summary": "The author's Octatrack MKII, OS 1.40C, flashed with his private base 86388105 (Modwerk's base of 31 October with --raise and a start logo); this package f501a6a4 kept over USB since 31 October 2026, beside FM Synth 0.1.2 until 7 November. 7 November 2026, on a RAM-booted development twin (7bce173d) of that base, the base's frame guard, 120 s a run, the author at the keys: his reference set (THRU, two samples, THRU, SAW heavy with filter and chorus, TABLE with filter and chorus, NEIGHBOR with flanger, master compressor) 60 % of each frame with the pattern alone and 69 % played live, no render dropped, no crackle heard; his complete set (a third sample) 74 %, 259 renders dropped in 120 s, nothing heard. Power-cycled twice back onto the flashed base: do inventory lists syntiz alone, nothing missing, the set plays. Reported by the author since 28 October (earlier packages, two MKIIs): the six models play, projects saved with SYNTIZ tracks come back after a power cycle; since 31 October, this package: a fourth SYNTIZ track is refused, three heavy tracks with long notes crackle. With FM Synth installed but never played the SYNTIZ tracks crackled lightly; removing it cured it (one A/B, 7 November).",
-        "limitations": [
-          "One MKII with this package (a second MKII ran an earlier package on 29 October); no MKI.",
-          "The measurements come from the author's own development twins of his base, not Modwerk's beta base, and from his own sets, one run each; on 3 November the same run repeated gave 24 to 75 dropped renders.",
-          "Not run: a mute module's muted trigs, the level against a FLEX sample measured, a MIDI flood, a stress project with eight tracks and three LFOs a track.",
-          "Three heavy SYNTIZ tracks holding long notes still crackle at moments: the three-track limit bounds the load, it does not make the worst frame fit."
-        ],
-        "report": "evidence/hardware.md"
-      },
-      "documentation": {
-        "tutorial": {
-          "title": "Quick tutorial: play a SYNTIZ track",
-          "steps": [
-            "Select an audio track, hold FUNC and press SRC: SRC SETUP's machine list opens. Go DOWN to SYNTIZ and press YES.",
-            "Tap the track key twice quickly: the model list opens, 001 SAW to 006 CHOIR. Pick one with the arrows and YES; LEFT goes back to the machine list.",
-            "Press SRC for the model's page and turn the encoders; FUNC + SRC again shows SETUP, where OCT moves the register and DRIV adds drive.",
-            "Place trigs or play the trig keys in chromatic mode: the track's filter, AMP envelope, LFOs and effects shape the sound as they would a sample's."
-          ]
-        },
-        "screenshots": [
-          "media/ot-chooser.png",
-          "media/ot-model-list.png",
-          "media/ot-saw-src.png",
-          "media/ot-table-src.png"
-        ],
-        "screenshotStyle": "black-and-white"
-      }
     }
   },
   "license": {

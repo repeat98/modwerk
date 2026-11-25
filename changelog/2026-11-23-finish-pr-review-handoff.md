@@ -1,0 +1,1 @@
+Agents now finish submitting a tested contribution by marking its draft ready on GitHub and verifying the status of the checked commit. Drafts still let contributors share work while testing is underway.

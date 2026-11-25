@@ -120,7 +120,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'sample-rate', file: 'sample-rate-0.6.3-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.3-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
       missing: [],
     })
@@ -141,7 +141,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
       missing: [],
     })
@@ -152,7 +152,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.3.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3.1-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.6.3-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.3-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
       missing: [],
     })
@@ -163,7 +163,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'quick-fill-trig-condition', file: 'quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
         { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.3.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3.1-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
       missing: [],
     })
@@ -190,12 +190,23 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Improved FLTR beside Filter Hz and Improved AMP from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz', 'improved-amp', 'improved-fltr'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [
+        { id: 'filter-hz', file: 'filter-hz-1.3.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.3.1' },
+        { id: 'improved-amp', file: 'improved-amp-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
+        { id: 'improved-fltr', file: 'improved-fltr-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
   it('plans QPERF beside Live Rec Retrig Fix and Temp Save from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
-        { id: 'qperf', file: 'qperf-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
+        { id: 'qperf', file: 'qperf-0.3.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],
@@ -217,7 +228,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'quick-fill-trig-condition', file: 'quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],
@@ -240,7 +251,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'control-in-actions', file: 'control-in-actions-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.6.3-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.3-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
       missing: [],
     })

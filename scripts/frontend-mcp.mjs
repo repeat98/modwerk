@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { existsSync } from 'node:fs'
-import { readFile, writeFile, mkdir, rename, lstat, rm } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { readFile, writeFile, mkdir, rename, lstat, rm, stat } from 'node:fs/promises'
+import { resolve, join, isAbsolute } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { createInterface } from 'node:readline'
@@ -17,6 +17,7 @@ import * as board from './agent-board.mjs'
 import { nodeMidiAccess, zoomCommand } from './zoom-device.ts'
 import { DigitoneUnit, midiLinkLine } from './digitone-device.ts'
 import { acquire, UnitBusyError } from './unit-queue.mjs'
+import { isUpdateMode, ZOOM_DEVICE_IDS } from '../src/engine/zoom/zoom-protocol.ts'
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 let activeWorkspace = false
@@ -63,9 +64,9 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read the connected base identity, inventory, missing modules and bounded diagnostic status through the real site USB client.'),
-  tool('device_load', 'Read one cached CPU/DSP meter snapshot through the real frontend client. Read-only; never runs a self-test. Older bases report unsupported.'),
-  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; older bases report unsupported.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory.'),
+  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available. Read-only.'),
+  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; Zoom pedals and older Octatrack bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes.', { moduleIds: strings }, ['moduleIds']),
@@ -149,14 +150,38 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   try { await takeLease(lease, dependencies.lease) } catch (error) { activeWorkspace = false; throw error }
   try {
   await writeFile(join(lease, 'owner.json'), JSON.stringify({ pid: process.pid, started: new Date().toISOString() }), { mode: 0o600, flag: 'wx' })
-  let frontend = injected
-  if (!frontend) {
-    const bridge = join(ROOT, 'scripts/frontend-mcp-bridge.ts')
-    const bundled = await build({ root, configFile: false, logLevel: 'silent', plugins: [{ name: 'mcp-candidate-source', resolveId(id, importer) { if (importer === bridge && id.startsWith('../src/')) return resolve(root, id.slice(3)) } }], define: { 'import.meta.env.VITE_COMMUNITY_API_URL': JSON.stringify(api.href), 'import.meta.env.DEV': 'false', 'import.meta.env.BASE_URL': JSON.stringify('/') }, build: { ssr: bridge, write: false, minify: false, sourcemap: false } })
-    const source = bundled.output.find(entry => entry.type === 'chunk' && entry.isEntry)?.code
+  // The site bundle and the package manifest, with the files they were built from. A branch switch or a base regeneration
+  // changes those files, and a server that kept its first bundle refused the new base until the developer reconnected
+  // (/mcp). So each tool call compares them first and rebuilds what changed (refreshFrontend below).
+  const bridge = join(ROOT, 'scripts/frontend-mcp-bridge.ts')
+  const bundle = dependencies.bundle ?? (async entry => {
+    const bundled = await build({ root, configFile: false, logLevel: 'silent', plugins: [{ name: 'mcp-candidate-source', resolveId(id, importer) { if (importer === bridge && id.startsWith('../src/')) return resolve(root, id.slice(3)) } }], define: { 'import.meta.env.VITE_COMMUNITY_API_URL': JSON.stringify(api.href), 'import.meta.env.DEV': 'false', 'import.meta.env.BASE_URL': JSON.stringify('/') }, build: { ssr: entry, write: false, minify: false, sourcemap: false } })
+    const chunks = bundled.output.filter(item => item.type === 'chunk'), source = chunks.find(item => item.isEntry)?.code
     if (!source) throw new Error('Could not load the frontend testing bridge.')
-    frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
+    return { module: await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64')), files: chunks.flatMap(item => item.moduleIds).filter(id => isAbsolute(id) && existsSync(id)) }
+  })
+  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts'), packagesFile = join(root, 'src/engine/assets/octatrack-module-packages.json')
+  // Size and modification time of each file. A file written while the bundle was being built (a regeneration still running)
+  // leaves the stamp empty, so the next call builds again instead of keeping a bundle of half-written inputs. File times
+  // run on a coarser clock than Date.now() (and some file systems keep 2 s), so the build counts from 2 s before it began.
+  const stamp = async (files, since = Infinity) => {
+    const seen = await Promise.all(files.map(file => stat(file).then(info => ({ line: file + ' ' + info.size + ' ' + info.mtimeMs, late: info.mtimeMs >= since }), () => ({ line: file + ' gone', late: true }))))
+    return seen.some(item => item.late) ? '' : seen.map(item => item.line).join('\n')
   }
+  let frontend, preparedModules, catalogue, built = { files: [], stamp: '' }
+  async function loadFrontend() {
+    const started = (dependencies.now ?? Date.now)() - 2000
+    const site = injected ? { module: injected, files: [] } : await bundle(bridge)
+    // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
+    const published = !options.preparedModules && !injected && existsSync(publication) ? await bundle(publication) : null
+    const nextManifest = published ? published.module.publishedPackages : JSON.parse(await readFile(packagesFile, 'utf8'))
+    const prepared = options.preparedModules && await loadPreparedModules(options.preparedModules, nextManifest, site.module)
+    const files = injected ? [] : [...new Set([...site.files, ...published ? published.files : [packagesFile], ...options.preparedModules ? [options.preparedModules] : []])]
+    const nextCatalogue = prepared?.catalogue ?? site.module.createRuntimeCatalogue(nextManifest)
+    frontend = site.module; preparedModules = prepared; catalogue = nextCatalogue
+    built = { files, stamp: await stamp(files, started) }
+  }
+  await loadFrontend()
   if (!Array.isArray(sets) || sets.length > 100) throw new Error('The local set file is invalid.')
   sets = sets.map(frontend.validateConfiguration)
   const save = async values => {
@@ -164,20 +189,14 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     try { await writeFile(temporary, JSON.stringify(values, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); sets = values }
     finally { await rm(temporary, { force: true }) }
   }
-  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts')
-  // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
-  const manifest = !options.preparedModules && !injected && existsSync(publication)
-    ? (await import(pathToFileURL(publication).href)).publishedPackages
-    : JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
-  const preparedModules = options.preparedModules && await loadPreparedModules(options.preparedModules, manifest, frontend)
-  const catalogue = preparedModules?.catalogue ?? frontend.createRuntimeCatalogue(manifest)
-  const load = preparedModules?.load ?? (async entry => {
+  const load = entry => preparedModules?.load ? preparedModules.load(entry) : loadSitePackage(entry)
+  const loadSitePackage = async entry => {
     if (!/^octatrack-modules\/[a-z0-9-]+\/[a-zA-Z0-9.-]+\.mwrm$/.test(entry.path) &&
         !(/^[a-f0-9]{64}$/.test(entry.sha256) && entry.path === 'octatrack-base-packages/' + entry.sha256 + '.mwrm')) throw new Error('Unexpected module asset path.')
     const bytes = new Uint8Array(await readFile(join(root, 'public', entry.path)))
     if (bytes.length !== entry.bytes || hash(bytes) !== entry.sha256) throw new Error('The local site package differs from its manifest.')
     return bytes
-  })
+  }
   const storage = () => { const map = new Map(); return { getItem: key => map.get(key) ?? null, setItem: (key, value) => map.set(key, value), removeItem: key => map.delete(key) } }
   globalThis.localStorage = storage(); globalThis.sessionStorage = storage()
   if (credentials) {
@@ -214,9 +233,22 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     }
   }
   const dropLink = () => { release?.(); bench?.socket.destroy(); link = undefined; release = undefined; bench = undefined; trial = undefined; endTrialTurn(); reviews.clear() }
+  // The USB bridge serves one client at a time (scripts/octatrack-usb-bridge.py), so a link held between tool calls kept
+  // `npm run device` and the site off the unit. Give it back after each call: a trial keeps it until Keep or Undo, and a
+  // review until it expires, so its trial runs on the link it was read through. The next device tool opens a fresh one.
+  let idleTimer
+  function releaseIdleLink() {
+    clearTimeout(idleTimer); idleTimer = undefined
+    if (!link || remote || trial || running || closed) return
+    const pending = Math.max(0, ...[...reviews.values()].map(item => item.expires - clock()))
+    if (pending > 0) { idleTimer = setTimeout(releaseIdleLink, pending + 100); idleTimer.unref?.(); return }
+    release?.(); bench?.socket.destroy(); link = undefined; release = undefined; bench = undefined
+  }
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
+  const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
   async function connected() {
+    if (zoomSelected()) throw new Error('MIDISTOMP does not provide the runtime set loader or saved-set files. Use zoom_list or zoom_backup for the pedal’s files.')
     if (!options.deviceSocket && !remote) throw new Error('Device tools require an explicitly selected --device-socket or a connected remote session (remote_session_connect).')
     if (remote?.relay.state().ended) { remote = undefined; dropLink(); throw new Error('The remote session has ended.') }
     if (link && ['idle', 'disconnected', 'unavailable', 'error'].includes(link.getState().status)) {
@@ -246,10 +278,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (link.getState().status !== 'ready' && !(trial && link.getState().status === 'trial')) throw new Error('Octatrack is not ready: ' + link.getState().status)
     return link
   }
+  const closeZoom = () => { zoom?.access.close?.(); zoom = undefined }
   // The Zoom pedal: a fresh MIDI port list and ZoomLink whenever the last one isn't ready (unplugged, or not found yet).
   async function zoomLink() {
     if (!options.zoomMidi) throw new Error('Zoom tools require --zoom-midi at startup.')
-    if (zoom?.link.getState().status !== 'ready') { zoom?.access.close?.(); zoom = undefined }
+    if (zoom?.link.getState().status !== 'ready') closeZoom()
     if (!zoom) {
       const access = await (dependencies.zoomAccess ?? nodeMidiAccess)()
       zoom = { access, link: new frontend.ZoomLink(async () => access) }
@@ -260,7 +293,21 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   async function zoomRun(command, file, confirmed = false) {
     try { return await zoomCommand(await zoomLink(), command, file, { dir: dataDir, confirmed }) }
     // An unplugged pedal leaves the link ready (these ports have no hot-plug): start again on the next call.
-    catch (error) { zoom?.access.close?.(); zoom = undefined; throw error }
+    catch (error) { closeZoom(); throw error }
+  }
+  async function zoomSnapshot(includeInventory) {
+    // RtMidi has no hot-plug here. Identify the unit afresh so a switched-off or rebooted pedal never returns an old receipt.
+    const turn = dependencies.zoomAccess ? null : await unitTurn('read Zoom', 60000)
+    try {
+      closeZoom()
+      const unit = await zoomLink(), opts = { dir: dataDir }
+      const { load, ...identity } = await zoomCommand(unit, 'status', undefined, opts)
+      const machine = Object.keys(ZOOM_DEVICE_IDS).find(id => ZOOM_DEVICE_IDS[id] === identity.deviceId) ?? null
+      const updateMode = isUpdateMode(identity)
+      const state = { status: updateMode ? 'update-mode' : 'ready', identity }
+      const inventory = includeInventory && !updateMode ? await zoomCommand(unit, 'list', undefined, opts) : null
+      return { machine, state, inventory, load: load ?? null }
+    } finally { try { closeZoom() } finally { turn?.release() } }
   }
   const zoomWrite = (args, name) => {
     if (!options.allowDeviceWrites || args.confirm !== true) throw new Error('Zoom writes require --allow-device-writes and confirm=true.')
@@ -369,8 +416,12 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { status: response.status, body }
     },
     firmware_download: async args => { if (!options.stock) throw new Error('Choose private stock at startup with --stock.'); return buildAndSave(args.request, { stockPath: options.stock, outputDir: dataDir, site, root }) },
-    device_status: snapshot,
+    device_status: async () => zoomSelected() ? zoomSnapshot(true) : snapshot(),
     device_load: async () => {
+      if (zoomSelected()) {
+        const { machine, state, load } = await zoomSnapshot(false)
+        return { machine, identity: state.identity, supported: load !== null, reading: load }
+      }
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
       const reading = await unit.liveLoad(), after = unit.getState()
@@ -378,6 +429,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { base: after.identity.base, supported: reading !== undefined, reading: reading ?? null }
     },
     device_log: async () => {
+      if (zoomSelected()) return { supported: false, log: null }
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
       const log = await unit.deviceLog()
@@ -531,6 +583,15 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!keep && !frontend.sameModules(result.inventory.moduleIds, completed.before.inventory.moduleIds)) throw new Error('Undo did not restore the reviewed inventory.')
     return { kept: keep, completed: true, ...result }
   }
+  // Before each tool call: rebuild the bundle when a file it was built from changed. An open trial keeps the bundle it
+  // started with until Keep or Undo; the link and reviews belong to the old bundle, so they are dropped.
+  async function refreshFrontend() {
+    if (trial || await stamp(built.files) === built.stamp) return
+    dropLink(); closeZoom()
+    try { await loadFrontend() }
+    catch (error) { throw new Error('The checkout changed since this server bundled the site (a branch switch or base regeneration), and rebuilding failed: ' + error.message + ' Once the checkout builds again, call the tool again; nothing was sent.', { cause: error }) }
+    console.error('Rebuilt the site bundle: the checkout changed since the last tool call.')
+  }
   let running = false
   return {
     tools: TOOLS,
@@ -546,11 +607,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       if (closed) throw new Error('The MCP workspace is closed.')
       if (running) throw new Error('Another frontend/device operation is running.')
       running = true
-      try { return await handlers[name](args) } finally { running = false }
+      try { if (!name.startsWith('board_')) await refreshFrontend(); return await handlers[name](args) } finally { running = false; releaseIdleLink() }
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
-    close() { return closing ??= (async () => { closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.(); if (digitone) { await digitone.unit.undo().catch(() => { /* the unit rolls an unkept trial back by itself */ }); digitone.access.close?.() } } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
+    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); closeZoom(); if (digitone) { await digitone.unit.undo().catch(() => { /* the unit rolls an unkept trial back by itself */ }); digitone.access.close?.() } } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }
