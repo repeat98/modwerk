@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, LAYER, largeSet, plan, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
+import { context, LAYER, largeSet, packageRunsDsp, plan, reading, record, recordMarkdown, rehearsal, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -352,5 +352,120 @@ describe('the real unit queue', () => {
     expect(ctx.env.MODWERK_UNIT).toBe('emulator')
     const { takeUnitTurn } = await import('./unit-queue.mjs')
     expect(await takeUnitTurn({ env: { MODWERK_UNIT: 'emulator' } })).toBeNull()
+  })
+})
+
+describe('the emulator rehearsal (step 5)', () => {
+  const twin = { emulator: '/emu/ot_emu', image: '/twins/t1/MAIN.raw', identity: '8fd6d456abf3865b', dir: '/tmp/mw-emu-1' }
+  /** fakeDeps with a fake session: what it was asked to start, and whether it was stopped. */
+  const withSession = (deps, { fails } = {}) => {
+    deps.sessions = []
+    deps.session = async spec => {
+      if (fails) throw new Error(fails)
+      const session = { spec, stopped: false, ended: new Promise(() => {}), stop: async () => { session.stopped = true } }
+      deps.sessions.push(session)
+      return session
+    }
+    return deps
+  }
+
+  it('starts its own session when an ot_emu and a twin are there, and runs the unit\'s cases in it before the unit', async () => {
+    const deps = withSession(fakeDeps()), ctx = moduleCtx({ rehearsal: twin })
+    const steps = await runProcedure(ctx, deps)
+    expect(deps.sessions).toHaveLength(1)
+    expect(deps.sessions[0].spec).toEqual({ emulator: '/emu/ot_emu', image: '/twins/t1/MAIN.raw', dir: '/tmp/mw-emu-1', dsp: undefined, package: '/out/vibrato.mwrm' })
+    expect(deps.sessions[0].stopped).toBe(true)
+    // Step 6, 7 and 10's commands on the session's sockets, in its environment, then the same on the unit.
+    expect(deps.ran.slice(3, 7)).toEqual([
+      'node scripts/device.mjs status --socket /tmp/mw-emu-1/share.sock',
+      'node scripts/device.mjs do inventory --socket /tmp/mw-emu-1/share.sock',
+      'npm run device:test -- --share /tmp/mw-emu-1/share.sock --testing-entry /out/emulator/device-test.md --soak 120 /out/vibrato.mwrm',
+      'node scripts/device.mjs do inventory --socket /tmp/mw-emu-1/share.sock',
+    ])
+    expect(deps.envs.slice(3, 7).every(env => env.MODWERK_UNIT === 'emulator' && env.MODWERK_DEV_SOCKET === '/tmp/mw-emu-1/dev.sock')).toBe(true)
+    expect(deps.ran[7]).toBe('node scripts/device.mjs status --socket /tmp/share.sock')
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'passed', emulator: true, reason: expect.stringContaining('twin 8fd6d456abf3865b in ot_emu, not hardware evidence') })
+    const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- vibrato' }))
+    expect(md).toMatch(/\| 5 \| Emulator rehearsal \(emulator\) \| emulator \| passed: the development twin 8fd6d456abf3865b/)
+    expect(md).toMatch(/^Tested on a unit: package/m) // the unit's own pass makes that line; the rehearsal never does
+  })
+
+  it('stops before the unit when the rehearsal fails, and stops the session', async () => {
+    const deps = withSession(fakeDeps({ fail: ['device:test -- --share /tmp/mw-emu-1'] }))
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(statuses(steps)).toMatchObject({ emulator: 'failed', 'unit-read': 'not run', 'unit-pass': 'not run' })
+    expect(steps.find(step => step.id === 'emulator').reason).toMatch(/^exit 1: npm run device:test .* \(the development twin 8fd6d456abf3865b in ot_emu/)
+    expect(steps.find(step => step.id === 'unit-read').reason).toBe('stopped: step 5 (Emulator rehearsal) failed')
+    expect(deps.ran.some(line => line.includes('/tmp/share.sock'))).toBe(false)
+    expect(deps.sessions[0].stopped).toBe(true)
+  })
+
+  it('fails when the emulator\'s inventory at the end differs from the one it read first', async () => {
+    const deps = withSession(fakeDeps()), exec = deps.exec, inventories = [INVENTORY, '[]']
+    deps.exec = async (argv, ...rest) => {
+      const run = await exec(argv, ...rest)
+      return argv.join(' ').endsWith('do inventory --socket /tmp/mw-emu-1/share.sock') ? { code: 0, output: inventories.shift() } : run
+    }
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/^the inventory differs from the one read first/) })
+  })
+
+  it('reports an emulator that died during the run with the failure', async () => {
+    const deps = withSession(fakeDeps({ fail: ['device:test -- --share /tmp/mw-emu-1'] }))
+    const session = deps.session
+    deps.session = async spec => ({ ...(await session(spec)), ended: Promise.resolve('ot_emu exited (139)') })
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(steps.find(step => step.id === 'emulator').reason).toMatch(/; ot_emu exited \(139\) \(the development twin/)
+  })
+
+  it('leaves the step not run, and the unit steps running, when the session does not start', async () => {
+    const deps = withSession(fakeDeps(), { fails: 'ot_emu ended before the session was ready (exit 1)' })
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/^the emulator session did not start: ot_emu ended/) })
+    expect(statuses(steps)).toMatchObject({ 'unit-read': 'passed', 'unit-pass': 'passed', restore: 'passed' })
+  })
+
+  it('says what is missing and how to get it, and leaves the step out on request', async () => {
+    const none = rehearsal({}, {}, () => false)
+    expect(none.missing).toMatch(/no adapted ot_emu: .*MODWERK_OT_EMU.*--emulator OT_EMU; no development twin: .*MODWERK_OT_TWIN.*--twin DIR/)
+    expect(rehearsal({}, { MODWERK_OT_EMU: '/e/ot_emu', MODWERK_OT_TWIN: '/t' }, path => path === '/e/ot_emu').missing)
+      .toBe('no MAIN.raw at /t/MAIN.raw (MODWERK_OT_TWIN or --twin names a development twin\'s build folder)')
+    expect(rehearsal({ 'no-emulator': true }, { MODWERK_OT_EMU: '/e', MODWERK_OT_TWIN: '/t' }).missing).toBe('left out with --no-emulator')
+    // A build folder names its twin by its configuration, a bare MAIN.raw by its path. The arguments win over the environment.
+    expect(rehearsal({ twin: '/t' }, { MODWERK_OT_EMU: '/e/ot_emu', MODWERK_OT_TWIN: '/other' }, () => true, () => '{"configurationHash":"8fd6d456abf3865b0011"}'))
+      .toEqual({ emulator: '/e/ot_emu', image: '/t/MAIN.raw', identity: '8fd6d456abf3865b' })
+    expect(rehearsal({ emulator: '/e/ot_emu', twin: '/t/MAIN.raw' }, {}, () => true, () => { throw new Error('no proofs') }))
+      .toEqual({ emulator: '/e/ot_emu', image: '/t/MAIN.raw', identity: undefined })
+    const steps = await runProcedure(moduleCtx({ rehearsal: none, unit: { available: false, reason: 'none' } }), withSession(fakeDeps()))
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/^no emulator session: no adapted ot_emu/) })
+  })
+
+  it('rehearses a base\'s large set with the DSPs running, and fails a refusal there', async () => {
+    const ctx = moduleCtx({ kind: 'base', id: undefined, pkg: '/b/base.elemod', setPackages: ['/p/a.mwrm', '/p/b.mwrm'], rehearsal: twin, unit: { available: false, reason: 'none' } })
+    const deps = withSession(fakeDeps({ said: { 'set /p/a.mwrm,/p/b.mwrm --seconds 30 --split --socket /tmp/mw-emu-1/share.sock': 'refused: module pool full' } }))
+    const steps = await runProcedure(ctx, deps)
+    expect(deps.sessions[0].spec.dsp).toBe(true)
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/^refused: module pool full/) })
+  })
+
+  it('runs ot_emu with --dsp only for a package that carries DSP code', () => {
+    const header = dsp => { const bytes = Buffer.alloc(64); bytes.write('MWRM'); bytes.writeUInt32BE(dsp, 32); return bytes }
+    expect(packageRunsDsp(header(120))).toBe(true)
+    expect(packageRunsDsp(header(0))).toBe(false)
+    expect(packageRunsDsp(Buffer.alloc(8))).toBe(false)
+  })
+
+  it('reads the ot_emu and the twin from the environment, and plans the session in a short folder of its own', () => {
+    const root = join(import.meta.dirname, '..'), dir = mkdtempSync(join(tmpdir(), 'twin-'))
+    writeFileSync(join(dir, 'MAIN.raw'), '')
+    writeFileSync(join(dir, 'proofs.json'), '{"configurationHash":"0123456789abcdef99"}')
+    writeFileSync(join(dir, 'ot_emu'), '')
+    const ctx = context(root, { out: mkdtempSync(join(tmpdir(), 'procedure-')) }, ['vibrato'], { MODWERK_OT_EMU: join(dir, 'ot_emu'), MODWERK_OT_TWIN: dir })
+    expect(ctx.rehearsal).toMatchObject({ emulator: join(dir, 'ot_emu'), image: join(dir, 'MAIN.raw'), identity: '0123456789abcdef' })
+    expect(ctx.rehearsal.dir.length).toBeLessThan(60)
+    const p = plan(STEPS.find(step => step.id === 'emulator'), ctx)
+    expect(p.commands.map(argv => argv.join(' '))).toContain('node scripts/device.mjs status --socket ' + join(ctx.rehearsal.dir, 'share.sock'))
+    // Inside an emulator session (device:emulator) the unit steps are the rehearsal, and step 5 is not run again.
+    expect(plan(STEPS.find(step => step.id === 'emulator'), { ...ctx, target: 'emulator' }).skip).toMatch(/--target emulator/)
   })
 })
