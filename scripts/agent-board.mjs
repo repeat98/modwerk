@@ -20,6 +20,8 @@
 //   npm run board -- reply <id> "answer" [--pr <n>]  |  link <id> --pr <n>  |  close <id>  |  delete <id>
 //                                                # --pr / link: the thread ends when that pull request merges (fold = link)
 //   npm run board -- inbox                       # questions, replies and your expiring claims
+//   npm run board -- wait [<id>] [--minutes 60]  # ends when someone else answers thread <id>, or anything new reaches your inbox;
+//                                                # run it in the background after asking: exit 0 with the thread, 3 at the deadline
 //   npm run board -- activity                    # how many developers use the board
 //
 // Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7, a run octatrack/38-51), migration (0085), dsp-region (machine/name),
@@ -202,6 +204,7 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
 
 const hookSpan = key => { const [, list, first, last] = /^(.+)\/(\d+)(?:-(\d+))?$/.exec(key); return { list, first: Number(first), last: Number(last ?? first) } }
 const overlaps = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.last && y.first <= x.last }
+const covers = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.first && y.last <= x.last }
 /** Consecutive new hook indices of one list become one claim (octatrack/38-51): a base change may add more hooks than
  * one person may hold claims. */
 function hookRuns(items) {
@@ -224,13 +227,14 @@ export async function compareClaims(needed, login, { pullRequest, ...options } =
   const claims = await listClaims({}, options), byKey = new Map(claims.map(item => [item.kind + ' ' + item.key, item]))
   const result = { mine: [], others: [], free: [], unknown: [] }
   for (const item of needed) {
-    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed.
+    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed. A run claimed
+    // ahead of the work (tables/4-6 while the branch adds 4-5 so far) covers the part a branch adds.
     const near = item.kind === 'hook' ? claims.filter(claim => claim.kind === 'hook' && overlaps(claim.key, item.key)) : [byKey.get(item.kind + ' ' + item.key)].filter(Boolean)
-    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase() && !(pullRequest && claim.pullRequest === pullRequest)), exact = near.find(claim => claim.key === item.key)
+    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase() && !(pullRequest && claim.pullRequest === pullRequest)), held = near.find(claim => claim.key === item.key) ?? (item.kind === 'hook' ? near.find(claim => covers(claim.key, item.key)) : undefined)
     if (!near.length) result.free.push(item)
     else if (!login) result.unknown.push({ ...item, claim: near[0] })
     else if (theirs) result.others.push({ ...item, claim: theirs })
-    else if (exact) result.mine.push({ ...item, claim: exact })
+    else if (held) result.mine.push({ ...item, claim: held })
     else result.free.push(item)
   }
   return result
@@ -306,6 +310,28 @@ export async function inboxNotes(options = {}) {
   if (expiring) notes.push(`You have ${expiring} board claim${expiring === 1 ? '' : 's'} expiring within three days. Run npm run board -- inbox to see which claims to review.`)
   return notes
 }
+/** Waits until someone other than `me` has the newest word in a thread `read` returns, a thread is new, or one ends.
+ * Returns the threads that changed, or null at the deadline. A board that does not answer for a moment is read again
+ * at the next turn, so a long wait survives a deploy. */
+export async function waitForReply({ read, me, minutes = 60, every = 60000, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now }) {
+  const state = thread => ({ word: thread.replies?.at(-1)?.id ?? thread.id, by: thread.replies?.at(-1)?.author ?? thread.author, ended: Boolean(thread.endedAt) })
+  const seen = new Map((await read()).map(thread => [thread.id, state(thread)]))
+  const deadline = now() + minutes * 60000
+  while (now() < deadline) {
+    await sleep(Math.min(every, deadline - now()))
+    let threads
+    try { threads = await read() } catch (error) { if (error instanceof BoardUnavailable) continue; throw error }
+    const changed = threads.filter(thread => {
+      const before = seen.get(thread.id), after = state(thread)
+      if (!before) return after.by !== me
+      return (before.word !== after.word && after.by !== me) || before.ended !== after.ended
+    })
+    for (const thread of threads) seen.set(thread.id, state(thread))
+    if (changed.length) return changed
+  }
+  return null
+}
+
 /** One thread as the terminal shows it. Quoted text is another developer's words. */
 export function describeThread(thread) {
   const to = thread.to ? (thread.kind === 'wanted' ? ' taken by @' : ' → @') + thread.to : '', when = thread.endedAt ? 'ended ' + thread.endedAt.slice(0, 10) + ' (' + thread.endedReason + ')' : 'open until ' + thread.endsAt.slice(0, 10)
@@ -375,7 +401,7 @@ export function branchVerdict(compared, { requireClaims = false } = {}) {
   const lines = []
   for (const item of compared.others) lines.push(`✗ ${item.kind} ${item.key} (${item.why}) is claimed by ${describeClaim(item.claim)}. Ask them, or renumber / rename.`)
   for (const item of compared.unknown) lines.push(`· ${item.kind} ${item.key} is claimed by ${describeClaim(item.claim)}; sign in (npm run board -- login) so the check can tell whether that is you.`)
-  for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours.`)
+  for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours${item.claim && item.claim.key !== item.key ? ' (claim ' + item.claim.key + ')' : ''}.`)
   for (const item of compared.free) lines.push(requireClaims
     ? `✗ ${item.kind} ${item.key} (${item.why}) is unclaimed. Claim it so nobody else starts the same work: npm run board -- login once, then npm run pr:ready (it claims what the branch adds) or npm run board -- claim ${item.kind} ${item.key}. Then rerun this check.`
     : `· ${item.kind} ${item.key} (${item.why}) is unclaimed: npm run board -- claim ${item.kind} ${item.key}`)
@@ -436,6 +462,21 @@ async function main(argv) {
       console.log('\nYour claims expiring within three days')
       for (const { id, kind, key, expiresAt } of expiring) console.log(`${id}  ${kind} ${key}  ${expiresAt}`)
     }
+    return 0
+  }
+  if (command === 'wait') {
+    const minutes = flag('--minutes') ? Number(option('--minutes')) : 60
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 720) throw new Error('Give --minutes as a whole number from 1 to 720.')
+    const token = await readToken(), me = token && await whoami({ token })
+    if (!me) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+    const id = rest[0]
+    const read = id ? async () => [(await boardRequest('/agent-board/messages/' + encodeURIComponent(id), { token })).message]
+      : async () => { const box = await inbox({ token }); if (!box) throw new BoardError('The board sign-in ended: npm run board -- login', 401); return [...box.waiting, ...box.replies] }
+    console.log(`Waiting up to ${minutes} minutes for ${id ? 'an answer in ' + id : 'something new in your inbox'}.`)
+    const changed = await waitForReply({ read, me, minutes })
+    if (!changed) { console.log(`No answer within ${minutes} minutes. Run it again to keep waiting.`); return 3 }
+    console.log(UNTRUSTED)
+    for (const thread of changed) console.log(describeThread(thread).join('\n'))
     return 0
   }
   if (command === 'activity') {

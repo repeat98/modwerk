@@ -37,12 +37,11 @@
    the card, so it never shows a cut. Brighter on hover. */
 .overview-art::before { content: ''; position: absolute; inset: 4% 3%; pointer-events: none; background: radial-gradient(closest-side, #ffffff1c, #ffffff0a 45%, #ffffff03 72%, transparent); opacity: .8; transition: opacity .3s; }
 .overview-tile:hover .overview-art::before { opacity: 1; }
-.overview-art > :not(.overview-lock):not(.overview-cta) { z-index: 1; }
-.overview-art .device-photo { position: absolute; inset: 0; width: 100%; height: 100%; }
-.overview-art .device-photo.is-cutout { padding: 26px 30px 18px; filter: drop-shadow(0 10px 16px #00000066); }
-.overview-art .device-art { position: absolute; left: 50%; top: 50%; width: 66%; height: auto; transform: translate(-50%, -50%); }
-.overview-tile.is-locked .overview-art .device-photo { filter: grayscale(1) brightness(.38) contrast(.9); }
-.overview-tile.is-locked .overview-art .device-photo.is-cutout { filter: grayscale(1) brightness(.38) contrast(.9) drop-shadow(0 10px 16px #00000066); }
+.overview-art > :is(.device-photo, .device-art) { position: absolute; z-index: 1; filter: var(--overview-image-tone, none); }
+.overview-art .device-photo { inset: 0; width: 100%; height: 100%; }
+.overview-art .device-photo.is-cutout { padding: 26px 30px 18px; filter: var(--overview-image-tone, brightness(1)) drop-shadow(0 10px 16px #00000066); }
+.overview-art .device-art { left: 50%; top: 50%; width: 66%; height: auto; transform: translate(-50%, -50%); }
+.overview-tile.is-locked .overview-art { --overview-image-tone: grayscale(1) brightness(.5) contrast(.8); }
 .overview-tile-name a { color: inherit; }
 .overview-tile-name a:hover { text-decoration: underline; text-decoration-color: var(--line-hover); text-underline-offset: 4px; }
 
@@ -89,7 +88,7 @@
 .overview-tile.is-develop:hover { border-color: #c7a16c4d; background: linear-gradient(180deg, #c7a16c1c, #c7a16c08 60%); }
 .overview-tile.is-develop .overview-art { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px 22px; text-align: center; }
 .overview-tile.is-develop .overview-art::before { background: radial-gradient(closest-side, #e2b77a2c, #e2b77a10 45%, #e2b77a05 72%, transparent); }
-.overview-waiting, .overview-pitch { position: relative; }
+.overview-waiting, .overview-pitch { position: relative; z-index: 1; }
 .overview-waiting { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .overview-waiting strong { font-size: 24px; font-weight: 680; line-height: 1.15; letter-spacing: -.4px; color: #fff1da; }
 .overview-waiting small { color: var(--apricot-text); font: 10.5px/1.5 var(--mono); letter-spacing: 1.1px; text-transform: uppercase; }

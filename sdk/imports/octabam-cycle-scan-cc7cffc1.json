@@ -3,25 +3,32 @@
   "repository": "https://github.com/sambanks/octabam",
   "revision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
   "kind": "infrastructure-backport",
+  "license": "MIT AND GPL-3.0-only",
   "modules": [],
   "files": [
     {
       "path": "interlock_scan.py",
       "sourcePath": "tools/build/interlock_scan.py",
       "sourceSha256": "3c8837e2abf697f8d2a2e40bfa88932a97c29616e828cf2816fff20998d9f1cc",
-      "vendoredSha256": "23bcc590bc9fe17faf1a822b12cef0da53a031494a9a718126942451e9e37819"
+      "vendoredSha256": "23bcc590bc9fe17faf1a822b12cef0da53a031494a9a718126942451e9e37819",
+      "license": "MIT",
+      "licenseSource": "octabam LICENSE (Copyright 2026 Sam Banks); author Yves Rosius"
     },
     {
       "path": "dsp_host.cpp",
       "sourcePath": "tools/harness/dsp_host/dsp_host.cpp",
       "sourceSha256": "80d0186deec8829fe655f833f0ffa4f1fd6054ffc9a863d63da046ff61538e8a",
-      "vendoredSha256": "80d0186deec8829fe655f833f0ffa4f1fd6054ffc9a863d63da046ff61538e8a"
+      "vendoredSha256": "80d0186deec8829fe655f833f0ffa4f1fd6054ffc9a863d63da046ff61538e8a",
+      "license": "GPL-3.0-only",
+      "licenseSource": "octabam THIRD_PARTY.md: dsp_asm/dsp_host are additions to the dsp56300 emulator, under its licence, GPL-3.0 (dsp56300 LICENSE.md, the GPL version 3 text; sdk/octabam/licenses/manifest.json spdx GPL-3.0-only)"
     },
     {
       "path": "CYCLE_SCAN.md",
       "sourcePath": "docs/contributing/CYCLE_SCAN.md",
       "sourceSha256": "d8c0446e768e6ba22ed8474d9ec8213e59cae15156949af056589211065fb89a",
-      "vendoredSha256": "d8c0446e768e6ba22ed8474d9ec8213e59cae15156949af056589211065fb89a"
+      "vendoredSha256": "d8c0446e768e6ba22ed8474d9ec8213e59cae15156949af056589211065fb89a",
+      "license": "MIT",
+      "licenseSource": "octabam LICENSE (Copyright 2026 Sam Banks)"
     }
   ],
   "destination": "sdk/cycle-scan"

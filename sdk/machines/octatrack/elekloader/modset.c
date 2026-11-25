@@ -92,6 +92,13 @@ extern int olog_stock_open(struct file_object *, const char *, const char *, voi
 extern int olog_stock_read(struct file_object *, void *, unsigned);
 extern int olog_stock_write(struct file_object *, const void *, unsigned);
 extern int olog_stock_close(struct file_object *);
+#ifdef MODWERK_HOST_CARD
+int modwerk_test_card_size(struct file_object *);
+#define FILE_SIZE(f) modwerk_test_card_size(f)
+#else
+/* An open file's length, as the logger reads it (stock_140c.c). */
+#define FILE_SIZE(f) ((int (*)(uint32_t))(uintptr_t)*(volatile uint32_t *)0x46c8241eu)((f)->word[0])
+#endif
 #endif
 
 static uint8_t set[SET_BYTES] __attribute__((aligned(4)));
@@ -375,6 +382,24 @@ void modwerk_modset_kept(void) { if (keep_bytes) seal(keep_count, keep_bytes), p
 unsigned modwerk_modset_unsaved(void) { return pending ? 1u | (unsigned)(modwerk_modset_result == SAVE_FAILED) << 1 : 0u; }
 #endif
 
+#if defined MODWERK_DEV || defined MODWERK_HOST
+/* dev.c's ADOPT TEST: this development base restores a whole set another base wrote (the flashed base's, on the card)
+ * as its own and writes nothing to the card for the rest of that start, so a twin's restore can be tried without a
+ * Keep replacing the owner's set. Battery RAM (battery-ram.json): "MWAD" and this base's id, so another base ignores it. */
+#ifdef MODWERK_HOST
+uint32_t modwerk_test_adopt[2];
+#define ADOPT modwerk_test_adopt
+#else
+#define ADOPT ((volatile uint32_t *)0x100ffd38u)
+#endif
+#define ADOPTING() (ADOPT[0] == 0x4d574144u && ADOPT[1] == be32(modwerk_base_digest))
+static unsigned adopted; /* this start restored another base's set: no card writes */
+void modwerk_modset_adopt_test(unsigned on);
+void modwerk_modset_adopt_test(unsigned on) { ADOPT[1] = be32(modwerk_base_digest), ADOPT[0] = on ? 0x4d574144u : 0; }
+#else
+#define ADOPTING() 0
+#define adopted 0
+#endif
 #if defined MODWERK_HOST && !defined MODWERK_HOST_CARD
 /* The pretend card keeps a file's shelf beside its set: op 2 reads it (its bytes, 0 none), op 3 writes it. */
 static int load(unsigned which)
@@ -394,7 +419,7 @@ static int load(unsigned which)
 static int store(unsigned which)
 {
     const char *path = which ? "/MODWERK1.SET" : "/MODWERK0.SET";
-    if (VOLATILE_BLOCKED()) return 0;
+    if (VOLATILE_BLOCKED() || adopted) return 0;
     return modwerk_test_file(1, path, set, used()) && modwerk_test_file(3, path, OFF, off_bytes);
 }
 #else
@@ -429,15 +454,19 @@ static int load(unsigned which)
 /* The set into one slot, sector by sector while the gate holds, then read back whole. */
 static int store(unsigned which)
 {
-    if (VOLATILE_BLOCKED()) return 0;
+    if (VOLATILE_BLOCKED() || adopted) return 0;
     static uint8_t verify[512];
     const char *path = which ? "/MODWERK1.SET" : "/MODWERK0.SET";
     struct file_object f;
     uint32_t n = (used() + 511u) & ~511u;
     if (olog_stock_open(&f, path, "w", octamod_log_io, 512) < 0) return 0;
-    int ok = 1;
+    int had = FILE_SIZE(&f), ok = 1;
     for (uint32_t at = 0; ok && at < n; at += 512) ok = !VOLATILE_BLOCKED() && GATE() && olog_stock_write(&f, set + at, 512) == 1;
     for (uint32_t at = 0; ok && at < off_bytes; at += 512) ok = !VOLATILE_BLOCKED() && GATE() && olog_stock_write(&f, OFF + at, 512) == 1; /* the shelf */
+    /* Stock's close takes the length from word 4, and shortening a file leaves its last cluster linked to the freed
+     * tail (#1830). So the file keeps its length; the header says how much of it is the set, and a version 1 set
+     * reads no shelf after it. */
+    if (had > 0 && (uint32_t)had > n + off_bytes) f.word[4] = (uint32_t)had;
     ok = olog_stock_close(&f) >= 0 && ok;
     if (!ok || olog_stock_open(&f, path, "r", octamod_log_io, 512) < 0) return 0;
     for (uint32_t at = 0; ok && at < n; at += 512) {
@@ -457,9 +486,12 @@ static int whole(int n)
 {
     uint8_t digest[MU_DIGEST_BYTES];
     if (n < (int)HEADER || (be32(set + 4) != 1u && !(be32(set + 4) == 2u && off_bytes)) || be32(set + 16) != (uint32_t)n) return 0;
-    for (unsigned i = 0; i < 32u; ++i) if (set[20 + i] != modwerk_base_digest[i]) { modwerk_modset_result = FOREIGN; return 0; }
+    for (unsigned i = 0; i < 32u; ++i) if (set[20 + i] != modwerk_base_digest[i] && !ADOPTING()) { modwerk_modset_result = FOREIGN; return 0; }
     mu_sha256(set + HEADER, (uint32_t)n - HEADER, digest);
     for (unsigned i = 0; i < MU_DIGEST_BYTES; ++i) if (digest[i] != set[52 + i]) return 0;
+#if defined MODWERK_DEV || defined MODWERK_HOST
+    if (ADOPTING()) adopted = 1;
+#endif
     return 1;
 }
 /* A package the loader refuses BUSY (it names every switch it could not make so) is tried again every half second,
@@ -468,7 +500,11 @@ static int whole(int n)
  * the same way. ep0.c holds the host until the restore is done. */
 #define RESTORE_RETRY 30u
 #define RESTORE_TRIES 20u
-static uint8_t restore_outcome[RUNTIME_MODULES]; /* per package of set[]: 0 to try, 1 installed, 2 left out */
+/* Per package of set[], as ep0.c's RESTORE request reports it (status.h): its first byte 0 to try, 1 installed, 2 left
+ * out. restore_count: the set's packages once the restore has run, else 0. */
+static uint8_t restore_entry[RUNTIME_MODULES][MODSET_RESTORE_ENTRY];
+#define restore_outcome(k) restore_entry[k][0]
+static volatile uint32_t restore_count;
 static unsigned restore_tries;
 static uint32_t left_out, left_why, left_used, left_largest, left_check; /* the first package left out, the loader's refusal,
                                                               * the module pool at that moment (used, largest free run) and the
@@ -514,6 +550,16 @@ static void guard_name(const uint8_t *p, uint32_t n)
     for (const char *t = k ? " LEFT OUT" : "MODULE LEFT OUT"; *t; ) guard_text[k++] = *t++;
     guard_text[k] = 0;
 }
+/* Package k's outcome: 1 installed, or 2 left out with why (the loader's refusal or the guard's), the check that refused
+ * it and the pool's largest free run then. */
+static void outcome(uint32_t k, unsigned state, const uint8_t *p, uint32_t length, uint32_t why, uint32_t check, uint32_t largest)
+{
+    uint8_t *e = restore_entry[k];
+    int named = length >= 65u && ((uint32_t)p[4] << 8 | p[5]) >= 6u;
+    e[0] = (uint8_t)state, e[1] = (uint8_t)check, e[2] = (uint8_t)(why >> 8), e[3] = (uint8_t)why;
+    put32(e + 4, module_of(p, length)), put32(e + 8, length), put32(e + 12, largest);
+    for (unsigned i = 0; i < 16u; ++i) e[16 + i] = named && i < 15u ? p[50 + i] : 0;
+}
 static void restore_pass(void)
 {
     const struct mu_backend *b6 = &modwerk_runtime_backend;
@@ -522,10 +568,10 @@ static void restore_pass(void)
     int open = b6->enter(b6->user), last = ++restore_tries >= RESTORE_TRIES;
     uint32_t n = used(), count = 0, installed = 0, waiting = 0, end = HEADER, guarded = 0;
     for (uint32_t at = HEADER; at < n; at += 8u + ((be32(set + at + 4) + 3u) & ~3u), ++count) {
-        if (count >= RUNTIME_MODULES || restore_outcome[count]) continue; /* past the loader's rows: never live */
+        if (count >= RUNTIME_MODULES || restore_outcome(count)) continue; /* past the loader's rows: never live */
         uint32_t length = be32(set + at + 4), id = module_of(set + at + 8, length);
         if (guard_left(id)) {
-            restore_outcome[count] = 2, ++guarded;
+            outcome(count, 2, set + at + 8, length, GUARD_LEFT, 0, 0), ++guarded;
             if (guarded == 1u) guard_name(set + at + 8, length);
             if (!left_out) left_out = id, left_why = GUARD_LEFT;
             continue;
@@ -533,16 +579,16 @@ static void restore_pass(void)
         /* The package a crash or a stall would blame: after a stall the loader is shut off and refuses the rest. */
         if (STALLS == g->stalls) g->loading = id;
         if (open && b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) {
-            restore_outcome[count] = 1;
+            outcome(count, 1, set + at + 8, length, 0, 0, 0);
             continue;
         }
         /* Read before the next install overwrites the loader's refusal. */
         uint32_t why = open ? (uint32_t)modwerk_runtime_refusal() : (uint32_t)RUNTIME_BUSY;
         if (open) (void)b6->discard(b6->user);
         if (why == RUNTIME_BUSY && !last) { ++waiting; continue; }
-        restore_outcome[count] = 2;
-        if (!left_out) left_out = id, left_why = why, left_used = RUNTIME_POOL_BYTES - modwerk_runtime_free(&left_largest),
-                       left_check = open ? (uint32_t)modwerk_runtime_refused_check() : 0;
+        uint32_t largest = 0, in_use = RUNTIME_POOL_BYTES - modwerk_runtime_free(&largest), check = open ? (uint32_t)modwerk_runtime_refused_check() : 0;
+        outcome(count, 2, set + at + 8, length, why, check, largest);
+        if (!left_out) left_out = id, left_why = why, left_used = in_use, left_largest = largest, left_check = check;
     }
     if (STALLS == g->stalls) g->loading = 0; /* between installs, nothing to blame */
     if (open) (void)b6->leave(b6->user);
@@ -553,13 +599,14 @@ static void restore_pass(void)
      * copy until the next change, so the next boot tries the refused ones again. */
     for (uint32_t at = HEADER, k = 0; at < n; ++k) {
         uint32_t step = 8u + ((be32(set + at + 4) + 3u) & ~3u);
-        if (k < RUNTIME_MODULES && restore_outcome[k] == 1) {
+        if (k < RUNTIME_MODULES && restore_outcome(k) == 1) {
             for (uint32_t i = 0; end != at && i < step; ++i) set[end + i] = set[at + i]; /* the loader keeps its own copy */
             end += step, ++installed;
         }
         at += step;
     }
     if (left_out) modwerk_diag_refused(left_out, left_why, left_used, left_largest, left_check);
+    restore_count = count;
     if (installed != count) seal(installed, end);
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
     modwerk_modset_result = installed == count ? RESTORED : guarded ? LEFT_OUT : REFUSED;
@@ -571,7 +618,7 @@ static void restore_pass(void)
 /* After a boot: the newest whole set, each package installed as a USB install would be. */
 static void restore(void)
 {
-    restored = 1;
+    restored = 1, restore_count = 0;
     unsigned held = SKIP_HELD;
     int a = load(0), wa = whole(a);
     uint32_t ga = wa ? be32(set + 8) : 0;
@@ -600,7 +647,7 @@ static void restore(void)
     }
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
     if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; off_bytes = 0; return; }
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome[i] = 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome(i) = 0;
     restored = 0, left_out = left_why = left_used = left_largest = left_check = 0;
     restore_pass();
 }
@@ -717,6 +764,18 @@ unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most)
     uint32_t count = off_count();
     out[0] = 'M', out[1] = 'W', out[2] = 'O', out[3] = (uint8_t)n, out[4] = (uint8_t)(count >> 8), out[5] = (uint8_t)count, out[6] = out[7] = 0;
     return 8u + MODSET_OFF_ENTRY * n;
+}
+/* This start's restore for a host (ep0.c's RESTORE request; status.h): each package of the card's set, loaded or left out
+ * and why, entries `first` on, at most `most`; none until the restore has run. The header's result is the card set's
+ * now, as SELFTEST's `saved`. From the USB interrupt; only the restore writes the entries, before it sets the count. */
+unsigned modwerk_modset_restore_list(uint8_t *out, unsigned first, unsigned most)
+{
+    uint32_t count = restore_count, rows = count < RUNTIME_MODULES ? count : RUNTIME_MODULES, n = 0;
+    for (; first + n < rows && n < most; ++n)
+        for (unsigned i = 0; i < MODSET_RESTORE_ENTRY; ++i) out[8u + MODSET_RESTORE_ENTRY * n + i] = restore_entry[first + n][i];
+    out[0] = 'M', out[1] = 'W', out[2] = 'R', out[3] = (uint8_t)n, out[4] = (uint8_t)(count >> 8), out[5] = (uint8_t)count;
+    out[6] = (uint8_t)modwerk_modset_result, out[7] = 1;
+    return 8u + MODSET_RESTORE_ENTRY * n;
 }
 int modwerk_modset_is_off(uint32_t module)
 {

@@ -4,9 +4,15 @@
  * modulation oscillators. No physical-cell or transport-history model.
  * Only the stock delay's current track ring is used, through its uncached
  * alias. The stock DMA commits record[] after this function returns. */
+#include <stddef.h>
 #include "cpu.h"
 #include "cpu_tables.h"
 _Static_assert(sizeof(TapeState) == 200, "cpu_hooks.s allocation: 8 x 200 bytes");
+_Static_assert(offsetof(TapeState, rng) == 20 && offsetof(TapeState, mix) == 24 &&
+               offsetof(TapeState, feedback) == 28 && offsetof(TapeState, hiss) == 40 &&
+               offsetof(TapeState, fir) == 44, "te_tape_block's state offsets");
+_Static_assert(sizeof(TapeGuard) == 24 && offsetof(TapeGuard, live) == 20,
+               "cpu_hooks.s: te_guard after te_states, its live mask in byte 23");
 
 static uint32_t minimum(uint32_t a, uint32_t b) { return a < b ? a : b; }
 /* Signed fractional EMAC, MACSR=0xa0 as established by stock 0x400031c4.
@@ -191,7 +197,7 @@ static void render_head(int32_t *out, volatile int32_t *ring, uint32_t write,
 /* The assembly kernels read these tables; keep them in the unit. */
 __attribute__((used)) static const int32_t *const te_kernel_tables[] =
     {te_hp, te_tape_curve, te_record_gain};
-/* Both playback sections in one pass, z = filters[1..2]. */
+/* Both playback sections in one pass, z = s->z. */
 void te_filter_block(int32_t *, const int32_t *, int32_t *);
 #define filter_block te_filter_block
 /* Record sum, [1,6,1]/8 FIR, tape curve, DMA staging and output mix. */
@@ -250,7 +256,7 @@ static void tape_block(TapeState *restrict s, const int32_t *restrict wet,
                        int32_t dm, int32_t df, int32_t dn) {
     const int32_t drive=te_record_gain[0];
     const int settled=!(dm|df|dn);
-    int32_t x1=s->filters[0][0], x2=s->filters[0][1];
+    int32_t x1=s->fir[0], x2=s->fir[1];
     uint32_t rng=s->rng;
     for (unsigned i=0;i<TE_FRAMES;++i) {
         s->mix+=dm; s->feedback+=df; s->hiss+=dn;
@@ -276,7 +282,7 @@ static void tape_block(TapeState *restrict s, const int32_t *restrict wet,
             audio[2*i+1]=readout(4*emac(w,wg) + emac(R,dg));
         }
     }
-    s->rng=rng; s->filters[0][0]=x1; s->filters[0][1]=x2;
+    s->rng=rng; s->fir[0]=x1; s->fir[1]=x2;
 }
 #define te_tape_block tape_block
 #ifdef TE_HOST
@@ -316,24 +322,67 @@ static __attribute__((noinline)) void tone_update(TapeState *s) {
     if (update_corner || update_worn) for (unsigned j=0;j<3;++j) {
         int32_t c=te_tone[worn*57+index][j];
         if (index<56) c+=mul31(te_tone[worn*57+index+1][j]-c,(speed&8191u)<<18);
-        s->filter_targets[0][j]=c;
+        s->filter_targets[j]=c;
     }
     /* The /8 step at quarter control rate retains roughly the old /32
      * smoothing time. Skip settled coefficients until tone changes. */
     if (update_corner || update_worn || s->filter_pending) {
         s->filter_pending=0;
         for (unsigned j=0;j<3;++j) {
-            int32_t delta=s->active ? (s->filter_targets[0][j]-s->coefficients[0][j])/8
-                                    : s->filter_targets[0][j];
-            s->coefficients[0][j]+=delta;
+            int32_t delta=s->active ? (s->filter_targets[j]-s->coefficients[j])/8
+                                    : s->filter_targets[j];
+            s->coefficients[j]+=delta;
             s->filter_pending |= delta!=0;
         }
     }
 }
 
-void te_process(TapeState *restrict s, const TapeParams *restrict p,
+/* Two cheap oscillators: 0.8 Hz wow, gently randomized ~8..12 Hz
+ * flutter. No travel-time integration, speed-dependent oscillator
+ * divisions, capstan harmonic or drift oscillator. At WOW=44 this
+ * retains about eight cents RMS; AGE increases the flutter component.
+ * age and wow are s->age and s->wow before this block's ramp step. Sets
+ * s->wobble_step, the head's wow step for this block. */
+static inline void oscillate(TapeState *restrict s, int32_t age, int32_t wow) {
+    s->phase += 16u*77913u;
+    s->flutter_rate += ((int32_t)s->flutter_target-(int32_t)s->flutter_rate)/16;
+    uint32_t old=s->flutter;
+    s->flutter+=16u*s->flutter_rate;
+    if (s->flutter<old) s->flutter_target=779132u+(random32(s)&0x3ffffu);
+    int32_t wobble_step = -s->wobble/16;
+    if (wow || s->wobble) {
+        int32_t wow_amp=mul31(159*256,wow);
+        int32_t flutter_amp=mul31(256+8*(age>>16),wow);
+        int32_t w=2*mul31(wow_amp,sine(s->phase))
+                 +2*mul31(flutter_amp,sine(s->flutter));
+        wobble_step = (w*256 - s->wobble)/16;
+    }
+    /* A snapped time changes the integrated wow offset. Do not traverse
+     * that offset in one block: bound acceleration as well as velocity.
+     * Normal low-rate wow is below these bounds; a mode/TIME jump is not. */
+    if (wobble_step>s->wobble_step+128) wobble_step=s->wobble_step+128;
+    if (wobble_step<s->wobble_step-128) wobble_step=s->wobble_step-128;
+    if (wobble_step>8192) wobble_step=8192;
+    if (wobble_step<-8192) wobble_step=-8192;
+    s->wobble_step=wobble_step;
+}
+
+/* One block. steady (te_cpu_hook only) says the previous block left
+ * s->steady set and these are its controls again: then every control
+ * computation below would repeat itself, every ramp delta is zero and the
+ * motor and fades are at rest, so they are left out and only the clocks,
+ * the head and the audio run. The arithmetic is te_process's either way. */
+void te_block(TapeState *restrict s, const TapeParams *restrict p,
                 volatile int32_t *restrict ring, uint32_t write,
-                int32_t *restrict audio, int32_t *restrict record) {
+                int32_t *restrict audio, int32_t *restrict record, unsigned steady) {
+    int32_t dm = 0, df = 0, dn = 0, movement = 0;
+    unsigned dry = 0; /* MIX is 0: snap the ramp's residual after the block */
+    /* The oscillators read AGE and WOW before this block's ramp steps, and
+     * nothing after them reads either: the old order, ramps stepped earlier. */
+    int32_t age_now = s->age, wow_now = s->wow;
+    if (steady) {
+        if (!((s->control_clock++ + p->lane) & 3u)) tone_update(s);
+    } else {
     if (p->tempo >= 720 && p->tempo <= 7200) s->tempo = p->tempo;
     if (s->tempo < 720 || s->tempo > 7200) s->tempo = 2880;
     uint32_t target = te_target(p, s->tempo);
@@ -369,50 +418,36 @@ void te_process(TapeState *restrict s, const TapeParams *restrict p,
     if (!((s->control_clock++ + p->lane) & 3u) || !s->active) tone_update(s);
     s->active = 1;
     /* ~12 ms gain ramps; no gain reset or phase reset at FREE/BEAT changes. */
-    int32_t dm = (mix-s->mix)/512, df = (feedback-s->feedback)/512;
+    dm = (mix-s->mix)/512; df = (feedback-s->feedback)/512;
     int32_t da = ((int32_t)(age<<16)-s->age)/512, dw = (wow-s->wow)/512;
-    int32_t dn = ((te_hiss[age]<<16)-s->hiss)/512;
-    /* Two cheap oscillators: 0.8 Hz wow, gently randomized ~8..12 Hz
-     * flutter. No travel-time integration, speed-dependent oscillator
-     * divisions, capstan harmonic or drift oscillator. At WOW=44 this
-     * retains about eight cents RMS; AGE increases the flutter component. */
-    s->phase += 16u*77913u;
-    s->flutter_rate += ((int32_t)s->flutter_target-(int32_t)s->flutter_rate)/16;
-    uint32_t old=s->flutter;
-    s->flutter+=16u*s->flutter_rate;
-    if (s->flutter<old) s->flutter_target=779132u+(random32(s)&0x3ffffu);
-    int32_t wobble_step = -s->wobble/16;
-    if (s->wow || s->wobble) {
-        int32_t wow_amp=mul31(159*256,s->wow);
-        int32_t flutter_amp=mul31(256+8*(s->age>>16),s->wow);
-        int32_t w=2*mul31(wow_amp,sine(s->phase))
-                 +2*mul31(flutter_amp,sine(s->flutter));
-        wobble_step = (w*256 - s->wobble)/16;
-    }
-    /* A snapped time changes the integrated wow offset. Do not traverse
-     * that offset in one block: bound acceleration as well as velocity.
-     * Normal low-rate wow is below these bounds; a mode/TIME jump is not. */
-    if (wobble_step>s->wobble_step+128) wobble_step=s->wobble_step+128;
-    if (wobble_step<s->wobble_step-128) wobble_step=s->wobble_step-128;
-    if (wobble_step>8192) wobble_step=8192;
-    if (wobble_step<-8192) wobble_step=-8192;
-    s->wobble_step=wobble_step;
-    int32_t playback[TE_FRAMES];
-    uint32_t position=s->position;
-    int32_t motor_step=0;
-    if (!p->sync && !s->fade_left && position!=target) {
-        int32_t error=(int32_t)target-(int32_t)position;
+    dn = ((te_hiss[age]<<16)-s->hiss)/512;
+    if (!p->sync && !s->fade_left && s->position!=target) {
+        int32_t error=(int32_t)target-(int32_t)s->position;
         /* One slew calculation per block. No motor acceleration model or
          * fractional velocity state. Fractional read positions still ramp
          * linearly through the block, so the read head never jumps. */
-        int32_t movement=error/64;
+        movement=error/64;
         if (!movement) movement=error>0?1:-1;
         if (movement>512) movement=512;
         if (movement<-512) movement=-512;
-        s->position=position+movement;
-        motor_step=movement*16;
+        s->position+=movement;
     }
-    render_head(playback,ring,write,position,s->wobble,wobble_step+motor_step,s->valid,TE_PLAIN);
+    /* Nothing ramps or moves and no fade runs: the same controls again
+     * would compute exactly these values and change nothing. */
+    s->steady = !(dm|df|da|dw|dn) && s->position == target && !s->fade_left &&
+                s->mode == !!p->sync;
+    age_now = s->age; wow_now = s->wow;
+    s->age += 16*da; s->wow += 16*dw;
+    /* Exact dry must not leave a tiny ramp residual forever. */
+    if (!wow && s->wow < 512) s->wow = 0;
+    dry = !mix;
+    }
+    oscillate(s, age_now, wow_now);
+    /* The head reads from where the motor stood at the block's start. */
+    uint32_t position=s->position-movement;
+    int32_t wobble_step=s->wobble_step;
+    int32_t playback[TE_FRAMES];
+    render_head(playback,ring,write,position,s->wobble,wobble_step+16*movement,s->valid,TE_PLAIN);
     if (s->fade_left) {
         /* The second head only exists during a BEAT transition; it
          * crossfades into the new head as it is read. */
@@ -423,43 +458,39 @@ void te_process(TapeState *restrict s, const TapeParams *restrict p,
     s->wobble+=16*wobble_step;
     /* All heads are >=32 samples behind this uncommitted block: playback
      * and record filters can be batched without changing feedback causality. */
-    filter_block(playback,s->coefficients[0],s->filters[1]);
+    filter_block(playback,s->coefficients,s->z);
     te_tape_block(s,playback,audio,record,dm,df,dn);
-    s->age += 16*da; s->wow += 16*dw;
-    /* Exact dry must not leave a tiny ramp residual forever. */
-    if (!mix && s->mix < 512) s->mix = 0;
-    if (!wow && s->wow < 512) s->wow = 0;
+    if (dry && s->mix < 512) s->mix = 0;
     s->valid = minimum(s->valid + TE_FRAMES, TE_RING - 1);
 }
 
-#ifndef TE_HOST
-#define U32(a) (*(volatile uint32_t *)(a))
-unsigned te_cpu_frame(uint32_t *sp) {
-    unsigned track = sp[112/4];
-    const uint8_t *setup = (const uint8_t *)sp[76/4];
-    if (track >= 8) return 0;
-    TapeState *s = &te_states[track];
-    if (setup[7] != TE_ID || *(const uint8_t *)sp[108/4] == 7) {
-        s->active = 0;
-        return 0;
-    }
-    /* Six staged page-1 halfwords; each control is the high (first) byte. */
-    const uint8_t *k = (const uint8_t *)sp[72/4];
-    TapeParams p = {k[0], k[2], k[4], k[8], k[10], k[6], U32(0x8000181c), track};
-    uint32_t base = 0x4f502c10u + track * TE_STRIDE;
-    uint32_t write = (sp[48/4] - base) >> 3;
-    if (write > TE_RING - TE_FRAMES) { s->active = 0; return 0; }
-    /* Stock 0x40003624 toggles these two scratch buffers after prefetching
-     * the NEXT track into the other one. Skipping that toggle would overwrite
-     * an in-flight DMA read and break every following stock-delay track. */
-    U32(0x800000e8) ^= U32(0x40003626);
-    /* The stock filter drains its accumulators on its first sample. We
-     * bypass it, so establish the same empty accumulators first. */
-    __asm__ volatile ("move.l #0,%%acc0\n\tmove.l #0,%%acc1\n\t"
-                      "move.l #0,%%acc2\n\tmove.l #0,%%acc3" ::: "memory");
-    te_process(s, &p, (volatile int32_t *)base, write,
-               (int32_t *)sp[96/4], (int32_t *)U32(0x800000e8));
-    U32(0x80006180) += 68; /* stock filter's per-track state iterator */
-    return 1;
+void te_process(TapeState *restrict s, const TapeParams *restrict p,
+                volatile int32_t *restrict ring, uint32_t write,
+                int32_t *restrict audio, int32_t *restrict record) {
+    te_block(s, p, ring, write, audio, record, 0);
+}
+#ifdef TE_HOST
+void te_host_process(TapeState *s, const TapeParams *p, volatile int32_t *ring,
+                     uint32_t write, int32_t *audio, int32_t *record, unsigned steady) {
+    te_block(s, p, ring, write, audio, record, steady);
 }
 #endif
+
+/* The ColdFire's per-track entry, the overload hold and the steady decision
+ * are in cpu_hooks.s (te_cpu_hook). */
+
+/* ev_frame_deadline (base 0.8): each frame interrupt's entry stores the DTIM3 count by which work at IPL 5 must end
+ * so the next frame interrupt enters no more than 80 µs late. Before each track's block te_cpu_hook holds the block
+ * (no echo for it, the tape held, as the overload hold does) when it would end past it: a late entry makes the DSP
+ * skip a frame, which played as a full-scale click (owner's MKII, 22 November 2026: two Tape Echos on a busy Part, 9
+ * of 9). 0 on a base that does not raise it: then only the overload hold below applies. rest is nonzero on every
+ * frame of a pattern the base predicts past its ceiling and has chosen Tape Echo to rest: te_cpu_hook then passes
+ * every Tape Echo track dry and drops its state, so the first frame after the rest starts the tape afresh. 0.1.9
+ * needs a base that passes rest (base 0.8's two-argument event): with one argument rest is a stale stack word.
+ * Frame-interrupt context: store and return. */
+volatile uint32_t te_deadline, te_rest;
+unsigned te_frame_deadline(uint32_t deadline, unsigned rest) {
+    te_deadline = deadline;
+    te_rest = rest;
+    return 0;
+}

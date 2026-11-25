@@ -51,7 +51,9 @@ section at `0x4012`, ours a 6-byte jump, to `0x40000400` and calls it; the stub 
 1. reads both records: a slot counts when its record checks and the container's own section sum matches;
 2. picks the newest counting slot. If it is not confirmed, it clears one *tries* bit first (a single-word program
    run from SRAM, since NOR answers status while it programs); after two tries without a confirmation it
-   starts the other counting slot, clearing one more bit so the base can tell it went back;
+   starts the other counting slot, clearing one more bit so the base can tell it went back. A RAM boot's soft
+   reset is a start too, so `npm run device -- boot` refuses while the newest slot is unconfirmed (an update
+   lost to RAM boots, 20 November 2026) and waits when that update is the base running;
 3. unpacks that slot with the bootloader's own unpacker and enters it exactly as the bootloader would: its cache
    settings, its stack (return address and boot word), every register as it left them;
 4. invalidates the instruction cache before that jump (CACR bit 8, as `runtime.c` does on the unit). The
@@ -111,6 +113,12 @@ current one. The step base is the 13 November base, kept as three assets that ar
 (`src/engine/elekloader/base-step.ts`, pinned by `base-step.test.ts`). The second update starts while the step base
 still runs from RAM, so its first arming restarts the unit on the same base from flash and the link arms once more.
 If even the step base does not fit, the dialog sends the user to the card.
+
+From the command line the same route is four steps. `npm run octatrack:base -- --stock OS.bin --step --out STEP` builds
+the step base's folder from the pinned assets and checks its identity; then `npm run device -- boot STEP`, `flash STEP`,
+`boot NEW` and `flash NEW`. `boot` and `flash` refuse an image larger than the running base's capacity before sending
+anything, and name this route. On two slots the new base's flash goes into the slot the unconfirmed step base holds,
+so the base that was confirmed before stays the fallback (MKII, 23 November 2026: `1bcbe613` to 0.8.1).
 
 - A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
   assets and update the pins, in the pull request that first publishes a base too big for the old stage.

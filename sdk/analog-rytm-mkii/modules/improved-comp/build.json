@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:improved_comp_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:value text of COMP THR and MUP (dB)"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

@@ -1,0 +1,1 @@
+Support: the bar for how much of the running costs Ko-fi tips cover now fills itself. Ko-fi reports each payment to the Worker, which keeps only the amount, currency, month and Ko-fi’s message ID; names, email addresses and messages are not stored. Ko-fi’s test payments are not counted. The bar appears once the owner connects the webhook (docs/KOFI_WEBHOOK.md).
