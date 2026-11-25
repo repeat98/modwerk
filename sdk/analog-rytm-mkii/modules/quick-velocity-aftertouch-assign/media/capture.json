@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.3.1-experimental",
+  "moduleVersion": "0.4.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-16T23:05:00Z",
-  "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Quick Mod Assign 0.3.1-experimental, materialised against stock OS 1.74, --version QM31",
+  "capturedAt": "2026-11-25T06:40:00Z",
+  "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Quick Mod Assign 0.4.0-experimental, materialised against stock OS 1.74, --version QM40",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -50,6 +50,12 @@
       "frame": "end.png",
       "plan": "--press FLTR@8020000000:12000000 --press LFO@8120000000:600000000 --nudge 4:1@8240000000x1/30000000 --turn 4:6@8400000000x16/4000000 --press LFO@9300000000:12000000",
       "sha256": "b94ea0cf2c569daee128e42371f7c2dcb864bddb829ce733020f4184c0941bdb"
+    },
+    {
+      "path": "media/scene-lock.png",
+      "frame": "end.png",
+      "plan": "--press SCNE@8020000000:12000000 --press BD@8120000000:12000000 --press SCNE@8220000000:12000000 --press SCNE@8403000000:1200000000 --nudge 1:1@8523000000x6/30000000",
+      "sha256": "8b130b2f3986d125790afe6f9d031da64d0b7ff5d163ed7d550a1f8c0af2dc56"
     }
   ]
 }

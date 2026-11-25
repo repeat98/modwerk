@@ -45,6 +45,7 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 3. Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.
 4. Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.
 5. Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth, then let go and tap LFO: the LFO page shows DST FRQ.
+6. Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE and turn SWT: SWT becomes a lock in scene 1, shown as a box with the scene's other locks, and the page stays.
 
 ## Changes to stock flows
 
@@ -81,10 +82,12 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build QM21 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build QM40 ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +11](media/sampler-amp.png)
 
 ![VELOCITY MODS FULL](media/mods-full.png) ![Stock's MODULATION SETUP showing the link](media/mod-setup.png)
 
 ![FILTER page with LFO held: FRQ is the LFO's destination at depth +46.96](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)
+
+![SYNTH page with SCENE held: SWT locked in scene 1 at 106, the scene's other locks boxed](media/scene-lock.png)
