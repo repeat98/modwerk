@@ -297,8 +297,9 @@ export default function App() {
   useEffect(() => { if (allRoute || overviewRoute) rememberDevice(ALL_MACHINES); else if (machineView || octatrackRoute) rememberDevice(currentDevice.id) }, [allRoute, overviewRoute, machineView, octatrackRoute, currentDevice.id])
   // #devices, the old machine overview, opens the overview page.
   useEffect(() => { if (machineRoute?.view === 'configuration' && isZoomSetDevice(machineRoute.device.id)) window.location.replace(zoomHubHref(machineRoute.device.id, 'set')) }, [machineRoute?.view, machineRoute?.device.id])
-  // A beta-only core build preview's configuration route opens the machine's page for everyone else.
-  useEffect(() => { if (!betaUi && machineRoute?.view === 'configuration' && isCoreBuildPreview(machineRoute.device.id)) window.location.replace(deviceHref(machineRoute.device.id)) }, [betaUi, machineRoute?.view, machineRoute?.device.id])
+  // A beta-only core build preview's configuration route opens the machine's page for everyone else, once the session
+  // has loaded: until then betaUi is false for everyone on the live site, beta testers included.
+  useEffect(() => { if (!sessionLoading && !betaUi && machineRoute?.view === 'configuration' && isCoreBuildPreview(machineRoute.device.id)) window.location.replace(deviceHref(machineRoute.device.id)) }, [sessionLoading, betaUi, machineRoute?.view, machineRoute?.device.id])
   useEffect(() => { if (devicesRoute) window.location.replace('#overview'); else if ((route === 'octatrack' || route.startsWith('octatrack/')) && !octatrackUi) window.location.replace('#library'); else if (!betaUi && parseZoomHubRoute(route) && !isZoomSetDevice(parseZoomHubRoute(route)!.device.id)) window.location.replace('#' + parseZoomHubRoute(route)!.device.id); else if (octatrackUi && route === 'your-octatrack') window.location.replace('#octatrack'); else if (route.startsWith('device/')) window.location.replace(DEVICES_BY_ID[route.slice(7)] ? deviceHref(route.slice(7)) : '#devices') }, [route, devicesRoute, octatrackUi, betaUi])
   const libraryCount = (category?: ModuleCategory) =>
     (allMachines || currentDevice.id === 'octatrack' ? accessibleModules.filter(module => !category || module.category === category).length : 0)
