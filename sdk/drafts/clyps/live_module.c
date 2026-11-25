@@ -50,6 +50,7 @@ static int stock_window(void)
            LONG(0x460e70e0u) || LONG(0x460e5e30u) || LONG(0x460e5cd0u);
 }
 
+#ifndef CLYPS_PERFORMANCE
 static int stock_src_available(void)
 {
     return !BYTE(0x80000015u) && BYTE(0x46c7d8d8u) == 0 &&
@@ -57,8 +58,15 @@ static int stock_src_available(void)
            !(BYTE(0x46100b1bu) & 6u) && !GRID_REC && !LIVE_REC && !REC_HELD;
 }
 
+#endif
+
 /* Row IDs are one-based. Zero means no complete row transaction. */
 static volatile unsigned last_row, pending_row;
+#ifdef CLYPS_PERFORMANCE
+enum panel_view { NATIVE, ROW, CLIP, SETUP };
+static enum panel_view view;
+static unsigned mode, operation, end_of_path;
+#endif
 static unsigned first_row, zoom, editing, draft, missing;
 static unsigned last_run, last_seen_row, last_seen_pending;
 static uint32_t last_seen_sources;
@@ -137,6 +145,10 @@ unsigned clyps_bank_loaded(void)
 void clyps_project_init(void)
 {
     unsigned sr = critical();
+#ifdef CLYPS_PERFORMANCE
+    view = NATIVE;
+    mode = operation = end_of_path = 0;
+#endif
     playing = requested = 0;
     src_list = src_cursor = 0;
     defined = visible = locked = armed = row_view = refused = track = slot = 0;
@@ -199,6 +211,7 @@ static void submit_lane(unsigned lane, unsigned ref)
     submit((requested & ~(15u << shift)) | (ref << shift), 0);
 }
 
+#ifndef CLYPS_PERFORMANCE
 /* Suspend a stale list before handling the next input or display frame. */
 static void check_src_context(void)
 {
@@ -211,11 +224,20 @@ static void check_src_context(void)
     }
 }
 
+#endif
+#ifdef CLYPS_PERFORMANCE
+#include "performance_controls.h"
+#else
 #include "session_controls.h"
+#endif
 
 void module_tick(struct modwerk_runtime_api *api)
 {
+#ifdef CLYPS_PERFORMANCE
+    performance_context();
+#else
     check_src_context();
+#endif
     if (!bank_read_active && (playing || requested || pending_row || last_row) && !supported()) {
         playing = requested = last_row = pending_row = 0;
         refused = 1;
@@ -232,10 +254,21 @@ void module_tick(struct modwerk_runtime_api *api)
 }
 
 #include "session_view.h"
+#ifdef CLYPS_PERFORMANCE
+#include "performance_view.h"
+#endif
 
 void module_draw(unsigned char *frame)
 {
+#ifdef CLYPS_PERFORMANCE
+    performance_context();
+    if (visible && frame && !stock_window()) {
+        performance_draw(frame);
+        return;
+    }
+#else
     check_src_context();
+#endif
     if (stock_window()) return;
     if ((!visible && !locked) || !frame)
         return;

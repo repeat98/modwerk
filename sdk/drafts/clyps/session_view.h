@@ -57,9 +57,11 @@ static void session_draw(unsigned char *frame)
     uint32_t active = playing, next = requested;
     unsigned last = last_row, queued = pending_row;
     restore(sr);
+#ifndef CLYPS_PERFORMANCE
     /* Show a row only while its complete current definition matches. */
     if (last && (!(defined & (1u << (last-1))) || rows[last-1] != active))
         last = 0;
+#endif
     /* Paint the whole surface by contiguous columns. The row separators
      * are already present when a cell is drawn. Only invert the focus. */
     for (unsigned x=0; x<128; ++x) {

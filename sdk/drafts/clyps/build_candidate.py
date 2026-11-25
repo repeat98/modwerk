@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('sdk', type=Path, help='Candidate repository sdk directory')
 parser.add_argument('output', type=Path)
 parser.add_argument('--symbols', type=Path, help='Write offsets for the phase witness')
+parser.add_argument('--performance', action='store_true', help='Build the private Row/Clip overlay')
 args = parser.parse_args()
 sdk = args.sdk.resolve()
 sys.path[:0] = [str(sdk / 'runtime/loader'), str(sdk / 'runtime'), str(sdk / 'machines/octatrack')]
@@ -32,6 +33,7 @@ with tempfile.TemporaryDirectory() as tmp:
     for source in [here / 'live_module.c', marker]:
         obj = work / (source.stem + '.o')
         subprocess.run(['m68k-elf-gcc', *build.CFLAGS, *m68k_codegen.FLAGS,
+                        *(['-DCLYPS_PERFORMANCE'] if args.performance else []),
                         '-I', sdk / 'machines/octatrack/include', '-c', source, '-o', obj], check=True)
         objects.append(obj)
     m68k_codegen.check_mcf54455(objects, 'm68k-elf-objdump')
@@ -46,6 +48,6 @@ package = package[:4] + struct.pack('>H', 9) + package[6:76] + struct.pack('>HBB
 args.output.write_bytes(package)
 if args.symbols:
     args.symbols.write_text(json.dumps(dict(sha256=hashlib.sha256(package).hexdigest(),
-        offsets={name:symbols[name] for name in ('clyps_project_init','playing','requested','defined')}),indent=2))
+        offsets={name:symbols[name] for name in (('clyps_project_init','playing','requested','defined','last_row','pending_row','view','slot','track','src_cursor','mode','locked') if args.performance else ('clyps_project_init','playing','requested','defined'))}),indent=2))
 print(json.dumps(dict(sha256=hashlib.sha256(package).hexdigest(), image=len(image), bss=bss,
                       relocations=len(offsets), hooks={e['event']:events.index(e['event'], registry) for e in bindings})))

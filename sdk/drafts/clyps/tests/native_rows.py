@@ -17,6 +17,7 @@ for field in ('emulator', 'base', 'card', 'symbols', 'output'):
     parser.add_argument(field, type=Path)
 parser.add_argument('--octabam', type=Path, required=True)
 parser.add_argument('--reference', action='store_true')
+parser.add_argument('--performance-overlay', action='store_true', help='Drive the wide fixture through Row/Clip')
 parser.add_argument('--lane-matrix', action='store_true')
 parser.add_argument('--project-reload', choices=('stored', 'missing'))
 parser.add_argument('--project-change', action='store_true')
@@ -520,7 +521,23 @@ with tempfile.TemporaryDirectory() as tmp:
                         cmd(f'poke {addr + pat*stride + pos:#x} {record[pos:pos+128].hex()}')
                     cmd(f'poke {bank+pat*stride+0x8e50:#x} {peek(cmd,bank+0x8e50,8).hex()}')
             initial = block(bank,16*stride), bank_parts(), project(args.card)
-            if not args.reference:
+            if args.performance_overlay and not args.reference:
+                switch(1)
+                tap(ARR)
+                tap(ARR)
+                for t, source in enumerate(sources):
+                    tap(0x10+t)
+                    tap(source)
+                tap(ARR)
+                move_focus(4)
+                tap(0x1b)
+                tap(YES)
+                tap(ARR)
+                for t in range(8):
+                    tap(0x10+t)
+                    tap(0)
+                tap(ARR)
+            elif not args.reference:
                 switch(1)
                 tap(ARR)
                 for t, source in enumerate(sources):
@@ -541,6 +558,8 @@ with tempfile.TemporaryDirectory() as tmp:
             until(32)
             if args.reference:
                 cmd('poke 0x800065c0 01')
+            elif args.performance_overlay:
+                tap(YES)
             else:
                 tap(ARR)
                 tap(15)
