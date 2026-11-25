@@ -20,6 +20,35 @@ async function fixture() {
   const send=(body:unknown=data(),token='a'.repeat(64))=>server.call('/octatrack/diagnostics','POST',{version,data:body},token)
   return {...server,admin,data,consent,send}
 }
+describe('diagnostics from a visitor without an account',()=>{
+  it('shares under the hash of a random ID, shows the owner, and deletes everything on stopping',async()=>{
+    const {db,env,admin,call,data}=await fixture(), guest='9'.repeat(64)
+    const as=(path:string,method:string,body?:unknown,id=guest,more:Record<string,string>={})=>handleCommunity(new Request('https://api.example.test/api'+path,{method,headers:{Origin:'https://octamod.test','CF-Connecting-IP':'192.0.2.9','Content-Type':'application/json','X-Modwerk-Diagnostics-Guest':id,...more},body:body===undefined?undefined:JSON.stringify(body)}),env)
+    const preflight=await handleCommunity(new Request('https://api.example.test/api/octatrack/diagnostics',{method:'OPTIONS',headers:{Origin:'https://octamod.test','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,x-modwerk-diagnostics-guest'}}),env)
+    expect(preflight.status).toBe(204) // the browser may send the ID from the site's own origin
+    expect((await as('/octatrack/diagnostics','POST',{version,data:data()},'not-an-id')).status).toBe(401) // no ID, no account
+    expect((await as('/octatrack/diagnostics','POST',{version,data:data()})).status).toBe(403) // an ID alone is no consent
+    expect(await(await as('/octatrack/diagnostics/consent','PUT',{enabled:true,version})).json()).toMatchObject({accountId:'guest',enabled:true,version})
+    expect((await as('/octatrack/diagnostics','POST',{version,data:{id:'x',event:'made-up'}})).status).toBe(400) // the same strict fields
+    expect(await(await as('/octatrack/diagnostics','POST',{version,data:data()},guest,{'Sec-GPC':'1'})).json()).toEqual({ok:true,stored:false})
+    expect(await(await as('/octatrack/diagnostics','POST',{version,data:data()})).json()).toEqual({ok:true,stored:true})
+    expect(db.prepare('SELECT guest_id FROM octatrack_guest_diagnostic_events').all()).toEqual([{guest_id:await digest(guest)}]) // never the ID itself
+    expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({n:0})
+    const listed=await(await call('/admin/octatrack/diagnostics','GET',undefined,'',admin)).json()
+    expect(listed.events.map((entry:{username:string})=>entry.username)).toEqual(['guest:'+(await digest(guest)).slice(0,8)])
+    // A verified member's own choice wins over a leftover ID.
+    expect(await(await as('/octatrack/diagnostics/consent','GET',undefined,guest,{Authorization:'Bearer '+'c'.repeat(64)})).json()).toMatchObject({accountId:'member'})
+    expect(await(await as('/octatrack/diagnostics/consent','PUT',{enabled:false,version})).json()).toMatchObject({accountId:'guest',enabled:false,changedAt:null})
+    for(const table of ['octatrack_guest_diagnostic_events','octatrack_guest_diagnostic_consent'])expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).toEqual({n:0})
+  })
+  it('drops a visitor’s consent and reports once the consent has expired',async()=>{
+    const {db,env}=await fixture(), id=await digest('8'.repeat(64)), old=new Date(Date.now()-91*86400000).toISOString()
+    db.prepare('INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES(?,1,?,?)').run(id,version,old)
+    db.prepare("INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) VALUES(?,'e',?,'{}',?)").run(id,version,new Date().toISOString())
+    await cleanupOctatrackDiagnostics(env.DB!)
+    for(const table of ['octatrack_guest_diagnostic_events','octatrack_guest_diagnostic_consent'])expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).toEqual({n:0})
+  })
+})
 describe('private consented Octatrack diagnostics',()=>{
   it('requires current explicit consent from verified members; never publishes reports',async()=>{
     const {call,db,consent,send}=await fixture()
@@ -85,21 +114,21 @@ describe('private consented Octatrack diagnostics',()=>{
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({n:0})
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_consent').get()).toEqual({n:0})
   })
-  it('requires fresh consent for new reports and keeps those sent under the earlier text',async()=>{
+  it('keeps sharing under a consent given to an earlier text and records that text with each report',async()=>{
     vi.useFakeTimers({toFake:['Date']})
     const acceptedAt=new Date('2026-10-13T12:00:00.000Z')
     vi.setSystemTime(acceptedAt)
     const {call,db,env,consent,send}=await fixture(), token='c'.repeat(64)
-    await consent(true,token);await send(undefined,token)
+    await consent(true,token)
     db.prepare("UPDATE octatrack_diagnostic_consent SET version='2026-10-12' WHERE user_id='member'").run()
-    // The stored version tells the site to ask again; a new consent text alone doesn't delete earlier reports.
-    expect(await(await call('/octatrack/diagnostics/consent','GET',undefined,token)).json()).toMatchObject({accountId:'member',enabled:false,version:'2026-10-12'})
-    expect((await send(undefined,token)).status).toBe(403)
+    // A new consent text never stops a member who already agreed (owner, 14 Nov 2026).
+    expect(await(await call('/octatrack/diagnostics/consent','GET',undefined,token)).json()).toMatchObject({accountId:'member',enabled:true,version:'2026-10-12'})
+    expect((await send(undefined,token)).status).toBe(200)
+    expect(db.prepare('SELECT consent_version FROM octatrack_diagnostic_events').all()).toEqual([{consent_version:'2026-10-12'}])
     await cleanupOctatrackDiagnostics(env.DB!)
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({n:1})
-    // Equal timestamps cannot supersede the prior consent decision.
-    expect(await(await consent(true,token)).json()).toMatchObject({enabled:false})
-    expect((await send(undefined,token)).status).toBe(403)
+    // Equal timestamps cannot supersede the prior consent decision; a later choice records the current text.
+    expect(await(await consent(true,token)).json()).toMatchObject({enabled:true,version:'2026-10-12'})
     vi.setSystemTime(acceptedAt.getTime()+1)
     expect(await(await consent(true,token)).json()).toMatchObject({enabled:true,version})
     expect((await send(undefined,token)).status).toBe(200)
@@ -196,11 +225,11 @@ describe('private consented Octatrack diagnostics',()=>{
     await consent(true,token)
     for(const event of ['browser_error','unhandled_rejection'])expect((await send({...browser(),event},token)).status).toBe(200)
     for(const [index,buildKind] of DIAGNOSTIC_BUILD_KINDS.entries()) {
-      for(const phase of DIAGNOSTIC_BUILD_PHASES)expect((await send({id:crypto.randomUUID(),event:'build_failed',phase,buildKind,error:DIAGNOSTIC_BUILD_ERRORS[index]},token)).status).toBe(200)
+      for(const phase of DIAGNOSTIC_BUILD_PHASES)expect((await send({id:crypto.randomUUID(),event:'build_failed',phase,buildKind,error:DIAGNOSTIC_BUILD_ERRORS[index%DIAGNOSTIC_BUILD_ERRORS.length]},token)).status).toBe(200)
     }
     for(const error of DIAGNOSTIC_BUILD_ERRORS)expect((await send({id:crypto.randomUUID(),event:'build_failed',phase:'building',buildKind:'elekloader',error},token)).status).toBe(200)
     const events=(await(await call('/octatrack/diagnostics','GET',undefined,token)).json()).events
-    expect(events).toHaveLength(22)
+    expect(events).toHaveLength(2+DIAGNOSTIC_BUILD_KINDS.length*DIAGNOSTIC_BUILD_PHASES.length+DIAGNOSTIC_BUILD_ERRORS.length)
     expect(events.every((entry:{data:{event:string}})=>['browser_error','unhandled_rejection','build_failed'].includes(entry.data.event))).toBe(true)
     expect(db.prepare('SELECT count(*) AS n FROM usage_visitors').get()).toEqual({n:0})
   })
@@ -209,16 +238,36 @@ describe('private consented Octatrack diagnostics',()=>{
     const ids={id:crypto.randomUUID(),phase:'ready',base:'a'.repeat(64)}, live={samples:10,cpu:[400,600],dsp1to4:[200,250]}
     const load={seq:3,boot:1,minute:5,cpu:[400,600],dsp1to4:[200,250],dsp5to8:[300,350],samples:600,playing:300}
     const incident={seq:4,boot:1,second:9,kind:'freeze',a:0,cpu:950,dsp1to4:0,dsp5to8:0,machines:Array(24).fill(1),fx:Array(16).fill(2),keys:Array(16).fill(255),screen:0x400cbf2c,tempo24:2880,playing:true}
+    // What the site sends from a version 2 log (device-log.ts), at the largest values, so a full group still fits the 8 KiB request.
+    const most=0xffffffff, v2={seq:most,boot:most,minute:most,cpu:[0xffff,0xffff],dsp1to4:[0xffff,0xffff],dsp5to8:[0xffff,0xffff],samples:0xffff,playing:0xffff,frameGap:0xffff,tickGap:0xffff}
+    const crash={count:3,vector:4,sr:0x2704,pc:0x40d2b000,sp:0x2003fff0,d:Array(8).fill(most),a:Array(7).fill(most),stack:Array(8).fill(most),code:Array(8).fill(most),memory:Array(8).fill(most)}
+    const stall={count:2,reason:1,ticks:most,report:Array(96).fill(most)}
     const fresh=<T extends object>(value:T)=>({...value,id:crypto.randomUUID()})
     for(const value of [{...ids,event:'load',live},{...ids,event:'unresponsive',reason:'ui',live},{...ids,event:'unresponsive',reason:'usb'},
-      {...ids,event:'device_log',log:{loads:[load],incidents:[]}},{...ids,event:'device_log',log:{loads:[],incidents:[incident]}}])expect((await send(fresh(value),token)).status).toBe(200)
+      {...ids,event:'device_log',log:{loads:[load],incidents:[]}},{...ids,event:'device_log',log:{loads:[],incidents:[incident]}},
+      {...ids,event:'device_log',log:{loads:Array(40).fill(v2),incidents:[]}},{...ids,event:'device_log',log:{loads:[],incidents:Array(10).fill(incident)}},
+      {...ids,event:'device_log',log:{loads:[],incidents:[],crash}},{...ids,event:'device_log',log:{loads:[],incidents:[],stall}},{...ids,event:'device_log',log:{loads:[],incidents:[],crash,stall}}])
+      expect((await send(fresh(value),token)).status).toBe(200)
     const cases=[{...ids,event:'load'},{...ids,event:'load',live:{...live,cpu:[400,1001]}},{...ids,event:'load',live:{...live,note:'x'}},{...ids,event:'load',live,reason:'ui'},
       {...ids,event:'unresponsive',reason:'other'},{...ids,event:'health',live},{...ids,event:'device_log',log:{loads:[],incidents:[]}},
       {...ids,event:'device_log',log:{loads:[load],incidents:[]},modules:[]},{...ids,event:'device_log',log:{loads:[{...load,name:'x'}],incidents:[]}},
       {...ids,event:'device_log',log:{loads:[],incidents:[{...incident,kind:'other'}]}},{...ids,event:'device_log',log:{loads:[],incidents:[{...incident,keys:Array(17).fill(1)}]}},
       {...ids,event:'device_log',log:{loads:[],incidents:[{...incident,fx:Array(16).fill(256)}]}},{...ids,event:'device_log',log:{loads:Array(41).fill(load),incidents:[]}},
-      {...ids,event:'device_log',log:{loads:[],incidents:Array(11).fill(incident)}},{...ids,event:'sync_failed',log:{loads:[load],incidents:[]}}]
+      {...ids,event:'device_log',log:{loads:[],incidents:Array(11).fill(incident)}},{...ids,event:'sync_failed',log:{loads:[load],incidents:[]}},
+      {...ids,event:'device_log',log:{loads:[{...load,frameGap:1}],incidents:[]}},{...ids,event:'device_log',log:{loads:[{...v2,tickGap:0x10000}],incidents:[]}},
+      {...ids,event:'device_log',log:{loads:[],incidents:[],crash:{...crash,code:Array(9).fill(0)}}},{...ids,event:'device_log',log:{loads:[],incidents:[],crash:{...crash,note:'x'}}},
+      {...ids,event:'device_log',log:{loads:[],incidents:[],stall:{...stall,report:Array(97).fill(0)}}},{...ids,event:'device_log',log:{loads:[],incidents:[],dump:[1]}}]
     for(const value of cases)expect((await send(fresh(value),token)).status).toBe(400)
+  })
+  it('accepts only fixed reconnect outcomes from a disconnected trial', async () => {
+    const { consent, send } = await fixture()
+    await consent()
+    const failure = { event: 'sync_failed', phase: 'trial', step: 'trial', error: 'disconnected', reconnect: 'timeout' }
+    for (const reconnect of ['timeout', 'closed', 'mismatch', 'unreadable', 'lost-again'])
+      expect((await send({ ...failure, id: crypto.randomUUID(), reconnect })).status).toBe(200)
+    for (const fields of [{ reconnect: 'arbitrary text' }, { reconnect: undefined }, { event: 'kept' },
+      { phase: 'busy' }, { step: 'stage' }, { error: 'device' }])
+      expect((await send({ ...failure, ...fields, id: crypto.randomUUID() })).status).toBe(400)
   })
   it('rejects raw browser/build data and cross-event USB fields instead of storing them',async()=>{
     const {consent,send}=await fixture(), token='c'.repeat(64);await consent(true,token)
@@ -228,11 +277,16 @@ describe('private consented Octatrack diagnostics',()=>{
       {...browser,filename:'private.bin'},{...browser,message:'private error'},{...browser,base:'a'.repeat(64)},{...browser,modules:[]},{...browser,phase:'sending'},{...browser,area:'/private/route'},{...browser,kind:'private message'},{...browser,area:undefined},
       {...build,phase:'sending'},{...build,buildKind:'private file name'},{...build,error:'private failure'},{...build,reading:{}},{...build,result:'ok'},{...build,packages:[]},
       {...build,phase:undefined},{...build,buildKind:undefined},{...build,error:undefined},{id:crypto.randomUUID(),event:'sync_failed',phase:'browser'},
-      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'build_failed',phase:'building',buildKind:'elekloader-octatrack',error:'build'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'},
       {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'private message'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',kind:'TypeError'},
-      {id:crypto.randomUUID(),event:'kept',phase:'ready',kind:'TypeError'}]
+      {id:crypto.randomUUID(),event:'kept',phase:'ready',kind:'TypeError'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',step:'private step'},{id:crypto.randomUUID(),event:'kept',phase:'ready',step:'stage'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',usb:[0,8,0,0,0,0]},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',usb:[0,8,0]},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',usb:[0,8,0,0,0,'private']}]
     for(const value of cases)expect((await send(value,token)).status).toBe(400)
     expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'TypeError'},token)).status).toBe(200)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',step:'stage',kind:'VendorTransportError',usb:[0,8,0,0,0,0]},token)).status).toBe(200)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',result:'rejected',refusal:7,step:'activate'},token)).status).toBe(200)
   })
   it('keeps the 1000 event cap for regular-member collections',async()=>{
     const {db,consent,send,data}=await fixture(), token='c'.repeat(64);await consent(true,token)

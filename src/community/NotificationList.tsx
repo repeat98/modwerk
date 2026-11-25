@@ -1,7 +1,8 @@
 import type { NotificationLine } from './notification-text'
 import { ForumAvatar } from './ForumIdentity'
 import { SUPPORT_URL } from '../config/support'
-import { trackUsage } from './usage'
+import { countSupportPrompt, trackUsage } from './usage'
+import { answerSupportPrompt } from './support-prompt'
 import { Icon, type IconName } from '../components/Icon'
 
 const activity: Record<NotificationLine['kind'], { label: string; icon: IconName }> = {
@@ -29,7 +30,7 @@ function time(value: string) {
  * counts as a Ko-fi click, like the button in the support dialog. */
 export function NotificationList({ lines, onOpen }: { lines: NotificationLine[]; onOpen: (line: NotificationLine) => void }) {
   return <ul className="notification-list">{lines.map(line => { const when = time(line.created_at), detail = activity[line.kind]; return <li key={line.ids[0]} data-unread={!line.seen} data-kind={line.kind}>
-    <a href={line.href} onClick={() => { if (line.href === SUPPORT_URL) trackUsage('support_link_opened'); onOpen(line) }} {...line.href.startsWith('https://') ? { target: '_blank', rel: 'noreferrer' } : {}}>
+    <a href={line.href} onClick={() => { if (line.href === SUPPORT_URL) { trackUsage('support_link_opened'); countSupportPrompt('bell-kofi'); answerSupportPrompt('kofi') } onOpen(line) }} {...line.href.startsWith('https://') ? { target: '_blank', rel: 'noreferrer' } : {}}>
       <ForumAvatar username={line.actor} official={line.official} avatar={line.avatar} />
       <span className="notification-copy">
         <span className="notification-meta"><span className="notification-kind"><Icon name={detail.icon} size={12} />{detail.label}</span><span className="notification-when"><time dateTime={when.iso}>{when.label}</time>{!line.seen && <span className="notification-unread-dot" aria-hidden="true" />}</span></span>

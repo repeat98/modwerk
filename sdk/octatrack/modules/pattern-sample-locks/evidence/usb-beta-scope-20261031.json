@@ -1,0 +1,325 @@
+{
+  "hardware": false,
+  "published": false,
+  "privateCatalogueFixtureOnly": true,
+  "usbOnly": true,
+  "cardRefusal": {
+    "beta": "Pattern Sample Locks needs the Modwerk base, so card firmware cannot include it. Sync this set over USB, or take it out to build card firmware.",
+    "classic": "Pattern Sample Locks needs the Modwerk base, so card firmware cannot include it. Loading the base over USB is in the beta for now; take it out to build card firmware."
+  },
+  "classicLibraryBlocked": true,
+  "betaLibraryAllowsUsbSelection": true,
+  "excludedFromCardCompilerVersionsAndSources": true,
+  "existingCardSourceFingerprintUnchanged": true,
+  "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+  "byteIdenticalToEmulatorTestedPackage": true,
+  "sevenPublicBaseAddAndRemovalUndoPreflights": 7,
+  "allPackagesPreflighted": 29,
+  "simultaneousRuntimeCompanionsTested": false,
+  "schema": 1,
+  "date": "2026-10-31",
+  "sourceCheckpoint": "7b5d5be2",
+  "pushed": false,
+  "physicalDeviceAccess": false,
+  "cardSupport": "deferred by author; USB-only first-beta scope; first-release review pending",
+  "normalPackageBuilder": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "normalPublicBuildPassed": true,
+    "normalPublicCheckPassed": true,
+    "bothStockScansPassed": true,
+    "usbOnly": true,
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "bytes": 10048,
+    "byteIdenticalToEmulatorTestedPackage": true,
+    "negativeCliChecks": [
+      {
+        "case": "changed native source, unchanged assembled instructions",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "protected bootloader source",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "changed final package pin",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "foreign source provenance",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "missing reconstruction opt-in exposes original strict-scan rejection",
+        "refused": true,
+        "exitCode": 1
+      }
+    ],
+    "nativeInputsRestoredAfterNegativeProbes": true,
+    "helperSha256": "0a6eeeb7d747f32a9cf60492cc2f72422d97f76ee816ce47f175bc6ab9e9d8df",
+    "inputs": {
+      "scripts/octatrack-module-packages.py": "bbcedd32ac5397d806791772b8679174f80c72a041e111653ab583af85f9b903",
+      "scripts/octatrack-reconstruction.py": "c21e23f4d973bc8ed0534addbfb40a3932acac0a8d568541fd24fe326eb9c85f",
+      "sdk/drafts/pattern-sample-locks/runtime-reconstruction.json": "b9778adbed2313ccf186e0286e7c2a4cbd09117941edc388751fc660331abb25"
+    },
+    "limitations": "Private catalogue fixture only; real catalogue and qualification remain unchanged. No device or new runtime claim."
+  },
+  "checks": {
+    "frontend": {
+      "files": 340,
+      "passed": 2766,
+      "skipped": 1,
+      "exitCode": 0
+    },
+    "sdk": {
+      "tests": 498,
+      "skipped": 69,
+      "exitCode": 0
+    },
+    "typecheck": {
+      "exitCode": 0
+    },
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 11
+    },
+    "moduleCompatibility": {
+      "activeModules": 29,
+      "pairs": 406,
+      "problems": 0,
+      "draftRuntimeNotCovered": true
+    },
+    "licenses": {
+      "exitCode": 0,
+      "tests": 12
+    },
+    "machines": {
+      "exitCode": 0,
+      "profiles": 22
+    }
+  },
+  "existingUsbPackages": {
+    "exitCode": 0,
+    "rebuiltIdentical": [
+      {
+        "id": "everb",
+        "sha256Prefix": "5f81e72fbba43ea8"
+      },
+      {
+        "id": "miniverb",
+        "sha256Prefix": "eea25e6cf8ac0a39"
+      },
+      {
+        "id": "tapehead",
+        "sha256Prefix": "980fb1ceda23837b"
+      },
+      {
+        "id": "airwindows-chorus",
+        "sha256Prefix": "e0f05d53b4259e0c"
+      },
+      {
+        "id": "lofi2",
+        "sha256Prefix": "a2ab27325404c061"
+      },
+      {
+        "id": "ring-sc",
+        "sha256Prefix": "5c4e7fcfdc2ec212"
+      },
+      {
+        "id": "previewvol",
+        "sha256Prefix": "9fd95d9a9a5a1c59"
+      },
+      {
+        "id": "apply-scene",
+        "sha256Prefix": "236231aaaf2914ed"
+      },
+      {
+        "id": "repitch",
+        "sha256Prefix": "052d27edf6cfac09"
+      },
+      {
+        "id": "vector",
+        "sha256Prefix": "45c962ca3a202ac6"
+      },
+      {
+        "id": "synth",
+        "sha256Prefix": "6e5716540d78b652"
+      },
+      {
+        "id": "quantizer",
+        "sha256Prefix": "4bd0e586aa5c2d47"
+      },
+      {
+        "id": "tapeecho",
+        "sha256Prefix": "921e7a60c3418e7e"
+      },
+      {
+        "id": "euclid",
+        "sha256Prefix": "649f26704bda30f0"
+      },
+      {
+        "id": "bbd",
+        "sha256Prefix": "614bf23b7d8e6811"
+      },
+      {
+        "id": "mute-modes",
+        "sha256Prefix": "c35b154d7a6ff4d9"
+      },
+      {
+        "id": "sidechain-compressor",
+        "sha256Prefix": "eadf2382bc71fc75"
+      },
+      {
+        "id": "output-matrix",
+        "sha256Prefix": "65a311c38c64652e"
+      },
+      {
+        "id": "cc-map",
+        "sha256Prefix": "c7cd39a5f645d692"
+      },
+      {
+        "id": "quantize-live-rec-toggle",
+        "sha256Prefix": "297f79efa4259486"
+      },
+      {
+        "id": "direct-jump-kyoti",
+        "sha256Prefix": "89a38e18728bb203"
+      },
+      {
+        "id": "dejavu",
+        "sha256Prefix": "95079643d3e11914"
+      },
+      {
+        "id": "arp-key-locks",
+        "sha256Prefix": "907a03cf980996b3"
+      },
+      {
+        "id": "recorder-loop-fix",
+        "sha256Prefix": "180b52c68018f34a"
+      },
+      {
+        "id": "analog-bassdrum",
+        "sha256Prefix": "6272600408466c3e"
+      },
+      {
+        "id": "beat-slicer",
+        "sha256Prefix": "6650ef77a837a61a"
+      }
+    ],
+    "declaredLagsPreserved": [
+      "poly8",
+      "playmodes"
+    ]
+  },
+  "cardSourceRebuild": {
+    "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+    "normalVerifyExistingImporterPassed": true,
+    "compilerSha256": "2a8fd3899b135918b01f612be983eb0648bdcddf32e04681a34c29cdf725088a",
+    "sourceTreeSha256": "567e4164b411efa282e4a485e44f46574da8011cfc4d12cecd9098eec858ed7c",
+    "products": {
+      "dsp-packages.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "491ee4987781fb694695b052e40269896572b32834c124e529035f8b3a1af300"
+      },
+      "resident-dsp.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "48d70baa1d43ceec7d8f62d8ab42b13e4dd0d5d477ec5c0d8e4093b2c6aafdb8"
+      },
+      "coldfire-packages.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "1ad9aa1825fab4ad2d736ef9a3458e57a2e694339edae443b1a674cd646ba61b"
+      },
+      "rom-packages.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "94c9d60ed20838dbda53f8b32d1a09c0034d601c85d8fee00c1f1f39dff91b81"
+      },
+      "bootstrap-package.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "03caadd3196b79f77ae1766e236f4557ad601d5cf44d4c92ab33d4fe145a9028"
+      },
+      "menu-recipes.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "a8467d8bc8976000be7fed9b93c72776f9c1562ccf1471f46ea19ac28dda562a"
+      },
+      "descriptor-recipes.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "47475b18370b64bc986e69b1f83dee20fe897b1e5213870d4417a76df1f6939a"
+      },
+      "platform-writes.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "8a7002770deb17ad39f66a916986e3f91f59e469ae8978693e2dd9831b0fb280"
+      },
+      "requested-packages.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "1d7b35e370726f42d44329fafd3126011b4426342f754f2a7691d0c0f5ac8256"
+      },
+      "utility-packages.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "f425882adece5f778c5458fd8fd7f0bb64e3e62c903b24b9c6a0250f4ba47319"
+      },
+      "usb-audio-packages.json": {
+        "unchangedExceptSourceCommit": true,
+        "sha256": "124a684330209f87562718077bf37838e385d8ff5b9cdecd5956dfb4c5c7b690"
+      }
+    },
+    "developmentOnly": true,
+    "approval": null
+  },
+  "provenanceOnlyRecipeRepins": {
+    "src/engine/assets/dsp-packages.json": {
+      "previousSha256": "301bab722f975f6edb85642f53c1d05928ec232defb90b5cd8b02785c08b73cc",
+      "sha256": "491ee4987781fb694695b052e40269896572b32834c124e529035f8b3a1af300",
+      "onlySourceCommitChanged": true
+    },
+    "src/engine/assets/descriptor-recipes.json": {
+      "previousSha256": "f8006d06e3b7c5df2d950dba3364797e16b86e65c39fefc40b5cbef7570407cd",
+      "sha256": "47475b18370b64bc986e69b1f83dee20fe897b1e5213870d4417a76df1f6939a",
+      "onlySourceCommitChanged": true
+    },
+    "src/engine/assets/menu-recipes.json": {
+      "previousSha256": "ca1eaf307ee09c95a984fe8080779a347d326a546e45aed70ce64bc3584c725c",
+      "sha256": "a8467d8bc8976000be7fed9b93c72776f9c1562ccf1471f46ea19ac28dda562a",
+      "onlySourceCommitChanged": true
+    },
+    "src/engine/assets/rom-packages.json": {
+      "previousSha256": "0569b717bdfa5b8c2915781406d81512d8d6aa7ad61ef40048f42a6a4323c44e",
+      "sha256": "94c9d60ed20838dbda53f8b32d1a09c0034d601c85d8fee00c1f1f39dff91b81",
+      "onlySourceCommitChanged": true
+    }
+  },
+  "sourceHashes": {
+    "scripts/build-module-packages.py": "2a8fd3899b135918b01f612be983eb0648bdcddf32e04681a34c29cdf725088a",
+    "scripts/module-source.mjs": "d9a5cad9bf803698487ac5e127efe49ae2b989589de68b366e6c44ad4621fe10",
+    "src/catalog/usb-only.ts": "99621edee2027d445a718c6cf46a6b9e760a8308048471b1f1ee7c9be272ddfc",
+    "sdk/drafts/pattern-sample-locks/usb_beta_scope.mjs": "645fd56b7d5c8223b12435947eeaa939e605585519f4dcea10ff5273140253d2",
+    "sdk/drafts/pattern-sample-locks/verify_public_package.py": "0a6eeeb7d747f32a9cf60492cc2f72422d97f76ee816ce47f175bc6ab9e9d8df",
+    "sdk/drafts/pattern-sample-locks/octamod.module.json": "c37cee7e19b918cc74495d2b3a0d12baadee9c850a34144389cd79147aa83337",
+    "sdk/drafts/pattern-sample-locks/runtime-reconstruction.json": "b9778adbed2313ccf186e0286e7c2a4cbd09117941edc388751fc660331abb25"
+  },
+  "privateLogHashes": {
+    "frontend-tests.private.log": "1406574d91ac3af15c4b7236ca8e0d58560a6fc5d4ee11eea7b5b132b38e1dd3",
+    "frontend-tests-final.private.log": "6b15b282d1dd47ce6e4e738b63c31cb35dcf1a4ad22e444bc19429bb2d0a9f30",
+    "frontend-tests-regenerated.private.log": "d7ce853f90f72643387e4f163d853b54bb865647cd69caa1f3fb16607035089d",
+    "sdk-tests.private.log": "798a4bee2db2e9e1ec17110bc1aa82f83ba215296dfc3c666073b0daa09a9cc4",
+    "lint-final.private.log": "f98b96ecb7abb652a1543efb9d0b278c72a53fea44d35257f30c16cd2d4dea0b",
+    "typecheck.private.log": "3afc15bdd7af5d8b9842bc5837829eda720e6ba4227f07ce87c5db14b6ca6811",
+    "existing-usb-packages.private.log": "096fc15d292b1f4bc823cd5139455e41fe97628ac53af385bc9612c4975bfca0",
+    "public-path/public-cli.private.log": "bec11f9b6c7f0470b8190911cf3ce6440f02bceff4fbdffd1a53bb6c0b76f1c6"
+  },
+  "corrections": [
+    "First broad run exposed a missing documentation-index link and stale generated machine catalogue/changelog data. The link was fixed and npm prepare regenerated local data.",
+    "Next broad run found the old SOPHIE thumbnail version in ignored generated media. npm run modules:generate rebuilt media; the complete final suite passed.",
+    "Lint identified missing Node process/console imports in three draft helpers; explicit Node imports fixed them without changing checks.",
+    "The first scope fixture omitted other published package rows and therefore failed existing card inventory parity. The check now includes the complete published list and restores the private manifest afterward."
+  ],
+  "limits": [
+    "No new runtime/emulator or physical result: package bytes remain exactly those in the prior emulator receipt.",
+    "No card form or card qualification. No concurrent companion runtime, physical CPU/stack or release approval claim. Real catalogue and published module binaries unchanged."
+  ]
+}

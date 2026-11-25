@@ -16,6 +16,16 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ModulePackagesCliTests(unittest.TestCase):
+    def test_recipe_report_distinguishes_source_changes_and_unavailable_inputs(self):
+        spec = importlib.util.spec_from_file_location('module_packages_cli', ROOT / 'scripts/octatrack-module-packages.py')
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        recorded = {'changed': 'before', 'gone': 'old', 'same': 'one', 'upstream/file': 'old'}
+        current = {'changed': 'after', 'new': 'new', 'same': 'one'}
+        expected = ['changed changed', 'missing gone', 'added new']
+        self.assertEqual(list(cli.recipe_differences(recorded, current, False)), expected)
+        self.assertEqual(list(cli.recipe_differences(recorded, current, True)), [*expected, 'missing upstream/file'])
+
     def test_private_preparation_can_resolve_its_builder_module(self):
         # Exercise the actual wrapper with a private preparation entry point.
         # The published builder can remain older than that staged entry point;
@@ -75,6 +85,19 @@ def main():
                     _, got, code = cli.lag_guard(types.SimpleNamespace(MANIFEST=manifest), check)
                     self.assertEqual((set(got), code), (held, failed))
 
+    def test_a_module_listed_twice_is_refused(self):
+        # A merge can keep main's row for an earlier version beside the branch's new one.
+        spec = importlib.util.spec_from_file_location('module_packages_twice', ROOT / 'scripts/octatrack-module-packages.py')
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        with tempfile.TemporaryDirectory() as temp:
+            manifest = Path(temp) / 'packages.json'
+            manifest.write_text(json.dumps({'packages': [{'id': 'everb', 'version': '0.0.1-experimental'},
+                                                         {'id': 'everb', 'version': '0.0.2-experimental'}]}))
+            with self.assertRaises(SystemExit) as stop:
+                cli.lag_guard(types.SimpleNamespace(MANIFEST=manifest), True)
+            self.assertIn('everb 0.0.1-experimental, 0.0.2-experimental', str(stop.exception.code))
+
     def test_a_write_keeps_every_package_it_did_not_rewrite(self):
         spec = importlib.util.spec_from_file_location('module_packages_keep', ROOT / 'scripts/octatrack-module-packages.py')
         cli = importlib.util.module_from_spec(spec)
@@ -103,6 +126,50 @@ def main():
             with self.assertRaises(SystemExit):
                 cli.keep_published(builder, rebuild(True))
             self.assertEqual((old.read_bytes(), current.read_bytes()), (b'old', b'new'))
+
+    def test_a_c_package_with_no_events_goes_out_as_abi_8_with_its_name(self):
+        modules = {}
+        for name, path in (('cli', 'scripts/octatrack-module-packages.py'), ('runtime', 'sdk/runtime/loader/build.py'),
+                           ('publisher', 'sdk/machines/octatrack/elekloader/module_packages.py')):
+            spec = importlib.util.spec_from_file_location('module_packages_titled_' + name, ROOT / path)
+            modules[name] = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(modules[name])
+        cli, runtime, publisher = modules['cli'], modules['runtime'], modules['publisher']
+        image, hooks = b'\x4e\x75\0\0\0\0\0\0', [0, runtime.NONE, 2, runtime.NONE]  # tick and key; no draw or enc
+        four = runtime.package(image, 8, hooks, [4], name='tiempos')  # what build.py makes with no --subscribe
+        self.assertEqual(four[5], 4)
+        made = cli.titled(four, 'tiempos')
+        # build_c's form for a subscribing package, with no subscription: subscribe() drops the trailing empty words
+        self.assertEqual(made, runtime.package(image, 8, runtime.subscribe(hooks, [], {}), [4], name='tiempos', abi=8,
+                                               hashed=True, title='tiempos'))
+        self.assertEqual(publisher.capabilities(made), dict(abi=8, features=0, sites=0, copies=0, fills=0))
+        self.assertEqual((made[28:32], made[50:66].rstrip(b'\0')), (four[28:32], b'tiempos'))  # same module id, named
+        self.assertIs(cli.titled(made, 'tiempos'), made)  # a subscribing (ABI 8) one stays as it is
+        with self.assertRaises(ValueError):
+            cli.titled(four, 'beat-slicer')  # the name must be the one the package's id was made from
+
+    def test_resting_references_flag_only_the_named_data_sites(self):
+        modules = {}
+        for name, path in (('cli', 'scripts/octatrack-module-packages.py'), ('runtime', 'sdk/runtime/loader/build.py')):
+            spec = importlib.util.spec_from_file_location('module_packages_rests_' + name, ROOT / path)
+            modules[name] = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(modules[name])
+        cli, runtime = modules['cli'], modules['runtime']
+        digest = bytes(32)
+        detour = (0x4000d514, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8)
+        table, start = (0x400d6434, digest, b'\0\0\0\0', [0], 0, 4), (0x400d6458, digest, b'\0\0\0\4', [0], 0, 4)
+        made = lambda *sites: runtime.package(b'\x4e\x75' * 4, 4, [runtime.NONE] * 4, [], sites, name='synth', hashed=True,
+                                              title='FM Synth', abi=8)
+        resting = made(detour + (True,), table, start)
+        flagged = cli.resting_references(resting, ['0x400d6434', '0x400d6458'])
+        self.assertEqual(flagged, made(detour + (True,), table + (True,), start + (True,)))  # as build.py would flag them
+        self.assertEqual(cli.resting_references(resting, ['0x400d6458']), made(detour + (True,), table, start + (True,)))
+        for package, addresses in ((made(detour, table, start), ['0x400d6434']),  # the package rests nothing yet
+                                   (resting, ['0x400d6430']),                      # no such site
+                                   (resting, ['0x4000d514']),                      # a detour, not a data word
+                                   (resting, ['0x400d6434', '0x400d6434'])):
+            with self.assertRaises(ValueError):
+                cli.resting_references(package, addresses)
 
 if __name__ == '__main__':
     unittest.main()

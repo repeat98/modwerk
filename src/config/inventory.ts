@@ -1,35 +1,50 @@
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { STOCK_EFFECTS } from '../catalog/stock-effects'
-import type { UsbAudioLayout } from './usb-audio'
+import { changeUsbAudioLayout, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, usbAudioFromInstallPreset, usbAudioInstallPreset, usbAudioPreset, type UsbAudioConfiguration, type UsbAudioSetPreset, type UsbAudioPackageKind } from './usb-audio'
+import { lastSuccessfulSync } from './octatrack-progress'
+import { runningLayout } from '../engine/elekloader/base-variants'
 
 /** What an Octatrack running the Modwerk base has on it: its modules and the stock effects left out of the menus. */
 export interface Inventory {
   moduleIds: string[]; removedStockFx: string[]
   /** Exact combined machine packages reported by the unit. Never inferred from the displayed member names. */
   runtimeGroups?: { id: string; layout: number }[]
+  /** Modules switched off on the unit itself (PROJ > MODWERK > MODULES): installed and saved there, not running. A sync
+   * leaves them as they are. Absent from a base before that page. */
+  offIds?: string[]
+  /** The layout of the USB Audio package on the unit, by the number it carries (engine/elekloader/module-set.ts), once
+   * USB Audio is a module package; absent while it comes with the base, or for a number the site does not know. */
+  usbAudioInstallPreset?: number
+  usbAudioLayout?: UsbAudioPackageKind
 }
 /** What a load makes the unit match: a module set, or the device page's edits. `usbAudio` holds the set's USB Audio
  * layout, which the base itself provides (engine/elekloader/base-variants.ts). */
-export interface InventoryTarget { name: string; moduleIds: string[]; removedStockFx?: string[]; usbAudio?: { layout: UsbAudioLayout } }
+export interface InventoryTarget { name: string; moduleIds: string[]; removedStockFx?: string[]; usbAudio?: UsbAudioSetPreset }
 export interface InventoryChanges { add: string[]; remove: string[]; stockOff: string[]; stockOn: string[] }
 
-/** The changes that make `current` match `target`: the unit matches the set exactly, stock effects included. */
+/** The changes that make `current` match `target`: the unit matches the set exactly, stock effects included. A module
+ * of the set that is switched off on the unit is already there, and stays off (owner, 16 November 2026); one that is
+ * off and not in the set leaves the unit like any other. */
 export function inventoryChanges(current: Inventory, target: InventoryTarget): InventoryChanges {
   const off = new Set(target.removedStockFx ?? [])
   return {
-    add: target.moduleIds.filter(id => !current.moduleIds.includes(id)),
-    remove: current.moduleIds.filter(id => !target.moduleIds.includes(id)),
+    add: target.moduleIds.filter(id => !current.moduleIds.includes(id) && !current.offIds?.includes(id)),
+    remove: [...current.moduleIds, ...(current.offIds ?? []).filter(id => !current.moduleIds.includes(id))].filter(id => !target.moduleIds.includes(id)),
     stockOff: STOCK_EFFECTS.filter(key => off.has(key) && !current.removedStockFx.includes(key)),
     stockOn: STOCK_EFFECTS.filter(key => !off.has(key) && current.removedStockFx.includes(key)),
   }
 }
 export const changeCount = (changes: InventoryChanges) => changes.add.length + changes.remove.length + changes.stockOff.length + changes.stockOn.length
 
-export type UnitState = 'on' | 'load' | 'leaving'
-export const UNIT_STATE: Record<UnitState, string> = { on: 'On your Octatrack', load: 'Not on your Octatrack yet', leaving: 'Leaves next sync' }
-/** Where a module stands against the unit: on it, only in the module set, or on it but leaving with the next load. */
+export type UnitState = 'on' | 'load' | 'leaving' | 'off'
+export const UNIT_STATE: Record<UnitState, string> = { on: 'On your Octatrack', load: 'Not on your Octatrack yet', leaving: 'Leaves next sync', off: 'Switched off on your Octatrack' }
+/** Where a module stands against the unit: on it, only in the module set, on it (running or switched off) but leaving
+ * with the next load, or in the set and switched off on the unit itself. */
 export const unitState = (id: string, setIds: readonly string[], inventory?: Inventory): UnitState | undefined =>
-  !inventory ? undefined : inventory.moduleIds.includes(id) ? setIds.includes(id) ? 'on' : 'leaving' : setIds.includes(id) ? 'load' : undefined
+  !inventory ? undefined : inventory.moduleIds.includes(id) || inventory.offIds?.includes(id) ? !setIds.includes(id) ? 'leaving' : inventory.moduleIds.includes(id) ? 'on' : 'off'
+    : setIds.includes(id) ? 'load' : undefined
+/** The modules of a set that are switched off on the unit: a sync leaves them off. */
+export const staysOff = (setIds: readonly string[], inventory?: Inventory) => setIds.filter(id => inventory?.offIds?.includes(id) && !inventory.moduleIds.includes(id))
 
 /** What the unit's project needs that the unit lacks (its MISSING list): the catalogue ids it names, and the names
  * of modules the catalogue does not know. A module's id is the first four bytes of the SHA-256 of its catalogue id. */
@@ -52,12 +67,45 @@ export function loadStep(status: string, started: boolean, preparing: boolean): 
 
 /** What this browser last read from each unit, by its base, so the sidebar and the hub can show it while the unit is away. */
 const LAST_SEEN = 'modwerk.octatrack.last-seen'
-export interface LastSeen { base: string; moduleIds: string[]; removedStockFx: string[]; at: string }
+/** `offIds`: those of `moduleIds` switched off on the unit then (PROJ > MODWERK > MODULES). A base update drops that
+ * state, so a put-back brings them back on, and the sync says which (owner, 16 November 2026). */
+export interface LastSeen { usbAudioInstallPreset?: number; usbAudio?: UsbAudioConfiguration; base: string; moduleIds: string[]; removedStockFx: string[]; at: string; offIds?: string[] }
 function allSeen(): Record<string, Omit<LastSeen, 'base'>> {
   try { const value = JSON.parse(localStorage.getItem(LAST_SEEN) ?? '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {} } catch { return {} }
 }
+/** A linked base identifies its layout. Only the matching saved setup knows its destination and routing. */
+export function inventoryUsbAudio(base: string | undefined, inventory: Pick<Inventory, 'usbAudioInstallPreset' | 'moduleIds'>): Pick<LastSeen, 'moduleIds' | 'usbAudio' | 'usbAudioInstallPreset'> {
+  const { moduleIds } = inventory
+  if (!USB_AUDIO_PACKAGED) return { moduleIds }
+  const layout = runningLayout(base)
+  if (!layout || layout === 'off') {
+    const preset = inventory.usbAudioInstallPreset
+    const usbAudio = usbAudioFromInstallPreset(preset)
+    return usbAudio || preset === 0 ? { moduleIds, usbAudio, usbAudioInstallPreset: preset } : { moduleIds }
+  }
+  const ids = [...new Set([...inventory.moduleIds, USB_AUDIO_MODULE])]
+  const sync = lastSuccessfulSync(base)
+  if (sync && sameModules(ids, sync.moduleIds) && (sync.usbAudio?.layout ?? 'tracks-main-cue') === layout) {
+    try {
+      const preset = usbAudioInstallPreset(sync.usbAudio)
+      return { moduleIds: ids, usbAudio: usbAudioFromInstallPreset(preset), usbAudioInstallPreset: preset }
+    } catch { /* A damaged local record still leaves the layout known from the base. */ }
+  }
+  return { moduleIds: ids, usbAudio: changeUsbAudioLayout(usbAudioPreset('computer'), layout) }
+}
+
+/** The known initial preset distinguishes sets with the same modules and different Outbox assignments. */
+export function matchesUsbAudio(configuration: UsbAudioSetPreset | undefined, seen: Pick<LastSeen, 'usbAudio' | 'usbAudioInstallPreset'>) {
+  if (seen.usbAudioInstallPreset !== undefined) {
+    try { return usbAudioInstallPreset(configuration) === seen.usbAudioInstallPreset }
+    catch { return false } // older browser records are untrusted
+  }
+  return !seen.usbAudio || (configuration?.layout ?? 'tracks-main-cue') === seen.usbAudio.layout
+}
 export function rememberInventory(base: string, inventory: Inventory, at = new Date().toISOString()) {
-  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: inventory.moduleIds, removedStockFx: inventory.removedStockFx, at } })) } catch { /* without storage it says Not connected */ }
+  // With the ones switched off on the unit: they are installed there, and a put-back after a base update brings them along.
+  const offIds = (inventory.offIds ?? []).filter(id => !inventory.moduleIds.includes(id))
+  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: [...new Set([...inventory.moduleIds, ...offIds])], removedStockFx: inventory.removedStockFx, usbAudioInstallPreset: inventory.usbAudioInstallPreset, at, ...offIds.length ? { offIds } : {} } })) } catch { /* without storage it says Not connected */ }
 }
 const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string')
 /** The newest record (or one base's, or the newest of any other base); undefined when this browser never read one or the record is damaged. */
@@ -65,7 +113,10 @@ export function lastInventory(base?: string, except?: string): LastSeen | undefi
   const [found] = Object.entries(allSeen())
     .filter(([key, seen]) => (!base || key === base) && key !== except && strings(seen?.moduleIds) && typeof seen.at === 'string')
     .sort((a, b) => b[1].at.localeCompare(a[1].at))
-  return found && { base: found[0], moduleIds: found[1].moduleIds, removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at }
+  const offIds = found && strings(found[1].offIds) ? found[1].offIds.filter(id => found[1].moduleIds.includes(id)) : []
+  if (!found) return undefined
+  const audio = inventoryUsbAudio(found[0], found[1])
+  return { base: found[0], ...audio, removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at, ...offIds.length ? { offIds } : {} }
 }
 /** The self-test record's `saved` when this boot loaded nothing because the card's set is another base's (modset.c FOREIGN):
  * after a base update, or a power cycle back to an older flashed base. The base can't load it itself, since some packages

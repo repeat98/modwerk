@@ -2,8 +2,9 @@
  * Host check of the MIDI generator registry (midi_generators.c) over a synthetic model of the unit's memory: nothing
  * changes without a generator; the list in MIDI NOTE SETUP chooses, stores 'M' and the id in the arp step mask and
  * resets the arpeggiator; the pages it takes (here NOTE, and ARP always) and FUNC+AMP dispatch to it with their page,
- * the others stay stock's; an unknown id reads as stock; the MODE guard after a generator returns; OFF restores stock's
- * defaults. No stock byte is used. */
+ * the others stay stock's; an unknown id reads as stock; the MODE guard after a generator returns; ARP (no generator)
+ * restores stock's defaults; the list scrolls five rows at a time and keeps its cursor on a row that exists. No stock
+ * byte is used. */
 #define MW_HOST
 #include <stdint.h>
 #include <stdio.h>
@@ -70,7 +71,8 @@ uint32_t mg_list_layer[7], mg_page_layer[7];
 
 #include "loader.h"
 #include "modwerk_events.h"
-static uintptr_t volatile generator_row[5];
+#define MG_ROOM_TEST 16u /* events.json's room for ot_midi_generators */
+static uintptr_t volatile generator_row[MG_ROOM_TEST + 1];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
@@ -110,11 +112,11 @@ int main(void)
     CHECK(mg_page(0x1234u) == 0x1234u);
     mg_tick(); CHECK(pushes == 0);
 
-    /* Installed: double-tap opens MIDI NOTE SETUP, the list layer goes on and the cursor sits on OFF. */
+    /* Installed: double-tap opens MIDI NOTE SETUP, the list layer goes on and the cursor sits on ARP. */
     generator_row[0] = (uintptr_t)&gen;
     mg_track_tap(T); CHECK(opens == 1);
     mg_tick(); CHECK(pushed == mg_list_layer && mg_cursor == 0);
-    mg_note_setup_draw(); CHECK(stock_draws && drawn_n == 2 && !strcmp(drawn[0], "OFF") && !strcmp(drawn[1], "VEC"));
+    mg_note_setup_draw(); CHECK(stock_draws && drawn_n == 2 && !strcmp(drawn[0], "ARP") && !strcmp(drawn[1], "VEC"));
     key(0x20); CHECK(mg_cursor == 1 && !mg_mine);
     U8(PART + 0x3e2u + 32u * T + 14u) = 3;             /* the arpeggiator was on */
     key(0x31);
@@ -153,11 +155,36 @@ int main(void)
     generator_row[0] = (uintptr_t)&gen; mg_tick();
     CHECK(U8(PART + 0x3e2u + 32u * T + 14u) == 0);
 
-    /* OFF: the generator leaves and stock's arpeggiator defaults come back. */
+    /* ARP: the generator leaves and stock's arpeggiator defaults come back. */
     put_u32(0x460d1684u, 0); mg_tick();
     put_u32(0x400bc6c0u, 0x46c7d34cu); mg_tick(); CHECK(pushed == mg_list_layer && mg_cursor == 1);
     key(0x33); CHECK(mg_cursor == 0);
     key(0x31); CHECK(on_state == 0 && U8(PART + 0x1822u + 2u * T) == 0xff && U8(PART + 0x1823u + 2u * T) == 0xff);
+
+    /* Six generators: the list shows five rows and scrolls with the cursor; the sixth is reachable and chosen. */
+    static struct modwerk_midi_generator more[6];
+    static char names[6][8];
+    for (unsigned k = 0; k < 6; ++k) {
+        more[k] = gen; snprintf(names[k], sizeof names[k], "G%u", k + 1u); more[k].label = names[k]; more[k].id = 'a' + k;
+        generator_row[k] = (uintptr_t)&more[k];
+    }
+    put_u32(0x460d1684u, 0); put_u32(0x400bc6c0u, 0); mg_tick();
+    put_u32(0x400bc6c0u, 0x46c7d34cu); mg_tick(); CHECK(pushed == mg_list_layer && mg_cursor == 0);
+    mg_note_setup_draw(); CHECK(drawn_n == 5 && !strcmp(drawn[0], "ARP") && !strcmp(drawn[4], "G4"));
+    for (unsigned k = 0; k < 8; ++k) key(0x20);
+    CHECK(mg_cursor == 6 && mg_top == 2);
+    mg_note_setup_draw(); CHECK(drawn_n == 5 && !strcmp(drawn[0], "G2") && !strcmp(drawn[4], "G6"));
+    key(0x31); CHECK(U8(PART + 0x1822u + 2u * T) == 'M' && U8(PART + 0x1823u + 2u * T) == 'f');
+    key(0x33); key(0x33); key(0x33); key(0x33); key(0x33);
+    CHECK(mg_cursor == 1 && mg_top == 1);
+    mg_note_setup_draw(); CHECK(!strcmp(drawn[0], "G1") && !strcmp(drawn[4], "G5"));
+    /* Two generators leave while the list is open on the last row: the cursor moves to the last row there is. */
+    for (unsigned k = 0; k < 6; ++k) key(0x20);
+    CHECK(mg_cursor == 6);
+    generator_row[4] = 0; mg_note_setup_draw(); CHECK(mg_cursor == 4 && drawn_n == 5 && !strcmp(drawn[4], "G4"));
+    generator_row[4] = (uintptr_t)&more[4];
+    /* The table's room: a seventeenth row is never read. */
+    CHECK(MG_ROOM == MG_ROOM_TEST);
     CHECK(!masked);
 
     if (failures) { fprintf(stderr, "%u failure(s)\n", failures); return 1; }

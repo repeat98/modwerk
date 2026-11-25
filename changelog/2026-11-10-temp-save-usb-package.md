@@ -1,0 +1,1 @@
+Temp Save 0.1.0 is no longer offered over USB on the Octatrack: its published package repeated a stock call sequence that the stock-free scan refuses. The card build stays, since it is made from the musician's own OS file. A rebuilt Temp Save brings the USB package back (#1391).

@@ -8,7 +8,7 @@ const write = process.argv.includes('--write')
 const notices = await renderLicenseNotices(root)
 // The site also ships the vendored Digitakt/Digitone builder; the Octatrack SDK copy stays its own.
 // Website acknowledgements stay outside the native source inventory.
-const usbCredits = await readFile(resolve(root, 'docs/USB_AUDIO_ATTRIBUTION.txt'), 'utf8')
+const usbCredits = await readFile(resolve(root, 'LICENSES/USB_AUDIO_ATTRIBUTION.txt'), 'utf8')
 const audioPackage = JSON.parse(await readFile(resolve(root, 'node_modules/wavesurfer.js/package.json'), 'utf8'))
 const audioCredits = ['WaveSurfer.js ' + audioPackage.version, 'SPDX: BSD-3-Clause',
   'Used in: website audio players', 'Notice source: https://github.com/katspaugh/wavesurfer.js/blob/' + audioPackage.version + '/LICENSE', '',

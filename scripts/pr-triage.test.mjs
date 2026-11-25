@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { CLOSE_AFTER_DAYS, NEEDS_WORK, ONE_AT_A_TIME, decide, newestRuns, queuedPulls } from './pr-triage.mjs'
+import { CLOSE_AFTER_DAYS, NEEDS_WORK, ONE_AT_A_TIME, decide, isModulePull, newestRuns, publishedContributors, queuedPulls } from './pr-triage.mjs'
 
 const day = 86400000, now = Date.parse('2026-10-25T12:00:00Z'), ago = days => new Date(now - days * day).toISOString()
 const base = { red: false, labels: [], labeledAt: undefined, headDate: ago(30), now, queued: false }
 
 describe('PR triage policy', () => {
+  it('counts a draft under sdk/drafts as a module PR, as it does a machine module folder', () => {
+    expect(isModulePull(['sdk/drafts/drummap/octamod.module.json'])).toBe(true)
+    expect(isModulePull(['sdk/octatrack/modules/euclid/README.md', 'docs/x.md'])).toBe(true)
+    expect(isModulePull(['sdk/analog-rytm-mkii/modules/_submissions/chorus/src/main.c'])).toBe(true)
+    expect(isModulePull(['sdk/machines/octatrack/events.json', 'docs/module-guides/README.md'])).toBe(false)
+  })
   it('labels a red PR once and unlabels it when the checks go green', () => {
     expect(decide({ ...base, red: true })).toEqual([{ add: NEEDS_WORK }])
     expect(decide({ ...base, red: true, labels: [NEEDS_WORK], labeledAt: ago(1) })).toEqual([])
@@ -24,6 +30,10 @@ describe('PR triage policy', () => {
     expect(newestRuns([run(5, 'x', 'failure', ago(1)), run(6, 'x', 'success', ago(1))]).map(r => r.id)).toEqual([6])
     expect(newestRuns([run(7, 'x', 'failure', ago(1)), run(8, 'x', null, null)]).map(r => r.id)).toEqual([8])
     expect(newestRuns([run(9, 'x', 'success', ago(1)), run(10, 'x', 'failure', ago(0.5))]).map(r => r.id)).toEqual([10])
+  })
+  it('recognizes published Digitakt II contributors in the one-at-a-time queue', () => {
+    const pulls = [12, 13].map(number => ({ number, author: 'crisp909', module: true }))
+    expect([...queuedPulls(pulls, publishedContributors())]).toEqual([])
   })
   it('queues every newer module PR from a contributor without a published module', () => {
     const pulls = [{ number: 12, author: 'new', module: true }, { number: 10, author: 'new', module: true }, { number: 11, author: 'new', module: false }, { number: 13, author: 'known', module: true }, { number: 14, author: 'known', module: true }]

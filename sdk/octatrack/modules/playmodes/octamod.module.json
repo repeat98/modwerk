@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 2,
+  "id": "playmodes",
+  "key": "PLAY MODES",
+  "name": "Play Modes",
+  "version": "0.2.0-experimental",
+  "category": "machines",
+  "source": {
+    "repository": "https://github.com/pgstath/Octaplay",
+    "revision": "73d5f89e4857411e27e2a5a396ebe681bb9f706c",
+    "path": "playmodes"
+  },
+  "author": {
+    "github": "devilfish707",
+    "contributors": [
+      {
+        "github": "pgstath"
+      }
+    ],
+    "credits": [
+      "devilfish707: engine, firmware glue, investigation and documentation.",
+      "Firmware addresses cited from octabam (Sam Banks), SCALE QUANTIZER and DIRECT JUMP (Tim Hastie), the KYOTI notes (Zac-Kyoti) and OctaKit (June Kiff).",
+      "pgstath: STEP REPEAT (the REPEAT mode, its trig-key detour, host tests, the ColdFire-port run and the trig-key investigation)."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "PLAYHEAD DIRECTION",
+    "family": "Sequencer",
+    "summary": "Play patterns reversed, pingpong, random or shuffled, or hold trig keys to repeat steps: per pattern, shared by every track or set per track.",
+    "overview": "Play Modes changes which step the sequencer plays at each position: NORMAL, REVERSED, PINGPONG (end steps once), PINGPONG 2 (end steps twice), RANDOM or SHUFFLE. Each pattern keeps its own modes: one shared mode under SCALE MODE NORMAL, one per audio and MIDI track under PER TRACK. Trigs, conditions, micro-timing, swing and locks move with their step; tempo, lengths, chains and the trig LEDs stay in step. The modes are saved with the project, survive a power cycle and follow pattern copy, paste and clear. REPEAT plays normally until trig keys are held while playing; then the track loops only the held steps, and on release it continues from where the stock playhead has reached.",
+    "highlights": [
+      "Six playhead modes, including two pingpongs and a shuffle that plays every step once per pass",
+      "STEP REPEAT: hold trig keys to loop those steps, let go to land back in time",
+      "Per pattern; per track under PER TRACK scale mode, audio and MIDI tracks",
+      "Hold a TRACK key and press UP or DOWN; a popup names the mode",
+      "Saved in the project, kept over a power cycle, carried by pattern copy and paste"
+    ],
+    "usage": [
+      "Hold a TRACK key and press DOWN to step through NORMAL, REVERSED, PINGPONG, PINGPONG 2, RANDOM, SHUFFLE and REPEAT; UP walks back. The popup shows ALL <mode> under SCALE MODE NORMAL, or T1..T8 / M1..M8 <mode> under PER TRACK.",
+      "In REPEAT, press PLAY and hold trig keys: the track loops the held steps in step order; let go and it continues from where it would have been.",
+      "Each pattern keeps its own modes; PLAY and every pattern change start the tracks from their first step again.",
+      "Under PER TRACK, MASTER LENGTH limits how far a track gets; set it to INF to let every track run its full length in every mode."
+    ]
+  },
+  "access": {
+    "location": "Automatic when included in a build: hold a TRACK key on the main screen and press UP or DOWN.",
+    "steps": [
+      "Include Play Modes in your build. It uses no effect slot and no knob.",
+      "Load a pattern and choose its SCALE MODE in PATTERN SETTINGS: NORMAL for one shared mode, PER TRACK for one mode per track.",
+      "Hold TRACK 1 (or the track to change) and press DOWN or UP; the popup shows the new mode. Press PLAY.",
+      "For STEP REPEAT, hold the TRACK key and press DOWN until the popup shows REPEAT, press PLAY, then hold trig keys: the track loops those steps; let go and it continues in time.",
+      "Hold the TRACK key and press UP until the popup shows NORMAL to return to stock playback."
+    ],
+    "screenshots": [
+      "media/ot-mode-all-reversed.png",
+      "media/ot-mode-all-pingpong2.png",
+      "media/ot-mode-all-repeat.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "limitations": [
+      "Does not combine with octabam's PLOCKS P2 (not in this catalog): both use battery RAM 0x100f8600.. and the 20 pattern-copy memcpy sites.",
+      "Deliberate stock-flow change: TRACK held + UP / DOWN changes the mode and does not reach the stock arrow handler; project.work gains #PLAY_MODES= comment lines.",
+      "Deliberate stock-flow change (0.2.0, REPEAT only): while the sequencer plays and the current track is in REPEAT, the trig keys in TRACKS trig mode loop steps and no longer trigger tracks; stopped, GRID REC, LIVE REC and the other trig modes stay stock.",
+      "Copying a single track does not copy its mode; PROJECT > NEW may keep the previous project's modes (untested).",
+      "Played interactively on one MKII (builds 12-24); MKI, micro-timing, trig conditions, slides, live recording and MIDI tracks beyond a first check are untested.",
+      "Chip worst-case cycles are unmeasured; no stress project has been run.",
+      "Like every DRAM module, the build gives up about 10 MB of sample memory to the platform reserve.",
+      "Build-24 physical reboot, Part/project save-reload after later edits and distinct-track isolation were not rechecked; build-19 persistence results remain historical.",
+      "STEP REPEAT (0.2.0) is host-tested and run under the ColdFire port only: not played on a unit; MKI, audio and MIDI out, PER TRACK and patterns longer than 16 steps under REPEAT are untested; on long patterns the keys name the playhead's page."
+    ]
+  },
+  "resources": {
+    "recorded": "8 October 2026: emulator counts and build memory (build 24); chip timing unmeasured",
+    "storage": {
+      "label": "DRAM data + battery RAM",
+      "display": "14,876 B: 12,566 B unit in DRAM + 2,310 B battery RAM",
+      "value": 14876,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Code 7,700, read-only data 102, state and pattern table 4,764 (SDRAM platform reserve), battery table 2,310 (CS1). All shared; stack at most 120 bytes. See evidence/memory.md.",
+      "source": "evidence/memory.md"
+    },
+    "processing": {
+      "label": "ColdFire processing",
+      "display": "≤ 4,654 instructions per track step (1,884 measured)",
+      "value": 4654,
+      "unit": "instructions/event",
+      "method": "emulator",
+      "conditions": "Instruction counts of the module's own code in octabam's ColdFire core, no firmware, synthetic sequencer state; SHUFFLE's walk bounded analytically. Chip cycles: 32-cycle-per-instruction allowance, not measured.",
+      "source": "evidence/cycles.md"
+    },
+    "impact": {
+      "conditions": "16 tracks (8 audio, 8 MIDI) in SHUFFLE, the most expensive mode, at the highest tempo and finest track scale; a project load rewriting the battery table.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Per track per step a few byte reads, one pass test and one mapping; SHUFFLE adds a keyed permutation (about two evaluations, three multiplies each). Battery-RAM writes only on key presses, pattern copies and project loads.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code, tables or buffers; stock DSP processing is unchanged.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "About 4.7 KB of DRAM data in the platform reserve plus the unit's code, and a 2,310-byte battery-RAM table; no per-instance copies.",
+        "source": "TESTING.md"
+      }
+    },
+    "cpuPrice": {
+      "value": 0.1,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-21",
+      "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7. Private runtime package built from the listed Play Modes 0.2.0 source; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.6 % before, 32.7 % installed and used nowhere; CPU meter 45.6 % before, 45.2 % at rest.",
+      "source": "evidence/cpu-price.json"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host suites for the engine and firmware glue pass, including STEP REPEAT's; instruction counts in octabam's ColdFire core for 0.2.0 bound one track step at 4,746 instructions (1,969 measured); STEP REPEAT ran under the ColdFire port on a real project (GRID REC, LIVE REC, CHROMATIC, stopped and a MIDI track left stock). The author's MKII report covers 0.1.1's build 24 and is historical for 0.2.0; 0.2.0 has not been played on a unit. No stress run, no chip timing.",
+    "hardwareStatus": "historical",
+    "evidenceRevision": "41dbdaaaf18ddea0bc18f72bc88cc1a0926b84f0",
+    "gates": [
+      "modules/playmodes/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Include Play Modes in your build and load a pattern with a trig on step 1 only; SCALE MODE NORMAL.",
+          "Hold TRACK 1, press DOWN once: ALL REVERSED. Press PLAY: the trig sounds on the last step of every bar, and the trig LEDs walk 16 → 1.",
+          "Hold TRACK 1, press DOWN twice more: ALL PINGPONG 2: the trig sounds twice in a row at every turn back to step 1. Hold TRACK 1 and press UP until ALL NORMAL to return to stock playback.",
+          "Hold TRACK 1 and press DOWN until ALL REPEAT. Press PLAY, then hold TRIG 5 and TRIG 8: every track loops steps 5 and 8. Let go: the pattern goes on in time, from where it would have been. Hold TRACK 1 and press UP until ALL NORMAL to give the trig keys back to stock."
+        ]
+      },
+      "screenshots": [
+        "media/ot-mode-all-reversed.png",
+        "media/ot-mode-all-pingpong2.png",
+        "media/ot-mode-all-repeat.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code and thumbnail by devilfish707, MIT. Firmware addresses are cited from public module sources and read from the author's own OS; no Elektron firmware, extracted routines, tables or images are included."
+  },
+  "media": [
+    {
+      "path": "media/ot-mode-all-reversed.png",
+      "captureType": "emulator",
+      "caption": "Hold TRACK 1 and press DOWN on the main screen: the popup names the new mode, here ALL REVERSED (SCALE MODE NORMAL: one mode for every track).",
+      "alt": "Main screen of pattern A01 with a popup reading ALL REVERSED.",
+      "credit": "Modwerk (headless capture); Play Modes by devilfish707",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen, TRACK + DOWN popup",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "9d91395f4a75942424154a5cda2c1e484e64efac75f9ac9a8aaa05c78e82cd68",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card, pattern A01, native Modwerk 0.2.0 composition of Octaplay 73d5f89 (pgstath/Octaplay step-repeat)."
+      }
+    },
+    {
+      "path": "media/ot-mode-all-pingpong2.png",
+      "captureType": "emulator",
+      "caption": "Still holding TRACK 1, two more DOWN presses: ALL PINGPONG 2, the bounce that plays the end steps twice.",
+      "alt": "Main screen of pattern A01 with a popup reading ALL PINGPONG 2.",
+      "credit": "Modwerk (headless capture); Play Modes by devilfish707",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen, TRACK + DOWN popup",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "9d91395f4a75942424154a5cda2c1e484e64efac75f9ac9a8aaa05c78e82cd68",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card, pattern A01, native Modwerk 0.2.0 composition of Octaplay 73d5f89 (pgstath/Octaplay step-repeat)."
+      }
+    },
+    {
+      "path": "media/ot-mode-all-repeat.png",
+      "captureType": "emulator",
+      "caption": "Still holding TRACK 1, three more DOWN presses: ALL REPEAT. Press PLAY and hold trig keys: those steps loop; let go and the pattern goes on in time.",
+      "alt": "Main screen of pattern A01 with a popup reading ALL REPEAT.",
+      "credit": "Modwerk (headless capture); Play Modes by devilfish707, STEP REPEAT by pgstath",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen, TRACK + DOWN popup",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "9d91395f4a75942424154a5cda2c1e484e64efac75f9ac9a8aaa05c78e82cd68",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card, pattern A01, native Modwerk 0.2.0 composition of Octaplay 73d5f89 (pgstath/Octaplay step-repeat)."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Zoom MS-50G, MS-60B and G1on series: their machine pages' starter prompt now points developers at the road the MS-70CDR took (read, write, listing, effects, base), one step per pull request with evidence from that pedal. The MS-50G and MS-60B pages say MIDISTOMP's releases are built from the MS-70CDR's OS, so they wait for a build from their own.

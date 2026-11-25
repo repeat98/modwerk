@@ -8,10 +8,10 @@ from pathlib import Path
 import argparse, hashlib, importlib.util, json, os, re, shutil, struct, subprocess, sys, tempfile
 
 APP = Path(__file__).resolve().parents[1]
-ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc']
+ORDER = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', 'vibrato', 'resonator', 'mackity']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
-REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks']
+REQUESTED = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec', 'songbook']
 UTILITIES = ['previewvol', 'cc-map']
 ASSET_NAMES = ['dsp-packages.json', 'coldfire-packages.json', 'resident-dsp.json', 'rom-packages.json',
                'bootstrap-package.json', 'menu-recipes.json', 'descriptor-recipes.json', 'platform-writes.json', 'requested-packages.json', 'utility-packages.json', 'usb-audio-packages.json']
@@ -73,6 +73,11 @@ def source_hashes(root, cardless=()):
     return files
 
 
+def cardless_modules(manifest):
+    """The card source scope, shared with module-source.mjs and usb-only.ts."""
+    return {row['id'] for row in manifest['packages'] if row.get('sources') or row.get('usbOnly') is True}
+
+
 def fingerprint(reference, address):
     from remix.stock_guard import LocalStockSpan
     if isinstance(reference, LocalStockSpan):
@@ -83,23 +88,21 @@ def fingerprint(reference, address):
 
 
 def requested_release_scope(buildable):
-    """Permit the reviewed scope; MIDISC2.0 is a standalone local-stock recipe."""
+    """Permit the reviewed scope."""
     hooked_only = [id for id in HOOKED if id not in REQUESTED]
     ordinary = [id for id in buildable if id not in UTILITIES + hooked_only]
     if [id for id in buildable if id in UTILITIES] not in ([], UTILITIES):
         raise ValueError('Unsupported utility module scope')
-    scopes = (ORDER, ORDER + REQUESTED, ORDER + [id for id in REQUESTED if id != 'midi-scenes'])
+    scopes = (ORDER, ORDER + REQUESTED)
     if ordinary not in scopes:
         raise ValueError('Unsupported reviewed module scope')
-    return [id for id in REQUESTED if id in buildable and id != 'midi-scenes']
+    return [id for id in REQUESTED if id in buildable]
 
 
-def retain_pending_requested(compiled, baseline, ids, standalone=False):
+def retain_pending_requested(compiled, baseline, ids):
     """Keep inactive, previously verified objects unchanged; never compile their pending source."""
-    if standalone:
-        baseline = dict(baseline, objects=[r for r in baseline['objects'] if r['moduleId'] != 'midi-scenes'], groups=[r for r in baseline['groups'] if r['moduleId'] != 'midi-scenes'], moduleVersions={k:v for k,v in baseline['moduleVersions'].items() if k != 'midi-scenes'})
     pending = set(REQUESTED) - set(ids)
-    if pending & set(baseline['moduleVersions']):
+    if pending & set(json_file(APP / 'src/engine/assets/module-build.json')['moduleVersions']):
         raise ValueError('Pending modules must be absent from verified version pins')
     for field, key in [('objects', 'label'), ('groups', 'moduleId')]:
         actual = {row[key]: row for row in compiled[field]}
@@ -112,7 +115,7 @@ def retain_pending_requested(compiled, baseline, ids, standalone=False):
     return compiled
 
 
-def compile_requested(root, known, documents, versions, revision, provenance, native, sources, assembler, disassembler, ids):
+def compile_requested(root, known, documents, versions, revision, native, sources, assembler, disassembler, ids):
     """Authored objects and runtime recipes only; inherited USB spans are masked."""
     byid = {m.name: m for m in known.values()}
     selected = [byid[id] for id in ids + (['repitch'] if 'poly8' in ids else [])] + [known['USB MIDI']]
@@ -237,7 +240,7 @@ def compile_requested(root, known, documents, versions, revision, provenance, na
     obj=work/'loader.o';run(['m68k-elf-as','-mcpu=5475','-I',work,'--defsym','PREBOOT=1','-o',obj,work/'loader.S'],root)
     raw=obj.read_bytes(); bootstrap=dict(bytes=len(raw),code=raw.hex(),sha256=HASH(raw))
     print(f'Compiled {len(objects)} requested ColdFire objects, both Analog BD engines and stock-free pre-boot skeleton.',flush=True)
-    return dict(schema=1,revision=revision,**provenance,objects=objects,groups=groups,composition=composition,analog=analog,bootstrap=bootstrap)
+    return dict(schema=1,revision=revision,objects=objects,groups=groups,composition=composition,analog=analog,bootstrap=bootstrap)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -261,10 +264,12 @@ def main():
             parser.error('Untracked source is not allowed in a release build')
     if args.include_requested and args.source_commit: parser.error('Pending modules may be compiled only for local development verification')
     sdk = APP / 'sdk/octabam'
-    # A C runtime module (its USB package row has "sources") has no card form: src/catalog/usb-only.ts. Mirrors scripts/module-source.mjs.
-    usb_only = {row['id'] for row in json_file(APP / 'src/engine/assets/octatrack-module-packages.json')['packages'] if row.get('sources')}
+    # Source runtimes and explicit USB-only packages have no card form.
+    usb_only = cardless_modules(json_file(APP / 'src/engine/assets/octatrack-module-packages.json'))
     sources = source_hashes(sdk, usb_only)
     baseline = {name: json_file(APP / 'src/engine/assets' / name) for name in ASSET_NAMES}
+    # Build provenance lives once, in module-build.json, so two module releases never rewrite the same package-file lines.
+    for doc in baseline.values(): doc.pop('sourceCommit', None); doc.pop('moduleVersions', None)
     catalog = json_file(APP / 'sdk/catalog.json')
     catalog_documents = {module['id']: json_file(sdk / 'modules' / module['id'] / 'octamod.module.json') for module in catalog['modules']}
     for module in catalog['modules']:
@@ -275,9 +280,7 @@ def main():
         approved_requested = requested_release_scope([module['id'] for module in buildable])
     except ValueError as error:
         parser.error(str(error))
-    standalone = 'midi-scenes' in [module['id'] for module in buildable]
-    if standalone and catalog_documents['midi-scenes']['version'] != '0.2.5-experimental': parser.error('Unknown standalone MIDI Scenes release')
-    requested_ids = [id for id in REQUESTED if id != 'midi-scenes'] if args.include_requested else approved_requested
+    requested_ids = list(REQUESTED) if args.include_requested else approved_requested
     if "poly8" in requested_ids:
         # Local PC16 operands can wrap before ELF relocations exist. Run the
         # compiled-address gate in this isolated source-build environment.
@@ -298,7 +301,6 @@ def main():
     revision = catalog['sourceRevision']
     utility_ids = [id for id in UTILITIES if id in versions]
     documents = {id: json_file(sdk / 'modules' / id / 'octamod.module.json') for id in ORDER + REQUESTED + utility_ids + hooked_ids}
-    provenance = {'sourceCommit': args.source_commit, 'moduleVersions': versions}
     products = {}
     with tempfile.TemporaryDirectory(prefix='octamod-source-build.') as temporary:
         root = Path(temporary)
@@ -364,7 +366,7 @@ def main():
         packages = []
         for id in sorted(ORDER):
             module = byid[id]
-            if not module.dsp or id == 'character': continue
+            if not module.dsp: continue
             text = native._loadable_text(module)
             if text is None: raise ValueError(id + ': changed native placement needs a supported browser recipe')
             packages.append(package(module, text))
@@ -406,16 +408,10 @@ def main():
                     'words':len(words),'code':code.hex(),'sha256':HASH(code),'relocations':relocations,
                     'init':hooks[0]['entry'],'proc':hooks[1]['entry'],'hooks':hooks,'proofs':proofs})
 
-        products['dsp-packages.json'] = {'schema': 1, 'revision': revision, 'license': '/licenses/octabam.txt', **provenance,
-            'packages': packages, 'excluded': [{'id': 'character', 'reason': 'Native resident placement.'}]}
+        products['dsp-packages.json'] = {'schema': 1, 'revision': revision, 'license': '/licenses/octabam.txt',
+            'packages': packages}
         print('Compiled loadable DSP modules with four-origin relocation proofs.', flush=True)
 
-        character = byid['character']
-        text = (root / character.dsp.asm).read_text()
-        text = re.sub(r'\$9([0-9a-f]{2})\b', lambda match: '$%x' % (0x36000 + int(match[1], 16)), text)
-        if any(marker in text for marker in ('; ROTLATCH', '; XBUS_GATE', '.include', '.incbin')): raise ValueError('Changed resident placement needs review')
-        resident = package(character, text)
-        resident.update(mode='resident', xbusBase=0x36000, ptableMemory='P')
         receiver_source = 'platform/dsp-dynload-transport/receiver_runtime.asm'
         receiver = (root / receiver_source).read_text()
         marker = '; OCTAMOD_LOCAL_NULL_STUB'
@@ -425,7 +421,7 @@ def main():
         variants = []
         for old in baseline['resident-dsp.json']['variants']:
             payload = next(row for row in json_file(APP / 'src/engine/assets/stock-dsp-metadata.json')['payloads'] if row['core'] == old['core'])
-            table = payload['sharedEnd'] + (resident['words'] if old['hasCharacter'] else 0)
+            table = payload['sharedEnd']
             probe, _ = native.assemble_syms(receiver.replace('@DLWORDS@', '0').replace('$fab1e0', f'${table:x}'), table, label='DSP DYNLOAD STOCK')
             arena = payload['effectEnd'] - table - len(probe)
             if arena < 1131: raise ValueError('Receiver and module do not fit the stock DSP region')
@@ -443,9 +439,9 @@ def main():
             if variant['sha256'] == old['sha256'] and copy['adjustments'] == old['stockCopy']['adjustments']:
                 variant['completeSha256'] = old['completeSha256']; copy['sha256'] = old['stockCopy']['sha256']
             variants.append(variant)
-        products['resident-dsp.json'] = dict(baseline['resident-dsp.json'], **provenance, character=resident, variants=variants,
+        products['resident-dsp.json'] = dict(baseline['resident-dsp.json'], variants=variants,
             receiverSource=receiver_source, receiverSourceSha256=sources[receiver_source])
-        print('Compiled resident Character and four stock-free receiver templates.', flush=True)
+        print('Compiled two stock-free receiver templates.', flush=True)
 
         compiled_cf = []
         for key in ['DSP DYNLOAD STOCK', 'EUCLID', 'TAPE ECHO', 'BBD']:
@@ -460,7 +456,25 @@ def main():
                 compiled_cf.append({'label': unit.label, 'moduleId': module.name, 'version': versions.get(module.name),
                     'key': module.key, 'author': module.author, 'cpu': '54455', 'dram': True, 'source': unit.source,
                     'sources': hashes(unit.source, manifest), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
-        products['coldfire-packages.json'] = dict(baseline['coldfire-packages.json'], **provenance, packages=compiled_cf)
+        # Units a module lets join the DRAM runtime when another module carries one
+        # (modules/<id>/placement.json): the same source, assembled for the runtime's ISA.
+        from runtime_join import JOIN
+        for name, labels in JOIN.items():
+            module = byid[name]
+            manifest, rule = f'modules/{name}/manifest.py', f'modules/{name}/placement.json'
+            if not (module.menu and module.menu.stock_dsp): raise ValueError(f'{name}: only a stock-DSP effect\'s descriptor units can join the runtime')
+            for unit in module.linked:
+                if unit.label not in labels: continue
+                if unit.dram or unit.include is not None or unit.defsyms or unit.stock_copies:
+                    raise ValueError(f'{name} {unit.label}: a joining unit links one variant with no includes, defsyms or stock copies')
+                validate_source((root / unit.source).read_text())
+                obj = root / (unit.label + '.join.o')
+                run(['m68k-elf-as', '-mcpu=54455', '-o', obj, unit.source], root)
+                data = obj.read_bytes()
+                compiled_cf.append({'label': unit.label, 'moduleId': name, 'version': versions.get(name),
+                    'key': module.key, 'author': module.author, 'cpu': '54455', 'dram': True, 'joinRuntime': True, 'source': unit.source,
+                    'sources': hashes(unit.source, manifest, rule), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
+        products['coldfire-packages.json'] = dict(baseline['coldfire-packages.json'], packages=compiled_cf)
 
         rom = []
         for old in baseline['rom-packages.json']['packages']:
@@ -480,12 +494,12 @@ def main():
                 proofs.append(dict(proof, bytes=len(raw), sha256=HASH(raw), exports=exported_symbols(elf, root)))
             rom.append(dict(old, version=versions.get(old['moduleId']), key=module.key if module else old['key'],
                 author=module.author if module else old['author'], sourceSha256=sources[source], bytes=len(data), code=data.hex(), sha256=HASH(data), proofs=proofs))
-        products['rom-packages.json'] = dict(baseline['rom-packages.json'], **provenance, packages=rom)
+        products['rom-packages.json'] = dict(baseline['rom-packages.json'], packages=rom)
         (root / 'table.inc').write_text('        .long 1\n        .long blob0,0,0,0,0,0,0,0\n        .align 4\nblob0:\n')
         obj = root / 'bootstrap.o'
         run(['m68k-elf-as', '-mcpu=5475', '-I', root, '-o', obj, root / 'tools/remix/loader.S'], root)
         data = obj.read_bytes()
-        products['bootstrap-package.json'] = dict(baseline['bootstrap-package.json'], **provenance,
+        products['bootstrap-package.json'] = dict(baseline['bootstrap-package.json'],
             sourceSha256=sources['tools/remix/loader.S'], bytes=len(data), code=data.hex(), sha256=HASH(data))
         print('Compiled eleven ColdFire runtime objects, four ROM units and the authored bootstrap.', flush=True)
 
@@ -514,16 +528,10 @@ def main():
         for poke in repitch.pokes:
             length, sha = fingerprint(poke.expect, poke.addr)
             patches.append({'address': poke.addr, 'guardLength': length, 'guardSha256': sha, 'kind': 'poke', 'code': poke.write.hex(), 'note': poke.note})
-        products['menu-recipes.json'] = dict(baseline['menu-recipes.json'], **provenance, recipes=recipes, repitchPatches=patches)
+        products['menu-recipes.json'] = dict(baseline['menu-recipes.json'], recipes=recipes, repitchPatches=patches)
 
         descriptors = []
         descriptor_guards = list(baseline['descriptor-recipes.json']['recipes'])
-        if not any(row['id'] == 'airwindows-chorus' for row in descriptor_guards):
-            # Locally verified 1.40C: same donor and unused-slot fingerprint as
-            # Character. Only addresses/hashes are retained, never stock bytes.
-            donor = next(row for row in descriptor_guards if row['id'] == 'character')
-            descriptor_guards.append(dict(donor, id='airwindows-chorus', key='AIR CHORUS',
-                author='repeat98', fxId=0x1e, fx2Slot=0x400d6054))
         if not any(row['id'] == 'everb' for row in descriptor_guards):
             # Locally verified on private OS 1.40C: DARK REV descriptor and
             # stock NONE at unused FX2 id 0x1b. Never retain stock bytes.
@@ -556,6 +564,30 @@ def main():
                 fxId=0x06, donorAddress=0x400d58f0,
                 donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
                 fx2Slot=0x400d5ff4,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'vibrato' for row in descriptor_guards):
+            # Locally verified on private OS 1.40C (17 Nov 2026, hashes only): the same
+            # DARK REV donor and stock NONE at unused FX2 id 0x0b. Never retain stock bytes.
+            descriptor_guards.append(dict(id='vibrato', key='VIBRATO', author='bryantysinger',
+                fxId=0x0b, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d6008,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'resonator' for row in descriptor_guards):
+            # The same DARK REV donor and stock NONE at unused FX2 id 0x07, as the effects above;
+            # the build checks both hashes against the private OS 1.40C. Never retain stock bytes.
+            descriptor_guards.append(dict(id='resonator', key='RESONATOR', author='repeat98',
+                fxId=0x07, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d5ff8,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'mackity' for row in descriptor_guards):
+            # The same DARK REV donor and stock NONE at unused FX2 id 0x1a, as the effects above;
+            # the build checks both hashes against the private OS 1.40C. Never retain stock bytes.
+            descriptor_guards.append(dict(id='mackity', key='MACKITY', author='repeat98',
+                fxId=0x1a, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d6044,
                 slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
         for old in descriptor_guards:
             module = byid[old['id']]
@@ -599,7 +631,7 @@ def main():
                     rows.append({'address': detour.site, 'guardLength': length, 'guardSha256': sha, 'unit': detour.unit, 'symbol': detour.symbol, 'kind': detour.kind, 'bytes': detour.pad_to or 6, 'note': detour.note})
                 extra['detours'] = rows
             descriptors.append(dict(old, sourceSha256=sources[f'modules/{module.name}/manifest.py'], integers=integers, strings=strings, **extra))
-        products['descriptor-recipes.json'] = dict(baseline['descriptor-recipes.json'], **provenance, recipes=descriptors)
+        products['descriptor-recipes.json'] = dict(baseline['descriptor-recipes.json'], recipes=descriptors)
         groups = []
         if not any(row['moduleId'] == 'bbd' for row in baseline['platform-writes.json']['groups']):
             baseline['platform-writes.json']['groups'].append(dict(moduleId='bbd', key='BBD', author='JamCones'))  # its stop kill (0.1.1)
@@ -612,10 +644,10 @@ def main():
                              'symbol': detour.symbol, 'kind': detour.kind, 'writeLength': detour.pad_to or 6})
             manifest = f'platform/{module.name}/manifest.py' if module.name in registry.PLATFORM_NAMES else f'modules/{module.name}/manifest.py'
             groups.append(dict(old, source=manifest, sourceSha256=sources[manifest], detours=rows))
-        products['platform-writes.json'] = dict(baseline['platform-writes.json'], **provenance, groups=groups)
+        products['platform-writes.json'] = dict(baseline['platform-writes.json'], groups=groups)
         if include_requested:
-            requested = compile_requested(root, known, documents, versions, revision, provenance, native, sources, assembler, disassembler, requested_ids)
-            products['requested-packages.json'] = retain_pending_requested(requested, baseline['requested-packages.json'], requested_ids + (['repitch'] if 'poly8' in requested_ids else []), standalone=standalone) if not args.include_requested else requested
+            requested = compile_requested(root, known, documents, versions, revision, native, sources, assembler, disassembler, requested_ids)
+            products['requested-packages.json'] = retain_pending_requested(requested, baseline['requested-packages.json'], requested_ids + (['repitch'] if 'poly8' in requested_ids else [])) if not args.include_requested else requested
         if stock_guard._cache is not None: raise RuntimeError('Stock must never be read during source compilation')
         if native._SCRATCH is not None: shutil.rmtree(native._SCRATCH, ignore_errors=True)
 
@@ -625,7 +657,6 @@ def main():
             expected = {(row[key],row.get('tag')): row for row in baseline[name]['packages']}
             for row in products[name]['packages']:
                 if row['code'] != expected[(row[key],row.get('tag'))]['code']: raise ValueError(name + ': compiled code differs from native baseline for ' + row[key])
-        if products['resident-dsp.json']['character']['code'] != baseline['resident-dsp.json']['character']['code']: raise ValueError('Resident Character differs from baseline')
         # Placement and dispatch bindings change composed firmware as much as code bytes do.
         for row, old in zip(products['resident-dsp.json']['variants'], baseline['resident-dsp.json']['variants']):
             if row != old: raise ValueError('Receiver differs from baseline: ' + ', '.join(sorted(key for key in row.keys() | old.keys() if row.get(key) != old.get(key))))
@@ -637,8 +668,7 @@ def main():
             if strip_source(products[name][field]) != strip_source(baseline[name][field]): raise ValueError(name + ': native declarations differ')
         if [row['proofs'] for row in products['rom-packages.json']['packages']] != [row['proofs'] for row in baseline['rom-packages.json']['packages']]: raise ValueError('ROM relocation proofs differ')
         if include_requested:
-            clean = lambda doc: {key: value for key, value in doc.items() if key not in ('sourceCommit', 'moduleVersions')}
-            if clean(products['requested-packages.json']) != clean(baseline['requested-packages.json']): raise ValueError('Requested authored packages or placement recipes differ from the verified baseline')
+            if products['requested-packages.json'] != baseline['requested-packages.json']: raise ValueError('Requested authored packages or placement recipes differ from the verified baseline')
         print('Every authored compiled package and receiver matches the existing browser/native baseline.', flush=True)
 
     regions = [dict(moduleId=m.name, symbol=r.symbol, size=r.size, align=r.align)
@@ -658,10 +688,10 @@ def main():
     if utility_ids:
         spec = importlib.util.spec_from_file_location('octamod_utility_compiler', APP / 'scripts/build-utility-packages.py')
         compiler = importlib.util.module_from_spec(spec); spec.loader.exec_module(compiler)
-        products['utility-packages.json'] = compiler.compile_packages(APP, provenance=provenance)
+        products['utility-packages.json'] = compiler.compile_packages(APP)
     spec = importlib.util.spec_from_file_location('modwerk_usb_compiler', APP / 'scripts/build-usb-audio-packages.py')
     usb_compiler = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_compiler)
-    products['usb-audio-packages.json'] = dict(usb_compiler.build(), **provenance)
+    products['usb-audio-packages.json'] = usb_compiler.build()
     destination.mkdir(parents=True)
     files = {}
     notice_name = 'THIRD_PARTY_NOTICES.txt'

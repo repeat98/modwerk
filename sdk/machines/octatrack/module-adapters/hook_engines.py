@@ -62,13 +62,14 @@ def analog_sources(sdk):
 
 
 def site(feature):
-    """The catalogue's one site of a packaged feature, and that feature's regions (dsp-sites.json)."""
+    """The catalogue's chain site that hosts a packaged feature, and that feature's regions (dsp-sites.json). The
+    engine is built against the site's stock exit; at run time the base aims that exit at the chain's trampoline."""
     reg = json.loads(SITES.read_text())
     if not next(f for f in reg['features'] if f['bit'] == feature).get('packaged'):
         raise ValueError('Feature %d is not packaged' % feature)
-    sites = [s for s in reg['sites'] if s['feature'] == feature]
+    sites = [s for s in reg['sites'] if s['kind'] == 'chain' and feature in s['features']]
     if len(sites) != 1:
-        raise ValueError('A packaged feature enters at one site')
+        raise ValueError('A packaged feature is a member of one chain site')
     return sites[0], [r for r in reg['regions'] if r['feature'] == feature]
 
 
@@ -149,11 +150,23 @@ def analog_engine(sdk, work, assemble):
     return unit
 
 
+def analog_price():
+    """Analog BD's price per voice for its engine header (analog_bd_dsp_price.json): the voice's, with the fixed
+    per-core cost folded in (owner, 13 November 2026: it over-reserves at most three voices' share on a core and never
+    under-charges), and the evidence's kind. Read here, not from machine-ports.json, so it is no controller source."""
+    price = json.loads((Path(__file__).with_name('analog_bd_dsp_price.json')).read_text())
+    kind = price['kind'].removesuffix('-instructions')  # machine_ports.py's spelling: <kind>-instructions
+    if kind not in abi9.ENGINE_KINDS:
+        raise ValueError('Analog BD\'s price must be executed or hardware evidence, not %r.' % price['kind'])
+    return price['perVoice'] + price['perCoreWhileEnabled'], kind
+
+
 def analog_package(data, sdk, work, assemble):
-    """The Analog BD controller package (build.py's, no DSP) as ABI 10, carrying its engine and initial words."""
+    """The Analog BD controller package (build.py's, no DSP) as ABI 10, carrying its engine, initial words and price."""
     unit = analog_engine(sdk, work, assemble)
+    cycles, kind = analog_price()
     return abi9.engine(data, unit['words'], unit['relocations'], unit['site'], 3, unit['exit'],
-                       [('x', abi9.BOTH_CORES, unit['address'], unit['init'])])
+                       [('x', abi9.BOTH_CORES, unit['address'], unit['init'])], cycles=cycles, kind=kind)
 
 
 PACKAGES = {'analog-bassdrum': analog_package}  # base-bound modules whose packages carry an engine

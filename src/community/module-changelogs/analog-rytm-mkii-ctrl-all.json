@@ -1,0 +1,13 @@
+[
+  {
+    "version": "1.2.0",
+    "date": "2026-11-07",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: MrScruff's Ctrl All, ported to elemod by Iced-Cream, with his code unchanged.",
+      "Hold TRK and turn a knob on a sound page or the TRIG page: the same step goes to that parameter on all twelve sound tracks.",
+      "Each track keeps its own offset and stops at its own limits; on the SYNTH page each track moves the knob of its own machine.",
+      "FILTER TYP sets every track to the type the selected track reaches.",
+      "With the FX track selected, a trig key held, or on the FX and global pages, the knob works as stock."
+    ]
+  }
+]

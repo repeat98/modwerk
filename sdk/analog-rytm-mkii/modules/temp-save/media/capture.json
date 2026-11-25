@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "temp-save",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-05T15:30:00Z",
+  "imageSha256": "ad1d32ed51c981c9241977007d4d3d8f2bbabb0cee724fc7f1d453e6c7460b20",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant e558ad22) + this folder's Temp Save 0.1.0-experimental (package b7ce860c), materialised against stock OS 1.74, --version TS11",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f; no card (starts formatted); JIT on; --every 1000M; DTBOOT_END_PNG at the end of each run"
+  },
+  "conditions": "Cold boot; eight NO presses from 7003M, 300M apart, close the calibration notices. Then FUNC held from 11003M for 300M with YES pressed at 11103M (12M): TEMP SAVED. The second run repeats that, then FUNC from 12403M for 300M with NO at 12503M (12M): RELOADED. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/temp-saved.png",
+      "frame": "end.png",
+      "plan": "DTBOOT_END_PNG=temp-saved.png dtboot ts11.syx --instr 11303M --every 1000M --press NO@7003M ... --press NO@9103M (8 presses, 300M apart) --press FUNC@11003M:300M --press YES@11103M:12M",
+      "sha256": "da6f9e82f74d77a106fa5e9f391e52e33ed27cdd79087a0fbdf2bc4b62e62380"
+    },
+    {
+      "path": "media/reloaded.png",
+      "frame": "end.png",
+      "plan": "DTBOOT_END_PNG=reloaded.png dtboot ts11.syx --instr 12703M --every 1000M --press NO@7003M ... --press NO@9103M (8 presses, 300M apart) --press FUNC@11003M:300M --press YES@11103M:12M --press FUNC@12403M:300M --press NO@12503M:12M",
+      "sha256": "9b3381da7ff25eb3ccf13c90033f4425f1393eade0d93f48ea32e4f254c2c1f3"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Octatrack module edge cases
 
+A change's own edge cases start here and in the [hardware traps](OCTATRACK_HARDWARE_TRAPS.md): [the test procedure](TEST_PROCEDURE.md#edge-cases) says how to derive, run and record them.
+
 Owner and Claude, 11 October 2026, after the persistence run on a scratch project. What can go wrong when
 modules, projects, Parts and the base meet, what the base does today, and what is proven. Status: **done**
 (proven on the unit), **built** (code exists, not proven on the unit), **open** (not built or not tested).
@@ -15,7 +17,7 @@ brought back the baseline exactly. Not yet: another project and back, a real pow
 
 | # | Case | Today | Status |
 |---|---|---|---|
-| 1 | A project names modules that are not installed | The unit opens MISSING MODULES (status.c, owner: a list to close, not a popup): every module the project names in any bank or Part that is not installed, UP and DOWN to scroll, YES or NO to close (12 October 2026: modules that went missing while the page showed reopened it at once after NO, which looked like NO doing nothing; now what the open page shows counts as told, `test_status.c`; on the unit, the tester image `dc1d7a39…`: one NO closed it for good); it opens when the list gains one and has held still for half a second, once the boot's restore is over, and closes itself when nothing is missing. Selecting a track running one still says `MISSING <NAME>` briefly. Those slots play dry and keep their knobs. The site reads the same list every 3 s while the unit is idle and offers Add to set, or says a load brings them back. | unit: done (S45); site: built, not seen in a browser with the unit |
+| 1 | A project names modules that are not installed | The unit opens MISSING MODULES (status.c, owner: a list to close, not a popup): every module the project names in any bank or Part that is not installed, UP and DOWN to scroll, YES or NO to close (12 October 2026: modules that went missing while the page showed reopened it at once after NO, which looked like NO doing nothing; now what the open page shows counts as told, `test_status.c`; on the unit, the tester image `dc1d7a39…`: one NO closed it for good); it opens when the list gains one and has held still for half a second, once the boot's restore is over, and closes itself when nothing is missing. Selecting a track running one still says `MISSING <NAME>` briefly. A module switched off on MODULES is listed (OFF), YES switches every such one on at once, and its track says `<NAME> IS OFF`; the page opens for one only after a project load, not right after the player switched it off (base 0.7.2). Machines too since base 0.7.3: the project's machine map (`#MODWERK_MC=` lines, `machine_registry.c`) names each machine its tracks are signed for, so MISSING lists an absent or switched-off machine with where, YES switches it on, and its track says `MISSING POLY8` or `POLY8 IS OFF`; before, such a track (POLY8, VECTOR) just played as FLEX without a word. Those slots play dry and keep their knobs. The site reads the same list every 3 s while the unit is idle and offers Add to set, or says a load brings them back. | unit: done (S45); site: built, not seen in a browser with the unit |
 | 2 | A new base build: the saved set belongs to another build and is not restored | The page lists every module the project names (S45: E-Verb, Euclid, TapeHead); reinstalling them brought back every assignment, knob and both Part copies | done (unit) |
 | 3 | The restore installs only some modules (`SOME MODULES FAILED`) | The ones the project names show as missing on the site (1); the unit's popup does not name them | built (as 1) |
 | 4 | Another project gives a handle to a different module | Two-step rebind: the old module lets go, then the new one takes the handle. On the unit: MODWERK-TEST, then a second scratch project with E-Verb on another track, then back: identical to the baseline (both projects used the catalogue handles, so no handle actually moved) | built (host test, emulator); switch and back done |
@@ -39,7 +41,7 @@ brought back the baseline exactly. Not yet: another project and back, a real pow
 | # | Case | Today | Status |
 |---|---|---|---|
 | 14 | Power lost while the set is being saved | Two files in turn: the older set stays | built (host test) |
-| 15 | FUNC held at boot skips the restore | Everything the project names is missing; the card's set is left alone, and the next normal boot restores it | done (flashed beta, 12 October 2026; below) |
+| 15 | PROJ held from power-on (or FUNC held while the restore runs) skips the restore | Everything the project names is missing; the card's set is left alone, and the next normal boot restores it. PROJ since 11 November 2026 (owner): FUNC at power-on opens Elektron's Startup Menu, so FUNC had to come after the startup animation began. The MKI has no PROJ key: FUNC stays its gesture | FUNC: done (flashed beta, 12 October 2026; below). PROJ: in part (11 November 2026, below): MODULES SKIPPED through a RAM boot, not yet from a cold power-on on the flashed base, nor on an MKI |
 | 16 | A real power cycle into a flashed base that restores | MODULES LOADED, the set back from the card | done (flashed beta, 12 October 2026; below) |
 | 17 | The restore held back past 10 s (playback or USB disk mode right after boot) | Hosts then go ahead, and a late restore could still overwrite a change made before it. Installs need the transport stopped, so this needs the card unavailable or USB disk mode for 10 s after boot while installing | open (rare; shortcut in ep0.c) |
 
@@ -164,7 +166,8 @@ A ColdFire unit with a large `.bss` (Temp Save keeps 42 KB) reaches it by absolu
    manager must retire the old code from the slots running it before the new code binds, as the rebind does).
 4. Case 6: layout numbers, before the first module update that changes its knobs.
 5. Needing the owner at the unit: 11 (SAVE TO NEW, EXPORT TO SET: read project.work in USB disk mode), 19 (the
-   arranger), the site's note in a browser. 15 and 16 are done (12 October 2026).
+   arranger), the site's note in a browser, and 15 with PROJ from a cold power-on on the flashed base (FUNC's 15 and 16 are done,
+   12 October 2026; PROJ in part, 11 November 2026).
 6. Case 9: paste between projects (owner, 11 October 2026: not now).
 
 ## Owner steps for 15 and 16, on the flashed beta (12 October 2026)
@@ -187,16 +190,19 @@ Case 16, a real power cycle restores the set:
 9. Switch it on, holding no key.
 10. About 3 seconds after the project shows, read the message: MODULES LOADED, SOME MODULES FAILED or MODULES NOT LOADED.
 
-Case 15, FUNC skips the restore:
+Case 15, PROJ skips the restore (the gesture since 11 November 2026; done only in part, 11 November results below):
 
 11. Switch off and wait 5 seconds.
-12. Switch on, holding no key.
-13. When the startup animation begins, press and hold FUNC until MODULES SKIPPED shows, then let go. If the Startup
-    Menu appears, FUNC came too early: switch off, wait 5 seconds and repeat from step 12.
-14. Switch off, wait 5 seconds, and switch on holding no key: MODULES LOADED again, because the skip leaves the card's
+12. Hold PROJ, switch on, and keep holding PROJ until MODULES SKIPPED shows (about three seconds after the project
+    shows), then let go.
+13. Switch off, wait 5 seconds, and switch on holding no key: MODULES LOADED again, because the skip leaves the card's
     set alone.
 
-After steps 10, 13 and 14 the agent reads INVENTORY and MISSING over USB and records them here.
+FUNC still skips it too (the 12 October run below): switch on holding no key, and when the startup animation begins,
+press and hold FUNC until MODULES SKIPPED shows. FUNC held from power-on opens the Startup Menu instead. On an MKI,
+which has no PROJ key, FUNC is the only way.
+
+After steps 10, 12 and 13 the agent reads INVENTORY and MISSING over USB and records them here.
 
 ### Results on the owner's MKII (12 October 2026)
 
@@ -214,7 +220,7 @@ The owner flashed `Modwerk-octatrack-beta3.bin`. The agent then read the unit wi
   TapeHead. The restore record said RESTORED, 2 of 2, and INVENTORY listed E-Verb and Mini Verb.
   - HELLO then shows generation 0 and the base's own digest as the active set: a restore installs through the loader,
     not as an upload. INVENTORY, not HELLO, says what is installed.
-- **Case 15:** the owner held FUNC from the start of the startup animation; MODULES SKIPPED showed. The restore record
+- **Case 15 (FUNC, the gesture then):** the owner held FUNC from the start of the startup animation; MODULES SKIPPED showed. The restore record
   said SKIPPED. INVENTORY was empty, and MISSING listed E-Verb, Euclid, Air Chorus and TapeHead (Mini Verb is named by no
   bank).
 - **The next normal power cycle:** MODULES LOADED again; RESTORED, 2 of 2; INVENTORY E-Verb and Mini Verb; MISSING
@@ -224,3 +230,19 @@ The owner flashed `Modwerk-octatrack-beta3.bin`. The agent then read the unit wi
 for a moment. They are stock popups (`modset.c`, `SAY`), and the MISSING MODULES page covers them half a second after
 its list stops changing, so the owner could hardly read MODULES SKIPPED. Either keep MISSING back for a few seconds
 after the restore's message, or put the restore's result on the MISSING page.
+
+### Results on the owner's MKII (11 November 2026)
+
+Seen by the owner and the orchestrating session; nothing more was tested.
+
+- **PROJ through a RAM boot:** the development twin of the new base (configuration `513be133…`, 20-channel USB
+  Audio) was RAM-booted while the owner held PROJ through the restart. MODULES SKIPPED showed. The key rows read back
+  zero only after PROJ was released, so the key bit itself was not read.
+- **PROJ at power-on on the previously flashed base:** holding PROJ while switching the unit on started it normally:
+  Elektron's bootloader did not open the Startup Menu or react.
+- **The `off` layout** of the new base (identity `d891acb3…`), built through the site's own path, was RAM-booted: it
+  started and answered `status` over the USB link ("normal").
+
+Not done: the new base flashed to the unit (from the card or over USB); PROJ held from a cold power-on on the new base
+(the first two results together are not that test); any MKI (the repository's key tables list no PROJ key code for
+the MKI); audio or MIDI of the `off` layout on a host.

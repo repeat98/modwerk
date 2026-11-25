@@ -7,7 +7,7 @@ open until that configuration can be reproduced.
 
 The change adds [a native regression probe](../scripts/repitch-original-tempo-probe.cpp)
 for live sample-tempo edits. The shipped SDK, Repitch source/version, catalog and
-compiled packages remain unchanged. [The sanitized results](repitch-original-tempo-2026-10-08.json)
+compiled packages remain unchanged. [The sanitized results](verification/repitch-original-tempo-2026-10-08.json)
 bind the tests to the exact module source, local image, emulator and toolchain.
 Firmware, cards/projects, raw RAM/LCD captures and generated test audio stay local.
 

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "54200264209d44303e150cdb946ca96ef1062c30",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "9bf38241d9d96cafb731dd9f4e6e5e1434104f80e77a06025c419fba58f94ef0",
+      "vendoredSha256": "9bf38241d9d96cafb731dd9f4e6e5e1434104f80e77a06025c419fba58f94ef0"
+    },
+    {
+      "path": "docs/FAILURE_MODES.md",
+      "sourcePath": "docs/contributing/FAILURE_MODES.md",
+      "sourceSha256": "1237e1ff3695b31fa363e88cea1edb51e1fb1afc2eed549c7005fa4e3330d43d",
+      "vendoredSha256": "1237e1ff3695b31fa363e88cea1edb51e1fb1afc2eed549c7005fa4e3330d43d"
+    }
+  ],
+  "localAdaptations": [
+    "None: both files are upstream byte for byte, replacing the copies the 5f8e779f (TRAPS.md) and bc144523 (FAILURE_MODES.md) records pinned. HARDWARE_MATRIX.md and MIDI_TRACKS.md are unchanged upstream and stay pinned by the dcf93d37 and 30fbb8e4 records. CHIP.md is not taken."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN image (unpacked from OCTATRACK_OS1.40C.bin sha 34695b60..., MAIN sha 164f3122..., local, nothing written): TRAPS.md has no hex string of 8 bytes or more; FAILURE_MODES.md has nine, and no 8-byte window of any of them occurs in MAIN or in its DSP payloads read as big-endian words. The scanner found 5 windows of planted stock bytes in an in-memory probe.",
+    "No objdump listing and no instruction encoding. The rewritten DELAY entry in FAILURE_MODES.md names the low-pass index computation as a three-instruction sequence by mnemonic at a stock address, as a description of how the index is formed, like the single instructions by mnemonic the bc144523 record accepted; its one 32-bit value is a word of a module's page cave, not stock. TRAPS.md's new entries name addresses, a USB register idiom and stock routines by address."
+  ],
+  "limitations": [
+    "Documentation only: no code, build input, module source or tool pin changes. Of the new entries, the stock DELAY reading its coefficient table across the whole zero run 0x400d24d0..0x400d2ce0 (entries 508..1023) corrects what Modwerk's card builders assume and is listed in docs/OCTATRACK_HARDWARE_TRAPS.md with the page plane and the stock file layer's buffer; the card composer's guard is a separate base-coupled change. The rest concern upstream machinery Modwerk does not carry (its demand loader, REMIX SWITCH, PLOCKS P2, MIDI-only test fixtures, CX OSC)."
+  ]
+}

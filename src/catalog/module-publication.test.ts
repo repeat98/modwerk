@@ -11,25 +11,29 @@ import { resourceImpactFixture } from './test-fixtures/resource-impact'
 
 it('checks real PR publication changes without executing module source', async () => {
   const root=mkdtempSync(resolve(tmpdir(),'octamod-publication-test.'))
-  const folder=resolve(root,'sdk/octabam/modules',example.id)
-  const document={...structuredClone(example),access:{...example.access,screenshots:[] as string[]}}
+  const folder=resolve(root,'sdk/octatrack/modules',example.id)
+  // Every module names its CPU price (scripts/module-cpu-price.mjs); the fixture's is not what this test is about.
+  const cpuPrice={value:0.4,unit:'percent-of-frame',measure:'frame-interrupt',tool:'npm run device:price',date:'2026-11-16',conditions:'Fixture',source:'TESTING.md'}
+  const document={...structuredClone(example),access:{...example.access,screenshots:[] as string[]},resources:{...example.resources,cpuPrice}}
   const catalog={schemaVersion:1,sourceRevision:'a'.repeat(40),modules:[{id:document.id,version:document.version,addedAt:'2026-10-05T12:00:00Z'}]}
   const put=(path:string,value:string)=>{mkdirSync(dirname(path),{recursive:true});writeFileSync(path,value)}
   const save=()=>{
     put(resolve(folder,'octamod.module.json'),JSON.stringify(document))
     put(resolve(root,'sdk/catalog.json'),JSON.stringify(catalog))
   }
-  const run=(...args:string[])=>spawnSync(process.execPath,['scripts/modules.mjs',...args],{cwd:root,encoding:'utf8'})
+  // A draft pull request's CI sets MODWERK_EVIDENCE_PENDING=1 (module-pr.yml), which turns these refusals into warnings.
+  const run=(...args:string[])=>spawnSync(process.execPath,['scripts/modules.mjs',...args],{cwd:root,encoding:'utf8',env:{...process.env,MODWERK_EVIDENCE_PENDING:'0'}})
+  const draft=()=>spawnSync(process.execPath,['scripts/modules.mjs','--base','HEAD'],{cwd:root,encoding:'utf8',env:{...process.env,MODWERK_EVIDENCE_PENDING:'1',GITHUB_ACTIONS:''}})
   const failure=()=>{const result=run('--base','HEAD','--write');expect(result.status).not.toBe(0);return result.stderr}
   const git=(...args:string[])=>execFileSync('git',args,{cwd:root,encoding:'utf8'})
   try {
-    for(const path of ['scripts/modules.mjs','scripts/dsp-source-gates.py','sdk/octabam/tools/build/norep.py','sdk/octabam/tools/build/nolabelprefix.py','scripts/machine-modules.mjs','scripts/conflict-ids.mjs','scripts/elemod-dependencies.mjs','scripts/change-scope.mjs','scripts/module-source.mjs','scripts/synth-release.mjs','scripts/module-qualification.mjs','scripts/retained-evidence.mjs','scripts/engine-asset.mjs','scripts/module-documentation.mjs','src/catalog/module-contract.ts','src/catalog/module-contract-v3.ts','src/catalog/module-authors.ts','src/devices/machine-contract.ts','src/catalog/versions.ts','src/catalog/module-folder.ts','src/catalog/resource-impact.ts','sdk/module-release-waivers.json']){
+    for(const path of ['scripts/modules.mjs','scripts/module-cpu-price.mjs','scripts/dsp-source-gates.py','sdk/octabam/tools/build/norep.py','sdk/octabam/tools/build/nolabelprefix.py','scripts/machine-modules.mjs','src/config/usb-audio.ts','scripts/conflict-ids.mjs','scripts/zdl-binaries.mjs','src/engine/zoom/zoom-protocol.ts','src/catalog/zoom-effect-ids.ts','scripts/elemod-dependencies.mjs','scripts/change-scope.mjs','scripts/base-size.mjs','scripts/machine-folders.mjs','src/devices/machines.generated.json','scripts/module-source.mjs','scripts/synth-release.mjs','scripts/module-qualification.mjs','scripts/retained-evidence.mjs','scripts/engine-asset.mjs','scripts/module-documentation.mjs','src/catalog/module-contract.ts','src/catalog/module-contract-v3.ts','src/catalog/module-authors.ts','src/devices/machine-contract.ts','src/catalog/versions.ts','src/catalog/module-folder.ts','src/catalog/resource-impact.ts','sdk/approvals/module-release-waivers.json']){
       mkdirSync(dirname(resolve(root,path)),{recursive:true})
       copyFileSync(resolve(path),resolve(root,path))
     }
     for(const path of ['manifest.py','README.md','TESTING.md','LICENSE'])put(resolve(folder,path),path==='manifest.py'?'raise AssertionError("module source must never execute")':'Fixture document\n')
     save()
-    const baselinePath=resolve(root,'sdk/module-qualification-baseline.json')
+    const baselinePath=resolve(root,'sdk/approvals/module-qualification-baseline.json')
     const baseline={schemaVersion:1,recorded:'2026-10-02',modules:[{id:document.id,version:document.version,folderSha256:await moduleFolderSha256(folder)}]}
     const baselineBytes=JSON.stringify(baseline)
     put(baselinePath,baselineBytes)
@@ -64,7 +68,15 @@ it('checks real PR publication changes without executing module source', async (
     document.version='0.1.1'
     catalog.modules[0].version=document.version
     save()
+    // A new version's TESTING.md names it (scripts/module-qualification.mjs, testingVersionProblem).
+    put(resolve(folder,'TESTING.md'),'Fixture document for 0.1.1\n')
     expect(failure()).toContain('actual screenshots')
+    // A draft pull request reports the missing evidence and goes on to the next check, which still fails: resource estimates are
+    // written before a unit test, so a draft owes them like any other check.
+    const pending=draft()
+    expect(pending.stderr).toContain('Release evidence still to come (draft): '+document.id+': '+document.id+'.access: publication requires OT UI access instructions and actual screenshots')
+    expect(pending.stderr).toContain('release requires populated CPU, DSP core and memory gauges')
+    expect(pending.status).not.toBe(0)
     const path='media/ui.png'
     document.access.screenshots=[path]
     // Synthetic image fixture exercises file validation, not authenticity review.
@@ -106,4 +118,4 @@ it('checks real PR publication changes without executing module source', async (
     save()
     expect(failure()).toContain('actual screenshots')
   } finally { rmSync(root,{recursive:true,force:true}) }
-},15000)
+},20000)

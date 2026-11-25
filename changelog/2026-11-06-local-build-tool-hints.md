@@ -1,0 +1,1 @@
+Development: on a Mac with Docker Desktop, the isolated package builds now say to pick an output folder under your home folder when Docker can't mount one under `/private/tmp`. A local `npm run sdk:check` without `dsp_asm` now skips the Octatrack Analog BD package with a note instead of failing on a missing file.

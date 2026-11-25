@@ -1,8 +1,9 @@
 // Import history remains exact for code and preserved upstream files. Local module guides are editable.
 import { createHash } from 'node:crypto'
-import { lstatSync, readFileSync } from 'node:fs'
+import { lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, resolve, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { manifestWithoutPrice } from './module-cpu-price.mjs'
 
 const localGuides = new Set(['README.md', 'TESTING.md', 'CPU.md'])
 export function verifyImportedFile(path, expected, moduleRoot = null) {
@@ -16,6 +17,13 @@ export function verifyImportedFile(path, expected, moduleRoot = null) {
     return true
   }
   const actual = createHash('sha256').update(bytes).digest('hex')
+  // A measured CPU price changes no module (owner, 18 November 2026): an imported manifest still matches when only
+  // device:price --write's resources.cpuPrice was added (module-qualification.mjs keeps the same rule).
+  if (actual !== expected && moduleRoot && basename(path) === 'octamod.module.json' && basename(dirname(resolve(path))) === basename(resolve(moduleRoot))) { // the module's manifest, or its generated sdk/octabam copy
+    let priceless
+    try { priceless = manifestWithoutPrice(bytes.toString('utf8')) } catch { priceless = null }
+    if (priceless !== null && createHash('sha256').update(priceless).digest('hex') === expected) return false
+  }
   if (actual !== expected) throw new Error(`Imported source checksum mismatch: ${path}\nExpected ${expected}\nActual   ${actual}`)
   return false
 }
@@ -27,10 +35,21 @@ export function checkSdkImports(root) {
     for (const item of record.files) {
       const parts = item.path.split('/')
       if (parts.some(part => !part || part === '.' || part === '..' || part.includes(':')) || item.path.includes('\\')) throw new Error('Invalid import path: ' + item.path)
-      const base = item.path.startsWith('modules/midi-scenes/') ? 'sdk/archive/midi-scenes-8.2' : 'sdk/octabam'
+      // The records name files as octabam's tree does; its modules/ folder is sdk/octatrack/modules here.
+      const base = parts[0] === 'modules' ? 'sdk/octatrack' : 'sdk/octabam'
       const path = resolve(root, base, item.path)
-      const moduleRoot = parts[0] === 'modules' ? resolve(root, 'sdk/octabam/modules', parts[1]) : null
+      const moduleRoot = parts[0] === 'modules' ? resolve(root, 'sdk/octatrack/modules', parts[1]) : null
       if (verifyImportedFile(path, item.vendoredSha256, moduleRoot)) guides++
+      files++
+    }
+  }
+  // Vendored upstream trees (a record whose files land under vendor/): POSIX paths, and each hash is the committed file's bytes.
+  for (const name of readdirSync(resolve(root, 'sdk/imports')).filter(name => name.endsWith('.json')).sort()) {
+    const record = JSON.parse(readFileSync(resolve(root, 'sdk/imports', name), 'utf8'))
+    if (!Array.isArray(record.files) || !record.files.some(item => typeof item?.to === 'string' && item.to.startsWith('vendor/'))) continue
+    for (const item of record.files) {
+      for (const path of [item.from, item.to]) if (typeof path !== 'string' || path.includes('\\') || path.split('/').some(part => !part || part === '.' || part === '..' || part.includes(':'))) throw new Error(`Invalid import path in sdk/imports/${name}: ${path} (relative, with forward slashes)`)
+      verifyImportedFile(resolve(root, item.to), item.sha256)
       files++
     }
   }

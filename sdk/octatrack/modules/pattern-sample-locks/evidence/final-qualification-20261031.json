@@ -1,0 +1,427 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "scope": "USB-only MKII preparation; no release approval",
+  "moduleVersion": "0.1.8-experimental",
+  "sourceRevision": "31bb81c8cdcfa6c4887bfe7841ba41b235b91fb7",
+  "runtimeChanged": false,
+  "candidateSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+  "checks": {
+    "prReady": true,
+    "frontendPassed": 2766,
+    "frontendSkipped": 1,
+    "sdkCheckPassed": true,
+    "fullCheckSeconds": 162.7,
+    "sourceBuilds": {
+      "sourceRevision": "31bb81c8cdcfa6c4887bfe7841ba41b235b91fb7",
+      "immutableToolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+      "networkDisabled": true,
+      "octatrackCompilePassed": true,
+      "octatrackImportCheckAndVerifyExistingPassed": true,
+      "elemodCompilePassed": true,
+      "elemodReleaseExportsReproduced": 28,
+      "octatrackInitialEnvironmentFailure": "Git rejected container mount ownership; retry added safe.directory=/source via Git environment configuration. Build and importer unchanged."
+    }
+  },
+  "publicPackage": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "normalPublicBuildPassed": true,
+    "normalPublicCheckPassed": true,
+    "bothStockScansPassed": true,
+    "usbOnly": true,
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "bytes": 10048,
+    "byteIdenticalToEmulatorTestedPackage": true,
+    "negativeCliChecks": [
+      {
+        "case": "changed native source, unchanged assembled instructions",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "protected bootloader source",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "changed final package pin",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "foreign source provenance",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "missing reconstruction opt-in exposes original strict-scan rejection",
+        "refused": true,
+        "exitCode": 1
+      }
+    ],
+    "nativeInputsRestoredAfterNegativeProbes": true,
+    "helperSha256": "0a6eeeb7d747f32a9cf60492cc2f72422d97f76ee816ce47f175bc6ab9e9d8df",
+    "inputs": {
+      "scripts/octatrack-module-packages.py": "bbcedd32ac5397d806791772b8679174f80c72a041e111653ab583af85f9b903",
+      "scripts/octatrack-reconstruction.py": "c21e23f4d973bc8ed0534addbfb40a3932acac0a8d568541fd24fe326eb9c85f",
+      "sdk/drafts/pattern-sample-locks/runtime-reconstruction.json": "b9778adbed2313ccf186e0286e7c2a4cbd09117941edc388751fc660331abb25"
+    },
+    "limitations": "Private catalogue fixture only; real catalogue and qualification remain unchanged. No device or new runtime claim."
+  },
+  "usbScope": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "usbOnly": true,
+    "cardRefusal": {
+      "beta": "Pattern Sample Locks needs the Modwerk base, so card firmware cannot include it. Sync this set over USB, or take it out to build card firmware.",
+      "classic": "Pattern Sample Locks needs the Modwerk base, so card firmware cannot include it. Loading the base over USB is in the beta for now; take it out to build card firmware."
+    },
+    "classicLibraryBlocked": true,
+    "betaLibraryAllowsUsbSelection": true,
+    "excludedFromCardCompilerVersionsAndSources": true,
+    "existingCardSourceFingerprintUnchanged": true,
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "byteIdenticalToEmulatorTestedPackage": true,
+    "sevenPublicBaseAddAndRemovalUndoPreflights": 7,
+    "allPackagesPreflighted": 29,
+    "simultaneousRuntimeCompanionsTested": false
+  },
+  "stack": {
+    "hardware": false,
+    "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+    "flags": [
+      "-mcpu=54455",
+      "-Os",
+      "-std=c99",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-common",
+      "-fno-tree-loop-distribute-patterns",
+      "-fno-asynchronous-unwind-tables",
+      "-fno-unwind-tables",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/work/sdk/runtime/loader",
+      "-fno-late-combine-instructions",
+      "-fstack-usage",
+      "-fcallgraph-info=su"
+    ],
+    "sourceRevision": "31bb81c8",
+    "initializedBytes": 8748,
+    "bssBytes": 1328,
+    "relocations": 167,
+    "imageSha256": "54efd2166b30b836401d02f8d0d785e12aebc5b40196deb1a9b6e4530e6f95d5",
+    "matchesTestedRuntime": true,
+    "cMatchesCommittedAssembly": true,
+    "mcf54455GuardPassed": true,
+    "emittedFunctions": 33,
+    "authoredStackPaths": {
+      "module_key": {
+        "authoredOnlyBytes": 500,
+        "path": [
+          "module_key",
+          "psl_native_commit",
+          "psl_validate",
+          "source_valid"
+        ]
+      },
+      "module_draw": {
+        "authoredOnlyBytes": 296,
+        "path": [
+          "module_draw",
+          "psl_native_part_menu_draw",
+          "psl_font_box",
+          "pixel"
+        ]
+      },
+      "module_tick": {
+        "authoredOnlyBytes": 16,
+        "path": [
+          "module_tick",
+          "psl_native_popup"
+        ]
+      },
+      "module_enc": {
+        "authoredOnlyBytes": 44,
+        "path": [
+          "module_enc",
+          "move",
+          "psl_native_set_cursor"
+        ]
+      },
+      "psl_open": {
+        "authoredOnlyBytes": 40,
+        "path": [
+          "psl_open",
+          "psl_native_popup"
+        ]
+      }
+    },
+    "unresolvedCallGraphEdges": [
+      {
+        "caller": "psl_native_close_popup",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_text",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_part_menu_draw",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_part_menu_draw",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_commit",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_commit",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_open",
+        "target": "__indirect_call"
+      }
+    ],
+    "totalStackBoundEstablished": false,
+    "limitations": [
+      "Stock indirect callees excluded",
+      "Caller context and interrupt nesting excluded",
+      "No hardware stack canary",
+      "Sampled probe maximum is not a bound"
+    ]
+  },
+  "selectorUndo": {
+    "status": "incomplete: input acknowledgement failed before selector",
+    "singleUploadOwner": true,
+    "base": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+    "initializedRuntimeAttested": 8748,
+    "openerSitesAttested": 3,
+    "selectorReached": false,
+    "rollbackAcknowledged": true,
+    "normalStateIndependentlyRead": true,
+    "emptyInventoryIndependentlyRead": true,
+    "previousActiveIdentityRestored": true,
+    "transportAfterRollback": {
+      "stopped": true,
+      "recording": false
+    },
+    "heldRowsAfterRollback": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "dspErrorsAfterRollback": 0,
+    "dspStallsAfterRollback": 0,
+    "postUndoSiteAndDataComparisonsCompleted": false,
+    "patternsBefore": [
+      {
+        "pattern": "A01",
+        "sha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948",
+        "matchesPriorRestoredFixture": true
+      },
+      {
+        "pattern": "A02",
+        "sha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582",
+        "matchesPriorRestoredFixture": true
+      },
+      {
+        "pattern": "A03",
+        "sha256": "74710cf77d6ea4c5517ef8c62f9e0020219fe954e85ab8f15e70625ef3719bb1",
+        "matchesPriorRestoredFixture": true
+      },
+      {
+        "pattern": "A04",
+        "sha256": "5295c0cccfd4ccfca585c72328df2ad8d15c6a80b64cb9c14c09cc858874c262",
+        "matchesPriorRestoredFixture": true
+      }
+    ],
+    "failure": "held-row acknowledgement 50"
+  },
+  "noModuleInputProbe": {
+    "moduleInventory": [],
+    "before": {
+      "heldRows": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stockFuncState": 0,
+      "fader": 0
+    },
+    "observations": [
+      {
+        "ms": 0,
+        "heldRows": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stockFuncState": 0,
+        "fader": 0
+      },
+      {
+        "ms": 100,
+        "heldRows": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stockFuncState": 0,
+        "fader": 0
+      },
+      {
+        "ms": 200,
+        "heldRows": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stockFuncState": 0,
+        "fader": 0
+      },
+      {
+        "ms": 300,
+        "heldRows": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stockFuncState": 0,
+        "fader": 0
+      },
+      {
+        "ms": 400,
+        "heldRows": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stockFuncState": 0,
+        "fader": 0
+      },
+      {
+        "ms": 500,
+        "heldRows": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stockFuncState": 0,
+        "fader": 0
+      }
+    ],
+    "after": {
+      "heldRows": [
+        37,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "stockFuncState": 0,
+      "fader": 0
+    },
+    "requestedPhysicalPanelStill": true,
+    "physicalStillnessVerifiedForEveryPacket": false,
+    "remoteFaderEvents": 0,
+    "causeIsolatedByThisRun": false,
+    "furtherRemoteInputStopped": true
+  },
+  "persistence": {
+    "performed": false,
+    "publicBase": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+    "emptyLiveSet": true,
+    "savedState": 4,
+    "savedStateName": "FOREIGN",
+    "publicBaseReadOnlySavedExportSupported": false,
+    "foreignSavedFilesOverwritten": false,
+    "backupAndReviewPending": true
+  },
+  "privateSavedExportBase": {
+    "loaded": false,
+    "buildPassed": false,
+    "refusal": "MCF54455-incompatible indexed addressing in dsp.c.o; no guard weakened"
+  },
+  "finalState": {
+    "moduleRollbackConfirmed": true,
+    "usbReleased": true,
+    "authorResetRequested": true,
+    "authorResetVerified": false,
+    "keep": false,
+    "flash": false,
+    "projectSave": false,
+    "pushed": false
+  },
+  "privateArtifactSha256": {
+    "public-preflight.private.json": "d3c7b4a88f65724d66bd9cd8b7af8abe5c139c009aa03c1b86e233de459ba062",
+    "public-saved-status.private.json": "b4058a809ba78f42369d9bd22383f7732dca31f820451d5dda971a46f20a8b41",
+    "selector-undo.private.mjs": "69fc80b851e1c26ac076561e3c8b8be4d7eb3021ea15b76054b1e192832265e3",
+    "selector-undo/receipt.private.json": "98977f77cbadb96c6d8316e131e0fe6708b0f62222aeb599c9cb75a1a7ca0ed5",
+    "selector-undo/input-recovery.private.json": "220ce88c6c54921286f457923f627e4a95d58167b502748ef2924c0e1e3bd577",
+    "selector-undo/stock-input-probe.private.json": "02c1cfae5bbeaf49f7aca38d24f9e020de4c05825a1af2e746f1d76a1a70dd6b",
+    "stack-audit.private.py": "c38edf3a4e6efdaf35bcbdae10041bc5a0d640c60a2d7616f4b5537cc706ac4e",
+    "stack-audit2/receipt.private.json": "fa3dc19f8ec2a31aae30c6ddd0d33df133e36895b04a3e4bc28ebe0a16616187",
+    "pr-ready.private.log": "e45dd784f8320c392520a0581a110e43055d3d190681663197a720cbf52f9604",
+    "public-package/public-path.json": "00efe1eb40a70a6a4af40318ae5b778603093b20238b832a77a7fac38cd1e89d",
+    "public-package/usb-beta-scope.json": "854066d40c69894b9df688bc102761e3c6ba427ae7a42e806ec5a47b69f5a535",
+    "build-recovery-base3.private.log": "f1ab00d6b81961538ed94492f3d144dcebcc3341edaebb81ad36b42fb14779b3",
+    "octatrack-source.private.log": "3c36c0e74df5f50518f04c101cf960f6b3a4c400198febbf17a466186a60cad3",
+    "octatrack-source2.private.log": "b9df654d32bb780427af2b3996a85284d89cc179b1ebd98b3dc46e48fdad04c4",
+    "octatrack-import.private.log": "ffe8e6d796bfe06e09484ae93e46814e6c591bf8c006774a6c09e9df3b99c128",
+    "elemod-source.private.log": "b6df9cbc113c89f10c4c225db2063af87cc0fb41a836229fde0aa5e8dbd24f1b",
+    "elemod-exports.private.log": "9e36412acd296a33f07126a279b807348db2ba31a7360d51934091b857e59d8f"
+  }
+}

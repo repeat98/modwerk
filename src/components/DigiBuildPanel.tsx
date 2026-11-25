@@ -5,6 +5,8 @@ import { DownloadedBuildOverview } from '../community/HardwareFeedbackCheckIn'
 import { builtModules } from '../community/build-follow-up'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { trackFirmwareDownload } from '../community/usage'
+import { noteSupportInstall } from '../community/support-prompt'
+import { SupportLine } from './SupportDialog'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
 import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
@@ -37,6 +39,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
   const deviceInfo = 'device' in state ? state.device : undefined, key = 'key' in state ? state.key : ''
   const shown = version || deviceInfo?.default_version || '2.0a', length = deviceInfo?.version_len ?? 4
   const result = state.phase === 'built' && state.result.version === shown ? state.result : undefined
+  const preflight = result && state.phase === 'built' ? state.preflight : undefined
   // ticked for this exact file: a build that gives other bytes asks again
   const storageId = result ? builtLock(result)?.id : undefined
   const knowsRecovery = !!result?.sha256 && recoveryKnown === result.sha256
@@ -71,6 +74,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
       <div><h2 id="digi-build-title">{result ? 'Firmware ready' : 'Build firmware'}</h2>
         <p id="digi-build-status" role={state.phase === 'blocked' || state.phase === 'failed' ? 'alert' : 'status'}>{message}</p>
         {state.phase === 'blocked' && state.check?.problems?.length ? <details className="build-report"><summary>Show the builder’s report</summary><ul className="build-problems">{state.check.problems.map(problem => <li key={problem}>{problem}</li>)}</ul></details> : null}
+        {state.phase === 'failed' && state.problems?.length ? <details className="build-report" open><summary>What the preflight found</summary><ul className="build-problems">{state.problems.map(problem => <li key={problem}>{problem}</li>)}</ul></details> : null}
         {state.phase === 'building' && <BuildProgressIndicator phase={state.step} finished={false}/>}
         {result && <BuildProgressIndicator finished/>}
         <span className="subtle">{'No firmware upload. Local validation does not qualify this ' + w.set + ' on hardware.'}</span>
@@ -81,7 +85,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         {result && downloadsEnabled && <RecoveryNotice machine={device.id} steps={result.recovery || device.firmware?.recovery} checked={knowsRecovery} onChange={checked => setRecoveryKnown(checked ? result.sha256 : '')}/>}
       </div>
       <div className="build-actions">
-        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
+        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { noteSupportInstall(); const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
         {!busy && (state.phase === 'ready' || state.phase === 'failed' || state.phase === 'built'
           ? <button className={'button ' + (result ? 'button-quiet' : 'button-primary')} disabled={!!versionError || !riskAccepted} onClick={() => void build(shown)} aria-describedby="digi-build-status"><Icon name="sliders" size={16} />{result ? 'Build again' : 'Build firmware'}</button>
           : <button className="button button-primary" disabled={!ready || !!missing.length || busy} onClick={() => void check()} aria-describedby="digi-build-status"><Icon name="check" size={16} />{state.phase === 'blocked' ? 'Check again' : 'Check selection'}</button>)}
@@ -97,11 +101,13 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         <ol><li>Connect the {device.name} over USB and open Elektron Transfer.</li><li>Select the unit, connect, and drop the .syx onto Transfer.</li><li>Press YES on the unit and keep it powered until the update finishes.</li></ol>
         <p className="service-note">{FLASHING_RISKS} Flash at your own risk. Local checks cannot guarantee hardware safety.</p>
         <p className="service-note">{FIRMWARE_SHARING_NOTICE}</p>
-        {downloaded === key && <p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}
+        {downloaded === key && <><p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p><SupportLine /></>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}
       {result && downloadsEnabled && downloaded === key && state.phase === 'built' && <DownloadedBuildOverview build={{ machine: device.name, os: release ?? '', modules: builtModules(state.moduleIds.map(id => device.id + '-' + id)) }}/>}
       {result && <section className="configuration-section"><details><summary>File identity &amp; builder</summary><dl className="build-identity">
         <dt>SHA-256</dt><dd>{result.sha256}</dd><dt>Mods</dt><dd>{result.mods.join(', ')}</dd>
         {storageId && <><dt>Mod storage</dt><dd>Layout {storageId}, saved with this {w.set} for its next build</dd></>}
+        {preflight && <><dt>Preflight</dt><dd>Passed. Sections {preflight.unchangedSections.join(', ')} are byte for byte stock; {preflight.changed.length} changed {preflight.changed.length === 1 ? 'run' : 'runs'} of stock bytes, each inside a declared site ({[...new Set(preflight.changed.map(run => run.owner))].join(', ') || 'none'}); {kib(preflight.appended)} appended of {kib(preflight.appendLimit)} allowed; {kib(preflight.flashHeadroom)} flash headroom.</dd>
+          <dt>Stock file SHA-256</dt><dd>{preflight.stockSha256}</dd><dt>Main OS SHA-256</dt><dd>{preflight.mainBuildSha256} (stock {preflight.mainStockSha256})</dd></>}
         <dt>Builder</dt><dd><a href={BUILDER_SOURCE.repository + '/tree/' + BUILDER_SOURCE.commit} target="_blank" rel="noreferrer">elekloader {BUILDER_SOURCE.commit.slice(0, 7)} ↗</a> by irpina, GPL-3.0-or-later · <a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">Licence notices</a></dd>
       </dl></details></section>}
       {lines.length > 0 && <section className="configuration-section"><details open={state.phase === 'failed'}><summary>Build log</summary>

@@ -1,0 +1,157 @@
+# Improved AMP: a lock trig (a trig without a note: FUNC + the trig key in GRID RECORDING) is not faded
+# for, and one with RTRG on gives a running retrig series its own rate, whose strikes are faded for.
+# HLD 57 holds each strike into the next; each take plays the pattern three times (3 hits).
+# `lk`: note trigs on steps 1 and 3, a lock trig on step 2, ENV RESET AMP: 3 dips (before step 3 each
+# time); a fade before the lock trig would silence the voice until step 3 (6 hits, no dip).
+# `lr`: a trig with a retrig lock on step 1 (the kit's RATE and LEN: 1/16 and 1/4 here, strikes on steps
+# 1 to 4) and a lock trig on step 3 with RTRG on at RATE 1/32 (UP in the retrig menu: 1/16, 1/20, 1/24,
+# 1/32). From step 3 on the series strikes every 62.5 ms until its length ends at step 5: at 0, 125, 250,
+# 312.5, 375 and 437.5 ms as the module counts it, 5 dips a time, the shortest 62.5 ms apart. At OFF: no
+# dip, and the first hit is as long as at AMP (to 60 ms).
+# `lr` is also what shows that the gesture places a lock trig on the unit: nothing on the screen does.
+# Expected from the module's README and code and from stock's manual; not yet run on the unit.
+# The retrig menus' screens are checked against their references. The BD track needs a sound that rings
+# with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-prefade-locktrig
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+hold FUNC
+wait 300
+key T2
+release FUNC
+wait 300
+key RECORD
+wait 300
+audio lk BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+hold FUNC
+wait 300
+key T3
+release FUNC
+wait 300
+hold T1
+wait 300
+key RTRG
+wait 400
+key RTRG
+wait 400
+screen rt1
+release T1
+wait 300
+expect rt1 == ref region 13 19 104 28
+hold T3
+wait 300
+key RTRG
+wait 400
+key RTRG
+wait 400
+key UP x3
+wait 400
+screen rt3
+release T3
+wait 300
+expect rt3 == ref region 13 19 104 28
+expect rt3 != rt1 region 13 19 104 28
+key RECORD
+wait 300
+audio lr BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+wait 300
+audio lroff BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect lk.hits == 3
+expect lk.dips == 3
+expect lr.hits == 3
+expect lr.dips == 15
+expect lr.gapmin == 62.5 within 4
+expect lroff.hits == 3
+expect lroff.dips == 0
+expect lr.len20 > lroff.len20 - 60
+expect lr.len20 < lroff.len20 + 60

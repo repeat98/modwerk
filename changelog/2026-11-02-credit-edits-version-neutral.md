@@ -1,0 +1,1 @@
+Development: renaming a Digitakt, Digitone or Analog Rytm module, or changing how its author is credited (the display name, author name and credits, or the licence declaration), no longer needs a new module version, as on the Octatrack. A new author login, maintainer or licence still does.

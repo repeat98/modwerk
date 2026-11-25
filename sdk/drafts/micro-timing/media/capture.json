@@ -1,0 +1,38 @@
+{
+  "captured": "2026-11-19",
+  "moduleId": "micro-timing",
+  "moduleVersion": "0.1.1-experimental",
+  "firmware": "1.40C",
+  "imageSha256": "5e359bf64919555125f0225744b5bb886a5661bed0e00279065b7ea38f99597b",
+  "packageSha256": "f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292",
+  "emulatorSha256": "6920f2385726304a11a699d709d0565afcae8e0a8d5a5ef88546b805d28f1aa7",
+  "cardSha256": "17ac3c525ec770cafbbe892e3870f3d2ee49a2479a96e45e0c5cc4c2bf993b64",
+  "setup": "Headless ot_emu; MKII panel; development twin MAIN.raw; DSP cores with --dsp-rt; local card mounted, not committed; transport stopped. Package installed over the emulator USB link and not kept. LCD plane at 0x46c7e0ea, grayscale 24 and 240, scale 6.",
+  "palette": {
+    "on": [240, 240, 240],
+    "off": [24, 24, 24]
+  },
+  "method": "ot_emu --interactive. A key is held for run 120 and released, then the plane is read. This is not capture-module-ui.py.",
+  "plan": [
+    { "press": ["YES"] },
+    { "press": ["REC"] },
+    { "press": ["FUNC", "BANK"] },
+    { "press": ["DOWN"] },
+    { "capture": "ot-micro-t.png" },
+    { "encoder": { "name": "LEVEL", "delta": 1 } },
+    { "capture": "ot-micro-t-step.png" },
+    { "press": ["MIDI"] },
+    { "capture": "ot-micro-t-midi.png" },
+    { "press": ["MIDI"] },
+    { "press": ["DOWN"] },
+    { "press": ["DOWN"] },
+    { "press": ["DOWN"] },
+    { "capture": "ot-rec-trg.png" }
+  ],
+  "screenshots": {
+    "ot-micro-t.png": "6ec075655a76553eeafe277eb50d15410f8df16811ce1e4229fa303c9c041380",
+    "ot-micro-t-step.png": "d4815c9625d0c2d47832038f9f5f7723220374200370f330814783762f5c895e",
+    "ot-micro-t-midi.png": "83a58d326225e7b4d5ff337cc8200eb96c210b55500c87ee8399d09ec2854069",
+    "ot-rec-trg.png": "e5cc041ce1c73d27c1ff56ca021a63c7d12cb3466279180319966400be02dab9"
+  }
+}

@@ -1,0 +1,286 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitakt",
+ "moduleId": "live-looper",
+ "moduleVersion": "0.1.0-experimental",
+ "capturedAt": "2026-11-10",
+ "firmware": "1.54",
+ "imageSha256": "8eb45a154c0e355813e1db5b657700d798e9d6a07b0f7b653a8b043ad5fadc6b",
+ "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+ "source": {
+  "repository": "https://github.com/repeat98/modwerk",
+  "revision": "uncommitted working tree on e030632cf3679dfc0fc884913e78b70acac887d1, branch module/loop-fade",
+  "path": "sdk/digitakt/modules/live-looper"
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
+ },
+ "catalog": {
+  "revision": "e030632cf3679dfc0fc884913e78b70acac887d1",
+  "sha256": "7f10e01e24980fcbc7c3890aee98c30f0f7c2c35abbb9eef0aff0f4d9e48bb20",
+  "cores": 10,
+  "mods": 82
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "2.1",
+    "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+   },
+   {
+    "id": "machine-pages",
+    "version": "1.2",
+    "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+   },
+   {
+    "id": "live-looper",
+    "version": "0.1.0-experimental",
+    "sha256": null
+   }
+  ],
+  "linker": "Modwerk engine linkMods (scripts/link-image.mjs)",
+  "outputVersion": "LL02",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47"
+  },
+  "python": "3.12.15",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture. Audio is off in the capture session, so the sequencer does not run: page 2 shows LOOP WAIT.",
+  "sandbox": "Private temporary output only."
+ },
+ "inputs": [
+  [
+   1000.004,
+   "press 2"
+  ],
+  [
+   1103.959,
+   "press 25"
+  ],
+  [
+   1203.962,
+   "release 25"
+  ],
+  [
+   1503.971,
+   "release 2"
+  ],
+  [
+   1603.973,
+   "press 1"
+  ],
+  [
+   1703.977,
+   "press 20"
+  ],
+  [
+   1803.979,
+   "release 20"
+  ],
+  [
+   2103.988,
+   "release 1"
+  ],
+  [
+   2203.991,
+   "press 15"
+  ],
+  [
+   2303.994,
+   "release 15"
+  ],
+  [
+   2604.002,
+   "press 15"
+  ],
+  [
+   2704.005,
+   "release 15"
+  ],
+  [
+   3004.014,
+   "press 15"
+  ],
+  [
+   3104.017,
+   "release 15"
+  ],
+  [
+   3404.026,
+   "press 15"
+  ],
+  [
+   3504.029,
+   "release 15"
+  ],
+  [
+   3804.038,
+   "press 12"
+  ],
+  [
+   3904.041,
+   "release 12"
+  ],
+  [
+   4204.049,
+   "press 12"
+  ],
+  [
+   4304.052,
+   "release 12"
+  ],
+  [
+   5404.084,
+   "press 20"
+  ],
+  [
+   5504.087,
+   "release 20"
+  ],
+  [
+   5804.095,
+   "turn 1 +4"
+  ],
+  [
+   5846.089,
+   "turn 1 +4"
+  ],
+  [
+   5886.089,
+   "turn 1 +4"
+  ],
+  [
+   5926.09,
+   "turn 1 +4"
+  ],
+  [
+   5966.688,
+   "turn 1 +4"
+  ],
+  [
+   6020.768,
+   "turn 1 +4"
+  ],
+  [
+   6066.089,
+   "turn 1 +4"
+  ],
+  [
+   6106.089,
+   "turn 1 +4"
+  ],
+  [
+   6146.089,
+   "turn 1 +4"
+  ],
+  [
+   6187.44,
+   "turn 1 +4"
+  ],
+  [
+   6233.356,
+   "turn 1 +4"
+  ],
+  [
+   6286.09,
+   "turn 1 +4"
+  ],
+  [
+   6633.357,
+   "turn 2 -4"
+  ],
+  [
+   6686.089,
+   "turn 2 -4"
+  ],
+  [
+   6726.089,
+   "turn 2 -4"
+  ],
+  [
+   6766.089,
+   "turn 2 -4"
+  ],
+  [
+   7320.806,
+   "turn 2 -4"
+  ],
+  [
+   7366.089,
+   "turn 2 -4"
+  ],
+  [
+   7406.089,
+   "turn 2 -4"
+  ],
+  [
+   7446.089,
+   "turn 2 -4"
+  ],
+  [
+   8286.089,
+   "turn 7 +4"
+  ],
+  [
+   8333.363,
+   "turn 7 +4"
+  ],
+  [
+   8386.089,
+   "turn 7 +4"
+  ],
+  [
+   8426.089,
+   "turn 7 +4"
+  ],
+  [
+   8466.09,
+   "turn 7 +4"
+  ],
+  [
+   8520.841,
+   "turn 7 +4"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/machine-choice.png",
+   "sha256": "6691210c1a22624a6d05d212be1b7cbd658769a7800c9e83d6bc338902ff94b0",
+   "plan": "# Live Looper 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Machine Pages, Live Looper)\nwait 1000\n# track 2, FUNC + SRC, down to LOOPER\npress TRK\ntap 2\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap machine-choice\ntap YES\ntap YES\nwait 800\n# SRC again: page 2; MODE to CAPT, LEN to 16, PLAY to PICK\ntap SRC\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 300\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nwait 300\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 500\nwait 1500\nsnap loop-page2\n",
+   "atMs": 3606.0891025641026,
+   "requestedAtMs": 3804.0378205128204
+  },
+  {
+   "path": "media/loop-page2.png",
+   "sha256": "801ecddd8d0e51bae2d20fbf9ef2192c05f05498c716e7ad832cec3f5657d981",
+   "plan": "# Live Looper 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Machine Pages, Live Looper)\nwait 1000\n# track 2, FUNC + SRC, down to LOOPER\npress TRK\ntap 2\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap machine-choice\ntap YES\ntap YES\nwait 800\n# SRC again: page 2; MODE to CAPT, LEN to 16, PLAY to PICK\ntap SRC\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 300\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nwait 300\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 500\nwait 1500\nsnap loop-page2\n",
+   "atMs": 10333.37094017094,
+   "requestedAtMs": 10566.705128205129
+  }
+ ]
+}

@@ -12,6 +12,8 @@ const developerKey = () => 'modwerk.developer.session:' + communityBase()
 function savedDeveloper() { try { return localStorage.getItem(developerKey()) ?? '' } catch { return '' } }
 function validSession(value:string){return /^[a-f0-9]{64}$/.test(value)||/^[A-Za-z0-9_%+./=-]{40,600}$/.test(value)&&value.includes('.')}
 function savedSession() { try { return localStorage.getItem(sessionKey()) ?? '' } catch { return '' } }
+/** Whether this browser holds a session token, so the first paint can wait for the member instead of drawing the visitor view. */
+export function hasSavedSession() { return validSession(savedSession()) }
 function savedAdmin() { try { return sessionStorage.getItem(adminKey()) ?? '' } catch { return '' } }
 /** Calls `listener` whenever community reads work again after an outage; returns the unsubscribe. */
 export function onCommunityReconnect(listener: () => void) { return readRecovery().onReconnect(listener) }

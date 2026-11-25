@@ -5,7 +5,7 @@
   "poly8": {
    "sources": {
     "sdk/octabam/modules/poly8/manifest.py": "f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc",
-    "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
+    "sdk/octabam/modules/poly8/polyphony.s": "ffc66cf1f16f7b078595e4df34d647a6e6ab561ec112cfd525f7e8796158777a",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
     "sdk/octabam/modules/poly8/shared-machine.s": "3148a219ca0a1cdf5b1a20c64ff4da564b1078f599a2ceb08b15f6c10e908923"
    },
@@ -151,7 +151,7 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "c4f829e437ffbde1275c00827031b694a86011013d37269077e4696818323471",
+    "sdk/octabam/modules/vector/control.s": "4ea4778c545453ce37b2a106438b7a24460705295bef8ff7f9ab500787068bc0",
     "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21"
    },
    "contribute": [
@@ -226,15 +226,15 @@
    "sources": {
     "sdk/octabam/modules/synth/machine.s": "de9d849bf0b6e5d5ad747df32ae5806e7f9516674a14ac74b1c15d73d30d280a",
     "sdk/octabam/modules/synth/manifest.py": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6",
-    "sdk/octabam/modules/synth/registration.s": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
+    "sdk/octabam/modules/synth/registration.s": "dc59fba32b15230b20338266ce8f2b6b664152b8c104f50158526140bfbe80fb",
     "sdk/octabam/modules/synth/upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
     "sdk/octabam/modules/synth/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
     "sdk/octabam/modules/synth/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
     "sdk/octabam/modules/synth/upstream/quantizer/quantizer.s": "d1737168a1750f540b3dfbefdd2a64b11084013b9f7b71b31aa4f189d33a24c5",
     "sdk/octabam/modules/synth/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
-    "sdk/octabam/modules/synth/upstream/synth/manifest.py": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
+    "sdk/octabam/modules/synth/upstream/synth/manifest.py": "786154c440d71f372abb49f527d345d5d6d74e96959a4af2f3ce248683753314",
     "sdk/octabam/modules/synth/upstream/synth/page.s": "25e2a0624fcc30ee3a8db5966954113119fb5942855042f765e664a2f8544a70",
-    "sdk/octabam/modules/synth/upstream/synth/poly.s": "ce21f5f7cddcd7268d27e25c500f1403cc59a9dff28044b1832cf2b45592d34c"
+    "sdk/octabam/modules/synth/upstream/synth/poly.s": "db3cd8b0ca3dad25aebc1463c49e7a76dcef1cc34d00a965bc2fb7ac9006cfed"
    },
    "subscribe": [
     {
@@ -487,8 +487,7 @@
     "hi": 1,
     "label": "FM SYNTH",
     "flags": [
-     "PROTECT",
-     "RENDER_FLEX"
+     "PROTECT"
     ],
     "fields": {
      "defaults": "fm_defaults",
@@ -498,6 +497,7 @@
      "render": "sy_render"
     }
    },
+   "cpuPrice": 4,
    "sequencer": {
     "rows": [
      [
@@ -531,12 +531,14 @@
   },
   "quantizer": {
    "sources": {
-    "sdk/octabam/modules/quantizer/manifest.py": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+    "sdk/octabam/modules/quantizer/manifest.py": "785a132fa736d26ec9da160743f5f1c56f10e4661015088b1763bd8bba4ae3ca",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "sdk/octabam/modules/quantizer/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64"
+    "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "bdfd9d1de96cc3a8ea07bb9ebed41db0107fa497501f32bf254c29df400e3016",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/panel_transaction.inc.s": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "c1a320ad9b807dc9af995e93fbd3e2bdd00324cff93889b016003138bf73e41d",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
    },
    "subscribe": [
     {
@@ -749,6 +751,16 @@
       "qz_lbl_glide",
       "qz_get_glide",
       "qz_set_glide"
+     ],
+     [
+      "qz_lbl_trk",
+      "qz_get_trk",
+      "qz_set_trk"
+     ],
+     [
+      "qz_lbl_fol",
+      "qz_get_fol",
+      "qz_set_fol"
      ]
     ],
     "tables": [
@@ -762,7 +774,7 @@
     "SEQUENCER getters",
     "SEQUENCER setters"
    ],
-   "why": "Every Scale Quantizer site is a take event (order 50) or the SEQUENCER table"
+   "why": "Every Scale Quantizer site that FM Synth's bundled copy and POLY8 also hook is a take event (order 50) or the SEQUENCER table; the source's other hooks (qz_mknob, qz_mplock, qz_mkey, qz_mnote, qz_atrig, qz_mprev, qz_heldmark, and 2.21's qz_panel_stage, qz_panel_commit) meet no base event or site and stay guarded patches. The source brings five SEQUENCER rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW), inside the table's eight contributed rows"
   },
   "analog-bassdrum": {
    "sources": {
@@ -827,12 +839,14 @@
     }
    },
    "price": {
-    "voice": 411,
-    "engine": 3,
+    "voice": 0,
+    "engine": 0,
     "kind": "executed",
+    "inEngine": true,
     "source": "sdk/machines/octatrack/module-adapters/analog_bd_dsp_price.json"
    },
    "controller": "analog_bd_write_lease",
+   "lease": {"feature": 4, "functions": ["ab_render", "ab_lease_end"], "why": "its packaged feature (dsp-sites.json) and the functions holding its one Begin and one End call (machine_lease_policy.py)"},
    "imports": [
     "modwerk_controller_write_begin",
     "modwerk_controller_write_end"

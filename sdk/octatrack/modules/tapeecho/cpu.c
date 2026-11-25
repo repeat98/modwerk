@@ -1,0 +1,496 @@
+/* CPU Tape Echo: fixed-point, allocation-free. One playback head, fixed
+ * DRIVE=0. FREE has a Q24.8 motor; BEAT snaps with a bounded crossfade.
+ * Economy model: two biquads plus a record FIR, block-rate glide, two simple
+ * modulation oscillators. No physical-cell or transport-history model.
+ * Only the stock delay's current track ring is used, through its uncached
+ * alias. The stock DMA commits record[] after this function returns. */
+#include <stddef.h>
+#include "cpu.h"
+#include "cpu_tables.h"
+_Static_assert(sizeof(TapeState) == 200, "cpu_hooks.s allocation: 8 x 200 bytes");
+_Static_assert(offsetof(TapeState, rng) == 20 && offsetof(TapeState, mix) == 24 &&
+               offsetof(TapeState, feedback) == 28 && offsetof(TapeState, hiss) == 40 &&
+               offsetof(TapeState, fir) == 44, "te_tape_block's state offsets");
+_Static_assert(sizeof(TapeGuard) == 24 && offsetof(TapeGuard, live) == 20,
+               "cpu_hooks.s: te_guard after te_states, its live mask in byte 23");
+
+static uint32_t minimum(uint32_t a, uint32_t b) { return a < b ? a : b; }
+/* Signed fractional EMAC, MACSR=0xa0 as established by stock 0x400031c4.
+ * acc0 is cleared on every read. Stock saves/restores ALL EMAC state around
+ * the entire delay routine. The host path is an independent arithmetic oracle. */
+static inline int32_t mul31(int32_t a, int32_t b) {
+#ifdef __m68k__
+    int32_t out;
+    __asm__ volatile ("mac.l %1,%2,%%acc0\n\tmovclr.l %%acc0,%0"
+                      : "=d"(out) : "d"(a), "d"(b));
+    return out;
+#else
+    return (int32_t)(((int64_t)a * b) >> 31);
+#endif
+}
+static int32_t gain(uint32_t knob) {
+    return (int32_t)(minimum(knob, 127) * 16909320u); /* <= INT32_MAX */
+}
+/* Audio arithmetic is written for the EMAC, as stock's delay is: products
+ * accumulate eight bits below the 32-bit read-out, and MOVCLR saturates
+ * (MACSR OMC). Playback, filters and the record sum are Q3.29 (FS = 2^29),
+ * so the old +/-4 FS clamps are the read-out's own saturation. The record
+ * FIR and curve index stay Q6.26. The native model below reproduces the
+ * ColdFire kernels bit-for-bit and is their arithmetic oracle. */
+#define TE_FULL_WET 2147483640
+#define TE_ONE 2147483647
+/* MIX (#969, 0.1.6), BBD's law: up to MIX 64 the wet rises to unity on top
+ * of the whole dry signal; from 64 to 127 the dry fades out, leaving the
+ * wet alone at 127. s->mix still ramps MIX/127 (gain()); the kernel turns it
+ * into both gains per sample. TE_MIX_KNEE is gain(64). */
+#define TE_MIX_KNEE 1082196480
+#ifndef __m68k__
+static inline int64_t emac(int32_t x, int32_t y) { return ((int64_t)x * y) >> 23; }
+static inline int32_t readout(int64_t acc) {
+    int64_t r = acc >> 8;
+    return r > 2147483647 ? 2147483647 : r < -2147483647 - 1 ? -2147483647 - 1 : (int32_t)r;
+}
+#endif
+/* Linear interpolation in stock's accumulator form, a*(1-f) + b*f, with a
+ * raw ring word (Q1.31) scaled to Q3.29 by the 1/4 operand. f4 is the
+ * 8-bit read fraction already divided by four (frac << 21). */
+static int32_t interpolate(int32_t a, int32_t b, int32_t f4) {
+#ifdef __m68k__
+    int32_t out;
+    __asm__ volatile ("mac.l %1,%2,%%acc0\n\tmsac.l %1,%3,%%acc0\n\t"
+                      "mac.l %4,%3,%%acc0\n\tmovclr.l %%acc0,%0"
+                      : "=d"(out) : "d"(a), "d"(0x20000000), "d"(f4), "d"(b));
+    return out;
+#else
+    return readout(emac(a, 0x20000000) - emac(a, f4) + emac(b, f4));
+#endif
+}
+/* BEAT crossfade in the same form: old*(1-g) + new*g, g a Q1.31 weight. */
+static int32_t crossfade(int32_t old, int32_t new, int32_t g) {
+#ifdef __m68k__
+    int32_t out;
+    __asm__ volatile ("move.l %1,%%acc0\n\tmsac.l %1,%2,%%acc0\n\t"
+                      "mac.l %3,%2,%%acc0\n\tmovclr.l %%acc0,%0"
+                      : "=d"(out) : "d"(old), "d"(g), "d"(new));
+    return out;
+#else
+    return readout((int64_t)old*256 - emac(old, g) + emac(new, g));
+#endif
+}
+/* Write a head's sample, or blend it into the new head already in out[]. */
+#define TE_PLAIN (-1)
+static inline void emit(int32_t *out, int32_t sample, int32_t blend) {
+    *out = blend < 0 ? sample : crossfade(sample, *out, blend);
+}
+static uint32_t random32(TapeState *s) {
+    s->rng ^= s->rng << 13; s->rng ^= s->rng >> 17; s->rng ^= s->rng << 5;
+    return s->rng;
+}
+static int32_t sine(uint32_t phase) {
+    unsigned i = phase >> 22;
+    return te_sine[i] + mul31(te_sine[i+1]-te_sine[i], (phase & 4194303u) << 9);
+}
+/* TIME's 128 automation values select twelve bands in BEAT. All divisions
+ * fit the four-second ring down to the stock minimum tempo (30 BPM).
+ * Keep time_fmt.s's names/band mapping in lockstep with this table. */
+static const uint8_t clocks2[12] = {3,4,6,8,12,16,18,24,32,36,48,72};
+
+uint32_t te_target(const TapeParams *p, uint32_t tempo) {
+    if (tempo < 720 || tempo > 7200) tempo = 2880;
+    uint32_t target = (2048u + 64u * minimum(p->time, 127)) << 8;
+    if (p->sync) {
+        /* samples = 44100*60*(MIDI clocks*2)/(2*tempo24). Split the
+         * quotient to keep Q24.8 precision without a 64-bit divide. */
+        uint32_t n = 1323000u * clocks2[(minimum(p->time, 127)*12u) >> 7];
+        target = (n / tempo) * 256u + (n % tempo) * 256u / tempo;
+    }
+    /* Include wow and the neighbouring interpolation sample. */
+    uint32_t limit = (TE_RING - 1024u) << 8;
+    return minimum(target, limit);
+}
+
+/* Slow, general reader: one position per sample, wrap and history checks.
+ * Reads older->newer exactly like the contiguous kernel, so either path
+ * yields the same sample for the same Q24.8 position. */
+static int32_t read_head(volatile int32_t *ring, uint32_t write,
+                         uint32_t delay, uint32_t valid) {
+    /* Exclude all tape recorded by a previously selected effect. This is
+     * also the startup clear: bounded work, no 1.4 MB memset in the ISR. */
+    if ((delay >> 8) + 1u > valid) return 0;
+    int32_t position = (int32_t)(write*256u - delay);
+    if (position < 0) position += TE_RING*256;
+    unsigned index = (uint32_t)position >> 8;
+    unsigned next = index+1 == TE_RING ? 0 : index+1;
+    return interpolate(ring[2u*index], ring[2u*next],
+                       (int32_t)(((uint32_t)position & 255u) << 21));
+}
+
+/* Contiguous-head fast path. Use an advancing fractional read position
+ * instead of rebuilding/clamping/checking each head's delay each sample.
+ * The caller proves the whole block is valid history and in delay bounds. */
+#ifdef __m68k__
+void te_read_linear(int32_t *, volatile int32_t *, int32_t, int32_t, int32_t, int32_t);
+#else
+static void read_linear(int32_t *out, volatile int32_t *ring, int32_t base,
+                        int32_t wobble, int32_t step, int32_t blend) {
+    for (unsigned i=0;i<TE_FRAMES;++i) {
+        wobble+=step;
+        uint32_t position=(uint32_t)(base-(wobble>>8)), index=position>>8;
+        emit(&out[i],interpolate(ring[2*index],ring[2*index+2],(int32_t)((position&255u)<<21)),
+             blend<0 ? blend : blend+(int32_t)(i<<22));
+        base+=256;
+    }
+}
+#endif
+/* A linear delay ramp serves FREE motor movement, WOW, and each end of a
+ * BEAT crossfade. Prove history/bounds once, then use the same assembly
+ * reader whether TIME is moving or stationary. Slow fallback is confined
+ * to not-yet-recorded history or clamping, never ordinary knob movement. */
+static void render_head(int32_t *out, volatile int32_t *ring, uint32_t write,
+                        uint32_t position, int32_t offset, int32_t step,
+                        uint32_t valid, int32_t blend) {
+    int32_t end=offset+16*step;
+    int32_t near=(offset<end?offset:end)>>8, far=(offset>end?offset:end)>>8;
+    int32_t lo=(int32_t)position+near, hi=(int32_t)position+far;
+    if (lo>=32*256 && hi<=(int32_t)((TE_RING-2)*256) && ((unsigned)hi>>8)+1<=valid) {
+        /* The whole block's ring positions, first to last read. */
+        int32_t base=(int32_t)(write*256u-position);
+        const int32_t ring_units=TE_RING*256;
+        int32_t first=base-far, last=base+15*256-near;
+        if (last<0) { base+=ring_units;first+=ring_units;last+=ring_units; }
+        else if (first>=ring_units) { base-=ring_units;first-=ring_units;last-=ring_units; }
+        if (first>=0 && last<(int32_t)((TE_RING-1)*256)) {
+#ifdef __m68k__
+            te_read_linear(out,ring,base,offset,step,blend);
+#else
+            read_linear(out,ring,base,offset,step,blend);
+#endif
+            return;
+        }
+        /* The block straddles the physical ring end. */
+        for (unsigned i=0;i<TE_FRAMES;++i) {
+            offset += step;
+            int32_t at=base-(offset>>8);
+            if (at<0) at += TE_RING*256;
+            else if (at>=(int32_t)(TE_RING*256)) at -= TE_RING*256;
+            unsigned index=(uint32_t)at >> 8;
+            unsigned next=index+1 == TE_RING ? 0 : index+1;
+            emit(&out[i],interpolate(ring[2*index],ring[2*next],
+                                     (int32_t)(((uint32_t)at&255u)<<21)),
+                 blend<0 ? blend : blend+(int32_t)(i<<22));
+            base += 256;
+        }
+    } else if (lo<32*256 || ((unsigned)lo>>8)+1<=valid+15) {
+        for (unsigned i=0;i<TE_FRAMES;++i) {
+            offset+=step;
+            int32_t delay=(int32_t)position+(offset>>8);
+            if (delay<32*256) delay=32*256;
+            if (delay>(int32_t)((TE_RING-2)*256)) delay=(TE_RING-2)*256;
+            emit(&out[i],read_head(ring,write+i,delay,valid+i),
+                 blend<0 ? blend : blend+(int32_t)(i<<22));
+        }
+    } else for (unsigned i=0;i<TE_FRAMES;++i)
+        emit(&out[i],0,blend<0 ? blend : blend+(int32_t)(i<<22));
+}
+
+#ifdef __m68k__
+/* The assembly kernels read these tables; keep them in the unit. */
+__attribute__((used)) static const int32_t *const te_kernel_tables[] =
+    {te_hp, te_tape_curve, te_record_gain};
+/* Both playback sections in one pass, z = s->z. */
+void te_filter_block(int32_t *, const int32_t *, int32_t *);
+#define filter_block te_filter_block
+/* Record sum, [1,6,1]/8 FIR, tape curve, DMA staging and output mix. */
+void te_tape_block(TapeState *, const int32_t *, int32_t *, int32_t *,
+                   int32_t, int32_t, int32_t);
+#else
+/* Fixed 106 Hz low cut, then the TIME/AGE tone section with the wet makeup
+ * in its numerator. Each is y = g*(x +/- 2*x1 + x2) + a1*y1 + a2*y2 in one
+ * accumulator: y1 loads exactly, the remaining a1-1 fits Q1.31. The low
+ * eight accumulator bits carry to the next sample (fraction saving):
+ * repeated truncation in the 106 Hz section otherwise leaves a DC /
+ * limit-cycle floor. The tone section's input history is the low cut's
+ * output history. z = {x1, x2, y1, y2, w1, w2, error_hp, error_lp}. */
+static void filter_block(int32_t *buffer, const int32_t *lp, int32_t *z) {
+    int32_t x1=z[0], x2=z[1], y1=z[2], y2=z[3], w1=z[4], w2=z[5], eh=z[6], el=z[7];
+    const int32_t g=te_hp[0], a1=te_hp[1], a2=te_hp[2], gl=lp[0], b1=lp[1], b2=lp[2];
+    for (unsigned i=0;i<TE_FRAMES;++i) {
+        int32_t x=buffer[i];
+        int64_t acc=(int64_t)y1*256 + emac(eh,8388608) + emac(x2,g) + emac(x,g)
+            - emac(x1,g) - emac(x1,g) + emac(y1,a1) + emac(y2,a2);
+        int32_t y=readout(acc); eh=(int32_t)(acc & 255);
+        acc=(int64_t)w1*256 + emac(el,8388608) + emac(y2,gl) + emac(w1,b1)
+            + emac(w2,b2) + emac(y,gl) + emac(y1,gl) + emac(y1,gl);
+        int32_t w=readout(acc); el=(int32_t)(acc & 255);
+        x2=x1; x1=x; y2=y1; y1=y; w2=w1; w1=w;
+        buffer[i]=w;
+    }
+    z[0]=x1; z[1]=x2; z[2]=y1; z[3]=y2; z[4]=w1; z[5]=w2; z[6]=eh; z[7]=el;
+}
+
+/* MIX's two gains from the ramped s->mix (u = MIX/127), as te_tape_block
+ * forms them (TE_TAPE_GAINS): up to the knee, wet = u*127/64 = 2u - u/64
+ * and dry = 1; above it, wet = 1 and dry = (1-u)*127/63, taken as
+ * ((full - u) >> 14) * 33028 with the 16 x 16 bit MULU.W (within 2e-5 of
+ * the exact slope). Unsigned like the kernel's cmp.l / sub.l / lsr.l. */
+static void mix_gains(int32_t m, int32_t *wet, int32_t *dry) {
+    uint32_t u=(uint32_t)m;
+    if (u <= TE_MIX_KNEE) {
+        *wet=(int32_t)((u<<1)-(u>>6));
+        *dry=TE_ONE;
+    } else {
+        *wet=TE_ONE;
+        *dry=(int32_t)(((((uint32_t)TE_FULL_WET-u)>>14)&0xffffu)*33028u);
+    }
+}
+
+/* One record/output sample set per block. The record sum is a single
+ * saturating accumulator: drive*(L+R)/2 + feedback*wet + hiss. wet already
+ * carries the makeup; feedback (Q2.30) is applied twice. Full wet is 4*wet
+ * (Q3.29 -> Q1.31) and other MIX values L*dry + 4*wet*wet_gain with the
+ * gains of mix_gains(), each clipped by the read-out. Knob ramps advance
+ * before each sample, as they always have; a settled full-wet block uses
+ * the dedicated full-wet output. */
+static void tape_block(TapeState *restrict s, const int32_t *restrict wet,
+                       int32_t *restrict audio, int32_t *restrict record,
+                       int32_t dm, int32_t df, int32_t dn) {
+    const int32_t drive=te_record_gain[0];
+    const int settled=!(dm|df|dn);
+    int32_t x1=s->fir[0], x2=s->fir[1];
+    uint32_t rng=s->rng;
+    for (unsigned i=0;i<TE_FRAMES;++i) {
+        s->mix+=dm; s->feedback+=df; s->hiss+=dn;
+        /* Full-period LCG hiss, taken through the multiply as a signed
+         * fraction, so its short-period low bits never matter. */
+        rng=rng*1664525u+1013904223u;
+        int32_t L=audio[2*i], R=audio[2*i+1], w=wet[i];
+        int32_t rec=readout(emac(L,drive) + emac(R,drive) + emac(w,s->feedback)
+            + emac(w,s->feedback) + emac((int32_t)rng,(s->hiss>>16)*8)) >> 3;
+        /* [1,6,1]/8 record FIR: unity DC gain, no recursive state. */
+        int32_t shaped=x1+((rec-2*x1+x2)>>3);
+        x2=x1; x1=rec;
+        int32_t t0=te_tape_curve[1024+(shaped>>18)], t1=te_tape_curve[1025+(shaped>>18)];
+        int32_t f=(shaped&262143)<<13;
+        record[2*i]=record[2*i+1]=readout((int64_t)t0*256 - emac(t0,f) + emac(t1,f));
+        if (!s->mix) continue;
+        if (settled && s->mix==TE_FULL_WET) {
+            audio[2*i]=audio[2*i+1]=readout(4*emac(w,TE_ONE));
+        } else {
+            int32_t wg, dg;
+            mix_gains(s->mix,&wg,&dg);
+            audio[2*i]=readout(4*emac(w,wg) + emac(L,dg));
+            audio[2*i+1]=readout(4*emac(w,wg) + emac(R,dg));
+        }
+    }
+    s->rng=rng; s->fir[0]=x1; s->fir[1]=x2;
+}
+#define te_tape_block tape_block
+#ifdef TE_HOST
+/* The ColdFire probe checks each assembly kernel against these. */
+void te_host_read_linear(int32_t *out, volatile int32_t *ring, int32_t base,
+                         int32_t wobble, int32_t step, int32_t blend) {
+    read_linear(out,ring,base,wobble,step,blend);
+}
+void te_host_filter_block(int32_t *buffer, const int32_t *lp, int32_t *z) { filter_block(buffer,lp,z); }
+void te_host_tape_block(TapeState *s, const int32_t *wet, int32_t *audio, int32_t *record,
+                        int32_t dm, int32_t df, int32_t dn) { tape_block(s,wet,audio,record,dm,df,dn); }
+#endif
+#endif
+
+/* Tone is a slow control, not audio timing. Design/ramp it once per
+ * 64 samples (~1.45 ms); TIME/WOW positions and gain ramps still run
+ * every block/sample. This bounds the cost of simultaneous AGE/TIME
+ * edits, not only the steady-state benchmark. Kept out of line so the
+ * per-block path does not carry its registers. */
+static __attribute__((noinline)) void tone_update(TapeState *s) {
+    /* Tonal speed follows the running motor, clamped to the pedal's range. */
+    uint32_t speed=s->cached_speed;
+    unsigned update_corner=!s->active, update_worn=!s->active;
+    /* Tone is not timing: updating at 32-sample delay bins avoids repeated
+     * division/interpolation while TIME moves. Coefficients still ramp. */
+    if (!s->active || s->cached_position != s->position>>13) {
+        speed = 1156055040u / (s->position >> 8); /* .4*44100 / delay, Q16 */
+        if (speed < 65536) speed = 65536;
+        if (speed > 524288) speed = 524288;
+        update_corner |= speed != s->cached_speed;
+        s->cached_speed=speed; s->cached_position=s->position>>13;
+        s->cached_index=(speed-65536)>>13;
+    }
+    unsigned index=s->cached_index;
+    unsigned worn = (unsigned)s->age >> 16;
+    update_worn |= worn != s->cached_age; s->cached_age=worn;
+    if (update_corner || update_worn) for (unsigned j=0;j<3;++j) {
+        int32_t c=te_tone[worn*57+index][j];
+        if (index<56) c+=mul31(te_tone[worn*57+index+1][j]-c,(speed&8191u)<<18);
+        s->filter_targets[j]=c;
+    }
+    /* The /8 step at quarter control rate retains roughly the old /32
+     * smoothing time. Skip settled coefficients until tone changes. */
+    if (update_corner || update_worn || s->filter_pending) {
+        s->filter_pending=0;
+        for (unsigned j=0;j<3;++j) {
+            int32_t delta=s->active ? (s->filter_targets[j]-s->coefficients[j])/8
+                                    : s->filter_targets[j];
+            s->coefficients[j]+=delta;
+            s->filter_pending |= delta!=0;
+        }
+    }
+}
+
+/* Two cheap oscillators: 0.8 Hz wow, gently randomized ~8..12 Hz
+ * flutter. No travel-time integration, speed-dependent oscillator
+ * divisions, capstan harmonic or drift oscillator. At WOW=44 this
+ * retains about eight cents RMS; AGE increases the flutter component.
+ * age and wow are s->age and s->wow before this block's ramp step. Sets
+ * s->wobble_step, the head's wow step for this block. */
+static inline void oscillate(TapeState *restrict s, int32_t age, int32_t wow) {
+    s->phase += 16u*77913u;
+    s->flutter_rate += ((int32_t)s->flutter_target-(int32_t)s->flutter_rate)/16;
+    uint32_t old=s->flutter;
+    s->flutter+=16u*s->flutter_rate;
+    if (s->flutter<old) s->flutter_target=779132u+(random32(s)&0x3ffffu);
+    int32_t wobble_step = -s->wobble/16;
+    if (wow || s->wobble) {
+        int32_t wow_amp=mul31(159*256,wow);
+        int32_t flutter_amp=mul31(256+8*(age>>16),wow);
+        int32_t w=2*mul31(wow_amp,sine(s->phase))
+                 +2*mul31(flutter_amp,sine(s->flutter));
+        wobble_step = (w*256 - s->wobble)/16;
+    }
+    /* A snapped time changes the integrated wow offset. Do not traverse
+     * that offset in one block: bound acceleration as well as velocity.
+     * Normal low-rate wow is below these bounds; a mode/TIME jump is not. */
+    if (wobble_step>s->wobble_step+128) wobble_step=s->wobble_step+128;
+    if (wobble_step<s->wobble_step-128) wobble_step=s->wobble_step-128;
+    if (wobble_step>8192) wobble_step=8192;
+    if (wobble_step<-8192) wobble_step=-8192;
+    s->wobble_step=wobble_step;
+}
+
+/* One block. steady (te_cpu_hook only) says the previous block left
+ * s->steady set and these are its controls again: then every control
+ * computation below would repeat itself, every ramp delta is zero and the
+ * motor and fades are at rest, so they are left out and only the clocks,
+ * the head and the audio run. The arithmetic is te_process's either way. */
+void te_block(TapeState *restrict s, const TapeParams *restrict p,
+                volatile int32_t *restrict ring, uint32_t write,
+                int32_t *restrict audio, int32_t *restrict record, unsigned steady) {
+    int32_t dm = 0, df = 0, dn = 0, movement = 0;
+    unsigned dry = 0; /* MIX is 0: snap the ramp's residual after the block */
+    /* The oscillators read AGE and WOW before this block's ramp steps, and
+     * nothing after them reads either: the old order, ramps stepped earlier. */
+    int32_t age_now = s->age, wow_now = s->wow;
+    if (steady) {
+        if (!((s->control_clock++ + p->lane) & 3u)) tone_update(s);
+    } else {
+    if (p->tempo >= 720 && p->tempo <= 7200) s->tempo = p->tempo;
+    if (s->tempo < 720 || s->tempo > 7200) s->tempo = 2880;
+    uint32_t target = te_target(p, s->tempo);
+    unsigned age = minimum(p->age,127);
+    int32_t mix = gain(p->mix), wow = gain(p->wow);
+    int32_t feedback = te_feedback[minimum(p->feedback,127)];
+    if (!s->active) {
+        /* Also clear every filter/oscillator after dirty-state effect entry. */
+        uint32_t tempo = s->tempo;
+        uint32_t *words = (uint32_t *)s;
+        for (unsigned j=0;j<sizeof(*s)/4;++j) words[j]=0;
+        s->tempo = tempo; s->position = target;
+        s->rng = 0x6d2b79f5;
+        s->mix = mix; s->feedback = feedback;
+        s->age = age << 16; s->wow = wow;
+        s->hiss = te_hiss[age] << 16;
+        s->flutter = 751934170u;
+        s->flutter_rate=s->flutter_target=973915;
+        s->mode = !!p->sync;
+    }
+    /* Never restart a live fade: rapid locks/knob edits are coalesced to
+     * the latest target at the next boundary (at most 2*512 samples).
+     * Only this transition has two reads; there is one normal echo head.
+     * No waits, allocation, ring clear, or global/shared transition state. */
+    if (!s->fade_left && (p->sync || s->mode != !!p->sync)) {
+        if (s->position != target) {
+            s->fade_from = s->position;
+            s->fade_left = TE_FADE;
+            s->position = target;
+        }
+        s->mode = !!p->sync;
+    }
+    if (!((s->control_clock++ + p->lane) & 3u) || !s->active) tone_update(s);
+    s->active = 1;
+    /* ~12 ms gain ramps; no gain reset or phase reset at FREE/BEAT changes. */
+    dm = (mix-s->mix)/512; df = (feedback-s->feedback)/512;
+    int32_t da = ((int32_t)(age<<16)-s->age)/512, dw = (wow-s->wow)/512;
+    dn = ((te_hiss[age]<<16)-s->hiss)/512;
+    if (!p->sync && !s->fade_left && s->position!=target) {
+        int32_t error=(int32_t)target-(int32_t)s->position;
+        /* One slew calculation per block. No motor acceleration model or
+         * fractional velocity state. Fractional read positions still ramp
+         * linearly through the block, so the read head never jumps. */
+        movement=error/64;
+        if (!movement) movement=error>0?1:-1;
+        if (movement>512) movement=512;
+        if (movement<-512) movement=-512;
+        s->position+=movement;
+    }
+    /* Nothing ramps or moves and no fade runs: the same controls again
+     * would compute exactly these values and change nothing. */
+    s->steady = !(dm|df|da|dw|dn) && s->position == target && !s->fade_left &&
+                s->mode == !!p->sync;
+    age_now = s->age; wow_now = s->wow;
+    s->age += 16*da; s->wow += 16*dw;
+    /* Exact dry must not leave a tiny ramp residual forever. */
+    if (!wow && s->wow < 512) s->wow = 0;
+    dry = !mix;
+    }
+    oscillate(s, age_now, wow_now);
+    /* The head reads from where the motor stood at the block's start. */
+    uint32_t position=s->position-movement;
+    int32_t wobble_step=s->wobble_step;
+    int32_t playback[TE_FRAMES];
+    render_head(playback,ring,write,position,s->wobble,wobble_step+16*movement,s->valid,TE_PLAIN);
+    if (s->fade_left) {
+        /* The second head only exists during a BEAT transition; it
+         * crossfades into the new head as it is read. */
+        render_head(playback,ring,write,s->fade_from,s->wobble,wobble_step,s->valid,
+                    (int32_t)((TE_FADE-s->fade_left)<<22));
+        s->fade_left-=TE_FRAMES;
+    }
+    s->wobble+=16*wobble_step;
+    /* All heads are >=32 samples behind this uncommitted block: playback
+     * and record filters can be batched without changing feedback causality. */
+    filter_block(playback,s->coefficients,s->z);
+    te_tape_block(s,playback,audio,record,dm,df,dn);
+    if (dry && s->mix < 512) s->mix = 0;
+    s->valid = minimum(s->valid + TE_FRAMES, TE_RING - 1);
+}
+
+void te_process(TapeState *restrict s, const TapeParams *restrict p,
+                volatile int32_t *restrict ring, uint32_t write,
+                int32_t *restrict audio, int32_t *restrict record) {
+    te_block(s, p, ring, write, audio, record, 0);
+}
+#ifdef TE_HOST
+void te_host_process(TapeState *s, const TapeParams *p, volatile int32_t *ring,
+                     uint32_t write, int32_t *audio, int32_t *record, unsigned steady) {
+    te_block(s, p, ring, write, audio, record, steady);
+}
+#endif
+
+/* The ColdFire's per-track entry, the overload hold and the steady decision
+ * are in cpu_hooks.s (te_cpu_hook). */
+
+/* ev_frame_deadline (base 0.8): each frame interrupt's entry stores the DTIM3 count by which work at IPL 5 must end
+ * so the next frame interrupt enters no more than 80 µs late. Before each track's block te_cpu_hook holds the block
+ * (no echo for it, the tape held, as the overload hold does) when it would end past it: a late entry makes the DSP
+ * skip a frame, which played as a full-scale click (owner's MKII, 22 November 2026: two Tape Echos on a busy Part, 9
+ * of 9). 0 on a base that does not raise it: then only the overload hold below applies. rest is nonzero on every
+ * frame of a pattern the base predicts past its ceiling and has chosen Tape Echo to rest: te_cpu_hook then passes
+ * every Tape Echo track dry and drops its state, so the first frame after the rest starts the tape afresh. 0.1.9
+ * needs a base that passes rest (base 0.8's two-argument event): with one argument rest is a stale stack word.
+ * Frame-interrupt context: store and return. */
+volatile uint32_t te_deadline, te_rest;
+unsigned te_frame_deadline(uint32_t deadline, unsigned rest) {
+    te_deadline = deadline;
+    te_rest = rest;
+    return 0;
+}

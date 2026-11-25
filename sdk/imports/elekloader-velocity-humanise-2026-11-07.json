@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "velocity-humanise-2026-11-07",
+  "about": "Modwerk source-only velocity-humanise package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/velocity-humanise.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "velocity-humanise-1.2.0-os1.74.elemod",
+      "sha256": "dd85e892f1eb9f2ed882d20ac89a6e5b8e0d85f339cdac3e9b6ee204d5d14e9b",
+      "id": "velocity-humanise",
+      "version": "1.2.0",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "ecb720a9e6bdde11d973d7b304727987f58d1f14",
+        "path": "sdk/imports/packages/velocity-humanise/velocity-humanise-1.2.0-os1.74.elemod"
+      },
+      "title": "Velocity Humanise",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "sample-rate"
+      ],
+      "summary": "Per track, every trig's velocity gets a random offset of up to ±N, set with FUNC + VEL on the TRIG page.",
+      "description": "Velocity Humanise gives each track a random velocity offset: every trig's velocity moves by a random amount up to ±N, clamped to 1..127. N is one of sixteen steps from 0 to 64, set by holding FUNC and turning VEL on the TRIG page, where the label reads RND and the knob becomes a sixteen-position selector. N is per pattern track, kept in core-ar2's mod storage and saved with the pattern. It is an elemod port of MrScruff's rytm-mods 0003-velocity-humanise, with his code unchanged apart from the storage port and FUNC + VEL's turn and text, which now go through core-ar2's parameter table (core_params) instead of two detours of his own.",
+      "category": "Sequencer",
+      "author": "Iced-Cream",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: build P4A4 (core-ar2 0.4 with all eleven rytm2_mods ports, this module at 1.2) passed FUNC + VEL reading RND through N's sixteen values, VEL alone as stock, and N kept through a power-cycle without a project save; 1.1's velocity spread was measured on SXH4 and VHH4 (core-ar2 0.3). This package's own bytes, and the Modwerk base, have not been flashed from the site."
+    }
+  ]
+}

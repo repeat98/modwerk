@@ -1,0 +1,1 @@
+Device reviewers can approve and merge a first module release for their assigned instrument and register its author as a modder in the same pull request. GitHub collaborators with write access can maintain submissions across instruments. The maintenance worker records the reviewer and the exact revision they approved.

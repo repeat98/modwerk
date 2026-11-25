@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "improved_machine_browser_key",
+      "order": 40
+    },
+    {
+      "event": "ev_enc",
+      "fn": "improved_machine_browser_enc",
+      "order": 40
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:UP and DOWN in the machine list",
+    "ui:FUNC + UP and FUNC + DOWN in the machine list",
+    "ui:knobs A-H in the machine list",
+    "ui:YES in the machine list"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

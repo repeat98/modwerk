@@ -101,7 +101,7 @@ def ab_package(seed=0, n=998, image=None):
     """The Analog BD controller as ABI 10: its CF image (the trust row's), its engine and initial words (not the row's)."""
     data = package(PACKAGES['ab'][0], PACKAGES['ab'][2] if image is None else image)
     words, relocations, exit = ab_engine(seed, n)
-    return abi9.engine(data, words, relocations, AB_SITE, 3, exit, [('x', 2, 0x2840, ab_words(seed))])
+    return abi9.engine(data, words, relocations, AB_SITE, 3, exit, [('x', 2, 0x2840, ab_words(seed))], cycles=414, kind='executed')
 
 
 def header():
@@ -157,7 +157,8 @@ uint32_t modwerk_machine_mask(void) { return sr; }
 void modwerk_machine_unmask(uint32_t old) { sr = old; }
 void dl_selection_tick(void) {}
 void dl_show_message(const char *s, unsigned n) { (void)s; (void)n; }
-int modwerk_machine_stopped(void) { return 1; }
+static int transport_running;
+int modwerk_machine_stopped(void) { return !transport_running; }
 static unsigned long uncached_calls; /* each owner header check, canonical extent and owns_image takes one */
 void *modwerk_machine_uncached(void *p) { ++uncached_calls; return p; }
 void modwerk_machine_invalidate_code(void) {}

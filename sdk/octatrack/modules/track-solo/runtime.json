@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_key", "fn": "ts_key"},
+    {"event": "module_tick", "fn": "ts_tick"},
+    {"event": "module_enc", "fn": "ts_enc"}
+  ],
+  "contribute": [{"to": "ot_sequencer_rows", "data": "ts_rows", "order": 60}]
+}

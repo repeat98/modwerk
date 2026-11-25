@@ -135,6 +135,24 @@ describe('a report about a whole configuration', () => {
     expect(JSON.parse(String(f.row().context_json)).modules.map((item: { id: string }) => item.id)).toEqual(['repitch', 'miniverb'])
   })
 
+  it('carries the USB events the reporter attached to the GitHub issue, and refuses anything else in their place', async () => {
+    const events = [{ at: '2026-11-24T12:00:00.000Z', event: 'sync_started', phase: 'sending', base: 'b'.repeat(64), packages: [{ sha256: 'd'.repeat(64), bytes: 2048 }] },
+      { at: '2026-11-24T12:00:01.000Z', event: 'sync_failed', phase: 'sending', base: 'b'.repeat(64), error: 'device', step: 'stage', result: 'rejected', refusal: 7 }]
+    const usbEvents = { schema: 1, unit: { base: 'b'.repeat(64), version: '0.8.1', layout: 'off', model: 'OCTATRACK 1.40C' }, client: { browser: 'chrome', major: 131, os: 'windows' }, events }
+    const f = await fixture()
+    expect((await f.post(report(undefined, { usbEvents }))).status).toBe(201)
+    expect(JSON.parse(String(f.row().context_json)).usb).toEqual(usbEvents)
+    const markdown = String(f.requests.find(item => item.method === 'POST')!.body!.body)
+    expect(markdown).toContain('### USB events')
+    expect(markdown).toContain('Base: 0.8.1 (USB Audio off) · bbbbbbbb')
+    expect(markdown).toContain(JSON.stringify(events[1]))
+    const other = await fixture()
+    const refused = await other.post(report(undefined, { usbEvents: { ...usbEvents, events: [{ ...events[1], note: 'free text' }] } }))
+    expect(refused.status).toBe(400)
+    expect(await refused.json()).toMatchObject({ error: expect.stringMatching(/USB events are unreadable/) })
+    expect(other.db.prepare('SELECT COUNT(*) AS count FROM issues').get()).toEqual({ count: 0 })
+  })
+
   it('reports a Digitakt configuration against the modules of that machine', async () => {
     const f = await fixture(), device = DEVICES_BY_ID.digitakt
     const ids = ['digitakt-digihealth', 'digitakt-digieq'], natives = ids.map(id => communityModule(id)!)
@@ -167,6 +185,12 @@ describe('a report about a whole configuration', () => {
     f.db.exec("UPDATE users SET email_verified=1 WHERE id='reporter'")
     for (let sent = 0; sent < 10; sent++) expect((await f.post(report(undefined, { visibility: undefined }))).status).toBe(201)
     expect((await f.post()).status).toBe(429)
+    // Refused for the member, even from a fresh address, the report counts toward neither the address nor the site.
+    const bucket = Math.floor(Date.now() / 3600000), count = async (key: string) => f.db.prepare('SELECT count FROM rate_limits WHERE key=?').get(await digest(key + ':' + bucket))
+    f.db.prepare('DELETE FROM rate_limits WHERE key=?').run(await digest('issue-ip:192.0.2.1:' + bucket))
+    expect((await f.post()).status).toBe(429)
+    expect(await count('issue-global')).toEqual({ count: 10 })
+    expect(await count('issue-ip:192.0.2.1')).toBeUndefined()
   })
 
   it('does not count against a module’s own issue totals or stability grade', async () => {
@@ -228,6 +252,17 @@ describe('maintainers of every module in the configuration', () => {
     expect(closed.status).toBe(200)
     expect(f.row().status).toBe('closed')
     expect(f.db.prepare('SELECT kind,issue_id FROM notifications').all()).toEqual([{ kind: 'issue_closed', issue_id: id }])
+  })
+
+  it('are not told when the reporter replies, while the reporter still hears a maintainer', async () => {
+    const f = await fixture()
+    await f.post()
+    const id = String(f.row().id), zac = await f.developer('zac', 'Zac-Kyoti', ZAC.id), repeat = await f.developer('repeat', 'repeat98', REPEAT.id)
+    for (const [token, module] of [[zac, 'sidechain-compressor'], [repeat, 'miniverb']]) expect((await f.request('/developer/modules/' + module + '/claim', 'POST', {}, '', token)).status).toBe(201)
+    expect((await f.request('/issues/' + id + '/replies', 'POST', { body: 'Still DSP FULL with only these two.' }, f.session)).status).toBe(201)
+    expect(f.db.prepare("SELECT COUNT(*) AS count FROM notifications WHERE kind='issue_comment'").get()).toEqual({ count: 0 })
+    expect((await f.request('/issues/' + id + '/replies', 'POST', { body: 'Which tracks hold them?' }, '', zac)).status).toBe(201)
+    expect(f.db.prepare("SELECT user_id FROM notifications WHERE kind='issue_comment'").all()).toEqual([{ user_id: 'reporter' }])
   })
 })
 

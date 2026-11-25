@@ -1,0 +1,1 @@
+Octatrack base: the box after you pick a module effect now shows the CPU next to its DSP and memory: how full the frame is, where a full bar means renders start to drop. The CPU meter is an average over seconds and can read 72 % while the frame is already full: on an Octatrack MKII a third Tape Echo made the Amiga track crackle that way.

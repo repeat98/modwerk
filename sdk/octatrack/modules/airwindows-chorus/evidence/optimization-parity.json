@@ -1,0 +1,222 @@
+{
+  "candidateVersion": "0.1.3-experimental",
+  "baselineSourceSha256": "2a39a3cf0ae9918cf4fffb84d8bb1da73ff09c39895663f815f6b5425000d8e0",
+  "optimizedSourceSha256": "93f58d2cc5a6e23c6dbc03d387530f5bfd3b3a023ee271a83b28bbca6093a569",
+  "baselineAssembledSha256": "03469c86e11d0aca51b98501293074cd7140339cc8664e39376507339a322daa",
+  "optimizedAssembledSha256": "4bb74803178a809892e542d78608265a3a682892e26ac29ac87e63aa44835a0f",
+  "baselineProgramWords": 539,
+  "optimizedProgramWords": 588,
+  "conditions": "Synthetic DSP memory, dirty init, independent full-scale seeded noise and 19 kHz tone, cold/warm history, four ring wraps, endpoints and moving controls. Instructions include the identical synthetic harness; not hardware cycles.",
+  "results": [
+    {
+      "name": "static-(0, 0, 0)",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 399.2,
+      "afterInstructionsPerSampleIncludingHarness": 347.2
+    },
+    {
+      "name": "static-(0, 0, 127)",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 399.2,
+      "afterInstructionsPerSampleIncludingHarness": 347.2
+    },
+    {
+      "name": "static-(64, 64, 64)",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 386.6,
+      "afterInstructionsPerSampleIncludingHarness": 343.6
+    },
+    {
+      "name": "static-(127, 127, 127)",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 408.1,
+      "afterInstructionsPerSampleIncludingHarness": 365.0
+    },
+    {
+      "name": "static-(127, 0, 127)",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 423.0,
+      "afterInstructionsPerSampleIncludingHarness": 371.0
+    },
+    {
+      "name": "static-(0, 127, 127)",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 389.2,
+      "afterInstructionsPerSampleIncludingHarness": 344.9
+    },
+    {
+      "name": "moving-split-0",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 408.9,
+      "afterInstructionsPerSampleIncludingHarness": 367.3
+    },
+    {
+      "name": "moving-split-1",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-2",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-3",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-4",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-5",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-6",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-7",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-8",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-9",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-10",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-11",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-12",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-13",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-14",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "moving-split-15",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-0",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 416.4,
+      "afterInstructionsPerSampleIncludingHarness": 367.3
+    },
+    {
+      "name": "random-1",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 418.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-2",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-3",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-4",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 410.9,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-5",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 413.2,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-6",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 420.6,
+      "afterInstructionsPerSampleIncludingHarness": 371.5
+    },
+    {
+      "name": "random-7",
+      "bitIdentical": true,
+      "frames": 32768,
+      "beforeInstructionsPerSampleIncludingHarness": 410.9,
+      "afterInstructionsPerSampleIncludingHarness": 369.2
+    }
+  ]
+}

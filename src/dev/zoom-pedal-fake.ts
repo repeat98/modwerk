@@ -1,21 +1,29 @@
 // A pretend Zoom MultiStomp for tests: answers the identity request and the file commands the link sends,
-// in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access.
-import { crc32, pack7, unpack7 } from '../engine/zoom/zoom-protocol'
+// in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access. With firmware 1.10 it is in update
+// mode: it takes the flash commands into a 4 MB flash where, as in NOR flash, a write only clears bits until erased.
+// With `midistomp` it also answers MIDISTOMP's hello (version, feature bits) and, given `load`, its load request.
+import { crc32, pack7, unpack7, type MidistompLoad } from '../engine/zoom/zoom-protocol'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '' } = {}) {
-  const sent: number[][] = []
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, patch = undefined as number[] | undefined, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
+  const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
+  let firmware = started, starting = 0
+  let writes = 0
   let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
-  const input: MidiIn = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
+  const input: MidiIn & { state: string } = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
   // Every reply takes `latency` ms; with `slow`, the nth reply to file command `cmd` comes `ms` later still, or never (null).
   let seen = 0, current = -1
   const reply = (m: number[]) => {
     let ms: number | null = 0
     if (slow && current === slow.cmd && ++seen === slow.nth) ms = slow.ms
-    if (ms !== null) setTimeout(() => input.onmidimessage?.({ data: Uint8Array.from(m) }), latency + ms)
+    // An instant reply goes as a microtask: a nested setTimeout(0) waits 4 ms or more, which made a whole flash crawl.
+    const deliver = () => input.onmidimessage?.({ data: Uint8Array.from(m) })
+    if (ms === null) return
+    if (latency + ms) setTimeout(deliver, latency + ms)
+    else queueMicrotask(deliver)
   }
   const head = [0xf0, 0x52, 0x00, deviceId, 0x60, 0x04]
   const ack = () => reply([...head, 0, 0xf7])
@@ -33,12 +41,18 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
     const v = (crc32(data) ^ 0xffffffff) >>> 0
     reply([...head, 0x22, 0, 0, data.length & 0x7f, (data.length >> 7) & 0x7f, ...pack7(data), v & 0x7f, (v >>> 7) & 0x7f, (v >>> 14) & 0x7f, (v >>> 21) & 0x7f, (v >>> 28) & 0x0f, 0xf7])
   }
-  const output: MidiOut = {
+  const output: MidiOut & { state: string } = {
     id: 'out', name: portName, state: 'connected',
     send(data) {
       const m = Array.from(data); sent.push(m)
       if (silent) return
-      if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
+      if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
+      if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
+      if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
+      if (m[1] === 0x52 && m[3] === deviceId && patch) {
+        if (m[4] === 0x29) { current = m[4]; return reply(patch) }
+        if (m[4] === 0x28 && m.length === 146) { patch.splice(0, patch.length, ...m); return }
+      }
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
       const cmd = m[5], name = cmd === 0x20 ? String.fromCharCode(...m.slice(16, m.indexOf(0, 16))) : ''   // read: 9 zero bytes, then the name
@@ -60,8 +74,60 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
       return ack()
     },
   }
+  // Update mode: 01 start, 0A erase, 02 write (the nth write, with badCrcAt, fails its checksum once), 04 finish.
+  const n = (d: number[]) => d.reduce((v, b, i) => v + b * 128 ** i, 0)
+  function flashCommand(m: number[]) {
+    current = m[4]
+    const status = (s: number) => reply([0xf0, 0x52, 0x00, deviceId, 0x00, s, 0xf7])
+    if (m[4] === 0x0a) flash.fill(0xff, n(m.slice(5, 10)), n(m.slice(5, 10)) + n(m.slice(10, 15)))
+    if (m[4] === 0x02) {
+      const at = n(m.slice(5, 10)), length = n(m.slice(10, 12)), data = unpack7(m.slice(12, -6)).slice(0, length)
+      if (++writes === badCrcAt || ((n(m.slice(-6, -1)) ^ 0xffffffff) >>> 0) !== crc32(data)) return status(0x08)
+      data.forEach((b, i) => { flash[at + i] &= b })
+    }
+    status(0x00)
+  }
+  // MIDISTOMP's SysEx: 01 hello -> 41 version + 42 feature bits; 06 load -> 47, its window one on each time.
+  let window = 0
+  function mstCommand(m: number[]) {
+    const mst = [0xf0, 0x7d, 0x4d, 0x53, 0x54], nonce = m[6], { version, features: f, load } = midistomp!
+    if (m[5] === 0x01) { reply([...mst, 0x41, nonce, ...version, 0xf7]); reply([...mst, 0x42, nonce, f & 127, f >> 7 & 127, f >> 14 & 127, 0x7f, 0xf7]) }
+    if (m[5] === 0x06 && load) {   // diag.c's window in cycles (an 8-frame block is 54,422), then names; the DSP total is the slots'
+      const cyc = (tenths: number) => Math.round(tenths * 54422 / 1000)
+      const words = [cyc(load.cpu), cyc(load.audio), cyc(load.audioMax), cyc(load.system), cyc(load.perform), ...load.slots.map(s => cyc(s.cpu)), load.late, ++window, cyc(load.midi), load.lateTotal]
+      const bytes = [...words.flatMap(w => [w & 255, w >> 8 & 255, w >> 16 & 255, w >>> 24]), ...load.slots.flatMap(s => [s.dsp & 255, s.dsp >> 8]), ...load.slots.flatMap(s => Array.from(s.name.padEnd(8, '\0').slice(0, 8), c => c.charCodeAt(0)))]
+      reply([...mst, 0x47, nonce, ...pack7(bytes), 0xf7])
+    }
+  }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
-  return { access, sent, input, output, files }
+  /** Unplugged, then plugged in again running `next` (1.10: update mode; the base's tag after a flash), as Web MIDI
+   * tells it; the first `boot` identity requests go unanswered, as while the pedal shows its boot screen. */
+  function replug(next: string, boot = 0) {
+    input.state = output.state = 'disconnected'; access.onstatechange?.({})
+    firmware = next; starting = boot; input.state = output.state = 'connected'; access.onstatechange?.({})
+  }
+  return { access, sent, input, output, files, flash, replug }
+}
+
+/** A synthetic current-patch reply. Slots are zero-based. */
+export function fakeCurrentPatch(name: string, slots: { index: number; gid: number; fxid: number; enabled?: boolean; values?: number[] }[]) {
+  const data = new Uint8Array(122)
+  data[109] = (Math.max(-1, ...slots.map(slot => slot.index)) + 1) << 2
+  data.set(Array.from(name.slice(0, 10).padEnd(10), c => c.charCodeAt(0)), 111)
+  const offsets = [29, 42, 55, 68, 76, 84, 92, 100, 128]
+  for (const { index, gid, fxid, enabled = true, values = [] } of slots) {
+    const start = index * 18
+    data[start] = (fxid << 1) | Number(enabled)
+    data[start + 1] = fxid >> 7
+    data[start + 3] = gid << 1
+    values.forEach((value, parameter) => {
+      const position = offsets[parameter], byte = start + (position >> 3), bits = value << (position & 7)
+      data[byte] |= bits
+      data[byte + 1] |= bits >> 8
+      data[byte + 2] |= bits >> 16
+    })
+  }
+  return [0xf0, 0x52, 0, 0x61, 0x28, ...pack7(data), 0xf7]
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */
@@ -72,6 +138,19 @@ export function fakeEffect(name: string, gid: number, fxid: number, version: str
   Array.from(version).forEach((c, i) => { data[0x44 + i] = c.charCodeAt(0) })
   data[0x4c] = 0x7f; Array.from('ELF').forEach((c, i) => { data[0x4d + i] = c.charCodeAt(0) })
   return { name, data }
+}
+
+/** Synthetic descriptor across a file block boundary, with no bytes from a pedal. */
+export function withFakeEffectControls(file: FakePedalFile, name: string, parameters: [string, number][]): FakePedalFile {
+  const entries: [string, number][] = [['OnOff', 1], [name, 0xffffffff], ...parameters]
+  for (const [index, [label, max]] of entries.entries()) {
+    const bytes = new Uint8Array(0x30)
+    bytes.set(Array.from(label, char => char.charCodeAt(0)))
+    new DataView(bytes.buffer).setUint32(0x0c, max, true)
+    if (index === entries.length - 1) bytes[0x2c] = 4
+    file.data.splice(500 + index * 0x30, bytes.length, ...bytes)
+  }
+  return file
 }
 
 /** A stand-in effect list: one section per group, the given names in them, zero padding to 4108 bytes. */

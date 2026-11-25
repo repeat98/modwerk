@@ -1,0 +1,404 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "scope": "Physical fixture preparation and unloaded audio preflight; no Sample Locks module trial.",
+  "base": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+  "model": "Octatrack MKII / 1.40C",
+  "candidate": {
+    "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "bytes": 10048,
+    "installed": false
+  },
+  "transfer": {
+    "set": "PSLTEST_261031",
+    "project": "PSL AUDIO TEST",
+    "filesVerified": 60,
+    "sampleFilesVerified": 8,
+    "bytesCopied": 23780482,
+    "allFileHashesMatched": true,
+    "existingDestinationOverwritten": false,
+    "cardEjectedSuccessfully": true
+  },
+  "existingModuleSetFilesPreserved": true,
+  "inventoryBefore": [],
+  "inventoryAfterRestart": [],
+  "inventoryLatest": [],
+  "initialFailure": {
+    "authorReported": "Playback did not advance; trig and sample preview silent.",
+    "uiTicks": [
+      1059709,
+      1059775
+    ],
+    "dspFrames": [
+      47291979,
+      47291979
+    ],
+    "cause": "Not established; no module installed."
+  },
+  "recovery": {
+    "powerCycle": "Performed and reported by author",
+    "authorReported": "Restarted, fixture on A01; subsequently explicitly pressed PLAY: advancing and audible.",
+    "readOnlyDspFrames": [
+      101131,
+      103887,
+      915609
+    ],
+    "sameBase": true
+  },
+  "audioPreflight": {
+    "userListening": "Pressed PLAY: advancing and audible (author-reported).",
+    "usbCapture": "Passed after explicit PLAY confirmation: all eight expected track tones and all eight tones in Main.",
+    "captures": [
+      {
+        "file": "baseline-1.private.wav",
+        "sha256": "ac13e2ddc48a4b651a3bc8827d55f19208c7df030487dcc5723924ea0f165f66",
+        "frames": 40960,
+        "channels": 20,
+        "sampleRate": 44100,
+        "constantEachChannel": true,
+        "channelMin": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "channelMax": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "recorder": "Swift CoreAudio HAL IOProc"
+      },
+      {
+        "file": "baseline-2.private.wav",
+        "sha256": "afd83579a0be25cca168c1a6d2d258b6dd3bc0c0da992b9593b3351dea594f58",
+        "frames": 132608,
+        "channels": 20,
+        "sampleRate": 44100,
+        "constantEachChannel": true,
+        "channelMin": [
+          -8703,
+          -8703,
+          -5887,
+          -5887,
+          -4095,
+          -4095,
+          -3583,
+          -3583,
+          -2559,
+          -2559,
+          -2303,
+          -2303,
+          -2047,
+          -2047,
+          -1791,
+          -1791,
+          -5887,
+          -5887,
+          0,
+          0
+        ],
+        "channelMax": [
+          -8703,
+          -8703,
+          -5887,
+          -5887,
+          -4095,
+          -4095,
+          -3583,
+          -3583,
+          -2559,
+          -2559,
+          -2303,
+          -2303,
+          -2047,
+          -2047,
+          -1791,
+          -1791,
+          -5887,
+          -5887,
+          0,
+          0
+        ],
+        "recorder": "Swift CoreAudio HAL IOProc"
+      },
+      {
+        "file": "inspect.private.wav",
+        "sha256": "38ba196c6dc4fa4ab3705c762f2565fe37ca50183dae5e2870cd6b7d1185028b",
+        "frames": 44544,
+        "channels": 20,
+        "sampleRate": 44100,
+        "constantEachChannel": true,
+        "channelMin": [
+          -8703,
+          -8703,
+          -5887,
+          -5887,
+          -4095,
+          -4095,
+          -3583,
+          -3583,
+          -2559,
+          -2559,
+          -2303,
+          -2303,
+          -2047,
+          -2047,
+          -1791,
+          -1791,
+          -5887,
+          -5887,
+          0,
+          0
+        ],
+        "channelMax": [
+          -8703,
+          -8703,
+          -5887,
+          -5887,
+          -4095,
+          -4095,
+          -3583,
+          -3583,
+          -2559,
+          -2559,
+          -2303,
+          -2303,
+          -2047,
+          -2047,
+          -1791,
+          -1791,
+          -5887,
+          -5887,
+          0,
+          0
+        ],
+        "recorder": "Swift CoreAudio HAL IOProc"
+      },
+      {
+        "file": "ffmpeg-baseline.private.wav",
+        "sha256": "7ef89bae1d86ae328f48d90d54285808fd85defd2997e44a5887d524dada7e0f",
+        "frames": 83592,
+        "channels": 20,
+        "sampleRate": 44100,
+        "constantEachChannel": true,
+        "channelMin": [
+          -8704,
+          -8704,
+          -5888,
+          -5888,
+          -4096,
+          -4096,
+          -3584,
+          -3584,
+          -2560,
+          -2560,
+          -2304,
+          -2304,
+          -2048,
+          -2048,
+          -1792,
+          -1792,
+          -5888,
+          -5888,
+          0,
+          0
+        ],
+        "channelMax": [
+          -8704,
+          -8704,
+          -5888,
+          -5888,
+          -4096,
+          -4096,
+          -3584,
+          -3584,
+          -2560,
+          -2560,
+          -2304,
+          -2304,
+          -2048,
+          -2048,
+          -1792,
+          -1792,
+          -5888,
+          -5888,
+          0,
+          0
+        ],
+        "recorder": "FFmpeg AVFoundation"
+      }
+    ],
+    "coreAudioInput": {
+      "channels": 20,
+      "sampleRate": 44100,
+      "format": "32-bit float interleaved",
+      "formatFlags": 9
+    },
+    "confirmedPlayingCapture": {
+      "captureSha256": "353122e4c2782ce613f6ba1f94df099b208b9d9025872ae21b6e43abb3e46a64",
+      "channels": 20,
+      "sampleRate": 44100,
+      "sourceFrames": 132608,
+      "selectedWindowStartFrame": 0,
+      "analysedFrames": 44100,
+      "allEightTrackTonesVerified": true,
+      "allEightTonesPresentInMain": true,
+      "mainRmsFullScale": [
+        0.00571577576642001,
+        0.00571577576642001
+      ],
+      "mainToneEnergyFractions": [
+        0.12500078923570912,
+        0.12494568451346669,
+        0.12491452344312928,
+        0.12489711029985491,
+        0.12487212282086067,
+        0.1248588700614002,
+        0.12483084186264405,
+        0.12480492703178929
+      ],
+      "tracks": [
+        {
+          "track": 1,
+          "expectedHz": 256,
+          "rmsFullScale": [
+            0.010956920318285835,
+            0.010956920318285835
+          ],
+          "expectedFrequencyEnergyFraction": 0.9999083940873891
+        },
+        {
+          "track": 2,
+          "expectedHz": 384,
+          "rmsFullScale": [
+            0.010956948829975499,
+            0.010956948829975499
+          ],
+          "expectedFrequencyEnergyFraction": 0.9998005784543563
+        },
+        {
+          "track": 3,
+          "expectedHz": 512,
+          "rmsFullScale": [
+            0.010957075411590944,
+            0.010957075411590944
+          ],
+          "expectedFrequencyEnergyFraction": 0.9996521157119515
+        },
+        {
+          "track": 4,
+          "expectedHz": 640,
+          "rmsFullScale": [
+            0.010957175622946734,
+            0.010957175622946734
+          ],
+          "expectedFrequencyEnergyFraction": 0.9994608897075868
+        },
+        {
+          "track": 5,
+          "expectedHz": 768,
+          "rmsFullScale": [
+            0.010957281498709365,
+            0.010957281498709365
+          ],
+          "expectedFrequencyEnergyFraction": 0.9992317792957986
+        },
+        {
+          "track": 6,
+          "expectedHz": 896,
+          "rmsFullScale": [
+            0.0109574876422192,
+            0.0109574876422192
+          ],
+          "expectedFrequencyEnergyFraction": 0.9989597669921809
+        },
+        {
+          "track": 7,
+          "expectedHz": 1024,
+          "rmsFullScale": [
+            0.010957429839510553,
+            0.010957429839510553
+          ],
+          "expectedFrequencyEnergyFraction": 0.9986453616639214
+        },
+        {
+          "track": 8,
+          "expectedHz": 1152,
+          "rmsFullScale": [
+            0.010957454586147533,
+            0.010957454586147533
+          ],
+          "expectedFrequencyEnergyFraction": 0.9982883075784958
+        }
+      ],
+      "scope": "Audio fixture preflight only; no timing, dropout, CPU or stack qualification."
+    },
+    "earlierCaptures": "Initial all-zero capture accompanied observed stalled DSP; subsequent constant captures had no confirmed PLAY and were superseded by author correction. Neither diagnoses a USB audio fault."
+  },
+  "actions": {
+    "fixtureCopied": true,
+    "moduleInstall": false,
+    "keep": false,
+    "flash": false,
+    "ownerProjectSaved": false,
+    "pushed": false
+  },
+  "limitations": [
+    "Physical A01 tone preflight passed; this does not establish edit continuity, absence of dropouts, or other pattern playback.",
+    "No Apply/Clear hardware test was performed in this run.",
+    "No physical CPU, worst-case timing, stack, dropout or release qualification.",
+    "Project, WAVs, PCM, raw diagnostics and built package remain private outside Git."
+  ],
+  "correction": "Earlier structured Playing and audible reply was superseded by explicit author clarification that PLAY had not been pressed. Initial post-restart recordings cannot qualify playback or diagnose USB audio.",
+  "detectorSanity": {
+    "syntheticOnly": true,
+    "tests": 4,
+    "pcm16And32Accepted": true,
+    "loudDcRefused": true,
+    "activeStemsWithMutedMainRefused": true,
+    "swappedTracksRefused": true
+  },
+  "sourceHashes": {
+    "device_audio_preflight.py": "31ffbb1d89bc5bb6c4e485d046555c51e13f80019e3d945fb9d9dc7483ea30bd",
+    "test_device_audio_preflight.py": "9d1f9c44036aa9805680f4cb8fbab3ec4b0f9b81707f5edba8436e7605049f8f"
+  },
+  "checks": {
+    "deviceAudioAnalyser": "4 synthetic tests passed",
+    "diffWhitespace": "Passed",
+    "moduleDoctor": "Draft remains unqualified: publication/cycle/memory/hardware evidence and unpublished catalog/package/comparison checks remain red. No gate changed."
+  }
+}

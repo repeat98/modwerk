@@ -12,7 +12,7 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'yaml'
 import { parseAis } from '../src/engine/zoom/ais.ts'
@@ -21,7 +21,7 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url)), OUT = join(ROOT, 'v
 const UPSTREAM = 'https://github.com/matujuice/zoom-ms-midistomp', BUILD = 'ms70cdr-2.10'
 const MIN = 16, DISTINCT = 5 // check_stock_free.py: shorter runs, and sparser windows, match stock by chance
 type Part = ['hex', string] | ['copy', string, number, number]
-type Entry = { model: string; addr?: number; offset?: number; expect?: string; expect_sha256?: string; data: string; source?: string }
+type Entry = { model: string; addr?: number; offset?: number; expect?: string | string[]; expect_sha256?: string | string[]; data: string; source?: string; stamp?: Record<string, number> }
 type Patch = { name: string; description?: string; builds?: string[]; replace?: { find: string; with: string; count?: number }[]; write?: Entry[]; section?: Entry[]; bin133?: Entry[] }
 
 const sha = (data: Uint8Array) => createHash('sha256').update(data).digest('hex')
@@ -34,6 +34,16 @@ const upstream = resolve(upstreamArg), app = resolve(appArg)
 const git = (...args: string[]) => execFileSync('git', ['-C', upstream, ...args], { encoding: 'utf8' }).trim()
 if (git('status', '--porcelain')) fail(upstream + ' has local changes; import a clean checkout.')
 const revision = git('rev-parse', 'HEAD')
+// The diag page's build fields, filled like zoomms --stamp; fixed per revision so the build stays byte for byte.
+const stamps: Record<string, string> = { commit: revision.slice(0, 7), date: git('log', '-1', '--format=%cs'), label: 'Modwerk' }
+const stamped = (entry: Entry) => {
+  const data = fromHex(entry.data)
+  for (const [key, at] of Object.entries(entry.stamp ?? {})) {
+    if (data.subarray(at, at + 16).toString('latin1') !== `<${key}>`.padEnd(16, '\0')) fail(`A section has no <${key}> placeholder at +${at}.`)
+    if (stamps[key]) data.fill(0, at, at + 16).write(stamps[key].slice(0, 15), at, 'latin1')
+  }
+  return data
+}
 
 const model = parse(readFileSync(join(upstream, 'models/ms70cdr.yaml'), 'utf8'))
 if (sha(readFileSync(join(app, 'Contents/MacOS/EFX Updater'))) !== model.stock_mac_updater_sha256) fail(app + " is not Zoom's stock MS-70CDR 2.10 Mac updater.")
@@ -64,8 +74,16 @@ function stockFree(data: Buffer): string | Part[] {
   return at < data.length ? [...parts, ['hex', data.toString('hex', at)]] : parts
 }
 
+// The releases MIDISTOMP's own builder makes (scripts/midistomp_builder.py: NAME, and PATCHES, which may start with BASE +).
+const builder = readFileSync(join(upstream, 'scripts/midistomp_builder.py'), 'utf8')
+const list = (name: string) => new RegExp(String.raw`^${name} = (BASE \+ )?\[([^\]]*)\]`, 'm').exec(builder)
+const release = /^NAME = "([^"]+)"/m.exec(builder)?.[1], own = list('PATCHES'), base = own?.[1] ? list('BASE') : null
+if (!release || !own || (own[1] && !base)) fail("Couldn't read the release in scripts/midistomp_builder.py.")
+stamps.version = release!.split(' ').pop()!
+const names = [...(base ? base[2] : '').matchAll(/"([^"]+)"/g), ...own![2].matchAll(/"([^"]+)"/g)].map(match => match[1])
+
 const patches = [], skipped = []
-for (const file of readdirSync(join(upstream, 'patches')).filter(name => name.endsWith('.yaml')).sort()) {
+files: for (const file of readdirSync(join(upstream, 'patches')).filter(name => name.endsWith('.yaml')).sort()) {
   const patch: Patch = parse(readFileSync(join(upstream, 'patches', file), 'utf8'))
   // Patches build on each other (midi-settings expects midi-cc's bytes), so none is tried alone here:
   // src/engine/zoom/zoom-base.test.ts checks the releases against zoomms' own output.
@@ -78,33 +96,39 @@ for (const file of readdirSync(join(upstream, 'patches')).filter(name => name.en
       for (let i = hay.indexOf(needle); i >= 0; i = hay.indexOf(needle, i + 1)) found.push(addr + i)
       return found
     })
-    if (hits.length !== count) fail(`${patch.name}: ${JSON.stringify(find)} is in the stock OS ${hits.length} times, not ${count}.`)
+    if (hits.length !== count) {
+      // A test-only patch may search for text another patch writes (m0-probe renames version-1.2's): no release needs it.
+      if (names.includes(patch.name)) fail(`${patch.name}: ${JSON.stringify(find)} is in the stock OS ${hits.length} times, not ${count}.`)
+      skipped.push(`${patch.name}: ${JSON.stringify(find)} is not in the stock OS, and no release uses it`)
+      continue files
+    }
     write.push(...hits.map(addr => ({ model: BUILD, addr, expect_sha256: sha(needle), expect_length: needle.length, data: Buffer.from(next, 'latin1').toString('hex') })))
   }
-  for (const { model, addr, expect, data } of patch.write ?? [])
-    if (model === BUILD) write.push({ model, addr, expect_sha256: sha(fromHex(expect!)), expect_length: fromHex(expect!).length, data: stockFree(fromHex(data)) })
-  const own = (entries: Entry[] = []) => entries.filter(entry => entry.model === BUILD).map(entry => ({ ...entry, data: stockFree(fromHex(entry.data)) }))
+  for (const { model, addr, expect, data } of patch.write ?? []) {
+    if (model !== BUILD) continue
+    // A list: any of these may be there (mixer-m2 runs after midi-clock or after looper); all are the same length.
+    const expects = [expect!].flat().map(fromHex)
+    if (expects.some(bytes => bytes.length !== expects[0].length)) fail(`${patch.name}: the expected bytes at ${addr} differ in length.`)
+    write.push({ model, addr, expect_sha256: expects.length > 1 ? expects.map(sha) : sha(expects[0]), expect_length: expects[0].length, data: stockFree(fromHex(data)) })
+  }
+  const own = (entries: Entry[] = []) => entries.filter(entry => entry.model === BUILD).map(({ stamp, ...entry }) => ({ ...entry, data: stockFree(stamped({ ...entry, stamp })) }))
   const entry = { name: patch.name, description: patch.description, builds: patch.builds, write, section: own(patch.section), bin133: own(patch.bin133) }
   if (!write.length && !entry.section.length && !entry.bin133.length) { skipped.push(patch.name + ': nothing for ' + BUILD); continue }
   patches.push(Object.fromEntries(Object.entries(entry).filter(([, value]) => Array.isArray(value) ? value.length : value !== undefined)))
 }
 
-// The releases MIDISTOMP's own builder makes (scripts/midistomp_builder.py: NAME and PATCHES).
-const builder = readFileSync(join(upstream, 'scripts/midistomp_builder.py'), 'utf8')
-const release = /^NAME = "([^"]+)"/m.exec(builder)?.[1], names = /^PATCHES = \[([^\]]*)\]/m.exec(builder)?.[1]
-if (!release || !names) fail("Couldn't read the release in scripts/midistomp_builder.py.")
 const document = {
   upstream: UPSTREAM, revision, license: 'MIT', build: BUILD,
   stock: {
     macUpdaterSha256: model.stock_mac_updater_sha256, windowsUpdaterSha256: model.stock_updater_sha256,
     main: { bytes: stock['Main.bin'].length, sha256: sha(stock['Main.bin']) }, preset: { bytes: stock['Preset.bin'].length, sha256: sha(stock['Preset.bin']) },
   },
-  releases: { [release!]: [...names!.matchAll(/"([^"]+)"/g)].map(match => match[1]) },
+  releases: { [release!]: names },
   patches,
 }
 
 const copied = ['LICENSE', ...['models', 'asm'].flatMap(folder => readdirSync(join(upstream, folder), { recursive: true, withFileTypes: true })
-  .filter(entry => entry.isFile()).map(entry => join(entry.parentPath, entry.name).slice(upstream.length + 1))).sort()]
+  .filter(entry => entry.isFile()).map(entry => join(entry.parentPath, entry.name).slice(upstream.length + 1).split(sep).join('/'))).sort()]
 rmSync(OUT, { recursive: true, force: true })
 for (const name of copied) {
   mkdirSync(dirname(join(OUT, name)), { recursive: true })

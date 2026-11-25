@@ -1,0 +1,415 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitakt",
+ "moduleId": "crossfader",
+ "moduleVersion": "0.1.0-experimental",
+ "capturedAt": "2026-11-10",
+ "firmware": "1.54",
+ "imageSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+ "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+ "source": {
+  "repository": "https://github.com/repeat98/modwerk",
+  "revision": "uncommitted working tree on 2709906d639e1d57719d6c2659ab2bd82444c729, branch module/crossfader",
+  "path": "sdk/digitakt/modules/crossfader"
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
+ },
+ "catalog": {
+  "revision": "2709906d639e1d57719d6c2659ab2bd82444c729",
+  "sha256": null,
+  "cores": 0,
+  "mods": 0
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "2.1",
+    "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+   },
+   {
+    "id": "crossfader",
+    "version": "0.1.0-experimental",
+    "sha256": null
+   }
+  ],
+  "linker": "Modwerk engine linkMods (scripts/link-image.mjs)",
+  "outputVersion": "CF01",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47"
+  },
+  "python": "3.12.15",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture; the first-boot project.",
+  "sandbox": "Private temporary output only."
+ },
+ "inputs": [
+  [
+   1000.0,
+   "press 6"
+  ],
+  [
+   1100.0,
+   "release 6"
+  ],
+  [
+   1414.234,
+   "press 15"
+  ],
+  [
+   1514.237,
+   "release 15"
+  ],
+  [
+   1814.246,
+   "press 15"
+  ],
+  [
+   1914.249,
+   "release 15"
+  ],
+  [
+   2214.258,
+   "press 15"
+  ],
+  [
+   2314.261,
+   "release 15"
+  ],
+  [
+   2614.269,
+   "press 15"
+  ],
+  [
+   2714.272,
+   "release 15"
+  ],
+  [
+   3014.281,
+   "press 15"
+  ],
+  [
+   3114.284,
+   "release 15"
+  ],
+  [
+   3414.293,
+   "press 15"
+  ],
+  [
+   3514.295,
+   "release 15"
+  ],
+  [
+   3814.304,
+   "press 15"
+  ],
+  [
+   3914.307,
+   "release 15"
+  ],
+  [
+   4214.316,
+   "press 15"
+  ],
+  [
+   4314.319,
+   "release 15"
+  ],
+  [
+   4614.328,
+   "press 15"
+  ],
+  [
+   4714.33,
+   "release 15"
+  ],
+  [
+   5014.34,
+   "press 12"
+  ],
+  [
+   5114.342,
+   "release 12"
+  ],
+  [
+   5814.362,
+   "press 17"
+  ],
+  [
+   5914.365,
+   "release 17"
+  ],
+  [
+   6214.374,
+   "press 15"
+  ],
+  [
+   6314.377,
+   "release 15"
+  ],
+  [
+   6614.386,
+   "press 17"
+  ],
+  [
+   6714.388,
+   "release 17"
+  ],
+  [
+   7014.397,
+   "press 17"
+  ],
+  [
+   7114.4,
+   "release 17"
+  ],
+  [
+   7414.409,
+   "press 15"
+  ],
+  [
+   7514.412,
+   "release 15"
+  ],
+  [
+   7814.421,
+   "press 15"
+  ],
+  [
+   7914.423,
+   "release 15"
+  ],
+  [
+   8214.432,
+   "press 15"
+  ],
+  [
+   8314.435,
+   "release 15"
+  ],
+  [
+   8614.444,
+   "press 15"
+  ],
+  [
+   8714.447,
+   "release 15"
+  ],
+  [
+   9014.455,
+   "press 15"
+  ],
+  [
+   9114.458,
+   "release 15"
+  ],
+  [
+   9414.467,
+   "press 15"
+  ],
+  [
+   9514.47,
+   "release 15"
+  ],
+  [
+   9814.478,
+   "press 15"
+  ],
+  [
+   9914.482,
+   "release 15"
+  ],
+  [
+   10214.491,
+   "press 15"
+  ],
+  [
+   10314.494,
+   "release 15"
+  ],
+  [
+   10614.502,
+   "press 15"
+  ],
+  [
+   10714.505,
+   "release 15"
+  ],
+  [
+   11014.513,
+   "press 15"
+  ],
+  [
+   11114.517,
+   "release 15"
+  ],
+  [
+   11414.526,
+   "press 25"
+  ],
+  [
+   11514.528,
+   "release 25"
+  ],
+  [
+   12214.549,
+   "press 13"
+  ],
+  [
+   12314.551,
+   "release 13"
+  ],
+  [
+   12614.56,
+   "press 13"
+  ],
+  [
+   12714.563,
+   "release 13"
+  ],
+  [
+   13414.583,
+   "press 1"
+  ],
+  [
+   13514.587,
+   "press 23"
+  ],
+  [
+   13614.589,
+   "release 23"
+  ],
+  [
+   13914.598,
+   "release 1"
+  ],
+  [
+   14314.61,
+   "press 1"
+  ],
+  [
+   14414.612,
+   "press 23"
+  ],
+  [
+   14514.615,
+   "release 23"
+  ],
+  [
+   14814.624,
+   "release 1"
+  ],
+  [
+   15314.639,
+   "turn 9 +8"
+  ],
+  [
+   15360.0,
+   "turn 9 +8"
+  ],
+  [
+   15400.0,
+   "turn 9 +8"
+  ],
+  [
+   15440.0,
+   "turn 9 +8"
+  ],
+  [
+   15481.31,
+   "turn 9 +8"
+  ],
+  [
+   15527.262,
+   "turn 9 +8"
+  ],
+  [
+   15580.0,
+   "turn 9 +8"
+  ],
+  [
+   15620.0,
+   "turn 9 +8"
+  ],
+  [
+   16260.0,
+   "press 2"
+  ],
+  [
+   16360.0,
+   "press 25"
+  ],
+  [
+   16460.0,
+   "release 25"
+  ],
+  [
+   16760.6,
+   "release 2"
+  ],
+  [
+   17260.601,
+   "press 22"
+  ],
+  [
+   17360.602,
+   "release 22"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/crossfader-groups.png",
+   "sha256": "a7a84ea154b25068af6bb84fb184f6ebfee438f81c4dcb2cb36ebc68ca0ee07d",
+   "plan": "# Crossfader 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Crossfader)\nwait 1000\n# SETTINGS > CROSSFADER: TRACK 1 in A, TRACK 2 in B, TRACK 2 on FADER ON\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap YES\nwait 400\ntap RIGHT\ntap DOWN\ntap RIGHT\ntap RIGHT\nsnap crossfader-groups\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap 2\nwait 400\nsnap crossfader-fader-on\ntap NO\ntap NO\nwait 400\n# the Internal Mixer: FUNC + LFO twice; LEVEL moves the fader\npress FUNC\ntap LFO\nrelease FUNC\nwait 300\npress FUNC\ntap LFO\nrelease FUNC\nwait 400\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nwait 600\nsnap internal-mixer\n# track 2's SRC page: LEVEL is the fader there too\npress TRK\ntap 2\nrelease TRK\nwait 400\ntap AMP\nwait 1200\nsnap track-fader\n",
+   "atMs": 7200.000213675214,
+   "requestedAtMs": 7414.408974358975
+  },
+  {
+   "path": "media/crossfader-fader-on.png",
+   "sha256": "d396c59004c076dfa12fc219ef7648323c9217266123c78777241db42cab8bfb",
+   "plan": "# Crossfader 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Crossfader)\nwait 1000\n# SETTINGS > CROSSFADER: TRACK 1 in A, TRACK 2 in B, TRACK 2 on FADER ON\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap YES\nwait 400\ntap RIGHT\ntap DOWN\ntap RIGHT\ntap RIGHT\nsnap crossfader-groups\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap 2\nwait 400\nsnap crossfader-fader-on\ntap NO\ntap NO\nwait 400\n# the Internal Mixer: FUNC + LFO twice; LEVEL moves the fader\npress FUNC\ntap LFO\nrelease FUNC\nwait 300\npress FUNC\ntap LFO\nrelease FUNC\nwait 400\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nwait 600\nsnap internal-mixer\n# track 2's SRC page: LEVEL is the fader there too\npress TRK\ntap 2\nrelease TRK\nwait 400\ntap AMP\nwait 1200\nsnap track-fader\n",
+   "atMs": 12000.000213675214,
+   "requestedAtMs": 12214.548504273504
+  },
+  {
+   "path": "media/internal-mixer.png",
+   "sha256": "d0df0122273ab1639342e0b7ca6166714063703c943ed5b5025d60ae290ecbf7",
+   "plan": "# Crossfader 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Crossfader)\nwait 1000\n# SETTINGS > CROSSFADER: TRACK 1 in A, TRACK 2 in B, TRACK 2 on FADER ON\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap YES\nwait 400\ntap RIGHT\ntap DOWN\ntap RIGHT\ntap RIGHT\nsnap crossfader-groups\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap 2\nwait 400\nsnap crossfader-fader-on\ntap NO\ntap NO\nwait 400\n# the Internal Mixer: FUNC + LFO twice; LEVEL moves the fader\npress FUNC\ntap LFO\nrelease FUNC\nwait 300\npress FUNC\ntap LFO\nrelease FUNC\nwait 400\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nwait 600\nsnap internal-mixer\n# track 2's SRC page: LEVEL is the fader there too\npress TRK\ntap 2\nrelease TRK\nwait 400\ntap AMP\nwait 1200\nsnap track-fader\n",
+   "atMs": 16260.000427350427,
+   "requestedAtMs": 16260.000427350427
+  },
+  {
+   "path": "media/track-fader.png",
+   "sha256": "e7f3010efe5535230b49f090d3f7bf1780aa31d912752520ab7522faae1eac1e",
+   "plan": "# Crossfader 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Crossfader)\nwait 1000\n# SETTINGS > CROSSFADER: TRACK 1 in A, TRACK 2 in B, TRACK 2 on FADER ON\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap YES\nwait 400\ntap RIGHT\ntap DOWN\ntap RIGHT\ntap RIGHT\nsnap crossfader-groups\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap 2\nwait 400\nsnap crossfader-fader-on\ntap NO\ntap NO\nwait 400\n# the Internal Mixer: FUNC + LFO twice; LEVEL moves the fader\npress FUNC\ntap LFO\nrelease FUNC\nwait 300\npress FUNC\ntap LFO\nrelease FUNC\nwait 400\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nturn 9 +2 40\nwait 600\nsnap internal-mixer\n# track 2's SRC page: LEVEL is the fader there too\npress TRK\ntap 2\nrelease TRK\nwait 400\ntap AMP\nwait 1200\nsnap track-fader\n",
+   "atMs": 18860.60705128205,
+   "requestedAtMs": 18860.60705128205
+  }
+ ]
+}

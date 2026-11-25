@@ -23,6 +23,12 @@ afterEach(() => { for (const root of folders.splice(0)) rmSync(root, { recursive
 const text = bytes => 'x'.repeat(bytes)
 
 describe('documents', () => {
+  it('refuses a relative link in a guide to a file that does not exist', () => {
+    const root = repository({ 'scripts/a.mjs': '', 'AGENTS.md': '[a](scripts/a.mjs), [web](https://example.com), [here](#top)\n', 'docs/G.md': '[a](../scripts/a.mjs#L2)\n```\n[x](gone.md)\n```\n', 'sdk/machines/m/README.md': '[a](../../../scripts/a.mjs)\n' })
+    expect(checkDocs(root)).toEqual({ documents: 2 })
+    write(root, { 'sdk/machines/m/README.md': '[b](../../../scripts/b.mjs)\n' })
+    expect(() => checkDocs(root)).toThrow('sdk/machines/m/README.md links to ../../../scripts/b.mjs, which does not exist.')
+  })
   it('keeps the commands in AGENTS.md and both skill folders one to one', () => {
     const skill = (name, text = '---\nname: ' + name + '\n---\n') => ({ ['.claude/skills/' + name + '/SKILL.md']: text, ['.agents/skills/' + name + '/SKILL.md']: text })
     const root = repository({ 'AGENTS.md': '## Commands\n\nStart with `/modwerk-a <link>`.\n', ...skill('modwerk-a') })
@@ -37,16 +43,16 @@ describe('documents', () => {
     write(root, { 'docs/SHORT.md': text(LIMIT), 'docs/LONG.md': text(LIMIT + 400) })
     expect(checkDocs(root, 'HEAD')).toEqual({ documents: 3 })
     write(root, { 'docs/LONG.md': text(LIMIT + 501) })
-    expect(() => checkDocs(root, 'HEAD')).toThrow('docs/LONG.md grew by 1 bytes to 32.5 KB')
+    expect(() => checkDocs(root, 'HEAD')).toThrow('docs/LONG.md grew by 1 bytes to 40.5 KB')
     write(root, { 'docs/LONG.md': text(LIMIT), 'AGENTS.md': text(LIMIT + 1) })
-    expect(() => checkDocs(root, 'HEAD')).toThrow('AGENTS.md grew by 32669 bytes to 32.0 KB, over the 32.0 KB')
+    expect(() => checkDocs(root, 'HEAD')).toThrow('AGENTS.md grew by 40861 bytes to 40.0 KB, over the 40.0 KB')
   })
   it('refuses a new document over the limit, counting Windows line endings as Git does', () => {
     const root = repository({ 'docs/A.md': 'a\n'.repeat(LIMIT / 2) })
     write(root, { 'docs/A.md': 'a\r\n'.repeat(LIMIT / 2) })
     expect(checkDocs(root, 'HEAD')).toEqual({ documents: 1 })
     write(root, { 'docs/sub/NEW.md': text(LIMIT + 1) })
-    expect(() => checkDocs(root, 'HEAD')).toThrow('docs/sub/NEW.md is new at 32.0 KB, over')
+    expect(() => checkDocs(root, 'HEAD')).toThrow('docs/sub/NEW.md is new at 40.0 KB, over')
   })
   it('keeps the frozen logs as they are, apart from a note, and their size out of the limit', () => {
     const log = '# Verification record\n\n## Old — 1 October 2026\n\n- Old result.\n' + text(LIMIT)

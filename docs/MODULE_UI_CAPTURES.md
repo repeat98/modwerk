@@ -105,16 +105,16 @@ record the source-file hashes and publication-version binding. Do not relabel
 old UI after a native source or control change. The reviewer checks this
 binding as well as the current access steps.
 
-An automatic USB module with no OT controls or dedicated OT page must explain
-that fact in `access.noUiReason`, keep `screenshots` empty and document its
-actual host/device access steps. Owner review verifies this narrow exception;
-do not invent a menu or use unrelated stock pages as evidence.
-
-A module that only changes how stock controls behave, with no page and
-nothing drawn (Butter Fingers drops knob turns while a lock is edited), is not
-covered by `access.noUiReason`, which the contract allows only for automatic
-USB modules. Until the owner sets a rule, keep its `screenshots` empty in the
-draft, describe the gesture in `access.steps`, and say so in the pull request.
+A module that changes stock behaviour and draws nothing of its own (an
+automatic USB output, a tempo LED that turns green on the pattern's 1, knob
+turns dropped while a lock is edited) gives `access.noUiReason` in place of
+screenshots, whatever its location: one sentence naming what it changes
+instead. It keeps both `screenshots` lists empty, describes the gestures or
+host steps in `access.steps`, and still has its README tutorial of at least
+three steps. The contract accepts the reason only with no `controls`, no
+`effectId` and no `screen:` claim in `compatibility.uiClaims`; key claims are
+fine. Owner review checks that it really draws nothing; do not invent a menu
+or use unrelated stock pages, or a photo of an LED, as evidence.
 
 ## Headless capture workflow
 
@@ -216,6 +216,30 @@ and framebuffer data are removed by the script.
   ninth of 24 words a frame).
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
   FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+- A USB trial needs `--dsp --dsp-rt`, or no `--dsp` at all: under plain `--dsp` the session runs slower than real time and
+  `try` stops at "hello was not confirmed … Upload acknowledgement timed out" (Arr Rows' draft, 17 November 2026).
+- On macOS a Unix socket path is limited to 104 characters: with a longer `--usb-host` path (a scratch directory's
+  often is) the emulator logs "cannot listen" and exits. Put the socket in `/tmp`.
+- A session that holds the bench itself ends after 120 wall seconds; `--usb-hold-ms` raises that.
+- From base 0.8, a package that reconnects USB (USB Audio) loses its trial about two seconds in under a scripted
+  host: the attach watchdog (#1985) takes the twin off the bus, which undoes the trial, and SETTINGS reads "NO MODULE
+  HAS A SETTING". Keep the package on the emulator's scratch card before capturing its pages (USB Audio 0.4.0,
+  23 November 2026).
+
+### Capturing the base's own screens
+
+`capture-module-ui.py` reads stock's LCD plane, so it misses everything a base draws through `ev_draw`: the startup,
+the CUE + PROJ status, the MODWERK pages' dialogs, the update and sync screens. A base image also runs past the
+emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000`.
+Capture those screens from a development twin (`build_core.py` with the release flags plus `--dev`) under `--usb-host`
+and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
+`screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.
+The startup's last frame comes from `scripts/verify-startup-base.py --png`.
+
+A module's own `module_draw` overlay (marks drawn over a stock page) is missed the same way. Without a development twin,
+rebuild the screen from what the panel link receives: after each `run`, send `tx` and feed its bytes to Octabam's
+`tools/panel/panel_link.py` (`PanelLink.feed`), then save `render_png(scale=6, dark=24, light=240)`, the documentation
+palette. Say so in `capture.json`'s method, as Arr Rows' draft does.
 
 ## Rights and release review
 
@@ -301,22 +325,34 @@ separately from Elektron's underlying interface rights, as for the OT captures.
 
 Rytm modules use the same manifest fields and `media/capture.json` as the
 Digitakt and Digitone. Capture them in
-[rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT) at revision
-`3c4c42c`, built with `cargo build --release --bin dtboot`. Its headless
+[rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT), from the
+checkout `npm run upstream:tools` keeps at the commit `sdk/upstream-tools.json`
+pins (`-- --update` moves it to upstream main), built there with
+`cargo build --release --bin dtboot`; a hand-made clone falls behind its fixes.
+Record the revision in `capture.json`. Its headless
 `dtboot` runs your own build of stock OS 1.74 with core-ar2 and the module, and
 writes the firmware-rendered 128×64 screen as a PNG at 3× without
 interpolation: `DTBOOT_STEPS=1` with `DTBOOT_PNG_DIR` after each key release,
 `DTBOOT_TURN_PNG` after each encoder turn. The command line is the panel-input
 plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
 
-- Never put an event on a multiple of 10M. dtboot runs in chunks of
-  `--every` instructions (10M by default) and silently drops a press,
-  release or turn whose clock the CPU has already passed when its chunk
-  starts. An event exactly on a boundary is lost whenever the CPU is busy
-  there (in an interrupt, not stopped): Send FX's boot plan lost its NO
-  presses, the notices stayed up and the run was silent
-  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)).
-  Place every event 3M off the boundaries.
+- Keep events off the `--every` grid. dtboot runs in chunks of `--every`
+  instructions (10M by default). Before rytm-emu `951dcbc`
+  ([trigcondition/rytm-emu#3](https://github.com/trigcondition/rytm-emu/pull/3))
+  it silently dropped a press, release or turn on a chunk boundary whenever
+  the CPU had run a few instructions past it, which depends on code layout:
+  Send FX's boot plan lost its NO presses
+  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)), and a
+  FLTR press at 11900M with `--every 100M` looked like a build that failed
+  only past a certain size. A dropped key press logs `no key named "SMPL" on
+  this machine` for a key the Rytm has. The pinned revision runs such an event a few
+  instructions late instead; plans still place events 3M off the boundaries,
+  so they replay on older revisions too.
+- Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus
+  clock as the unit does, so the firmware's timers run twice as fast for the
+  same instructions as on older revisions. A 40M press of FX now reads as a
+  hold and leaves the track unchanged, while 12M selects the FX track.
+  Replay a capture on the revision its `capture.json` names.
 - Without the unit's analog calibration the OS opens with notices. Clear them
   with held NO presses before the first real step, for example
   `--press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M`

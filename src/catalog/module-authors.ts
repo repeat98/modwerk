@@ -9,6 +9,13 @@ export const displayName = (github: string, name = github) => github.toLowerCase
 /** Free-text credits written before the name was fixed still say the handle. */
 export const ownerCredit = (text: string) => text.replace(/Jannik A(?:ss|ß)falg \(@?repeat98\)|@?\brepeat98\b(?![\w/.-])/g, OWNER.name)
 
+/** Ports shown under their original author's name in place of their porter's, everywhere the site names an author, and
+ *  without a support cup (owner, 17 November 2026). Display only: the manifest's author still owns and releases the module. */
+export const DISPLAY_AUTHORS: Readonly<Record<string, Required<ModuleContributor>>> = {
+  'airwindows-chorus': { github: 'airwindows', name: 'Chris Johnson' },
+  mackity: { github: 'airwindows', name: 'Chris Johnson' },
+}
+
 export const contributorSearchText = (contributors?: readonly ModuleContributor[]) => contributors?.map(person => person.github + ' ' + (person.name ?? '')).join(' ') ?? ''
 
 export function parseModuleContributors(value: unknown, primary: string, path: string): ModuleContributor[] {

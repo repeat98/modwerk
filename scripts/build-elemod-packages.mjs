@@ -3,7 +3,9 @@
 // patches and FAST AUDIO fixups are materialized by the local browser engine.
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { rmSync } from 'node:fs'
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseMachineProfile } from '../src/devices/machine-contract.ts'
@@ -14,6 +16,7 @@ import { elfToElemod } from './elemod-elf.mjs'
 import { loadElemodDependencies } from './elemod-dependencies.mjs'
 import { validateCompilerFlags } from './elemod-compiler-flags.mjs'
 import { buildCoreProbes } from './build-elemod-cores.mjs'
+import { AUDIO_STACK_FLAGS, checkAudioStack, fieldOffsets, loadAudioStack } from './elemod-audio-stack.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2), outputIndex = args.indexOf('--output'), commitIndex = args.indexOf('--source-commit')
@@ -65,6 +68,9 @@ function fastStubs(derive) {
 await mkdir(output, { recursive: true })
 // A stale successful inventory must never survive a failed rebuild. build-elemod-isolated.sh mounts a new, empty directory.
 if ((await readdir(output)).length) throw new Error('The output directory must be empty: ' + output)
+// Each build compiles in its own folder: two builds at once must never share object files.
+const scratch = await mkdtemp(resolve(tmpdir(), 'modwerk-compile-'))
+process.once('exit', () => rmSync(scratch, { recursive: true, force: true }))
 for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) {
   const folderRoot = resolve(root, machine.sdk.modules)
   const roots = [folderRoot, ...(includeDrafts ? [resolve(folderRoot, '_submissions')] : [])]
@@ -73,6 +79,8 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
   if (!(await Promise.all(roots.map(listing))).flat().some(entry => entry.isDirectory() && !entry.name.startsWith('_'))) continue
   const device = LINK_DEVICES.find(item => item.machine === machine.id)
   if (!device) throw new Error('No linker profile for ' + machine.id)
+  const audioStack = loadAudioStack(root, machine.id)
+  let audioOffsets = null
   const dependencies = await loadElemodDependencies(root, machine)
   const inputs = [...dependencies.values()]
   for (const moduleRoot of roots) for (const entry of (await listing(moduleRoot)).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -94,7 +102,7 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
     for (const [release, port] of Object.entries(build.releases)) {
       const identity = device.releases.find(item => item.version === release)
       if (!identity) throw new Error('No stock identity for ' + machine.id + ' ' + release)
-      const work = resolve('/tmp', 'modwerk-compile', machine.id, document.id, release)
+      const work = resolve(scratch, machine.id, document.id, release)
       await mkdir(work, { recursive: true })
       const defines = Object.entries({ ...build.defsym, ...port.defsym }).flatMap(([name, value]) => ['--defsym', name + '=' + value])
       const extraFlags = [...build.cflags, ...port.cflags]
@@ -104,7 +112,8 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       const includes = ['-I', resolve(folder, 'src'), '-I', resolve(root, 'sdk/machines', machine.id, 'include')]
       for (const [index, source] of build.sources.entries()) {
         const path = await resolveModuleFile(folder, source), object = resolve(work, index + '.o')
-        if (source.endsWith('.c')) run('gcc', [...cflags, ...extraFlags, ...includes, '-c', path, '-o', object])
+        // The stack flags write .su and .ci files beside the object and leave the object itself unchanged.
+        if (source.endsWith('.c')) run('gcc', [...cflags, ...extraFlags, ...(audioStack ? AUDIO_STACK_FLAGS : []), ...includes, '-c', path, '-o', object])
         else if (source.endsWith('.S')) run('gcc', [...cflags, ...extraFlags, '-Wa,-mcpu=54455', ...defines.filter((_, i) => i % 2).map(define => '-Wa,--defsym,' + define), ...includes, '-c', path, '-o', object])
         else run('as', ['-mcpu=54455', '-I', resolve(folder, 'src'), ...defines, '-o', object, path])
         inputs.push(object)
@@ -112,6 +121,12 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       // GCC 16.2's late-combine miscompile: refuse any C object that steps a register its destination reuses.
       const compiled = inputs.filter((_, index) => build.sources[index].endsWith('.c'))
       if (compiled.length) execFileSync('python3', ['-B', resolve(root, 'sdk/runtime/m68k_codegen.py'), '--objdump', cross + 'objdump', ...compiled], { stdio: 'inherit' })
+      if (audioStack) {
+        audioOffsets ??= fieldOffsets(audioStack, { run, work, includes: ['-I', resolve(root, 'sdk/machines', machine.id, 'include')], cflags })
+        const objects = await Promise.all(build.sources.map(async (source, index) => ({ source: await resolveModuleFile(folder, source), object: resolve(work, index + '.o'), callgraph: resolve(work, index + '.ci'), c: source.endsWith('.c') })))
+        const results = checkAudioStack({ config: audioStack, offsets: audioOffsets, build, objects, label: selectedId })
+        if (process.env.MODWERK_AUDIO_STACK_REPORT) for (const r of results) console.log('audio stack ' + selectedId + ' ' + r.what + ': ' + r.bytes + ' B (' + r.chain.join(' -> ') + ')' + (r.unknown.length ? ' + not counted: ' + r.unknown.join(', ') : ''))
+      }
       const generated = []
       if (build.derive) {
         if (build.derive.kind !== 'fast_audio') throw new Error('Unsupported local derivation: ' + build.derive.kind)
@@ -144,5 +159,5 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
 }
 // Written last: a failed compilation never creates a complete package inventory.
 if (selection.some(id => !found.has(id))) throw new Error('Selected module not found')
-if (!selection.length) for (const stage of ['boot-probe', 'ui-hook-probe', 'event-hook-probe']) await buildCoreProbes({ root, output, sourceCommit, compiler, cflags, ldScript, run, stage })
+if (!selection.length) for (const stage of ['boot-probe', 'ui-hook-probe', 'event-hook-probe']) await buildCoreProbes({ root, output, scratch, sourceCommit, compiler, cflags, ldScript, run, stage })
 await writeFile(resolve(output, 'elemod-build.json'), JSON.stringify({ schemaVersion: 1, sourceCommit, compiler, includesDrafts: includeDrafts, scope: selection.length ? 'selected-modules' : 'all-modules-and-core-probes', selection, artifacts }, null, 2) + '\n')

@@ -1,15 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "synth",
-  "version": "0.1.2-experimental",
+  "version": "0.1.5-experimental",
   "status": "released",
-  "basedOn": "3238863f2635f8db840b4d42ab9f0d3bea48c006",
+  "basedOn": "fa4156543aa241e9fedb6782691d595388ea9e2c",
   "originalImport": "synth-949f3be.json",
   "folder": "sdk/octabam/modules/synth",
-  "issues": [
-    273,
-    264
-  ],
+  "issues": [],
   "files": [
     {
       "path": "manifest.py",
@@ -24,7 +21,7 @@
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "ce21f5f7cddcd7268d27e25c500f1403cc59a9dff28044b1832cf2b45592d34c"
+      "draftSha256": "db3cd8b0ca3dad25aebc1463c49e7a76dcef1cc34d00a965bc2fb7ac9006cfed"
     },
     {
       "path": "upstream/quantizer/manifest.py",
@@ -35,11 +32,26 @@
       "path": "upstream/quantizer/quantizer.s",
       "previousSha256": "8dd8f8c59b480dbf63e7c37b7ac11a5c2f03b3e7afbbbb3ca2f84e3a01fc114a",
       "draftSha256": "d1737168a1750f540b3dfbefdd2a64b11084013b9f7b71b31aa4f189d33a24c5"
+    },
+    {
+      "path": "upstream/synth/manifest.py",
+      "previousSha256": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
+      "draftSha256": "786154c440d71f372abb49f527d345d5d6d74e96959a4af2f3ce248683753314"
+    },
+    {
+      "path": "registration.c",
+      "previousSha256": "c7f969f6536ef3b03727c02a05ce48755662c2eae0fbb4aaba80708d02c06f76",
+      "draftSha256": "32ba275df30f29a696201be5c0812e3dabb18c61881afd796242f9552f66752b"
+    },
+    {
+      "path": "registration.s",
+      "previousSha256": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
+      "draftSha256": "dc59fba32b15230b20338266ce8f2b6b664152b8c104f50158526140bfbe80fb"
     }
   ],
   "changes": [
-    "18.06 dB source headroom before mono output and every paraphonic sum contribution.",
-    "Move the private quantizer octave drawer detour to the common MIDI/audio argument push and preserve stock MIDI octave formatting."
+    "Rest while nothing in the project uses FM Synth: fm_in_use answers ev_in_use, and its frame-path detours and its STATIC renderer and FLEX start entries hold stock's bytes meanwhile.",
+    "A silent FM track (no voice of ours, or a released voice at silence) ships its silence without the FM loop; #1928's faster fm_frame. #1928's frame-prepare clock and LFO gate are dropped: the rest covers the case they were for."
   ],
-  "publication": "Owner explicitly authorized release and issue closure on 8 October 2026: please release them and close. I green light no hardware validation for now. Current hardware remains untested; previously disclosed timing/memory bounds remain unknown."
+  "publication": "0.1.5-experimental: #1928 and #1974 combined, then a silent-track path (22 November 2026) whose saving did not show on the unit (#2030); needs the owner's approval again. See TESTING.md."
 }

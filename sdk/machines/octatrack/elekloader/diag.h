@@ -12,16 +12,31 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
 #define DIAG_STALL_BYTES 456u
+/* After those, the frames before the stall ("MWFT", 0x100ffb30): what the frame interrupt saw in its last
+ * DIAG_TRACE_FRAMES frames (46 ms), oldest first, kept at the tick that finds dsp.c's stall record, with its `count`. Each frame: the time
+ * since the frame before began, then how long the frame interrupt before it ran, both in DTIM3 counts / 64 (0.485 µs;
+ * a frame is 363 µs, so 749), 65535 at most. A long gap after a long run is the frame interrupt's own work; a long gap
+ * after a short one is something else holding it off. Frames stop with the DSPs, so the last ones are the lead-up. */
+#define DIAG_TRACE_FRAMES 128u
+#define DIAG_TRACE_MAGIC 0x4d574654u
+struct diag_trace { uint32_t magic, count; uint16_t frame[DIAG_TRACE_FRAMES][2]; };
+#define DIAG_TRACE_BYTES 520u
+/* And with it ("MWLR", 0x100f9710): the lateness of the last eight frame-interrupt entries, oldest first, in DTCN3
+ * counts as the late-entry wait measured them (machine_registry.c): the trace's gaps are stamped later in the frame.
+ * Read from battery RAM; LOG does not page it. */
+#define DIAG_LATES_MAGIC 0x4d574c52u
+struct diag_lates { uint32_t magic, count; uint16_t late[8]; };
+typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1 : -1];
 
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the
  * sequencer running. `minute` counts from the start (`boot`). `frame_gap`: the longest time between two audio frames
  * in the window, in µs (a frame is 363 µs; past about 515 µs the DSPs starve), `tick_gap` the longest run of frames
- * without a UI tick (a tick is every 2.7 frames; 13,781 is the freeze threshold): what a dropout or a hang looks
+ * without a UI tick (60 ticks a second on the unit, one every 46 frames; 13,781 is the freeze threshold): what a dropout or a hang looks
  * like, where the meters' peaks only show a self-test or an install. */
 struct diag_load {
     uint32_t seq, boot, minute;
@@ -31,8 +46,17 @@ struct diag_load {
  * half-seconds at 90 % or more, FREEZE the frames the UI stood still (0: it never came back before a restart),
  * CRASH the program counter, STALL the stall's reason, BASE the first four bytes of the base's identity (right after
  * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
- * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), SET how many modules are installed, their ids in
- * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep).
+ * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), USB the controller when the unit
+ * offered itself again because the host never enumerated it (usb_attach.h: OTGSC in the high half, PORTSC1 in the low),
+ * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, in the low
+ * 24 bits, and in the top byte how many entries since boot came later than the wait can hold (190 µs or more, 255 at
+ * most; 0 on bases before it was counted), BRAKE with
+ * bit 23 set how many patterns began with module machines silenced as predicted past the frame ceiling (status.c),
+ * SET how many modules are installed, their ids in
+ * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep); after a
+ * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes
+ * used and the largest free run, in 16-byte units) and `dsp1` the loader's check that refused it (runtime_check: 1 the
+ * pool, 2 claims, 3 metadata, 4 the DSP's limits); all three 0 on bases before 0.7.10.
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */
@@ -54,15 +78,26 @@ struct diag_log {
 typedef char diag_load_layout[sizeof(struct diag_load) == 32u ? 1 : -1];
 typedef char diag_incident_layout[sizeof(struct diag_incident) == 92u ? 1 : -1];
 typedef char diag_log_layout[sizeof(struct diag_log) == 40u + 92u + 32u * DIAG_LOADS + 92u * DIAG_INCIDENTS ? 1 : -1];
-#define DIAG_IMAGE_BYTES (sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES) /* what LOG pages */
+#define DIAG_IMAGE_BYTES (sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES + DIAG_TRACE_BYTES) /* what LOG pages */
+/* Then, in the last page's spare bytes: the frame guard's skips since the start and their tracks as they stand now
+ * ("MWSK", count, track mask), then the frame entries since the start later than the late-entry wait can hold
+ * (machine_registry.c's mw_late_over; zero on bases before it). A SHED or LATE incident comes at most once in HOT_GAP,
+ * so either can be logged inside a later trial's window; a host compares two reads of these counts instead (owner's
+ * MKII, 21 November 2026). The four words fill the last page exactly. */
+#define DIAG_SHEDS_MAGIC 0x4d57534bu
+#define DIAG_SHEDS_BYTES 16u
+typedef char diag_sheds_fit[DIAG_IMAGE_BYTES % DIAG_PAGE + DIAG_SHEDS_BYTES <= DIAG_PAGE ? 1 : -1];
 
 void modwerk_diag_tick(void);                          /* ev_tick */
 int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers presses, takes none */
 void modwerk_diag_frame(void);                         /* dl_frame, in the frame interrupt */
 unsigned modwerk_diag_read(uint8_t *out, unsigned page); /* ep0.c LOG: DIAG_PAGE bytes of the log, then the records */
 void modwerk_diag_set(void);                           /* modset.c: the installed set changed (restore, Keep) */
-void modwerk_diag_refused(uint32_t module, uint32_t refusal); /* modset.c, before a restore's set record: its first refused
-                                                       * package's module and the loader's refusal (screen, tempo24) */
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* modset.c,
+                                                       * before a restore's set record: its first refused package's module and the
+                                                       * loader's refusal (screen, tempo24), the module pool when it was refused:
+                                                       * bytes used and the largest free run (cpu and dsp0, in 16-byte units), and
+                                                       * the loader's check that refused it (dsp1, loader.h runtime_check) */
 #ifdef MODWERK_DEV
 /* Development builds: what the base's own hooks cost, in DTIM3 counts (132 MHz), read over MEM. The tick chain is
  * stamped in its order (runtime_tick 1, ep0_tick 2 and its end 3, dl_ui 4, status_tick 5 and its end 6, crash_tick 7,

@@ -48,7 +48,7 @@ are done and host-tested against the real controller
 The private base now loads, replaces, rolls back and removes one runtime
 module over USB without rebooting, in the emulator: 27 bench checks and 7
 browser-client checks pass ([milestones](OCTATRACK_ELEKLOADER_MIGRATION.md#milestones-in-the-emulator)).
-A read-only DIAG request and a Chrome page (`dev/octatrack-usb.html`, served
+A read-only DIAG request and a Chrome page (`src/dev/octatrack-usb.html`, served
 by `npm run dev` only) now run the same lifecycle on a real unit
 ([hardware run](../sdk/machines/octatrack/elekloader/README.md#hardware-run)).
 The first hardware runs passed the whole runtime-module lifecycle on the

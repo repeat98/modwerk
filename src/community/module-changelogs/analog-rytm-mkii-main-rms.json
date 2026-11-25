@@ -1,0 +1,11 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-07",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: MrScruff's Main RMS, ported to elemod by Iced-Cream, with his code unchanged.",
+      "On the compressor pages, the VOL label draws inverted while the main output is louder than -18 dBFS RMS, for gain staging.",
+      "The label clears again once the output is 1 dB below the threshold. The threshold is fixed."
+    ]
+  }
+]

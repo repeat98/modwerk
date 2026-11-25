@@ -1,0 +1,1070 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "hardware": true,
+  "status": "Stationary-panel edit/input/audio checks PASSED; cleanup protocol fault recovered and Undo verified. Original flashed base restored after author power cycle.",
+  "developmentBase": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+  "candidateSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+  "wholeSetSha256": "8ff2effb1c839ea2016eb6cf13fa6973321f75cf96e6667fc52ed06f070670f7",
+  "packages": [
+    {
+      "id": "tapehead",
+      "version": "0.1.2-experimental",
+      "sha256": "980fb1ceda23837b3cb121e42372ccc21e5068ce03cacb1f371c7d53f5150554",
+      "bytes": 2250
+    },
+    {
+      "id": "everb",
+      "version": "0.1.2-experimental",
+      "sha256": "5f81e72fbba43ea827ec3996509b50c036b458d4baa87d801e57d4b4ce1695ca",
+      "bytes": 7454
+    },
+    {
+      "id": "airwindows-chorus",
+      "version": "0.1.2-experimental",
+      "sha256": "e0f05d53b4259e0c3b50f5dde05ed1a1ec5d7c5b80bf5efd5ce4e5ab7d6d7ff8",
+      "bytes": 3758
+    },
+    {
+      "id": "pattern-sample-locks",
+      "version": "0.1.8-experimental",
+      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+      "bytes": 10048
+    }
+  ],
+  "started": "2026-10-30T19:26:00.158Z",
+  "finished": "2026-10-30T19:30:17.220Z",
+  "fixture": {
+    "project": "PSL AUDIO TEST",
+    "patterns": "A01-A04",
+    "bpm": 120,
+    "machines": "Four Flex/four Static; eight 64-step sample-trig tracks",
+    "fx1": [
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead"
+    ],
+    "fx2": [
+      "E-Verb",
+      "E-Verb",
+      "DELAY",
+      "DELAY",
+      "Air Chorus",
+      "COMPRESSOR",
+      "DELAY",
+      "DELAY"
+    ],
+    "lfos": "All enabled as previously reported by author; persisted configuration compared byte-for-byte, individual LFO flags not independently decoded.",
+    "partsSha256": "dd0525adcdb700c5552f779cf30ac81f32e9b0817f8dce8509f56cd2894519b6",
+    "savedPartsSha256": "66b31cec3813860cbda99ca783bd9cdd99367ba534d79bc8350f21b296192f67",
+    "configurationMatchesPriorHigherLoadTrial": true
+  },
+  "method": {
+    "physicalPanelHeldStill": true,
+    "remoteFaderEvents": 0,
+    "inputPathFixApplied": false,
+    "freshRamBoot": true,
+    "initialHeldRows": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "initialStockFuncState": 0,
+    "keyDeliveryChecks": "Before each key, compare complete held rows with expected state; acknowledge held-row transitions and stock FUNC press/release. Check no held keys/FUNC or fader drift between gestures and through load windows.",
+    "baseline": "Same retained four-module trial, Sample Locks idle versus editing; no companion-only or unloaded baseline.",
+    "capture": "One continuous 20-channel 44.1 kHz PCM32 USB recording; 18 track/Main channels analysed.",
+    "recordingFlags": "Sampler and native live-sequencer recording off; USB host audio recording is separate.",
+    "dataChecks": "Every edit compared the complete 36,568-byte pattern, all 64 active lock-index bytes, and complete working/saved Parts. Both initialized image and all three opener sites attested.",
+    "directCanonicalBatteryMirrorCompared": false
+  },
+  "result": {
+    "operations": 32,
+    "changedSampleFieldsPerOperation": 512,
+    "a01MaximumLockClearPairs": 10,
+    "a02A03A04ClearRestorePairsEach": 2,
+    "firstAndLastOtherSlotCovered": true,
+    "allPatternsRestored": true,
+    "workingAndSavedPartsPreserved": true,
+    "playbackPreservedDuringEdits": true,
+    "finalRemoteStopVerified": true,
+    "finalHeldRows": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "finalStockFuncState": 0,
+    "faderValueThroughout": 74,
+    "newDspErrors": 0,
+    "newDspStalls": 0,
+    "frameSheddingObserved": false,
+    "maximumSampledCpuPermille": 937,
+    "maximumInnerPublicationTimerCounts": 617,
+    "timerCountsPerMicrosecond": 132,
+    "maximumOperationFrameGapCounts": 60606,
+    "maximumOperationLatenessCounts": 11893
+  },
+  "windows": [
+    {
+      "label": "closed-no-usb-recording",
+      "seconds": 10.135,
+      "readings": 48,
+      "cpuPermille": {
+        "minimum": 681,
+        "median": 704.0,
+        "maximum": 747
+      },
+      "dsp1to4PeakPermille": 797,
+      "dsp5to8PeakPermille": 777,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 51567,
+        "frameMaxCounts": 50419,
+        "lateMaxCounts": 2528,
+        "busy256": 3350989,
+        "frames": 27950,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "closed-recording-baseline",
+      "seconds": 20.119,
+      "readings": 95,
+      "cpuPermille": {
+        "minimum": 798,
+        "median": 841,
+        "maximum": 881
+      },
+      "dsp1to4PeakPermille": 798,
+      "dsp5to8PeakPermille": 774,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 61162,
+        "frameMaxCounts": 59467,
+        "lateMaxCounts": 11576,
+        "busy256": 7971084,
+        "frames": 55472,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "selector-recording",
+      "seconds": 5.056,
+      "readings": 24,
+      "cpuPermille": {
+        "minimum": 828,
+        "median": 850.0,
+        "maximum": 874
+      },
+      "dsp1to4PeakPermille": 794,
+      "dsp5to8PeakPermille": 782,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 54007,
+        "frameMaxCounts": 52698,
+        "lateMaxCounts": 4807,
+        "busy256": 1984576,
+        "frames": 13948,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "confirmation-recording",
+      "seconds": 5.051,
+      "readings": 24,
+      "cpuPermille": {
+        "minimum": 823,
+        "median": 851.0,
+        "maximum": 930
+      },
+      "dsp1to4PeakPermille": 796,
+      "dsp5to8PeakPermille": 773,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 60393,
+        "frameMaxCounts": 58333,
+        "lateMaxCounts": 10442,
+        "busy256": 1996211,
+        "frames": 13936,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "A02-recording-baseline",
+      "seconds": 5.071,
+      "readings": 24,
+      "cpuPermille": {
+        "minimum": 798,
+        "median": 823.0,
+        "maximum": 857
+      },
+      "dsp1to4PeakPermille": 797,
+      "dsp5to8PeakPermille": 773,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 54411,
+        "frameMaxCounts": 52656,
+        "lateMaxCounts": 4765,
+        "busy256": 1976018,
+        "frames": 13996,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "A03-recording-baseline",
+      "seconds": 5.064,
+      "readings": 24,
+      "cpuPermille": {
+        "minimum": 802,
+        "median": 826.0,
+        "maximum": 853
+      },
+      "dsp1to4PeakPermille": 794,
+      "dsp5to8PeakPermille": 776,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 55468,
+        "frameMaxCounts": 54494,
+        "lateMaxCounts": 6603,
+        "busy256": 1974379,
+        "frames": 13977,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "A04-recording-baseline",
+      "seconds": 5.041,
+      "readings": 24,
+      "cpuPermille": {
+        "minimum": 801,
+        "median": 823.0,
+        "maximum": 854
+      },
+      "dsp1to4PeakPermille": 799,
+      "dsp5to8PeakPermille": 774,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 54867,
+        "frameMaxCounts": 53305,
+        "lateMaxCounts": 5414,
+        "busy256": 1964220,
+        "frames": 13906,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "closed-recording-after",
+      "seconds": 10.103,
+      "readings": 48,
+      "cpuPermille": {
+        "minimum": 797,
+        "median": 844.0,
+        "maximum": 881
+      },
+      "dsp1to4PeakPermille": 792,
+      "dsp5to8PeakPermille": 773,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 61937,
+        "frameMaxCounts": 59479,
+        "lateMaxCounts": 11588,
+        "busy256": 4008788,
+        "frames": 27859,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "recording-tail-no-edits",
+      "seconds": 126.173,
+      "readings": 600,
+      "cpuPermille": {
+        "minimum": 799,
+        "median": 828.0,
+        "maximum": 882
+      },
+      "dsp1to4PeakPermille": 799,
+      "dsp5to8PeakPermille": 778,
+      "distinctFaderReadings": 1,
+      "frameTiming": {
+        "gapCounts": 64169,
+        "frameMaxCounts": 63899,
+        "lateMaxCounts": 16008,
+        "busy256": 49786324,
+        "frames": 347641,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    }
+  ],
+  "operations": [
+    {
+      "label": "usb-pair-0-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 481,
+      "hostCompletionMs": 68.89283299999806,
+      "frameTiming": {
+        "gapCounts": 53637,
+        "frameMaxCounts": 52285,
+        "lateMaxCounts": 4394,
+        "busy256": 28779,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-0-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 533,
+      "hostCompletionMs": 67.41579199999978,
+      "frameTiming": {
+        "gapCounts": 54823,
+        "frameMaxCounts": 53898,
+        "lateMaxCounts": 6007,
+        "busy256": 28775,
+        "frames": 194,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-1-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 533,
+      "hostCompletionMs": 68.86750000000029,
+      "frameTiming": {
+        "gapCounts": 60606,
+        "frameMaxCounts": 59784,
+        "lateMaxCounts": 11893,
+        "busy256": 30150,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-1-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 111.79291699999885,
+      "frameTiming": {
+        "gapCounts": 52185,
+        "frameMaxCounts": 52094,
+        "lateMaxCounts": 4203,
+        "busy256": 48341,
+        "frames": 316,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-2-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 71.0946249999979,
+      "frameTiming": {
+        "gapCounts": 54519,
+        "frameMaxCounts": 53344,
+        "lateMaxCounts": 5453,
+        "busy256": 30330,
+        "frames": 204,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-2-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 68.64670800000022,
+      "frameTiming": {
+        "gapCounts": 49716,
+        "frameMaxCounts": 44017,
+        "lateMaxCounts": 0,
+        "busy256": 28348,
+        "frames": 197,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-3-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 19.94566599999962,
+      "frameTiming": {
+        "gapCounts": 53768,
+        "frameMaxCounts": 53093,
+        "lateMaxCounts": 5202,
+        "busy256": 9404,
+        "frames": 63,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-3-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 68.92025000000285,
+      "frameTiming": {
+        "gapCounts": 49353,
+        "frameMaxCounts": 45384,
+        "lateMaxCounts": 0,
+        "busy256": 28992,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-4-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 20.003875000002154,
+      "frameTiming": {
+        "gapCounts": 49484,
+        "frameMaxCounts": 38900,
+        "lateMaxCounts": 0,
+        "busy256": 8696,
+        "frames": 64,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-4-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 68.8483339999948,
+      "frameTiming": {
+        "gapCounts": 52892,
+        "frameMaxCounts": 51422,
+        "lateMaxCounts": 3531,
+        "busy256": 28960,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-5-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 68.83954200000153,
+      "frameTiming": {
+        "gapCounts": 49360,
+        "frameMaxCounts": 44341,
+        "lateMaxCounts": 0,
+        "busy256": 29036,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-5-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 604,
+      "hostCompletionMs": 70.96474999999919,
+      "frameTiming": {
+        "gapCounts": 49694,
+        "frameMaxCounts": 46013,
+        "lateMaxCounts": 0,
+        "busy256": 30622,
+        "frames": 205,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-6-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.86779199999728,
+      "frameTiming": {
+        "gapCounts": 49731,
+        "frameMaxCounts": 44197,
+        "lateMaxCounts": 0,
+        "busy256": 29231,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-6-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 69.6617499999993,
+      "frameTiming": {
+        "gapCounts": 55413,
+        "frameMaxCounts": 52943,
+        "lateMaxCounts": 5052,
+        "busy256": 30753,
+        "frames": 200,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-7-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 71.79633399999875,
+      "frameTiming": {
+        "gapCounts": 51566,
+        "frameMaxCounts": 51201,
+        "lateMaxCounts": 3310,
+        "busy256": 31020,
+        "frames": 206,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-7-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.49554199999693,
+      "frameTiming": {
+        "gapCounts": 54188,
+        "frameMaxCounts": 53042,
+        "lateMaxCounts": 5151,
+        "busy256": 29377,
+        "frames": 197,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-8-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 69.72258400000283,
+      "frameTiming": {
+        "gapCounts": 49594,
+        "frameMaxCounts": 49026,
+        "lateMaxCounts": 1135,
+        "busy256": 28139,
+        "frames": 201,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-8-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.89895899999829,
+      "frameTiming": {
+        "gapCounts": 53516,
+        "frameMaxCounts": 52298,
+        "lateMaxCounts": 4407,
+        "busy256": 28695,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "usb-pair-9-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 19.838792000002286,
+      "frameTiming": {
+        "gapCounts": 49269,
+        "frameMaxCounts": 44904,
+        "lateMaxCounts": 0,
+        "busy256": 9273,
+        "frames": 64,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "usb-pair-9-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 72.98799999999756,
+      "frameTiming": {
+        "gapCounts": 53395,
+        "frameMaxCounts": 51938,
+        "lateMaxCounts": 4047,
+        "busy256": 32001,
+        "frames": 220,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "A02-usb-clear-0",
+      "pattern": 2,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 69.99741600001289,
+      "frameTiming": {
+        "gapCounts": 49297,
+        "frameMaxCounts": 43936,
+        "lateMaxCounts": 0,
+        "busy256": 29921,
+        "frames": 201,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "A02-usb-restore-0",
+      "pattern": 2,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 71.84100000000035,
+      "frameTiming": {
+        "gapCounts": 49495,
+        "frameMaxCounts": 46094,
+        "lateMaxCounts": 0,
+        "busy256": 31677,
+        "frames": 207,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "A02-usb-clear-1",
+      "pattern": 2,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.94012499999371,
+      "frameTiming": {
+        "gapCounts": 53840,
+        "frameMaxCounts": 53723,
+        "lateMaxCounts": 5832,
+        "busy256": 29881,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "A02-usb-restore-1",
+      "pattern": 2,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.9474579999951,
+      "frameTiming": {
+        "gapCounts": 52927,
+        "frameMaxCounts": 52366,
+        "lateMaxCounts": 4475,
+        "busy256": 29937,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "A03-usb-clear-0",
+      "pattern": 3,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.49629100000311,
+      "frameTiming": {
+        "gapCounts": 53768,
+        "frameMaxCounts": 53881,
+        "lateMaxCounts": 5990,
+        "busy256": 28751,
+        "frames": 197,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "7ad4504c89a193669d612fd707d33d156254a1f7761d01a0c29c3ce447092cb4"
+    },
+    {
+      "label": "A03-usb-restore-0",
+      "pattern": 3,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 110.02924999999232,
+      "frameTiming": {
+        "gapCounts": 53196,
+        "frameMaxCounts": 54241,
+        "lateMaxCounts": 6350,
+        "busy256": 47466,
+        "frames": 312,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "74710cf77d6ea4c5517ef8c62f9e0020219fe954e85ab8f15e70625ef3719bb1"
+    },
+    {
+      "label": "A03-usb-clear-1",
+      "pattern": 3,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 69.03887499999837,
+      "frameTiming": {
+        "gapCounts": 49960,
+        "frameMaxCounts": 44300,
+        "lateMaxCounts": 0,
+        "busy256": 29861,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "7ad4504c89a193669d612fd707d33d156254a1f7761d01a0c29c3ce447092cb4"
+    },
+    {
+      "label": "A03-usb-restore-1",
+      "pattern": 3,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.54641599999741,
+      "frameTiming": {
+        "gapCounts": 52196,
+        "frameMaxCounts": 51522,
+        "lateMaxCounts": 3631,
+        "busy256": 29871,
+        "frames": 197,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "74710cf77d6ea4c5517ef8c62f9e0020219fe954e85ab8f15e70625ef3719bb1"
+    },
+    {
+      "label": "A04-usb-clear-0",
+      "pattern": 4,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 67.81770899999538,
+      "frameTiming": {
+        "gapCounts": 49459,
+        "frameMaxCounts": 42989,
+        "lateMaxCounts": 0,
+        "busy256": 28762,
+        "frames": 195,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "ecf9c2c162d65b18b651e9e41723e126aed06692989ffbe9c3136fa9b876a832"
+    },
+    {
+      "label": "A04-usb-restore-0",
+      "pattern": 4,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.9184580000001,
+      "frameTiming": {
+        "gapCounts": 49663,
+        "frameMaxCounts": 45042,
+        "lateMaxCounts": 0,
+        "busy256": 29951,
+        "frames": 198,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "5295c0cccfd4ccfca585c72328df2ad8d15c6a80b64cb9c14c09cc858874c262"
+    },
+    {
+      "label": "A04-usb-clear-1",
+      "pattern": 4,
+      "clear": true,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 67.7508749999979,
+      "frameTiming": {
+        "gapCounts": 54474,
+        "frameMaxCounts": 53127,
+        "lateMaxCounts": 5236,
+        "busy256": 29665,
+        "frames": 196,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "ecf9c2c162d65b18b651e9e41723e126aed06692989ffbe9c3136fa9b876a832"
+    },
+    {
+      "label": "A04-usb-restore-1",
+      "pattern": 4,
+      "clear": false,
+      "changes": 512,
+      "guardCount": 64,
+      "innerGuardMaximumCountsCumulative": 617,
+      "hostCompletionMs": 68.25762499999837,
+      "frameTiming": {
+        "gapCounts": 49401,
+        "frameMaxCounts": 44621,
+        "lateMaxCounts": 0,
+        "busy256": 29146,
+        "frames": 196,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "5295c0cccfd4ccfca585c72328df2ad8d15c6a80b64cb9c14c09cc858874c262"
+    }
+  ],
+  "audio": {
+    "sha256": "ff12b477ae18dd97b4087f32bec5df690dee3ffc7869434750e9cf6b0209a9eb",
+    "frames": 10584576,
+    "sampleRate": 44100,
+    "seconds": 240.0130612244898,
+    "captureChannels": 20,
+    "measuredChannels": 18,
+    "wholeStreamRepeated16FrameBlocks": 0,
+    "perChannelRepeated16SampleBlocks": 0,
+    "maximumZeroRunSamples": 1,
+    "maximumConstantRunSamples": 3,
+    "maximumClippedFraction": 0.0,
+    "mainMetrics": [
+      {
+        "channel": 17,
+        "rms": 0.011232793202413695,
+        "peak": 0.05765032721683383,
+        "zeroRunMax": 1,
+        "constantRunMax": 2,
+        "clippedFraction": 0.0,
+        "rms100msMinimum": 0.008789150995199387,
+        "rms100msMaximum": 0.015111650505769644
+      },
+      {
+        "channel": 18,
+        "rms": 0.011227918335766314,
+        "peak": 0.052789449226111174,
+        "zeroRunMax": 1,
+        "constantRunMax": 2,
+        "clippedFraction": 0.0,
+        "rms100msMinimum": 0.00889389992664361,
+        "rms100msMaximum": 0.015033957299614336
+      }
+    ]
+  },
+  "recovery": {
+    "initialCliUndo": "ENTER acknowledgement was not confirmed because it belonged to another command or transaction; that client stopped. Initial verification correctly refused to treat trial phase as normal.",
+    "freshTrustedRollback": "A fresh connection adopted only the pinned trial transaction; rollback returned needs-recovery. A subsequent trusted connection found normal state, original identity and empty inventory. Which asynchronous/timeout recovery turn completed it was not isolated.",
+    "sameBuildRestorationVerified": true,
+    "activeIdentity": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+    "setIdentity": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "inventory": [],
+    "originalSitesCompared": 3,
+    "patternsAndPartsComparedAfterUndo": true,
+    "stoppedAfterUndo": true,
+    "heldRowsAfterUndo": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "publicBaseRestored": true,
+    "usbReleased": true,
+    "keep": false,
+    "flash": false,
+    "projectSave": false,
+    "push": false,
+    "cleanupFaultCause": "The helper sent a second loader HELLO while the CLI retained a cached sequence. A host-side model of duplicate-sequence refusal plus cached RESULT reproduces the stale HELLO reply on the CLI next ENTER. This strongly explains the mismatch; the hardware wire sequence was not captured.",
+    "publicBaseAfterRestart": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+    "publicInventory": [],
+    "publicFramesAdvancing": true,
+    "authorReportedPowerCycle": true,
+    "transportAfterRestart": "Not independently read on public base; last confirmed stopped before power cycle.",
+    "harnessCorrection": "Keep one uploader/HELLO owner throughout a retained trial; observers must not SUBMIT upload frames."
+  },
+  "limitations": [
+    "This pass is confined to a stationary physical panel. The independently reproduced USB/physical packet-interleaving bug remains unfixed and concurrent physical input is not qualified.",
+    "Cached CPU readings are sampled load windows, not instantaneous peaks; the observed maximum was below 100% and this is not arbitrary CPU-saturation qualification.",
+    "Inner publication timing excludes interrupt-mask boundary instructions; host completion includes input checks, USB/UI scheduling and polling. Neither is complete exclusive native Apply CPU cost.",
+    "Frame lateness also occurred in idle recording windows. Unequal window lengths and their maxima do not isolate added lateness rates.",
+    "Processed FX/LFO output is time varying; these continuity metrics do not prove the absence of every click. No analog capture or new author listening report is claimed.",
+    "Full stock/interrupt stack bounds, direct canonical battery-mirror readback, long streaming and external MIDI stress remain outside this pass.",
+    "The first cleanup protocol acknowledgement failed; recovered restoration is separately verified, not recorded as a clean first-attempt Undo."
+  ],
+  "privateReceiptSha256": "a8f897e53940c6267aa5b7212952b18e58f048dd38c7100aa18da18f415f4752",
+  "helperHashes": {
+    "run.private.mjs": "fbaeafa8f7f7287e6861ad26f19d9b8acc15749381046a18a3334859036216f1",
+    "verify-final-undo.private.mjs": "e0467f451400a52d89e783aba6cb945c28e1f07e647af1635a92c0abbc4d9272",
+    "recover-trial.private.mjs": "3b2afc583670231980093f0e6f9d0589f96020647ca6bce4dc9d9ec4afd7c4ab",
+    "processed-audio-metrics.private.py": "4e025153cd0806da24479babcf22e295ec46f2026c8b551cc90c5bcdbb55dce2",
+    "channel-block-check.private.cpp": "90814b04a2e3d08c1369e73a8c29b1ba197fbe5098980e2be81e4203438271e9",
+    "repro-sequence.private.mjs": "2855a970ad92418176804e8e989a2eab31d14356c625fed7f30deed855da776b"
+  },
+  "cleanupTransportReproduction": {
+    "hardware": false,
+    "scope": "Host-side model backed by vendor.c duplicate-sequence policy, not a hardware wire trace.",
+    "twoClientSequences": [
+      1,
+      2,
+      2
+    ],
+    "returnedCommandForEnter": "HELLO",
+    "singleOwnerEnterConfirmed": true
+  }
+}

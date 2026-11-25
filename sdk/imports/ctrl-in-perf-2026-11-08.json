@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/ctrl-in-perf",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-08",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: PERF DEST in the CONTROL INPUT menus sends a CV or EXPR jack to a performance macro."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/ctrl-in-perf/ctrl-in-perf-0.1.0-experimental-os1.74.elemod",
+      "sha256": "6b6fdb7de3852f0bd7a72e1e55a1074fbccb73214a88fe56a2b9b5f6ed77cb05"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/ctrl-in-perf/TESTING.md",
+  "requires": []
+}

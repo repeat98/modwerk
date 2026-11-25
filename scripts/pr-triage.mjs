@@ -2,12 +2,13 @@
 // no PR checkout, dependency or code runs here.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
+import { moduleFolders } from './machine-folders.mjs'
 import { githubApi, pages } from './author-release-api.mjs'
 
 export const NEEDS_WORK = 'needs-work', ONE_AT_A_TIME = 'one-at-a-time', CLOSE_AFTER_DAYS = 14
 const MARKER = '<!-- modwerk-triage -->'
 export const MESSAGES = {
-  [NEEDS_WORK]: MARKER + '\nA required check failed, so this pull request is out of the review queue for now. Run `npm run pr:ready` (a registered author: `npm run pr:ready -- --author <login>`) until it says Ready, then push: the label goes away by itself once the checks are green. If nothing changes for ' + CLOSE_AFTER_DAYS + ' days it is closed, and you can reopen it whenever it is green. See [Make it mergeable](https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md#make-it-mergeable).',
+  [NEEDS_WORK]: MARKER + '\nA required check failed, so this pull request is out of the review queue for now. Run `npm run pr:ready` (a registered author: `npm run pr:ready -- --author <login>`) until it says Ready, then push. If the failed check is the description check, edit the description instead. The label goes away by itself once the checks are green. If nothing changes for ' + CLOSE_AFTER_DAYS + ' days it is closed, and you can reopen it whenever it is green. See [Make it mergeable](https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md#make-it-mergeable).',
   [ONE_AT_A_TIME]: MARKER + '\nThanks for this. Until your first module is published, one module pull request is reviewed at a time, so this one waits until your earlier one is merged or closed. Nothing to do: the label goes away by itself.',
   close: MARKER + '\nClosing this because its checks have been red for ' + CLOSE_AFTER_DAYS + ' days without a new commit. Nothing is lost: push a fix and reopen it whenever `npm run pr:ready` says Ready.',
 }
@@ -36,6 +37,9 @@ export function newestRuns(runs) {
   return [...newest.values()]
 }
 
+/** A module PR adds or changes a module folder: one under a machine's modules/ (and its _submissions/), or a draft under sdk/drafts/. */
+export const isModulePull = files => files.some(file => /^sdk\/(?:[^/]+\/modules|drafts)\//.test(file))
+
 /** Contributors without a published module get one module PR reviewed at a time: every newer one waits. */
 export function queuedPulls(pulls, registered) {
   const waiting = new Set(), byAuthor = new Map()
@@ -46,17 +50,29 @@ export function queuedPulls(pulls, registered) {
   return waiting
 }
 
+/** Published authors and maintainers, plus accounts registered to release updates. */
+export function publishedContributors() {
+  const repositoryRoot = new URL('../', import.meta.url)
+  const json = path => JSON.parse(readFileSync(new URL(path, repositoryRoot), 'utf8'))
+  const documents = [...json('src/catalog/module-documents.json').modules]
+  for (const machine of moduleFolders().filter(machine => machine !== 'octatrack')) {
+    const directory = new URL('sdk/' + machine + '/modules/', repositoryRoot)
+    if (!existsSync(directory)) continue
+    for (const name of readdirSync(directory)) {
+      const manifest = new URL(name + '/modwerk.module.json', directory)
+      if (!name.startsWith('_') && existsSync(manifest)) documents.push(JSON.parse(readFileSync(manifest, 'utf8')))
+    }
+  }
+  const contributors = documents.flatMap(doc => [doc.author?.github, ...(doc.maintainers ?? [])])
+  return new Set([...Object.keys(json('.github/module-authors.json').accounts), ...contributors].filter(Boolean).map(login => login.toLowerCase()))
+}
+
 async function main() {
   const repository = process.env.GITHUB_REPOSITORY, api = githubApi(repository, process.env.GITHUB_TOKEN), owner = repository.split('/')[0].toLowerCase()
   // PR_TRIAGE_DRY_RUN=1 reads the live repository and prints the writes instead of making them.
   const write = process.env.PR_TRIAGE_DRY_RUN === '1' ? async (path, method) => console.log('dry run: ' + method + ' ' + path) : api
   // Anyone with a published module (author or maintainer) or release authority skips the queue.
-  const json = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'))
-  const documents = [...json('src/catalog/module-documents.json').modules, ...['digitakt', 'digitone', 'analog-rytm-mkii'].flatMap(machine => {
-    const folder = 'sdk/' + machine + '/modules/'
-    return readdirSync(new URL('../' + folder, import.meta.url)).filter(id => existsSync(new URL('../' + folder + id + '/modwerk.module.json', import.meta.url))).map(id => json(folder + id + '/modwerk.module.json'))
-  })]
-  const registered = new Set([...Object.keys(json('.github/module-authors.json').accounts), ...documents.flatMap(doc => [doc.author?.github, ...(doc.maintainers ?? [])])].filter(Boolean).map(login => login.toLowerCase()))
+  const registered = publishedContributors()
   for (const [name, color] of [[NEEDS_WORK, 'b60205'], [ONE_AT_A_TIME, 'fbca04']]) {
     try { await write('/labels', 'POST', { name, color, description: name === NEEDS_WORK ? 'A required check failed; out of the review queue until green' : 'Waits for the contributor’s earlier module PR' }) }
     catch (error) { if (!/HTTP 422/.test(error.message)) throw error }
@@ -65,7 +81,7 @@ async function main() {
   const pulls = []
   for (const pr of open) {
     const files = await pages(api, '/pulls/' + pr.number + '/files')
-    pulls.push({ pr, number: pr.number, author: pr.user.login.toLowerCase(), module: files.some(file => /^sdk\/[^/]+\/modules\//.test(file.filename)) })
+    pulls.push({ pr, number: pr.number, author: pr.user.login.toLowerCase(), module: isModulePull(files.map(file => file.filename)) })
   }
   const queued = queuedPulls(pulls, registered), now = Date.now()
   for (const { pr } of pulls) {

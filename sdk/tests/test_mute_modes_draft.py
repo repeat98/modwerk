@@ -53,7 +53,7 @@ class ImportedDraft(unittest.TestCase):
         for path in ["sdk/catalog.json", "src/catalog/module-documents.json"]:
             entries = json.loads((APP / path).read_text())["modules"]
             self.assertIn(ID, {entry["id"] for entry in entries})
-        baseline = json.loads((APP / "sdk/module-qualification-baseline.json").read_text())["modules"]
+        baseline = json.loads((APP / "sdk/approvals/module-qualification-baseline.json").read_text())["modules"]
         self.assertNotIn(ID, {entry["id"] for entry in baseline})
         self.assertTrue(json.loads((live / "evidence/probes.json").read_text())["passed"])
         current = json.loads((live / "octamod.module.json").read_text())

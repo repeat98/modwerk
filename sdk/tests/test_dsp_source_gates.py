@@ -84,14 +84,19 @@ class Driver(unittest.TestCase):
     def test_the_modules_and_the_json_report_agree(self):
         added = gates.catalog_added()
         self.assertTrue(added)
-        for module_id in ('euclid', 'character'):
+        ids = ('euclid', 'tapehead')
+        batch = json.loads(subprocess.check_output([sys.executable, '-B', str(ROOT / 'scripts/dsp-source-gates.py'),
+                                                    '--json-modules', *ids], cwd=ROOT))
+        self.assertEqual(set(batch), set(ids))
+        for module_id in ids:
             report = subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/dsp-source-gates.py'), '--json', module_id],
                                     cwd=ROOT, capture_output=True, text=True, check=True)
             found = json.loads(report.stdout)
             self.assertEqual(found['module'], module_id)
             self.assertEqual(found['errors'], [])
             self.assertEqual(found, gates.module_findings(module_id, added))
-        self.assertFalse(gates.module_findings('character', added)['repRefused'])
+            self.assertEqual(batch[module_id], found)
+        self.assertFalse(gates.module_findings('tapehead', added)['repRefused'])
 
     def test_the_whole_repository_passes(self):
         run = subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/dsp-source-gates.py')], cwd=ROOT, capture_output=True, text=True)

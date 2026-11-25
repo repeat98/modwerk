@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "wavefolder",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-06T12:00:00Z",
+  "imageSha256": "bdf7e7767efc15e0424f1a1a1bacea38ee38f248dec269e3f40c3f3c1717b245",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk base's send-bus variant (0cdf0343, sdk/machines/analog-rytm-mkii/base-binding.json) + this folder's WAVEFOLDER 0.1.0-experimental package (3b5621c0), against the owner's stock OS 1.74, --version WF01",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "2ac0f1f",
+    "binary": "dtboot (cargo build --release --bin dtboot)",
+    "settings": "no card, JIT on"
+  },
+  "conditions": "Cold boot, then dtboot WF01.syx --instr 7500M --every 1000M --press NO@2003M:12M --press NO@2303M:12M --press NO@2603M:12M --press NO@2903M:12M --press AMP@4003M:12M --press AMP@4603M:12M --press FX@5503M:12M --press SRC@6103M:12M --press SRC@6703M:12M, with DTBOOT_STEPS=1 and DTBOOT_PNG_DIR. On the FX track the SRC key opens DELAY, and each press there switches between DELAY and SEND FX. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/send-page.png",
+      "frame": "step06_AMP.png",
+      "plan": "BD selected: AMP, AMP",
+      "sha256": "1339d3beec27a2d11e915671aa399feea891aabdce1a9925c84004647d2c332a"
+    },
+    {
+      "path": "media/send-fx-wavefolder.png",
+      "frame": "step08_SRC.png",
+      "plan": "FX, then SRC",
+      "sha256": "084dbaadb497afed18b2ab3d8a89dce79e7a37bf2e26871a74afac144c94d66f"
+    }
+  ]
+}

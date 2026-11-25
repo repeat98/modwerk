@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Mute Modes' runtime package beside ev_mute_keep, under the ColdFire emulator (opt-in).
+"""Mute Modes' runtime package beside ev_mute_keep, and its ev_trig_muted answer, under the ColdFire emulator (opt-in).
 
 Needs MODWERK_PRIVATE_STOCK_MAIN (your own 1.40C MAIN image), the Elekloader upstream (MODWERK_UPSTREAM, default
 ~/.cache/modwerk-upstream/elekloader) and the built native emulator (OCTABAM_NATIVE). Never firmware in CI.
@@ -68,7 +68,8 @@ class MuteModesRuntime(unittest.TestCase):
                 if defines:
                     subprocess.run(['m68k-elf-as', '-mcpu=5475', str(GLUE / 'runtime_events.s'), '-o', str(work / 'dispatch.o')], check=True)
                     objects.append(work / 'dispatch.o')
-                    undefined += ['modwerk_site_40004100', 'modwerk_site_40006820', 'modwerk_raise_ev_mute_keep']
+                    undefined += ['modwerk_site_40004100', 'modwerk_site_40006820', 'modwerk_raise_ev_mute_keep',
+                                  'modwerk_raise_ev_trig_muted']
                 (work / 'link.ld').write_text('SECTIONS { . = 0x47400000; .text : { *(.text) *(.text.*) } .rodata : { *(.rodata*) } '
                                               '.data : { *(.data*) } .bss : { *(.bss*) } /DISCARD/ : { *(.comment) *(.eh_frame*) } }')
                 elf = work / (name + '.elf')
@@ -87,6 +88,7 @@ class MuteModesRuntime(unittest.TestCase):
             new = mute_modes('new', {'MUTE_MODES'}, True)
             self.assertEqual(new['hooks'][0], new['symbols']['mm_restore'])
             self.assertEqual(new['hooks'][7], build.RAISE << 24 | new['symbols']['raise_ev_mute_keep'])
+            self.assertEqual(new['hooks'][35], 50 << 24 | new['symbols']['mm_trig_muted'])  # ev_trig_muted (#777)
             mute_modes('plain', {'MUTE_MODES'}, False)
             mute_modes('key', {'MUTE_MODES', 'SIDECHAIN_COMPRESSOR'}, False)
             subprocess.run(['m68k-elf-as', '-mcpu=54455', str(ADAPTERS / 'mute_keep_provider_fixture.s'), '-o', str(work / 'keep.o')], check=True)
@@ -98,7 +100,7 @@ class MuteModesRuntime(unittest.TestCase):
                             '-I' + str(native / 'vendor/dsp56300/source'), str(ADAPTERS / 'loader_mute_keep_fixture.cpp'), *map(str, archives),
                             '-lpthread', '-o', str(work / 'probe')], check=True, capture_output=True)
             result = subprocess.run([str(work / 'probe'), stock, *(str(work / f) for f in (
-                'events.bin', 'events.sym', 'legacy.bin', 'legacy.sym', 'new.mwrm', 'new.syms', 'plain.mwrm', 'key.mwrm', 'key.syms',
+                'events.bin', 'events.sym', 'legacy.bin', 'legacy.sym', 'new.mwrm', 'new.syms', 'plain.mwrm', 'plain.syms', 'key.mwrm', 'key.syms',
                 'keep.mwrm'))], capture_output=True, text=True)
             packages = {f: hashlib.sha256((work / f).read_bytes()).hexdigest() for f in ('new.mwrm', 'plain.mwrm', 'key.mwrm', 'keep.mwrm')}
         self.assertEqual(result.returncode, 0, result.stderr[-4000:])

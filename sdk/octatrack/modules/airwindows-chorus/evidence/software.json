@@ -1,0 +1,171 @@
+{
+  "programWords": 588,
+  "assembledSha256": "4bb74803178a809892e542d78608265a3a682892e26ac29ac87e63aa44835a0f",
+  "floatOraclePeakError": 0.0011729174929883332,
+  "maxInstructionsPerSample": 372.9,
+  "results": [
+    {
+      "name": "signed multiply encodings",
+      "passed": true,
+      "detail": "no unsigned-second-operand multiply"
+    },
+    {
+      "name": "init preserves dispatcher r1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "float oracle (64, 64, 64)",
+      "passed": true,
+      "detail": "peak error 5.06513e-05"
+    },
+    {
+      "name": "memory guard (64, 64, 64)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "float oracle (0, 0, 127)",
+      "passed": true,
+      "detail": "peak error 4.84616e-05"
+    },
+    {
+      "name": "memory guard (0, 0, 127)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "float oracle (127, 127, 127)",
+      "passed": true,
+      "detail": "peak error 0.00117292"
+    },
+    {
+      "name": "memory guard (127, 127, 127)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "float oracle (127, 32, 127)",
+      "passed": true,
+      "detail": "peak error 0.000101084"
+    },
+    {
+      "name": "memory guard (127, 32, 127)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "float oracle (32, 127, 64)",
+      "passed": true,
+      "detail": "peak error 0.000100089"
+    },
+    {
+      "name": "memory guard (32, 127, 64)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "float oracle (64, 64, 0)",
+      "passed": true,
+      "detail": "peak error 0"
+    },
+    {
+      "name": "memory guard (64, 64, 0)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "MIX 0 exact bypass",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "float oracle (127, 0, 127)",
+      "passed": true,
+      "detail": "peak error 4.84616e-05"
+    },
+    {
+      "name": "memory guard (127, 0, 127)",
+      "passed": true,
+      "detail": "  guard clean: nothing written over a loaded module"
+    },
+    {
+      "name": "FX1 slot 1 safely dry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX1 slot 4 safely dry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX1 slot 7 safely dry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX1 slot 10 safely dry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX2 slot 2 dirty-state silence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX2 slot 5 dirty-state silence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX2 slot 8 dirty-state silence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FX2 slot 11 dirty-state silence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L/R state independence",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "control-change memory guard",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "dirty-state music equals clean init",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "1+15-frame split continuity",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "4+12-frame split continuity",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "8+8-frame split continuity",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "burst settles after three seconds",
+      "passed": true,
+      "detail": "last half-second peak 0"
+    }
+  ],
+  "limitations": [
+    "Synthetic DSP memory only; no firmware, panel, dispatcher, physical hardware, or persistence qualification."
+  ]
+}

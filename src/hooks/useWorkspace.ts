@@ -6,13 +6,23 @@ import { useEffect, useRef, useState } from 'react'
 import { afterDeleting, newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE, removedSettings, startupSettings, storageSettings } from '../config/workspace'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { isModuleAvailable } from '../catalog/availability'
+import { canAdd } from '../catalog/set-limit'
 import type { Configuration, StorageLock } from '../config/workspace'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import type { DeviceStore } from '../storage/device'
 import { createLazyFirmwareClient } from './firmware-client'
 import type { FirmwareClient } from '../engine/client'
 import type { FirmwareInspection } from '../engine/base'
-import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
+import { comesWithBase, parseUsbAudioConfiguration, usbAudioForSelection, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
+
+const STORAGE_ATTEMPTS = 2, STORAGE_RETRY_MS = 300
+
+/** A saved set this version cannot read. It stays on the device, so its name and the reason are all the page shows. */
+export type UnreadableSet = { name: string; reason: string }
+function describeUnreadable(error: unknown, record: unknown): UnreadableSet {
+  const name = record && typeof record === 'object' && typeof (record as { name?: unknown }).name === 'string' ? (record as { name: string }).name.trim().slice(0, 80) : ''
+  return { name, reason: error instanceof Error ? error.message : 'It could not be read.' }
+}
 
 export function useWorkspace() {
   const betaAccess = hasBetaAccess(useCommunity().session)
@@ -21,12 +31,13 @@ export function useWorkspace() {
   const [ready, setReady] = useState(false)
   const [saving, setSaving] = useState(false)
   const [storageError, setStorageError] = useState('')
-  const [unreadable, setUnreadable] = useState(0)
+  const [unreadable, setUnreadable] = useState<UnreadableSet[]>([])
   const [firmware, setFirmware] = useState<FirmwareInspection | null>(null)
   const [fileState, setFileState] = useState<'empty' | 'reading' | 'ready' | 'error'>('empty')
   const [fileError, setFileError] = useState('')
   const [firmwareSaved, setFirmwareSaved] = useState(false)
   const storeRef = useRef<DeviceStore | null>(null)
+  const databaseRef = useRef<IDBDatabase | null>(null)
   const clientRef = useRef<FirmwareClient | null>(null)
   const generation = useRef(0)
   const saveQueue = useRef<Promise<void>>(Promise.resolve())
@@ -44,23 +55,34 @@ export function useWorkspace() {
     alive.current = true
     const client = createLazyFirmwareClient()
     clientRef.current = client
-    let database: IDBDatabase | undefined
+    async function load() {
+      const db = await openDeviceDatabase()
+      if (cancelled) { db.close(); return null }
+      databaseRef.current = db
+      const store = deviceStore(db), skipped: UnreadableSet[] = []
+      let items = await store.listConfigurations((error, record) => skipped.push(describeUnreadable(error, record)))
+      if (!items.length) { const item = newConfiguration('My first configuration'); await store.saveConfiguration(item); items = [item] }
+      return { store, items, skipped, rememberedId: await store.activeConfiguration() }
+    }
     void (async () => {
       try {
-        const db = await openDeviceDatabase()
-        if (cancelled) { db.close(); return }
-        database = db
-        const store = deviceStore(db)
+        let opened: Awaited<ReturnType<typeof load>> = null
+        // Safari can drop a home-screen app's storage connection as it resumes; a fresh connection usually works.
+        for (let attempt = 1; ; attempt++) {
+          try { opened = await load(); break } catch (error) {
+            databaseRef.current?.close(); databaseRef.current = null
+            if (attempt === STORAGE_ATTEMPTS || cancelled) throw error
+            await new Promise(resolve => setTimeout(resolve, STORAGE_RETRY_MS))
+          }
+        }
+        if (!opened || cancelled) return
+        const { store, items, skipped, rememberedId } = opened
         storeRef.current = store
-        let skipped = 0
-        let items = await store.listConfigurations(() => skipped++)
         setUnreadable(skipped)
-        if (!items.length) { const item = newConfiguration('My first configuration'); await store.saveConfiguration(item); items = [item] }
-        const rememberedId = await store.activeConfiguration()
-        if (cancelled) return
         replaceConfigurations(items)
         changeActive(items.some(item => item.id === rememberedId) ? rememberedId! : items[0].id)
-        const stored = await store.readFirmware()
+        // The saved sets are open by now: a firmware record that cannot be read or forgotten must not replace them.
+        const stored = await store.readFirmware().catch(() => undefined)
         if (cancelled) return
         if (stored) {
           const request = requestGeneration.current
@@ -73,25 +95,34 @@ export function useWorkspace() {
             setFirmware(verified); setFirmwareSaved(true); setFileState('ready')
           } catch {
             // A file chosen or cleared during the check supersedes it and must not be forgotten.
-            if (!cancelled && request === requestGeneration.current) { setFileState('error'); setFileError('The saved firmware could not be verified. Choose the original 1.40C file again.'); await store.forgetFirmware() }
+            if (!cancelled && request === requestGeneration.current) { setFileState('error'); setFileError('The saved firmware could not be verified. Choose the original 1.40C file again.'); await store.forgetFirmware().catch(() => {}) }
           }
         }
       } catch (error) {
         if (!cancelled) {
-          setStorageError('Device storage could not be opened. Changes are not saved. ' + (error instanceof Error ? error.message : ''))
+          setStorageError('Your saved sets could not be loaded from this device, so changes are not saved. Reload the page to try again. ' + (error instanceof Error ? error.message : ''))
           const fallback = newConfiguration('Unsaved configuration')
           replaceConfigurations([fallback]); changeActive(fallback.id)
         }
       } finally { if (!cancelled) setReady(true) }
     })()
-    return () => { cancelled = true; alive.current = false; ++requestGeneration.current; client.dispose(); clientRef.current = null; storeRef.current = null; database?.close() }
+    return () => { cancelled = true; alive.current = false; ++requestGeneration.current; client.dispose(); clientRef.current = null; storeRef.current = null; databaseRef.current?.close(); databaseRef.current = null }
   }, [])
 
   function persist(operation: (store: DeviceStore) => Promise<void>) {
     setSaving(true)
     saveQueue.current = saveQueue.current.catch(() => {}).then(async () => {
+      // Without a store the sets were never loaded: saving the placeholder set would add it beside them.
       if (!storeRef.current) throw new Error('Browser storage is unavailable.')
-      await operation(storeRef.current)
+      try { await operation(storeRef.current) } catch (error) {
+        // A connection Safari dropped while the app was suspended stays dead; one fresh connection retries the save.
+        if (!alive.current) throw error
+        const db = await openDeviceDatabase().catch(() => { throw error })
+        if (!alive.current) { db.close(); throw error }
+        databaseRef.current?.close(); databaseRef.current = db
+        storeRef.current = deviceStore(db)
+        await operation(storeRef.current)
+      }
     }).catch(error => { if (alive.current) setStorageError('Not saved on this device. ' + (error instanceof Error ? error.message : 'Try exporting your configuration.')) })
     const latest = saveQueue.current
     void latest.finally(() => { if (alive.current && saveQueue.current === latest) setSaving(false) })
@@ -106,7 +137,7 @@ export function useWorkspace() {
     const source = copy && original && configurationDevice(original) === device ? original : undefined
     const item = { ...newConfiguration(name, source?.moduleIds, source?.keepStockFx2 ?? true, source?.moduleVersions, device, source?.usbAudio), ...removedSettings(device, source?.removedStockFx), ...startupSettings(device, source?.classicStartup), ...storageSettings(source?.storageLock) }
     replaceConfigurations([...configsRef.current, item]); changeActive(item.id)
-    persist(async store => { await store.saveConfiguration(item); await store.setActiveConfiguration(item.id) })
+    persist(store => store.saveConfiguration(item, { makeActive: true }))
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
     return item
   }
@@ -114,7 +145,7 @@ export function useWorkspace() {
     const item = { ...newConfiguration(name, ids, keepStockFx2, moduleVersions, device, usbAudio), ...removedSettings(device, removedStockFx), ...startupSettings(device, classicStartup), ...storageSettings(storageLock) }
     replaceConfigurations([...configsRef.current,item]);changeActive(item.id)
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
-    persist(async store => {await store.saveConfiguration(item);await store.setActiveConfiguration(item.id)})
+    persist(store => store.saveConfiguration(item, { makeActive: true }))
     return item.id
   }
   function updateActive(update: Partial<Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions' | 'keepStockFx2' | 'usbAudio' | 'removedStockFx' | 'classicStartup'>>) {
@@ -144,29 +175,40 @@ export function useWorkspace() {
   }
   function toggleModule(id: string, device = DEFAULT_DEVICE) {
     const current = configurationFor(device)
-    // USB is added atomically with the user's setup through configureUsbAudio.
-    if (device === DEFAULT_DEVICE && id === USB_AUDIO_MODULE && !current.moduleIds.includes(id)) return
+    // Built-in audio needs its layout selection before it can be added.
+    if (device === DEFAULT_DEVICE && comesWithBase(id) && !current.moduleIds.includes(id)) return
     if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id, betaAccess)) return
+    // A full Octatrack set takes no further module (set-limit.ts); the library shows why before anyone gets here.
+    if (!canAdd(current.moduleIds, id, configurationDevice(current))) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
-    updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })
+    updateActive({ moduleIds, moduleVersions, usbAudio: usbAudioForSelection(moduleIds, current) })
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
+  }
+  /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)
+   * still holds them all, and says why it can't be synced or built until trimmed. As toggleModule, it leaves out a
+   * module that isn't available here (paused, or beta without beta access) and USB Audio, which comes with its setup. */
+  function addModules(ids: readonly string[], device = DEFAULT_DEVICE) {
+    const current = configurationFor(device)
+    const adding = device === DEFAULT_DEVICE ? ids.filter(id => id !== USB_AUDIO_MODULE && isModuleAvailable(id, betaAccess)) : ids
+    const moduleIds = [...new Set([...current.moduleIds, ...adding])]
+    if (moduleIds.length === current.moduleIds.length) return
+    const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
+    updateActive({ moduleIds, moduleVersions })
+    if(!current.moduleIds.length)trackConfigurationStarted(current.id)
   }
   function configureUsbAudio(usbAudio: UsbAudioConfiguration | undefined) {
     const current = configurationFor(DEFAULT_DEVICE)
+    if (!canAdd(current.moduleIds, USB_AUDIO_MODULE, DEFAULT_DEVICE)) return
     const moduleIds = current.moduleIds.includes(USB_AUDIO_MODULE) ? current.moduleIds : [...current.moduleIds, USB_AUDIO_MODULE]
     updateActive({ moduleIds, moduleVersions: { ...current.moduleVersions, ...pinModuleVersions([USB_AUDIO_MODULE]) }, usbAudio: usbAudio ? parseUsbAudioConfiguration(usbAudio) : undefined })
     if (!current.moduleIds.length) trackConfigurationStarted(current.id)
   }
   function deleteConfiguration() {
     const deleting = activeRef.current
-    const { remaining, next } = afterDeleting(configsRef.current, deleting)
+    const { remaining, next, created } = afterDeleting(configsRef.current, deleting)
     replaceConfigurations(remaining); changeActive(next.id)
-    persist(async store => {
-      await store.saveConfiguration(next)
-      await store.setActiveConfiguration(next.id)
-      await store.deleteConfiguration(deleting)
-    })
+    persist(store => store.deleteConfiguration(deleting, created ? next : next.id))
   }
   async function readFile(file: File) {
     const request = ++generation.current
@@ -196,5 +238,5 @@ export function useWorkspace() {
     persist(store => store.forgetFirmware())
     void clientRef.current?.clear().catch(() => setFileError('The firmware reader stopped. Reload the page.'))
   }
-  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
+  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, addModules, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
 }

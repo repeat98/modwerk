@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/control-in-actions",
+  "version": "0.1.1-experimental",
+  "date": "2026-11-04",
+  "changes": [
+    "The input is read in the audio interrupt, 1,500 times a second, and an action plays on the UI task as soon as a panel key would, instead of from stock's smoothed level once a UI tick (up to about 80 ms late); a 10 ms quiet time after each edge takes a footswitch's bounce, the bars' line follows the actions, and changing the levels or REVERSE DIRECTION no longer plays an action."
+  ],
+  "runtimeSourceSha256": "b7be00f9f8d3bb9cc22b3b6a9f709da0863245788fc6ba5d4005c190920ee9f7",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/control-in-actions/control-in-actions-0.1.1-experimental-os1.74.elemod",
+      "sha256": "290e39c701a8d80adcf9e66e3105c5c2b55683c2652a9aeb7b94d9b091b5a41e"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/control-in-actions/TESTING.md",
+  "requires": []
+}

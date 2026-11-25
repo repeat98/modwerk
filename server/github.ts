@@ -8,6 +8,7 @@ import { profilePath } from '../src/community/forum-links'
 import { FLASH_STATES, type IssueContext } from '../src/community/issue-context'
 import { REPORT_CLOSURE_REASONS, REPORT_COMMANDS, type ReportClosureReason } from '../src/community/report-closure'
 import { digest } from './security'
+import { supportBlock, type SupportAttachment } from '../src/community/support-report'
 
 const API = 'https://api.github.com'
 const BODY_LIMIT = 60000
@@ -69,10 +70,12 @@ const quote = (text: string) => inert(text).split(/\r?\n/).map(line => '> ' + li
  */
 export type PublicBugDetails = { device: string; version: string; steps: string; expected: string; actual: string; modules?: { id: string; name: string; version: string }[]; full?: boolean }
 /** A whole-configuration report lists every module in `moduleIds`; `module_id` is then only the first of them. */
-export type MirroredIssue = { id: string; module_id: string; scope?: 'module' | 'configuration'; moduleIds?: string[]; title: string; reporter: string | null; owners: string[]; details: PublicBugDetails; context?: IssueContext; log?: string }
+export type MirroredIssue = { id: string; module_id: string; scope?: 'module' | 'configuration'; moduleIds?: string[]; title: string; reporter: string | null; owners: string[]; details: PublicBugDetails; context?: IssueContext; log?: string; usb?: SupportAttachment }
 
 export function issueTitle(issue: Pick<MirroredIssue, 'module_id' | 'scope' | 'title'>) { return ('[' + (issue.scope === 'configuration' ? 'configuration' : issue.module_id) + '] ' + issue.title).slice(0, 256) }
 const GITHUB_LOGIN = /^[A-Za-z0-9-]{1,39}$/
+/** Appended to every comment the maintenance bot posts (scripts/maintenance-bot/lib.mjs). */
+const MAINTENANCE_BOT_MARKER = '<!-- modwerk-maintenance-bot -->'
 const appLink = (app: string | undefined, hash: string) => { if (!app) return null; const url = new URL(app); url.hash = hash; return url.href }
 const cell = (text: string) => inert(text).replace(/\|/g, '\\|')
 
@@ -100,7 +103,7 @@ export function issueMarkdown(issue: MirroredIssue, app?: string) {
   const modules = configuration ? issue.details.modules ?? [] : []
   const report = ['Reported on [Modwerk](' + site + ') for ' + (configuration ? 'the **whole configuration**' : '**`' + issue.module_id + '`**') + ' by ' + (profile ? '[' + reporter + '](' + profile + ')' : reporter) + (owners.length ? ' · ' + owners.join(' ') : ''), '',
     '| | |', '| --- | --- |', '| Device | ' + cell(device) + ' |', configuration ? '| Configuration | ' + configurationSummary(modules.length) + ' |' : '| Module version | ' + cell(version) + ' |',
-    ...(context ? ['| Firmware | ' + cell(FLASH_STATES[context.flash].replace('an Octamod', 'a Modwerk')) + ' |', '| Build fingerprint | ' + (context.build ? '`' + context.build + '`' : 'Not recorded') + ' |'] : []), '',
+    ...(context ? ['| Firmware | ' + cell(FLASH_STATES[context.flash]) + ' |', '| Build fingerprint | ' + (context.build ? '`' + context.build + '`' : 'Not recorded') + ' |'] : []), '',
     ...(configuration ? ['### Modules in this configuration', '', ...modules.map(module => '- `' + module.id + '` ' + inert(module.version)), '', 'Reported for the whole configuration: the cause may be one module or how they combine. Reply here to narrow it down, then mention the author of the module at fault.', ''] : []),
     ...(!configuration && context ? ['### Configuration', '', ...(context.modules.length ? context.modules.map(module => '- `' + module.id + '` ' + inert(module.version)) : ['No modules recorded.']), ''] : []),
     ...([['Steps to reproduce', steps], ['Expected', expected], ['Actual', actual]] as const).filter(([, text]) => text).flatMap(([heading, text]) => ['### ' + heading, '', quote(text), ''])]
@@ -113,8 +116,10 @@ export function issueMarkdown(issue: MirroredIssue, app?: string) {
     'Only the registered release author can use `resolve`, after verifying that exact published download fixes the report on their unit. Ordinary closures claim no new firmware fix.', '',
     'A merged PR alone does not resolve a report. [Author release steps](https://github.com/repeat98/modwerk/blob/main/docs/MODULE_AUTHOR_UPDATES.md).',
   ]
-  const log = issue.log ? ['### Device log', '', ...logBlock(issue.log, BODY_LIMIT - [...report, ...rest].join('\n').length)] : []
-  return [...report, ...log, ...rest].join('\n').slice(0, BODY_LIMIT)
+  // The reporter attached them themselves (support-report.ts); checked to numbers, codes and hashes when they posted.
+  const usb = issue.usb ? ['### USB events', '', ...supportBlock(issue.usb)] : []
+  const log = issue.log ? ['### Device log', '', ...logBlock(issue.log, BODY_LIMIT - [...report, ...usb, ...rest].join('\n').length)] : []
+  return [...report, ...usb, ...log, ...rest].join('\n').slice(0, BODY_LIMIT)
 }
 
 export async function createGithubIssue(config: GithubConfig, issue: MirroredIssue, app?: string) {
@@ -176,8 +181,8 @@ export async function mirrorIssue(db: Database, env: Env, id: string, stale = fa
     const details = JSON.parse(row.public_json) as PublicBugDetails
     // Only reporters who agreed to publish them get their configuration and log on GitHub.
     const log = details.full ? (await db.prepare('SELECT text FROM issue_logs WHERE issue_id=?').bind(id).first<{ text: string }>())?.text : undefined
-    const context = details.full && row.context_json ? JSON.parse(row.context_json) as IssueContext : undefined
-    const created = await createGithubIssue(config, { id: row.id, module_id: row.module_id, scope: row.scope, moduleIds, title: row.title, reporter: row.reporter, owners, details, context, log }, env.APP_URL)
+    const context = details.full && row.context_json ? JSON.parse(row.context_json) as IssueContext & { usb?: SupportAttachment } : undefined
+    const created = await createGithubIssue(config, { id: row.id, module_id: row.module_id, scope: row.scope, moduleIds, title: row.title, reporter: row.reporter, owners, details, context, log, ...(context?.usb ? { usb: context.usb } : {}) }, env.APP_URL)
     await db.prepare("UPDATE issues SET github_state='synced',github_number=?,github_url=?,github_error='' WHERE id=?").bind(created.number, created.url, id).run()
     return { state: 'synced' as const, url: created.url }
   } catch (error) {
@@ -219,8 +224,16 @@ export async function handleGithubWebhook(request: Request, env: Env, db: Databa
   if(await db.prepare('SELECT id FROM github_webhook_deliveries WHERE id=?').bind(delivery).first())return {ok:true,handled:true}
   if (event === 'issue_comment') {
     const comment = payload.comment
-    // Bots (CI, release tooling) talk to developers, not reporters.
-    if (payload.action !== 'created' || typeof comment?.body !== 'string' || comment.user?.type === 'Bot') return { ok: true, handled: false }
+    if (payload.action !== 'created' || typeof comment?.body !== 'string') return { ok: true, handled: false }
+    // Bots (CI, release tooling) talk to developers, not reporters. The maintenance bot's replies
+    // (scripts/maintenance-bot/act.mjs) are the exception: only this repository's workflows comment as
+    // github-actions[bot], and they reach the reporter as replies from TARS.
+    if (comment.user?.type === 'Bot') {
+      if (comment.user.login !== 'github-actions[bot]' || !comment.body.includes(MAINTENANCE_BOT_MARKER)) return { ok: true, handled: false }
+      const text = comment.body.replace(MAINTENANCE_BOT_MARKER, '').trim()
+      await db.batch([publicIssueReplyStatement(db, issue.id, delivery, text, 'tars'), db.prepare('INSERT INTO github_webhook_deliveries(id,issue_id) VALUES(?,?) ON CONFLICT DO NOTHING').bind(delivery, issue.id)])
+      return { ok: true, handled: true }
+    }
     if (/^\s*\/modwerk(?:\s|$)/.test(comment.body)) {
       const result = await handleGithubCommand(env, db, config, issue.id, Number(number), payload)
       await db.prepare('INSERT INTO github_webhook_deliveries(id,issue_id) VALUES(?,?) ON CONFLICT DO NOTHING').bind(delivery, issue.id).run()

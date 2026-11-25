@@ -5,11 +5,14 @@ import { moduleSlug } from '../catalog/module-links'
 import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import MACHINE_MODULES from '../catalog/machine-modules.json'
 import type { ModwerkModule } from '../catalog/module-contract-v3'
+import MACHINES from '../devices/machines.generated.json'
+import type { MachineProfile } from '../devices/machine-contract'
 import { displayName } from '../catalog/module-authors'
 
 // Reviewed maintainer opt-outs apply independently of authorship and source credits.
-// Sam Banks asked to be removed as a maintainer on 12 October 2026.
-const MAINTAINER_OPT_OUTS: ReadonlySet<string> = new Set(['sambanks'])
+// Sam Banks asked to be removed as a maintainer on 12 October 2026. Mark Roberts (USB Audio) is not an active
+// maintainer; on 17 November 2026 the owner stopped mentioning him on its reports.
+const MAINTAINER_OPT_OUTS: ReadonlySet<string> = new Set(['sambanks', 'markandrus'])
 const activeMaintainers = (logins: readonly string[]) => logins.filter(login => !MAINTAINER_OPT_OUTS.has(login.toLowerCase()))
 
 /** Community IDs are unique across machines; configuration IDs stay native to each SDK. */
@@ -17,7 +20,7 @@ export const COMMUNITY_MODULES = [
   ...MODULES.map(module => ({
     id: module.id, moduleId: module.id, machine: 'octatrack', name: module.name,
     version: module.version, author: module.author, authorName: module.authorName, maintainers: activeMaintainers([module.author]),
-    href: '#module/' + moduleSlug(module.id), sourcePath: 'sdk/octabam/modules/' + module.id, summary: module.description,
+    href: '#module/' + moduleSlug(module.id), sourcePath: 'sdk/octatrack/modules/' + module.id, summary: module.description,
     evidence: MODULE_DOCUMENTS_BY_ID[module.id].tests.summary,
   })),
   ...(MACHINE_MODULES.modules as ModwerkModule[]).map(module => ({
@@ -25,7 +28,8 @@ export const COMMUNITY_MODULES = [
     name: module.name, version: module.version, author: module.author.github, authorName: displayName(module.author.github, module.author.name),
     // Internal account-return and notification routes retain hashes; routing upgrades public navigation to paths.
     maintainers: activeMaintainers(module.maintainers), href: '#' + module.machine + '/module/' + module.id,
-    sourcePath: 'sdk/' + module.machine + '/modules/' + module.id, summary: module.presentation.summary,
+    // The machine's module folder: sdk/<machine>/modules, or one a pedal family shares (sdk/zoom/modules).
+    sourcePath: ((MACHINES as MachineProfile[]).find(machine => machine.id === module.machine)?.sdk?.modules ?? 'sdk/' + module.machine + '/modules') + '/' + module.id, summary: module.presentation.summary,
     evidence: module.evidence.tier,
   })),
 ]

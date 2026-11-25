@@ -17,17 +17,17 @@ function fixture({ foreign = false, symlink = false, registryChange = false, sou
   const doc = { id: 'playmodes', version: '0.1.0-experimental', author: { github: 'devilfish707' }, license: { spdx: 'MIT' }, compatibility: { effectId: null } }
   write('.github/module-authors.json', { schemaVersion: 1, accounts: { devilfish707: author.id } })
   write('sdk/catalog.json', { schemaVersion: 1, sourceRevision: 'd'.repeat(40), modules: [{ id: 'playmodes', version: doc.version }] })
-  write('sdk/octabam/modules/playmodes/octamod.module.json', doc)
-  write('sdk/octabam/modules/playmodes/source.c', 'original code jsr 0x4000D562\n')
-  write('sdk/octabam/modules/playmodes/media/location.png', 'fixture only')
+  write('sdk/octatrack/modules/playmodes/octamod.module.json', doc)
+  write('sdk/octatrack/modules/playmodes/source.c', 'original code jsr 0x4000D562\n')
+  write('sdk/octatrack/modules/playmodes/media/location.png', 'fixture only')
   git('add', '.'); git('commit', '-qm', 'trusted base'); const base = git('rev-parse', 'HEAD')
-  write('sdk/octabam/modules/playmodes/octamod.module.json', { ...doc, version: '0.1.1-experimental' })
-  write('sdk/octabam/modules/playmodes/source.c', source)
-  for (const [path, data] of Object.entries(files)) write('sdk/octabam/modules/playmodes/' + path, data)
+  write('sdk/octatrack/modules/playmodes/octamod.module.json', { ...doc, version: '0.1.1-experimental' })
+  write('sdk/octatrack/modules/playmodes/source.c', source)
+  for (const [path, data] of Object.entries(files)) write('sdk/octatrack/modules/playmodes/' + path, data)
   if (foreign) write('sdk/octabam/tools/build/build_bus.py', 'malicious compiler')
   if (registryChange) write('.github/module-authors.json', { schemaVersion: 1, accounts: { devilfish707: 1 } })
   git('add', '.')
-  if (symlink) git('update-index', '--add', '--cacheinfo', '120000', git('hash-object', '-w', 'sdk/octabam/modules/playmodes/source.c'), 'sdk/octabam/modules/playmodes/link')
+  if (symlink) git('update-index', '--add', '--cacheinfo', '120000', git('hash-object', '-w', 'sdk/octatrack/modules/playmodes/source.c'), 'sdk/octatrack/modules/playmodes/link')
   git('commit', '-qm', 'author head'); const head = git('rev-parse', 'HEAD'), tree = git('rev-parse', 'HEAD^{tree}')
   const merge = git('commit-tree', tree, '-p', base, '-p', head, '-m', 'bot merge')
   return { root, base, head, merge, git }
@@ -60,7 +60,7 @@ describe('trusted Git object inspection', () => {
   })
   it('sends an update that reaches a new firmware or hardware address to owner review', () => {
     const f = fixture({ source: 'fixed code jsr 0x4000d562\nmove.l d0,0xF0001234\n' })
-    expect(() => inspectAuthorUpdate(f.root, f.base, f.head, author)).toThrow('New addresses in sdk/octabam/modules/playmodes (0xf0001234)')
+    expect(() => inspectAuthorUpdate(f.root, f.base, f.head, author)).toThrow('New addresses in sdk/octatrack/modules/playmodes (0xf0001234)')
   })
   it.each([{ foreign: true }, { symlink: true }, { registryChange: true }])('rejects unsafe Git trees: %j', options => {
     const f = fixture(options)
@@ -125,6 +125,17 @@ describe('independent author release verification', () => {
   it('preserves the existing owner-reviewed release path', async () => {
     const f = fixture(); github(f, { owner: true, withdraw: true })
     expect(await fetchReleaseApproval(repository, f.merge, ownerId, 'fixture', 1, 0, { root: f.root })).toMatchObject({ moduleApproverId: ownerId, mergedBy: 'repeat98' })
+  })
+  it('publishes a worker merge only with the recorded base and head as its two parents', async () => {
+    const f = fixture(), tree = f.git('rev-parse', f.head + '^{tree}')
+    for (const base of [f.base, 'f'.repeat(40)]) {
+      const message = 'Modwerk reviewed merge\nBase: ' + base + '\nHead: ' + f.head + '\nReview: 81\nApproved by: tester (42, device-reviewer)'
+      f.merge = f.git('commit-tree',tree,'-p',f.base,'-p',f.head,'-m','Merge reviewed PR','-m',message)
+      github(f, { owner:true })
+      const evidence = fetchReleaseApproval(repository,f.merge,ownerId,'fixture',1,0,{ root:f.root })
+      if (base === f.base) await expect(evidence).resolves.toMatchObject({ authorization:'device-reviewer', reviewerId:42, reviewId:81 })
+      else await expect(evidence).rejects.toThrow('parents differ')
+    }
   })
   it.each([{ botId: 1 }, { withdraw: true }, { head: 'f'.repeat(40) }, { author: { ...author, id: 1 } }, { conclusion: 'failure' }, { base: 'f'.repeat(40) }])('keeps the previous release when GitHub evidence is invalid: %j', async options => {
     const f = fixture(); github(f, options)

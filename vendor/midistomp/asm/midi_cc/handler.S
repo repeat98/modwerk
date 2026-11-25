@@ -12,7 +12,7 @@
 ; uses: 0, 74, 75) to the stock midi_channel_msg unchanged.
 ;
 ; A mapped CC does what the SysEx 0x31 parameter edit does (see
-; docs/os-reverse-engineering.md): Semaphore_pend, fx_set_param(slot, param,
+; docs/dev/os-reverse-engineering.md): Semaphore_pend, fx_set_param(slot, param,
 ; value, 0, 1), Semaphore_post, UI refresh, Event_post(UI, 0x40).
 ; fx_set_param itself ignores parameters the effect does not have and clamps
 ; the value to the parameter's maximum.

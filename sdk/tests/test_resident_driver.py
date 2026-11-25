@@ -85,6 +85,7 @@ class ResidentDriver(unittest.TestCase):
             flags += ['-DMODWERK_DSP_%s%d=4096' % (name, core) for name in ('TABLE', 'WORDS', 'MISS', 'METER') for core in (0, 1)]
             for source in (work / 'transfer.c', work / 'dsp.c', RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_driver.c'):
                 compiled = subprocess.run(['m68k-elf-gcc', *flags, '-I' + str(work), '-I' + str(ELEK), '-I' + str(RUNTIME),
+                                '-I' + str(ROOT / 'sdk/machines/octatrack/module-adapters/controller-policy'),
                                 '-I' + str(ROOT / 'sdk/runtime/loader'), '-I' + str(ROOT / 'sdk/runtime/upload'), '-c', str(source),
                                 '-o', str(work / (source.stem + '.o'))], capture_output=True, text=True)
                 self.assertEqual(compiled.returncode, 0, compiled.stderr)
@@ -130,7 +131,8 @@ class ResidentDriver(unittest.TestCase):
             changed = changed.replace(old, new)
         private = driver.transport(changed)
         self.assertIn('dl_hook_reset_start', private)
-        self.assertIn('unsigned split=feature==1u ? 528u : feature==8u ? 514u : 0u;', private)  # one owned range per chunk
+        self.assertIn('unsigned end=(feature == 1u ? (offset < 16u ? 16u : offset < 530u ? 530u : 1042u) : feature == 2u ? 193u : '
+                      'feature == 4u ? 3776u : feature == 8u ? (offset < 514u ? 514u : 1026u) : 0u);', private)  # one owned range per chunk
         self.assertIn('feature==8u ? 1026u', private)  # the key bus
         self.assertIn('op!=10u', private)
         self.assertEqual((core.DYNLOAD / 'transfer.c').read_text(), original)

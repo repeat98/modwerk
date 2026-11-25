@@ -2,8 +2,8 @@
  {
   "module": "sidechain-compressor",
   "moduleId": 2513434262,
-  "controllerSha256": "178d200073896dd2416f07bb952f835087f9250778e773fc9426a5165db259ce",
-  "sourcePolicySha256": "96638989bbfb3b2f695d60eee84e6e3f9a6ada4099a0c9c889cbecf477f06b58",
+  "controllerSha256": "c5f15f0bb360c502f59aa59578bc92c5d346e14cd391cdf9d6ed344c09665fdd",
+  "sourcePolicySha256": "33d3ebe65c4f2a593644ef6b44dd8bc9a0ed66ba30ca4a8d2e05d9145c7bd283",
   "revisions": [
    1,
    1,
@@ -21,7 +21,7 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "controllerSha256": "17e9afe714d2707147804360bbf4e614240d9d5afc037df5fec0d2a1fc56c3e1",
+  "controllerSha256": "d0287191dca2cba3c88e03fe152eacf0423d35ee248450c95846284bc7a33ce1",
   "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
@@ -40,7 +40,7 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "controllerSha256": "17e9afe714d2707147804360bbf4e614240d9d5afc037df5fec0d2a1fc56c3e1",
+  "controllerSha256": "d0287191dca2cba3c88e03fe152eacf0423d35ee248450c95846284bc7a33ce1",
   "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
@@ -59,7 +59,7 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "controllerSha256": "17e9afe714d2707147804360bbf4e614240d9d5afc037df5fec0d2a1fc56c3e1",
+  "controllerSha256": "d0287191dca2cba3c88e03fe152eacf0423d35ee248450c95846284bc7a33ce1",
   "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
@@ -78,8 +78,8 @@
  {
   "module": "analog-bassdrum",
   "moduleId": 2883261509,
-  "controllerSha256": "579b9b5e76b000a8b9c95f6131a547fbb5117f497d4bc3ee0f98385edc96e5a3",
-  "sourcePolicySha256": "600a5ef2601e6280c90aa19677fcbf05b7d5972f0ec53a310be447bbe0ff81c9",
+  "controllerSha256": "e77e36cf6885e7669d3935ac9ef82626a6aa9d7e015ef1a42cef3202691c83ab",
+  "sourcePolicySha256": "7b8c0f1ab076abe168e42da3f3069e99dfca89b18f9beb0482716fe23a8c1965",
   "revisions": [
    1,
    1,

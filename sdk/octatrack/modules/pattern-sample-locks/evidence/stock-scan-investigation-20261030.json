@@ -1,0 +1,403 @@
+{
+  "schema": 1,
+  "hardware": false,
+  "published": false,
+  "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+  "cDebugBuildMatchesCandidate": true,
+  "compilation": {
+    "stage": "firmware-blind compilation",
+    "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+    "flags": [
+      "-mcpu=54455",
+      "-Os",
+      "-std=c99",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-common",
+      "-fno-tree-loop-distribute-patterns",
+      "-fno-asynchronous-unwind-tables",
+      "-fno-unwind-tables",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/work/sdk/runtime/loader",
+      "-fno-late-combine-instructions",
+      "-g"
+    ],
+    "results": {
+      "module": {
+        "imageBytes": 8748,
+        "imageSha256": "54efd2166b30b836401d02f8d0d785e12aebc5b40196deb1a9b6e4530e6f95d5",
+        "bssBytes": 1328,
+        "relocations": 167
+      },
+      "probe": {
+        "imageBytes": 60,
+        "imageSha256": "0c660a18a45764ab56a59ec108dd6c258912dabf7179d9a6619df99b9faac844",
+        "bssBytes": 4,
+        "relocations": 1
+      }
+    },
+    "helperSha256": "f022234f956790db5dbf546a15c56967a07949129d50866e488fcc31757b7e10",
+    "sourceHashes": {
+      "translation.c": "307d7f0d95a8eef8746c069472123555eebd40635e9401c3946e7d51e69113a5",
+      "native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+      "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+      "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+      "ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+      "ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+      "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+      "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+      "scanner_probe.c": "9f56bf224fc655883b29c0610f25342b5b3bde55fadb0c80064da74e54ed7cd7"
+    },
+    "builderHashes": {
+      "sdk/runtime/loader/build.py": "e8d2b83d2da6964fd5c48ff5b58fbcf2edd67d377404a1d96c497586b51a6c43",
+      "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab"
+    }
+  },
+  "scans": {
+    "package": {
+      "weightedRejects": true,
+      "longestWeightedRun": 14,
+      "rejectedSeeds": [
+        {
+          "offset": 854,
+          "bytes": 13,
+          "countedBytes": 12,
+          "stockOffset": 239068,
+          "matchSha256": "1cabfbc69aec7078ffc8254a02c02c15bd3091daa54885ae07da3f4b9b770def",
+          "imageOffset": 762,
+          "authoredLocation": {
+            "function": "psl_validate",
+            "source": "engine.c:51"
+          }
+        },
+        {
+          "offset": 3828,
+          "bytes": 16,
+          "countedBytes": 14,
+          "stockOffset": 916162,
+          "matchSha256": "3e9d90e97516d87a15aa301f0fbfd917a4b94adaed833dd204d3d5969a7f34e4",
+          "imageOffset": 3736,
+          "authoredLocation": {
+            "function": "module_enc",
+            "source": "ui.c:150"
+          }
+        },
+        {
+          "offset": 3829,
+          "bytes": 15,
+          "countedBytes": 13,
+          "stockOffset": 916163,
+          "matchSha256": "d89baca10c3a5f3b796e34bf57c14ab3196c1c14556c71f7107fe8441e84ab9a",
+          "imageOffset": 3737,
+          "authoredLocation": {
+            "function": "module_enc",
+            "source": "ui.c:150"
+          }
+        },
+        {
+          "offset": 3830,
+          "bytes": 14,
+          "countedBytes": 12,
+          "stockOffset": 916164,
+          "matchSha256": "922c4a19e0c65c612b56dc5f8f5010faf98b42de8882a72e456547107ce87a25",
+          "imageOffset": 3738,
+          "authoredLocation": {
+            "function": "module_enc",
+            "source": "ui.c:150"
+          }
+        },
+        {
+          "offset": 4080,
+          "bytes": 12,
+          "countedBytes": 12,
+          "stockOffset": 492998,
+          "matchSha256": "c258d55f4212b4fce1144db5bc2e214c30425f18615dc1d4f6bac15580272474",
+          "imageOffset": 3988,
+          "authoredLocation": {
+            "function": "module_enc",
+            "source": "ui.c:164"
+          }
+        },
+        {
+          "offset": 4304,
+          "bytes": 14,
+          "countedBytes": 13,
+          "stockOffset": 148958,
+          "matchSha256": "9ab1352d0db73135666df56f15bbb786c0bd1a01acf77e961e826948e9604b1a",
+          "imageOffset": 4212,
+          "authoredLocation": {
+            "function": "psl_native_text",
+            "source": "native.c:57"
+          }
+        },
+        {
+          "offset": 4305,
+          "bytes": 13,
+          "countedBytes": 12,
+          "stockOffset": 148959,
+          "matchSha256": "c785c997da559b193fa2d130ed5c4631a1021346af54eaf4c302316565451d89",
+          "imageOffset": 4213,
+          "authoredLocation": {
+            "function": "psl_native_text",
+            "source": "native.c:57"
+          }
+        },
+        {
+          "offset": 4562,
+          "bytes": 15,
+          "countedBytes": 14,
+          "stockOffset": 148958,
+          "matchSha256": "58563be8957699691cf842a73efaca5ef2006eb179cee47cf836e653af55c1fa",
+          "imageOffset": 4470,
+          "authoredLocation": {
+            "function": "psl_native_part_menu_draw",
+            "source": "native.c:79"
+          }
+        },
+        {
+          "offset": 4563,
+          "bytes": 14,
+          "countedBytes": 13,
+          "stockOffset": 148959,
+          "matchSha256": "88aeb6648873c2bc503e17f1230cc384b5d0b37755944b5f606ff9ee0861eecd",
+          "imageOffset": 4471,
+          "authoredLocation": {
+            "function": "psl_native_part_menu_draw",
+            "source": "native.c:79"
+          }
+        },
+        {
+          "offset": 4564,
+          "bytes": 13,
+          "countedBytes": 12,
+          "stockOffset": 148960,
+          "matchSha256": "f4aad586238217287481a32666b376c215e2c66dd062ac80105f43f2981849a7",
+          "imageOffset": 4472,
+          "authoredLocation": {
+            "function": "psl_native_part_menu_draw",
+            "source": "native.c:79"
+          }
+        },
+        {
+          "offset": 6048,
+          "bytes": 12,
+          "countedBytes": 12,
+          "stockOffset": 590894,
+          "matchSha256": "72e96cd22c99313b831382155a0c9a40aea99ccc4612eead7e9451a89cf62a6d",
+          "imageOffset": 5956,
+          "authoredLocation": {
+            "function": "psl_native_commit",
+            "source": "native.c:182"
+          }
+        },
+        {
+          "offset": 7965,
+          "bytes": 12,
+          "countedBytes": 12,
+          "stockOffset": 735437,
+          "matchSha256": "d54738c657ccc5593831f392391f0beb92cc923f33e2e9fc32846ef7a984d396",
+          "imageOffset": 7873,
+          "authoredLocation": {
+            "function": "??",
+            "source": "??:0"
+          }
+        },
+        {
+          "offset": 7975,
+          "bytes": 15,
+          "countedBytes": 14,
+          "stockOffset": 739466,
+          "matchSha256": "db6cf654e734b2645668cc626f5b8d08ea285f3a87ec1ca77221de6150c2f22c",
+          "imageOffset": 7883,
+          "authoredLocation": {
+            "function": "??",
+            "source": "??:0"
+          }
+        },
+        {
+          "offset": 7976,
+          "bytes": 14,
+          "countedBytes": 13,
+          "stockOffset": 739467,
+          "matchSha256": "2057495af7b2e52259394143656e62bc05d0bdf8c1726b1038beadedd74a0ff9",
+          "imageOffset": 7884,
+          "authoredLocation": {
+            "function": "??",
+            "source": "??:0"
+          }
+        },
+        {
+          "offset": 7977,
+          "bytes": 13,
+          "countedBytes": 12,
+          "stockOffset": 739468,
+          "matchSha256": "9c1b262011a1eef58118a06d9b32341cf9a01f43166b2a0fd4e971b17a83c297",
+          "imageOffset": 7885,
+          "authoredLocation": {
+            "function": "??",
+            "source": "??:0"
+          }
+        }
+      ],
+      "sixteenByteScanRejects": true,
+      "sixteenByteMatches": [
+        {
+          "where": "literal+0x0",
+          "offset": 3828,
+          "bytes": 16,
+          "stockLocation": "MAIN+0xdfac2"
+        }
+      ]
+    },
+    "probe": {
+      "weightedRejects": true,
+      "longestWeightedRun": 14,
+      "rejectedSeeds": [
+        {
+          "offset": 0,
+          "bytes": 16,
+          "countedBytes": 14,
+          "stockOffset": 916162,
+          "matchSha256": "3e9d90e97516d87a15aa301f0fbfd917a4b94adaed833dd204d3d5969a7f34e4",
+          "imageOffset": 0,
+          "authoredLocation": {
+            "function": "scanner_abi_probe",
+            "source": "scanner_probe.c:6"
+          }
+        },
+        {
+          "offset": 1,
+          "bytes": 15,
+          "countedBytes": 13,
+          "stockOffset": 916163,
+          "matchSha256": "d89baca10c3a5f3b796e34bf57c14ab3196c1c14556c71f7107fe8441e84ab9a",
+          "imageOffset": 1,
+          "authoredLocation": {
+            "function": "scanner_abi_probe",
+            "source": "scanner_probe.c:6"
+          }
+        },
+        {
+          "offset": 2,
+          "bytes": 14,
+          "countedBytes": 12,
+          "stockOffset": 916164,
+          "matchSha256": "922c4a19e0c65c612b56dc5f8f5010faf98b42de8882a72e456547107ce87a25",
+          "imageOffset": 2,
+          "authoredLocation": {
+            "function": "scanner_abi_probe",
+            "source": "scanner_probe.c:6"
+          }
+        },
+        {
+          "offset": 40,
+          "bytes": 12,
+          "countedBytes": 12,
+          "stockOffset": 492998,
+          "matchSha256": "c258d55f4212b4fce1144db5bc2e214c30425f18615dc1d4f6bac15580272474",
+          "imageOffset": 40,
+          "authoredLocation": {
+            "function": "scanner_modulo_probe",
+            "source": "scanner_probe.c:15"
+          }
+        }
+      ],
+      "sixteenByteScanRejects": true,
+      "sixteenByteMatches": [
+        {
+          "where": "literal+0x0",
+          "offset": 0,
+          "bytes": 16,
+          "stockLocation": "MAIN+0xdfac2"
+        }
+      ]
+    }
+  },
+  "abiProbe": {
+    "imageOffset": 0,
+    "candidatePackageOffset": 3828,
+    "bytes": 16,
+    "matchSha256": "3e9d90e97516d87a15aa301f0fbfd917a4b94adaed833dd204d3d5969a7f34e4",
+    "explanation": "Empty compiler barrier emits no inline instructions; GCC generates the ABI frame/register saves and argument loads."
+  },
+  "scannerHashes": {
+    "sdk/machines/octatrack/elekloader/module_packages.py": "26247dd2448e8cd281cea83c999139931cbc0766bbbab553d2048ab8a2c13824",
+    "sdk/machines/octatrack/elekloader/check_stock_free.py": "ce3fbd181f70fe8778bde660030934d34479773ce998b48afafe16d5c54cdb31"
+  },
+  "limitations": "Demonstrates coincidental compiler/ABI matches. Scanners, candidate and release verdict remain unchanged; no permission to publish or exception is inferred.",
+  "recorded": "2026-10-30",
+  "sourceCheckpoint": "1f469c61",
+  "compileContainerInputs": {
+    "checkoutReadOnly": true,
+    "dedicatedPrivateOutput": true,
+    "stockAndReferencePackageMounted": false,
+    "image": "modwerk-source-tools",
+    "imageId": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792"
+  },
+  "candidateCorruptionRefusedBeforeStockRead": true,
+  "classifiedGroups": [
+    {
+      "packageOffset": 854,
+      "bytes": 13,
+      "classification": "compiler stack frame and argument loads",
+      "source": "engine.c:51"
+    },
+    {
+      "packageOffset": 3828,
+      "bytes": 16,
+      "classification": "compiler ABI register saves and argument loads; reproduced independently",
+      "source": "ui.c:150"
+    },
+    {
+      "packageOffset": 4080,
+      "bytes": 12,
+      "classification": "signed remainder by four and start of store; reproduced independently",
+      "source": "ui.c:164"
+    },
+    {
+      "packageOffset": 4304,
+      "bytes": 14,
+      "classification": "stock font API arguments/call and stack cleanup",
+      "source": "native.c:57"
+    },
+    {
+      "packageOffset": 4562,
+      "bytes": 15,
+      "classification": "stock font API arguments/call and stack cleanup",
+      "source": "native.c:79"
+    },
+    {
+      "packageOffset": 6048,
+      "bytes": 12,
+      "classification": "compiler register restore and function return",
+      "source": "native.c:182"
+    },
+    {
+      "packageOffset": 7965,
+      "bytes": 12,
+      "classification": "substring of authored action label LOCK SAMPLES TO PATTERN",
+      "source": "ui.c:21"
+    },
+    {
+      "packageOffset": 7975,
+      "bytes": 15,
+      "classification": "text across authored action labels ending PATTERN and beginning CLEAR",
+      "source": "ui.c:21-22"
+    }
+  ],
+  "remediationAssessment": {
+    "scannerBugEstablished": false,
+    "existingReviewedMechanism": "standalone_runtime.py / stock_recipe.py guarded reconstruction of coincident authored spans",
+    "supportedModules": [
+      "playmodes",
+      "tapeecho",
+      "euclid"
+    ],
+    "patternSampleLocksAdmitted": false,
+    "recipeOrPackageChanged": false,
+    "nextWork": "Prepare a separately reviewed source/image-bound declaration, verify exact reconstruction and both unchanged scans, then runtime lifecycle and compatibility checks."
+  }
+}

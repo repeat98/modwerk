@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "54200264209d44303e150cdb946ca96ef1062c30",
+  "kind": "infrastructure-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "tools/emu/ot_emu/main.cpp",
+      "sourcePath": "tools/emu/ot_emu/main.cpp",
+      "sourceSha256": "b8fc4505da5f6f390a78b23d8f4c9cdc85f7e42ec28c1b43ff0271b2651cfc40",
+      "vendoredSha256": "1606c4c4df91f1e596f90760e7305bf3404f3da5fcdfff6e0fcefb3b10e40d54"
+    }
+  ],
+  "localAdaptations": [
+    "Only upstream commit b10a6b66 is taken (merged 30 October 2026 as 26b1de62): at the start of serveInteractive, the --interactive line server, a detached thread polls getppid() once a second and calls _exit(3) with 'ot_emu: parent <pid> is gone: exiting' once the parent changes. The 11 lines apply unchanged to the copy the 5c71bc8c record pinned.",
+    "Every other change upstream made to main.cpp since 5c71bc8c (the stall CPU print and its Machine::sr(), frame-stamped .frames files, OT_PROFILE_ALL) is left out, and main.cpp keeps Modwerk's independent scenario block-dump streams and per-child audio-capture flag, so the vendored file is upstream's 5c71bc8c copy with those adaptations plus this hunk, not upstream's file at this revision.",
+    "docs/remixer/EMU.md stays the 5c71bc8c copy byte for byte: upstream's README sentence for this change is not taken."
+  ],
+  "verificationRecord": "infrastructure-verification/octabam-emulator-parent-exit-54200264.json",
+  "limitations": [
+    "Emulator only: no builder file, base source, module or package changes, so every image, refusal and package identity of the earlier records holds by identity.",
+    "The watcher arms only in --interactive; the batch mode is unchanged. An emulator whose parent is launchd (pid 1) from the start arms no watcher."
+  ]
+}

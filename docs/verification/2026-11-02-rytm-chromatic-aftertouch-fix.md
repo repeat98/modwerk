@@ -1,0 +1,8 @@
+# Analog Rytm MKII: Chromatic Aftertouch Fix 0.1.0-experimental — 2 November 2026
+
+npp1993's Chromatic Aftertouch Fix enters the library as a new module. Stock OS 1.74 sends a held CHROMATIC pad's MIDI poly pressure on the pad's layout note while its note on and note off use the held note less 24; the module sends the pressure on the note off's note. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-chromatic-aftertouch-fix-2026-11-02.json` (commit `72592f6c`). Downloads stay off (`DIGI_DOWNLOADS_ENABLED`).
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `b7e6fb3b…`) from a clean checkout of `b200548f`. The export reproduces with `package-elemod-recipe.mjs --check`, and `verify-elemod-release-exports.mjs` reproduces all 32 current exports from that build.
+- **Package:** `chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod` `38a69a81…899b`, fetched into the vendored catalogue through its pin by `npm run elekloader:update -- --overlay`.
+- **Linking together:** `checkLinkable` against the stock 1.74 main OS (kept outside the repository), with core-ar2 0.7: this module alone, beside each of Filter Hz 1.2.0, Loop Sync 0.2.0, Pipo Loop 0.1.1, Sample RATE 0.1.0 and Silent Pad+Trig Settings 0.6.0, and with all of them at once, reports nothing; the module given twice is refused. `planBuild` plans it beside Silent Pad+Trig (`src/engine/elekloader/digi-build.test.ts`).
+- **On a unit:** the author's build CA02 (core-ar2 0.7 and this module, linked by `scripts/link-image.mjs`, `820cfaec…2c9a`) passed every step of TESTING.md on an Analog Rytm MKII, as reported. This package has not run on a unit, and no browser build from a stock OS file ran here.

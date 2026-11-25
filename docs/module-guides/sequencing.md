@@ -4,7 +4,7 @@ Applies to every module that does something in time: rhythms, gates, envelopes, 
 
 **The rule.** Never build a second clock. Follow the Octatrack's transport, tempo, track speed, track scale and length, swing and trig masks, read from the sequencer's own records. A module that keeps its own timing drifts against the pattern, ignores the swing the musician set and breaks when the tempo or a track speed changes.
 
-[Euclid](../../sdk/octabam/modules/euclid/README.md) is the worked example. It "follows the Octatrack transport, track speed and swing grid".
+[Euclid](../../sdk/octatrack/modules/euclid/README.md) is the worked example. It "follows the Octatrack transport, track speed and swing grid".
 
 ## What to follow
 
@@ -47,6 +47,10 @@ Do not hard-code one tempo, one speed or zero swing in a test and call the timin
 
 The core delivers events to your handler (`ev_tick`, `ev_render_in`, `ev_render_out`: [Digitakt guide](../../sdk/machines/digitakt/README.md)). Take timing from what the core and the OS provide at those events; do not count your own. No sequencer-timing contract is documented for these machines yet, so record what you read and how you tested tempo and swing changes in TESTING.md.
 
+## Digitakt II (OS 1.17)
+
+The core's `ev_tick` runs at about 30 Hz, so at 140 BPM one step is about three ticks. The master track's step word (a byte a track at `0x43164fe0` + track, 0 at the first step) runs a step ahead of what plays, and a track's mute is judged a moment after the word moves on. A mute switch meant to start on step 1 therefore has no tick of its own: on a unit (Mute Latch, one kick sample, 128 steps, 140 BPM, reported by its author) acting at the last step let the last two steps through, at the first tick of step 1 the last step, and at the first tick of step 2 step 1 stayed silent; only the second tick of step 1 kept the last step as it was and played step 1 switched, at several tempos; at those tempos step 1 always had a second tick. When steps are too short for that tick, the first tick of step 2 is the only moment left, but it is the moment at which acting on the step word at 2 left step 1 unswitched on the unit, so treat it as an untested fallback that may let step 1 through. Aim at a boundary this way, and check the result on a unit with a short sample on the steps either side of it; the window is about one step wide, and an emulator does not show it.
+
 ## Analog Rytm MKII (OS 1.74)
 
 The sequencer and the audio engine share a musical clock, not a sample count. Measured in rytm-emu and the disassembly:
@@ -59,4 +63,4 @@ The sequencer and the audio engine share a musical clock, not a sample count. Me
 | Playing | `0x405c8cf8` | Nonzero while the sequencer runs. |
 | Per-track events | `0x8000fd50`, three longs a track | The times the sequencer will process each track's next steps. They include swing and micro timing: not a grid. |
 
-Read the three pulse words with interrupts masked, so they belong to the same pulse. A pad's retrig series is driven by the same clock (`0x8000fd50[39 + t]`, one tick ahead, and a 960-tick counter at `0x42adf5d0[t]`).
+Read the three pulse words with interrupts masked, so they belong to the same pulse. The step word runs a step ahead of what plays: in rytm-emu at 1x, a lock trig on step 4 acted while it read 5. A change that acts at once, such as a performance amount, made at the counter's step belongs on the step before when you write it as a lock. A pad's retrig series is driven by the same clock (`0x8000fd50[39 + t]`, one tick ahead, and a 960-tick counter at `0x42adf5d0[t]`).

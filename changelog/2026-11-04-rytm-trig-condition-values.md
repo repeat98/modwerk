@@ -1,0 +1,1 @@
+Docs: the Analog Rytm MKII SDK guide now lists every trig condition value, ratios included (N:M is 28 + M(M-1)/2 + N), and says what stock does with UP, DOWN and RTRG while a trig is held: all three open that trig's RETRIG menu.

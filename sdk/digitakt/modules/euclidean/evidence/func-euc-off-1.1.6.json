@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "1.1.6",
+  "issue": "https://github.com/repeat98/modwerk/issues/1158",
+  "sourceSha256": "1e2288bda27580ce393d2dfce9a77d345b81874c937d6d8181a00b755f035060",
+  "source": {
+    "repository": "https://github.com/sumedho/digirequests",
+    "revision": "46e19aa75835ab22213758ce0653c66e519a76e0",
+    "path": "modules/euclidean"
+  },
+  "fix": "Holding FUNC while turning D off converts the generated rhythm into ordinary trigs. The conversion copies and checks about 8 KB of track and lock data inside the Euclidean lock, which masked every interrupt (level 7) and so held off the audio render; the main outputs clicked, faintly even with the sequencer stopped. The lock now raises the interrupt mask to level 4 and never lowers it. Only the lock function in src/release-*/euclidean.c changes.",
+  "emulator": {
+    "scope": "Emulator only; not hardware evidence. Stock OS 1.53 (9bdd44bb…) and 1.54 (f78ba80f…) snapshots, MCF5441x instruction-timing model at 250 MHz with zero-wait memory.",
+    "interruptLevels": {
+      "method": "Interrupt-controller priority registers read from the stock 1.53 and 1.54 snapshots; contexts recorded by hooking the sequencer, both native event builders, the Euclidean event adapters and grid hooks during playback.",
+      "audioRender": "INTC1 source 63, level 5",
+      "taskSwitch": "INTC2 source 13 (forced), level 1",
+      "sequencerAndEuclideanCode": "Interrupt level 0 or 2; never inside the audio render",
+      "renderAccessesToPatternOrEuclideanData": 0,
+      "sameOn": [
+        "1.53",
+        "1.54"
+      ]
+    },
+    "conversionLock": {
+      "before": {
+        "maskLevel": 7,
+        "windowsCycles": [
+          127,
+          6849,
+          12869
+        ],
+        "rendersStartedDuringEuclideanLocks": 0
+      },
+      "after": {
+        "maskLevel": 4,
+        "rendersStartedDuringEuclideanLocks": "yes (the render is no longer held off)",
+        "conversions": "3 of 3 completed, no retry"
+      },
+      "limitation": "The zero-wait model has no DDR or cache cost, so it underestimates the hardware duration of the 7.9 KB copy and compare; the emulator's codec output showed no glitch either way. The click itself is established by the hardware reports, not by the emulator."
+    },
+    "regressions": {
+      "counts": {
+        "1.53-euclidean-standalone": 54,
+        "1.53-euclidean-combined": 59,
+        "1.53-playback-combined": 1,
+        "1.53-editing-combined": 21,
+        "1.54-euclidean-standalone": 54,
+        "1.54-euclidean-combined": 59,
+        "1.54-playback-combined": 1,
+        "1.54-editing-combined": 21
+      },
+      "failures": 0,
+      "note": "Same pass counts as 1.1.5 on both OSes; the editing case includes FUNC + EUC-off conversion with the transport running."
+    },
+    "coldBoot": "Both all-mods SysEx files cold-boot to a settled UI; recaptured screenshots are byte-identical to 1.1.5's."
+  },
+  "hardware": {
+    "tester": "sumedho",
+    "model": "Digitakt 1",
+    "testedOn": "2026-11-04",
+    "releases": [
+      "1.53",
+      "1.54"
+    ],
+    "builds": {
+      "1.53": {
+        "all": "ad46ffa76fe261ae8fb541767c693e9d3f3f3c48fe7a9aa340af8756eb9eeb47",
+        "euclidean": "1ea0d1a65538ed456821130e130f9d7c27d2dd4e1586a0ccea8ad1a1754542bf"
+      },
+      "1.54": {
+        "all": "eb119355d3514132ceae730d3cc9a45d64f82a01f2cc61c0d6c3ed3adccc0869",
+        "euclidean": "ebc31354507f2f154159398e44e2efca14b80791735e2688ceb5e879e5c53b70"
+      }
+    },
+    "checklist": [
+      "Audio track with a long sustained sound and a MIDI track, both with Euclidean on, playing: FUNC while turning D off on each gives no click and leaves the generated rhythm as ordinary trigs",
+      "The same with the sequencer stopped, and plain D off: silent",
+      "TRIG and FLTR leave Euclidean; FUNC + AMP reopens it",
+      "On at least one image: project save, reload and power cycle keep the Euclidean settings"
+    ],
+    "configurations": "All six mods together, and Euclidean alone, on each OS.",
+    "result": "Reported: \"tested all cases and working\".",
+    "earlierReport": "Before the fix, on 1.53: FUNC + D off clicked on the main outputs, faintly with the sequencer stopped; plain D off and FUNC + D with EUC already off were silent; with the master volume at zero there was no click.",
+    "limitations": [
+      "Outcomes were reported for the checklist as a whole, not itemized per image.",
+      "Test duration was not reported.",
+      "Firmware was not read back from the device; build hashes identify the files provided for testing."
+    ]
+  }
+}

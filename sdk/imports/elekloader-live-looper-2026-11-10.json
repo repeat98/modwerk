@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "live-looper-2026-11-10",
+  "about": "Modwerk source-only live-looper package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/live-looper.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "live-looper-0.1.0-experimental-os1.54.elemod",
+      "sha256": "c2e8c7f4dd88527d054fde1fb9175e88a0ee02c2d1b431d53dcc7dd983a997f1",
+      "id": "live-looper",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "4bae7ac72f190c77036d0c566727ddbd0851de5c",
+        "path": "sdk/imports/packages/live-looper/live-looper-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "Live Looper",
+      "requires": [
+        "core",
+        "machine-pages"
+      ],
+      "conflicts": [
+        "ram-machines",
+        "digihealth"
+      ],
+      "summary": "A looper machine for one audio track: it records the master mix or the inputs all the time, catches the loop playing now at a button press, and keeps it playing through pattern changes.",
+      "description": "A looper machine for one audio track: it records the master mix or the inputs all the time, catches the loop playing now at a button press, and keeps it playing through pattern changes.",
+      "category": "Sampling",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Tested by the author on a Digitakt I, OS 1.54 (LL02, 2026-11-12), after LL01 and the combined LF03 build. Known: the track's trig key retriggers its envelope in PICK."
+    }
+  ]
+}

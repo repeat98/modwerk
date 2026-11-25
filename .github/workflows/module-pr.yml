@@ -3,13 +3,18 @@
 name: Module PR checks
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    # No edited: the description check is its own workflow (pr-description.yml), so editing a description reruns only it.
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+    # Pull requests into base/<machine>-next get the description check only (pr-description.yml).
     branches: [main, 'modwerk/**', 'codex/modwerk-*']
 permissions:
   contents: read
 concurrency:
   group: module-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+env:
+  # A draft reports missing release evidence instead of failing on it (scripts/modules.mjs); ready_for_review reruns every job without it.
+  MODWERK_EVIDENCE_PENDING: ${{ github.event.pull_request.draft && '1' || '0' }}
 jobs:
   # Documentation uses metadata/provenance checks. Firmware compilation follows actual
   # source/build inputs; app changes retain lint, tests, types and the bundle.
@@ -17,30 +22,46 @@ jobs:
     name: scope / ${{ github.event.pull_request.base.sha }} / ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
+      pages-run: ${{ steps.pages.outputs.run }}
       modules: ${{ steps.scope.outputs.modules }}
       windows: ${{ steps.scope.outputs.windows }}
       elemod: ${{ steps.scope.outputs.elemod }}
-      documentation: ${{ steps.scope.outputs.documentation }}
+      parts: ${{ steps.scope.outputs.parts }}
       logger: ${{ steps.scope.outputs.logger }}
     steps:
+      # Read the public deployment record before checking out or running contributor code.
+      # Ordinary PRs can proceed if the API is down. Rollbacks still require a verified record.
+      - id: pages
+        name: Look up the last successful production release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          record=$(gh api 'repos/repeat98/modwerk/actions/workflows/pages.yml/runs?branch=main&status=success&per_page=1' |
+            jq -ce '.workflow_runs[0] | select(. != null) | {repository: {full_name: .repository.full_name}, path, head_branch, conclusion, head_sha}')
+          echo "run=$record" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0
+          # Scope compares the PR merge tree to its base parent.
+          fetch-depth: 2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - id: scope
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: node scripts/change-scope.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
+          # The merge commit's own base parent. The event's base.sha can be an older main than the one GitHub merged
+          # onto, and two commits of history do not hold it, so rev-parse failed whenever main had moved.
+          OCTAMOD_PR_BASE: HEAD^1
+        run: node scripts/pr-check-plan.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
   module-contract:
     needs: scope
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    outputs:
-      elemod: ${{ needs.scope.outputs.elemod }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,17 +71,70 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --prefer-offline
+      # npm ci empties node_modules, where ESLint (content-hashed, per-file rules), tsc (incremental), Vitest and sdk:check
+      # (the order of their files) keep their caches. The newest one, from this pull request or main, lets lint and typecheck
+      # redo only what changed.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            node_modules/.cache/eslint
+            node_modules/.cache/sdk-check-times.json
+            node_modules/.tmp
+            node_modules/.vite/vitest
+          key: check-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: check-cache-${{ runner.os }}-
       - name: Require versions, qualification evidence and complete release documentation
         env:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: npm run check -- --base "$OCTAMOD_PR_BASE"
+          MODWERK_PAGES_RUN: ${{ needs.scope.outputs.pages-run }}
+        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part contract
       # Qualification records, complete docs/tutorials and monochrome screenshots are mandatory.
       # First release: owner reviews actual evidence. Later releases: registered author
       # verifies it and explicitly requests automatic publication within the trusted scope.
-      # Metadata checks never execute submitted Python or run firmware gates.
+      # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat
+      # and sdk:check load every module's manifest as Python.
+  # Small test selections run in the contract job. The same plan as pr:ready chooses the remaining suites.
+  module-suites:
+    # After module-contract, so one catalogue or evidence problem shows as one red job, not six.
+    needs: [scope, module-contract]
+    if: needs.scope.outputs.parts != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        part: ${{ fromJSON(needs.scope.outputs.parts) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --prefer-offline
+      # The same path list as module-contract's cache, so main's restores here too (the SDK suite's job order comes from it).
+      # A key of its own: module-contract must never restore a suite's cache, which holds no lint or typecheck state.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            node_modules/.cache/eslint
+            node_modules/.cache/sdk-check-times.json
+            node_modules/.tmp
+            node_modules/.vite/vitest
+          key: suite-cache-${{ runner.os }}-${{ strategy.job-index }}-${{ github.run_id }}
+          restore-keys: |
+            suite-cache-${{ runner.os }}-${{ strategy.job-index }}-
+            check-cache-${{ runner.os }}-
+      - name: Run one suite of the check
+        env:
+          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PART: ${{ matrix.part }}
+        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part "$PART"
   module-paths-windows:
-    needs: scope
+    needs: [scope, module-contract]
     if: needs.scope.outputs.windows == 'true'
     runs-on: windows-2025
     timeout-minutes: 10
@@ -77,6 +151,7 @@ jobs:
       - name: Validate module paths against the exact PR base
         env:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          MODWERK_PAGES_RUN: ${{ needs.scope.outputs.pages-run }}
         run: npm run modules:check -- --base "$env:OCTAMOD_PR_BASE"
       - name: Check byte-exact source integrity
         run: npm run sdk:check
@@ -96,8 +171,8 @@ jobs:
       - name: Check bounded logger ring, controller and card adapter without firmware
         run: sh sdk/runtime/logging/tests/run_host.sh
   elemod-source:
-    needs: module-contract
-    if: needs.module-contract.outputs.elemod == 'true'
+    needs: scope
+    if: needs.scope.outputs.elemod == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -134,7 +209,7 @@ jobs:
           retention-days: 14
           if-no-files-found: error
   octatrack-source:
-    needs: scope
+    needs: [scope, module-contract]
     if: needs.scope.outputs.modules == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -169,6 +244,8 @@ jobs:
         run: |
           image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
           bash scripts/build-modules-isolated.sh "$GITHUB_WORKSPACE" "$RUNNER_TEMP/octatrack-source" "$image"
+      - name: Rebuild base-bound packages and verify their published bytes
+        run: bash scripts/test-base-bound.sh "$(docker image inspect modwerk-source-tools --format '{{.Id}}')"
       - name: Compile the freestanding upload controller with the pinned ColdFire tools
         run: |
           image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
@@ -190,11 +267,22 @@ jobs:
   # A job the scope skips counts as passed; a failed, cancelled or unrun job does not.
   module-pr-ok:
     if: always()
-    needs: [scope, module-contract, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
+    needs: [scope, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
-    permissions: {}
+    permissions:
+      pull-requests: read
     steps:
+      # A rerun keeps its event, so a draft's lenient run rerun after the PR was marked ready must not count as its verdict.
+      - name: Count a draft's run only while the PR is a draft
+        if: env.MODWERK_EVIDENCE_PENDING == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" != true ]; then
+            echo "::error::This run checked the PR as a draft, but it is ready for review now. Push, or close and reopen it, for the full check."; exit 1
+          fi
       - name: Require every check above to pass
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}

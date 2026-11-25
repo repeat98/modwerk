@@ -4,6 +4,18 @@
 
 No hardware, audio or timing qualification is claimed. Evidence tier: `none`. The current builder and UI capture results are recorded below.
 
+## 1.2.0 on Machine Pages — 8 November 2026
+
+Version `1.2.0-experimental` imports the author's v1.2.0 sources unchanged (`11d2364f3ea8faabd21bb9942fdc0a79606b4e1a`; `glue.s`, `digitakt.c` and `sophie.c` match the hashes in the author's own 1.2.0 packages). SOPHIE now describes its SRC and LFO pages for Machine Pages and renders through its `ev_render_voices` event; `build.json` declares no stock site. The author builds 1.2.0 for elekloader's core 3.0, whose package says so in `resources.core`. Modwerk compiles the same sources for Core 2.1 with its Machine Pages 1.2 (irpina's 1.1 on Core 2.1): the `cm_ui`/`cm_knob` layout and the `ev_render_voices` signature in Machine Pages' `digitakt-mk1/core3.h`, copied to `src/`, match elekloader's current header, and the author's README names machine-pages 1.1 as enough.
+
+Packages: compiled in the pinned toolchain image (`build-elemod-isolated.sh`, `sha256:283235500ccd…`) and exported by `package-elemod-recipe.mjs` to `sdk/imports/packages/digisophie/` (OS 1.53 `04a809df…`, OS 1.54 `025675fc…`). Each holds 8,032 B in `.run` (the author's 1.2.0 object: 8,032 B too) and 496 B in `.bss`: **8,528 B**. The bytes differ from the author's files, which use `-mcpu=54415 -mtune=cfv4e`; Modwerk builds every Digitakt module with `-mcpu=54455`.
+
+Link check, 8 November 2026: the vendored kit 0.7.0 (`planBuild`, then `patch.build`) linked these with the owner's private stock OS 1.53 and 1.54 files. Both releases built SOPHIE alone (Core 2.1 + Machine Pages 1.2), SOPHIE with Digi EQ, digiutils, Euclidean and MIDI Retrig (#1248's set), SOPHIE with STRING, RAM Machines and Note Accumulator, and SOPHIE with STRING and digihealth. The kit refused SOPHIE beside NEIGHBOR 0.6, DIGISLICER 2.1 and Digi Mono (via DigiChain), as declared.
+
+Emulator capture, 8 November 2026: the OS 1.54 SOPHIE-only image (`5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e`) ran [capture-plan.txt](media/capture-plan.txt) in the same pinned digiemu, sandbox and settings as on 30 October. All six frames (chooser, FUSE, BOOM, PIPE, SHARD, AMP) are byte-identical PNGs to 1.1.13-experimental.3's: Machine Pages draws SOPHIE's pages as 1.1.13 drew them itself.
+
+Not tested: on a unit, audio, timing, CPU load, project save and reload, or the OS 1.53 image in the emulator.
+
 ## Authorship correction
 
 Modwerk metadata version `1.1.13-experimental.1` credits Sjoerd (Soejrd, @soejrd) as DigiSophie’s developer and maintainer, and Matt Estela (@mestela) as the original Sophie for Schwung algorithm author. The pinned upstream revision, native source, build inputs, compatibility and resource estimates are unchanged. Evidence remains `none`; this correction claims no new native or hardware validation.

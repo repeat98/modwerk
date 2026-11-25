@@ -1,0 +1,1 @@
+Site: the Zoom G1 FOUR research report now covers OS research done on the developer's own pedal. A MIDISTOMP-style MIDI clock follower and transport block were built from the user's own updater. A test slicer stayed locked to a DAW, and the stock updater restored the pedal. Modwerk offers none of it; an OS base is listed as an owner decision.

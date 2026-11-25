@@ -1,7 +1,7 @@
 import { createDigiFirmwareClient, type DigiFirmwareClient } from '../engine/elektron/firmware-client'
 import { createFirmwareClient, type FirmwareClient } from '../engine/client'
 import { observeSiteDiagnosticOperation } from '../community/site-diagnostic-events'
-import type { DiagnosticBuildKind, DiagnosticBuildPhase, DiagnosticBuildError } from '../community/octatrack-diagnostics-contract'
+import { elekloaderBuildKind, type DiagnosticBuildKind, type DiagnosticBuildPhase, type DiagnosticBuildError } from '../community/octatrack-diagnostics-contract'
 /**
  * The firmware worker is a 1.6 MB chunk that only the configuration pages need. This wrapper
  * has the engine client's interface but creates it, and with it the worker, on the first
@@ -19,13 +19,7 @@ export function createLazyFirmwareClient(create: () => FirmwareClient = createFi
   }
   return {
     inspect: file => observe(() => engine().inspect(file), 'octatrack-firmware', () => 'preparing', 'input'),
-    validate: (...args) => observe(() => engine().validate(...args), 'octatrack-firmware', () => 'preparing', 'selection'),
-    build: (ids, keepStock, progress, usbAudio, betaAccess, startup) => {
-      let phase: DiagnosticBuildPhase = 'building'
-      return observe(() => engine().build(ids, keepStock, next => { phase = next; progress(next) }, usbAudio, betaAccess, startup), 'octatrack-firmware', () => phase, 'build')
-    },
-    buildBase: layout => observe(() => engine().buildBase(layout), 'octatrack-base', () => 'building', 'build'),
-    cancelBuild: () => { ++cancellation; client?.cancelBuild() },
+    buildBase: (layout, step) => observe(() => engine().buildBase(layout, step), 'octatrack-base', () => 'building', 'build'),
     clear: () => { ++cancellation; return client?.clear() ?? Promise.resolve() },
     dispose: () => { disposed = true; ++cancellation; client?.dispose(); client = null },
   }
@@ -36,7 +30,7 @@ export function createObservedDigiFirmwareClient(create: () => DigiFirmwareClien
   const client = create()
   let disposed = false
   return {
-    inspect: (machine, file) => observeSiteDiagnosticOperation(() => client.inspect(machine, file), () => ({ event: 'build_failed', buildKind: 'elekloader', phase: 'preparing', error: 'input' }), () => !disposed),
+    inspect: (machine, file) => observeSiteDiagnosticOperation(() => client.inspect(machine, file), () => ({ event: 'build_failed', buildKind: elekloaderBuildKind(machine), phase: 'preparing', error: 'input' }), () => !disposed),
     dispose: () => { disposed = true; client.dispose() },
   }
 }

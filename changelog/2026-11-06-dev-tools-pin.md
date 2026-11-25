@@ -1,0 +1,1 @@
+Developer tools: `npm run upstream:tools` now keeps the Octatrack developer tools at 190f5c4. They add a freeze watch, a DSP watch, a hardware test suite and a live screen stream, fix a crash in the MIDI tool, and make the emulator print where it stalls. Developer checkout only: nothing in it enters a Modwerk build, catalogue or release.

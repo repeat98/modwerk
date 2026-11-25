@@ -63,9 +63,9 @@ def check_sources(name, entry, root=APP):
             raise ValueError('%s changed since its machine port was reviewed: %s' % (name, rel))
 
 
-def declaration(name, folder=None, path=PORTS):
+def declaration(name, folder=None, path=PORTS, *, effect=False):
     """{subscribe, contribute}: the module's own runtime.json first, then its port's, or None for neither."""
-    own = _builder().runtime_declaration(folder or APP / 'sdk/octabam/modules' / name)
+    own = _builder().runtime_declaration(folder or APP / 'sdk/octabam/modules' / name, effect=effect)
     entry = port(name, path)
     if not own and not entry:
         return None
@@ -77,6 +77,18 @@ def declaration(name, folder=None, path=PORTS):
                 raise ValueError('%s: its runtime.json and its machine port both subscribe to %s' % (name, e['event']))
         doc['subscribe'] += entry.get('subscribe', [])
         doc['contribute'] += entry.get('contribute', [])
+    raises = list((own or {}).get('raise', ())) + list((entry or {}).get('raise', ()))
+    if raises:
+        doc['raise'] = raises
+    # Detours that rest with the module: from its runtime.json and its port. A machine (a contribution to a table the
+    # base judges, ot_machines) needs no ev_in_use of its own: the base answers for it (HOOKS.md).
+    rests = list((own or {}).get('rests', [])) + list((entry or {}).get('rests', []))
+    if rests:
+        judged = _builder().judged_tables()
+        if len(set(rests)) != len(rests) or not all(isinstance(a, str) and a.startswith('0x') for a in rests) or not (
+                effect or any(e.get('event') == 'ev_in_use' for e in doc['subscribe']) or any(c.get('to') in judged for c in doc['contribute'])):
+            raise ValueError('%s: "rests" names its own detours once each, beside ev_in_use, a machine contribution or a DSP effect' % name)
+        doc['rests'] = rests
     return doc
 
 
@@ -86,7 +98,7 @@ def ported(module, registry=None, path=PORTS):
     DRAM (the runtime ports place pinned units). Unchanged for a module without a declaration."""
     builder = _builder()
     reg = registry or builder.site_events()
-    declared = declaration(module.name, path=path)
+    declared = declaration(module.name, path=path, effect=bool(module.dsp and module.menu and not module.menu.stock_dsp))
     if not declared:
         return module
     entry = port(module.name, path) or {}
@@ -132,8 +144,9 @@ def glue(name, entry):
                        m['sig'][0], m['sig'][1], m['lo'], m['hi'], sum(FLAGS[f] for f in m['flags']), m['fields'].get('defaults', 0)))
         out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in FIELDS]
         price = entry.get('price')
-        out.append('        .word   %d, %d\n        .byte   %d, 0, 0, 0\n' % (
-            (price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)))
+        # reserved[0]: the machine's CPU price, a whole percent of a frame (docs/MODULE_PERFORMANCE.md); 0 names none.
+        out.append('        .word   %d, %d\n        .byte   %d, %d, 0, 0\n' % (
+            ((price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)) + (entry.get('cpuPrice', 0),)))
         if 'SETUP_PAGE' in m['flags']:  # the record goes on: struct modwerk_machine_setup (EVENTS.md ot_machines)
             out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in SETUP_FIELDS]
         unknown = set(m['fields']) - set(FIELDS) - {'defaults'} - (set(SETUP_FIELDS) if 'SETUP_PAGE' in m['flags'] else set())
@@ -151,7 +164,7 @@ def effective(module, sdk_root, work, registry=None, path=PORTS):
     """(module, entries): the package's effective manifest, with its runtime source ports applied into `work`
     (vector_runtime, fm_runtime, quantizer_runtime) and its glue unit added, and its hook entries."""
     entry = port(module.name, path)
-    declared = declaration(module.name, path=path)
+    declared = declaration(module.name, path=path, effect=bool(module.dsp and module.menu and not module.menu.stock_dsp))
     if entry:
         check_sources(module.name, entry)
     effective_module = ported(module, registry, path)
@@ -175,7 +188,13 @@ def effective(module, sdk_root, work, registry=None, path=PORTS):
             raise ValueError('%s needs its controller port %s (module-adapters).' % (module.name, entry['controller'])) from error
         effective_module = controller.port(effective_module, sdk_root, work / 'controller')
     price = (entry or {}).get('price')
-    if price and (APP / price['source']).is_file():
+    if price and price.get('inEngine'):
+        # Its engine package's header carries the price (hook_engines.py), outside the controller digest; the record
+        # keeps only its kind, which says its voice is a DSP voice, so the trust row never pins a price.
+        if price['voice'] or price['engine'] or (APP / price['source']).is_file() and \
+                json.loads((APP / price['source']).read_text()).get('kind') != price['kind'] + '-instructions':
+            raise ValueError('%s: a price in its engine leaves the record 0 and 0, of the source\'s kind' % module.name)
+    elif price and (APP / price['source']).is_file():
         measured = json.loads((APP / price['source']).read_text())
         if (measured.get('perVoice'), measured.get('perCoreWhileEnabled'), measured.get('kind')) != (
                 price['voice'], price['engine'], price['kind'] + '-instructions'):

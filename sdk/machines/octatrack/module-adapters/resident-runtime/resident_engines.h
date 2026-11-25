@@ -2,6 +2,7 @@
 #ifndef MODWERK_RESIDENT_ENGINES_H
 #define MODWERK_RESIDENT_ENGINES_H
 #include <stdint.h>
+#include "dsp_ledger.h"
 
 /* Resident controller engines on demand (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md). Only a base built with
  * --resident-on-demand compiles this unit (MODWERK_RESIDENT_ON_DEMAND). Each on-demand engine (Sidechain 1, Output
@@ -23,8 +24,8 @@
 
 /* One engine: its words at base 0; each relocation an index, | 0x8000 for a displacement to a fixed address (value -
  * base), else an address (value + base). Indices strictly increase. count 0: this core does not carry the feature.
- * `exit`, 0 or the word holding a long branch's displacement that relocation points at the stock P address
- * `exit_target` (its site's exit on this core, dsp_ledger.h). The base's engines are build data
+ * `exit`, 0 or the word holding a long branch's displacement that relocation points at the P address `exit_target`
+ * (its chain's exit trampoline on this core, mw_engine_exit_of). The base's engines are build data
  * (resident-engines-data.c); a packaged feature's (MW_DSP_PACKAGED) are its bound controller's package's (ABI 10),
  * given per generation by the board (mw_engines_package). */
 struct mw_engine_unit {
@@ -32,10 +33,15 @@ struct mw_engine_unit {
     const uint16_t *relocations;
     uint16_t count, relocation_count, exit, exit_target;
 };
-#define MW_ENGINE_FEATURES 4u                                /* feature indices: 1, 2, 4, 8 */
+#define MW_ENGINE_FEATURES MW_DSP_COUNT                      /* feature indices: the ledger's bits (dsp_ledger.h) */
+#define MW_ENGINE_VIEW_FEATURES 4u                           /* the dev view's: Sidechain, Output Matrix, Analog BD, key bus */
 #define MW_ENGINE_PACKAGED_WORDS 2048u                       /* the largest engine a package may bring */
 extern const struct mw_engine_unit mw_engine_units[2][MW_ENGINE_FEATURES];  /* [core][feature index]; packaged: none */
 extern uint32_t *const mw_engine_buffer[2];                /* per core, sized to its largest unit (packaged ones too) */
+/* Where a packaged engine at chain site `site` leaves on core `core`: the P address of that chain's exit trampoline in
+ * the permanent block, which drops the site's return and continues at its stock exit (dsp-sites.json "chain"); 0 for a
+ * site that is no chain. Build data, beside mw_engine_units (resident_dsp.chain_exits). */
+uint16_t mw_engine_exit_of(unsigned site, unsigned core);
 
 enum mw_engine_state { MW_ENGINE_FREE, MW_ENGINE_CLAIMED, MW_ENGINE_WRITING, MW_ENGINE_WRITTEN, MW_ENGINE_PLACING,
                        MW_ENGINE_PLACED, MW_ENGINE_UNPLACING, MW_ENGINE_STUCK };
@@ -91,6 +97,12 @@ unsigned modwerk_machine_dsp_features(void);
 /* The unit may give an unused engine back (the board parks its controller): stopped, no pattern change queued, two
  * seconds after the last key or knob and no pick waiting, as an evacuation waits. */
 int mw_engines_settled(void);
+/* Project priority is evaluated on the UI task from the complete incoming slot map. */
+struct dl_allocator;
+int mw_project_fx_move(struct dl_allocator *allocator, const uint8_t ids[16], uint32_t token);
+int mw_project_sidechain_used(unsigned compressor);
+int mw_project_fx_wait(const uint8_t ids[16]); /* negative: draining, positive: plan the slots now */
+int mw_project_sidechain_notice(void);         /* consume one confirmed pause */
 /* Unplace and free every engine no held slot names: only when its feature is known dormant on that core (`mask`,
  * bit c of `known`), the core is free (`busy`) and the sequencer is quiet. */
 void mw_engines_collect(unsigned held, const uint8_t mask[2], unsigned known, const uint8_t busy[2]);

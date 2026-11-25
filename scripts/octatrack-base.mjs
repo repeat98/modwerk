@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The committed Octatrack base package (src/engine/assets/octatrack-base.elemod and its fills), rebuilt from source
-// and your own OS 1.40C file, then proven three ways: it carries no stock bytes (check_stock_free.py), it is the
-// committed one (or, with --write, becomes it), and the browser's path (octatrack-base.ts, the kit in TypeScript)
+// and your own OS 1.40C file, then proven two ways: it is the committed one (or, with --write, becomes it), and the
+// browser's path (octatrack-base.ts, the kit in TypeScript)
 // builds a .bin byte-identical to build_core.py's NOT_FLASH_CANDIDATE.bin, which passes check_flash_safety.py.
 // With --out the browser-built .bin, its MAIN.raw and build_core.py's proofs.json and symbols.json are saved there,
 // a new directory outside Git: what `npm run device -- boot DIR` and the emulator's run scripts read. Firmware and generated images never enter the checkout.
 //
 //   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--upstream ELEKLOADER] [--write] [--out NEW-DIR]
+//   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --step --out NEW-DIR   # the step base (octatrack-step-base.mjs)
 // Private transport candidates may add --usb-midi and --usb-audio "USB AUDIO OUT TRACKS MAIN CUE". --site-events builds the
 // base that owns sdk/machines/octatrack/events.json's sites and tables and dispatches them to subscribed packages;
 // --table-owners also fills its table-owner storage from module-adapters/table-owners.json (the reviewed table owners).
@@ -32,35 +33,49 @@ import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { buildBase } from '../src/engine/elekloader/octatrack-base.ts'
 import { applyVariantPatch } from '../src/engine/elekloader/base-variants.ts'
 import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { keepSymbols } from '../src/dev/address-names.ts'
 
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
   write: { type: 'boolean', default: false }, out: { type: 'string' },
-  'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
+  'usb-input': { type: 'boolean', default: false }, 'packaged-usb-audio': { type: 'boolean', default: false }, 'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
   'table-owners': { type: 'boolean', default: false },
   'resident-stock-hooks': { type: 'boolean', default: false }, 'resident-on-demand': { type: 'boolean', default: false },
   'saved-set-export': { type: 'boolean', default: false },
   controllers: { type: 'boolean', default: false }, 'usb-audio-variants': { type: 'boolean', default: false },
   'cached-modules': { type: 'boolean', default: false },
-  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false },
-  beta: { type: 'boolean', default: false },
+  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false }, 'part-menu': { type: 'boolean', default: false },
+  'module-ui-roots': { type: 'boolean', default: false },
+  beta: { type: 'boolean', default: false }, step: { type: 'boolean', default: false },
 } })
-if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
+if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR] | --step --out NEW-DIR')
+// --step: the step base's build folder (octatrack-step-base.mjs), for a unit whose base stages less than this one needs.
+if (args.step) {
+  const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'out', 'step'].includes(flag) && args[flag])
+  if (!args.out || own.length) throw new Error('--step takes only --stock and --out NEW-DIR' + (own.length ? ', not ' + own.map(flag => '--' + flag).join(', ') : '') + '.')
+  const { writeStepBase } = await import('./octatrack-step-base.mjs')
+  const built = await writeStepBase(args.stock, resolve(args.out))
+  console.log(`step base ${built.base}: .bin ${built.sha256} (${built.bin.length} bytes)\nsaved ${resolve(args.out)}: NOT_FLASH_CANDIDATE.bin, MAIN.raw, proofs.json`)
+  process.exit(0)
+}
 // The beta base's flags. A regeneration that spelled them out by hand dropped --cached-modules once (20 October 2026),
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
-const BETA = { 'usb-midi': true, 'usb-audio': 'USB AUDIO OUT TRACKS MAIN CUE', 'site-events': true, 'table-owners': true,
-  'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true, 'usb-audio-variants': true,
-  'cached-modules': true, 'sample-editor': true }
+const BETA = { 'usb-input': true, 'usb-midi': true, 'packaged-usb-audio': true, 'site-events': true, 'table-owners': true,
+  'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true,
+  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true, 'part-menu': true }
 if (args.beta) {
   const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'write', 'out', 'beta'].includes(flag) && process.argv.some(arg => arg === '--' + flag || arg.startsWith('--' + flag + '=')))
   if (own.length) throw new Error('--beta is every flag of the beta base; leave out ' + own.map(flag => '--' + flag).join(', ') + '.')
   Object.assign(args, BETA)
 } else if (args.write) throw new Error('--write commits the beta base: build it with --beta, not flags of your own.')
 const root = resolve(import.meta.dirname, '..'), here = join(root, 'sdk/machines/octatrack/elekloader')
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+mirrorOctatrackModules(root)
 const adapters = join(root, 'sdk/machines/octatrack/module-adapters')
 const committed = { package: join(root, 'src/engine/assets/octatrack-base.elemod'), fills: join(root, 'src/engine/assets/octatrack-base-fills.json'),
   sources: join(root, 'src/engine/assets/octatrack-base-sources.json'), binding: join(root, 'sdk/machines/octatrack/base-binding.json'),
-  variants: join(root, 'src/engine/assets/octatrack-base-variants.json'),
+  variants: join(root, 'src/engine/assets/octatrack-base-variants.json'), versions: join(root, 'sdk/machines/octatrack/base-versions.json'),
   policies: join(adapters, 'controller-policies.json') }
 const asm = process.env.ELEKLOADER_DSP_ASM ?? join(homedir(), '.cache/modwerk-upstream/octabam/vendor/dsp56300/build/source/dsp_host/dsp_asm')
 const python = (script, ...rest) => execFileSync('python3', ['-B', script.includes('/') ? script : join(here, script), ...rest], { stdio: 'inherit', env: { ...process.env, ELEKLOADER_DSP_ASM: asm } })
@@ -73,12 +88,12 @@ if (args['resident-on-demand'] && !args['resident-stock-hooks']) throw new Error
 if (args['resident-stock-hooks'] && !args['resident-on-demand']) throw new Error('--resident-stock-hooks needs --resident-on-demand: Analog BD’s engine is its package’s.')
 const work = mkdtempSync(join(tmpdir(), 'modwerk-base-')), core = join(work, 'core')
 const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
-  ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(layout ? ['--usb-audio', layout] : []),
+  ...(args['usb-input'] ? ['--usb-input'] : []), ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['packaged-usb-audio'] ? ['--packaged-usb-audio'] : []), ...(layout ? ['--usb-audio', layout] : []),
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []),
-  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...rest)
+  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...(args['part-menu'] ? ['--part-menu'] : []), ...(args['module-ui-roots'] ? ['--module-ui-roots'] : []), ...rest)
 const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)
 const defaultLayout = USB_AUDIO_LAYOUTS.find(layout => layout.key === args['usb-audio'])?.id
 if (args['usb-audio-variants'] && (!args['usb-midi'] || !defaultLayout)) throw new Error('--usb-audio-variants needs --usb-midi and a --usb-audio layout, the default variant.')
@@ -94,7 +109,6 @@ if (args.controllers) {
   same(readFileSync(join(encoded, 'controller-policies.json')), committed.policies)
   build(core, '--controller-policies', committed.policies, '--controller-layout', join(empty, 'symbols.json'))
 } else build(core)
-python('check_stock_free.py', join(core, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
 for (const [key, file] of [['package', 'base.elemod'], ['fills', 'base-fills.json'], ['sources', 'base-sources.json']])
   same(readFileSync(join(core, file)), committed[key])
 // What the base-bound packages link against (module-adapters/base_bound.py): its identity, arena, pool and lease entries.
@@ -125,7 +139,6 @@ if (args['usb-audio-variants']) {
       assert(readFileSync(join(dir + '-encoded', 'controller-policies.json')).equals(readFileSync(committed.policies)), layout + ': the controller packages differ on this layout.')
       buildLayout(key, dir, '--controller-policies', committed.policies, '--controller-layout', join(dir + '-empty', 'symbols.json'))
     } else buildLayout(key, dir)
-    python('check_stock_free.py', join(dir, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
     const own = bind(dir, dir + '-binding.json')
     assert.deepEqual({ ...own, identity: '' }, { ...binding, identity: '' }, layout + ': the base-bound packages would link differently on this layout.')
     const text = readFileSync(join(dir, 'base.elemod'), 'utf8'), extra = JSON.parse(text).sites.filter(site => !defaultSites.has(site.addr + '+' + site.len))
@@ -143,7 +156,26 @@ if (args['usb-audio-variants']) {
   binding.variants = identities
   same(Buffer.from(JSON.stringify({ schema: 1, packageSha256: sha(Buffer.from(defaultText)), variants }) + '\n'), committed.variants)
 }
+if (args['packaged-usb-audio']) {
+  binding.variants = { off: binding.identity }
+  same(Buffer.from(JSON.stringify({ schema: 1, packageSha256: sha(readFileSync(committed.package)), variants: [] }) + '\n'), committed.variants)
+}
 same(Buffer.from(JSON.stringify(binding, null, 1) + '\n'), committed.binding)
+// The base's version, for people (elekloader/base-version.json, built into the base): base-versions.json keeps every
+// published version's identities, one per layout, so the site can name the base a unit reports. A version that main
+// already has names that base for good: a base with other contents takes the next number.
+const number = JSON.parse(readFileSync(join(here, 'base-version.json'), 'utf8'))
+const version = number.major + '.' + number.minor + (number.patch ? '.' + number.patch : '') // the patch only when not 0: 0.7, 0.7.1
+const identities = [...new Set([binding.identity, ...Object.values(binding.variants ?? {})])]
+const read = text => JSON.parse(text).bases
+let published = []
+try { published = read(execFileSync('git', ['-C', root, 'show', 'origin/main:sdk/machines/octatrack/base-versions.json'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString()) } catch { /* main has no versions yet, or no Git here */ }
+const taken = published.find(base => base.version === version)
+if (taken && JSON.stringify(taken.identities) !== JSON.stringify(identities))
+  throw new Error(`Base ${version} is already published with other contents. Raise sdk/machines/octatrack/elekloader/base-version.json, then build again.`)
+const earlier = existsSync(committed.versions) ? read(readFileSync(committed.versions, 'utf8')).filter(base => base.version !== version) : []
+same(Buffer.from(JSON.stringify({ schema: 1, bases: [...earlier, { version, identities }] }, null, 1) + '\n'), committed.versions)
+console.log('base ' + version + ': ' + binding.identity)
 console.log('package ' + sha(readFileSync(committed.package)) + ', fills ' + sha(readFileSync(committed.fills)))
 console.log('browser .bin = build_core.py .bin: ' + browser.sha256 + ' (' + browser.bin.length + ' bytes)')
 if (args.out) {
@@ -155,5 +187,8 @@ if (args.out) {
   writeFileSync(join(args.out, 'NOT_FLASH_CANDIDATE.bin'), browser.bin)
   writeFileSync(join(args.out, 'MAIN.raw'), formats.mainImage(formats.parse(browser.bin, device), device))
   for (const name of ['proofs.json', 'symbols.json']) copyFileSync(join(core, name), join(args.out, name))
+  if (args['usb-input']) python(join(adapters, 'usb_audio_package.py'), '--usb-input', '--release',
+    '--stock', args.stock, '--upstream', args.upstream, '-o', join(args.out, 'usb-audio-input.mwrm'))
+  try { keepSymbols(args.out) } catch { /* a crash record from this base then prints without names */ } // src/dev/address-names.ts
   console.log('saved ' + resolve(args.out) + ': NOT_FLASH_CANDIDATE.bin, MAIN.raw, proofs.json, symbols.json')
 }

@@ -1,0 +1,300 @@
+{
+ "elemod": 2,
+ "id": "temp-save",
+ "version": "0.1.0-experimental",
+ "title": "Temp Save",
+ "description": "FUNC + YES overwrites the pattern's and kit's saved copies, the ones stock's reloads go back to; FUNC + NO brings both back.",
+ "category": "system",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1092,
+   "parts": [
+    [
+     "hex",
+     "2f2f00042f0a4eba0234508f7202b28067024e7576014ef9400cdf6c2f2f00042f0a4eba0306508f7202b28067024e7576014ef9400cdf6c2f2f00042f0a4eba0344508f7202b28067024e7576014ef94003ac564e56ffec2f02486efff3240e0682fffffff42f2e000c2f024eb9401bcff0487800a04eb940082a402f022f002d40ffec4eb940076754226effec205142a72f09206800544e904fef001c2eaeffec486efff84eb9401832ec42a7486efff8206e00082f28002c4eb940079462486efffc4eb940170bd82f024eb9401bb5404fef001c242effe84e5e4e752f02242f00082f024eb9400af0ac2f004eb9400ab34a2f004eb9400aaef84fef000c4a806d04241f4e752242068200000160206901602f420008241f2268006c4ed12f02487800804eb940081c28588f4a806738206f0008203c402348002068002c2068001820680008b090671e42822f024eb940081c28588f4a80660e52827010b08266ea241f70014e75241f42804e754eb9401817902f004eb940035586588f5280b0b900000000670442804e75226f000420690160486901602068006c4e90588fb0b90000000066e02f2f00044ebaff2e588fb0b90000000057c0710044804e75518f2f022f6f001000082f6f001400044eb94017fa0a2f2f000424004eb940071eac588f4ab90000000067362f024ebaff7e588f4a80672a2f024eb9400af64c2f024eb9400af13e508f2f6f00080010203c000000002f400014241f508f6000fe32203c000000002f4000142f6f00080010241f508f6000fe1a4feffff02f2f00184eb940071fa0588f73804a00660820014fef00104e752f2f00142f4100044ebafebc588f22174a8067e42f2f00184eb940071eac4eb94017fa0a2240206901602f40000c486901602068006c4e902f4000142f2f00104ebafe424fef000cb0af000c67204879000000002f2f001842b9000000004ebafd9a508f720220014fef00104e752e804eb9401817902f004eb9400355862f002f2f00102f4000104eb9400ae5f442a7222f00102f012f2f001c2f4100184eb9400b1208487900000000222f001c202f0020528023c1000000002f2f003023c0000000004ebafd344fef002072026096598f2f2f000c4eb940071fa0588f73804a0066062001588f4e752f2f00082f4100044ebafdd2588f22174a8067e64eb9401816f42f004eb940036370588f22174a0066d02f2f000c2f2f000c4ebafe4a508f72022001588f4e75598f2f2f000c4eb940071f90588f73802e814a0067102f2f000c4eb940071fa0588f4a0066062017588f4e752f2f00084ebafd6a588f4a8067ec4eb9401816f42f004eb940036370588f4a0066d82f2f000c2f2f000c4ebafde6508f70022e802017588f4e754ab90000000067184eb94017fa0a2f004ebafd74588f4a80660642b9000000004e7542b9000000004e754e4f2054454d5020534156450052454c4f41444544004b4954204e4f54204c494e4b45440054454d5020534156454400"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 8
+  }
+ },
+ "symbols": {
+  "show": [
+   ".run",
+   84
+  ],
+  "reload_kit": [
+   ".run",
+   222
+  ],
+  "ours": [
+   ".run",
+   288
+  ],
+  "save_holds": [
+   ".run",
+   368
+  ],
+  "saved": [
+   ".bss",
+   4
+  ],
+  "saved_kit": [
+   ".bss",
+   0
+  ],
+  "reload.isra.0": [
+   ".run",
+   450
+  ],
+  "temp_save_no": [
+   ".run",
+   28
+  ],
+  "temp_save_yes": [
+   ".run",
+   0
+  ],
+  "temp_save_yes_key": [
+   ".run",
+   572
+  ],
+  "temp_save_page_no_key": [
+   ".run",
+   900
+  ],
+  "temp_save_tick": [
+   ".run",
+   1002
+  ],
+  "temp_save_page_no": [
+   ".run",
+   56
+  ],
+  "temp_save_no_key": [
+   ".run",
+   810
+  ],
+  "temp_save_project": [
+   ".run",
+   1036
+  ]
+ },
+ "exports": [
+  "temp_save_no",
+  "temp_save_no_key",
+  "temp_save_page_no",
+  "temp_save_page_no_key",
+  "temp_save_project",
+  "temp_save_tick",
+  "temp_save_yes",
+  "temp_save_yes_key"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   388,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   420,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   438,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   488,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   532,
+   "abs32",
+   "sec:.run",
+   1057
+  ],
+  [
+   ".run",
+   550,
+   "abs32",
+   "sec:.run",
+   1044
+  ],
+  [
+   ".run",
+   682,
+   "abs32",
+   "sec:.run",
+   1066
+  ],
+  [
+   ".run",
+   692,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   768,
+   "abs32",
+   "sec:.run",
+   1081
+  ],
+  [
+   ".run",
+   784,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   794,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1004,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1030,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1038,
+   "abs32",
+   "sec:.bss",
+   4
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400cca76",
+   "len": 6,
+   "stock_sha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:temp_save_yes",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400cca98",
+   "len": 6,
+   "stock_sha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:temp_save_no",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4003a7ca",
+   "len": 6,
+   "stock_sha256": "6114097ca96797415c564b8e666873886797a3284aad2dada36d188ad4857702",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:temp_save_page_no",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:temp_save_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_project",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:temp_save_project",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:FUNC + YES",
+   "ui:FUNC + NO"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

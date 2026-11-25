@@ -1,0 +1,1 @@
+Development: checking a PR description from a file (`node scripts/pr-body.mjs FILE.md`) in a fork's checkout compares the branch against `upstream/main`, not the fork's own `origin/main`, which can lag far behind and flag hundreds of unrelated files as instrument changes.

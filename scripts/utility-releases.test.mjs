@@ -9,12 +9,12 @@ import { requireModuleDocumentation } from './module-documentation.mjs'
 import { AVAILABLE_MODULES } from '../src/catalog/availability.ts'
 import { MODULES, resolveSelection } from '../src/catalog/modules.ts'
 const json=async p=>JSON.parse(await readFile(resolve(p),'utf8'))
-const baseline=await json('sdk/module-qualification-baseline.json'),waiverRecord=await json('sdk/module-release-waivers.json')
+const baseline=await json('sdk/approvals/module-qualification-baseline.json'),waiverRecord=await json('sdk/approvals/module-release-waivers.json')
 const waivers=parseReleaseWaivers(waiverRecord),catalog=await json('sdk/catalog.json')
 
 describe('owner-approved utility releases',()=>{
   for(const id of ['cc-map','previewvol']) it(id+' is selectable, source-pinned and honestly software verified',async()=>{
-    const folder=resolve('sdk/octabam/modules/'+id),document=parseModuleDocument(await json(folder+'/octamod.module.json'))
+    const folder=resolve('sdk/octatrack/modules/'+id),document=parseModuleDocument(await json(folder+'/octamod.module.json'))
     expect(document.version).toBe('0.1.2-experimental')
     expect(document.build).toBeUndefined()
     expect(document.tests.hardwareStatus).toBe('untested')

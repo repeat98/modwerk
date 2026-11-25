@@ -2,51 +2,68 @@
 // Octatrack manifests' declarations, read by the cross-compatibility gate.
 //
 //   npm run module:doctor -- <module-id>
-//   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octabam/modules/ for the run and removed after
-//   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this
+//   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octatrack/modules/ for the run and removed after:
+//                                          # its experimental lines (try it, share it), with the release lines listed as still to do
+//   npm run module:doctor -- --draft <id> --release  # the same draft judged as a release: every line counts
+//   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this. It ends with
+//                                         # the modules due for a re-run on the unit (scripts/retest-queue.mjs), a report only
 //
 // Each line is a point where a module meets an existing workflow, with the command that fixes it when it fails. Run it until
 // it is green, then walk the checklist in docs/module-guides/<category>.md, which covers what a program cannot see.
-import { cpSync, existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
-import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
+import { MODULE_V3_CATEGORIES } from '../src/catalog/module-contract-v3.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { COMPARED_BEFORE_RECORDS, NOT_COMPOSED } from './module-coverage.mjs'
-import { moduleSourceFingerprint } from './module-source.mjs'
+import { isDocumentationPath, moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
-import { moduleNativeSourceSha256 } from './module-qualification.mjs'
-import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
+import { crlfModuleFiles, moduleEarlierPerformanceSourceSha256, moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { judgeRecord, ownerWaivedPerformanceRow, priceLimits, approvalCoversSource, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
+import { stageDraft } from './draft-stage.mjs'
+import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
+import { moduleCardless } from '../src/catalog/usb-only.ts'
+import { controlProblems, widgetProblems } from './module-controls.mjs'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
+import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
+import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
+import { qualifyProblems } from './module-qualify.mjs'
 
-// Modules first listed on or after this day carry a measured performance record (docs/module-guides/README.md, "Performance"); earlier ones keep their qualification evidence.
+// Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
+// Modules first listed on or after this day, and every draft judged as a release, stamp their performance record with the source it
+// was measured on (npm run perf:audit -- check FILE --stamp); earlier records are asked to stamp at their next measurement.
+const PERFORMANCE_STAMP_REQUIRED_FROM = '2026-11-18'
 // Modules first listed on or after this day declare the key gestures and screens they take (compatibility.uiClaims).
 const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
-// Octatrack modules first listed on or after this day ship a USB package beside the card build (docs/ADD_A_MODULE.md, "Octatrack base and
-// USB lifecycle"); the card-only ones listed before it need a reviewed migration before USB rollout. CI's package --check sees a stale package, not a missing one.
-const USB_PACKAGE_REQUIRED_FROM = '2026-10-02'
+// Octatrack modules first listed on or after this day, and every draft judged as a release, build a machine page's controls with modwerk_page_control()
+// (sdk/machines/octatrack/include/modwerk_page.h), which gives a control stock's widget for its number of values.
+const PAGE_CONTROLS_REQUIRED_FROM = '2026-11-11'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const args = process.argv.slice(2), all = args.includes('--all'), draft = args.includes('--draft'), ids = args.filter(arg => !arg.startsWith('--'))
-if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id>   or   npm run module:doctor -- --all')
+const args = process.argv.slice(2), all = args.includes('--all'), draft = args.includes('--draft'), release = args.includes('--release'), ids = args.filter(arg => !arg.startsWith('--'))
+if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft) || (release && !draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id> [--release]   or   npm run module:doctor -- --all')
 const json = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
 const exists = path => existsSync(resolve(root, path))
-// A draft is checked where every gate looks: its folder is copied under sdk/octabam/modules/ for this run and removed when the run ends,
-// so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages, native comparison, pair table) stay red for a draft.
-if (draft) {
-  const source = resolve(root, 'sdk/drafts', ids[0]), copy = resolve(root, 'sdk/octabam/modules', ids[0])
-  if (!existsSync(source)) { console.error('No draft named ' + ids[0] + ' under sdk/drafts.'); process.exit(2) }
-  if (existsSync(copy)) { console.error('sdk/octabam/modules/' + ids[0] + ' exists: check the listed module instead, or rename the draft.'); process.exit(2) }
-  cpSync(source, copy, { recursive: true })
-  process.on('exit', () => rmSync(copy, { recursive: true, force: true }))
-  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(signal === 'SIGINT' ? 130 : 143))
+// A draft is checked where every gate looks: its folder is copied under sdk/octatrack/modules/ for this run and removed when the run ends,
+// so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages) stay red for a draft.
+if (draft) stageDraft(root, ids[0])
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+else mirrorOctatrackModules(root)
+// Every elemod machine's module folder, from the machine profiles, so a machine added there (the Digitakt II on 13 November 2026) is found.
+const ELEMOD_MACHINES = json('src/devices/machines.generated.json').filter(profile => profile.sdk?.platform === 'elemod').map(profile => ({ machine: profile.id, modules: profile.sdk.modules }))
+const catalog = json('sdk/catalog.json'), machineModules = ELEMOD_MACHINES.flatMap(({ machine, modules }) => exists(modules) ? readdirSync(resolve(root, modules), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: modules + '/' + entry.name })) : [])
+// Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
+if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
+  const folder = 'sdk/zoom/modules/' + entry.name
+  machineModules.push({ id: entry.name, machine: exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json').machine : 'zoom-ms-70cdr', folder, zdl: true })
 }
-const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine })) : [])
+const MODULE_FOLDERS = ['sdk/octatrack/modules', ...ELEMOD_MACHINES.map(item => item.modules)].join(', ') + ' or sdk/zoom/modules'
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
-if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
+if (!all && !exists('sdk/octatrack/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
 
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
 const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
@@ -55,19 +72,26 @@ const ruleLines = rules.stderr.trim().split('\n').filter(line => line && !/^\s+a
 const rulesProblem = rules.status === 0 ? '' : (ruleLines.find(line => /^\w*Error: /.test(line))?.replace(/^\w*Error: /, '') ?? ruleLines.at(-1) ?? 'failed')
 // Cross-compatibility of every active Octatrack module with every other and the base (scripts/module-compat.py): run once.
 // A single run also compares the module asked about when the catalogue does not list it yet (a draft, a new folder) or pauses it.
-const withId = !all && exists('sdk/octabam/modules/' + ids[0]) ? ['--with', ids[0]] : []
-const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', ...withId], { cwd: root, encoding: 'utf8' })
+const withId = !all && exists('sdk/octatrack/modules/' + ids[0]) ? ['--with', ids[0]] : []
+const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', '--native-params', ...withId], { cwd: root, encoding: 'utf8' })
 const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { return null } })(), compatProblems = compatResult?.problems
+// The controls line uses the same native manifests the compatibility check already loaded.
+const nativeParams = compatResult?.nativeParams
 
+// The modules listed before every module had to name its CPU price, which wait for a measurement.
+const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
-const nativeHashes = new Map()
+const nativeHashes = new Map(), performanceHashes = new Map(), earlierPerformanceHashes = new Map(), crlfFiles = new Map(), qualifyChecks = new Map()
+// The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
+let packageRows = null
+const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
 
 function octatrack(id) {
   const lines = []
   const ok = (name, detail) => lines.push({ state: 'ok', name, detail })
   const fail = (name, detail, fix) => lines.push({ state: 'fail', name, detail, fix })
   const info = (name, detail) => lines.push({ state: 'info', name, detail })
-  const folder = 'sdk/octabam/modules/' + id
+  const folder = 'sdk/octatrack/modules/' + id
   const document = parseModuleDocument(json(folder + '/octamod.module.json'))
   const entry = catalog.modules.find(item => item.id === id)
 
@@ -81,9 +105,30 @@ function octatrack(id) {
   else if (entry && !availableModules(true).some(module => module.id === id)) fail('library', 'the library does not offer it', 'run npm run modules:generate')
   else if (entry) ok('library', isBetaModule(id) ? 'offered to beta testers in the library and configurator' : 'offered in the library and the configurator')
 
-  if (!LIBRARY_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a library category', 'use one of ' + LIBRARY_CATEGORIES.join(', '))
+  if (!MODULE_V3_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a manifest category', 'use one of ' + MODULE_V3_CATEGORIES.join(', '))
   else if (!exists('docs/module-guides/' + document.category + '.md')) fail('category guide', 'docs/module-guides/' + document.category + '.md is missing', 'write the guide for this category')
   else ok('category guide', 'walk docs/module-guides/' + document.category + '.md (and sequencing.md if it acts in time)')
+  // The knobs the build writes into the instrument (manifest.py) and the ones the site describes (controls[]) are one list.
+  const knobs = nativeParams?.[id]
+  if (!nativeParams) fail('controls', 'the native knob declarations could not be read: ' + (compat.stderr || compat.error?.message || 'missing compatibility report').trim().split('\n').at(-1).slice(0, 200), 'fix what manifest.py reports, then run this again')
+  else if (knobs?.length) {
+    const problems = controlProblems(knobs, document.controls)
+    if (problems.length) fail('controls', problems.slice(0, 3).join('; ') + (problems.length > 3 ? '; and ' + (problems.length - 3) + ' more' : ''), 'make controls[] in octamod.module.json say what manifest.py declares (name, default, count), then npm run modules:generate')
+    else ok('controls', knobs.length + ' knob' + (knobs.length === 1 ? '' : 's') + ' in manifest.py, the same in controls[]')
+    const widgets = widgetProblems(knobs), said = widgets.slice(0, 3).join('; ') + (widgets.length > 3 ? '; and ' + (widgets.length - 3) + ' more' : '')
+    if (!widgets.length) ok('widgets', 'every knob is drawn as what it holds: a switch for two to five words, a labelled dial for a longer list, a knob for a range')
+    else if (draft) fail('widgets', said, 'pick each knob\'s formatter by what it holds: docs/module-guides/effects.md#choose-the-widget')
+    else info('widgets', said + ' (fix it in the next release: docs/module-guides/effects.md#choose-the-widget)')
+  }
+  // Its own host tests (scripts/module-tests.mjs), run as sdk:check runs a listed module's on every pull request.
+  const tests = moduleTestFiles(root, folder)
+  if (tests.length && all) info('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ': npm run sdk:check runs them, npm run module:doctor -- ' + id + ' too')
+  else if (tests.length) {
+    const failed = runModuleTests(root, tests).filter(result => !result.ok)
+    if (failed.length) fail('host tests', failed.length + ' of ' + tests.length + ' fail: ' + failed.slice(0, 2).map(result => result.file.slice(folder.length + 1) + ' (' + result.detail + ')').join('; ') + (failed.length > 2 ? '; and ' + (failed.length - 2) + ' more' : ''),
+      'python3 -B ' + (draft ? 'sdk/drafts/' + id + failed[0].file.slice(folder.length) : failed[0].file) + ', and fix what it reports. A test_*.py runs with no arguments and no firmware, unit or emulator; rename a script that needs one (docs/ADD_A_MODULE.md, Host tests)')
+    else ok('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ' pass (a test skips what this computer lacks a tool for)')
+  } else info('host tests', 'none: a test_*.py in the module folder runs here and in npm run sdk:check')
   // No gate can see how an effect sounds, so this only points at the check and says whether TESTING.md already answers it.
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''
@@ -94,12 +139,17 @@ function octatrack(id) {
   }
 
   // Cycles, a benchmark against stock and a stress run. Required for a module listed from PERFORMANCE_REQUIRED_FROM; older modules are told.
-  const approvalPath = 'sdk/' + id + '-build-approval.json'
+  const approvalPath = 'sdk/approvals/' + id + '-build-approval.json'
   const hardwareApproval = exists(approvalPath) ? json(approvalPath) : null
-  const performanceRequired = entry && (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM
+  // A release from RELEASE_COST_FROM carries the record whatever day its module was first listed (owner, 23 November 2026:
+  // every module goes through the whole cost procedure before a release; Tape Echo, listed 1 October, had none for 0.1.9).
+  const released = releaseDate({ root, document }), releaseInProgress = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json')) && (!released || released >= RELEASE_COST_FROM)
+  const performanceRequired = entry && ((entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM || releaseInProgress)
   if (exists(folder + '/evidence/performance.json')) {
-    const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record)
+    const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record, priceLimits(document))
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
+    // A key-press record has no flood, so a module with a MIDI path or ColdFire sound work cannot take it.
+    if (record.trigger === 'key' && ['midi-usb', 'machines'].includes(document.category)) fail('performance', "a key-press record (trigger: 'key') is for a module with no MIDI path and no frame-interrupt work, not a " + document.category + ' module', 'npm run perf:audit -- template coldfire, and measure under the flood')
     if (record.stress?.harness === 'ot_emu' && document.compatibility?.effectId != null) fail('performance', 'stress: an ot_emu run is for code reached only through stock hooks; an effect with id ' + document.compatibility.effectId + ' renders under dsp_host -guard -dirty', 'python3 tools/harness/stress_project.py, then tools/harness/pressure.py render')
     if (record.module !== id || record.version !== document.version) fail('performance', 'evidence/performance.json is for ' + record.module + '@' + record.version + ', not ' + id + '@' + document.version, 'measure again for this version, then npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     else for (const row of rows.filter(item => item.state === 'fail')) {
@@ -107,68 +157,111 @@ function octatrack(id) {
       else fail('performance', row.name + ': ' + row.detail, row.fix ?? 'npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     }
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
-  } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/module-guides/README.md, "Performance"), then npm run perf:audit -- check')
-  else info('performance', 'no evidence/performance.json. Not required before ' + PERFORMANCE_REQUIRED_FROM + '; npm run perf:audit measures the same three things')
+    // Were these numbers taken on this code? The stamp names the source they were measured on.
+    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json', earlierPerformanceHashes.get(id))
+    if (stamped.state === 'fail' && !record.sourceSha256 && approvalCoversSource(hardwareApproval, id, document.version, nativeHashes.get(id)))
+      info('performance stamp', 'not stamped: the owner\'s approval binds this exact source, record included (' + approvalPath + ')')
+    else if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
+    else if (stamped.state === 'note') info('performance stamp', stamped.detail)
+    else ok('performance stamp', stamped.detail)
+  } else if (performanceRequired) fail('performance', 'a new module, and every release from ' + RELEASE_COST_FROM + ', needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
+  else info('performance', 'no evidence/performance.json. Not required for a module listed before ' + PERFORMANCE_REQUIRED_FROM + ' until its next release (from ' + RELEASE_COST_FROM + '); npm run perf:audit measures the same three things')
 
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
   else fail('thumbnail', 'no presentation/thumbnail.svg and no hand-drawn art', 'add a 320x192 presentation/thumbnail.svg that shows what the module does')
 
+  // Git stores text with LF (.gitattributes). The evidence hashes read files as Git stores them; the compiled-package fingerprint, here
+  // and in the compiler, reads them as they are, so a CRLF file the compiler reads is a different package fingerprint here than in CI.
+  const crlf = crlfFiles.get(id) ?? [], compiled = moduleCardless(id) ? [] : crlf.filter(path => !isDocumentationPath('modules/' + id + '/' + path))
+  const crlfFix = "sed -i 's/\\r$//' " + crlf.slice(0, 3).map(path => (draft ? 'sdk/drafts/' + id : folder) + '/' + path).join(' ') + (crlf.length > 3 ? ' … (' + crlf.length + ' files)' : '')
+  if (compiled.length) fail('line endings', compiled.slice(0, 3).join(', ') + (compiled.length > 3 ? ' and ' + (compiled.length - 3) + ' more' : '') + ' ha' + (compiled.length === 1 ? 's' : 've') + ' CRLF line endings here, Git stores LF, so the package fingerprint here differs from CI\'s', crlfFix)
+  else if (crlf.length) info('line endings', crlf.slice(0, 3).join(', ') + (crlf.length > 3 ? ' and ' + (crlf.length - 3) + ' more' : '') + ': CRLF here, LF in Git; the evidence hashes read them as Git stores them. To match: ' + crlfFix)
+
+  // A page descriptor written by hand is where a short list ends up as a knob: the widget word (desc+0x132) beside the count (desc+0xd2).
+  const sources = readdirSync(resolve(root, folder), { recursive: true, encoding: 'utf8' }).filter(name => /\.(c|h|py)$/.test(name)).map(name => [name, readFileSync(resolve(root, folder, name), 'utf8')])
+  const byHand = sources.filter(([, text]) => !text.includes('modwerk_page.h') && /0x132\b/i.test(text) && /0xd2\b/i.test(text)).map(([name]) => name)
+  const pageFix = 'fill each slot with modwerk_page_control() from modwerk_page.h (docs/module-guides/machines.md, "A control with few values is a switch")'
+  if (byHand.length && (draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PAGE_CONTROLS_REQUIRED_FROM)) fail('page controls', byHand.join(', ') + ' writes a page descriptor by hand, so nothing picks stock\'s switch for a control with two to five values', pageFix)
+  else if (byHand.length) info('page controls', byHand.join(', ') + ' writes its page descriptor by hand (listed before ' + PAGE_CONTROLS_REQUIRED_FROM + '). At its next page change: ' + pageFix)
+  else if (sources.some(([, text]) => text.includes('modwerk_page.h'))) ok('page controls', 'built with modwerk_page_control(): two to five values draw as stock\'s switch, more as a knob')
+
   // The two DSP source gates (octabam's norep and nolabelprefix, sdk/octabam/docs/TRAPS.md): a label prefix is always refused; a rep is refused in a module listed from 2026-10-23.
-  const gates = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-source-gates.py', '--json', id], { cwd: root, encoding: 'utf8' })
-  const found = gates.status === 0 ? JSON.parse(gates.stdout) : null
-  if (!found) fail('dsp sources', 'the gates did not run: ' + (gates.stderr || gates.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
+  const found = sourceGates.modules?.[id]
+  if (!found) fail('dsp sources', 'the gates did not run: ' + (sourceGates.error ?? 'missing module report'), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
   else if (found.errors.length) fail('dsp sources', found.errors[0], 'rewrite it as the message says, then npm run modules:check')
-  else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octabam\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
+  else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octatrack\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
   else info('dsp sources', 'no .asm source (ColdFire-only module)')
+
+  // The register contract of its DSP package's entries, read from the assembled words (scripts/dsp-register-contract.py): a hook entry writes only its
+  // site's clobbers, an init keeps r1/n1/m1. Reported until the owner sets REFUSED_FROM there; from then a module listed on or after it is refused.
+  const contract = registerContracts.modules?.[id], more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
+  const registersFix = 'keep what the contract names, or widen the site\'s clobbers in a base pull request; python3 -B scripts/dsp-register-contract.py --json ' + id
+  if (!contract) fail('dsp registers', 'the check did not run: ' + (registerContracts.error ?? 'missing module report'), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
+  else if (contract.skipped) info('dsp registers', 'not checked: ' + contract.skipped)
+  else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
+  else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
+  else if (contract.entries) ok('dsp registers', contract.entries + ' DSP entr' + (contract.entries === 1 ? 'y writes' : 'ies write') + ' only what their contract allows')
+
+  // Every module names its CPU price; a machine's is also its descriptor's reserved[0] (scripts/module-cpu-price.mjs, docs/MODULE_PERFORMANCE.md).
+  const price = cpuPriceStatus({ root, document, pending: cpuPending })
+  if (price.state === 'fail') fail('cpu price', price.detail, price.fix)
+  else if (price.state === 'pending') info('cpu price', price.detail)
+  else ok('cpu price', price.detail)
+  // What it costs installed and used nowhere (test procedure step 9): above the limit it must rest (answer ev_in_use), unless a machine.
+  const rest = atRestStatus({ root, document })
+  if (rest.state === 'fail') fail('cost at rest', rest.detail, rest.fix)
+  else if (rest.state === 'ok') ok('cost at rest', rest.detail)
+  else info('cost at rest', rest.detail + (rest.fix ? '. Fix: ' + rest.fix : ''))
+  // What one more instance costs on a Part (base 0.8 admission): a release of an effect or a machine measures its curve on a unit.
+  const curve = frameCostStatus({ root, document })
+  if (curve.state === 'fail') fail('frame cost', curve.detail, curve.fix)
+  else if (curve.state === 'ok') ok('frame cost', curve.detail)
+  else info('frame cost', curve.detail + (curve.fix ? '. Fix: ' + curve.fix : ''))
+
+  // The release record against the source it was tested on, and drafted words nobody has read yet (npm run module:qualify).
+  const qualified = qualifyChecks.get(id) ?? []
+  if (qualified.length) fail('qualification', qualified.map(problem => problem.detail).join('; '), qualified[0].fix)
+  else if (document.tests.qualification) ok('qualification', 'bound to this source, nothing left drafted (npm run module:qualify -- ' + id + ' --check)')
 
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
   const build = json('src/engine/assets/module-build.json'), buildable = document.build?.status !== 'pending'
-  // A C runtime module (its USB package row has "sources") has no card form: only its USB package is built.
-  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = Boolean(usbRow?.sources)
-  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (a C runtime module, no card form)')
+  // A C runtime module (its USB package row has "sources") or one marked "usbOnly" is not in the source compile: only its
+  // USB package is built (src/catalog/usb-only.ts).
+  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = moduleCardless(id)
+  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (' + (usbRow.sources ? 'a C runtime' : 'a USB-only') + ' module)')
   else if (cOnly) fail('packages', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
   else if (!buildable) info('packages', 'build status is pending, so the packages do not include it yet')
   else if (build.moduleVersions?.[id] !== document.version) fail('packages', 'the committed packages lack ' + id + '@' + document.version, 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)')
   else ok('packages', 'compiled into the committed packages at ' + document.version)
-  // The USB package beside the card build: required of every module listed from USB_PACKAGE_REQUIRED_FROM (Track Mutes and Play Start were sent back for it, #931, #947).
+  // The package for the Modwerk base is how a module reaches a unit, over USB or in the card file: every module needs one at
+  // its version (Track Mutes and Play Start were sent back for it, #931, #947). A paused module waits without one.
   if (!cOnly) {
-    const usbRequired = !entry || (entry.addedAt ?? '').slice(0, 10) >= USB_PACKAGE_REQUIRED_FROM
     if (usbRow?.version === document.version) ok('usb package', 'at ' + document.version + ' (npm run octatrack:module-packages -- --check)')
     else if (usbRow?.lagsBehind === document.version) info('usb package', 'kept at ' + usbRow.version + ' by a declared lag: ' + usbRow.lagReason)
     else if (usbRow) fail('usb package', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
-    else if (usbRequired) fail('usb package', 'none. A new Octatrack module ships its USB package beside the card build: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
-    else info('usb package', 'none: card-only, listed before ' + USB_PACKAGE_REQUIRED_FROM + '; a reviewed migration comes before USB rollout')
+    else if (paused) info('usb package', 'none: paused until it has one')
+    else if (id === 'usb-audio-out-tracks-main-cue') info('usb package', 'none: USB Audio comes with the base, as one of its layouts (src/engine/elekloader/base-variants.ts)')
+    else fail('usb package', 'none. An Octatrack module ships as a package for the Modwerk base: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
   }
 
-  if (cOnly) info('native comparison', 'no card form to compare; npm run octatrack:module-packages -- --check rebuilds its USB package')
-  else if (paused) info('native comparison', 'skipped while paused')
-  else if (NOT_COMPOSED.includes(id)) info('native comparison', 'builds only on its own; standalone parity is recorded in docs/VERIFICATION.md')
-  else {
-    const record = exists('sdk/native-comparisons/' + id + '.json') ? json('sdk/native-comparisons/' + id + '.json') : null
-    const code = nativeHashes.get(id)
-    if (record) {
-      if (record.moduleSourceSha256 === code && record.summary.mismatches === 0) ok('native comparison', record.summary.selections + ' selections match native octabam (' + record.summary.built + ' built, ' + record.summary.refused + ' refused' + (record.summary.browserPlatformRefused ? ', ' + record.summary.browserPlatformRefused + ' additional browser platform limits' : '') + ')')
-      else fail('native comparison', 'the record was made for different code or has mismatches', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin>')
-    } else if (COMPARED_BEFORE_RECORDS[id] === code) ok('native comparison', 'compared by the earlier exhaustive suites at this exact code')
-    else fail('native comparison', 'no current comparison with native octabam', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin>')
+  // The hardware record against the package that ships. A base relink rebuilds a package without new source, so a mismatch is a line
+  // to read, never a red one: run the shipped package, or say in TESTING.md why the earlier run covers it (Bar LED, #1173).
+  const hardware = document.tests?.qualification?.hardware
+  if (hardware?.status === 'reported' && usbRow?.version === document.version) {
+    if (hardware.imageSha256 === usbRow.sha256) ok('tested package', 'the hardware record names the shipped USB package (' + usbRow.sha256.slice(0, 8) + ')')
+    else {
+      const due = retest([document]).due[0]
+      info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + (due ? ' (' + due.reason + ': ' + due.detail + ')' : '') + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
+    }
   }
-
-  // The card builder's native pair checks (npm run modules:pairs): what the ledger refuses beside this module, in any context.
-  const pairTable = json('src/catalog/compatibility-pairs.json')
-  const collisions = [...new Set(Object.entries(pairTable.clashes).flatMap(([context, found]) => Object.keys(found).filter(key => key.split('+').includes(id))
-    .map(key => (key.split('+').find(other => other !== id) ?? 'alone') + (context ? ' (with ' + context + ')' : ''))))]
-  if (cOnly) info('declaration checks', 'no card form, so it has no card pairs')
-  else if (NOT_COMPOSED.includes(id)) info('declaration checks', 'builds only on its own, so it has no pairs')
-  else if (!pairTable.modules.includes(id)) fail('declaration checks', 'the native pair table lacks it, so a build of it is refused', 'npm run modules:pairs -- --write')
-  else ok('declaration checks', 'checked beside ' + (pairTable.modules.length - 1) + ' modules' + (collisions.length ? '; the ledger refuses it beside ' + collisions.join(', ') + ' (each flagged in compatibility.conflicts: npm run modules:pairs)' : '; no collisions'))
 
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
   const compared = withId.length > 0 || (entry && !paused)
-  if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.10+, then npm run modules:compat')
+  if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.12+, then npm run modules:compat')
   else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- --with ' + id + ' lists every one')
   else if (!compared) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
   else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat' + (entry && !paused ? '' : ' -- --with ' + id) + ')')
@@ -184,20 +277,31 @@ function octatrack(id) {
   return lines
 }
 
-function machineModule({ id, machine }) {
-  const lines = [], folder = 'sdk/' + machine + '/modules/' + id
+function machineModule({ id, machine, folder, zdl = false }) {
+  const lines = []
   const manifest = exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json') : null
   if (!manifest) lines.push({ state: 'fail', name: 'manifest', detail: folder + '/modwerk.module.json is missing', fix: 'npm run module:new -- <id> --machine ' + machine + ' --author <login>' })
   else {
     lines.push({ state: 'ok', name: 'manifest', detail: manifest.version })
-    if (!LIBRARY_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a library category', fix: 'use one of ' + LIBRARY_CATEGORIES.join(', ') })
+    if (!MODULE_V3_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a manifest category', fix: 'use one of ' + MODULE_V3_CATEGORIES.join(', ') })
     else if (!exists('docs/module-guides/' + manifest.category + '.md')) lines.push({ state: 'fail', name: 'category guide', detail: 'docs/module-guides/' + manifest.category + '.md is missing', fix: 'write the guide for this category' })
-    else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md, and the Digitakt and Digitone section in it' })
+    else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md' + (zdl ? ' and "Create an effect" in sdk/machines/' + machine + '/README.md' : ', and the Digitakt and Digitone section in it') })
+  }
+  // A Zoom effect installs from its pinned release file, vendored without Zoom code (npm run zdl:vendor).
+  if (zdl) {
+    let problem = null
+    try { if (manifest) requireZdlBinary(root, folder, manifest) } catch (error) { problem = error.message }
+    if (manifest && !problem) lines.push({ state: 'ok', name: 'effect file', detail: zdlPath(manifest) + ' is the pinned release file' })
+    else lines.push({ state: 'fail', name: 'effect file', detail: problem ?? 'no manifest', fix: 'npm run zdl:vendor -- ' + id + ' --checker <ZoomMultistompZDL checkout> --stock-dir <your stock blobs> (docs/ZDL_MODULE_CONTRACT.md)' })
+    if (rulesProblem) lines.push({ state: 'fail', name: 'module rules', detail: 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), fix: 'fix what it names' })
+    else lines.push({ state: 'ok', name: 'module rules', detail: 'contract v3 (zdl), evidence tier, documentation (npm run modules:check)' })
+    return lines
   }
   // The browser builds only from the files elekloader's catalog pins (vendor/elekloader/catalog/catalog.json); a mod's id is its catalog id.
-  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with.
+  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with,
+  // and the Digitakt II's digitakt-mk2, which the Digitakt's id does: match the link device's key where there is one.
   const device = LINK_DEVICES.find(item => item.machine === machine)?.key
-  const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (mod.device === device || mod.device.startsWith(machine)))
+  const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (device ? mod.device === device : mod.device.startsWith(machine)))
   if (pins.length) lines.push({ state: 'ok', name: 'browser builder', detail: 'pinned in the elekloader catalog for OS ' + pins.map(mod => mod.os).join(', ') })
   else lines.push({ state: 'fail', name: 'browser builder', detail: 'no pinned .elemod file for ' + machine + ', so the browser cannot build it', fix: 'npm run elekloader:update -- ... (vendor/elekloader/README.md, Updating; docs/ADD_A_MODULE.md, Digitakt and Digitone)' })
   if (rulesProblem) lines.push({ state: 'fail', name: 'module rules', detail: 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), fix: 'fix what it names' })
@@ -205,36 +309,67 @@ function machineModule({ id, machine }) {
   return lines
 }
 
-const symbol = { ok: '✓', fail: '✗', info: '·' }
-function report(title, lines) {
+// Two tiers. A draft is experimental: to try it on your unit and share it with testers, it needs these lines green (it is what it
+// says it is, it follows the category's rules and DSP traps, it installs beside every other module and the base, and nobody else
+// holds it). Every other line is what listing it needs; for a draft they read as still to do (○) until --release.
+const EXPERIMENTAL = new Set(['category guide', 'category', 'sound quality', 'dsp sources', 'cross-compatibility', 'hook migration', 'ui claims', 'conflicts', 'board claim', 'board messages'])
+const symbol = { ok: '✓', fail: '✗', info: '·', later: '○' }
+const print = line => {
+  console.log('  ' + symbol[line.state] + ' ' + line.name.padEnd(20) + line.detail)
+  if (line.fix) console.log('    ' + ''.padEnd(20) + 'fix: ' + line.fix)
+}
+function report(title, lines, tiered = false) {
   console.log('\n' + title)
-  for (const line of lines) {
-    console.log('  ' + symbol[line.state] + ' ' + line.name.padEnd(20) + line.detail)
-    if (line.fix) console.log('    ' + ''.padEnd(20) + 'fix: ' + line.fix)
+  if (!tiered) lines.forEach(print)
+  else {
+    const now = lines.filter(line => EXPERIMENTAL.has(line.name)), later = lines.filter(line => !EXPERIMENTAL.has(line.name))
+    console.log('  Experimental: to try it on your unit and share it')
+    now.forEach(print)
+    print({ state: 'info', name: 'dev build', detail: 'npm run module:dev -- ' + title.split(' ')[0] + ' builds it and tries it on your unit over USB (--watch: on every save)' })
+    console.log('  Release: before it is listed (--release judges these too)')
+    later.map(line => line.state === 'fail' ? { ...line, state: 'later' } : line).forEach(print)
+    return now.every(line => line.state !== 'fail')
   }
   return lines.every(line => line.state !== 'fail')
 }
 
 // The agent board (docs/AGENT_BOARD.md): one read per run; a new module needs your claim, and someone else's claim stops it.
 // Open questions and findings on the module or its machine are a line to read, never a red one.
-const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: {} })
+const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: { moduleContext: true } })
 const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
-const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octabam/modules/' + id))
+const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octatrack/modules/' + id))
+function dspReports(script) {
+  if (!octatrackIds.length) return { modules: {} }
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', script, '--json-modules', ...octatrackIds], {
+    cwd: root, encoding: 'utf8', maxBuffer: octatrackIds.length * 1024 * 1024,
+  })
+  if (result.status === 0) return { modules: JSON.parse(result.stdout) }
+  return { error: (result.stderr || result.error?.message || 'missing report').trim().split('\n').pop() }
+}
+const sourceGates = dspReports('scripts/dsp-source-gates.py')
+const registerContracts = dspReports('scripts/dsp-register-contract.py')
 for (const id of octatrackIds) {
-  const document = parseModuleDocument(json('sdk/octabam/modules/' + id + '/octamod.module.json'))
-  nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octabam/modules', id), document))
+  const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
+  nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  performanceHashes.set(id, await modulePerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  earlierPerformanceHashes.set(id, await moduleEarlierPerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  crlfFiles.set(id, await crlfModuleFiles(resolve(root, 'sdk/octatrack/modules', id)))
+  qualifyChecks.set(id, await qualifyProblems({ root, folder: resolve(root, 'sdk/octatrack/modules', id), document, nativeSha: nativeHashes.get(id), evidence: false }))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.
 const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(root)) === json('src/engine/assets/module-build.json').sourceTreeSha256
 for (const id of octatrackIds) {
   const lines = octatrack(id)
   if (!fingerprintOk) lines.push({ state: 'fail', name: 'package fingerprint', detail: 'the committed packages were built from different module code', fix: 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)' })
-  lines.push(...boardLines('octatrack', id, draft ? 'sdk/drafts/' + id : 'sdk/octabam/modules/' + id))
-  green = report(id + ' (Octatrack)', lines) && green
+  lines.push(...boardLines('octatrack', id, draft ? 'sdk/drafts/' + id : 'sdk/octatrack/modules/' + id))
+  green = report(id + ' (Octatrack)', lines, draft && !release) && green
 }
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
-for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, 'sdk/' + item.machine + '/modules/' + item.id)]) && green
-if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
-console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
+for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, item.folder)]) && green
+if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
+if (all) console.log(formatRetestQueue(retest(octatrackIds.map(id => parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json')))), { history: Object.keys(packageRows ?? {}).length > 0 }))
+const tiered = draft && !release
+if (tiered) console.log(green ? '\nThe experimental lines are green: try it with npm run module:dev, and share the branch; a tester runs the same command on it. The ○ lines are what listing it needs.' : '\nFix the lines marked ✗, then run this again. The ○ lines can wait until you list it.')
+else console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
 process.exitCode = green ? 0 : 1

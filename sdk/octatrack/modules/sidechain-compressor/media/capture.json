@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "sidechain-compressor",
+  "moduleVersion": "0.2.2-experimental",
+  "capturedOn": "2026-10-30",
+  "firmware": "1.40C",
+  "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
+  "emulatorSha256": "21b159be7e918d0cdf211c3a9f8b3966c8ed4a262b29b9fb4c41de10753a14c8",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX1"
+      ]
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 8
+      }
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "capture": "ot-compressor-selection.png"
+    },
+    {
+      "press": [
+        "FX1"
+      ]
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "capture": "ot-compressor-main.png"
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX1"
+      ]
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 8
+      }
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "capture": "ot-sidechain-key-selected.png"
+    }
+  ],
+  "screenshots": {
+    "ot-compressor-selection.png": "505432eb93b2efa56306b6c9582b83dd2d01c104e6a4d21580972b55a26493c7",
+    "ot-compressor-main.png": "147a64589097cf12a0d7765dbe5adc266640a4e0a97c164353e3e146bcd765e5",
+    "ot-sidechain-key-selected.png": "4251d5989619fe2825794316152b390dd0ce5eebc383803be127fb64ebe1aef0"
+  },
+  "image": {
+    "what": "Native octabam image of Sidechain Compressor alone with the stock FX2 effects kept, built by the SDK Modwerk ships; SPRING REV gives up its code space.",
+    "build": "python3 scripts/export-composition-proofs.py PRIVATE_SDK DEST --app . --vendored-sdk --static-stock --modules POOL --menus MENUS --select sidechain-compressor:true --image-dir IMAGES",
+    "sdkRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "bytes": 1112560
+  },
+  "composedImage": {
+    "what": "The complete image the site composes for the same selection, with its appended runtime and the core logger. The same plan drew the same three frames.",
+    "sha256": "9b8c9ed37f290d050ba39ec09144362548df216b772af212594f0bc3c2f48c61",
+    "bytes": 1118124,
+    "screenshots": {
+      "ot-compressor-selection.png": "505432eb93b2efa56306b6c9582b83dd2d01c104e6a4d21580972b55a26493c7",
+      "ot-compressor-main.png": "147a64589097cf12a0d7765dbe5adc266640a4e0a97c164353e3e146bcd765e5",
+      "ot-sidechain-key-selected.png": "4251d5989619fe2825794316152b390dd0ce5eebc383803be127fb64ebe1aef0"
+    },
+    "pixelIdenticalToNative": true
+  },
+  "source": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
+    "path": "modwerk-modules/sidechain-compressor",
+    "manifestSha256": "ad3a66d0644a61a8b388f4ca75cd59987e61f527c26c603c71e96bd1ecce7418"
+  },
+  "sourceToolHashes": {
+    "scripts/capture-module-ui.py": "6521395cc2a9c05aff546bb422d73952011bf56de44ecb7de2741c8e74b78a9c",
+    "sdk/octabam/tools/emu/lcd_view.py": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
+    "sdk/octabam/tools/emu/emu_card.py": "b3877cd541467665f0f0d335f4baf5fc92fc088e53de62b50220bf991a606a55"
+  },
+  "emulatorBuild": {
+    "source": "ot_emu from a local sambanks/octabam checkout (HEAD 4781ca40, 21 October 2026); not rebuilt from this repository's sdk/octabam copy.",
+    "dspRepository": "https://github.com/dsp56300/dsp56300",
+    "dspRevision": null,
+    "asmjitRevision": null,
+    "mc68kRevision": null,
+    "compiler": null,
+    "cmake": null
+  },
+  "projectSetup": {
+    "recipe": "No project and no private template: the capture script writes an empty scratch card and the firmware starts a new project. The first-run date dialog is accepted with YES, track T1 is selected, FUNC + FX1 opens FX1 SETUP and encoder LEVEL is turned eight rows to COMPRESSOR, the module's row, before YES assigns it."
+  },
+  "review": {
+    "selectionConfirmed": "YES assigns COMPRESSOR before the SETUP page is captured: its right-hand side shows RMS, MON (OFF), KEY, KGN, KBAS and KWID, KWID with its link clip to KBAS.",
+    "observedKey": "T2 after encoder C delta 8, drawn on the KEY rotary switch; not evidence of T1-to-T5 tutorial audio.",
+    "pixelEdits": "None; actual LCD framebuffer at integer scale 6, only the two display colours are mapped.",
+    "comparedWith0.1.2": "The selection and KEY captures show 0.2.0's page 2; the main page is stock COMPRESSOR's, as before."
+  },
+  "limitations": [
+    "UI-only MKII session: stopped transport, no loaded audio or hardware qualification.",
+    "FX1 selection, main page and SETUP with the KEY switch observed. FX2 and MKI remain source-described, not captured.",
+    "No MON audio, ducking, project reload or timing qualification claimed.",
+    "The emulator was built from upstream octabam, not this repository's sdk/octabam copy; its sub-revisions were not recorded."
+  ]
+}

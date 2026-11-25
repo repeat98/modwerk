@@ -1,12 +1,14 @@
-# Silent Pad+Trig Settings — test report
+# Improved Configs (formerly Silent Pad+Trig Settings) — test report
+
+0.9.0 renames the module Improved Configs; its id, rows, fields and files stay.
 
 Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL TRK, as in
 rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and
 the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 renames 0.5.0's
 second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
-After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds.
+After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds. 0.7.0 renames the second row SILENT P+T LIVEREC; sections before 0.7.0 keep SILENT PAD LIVEREC.
 
-- Module: `silent-pad-trig` 0.6.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.9.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -24,8 +26,43 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
   the provenance hashes differ, so the PS07/PS08 results stand.
 - 0.6.0's `src/silent-pad-trig.s` is `54402bee…d71f`, fingerprint `cb882beb…5193`
   (`evidence.sourceSha256`).
+- 0.7.0's `src/silent-pad-trig.s` is `a98f7e1e…1a8e`, fingerprint `4e0e6f07…5680`.
+- 0.8.0's `src/silent-pad-trig.s` is `e00acb55…50f4`, fingerprint `ad162c3d…b5e6`.
+- 0.9.0's `src/silent-pad-trig.s` is `8ad80456…c76a`, fingerprint `b8aa46c7…363c`
+  (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PC01 (the author's combined build: RC45's 17 modules on the private base `b3bf8330`, RC45's
+  lockfile, this folder's 0.9.0, `--version PC01`): `.syx`
+  `b0f8b76b63156f36fbc5e3dd4a7f3294aff195f5ec7afd26ae7f1a70c0c991f6`, storage layout `0x253c78e2`
+  (reads RC45's projects; the new bit is appended). RAM-booted on an Analog Rytm MKII on 2026-11-22
+  ([below](#pc01-on-an-analog-rytm-mkii-2026-11-22-as-reported)).
+- Build PF02 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.9.0 alone, Modwerk's linker, `--version PF02`):
+  `.syx` `f4e3fb24adf893dddcc4b056964f5187005d786318418a4728dd4e327743cfc4`, main OS `dead3b08…b4eb`.
+  The media frames. PF01 (`c7d83de2…db08`), the emulator cases below, has the same main OS bytes
+  (PF02 only adds a claim to `build.json`). Not run on a unit; PC01 carries the same source.
+- Build PS17 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.8.0 alone, Modwerk's linker, `--version PS17`):
+  `.syx` `0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce`, main OS `6ff61580…8b2e`.
+  Screenshots only: rytm-emu reproduces PS16's four media frames byte for byte. Not run on a unit.
+- Build AT04 (the author's combined build: a modified core-ar2 0.7 base with 15 other modules and
+  this folder's 0.8.0 code, `--version AT04`): `.syx`
+  `d018eb553f22cd973063cbc25acc2f98b241ec87b1cfad875c44418630049427`. Ran on an Analog Rytm MKII on
+  2026-11-08 ([below](#at04-on-an-analog-rytm-mkii-2026-11-08-as-reported)). AT04E is the same with
+  CH forced muted, for the emulator only.
+- Build PS16 (as PS15, with the LIVE REC row's storage field renamed `silent_pt_live_rec_on`,
+  `--version PS16`): `.syx` `0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9`, main OS
+  `40a8221f…0e3d`. Checked in rytm-emu 2026-11-04. Ran on an Analog Rytm MKII on 2026-11-04: flashed,
+  and "all good", as reported. PS14's itemized results carry over (the same code apart from the label
+  and the field's name).
+- Build PS15 (as PS14, with the second row renamed SILENT P+T LIVEREC, `--version PS15`): `.syx`
+  `35bd04354075702068122a9fbd2653a75e5988210f697a944f5ca244da483d80`, main OS `7b5b44d6…9006`. Label
+  checked in rytm-emu 2026-11-04; not run on a unit. PS14's results carry over (the same code apart
+  from the label).
+- Build PS14 (vendored core-ar2 0.7 `core-ar2-0.7.elemod` `f1e9cb2c…`, + 0.7.0, Modwerk's linker,
+  `--version PS14`): `.syx` `629fa15c9203f7a82350535e1e50c5b13065283248884b5267e7acba296bf736`, main OS
+  `73fb5eda…0122`. Tested in rytm-emu 2026-11-04 ([0.7.0](#070-func--trig-plays-trig-keys-in-live-rec-row-renamed-2026-11-04)).
+  Ran on an Analog Rytm MKII on 2026-11-04 ([below](#ps14-on-an-analog-rytm-mkii-2026-11-04-as-reported)). PS13 (`cf990894…`), the same without the LIVE REC change, was an
+  intermediate build.
 - Build PS12 (as PS11, with the MIDI note on stopped where the track is known): `.syx`
   `abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702`. Tested in rytm-emu 2026-11-01 ([0.6.0](#060-mute-all-sound-2026-11-01)). Combined image `82f9a398a62751cd…`. Ran on an Analog Rytm MKII on 2026-11-01, as reported.
 - Build PS11 (Modwerk base `0c92aa45`, core-ar2 0.7, + 0.6.0, Modwerk's linker, `--version PS11`):
@@ -54,6 +91,181 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
+
+## 0.9.0: PAD LEAVES FX, renamed Improved Configs (2026-11-22)
+
+What stock does, read from OS 1.74's code: every track change goes through one routine,
+`0x400d4ba0` (track, stay on FX). For a track 0 to 11 it sets the track the pads and knobs play,
+then the screen's track unless that is the track already or "stay on FX" is set. Its callers: the
+TRK view (`0x400d4f72`, TRK + pad or TRIG) passes "leave"; the FX key (`0x400d4fac`) selects track
+12; and KeyboardView's pending select (`0x400c6de8`, from view + 176 and + 180), which both key
+handlers fill when a press selects a track (the pad's with AUTO TRK SWITCH checked or RTRG held,
+`0x400c7a4e`; the TRIG key's with AUTO TRK SWITCH, TRIG 1-12 only), setting "stay on FX" exactly
+when the screen's track is 12 (`0x400c7b5c`, `0x400c7eb4`). Nothing else writes either track: MIDI
+notes in, CHROMATIC pads and the PERF and SCENE views select nothing. Silent Pad+Trig's silent
+select reaches the same stores through its AUTO TRK SWITCH sites.
+
+The module replaces both flag computations (`moveq #12; cmpl; seq %d0`, 6 bytes each, before
+`negl %d0; moveb %d0,+180`) with a `jsr`: the same flag while PAD LEAVES FX is unchecked (-1 for
+stock's 0xff, 0 for 0, so the stored byte is identical), 0 while it is checked. An independent
+review checked the equivalence, the registers the code after each site reads, and the menu row,
+and found no defect (two documentation nits, fixed).
+
+### In rytm-emu (2ac0f1f), PF01, 2026-11-22
+
+From one snapshot after the boot notices, PAD LEAVES FX checked (C) or unchecked (U) through the
+menu, AUTO TRK SWITCH checked (its default) unless noted, then FX and the press. The screen after
+the press:
+
+| Case | Press after FX | Screen |
+| --- | --- | --- |
+| U1 | SD | FX track (stock) |
+| C1 | SD | SD's SRC page |
+| U2 | TRIG 3 | FX track (stock) |
+| C2 | TRIG 3 | RS's SRC page |
+| C3 | BD, the track FX would return to | BD's SRC page |
+| C4 | SD, with SILENT PAD+TRIG checked too | SD's SRC page |
+| C5 | SD, with AUTO TRK SWITCH unchecked | FX track (stock: the pad selects nothing) |
+| C6 | RTRG held, SD | SD's SRC page |
+| C7 | FUNC held, SD | SD's SRC page |
+| C8 | SD in LIVE RECORDING (RECORD + PLAY first) | SD's SRC page, recording |
+| C9 | SD, then FX again | FX track |
+| C10 | TRK held, SD | SD's SRC page (stock's own path) |
+
+The rows draw as stock's (media frames, PF02). Not compared: sound (C4's silence is the unchanged
+SILENT PAD+TRIG path), MIDI out, the SOUND BROWSER and other menus, CHAIN, SONG, FILL, a saved
+project across a power cycle, and PAD LEAVES FX in a GLOBAL slot other than 1.
+
+### PC01 in rytm-emu, 2026-11-22
+
+The combined build, cold-booted: SEQUENCER CONFIG lists PAD LEAVES FX after MUTE ALL SOUND, before
+Live Rec Retrig Fix's QUANT RTRG TO SEQ. With it checked, from the FX track: SD, BD, TRIG 3 and RTRG +
+SD each brought up their track's page, beside Improved MIDI Control's FX-track page. Unchecked, SD
+and BD from the FX track left it up.
+
+### PC01 on an Analog Rytm MKII, 2026-11-22, as reported
+
+RAM-booted over the development link (not flashed), a scratch project. Reported by the author, with
+AUTO TRK SWITCH unchecked and PAD LEAVES FX checked: on MT, FX, then the MT pad: back on MT; FX, then
+CH: on CH; TRK + pad the same. Plain pad taps selected their track silently, and FUNC + pad played
+without selecting, as SILENT PAD+TRIG documents (a silent press always selects; one that plays follows
+AUTO TRK SWITCH). Not tried on the unit: TRIG keys, RTRG + pad, LIVE RECORDING, AUTO TRK SWITCH
+checked, and a power cycle with the row kept.
+
+## 0.8.0: muted retrig rolls record, no shared-voice steal, pad lights (2026-11-08)
+
+Before 0.8.0, MUTE ALL SOUND stopped a muted pad's hit at the voice trigger (`0x40084114`). The
+retrig series is armed later, in the audio block, from that trigger's pad mailbox, so RTRG + a
+muted pad in LIVE RECORDING recorded its first hit only. 0.8.0 lets a muted hit in LIVE RECORDING
+go on to the voice trigger, and drops the track's trig in the audio block instead, at the end of
+each track's pass over its trig sources (`0x40120a66`), before voice allocation (`0x4012106a`):
+no voice is taken, so CH muted never steals OH's voice, and the series, kept per track, keeps
+counting. A dropped note's release is dropped while a partner owns the voice (stock's release at
+`0x40121108` does not check the owner). A second site at the pad glow store (`0x4012155a`) lights
+the pad on each dropped hit: stock lights a pad from its voice's sound (a running mean of the
+voice's square, `0x419ca178[t]`, drawn as log2 by the pad view `0x400c987e`), and a dropped hit
+makes none.
+
+### In rytm-emu (2ac0f1f, `DTEMU_ANALOG_IDEAL=1`), 2026-11-08
+
+Emulator results, not hardware. AT04E forces MUTE ALL SOUND on and CH muted; OH pressed at 5701M,
+RTRG held from 5901M, CH from 5911M for 150M.
+
+| Run | Result |
+| --- | --- |
+| AT04E, RTRG + CH | analog and DAC output sample-identical to the same run without CH (0 of 771840 and 0 of 3102592 samples differ) |
+| AT03E (AT04E without the glow site), RTRG + CH | CH's retrig count (`0x42adf5d0 + 8`) written as often as with CH unmuted; message 31 (the trig notice) sent 8 times, as unmuted |
+| AT04E, RTRG + CH | CH's pad glow `0x419ca198` rises to `0x0adcea0f` after a hit and falls block by block, again on each retrig, and reaches 0 about 30M after release |
+| AT04, nothing muted | output identical to the build before (AT03 and AT02) |
+| All | one CPU exception class only, TRAP #0 (stock's) |
+
+The emulator renders CH but not OH, so OH ringing on, and stock's own pad glow, were checked on
+the unit only.
+
+### AT04 on an Analog Rytm MKII, 2026-11-08, as reported
+
+With MUTE ALL SOUND checked, OH playing a pattern and CH muted, RTRG + CH in LIVE RECORDING: every
+retrig recorded, no CH sound and no click, OH kept ringing (not choked), and the CH pad flashed on
+each retrig like an unmuted pad. With LIVE RECORDING off, a muted pad stayed silent. A normal jam
+felt unchanged. The step that unmutes during a held roll could not be done by hand; MIDI out and
+solo were not retested.
+
+## 0.7.0: FUNC + TRIG plays, TRIG keys in LIVE REC, row renamed (2026-11-04)
+
+Read from OS 1.74: KeyboardView's TRIG handler (`0x400c7b84`) declines FUNC + TRIG outside STEP
+RECORDING (`0x400c7cec`), after testing STEP REC at `0x400c7ce0`, so stock's FUNC + TRIG plays
+nothing there; the sequencer view's TRIG case (`0x4003cf3c`) does nothing with it when not
+recording. With plain TRIG presses silent, FUNC + TRIG was free to play them. The new `func_trig`
+replaces that STEP REC test: true in STEP REC, as stock, and true for TRIG 1-13 while `active()`
+holds, sending the press down the plain press's path (`0x400c7cf2`), which plays at the sound's
+VEL (byte 705, `0x400c7d30`); `play_gate` already lets FUNC through. GRID REC and the handler's
+other declines are tested before the site, so stay stock.
+
+`active()` no longer takes the press's source: in LIVE REC, SILENT P+T LIVEREC now gates TRIG keys
+as it gates pads. The plain press stops in `play_gate`, before the play routine and its record code,
+as a silent pad does. The row is renamed SILENT P+T LIVEREC (it was SILENT PAD LIVEREC) and its storage field
+`silent_pt_live_rec_on` (it was `silent_live_rec_on`), with no migration: the module is experimental. One new site, `.run` 1172 to 1196 bytes, no
+new storage.
+
+**Emulator** (rytm-emu 2ac0f1f, headless `dtboot`, PS14). Cold boots on a card image with the rows
+checked through the menu (AUTO TRK SWITCH checked on that card): A, SILENT PAD+TRIG and SILENT PAD
+LIVEREC; B, SILENT PAD+TRIG only. Then a snapshot per mode. Counters on the handler's decline
+(`0x400c7cec`), the play path (`0x400c7cf2`), the play routine (`0x400c772e`) and the voice start
+(`0x40083f40`); `--midi-out` bytes. VEL was 100 (`0x64`).
+
+| Mode (A) | TRIG 5, TRIG 13 | FUNC + TRIG 5 | FUNC + TRIG 13 | FUNC + SD |
+| --- | --- | --- | --- | --- |
+| Stopped, playing, CHAIN, SONG, menu open | silent, no MIDI | plays, `9d 04 64 8d 04 00` | plays, `9d 0c 64 8d 0c 00` | plays, `9d 01 7f` |
+| PERF, SCENE | silent | plays, `9d 04 64` | plays, `9d 0c 64` | as stock (no voice) |
+| MUTE | silent | plays, `9d 04 64` | plays, `9d 0c 64` | as stock (mute CC) |
+| CHROMATIC | silent | plays, `9d 04 64` | plays, `9d 0c 64` | chromatic note, as stock |
+| GRID REC | declined (place trigs, as stock) | declined; FUNC trig placed (`0x4003d71c`), as stock | the same | plays |
+| LIVE REC | silent, no MIDI | plays, `9d 04 64` | plays, `9d 0c 64` | plays |
+| STEP REC | declined, as stock | plays, as stock | plays, as stock | plays |
+
+On PS13 FUNC + TRIG 14 was declined in every mode but STEP REC, as stock; PS14 changes nothing on
+that path.
+
+LIVE REC, recording. Counted inside the play routine: for A's plain TRIG 5, `0x40083ec4`,
+`0x40083f14` and the voice trigger `0x4011e1b4` ran 0 times, as with no press, and `--analog-wav`
+was sample-identical to the run with no press. A's FUNC + TRIG 5 ran them 2, 1 and 2 times, the
+same as B's plain TRIG 5, which is stock. Playback of the recorded trig was not checked: the
+`--analog-wav` capture came back one second long, short of a pattern loop.
+
+B (SILENT P+T LIVEREC unchecked), LIVE REC: TRIG 5 and 13 play (`9d 04 64`, `9d 0c 64`), FUNC +
+TRIG is declined with no voice or MIDI, FUNC + SD plays at VEL, all as stock. Stopped: as A.
+
+With both rows unchecked (PS13, same code path outside LIVE REC), stopped: TRIG 5 plays, FUNC + TRIG
+5 and 13 are declined with no voice or MIDI, as stock.
+
+**Field rename (PS16).** PS15 with both SILENT rows checked, then `--power-off` on a copy of the
+card: a cold boot of PS15 on that card shows both still checked; a cold boot of PS16 shows SILENT
+PAD+TRIG and SILENT P+T LIVEREC unchecked, the reset the README lists. On a fresh PS16 boot with both
+rows checked, LIVE REC: TRIG 5 silent with no voice or MIDI, FUNC + TRIG 5 `9d 04 64 8d 04 00`, SD
+silent.
+
+The four documentation captures, rerun on PS16 with the same plan (byte-identical to PS15's): CONTROL and the silent press
+are byte-identical to PS12's frames; both SEQUENCER CONFIG frames show the new label, whole, ending
+before the box, also highlighted (step 21).
+
+### PS14 on an Analog Rytm MKII, 2026-11-04, as reported
+
+npp1993 ran PS14 with both SILENT rows checked and reported that everything worked as expected,
+following these steps:
+
+| Step | Result |
+| --- | --- |
+| LIVE REC: TRIG 5 | silent, as reported |
+| LIVE REC: FUNC + TRIG 5 | plays, as reported |
+| Stop, play the pattern | only the FUNC + TRIG hit recorded, as reported |
+| Stopped: FUNC + TRIG | plays at VEL; changing VEL changes its level, as reported |
+
+Not itemized on a unit: GRID REC and STEP REC with FUNC + TRIG, TRIG 13, AUTO TRK SWITCH off.
+PS16 was then flashed and reported all good, with no steps itemized.
+
+**Not tested in the emulator:** VEL other than 100 for FUNC + TRIG, playback of a FUNC + TRIG trig
+recorded in LIVE REC (both passed on the unit, below), AUTO TRK SWITCH unchecked, FUNC + TRIG
+with MUTE ALL SOUND on a muted track, the SOUND BROWSER, a unit.
 
 ## 0.6.0: MUTE ALL SOUND (2026-11-01)
 
@@ -321,6 +533,10 @@ those bytes; all are rytm2_mods' and their stock bytes match its `mod.json`. 0.3
 | `0x400c7e90` | 6 | jsr | `silent_pad_trig_autotrk` | the TRIG key handler's AUTO TRK SWITCH call |
 | `0x400c7950` | 6 | jmp | `silent_pad_trig_func_gate` | the pad handler's FUNC test |
 | `0x400ec184` | 8 | jmp | `silent_pad_trig_menu_add` | the SEQUENCER CONFIG menu's constructor (jmp + nop) |
+| `0x400c7b5c` | 6 | jsr | `silent_pad_trig_fx_pad` | the pad handler's "stay on FX" flag (0.9.0) |
+| `0x400c7eb4` | 6 | jsr | `silent_pad_trig_fx_trig` | the TRIG key handler's "stay on FX" flag (0.9.0) |
+
+Later versions add the sites `build.json` lists (fifteen in 0.9.0).
 
 rytm2_mods declares the two AUTO TRK SWITCH sites as `keep2`. The stock instruction there is an
 absolute `jsr`, so `keep2` and `jsr` write the same six bytes; this folder uses `jsr`, which

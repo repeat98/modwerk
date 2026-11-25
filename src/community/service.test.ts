@@ -11,6 +11,9 @@ import { digest } from '../../server/security'
 import { signGithubPayload } from '../../server/github'
 import { notificationLines } from './notification-text'
 import { COMMUNITY_MODULES } from './modules'
+import { PAUSED_MODULE_IDS, isBetaModule } from '../catalog/availability'
+// Paused modules that nobody can download, beta access or not.
+const PAUSED = PAUSED_MODULE_IDS.filter(id => !isBetaModule(id))
 import type { Database, Statement, Env } from '../../server/platform'
 const databases:DatabaseSync[]=[]
 function adapter(db:DatabaseSync):Database{
@@ -62,6 +65,10 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0068_report_triage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0021_social_onboarding.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0063_github_actions.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0072_octatrack_diagnostics.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0089_octatrack_count_daily.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0087_shared_read_cache.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0097_site_count_daily.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
  const objects=new Map<string,ArrayBuffer>()
  env.MEDIA={async put(key,bytes){objects.set(key,bytes)},async get(key){const bytes=objects.get(key);return bytes?{body:new ReadableStream({start(controller){controller.enqueue(new Uint8Array(bytes));controller.close()}})}:null},async delete(key){objects.delete(key)}}
@@ -81,12 +88,47 @@ async function fixture(){
  return {db,env,call,tokens,admin,openAdmin}
 }
 const adminKey='e'.repeat(64)
-const issueContext={model:'mk2',flash:'flashed',os:'1.40C',modules:[{id:'spectrum',version:'0.1.0'}],keepStockFx2:true,build:'c'.repeat(64)}
+const issueContext={model:'mk2',flash:'flashed',os:'1.40C',modules:[{id:'recorder-loop-fix',version:'0.1.0'}],keepStockFx2:true,build:'c'.repeat(64)}
 const otLog=readFileSync(new URL('../../sdk/runtime/logging/tests/expected.log',import.meta.url),'utf8')
-const issue=(extra:Record<string,unknown>={})=>({title:'Knob issue',steps:'Load spectrum, turn knob A',expected:'Sweep',actual:'Freeze',displayName:'Listener',context:issueContext,log:otLog,...extra})
+const issue=(extra:Record<string,unknown>={})=>({title:'Knob issue',steps:'Load recorder-loop-fix, turn knob A',expected:'Sweep',actual:'Freeze',displayName:'Listener',context:issueContext,log:otLog,...extra})
 afterEach(()=>{vi.useRealTimers();for(const db of databases.splice(0))db.close()})
 const details={moduleId:'new-filter',title:'New filter',repositoryUrl:'https://github.com/sambanks/example/tree/main/modules/filter',description:'Original filter',usage:'Choose the filter',testReportUrl:'https://github.com/sambanks/example/blob/main/TESTS.md',stressNotes:'Eight tracks under stress',qualityNotes:'Emulator only; hardware untested',resourceNotes:'100 words; CPU not measured',license:'Original code, MIT; own capture',rightsConfirmed:true}
 describe('community access and review',()=>{
+ it('counts outstanding work across all three admin queues', async () => {
+  const { call, db, admin } = await fixture()
+  const counts = async () => (await call('/admin/overview', 'GET', undefined, '', undefined, admin)).json()
+  expect(await counts()).toMatchObject({ issues: 0, forum: 0, requests: 0 })
+  db.exec(`
+    INSERT INTO issues(id,module_id,author_login,reporter_id,title,body) VALUES('issue','mod','author','other','Title','Body');
+    INSERT INTO forum_threads(id,user_id,title,category) VALUES('thread','author','Title','general');
+    INSERT INTO forum_posts(id,thread_id,user_id,body) VALUES('post','thread','author','Body');
+    INSERT INTO forum_reports(id,post_id,user_id,reason) VALUES('report','post','other','Reason');
+    INSERT INTO forum_shouts(id,user_id,body) VALUES('shout','author','Body');
+    INSERT INTO forum_shout_reports(id,shout_id,user_id,reason) VALUES('shout-report','shout','other','Reason');
+    INSERT INTO conversations(id,pair_key) VALUES('dm','author:other');
+    INSERT INTO conversation_members(conversation_id,user_id) VALUES('dm','author'),('dm','other');
+    INSERT INTO message_reports(id,conversation_id,user_id,reason) VALUES('dm-report','dm','other','Reason');
+    INSERT INTO account_removal_requests(id,user_id,status) VALUES('new','author','requested'),('active','other','reviewing');
+  `)
+  expect(await counts()).toMatchObject({ issues: 1, forum: 3, requests: 2 })
+  db.exec(`
+    UPDATE issues SET status='closed';
+    UPDATE forum_reports SET resolved=1;
+    UPDATE message_reports SET resolved=1;
+    UPDATE account_removal_requests SET status='completed' WHERE id='active';
+    UPDATE account_removal_requests SET status='cancelled' WHERE id='new';
+  `)
+  expect(await counts()).toMatchObject({ issues: 0, forum: 1, requests: 0 })
+  const ids = async (path: string) => {
+    const result = await call(path, 'GET', undefined, '', undefined, admin)
+    expect(result.status).toBe(200)
+    return (await result.json() as { id: string }[]).map(item => item.id).sort()
+  }
+  expect(await ids('/admin/forum/reports?view=pending')).toEqual(['shout-report'])
+  expect(await ids('/admin/forum/reports?view=reviewed')).toEqual(['dm-report', 'report'])
+  expect(await ids('/admin/account-requests?view=active')).toEqual([])
+  expect(await ids('/admin/account-requests?view=archive')).toEqual(['active', 'new'])
+ })
  it('does not grant publication to historical reports during migration',()=>{
   const db=new DatabaseSync(':memory:');databases.push(db)
   db.exec("CREATE TABLE issues(id TEXT PRIMARY KEY,context_json TEXT,github_url TEXT); INSERT INTO issues VALUES('private',NULL,NULL),('structured','{}',NULL),('published','{}','https://github.com/repeat98/octamod/issues/1')")
@@ -117,15 +159,15 @@ describe('community access and review',()=>{
   expect((await (await asAdmin('/admin/history')).json()).map((item:{action:string;actor:string})=>[item.action,item.actor])).toEqual([['withdrawn','Octamod administrator']])
  })
  it('accepts member comments and ratings, preserving ownership',async()=>{
-  const {call,tokens}=await fixture(),session='octamod_session='+tokens.author;const posted=await call('/modules/spectrum/comments','POST',{body:'Useful module'},session);expect(posted.status).toBe(200)
-  expect((await call('/modules/spectrum/rating','POST',{value:5},session)).status).toBe(200)
-  expect((await call('/modules/spectrum/rating','POST',{value:3},session)).status).toBe(200)
-  const page=await (await call('/modules/spectrum','GET',undefined,session)).json()
+  const {call,tokens}=await fixture(),session='octamod_session='+tokens.author;const posted=await call('/modules/recorder-loop-fix/comments','POST',{body:'Useful module'},session);expect(posted.status).toBe(200)
+  expect((await call('/modules/recorder-loop-fix/rating','POST',{value:5},session)).status).toBe(200)
+  expect((await call('/modules/recorder-loop-fix/rating','POST',{value:3},session)).status).toBe(200)
+  const page=await (await call('/modules/recorder-loop-fix','GET',undefined,session)).json()
   expect(page.ratings).toEqual({average:3,count:1});expect(page.comments[0].author).toBe('Author guest');expect(page.comments[0].canDelete).toBe(true);expect(JSON.stringify(page)).not.toContain('email')
-  expect((await call('/modules/spectrum/rating','POST',{value:6},session)).status).toBe(400)
-  expect((await call('/modules/spectrum/like','POST',{liked:true},session)).status).toBe(200)
-  expect((await call('/modules/spectrum/like','POST',{liked:true},session)).status).toBe(200)
-  expect((await (await call('/modules/spectrum','GET',undefined,session)).json()).likes).toBe(1)
+  expect((await call('/modules/recorder-loop-fix/rating','POST',{value:6},session)).status).toBe(400)
+  expect((await call('/modules/recorder-loop-fix/like','POST',{liked:true},session)).status).toBe(200)
+  expect((await call('/modules/recorder-loop-fix/like','POST',{liked:true},session)).status).toBe(200)
+  expect((await (await call('/modules/recorder-loop-fix','GET',undefined,session)).json()).likes).toBe(1)
   expect((await call('/submissions','POST',details,session)).status).toBe(410)
   expect((await call('/modules/remix-miniverb/comments','POST',{body:'Guest remix discussion'},session)).status).toBe(404)
   expect((await call('/modules/remix-miniverb/rating','POST',{value:4},session)).status).toBe(200)
@@ -145,7 +187,7 @@ describe('community access and review',()=>{
  })
  it('keeps report copies and logs restricted to the verified reporter and administrator',async()=>{
   const {call,tokens,admin}=await fixture()
-  const result=await call('/modules/spectrum/issues','POST',issue(),'octamod_session='+tokens.other);expect(result.status).toBe(201);expect(await result.json()).toMatchObject({author:'sambanks',github:'none'})
+  const result=await call('/modules/recorder-loop-fix/issues','POST',issue(),'octamod_session='+tokens.other);expect(result.status).toBe(201);expect(await result.json()).toMatchObject({author:'sambanks',github:'none'})
   const reporter='octamod_session='+tokens.other,other='octamod_session='+tokens.author,author='octamod_session='+tokens.author
   for(const session of ['',other,author,reporter])expect((await call('/admin/issues','GET',undefined,session)).status).toBe(403)
   expect((await call('/issues','GET',undefined,reporter)).status).toBe(404)
@@ -153,7 +195,7 @@ describe('community access and review',()=>{
   expect(await (await call('/issues/mine','GET',undefined,other)).json()).toEqual([])
   const mine=await (await call('/issues/mine','GET',undefined,reporter)).json();expect(mine).toHaveLength(1);expect(mine[0]).toMatchObject({author_login:'sambanks',status:'open'})
   const inbox=await (await call('/admin/issues','GET',undefined,'',undefined,admin)).json();expect(inbox).toHaveLength(1);expect(inbox[0].reporter).toBe('Another guest')
-  expect(inbox[0]).toMatchObject({context:{...issueContext,modules:[{id:'repitch',version:'0.1.0'},{id:'miniverb',version:'0.1.2'}]},github_state:'none',log:{records:259,dropped:44}});expect(inbox[0].body).toContain('Load spectrum, turn knob A')
+  expect(inbox[0]).toMatchObject({context:{...issueContext,modules:[{id:'repitch',version:'0.1.0'},{id:'miniverb',version:'0.1.2'}]},github_state:'none',log:{records:259,dropped:44}});expect(inbox[0].body).toContain('Load recorder-loop-fix, turn knob A')
   for(const session of ['',reporter])expect((await call('/admin/issues/'+inbox[0].id+'/log','GET',undefined,session)).status).toBe(403)
   const log=await call('/admin/issues/'+inbox[0].id+'/log','GET',undefined,'',undefined,admin);expect(log.status).toBe(200);expect(await log.text()).toBe(otLog)
   expect((await call('/admin/issues/'+inbox[0].id,'PATCH',{status:'closed'},reporter)).status).toBe(403)
@@ -162,7 +204,7 @@ describe('community access and review',()=>{
  })
  it('accepts reports without a log or reproduction steps, checks a given reason, and accepts only the log format',async()=>{
   const {call,db,tokens}=await fixture()
-  const status=async(body:Record<string,unknown>)=>(await call('/modules/spectrum/issues','POST',body,'octamod_session='+tokens.other)).status
+  const status=async(body:Record<string,unknown>)=>(await call('/modules/recorder-loop-fix/issues','POST',body,'octamod_session='+tokens.other)).status
   expect(await status({title:'Old form',body:'Free text'})).toBe(400)
   expect(await status(issue({log:undefined,logMissing:{reason:'other',note:'no'}}))).toBe(400)
   expect(await status(issue({log:undefined,logMissing:{reason:'not-flashed'}}))).toBe(400)
@@ -193,21 +235,21 @@ describe('community access and review',()=>{
   try{
    const reporter='octamod_session='+tokens.other
    // A private report never reaches GitHub, not even through an administrator retry.
-   const saved=await call('/modules/spectrum/issues','POST',issue(),reporter)
+   const saved=await call('/modules/recorder-loop-fix/issues','POST',issue(),reporter)
    expect(saved.status).toBe(201);expect(await saved.json()).toMatchObject({github:'none',githubUrl:null})
    const privateId=String(db.prepare('SELECT id FROM issues').get()!.id)
    expect((await call('/admin/issues/'+privateId+'/github','POST',{},'',undefined,admin)).status).toBe(400)
    expect(requests).toHaveLength(0)
-   expect(await (await call('/modules/spectrum/issues')).json()).toEqual({tracker:'github',issues:[],openCount:0,closedCount:0,confirmedCount:0,needsInfoCount:0,hasMore:false,allUrl:'https://github.com/repeat98/octamod/issues?q='+encodeURIComponent('is:issue is:open label:"module:spectrum"')})
+   expect(await (await call('/modules/recorder-loop-fix/issues')).json()).toEqual({tracker:'github',issues:[],openCount:0,closedCount:0,confirmedCount:0,needsInfoCount:0,hasMore:false,allUrl:'https://github.com/repeat98/octamod/issues?q='+encodeURIComponent('is:issue is:open label:"module:recorder-loop-fix"')})
    // A public report becomes a GitHub issue straight away and gets no forum thread of its own.
-   const published=await call('/modules/spectrum/issues','POST',issue({visibility:'forum',steps:'Ping @someone about #12 <img src=x>'}),reporter)
+   const published=await call('/modules/recorder-loop-fix/issues','POST',issue({visibility:'forum',steps:'Ping @someone about #12 <img src=x>'}),reporter)
    expect(published.status).toBe(201)
    const result=await published.json();expect(result).toMatchObject({forumThreadId:null,github:'failed',githubUrl:null})
    expect(db.prepare("SELECT COUNT(*) AS count FROM forum_threads WHERE category='issues'").get()).toEqual({count:0})
    const created=requests[0];expect(created).toMatchObject({url:'https://api.github.com/repos/repeat98/octamod/issues',method:'POST',auth:'Bearer github_pat_test'})
-   expect(created.body.title).toBe('[spectrum] Knob issue');expect(created.body.labels).toEqual(['issue-report','module:spectrum'])
+   expect(created.body.title).toBe('[recorder-loop-fix] Knob issue');expect(created.body.labels).toEqual(['issue-report','module:recorder-loop-fix'])
    const markdown=String(created.body.body)
-   expect(markdown).toContain('by [other](https://octamod.test/forum/profile/other/)');expect(markdown).not.toContain('@sambanks');expect(markdown).toContain('| Module version | Not recorded |') // the configuration comes from the attached log, which does not list spectrum
+   expect(markdown).toContain('by [other](https://octamod.test/forum/profile/other/)');expect(markdown).not.toContain('@sambanks');expect(markdown).toContain('| Module version | Not recorded |') // the configuration comes from the attached log, which does not list recorder-loop-fix
    expect(markdown).toContain('@\u200bsomeone');expect(markdown).toContain('#\u200b12');expect(markdown).not.toContain('<img')
    expect(markdown).not.toContain('#developer/report/');expect(markdown).toContain('Everything the reporter submitted is in this issue.')
    // The reporter agreed to publish the configuration, build fingerprint and log on GitHub.
@@ -216,7 +258,7 @@ describe('community access and review',()=>{
    expect((await call('/admin/issues/'+row.id+'/github','POST',{},reporter)).status).toBe(403)
    const retried=await (await call('/admin/issues/'+row.id+'/github','POST',{},'',undefined,admin)).json();expect(retried).toEqual({state:'synced',url:'https://github.com/repeat98/octamod/issues/41'})
    expect(await (await call('/admin/issues/'+row.id+'/github','POST',{},'',undefined,admin)).json()).toEqual({state:'synced'});expect(requests).toHaveLength(2)
-   const publicReports=await (await call('/modules/spectrum/issues')).json()
+   const publicReports=await (await call('/modules/recorder-loop-fix/issues')).json()
    expect(publicReports).toMatchObject({openCount:1,closedCount:0,hasMore:false})
    expect(publicReports.issues).toEqual([expect.objectContaining({title:'Knob issue',url:'https://github.com/repeat98/octamod/issues/41',number:41,status:'open',reporter:'other',details:expect.objectContaining({steps:'Ping @someone about #12 <img src=x>',expected:'Sweep',actual:'Freeze'})})])
    for(const secret of ['context_json','reporter_id','OCTAMOD-LOG','c'.repeat(64)])expect(JSON.stringify(publicReports)).not.toContain(secret)
@@ -236,8 +278,8 @@ describe('community access and review',()=>{
    expect((await (await call('/issues/mine','GET',undefined,reporter)).json()).find((item:{id:string})=>item.id===row.id).status).toBe('open')
    expect(await (await hook(closed,{id:'close-1'})).json()).toEqual({ok:true,handled:true})
    expect((await (await call('/issues/mine','GET',undefined,reporter)).json()).find((item:{id:string})=>item.id===row.id).status).toBe('closed')
-   expect(await (await call('/modules/spectrum/issues')).json()).toMatchObject({openCount:0,closedCount:1,issues:[]})
-   expect(await (await call('/modules/spectrum/issues?status=closed')).json()).toMatchObject({openCount:0,closedCount:1,issues:[{id:row.id,status:'closed',title:'Knob issue'}]})
+   expect(await (await call('/modules/recorder-loop-fix/issues')).json()).toMatchObject({openCount:0,closedCount:1,issues:[]})
+   expect(await (await call('/modules/recorder-loop-fix/issues?status=closed')).json()).toMatchObject({openCount:0,closedCount:1,issues:[{id:row.id,status:'closed',title:'Knob issue'}]})
    const {items}=await (await call('/notifications','GET',undefined,reporter)).json()
    expect(items).toMatchObject([{kind:'issue_resolved',github_actor:'sambanks',title:'Knob issue',url:'https://github.com/repeat98/octamod/issues/41'},{kind:'issue_comment',excerpt:'Thanks, I can reproduce this on 1.40C.'}])
    expect(notificationLines(items).map(line=>[line.text,line.href])).toEqual([
@@ -265,35 +307,35 @@ describe('community access and review',()=>{
   const {call,db,env}=await fixture()
   Object.assign(env,{GITHUB_TOKEN:'github_pat_test',GITHUB_REPOSITORY:'repeat98/octamod'})
   const description={device:'Octatrack MKII',version:'0.1.0',steps:'1. Load the module\n2. Turn the knob',expected:'Sweep',actual:'Freeze'}
-  for(let index=0;index<13;index++)db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,status,github_number,github_url,public_json,context_json) VALUES(?,'spectrum','sambanks','other',?,'PRIVATE REPORT BODY',?,?,?,?,'PRIVATE CONFIGURATION')")
+  for(let index=0;index<13;index++)db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,status,github_number,github_url,public_json,context_json) VALUES(?,'recorder-loop-fix','sambanks','other',?,'PRIVATE REPORT BODY',?,?,?,?,'PRIVATE CONFIGURATION')")
    .run('public-'+index,'Report '+index,index===12?'closed':'open',index+1,'https://github.com/repeat98/octamod/issues/'+(index+1),JSON.stringify(description))
-  db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body) VALUES('private','spectrum','sambanks','other','PRIVATE TITLE','PRIVATE REPORT BODY')").run()
+  db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body) VALUES('private','recorder-loop-fix','sambanks','other','PRIVATE TITLE','PRIVATE REPORT BODY')").run()
   db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,github_url,public_json) VALUES('other-module','miniverb','repeat98','other','OTHER MODULE','PRIVATE REPORT BODY','https://github.com/repeat98/octamod/issues/99',?)").run(JSON.stringify(description))
-  const first=await (await call('/modules/spectrum/issues')).json()
+  const first=await (await call('/modules/recorder-loop-fix/issues')).json()
   expect(first).toMatchObject({openCount:12,closedCount:1,hasMore:true})
   expect(first.issues).toHaveLength(10)
   expect(first.issues[0]).toMatchObject({id:'public-11',details:description,reporter:'other',status:'open'})
   for(const secret of ['PRIVATE','OTHER MODULE','context_json','reporter_id'])expect(JSON.stringify(first)).not.toContain(secret)
-  const second=await (await call('/modules/spectrum/issues?page=1')).json()
+  const second=await (await call('/modules/recorder-loop-fix/issues?page=1')).json()
   expect(second).toMatchObject({openCount:12,closedCount:1,hasMore:false})
   expect(second.issues.map((item:{id:string})=>item.id)).toEqual(['public-1','public-0'])
-  expect(await (await call('/modules/spectrum/issues?status=closed')).json()).toMatchObject({openCount:12,closedCount:1,hasMore:false,issues:[{id:'public-12',status:'closed'}],allUrl:'https://github.com/repeat98/octamod/issues?q='+encodeURIComponent('is:issue is:closed label:"module:spectrum"')})
+  expect(await (await call('/modules/recorder-loop-fix/issues?status=closed')).json()).toMatchObject({openCount:12,closedCount:1,hasMore:false,issues:[{id:'public-12',status:'closed'}],allUrl:'https://github.com/repeat98/octamod/issues?q='+encodeURIComponent('is:issue is:closed label:"module:recorder-loop-fix"')})
   delete env.GITHUB_TOKEN
   for(const [id,hidden] of [['visible',0],['hidden',1]] as const){
-   db.prepare("INSERT INTO forum_threads(id,user_id,title,category,module_id,hidden) VALUES(?,'other',?,'issues','spectrum',?)").run(id,id,hidden)
-   db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,forum_thread_id,public_json) VALUES(?,'spectrum','sambanks','other',?,'PRIVATE REPORT BODY',?,?)").run(id+'-report',id,id,JSON.stringify(description))
+   db.prepare("INSERT INTO forum_threads(id,user_id,title,category,module_id,hidden) VALUES(?,'other',?,'issues','recorder-loop-fix',?)").run(id,id,hidden)
+   db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,forum_thread_id,public_json) VALUES(?,'recorder-loop-fix','sambanks','other',?,'PRIVATE REPORT BODY',?,?)").run(id+'-report',id,id,JSON.stringify(description))
   }
-  const forumReports=await (await call('/modules/spectrum/issues')).json()
+  const forumReports=await (await call('/modules/recorder-loop-fix/issues')).json()
   expect(forumReports).toMatchObject({tracker:'forum',openCount:13,closedCount:1,allUrl:null,hasMore:true})
   expect(forumReports.issues[0]).toMatchObject({id:'visible-report',url:'#forum/thread/visible',details:description,number:null})
   expect(JSON.stringify(forumReports)).not.toContain('hidden-report')
-  db.prepare("UPDATE issues SET status='closed' WHERE module_id='spectrum'").run()
-  expect(await (await call('/modules/spectrum/issues')).json()).toMatchObject({openCount:0,closedCount:14,hasMore:false,issues:[]})
-  for(const query of ['?status=all','?page=-1','?page=1.5','?page=nope','?page=10001'])expect((await call('/modules/spectrum/issues'+query)).status).toBe(400)
+  db.prepare("UPDATE issues SET status='closed' WHERE module_id='recorder-loop-fix'").run()
+  expect(await (await call('/modules/recorder-loop-fix/issues')).json()).toMatchObject({openCount:0,closedCount:14,hasMore:false,issues:[]})
+  for(const query of ['?status=all','?page=-1','?page=1.5','?page=nope','?page=10001'])expect((await call('/modules/recorder-loop-fix/issues'+query)).status).toBe(400)
  })
  it('retires account-bound cloud configuration copies; configurations stay on the device',async()=>{
   const {call,tokens}=await fixture(),auth='octamod_session='+tokens.author
-  const config={id:'one',name:'Live',moduleIds:['spectrum'],moduleVersions:{spectrum:'0.0.9'},revision:0}
+  const config={id:'one',name:'Live',moduleIds:['recorder-loop-fix'],moduleVersions:{'recorder-loop-fix':'0.0.9'},revision:0}
   expect((await call('/configurations','PUT',config,auth)).status).toBe(410)
   expect((await call('/configurations','GET',undefined,auth)).status).toBe(410)
   expect((await call('/configurations/one','DELETE',undefined,auth)).status).toBe(410)
@@ -329,13 +371,13 @@ describe('separate administrator access',()=>{
  })
  it('lets the administrator moderate guest comments without a guest identity',async()=>{
   const {call,admin,tokens}=await fixture(),guest='octamod_session='+tokens.author
-  await call('/modules/spectrum/comments','POST',{body:'Spam'},guest)
+  await call('/modules/recorder-loop-fix/comments','POST',{body:'Spam'},guest)
   const [comment]=await (await call('/admin/comments','GET',undefined,'',undefined,admin)).json() as {id:string}[]
-  expect((await (await call('/modules/spectrum','GET',undefined,'',undefined,admin)).json()).comments[0].canDelete).toBe(true)
-  expect((await (await call('/modules/spectrum')).json()).comments[0].canDelete).toBe(false)
+  expect((await (await call('/modules/recorder-loop-fix','GET',undefined,'',undefined,admin)).json()).comments[0].canDelete).toBe(true)
+  expect((await (await call('/modules/recorder-loop-fix')).json()).comments[0].canDelete).toBe(false)
   expect((await call('/comments/'+comment.id,'DELETE')).status).toBe(401)
   expect((await call('/comments/'+comment.id,'DELETE',undefined,'',undefined,admin)).status).toBe(200)
-  expect((await (await call('/modules/spectrum','GET',undefined,guest)).json()).comments).toEqual([])
+  expect((await (await call('/modules/recorder-loop-fix','GET',undefined,guest)).json()).comments).toEqual([])
  })
 })
 
@@ -362,10 +404,10 @@ describe('GitHub Pages and separate backend',()=>{
    return handleCommunity(new Request(endpoint+path,{method,headers,body:body!==undefined?JSON.stringify(body):undefined}),env)
   }
   const session=tokens.author
-  const result=await call('/modules/spectrum/comments','POST',{body:'Cross-domain member'},session)
+  const result=await call('/modules/recorder-loop-fix/comments','POST',{body:'Cross-domain member'},session)
   expect(session).toMatch(/^[a-f0-9]{64}$/);expect(result.headers.get('set-cookie')).toBeNull()
   expect(result.headers.get('access-control-expose-headers')).toBe('X-Octamod-Session, X-Modwerk-Developer, Server-Timing')
-  const mine=await (await call('/modules/spectrum','GET',undefined,session)).json();expect(mine.comments[0].canDelete).toBe(true)
+  const mine=await (await call('/modules/recorder-loop-fix','GET',undefined,session)).json();expect(mine.comments[0].canDelete).toBe(true)
   expect((await call('/submissions','POST',details,session)).status).toBe(410)
   const logout=await call('/auth/logout','POST',{},session);expect(logout.headers.get('X-Octamod-Session')).toBe('')
   expect((await (await call('/auth/session','GET',undefined,session)).json()).user).toBeNull()
@@ -417,7 +459,7 @@ describe('administrator insights',()=>{
  })
  it('filters the private issue inbox before its limit and validates status with bound module IDs',async()=>{
   const {call,admin,db}=await fixture()
-  for(let index=0;index<201;index++)db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,status,created_at) VALUES(?,'spectrum','author','author','Other report','Details','closed','2026-10-03 12:00:00')").run('other-'+index)
+  for(let index=0;index<201;index++)db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,status,created_at) VALUES(?,'recorder-loop-fix','author','author','Other report','Details','closed','2026-10-03 12:00:00')").run('other-'+index)
   db.prepare("INSERT INTO issues(id,module_id,author_login,reporter_id,title,body,created_at) VALUES('wanted','miniverb','author','author','Older open report','Details','2026-09-01 12:00:00')").run()
   const path='/admin/issues?moduleId=miniverb&status=open'
   expect((await call(path)).status).toBe(403)
@@ -445,6 +487,25 @@ describe('administrator insights',()=>{
 })
 
 describe('private aggregate usage statistics',()=>{
+ it('returns retained install outcomes with independent guide and sync coverage',async()=>{
+  vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-11-21T12:00:00Z'))
+  const {call,db,admin}=await fixture()
+  db.exec(`INSERT INTO octatrack_count_daily VALUES ('2026-11-11','base_guide_opened','',8),('2026-11-12','base_first_connection','',4),
+    ('2026-11-12','base_file_downloaded','',7),('2026-11-12','base_usb_update_done','',3);
+    INSERT INTO octatrack_beta_daily VALUES ('2026-10-22','usb_sync_kept',99),('2026-11-05','usb_sync_started',3),
+    ('2026-11-12','usb_sync_kept',6),('2026-11-12','usb_sync_failed',2);`)
+  const read=async(days:number)=>(await(await call('/admin/statistics?days='+days,'GET',undefined,'',undefined,admin)).json())
+  const wide=await read(90)
+  expect(wide.installActivity.guideFrom).toBe('2026-11-11')
+  expect(wide.installActivity.syncFrom).toBe('2026-11-05')
+  expect(wide.installActivity.counts).toHaveLength(3)
+  expect(wide.installActivity.counts).toEqual(expect.arrayContaining([
+    {day:'2026-11-12',event:'base_first_connection',count:4},{day:'2026-11-12',event:'base_usb_update_done',count:3},
+    {day:'2026-11-12',event:'usb_sync_kept',count:6}
+  ]))
+  expect(wide.siteCounts).toEqual([])
+  expect((await read(7)).installActivity).toEqual({...wide.installActivity,counts:[]})
+ })
  it('counts events once, deduplicates daily visitors, and keeps summaries behind administrator authorization',async()=>{
   const {call,db,admin,tokens}=await fixture(),first=usageEvent()
   expect((await call('/usage/events','POST',first)).status).toBe(200)
@@ -517,6 +578,15 @@ describe('private aggregate usage statistics',()=>{
   expect((await call('/usage/events','POST',usageEvent())).status).toBe(429)
   expect(db.prepare('SELECT visitors,page_views FROM usage_daily').get()).toEqual({visitors:1,page_views:200})
  },15000) // 201 requests through the service; past 5 s on a busy CI runner
+ it('limits one address however many visitor IDs it sends',async()=>{
+  const {call,db}=await fixture()
+  expect((await call('/usage/events','POST',usageEvent('page_view',crypto.randomUUID()))).status).toBe(200)
+  db.exec('UPDATE rate_limits SET count=300') // this address's hour is used up
+  expect((await call('/usage/events','POST',usageEvent('page_view',crypto.randomUUID()))).status).toBe(429)
+  expect((await call('/usage/module-downloads','POST',{...moduleDownload(),visitor:crypto.randomUUID()})).status).toBe(429)
+  expect(db.prepare('SELECT page_views FROM usage_daily').get()).toEqual({page_views:1})
+  expect(db.prepare('SELECT COUNT(*) AS n FROM module_downloads').get()).toEqual({n:0})
+ })
 })
 
 describe('page-level traffic',()=>{
@@ -611,7 +681,7 @@ describe('public module popularity',()=>{
    const detail=await (await call('/modules/'+module.id)).json()
    expect(detail).toMatchObject({ratings:{average:value,count:1},likes:1,downloads:2})
   }
-  const updated=await (await call('/community/summary')).json()
+  const updated=await (await call('/community/summary?fresh=1')).json()
   const insights=await (await call('/admin/insights','GET',undefined,'',undefined,admin)).json()
   for(const [index,module] of digi.entries()){
    expect(updated.find((item:{module_id:string})=>item.module_id===module.id)).toMatchObject({average:index%5+1,count:1,likes:1,downloads:2})
@@ -640,7 +710,16 @@ describe('public module popularity',()=>{
   expect(db.prepare('SELECT COUNT(*) AS n FROM usage_daily').get()).toEqual({n:0})
   expect(db.prepare("SELECT COUNT(*) AS n FROM users WHERE id<>'modwerk'").get()).toEqual({n:3})
   expect((await call('/modules/miniverb/like','POST',{liked:false},'octamod_session='+tokens.author)).status).toBe(200)
-  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0)
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // the shared answer holds for a minute
+  expect((await (await call('/community/summary?fresh=1')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0) // the member's own change asks for a fresh one
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0) // which everyone then gets
+  db.prepare("UPDATE shared_read_cache SET computed_at=computed_at-60000").run()
+  db.prepare("INSERT INTO likes(module_id,user_id) VALUES('miniverb','author')").run()
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // a minute later anyone's read counts again
+  for(let fresh=1;fresh<30;fresh++)expect((await call('/community/summary?fresh=1')).status).toBe(200) // 30 fresh recounts an hour per address
+  db.prepare("DELETE FROM likes WHERE module_id='miniverb'").run()
+  expect((await (await call('/community/summary?fresh=1')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // past them, the shared answer
+  expect(String(db.prepare('SELECT body FROM shared_read_cache').get()!.body)).not.toMatch(/visitor|event_hash|eventId|configuration|email|author/i) // counts only
  })
  it('adds open and latest issue reports and the first download for the stability grade, but nothing from the reports',async()=>{
   const {call,db}=await fixture()
@@ -682,7 +761,7 @@ describe('public module popularity',()=>{
  })
  it('rejects unavailable modules, configuration data and firmware without recording anything',async()=>{
   const {call,db,env}=await fixture()
-  for(const body of [moduleDownload('unknown'),moduleDownload('spectrum'),moduleDownload('modulation'),moduleDownload('character'),moduleDownload('remix-unknown'),{...moduleDownload(),moduleIds:['tapeecho']},{...moduleDownload(),firmware:'not accepted'},{...moduleDownload(),configuration:'not accepted'},{...moduleDownload(),eventId:'invalid'},{...moduleDownload(),visitor:'invalid'}])expect((await call('/usage/module-downloads','POST',body)).status).toBe(400)
+  for(const body of [moduleDownload('unknown'),...PAUSED.map(id=>moduleDownload(id)),moduleDownload('remix-unknown'),{...moduleDownload(),moduleIds:['tapeecho']},{...moduleDownload(),firmware:'not accepted'},{...moduleDownload(),configuration:'not accepted'},{...moduleDownload(),eventId:'invalid'},{...moduleDownload(),visitor:'invalid'}])expect((await call('/usage/module-downloads','POST',body)).status).toBe(400)
   expect((await call('/usage/module-downloads','POST',{...moduleDownload(),firmware:'x'.repeat(1024)})).status).toBe(413)
   expect((await call('/usage/module-downloads','POST',moduleDownload(),'','https://elsewhere.test')).status).toBe(403)
   expect((await handleApi(new Request('https://octamod.test/api/usage/module-downloads',{method:'POST',headers:{Origin:env.APP_URL!,'Content-Type':'application/octet-stream','X-Octamod-Usage-Consent':USAGE_CONSENT_VERSION},body:'ELEK'}),env)).status).toBe(415)

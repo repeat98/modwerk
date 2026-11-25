@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/live-rec-retrig-fix",
+  "version": "0.2.1-experimental",
+  "date": "2026-11-06",
+  "changes": [
+    "Both ev_render_out handlers (the recording follower and Retrig Grid's) are now short entries that call the unchanged bodies only when they have work, so an idle audio block no longer builds a 144-byte stack frame; on the author's unit the two cost 3.4 µs a block before and 2.5 µs after. Recording, the grid and the RTRG key are unchanged."
+  ],
+  "runtimeSourceSha256": "bcec8ed5ae4f8200a1dfde2c370cf60b505355058b0c4008ce804e38b86fd070",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod",
+      "sha256": "0760ed0da03b6b217bc2781b483a5fbae4da4135f1e97b129160b24801f261d5"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/live-rec-retrig-fix/TESTING.md",
+  "requires": []
+}

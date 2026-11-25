@@ -32,8 +32,9 @@ class LoaderTests(unittest.TestCase):
         if not cc:
             self.skipTest('no host C compiler')
         octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')
-        # the default, the Octatrack's, and both with build_core.py --cached-modules
-        for defines in ((), octatrack, ('-DMODWERK_CACHED_MODULES',), octatrack + ('-DMODWERK_CACHED_MODULES',),
+        # Force the 32-bit stock/pool address collision in one cached build, where both kinds of flush run.
+        cached_overlap = ('-DMODWERK_CACHED_MODULES', '-DMODWERK_HOST_OVERLAP_STOCK')
+        for defines in ((), octatrack, cached_overlap, octatrack + ('-DMODWERK_CACHED_MODULES',),
                         octatrack + ('-DMODWERK_RUNTIME_SETS',),
                         octatrack + ('-DMODWERK_RUNTIME_SETS', '-DMODWERK_CACHED_MODULES')):
             with self.subTest(defines), tempfile.TemporaryDirectory() as temp:
@@ -150,6 +151,8 @@ class LoaderTests(unittest.TestCase):
         result = subprocess.run([sys.executable, '-B', ROOT / 'scripts/octatrack-module-packages.py', '--check'],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        if result.stderr:
+            print(result.stderr.rstrip())
 
     def test_converted_module_becomes_image_relocations_and_sites(self):
         stock = {0x40001000: bytes.fromhex('70201140000e'), 0x40002000: bytes.fromhex('4e714e71')}
@@ -196,6 +199,49 @@ spec.loader.exec_module(events)
 
 class SiteEventTests(unittest.TestCase):
     """The Octatrack's events at base-owned stock sites: registry, generated files, loader rows, builder."""
+
+    def test_a_site_rests_only_as_a_declared_detour_of_a_module_that_answers_ev_in_use(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'runtime.json'
+            sub = [{'event': 'ev_play_increment', 'fn': 'f', 'order': 50}]
+            for bad in ({'subscribe': sub, 'rests': ['0x4000406a']},                     # no ev_in_use subscription
+                        {'subscribe': sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}], 'rests': ['4000406a']},
+                        {'subscribe': sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}], 'rests': ['0x4000406a', '0x4000406A']}):
+                path.write_text(json.dumps(dict(schema=1, **bad)))
+                with self.subTest(bad), self.assertRaises(ValueError):
+                    build.runtime_declaration(temp)
+            path.write_text(json.dumps(dict(schema=1, subscribe=sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}],
+                                            rests=['0x4000406a'])))
+            self.assertEqual(build.runtime_declaration(temp)['rests'], ['0x4000406a'])
+            # A machine needs no ev_in_use of its own: the base answers for a contributor to a judged table (ot_machines),
+            # in its runtime.json or in its machine port (POLY8's), and machine_ports.declaration carries the rests on.
+            path.write_text(json.dumps(dict(schema=1, contribute=[{'to': 'ot_machines', 'order': 50, 'data': 'm'}], rests=['0x4000406a'])))
+            self.assertEqual(build.runtime_declaration(temp)['rests'], ['0x4000406a'])
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp) / 'poly8'
+            folder.mkdir()
+            (folder / 'runtime.json').write_text(json.dumps(dict(schema=1, subscribe=[{'event': 'ev_play_increment', 'fn': 'f', 'order': 20}],
+                                                                 rests=['0x40007978'])))
+            self.assertEqual(build.runtime_declaration(folder)['rests'], ['0x40007978'])
+            sys.path.insert(0, str(ROOT / 'sdk/machines/octatrack/module-adapters'))
+            import machine_ports
+            self.assertEqual(machine_ports.declaration('poly8', folder=folder)['rests'], ['0x40007978'])
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'runtime.json'
+            path.write_text(json.dumps(dict(schema=1, rests=['0x4000406a'])))
+            self.assertEqual(machine_ports.declaration('test-fx', temp, effect=True)['rests'], ['0x4000406a'])
+            with self.assertRaises(ValueError):
+                machine_ports.declaration('test-cf', temp)
+        # The flag is bit 7 of the hashed site's length byte, and only there; the verifier reads the length without it.
+        digest = hashlib.sha256(b'\0' * 8).digest()
+        sites = [(0x4000406a, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8, True), (0x4000409e, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8)]
+        data = build.package(b'\x4e\x75\0\0', 0, [], [], sites, name='rests', hashed=True, title='RESTS', abi=8)
+        at = data.index(struct.pack('>I', 0x4000406a))
+        self.assertEqual(data[at + 4], 8 | build.REST_FLAG)
+        at = data.index(struct.pack('>I', 0x4000409e))
+        self.assertEqual(data[at + 4], 8)
+        with self.assertRaises(ValueError):
+            build.package(b'\x4e\x75\0\0', 0, [], [], [(0x4000406a, b'\0' * 8, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8, True)], name='x')
 
     def test_rows_refusals_and_rollback_on_the_host(self):
         cc = shutil.which('cc')
@@ -338,6 +384,27 @@ class SiteEventTests(unittest.TestCase):
         self.assertEqual(packages.capabilities(tick)['features'], 0)      # a core tick needs nothing new of the base
         self.assertEqual(packages.capabilities(evented)['features'], 128)  # a site event (or a raise) needs MWCP 128
 
+    def test_modules_rest_out_of_the_per_frame_events_only(self):
+        # ev_in_use is asked by the base, each module on its own: no raise entry, a plain subscription on the site.
+        reg = events.load()
+        asked = next(e for e in reg['events'] if e['event'] == 'ev_in_use')
+        self.assertEqual((asked['index'], asked['site'], asked['results'], asked['prototype']), (54, None, 'each', 'unsigned f(void)'))
+        self.assertNotIn('ev_in_use', events.raised(reg))
+        self.assertNotIn('modwerk_raise_ev_in_use', events.asm(reg))
+        self.assertEqual(next(e for e in json.loads(events.browser(reg))['events'] if e['event'] == 'ev_in_use')['kind'], 'call')
+        header = events.loader(reg)
+        self.assertIn('#define RUNTIME_SITE_EVENT_IN_USE %du\n' % (asked['index'] - 4), header)
+        rests = re.search(r'#define RUNTIME_SITE_EVENT_RESTS \{ (.*) \}', header).group(1).split(', ')
+        self.assertEqual({reg['events'][i]['event'] for i, w in enumerate(rests) if w == '1'},
+                         {'ev_play_increment', 'ev_voice_bind', 'ev_voice_bind_run', 'ev_tail_kill'})
+        # Only a call event at a site rests: never a take hook, a table, a raised event or the asked one; one asked event.
+        doc = json.loads((EVENTS_DIR / 'events.json').read_text())
+        for name, change in (('ev_knob_store', dict(rests=True)), ('ot_machines', dict(rests=True)), ('ev_trig_muted', dict(rests=True)),
+                             ('ev_in_use', dict(rests=True)), ('ev_play_increment', dict(rests=1)), ('ev_mute_keep', dict(results='each'))):
+            bad = json.loads(json.dumps(doc)); next(e for e in bad['events'] if e['event'] == name).update(change)
+            with tempfile.TemporaryDirectory() as temp, self.subTest(name=name, change=change), self.assertRaises(ValueError):
+                Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
+
     def test_dispatch_assembles_without_the_displaced_stock_bytes(self):
         asm = shutil.which('m68k-elf-as')
         if not asm:
@@ -464,6 +531,71 @@ start_record = {1,16,machine,TARGET};
                 Path(temp, 'runtime.json').write_text(text)
                 with self.subTest(text), self.assertRaises(ValueError):
                     build.runtime_declaration(temp)
+
+    @unittest.skipUnless(shutil.which('m68k-elf-as') and importlib.util.find_spec('unicorn'),
+                         'ColdFire binutils and Unicorn required')
+    def test_frame_prepare_notifies_each_subscriber_and_preserves_the_stock_frame(self):
+        from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE
+        from unicorn import m68k_const as m
+
+        event = 'ev_audio_frame_prepare'
+        entry = next(row for row in events.load()['events'] if row['event'] == event)
+        self.assertFalse(entry.get('rests'))
+        words = build.subscribe([build.NONE] * 4, [dict(event='ev_audio_frame_prepare', fn='frame', order=20)],
+                                {'frame': 4})
+        self.assertEqual(words[entry['index']], 20 << 24 | 4)
+        rows, handlers = 0x200000, 0x201000
+        with tempfile.TemporaryDirectory() as temp:
+            work = Path(temp)
+            subprocess.run(['m68k-elf-as', '-mcpu=5475', '-o', work/'events.o',
+                            EVENTS_DIR/'elekloader/runtime_events.s'], check=True)
+            subprocess.run(['m68k-elf-ld', '-Ttext=0x100000', '-e', 'modwerk_site_4000cf4a',
+                            '--defsym', f'modwerk_runtime_event_row={rows}', '--unresolved-symbols=ignore-all',
+                            work/'events.o', '-o', work/'events.elf'], check=True)
+            subprocess.run(['m68k-elf-objcopy', '-O', 'binary', work/'events.elf', work/'events.bin'], check=True)
+            code = (work/'events.bin').read_bytes()
+            symbols = {}
+            listing = subprocess.check_output(['m68k-elf-nm', work/'events.elf'], text=True)
+            for line in listing.splitlines():
+                fields = line.split()
+                if len(fields) == 3:
+                    symbols[fields[2]] = int(fields[0], 16)
+
+        def word(value):
+            return struct.pack('>I', value)
+
+        cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+        cpu.ctl_set_cpu_model(m.UC_CPU_M68K_CFV4E)
+        cpu.mem_map(0x100000, (len(code) + 4095) & ~4095)
+        cpu.mem_write(0x100000, code)
+        cpu.mem_map(rows, 0x4000)
+        cpu.mem_write(rows + 4 * (entry['index'] - events.FIRST), word(handlers))
+        callees = [0x202000, 0x202100]
+        volatile = [m.UC_M68K_REG_D0, m.UC_M68K_REG_D1, m.UC_M68K_REG_A0, m.UC_M68K_REG_A1]
+        original = {reg: 100 + i for i, reg in enumerate(volatile + [m.UC_M68K_REG_A2])}
+        original[m.UC_M68K_REG_A7] = 0x203f00
+        seen = []
+
+        def callback(uc, address, size, user_data):
+            if address in callees:
+                seen.append(address)
+                for reg in volatile:
+                    uc.reg_write(reg, 0xdeadcafe)
+
+        cpu.hook_add(UC_HOOK_CODE, callback)
+        for address in callees:
+            cpu.mem_write(address, bytes.fromhex('4e75'))  # rts, our test handler
+        for subscribers in ([], callees[:1], callees, list(reversed(callees)), []):
+            with self.subTest(subscribers=subscribers):
+                seen.clear()
+                cpu.mem_write(handlers, b''.join(word(a) for a in [*subscribers, 0]))
+                for reg, value in original.items():
+                    cpu.reg_write(reg, value)
+                tail = symbols['modwerk_stock_4000cf4a_6']
+                cpu.emu_start(symbols['modwerk_site_4000cf4a'], tail, count=90)
+                self.assertEqual(cpu.reg_read(m.UC_M68K_REG_PC), tail)
+                self.assertEqual(seen, subscribers)
+                self.assertEqual({reg: cpu.reg_read(reg) for reg in original}, original)
 
     def test_events_execute_under_the_emulator(self):
         """Opt-in: MODWERK_PRIVATE_STOCK_MAIN and MODWERK_PRIVATE_EVENT_PACKETS (old/ and new/ repitch.mwrm,

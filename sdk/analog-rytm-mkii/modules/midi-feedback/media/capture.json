@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "midi-feedback",
+  "moduleVersion": "0.1.0-experimental",
+  "imageSha256": "7bb7fb434981d0d5f144cfdb7c8e6bf29c10c849fcdb6207a5d72e17796c2b05",
+  "firmware": "1.74",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "MF01: imported core-ar2 0.7 plus this module, local m68k-linux-gnu development build; full image remains private.",
+  "emulator": "analog-emu 2ac0f1f09e0c126d314b87de494f8da2848cfa8b, dtboot, 3x PNG without interpolation",
+  "capturedAt": "2026-11-01",
+  "setup": "Same-build active snapshot from the emulator output probe, feedback ON, CC output and MIDI+USB selected. DTBOOT_STEPS=1; DTBOOT_PNG_DIR points outside Git. Screen documentation only.",
+  "captures": [
+    {
+      "path": "media/feedback-on.png",
+      "sha256": "a22e6a50b7d69d3fb2a7375939017e88e5b784888cd50bb233540ec8a1493e1f",
+      "plan": "dtboot <local MF01 image> --load <same-build active snapshot at 11000M> --instr 3G --press GLOBAL@11303M:60M --press DOWN@11503M:40M --press DOWN@11583M:40M --press DOWN@11663M:40M --press DOWN@11743M:40M --press DOWN@11823M:40M --press DOWN@11903M:40M --press DOWN@11983M:40M --press DOWN@12063M:40M --press DOWN@12143M:40M --press DOWN@12223M:40M --press DOWN@12303M:40M --press DOWN@12383M:40M --press DOWN@12463M:40M --press DOWN@12543M:40M --press DOWN@12623M:40M --press DOWN@12703M:40M --press DOWN@12783M:40M --press DOWN@12863M:40M --press DOWN@12943M:40M --press DOWN@13023M:40M --press DOWN@13103M:40M --press DOWN@13183M:40M --press DOWN@13263M:40M --press DOWN@13343M:40M",
+      "frame": "DTBOOT_STEPS after fourth DOWN release; visually reviewed before inclusion."
+    },
+    {
+      "path": "media/send-feedback.png",
+      "sha256": "e323b408c87b738cb4689a7a9e4236089333e91752cd48fd8156f0cf81f0aee6",
+      "plan": "dtboot <local MF01 image> --load <same-build active snapshot at 11000M> --instr 3G --press GLOBAL@11303M:60M --press DOWN@11503M:40M --press DOWN@11583M:40M --press DOWN@11663M:40M --press DOWN@11743M:40M --press DOWN@11823M:40M --press DOWN@11903M:40M --press DOWN@11983M:40M --press DOWN@12063M:40M --press DOWN@12143M:40M --press DOWN@12223M:40M --press DOWN@12303M:40M --press DOWN@12383M:40M --press DOWN@12463M:40M --press DOWN@12543M:40M --press DOWN@12623M:40M --press DOWN@12703M:40M --press DOWN@12783M:40M --press DOWN@12863M:40M --press DOWN@12943M:40M --press DOWN@13023M:40M --press DOWN@13103M:40M --press DOWN@13183M:40M --press DOWN@13263M:40M --press DOWN@13343M:40M",
+      "frame": "DTBOOT_STEPS after fifth DOWN release; visually reviewed before inclusion."
+    }
+  ]
+}

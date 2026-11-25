@@ -149,6 +149,11 @@ describe('verified email accounts',()=>{
   expect((await call('/auth/sign-up/email','POST',{name:'bypass',email:'bypass@example.test',password})).status).toBe(404)
   for(let i=0;i<9;i++)expect((await call('/auth/login','POST',{email:user.email,password:'wrong long password here'})).status).toBe(401)
   expect((await call('/auth/login','POST',{email:user.email,password})).status).toBe(429)
+  // The limit of ten is per address and email; the owner signing in from elsewhere still gets in, up to 50 attempts in all.
+  const elsewhere=(ip:string)=>handleCommunity(new Request('https://api.example.test/api/auth/login',{method:'POST',headers:{Origin:'https://octamod.test','CF-Connecting-IP':ip,'Content-Type':'application/json'},body:JSON.stringify({email:user.email,password})}),env)
+  expect((await elsewhere('192.0.2.2')).status).toBe(200)
+  db.prepare('UPDATE rate_limits SET count=50 WHERE key=?').run(await digest('auth-login:'+user.email+':'+Math.floor(Date.now()/1000/900)))
+  expect((await elsewhere('192.0.2.3')).status).toBe(429)
   expect(JSON.stringify(db.prepare('SELECT * FROM rate_limits').all())).not.toContain(user.email)
   env.AUTH_SECRET=undefined;expect((await call('/auth/register','POST',{rulesVersion:COMMUNITY_RULES_VERSION,username:'closed',email:'closed@example.test',password})).status).toBe(503)
   expect((await(await call('/auth/session')).json()).registrationAvailable).toBe(false)

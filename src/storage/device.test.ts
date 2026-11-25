@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { deviceStore, openDeviceDatabase } from './device'
 import { newConfiguration, validateConfiguration, pinModuleVersions } from '../config/workspace'
 import { moduleHasUpdate, moduleIsNew, moduleViewsToRemember } from '../catalog/module-updates'
@@ -27,17 +27,17 @@ describe('device persistence', () => {
   it('remembers module views across sessions without changing saved configurations', async () => {
     const name = 'test-' + crypto.randomUUID()
     const db = await openDeviceDatabase(name), store = deviceStore(db)
-    const config = newConfiguration('Earlier release', ['midi-scenes'], false, { 'midi-scenes': '0.1.1-experimental' })
+    const config = newConfiguration('Earlier release', ['tapehead'], false, { tapehead: '0.1.1-experimental' })
     await store.saveConfiguration(config)
     await store.setActiveConfiguration(config.id)
     await Promise.all([
-      store.rememberModuleView({ id: 'midi-scenes', version: '0.1.1-experimental' }),
+      store.rememberModuleView({ id: 'tapehead', version: '0.1.1-experimental' }),
       store.rememberModuleView({ id: 'repitch', version: '0.1.1-experimental' }),
     ])
     db.close()
     const restoredDb = await openDeviceDatabase(name), restored = deviceStore(restoredDb)
-    const current = { id: 'midi-scenes', version: '0.2.0-experimental' }
-    expect(await restored.readModuleViews()).toEqual({ 'midi-scenes': '0.1.1-experimental', repitch: '0.1.1-experimental' })
+    const current = { id: 'tapehead', version: '0.2.0-experimental' }
+    expect(await restored.readModuleViews()).toEqual({ tapehead: '0.1.1-experimental', repitch: '0.1.1-experimental' })
     expect(moduleHasUpdate(current, (await restored.readModuleViews())[current.id])).toBe(true)
     await restored.rememberModuleView(current)
     expect(moduleHasUpdate(current, (await restored.readModuleViews())[current.id])).toBe(false)
@@ -51,12 +51,12 @@ describe('device persistence', () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID()), store = deviceStore(db)
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction('settings', 'readwrite')
-      tx.objectStore('settings').put({ id: 'midi-scenes', version: 'latest' }, 'module-view/midi-scenes')
+      tx.objectStore('settings').put({ id: 'tapehead', version: 'latest' }, 'module-view/tapehead')
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error)
     })
     expect(await store.readModuleViews()).toEqual({})
-    await expect(store.rememberModuleView({ id: 'midi-scenes', version: 'latest' })).rejects.toThrow('semantic version')
+    await expect(store.rememberModuleView({ id: 'tapehead', version: 'latest' })).rejects.toThrow('semantic version')
     db.close()
   })
   it('keeps independently edited configurations and the active selection across connections', async () => {
@@ -73,9 +73,38 @@ describe('device persistence', () => {
     const restored = deviceStore(restoredDb)
     expect((await restored.listConfigurations()).map(item => [item.name, item.moduleIds])).toEqual([['Live set II', ['euclid']], ['Ambient', ['miniverb', 'repitch']]])
     expect(await restored.activeConfiguration()).toBe(b.id)
-    await restored.deleteConfiguration(a.id)
+    await restored.deleteConfiguration(a.id, b.id)
     expect((await restored.listConfigurations()).map(item => item.id)).toEqual([b.id])
     restoredDb.close()
+  })
+  it('rolls back creating and selecting a set together if the save is interrupted', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID()), store = deviceStore(db)
+    const old = newConfiguration('Live'), next = newConfiguration('Studio')
+    await store.saveConfiguration(old, { makeActive: true })
+    const transactions = vi.spyOn(db, 'transaction')
+    const saving = store.saveConfiguration(next, { makeActive: true })
+    transactions.mock.results[0].value.abort()
+    transactions.mockRestore()
+    await expect(saving).rejects.toThrow()
+    expect(await store.listConfigurations()).toEqual([old])
+    expect(await store.activeConfiguration()).toBe(old.id)
+    db.close()
+  })
+  it('rolls back deleting the last set, creating its replacement and selecting it together', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID()), store = deviceStore(db)
+    const old = newConfiguration('Only set'), next = newConfiguration('My configuration')
+    await store.saveConfiguration(old, { makeActive: true })
+    const transactions = vi.spyOn(db, 'transaction')
+    const deleting = store.deleteConfiguration(old.id, next)
+    transactions.mock.results[0].value.abort()
+    transactions.mockRestore()
+    await expect(deleting).rejects.toThrow()
+    expect(await store.listConfigurations()).toEqual([old])
+    expect(await store.activeConfiguration()).toBe(old.id)
+    await store.deleteConfiguration(old.id, next)
+    expect(await store.listConfigurations()).toEqual([next])
+    expect(await store.activeConfiguration()).toBe(next.id)
+    db.close()
   })
   it('skips a configuration this version cannot read, reports it and keeps it stored', async () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID())
@@ -89,6 +118,17 @@ describe('device persistence', () => {
     expect(skipped).toHaveLength(1)
     const kept = await new Promise(resolve => { const request = db.transaction('configurations').objectStore('configurations').get(retired.id); request.onsuccess = () => resolve(request.result) })
     expect(kept).toEqual(retired)
+    db.close()
+  })
+  it('lists a configuration that names a module removed from the library, without that module', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID())
+    const store = deviceStore(db), current = newConfiguration('Older set', ['miniverb'])
+    // As saved before the module left the library: writing it directly skips today's validation.
+    const saved = { ...current, moduleIds: ['modulation', 'miniverb'], moduleVersions: { ...current.moduleVersions, modulation: '0.1.1-experimental' } }
+    await new Promise((resolve, reject) => { const tx = db.transaction('configurations', 'readwrite'); tx.objectStore('configurations').put(saved); tx.oncomplete = resolve; tx.onerror = reject })
+    const skipped: unknown[] = []
+    expect(await store.listConfigurations(error => skipped.push(error))).toEqual([current])
+    expect(skipped).toEqual([])
     db.close()
   })
   it('stores a binary locally and removes it permanently without touching configurations', async () => {
@@ -120,7 +160,7 @@ it('migrates old device configurations without changing selection and preserves 
 
 
 it('persists the initial full catalog across sessions and remembers opening a new module', async () => {
- const name = 'test-' + crypto.randomUUID(), existing = { id: 'repitch', version: '0.1.1-experimental' }, addition = { id: 'midi-scenes', version: '0.2.0-experimental' }
+ const name = 'test-' + crypto.randomUUID(), existing = { id: 'repitch', version: '0.1.1-experimental' }, addition = { id: 'tapehead', version: '0.2.0-experimental' }
  const db = await openDeviceDatabase(name), store = deviceStore(db)
  expect(await store.readModuleBaseline()).toBeUndefined()
  // Legacy viewing history remains usable when establishing the new full-catalog baseline.

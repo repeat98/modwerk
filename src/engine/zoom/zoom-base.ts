@@ -4,9 +4,11 @@
 // (scripts/midistomp-import.ts).
 import midistomp from '../../../vendor/midistomp/midistomp.json'
 import { addSection, buildPart, concat, hex, parseAis, span } from './ais'
+import { zipEntry } from './zip'
+import { ZOOM_BASE } from './zoom-protocol'
 
 type Part = ['hex', string] | ['copy', string, number, number]
-type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string; expect_length?: number }
+type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string | string[]; expect_length?: number }
 export type ZoomPatch = { name: string; description?: string; builds?: string[]; write?: Entry[]; section?: Entry[]; bin133?: Entry[] }
 /** Zoom's own parts, as the Mac updater keeps them (Contents/Resources) and the Windows one as BIN/129 and BIN/133. */
 export type ZoomStock = { 'Main.bin': Uint8Array; 'Preset.bin': Uint8Array }
@@ -31,7 +33,7 @@ export async function applyPatches(stock: ZoomStock, patches: ZoomPatch[], build
     const own = (entries: Entry[] = []) => entries.filter(entry => entry.model === build)
     let applied = 0
     for (const write of own(patch.write)) {
-      if (await sha256(span(img, write.addr!, write.expect_length!)) !== write.expect_sha256) throw new Error(patch.name + ': the bytes at ' + hex(write.addr!) + ' are not the expected ones.')
+      if (![write.expect_sha256].flat().includes(await sha256(span(img, write.addr!, write.expect_length!)))) throw new Error(patch.name + ': the bytes at ' + hex(write.addr!) + ' are not the expected ones.')
       const data = bytes(write.data)
       span(img, write.addr!, data.length).set(data)
       applied++
@@ -52,10 +54,27 @@ export async function applyPatches(stock: ZoomStock, patches: ZoomPatch[], build
   return { main: buildPart(img, stock['Main.bin']), preset: preset.some((b, i) => b !== stock['Preset.bin'][i]) ? preset : undefined }
 }
 
-/** The base for the user's own stock MS-70CDR 2.10 parts, from MIDISTOMP's patches by name (a release: MIDISTOMP.releases). */
-export async function buildBase(stock: ZoomStock, names: readonly string[]) {
+async function checkStock(stock: ZoomStock) {
   for (const [file, pin] of [['Main.bin', MIDISTOMP.stock.main], ['Preset.bin', MIDISTOMP.stock.preset]] as const)
     if (stock[file].length !== pin.bytes || await sha256(stock[file]) !== pin.sha256) throw new Error(file + ' isn’t from Zoom’s MS-70CDR 2.10 updater. Choose an unmodified copy.')
+}
+
+/** Zoom's MS-70CDR 2.10 updater for Mac as Zoom ships it (the .zip, which works on any computer): its two parts, checked. */
+export async function readUpdater(zip: Uint8Array): Promise<ZoomStock> {
+  const part = (name: string) => zipEntry(zip, '.app/Contents/Resources/' + name)
+  const main = await part('Main.bin'), preset = await part('Preset.bin')
+  if (!main || !preset) throw new Error('This isn’t Zoom’s MS-70CDR 2.10 updater for Mac. Download MS-70CDR_v2.10_Mac_E.zip from Zoom (not the MS-70CDR Plus one) and choose it as it is.')
+  const stock = { 'Main.bin': main, 'Preset.bin': preset }
+  await checkStock(stock)
+  return stock
+}
+
+/** The base the pedal page installs (ZOOM_BASE), built from the user's own stock parts. */
+export const buildRelease = (stock: ZoomStock) => buildBase(stock, MIDISTOMP.releases[ZOOM_BASE.name])
+
+/** The base for the user's own stock MS-70CDR 2.10 parts, from MIDISTOMP's patches by name (a release: MIDISTOMP.releases). */
+export async function buildBase(stock: ZoomStock, names: readonly string[]) {
+  await checkStock(stock)
   const patches = names.map(name => {
     const patch = MIDISTOMP.patches.find(patch => patch.name === name)
     if (!patch) throw new Error('MIDISTOMP has no patch ' + name + '.')

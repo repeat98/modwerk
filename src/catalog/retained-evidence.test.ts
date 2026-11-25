@@ -17,10 +17,10 @@ const save = () => writeFileSync(resolve(folder,'octamod.module.json'),JSON.stri
 
 beforeEach(async () => {
   root=mkdtempSync(resolve(tmpdir(),'octamod-retained-test.'))
-  folder=resolve(root,'sdk/octabam/modules',example.id)
+  folder=resolve(root,'sdk/octatrack/modules',example.id)
   document=parseModuleDocument({...structuredClone(example),media:[qualificationMedia],access:{...example.access,screenshots:[qualificationMedia.path]},resources:{...example.resources,impact:resourceImpactFixture()},tests:{...example.tests,hardwareStatus:'verified',qualification:qualificationFixture()}})
-  for(const [path,bytes] of Object.entries({'manifest.py':'raise AssertionError("module source must never execute")\n','README.md':qualificationReadme,'TESTING.md':'Synthetic, firmware-free qualification fixture\n','LICENSE':'MIT fixture attribution\n'})) put('sdk/octabam/modules/'+example.id+'/'+path,bytes)
-  put('sdk/octabam/modules/'+example.id+'/media/ui.png',qualificationPng)
+  for(const [path,bytes] of Object.entries({'manifest.py':'raise AssertionError("module source must never execute")\n','README.md':qualificationReadme,'TESTING.md':'Synthetic, firmware-free qualification fixture\n','LICENSE':'MIT fixture attribution\n'})) put('sdk/octatrack/modules/'+example.id+'/'+path,bytes)
+  put('sdk/octatrack/modules/'+example.id+'/media/ui.png',qualificationPng)
   put('src/engine/compose-os.ts','// synthetic runtime dependency\n')
   put('src/engine/assets/dsp-packages.json',JSON.stringify({sourceCommit:null,moduleVersions:{[document.id]:document.version},packages:[{id:document.id,version:document.version,code:'synthetic bytes',address:4096}]}))
   put('src/engine/assets/module-build.json',JSON.stringify({schemaVersion:1,kind:'source-packages',sourceCommit:null,sourceTreeSha256:'a'.repeat(64),compilerSha256:'c'.repeat(64),moduleVersions:{[document.id]:document.version},files:{},approval:null,qualification:'assembly only; no new hardware qualification'}))
@@ -40,7 +40,7 @@ describe('risk-based retained module evidence',()=>{
     document.presentation.summary='Clearer description of the same behavior.'
     document.controls[0].doc='Clearer explanation of the unchanged control.'
     document.tests.summary='Clarify the original test observations.'
-    put('sdk/octabam/modules/'+example.id+'/README.md',qualificationReadme+'\nEditorial clarification.\n')
+    put('sdk/octatrack/modules/'+example.id+'/README.md',qualificationReadme+'\nEditorial clarification.\n')
     save()
     expect(await check()).toBe('retained-evidence')
     expect(document.tests.qualification!.moduleVersion).toBe(example.version)
@@ -59,7 +59,7 @@ describe('risk-based retained module evidence',()=>{
     git('add','.');git('-c','user.name=Evidence test','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Synthetic README resource reference')
     commit=git('rev-parse','HEAD');git('update-ref','refs/remotes/origin/main',commit)
     document={...original,version:'0.1.1',tests:{...original.tests,retainedEvidence:{commit,moduleVersion:original.version,documentation:structuredClone(original.tests.qualification!.documentation)}}}
-    put('sdk/octabam/modules/'+example.id+'/README.md',qualificationReadme+'\nTrack swing documentation.\n')
+    put('sdk/octatrack/modules/'+example.id+'/README.md',qualificationReadme+'\nTrack swing documentation.\n')
     save()
     if(method==='unmeasured') {
       expect(await check()).toBe('retained-evidence')
@@ -67,7 +67,7 @@ describe('risk-based retained module evidence',()=>{
       await expect(check()).rejects.toThrow('full qualification')
     } else {
       expect(await check()).toBe('retained-evidence')
-      put('sdk/octabam/modules/'+example.id+'/README.md',qualificationReadme.replace('Overview','Changed historical overview')+'\nTrack swing documentation.\n')
+      put('sdk/octatrack/modules/'+example.id+'/README.md',qualificationReadme.replace('Overview','Changed historical overview')+'\nTrack swing documentation.\n')
       await expect(check()).rejects.toThrow('README.md; full qualification')
     }
   })
@@ -76,9 +76,9 @@ describe('risk-based retained module evidence',()=>{
     docs.tutorial.title='A clearer tutorial'
     // The fixture heading is taken from the actual declaration, not assumed.
     const old=document.tests.qualification!.documentation.tutorial.title
-    put('sdk/octabam/modules/'+example.id+'/README.md',qualificationReadme.replace(old,docs.tutorial.title))
+    put('sdk/octatrack/modules/'+example.id+'/README.md',qualificationReadme.replace(old,docs.tutorial.title))
     save();expect(await check()).toBe('retained-evidence')
-    put('sdk/octabam/modules/'+example.id+'/media/ui.png',Buffer.from('invalid PNG'))
+    put('sdk/octatrack/modules/'+example.id+'/media/ui.png',Buffer.from('invalid PNG'))
     await expect(check()).rejects.toThrow('black-and-white PNG')
   })
   it.each([
@@ -88,7 +88,7 @@ describe('risk-based retained module evidence',()=>{
     ['media/hidden.py','print("executable hidden in media")'],
     ['TESTING.md','rewritten qualification evidence'],
   ])('requires full qualification for changed source/data/evidence: %s',async(path,bytes)=>{
-    put('sdk/octabam/modules/'+example.id+'/'+path,bytes)
+    put('sdk/octatrack/modules/'+example.id+'/'+path,bytes)
     await expect(check()).rejects.toThrow('full qualification')
   })
   it.each([
@@ -112,7 +112,7 @@ describe('risk-based retained module evidence',()=>{
     put(path,JSON.stringify({packages:[row]}))
     await expect(check()).rejects.toThrow('package rows changed')
     const waiver={module:document.id,version:document.version,path:row.path,sha256:sha,approval:'Synthetic owner beta waiver',hardware:'not tested',emulator:'not tested'}
-    const waive=(item:object)=>put('sdk/usb-package-waivers.json',JSON.stringify({schemaVersion:1,about:'Synthetic',waivers:[item]}))
+    const waive=(item:object)=>put('sdk/approvals/usb-package-waivers.json',JSON.stringify({schemaVersion:1,about:'Synthetic',waivers:[item]}))
     waive(waiver);expect(await check()).toBe('retained-evidence')
     waive({...waiver,sha256:'6'.repeat(64)});await expect(check()).rejects.toThrow('full qualification')
     waive({...waiver,version:'0.1.0',path:`octatrack-modules/${document.id}/0.1.0.mwrm`});await expect(check()).rejects.toThrow('package rows changed')
@@ -129,6 +129,9 @@ describe('risk-based retained module evidence',()=>{
     artifact.packages[0].version=document.version
     artifact.sourceCommit='b'.repeat(40)
     put(path,JSON.stringify(artifact));expect(await check()).toBe('retained-evidence')
+    // Package files no longer copy the build's provenance (module-build.json holds it); evidence from before still holds.
+    const current=structuredClone(artifact);delete current.sourceCommit;delete current.moduleVersions
+    put(path,JSON.stringify(current));expect(await check()).toBe('retained-evidence')
     artifact.packages[0].address++
     put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
     artifact.packages[0].address--

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitakt-ii",
+  "moduleId": "euclidean-scale",
+  "moduleVersion": "0.2.0-experimental",
+  "firmware": "1.17",
+  "imageSha256": "cd26330c181016d9ef8caf5c3162d457b0c2f974de692aae6109f06bbf3bb7ae",
+  "captures": [
+    {
+      "path": "media/euclidean-entry.png",
+      "plan": "Boot to the parameter view, dismiss popups, then press FUNC + AMP once to reach stock Euclidean.",
+      "sha256": "4cbdd6c21e94f38117eb43ec30ce8a5e8cb405927dbdd7696d00528adcccbeb3"
+    },
+    {
+      "path": "media/scf-rnn.png",
+      "plan": "Press FUNC + AMP again to open the Scale page. Turn C one detent left and D two detents right, then press B.",
+      "sha256": "0b3cbcd713865e26a42ab77f5d58922cd9d7ae6f2e8aeb34e6e45417d1651bbc"
+    }
+  ]
+}

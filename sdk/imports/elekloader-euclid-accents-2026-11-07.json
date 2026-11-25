@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "euclid-accents-2026-11-07",
+  "about": "Modwerk source-only euclid-accents package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/euclid-accents.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "euclid-accents-1.2.0-os1.74.elemod",
+      "sha256": "5c61e6c2c0f107ec6bc8cbc431e644c5e9562d3e3cdc9bdd39ec72ed95ab8b49",
+      "id": "euclid-accents",
+      "version": "1.2.0",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "81851b94b82e178225e990ff8c1db2ab8a2388d0",
+        "path": "sdk/imports/packages/euclid-accents/euclid-accents-1.2.0-os1.74.elemod"
+      },
+      "title": "Euclid Accents",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "The euclidean generator can accent the pattern's own trigs instead of deciding which steps play: Bool Operator gains OR*, XOR*, AND* and SUB*.",
+      "description": "Euclid Accents gives the euclidean page's Bool Operator (OP) eight values instead of four: OR, XOR, AND and SUB as stock, then OR*, XOR*, AND* and SUB*. In accent mode the euclidean generator no longer decides which steps play: only the grid's trigs play, and a trig on a step where the euclidean pattern has a hit plays accented. Hand-set accents stay. Turning euclid off with FUNC held bakes the accents into the pattern; without FUNC the pattern is left as it was. The accent flag is per track, kept in core-ar2's mod storage and saved with the pattern. It is an elemod port of MrScruff's rytm-mods 0002-euclid-accents, with his code unchanged apart from the storage port and OP's turn and text, which now go through core-ar2's parameter table (core_params) instead of two detours of his own.",
+      "category": "Sequencer",
+      "author": "Iced-Cream",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: build P4A4 (core-ar2 0.4 with all eleven rytm2_mods ports, this module at 1.2) passed OP's eight values both ways and OP kept through a power-cycle without a project save; 1.1's accent playback and bake passed on C3A4, SXH4 and EAH4 (core-ar2 0.3). This package's own bytes, and the Modwerk base, have not been flashed from the site."
+    }
+  ]
+}

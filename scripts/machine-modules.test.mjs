@@ -3,7 +3,8 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
-import { requireNoSubmissions } from './machine-modules.mjs'
+import { readFileSync } from 'node:fs'
+import { copiedThumbnail, publishesNewVersion, requireNoSubmissions, requireOriginalThumbnail, unlistedPackages } from './machine-modules.mjs'
 
 it('refuses a new or changed submission and lets one move into the library', () => {
   const root = mkdtempSync(resolve(tmpdir(), 'modwerk-submissions.'))
@@ -23,5 +24,53 @@ it('refuses a new or changed submission and lets one move into the library', () 
     expect(check).toThrow('_submissions/old/README.md')
     git('mv', 'sdk/analog-rytm-mkii/modules/_submissions/old', 'sdk/analog-rytm-mkii/modules/old')
     check()
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+it('refuses the SDK template\'s placeholder thumbnail in a library module', () => {
+  const template = new URL('../sdk/templates/elemod/', import.meta.url)
+  const svg = readFileSync(new URL('media/thumbnail.svg', template), 'utf8')
+  const item = JSON.parse(readFileSync(new URL('modwerk.module.json', template), 'utf8')).media.find(entry => entry.kind === 'thumbnail')
+  const original = { ...item, source: 'Original conceptual illustration in the shared signal-art style; not a device screenshot.' }
+  expect(() => requireOriginalThumbnail('rytm/x', item, svg)).toThrow('rytm/x: media/thumbnail.svg is still the SDK template\'s placeholder thumbnail')
+  expect(() => requireOriginalThumbnail('rytm/x', original, svg)).toThrow('placeholder thumbnail')
+  expect(() => requireOriginalThumbnail('rytm/x', item, '<svg/>')).toThrow('placeholder thumbnail')
+  requireOriginalThumbnail('rytm/x', original, '<svg><text>FIX</text></svg>')
+})
+
+it('refuses a thumbnail copied from another module, and lets one module share its own', () => {
+  const card = (path, sha256 = 'a'.repeat(64)) => ({ path, sha256 })
+  expect(copiedThumbnail([card('sdk/analog-rytm-mkii/modules/env-reset-amp/media/thumbnail.svg'), card('sdk/analog-rytm-mkii/modules/envelopes/media/thumbnail.svg')]))
+    .toMatch(/^sdk\/analog-rytm-mkii\/modules\/envelopes\/media\/thumbnail\.svg is the same file as .*env-reset-amp/)
+  expect(copiedThumbnail([card('sdk/octatrack/modules/euclid/presentation/thumbnail.svg'), card('sdk/drafts/syntiz/presentation/thumbnail.svg')])).toMatch(/syntiz/)
+  // Digi Health on two machines, and a module's draft beside its listed folder.
+  expect(copiedThumbnail([card('sdk/digitakt/modules/digihealth/media/thumbnail.svg'), card('sdk/digitone/modules/digihealth/media/thumbnail.svg'),
+    card('sdk/drafts/recorder-loop-fix/presentation/thumbnail.svg', 'b'.repeat(64)), card('sdk/octatrack/modules/recorder-loop-fix/presentation/thumbnail.svg', 'b'.repeat(64))])).toBe(null)
+  expect(copiedThumbnail([card('sdk/octatrack/modules/a/presentation/thumbnail.svg'), card('sdk/octatrack/modules/b/presentation/thumbnail.svg', 'c'.repeat(64))])).toBe(null)
+})
+
+it('runs the publication gate for a new library version only', () => {
+  expect(publishesNewVersion({ inLibrary: true, baseVersion: '0.2.0-experimental', version: '0.2.1-experimental' })).toBe(true)
+  expect(publishesNewVersion({ inLibrary: true, baseVersion: null, version: '0.1.0-experimental' })).toBe(true)
+  // A published version that only changes its documentation, and an old submission, keep their place.
+  expect(publishesNewVersion({ inLibrary: true, baseVersion: '0.2.0-experimental', version: '0.2.0-experimental' })).toBe(false)
+  expect(publishesNewVersion({ inLibrary: false, baseVersion: null, version: '0.1.0' })).toBe(false)
+})
+
+it('counts the USB Audio installer rows and refuses a superseded or unnamed download', () => {
+  const root = mkdtempSync(resolve(tmpdir(), 'usb-audio-package-list-'))
+  try {
+    const folder = 'octatrack-modules/usb-audio-out-tracks-main-cue'
+    const current = folder + '/current.mwrm', legacy = folder + '/tracks.mwrm'
+    const old = folder + '/old.mwrm', asset = resolve(root, 'src/engine/assets')
+    mkdirSync(asset, { recursive: true })
+    mkdirSync(resolve(root, 'public', folder), { recursive: true })
+    for (const name of [current, legacy]) writeFileSync(resolve(root, 'public', name), '')
+    writeFileSync(resolve(asset, 'octatrack-module-packages.json'), JSON.stringify({
+      packages: [], usbAudio: { configurable: { path: current }, tracks: { path: legacy }, unknown: { path: old } },
+    }))
+    unlistedPackages(root)
+    writeFileSync(resolve(root, 'public', old), '')
+    expect(() => unlistedPackages(root)).toThrow(old + ': no package row names')
   } finally { rmSync(root, { recursive: true, force: true }) }
 })

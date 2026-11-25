@@ -4,7 +4,7 @@
   "order": 50,
   "name": "Digitone II",
   "status": "research",
-  "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and a draft core with the Digitakt II's six events runs in the emulator.",
+  "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and modified builds boot on units: core-dn2 0.3's six UI events ran on a unit, and stock 1.12 restores it.",
   "firmware": {
     "releases": [
       {
@@ -18,12 +18,12 @@
       }
     ],
     "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. Modwerk has no Digitone II build path yet and downloads stay disabled.",
-    "recovery": "Hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx over MIDI DIN; recovery mode does not use USB. Not yet tried on a Digitone II."
+    "recovery": "Hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx over MIDI DIN; recovery mode does not use USB. Checked on toonst's unit with stock 1.12 (23 October 2026, elekloader's build guide); on a second unit only the normal Transfer update back to stock 1.12 was tried (18 November 2026)."
   },
   "steps": {
     "format": "done",
     "rebuild": "done",
-    "boot": "started",
+    "boot": "done",
     "core": "started",
     "mods": "open"
   },
@@ -41,7 +41,12 @@
     {
       "label": "core-dn2 0.3 (toonst's elekloader fork)",
       "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dn2",
-      "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Not copied into Modwerk yet."
+      "note": "The Digitone II core with the Digitakt II 1.1 additions, input, SysEx and SHARC bridges. 0.1's UI events ran on toonst's unit; 0.3 booted and its six UI events ran on a second unit (18 November 2026). Its 1.1 additions and bridges are untested on hardware. Not copied into Modwerk yet."
+    },
+    {
+      "label": "Digitone II core on a unit, 18 November 2026",
+      "url": "https://github.com/repeat98/modwerk/blob/main/docs/verification/2026-11-18-digitone-ii-core-on-a-unit.md",
+      "note": "prodbysmolec's unit: stock 1.12 with core-dn2 0.3 and hello-marker, then hooks-check-dn2, built with toonst's elekloader at 3d7c2e3 and flashed with Transfer; boot, normal playback, all six UI events and the return to stock 1.12 observed."
     }
   ],
   "art": {

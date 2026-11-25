@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192">
+<defs><pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0H0V16" fill="none" stroke="#292930" stroke-width=".5"/></pattern></defs>
+<rect width="320" height="192" fill="#1c1c22"/><rect width="320" height="192" fill="url(#grid)"/>
+<g fill="#83c7bc" font-family="monospace"><text x="22" y="29" font-size="12">MIDI FEEDBACK</text><text x="22" y="175" font-size="9">12 TRACKS / 7 PARAMETERS</text></g>
+<g fill="none" stroke="#83c7bc" stroke-width="1.2"><rect x="23" y="55" width="63" height="79" rx="3"/><rect x="232" y="55" width="65" height="79" rx="3"/><path d="M86 78h146m-146 16h146m-146 16h146M232 122H105v23H55v-11"/><path d="m224 73 8 5-8 5m0 6 8 5-8 5m0 6 8 5-8 5m-111 2-8 5 8 5"/></g>
+<g fill="#ceced4" font-size="9" font-family="monospace"><text x="32" y="98">RYTM</text><text x="242" y="98">SNAP</text><text x="106" y="66">CC 95 + 74…83</text><text x="118" y="139">PICKUP</text></g>
+</svg>

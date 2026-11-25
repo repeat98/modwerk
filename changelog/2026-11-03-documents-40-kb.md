@@ -1,0 +1,1 @@
+Development: `AGENTS.md` and the documents in `docs/` may now grow to 40 KB instead of 32 KB, so a guide at the limit takes a new sentence without a cut elsewhere. One already over the limit still may only shrink.

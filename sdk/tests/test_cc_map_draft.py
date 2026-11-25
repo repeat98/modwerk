@@ -56,7 +56,7 @@ class CcMapDraft(unittest.TestCase):
     def test_draft_stays_outside_discovery_catalog_baseline_and_binary_inputs(self):
         self.assertEqual(RECORD['root'], 'sdk/octabam/modules/cc-map')
         self.assertTrue((APP / 'sdk/octabam/modules/cc-map').exists())
-        for rel in ['sdk/module-qualification-baseline.json']:
+        for rel in ['sdk/approvals/module-qualification-baseline.json']:
             self.assertNotIn('cc-map', {item['id'] for item in json.loads((APP / rel).read_text(encoding='utf-8'))['modules']})
         doc = json.loads((DRAFT / 'octamod.module.json').read_text(encoding='utf-8'))
         self.assertEqual(doc['version'], RECORD['moduleVersion'])

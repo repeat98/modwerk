@@ -55,3 +55,31 @@ Review: none of the four carries a hex string of 8 bytes or more found in the or
 ## Seventh import: docs (octabam `5f8e779f`, 1 November 2026)
 
 [The seventh record](../sdk/imports/octabam-docs-5f8e779f.json) pins the newer `docs/TRAPS.md` (eight entries: separate audio and MIDI playing-Part latches, a runtime's own bytes spelling the clones' staging range, imported staging symbols in a resident relink, the port's DMA arm rule narrowed and reverted, a ColdFire save frame sized for the wrong register count, a project byte the OS rewrites on save, `--watch-mem` in a `--scenario` child, a string helper's bound cutting the load's path) to `5f8e779f`, byte for byte; FAILURE_MODES.md, HARDWARE_MATRIX.md and MIDI_TRACKS.md stay pinned by the earlier records, and the tool pin in `sdk/upstream-tools.json` moves in its own pull request. Modwerk carries none of the staging scan, the resident relink or the narrowed arm rule. The entries that reach Modwerk are in [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md#octabams-register). Same review: no 8-byte hex window found in `MAIN.raw`, no instruction listing.
+## Eighth import: docs (octabam `54200264`, 5 November 2026)
+
+[The eighth record](../sdk/imports/octabam-docs-54200264.json) pins the newer `docs/TRAPS.md` (three entries: the page plane `0x46c7e0ea` is not the composed screen, a MIDI-only fixture can leave no playing Part, a file open through the stock layer owns the caller's buffer; the card-write race seen again) and `docs/FAILURE_MODES.md` (the stock DELAY entry rewritten: it reads its coefficient table across the whole zero run `0x400d24d0..0x400d2ce0`, entries 508..1023, at default settings and at boot, not 16 bytes at a slow tempo; PLOCKS P2's headerless lock files; CX OSC's DSP stop under USB capture, clock and program change; four OCTA-303 machines locking the panel; FX2 LOCK; the demand loader's soak) to `54200264`, byte for byte; HARDWARE_MATRIX.md and MIDI_TRACKS.md are unchanged upstream and stay pinned by the earlier records. `sdk/octabam/docs/remixer/PLACEMENT.md`, Modwerk's own copy, no longer lists that run as free. The entries that reach Modwerk are in [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md#octabams-register). Same review: no 8-byte hex window found in `MAIN.raw`; the DELAY entry names the index computation as three instructions by mnemonic, with no encoding.
+## Ninth import: emulator exits with its parent (octabam `54200264`, 5 November 2026)
+
+[The ninth record](../sdk/imports/octabam-infrastructure-54200264.json) takes one change to `tools/emu/ot_emu/main.cpp`: in `--interactive`, a detached thread checks `getppid()` once a second and ends the emulator (`ot_emu: parent <pid> is gone: exiting`, status 3) once its parent has died. Before, end of input stopped the line server only when it read its input, so an emulator inside a long `run` or a stuck boot outlived a killed script and kept burning CPU. Modwerk starts it from `scripts/device.mjs`, `capture-module-ui.py`, `octatrack-usb-bridge.py` and the `verify-startup-*` scripts. Nothing else of upstream's newer `main.cpp` comes with it, and Modwerk's adaptations stay. [Its verification record](../sdk/infrastructure-verification/octabam-emulator-parent-exit-54200264.json) joins the extension chain: the emulator built with and without the change, its firmware-free tests passed, and a parent killed during `run 600000` left the old emulator running and ended the new one within about a second. No builder or base file changes.
+
+## Tenth import: docs (octabam `f7d72906`, 11 November 2026)
+
+[The tenth record](../sdk/imports/octabam-docs-f7d72906.json) pins the newer `docs/TRAPS.md` (three entries: a call into stock returns with a0, a1, d0 and d1 changed; a held scene key writes stock's scene-lock handler into every encoder slot, so a page editor's hook never sees the turn; bit 31 of the stock icon blit's column is the bottom row) and `docs/FAILURE_MODES.md` (the demand loader's 8 and 9 November soak beside STEM REC, with a freeze while two frame-interrupt waits have no time limit) to `f7d72906`, byte for byte; HARDWARE_MATRIX.md and MIDI_TRACKS.md stay pinned by the earlier records. The entries that reach Modwerk are in [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md#octabams-register) and the scene one in [the scenes guide](module-guides/scenes.md#test). Same review: no 8-byte hex window found in `MAIN.raw`, no instruction listing. The developer tools pin in `sdk/upstream-tools.json` moves to the same commit in this pull request.
+
+## Eleventh import: the cycle scan (octabam `cc7cffc1`, 19 November 2026)
+
+[The eleventh record](../sdk/imports/octabam-cycle-scan-cc7cffc1.json) takes octabam's cycle scan (#1169) into
+[`sdk/cycle-scan/`](../sdk/cycle-scan/README.md): `interlock_scan.py`, which runs an effect's proc under `dsp_host` and
+prices the executed path with the DSP56300 manual's instruction cycles (Table A-1) and pipeline stalls (sections A.2
+and 3.5), upstream's `dsp_host.cpp` with `-steptrace` (a host-stepped core, so a DO loop's body shows in the trace) and
+`CYCLE_SCAN.md`, upstream's results and how they compare with its unit (3.0 % above it on average over 38 settings of
+22 effects).
+
+It sits outside `sdk/octabam` on purpose: `sdk/octabam/tools` is part of the module-source fingerprint
+(`scripts/module-source.mjs`), and no compiler reads these files, so they must not make every module package count as
+rebuilt. The harness's `dsp_host.cpp` stays the second import's; `sdk/cycle-scan/build-tools.sh` stages upstream's copy
+over the vendor tree's when it builds the scan's tools. Two adaptations, both in the scanner and both recorded: it finds
+the octabam tree at `sdk/octabam` (`OCTABAM_ROOT` overrides), and, since Modwerk has no SEND module (FX2 id 0x09 is
+LOFI2's), its scratch image is the module beside the stock effects with no fallback, as the modules' own `perf.py`
+build theirs. How to run it: [its README](../sdk/cycle-scan/README.md). It is a model, not a measurement: the unit stays
+the judge ([MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md)).

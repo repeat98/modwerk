@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-10-16T07:58:44.016883+00:00",
-  "imageSha256": "4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc",
-  "mainSha256": "587a6de40e6184633205cfa6b0ab8a3b1690b745c5f3f2e0d5d0d0ebab16b6a6",
-  "snapshotSha256": "079d52bd54adebbeaac83f1cf1881e93c4e348365b11819c82669023361ec896",
+  "capturedAt": "2026-11-04T12:35:02.656891+00:00",
+  "imageSha256": "eb119355d3514132ceae730d3cc9a45d64f82a01f2cc61c0d6c3ed3adccc0869",
+  "mainSha256": "b83ccb3f25847912116bd380d8ce21a7fe36a5f3f658ee6ed9e9192c9e239f1e",
+  "snapshotSha256": "e17c0a8bb6e12dee744172ae17850664a3155a3155c69779e69e3e7486ee1a4b",
   "planSha256": "5f12c19849ff0df936a248c410aca5a000520303fe21591f88ef4f0db0bcde67",
   "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap FLTR\npress FUNC\npress AMP 800\nrelease FUNC\nrelease AMP\nwait 500\nsnap euclidean-open\nturn A 4 300\nturn B 4 300\ntap NO\ntap SRC\ntap TRIG\npress TRK\ntap 2\nrelease TRK\ntap FLTR\npress TRK\ntap 1\nrelease TRK\ntap FLTR\npress FUNC\npress AMP 800\nrelease AMP\nrelease FUNC\nwait 500\nsnap euclidean-controls\ntap NO\nsnap euclidean-closed\n",
   "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
@@ -46,7 +46,7 @@
       "press FUNC"
     ],
     [
-      2500.1,
+      2500.101,
       "press AMP"
     ],
     [
@@ -118,7 +118,7 @@
       "press TRK"
     ],
     [
-      6900.228,
+      6900.229,
       "press 1"
     ],
     [
@@ -175,21 +175,21 @@
     {
       "path": "media/1.54/euclidean-open.png",
       "sha256": "12a4bd1a55d5c0dc0208a1b9357f0663e01a5e8d3ab3647013103ee6eb1c1417",
-      "atMs": 4000.144125,
-      "requestedAtMs": 4000.144125,
+      "atMs": 4000.14415625,
+      "requestedAtMs": 4000.14415625,
       "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap FLTR\npress FUNC\npress AMP 800\nrelease FUNC\nrelease AMP\nwait 500\nsnap euclidean-open\nturn A 4 300\nturn B 4 300\ntap NO\ntap SRC\ntap TRIG\npress TRK\ntap 2\nrelease TRK\ntap FLTR\npress TRK\ntap 1\nrelease TRK\ntap FLTR\npress FUNC\npress AMP 800\nrelease AMP\nrelease FUNC\nwait 500\nsnap euclidean-controls\ntap NO\nsnap euclidean-closed\n"
     },
     {
       "path": "media/1.54/euclidean-controls.png",
       "sha256": "054740b4c38459b385913cfae51b11e3bc89bf008ba63581f869c5b2ffdf740e",
-      "atMs": 9400.30115625,
-      "requestedAtMs": 9400.30115625,
+      "atMs": 9400.301203125,
+      "requestedAtMs": 9400.301203125,
       "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap FLTR\npress FUNC\npress AMP 800\nrelease FUNC\nrelease AMP\nwait 500\nsnap euclidean-open\nturn A 4 300\nturn B 4 300\ntap NO\ntap SRC\ntap TRIG\npress TRK\ntap 2\nrelease TRK\ntap FLTR\npress TRK\ntap 1\nrelease TRK\ntap FLTR\npress FUNC\npress AMP 800\nrelease AMP\nrelease FUNC\nwait 500\nsnap euclidean-controls\ntap NO\nsnap euclidean-closed\n"
     }
   ],
   "machine": "digitakt",
   "moduleId": "euclidean",
-  "moduleVersion": "1.1.5",
+  "moduleVersion": "1.1.6",
   "firmware": "1.54",
   "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6"
 }

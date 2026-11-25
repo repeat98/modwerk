@@ -15,6 +15,12 @@ export type LinkRelease = { version: string; syxSha256: string; mainSha256: stri
 export type LinkDevice = {
   key: string; machine: ElemodMachine; name: string; sysexId: number; mainLoad: number; releases: LinkRelease[]
   areas: Record<string, [number, number]>; ddr: [number, number]; sramCode: [number, number]; fastTable: string; protected: [number, number, string][]
+  /** Stock routines no mod may reference (an absolute symbol or relocation) or copy, such as boot-flash writers. */
+  noLink?: [number, number, string][]
+  /** Larger areas for a set that does not fit ddr, smallest first: the set takes the first it fits, so a set that fits
+   * ddr links exactly as before. unless: a linker symbol; a mod that imports or references it cannot use that area (it
+   * assumes ddr's end). Only this linker reads it: the site builds through elekloader's kit, which has ddr alone. */
+  ddrMore?: { area: [number, number]; unless?: string }[]
 }
 
 // Facts from public research (elekloader device profiles): where mods may run and which releases exist.
@@ -48,12 +54,27 @@ export const LINK_DEVICES: LinkDevice[] = [
     ddr: [0x47f00000, 0x47f40000], sramCode: [0x8000f100, 0x80010000], fastTable: 'core_fast', protected: [],
   },
   {
+    // The Digitakt II's platform on OS 1.12 (docs/DIGITONE_II_OS_RESEARCH.md): mods run in the same 256 KB of DDR, which
+    // nothing in the OS names and a canary fill kept intact. SRAM is not qualified for code, so there is no .fast area.
+    key: 'digitone-mk2', machine: 'digitone-ii', name: 'Digitone II', sysexId: 0x15, mainLoad: 0x40000400,
+    releases: [
+      { version: '1.12', syxSha256: '7e5b8a733d4ab1fdf7e5d22757f7d8eddaa3cbf71d0858874a791844c02ceb35', mainSha256: 'a098f620019b2ad38fd7e0397df39501fb1cf6bc26d0283915f34c49446fdf1a', mainLength: 3196288 },
+    ],
+    areas: { ddr: [0x47f00000, 0x47f40000] },
+    ddr: [0x47f00000, 0x47f40000], sramCode: [0, 0], fastTable: '', protected: [],
+  },
+  {
     key: 'analog-rytm-mk2', machine: 'analog-rytm-mkii', name: 'Analog Rytm MKII', sysexId: 0x0c, mainLoad: 0x40000400,
     releases: [
       { version: '1.74', syxSha256: 'cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123', mainSha256: '34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b', mainLength: 3005432 },
     ],
     areas: { ddr: [0x47be0000, 0x47c00000] },
     ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
+    // OS 1.74's last use of the RAM under ddr ends at 0x47b47480 (a DMA list) and its boot stack runs down from
+    // 0x48000000; fills of 0x47b48000-0x47be0000 and 0x47c00000-0x47ff0000 read back intact on a unit
+    // (sdk/machines/analog-rytm-mkii/README.md, "Shared mod memory"). The send-bus base ends its effects' work area at
+    // ddr's end (sendbus.c's MODS_END), so a set on it stays below that.
+    ddrMore: [{ area: [0x47b50000, 0x47c00000] }, { area: [0x47b50000, 0x47f00000], unless: '__bss_end' }],
   },
   {
     key: 'analog-four-mk2', machine: 'analog-four-mkii', name: 'Analog Four MKII', sysexId: 0x0b, mainLoad: 0x40000400,
@@ -82,6 +103,9 @@ export type ParsedMod = {
   sections: Partial<Record<SectionName, Section>>; symbols: Map<string, [SectionName | 'abs', number]>; exports: string[]; imports: string[]; weak: Set<string>
   relocs: (Reloc & { section: SectionName })[]; collections: Map<string, number>; contribute: Contribution[]; copied: [number, number, number][]
   storage: [string, string, number][]   // mod storage fields: [symbol, scope, bits] (elekloader's store.ts)
+  // Digitone II: the DSP payload a format-2 mod declares for the SHARC program (section 7): its ABI. Only the core's
+  // bridge is accepted, and only while no other mod brings DSP code: this linker writes the main OS alone.
+  sharc: string | null
 }
 
 const COMMON = ['elemod', 'dtmod', 'id', 'version', 'title', 'description', 'category', 'author', 'license', 'target', 'sites', 'resources', 'requires', 'conflicts', 'build', 'signature', 'notes']
@@ -162,7 +186,7 @@ function parseResources(doc: Record<string, unknown>, name: string, device: Link
 export function parseElemod(doc: Record<string, unknown>, name = '<mod>', devices: readonly LinkDevice[] = LINK_DEVICES): ParsedMod {
   const format = (doc.elemod ?? doc.dtmod) as number
   if (format !== 1 && format !== 2) throw new ModError(name + ': not a .elemod file')
-  const allowed = format === 1 ? [...COMMON, 'ele3_version', 'blob'] : [...COMMON, 'sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied', 'storage']
+  const allowed = format === 1 ? [...COMMON, 'ele3_version', 'blob'] : [...COMMON, 'sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied', 'storage', 'sharc']
   const extra = Object.keys(doc).filter(key => !allowed.includes(key))
   if (extra.length) throw new ModError(name + ': unknown fields ' + extra.sort().join(', '))
   for (const key of format === 1 ? ['id', 'version', 'target', 'sites'] : ['id', 'version', 'target', 'sections']) if (!(key in doc)) throw new ModError(name + ': no "' + key + '"')
@@ -170,7 +194,7 @@ export function parseElemod(doc: Record<string, unknown>, name = '<mod>', device
   const mod: ParsedMod = {
     format, id: String(doc.id), version: String(doc.version), device, release, sites: [], ...parseResources(doc, name, device),
     requires: ((doc.requires as unknown[]) ?? []).map(String), conflicts: ((doc.conflicts as unknown[]) ?? []).map(String),
-    blob: null, shownVersion: null, sections: {}, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [], collections: new Map(), contribute: [], copied: [], storage: [],
+    blob: null, shownVersion: null, sections: {}, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [], collections: new Map(), contribute: [], copied: [], storage: [], sharc: null,
   }
   if (format === 1) {
     mod.sites = parseSites(doc, name, device, release, false)
@@ -187,6 +211,12 @@ export function parseElemod(doc: Record<string, unknown>, name = '<mod>', device
       mod.blob = { load, length, sha256: String(blob.sha256 ?? '').toLowerCase(), parts }
     }
     return mod
+  }
+  if (doc.sharc !== undefined) {
+    const payload = doc.sharc as Record<string, unknown> | null
+    if (device.machine !== 'digitone-ii') throw new ModError(name + ': a SHARC payload is only for the Digitone II')
+    if (!payload || typeof payload !== 'object' || typeof payload.abi !== 'string' || !payload.abi) throw new ModError(name + ': sharc needs its abi')
+    mod.sharc = payload.abi
   }
   for (const [section, value] of Object.entries(doc.sections as Record<string, Record<string, unknown>>)) {
     if (!SECTIONS.includes(section as SectionName)) throw new ModError(name + ': unknown section ' + section)
@@ -259,6 +289,19 @@ async function commonChecks(mods: ParsedMod[], image: Uint8Array, spans: [number
   for (const mod of mods) for (const name of mod.names) { const other = owner.get(name); if (other && other !== mod) bad.push(label(other) + ' and ' + label(mod) + ' both claim ' + name); owner.set(name, mod) }
   const device = mods[0].device
   for (const mod of mods) for (const site of mod.sites) for (const [lo, hi, why] of device.protected) if (site.addr < hi && lo < site.addr + site.length) bad.push(label(mod) + ' site ' + hex32(site.addr) + ' is inside ' + hex32(lo) + '-' + hex32(hi) + ', ' + why + ': protected on the ' + device.name)
+  if (device.noLink?.length) {
+    const absolute = new Map(mods.flatMap(mod => mod.exports.flatMap(symbol => { const value = mod.symbols.get(symbol); return value?.[0] === 'abs' ? [[symbol, value[1]] as const] : [] })))
+    for (const mod of mods) {
+      const own = (name: string) => { const value = mod.symbols.get(name); return value ? (value[0] === 'abs' ? value[1] : undefined) : absolute.get(name) }
+      const refs: [number, number, string][] = [...mod.symbols].flatMap(([symbol, [section, value]]) => section === 'abs' ? [[value, value + 1, 'symbol ' + symbol] as [number, number, string]] : [])
+      for (const reloc of [...mod.relocs, ...mod.sites.flatMap(site => site.relocs), ...mod.contribute.flatMap(entry => entry.relocs)]) {
+        const base = reloc.target === 'abs' ? 0 : reloc.target.startsWith('sym:') ? own(reloc.target.slice(4)) : undefined
+        if (base !== undefined) refs.push([base + reloc.addend, base + reloc.addend + 1, 'a reference to ' + hex32(base + reloc.addend)])
+      }
+      for (const part of [...Object.values(mod.sections), mod.blob].flatMap(section => section && 'parts' in section ? section.parts : [])) if (part.kind === 'stock') refs.push([part.addr, part.addr + part.length, 'a stock copy from ' + hex32(part.addr)])
+      for (const [a, b, what] of refs) for (const [lo, hi, why] of device.noLink) if (a < hi && lo < b) bad.push(label(mod) + ': ' + what + ' reaches ' + hex32(lo) + '-' + hex32(hi) + ', ' + why + ': no mod may link to it on the ' + device.name)
+    }
+  }
   for (const mod of mods) for (const site of mod.sites) {
     const offset = site.addr - device.mainLoad
     if (await sha256Hex(image.subarray(offset, offset + site.length)) !== site.stockSha256) bad.push(label(mod) + ' site ' + hex32(site.addr) + ': the stock bytes are not the ones it expects')
@@ -321,8 +364,11 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array, lock: store
   if (await sha256Hex(image) !== release.mainSha256) throw new ModError('the stock main OS is not ' + device.name + ' ' + release.version)
   const problems = await checkLinkable(mods, image)
   if (problems.length) throw new ModError('the mods do not combine:\n  ' + problems.join('\n  '))
-  const end = imageEnd(mods[0]), [ddrBase, ddrEnd] = device.ddr, [fastBase, fastEnd] = device.sramCode
+  const end = imageEnd(mods[0]), [fastBase, fastEnd] = device.sramCode
   const core = mods.find(mod => mod.sections['.boot'])!
+  // The core's DSP bridge goes into section 7 only for a mod with DSP code, and this linker writes the main OS alone.
+  const dsp = mods.filter(mod => mod !== core && mod.sharc).map(label)
+  if (dsp.length) throw new ModError(dsp.join(', ') + ' bring' + (dsp.length === 1 ? 's' : '') + ' DSP code for the ' + device.name + "'s SHARC program, which this linker does not write yet")
   const order = [core, ...mods.filter(mod => mod !== core).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))]
   const tables = new Map<string, [ParsedMod, number]>()
   for (const mod of order) for (const [table, entry] of mod.collections) tables.set(table, [mod, entry])
@@ -352,22 +398,33 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array, lock: store
   const base = new Map<string, number>(), key = (mod: ParsedMod, section: SectionName) => mod.id + ' ' + section
   const bootLength = sizeOf(core.sections['.boot'])
   base.set(key(core, '.boot'), end)
-  let at = ddrBase
-  for (const mod of order) if (sizeOf(mod.sections['.run'])) { at = align(at, Math.max(4, mod.sections['.run']!.align)); base.set(key(mod, '.run'), at); at += sizeOf(mod.sections['.run']) }
-  const tableAt = new Map<string, number>()
-  for (const table of [...tables.keys()].sort()) { at = align(at, 4); tableAt.set(table, at); at += tableLength(table) }
-  let fastAt = fastBase
-  const fastLoad = new Map<string, number>()
-  for (const mod of fastMods) {
-    fastAt = align(fastAt, Math.max(4, mod.sections['.fast']!.align)); base.set(key(mod, '.fast'), fastAt)
-    at = align(at, 4); fastLoad.set(mod.id, at)
-    const size = align(sizeOf(mod.sections['.fast']), 4); fastAt += size; at += size
+  const tableAt = new Map<string, number>(), fastLoad = new Map<string, number>()
+  // Places .run, the tables, the .fast load copies and .bss from ddrBase up; returns where .run, .fast and .bss end.
+  const place = (ddrBase: number): [number, number, number] => {
+    let at = ddrBase
+    for (const mod of order) if (sizeOf(mod.sections['.run'])) { at = align(at, Math.max(4, mod.sections['.run']!.align)); base.set(key(mod, '.run'), at); at += sizeOf(mod.sections['.run']) }
+    for (const table of [...tables.keys()].sort()) { at = align(at, 4); tableAt.set(table, at); at += tableLength(table) }
+    let fastAt = fastBase
+    for (const mod of fastMods) {
+      fastAt = align(fastAt, Math.max(4, mod.sections['.fast']!.align)); base.set(key(mod, '.fast'), fastAt)
+      at = align(at, 4); fastLoad.set(mod.id, at)
+      const size = align(sizeOf(mod.sections['.fast']), 4); fastAt += size; at += size
+    }
+    const runEnd = align(at, 4)
+    at = runEnd
+    for (const mod of order) if (sizeOf(mod.sections['.bss'])) { at = align(at, Math.max(4, mod.sections['.bss']!.align)); base.set(key(mod, '.bss'), at); at += sizeOf(mod.sections['.bss']) }
+    return [runEnd, fastAt, align(at, 4)]
   }
-  const runEnd = align(at, 4)
-  at = runEnd
-  for (const mod of order) if (sizeOf(mod.sections['.bss'])) { at = align(at, Math.max(4, mod.sections['.bss']!.align)); base.set(key(mod, '.bss'), at); at += sizeOf(mod.sections['.bss']) }
-  const bssEnd = align(at, 4)
-  if (bssEnd > ddrEnd) throw new ModError('the mods need RAM to ' + hex32(bssEnd) + ', past ' + hex32(ddrEnd) + ' (' + (bssEnd - ddrEnd) + ' bytes over)')
+  let [ddrBase, ddrEnd] = device.ddr, [runEnd, fastAt, bssEnd] = place(ddrBase), barred = ''
+  // A set too big for ddr takes the first larger area it fits and may use; every other set stays where it was.
+  for (const { area, unless } of device.ddrMore ?? []) {
+    if (bssEnd <= ddrEnd) break
+    const names = (mod: ParsedMod) => [...mod.relocs, ...mod.sites.flatMap(site => site.relocs), ...mod.contribute.flatMap(entry => entry.relocs)].some(reloc => reloc.target === 'sym:' + unless)
+    const user = unless && order.find(mod => mod.imports.includes(unless) || names(mod))
+    if (user) { barred = '; ' + label(user) + ' cannot use the ' + (area[1] - area[0]) + ' bytes at ' + hex32(area[0]) + '-' + hex32(area[1]); continue }
+    ;[ddrBase, ddrEnd] = area; [runEnd, fastAt, bssEnd] = place(ddrBase)
+  }
+  if (bssEnd > ddrEnd) throw new ModError('the mods need RAM to ' + hex32(bssEnd) + ', past ' + hex32(ddrEnd) + ' (' + (bssEnd - ddrEnd) + ' bytes over)' + barred)
   if (fastAt > fastEnd) throw new ModError('.fast code needs SRAM to ' + hex32(fastAt) + ', past ' + hex32(fastEnd))
   const runLoad = align(end + bootLength, 16)
 

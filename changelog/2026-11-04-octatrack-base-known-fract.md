@@ -1,0 +1,1 @@
+Octatrack base: the boot's battery restore keeps a FRACT track's twelve machine bytes while the FRACT module is not yet reinstalled. FRACT (`FR`, version 1) joins Analog BD, FM Synth and SYNTIZ among the PROTECT machines the base knows by signature, so a bank with a FRACT track is not refused at power-on (beta finding 24).

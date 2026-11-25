@@ -1,0 +1,124 @@
+{
+  "started": "2026-10-25T17:47:47.120966+00:00",
+  "supervisor_pid": 91988,
+  "limit_seconds": 900,
+  "gate": "UI-only",
+  "attempt": 1,
+  "capture_argv": [
+    "/usr/local/bin/python3",
+    "-B",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/tempo-capture/scripts/capture-module-ui.py",
+    "--emulator",
+    "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/work/r19/G/emu/ot_emu",
+    "--image",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/mainos_bus.bin",
+    "--image-sha256",
+    "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+    "--key-ms",
+    "150",
+    "--plan",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/capture/ui-plan.json",
+    "--output",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/capture/ui-once"
+  ],
+  "whole_file_identities": {
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/tempo-capture/scripts/capture-module-ui.py": "91bc00d7f4cf6100c37e2d60b6b934211ef1f63bbc3e953cf1821521933ed22e",
+    "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/work/r19/G/emu/ot_emu": "07a7c08e3d4562f7b51ee5985bd2595cced383f1b8090995f1dfecfb404f092d",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/mainos_bus.bin": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/capture/ui-plan.json": "febe4f7feda7a0c40088e55da80beddb590613026509aace9c0c6c0c7cd3bc6d",
+    "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/capture/run_ui_once.py": "d5967160b5b3977678b34f3d914972818d9ab5ca61b97eebd78ba99dbc347791",
+    "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/work/hostemu/scripts/tim_session_wait.sh": "868d4c447940af7c7ec749d8430d48abff5f906e83e950a8a534a6d1c7d736a6",
+    "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/rig/rig_slot.sh": "2a6e7c90d63afddaa974257d0cbce0c33ea0a9493d65fae01f19e4ebb418cbb2"
+  },
+  "tim_wait": {
+    "pid": 92003,
+    "exit_code": 0,
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "lease": {
+    "pid": 92007,
+    "slot": "/tmp/octatrick-rig.slots/slot-2",
+    "owner": {
+      "owner": "relay062-ui",
+      "pid": 92007,
+      "purpose": "capture-tuner-ui-only",
+      "since": "10:47:47"
+    },
+    "acquired": "2026-10-25T17:47:47.309940+00:00",
+    "exit_code": 0,
+    "reaped": true,
+    "released": true
+  },
+  "emulator": {
+    "pid": 92045,
+    "argv": [
+      "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/work/r19/G/emu/ot_emu",
+      "--image",
+      "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/mainos_bus.bin",
+      "--card",
+      "/var/folders/pw/p4nn25h97qq_sd0p8sn4kzw00000gn/T/octamod-ui-capture.xocd922f/card.img",
+      "--dsp",
+      "--frame",
+      "--ms",
+      "3000",
+      "--interactive",
+      "--lcd",
+      "/var/folders/pw/p4nn25h97qq_sd0p8sn4kzw00000gn/T/octamod-ui-capture.xocd922f/lcd.bin",
+      "--main-level",
+      "off",
+      "--rtc",
+      "host",
+      "--mkii"
+    ],
+    "started": "2026-10-25T17:47:47.358063+00:00",
+    "exit_code": -11,
+    "reaped": true,
+    "stderr_drain_complete": true
+  },
+  "failure": "capture_or_setup_failed",
+  "exception_type": "RuntimeError",
+  "finished": "2026-10-25T17:47:47.541704+00:00",
+  "elapsed_seconds": 0.42,
+  "exit_code": 1,
+  "streams": {
+    "emulator_stdout": {
+      "bytes": 430,
+      "lines": 4,
+      "sha256": "927dce5f516ba524b912331304afd116a2a08c8c864ab531c6292241219d3f70",
+      "raw_retained": false
+    },
+    "emulator_stderr": {
+      "bytes": 335,
+      "lines": 8,
+      "sha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+      "raw_retained": false
+    },
+    "emulator_commands": {
+      "bytes": 0,
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_retained": false
+    },
+    "capture_stdout": {
+      "bytes": 0,
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_retained": false
+    },
+    "capture_stderr": {
+      "bytes": 0,
+      "lines": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_retained": false
+    }
+  },
+  "captures": [],
+  "provenance_present": false
+}

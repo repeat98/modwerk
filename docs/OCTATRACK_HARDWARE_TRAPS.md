@@ -27,20 +27,18 @@ it primes its data stage, and the client never sends such a frame (it
 shortens that chunk by a byte), so older bases work too. `usbtest9`,
 `508b0e52`.
 
-**An EP0 OUT data stage can go unanswered two ways, and the tick
-covers both.** Measured on the owner's MKII, 11 October 2026, about one
-SUBMIT in 50–100 (502 primes: 29 of the first kind, 2 of the second). (1) The
-stage completes inside the ISR after the poll at the start of the transfer
-path, and stock's completion loop takes the bit: no new interrupt, no status
-stage. (2) The stage stops part way: 64 bytes of a 120-byte frame arrived (the
-queue head's overlay token `0x00388080`), the endpoint is still primed, and
-the host waits on a status stage that never comes. libusb gives up after its
-timeout; a browser may wait for ever. `modwerk_ep0_tick` (60 Hz, USB held off
-with the level-4 lock) finishes a stage that has completed and, after half a
-second without completion, refuses the frame and stalls EP0. The host then
-sees a stall and a REFUSED result for its sequence, and submits again (a
-refused frame never ran). Counters: `caught`, `stalled`, `stuck_overlay` in
-ep0.c (read with `mem:`). The cause of (2) on the wire is not known.
+**EP0 OUT can lose a completion interrupt or stop mid-frame.** On the owner's MKII
+(11 October 2026, 502 primes), 29 stages completed after the ISR poll and stock
+took the interrupt. Two stopped mid-frame: a 120-byte SUBMIT received 64 bytes
+(overlay `0x00388080`). The host then waited for status. At 60 Hz under the
+level-4 lock, `modwerk_ep0_tick` catches completed stages or stalls EP0 after
+half a second so the host can retry a refused frame. See `caught`, `stalled`
+and `stuck_overlay` in ep0.c. The cause of the partial transfer is still unknown.
+
+DIAG v3 byte 5 bit 0 advertises a 70-byte read. Pass the failed SUBMIT sequence
+in `wValue` before recovery. Bytes 68–69 give the controller's remaining OUT
+bytes, big-endian. Zero means no bytes outstanding, `0xffff` no matching sample.
+The CHUNK offset counts bytes from the start of the staged set.
 
 **Host frames wait for the boot restore.** The saved module set is
 reinstalled about 3 s after boot and its DSP code loads afterwards. An
@@ -64,12 +62,12 @@ back after 10 s of USB quiet. The `serve` session's request every 4 s keeps
 the base from ever seeing that quiet.
 
 **Windows binds WinUSB only to a USB 2.10 device that answers BOS and the
-Microsoft OS 2.0 set.** Both requests reach the base through stock's
-unknown-request STALL tail; the device descriptor needs a copy (stock's sits
-in the protected bootloader range). macOS and USB disk mode are unaffected.
-`usbtest8`. On Windows 11 the vendor interface came up as a WinUSB device with
-no driver install, next to the card's mass storage (flashed base `19d37e25`
-and `ee76c36f` (S54), 12 October 2026), and libusb drives it.
+Microsoft OS 2.0 set**, both through stock's unknown-request STALL tail; the
+device descriptor needs a copy. No driver install (Windows 11, 12 October 2026).
+It keeps an interface's first setup: `DeviceInterfaceGUIDs` is written once,
+and without it nothing opens the interface. A changed `bcdDevice` makes Windows
+write it again (`BASE_REVISION` 0x0101,
+[record](verification/2026-11-13-windows-usb-revision.md)).
 
 **WinUSB refuses a control transfer longer than 4,096 bytes** ("Invalid
 parameter", before anything reaches the wire); macOS and Linux take the
@@ -101,10 +99,7 @@ combined-set audio or reboot persistence.
 **Extracted 1.40C MAIN starts at `0x40000400`.** Map stock addresses to file
 offsets from that section's load address, not the `0x40000000` vector base.
 After a runtime install, compare every declared relocation with an independent
-fresh link, including words beyond any leading-code sample. The private CC Map
-and Recorder Loop Fix envelopes prepared from `e86283a6` passed sequential
-emulator install/remove with these checks; that does not establish hardware,
-coexistence, MIDI, audio or reboot behavior.
+fresh link, including words beyond any leading-code sample.
 
 **A source-linked base's DDR symbol is not a MAIN file offset.** Elekloader
 places `.run` in appended flash and copies it to its DDR execution address at
@@ -118,8 +113,6 @@ load address from its DDR symbol would read the wrong place.
 bridge must catch transient enumeration/claim failures while the device returns,
 dispose partially opened handles and keep listening for the next explicit
 request. Never replay a write, reset USB or select a configuration as recovery.
-The same `e86283a6` candidate identified successfully after this host fix on the
-owner's MKII; the earlier dead bridge could not establish a device boot failure.
 
 **Snapshot StockCopy sources before activation.** A source span can overlap a
 site the package replaces. Reading it after Keep compares the loader's correctly
@@ -202,6 +195,11 @@ delta, `0x40` with the fader position), masked as the UART interrupt does.
 This is what octemu's emulated panel sends too. Remote PLAY, STOP and
 auto-stop work this way (development base `54f2ce5c`).
 
+**The transport has two stopped states.** Long `0x800065b8` and the 16 track
+bytes at `0x80006500` read 0 after a panel STOP, 1 playing, and 2 (position
+kept) after PLAY while playing or any MIDI STOP, until a panel STOP (MKII, 23
+November 2026). Running is `== 1`; octabam read 2 as the STOP key's.
+
 **Moving the cursor in an FX chooser does not pick; YES does.**
 
 **A script's YES can land somewhere else.**
@@ -269,24 +267,24 @@ voice limit switched off took about 34,000 DTIM3 counts (257 µs) of POLY work i
 frames stopped for good (stall record "frames stopped"). Bound what a module does per frame in the interrupt and
 measure it with DTCN3 (`0xfc07c00c`, 132 MHz, about 47,900 counts a frame); POLY8 0.3.1 sheds voices above 26,000.
 
-**One long frame does not stop the DSP; a frame interrupt that keeps the CPU does.** Measured on the owner's MKII
+**The long frames measured did not stop the DSP; a frame interrupt that keeps the CPU did.** Measured on the owner's MKII
 (24 October 2026, development twins of the frame guard's branch, timing the interrupt from its entry `0x4000aad0` to
 its exit `0x4000d9a6`), in a bank of eight tracks trigged on every step:
 - **Each track renders twice in most frames.**
-- **Long frames pass.** Stock tracks alone ran frames up to 96 % of a frame; with POLY8 0.3.1 up to 107 %; with FM Synth
-  and USB recording up to 148 %, starting up to 69 % of a frame late. None of these stopped anything by itself.
-- **The share stops it.** POLY8 0.3.1 on T1, FM Synth 0.1.2 on T2 and six busy stock tracks kept the interrupt at 86.5 %
-  of the CPU (meter 94 %). Starting USB recording took it to 89.5 %, and the frames stopped within about 1,000 frames
-  (stall record "frames stopped", sequencer stuck on its first step). With the interrupt kept near a whole frame every
+- **These long frames passed.** Stock tracks alone ran frames up to 96 % of a frame; with POLY8 0.3.1 up to 107 %; with
+  FM Synth and USB recording up to 148 %, starting up to 250 µs late. For an entry about 150 µs late see
+  [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md).
+- **A high share stopped it.** POLY8 0.3.1 on T1, FM Synth 0.1.2 on T2 and six busy stock tracks kept the interrupt at
+  86.5 % (meter 94 %). USB recording took it to 89.5 %, and the frames stopped within about 1,000 (sequencer
+  stuck on its first step): the late entry looks the same, and no entry times were kept. Kept near a whole frame every
   frame, the panel froze and USB disconnected too.
 - **The guard.** The base gives the interrupt 80 % of each frame, saving up to half a frame from short ones, and
   renders stock's silent source for a machine track whose render would overdraw it (`machine_registry.c`). The same
   load and recording then ran with the interrupt at 79.7 % and a clean recording, with POLY8 skipped on about half its
-  renders; POLY8 alone, sparse or on every step, was never skipped (66 % and 70 %). Card builds' logger has
-  the same guard. On a development base `npm run device -- guard` reads the interrupt's share, its longest frame and the
+  renders; POLY8 alone, sparse or on every step, was never skipped (66 % and 70 %). On a development base `npm run device -- guard` reads the interrupt's share, its longest frame and the
   skips, and `guard:MILLE` sets the share.
 
-**Walk the module list once, not once per question.** A lookup that reads module headers from the pool (uncached) inside a loop over every module is quadratic in what is installed. The controller tick did that once per held controller and check, and with 26 modules (Sidechain, Output Matrix, Analog BD among them) it cost 0.8 ms of every UI tick (owner's MKII, 24 October 2026). Find an owner by its record in base RAM, read the pool only for that one, and keep results while `modwerk_runtime_owner_epoch()` stands even and unchanged (`loader.h`), checking the header with `modwerk_runtime_owner_held`. `npm run device -- do 'mem:ADDR:112'` on `modwerk_cost` (development bases) shows each tick hook's µs, and the frame guard's `guard` step shows what the frame interrupt takes.
+**Walk the module list once, not once per question.** A lookup that reads module headers from the pool (uncached) inside a loop over every module is quadratic in what is installed. The controller tick did that once per held controller and check, and with 26 modules it cost 0.8 ms of every UI tick (owner's MKII, 24 October 2026). Find an owner by its record in base RAM, read the pool only for that one, and keep results while `modwerk_runtime_owner_epoch()` stands even and unchanged (`loader.h`), checking the header with `modwerk_runtime_owner_held`. `npm run device -- do 'mem:ADDR:112'` on `modwerk_cost` (development bases) shows each tick hook's µs, and the frame guard's `guard` step shows what the frame interrupt takes.
 
 **Uncached module code is slow in the interrupt, and so is its data.** Without `--cached-modules` every instruction
 and every load or store of a module goes to SDRAM. POLY8 0.3.0 cost about 13 points of CPU per voice there and about
@@ -385,7 +383,7 @@ a word:
   saved", "set not mounted", until a power cycle.
 
 A per-sample `rep #21` did this on both cores, and the same loop as DO fixed it.
-In this repository Spectrum (4), Character (5) and Modulation (1) still use
+Spectrum (4), Character (5) and Modulation (1), now removed, used
 `rep`; the report also names busdelay, character-txtr, testgen and vocoder (at
 init only). The base and the modules in today's runs (E-Verb, Mini Verb,
 TapeHead, Euclid, Air Chorus, Tape Echo) have none. Not checked against "Junk on
@@ -488,9 +486,9 @@ stock path (MIDI TRACK > CHROMATIC) enters directly at `0x400449be`. Audio
 CHROMATIC worked through the detour; the MIDI path skipped the push, the
 formatter popped four bytes too many and returned into the LCD surface
 (`VEC:04` at `0x400bf10a`). Reported from a tester's MKII, 15 October 2026,
-and reproduced on the ColdFire emulator. Before taking a span, look for
-stock branches to every instruction after its first; shorten the detour
-and keep a shared target stock (Quantizer 0.1.3, its TESTING.md).
+and reproduced on the ColdFire emulator. Before taking a span, run `npm run stock:branches`
+(with your OS file); shorten the detour and keep a shared target stock
+(Quantizer 0.1.3, its TESTING.md).
 
 **One copy of the arena base literal is not the arena.** The sample arena's
 stock base address is the operand of 23 instructions. 22 of them are the
@@ -536,20 +534,20 @@ catalogue module patches or keeps (`catalogue_overlaps`).
 `-mcpu=5475` emitted scale-eight indexed LEA in text drawing; the unit restarted with vector 3
 at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes with address
 errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
-The emulator accepted it. Keep the machine SDK's target flags and audit final code; emulator
-execution is not an ISA-compatibility check. Probe history is
-in [Beat Slicer's testing record](../sdk/octabam/modules/beat-slicer/TESTING.md).
+The emulator accepted it. Keep the SDK's target flags; `npm run coldfire:isa` holds
+hand-written assembly to that CPU. Probes are
+in [Beat Slicer's testing record](../sdk/octatrack/modules/beat-slicer/TESTING.md).
 
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
 ColdFire computes the destination from the register it has just
 incremented, so the whole COMPRESSOR descriptor landed one byte high. The
-FX1 SETUP page then saw the wrong slots enabled and jumped through an odd
-widget pointer: vector 3 (address error) at `0x40037c2a`, on a dev twin
-built from base 9d5aa74d. Host builds never show it. The base now compiles
-with `-fno-late-combine-instructions`. `sdk/runtime/m68k_codegen.py`
-refuses any C object, in the base and elemod builds, where an instruction
-steps an address register in its source and reuses it in its destination.
+FX1 SETUP page then jumped through an odd widget pointer: vector 3 at
+`0x40037c2a`, on a dev twin of base 9d5aa74d. Host builds never show it.
+The base compiles with `-fno-late-combine-instructions`. An instruction
+that steps an address register in its source and reuses it in its
+destination is refused in a build's C objects (`m68k_codegen.py`) and
+reported in assembly, `.s` kept from C included (`npm run coldfire:isa`).
 
 **Stock copies a table entry; restoring the table is not enough.** A track
 bind (`0x4000bff0`, in the frame builder, on a trig that asks for it) copies
@@ -569,20 +567,20 @@ such a leftover call at once instead of on a later install.
 
 **The boot validates the bank before any module is back.** At power-up and
 RAM boot stock restores the current bank from its battery-backed Part copies
-(`0x40025770`) and runs the Part validator on each first; the saved module set
-reinstalls modules only about 3 s later. One value the validator has to fix
+(`0x40025770`) and runs the Part validator on each first; the saved set
+reinstalls modules about 3 s later. One value the validator has to fix
 refuses the whole restore: the bank is never copied in or applied, every Part
 reads STATIC with stock defaults, no track is ever bound (renderer slots stay
 `0x400047f0`) and the unit is silent. A module whose Part bytes stock would reject must be kept
-from the validator by the base itself, before the module is installed (beta
-finding 24: Analog BD). That includes a module that gives a stock effect's slots new
+from the validator by the base, before the module is installed (beta
+finding 24: Analog BD). So must a module that gives a stock effect's slots new
 meanings: Sidechain Compressor's KEY, KFLT and KGN in COMPRESSOR's page-2 slots
-8-11 wiped testers' current banks at every power-on (finding 47). The restore also runs a
-pattern validator (`0x4009a670`, not hooked) on all 16 patterns, so pattern
-bytes a module writes need the same care. To test a module for this, set it up
-in a scratch project's current bank and RAM-boot: the restore and both
-validators run as at power-up. A refused restore has already written its fixes
-into the battery copy, so the next boot restores the bank with those values
+8-11 wiped testers' current banks at power-on (finding 47). It also caps stock
+fields, holds XVOL at 127 and runs on every bank read
+([register](../sdk/octabam/docs/remixer/FAILURE_MODES.md#the-part-validator-caps-stock-fields-and-runs-on-every-bank-read)).
+A pattern validator (`0x4009a670`, not hooked) checks all 16 too. To test,
+RAM-boot with the module set up in a scratch bank. A refused restore has written its fixes
+into the battery copy, so the next boot restores the bank with them
 changed (Sidechain's KFLT 64 became 1). To recover a bank lost this way, do not
 save or edit: power-cycle once more, or PROJECT > RELOAD the last save from the
 card.
@@ -704,35 +702,29 @@ early-startup change passed emulator boots and quick power cycles on a
 tester's MKII, then stalled at the logo after several minutes powered off
 (reported 18 October 2026). Moving the small activation helper into the
 resident OS image fixed repeated cold starts on that unit; the module itself
-still runs from RAM. The mechanism is not known: it does not show a defect
-in RAM execution, the loader or the cache. Keep startup gates and activation
+still runs from RAM. Keep startup gates and activation
 helpers resident where you can, publish a callback only once its runtime is
 ready, and qualify a startup change after a sustained power-off as well as
 a quick restart. The emulator models neither cache, reset settling nor RAM
 retention.
 
 **A card-write completion interrupt can run before the bookkeeping it
-reads.** Stock's first-sector PIO write lowers the interrupt mask again
-before it sends the 256 data words and before it advances the buffer pointer
-and the remaining-sector count. If the engine task is preempted after the
-last word, the completion interrupt sees the old count, polls for a data
-request the card has already finished, and spins for ever; the engine never
-resumes to fix the count. Seen only on the ColdFire emulator, as a gate hang
-(15 October 2026); whether real card timing opens the window is not
-measured. When a hang follows card writes, ask what an interrupt handler
-reads while the producer is mid-update before chasing parsers, names or
-card latency.
+reads.** Stock's first-sector PIO write lowers the interrupt mask before it
+sends the 256 data words and advances the buffer pointer and sector count.
+Preempted after the last word, the completion interrupt sees the old count
+and spins for ever. Seen only as emulator hangs (15 October, 1-4 November
+2026); real card timing is not measured. When a hang follows card writes,
+ask what an interrupt handler reads while the producer is mid-update.
 
 ## Octabam's register
 
-Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam/AGENTS.md) (to 30 September 2026), then [sdk/octabam/docs/TRAPS.md](../sdk/octabam/docs/TRAPS.md) (to 1 November 2026, with anchors), with [FAILURE_MODES.md](../sdk/octabam/docs/FAILURE_MODES.md) (failures on units), [HARDWARE_MATRIX.md](../sdk/octabam/docs/HARDWARE_MATRIX.md) (a one-cable USB test, per-slot DSP costs of the stock effects) and [MIDI_TRACKS.md](../sdk/octabam/docs/MIDI_TRACKS.md) (a MIDI track's setup in the Part, read from the image); `sdk/imports/octabam-docs-*.json` pins each. Entries that reach Modwerk (`brclr`, descriptor names, label prefixes and `rep` are above or in the effects guide):
+The register is vendored unchanged and frozen: [its AGENTS.md](../sdk/octabam/AGENTS.md) (to 30 September 2026), then [TRAPS.md](../sdk/octabam/docs/TRAPS.md) (to 11 November 2026, with anchors), [FAILURE_MODES.md](../sdk/octabam/docs/FAILURE_MODES.md), [HARDWARE_MATRIX.md](../sdk/octabam/docs/HARDWARE_MATRIX.md) (a one-cable USB test, stock per-slot DSP costs) and [MIDI_TRACKS.md](../sdk/octabam/docs/MIDI_TRACKS.md); `sdk/imports/octabam-docs-*.json` pins each, and newer traps go into Modwerk's own docs ([upstream worker](MAINTENANCE.md#upstream-worker)). Entries that reach Modwerk (`brclr`, descriptor names, label prefixes and `rep` are above or in the effects guide):
 
-- **A DSP counter past $7fffff saturates in `move a,nN`** (TRAPS.md, "A frame count past $7fffff"): A2 keeps its sign through `and`, so a frame-counter index stopped the frame engine after 50.7 minutes. Mask the count to 23 bits, or move it through `a1` as the load meter does.
+- **A DSP counter past $7fffff saturates in `move a,nN`** (TRAPS.md, "A frame count past $7fffff"): A2 keeps its sign through `and`, so a frame-counter index stopped the frame engine after 50.7 minutes. Mask the count to 23 bits.
 - **A zero CS1 with a valid settings tail boots stock's settings as zeros** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cs1-zero)): a base variant reading run-time settings from the CS1 early block treats an all-zero block as none.
 - **Same-named labels across DRAM units bind by nm table order**: keep local labels unique across one runtime's units.
-- **A card-write completion that runs before its bookkeeping** is the race under "Cold starts and card writes"; a hook that writes to the card keeps the first sector and its pointer update atomic, as octabam's ATA WRITE GUARD does.
 - **A persistent slot that init does not clear holds the previous effect's words**: init zeroes every slot the sample loop reads. `dsp_host -dirty` reproduces it, `-pword` a knob under an LFO (bits 8-15 set).
-- **Window code costs 2x and is zeroed at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero), [record](OCTATRACK_DSP_WINDOW.md)): the base copies the receiver's packet operations to `P:0x37e00`/`0x3fe00` at the first frame; FX2 block 3 takes no buffer past `0x3e00`.
+- **Window code costs 2x and is zeroed at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero), [record](OCTATRACK_DSP_WINDOW.md), with a lead on core 1's frame head): the base copies the receiver's packet operations to `P:0x37e00`/`0x3fe00` at the first frame; FX2 block 3 takes no buffer past `0x3e00`.
 - **A host write at the frame interrupt's entry is lost every other frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-host-mask); under the port, open on a unit): payload B rewrites the host handlers' masks each frame. Stream to core B on ping-0 frames, or check every word arrived.
 - **`dsp_asm` does not assemble a backward `bra`, or a `jmp` to a window address** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-bra-back)): put a trampoline before the code it enters, or `jmp (rN)`; dispatch entries keep `init < proc <= init + 256`.
 - **A module's id is the remix's, not the manifest's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-module-id)): a tool reading the preferred `fx2_id`, a literal id or `0x400d5fdc` is right only for the stock layout, which [more than 32 effect ids](OCTATRACK_MORE_EFFECT_IDS.md) change.
@@ -742,7 +734,11 @@ Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam
 - **A floating cave rounded past the clone window** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cave-round)): test where a cave ends, as `floating_cave_at` does.
 - **Audio and MIDI keep separate playing-Part latches** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-part-engine-context)): a MIDI-side module reads the MIDI engine's; test with the engines on different Parts.
 - **A byte zero in every project can still be the OS's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-unused-bytes)): before keeping state there, write a marker, save, reload and diff.
-- **Generated test projects** (FAILURE_MODES.md, "A generated test project plays a sample wrongly"): a FLEX slot needs its `markers.work` trim record (the harness's `set_markers` writes it); the EMPTY template has MIDI transport receive off.
+- **The stock DELAY reads its table across the whole run `0x400d24d0..0x400d2ce0`** (FAILURE_MODES.md, "A cave at 0x400d24d0 changes the stock DELAY"): default settings read its first word, boot its last; code there changes the sound. `modules:compat` refuses any write there.
+- **The page plane `0x46c7e0ea` is not the screen** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-page-plane)): it lacks windows and popups. UI captures add them (`lcd_view.py`); a bare `peek` does not.
+- **A file open through the stock layer owns your buffer** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-file-buffer)) until it is closed.
+- **A `jsr` into stock returns with a0, a1, d0 and d1 changed** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-scratch-regs)); **a held scene key takes every encoder** from the open page ([scenes guide](module-guides/scenes.md#test)); **in the icon blit, bit 31 is the bottom row** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-icon-bit31)).
+- **Generated test projects** (FAILURE_MODES.md, "A generated test project plays a sample wrongly"): a FLEX slot needs its `markers.work` trim record; the EMPTY template has MIDI transport receive off.
 
 ## The emulator and the tools
 
@@ -761,15 +757,11 @@ What `ot_emu` does not show:
   unless given `--card-rw`. Hold remote keys for unit ticks, not wall time:
   under `--dsp` it runs far slower than the clock.
 
-**Keep one link open and drive it by name.** [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)
-covers the persistent session, named panel steps, state reads and screenshots.
-A single connection avoids repeated bridge startup and CONNECTED notices; use
-screenshots only for details the state reads cannot show.
+**Keep one link open and drive it by name** ([OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)).
 
 Tools that work on this Mac:
-- Development bases (`build_core.py --dev`): `npm run device -- key`,
-  `enc`, `fader`, `state`, `screen [--png FILE]`, `loader`, `report`,
-  `probe`, plus USB audio (MAIN and CUE).
+- Development bases (`build_core.py --dev`): the device steps, plus USB
+  audio (MAIN and CUE).
 - Recording: the repaired `rec.swift` (`sdk/machines/octatrack/hw/prepare_tools.py`,
   then `swiftc -O rec.swift -o rec; rec SECONDS OUT.wav Octatrack`).
 - `dsp_asm` for `--dsp-loader` builds: build `source/dsp_host/dsp_asm` from

@@ -29,6 +29,7 @@ export type DeviceProfile = {
   // file: the newest release's stock OS file; Zoom releases list none (the OS is never modified).
   firmware?: { releases: string[]; file?: string; flash: string; recovery: string }
   steps: Partial<Record<DeviceStepId, StepState>>
+  stack: MachineProfile['stack']
   research?: { label: string; url: string; note: string }[]
   sdk?: string
   art: DeviceArt
@@ -45,9 +46,9 @@ export const DEVICE_STEPS: DeviceStep[] = [
   { id: 'mods', title: 'First mods', description: 'Reviewed mods with documentation, licences and test evidence.' },
 ]
 
-// The Zoom MultiStomp road: separate effect files on the stock OS, which is never modified.
+// The Zoom road: separate effect files on the stock OS, which is never modified.
 const ZOOM_STEPS: DeviceStep[] = [
-  { id: 'format', title: 'Effect file understood', description: 'The ZDL container, its ELF and the calling convention for the audio and knob code are documented.' },
+  { id: 'format', title: 'Effect file understood', description: 'The effect container (ZDL or ZD2), its ELF and the calling convention for the audio and knob code are documented.' },
   { id: 'load', title: 'Own effect runs', description: 'An effect built from original source loads on the stock firmware, plays and is removed again.' },
   { id: 'mods', title: 'First mods', description: 'Reviewed effects with documentation, licences and test evidence.' },
 ]
@@ -66,12 +67,20 @@ export function deviceSteps(device: Pick<DeviceProfile, 'family'>) {
   return FAMILY_STEPS[device.family]
 }
 
+// The Zoom pedals that load ZD2 effects (docs/ZOOM_ZD2.md). Every other Zoom pedal is of the ZDL family
+// (docs/ZOOM_MULTISTOMP.md), whose pedal page, link, base and proposed module contract do not apply to these.
+const ZD2_PEDALS: readonly string[] = ['zoom-g1-four']
+export const isZd2Pedal = (device: Pick<DeviceProfile, 'id' | 'family'>) => device.family === 'zoom' && ZD2_PEDALS.includes(device.id)
+
 // Where a machine is ready for its first module: the core on Elektron machines; on Zoom pedals a loading effect, on
 // Erica Synths machines the Modwerk base, each with an SDK, since Modwerk takes their mods only once a module contract exists.
 export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 'sdk'>) {
   if (device.family === 'elektron') return device.steps.core === 'done'
   return device.steps[device.family === 'zoom' ? 'load' : 'core'] === 'done' && !!device.sdk
 }
+
+// A machine Start developing sends to integration rather than to module prompts.
+export const needsIntegration = (device: DeviceProfile | undefined) => !device || !readyForMods(device)
 
 // Machines come from sdk/machines/<id>/machine.json through scripts/machines.mjs; the UI keeps a compact shape.
 export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machine => ({
@@ -81,10 +90,16 @@ export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machi
     file: machine.firmware.releases[machine.firmware.releases.length - 1].files[0]?.name,
     flash: machine.firmware.flash, recovery: machine.firmware.recovery,
   },
-  steps: machine.steps, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
+  steps: machine.steps, stack: machine.stack, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
 }))
 
 export const DEVICES_BY_ID: Record<string, DeviceProfile> = Object.fromEntries(DEVICES.map(device => [device.id, device]))
+
+// The build generates standalone pages for the library's Elekloader modules.
+const deviceModulePages = new Set((MACHINES as MachineProfile[])
+  .filter(machine => machine.sdk?.platform === 'elemod' && (machine.status === 'available' || machine.status === 'preview'))
+  .map(machine => machine.id))
+export const hasDeviceModulePages = (id: string) => deviceModulePages.has(id)
 
 export const STATUS_LABELS: Record<DeviceStatus, string> = {
   available: 'Mods available',
@@ -101,7 +116,7 @@ export function stepsDone(device: DeviceProfile) {
   return deviceSteps(device).filter(step => device.steps[step.id] === 'done').length
 }
 
-const DEVICE_KEY = 'modwerk.device'
+const DEVICE_KEY = 'modwerk.device', MACHINE_KEY = 'modwerk.machine'
 
 // 'all' is the All machines library; anything else is a machine id.
 export const ALL_MACHINES = 'all'
@@ -110,8 +125,19 @@ export function rememberedDevice() {
   try { const id = localStorage.getItem(DEVICE_KEY); return id && (id === ALL_MACHINES || DEVICES_BY_ID[id]) ? id : undefined } catch { return undefined }
 }
 
+/** The last machine whose pages were open. All machines and the overview do not replace it, so they can still show it. */
+export function lastMachine() {
+  try {
+    const id = localStorage.getItem(MACHINE_KEY) ?? localStorage.getItem(DEVICE_KEY)
+    return id && DEVICES_BY_ID[id] ? id : undefined
+  } catch { return undefined }
+}
+
 export function rememberDevice(id: string) {
-  try { localStorage.setItem(DEVICE_KEY, id) } catch { /* the choice is a convenience only */ }
+  try {
+    localStorage.setItem(DEVICE_KEY, id)
+    if (DEVICES_BY_ID[id]) localStorage.setItem(MACHINE_KEY, id)
+  } catch { /* the choice is a convenience only */ }
 }
 
 // Library and configuration views keep hash routes; Digitakt/Digitone module pages have public paths.
@@ -131,6 +157,6 @@ export function parseDeviceRoute(route: string): DeviceRoute | undefined {
 export function deviceHref(id: string, path = '') {
   if (id === 'octatrack') return '#' + (path || 'library')
   if (id === ALL_MACHINES) return '#all'
-  if ((id === 'digitakt' || id === 'digitone') && /^module\/[a-z0-9-]+$/.test(path)) return assetUrl(`${id}/${path}/`)
+  if (hasDeviceModulePages(id) && /^module\/[a-z0-9-]+$/.test(path)) return assetUrl(`${id}/${path}/`)
   return '#' + id + (path ? '/' + path : '')
 }

@@ -21,10 +21,15 @@ runtime is resident-runtime/resident_engines.c; docs/OCTATRACK_RESIDENT_ENGINES_
   arena; `dsp` also tells the evacuation when code may move (`modwerk_dsp_moves_idle`).
 """
 import hashlib
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import resident_dsp  # noqa: E402
 
 CORES = ('A', 'B')
-FEATURES = (1, 2, 4, 8)  # resident_dsp.FEATURES: Sidechain, Output Matrix, Analog BD, the key bus
-PACKAGED = 4             # resident_dsp.PACKAGED: Analog BD's engine is its package's
+FEATURES = resident_dsp.FEATURES  # the ledger's: Sidechain, Output Matrix, Analog BD, the key bus, then packaged machines
+PACKAGED = resident_dsp.PACKAGED  # the features whose engine is their package's (dsp-sites.json "packaged")
 PACKAGED_WORDS = 2048    # resident_engines.h MW_ENGINE_PACKAGED_WORDS
 
 
@@ -74,7 +79,22 @@ def data_c(bundles):
     lines.append('const struct mw_engine_unit mw_engine_units[2][MW_ENGINE_FEATURES] = {%s};' % ', '.join(rows))
     lines += ['static uint32_t mw_engine_buffer_%d[%d];' % (core, most) for core, most in enumerate(largest)]
     lines.append('uint32_t *const mw_engine_buffer[2] = {mw_engine_buffer_0, mw_engine_buffer_1};')
+    lines += exits_c(bundles)
     return '\n'.join(lines) + '\n'
+
+
+def exits_c(bundles):
+    """mw_engine_exit_of: each chain site's exit trampoline per core (resident_dsp.chain_exits), 0 for other sites."""
+    sites = resident_dsp.LEDGER['sites']
+    table = []
+    for tag in CORES:
+        exits = resident_dsp.chain_exits(bundles[tag])
+        if any(not 0 < at < 0x2000 for at in exits.values()):
+            raise ValueError('Payload %s: a chain\'s exit trampoline lies outside private P' % tag)
+        table.append('{%s}' % ', '.join('%du' % exits.get(s['index'], 0) for s in sites))
+    return ['static const uint16_t mw_engine_exits[2][%d] = {%s};' % (len(sites), ', '.join(table)),
+            'uint16_t mw_engine_exit_of(unsigned site, unsigned core) { return site < %du && core < 2u ? '
+            'mw_engine_exits[core][site] : 0u; }' % len(sites)]
 
 
 INIT_BLOCK = '''        if(!initialized) {
@@ -338,6 +358,27 @@ def manager(text):
     # The evacuation is a transaction of its own: advance() hands its phase to it, and nothing else starts meanwhile.
     text = _change(text, '    if(!phase) return;\n    if(phase==1) {\n',
                    '    if(!phase) return;\n    if(phase==10) { engine_evacuate(); return; }\n    if(phase==1) {\n', 'manager evacuation')
+    text = _change(text, '    unsigned changed=!observed_valid;\n',
+                   '    int mw_project_fx_wait(const uint8_t ids[16]);\n'
+                   '    int project=mw_project_fx_wait(ids);\n'
+                   '    if(project<0) return;\n'
+                   '    unsigned changed=project || !observed_valid;\n', 'saved project effect priority')
+    # The retained stock effect uses the same upload, bind and retirement as an ordinary move.
+    text = _change(text, 'static int pack_room(void) {',
+                   'static void begin_move(uint32_t token) { auto_serial=token; begin(allocator.active,token,1); phase=2; }\n'
+                   'static int project_room(void) {\n'
+                   '    int mw_project_fx_move(struct dl_allocator *,const uint8_t *,uint32_t);\n'
+                   '    if(automatic!=1 || queued_token || journal_generation || !modwerk_stock_hook_export_idle() || modwerk_saved_set_busy()) return 0;\n'
+                   '    uint32_t token=auto_serial+1u; if(!token) token=0x80000000u;\n'
+                   '    if(!mw_project_fx_move(&allocator,desired,token)) return 0;\n'
+                   '    bytes(queued_ids,desired,16); queued_token=current; queued_auto=automatic;\n'
+                   '    trimmed_for=current; trim_stage=4u; /* one proven move per saved request */\n'
+                   '    begin_move(token); return 1;\n'
+                   '}\nstatic int pack_room(void) {', 'saved project move')
+    text = _change(text, '(stage<3u && pack_room()))', '(stage<3u && pack_room()) || (stage<4u && project_room()))',
+                   'saved project move after trim and pack')
+    text = _change(text, 'auto_serial=token; begin(allocator.active,token,1); phase=2; /* placed: upload, bind, commit, free */',
+                   'begin_move(token); /* placed: upload, bind, commit, free */', 'shared move transaction')
     body = MANAGER.replace('static uint16_t engine_reserved[2];\n', '', 1)
     return _change(text, 'unsigned dl_arena(unsigned c) { return c<2 ? allocator.capacity[c] : 0; }\n',
                    'unsigned dl_arena(unsigned c) { return c<2 ? allocator.capacity[c] : 0; }\n' + body, 'manager arena')
@@ -398,14 +439,14 @@ static unsigned keybus_at(unsigned c, uint32_t module)
     for (unsigned e = 0; e < SOURCE_ENGINES; ++e) if (source_engine[c][e].module == module) return e;
     return SOURCE_ENGINES;
 }
-/* 1: already charged on both cores, or it would fit beside every slot and source of each core now. */
+/* 1: already charged on both cores, or it would fit beside each core's slots, as voices book them, and its sources now. */
 int modwerk_dsp_keybus_fits(void)
 {
     uint32_t e = charged(MW_DSP_KEYBUS_HARDWARE, RUNTIME_HARDWARE);
     for (unsigned c = 0; c < 2u; ++c) {
         if (keybus_at(c, KEYBUS_MODULE) < SOURCE_ENGINES) continue;
         if (keybus_at(c, 0) == SOURCE_ENGINES ||
-            slot_charge(c) + modwerk_dsp_source_charge(c) + e > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return 0;
+            voice_slots(c) + modwerk_dsp_source_charge(c) + e > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return 0;
     }
     return 1;
 }
@@ -442,9 +483,9 @@ def allocator(text):
                    'uint32_t modwerk_dsp_source_charge(unsigned);\n' + PENDING +
                    'volatile uint32_t dl_cycles_core=2; /* the core the last DL_ALLOC_CYCLES ran out on */\n',
                    'allocator declaration')
-    text = _change(text, '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n',
-                   '    uint32_t steady[2]={modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids),\n'
-                   '                        modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids)};\n',
+    text = _change(text, '    steady[0]=modwerk_dsp_source_charge(0); steady[1]=modwerk_dsp_source_charge(1); /* after the voices made way */\n',
+                   '    steady[0]=modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids); /* after the voices made way */\n'
+                   '    steady[1]=modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids);\n',
                    'allocator key bus price')
     text = _change(text, '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;',
                    '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) {\n'

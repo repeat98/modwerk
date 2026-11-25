@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/main-rms",
+  "version": "1.0.0",
+  "date": "2026-11-07",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.3 and later: on the compressor pages the VOL label draws inverted while the main output is louder than -18 dBFS RMS."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/main-rms/main-rms-1.0.0-os1.74.elemod",
+      "sha256": "fe24c98b433da9c3d3cfd52965ee6696d22d5affcac14452bde53ac69c2b6f4a"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/main-rms/TESTING.md",
+  "requires": []
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "audio-in-fx",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-03T02:00:00Z",
+  "imageSha256": "dd1c4b63ac789fd26de8ba73f4126f9ab77e35bb1a3cdf8e0441bbb95d55f96b",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Audio In FX 0.1.0-experimental, materialised against stock OS 1.74, --version AF22",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "card image from earlier Rytm module tests; JIT on; default --every (10M), every event 3M off it",
+    "revision": "c5732f0"
+  },
+  "conditions": "From the FX track's DISTORTION page: D turned up, then E, then a tap of encoder D.",
+  "captures": [
+    {
+      "path": "media/dist-page.png",
+      "plan": "--card <card image> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@9703M:40M --press FLTR@10203M:40M --turn 3:2@11003Mx55/4M --turn 4:2@11503Mx30/4M --instr 12003M, DTBOOT_END_PNG",
+      "sha256": "7881cab54e25bfa34b41d0065b759af0a15edd2e2e0d583d2138de854c00e8a5"
+    },
+    {
+      "path": "media/dist-mono.png",
+      "plan": "--card <card image> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@9703M:40M --press FLTR@10203M:40M --turn 3:2@11003Mx55/4M --turn 4:2@11503Mx30/4M --press PUSH_D@12103M:40M --instr 12603M, DTBOOT_END_PNG",
+      "sha256": "2af0d1f3226c4f2508c8ad65c15f33157cee1b0b6825023faebcfd88346720b4"
+    }
+  ]
+}

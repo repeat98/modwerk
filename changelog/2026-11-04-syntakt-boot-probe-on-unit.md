@@ -1,0 +1,1 @@
+Syntakt: Modwerk's boot probe ran on a unit for the first time. On OS 1.42 it booted to the live UI, played a project, survived power cycles, held every sample slot loaded and played ten minutes cleanly; the startup-menu recovery over MIDI DIN is now tested too. The machine page says so. No module can be built for the Syntakt yet.

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DigiMachine } from '../devices/digi-mods'
 import { useDigiBuild } from './useDigiBuild'
 import { subscribeSiteDiagnosticEvents } from '../community/site-diagnostic-events'
-const mocked = vi.hoisted(() => ({ account: vi.fn(), prepare: vi.fn(), version: vi.fn(), build: vi.fn(), usage: vi.fn(), dispose: vi.fn(), stores: [] as unknown[] }))
+const mocked = vi.hoisted(() => ({ account: vi.fn(), prepare: vi.fn(), version: vi.fn(), build: vi.fn(), usage: vi.fn(), dispose: vi.fn(), preflight: vi.fn(), stores: [] as unknown[] }))
 vi.mock('../community/member-access', () => ({ requireBuildAccount: mocked.account }))
 vi.mock('../community/usage', () => ({ trackUsage: mocked.usage }))
 vi.mock('../engine/elekloader/machine-build', () => ({
@@ -16,6 +16,10 @@ vi.mock('../engine/elekloader/machine-build', () => ({
   builtLock: (result: { ok: boolean; store?: unknown }) => result.ok && result.store ? result.store : null,
   buildStep: (line: string, previous: string) => line === 'PRIVATE packing log' ? 'packing' : previous,
 }))
+vi.mock('../engine/elekloader/digi-preflight', () => {
+  class PreflightError extends Error { problems: string[]; constructor(problems: string[]) { super('refused'); this.problems = problems } }
+  return { PREFLIGHT_MACHINES: ['digitakt-ii'], PreflightError, preflightBuiltFile: mocked.preflight }
+})
 let root: Root, container: HTMLDivElement, hook: ReturnType<typeof useDigiBuild>, cleanups: (() => void)[]
 const device = { key: 'PRIVATE device' }, file = new File(['PRIVATE bytes'], 'PRIVATE.syx'), modules = ['PRIVATE module']
 let machine: DigiMachine = 'digitakt'
@@ -32,6 +36,7 @@ beforeEach(async () => {
   mocked.prepare.mockResolvedValue({ ok: true, enabled: ['PRIVATE path'], check: { ok: true }, device })
   mocked.version.mockResolvedValue({ ok: true, name: 'PRIVATE name' })
   mocked.build.mockResolvedValue({ ok: false, error: 'PRIVATE build error', log: [[0, 'PRIVATE log']] })
+  mocked.preflight.mockResolvedValue({ unchangedSections: [2, 4] })
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
   await act(async () => { root.render(createElement(Harness)); await flush() })
 })
@@ -58,11 +63,11 @@ describe('consent-bound Elekloader preparation and builds', () => {
     const receive = subscribe()
     mocked.prepare.mockResolvedValueOnce({ ok: false, error: 'PRIVATE selection' })
     await check(); expect(hook.state.phase).toBe('blocked')
-    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'selection' })
+    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader-digitakt', error: 'selection' })
     await check(); expect(hook.state.phase).toBe('ready')
     mocked.build.mockImplementationOnce(async (_enabled, _version, _name, progress) => { progress('PRIVATE packing log'); return { ok: false, error: 'PRIVATE build error' } })
     await build(); expect(hook.state.phase).toBe('failed')
-    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'packing', buildKind: 'elekloader', error: 'build' })
+    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'packing', buildKind: 'elekloader-digitakt', error: 'build' })
     expect(JSON.stringify(receive.mock.calls)).not.toContain('PRIVATE')
     expect(mocked.build).toHaveBeenCalledWith(['PRIVATE path'], 'PRIVATE version', 'PRIVATE name', expect.any(Function))
   })
@@ -95,11 +100,11 @@ describe('consent-bound Elekloader preparation and builds', () => {
   it('reports version refusal and rejected preparation/build through fixed categories only', async () => {
     const receive = subscribe()
     mocked.prepare.mockRejectedValueOnce(new Error('PRIVATE prepare error')); await check()
-    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'build' })
+    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader-digitakt', error: 'build' })
     await check(); mocked.version.mockResolvedValueOnce({ ok: false, error: 'PRIVATE version error' }); await build()
-    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'input' })
+    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader-digitakt', error: 'input' })
     mocked.build.mockRejectedValueOnce(new Error('PRIVATE build')); await build()
-    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'composing', buildKind: 'elekloader', error: 'build' })
+    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'composing', buildKind: 'elekloader-digitakt', error: 'build' })
   })
   it('builds from the configuration’s lockfile and saves a changed one for the configuration it was built for', async () => {
     const before = { id: 'aaaaaaaa' } as never, after = { id: 'bbbbbbbb' } as never, save = vi.fn()
@@ -117,6 +122,52 @@ describe('consent-bound Elekloader preparation and builds', () => {
     mocked.build.mockResolvedValueOnce({ ok: true, files: [], log: [], store: null })
     await build()
     expect(mocked.stores).toEqual([before, after, after]); expect(save).toHaveBeenCalledTimes(1)
+  })
+  it('offers a Digitakt II build only after the preflight passes, and fails one it refuses', async () => {
+    machine = 'digitakt-ii'
+    const save = vi.fn(), verifiedLock = { id: 'bbbbbbbb' }, refusedLock = { id: 'cccccccc' }
+    storage = { save }
+    await act(async () => { root.render(createElement(Harness)); await flush() })
+    await check()
+    const receive = subscribe(), files = [{ name: 'PRIVATE.syx', data: new ArrayBuffer(1) }]
+    mocked.build.mockResolvedValueOnce({ ok: true, files, log: [], store: verifiedLock })
+    await build()
+    expect(mocked.preflight).toHaveBeenCalledWith('digitakt-ii', file, ['PRIVATE path'], files)
+    expect(hook.state).toMatchObject({ phase: 'built', preflight: { unchangedSections: [2, 4] } })
+    expect(save).toHaveBeenCalledWith(verifiedLock)
+    const { PreflightError } = await import('../engine/elekloader/digi-preflight')
+    mocked.preflight.mockRejectedValueOnce(new PreflightError(['PRIVATE section 4 is not byte for byte stock']))
+    mocked.build.mockResolvedValueOnce({ ok: true, files, log: [], store: refusedLock })
+    await build()
+    expect(save).toHaveBeenCalledTimes(1)
+    expect(hook.state).toMatchObject({ phase: 'failed', problems: ['PRIVATE section 4 is not byte for byte stock'] })
+    expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'verifying', buildKind: 'elekloader-digitakt-ii', error: 'build' })
+    expect(JSON.stringify(receive.mock.calls)).not.toContain('PRIVATE')
+    expect(mocked.usage).toHaveBeenLastCalledWith('build_failed', 'digitakt-ii')
+    // other machines' builds are offered as the builder verified them
+    machine = 'digitakt'; mocked.preflight.mockClear()
+    await act(async () => { root.render(createElement(Harness)); await flush() })
+    await check(); mocked.build.mockResolvedValueOnce({ ok: true, files, log: [] }); await build()
+    expect(mocked.preflight).not.toHaveBeenCalled(); expect(hook.state.phase).toBe('built')
+  })
+  it('keeps the saved storage layout when a build is cancelled during preflight', async () => {
+    machine = 'digitakt-ii'
+    const save = vi.fn()
+    storage = { save }
+    await act(async () => { root.render(createElement(Harness)); await flush() })
+    await check()
+    let finishPreflight!: (value: unknown) => void
+    mocked.preflight.mockImplementationOnce(() => new Promise(resolve => { finishPreflight = resolve }))
+    mocked.build.mockResolvedValueOnce({ ok: true, files: [], log: [], store: { id: 'bbbbbbbb' } })
+    let pending!: Promise<void>
+    await act(async () => { pending = hook.build('PRIVATE version'); await flush() })
+    await act(async () => {
+      hook.cancel()
+      finishPreflight({ unchangedSections: [2, 4] })
+      await pending
+    })
+    expect(save).not.toHaveBeenCalled()
+    expect(hook.state.phase).toBe('idle')
   })
   it('starts a configuration without a lockfile from a new layout and saves nothing for a failed build', async () => {
     const save = vi.fn()

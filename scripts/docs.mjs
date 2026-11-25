@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join, normalize } from 'node:path'
 import { refuseNewEntries } from './changelog.mjs'
 
 /** The documents every agent reads stay short enough to read in one go: one may grow to LIMIT bytes, and one already
  * longer may not grow at all. The two old logs are frozen; a new record is its own dated file (docs/README.md). */
-export const LIMIT = 32 * 1024
+export const LIMIT = 40 * 1024
 export const FROZEN = { 'docs/VERIFICATION.md': 'docs/verification/', 'docs/DECISIONS.md': 'docs/decisions/' }
 const RECORD = /^\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/
 
@@ -44,6 +44,15 @@ export function checkDocs(root, base = null) {
       return now > before ? [before ? `${file} grew by ${now - before} bytes to ${kb(now)}` : `${file} is new at ${kb(now)}`] : []
     })
     if (grown.length) problems.push(`${grown.join('; ')}, over the ${kb(LIMIT)} a document may have. Make room by cutting what is stale or said elsewhere (Git keeps the history), or move a part into its own document and list it in docs/README.md.`)
+  }
+  // A relative link in a guide names a file that exists: a script or guide renamed or removed leaves none behind.
+  for (const file of [...documents, ...markdownUnder(root, 'sdk/machines')]) {
+    const body = readFileSync(join(root, file), 'utf8').replace(/```[^]*?```/g, '')
+    for (const [, target] of body.matchAll(/\]\(([^)\s]+)\)/g)) {
+      const path = decodeURI(target.split(/[#?]/)[0])
+      if (!path || /^[a-z][a-z0-9+.-]*:/i.test(target) || path.startsWith('/')) continue
+      if (!existsSync(join(root, normalize(join(dirname(file), path))))) problems.push(`${file} links to ${target}, which does not exist. Point it at what replaced it, or drop the link.`)
+    }
   }
   // AGENTS.md's commands and the skills name each other one to one; Codex's .agents/skills is Claude Code's .claude/skills byte for byte.
   const listed = existsSync(join(root, 'AGENTS.md')) ? [...new Set([...readFileSync(join(root, 'AGENTS.md'), 'utf8').matchAll(/`\/(modwerk-[a-z0-9-]+)[^`]*`/g)].map(match => match[1]))] : []

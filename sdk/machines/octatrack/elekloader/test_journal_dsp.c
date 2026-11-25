@@ -4,7 +4,18 @@
 #define MODWERK_JOURNAL_FACT_EXTERNAL
 #include "sha256.c"
 volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
+static int usb_disk; int modwerk_machine_usb_disk(void) { return usb_disk; } /* runtime.c, not linked here */
 #include "dsp.c"
+int modwerk_modset_is_off(uint32_t module) { (void)module; return 0; } /* modset.c: nothing switched off */
+/* machine_registry.c's machine map: none here. */
+int modwerk_machine_absent(unsigned k, uint32_t *module, char *name) { (void)k, (void)module, (void)name; return 0; }
+int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { (void)t, (void)module, (void)name; return 0; }
+void modwerk_machine_map_begin(void) {}
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{ (void)sig, (void)lo, (void)hi, (void)module, (void)name; }
+void modwerk_machine_map_loaded(int ok) { (void)ok; }
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{ (void)k, (void)sig, (void)lo, (void)hi, (void)module, (void)name; return 0; }
 int modwerk_runtime_restoring(void) { return 0; } /* loader.c's: no restore here */
 volatile uint32_t dl_residency_words[2]; /* manager.c: each core's resident code words (dsp.c's budget box) */
 #include "fxmap.c"

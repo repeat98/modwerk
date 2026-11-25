@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { compiledModuleVersions, moduleSourcePaths, moduleSourceFingerprint, sourceEntryHash, isDocumentationPath } from './module-source.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const catalog = JSON.parse(await readFile(resolve(root, 'sdk/catalog.json'), 'utf8'))
-const requested = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
-const verifiedRequested = requested.filter(id => id !== 'midi-scenes')
+const requested = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
 describe('release package scope and reviewed source inventory', () => {
   it('keeps the committed release identity bound to the complete SDK source and compiler', async () => {
     const record = JSON.parse(await readFile(resolve(root, 'src/engine/assets/module-build.json'), 'utf8'))
@@ -17,29 +17,30 @@ describe('release package scope and reviewed source inventory', () => {
     expect(record.compilerSha256).toBe(createHash('sha256').update(await readFile(resolve(root, 'scripts/build-module-packages.py'))).digest('hex'))
     expect(record.moduleVersions).toEqual(await compiledModuleVersions(root, catalog))
   })
-  it('binds approved standalone MIDI Scenes without compiling its archived 8.2 port', async () => {
+  it('binds every listed module to the compiled scope', async () => {
     const versions = await compiledModuleVersions(root, catalog), paths = await moduleSourcePaths(root)
-    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks'])
-    for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix', 'output-matrix', 'quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks']) {
-      expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.1-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : id === 'direct-jump-kyoti' ? '0.1.2-experimental' : '0.1.0-experimental')
-      expect(paths).toContain('modules/' + id + '/manifest.py')
-    }
-    expect(versions['midi-scenes']).toBe('0.2.5-experimental')
-    expect(versions.miniverb).toBe('0.2.3-experimental')
-    for (const id of verifiedRequested) {
-      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.6-experimental' : id === 'vector' ? '0.2.5-experimental' : id === 'quantizer' ? '0.1.3-experimental' : id === 'synth' ? '0.1.2-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
-      expect(paths).toContain('modules/' + id + '/manifest.py')
-    }
-    expect(paths).toContain('modules/midi-scenes/recipe.json')
-    expect(paths.some(path=>path.startsWith('modules/midi-scenes/upstream/'))).toBe(false)
+    // Every catalogue module is compiled at its catalogue version, in catalogue order, unless the USB package list builds it
+    // from its own sources (usbOnly or sources); those stay out of the card compiler's source inventory.
+    const packages = JSON.parse(await readFile(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
+    const usbOnly = new Set(packages.filter(row => row.sources || row.usbOnly === true).map(row => row.id))
+    const cardBuilt = catalog.modules.filter(module => !usbOnly.has(module.id))
+    expect(Object.entries(versions)).toEqual(cardBuilt.map(module => [module.id, module.version]))
+    for (const { id } of cardBuilt) expect(paths).toContain('modules/' + id + '/manifest.py')
+    for (const id of usbOnly) expect(paths.some(path => path.startsWith('modules/' + id + '/')), id).toBe(false)
+    // The card route still builds these; Stem Recorder is the catalogue's retained card-only module.
+    for (const id of [...requested, 'miniverb', 'stem-rec']) expect(versions[id], id).toBeDefined()
+    const usbLayouts = JSON.parse(await readFile(resolve(root, 'src/engine/assets/usb-audio-packages.json'), 'utf8'))
+    const synthApproval = JSON.parse(await readFile(resolve(root, 'sdk/approvals/synth-build-approval.json'), 'utf8'))
+    expect(versions.synth).toBe(synthApproval.version)
+    expect(versions['usb-audio-out-tracks-main-cue']).toBe(usbLayouts.version)
     expect(paths).toContain('platform/usb-midi/manifest.py')
   })
   it('refuses stale and duplicate catalog pins for requested imports', async () => {
     const temporary = await mkdtemp(resolve(tmpdir(), 'octamod-scope-test.'))
     try {
-      const id = requested[0], folder = resolve(temporary, 'sdk/octabam/modules', id)
+      const id = requested[0], folder = resolve(temporary, 'sdk/octatrack/modules', id)
       await mkdir(folder, { recursive: true })
-      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octabam/modules', id, 'octamod.module.json')))
+      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octatrack/modules', id, 'octamod.module.json')))
       const entry = catalog.modules.find(module => module.id === id)
       await expect(compiledModuleVersions(temporary, { modules: [{ ...entry, version: '0.1.0-experimental' }] })).rejects.toThrow('Stale catalog module version')
       await expect(compiledModuleVersions(temporary, { modules: [entry, entry] })).rejects.toThrow('Invalid catalog module id')
@@ -53,7 +54,9 @@ describe('the code fingerprint', () => {
   const files = (overrides = {}) => ({ 'modules/demo/manifest.py': 'NAME = "demo"\n', 'modules/demo/demo.asm': ' nop\n', 'modules/demo/octamod.module.json': JSON.stringify(manifest), 'modules/demo/README.md': 'Words.\n', 'modules/demo/TESTING.md': 'Results.\n', 'modules/demo/LICENSE': 'MIT\n', 'modules/demo/media/a.png': 'png', 'modules/demo/presentation/thumbnail.svg': '<svg/>', 'modules/demo/evidence/report.json': '{}', 'modules/demo/upstream/NOTES.md': 'notes', 'platform/p.s': ' nop\n', 'tools/t.py': 'x=1\n', 'dsp/d.asm': ' nop\n', 'licenses/l.txt': 'MIT\n', ...overrides })
   async function tree(overrides) {
     const dir = await mkdtemp(resolve(tmpdir(), 'octamod-fingerprint-'))
-    for (const [path, text] of Object.entries(files(overrides))) { const target = resolve(dir, 'sdk/octabam', path); await mkdir(resolve(target, '..'), { recursive: true }); await writeFile(target, text) }
+    // As in a checkout: the modules in sdk/octatrack/modules, and the mirror octabam's compiler reads.
+    for (const [path, text] of Object.entries(files(overrides))) { const target = resolve(dir, path.startsWith('modules/') ? 'sdk/octatrack' : 'sdk/octabam', path); await mkdir(resolve(target, '..'), { recursive: true }); await writeFile(target, text) }
+    await mkdir(resolve(dir, 'sdk/octabam'), { recursive: true }); mirrorOctatrackModules(dir)
     return dir
   }
   const edit = (change) => JSON.stringify({ ...manifest, ...change })
@@ -92,6 +95,27 @@ print(json.dumps(module.source_hashes(Path(sys.argv[2]) / 'sdk/octabam')))`, res
       for (const path of await moduleSourcePaths(dir)) node[path] = await sourceEntryHash(dir, path)
       expect(python).toEqual(node)
       expect(Object.keys(node)).not.toContain('modules/demo/README.md')
+    } finally { await rm(dir, { recursive: true }) }
+  })
+  it('excludes USB-only native sources consistently in the compiler and importer', async () => {
+    const dir = await tree({})
+    try {
+      const packages = resolve(dir, 'src/engine/assets/octatrack-module-packages.json')
+      await mkdir(resolve(packages, '..'), { recursive: true })
+      for (const declaration of [{ usbOnly: true }, { sources: ['native.c'] }, { usbOnly: false }]) {
+        await writeFile(packages, JSON.stringify({ packages: [{ id: 'demo', ...declaration }] }))
+        const paths = await moduleSourcePaths(dir)
+        expect(paths.includes('modules/demo/demo.asm')).toBe(declaration.usbOnly === false)
+        const python = JSON.parse(execFileSync('python3', ['-B', '-c', `
+import importlib.util, json, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('compiler', sys.argv[1]); module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+root = Path(sys.argv[2]); manifest = json.loads((root / 'src/engine/assets/octatrack-module-packages.json').read_text())
+print(json.dumps(module.source_hashes(root / 'sdk/octabam', module.cardless_modules(manifest))))`, resolve(root, 'scripts/build-module-packages.py'), dir], { encoding: 'utf8' }))
+        const node = {}
+        for (const path of paths) node[path] = await sourceEntryHash(dir, path)
+        expect(python).toEqual(node)
+      }
     } finally { await rm(dir, { recursive: true }) }
   })
 })

@@ -54,18 +54,20 @@ scripts/push-keys.mjs
 scripts/push-runtime.test.mjs
 scripts/sync-module-releases.mjs
 scripts/sync-module-releases.test.mjs
-scripts/verify-placement-diagnostics.mjs
 
 Shared helpers (GPL-3.0-or-later OR Elastic-2.0):
 src/catalog/availability.ts
 src/catalog/build-support.ts
 src/catalog/documents.ts
+src/catalog/library-classification.ts
 src/catalog/module-authors.ts
 src/catalog/module-contract.ts
 src/catalog/module-links.ts
 src/catalog/module-releases.ts
 src/catalog/modules.ts
+src/catalog/set-limit.ts
 src/catalog/versions.ts
+src/community/agent-sessions.ts
 src/community/configuration-report.ts
 src/community/creator-support.ts
 src/community/digi-issue-context.ts
@@ -86,12 +88,15 @@ src/community/ot-log.ts
 src/community/profile-links.ts
 src/community/remote-session-contract.ts
 src/community/report-closure.ts
+src/community/support-report.ts
 src/community/usage-contract.ts
 src/community/usage-pages.ts
 src/config/beta-invitation.ts
 src/config/development-discord.ts
+src/config/octatrack-base.ts
 src/config/support.ts
 src/config/usb-audio.ts
+src/dev/address-names.ts
 src/devices/registry.ts
 src/hosting.ts
 src/legal/policy.ts
@@ -879,68 +884,9 @@ Retain applicable component notices and full terms with source and binary distri
 Source patch licences apply to those patches; fetched toolchains are not bundled in the app.
 Pinned revisions identify the files used to verify the notices, not the module source revisions; module source provenance remains in sdk/UPSTREAM.json and each module manifest.
 
-Hera Chorus
-SPDX: ISC
-Used in: modules/modulation: JUNO
-Notice source: https://raw.githubusercontent.com/jpcima/rc-effect-playground/3375323d8616cbfc73c9701a3765f738d574c460/LICENSE
-
-Hera Chorus audio effect based on DISTRHO Plugin Framework (DPF)
-Copyright (C) 2019-2020 J.P. Cimalando <https://jpcima.sdf1.org/>
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-
-========================================================================
-
-ChowPhaser
-SPDX: BSD-3-Clause
-Used in: modules/modulation: PHSR
-Notice source: https://raw.githubusercontent.com/jatinchowdhury18/ChowPhaser/31eac4df747e9a778a6efe53d461f526343cb61d/LICENSE
-
-BSD 3-Clause License
-
-Copyright (c) 2020, jatinchowdhury18
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-========================================================================
-
 JSFXClones (TapeHead, DaTube, OInflator, AC1)
 SPDX: MIT
-Used in: modules/character: SAT, COMP, GLUE; modules/tapehead: TapeHead
+Used in: modules/tapehead: TapeHead
 Notice source: https://raw.githubusercontent.com/JClones/JSFXClones/88a1503d668c378ced4c166e772378272f3b72ea/LICENSE
 
 MIT License
@@ -967,84 +913,9 @@ SOFTWARE.
 
 ========================================================================
 
-audiojs/filter (moogLadder and oberheim)
+Airwindows Chorus and Mackity
 SPDX: MIT
-Used in: modules/spectrum: filters
-Notice source: https://raw.githubusercontent.com/audiojs/filter/0a851e9907101899ffc0708f5abf864e1e873cb9/LICENSE
-
-Kṛṣnized
-
-This is a reminder that, in the absolute sense, all results of work belong to the Supreme.
-
-While software and intellectual property (IP) require a formal license to define authorship,
-responsibilities, or distribution limitations, these are temporary material designations.
-The origin and destination of all ideas, as well as the ultimate owner of all results,
-is the Supreme. The most meaningful action is to dedicate these results to the Supreme.
-This process is known as Karma-Yoga and is described in BG 3.9, BG 12.10 and BG 18.46.
-
-"Work done as a sacrifice for the Supreme must be performed;
-otherwise, work binds one to the material world."
-
-This license does not override or alter the terms specified by the material-level license below.
-
-ॐ
-
----
-
-MIT License
-
-Copyright (c) Dmitry Iv
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-========================================================================
-
-Mutable Instruments Rings (string.h / string.cc)
-SPDX: MIT
-Used in: modules/modulation: COMB
-Notice source: https://raw.githubusercontent.com/pichenettes/eurorack/08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4/rings/dsp/string.h
-
-Copyright 2015 Emilie Gillet.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-========================================================================
-
-Airwindows Chorus, Capacitor2 (and historical Pockey transcription)
-SPDX: MIT
-Used in: modules/spectrum: capacitor2_ref.py; modules/character: retired Pockey attribution; modules/airwindows-chorus: Chorus
-Notice source: https://raw.githubusercontent.com/airwindows/airwindows/d22a25b7f7c0c8c05e9f3ae480e7f1da9769f49d/LICENSE
+Used in: modules/airwindows-chorus: Chorus; modules/mackity: Mackity
 Notice source: https://raw.githubusercontent.com/airwindows/airwindows/e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea/LICENSE
 
 MIT License
@@ -3038,6 +2909,56 @@ targets.
 
 ========================================================================
 
+VIBRATO (Bryan T, in octabam)
+SPDX: MIT
+Used in: modules/vibrato
+Notice source: sdk/octabam/modules/vibrato/upstream/LICENSE
+
+MIT License
+
+Copyright (c) 2026 Sam Banks
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This license covers this repository's own source code and documentation only.
+Transcribed third-party DSP sources, the community modifications carried as
+submodules and the tools fetched by `make setup` are listed with their own
+licences in THIRD_PARTY.md.
+
+It does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder. Users
+supply their own copy of the official OS. The container-format tooling in
+this repository re-implements Elektron's firmware-update packaging solely for
+interoperability: so that an owner can build and flash a modified image for
+their own unit. Nothing in this project is endorsed by, supported by, or
+affiliated with Elektron. Octatrack and Elektron are trademarks of Elektron
+Music Machines MAV AB, used only to identify the hardware this project
+targets.
+
+========================================================================
+
 Zac Kyoti Quantize Live Rec Toggle
 SPDX: MIT
 Used in: modules/quantize-live-rec-toggle
@@ -3264,6 +3185,151 @@ targets.
 
 ========================================================================
 
+Tim Hastie Tuner
+SPDX: MIT
+Used in: modules/tuner
+Notice source: https://github.com/timhastie/octatrick-modules/blob/fd18f5530989be348e6aa4c6e38f93beba555e6d/LICENSE
+
+MIT License
+
+Copyright (c) 2026 Tim Hastie
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This licence covers this repository's own source code and documentation:
+the three modules' ColdFire sources, their manifests and their READMEs. It
+does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder; every
+image is built by the user from their own copy of the official OS with
+octabam (https://github.com/sambanks/octabam, MIT, Sam Banks), whose build
+system these manifests are written for. The displaced stock instructions a
+hook site replays (a few bytes per site) are carried the way every octabam
+ColdFire module carries them. Nothing in this project is endorsed by,
+supported by or affiliated with Elektron. Octatrack and Elektron are
+trademarks of Elektron Music Machines MAV AB, used only to identify the
+hardware this project targets.
+
+---
+
+The FM SYNTH machine-list chooser -- synth/machine.s and the chooser's parts of
+synth/poly.s, synth/page.s and quantizer/quantizer.s -- is adapted from
+Modwerk's FM Synth module (https://github.com/repeat98/modwerk,
+sdk/octabam/modules/synth, commit 1c1d938), whose chooser is derived from
+Modwerk's Analog BD chooser hooks. Since 2.13 the quantizer's CHROMATIC drawer
+hook at the drawer's common push (quantizer/quantizer.s qz_octnum at 0x400449be,
+Modwerk #264) takes the form of the quantizer that module bundles. Their
+notices, as that module's LICENSE carries them:
+
+Dedicated chooser, Part validation, sample-free transport and original presentation:
+
+MIT License
+
+Copyright (c) 2026 Modwerk contributors
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+MIT License
+
+Copyright (c) 2026 Sam Banks
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+========================================================================
+
+Model-TG (granular engine)
+SPDX: MIT
+Used in: modules/grain: the granular engine (window and table formulas, grain scheduling)
+Notice source: https://raw.githubusercontent.com/TinyGregAudio/Model-TG/70b39dd6787770ebefc7a2d78dea1678ec012679/LICENSE
+
+MIT License
+
+Copyright (c) 2026 TinyGregAudio
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This license covers the source code and documentation in this repository only.
+It grants nothing in Elektron's firmware, which is not included here and which
+you supply yourself when you build. tweaks/ is third-party code under its own
+MIT license (tweaks/LICENSE-elektron-model-tweaks).
+
+========================================================================
+
 elekloader's kit (vendored Digitakt/Digitone builder)
 SPDX: GPL-3.0-or-later
 Used in: vendor/elekloader/kit; Digitakt/Digitone browser builder
@@ -3271,7 +3337,7 @@ Notice source: vendor/elekloader/kit/NOTICE
 Notice source: vendor/elekloader/kit/LICENSE
 Notice source: https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js
 
-Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md).
+Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md). They keep the formats of the code credited under "Code from other projects" below and were checked against outputs recorded from it, so that credit stays.
 
 elekloader
 Copyright (C) 2026 irpina and contributors
@@ -3285,6 +3351,18 @@ elekloader is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 more details.
+
+Code from other projects
+------------------------
+These files come from digikit (https://github.com/m-dwyer/digikit),
+under the GNU GPL version 2 or (at your option) any later version. Each file names its origin in its header.
+
+  elekloader/codec/elz.py        dt2/elz.py, by Em D
+  elekloader/codec/aplib.py      dt2/aplib.py, by Em D; the match-finder and
+                                 compressed output by irpina
+  elekloader/codec/transport.py  the transport encoders and checksums from
+                                 dt2/build.py, by Em D; changes by irpina
+  elekloader/isa/coldfire.py     emu/cfisa.py, by irpina
 
 The TypeScript engine
 ---------------------
@@ -4429,7 +4507,7 @@ MIDISTOMP (Zoom MultiStomp firmware patches and their sources)
 SPDX: MIT
 Used in: vendor/midistomp; Zoom MultiStomp browser builder (src/engine/zoom)
 Notice source: vendor/midistomp/LICENSE
-Notice source: https://github.com/matujuice/zoom-ms-midistomp/tree/c8d3e1ba04e71bbae7919e256f2b2f611fca409a
+Notice source: https://github.com/matujuice/zoom-ms-midistomp/tree/fccbe400413b1a787f8213095319903a3befd084
 
 MIT License
 
@@ -4452,6 +4530,165 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+========================================================================
+
+Zoom ZDL runtime (own edit handlers and Dll_ entry for Zoom MultiStomp effects)
+SPDX: MIT AND BSD-3-Clause
+Used in: vendor/zoom-zdl-runtime
+Notice source: vendor/zoom-zdl-runtime/LICENSE
+Notice source: vendor/zoom-zdl-runtime/zui.asm
+
+Scope of the repository-level MIT grant
+
+Except where a file or component provides its own license or scope limitation,
+the MIT License below applies to original software and associated original
+documentation in this repository, only to the extent their copyrights are
+controlled by Leemuzhko and the portions can be licensed independently.
+
+Third-party and vendor material, imported/reference components, firmware,
+drivers, toolchains, IRs, model weights, recordings, graphics and other datasets
+or assets are outside this default grant, including when unmarked. They retain
+their own terms. Modifications and mixed or derived files remain subject to all
+applicable component terms; this notice does not relicense third-party portions.
+
+Existing license grants, copyright notices and component-specific scope
+statements remain in force. The exclusions above do not withdraw permissions
+already granted under those licenses. ZOOM-CORE/ is outside this licensing change.
+
+See LICENSING.md, THIRD_PARTY_NOTICES.md and license_map.json for the scope and
+reviewed evidence. The inventory is not exhaustive.
+
+---------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2026 Leemuzhko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+
+zui_stub / zui_stub_ret, zui_push_rts and zui_pop_rts in zui.asm are adapted from
+TI C6000 CGT 8.5.0.LTS lib/src/call_stub.asm and push.asm:
+
+Copyright (c) 2000 Texas Instruments Incorporated
+http://www.ti.com/
+
+Redistribution and  use in source  and binary forms, with  or without
+modification,  are permitted provided  that the  following conditions
+are met:
+
+Redistributions  of source  code must  retain the  above copyright
+notice, this list of conditions and the following disclaimer.
+
+Redistributions in binary form  must reproduce the above copyright
+notice, this  list of conditions  and the following  disclaimer in
+the  documentation  and/or   other  materials  provided  with  the
+distribution.
+
+Neither the  name of Texas Instruments Incorporated  nor the names
+of its  contributors may  be used to  endorse or  promote products
+derived  from   this  software  without   specific  prior  written
+permission.
+
+THIS SOFTWARE  IS PROVIDED BY THE COPYRIGHT  HOLDERS AND CONTRIBUTORS
+"AS IS"  AND ANY  EXPRESS OR IMPLIED  WARRANTIES, INCLUDING,  BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL,  EXEMPLARY,  OR CONSEQUENTIAL  DAMAGES  (INCLUDING, BUT  NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF  LIABILITY, WHETHER IN CONTRACT, STRICT  LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+========================================================================
+
+MultiStomp Editor effect animations and controls by Roman Rusinov
+SPDX: MIT
+Used in: Zoom effect library previews (src/devices/zoom-previews); MS-70CDR Editor controls (src/devices/zoom-control-choices.ts)
+Notice source: https://github.com/themanro/ZoomMultistompZDL/tree/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx
+Notice source: https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/build/selector_metadata.py
+
+MIT License
+
+Copyright (c) 2026 Roman Rusinov
+Copyright (c) 2024 Jannik Assfalg (the upstream toolchain, repeat98/ZoomMultistompZDL)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+SCOPE — please read
+
+The MIT grant above covers the ORIGINAL work in this fork, namely:
+
+  * the custom effects in src/custom/ (DSP, manifests, build scripts)
+  * the browser tools in tools/ (patch editor, cover editor, serve_editor.py,
+    apply_cover.py, the desktop audio-preview renderers)
+  * the reverse-engineering notes in docs/ and the cover artwork in graphics/
+
+It does NOT and cannot cover the following, which are owned by others:
+
+  * Upstream toolchain. This repository is a fork of
+    https://github.com/repeat98/ZoomMultistompZDL , which publishes no licence
+    file. Absent a licence, that material is under its author's default
+    copyright — all rights reserved. Anything inherited from upstream is used
+    here on that basis, and the MIT grant above does not extend to it. If you
+    intend to redistribute, ask that author.
+
+  * Airwindows-derived DSP (src/airwindows/): MIT, Copyright (c) Chris Johnson
+    / Airwindows. Its own terms apply.
+
+  * Dustbox (src/custom/dustbox/): MIT, Copyright (c) 2026 Marcelo Fuentes,
+    from https://github.com/marcfuentes/dustbox-zdl . Folded into this pack
+    under its own licence, which is kept alongside the source at
+    src/custom/dustbox/LICENSE. The DSP is unmodified; only the Power knob's
+    default was raised from 1 to 50 so it is audible on select, matching this
+    pack's convention.
+
+  * Zoom firmware, stock effect binaries under stock_zdls/, decoded stock cover
+    images, and the TI C6000 toolchain: owned by Zoom Corporation and Texas
+    Instruments respectively. Not licensed here. They are referenced solely for
+    interoperability and reverse-engineering research, and no Zoom or TI code
+    is redistributed by this repository.
+
+Zoom and MultiStomp are trademarks of Zoom Corporation. This project is not
+affiliated with, endorsed by, or supported by Zoom Corporation. Flashing
+custom effects is done at your own risk and may void your warranty.
 
 ========================================================================
 

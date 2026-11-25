@@ -1,0 +1,1 @@
+Module authors: sumedho (Euclidean Sequencing and other Digitakt modules) is a registered module author, so updates to modules that name sumedho as author or maintainer release themselves once CI is green.

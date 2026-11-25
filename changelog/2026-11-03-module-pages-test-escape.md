@@ -1,0 +1,1 @@
+Development: the module page test now compares each Digitakt, Digitone and Rytm page heading with the module title escaped the way the page generator writes it, so a module named with `&`, `<` or `"` no longer fails the check when its page is correct.

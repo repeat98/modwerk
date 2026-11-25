@@ -1,0 +1,1 @@
+The module doctor now checks what an Octatrack module costs while installed and used nowhere: above 0.2 points of the audio frame, a new release must rest when nothing uses it (answer `ev_in_use`), unless it is a machine, which the base rests by itself. Earlier releases are only reported.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.1.1-experimental",
+  "date": "2026-11-06",
+  "changes": [
+    "The block handler before the prefetch returns at once when no track has RATE on and no voice is still going down; 0.1.0 walked all eight voices every block, about 0.8 points of the audio block idle in the author's 16-module set. RATE plays as before."
+  ],
+  "runtimeSourceSha256": "22e0fea103717c7b342de1ed5b19ab8bd45ab6b8c6a36e8005bb1b33614b0050",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.1.1-experimental-os1.74.elemod",
+      "sha256": "35b50704e07e12eddf48affd2c458e17a6dbcc0ed8aa43114ca0e797277657d3"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

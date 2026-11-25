@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "operation": "Exact v2.20 source re-vendor; no test or build",
+  "modwerk_base": "4e2226f1be6347f74d51a0d5b99ee572ba3a82bb",
+  "upstream": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+    "tag": "v2.20",
+    "annotatedTagObject": "c6f1b1dabe640ab5218bd8fa4068025692aa514f"
+  },
+  "files": [
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/README.md",
+      "sourceBytes": 8791,
+      "sourceGitBlob": "71ab21c524bea7609e00a6a939c62d601456559f",
+      "sourceSha256": "4db778ea5cf4ecea2677fd54e97f648f4ed4bb622639c6ade8d125780470794a",
+      "vendoredSha256": "4db778ea5cf4ecea2677fd54e97f648f4ed4bb622639c6ade8d125780470794a"
+    },
+    {
+      "path": "upstream/manifest.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/manifest.py",
+      "sourceBytes": 2848,
+      "sourceGitBlob": "cb0215a8ba4d2b78946849200ec7e7eb9ec4efb8",
+      "sourceSha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc",
+      "vendoredSha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc"
+    },
+    {
+      "path": "upstream/stock_guard.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/stock_guard.py",
+      "sourceBytes": 1111,
+      "sourceGitBlob": "f1c59f7a844beb091b784c6b77d42a401ca554c9",
+      "sourceSha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d",
+      "vendoredSha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
+    },
+    {
+      "path": "upstream/tuner.s",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/tuner.s",
+      "sourceBytes": 30833,
+      "sourceGitBlob": "b28b20460db384336b15dc453b6fac42254c3e19",
+      "sourceSha256": "45be936153c27dc7582cf3d01af7b599349df269af8445d5a0a3b0b2ca5bee3a",
+      "vendoredSha256": "45be936153c27dc7582cf3d01af7b599349df269af8445d5a0a3b0b2ca5bee3a"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 5068,
+      "sourceGitBlob": "abff1c76e215ecd0c0b20e46a9e71913c77942cc",
+      "sourceSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+      "vendoredSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7"
+    }
+  ],
+  "guard_declarations": "Three unchanged Modwerk-form SHA-256 guards; upstream uses its immutable local two-argument reader.",
+  "historical_evidence_unchanged": [
+    {
+      "path": "evidence/declaration-compatibility.json",
+      "bytes": 1443,
+      "sha256": "360a95aff02b2c5e18b2064a0cbf412114c99fcc8669b8960165a1c7d52d85b9"
+    },
+    {
+      "path": "evidence/native-build.json",
+      "bytes": 2033,
+      "sha256": "12c6c9df0fbe015b843427ab080defe3e0fb2504d199e738b7b83c544290c1c9"
+    },
+    {
+      "path": "evidence/ui-capture-2026-10-26.json",
+      "bytes": 2754,
+      "sha256": "f78d0c833a12c0e6d4cf78ff1cb544175cf021452d42ef0f4a2d55289f1dfd35"
+    },
+    {
+      "path": "evidence/ui-startup.json",
+      "bytes": 4589,
+      "sha256": "b71f876e2547f53ce37c598209cc5ce7f29c43512b44bd6b17cc8b76ea6c0f23"
+    },
+    {
+      "path": "evidence/usb-admission.json",
+      "bytes": 9162,
+      "sha256": "7c73cead62bea3ce6269653119214016ce0895bb990d5aeb29b0c273ef7f44fa"
+    },
+    {
+      "path": "evidence/usb-admission.md",
+      "bytes": 6630,
+      "sha256": "269c4f17c79fca69c2dc2dd6ce3234ec350ed7d24dfa60ea2c6f88d73183bde4"
+    },
+    {
+      "path": "media/01-track-page.png",
+      "bytes": 5157,
+      "sha256": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603"
+    },
+    {
+      "path": "media/02-tuner-open.png",
+      "bytes": 3715,
+      "sha256": "75a29882708c9b6884bc9b379018bd5f15bbf95ba472ffeec1b8e593386dcf58"
+    },
+    {
+      "path": "media/03-closed-no.png",
+      "bytes": 5157,
+      "sha256": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603"
+    },
+    {
+      "path": "media/04-closed-yes.png",
+      "bytes": 5157,
+      "sha256": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603"
+    },
+    {
+      "path": "media/05-closed-tempo.png",
+      "bytes": 5157,
+      "sha256": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603"
+    },
+    {
+      "path": "media/06-normal-tempo.png",
+      "bytes": 5008,
+      "sha256": "deda2848b3ef0d1c22eb408f68e94fe728fbecab1d8f0a957089bcf3809eac04"
+    },
+    {
+      "path": "media/07-func-tempo.png",
+      "bytes": 4887,
+      "sha256": "c9a4f2081c337b80ed01a44f05e1178d4daf35486c22a7155723a81b49053243"
+    },
+    {
+      "path": "media/capture.json",
+      "bytes": 2758,
+      "sha256": "0c325991ec1eb20bf4deae20faf893baf6f191501af193663835fc6cf2dd7897"
+    }
+  ],
+  "lazy_fingerprint_source_review": {
+    "test": "sdk/tests/test_requested_imports.py:39-55",
+    "selectedRecord": "sdk/imports/octabam-363861e.json",
+    "tunerSelected": false,
+    "executed": false,
+    "limit": "The upstream reader requires a local MAIN section at import; other import paths are not proven."
+  },
+  "current_build_or_qualification_claimed": false
+}

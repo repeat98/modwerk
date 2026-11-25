@@ -4,6 +4,8 @@ Existing published module authors may use the [automatic author-update workflow]
 
 Contribute modules, fixes, documentation, screenshots and audio as pull requests to this repository. The owner approves first releases and changes beyond registered-author scope; later scoped author updates can publish automatically after evidence verification and required checks; the website has no second approval step. Guest comments and author issue reports on the site need no registration.
 
+New here, or sitting on a fork? [Make your own mod](https://modwerk.app/submit/?utm_source=github-contributing) walks you through it: agree the plan with your agent, build, test on your unit or in the emulator, open the pull request, get it reviewed and check it live. Work that stays in a fork never reaches Modwerk; only a pull request here does.
+
 ## Modules
 
 Follow [Add or port a module](docs/ADD_A_MODULE.md). It covers porting from octabam or elekloader and writing your own, for every machine, with the commands to run. Read [the guide for your module's category](docs/module-guides/README.md) before you write it: it says how a module must behave beside parameter locks, LFOs, scenes, saved projects and other modules, and a module that acts in time uses the instrument's own tempo, track speed and swing. `npm run module:doctor -- <id>` must be green.
@@ -17,6 +19,10 @@ What review expects for a new module, or for a change to how a module runs:
 - every author's credit and licence.
 
 A change to a module's documentation or media alone can keep its existing test evidence ([retained evidence](docs/MODULE_QUALIFICATION.md#risk-based-update-checks--3-october-2026)).
+
+## Contributions stay here
+
+Every contribution comes to Modwerk as a pull request to this repository: modules, hooks, cores, bases, links, emulators and tools (owner, 18 November 2026). Work from another project comes in as a pinned, credited import ([add or port a module](docs/ADD_A_MODULE.md)). Every machine gets a Modwerk base in `sdk/machines/` ([recipe](docs/MACHINE_RECIPE.md)), the Digitone II and Analog Four MKII included, and the Digitakt and Digitone cores (`sdk/digitakt/core`, `sdk/digitone/core`) are Modwerk's own. A base starts from an upstream core's source, credited, but is not that core, and an elekloader mod is not built for it. A hook a Modwerk module needs goes into that machine's base or core here ([propose a hook](docs/module-guides/README.md#propose-a-hook)). A machine's builder carries its own devices and readers; it does not wait for another project's kit to.
 
 ## Versions
 

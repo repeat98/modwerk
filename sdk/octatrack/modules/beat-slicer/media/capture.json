@@ -1,0 +1,33 @@
+{
+  "scope": "Actual LCD framebuffer on the author's MKII over USB, with the module installed as a timed trial",
+  "inputs": {
+    "base": {
+      "identity": "54cab5949013f45d96f23102f3b838932cb663cf0b5332007d608422928aedcb",
+      "source": "3055f13f2 with --dev"
+    },
+    "package": {
+      "sha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+      "bytes": 5332
+    }
+  },
+  "baseIdentity": "54cab5949013f45d96f23102f3b838932cb663cf0b5332007d608422928aedcb",
+  "kind": 1,
+  "spacingBeats": 4,
+  "hardware": true,
+  "functionalSuiteCompleted": true,
+  "usbUndoTested": true,
+  "moduleVersion": "0.1.68-experimental",
+  "modulePackageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+  "images": [
+    {
+      "path": "ot-beat-grid-menu.png",
+      "sha256": "53623878bf4363beeb18435d05bec9f12abbc1d49e7282bab29950d1ed31c127",
+      "scale": 2
+    },
+    {
+      "path": "ot-create-beat-grid.png",
+      "sha256": "a53ec63053046ad3f4f5ae48f1f30ef3fbe9bee489a3823c670a3049af291d28",
+      "scale": 2
+    }
+  ]
+}

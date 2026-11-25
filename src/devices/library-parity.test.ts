@@ -1,23 +1,24 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { AVAILABLE_MODULES } from '../catalog/availability'
-import { selectionConflicts } from '../catalog/selection-conflicts'
 import { LibraryTools } from '../components/LibraryTools'
 import { ModuleComparison } from '../components/ModuleComparison'
+import { MODULE_COMPARE_ENABLED } from '../components/module-compare'
 import { DEFAULT_MODULE_SORT } from '../community/module-statistics'
 import { DEVICES_BY_ID } from './registry'
 import { DIGI_MODS, type DigiMod } from './digi-mods'
-import { EmptyMachine, MachineLibrary } from './MachinePages'
-import { isCoreBuildPreview } from '../engine/elekloader/protocol'
+import { MachineLibrary } from './MachinePages'
+import { digiDownloadsEnabled, isCoreBuildPreview } from '../engine/elekloader/protocol'
 
 const noop = () => {}
 // The all-machines library is the machine library without a device; a Digi library is the same view with that machine's selection.
 const AllMachinesLibrary = MachineLibrary
 type DigiDevice = NonNullable<Parameters<typeof MachineLibrary>[0]['device']> & { id: DigiMod['device'] }
-type DigiProps = { device: DigiDevice; selectedIds: string[]; onToggle: (id: string) => void } & Omit<Parameters<typeof MachineLibrary>[0], 'device' | 'octatrackModules' | 'octatrackSelected' | 'onToggleOctatrack' | 'digiSelected' | 'onToggleDigi' | 'octatrackConflicts' | 'viewedModuleVersions' | 'moduleBaseline'>
+type DigiProps = { device: DigiDevice; selectedIds: string[]; onToggle: (id: string) => void } & Omit<Parameters<typeof MachineLibrary>[0], 'device' | 'octatrackModules' | 'octatrackSelected' | 'onToggleOctatrack' | 'digiSelected' | 'onToggleDigi' | 'viewedModuleVersions' | 'moduleBaseline'>
 function DigiLibrary({ device, selectedIds, onToggle, ...rest }: DigiProps) {
-  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], 'digitakt-ii': device.id === 'digitakt-ii' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [], 'analog-rytm-mkii': device.id === 'analog-rytm-mkii' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), octatrackConflicts: [], viewedModuleVersions: {}, moduleBaseline: null })
+  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], 'digitakt-ii': device.id === 'digitakt-ii' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [], 'analog-rytm-mkii': device.id === 'analog-rytm-mkii' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), viewedModuleVersions: {}, moduleBaseline: null })
 }
 // Likes and downloads show the number beside an icon; the word is there for screen readers only.
 const count = (value: string, word: string) => value + '<span class="sr-only"> ' + word + '</span>'
@@ -26,14 +27,17 @@ const props = {
   onToggleOctatrack: noop, digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
   family: 'all', onFamilyChange: noop, sort: 'collection', onSortChange: noop,
   statistics: [{module_id: 'miniverb', average: 4.5, count: 2, likes: 7, downloads: 12, worksReports: 5, downloadsStarted: null}],
-  octatrackConflicts: [], comparison: ['miniverb'], onCompare: noop, onOpenComparison: noop,
+  comparison: ['miniverb'], onCompare: noop, onOpenComparison: noop,
   viewedModuleVersions: {}, moduleBaseline: AVAILABLE_MODULES.map(module=>module.id),
 }
 
 describe('machine switching layout', () => {
   it.each(['octatrack', 'digitakt', 'digitone', 'syntakt'])('keeps the search tools and build action in the %s library without the local-build banner', id => {
     const html = renderToStaticMarkup(createElement(MachineLibrary, {...props, device: DEVICES_BY_ID[id]}))
-    expect(html.indexOf('class="discovery-tools"')).toBeLessThan(html.indexOf('class="library-subheading"'))
+    const results = html.indexOf(id === 'syntakt' ? 'class="device-page"' : 'class="module-grid"')
+    expect(html).toContain('class="discovery-tools"')
+    expect(html.indexOf('class="discovery-tools"')).toBeLessThan(results)
+    expect(html).not.toContain('Explore the collection')
     expect(html).toMatch(/<h1[^>]*>Module library<\/h1>/)
     expect(html).toContain('Collection order')
     expect(html).toContain('Build firmware</a>')
@@ -47,21 +51,27 @@ describe('machine switching layout', () => {
   })
 })
 
-describe('Digitakt II research preview', () => {
-  it.each(['digitakt-ii'])('offers a local %s core build preview without presenting it as an approved module catalog', id => {
-    const html = renderToStaticMarkup(createElement(EmptyMachine, { device: DEVICES_BY_ID[id] }))
-    expect(html).toContain('href="#' + id + '/configuration"')
-    expect(html).toContain('Open local build preview')
-    expect(DEVICES_BY_ID[id].status).toBe('research')
-    expect(DIGI_MODS.some(mod => mod.device === id)).toBe(false)
+describe('Digitakt II library', () => {
+  it('lists its library modules for OS 1.17, leaves the core build preview and keeps downloads off', () => {
+    expect(DEVICES_BY_ID['digitakt-ii'].status).toBe('preview')
+    expect(isCoreBuildPreview('digitakt-ii')).toBe(false)
+    expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
+    const mods = DIGI_MODS.filter(mod => mod.device === 'digitakt-ii')
+    expect(mods.length).toBeGreaterThan(0)
+    for (const mod of mods) expect(mod.releases).toEqual(['1.17'])
   })
 })
 
 describe('Analog Rytm MKII library', () => {
-  it('lists Filter Hz, Loop Sync, Pipo Loop, Sample RATE and Silent Pad+Trig and leaves the core build preview once a module is in the library', () => {
+  // Derived from the module folders, so two Rytm module pull requests never conflict on a hand-kept list.
+  it('lists every Rytm module folder at its version for OS 1.74, and leaves the core build preview once a module is in the library', () => {
     expect(DEVICES_BY_ID['analog-rytm-mkii'].status).toBe('preview')
     expect(isCoreBuildPreview('analog-rytm-mkii')).toBe(false)
-    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['filter-hz', '1.2.0', ['1.74']], ['loop-sync', '0.3.2', ['1.74']], ['pipo-loop', '0.1.1', ['1.74']], ['sample-rate', '0.1.0', ['1.74']], ['silent-pad-trig', '0.6.0', ['1.74']]])
+    const folder = 'sdk/analog-rytm-mkii/modules/'
+    const folders = readdirSync(folder).filter(id => existsSync(folder + id + '/modwerk.module.json')).sort()
+      .map(id => [id, (JSON.parse(readFileSync(folder + id + '/modwerk.module.json', 'utf8')) as { version: string }).version.replace(/-experimental$/, ''), ['1.74']])
+    expect(folders.length).toBeGreaterThan(20)
+    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual(folders)
   })
 })
 
@@ -88,22 +98,10 @@ describe('All machines library parity', () => {
     expect(html).toContain(count('7', 'likes'))
     expect(html).toContain(count('12', 'downloads'))
     expect(html).toContain('Remove Mini Verb from configuration')
-    expect(html).toContain('type="checkbox" checked=""')
+    if (MODULE_COMPARE_ENABLED) expect(html).toContain('type="checkbox" checked=""')
+    else expect(tools).not.toContain('Compare')
   })
 
-  it('shows saved Octatrack and Digitakt collisions even when filters hide their modules', () => {
-    const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props,
-      query: 'no matching modules', octatrackModules: [],
-      octatrackConflicts: selectionConflicts(['midi-scenes', 'analog-bassdrum']),
-      digiSelected: {digitakt: ['digislicer', 'digisophie'], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': []},
-    }))
-    expect(html).toContain('Octatrack: your selection needs a change')
-    expect(html).toContain('Digitakt: your selection needs a change')
-    expect(html).toContain('href="#digitakt/configuration"')
-    expect(html).not.toContain('Digitone: your selection needs a change')
-    expect(html).toContain('No modules found')
-    expect(html).toContain('aria-label="Build firmware for Octatrack"')
-  })
 
   it('keeps unavailable counts distinct from zero and offers a build link for each machine', () => {
     const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics: null}))
@@ -111,8 +109,9 @@ describe('All machines library parity', () => {
     expect(html).toContain(count('—', 'downloads'))
     expect(html).not.toContain(count('0', 'downloads'))
     expect(html).toContain('Popularity counts are currently unavailable.')
-    expect(html.match(/aria-label="Build firmware for/g)).toHaveLength(4)
+    expect(html.match(/aria-label="Build firmware for/g)).toHaveLength(5)
     expect(html).toContain('href="#digitakt/configuration"')
+    expect(html).toContain('href="#digitakt-ii/configuration"')
     expect(html).toContain('href="#digitone/configuration"')
     expect(html).toContain('href="#analog-rytm-mkii/configuration"')
   })
@@ -122,10 +121,25 @@ describe('All machines library parity', () => {
       octatrackModules: [], family: 'Sampling', sort: 'name',
     }))
     expect(html).toContain('DIGISLICER')
-    expect(html).toContain('NEIGHBOR')
-    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View NEIGHBOR'))
+    expect(html).toContain('RAM Record and Playback')
+    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View RAM Record and Playback'))
     expect(html).not.toContain('View SOPHIE')
     expect(html).not.toContain('View digihealth')
+  })
+})
+
+
+describe('download periods in the library', () => {
+  it('shows the period beside Most downloaded and counts that period on the cards', () => {
+    const statistics = [{module_id: 'miniverb', average: 4.5, count: 2, likes: 7, downloads: 12, downloads7: 0, downloads30: 3, downloads90: 9, worksReports: 5, downloadsStarted: null, dailyStarted: '2026-10-06T21:44:12Z'}]
+    const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics, sort: 'downloaded-30'}))
+    expect(html).toContain('<option value="downloaded" selected="">Most downloaded</option>')
+    expect(html).toContain('<option value="downloaded-30" selected="">Last 30 days</option>')
+    expect(html).toContain('3<span class="sr-only"> downloads in the last 30 days</span>')
+    expect(html).toContain('Counts firmware download requests in the last 30 days.')
+    const plain = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics, sort: 'liked'}))
+    expect(plain).not.toContain('Last 30 days')
+    expect(plain).toContain('12<span class="sr-only"> downloads</span>')
   })
 })
 
@@ -195,18 +209,19 @@ describe('Digi library parity', () => {
       const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, device: {...DEVICES_BY_ID[device], id: device}}))
       const toolbar = renderToStaticMarkup(createElement(LibraryTools, { ...digiProps, families: Array.from(new Set(DIGI_MODS.filter(mod=>mod.device===device).map(mod=>mod.category))), comparisonCount: 0, buildHref: '#'+device+'/configuration', buildLabel: 'Build firmware for '+DEVICES_BY_ID[device].name }))
       expect(html).toContain(toolbar)
-      expect(html).toContain('Compare<span class="sr-only">')
+      if (MODULE_COMPARE_ENABLED) expect(html).toContain('Compare<span class="sr-only">')
+      else expect(html).not.toContain('type="checkbox"')
       expect(html).not.toContain('href="#configuration"')
     }
   })
 
   it('filters type together with search and sorts the Digi library by name', () => {
     const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', sort: 'name'}))
-    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View NEIGHBOR'))
+    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View RAM Record and Playback'))
     expect(html).not.toContain('View SOPHIE')
     expect(html).not.toContain('View digihealth')
-    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', query: 'neighbor'}))
-    expect(search).toContain('View NEIGHBOR')
+    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', query: 'ram record'}))
+    expect(search).toContain('View RAM Record and Playback')
     expect(search).not.toContain('View DIGISLICER')
     const switched = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Octatrack-only type'}))
     expect(switched).toContain('View SOPHIE')
@@ -226,12 +241,14 @@ describe('Digi library parity', () => {
   })
 
   it('limits comparison to three cards while permitting removal and scopes matching module IDs by machine', () => {
-    const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitakt-digihealth','digitone-digihealth','miniverb']}))
-    expect(html).toContain('Compare (3)')
-    expect(html).toContain('type="checkbox" checked=""')
-    expect(html).toContain('type="checkbox" disabled=""')
-    const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digihealth']}))
-    expect(other).not.toContain('type="checkbox" checked=""')
+    if (MODULE_COMPARE_ENABLED) {
+      const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitakt-digihealth','digitone-digihealth','miniverb']}))
+      expect(html).toContain('Compare (3)')
+      expect(html).toContain('type="checkbox" checked=""')
+      expect(html).toContain('type="checkbox" disabled=""')
+      const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digihealth']}))
+      expect(other).not.toContain('type="checkbox" checked=""')
+    }
     const dialog = renderToStaticMarkup(createElement(ModuleComparison, {ids:['digitakt-digihealth','digitone-digihealth'], selected: [], digiSelected:{digitakt:['digihealth'],'digitakt-ii':[],digitone:[],'analog-rytm-mkii':[]}, onToggle:noop,onToggleDigi:noop,onClose:noop}))
     expect(dialog).toContain('href="/digitakt/module/digihealth/"')
     expect(dialog).toContain('href="/digitone/module/digihealth/"')

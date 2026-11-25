@@ -1,0 +1,1 @@
+Digitakt II SDK: a goal page for contributors (`sdk/machines/digitakt-ii/GOAL.md`). It says what the machine's stack is for, where each piece stands, the order of the work, the plan for a SysEx link over the stock USB MIDI, the rules that matter most on this machine, the open questions a unit owner can help close, and how to join as a developer, tester or maintainer.

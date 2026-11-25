@@ -1,0 +1,17 @@
+{
+  "kind": "owner-approved-update",
+  "id": "repitch",
+  "version": "0.2.1-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-17",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles",
+    "complete-memory-bounds",
+    "release-documentation"
+  ],
+  "retainedUiVersion": "0.1.2-experimental",
+  "sourceSha256": "c835b97e0b14e53fd8fcf0e1981b9df35b354f7675a840c6428ba01c21992b7e",
+  "ownerStatement": "Approved by repeat98 on 17 Nov 2026, as relayed by the owner's session that measured Repitch's cost at rest: release Repitch 0.2.1-experimental.",
+  "reason": "0.2.1 changes only rate_gate, which now tests the recompute flag before its REPITCH test and takes stock's reuse path at once; on a recompute rp_find returns after the SETUP TSTR byte for OFF, NORM and BEAT. Sites, results and hooks are unchanged: a scratch emulator comparison of 0.2.0 and 0.2.1 over 10,368 increment-builder states and 256 PTCH widget states gave identical registers, track state and output. On the owner's MKII (development twin of base 0.7.8 98637a13, 17 Nov 2026, bank C pattern C01 with three static loops on T2-T4, TSTR OFF where a loop carries REPITCH so Repitch acted on no track, npm run device:price, two alternating runs) this package (sha256 4b927846) added +0.8 and +0.8 points of the frame interrupt and the published 0.2.0 +1.2 and +1.2. The UI and pages are 0.1.2's, so its captures are retained. Waived for this exact source: the sound of a REPITCH track on a unit, a track with REPITCH in force on a unit, Part/project reload and power cycles, the MKI, verify_repitch.py and the native gates, chip worst-case cycles and complete memory bounds."
+}

@@ -1,0 +1,1 @@
+Docs: the module author update guide now says a published module keeps its id when it is renamed, because followers, likes, download counts, Ko-fi links, saved backups and configuration links are tied to it, and a new id is announced as a new module.

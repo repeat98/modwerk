@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 3,
+  "id": "scorch",
+  "name": "Scorch",
+  "version": "2.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov (Manro): Scorch",
+      "Leemuzhko: the effect runtime it is built with (zui and Dll_)",
+      "Jannik Aßfalg: the ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+    "revision": "32f3d6877d892409c6defeeeec57040ad004d31f",
+    "path": "src/custom/scorch"
+  },
+  "presentation": {
+    "label": "SCORCH",
+    "family": "Amp",
+    "summary": "An aggressive high-gain amp with its cab built in: one Gain knob from crunch to a wall of distortion.",
+    "overview": "Scorch is a high-gain amp and cab in one effect: a tight high-pass before cascaded asymmetric clipping stages with filtering between them, a scooped tone stack, and a 4x12-style cab baked in as filters. Gain sets the distortion, and Mix blends it with your dry signal.",
+    "highlights": [
+      "Cascaded clipping stages for tight high gain",
+      "Tone stack and cab built in",
+      "Mix blends it with your dry signal"
+    ],
+    "usage": [
+      "Put Scorch in a patch and turn Mix up to 100.",
+      "Raise Gain from crunch to full high gain.",
+      "Lower Mix to blend your dry signal back in."
+    ]
+  },
+  "access": {
+    "location": "The pedal's effect list, Delay group, as Scorch.",
+    "steps": [
+      "Add Scorch to a patch from the effect list (Delay group).",
+      "Its knobs are on the effect's pages, three per page."
+    ],
+    "screenshots": [
+      "media/scorch-screen.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Gain",
+      "default": 22,
+      "doc": "Preamp gain: the amount of distortion.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Dry and wet blend.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built with the init path off: a recalled patch plays the knobs' defaults until you touch a knob."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Scorch.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 457
+    },
+    "effectVersion": "2.00",
+    "dspCost": 20,
+    "binary": {
+      "sha256": "da68b74d1e01486d1deb175ef10705d4f2991fb8df0acc31eec37f6a656a7353",
+      "bytes": 5214,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "scorch-2.00",
+        "asset": "Scorch.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "confirmed",
+        "report": "TESTING.md"
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 5214,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The cost Scorch declares in its descriptor, which the pedal adds up per patch; not read from the DSP meter."
+    }
+  },
+  "evidence": {
+    "tier": "owner-verified",
+    "moduleVersion": "2.0.0",
+    "sourceSha256": "da68b74d1e01486d1deb175ef10705d4f2991fb8df0acc31eec37f6a656a7353",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Zoom MS-70CDR",
+      "release": "2.10+MIDISTOMP 2.0.1",
+      "testedOn": "2026-11-10",
+      "tester": "Jannik Aßfalg",
+      "durationMinutes": null,
+      "summary": "The release file was on the pedal (read back over USB with the same SHA-256): the pedal booted, the effect showed its screen and did its job.",
+      "limitations": [
+        "One run, reported by the tester as working; nothing measured.",
+        "Built with the init path off: the sound takes saved knob values only once a knob is touched.",
+        "MIDISTOMP V2.0.1 on Zoom's 2.10, not Zoom's 2.10 alone."
+      ]
+    },
+    "verifiedBy": "repeat98"
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The release file has no code from Zoom's effects (check_no_stock.py), passes Ziddle's loader check, renders in Ziddle, and ran on an MS-70CDR.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put Scorch in a patch and turn Mix up to 100.",
+          "Raise Gain from crunch to full high gain.",
+          "Lower Mix to blend your dry signal back in."
+        ]
+      },
+      "screenshots": [
+        "media/scorch-screen.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "ZoomMultistompZDL's MIT licence (Roman Rusinov, Jannik Aßfalg). Leemuzhko's runtime inside the file is MIT; its three call helpers are TI's RTS source, BSD-3-Clause."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Scorch thumbnail",
+      "alt": "Conceptual drawing of Scorch: an aggressive high-gain amp with its cab built in",
+      "credit": "Modwerk",
+      "license": "MIT",
+      "source": "Original illustration for Modwerk's library."
+    },
+    {
+      "path": "media/scorch-screen.png",
+      "kind": "screenshot",
+      "caption": "Scorch's screen",
+      "alt": "Pedal screen of Scorch",
+      "credit": "Roman Rusinov's Scorch, rendered by Modwerk",
+      "license": "MIT",
+      "source": "The cover picture inside the release file itself, decoded from its Zoom RLE: what the pedal shows for this effect.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "2.0.0",
+        "imageSha256": "da68b74d1e01486d1deb175ef10705d4f2991fb8df0acc31eec37f6a656a7353",
+        "setup": "The cover picture inside the release file itself, decoded from its Zoom RLE: what the pedal shows for this effect. the cover picture at the start of .const in the built Scorch.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+      }
+    }
+  ]
+}

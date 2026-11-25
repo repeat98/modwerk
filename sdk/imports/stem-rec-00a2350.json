@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/yvesrosius/octabam",
+  "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/octabam/modules/stem-rec",
+  "modules": [
+    "stem-rec"
+  ],
+  "excluded": [
+    "octabam's other modules, tools and gates",
+    "STEM REC's working records in octabam (FLASH.md, CLEANUP.md, TODO.md)",
+    "Firmware images, card data and generated packages"
+  ],
+  "notes": [
+    "upstream/ holds STEM REC's manifest, source and README copied byte for byte from 00a23502a9e3ce8264888026a2b6764e7f52a3be; stems.s at the module root is the same file, and LICENSE is octabam's, unchanged.",
+    "manifest.py is Modwerk's card-build adapter of upstream/manifest.py, changed four ways: no requires (Modwerk's builder places DramRegions at the top of its fixed reserve, where octabam's MEMORY sizes one); no YES detour at 0x4005e4c8 (APPLY SCENE patches that site and a card build has no key bus, so the main page's YES double tap is left out); the gain table as 25 stock copies of the user's OS (0x400ea18a, 774 bytes, each declared under stockGuards) instead of an .incbin of the OS slice; and the displaced stock instructions named by stock guards instead of written out.",
+    "Card build only: a USB package would need an 8 MiB DRAM grant and a lifecycle for the module's own writer task, which the base does not offer (Discord, 5 Nov 2026)."
+  ],
+  "status": "Draft card build. Built natively and booted under ot_emu; parity, packages, qualification and hardware evidence pending.",
+  "authorPin": {
+    "repository": "https://github.com/yvesrosius/octabam",
+    "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be"
+  },
+  "files": [
+    {
+      "path": "upstream/manifest.py",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/manifest.py",
+      "sourceBytes": 7728,
+      "sourceGitBlob": "282c89c72a0b75af4bc94e2862a1c089be734f2e",
+      "sourceSha256": "317a95bf29d4306cef92ab544819790621c8cf4a4da3b1e3d817969722c7ca9d",
+      "vendoredSha256": "317a95bf29d4306cef92ab544819790621c8cf4a4da3b1e3d817969722c7ca9d"
+    },
+    {
+      "path": "upstream/stems.s",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/stems.s",
+      "sourceBytes": 161011,
+      "sourceGitBlob": "7f1866cd8191d1ad5558a32bd59ac8a9a6ee323c",
+      "sourceSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b",
+      "vendoredSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b"
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/README.md",
+      "sourceBytes": 33873,
+      "sourceGitBlob": "b30709b737cd1a3863696974725351d72189598f",
+      "sourceSha256": "638481526c0c48fb92cda2bfbd6c4c773ee9ba5bbbc4896faeecec227e2eebf0",
+      "vendoredSha256": "638481526c0c48fb92cda2bfbd6c4c773ee9ba5bbbc4896faeecec227e2eebf0"
+    },
+    {
+      "path": "stems.s",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/stems.s",
+      "sourceBytes": 161011,
+      "sourceGitBlob": "7f1866cd8191d1ad5558a32bd59ac8a9a6ee323c",
+      "sourceSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b",
+      "vendoredSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    }
+  ],
+  "stockGuards": [
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700682,
+      "bytes": 32,
+      "sha256": "7f115797b4617e91b6d1a5d3034b451c7ce1167804086d7a8d5cbbc43db7b8d7",
+      "note": "Core 0's gain table, bytes 0 to 31: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700714,
+      "bytes": 32,
+      "sha256": "d8e52536dd0310844f52ae872b3df325bbad9dd92b66fc6ad1633f8e0aaddb7d",
+      "note": "Core 0's gain table, bytes 32 to 63: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700746,
+      "bytes": 32,
+      "sha256": "d81a5d6a247cde36b97b9509bdf9df8397dd6dd6148cbe6f2a086bdf12b7c35f",
+      "note": "Core 0's gain table, bytes 64 to 95: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700778,
+      "bytes": 32,
+      "sha256": "61d8204174dfc4122f65f1a553b5dff0bf6bb3670b75fd7f257351a71a2f6da1",
+      "note": "Core 0's gain table, bytes 96 to 127: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700810,
+      "bytes": 32,
+      "sha256": "8cafb80ee98a0458ddae28e9fa1f1d6f324e52fd3c0c012e656a00161c46f4ae",
+      "note": "Core 0's gain table, bytes 128 to 159: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700842,
+      "bytes": 32,
+      "sha256": "e8cc61ebc8a2376f3284d529d8f3d3df0f6f4cc5940bf817f55534afb04baebb",
+      "note": "Core 0's gain table, bytes 160 to 191: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700874,
+      "bytes": 32,
+      "sha256": "9f0af43d3cced4a509bec724f831fa7ba8c509b17c329309ddaaccb13faed4ff",
+      "note": "Core 0's gain table, bytes 192 to 223: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700906,
+      "bytes": 32,
+      "sha256": "8c044e7625a6d0599339534e6cfe73a8632722835db65326cf6f03ff95f0ff59",
+      "note": "Core 0's gain table, bytes 224 to 255: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700938,
+      "bytes": 32,
+      "sha256": "c5e12b2f136391ab196d9fed5217d08bb150af964717735f3997fd61e51df3bf",
+      "note": "Core 0's gain table, bytes 256 to 287: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074700970,
+      "bytes": 32,
+      "sha256": "88d711b2d2d1c4c8699940af7b12ccd7f2bba2d1d98e5191bb1fa0e1db402db3",
+      "note": "Core 0's gain table, bytes 288 to 319: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701002,
+      "bytes": 32,
+      "sha256": "1e0589f2458343ffbdd4274d79a25d56796531f6dc5066f420d54c0eb9f480db",
+      "note": "Core 0's gain table, bytes 320 to 351: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701034,
+      "bytes": 32,
+      "sha256": "7bbb0e1320fe7d22e215dd4abab1ca938b2f961cc1199ce2218eec4d4862f9dc",
+      "note": "Core 0's gain table, bytes 352 to 383: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701066,
+      "bytes": 32,
+      "sha256": "19caf5b64a33d2f814403e5ded758258454a365c61fe8aa024c23ea05feae997",
+      "note": "Core 0's gain table, bytes 384 to 415: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701098,
+      "bytes": 32,
+      "sha256": "fa63fd1e8b338c6207a6245c3b3c76575ce98794e9467580d39f02d9cdae9c2e",
+      "note": "Core 0's gain table, bytes 416 to 447: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701130,
+      "bytes": 32,
+      "sha256": "e69ddd0e538336b11ca74ce214460ad59dc85523fde565bc13bbfe2ea5852e19",
+      "note": "Core 0's gain table, bytes 448 to 479: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701162,
+      "bytes": 32,
+      "sha256": "204c8017733fbbb28484904b1b7d9cd86a208873b67245eea5529dab43807f14",
+      "note": "Core 0's gain table, bytes 480 to 511: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701194,
+      "bytes": 32,
+      "sha256": "9657a33244677f33875767b58486a4f2489f4fbb125016fd697a8bc92dae3c35",
+      "note": "Core 0's gain table, bytes 512 to 543: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701226,
+      "bytes": 32,
+      "sha256": "40fe62dcd001090f1c8875b9711b72dd1215225c9265625800be138ba9e46f08",
+      "note": "Core 0's gain table, bytes 544 to 575: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701258,
+      "bytes": 32,
+      "sha256": "d047a0e97273dc227363e8a2405b5d82d7e7ac9819de7fc4cbfe7dfdb19998ab",
+      "note": "Core 0's gain table, bytes 576 to 607: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701290,
+      "bytes": 32,
+      "sha256": "f530fed4edf64e5ff3fa84391675cc94faacfabe78e91409a3660995496a1ca4",
+      "note": "Core 0's gain table, bytes 608 to 639: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701322,
+      "bytes": 32,
+      "sha256": "7629feca4ec79355fc44877456189290e5d0d4d883ba326407ee5196538686d5",
+      "note": "Core 0's gain table, bytes 640 to 671: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701354,
+      "bytes": 32,
+      "sha256": "a0e2cd49f2276781bee185ba954769c0ab6788ed2c6d78503d76bf8372944d78",
+      "note": "Core 0's gain table, bytes 672 to 703: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701386,
+      "bytes": 32,
+      "sha256": "281d6703a025d6a289c0fcd8697dfdfd22be1920f4e79f488c047cfe8f80fb6b",
+      "note": "Core 0's gain table, bytes 704 to 735: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701418,
+      "bytes": 32,
+      "sha256": "1a46f915bdcb70abd0175efc19020993056ee70dba061785d589ea043d523136",
+      "note": "Core 0's gain table, bytes 736 to 767: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    },
+    {
+      "kind": "guarded-local-cpu-read",
+      "address": 1074701450,
+      "bytes": 6,
+      "sha256": "ec133f6cfab42e9acfaad41d012e0e0ac6bc37a6c7d01e349d6ce9cbe8d96ce5",
+      "note": "Core 0's gain table, bytes 768 to 773: read from the user's verified OS at build time, because the OS overwrites the table after the DSP upload and it cannot be computed."
+    }
+  ]
+}

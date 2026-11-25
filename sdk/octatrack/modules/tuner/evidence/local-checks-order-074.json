@@ -1,0 +1,853 @@
+{
+  "schema_version": 1,
+  "order": "ORDER-074",
+  "record_type": "completed_local_check_evidence",
+  "recorded_utc": "2026-10-26T19:18:40.156706+00:00",
+  "branch": "promotion",
+  "status": "PARTIAL",
+  "main_base": "4e2226f1be6347f74d51a0d5b99ee572ba3a82bb",
+  "newer_main_not_rebased": "814f6c556e6d518ba7cac77ac3cecc9f15cadf68",
+  "checked_source_commits": [
+    "4d6b96025e756ca9ce941425c1f8aa30827af7c3",
+    "be883d845d36dba7d7bbf77f35a996c5fd3a2107"
+  ],
+  "documentation_appendix_not_in_checked_commits": true,
+  "completed_leaves": [
+    {
+      "branch": "promotion",
+      "id": "S_PREPARE",
+      "kind": "setup",
+      "status": "PASS",
+      "source_commit": "be883d845d36dba7d7bbf77f35a996c5fd3a2107",
+      "exit_code": 0,
+      "seconds": 1.6521361670456827,
+      "diagnostic_categories": [],
+      "test_counts": {},
+      "receipt": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/receipts/S_PREPARE.json",
+        "bytes": 1514,
+        "sha256": "6cbd1690c5382d07eff94eb8920b6b1822f42b6c3938b36bfda736cc0cf8118a"
+      },
+      "process_reaped": true,
+      "streams_drained": true,
+      "container_cleanup": "not_applicable"
+    },
+    {
+      "branch": "promotion",
+      "id": "D01",
+      "kind": "check",
+      "status": "PASS",
+      "source_commit": "be883d845d36dba7d7bbf77f35a996c5fd3a2107",
+      "exit_code": 0,
+      "seconds": 11.164690874982625,
+      "diagnostic_categories": [],
+      "test_counts": {},
+      "receipt": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/receipts/D01.json",
+        "bytes": 2498,
+        "sha256": "0c9c30207807bac76300346c537031e5d10dbbc2ba750056ac42d76e6e2a80b4"
+      },
+      "process_reaped": true,
+      "streams_drained": true,
+      "container_cleanup": "absent"
+    },
+    {
+      "branch": "promotion",
+      "id": "L07",
+      "kind": "check",
+      "status": "FAIL",
+      "source_commit": "be883d845d36dba7d7bbf77f35a996c5fd3a2107",
+      "exit_code": 1,
+      "seconds": 0.2370060831308365,
+      "diagnostic_categories": [
+        "changelog_catalogue_scope",
+        "tuner_changelog_not_in_catalogue"
+      ],
+      "test_counts": {},
+      "receipt": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/receipts/L07.json",
+        "bytes": 1510,
+        "sha256": "c01862d2cb7b52aa285fa268ac12e3069c216658ace8089682f9dc6bfb93916a"
+      },
+      "process_reaped": true,
+      "streams_drained": true,
+      "container_cleanup": "not_applicable"
+    },
+    {
+      "branch": "promotion",
+      "id": "L14",
+      "kind": "check",
+      "status": "FAIL",
+      "source_commit": "4d6b96025e756ca9ce941425c1f8aa30827af7c3",
+      "exit_code": 1,
+      "seconds": 90.76978066563606,
+      "diagnostic_categories": [
+        "assertion_failure",
+        "changelog_catalogue_scope",
+        "tuner_changelog_not_in_catalogue"
+      ],
+      "test_counts": {
+        "numTotalTestSuites": 727,
+        "numFailedTestSuites": 13,
+        "numPassedTestSuites": 714,
+        "numPendingTestSuites": 0,
+        "numTotalTests": 2602,
+        "numFailedTests": 14,
+        "numPassedTests": 2588,
+        "numPendingTests": 0,
+        "numTodoTests": 0
+      },
+      "receipt": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/receipts/L14.json",
+        "bytes": 6519,
+        "sha256": "532ebfad8e01dac7e77260540dfec29632859535a283b60383ca4a8ff726a9c4"
+      },
+      "process_reaped": true,
+      "streams_drained": true,
+      "container_cleanup": "not_applicable"
+    },
+    {
+      "branch": "promotion",
+      "id": "L16",
+      "kind": "check",
+      "status": "PASS",
+      "source_commit": "4d6b96025e756ca9ce941425c1f8aa30827af7c3",
+      "exit_code": 0,
+      "seconds": 3.581154291983694,
+      "diagnostic_categories": [],
+      "test_counts": {},
+      "receipt": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/receipts/L16.json",
+        "bytes": 4095,
+        "sha256": "62090b29d1a04cf61918a55830f32c386502906fa8a8be149c87d86b8adf6adf"
+      },
+      "process_reaped": true,
+      "streams_drained": true,
+      "container_cleanup": "not_applicable"
+    }
+  ],
+  "results_receipt": {
+    "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/CHECK_RESULTS.json",
+    "bytes": 7222,
+    "sha256": "0db56d60743a08a202c6b3de4a61276a5f491ce0c10e9a6a79594659b36c9ca9"
+  },
+  "media_reuse": {
+    "receipt": {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/media-reuse/result.json",
+      "bytes": 381591,
+      "sha256": "1c3c8dd124b8a9f47d5911c27b73c55b20c15164130cd87a570c54d2c3b56f54"
+    },
+    "status": "PASS",
+    "copied_file_count": 251,
+    "source_pins": {
+      "draft": "a3372fd0e5f45958b837214c2fe57c95fca4f6b1",
+      "promotion": "be883d845d36dba7d7bbf77f35a996c5fd3a2107"
+    },
+    "catalogue_writes": false,
+    "qualification_changed": false,
+    "tuner_copied": false,
+    "catalogue_equivalence": [
+      {
+        "draft": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/draft/src/catalog/module-documents.json",
+          "bytes": 539711,
+          "sha256": "3a4ef9cadfcc50c129a370af128be1d3a35d20d50f156b741bceadb025f2d1a1"
+        },
+        "promotion": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/catalog/module-documents.json",
+          "bytes": 539711,
+          "sha256": "3a4ef9cadfcc50c129a370af128be1d3a35d20d50f156b741bceadb025f2d1a1"
+        }
+      },
+      {
+        "draft": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/draft/src/catalog/machine-modules.json",
+          "bytes": 299571,
+          "sha256": "dfd1d11a1f0d005cb57126e785fd6c3cfa8754ab4654643ea76183523581b96a"
+        },
+        "promotion": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/catalog/machine-modules.json",
+          "bytes": 299571,
+          "sha256": "dfd1d11a1f0d005cb57126e785fd6c3cfa8754ab4654643ea76183523581b96a"
+        }
+      }
+    ],
+    "scope": "Only 251 unchanged published media assets were copied to the ignored promotion directory after the generated catalogues and corresponding source inputs matched. No Tuner media or qualification catalogue was generated."
+  },
+  "canonical_firmware": {
+    "changed": false,
+    "rebuilt": false
+  },
+  "usb_runtime_mechanism": {
+    "changed": false,
+    "new_runtime_or_hardware_result": false
+  },
+  "limits": [
+    "These are per-leaf results, not a complete readiness or publication PASS.",
+    "ORDER073 failures and evidence are preserved rather than rewritten.",
+    "No further checks, generators, builds or runtime sessions were performed while assembling this evidence appendix.",
+    "No hardware, worst-case cycle or complete memory qualification is claimed.",
+    "The branches remain based on 4e2226f1, not newer main 814f6c55.",
+    "Hardware evidence alone does not make pending Tuner buildable or resolve catalogue/package coherence. No proof fingerprint was edited or retagged."
+  ],
+  "prior_leaves": {
+    "L03": {
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/receipts/L03.json",
+        "bytes": 2112,
+        "sha256": "ae48043f90fef8a74ba91427acd536aa113f7651927239affe68f7871fe7b337"
+      },
+      "status": "FAIL",
+      "exit_code": 1,
+      "source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+      "classification": "qualification",
+      "rerun_in_ORDER074": false
+    },
+    "L06": {
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/receipts/L06.json",
+        "bytes": 1477,
+        "sha256": "f2f6e756cb48bb468973d5734c5c414abaaa30c2d172f78ef15e16a9a800e396"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+      "classification": null,
+      "rerun_in_ORDER074": false
+    }
+  },
+  "source_package_import": {
+    "receipt": {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/IMPORT.json",
+      "bytes": 6418,
+      "sha256": "fbfa62359aee7c787bdbfac9279a357a888609c20418cc077cc5fc2276227d15"
+    },
+    "status": "PASS",
+    "exit_code": 0,
+    "source_commit": "be883d845d36dba7d7bbf77f35a996c5fd3a2107",
+    "command": [
+      "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/work/modwerk-fm/tools/node_modules/node/bin/node",
+      "scripts/import-module-build.mjs",
+      "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/checks/promotion/docker/octatrack-source/packages",
+      "--development",
+      "--verify-existing"
+    ],
+    "process_reaped": true,
+    "streams_drained": true,
+    "commit_record": {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/IMPORT_COMMIT.json",
+      "bytes": 994,
+      "sha256": "c62835088710e8ceb4d9771bf8fcb382ea52596d54e3b277a6c13b5f5f86b10d"
+    },
+    "import_commit": "4d6b96025e756ca9ce941425c1f8aa30827af7c3",
+    "source_build_commit": "be883d845d36dba7d7bbf77f35a996c5fd3a2107",
+    "changed_files": [
+      "src/engine/assets/bootstrap-package.json",
+      "src/engine/assets/coldfire-packages.json",
+      "src/engine/assets/descriptor-recipes.json",
+      "src/engine/assets/dsp-packages.json",
+      "src/engine/assets/menu-recipes.json",
+      "src/engine/assets/module-build.json",
+      "src/engine/assets/platform-writes.json",
+      "src/engine/assets/requested-packages.json",
+      "src/engine/assets/resident-dsp.json",
+      "src/engine/assets/rom-packages.json",
+      "src/engine/assets/usb-audio-packages.json",
+      "src/engine/assets/utility-packages.json"
+    ]
+  },
+  "remaining_red": {
+    "analysis_receipt": {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/REMAINING_RED_ANALYSIS.json",
+      "bytes": 30613,
+      "sha256": "586e1c54d088e918a53bd104a68b37a3612adb66ca88aa0c2a02abb819de3096"
+    },
+    "analysis_prose": {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-074/REMAINING_RED_ANALYSIS.md",
+      "bytes": 7210,
+      "sha256": "39ffc2f0bad56ca32aa887458901c46b7e081aa4799da08bd4ee95c9fb18bce9"
+    },
+    "results": {
+      "L07": {
+        "status": "FAIL",
+        "source_commit": "be883d845d36dba7d7bbf77f35a996c5fd3a2107",
+        "classification": "qualification",
+        "actual_category": "tuner_changelog_not_in_catalogue",
+        "reason": "Existing current-version notes are refused because Tuner is absent from the generated qualified catalogue; no missing note or arbitrary changelog defect is demonstrated.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 47
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 65
+          }
+        ]
+      },
+      "L14": {
+        "status": "FAIL",
+        "counts": {
+          "numTotalTestSuites": 727,
+          "numFailedTestSuites": 13,
+          "numPassedTestSuites": 714,
+          "numPendingTestSuites": 0,
+          "numTotalTests": 2602,
+          "numFailedTests": 14,
+          "numPassedTests": 2588,
+          "numPendingTests": 0,
+          "numTodoTests": 0
+        },
+        "failing_file_records": 7,
+        "classification_counts": {
+          "qualification": 13,
+          "ours": 1,
+          "owner-only": 0
+        }
+      },
+      "L16": {
+        "status": "PASS",
+        "seconds": 3.581154291983694,
+        "classification": null,
+        "reason": "No remaining bundle failure; retained import coordinates are not failures by themselves."
+      }
+    },
+    "failed_assertions": [
+      {
+        "file": "scripts/module-doctor.test.mjs",
+        "assertion_index": 0,
+        "classification": "qualification",
+        "reason": "The integration assertion rejects any failed doctor item. The doctor invokes the publication catalogue rules; Tuner lacks qualification and cannot enter the generated catalogue.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-doctor.test.mjs",
+            "line": 13
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-doctor.mjs",
+            "line": 38
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 47
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 65
+          }
+        ],
+        "confidence": "high",
+        "limit": "This is a source-supported sufficient cause. The reduced receipt does not retain every individual doctor diagnostic, so it does not prove this is its only failing integration item."
+      },
+      {
+        "file": "src/catalog/module-contract.test.ts",
+        "assertion_index": 2,
+        "classification": "qualification",
+        "reason": "The assertion compares generated catalogue IDs with SDK catalogue IDs: 31 generated entries versus 32 SDK entries, with Tuner absent only from the generated catalogue. Publication qualification prevents ordinary generation.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/catalog/module-contract.test.ts",
+            "line": 20
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 47
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 65
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/catalog/resource-indicators.test.ts",
+        "assertion_index": 0,
+        "classification": "qualification",
+        "reason": "The failing first assertion requires one generated document per SDK module; the same 31/32 mismatch occurs before the per-document evidence checks. No new exemption is justified.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/catalog/resource-indicators.test.ts",
+            "line": 26
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/catalog/resource-indicators.test.ts",
+            "line": 39
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 47
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 65
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/community/module-changelogs.test.ts",
+        "assertion_index": 1,
+        "classification": "qualification",
+        "reason": "The retained actual category is tuner_changelog_not_in_catalogue. Tuner release notes exist at the declared version, but the generated qualified catalogue omits Tuner, so the parser refuses the extra notes.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.test.ts",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 47
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/modules.mjs",
+            "line": 65
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/engine/analog-bd.test.ts",
+        "assertion_index": 0,
+        "classification": "ours",
+        "reason": "The precise failing assertion compares the retained Analog BD proof moduleSourceTreeSha256 with the imported package build sourceTreeSha256. Existing metadata confirms inequality after the legitimate source-package import. This is a stale composition-proof binding, independent of Tuner qualification; it is not a sourceCommit assertion.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/engine/analog-bd.test.ts",
+            "line": 25
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/export-composition-proofs.py",
+            "line": 202
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-source.mjs",
+            "line": 25
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/import-module-build.mjs",
+            "line": 132
+          }
+        ],
+        "confidence": "high",
+        "limit": "No composition proof was regenerated, and no proof/native equivalence is inferred from unchanged compiled module counts. The exporter performs native work; changing only the stored fingerprint would not be valid evidence."
+      },
+      {
+        "file": "src/engine/module-build.test.ts",
+        "assertion_index": 0,
+        "classification": "qualification",
+        "reason": "The preserved coherence assertion compares compiled module IDs with every SDK catalogue ID. Imported packages correctly contain 31 buildable modules; Tuner remains pending and is excluded from moduleVersions although its authored inputs are in the complete source fingerprint. Promotion therefore lacks the required catalogue/build-readiness coherence, rather than a failed D01 source import.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/engine/module-build.test.ts",
+            "line": 7
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-source.mjs",
+            "line": 38
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-source.mjs",
+            "line": 46
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/build-module-packages.py",
+            "line": 270
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/build-module-packages.py",
+            "line": 302
+          }
+        ],
+        "confidence": "high",
+        "limit": "Classified as a promotion qualification/build-readiness dependency. It does not establish that supplying hardware evidence alone would make Tuner browser-buildable; pending status must only change on legitimate evidence. The assertion was not filtered or weakened."
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 1,
+        "classification": "qualification",
+        "reason": "The npm subprocesses are mocked, but the runner still reads real changelogs. The unknown Tuner catalogue entry causes the error path on stderr, so the expected successful changelog message on stdout is absent.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 42
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 62
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 3,
+        "classification": "qualification",
+        "reason": "The parameterized orchestration case for sdk:check mocks npm stages, but real changelog validation stops the runner before the expected independent checks. The script-list assertion consequently fails; this does not establish a defect in sdk:check.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 51
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 55
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 96
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 4,
+        "classification": "qualification",
+        "reason": "The parameterized orchestration case for lint mocks npm stages, but real changelog validation stops the runner before the expected independent checks. The script-list assertion consequently fails; this does not establish a defect in lint.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 51
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 55
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 96
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 5,
+        "classification": "qualification",
+        "reason": "The parameterized orchestration case for test mocks npm stages, but real changelog validation stops the runner before the expected independent checks. The script-list assertion consequently fails; this does not establish a defect in test.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 51
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 55
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 96
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 6,
+        "classification": "qualification",
+        "reason": "The parameterized orchestration case for build:bundle mocks npm stages, but real changelog validation stops the runner before the expected independent checks. The script-list assertion consequently fails; this does not establish a defect in build:bundle.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 51
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 55
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 96
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 7,
+        "classification": "qualification",
+        "reason": "The no-injected-failure orchestration case expects status 0, but real Tuner changelog/catalogue validation fails and returns status 1.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 51
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 53
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 9,
+        "classification": "qualification",
+        "reason": "The typecheck-failure scenario expects the independent test task to run. Real changelog validation fails first, so that task never reaches the mocked npm log.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 65
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 69
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "file": "src/tooling/check.test.ts",
+        "assertion_index": 10,
+        "classification": "qualification",
+        "reason": "The build-only orchestration case expects status 0 after mocked generation. Its real changelog validation still sees the unqualified Tuner/catalogue mismatch and fails before the build stage.",
+        "evidence": [
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 74
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 76
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/tooling/check.test.ts",
+            "line": 10
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 57
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/check.mjs",
+            "line": 92
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 23
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/scripts/module-changelogs.mjs",
+            "line": 32
+          },
+          {
+            "file": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/promotion/src/community/module-changelogs.ts",
+            "line": 35
+          }
+        ],
+        "confidence": "high"
+      }
+    ],
+    "source_facts": {
+      "sdk_catalogue_entries": 32,
+      "generated_catalogue_entries": 31,
+      "compiled_module_versions": 31,
+      "tuner_in_sdk_catalogue": true,
+      "tuner_in_generated_catalogue": false,
+      "tuner_in_compiled_versions": false,
+      "tuner_build_status": "pending",
+      "analog_bd_proof_source_tree_matches_imported_build": false,
+      "analog_bd_proof_records": 212
+    },
+    "limits": [
+      "No tests, probes, builds, generator invocations, repairs, source edits or commits performed for this analysis.",
+      "Qualification means required publication/build-readiness evidence is absent; it is not permission to waive checks.",
+      "Owner-only count is zero: no retained failed assertion is explained solely by release approval credentials or a privileged owner action.",
+      "The 13 failed test suites are reporter suite nodes, not 13 distinct files; exactly seven file records contain the 14 failed assertions.",
+      "Prior failures and original receipts are unchanged."
+    ]
+  }
+}

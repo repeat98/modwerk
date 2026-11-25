@@ -3,13 +3,18 @@
  * since; five minutes of meters make one load record; the CPU at 90 % for a second makes one HOT incident with the
  * unit's context, at most one in ten minutes; five seconds without a UI tick while frames run make a FREEZE, added
  * with its length once the tick moves again, or with length 0 at the next start; the frame guard's skips make one
- * SHED, at most one in ten minutes; LOG pages are 244 bytes. */
+ * SHED, at most one in ten minutes; a boot's first USB re-offer makes one USB incident; LOG pages are 244 bytes. */
 #include "diag.c"
 #include <stdio.h>
 
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 volatile struct diag_log modwerk_test_log;
+volatile struct diag_trace modwerk_test_trace;
+volatile struct diag_lates modwerk_test_lates;
+volatile uint16_t mw_late_ring[8];
+volatile uint32_t mw_late_count;
+volatile uint32_t mw_frame_last; /* machine_registry.c */
 volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
     modwerk_test_screen, modwerk_test_timer;
 uint32_t modwerk_test_modules[16];
@@ -17,7 +22,9 @@ const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
 volatile uint8_t modwerk_test_running[16];
 volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
-volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c's frame guard */
+volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes, mw_late_over; /* the frame guard */
+volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
+volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
@@ -35,10 +42,12 @@ int main(void)
     CHECK(LOG->loads == 0u && LOG->freeze_state == 0u);
     /* The installed set, after a restore or a Keep: the ids as one run of bytes. */
     modwerk_test_modules[0] = 0x95cff696u, modwerk_test_modules[1] = 0xbcf0d674u;
-    modwerk_diag_refused(0x773c84aau, 7u); /* a restore refused Ringmod SC (in use): its record says so, once */
+    modwerk_diag_refused(0x773c84aau, 7u, 786400u, 1000u, 2u); /* a restore refused Ringmod SC (in use): its record says so,
+                                                               * once, with the module pool then in 16-byte units and the check */
     modwerk_diag_set();
     CHECK(LOG->incidents == 3u && last()->kind == DIAG_SET && last()->a == 2u && last()->machine[0] == 0x95u && last()->machine[3] == 0x96u);
     CHECK(last()->screen == 0x773c84aau && last()->tempo24 == 7u && !refused_module && !refused_code);
+    CHECK(last()->cpu == 49150u && last()->dsp0 == 63u && last()->dsp1 == 2u && !refused_used && !refused_largest && !refused_check);
     CHECK(last()->machine[4] == 0xbcu && last()->machine[7] == 0x74u && last()->machine[8] == 0u && last()->keys[0] == 0u);
     modwerk_test_modules[0] = modwerk_test_modules[1] = 0;
 
@@ -102,6 +111,59 @@ int main(void)
     CHECK(LOG->incidents == before + 1u);
     tick();
     CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_SHED && (last()->a & 0xffffffu) == 900u);
+    /* The brake: every time it catches the frame interrupt falling behind, with the tracks shed. */
+    mw_frame_brakes = 1u;
+    tick();
+    CHECK(LOG->incidents == before + 3u && last()->kind == DIAG_BRAKE && last()->a == (0x22u << 24 | 1u));
+    tick();
+    CHECK(LOG->incidents == before + 3u);
+    mw_frame_brakes = 2u;
+    tick();
+    CHECK(LOG->incidents == before + 4u && last()->kind == DIAG_BRAKE && (last()->a & 0xffffffu) == 2u);
+    /* The attach watchdog offered the unit again (#1985): one USB incident a boot, with OTGSC and PORTSC1. */
+    mw_usb_reoffer_regs = 0x0800u << 16 | 0x1000u, mw_usb_reoffers = 1u;
+    tick();
+    CHECK(LOG->incidents == before + 5u && last()->kind == DIAG_USB && last()->a == (0x0800u << 16 | 0x1000u));
+    mw_usb_reoffers = 2u; /* a boot's later ones are not logged: five with no host would crowd the log */
+    tick();
+    CHECK(LOG->incidents == before + 5u);
+    tick();
+    CHECK(LOG->incidents == before + 5u);
+    /* A late frame entry held, a skipped DSP frame: the count since boot, at most once in HOT_GAP. */
+    mw_frame_skips = 3u;
+    tick();
+    CHECK(LOG->incidents == before + 6u && last()->kind == DIAG_LATE && last()->a == 3u);
+    mw_frame_skips = 9u;
+    for (unsigned t = 0; t < HOT_GAP - 1u; ++t) tick();
+    CHECK(LOG->incidents == before + 6u);
+    tick();
+    CHECK(LOG->incidents == before + 7u && last()->kind == DIAG_LATE && last()->a == 9u);
+    /* An entry later than the wait can hold logs the same incident with nothing more held: the count in the top byte,
+     * under the same limit. */
+    mw_late_over = 1u;
+    for (unsigned t = 0; t < HOT_GAP - 1u; ++t) tick();
+    CHECK(LOG->incidents == before + 7u);
+    tick();
+    CHECK(LOG->incidents == before + 8u && last()->kind == DIAG_LATE && last()->a == (1u << 24 | 9u));
+    mw_late_over = 300u;
+    for (unsigned t = 0; t < HOT_GAP; ++t) tick();
+    CHECK(LOG->incidents == before + 9u && last()->kind == DIAG_LATE && last()->a == (255u << 24 | 9u)); /* 255 at most */
+    before += 2u;
+    /* A pattern begun with module machines silenced, as predicted: a brake incident with bit 23, once in HOT_GAP. */
+    mw_frame_hushes = 2u;
+    tick();
+    CHECK(LOG->incidents == before + 8u && last()->kind == DIAG_BRAKE && last()->a == (1u << 23 | 2u));
+    mw_frame_hushes = 3u;
+    tick();
+    CHECK(LOG->incidents == before + 8u);
+
+    /* The CPU budget refused a machine on T4: one incident with the track and the count. */
+    before = LOG->incidents;
+    mw_cpu_refusals = 2u, mw_cpu_refusal_tracks = 1u << 3;
+    tick();
+    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 2u));
+    tick();
+    CHECK(LOG->incidents == before + 1u);
 
     /* The UI stands still for six seconds while frames run, then moves again. */
     modwerk_status[0] = 100u;
@@ -146,10 +208,33 @@ int main(void)
     const volatile uint8_t *cb = (const volatile uint8_t *)modwerk_test_crash, *sb = (const volatile uint8_t *)modwerk_test_stall; /* the host's byte order */
     CHECK(modwerk_diag_read(page, at / DIAG_PAGE) == DIAG_PAGE && page[at % DIAG_PAGE] == cb[0] && page[at % DIAG_PAGE + 3u] == cb[3] && (cb[0] == 'M' || cb[3] == 'M'));
     CHECK(modwerk_diag_read(page, stall_at / DIAG_PAGE) == DIAG_PAGE && page[stall_at % DIAG_PAGE] == sb[0] && page[stall_at % DIAG_PAGE + 3u] == sb[3]);
-    CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 0 && page[DIAG_PAGE - 1u] == 0);
+    /* Then the guard's skips as they stand ("MWSK", count, tracks), the entries later than the wait can hold, then zeros. */
+    mw_frame_sheds = 0x01020304u, mw_frame_shed_tracks = 0x21u, mw_late_over = 0x0a0b0c0du;
+    CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 'M' && page[end % DIAG_PAGE + 3u] == 'K' &&
+          page[end % DIAG_PAGE + 4u] == 1u && page[end % DIAG_PAGE + 7u] == 4u && page[end % DIAG_PAGE + 11u] == 0x21u &&
+          page[end % DIAG_PAGE + 12u] == 0x0au && page[end % DIAG_PAGE + 15u] == 0x0du);
+    CHECK(end % DIAG_PAGE + DIAG_SHEDS_BYTES == DIAG_PAGE); /* the last page, filled */
+    { unsigned zeros = 1; modwerk_diag_read(page, end / DIAG_PAGE + 1u); for (unsigned i = 0; i < DIAG_PAGE; ++i) zeros &= !page[i]; CHECK(zeros); }
+    mw_late_over = 0;
     CHECK(DIAG_PAGE % 64u != 0u);
 
+    /* The frames before a stall: the last DIAG_TRACE_FRAMES, oldest first, the newest last; a gap and a run past the
+     * field's range stay at its top; LOG pages them after the stall record. */
+    for (unsigned f = 0; f < DIAG_TRACE_FRAMES + 5u; ++f) { modwerk_test_timer += 47936u + 64u * f; mw_frame_last = 6400u; modwerk_diag_frame(); }
+    modwerk_test_timer += 0x1000000u, mw_frame_last = 0x800000u, modwerk_diag_frame();
+    TRACE->magic = 0, tick();
+    CHECK(TRACE->magic == 0); /* no new stall record: nothing kept */
+    for (unsigned i = 0; i < 11u; ++i) mw_late_ring[mw_late_count & 7u] = (uint16_t)(100u + i), mw_late_count = mw_late_count + 1u;
+    modwerk_test_stall[1] = 4, tick(); /* dsp.c's record, found at the next tick */
+    CHECK(TRACE->magic == DIAG_TRACE_MAGIC && TRACE->count == 4u);
+    CHECK(LATES->magic == DIAG_LATES_MAGIC && LATES->count == 4u && LATES->late[0] == 103u && LATES->late[7] == 110u); /* oldest first */
+    CHECK(TRACE->frame[0][0] == 749u + 6u && TRACE->frame[0][1] == 100u && TRACE->frame[1][0] == 749u + 7u);
+    CHECK(TRACE->frame[DIAG_TRACE_FRAMES - 2u][0] == 749u + DIAG_TRACE_FRAMES + 4u && TRACE->frame[DIAG_TRACE_FRAMES - 1u][0] == 65535u && TRACE->frame[DIAG_TRACE_FRAMES - 1u][1] == 65535u);
+    unsigned trace_at = stall_at + DIAG_STALL_BYTES;
+    const volatile uint8_t *tb = (const volatile uint8_t *)TRACE;
+    CHECK(end == trace_at + DIAG_TRACE_BYTES && modwerk_diag_read(page, trace_at / DIAG_PAGE) == DIAG_PAGE && page[trace_at % DIAG_PAGE] == tb[0] && page[trace_at % DIAG_PAGE + 3u] == tb[3]);
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
-    else puts("diag: start, crash and stall, load, HOT, freeze, restart and LOG pages passed");
+    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages and the frames before a stall passed");
     return failures != 0;
 }

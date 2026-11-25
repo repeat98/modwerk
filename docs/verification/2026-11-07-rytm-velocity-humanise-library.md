@@ -1,0 +1,11 @@
+# Analog Rytm MKII: Velocity Humanise 1.2.0 in the library — 7 November 2026
+
+Velocity Humanise, in `_submissions/` as 1.1.0, moves into the library as 1.2.0: Iced-Cream's rytm2_mods v1.3 source (`e029f75`), where FUNC + VEL on the TRIG page sets a per-track random velocity range N, 0 to 64. 1.2 reaches that parameter's turn and text through core-ar2's parameter table (`core_params`, core-ar2 0.4 and later) instead of the two detours 1.1 made at param_apply_delta and param_value_text, which core-ar2 0.4 and later own. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-velocity-humanise-2026-11-07.json` (commit `ecb720a9`).
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `e9fc4df5…`, from `sdk/build/Dockerfile`) from a clean checkout of `cd820977`, the source of the pinned commit. The export reproduces with `package-elemod-recipe.mjs --check`.
+- **Package:** `velocity-humanise-1.2.0-os1.74.elemod` `dd85e892…4e9b`, vendored through its pin by `npm run elekloader:update -- --overlay`. `.run` is 816 bytes, no `.bss`.
+- **Parity:** linked with elekloader's released core-ar2 0.7 on stock OS 1.74, the package gives a main OS byte-identical to rytm2_mods v1.3's release object linked with the same core ([source-parity.json](../../sdk/analog-rytm-mkii/modules/velocity-humanise/evidence/source-parity.json)).
+- **Linking:** `planBuild` plans it beside Pipo Loop and Silent Pad+Trig on the plain base (`src/engine/elekloader/digi-build.test.ts`).
+- **Conflict:** Sample RATE patches the first bytes of param_short_name (`0x400a9000`, 10 bytes), where this module's label gate sits (`0x400a9004`, 6 bytes). The two are flagged in `compatibility.conflicts`; Modwerk's base has no shared label hook, and core-ar2 0.10's knob-name service is the fix path.
+- **Emulator:** captures retaken on the Modwerk base's plain variant with this package (VH12), in analog-emu `4c07ed3`.
+- **On a unit:** the author's Analog Rytm MKII passed this source's page entry in P4A4 (core-ar2 0.4, 21 October 2026), as [TESTING.md](../../sdk/analog-rytm-mkii/modules/velocity-humanise/TESTING.md) records. This package on the Modwerk base has not been flashed, and no browser build from a stock OS file ran here.

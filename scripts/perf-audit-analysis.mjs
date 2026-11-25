@@ -1,6 +1,6 @@
 // Offline performance checks for a module: worst-case cycles, a benchmark against stock, and a stress run.
 // No firmware and no module code runs here. You measure with the harness you already have, write the numbers into
-// evidence/performance.json (`template` prints the skeleton) and `check` judges them. See docs/module-guides/README.md, "Performance".
+// evidence/performance.json (`template` prints the skeleton) and `check` judges them. See docs/MODULE_PERFORMANCE.md.
 
 /** Audit defaults, not repository rules; the CLI can override each and TESTING.md says why. */
 export const LIMITS = {
@@ -14,7 +14,9 @@ export const LIMITS = {
   idleNote: 5,           // percentage points of idle time the module takes under the same flood
   idleFail: 10,
   dspSeconds: 2,         // stress render length: about a minute or two in dsp_host (owner, 15 October 2026; was 30)
-  midiSeconds: 60,       // MIDI flood length
+  midiSeconds: 10,       // MIDI flood length: about a minute and a half in ot_emu (owner, 5 November 2026; was 60)
+  uiEventCycles: 26600000, // what one key press may take in the UI task: 100 ms at 266 MHz, a responsiveness target (Temp Save, Apply Scene)
+  keyEvents: 20,         // presses of the dearest key event while the sequencer plays
   midiRate: 1000,        // messages per second: a 3-byte message takes 960 us at 31.25 kbaud, so ~1040 is the wire's limit
   lfos: 3,               // stress_project.py: three active LFOs per track
   locks: 12,             // locked slots per step; stress_project.py locks 15 and a module has 12 parameters
@@ -26,9 +28,15 @@ const present = value => typeof value === 'number' && Number.isFinite(value)
 const positive = value => present(value) && value > 0
 const text = (value, length = 1) => typeof value === 'string' && value.trim().length >= length
 
+/** `key` is a ColdFire record for a module with no MIDI path and no frame-interrupt work: it runs only on a key press. */
 export function templateRecord(kind) {
-  if (!KINDS.includes(kind)) throw new Error('kind is dsp or coldfire')
+  if (![...KINDS, 'key'].includes(kind)) throw new Error('kind is dsp, coldfire or key')
   const method = '<tool, command and conditions that produced these numbers>'
+  if (kind === 'key') return {
+    schema: 1, module: '<id>', version: '<manifest version>', kind: 'coldfire', trigger: 'key',
+    cycles: { unit: 'cycles/event', static: null, measured: null, budget: LIMITS.uiEventCycles, method: '<the dearest key press: executed instructions in ot_emu, or its time on the unit; command and conditions>' },
+    stress: { events: null, playing: null, hangs: null, method: '<the dearest press repeated while the sequencer plays, with a STOP and a Part change between presses; emulator or unit>' },
+  }
   return kind === 'dsp' ? {
     schema: 1, module: '<id>', version: '<manifest version>', kind,
     cycles: { unit: 'instructions/sample', static: null, measured: null, instancesPerCore: null, method },
@@ -48,20 +56,23 @@ export function judgeRecord(record, options = {}) {
   const row = (name, state, detail, fix) => rows.push({ name, state, detail, ...(fix ? { fix } : {}) })
   if (!record || typeof record !== 'object' || record.schema !== 1) { row('record', 'fail', 'not a performance record (schema 1)', 'start from: npm run perf:audit -- template dsp|coldfire'); return rows }
   if (!KINDS.includes(record.kind)) { row('record', 'fail', 'kind is ' + JSON.stringify(record.kind), 'dsp or coldfire'); return rows }
-  const { cycles = {}, stock = {}, load = {}, stress = {} } = record, dsp = record.kind === 'dsp'
-  row('record', 'ok', record.kind + ' record for ' + record.module + '@' + record.version)
+  if (record.trigger !== undefined && (record.kind !== 'coldfire' || record.trigger !== 'key')) { row('record', 'fail', 'trigger is ' + JSON.stringify(record.trigger), "only a coldfire record takes trigger: 'key'"); return rows }
+  const { cycles = {}, stock = {}, load = {}, stress = {} } = record, dsp = record.kind === 'dsp', key = record.trigger === 'key'
+  row('record', 'ok', (key ? 'key-press ' : '') + record.kind + ' record for ' + record.module + '@' + record.version)
 
-  // 1. Cycle count: the static floor and the dearest measured case, both against the budget.
+  // 1. Cycle count: the static floor and the dearest measured case, both against the budget. A key press needs only the measurement:
+  // its cost lies mostly in stock routines nothing here bounds, and it runs in the UI task, outside the audio frame.
   const unit = dsp ? 'instructions/sample' : 'cycles/event'
-  if (!positive(cycles.static) || !positive(cycles.measured) || !text(cycles.method, 10)) row('cycles', 'fail', 'static, measured and method are all required (' + unit + ')', dsp ? 'static: python3 tools/build/cycle_count.py; measured: dsp_host at the dearest knob and mode settings, knobs moving' : 'static: an upper bound per event; measured: the worst event under the flood')
+  if ((!key && !positive(cycles.static)) || !positive(cycles.measured) || !text(cycles.method, 10)) row('cycles', 'fail', (key ? 'measured and method are required (' : 'static, measured and method are all required (') + unit + ')', dsp ? 'static: python3 tools/build/cycle_count.py; measured: dsp_host at the dearest knob and mode settings, knobs moving' : key ? 'measured: the dearest key press, as executed instructions in ot_emu or its time on the unit; no static bound is needed' : 'static: an upper bound per event; measured: the worst event under the flood')
   else if (cycles.unit !== unit) row('cycles', 'fail', 'unit is ' + JSON.stringify(cycles.unit) + ', expected ' + unit)
-  else if (cycles.measured > cycles.static * 1.0001 && !dsp) row('cycles', 'fail', 'measured ' + cycles.measured + ' exceeds the static bound ' + cycles.static + ', so the bound is not an upper bound', 'recount the dearest path')
+  else if (!dsp && positive(cycles.static) && cycles.measured > cycles.static * 1.0001) row('cycles', 'fail', 'measured ' + cycles.measured + ' exceeds the static bound ' + cycles.static + ', so the bound is not an upper bound', 'recount the dearest path')
   else if (dsp) {
     const n = cycles.instancesPerCore, total = cycles.static * n
     if (!Number.isInteger(n) || n < 1) row('cycles', 'fail', 'instancesPerCore must be a whole number from 1: the most you support on one core')
     else if (total > limits.usableCycles) row('cycles', 'fail', n + ' x ' + cycles.static + ' = ' + total + ' per sample exceeds the ' + limits.usableCycles + ' a core can spend', 'lower instancesPerCore, or make the loop cheaper')
     else row('cycles', total > limits.usableCycles * limits.share ? 'note' : 'ok', n + ' x ' + cycles.static + ' = ' + total + ' of ' + limits.usableCycles + ' per sample per core (' + Math.round(100 * total / limits.usableCycles) + '%), measured ' + cycles.measured + ' per instance' + (total > limits.usableCycles * limits.share ? '; over half a core: say what stays free for stock effects and other modules' : ''))
   } else if (!positive(cycles.budget)) row('cycles', 'fail', 'budget (the event deadline in cycles) is required')
+  else if (key && cycles.budget > limits.uiEventCycles) row('cycles', 'fail', 'budget ' + cycles.budget + ' is over the ' + limits.uiEventCycles + ' cycles a key press may take (100 ms at 266 MHz)')
   else if (cycles.measured > cycles.budget) row('cycles', 'fail', 'worst event ' + cycles.measured + ' exceeds its deadline ' + cycles.budget)
   else row('cycles', cycles.measured > cycles.budget * limits.share ? 'note' : 'ok', 'worst event ' + cycles.measured + ' of ' + cycles.budget + ' cycles (' + Math.round(100 * cycles.measured / cycles.budget) + '%)' + (cycles.measured > cycles.budget * limits.share ? '; over half the deadline: say why' : ''))
 
@@ -76,13 +87,15 @@ export function judgeRecord(record, options = {}) {
       if (ratio > limits.ratioFail || dearer) row('stock benchmark', excused ? 'note' : 'fail', detail + (excused ? '; justified in the record' : ': dearer than ' + (dearer ? 'every stock effect' : limits.ratioFail + 'x its stock counterpart') + ', so a musician fits fewer of them'), excused ? undefined : 'make it cheaper, or explain in stock.justification (at least 40 characters) what the extra cost buys; the owner reads it')
       else row('stock benchmark', ratio > limits.ratioNote ? 'note' : 'ok', detail + (ratio > limits.ratioNote ? '; say in TESTING.md what the extra cost buys' : ''))
     }
-  } else {
+  } else if (key) row('stock benchmark', 'ok', 'none: a key-press module adds nothing to the frame interrupt, so there is no flood to compare under')
+  else {
     const frame = positive(load.frameUs) ? load.frameUs : limits.frameUs
     if (![load.stockLongestUs, load.moduleLongestUs, load.stockIdlePercent, load.moduleIdlePercent].every(present) || !text(load.method, 10)) row('stock benchmark', 'fail', 'stockLongestUs, moduleLongestUs, stockIdlePercent, moduleIdlePercent and method are required', 'python3 tools/harness/cfmeter.py on a capture of the stock image and of the image with the module, under the same flood')
     else {
       const added = (load.moduleLongestUs - load.stockLongestUs) / frame, idle = load.stockIdlePercent - load.moduleIdlePercent
       const state = added > limits.loadFail || idle > limits.idleFail ? 'fail' : added > limits.loadNote || idle > limits.idleNote ? 'note' : 'ok'
-      row('stock benchmark', state, 'under the same flood the longest frame interrupt grows by ' + (load.moduleLongestUs - load.stockLongestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) and idle time falls by ' + idle.toFixed(1) + ' points vs stock' + (state === 'ok' ? '' : state === 'note' ? '; say what it costs' : ''), state === 'fail' ? 'move work out of the interrupt, or do it once per event and not per message' : undefined)
+      const priced = limits.cpuPrice ? ', judged against the ' + limits.cpuPrice + '% of a frame the base books for this machine' : ''
+      row('stock benchmark', state, 'under the same flood the longest frame interrupt grows by ' + (load.moduleLongestUs - load.stockLongestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) and idle time falls by ' + idle.toFixed(1) + ' points vs stock' + priced + (state === 'ok' ? '' : state === 'note' ? '; say what it costs' : ''), state === 'fail' ? 'move work out of the interrupt, or do it once per event and not per message' : undefined)
     }
   }
 
@@ -110,6 +123,11 @@ export function judgeRecord(record, options = {}) {
     if (stress.dirty !== true) problems.push('dirty must be true (dsp_host -dirty)')
     if (stress.clobbers !== 0) problems.push('clobbers must be 0')
     if (stress.hangs !== 0) problems.push('hangs must be 0')
+  } else if (key) {
+    if (!(stress.events >= limits.keyEvents)) problems.push('events must be at least ' + limits.keyEvents + ' presses of the dearest event')
+    if (stress.playing !== true) problems.push('playing must be true: press while the sequencer plays')
+    if (stress.hangs !== 0) problems.push('hangs must be 0')
+    if (!text(stress.method, 40)) problems.push('method must say which press, project and patterns ran, and on the emulator or the unit')
   } else {
     if (!(stress.floodMessagesPerSecond >= limits.midiRate)) problems.push('floodMessagesPerSecond must be at least ' + limits.midiRate)
     if (!(stress.clockBpm >= 240)) problems.push('clockBpm must be at least 240')
@@ -119,9 +137,39 @@ export function judgeRecord(record, options = {}) {
     if (!present(stress.dropped)) problems.push('dropped must be the number of messages lost')
     else if (stress.dropped > 0 && !text(stress.droppedExplanation, 20)) problems.push('dropped is ' + stress.dropped + ' and droppedExplanation does not say why')
   }
-  row('stress', problems.length ? 'fail' : 'ok', problems.length ? problems.join('; ') : (emulated ? 'whole image under ot_emu: eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no late read-back, no hang' : dsp ? stress.instancesPerCore + ' per core, eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no clobber, no hang' : stress.floodMessagesPerSecond + ' messages/s at ' + stress.clockBpm + ' BPM for ' + stress.seconds + ' s, no stuck note, no hang, ' + stress.dropped + ' dropped'),
-    problems.length ? (dsp ? 'python3 tools/harness/stress_project.py, then render it with dsp_host -guard -dirty (tools/harness/pressure.py render)' : 'flood the module with notes, CC and clock at the wire rate, stop mid-note and change Part, then count') : undefined)
+  row('stress', problems.length ? 'fail' : 'ok', problems.length ? problems.join('; ') : (emulated ? 'whole image under ot_emu: eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no late read-back, no hang' : dsp ? stress.instancesPerCore + ' per core, eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no clobber, no hang' : key ? stress.events + ' presses of the dearest event while playing, no hang' : stress.floodMessagesPerSecond + ' messages/s at ' + stress.clockBpm + ' BPM for ' + stress.seconds + ' s, no stuck note, no hang, ' + stress.dropped + ' dropped'),
+    problems.length ? (dsp ? 'python3 tools/harness/stress_project.py, then render it with dsp_host -guard -dirty (tools/harness/pressure.py render)' : key ? 'press the dearest event at least ' + limits.keyEvents + ' times while the sequencer plays, with a STOP and a Part change between, and check it still answers' : 'flood the module with notes, CC and clock at the wire rate, stop mid-note and change Part, then count') : undefined)
   return rows
+}
+
+/** Whether a record's numbers were measured on the module's current source: its `sourceSha256`, written by
+ * `perf:audit check FILE --stamp`, against modulePerformanceSourceSha256. `required` (a module listed from the day stamps began,
+ * or a draft judged as a release) turns a missing stamp from a note into a failure; a stamp for other source always fails.
+ * `earlierSha256`, from moduleEarlierPerformanceSourceSha256, is what a stamp written before presentation/ left the hash names. */
+export function stampVerdict(record, sourceSha256, required, file = '<module>/evidence/performance.json', earlierSha256 = undefined) {
+  if (earlierSha256 && record?.sourceSha256 === earlierSha256 && earlierSha256 !== sourceSha256)
+    return { state: 'ok', detail: 'measured on this source (' + earlierSha256.slice(0, 12) + '…, a stamp from before art left it; the next --stamp writes ' + sourceSha256.slice(0, 12) + '…)' }
+  const fix = 'measure again on this source, then npm run perf:audit -- check ' + file + ' --stamp'
+  if (record?.sourceSha256 === undefined) return required
+    ? { state: 'fail', detail: 'its numbers name no source, so nothing shows they were measured on this code', fix: 'npm run perf:audit -- check ' + file + ' --stamp, right after you measure' }
+    : { state: 'note', detail: 'not stamped: stamp it when you next measure (npm run perf:audit -- check ' + file + ' --stamp)' }
+  if (record.sourceSha256 !== sourceSha256) return { state: 'fail', detail: 'measured on other source (stamp ' + String(record.sourceSha256).slice(0, 12) + '…, the source is now ' + sourceSha256.slice(0, 12) + '…): the code changed after the numbers were taken', fix }
+  return { state: 'ok', detail: 'measured on this source (' + sourceSha256.slice(0, 12) + '…)' }
+}
+
+/** A track machine is admitted by the base against its CPU price (resources.cpuPrice measured as 'machine-render': the share
+ * of a frame the base books for each track playing it). Its load is judged against that price; the default limits suit effects
+ * and MIDI modules, which the base does not book. Returns limit options for judgeRecord, or none. */
+export function priceLimits(document) {
+  const price = document?.category === 'machines' && document.resources?.cpuPrice?.measure === 'machine-render' ? document.resources.cpuPrice.value : null
+  return positive(price) && price <= 100 ? { cpuPrice: price, loadFail: price / 100, idleFail: price } : {}
+}
+
+/** Whether the owner's approval binds this exact module version and native source. That hash covers the module's whole folder,
+ * its performance record included, so a record it covers needs no stamp of its own. */
+export function approvalCoversSource(approval, id, version, sourceSha256) {
+  return approval?.kind === 'owner-approved-update' && approval.approvedBy === 'repeat98' && approval.id === id && approval.version === version &&
+    HEX64.test(sourceSha256 ?? '') && approval.sourceSha256 === sourceSha256
 }
 
 /** Only missing measurements may be excused by the existing exact-source owner approval.
@@ -129,11 +177,17 @@ export function judgeRecord(record, options = {}) {
  * A cycles row may also be excused when only the static bound is missing and a measurement with its budget is given (code whose cost
  * lies in stock routines nothing here bounds); a measurement over its budget, or without one, is never excused. Measured failures and ordinary audit verdicts remain failures. */
 export function ownerWaivedPerformanceRow(record, row, approval, sourceSha256) {
-  if (row.state !== 'fail' || !HEX64.test(sourceSha256 ?? '') || approval?.kind !== 'owner-approved-update' || approval.approvedBy !== 'repeat98' || approval.id !== record.module || approval.version !== record.version || approval.sourceSha256 !== sourceSha256 || !Array.isArray(approval.waived)) return false
+  if (row.state !== 'fail' || !approvalCoversSource(approval, record.module, record.version, sourceSha256) || !Array.isArray(approval.waived)) return false
   if (row.name === 'cycles') return approval.waived.includes('chip-worst-case-cycles') && record.kind === 'coldfire' && record.cycles?.unit === 'cycles/event' && record.cycles.static === null && (['measured', 'budget'].every(key => record.cycles[key] === null) || (['measured', 'budget'].every(key => positive(record.cycles[key])) && record.cycles.measured <= record.cycles.budget)) && text(record.cycles.method, 10)
   if (!approval.waived.includes('current-build-hardware') || record.kind !== 'coldfire') return false
   if (row.name === 'stock benchmark') return ['stockLongestUs', 'moduleLongestUs', 'stockIdlePercent', 'moduleIdlePercent'].every(key => record.load?.[key] === null) && text(record.load?.method, 10)
-  if (row.name === 'stress') return ['floodMessagesPerSecond', 'clockBpm', 'seconds', 'stuckNotes', 'hangs', 'dropped'].every(key => record.stress?.[key] === null)
+  if (row.name === 'stress') {
+    const stress = record.stress ?? {}
+    if (['floodMessagesPerSecond', 'clockBpm', 'seconds', 'stuckNotes', 'hangs', 'dropped'].every(key => stress[key] === null)) return true
+    // A flood that ran at the audit's rate without a hang, whose stuck notes or lost messages were not counted: only those are missing.
+    return stress.floodMessagesPerSecond >= LIMITS.midiRate && stress.clockBpm >= 240 && stress.seconds >= LIMITS.midiSeconds && stress.hangs === 0 &&
+      [stress.stuckNotes, stress.dropped].every(count => count === null || count === 0)
+  }
   return false
 }
 
@@ -161,6 +215,14 @@ export function selfTest() {
   row('a measurement above the static bound fails', state({ ...midiGood, cycles: { ...midiGood.cycles, static: 600 } }, 'cycles') === 'fail', '700 > 600')
   row('a module that adds 15% of a frame to the interrupt fails', state({ ...midiGood, load: { ...midiGood.load, moduleLongestUs: 95 } }, 'stock benchmark') === 'fail', '55 us of 362.8')
   row('a stuck note fails', state({ ...midiGood, stress: { ...midiGood.stress, stuckNotes: 2 } }, 'stress') === 'fail', 'stuckNotes 2')
+  row('a 10 s flood is long enough, 9 s is not', state({ ...midiGood, stress: { ...midiGood.stress, seconds: 10 } }, 'stress') === 'ok' && state({ ...midiGood, stress: { ...midiGood.stress, seconds: 9 } }, 'stress') === 'fail', '10 s, 9 s')
+  const keyGood = { schema: 1, module: 'demo', version: '0.1.0', kind: 'coldfire', trigger: 'key', cycles: { unit: 'cycles/event', static: null, measured: 640923, budget: LIMITS.uiEventCycles, method: 'ot_emu, executed instructions of the dearest press' }, stress: { events: 21, playing: true, hangs: 0, method: 'ot_emu, the dearest press 21 times while playing, a STOP and a Part change between' } }
+  row('a key-press record passes with no static bound and no flood', fails(keyGood).length === 0, judgeRecord(keyGood).map(line => line.name + ' ' + line.state).join(', '))
+  row('a key press over the UI budget fails', state({ ...keyGood, cycles: { ...keyGood.cycles, measured: 27000000 } }, 'cycles') === 'fail' && state({ ...keyGood, cycles: { ...keyGood.cycles, measured: 27000000, budget: 40000000 } }, 'cycles') === 'fail', '27M > ' + LIMITS.uiEventCycles + ', and a budget of 40M')
+  row('a key-press record still needs its measurement and presses while playing', state({ ...keyGood, cycles: { ...keyGood.cycles, measured: null } }, 'cycles') === 'fail' && state({ ...keyGood, stress: { ...keyGood.stress, playing: false } }, 'stress') === 'fail' && state({ ...keyGood, stress: { ...keyGood.stress, events: 5 } }, 'stress') === 'fail', 'measured null, playing false, 5 presses')
+  row('a static bound below the measurement still fails a key press', state({ ...keyGood, cycles: { ...keyGood.cycles, static: 1000 } }, 'cycles') === 'fail', '640923 > 1000')
+  row('only a coldfire record takes a trigger', state({ ...dspGood, trigger: 'key' }, 'record') === 'fail' && state({ ...keyGood, trigger: 'midi' }, 'record') === 'fail', 'dsp + key, coldfire + midi')
+  row('the unfilled key template fails its measurement and its presses', state(templateRecord('key'), 'cycles') === 'fail' && state(templateRecord('key'), 'stress') === 'fail', 'cycles and stress')
   row('dropped messages need an explanation', state({ ...midiGood, stress: { ...midiGood.stress, dropped: 3 } }, 'stress') === 'fail' && state({ ...midiGood, stress: { ...midiGood.stress, dropped: 3, droppedExplanation: 'Beyond 1040 messages a second the wire itself drops them.' } }, 'stress') === 'ok', 'dropped 3')
   return rows
 }

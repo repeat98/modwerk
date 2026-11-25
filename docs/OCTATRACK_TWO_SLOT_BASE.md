@@ -51,7 +51,9 @@ section at `0x4012`, ours a 6-byte jump, to `0x40000400` and calls it; the stub 
 1. reads both records: a slot counts when its record checks and the container's own section sum matches;
 2. picks the newest counting slot. If it is not confirmed, it clears one *tries* bit first (a single-word program
    run from SRAM, since NOR answers status while it programs); after two tries without a confirmation it
-   starts the other counting slot, clearing one more bit so the base can tell it went back;
+   starts the other counting slot, clearing one more bit so the base can tell it went back. A RAM boot's soft
+   reset is a start too, so `npm run device -- boot` refuses while the newest slot is unconfirmed (an update
+   lost to RAM boots, 20 November 2026) and waits when that update is the base running;
 3. unpacks that slot with the bootloader's own unpacker and enters it exactly as the bootloader would: its cache
    settings, its stack (return address and boot word), every register as it left them;
 4. invalidates the instruction cache before that jump (CACR bit 8, as `runtime.c` does on the unit). The
@@ -80,8 +82,8 @@ October 2026); the base still offers the other:
   from RAM (the trial, the update's one restart), then writes itself and runs on. A base takes another base's
   container here only on two slots (refusal 106 otherwise). Stock's routines need no quiesce: they mask
   interrupts only around their command writes, the OS runs from RAM, and the upload engine has stopped the
-  transport. So the base writes while the OS runs on, with its own box (BASE UPDATE, SAVING THE NEW BASE, KEEP
-  THE POWER ON, a bar) and a BASE SAVED popup; the next start is from the new slot. Conversion comes first:
+  transport. So the base writes while the OS runs on, with its own screen (BASE UPDATE, SAVING NEW BASE,
+  a bar, below) and BASE SAVED; the next start is from the new slot. Conversion comes first:
   the base the unit started from NOR is copied to slot B, confirmed (above any old container, so it stays whole
   meanwhile), then the stub's sector, then this base into slot A. The stub's sector is the only moment a power cut
   can still cost a startup-menu recovery: its erase and the pages up to the end of the stub's code, under a
@@ -101,12 +103,60 @@ the container, nothing is written (the site's repeat after a lost reply).
 - **Report**: SLOTS (vendor request 39, `flash.h`) gives the layout, the running slot, whether it is confirmed
   and whether the stub went back; the site tells the user when it did. `npm run device -- status` prints it.
 
+## A base too big for the unit's stage
+
+A base stages the next base's image in RAM for the update's trial and takes only what its own stage holds: 1.25 MiB
+on every base before 13 November 2026, 1.5 MiB from that one on (`boot.h` `BOOT_IMAGE_BYTES`). A unit reports it as
+its upload capacity, and the link refuses a larger image before it sends anything (`BaseTooBigError`). The site then
+runs two updates in a row (`BaseInstallDialog.tsx` `updateOverUsb`): the step base, which every base takes, then the
+current one. The step base is the 13 November base, kept as three assets that are never regenerated
+(`src/engine/elekloader/base-step.ts`, pinned by `base-step.test.ts`). The second update starts while the step base
+still runs from RAM, so its first arming restarts the unit on the same base from flash and the link arms once more.
+If even the step base does not fit, the dialog sends the user to the card.
+
+From the command line the same route is four steps. `npm run octatrack:base -- --stock OS.bin --step --out STEP` builds
+the step base's folder from the pinned assets and checks its identity; then `npm run device -- boot STEP`, `flash STEP`,
+`boot NEW` and `flash NEW`. `boot` and `flash` refuse an image larger than the running base's capacity before sending
+anything, and name this route. On two slots the new base's flash goes into the slot the unconfirmed step base holds,
+so the base that was confirmed before stays the fallback (MKII, 23 November 2026: `1bcbe613` to 0.8.1).
+
+- A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
+  assets and update the pins, in the pull request that first publishes a base too big for the old stage.
+- The packed container is the limit that binds first, and it is RAM's, not the flash's: the base that writes a base
+  copies the container into its buffer `packed[FLASH_CONTAINER_BYTES]` (`flash.c`), 851,712 bytes once the page it
+  keeps back is taken off. A slot holds 982,784 (`slots.h`). On two slots the running base writes the spare slot, so
+  the old base's buffer decides: raising it takes a step base, as the stage did. The base build refuses a larger
+  container (`build_core.py` `FLASH_SLOT_BYTES`), as it refuses an image over the step base's stage.
+- `node scripts/base-size.mjs` prints how full the committed base is, from the sizes in
+  `sdk/machines/octatrack/base-sizes.json`; `npm run check` fails a base whose record is missing or over a limit.
+  After `octatrack:base --write`, record the new base with `node scripts/base-size.mjs --stock OS.bin --write`.
+- On the owner's MKII (14 November 2026, a test base padded past the old stage): the two updates from a card-installed
+  base on one slot (the site's dialog) and from two slots (the link from the command line). The second overwrites the
+  step base's unconfirmed slot and the old base stays the fallback. With the host gone during the send or the save
+  of either update, the unit finished a write it had begun and the next update finished the job. Two power cuts
+  during a slot write left that slot unwhole and the confirmed base starting.
+- Not tested: a pulled cable (the host was only silenced), Windows keeping its USB driver through the two updates.
+
 ## Showing it on the Octatrack
 
-- Writing: stock's own upgrade screen when quiesced (another base, two slots), the base's box otherwise.
-- After it: BASE SAVED (it ran on), or, at the start from the new slot, BASE UPDATED; UPDATE UNDONE when the stub
-  went back to the previous base.
-- Not built: anything on the unit while the base is sent and while the new base starts from RAM.
+A base update takes the whole screen and the panel (owner, 13 November 2026); a module sync shows a box with a bar
+and holds no key. `status.c` works the step out each tick from the upload (`ep0.c`), an armed RAM boot (`boot.c`)
+and the write (`flash.c`):
+
+- On the base being replaced: BASE UPDATE, RECEIVING NEW BASE with a bar, then RESTARTING. Only from the first base
+  that carries this screen on; older bases show nothing while the new one is sent.
+- On the new base, started from RAM: WAITING FOR MODWERK, on two slots only (the slot NOR starts next names another
+  base, which one copy cannot tell); then RECEIVING NEW BASE as its container arrives, SAVING NEW BASE with the
+  write's progress, and BASE SAVED or NOT SAVED for three seconds or until a key.
+- From the first packet of a base until the write is over, every key and knob is held back, PLAY and STOP too: after
+  its restart the unit loads the project and looks ready while nothing is saved. A release reaches stock only if its
+  press did. WAITING gives up 25 s after the start (a development RAM boot has no write to wait for) and 20 s after
+  the last sign of a container; a failed write frees the panel at once, and the page sends it again.
+- The missing-modules page and the restore's notice wait until the screen is gone.
+- Another base's write, quiesced (two slots): stock's own upgrade screen, as before.
+- After a start from the new slot: BASE UPDATED; UPDATE UNDONE when the stub went back to the previous base.
+- Not built: saving before the project loads. The container reaches the new base over USB, which is up only once
+  stock has started, so the save follows the restart by the time the page needs to reconnect and send it.
 - A restart hangs at the logo when a DSP stalled before it in that run (the soft reset cannot park a hung core);
   a power cycle starts the newest whole slot.
 
@@ -131,3 +181,6 @@ the container, nothing is written (the site's repeat after a lost reply).
    off and on (BASE UPDATED, the confirm), then update A to B and back on two slots (stock's screen, one restart).
 3. Pull the power during the slot write, several times at different points; pull the USB cable during the write.
 4. Install a base that fails to start: after two power cycles the stub must start the previous one.
+5. The update screen (not yet run on a unit): keys and knobs held back from the first packet to BASE SAVED, a key held
+   down across the start of the lock releasing cleanly, the 25 s give-up after a development RAM boot, the screen over
+   the startup animation and the project load, and a module sync's box while playback is stopped.

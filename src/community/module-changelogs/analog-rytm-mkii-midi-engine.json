@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "First release: MIDI, a machine that plays an external synth from a Rytm track.",
+      "Trigs send their note, velocity and length, up to two chord notes, pitch bend, mod wheel, pressure and six CC lanes, all lockable.",
+      "Lock trigs send controller changes without a note; the LFO, swing and microtiming move them too.",
+      "Known issue: pads, chromatic play and MIDI in do not play a MIDI track yet; only the sequencer does."
+    ]
+  }
+]

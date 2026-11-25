@@ -1,0 +1,1 @@
+Fix: on the Octatrack, the self-test's PLAY and STOP and a development base's USB keys now wait until the panel has finished the report it is sending. A key that arrived between a fader's or knob's two bytes could leave trig keys held or lose a FUNC release.

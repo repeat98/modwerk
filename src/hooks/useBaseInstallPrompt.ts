@@ -1,15 +1,17 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { api, post } from '../community/api'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { isPublishedBase } from '../engine/elekloader/base-variants'
+import { lastInventory } from '../config/inventory'
 
 const noSubscription = () => () => {}
 /** What the prompt needs to know of the unit: it runs the current Modwerk base, an older one (including a base this
- * page cannot talk to), it is still being read, or no base is connected. */
-export function unitForPrompt(state?: LinkState): 'current' | 'older' | 'connecting' | 'none' {
+ * page cannot talk to), the original OS (`stock`), it is still being read, this browser has no WebUSB, or no unit is
+ * connected. */
+export function unitForPrompt(state?: LinkState): 'current' | 'older' | 'connecting' | 'stock' | 'unsupported' | 'none' {
   // Every USB Audio layout of the published base is current (base-variants.ts).
   if (state?.identity) return isPublishedBase(state.identity.base) ? 'current' : 'older'
-  return state?.status === 'ready' ? 'older' : state?.status === 'connecting' ? 'connecting' : 'none'
+  return state?.status === 'ready' ? 'older' : state?.status === 'connecting' ? 'connecting' : state?.status === 'stock' ? 'stock' : state?.status === 'unsupported' ? 'unsupported' : 'none'
 }
 
 /** Whether the site was deployed again since this page loaded: the page it serves now loads another entry script. Such a
@@ -24,35 +26,30 @@ export async function siteUpdated() {
   } catch { return false }
 }
 
-/**
- * The base prompts for a verified member with USB access, opened once the page is visible and no other dialog is open.
- * The install prompt is due until the member's unit has reported any Modwerk base, on any device: only that records it,
- * so it never returns once they have a base. The update prompt needs no record: it opens whenever the connected unit
- * runs an older base, so every base update reaches every tester without a migration. Closing either or Later hides it
- * for this visit. A failed read keeps the install prompt quiet; a failed record lets it show again next visit.
- */
-export function useBaseInstallPrompt(memberId: string | null, enabled: boolean, link: OctatrackLink | null = null) {
-  const [due, setDue] = useState(false), [open, setOpen] = useState(false), [quiet, setQuiet] = useState(false)
+/** Select the introduction when someone chooses Install. A connected unit takes precedence over saved history. */
+export function useFirstBaseInstall(memberId: string | null, link: OctatrackLink | null) {
+  const reportedMember = useRef<string | null>(null)
+  const [record, setRecord] = useState<{ member: string; first: boolean }>()
+  const [seenHere, setSeenHere] = useState(() => !!lastInventory())
   const unit = useSyncExternalStore(link?.subscribe ?? noSubscription, () => unitForPrompt(link?.getState()), () => 'none')
+  const hasBase = unit === 'current' || unit === 'older'
+  if (hasBase && !seenHere) setSeenHere(true)
   useEffect(() => {
-    if (!memberId || !enabled) return
+    if (!memberId || !link) return
     const controller = new AbortController()
-    void api<{ show: boolean }>('/auth/base-install-prompt', { signal: controller.signal }).then(result => { if (!controller.signal.aborted) setDue(result.show) }).catch(() => {})
+    void api<{ show: boolean }>('/auth/base-install-prompt', { signal: controller.signal }).then(result => {
+      if (!controller.signal.aborted) setRecord({ member: memberId, first: result.show })
+    }).catch(() => {})
     return () => controller.abort()
-  }, [memberId, enabled])
-  // Recorded once per visit, idempotently; unplugging afterwards must not bring the install prompt back.
-  useEffect(() => { if (due && (unit === 'current' || unit === 'older')) void post('/auth/base-install-prompt', {}).catch(() => {}).finally(() => setDue(false)) }, [due, unit])
-  const wanted = unit === 'older' || due && unit === 'none'
+  }, [memberId, link])
   useEffect(() => {
-    if (!wanted || open || quiet || !enabled) return
-    const timer = window.setInterval(() => { if (document.visibilityState === 'visible' && !document.querySelector('dialog[open]')) setOpen(true) }, 1500)
-    return () => window.clearInterval(timer)
-  }, [wanted, open, quiet, enabled])
-  return {
-    open: open && !!memberId,
-    /** The connected unit runs an older base: the dialog goes straight to the update steps. */
-    update: unit === 'older',
-    /** Gone for this visit only, so the prompt returns on the next one while it is still wanted. */
-    close() { setQuiet(true); setOpen(false) },
-  }
+    if (!memberId || record?.member !== memberId || !record.first || !hasBase || reportedMember.current === memberId) return
+    reportedMember.current = memberId
+    void post('/auth/base-install-prompt', {}).catch(() => {}).finally(() => {
+      setRecord(current => current?.member === memberId ? { member: memberId, first: false } : current)
+    })
+  }, [memberId, record, hasBase])
+  if (unit === 'stock') return true
+  if (hasBase) return false
+  return memberId && record?.member === memberId ? record.first : !seenHere
 }

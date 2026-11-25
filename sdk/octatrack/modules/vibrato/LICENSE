@@ -1,0 +1,69 @@
+VIBRATO (vibrato) for the Elektron Octatrack MKI / MKII
+
+VIBRATO was written by Bryan T (Bryan Tysinger, https://github.com/bryantysinger)
+and contributed to the octabam project, where it was merged as pull request 1045
+on 5 November 2026 (commit 960882f3), followed the same day by his SPD and DEP
+glide (commit 0869753f). This copy is that module as on octabam main at
+commit e85f54e0d570bd74bfd70b9d5467b35c01b9c468. It is distributed under
+octabam's MIT License, whose full text follows unchanged and is also kept
+byte for byte at upstream/LICENSE.
+
+- The module (vibrato.asm, vibrato_ref.py, vibrato.dsp, its declaration in
+  manifest.py, the render gate verify_vibrato.py,
+  upstream/modules/vibrato/README.md, upstream/docs/vibrato-usage.md):
+  Bryan T.
+- The octabam SDK, schema and harness it is written against: Sam Banks.
+- Modwerk's adaptations of vibrato.asm, manifest.py and verify_vibrato.py
+  (listed in README.md and sdk/imports/vibrato-e85f54e.json), README.md,
+  TESTING.md, octamod.module.json, media/ and presentation/thumbnail.svg are
+  contributed under the same MIT terms.
+
+No Elektron firmware, extracted stock routine or table is included. The
+module reads the stock sine table from the unit's own DSP memory at run time.
+
+================================================================
+sambanks/octabam at e85f54e0d570bd74bfd70b9d5467b35c01b9c468: LICENSE
+================================================================
+
+MIT License
+
+Copyright (c) 2026 Sam Banks
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This license covers this repository's own source code and documentation only.
+Transcribed third-party DSP sources, the community modifications carried as
+submodules and the tools fetched by `make setup` are listed with their own
+licences in THIRD_PARTY.md.
+
+It does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder. Users
+supply their own copy of the official OS. The container-format tooling in
+this repository re-implements Elektron's firmware-update packaging solely for
+interoperability: so that an owner can build and flash a modified image for
+their own unit. Nothing in this project is endorsed by, supported by, or
+affiliated with Elektron. Octatrack and Elektron are trademarks of Elektron
+Music Machines MAV AB, used only to identify the hardware this project
+targets.

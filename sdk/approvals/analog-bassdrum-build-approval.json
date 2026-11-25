@@ -1,0 +1,15 @@
+{
+  "kind": "owner-approved-update",
+  "id": "analog-bassdrum",
+  "version": "0.1.7-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-10",
+  "ownerStatement": "Waive hardware, publish now",
+  "reason": "Owner's answer on 10 Nov 2026 to whether to test 0.1.7 on a unit first or publish with the hardware run waived, after \"the sound is ACE\" and \"let's publish the update\". 0.1.7 runs the recorded-909 refit (approved by ear 22 Oct 2026) at half the 909's DSP work with a lighter shared desk; the owner auditioned emulator renders against the recordings. No unit was connected: this build has not run on hardware. The approval accepts the same limits as 0.1.6: current-build hardware, chip worst-case timing and complete memory bounds. Re-bound the same day to the source after a 21-word P reduction with bit-identical output and state (verify_analog_bd_exact.py), so card builds with Tape Echo keep PLATE REV as in 0.1.6. Native/browser parity, exact packages, licensing and a saved live download remain required.",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles",
+    "complete-memory-bounds"
+  ],
+  "sourceSha256": "fdb9d8e957e9bfc0445f72c723d28ae37d371155ac67e52fff4ace649e3ae487"
+}

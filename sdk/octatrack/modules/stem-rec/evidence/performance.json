@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "stem-rec",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 13992,
+    "budget": 95782,
+    "method": "An event is one 16-sample audio block (362.8 us, 95,782 cycles of the 264 MHz core): the frame hook's work in that block, which runs in the audio interrupt before the stock frame routine. Measured on hardware, not in the emulator: Yves's MKII, 5 November 2026, image STEMMW1, two takes of eleven 24-bit files (T1 to T7, MAIN, CUE, AB, CD), the hook timed on DMA timer 3 (132 MHz) at every block by STEM REC itself and written to each take's STATS.TXT: 53 us at most in both takes (13,992 cycles), 28 and 29 us on average; the hook and the stock frame routine together 104 us at most. Every source at 24 bits (fourteen files), the most, was not run on the unit: scaled from the measurement by the emulator's instruction counts (the source's cost gate, 4,468 against 4,032 a block), about 15,505 cycles. Idle (loaded, not recording) the hook is the gain mirror, 396 instructions a block. No static bound: the hook's cost is mostly uncached stores to the rings and cache misses on the read-back blocks, which no instruction count bounds; see TESTING.md."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Not measured with cfmeter.py or under a flood. On hardware the hook adds about 4 us a block while loaded and idle, 9 us recording T1 alone, and 53 us at most recording eleven 24-bit files: more than 10% of the frame only while a take records many files. The load exists only during a take; the musician sets it with STEMS (fewer sources or 16 bits cost less); and a take the card can't keep up with stops by itself with RING FULL, as does any take after 60 minutes."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "Not run: Stem Rec has no MIDI path. Its takes on the unit ran with the project's Static tracks streaming from the card."
+  }
+}

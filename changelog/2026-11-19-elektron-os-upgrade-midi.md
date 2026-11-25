@@ -1,0 +1,1 @@
+Elektron machines: the site's engine can now send an OS upgrade over USB MIDI the way Transfer does, block by block with the unit's answer to each, and stops with the unit still on its OS if anything is refused. Nothing is erased until you press YES on the unit. No page uses it yet.

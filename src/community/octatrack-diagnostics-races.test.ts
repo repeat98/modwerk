@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DiagnosticConsent } from './octatrack-diagnostics-contract'
+import { diagnosticClient } from './diagnostic-client'
 const mocked = vi.hoisted(() => ({ request: vi.fn(), fetch: vi.fn(), privacy: false, epoch: 0 }))
 vi.mock('./api', () => ({ scopedApi: () => {
   const epoch = mocked.epoch
@@ -38,9 +39,9 @@ async function delayedBody() {
   return finish
 }
 describe('regular-member collector consent and account boundaries', () => {
-  it('asks again after a new consent text or expiry but keeps the delete button for earlier reports', async () => {
+  it('keeps sharing under an earlier consent text, asks again only after expiry and keeps the delete button', async () => {
     version = '2026-10-12.2'; await collect()
-    expect(store.diagnosticPreference()).toMatchObject({ enabled: false, hasChoice: false, saved: true })
+    expect(store.diagnosticPreference()).toMatchObject({ enabled: true, hasChoice: true, saved: true })
     version = (await import('./octatrack-diagnostics-contract')).OCTATRACK_DIAGNOSTICS_VERSION
     mocked.request.mockResolvedValueOnce({ ...consent(), enabled: false, expiresAt: new Date(Date.now() - 1).toISOString() })
     vi.resetModules(); store = await import('./octatrack-diagnostics'); await collect()
@@ -51,10 +52,11 @@ describe('regular-member collector consent and account boundaries', () => {
     emit(); await flush()
     expect(inventory).not.toHaveBeenCalled()
     const body = JSON.parse(String(mocked.fetch.mock.calls[0][1].body))
-    expect(body).toEqual({ version, data: { id: expect.any(String), ...failure() } })
+    // Every report but the unit's own log carries the browser and OS family (2026-11-11.1), nothing more of the user agent.
+    expect(body).toEqual({ version, data: { id: expect.any(String), ...failure(), client: diagnosticClient() } })
     window.dispatchEvent(new ErrorEvent('error', { message: 'PRIVATE filename.bin https://private.test' })); await flush()
     const browser = JSON.parse(String(mocked.fetch.mock.calls[1][1].body))
-    expect(browser).toEqual({ version, data: { id: expect.any(String), event: 'browser_error', phase: 'browser', area: expect.any(String), kind: 'OtherError' } })
+    expect(browser).toEqual({ version, data: { id: expect.any(String), event: 'browser_error', phase: 'browser', area: expect.any(String), kind: 'OtherError', client: diagnosticClient() } })
     expect(JSON.stringify(mocked.fetch.mock.calls)).not.toContain('PRIVATE')
   })
   it('removes browser/build collection immediately on withdrawal and does not replay failures after re-enable', async () => {

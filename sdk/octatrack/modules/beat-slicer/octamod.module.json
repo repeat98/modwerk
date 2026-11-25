@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 2,
+  "id": "beat-slicer",
+  "key": "BEAT SLICER",
+  "name": "Beat Slicer",
+  "version": "0.1.68-experimental",
+  "category": "system",
+  "author": {
+    "github": "twwwy",
+    "credits": [
+      "Original Beat Slicer planning core by twwwy and contributors."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "BEAT SLICER",
+    "family": "Sample workflow",
+    "summary": "Record freely, set the original BPM, and create beat-spaced slices without planning an exact recording length.",
+    "overview": "Beat Slicer allows users to record audio freely without having to determine the recording length in advance. You only need to start recording on a downbeat and know the original BPM. There is no need to plan the recording length, stop on a bar boundary, or trim the audio to fit a fixed number of slices.",
+    "highlights": [
+      "Record without planning an exact number of bars; stop between bar boundaries.",
+      "Use the original sample BPM or the captured project BPM.",
+      "Choose 1, 2, 4, 16, 32 or 64 beats per slice.",
+      "SNAP ON moves each boundary to the nearest zero crossing; OFF keeps exact beat positions.",
+      "Create grids for Flex, Static and completed recorder buffers during playback.",
+      "FUNC+AED opens stock CREATE SLICE GRID; press it again to switch to CREATE BEAT GRID."
+    ],
+    "usage": [
+      "Start recording on a downbeat. Begin recording on the first beat of a bar so the audio is aligned with the musical grid.",
+      "Record for as long as you like. Perform, improvise, or capture live audio without worrying about recording an exact number of bars. Stop recording whenever you are finished, even in the middle of a bar.",
+      "Set the original BPM. Enter the tempo at which the audio was recorded so Beat Slicer can calculate the duration of each beat.",
+      "Choose the number of beats per slice. For example, selecting 4 beats per slice divides the recording into 4-beat segments. Any remaining audio becomes a shorter final slice.",
+      "Sequence and play back the slices. Trigger the slices at the appropriate beat intervals to reconstruct the original performance, preserving its musical timing without manually trimming the recording.",
+      "When using PROJECT BPM with a different sample tempo, turn off track time-stretch or set the sample ATTR BPM to the audio's actual recorded tempo to avoid unintended stretching. Beat Slicer does not change playback settings."
+    ]
+  },
+  "controls": [
+    {
+      "name": "BPM SOURCE",
+      "default": 0,
+      "count": 2,
+      "doc": "use the sample ATTR BPM or the project BPM captured at preview. No silent fallback.",
+      "labels": [
+        "SAMPLE",
+        "PROJECT"
+      ]
+    },
+    {
+      "name": "SPACING",
+      "default": 0,
+      "count": 6,
+      "doc": "beat spacing, anchored at trim start. A beat is a quarter note.",
+      "labels": [
+        "1 BEAT",
+        "2 BEATS",
+        "4 BEATS",
+        "16 BEATS",
+        "32 BEATS",
+        "64 BEATS"
+      ]
+    },
+    {
+      "name": "SNAP",
+      "default": 0,
+      "count": 2,
+      "doc": "OFF keeps exact beat positions; ON moves each boundary to the nearest zero crossing after the stock YES. Starts OFF and is not saved.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Flex / Static",
+    "conflicts": [
+      "recorder-loop-fix"
+    ],
+    "uiClaims": [
+      "screen:CREATE BEAT GRID"
+    ],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",
+      "Recording duration remains subject to Octatrack memory; a grid can contain at most 64 slices. Increase beats per slice if the grid would exceed this limit.",
+      "The grid starts at the current trim start. A final fragment shorter than the stock 64-frame minimum is included in the preceding slice.",
+      "Recording must be stopped for the buffer being edited; unrelated recording and pattern playback may continue.",
+      "Not offered together with Recorder Loop Fix 0.1.0: that module can make recorder-buffer slice 1 miss, also with stock CREATE SLICE GRID and without Beat Slicer (sambanks/octabam#908).",
+      "SNAP OFF writes an exact metadata grid; SNAP ON reads the sample to find zero crossings after the stock YES. Zero-crossing alignment alone does not promise click-free playback, especially when only one stereo channel crosses. No project or sample-settings save is implicit.",
+      "Not yet tested on the MKI. Slices kept through a project save and a power cycle, Static machines and recorder buffers were not run on this exact package (an earlier build was, by the author).",
+      "0.1.66's popup drawing took about 6 % of the ColdFire on the owner's MKII; 0.1.68 caches the drawing and has not been measured yet."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Author's MKII, 20 Nov 2026",
+    "storage": {
+      "label": "Storage",
+      "display": "7,880 bytes",
+      "value": 7880,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package: 4,392 bytes of ColdFire code and data and 3,488 of bss (the cached popup), one instance. No DSP memory, no heap; the base's sample-editor service owns the slice tables it writes and the SNAP analysis.",
+      "source": "evidence/hardware.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "About 0.2 ms a frame while its popup is open",
+      "value": 198,
+      "unit": "us",
+      "method": "hardware",
+      "conditions": "Author's MKII, 20 Nov 2026: the module's draw took 198 us a UI tick (about 1.2 % of the CPU) while CREATE BEAT GRID was open and its settings turned, 6.3 us closed; the CPU meter read 401-403 per mille open and 394-396 closed, the longest frame 36.5 % and 36.2 %.",
+      "source": "evidence/hardware.md"
+    },
+    "impact": {
+      "conditions": "The CREATE BEAT GRID popup open in AED with its settings being turned; closed, the module only waits for the menu.",
+      "cpu": {
+        "level": "low",
+        "basis": "measured-comparison",
+        "rationale": "Only while its popup is open: its draw took 198 us a UI tick on the author's MKII (about 1.2 % of the CPU; 0.1.66: 1,058 us), with the frame interrupt unchanged and nothing skipped. Closed it costs 6.3 us a tick. SNAP's analysis runs in the base's engine task: during playback the longest frame stayed at 38 % with nothing skipped.",
+        "source": "evidence/performance.json"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "7,880 bytes of ColdFire code, data and state in DRAM (from the package), including the cached popup; the slice table it fills is the sample's own.",
+        "source": "evidence/hardware.md"
+      }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-21",
+      "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.2 % before, 45.5 % at rest.",
+      "source": "evidence/cpu-price.json"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the author's MKII over USB (20 Nov 2026), on a development twin of base 0.7.11 with SNAP, the exact package 195d2b46: device:test passed; timed trials that rolled back replaced a Static sample's slices with SNAP OFF and ON, stopped and while the pattern played (ALIGNING GRID done within 6 s stopped, 3 s playing, nothing skipped), left them on NO, cycled FUNC+AED through stock and CREATE BEAT GRID, and an explicit Undo restored the set. The popup's draw cost 198 us a UI tick (0.1.66: 1,058 us). The author reported the boundary pops much reduced with SNAP ON. Save/reboot persistence, Flex and recorder sources on this package, the MKI and a static cycle bound remain open.",
+    "hardwareStatus": "reported",
+    "gates": [
+      "modules/beat-slicer/verify.py"
+    ],
+    "evidenceRevision": "3055f13f2e23eb8ffbadaf738939a78fc6546798",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: slice a free recording by beats",
+        "steps": [
+          "Select a Flex or Static track whose sample (or completed recorder buffer) starts on a downbeat, and check its BPM in AED → ATTR.",
+          "Open AED, press AMP for SLICE, then YES, and choose CREATE BEAT GRID.",
+          "Turn encoder A for SAMPLE or PROJECT BPM and encoder B for the beats per slice; the popup shows the tempo and how many slices it will make.",
+          "Press YES, then YES at the stock CREATE SLICES? (or REPLACE SLICES?) question. The slices appear from trim start; play them back with slice mode on."
+        ]
+      },
+      "screenshots": [
+        "media/ot-beat-grid-menu.png",
+        "media/ot-create-beat-grid.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    },
+    "qualification": {
+      "moduleVersion": "0.1.68-experimental",
+      "sourceSha256": "1d373e42a4ea6ea82585404aa558bbc5577528c156845bf8a0dda7df26464a12",
+      "imageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 52298,
+          "maxConfiguration": 52298,
+          "maxInstances": 1,
+          "budget": 4330000,
+          "unit": "cycles/event",
+          "method": "hardware",
+          "conditions": {
+            "parameterExtremes": "BEATS and BPM turned 16 times while the popup was open; SNAP OFF and ON grids of 4 and 16 slices on a Static sample.",
+            "parameterModulation": "Not applicable: the module has no audio parameters; the popup's settings were turned 16 times in the measured window.",
+            "modeSwitching": "CREATE BEAT GRID through FUNC+AED and the SLICE menu, REPLACE with SNAP OFF and ON, stopped and while the pattern played; NO at the question; the timed rollback with the popup open; an explicit Undo.",
+            "maxLoad": "One instance. The cost is the popup's draw on the UI task, once per composed frame while CREATE BEAT GRID is open; closed it costs 6.3 us a tick. SNAP analysis runs in the base's engine task. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz.",
+            "inputConditions": "Author's MKII, development twin 54cab594 of base 0.7.11 with SNAP: modwerk_cost[22] (runtime module draw) over 695 UI ticks, 198.1 us a tick on average (52,298 cycles at 264 MHz). An average, not a per-frame maximum, and no static bound."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and data (device_module, device_font and grid_preview, DRAM)",
+            "space": "sdram",
+            "words": 4392,
+            "wordBits": 8,
+            "bytes": 4392,
+            "scope": "shared"
+          },
+          {
+            "name": "State (bss): copied sample view, grid plan, proposal and popup state",
+            "space": "sdram",
+            "words": 3488,
+            "wordBits": 8,
+            "bytes": 3488,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 7880,
+        "maxInstances": 1,
+        "totalBytes": 7880,
+        "conditions": "From the USB package header (4,392 bytes of code and data, 3,488 of bss, 179 relocations). The popup is cached in bss. No stock code is written; the base's sample-editor service owns the slice table writes and SNAP's analysis. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
+        "report": "evidence/hardware.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-20",
+        "tester": "twwwy",
+        "sourceRevision": "3055f13f2e23eb8ffbadaf738939a78fc6546798",
+        "imageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+        "summary": "The author's MKII, OS 1.40C, driven over USB by Claude Code on a RAM-booted development twin (54cab594) of Octatrack base 0.7.11 with SNAP. device:test passed (self-test, 12 Part switches, playing pass). Timed trials of the exact package, each rolled back: CREATE BEAT GRID above CREATE SLICE GRID; on a Static sample with slices SNAP OFF replaced at once and SNAP ON showed ALIGNING GRID and finished within 6 s stopped and 3 s while the pattern played, with the frame interrupt at most 38 % and nothing skipped; NO at REPLACE SLICES? left the slices; FUNC+AED cycled stock, CREATE BEAT GRID, stock, and stayed stock with the module removed; the trial ended cleanly with the popup open; an MCP trial ended by an explicit Undo restored the active identity with no modules. The popup's draw cost 198 us a UI tick while open (0.1.66: 1,058 us). The author, in a 10-minute trial, reported the boundary pops much reduced with SNAP ON and smooth playback during analysis.",
+        "limitations": [
+          "One unit and one Static sample; Flex samples and recorder buffers were not run on this package.",
+          "A development twin of base 0.7.11 with SNAP, not the committed base 57c92565.",
+          "No Keep, project save, reload or power cycle with the slices kept; no MKI or companion modules.",
+          "The draw cost is an average over 695 ticks, not a per-frame maximum; no static bound and no MIDI flood.",
+          "The base's CPU budget refusal counter rose at slice replaces and FUNC+AED, also without the module; not explained."
+        ],
+        "report": "evidence/hardware.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: slice a free recording by beats",
+          "steps": [
+            "Select a Flex or Static track whose sample (or completed recorder buffer) starts on a downbeat, and check its BPM in AED → ATTR.",
+            "Open AED, press AMP for SLICE, then YES, and choose CREATE BEAT GRID.",
+            "Turn encoder A for SAMPLE or PROJECT BPM and encoder B for the beats per slice; the popup shows the tempo and how many slices it will make.",
+            "Press YES, then YES at the stock CREATE SLICES? (or REPLACE SLICES?) question. The slices appear from trim start; play them back with slice mode on."
+          ]
+        },
+        "screenshots": [
+          "media/ot-beat-grid-menu.png",
+          "media/ot-create-beat-grid.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original planning core and synthetic tests. No Elektron firmware, extracted routines, tables, samples or dumps included."
+  },
+  "media": [
+    {
+      "path": "media/ot-beat-grid-menu.png",
+      "captureType": "hardware",
+      "caption": "Select the sample, open AED and press AMP for SLICE, then YES. CREATE BEAT GRID sits directly above stock CREATE SLICE GRID. FUNC+AED also reaches it: the first press opens stock CREATE SLICE GRID, the second CREATE BEAT GRID.",
+      "alt": "SLICE menu with CREATE BEAT GRID immediately above CREATE SLICE GRID.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "AED SLICE action menu",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.68-experimental",
+        "imageSha256": "54cab5949013f45d96f23102f3b838932cb663cf0b5332007d608422928aedcb",
+        "setup": "The author's MKII, OS 1.40C, RAM-booted development twin 54cab594 of Octatrack base 0.7.11 with SNAP, package 195d2b46 installed as a timed trial; T1 Static sample 05_ELoop 3 with slices, bank H, Part 1, transport stopped. The LCD's own framebuffer read over USB (png:), 2x, unedited, 20 November 2026."
+      }
+    },
+    {
+      "path": "media/ot-create-beat-grid.png",
+      "captureType": "hardware",
+      "caption": "Encoder A chooses SAMPLE or PROJECT BPM, B the beats per slice and C SNAP OFF or ON. Here SAMPLE BPM is 115.00, 4 beats, SNAP ON: 4 slices replacing the existing ones. YES opens the stock REPLACE SLICES? question; with SNAP ON the base then aligns the grid to zero crossings. NO closes without changing markers.",
+      "alt": "CREATE BEAT GRID popup showing BPM SAMPLE, BEATS 4, SNAP ON, tempo 115.00, 4 SLICE and REPLACE.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "CREATE BEAT GRID",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.68-experimental",
+        "imageSha256": "54cab5949013f45d96f23102f3b838932cb663cf0b5332007d608422928aedcb",
+        "setup": "The author's MKII, OS 1.40C, RAM-booted development twin 54cab594 of Octatrack base 0.7.11 with SNAP, package 195d2b46 installed as a timed trial; T1 Static sample 05_ELoop 3 with slices, bank H, Part 1, transport stopped. The LCD's own framebuffer read over USB (png:), 2x, unedited, 20 November 2026."
+      }
+    }
+  ],
+  "access": {
+    "location": "AED → AMP (SLICE) → YES → CREATE BEAT GRID, or FUNC+AED twice",
+    "steps": [
+      "Select a file-backed Flex or Static sample, or a completed recorder buffer. Stop recording into the source being edited; playback may continue.",
+      "Open AED, press AMP (SLICE), then YES and select CREATE BEAT GRID; or press FUNC+AED twice (the first press opens stock CREATE SLICE GRID).",
+      "Encoder A selects SAMPLE or PROJECT BPM; encoder B 1, 2, 4, 16, 32 or 64 beats; encoder C SNAP OFF or ON. YES opens stock CREATE/REPLACE SLICES confirmation; NO goes back. Use stock slice commands to clear markers."
+    ],
+    "screenshots": [
+      "media/ot-beat-grid-menu.png",
+      "media/ot-create-beat-grid.png"
+    ]
+  }
+}

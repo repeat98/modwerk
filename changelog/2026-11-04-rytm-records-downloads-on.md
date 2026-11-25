@@ -1,0 +1,1 @@
+Docs: the verification records for Control In Actions, Quick Velocity+Aftertouch Assign and Silent Pad+Trig Settings 0.7.0 said Rytm downloads stay off; they have been on since #1190, so each record now says the site builds the module into a download, which was not tried there.

@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/voice-dac.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_project",
+      "fn": "voice_dac_vd_project",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_page_fns",
+      "order": 13,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_dac_page_fn",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 13,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_dac_p5",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 13,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_dac_p7",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 13,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_dac_p11",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 13,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_dac_p457",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_view_pages",
+      "order": 20,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_dac_view_page",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FILTER key, second press: DAC FILTER page (DAC SUM on)",
+    "menu:GLOBAL > AUDIO ROUTING > DAC SUM",
+    "audio:voice routing through the DAC sum"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400a2b1a",
+          "len": 8,
+          "stockSha256": "a6c1106837692c73fcd7417d36aa3142ebf61e47141bef5a9f8fa3abdad5e293",
+          "op": "jmp",
+          "target": "voice_dac_hpf_refresh"
+        },
+        {
+          "addr": "0x400a85f0",
+          "len": 8,
+          "stockSha256": "fdbdfa2df8a0985c628d4209c12d5d6c368c8ffbb24b67a477003fa78e66a878",
+          "op": "jmp",
+          "target": "voice_dac_flt_glyph"
+        },
+        {
+          "addr": "0x400d2eae",
+          "len": 8,
+          "stockSha256": "6044f56dbf85dd005882c97f987296ee64a58b738b174809744c5ac004e9fadc",
+          "op": "jmp",
+          "target": "voice_dac_flt_graph"
+        },
+        {
+          "addr": "0x400d9088",
+          "len": 6,
+          "stockSha256": "35ed6ea271f48a15c594eda524006dddba0ed358089f73f305a685fe3fa8a5e4",
+          "op": "jmp",
+          "target": "voice_dac_dac_menu_add"
+        },
+        {
+          "addr": "0x4011fe4e",
+          "len": 6,
+          "stockSha256": "723077187715c4f2cd27e25d5174070c79d86fe1823e73ae649d84e6ef127c9b",
+          "op": "jmp",
+          "target": "voice_dac_vs_alt"
+        },
+        {
+          "addr": "0x40121322",
+          "len": 6,
+          "stockSha256": "3872dfad29ce7018ab646e613364e2e0e1ddfbd61e7a49ecb6e6c89c1cc28937",
+          "op": "jmp",
+          "target": "voice_dac_route_all"
+        },
+        {
+          "addr": "0x401213d0",
+          "len": 8,
+          "stockSha256": "749ec5164099079b18717476eceaab03387b3779859e4b1926c044ffd5e6743e",
+          "op": "jmp",
+          "target": "voice_dac_vs_main"
+        },
+        {
+          "addr": "0x401bfcd8",
+          "len": 4,
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "op": "bytes",
+          "new": "00007f00",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401bfcf4",
+          "len": 4,
+          "stockSha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+          "op": "ptr",
+          "target": "voice_dac_txt_frq_long"
+        },
+        {
+          "addr": "0x401bfcfc",
+          "len": 4,
+          "stockSha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+          "op": "ptr",
+          "target": "voice_dac_txt_frq_short"
+        },
+        {
+          "addr": "0x401bfd40",
+          "len": 4,
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "op": "bytes",
+          "new": "00007f00",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401bfd5c",
+          "len": 4,
+          "stockSha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+          "op": "ptr",
+          "target": "voice_dac_txt_atk_long"
+        },
+        {
+          "addr": "0x401bfd64",
+          "len": 4,
+          "stockSha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+          "op": "ptr",
+          "target": "voice_dac_txt_atk_short"
+        },
+        {
+          "addr": "0x401bfe10",
+          "len": 4,
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "op": "bytes",
+          "new": "00000700",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401bfe2c",
+          "len": 4,
+          "stockSha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+          "op": "ptr",
+          "target": "voice_dac_txt_typ_long"
+        },
+        {
+          "addr": "0x401bfe34",
+          "len": 4,
+          "stockSha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+          "op": "ptr",
+          "target": "voice_dac_txt_typ_short"
+        },
+        {
+          "addr": "0x401bfe44",
+          "len": 4,
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "op": "bytes",
+          "new": "00007f00",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401bfe60",
+          "len": 4,
+          "stockSha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+          "op": "ptr",
+          "target": "voice_dac_txt_dep_long"
+        },
+        {
+          "addr": "0x401bfe68",
+          "len": 4,
+          "stockSha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+          "op": "ptr",
+          "target": "voice_dac_txt_dep_short"
+        },
+        {
+          "addr": "0x401bfe78",
+          "len": 4,
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "op": "bytes",
+          "new": "00007f00",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401bfe94",
+          "len": 4,
+          "stockSha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+          "op": "ptr",
+          "target": "voice_dac_txt_res_long"
+        },
+        {
+          "addr": "0x401bfe9c",
+          "len": 4,
+          "stockSha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+          "op": "ptr",
+          "target": "voice_dac_txt_res_short"
+        },
+        {
+          "addr": "0x401bfeac",
+          "len": 4,
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "op": "bytes",
+          "new": "00007f00",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401bfec8",
+          "len": 4,
+          "stockSha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+          "op": "ptr",
+          "target": "voice_dac_txt_sus_long"
+        },
+        {
+          "addr": "0x401bfed0",
+          "len": 4,
+          "stockSha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+          "op": "ptr",
+          "target": "voice_dac_txt_sus_short"
+        },
+        {
+          "addr": "0x401c58c4",
+          "len": 4,
+          "stockSha256": "323844a003b9775818f921ac547a48d4c02eaa969323fdb19dc51c5830f14db7",
+          "op": "ptr",
+          "target": "voice_dac_txt_pol_long"
+        },
+        {
+          "addr": "0x401c58cc",
+          "len": 4,
+          "stockSha256": "3c2617ce41cd14dd0cc649c3b466feed919751a877b0f511bb8089d6a3e2a5e6",
+          "op": "ptr",
+          "target": "voice_dac_txt_pol_short"
+        }
+      ]
+    }
+  },
+  "storage": [
+    {
+      "sym": "vd_flt",
+      "scope": "sound",
+      "bits": 24
+    },
+    {
+      "sym": "vd_shp",
+      "scope": "sound",
+      "bits": 15
+    },
+    {
+      "sym": "vd_dac",
+      "scope": "global",
+      "bits": 1
+    }
+  ]
+}

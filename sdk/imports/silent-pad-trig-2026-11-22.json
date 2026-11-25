@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/silent-pad-trig",
+  "version": "0.9.0-experimental",
+  "date": "2026-11-22",
+  "changes": [
+    "Renamed Improved Configs (id unchanged). New SEQUENCER CONFIG row PAD LEAVES FX (storage field pad_leaves_fx_on): with the FX track selected, a pad or TRIG 1-12 press that selects its track leaves the FX track for that track's page, as TRK + pad does. Two jsr sites over the pad and TRIG handlers' stay-on-FX flag (0x400c7b5c, 0x400c7eb4); unchecked, the flag is stock's."
+  ],
+  "runtimeSourceSha256": "2b66da215b6bf1db8c837f74837c8005c050c75f8a73671cc3da47195bbfc528",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/silent-pad-trig/silent-pad-trig-0.9.0-experimental-os1.74.elemod",
+      "sha256": "5096026874ef49d258913384bdc307d838a07422ff834cf42f560db4529bb785"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/silent-pad-trig/TESTING.md",
+  "requires": []
+}

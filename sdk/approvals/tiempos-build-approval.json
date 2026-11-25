@@ -1,0 +1,11 @@
+{
+  "kind": "owner-approved-update",
+  "id": "tiempos",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-07",
+  "ownerStatement": "I accept the three performance waivers for this experimental release (31 Oct 2026, #1096).",
+  "reason": "Tiempos runs only on the UI task (tick, draw, key and encoder hooks) and has no MIDI path or frame-interrupt work. Its draw cost is an emulator estimate scaled by pixel count, and the MKI LOAD readings are in TESTING.md. No static bound, no cfmeter capture and no MIDI flood. Every other qualification stays required.",
+  "waived": ["chip-worst-case-cycles", "current-build-hardware"],
+  "sourceSha256": "45e53efc39e6aba499d312e8e0b26995d2110a6657cbff8f06dc3aaaa9c1f035"
+}

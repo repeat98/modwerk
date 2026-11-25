@@ -1,0 +1,1 @@
+SDK: `scripts/link-image.mjs` prints how much of the shared mod RAM a set leaves free (`ramSpare`, and `fastSpare` for fast RAM), so you can see how close a combined Rytm set is to full before the next module overflows it. Nothing changes for players.

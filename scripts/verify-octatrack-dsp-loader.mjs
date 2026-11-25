@@ -46,6 +46,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { describeRefusal } from './loader-refusals.mjs'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics, removal } from '../src/dev/octatrack-usb-lifecycle.ts'
@@ -128,7 +129,7 @@ if (mode === 'dumps') {
     for (let tries = 0; ; tries++) {
       try { await keep(data); return tries } catch (error) {
         const why = await refusal()
-        if (why !== 5 || tries >= 60) throw new Error(`${what}: ${error.message} (loader refusal ${why})`, { cause: error })
+        if (why !== 5 || tries >= 60) throw new Error(`${what}: ${error.message} (loader refusal ${describeRefusal(why)})`, { cause: error })
         await session.cancel().catch(() => {}); await settle(30)
       }
     }
@@ -141,7 +142,10 @@ if (mode === 'dumps') {
   }
   if (scenario === 'meter') { // the load meter's last window, read back through PEEK
     await settle(120)
-    assert.equal(await call(symbols.modwerk_dsp_meter_read, 0), 1, 'the base starts the read')
+    // All five words, as dev.c's METER request asks; refused while a status-page read (status.c) waits to start.
+    for (let tries = 0; !await call(symbols.modwerk_dsp_meter_read, 0, 0, 5); tries++) {
+      assert(tries < 20, 'the base starts the read'); await settle(30)
+    }
     await settle(300); bench.socket.end(); process.exit(0)
   }
   if (scenario === 'probe') {
@@ -302,7 +306,7 @@ if (mode === 'dumps') {
       for (const site of sites) before.push(await peek(site.address, site.length))
       const originalCopies = await captureStockCopies(copies, peek)
       await keep(data).catch(async error => { // loader.h runtime_refusal: 8, the stock bytes under a site are not the ones it names
-        throw new Error(`${error.message} (loader refusal ${(await transport.selftest(false))?.refusal})`)
+        throw new Error(`${error.message} (loader refusal ${describeRefusal((await transport.selftest(false))?.refusal)})`)
       })
       let at
       for (const [i, site] of sites.entries()) {
@@ -361,7 +365,7 @@ if (mode === 'dumps') {
       for (let tries = 1; ; tries++) {
         try { await keep(new Uint8Array(readFileSync(path))); break } catch (error) {
           const refusal = await call(symbols.modwerk_runtime_refusal)
-          console.log(`${path.split('/').at(-1)} refused (loader refusal ${refusal}), try ${tries}`)
+          console.log(`${path.split('/').at(-1)} refused (loader refusal ${describeRefusal(refusal)}), try ${tries}`)
           if (refusal !== 5 || tries === 5) throw error
           await settle(240)
         }
@@ -536,10 +540,11 @@ if (mode === 'dumps') {
     const loaded = [...new Set(ids)].filter(fx => proofs.dspLoader.A.stock[fx]).map(fx => proofs.dspLoader.A.stock[fx].key)
     console.log(`stock effects on demand: ${loaded.join(', ')} each run from their core's arena (PLATE REV picked on T1, DARK REV on T5): passed`)
   } else if (scenario === 'meter') {
-    const [serial, least, most, sum, missed] = u32('modwerk_dsp_meter')
-    assert.equal(u32('modwerk_dsp_meter_core')[0], 0); assert.equal(u32('modwerk_dsp_meter_bits')[0], 120, 'all 120 bits read')
-    assert(serial >= 1 && least <= sum / 1024 && sum / 1024 <= most, 'a whole window')
-    console.log(`load meter: window ${serial}, idle iterations least ${least}, mean ${(sum / 1024).toFixed(1)}, most ${most}, missed ${missed} (emulator timing): passed`)
+    // The status page reads words 1-3 of either core twice a second (status.c), so the core, the bit count and those
+    // words belong to whichever of its reads is in flight at the dump. Words 0 and 4 only this full read writes.
+    const [serial, , , , missed] = u32('modwerk_dsp_meter')
+    assert(serial >= 1, 'core 0\'s window serial read back')
+    console.log(`load meter: core 0 window ${serial}, missed ${missed} (emulator timing): passed`)
   } else if (scenario === 'probe') {
     const answered = proofs.configuration.dsp.probe !== 'A'
     assert.equal(u32('modwerk_dsp_probes_ok')[0], answered ? 2 : 0); assert.equal(u32('modwerk_dsp_probes_failed')[0], answered ? 0 : 2)

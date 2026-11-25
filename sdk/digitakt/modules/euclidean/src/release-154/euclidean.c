@@ -11,8 +11,16 @@ extern u32 euc_native_copy(u32,u32,u32),euc_native_clear(u32,u32);
 extern u32 euc_native_track_mirror(u32);
 extern u32 free_hook(u32);
 
+/* Raise the interrupt mask to level 4, never lower it. Euclidean state and
+ * the track records are read by the level-2 sequencer interrupt and by
+ * tasks, and the task-switch interrupt is level 1, so level 4 excludes all
+ * of them. Level 5 and above (the audio render on INTC1 source 63) touch
+ * none of it and must keep running: holding them off through a track
+ * conversion delayed the render and clicked on hardware. */
 u32 euc_lock(void) {
- u32 sr;__asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr":"=d"(sr)::"memory");return sr;
+ u32 sr,raised;__asm__ volatile("move.w %%sr,%0":"=d"(sr)::"memory");sr&=0xffff;
+ if((sr&0x700)<0x400){raised=(sr&0xf8ff)|0x400;__asm__ volatile("move.w %0,%%sr"::"d"(raised):"memory");}
+ return sr;
 }
 void euc_unlock(u32 sr) {__asm__ volatile("move.w %0,%%sr"::"d"(sr):"memory");}
 void euc_copy(void *dst,const void *src,u32 n){u8 *d=dst;const u8 *s=src;while(n--)*d++=*s++;}

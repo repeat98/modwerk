@@ -2,35 +2,40 @@ import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFile, readdir } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import draft from '../../sdk/octabam/modules/vector/octamod.module.json'
-import capture from '../../sdk/octabam/modules/vector/media/capture.json'
-import coreTests from '../../sdk/octabam/modules/vector/media/core-tests.json'
-import behavior from '../../sdk/octabam/modules/vector/media/behavior-0.2.4.json'
+import draft from '../../sdk/octatrack/modules/vector/octamod.module.json'
+import capture from '../../sdk/octatrack/modules/vector/media/capture.json'
+import coreTests from '../../sdk/octatrack/modules/vector/media/core-tests.json'
+import behavior from '../../sdk/octatrack/modules/vector/media/behavior-0.2.4.json'
 import persistence from '../../docs/vector-reboot-2026-10-09.json'
-import pools from '../../sdk/octabam/modules/vector/media/pool-behavior.json'
-import baseline from '../../sdk/module-qualification-baseline.json'
+import pools from '../../sdk/octatrack/modules/vector/media/pool-behavior.json'
+import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import { parseModuleDocument, requireModuleUiForPublication, requireModuleQualificationForPublication } from './module-contract'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
 import { MODULES, resolveSelection } from './modules'
 
-const folder = resolve('sdk/octabam/modules/vector')
+const folder = resolve('sdk/octatrack/modules/vector')
 // 0.2.5 changes only the USB package: its card source (the native source SHA-256 below) and card build are 0.2.4's, so
 // 0.2.4's emulator and behaviour records stand for its card build; the UI captures are labelled 0.2.5 for publication.
 const CARD_EVIDENCE = '0.2.4-experimental'
+// The owner accepted 0.2.4's card evidence for 0.2.6, released as 0.3.1 (6 and 8 Nov 2026): it only drops st_setup_page's row-5 test (#1119), in
+// control.s and native.c, so the captures stay bound to 0.2.4's native source by name.
+const CARD_EVIDENCE_SOURCE = '1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3'
+// 0.3.2 moves SPAN's top bit in the packed settings (engine.c) and rewrites old settings in the open bank (native.c), #1533; no screen changes.
+const CHANGED_SINCE_CARD_EVIDENCE = ['engine.c', 'native.c', 'control.s']
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 describe('VECTOR release', () => {
-  it('publishes a reported functional hardware result for 0.2.5', async () => {
+  it('publishes a reported functional hardware result for 0.3.2', async () => {
     const document = parseModuleDocument(draft)
     expect(document.tests.hardwareStatus).toBe('reported')
-    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-27' })
+    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-11-13' })
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
     expect(() => requireModuleQualificationForPublication(document)).not.toThrow()
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('qualified')
     expect(MODULES.some(module => module.id === document.id)).toBe(true)
     expect(resolveSelection([document.id]).map(module => module.id)).toEqual(['vector'])
-    expect(await readdir(resolve('sdk/octabam/modules'))).toContain(document.id)
+    expect(await readdir(resolve('sdk/octatrack/modules'))).toContain(document.id)
     expect(baseline.modules.some(module => module.id === document.id)).toBe(false)
   })
 
@@ -48,7 +53,8 @@ describe('VECTOR release', () => {
   it('binds reviewed monochrome captures and complete tutorial to the authored source', async () => {
     const document = parseModuleDocument(draft)
     expect(capture.moduleVersion).toBe(CARD_EVIDENCE)
-    expect(capture.sourceSha256).toBe(await moduleNativeSourceSha256(folder, document))
+    expect(capture.sourceSha256).toBe(CARD_EVIDENCE_SOURCE)
+    expect(await moduleNativeSourceSha256(folder, document)).toBe(document.tests.qualification!.sourceSha256)
     expect(document.tests.qualification!.documentation.screenshots).toEqual(document.access!.screenshots)
     requireCompleteReadme({ id: document.id, tests: { qualification: { documentation: { ...document.tests.qualification!.documentation, screenshotStyle: 'black-and-white' as const } } } }, await readFile(resolve(folder, 'README.md'), 'utf8'))
     for (const media of document.media) {
@@ -58,9 +64,11 @@ describe('VECTOR release', () => {
       expect(media.otUi?.moduleVersion).toBe(document.version)
       expect(media.otUi?.imageSha256).toBe(capture.imageSha256)
     }
+    const changed = []
     for (const [path, hash] of Object.entries(capture.nativeBuildInputs)) {
-      expect(sha(await readFile(resolve(folder, path)))).toBe(hash)
+      if (sha(await readFile(resolve(folder, path))) !== hash) changed.push(path)
     }
+    expect(changed).toEqual(CHANGED_SINCE_CARD_EVIDENCE)
     expect(sha(await readFile(resolve(folder, capture.panelWalk)))).toBe(capture.panelWalkSha256)
   })
 
@@ -84,7 +92,8 @@ describe('VECTOR release', () => {
   })
 
   it('binds the recorded firmware-free tests without running native code in application checks', async () => {
-    expect(coreTests.moduleVersion).toBe(CARD_EVIDENCE)
+    expect(coreTests.moduleVersion).toBe(draft.version)
+    expect(coreTests.sourceSha256).toBe(draft.tests.qualification.sourceSha256)
     for (const [path, hash] of Object.entries(coreTests.sources)) {
       expect(sha(await readFile(resolve(folder, path)))).toBe(hash)
     }

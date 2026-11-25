@@ -39,7 +39,7 @@ int main(void) {
     idle=1; mw_hook_driver_tick(&d,&transport);
     assert(!writes[0] && !writes[1]); // 3776 skipped coefficients are bounded to 64 words per tick
     complete(&d);
-    assert(writes[0]==44 && writes[1]==44 && cas[0]==1 && cas[1]==1);
+    assert(writes[0]==45 && writes[1]==45 && cas[0]==1 && cas[1]==1); /* MON 16 (1), window 514 (22), bus 512 (22) */
     assert(d.leases.active[0]==1 && d.leases.active[1]==1);
     assert(mw_hook_driver_export_idle(&d));
     d.leases.inflight[0]=1; assert(!mw_hook_driver_export_idle(&d)); d.leases.inflight[0]=0;
@@ -53,7 +53,7 @@ int main(void) {
     assert(!d.leases.ready && mw_hook_driver_retire(&d,1,17,23,0)==MW_HOOK_STATE);
     assert(mw_hook_driver_retire(&d,1,17,23,1)==MW_HOOK_OK);
     assert(mw_hook_driver_begin(&d,2,31,41,1)==MW_HOOK_PENDING); complete(&d);
-    assert(d.leases.active[0]==2 && d.leases.active[1]==0 && writes[1]==44);
+    assert(d.leases.active[0]==2 && d.leases.active[1]==0 && writes[1]==45);
     clear(); mw_hook_driver_init(&d,modwerk_hook_boot);
     assert(mw_hook_driver_begin(&d,4,51,61,1)==MW_HOOK_PENDING);
     mw_hook_driver_tick(&d,&transport); assert(waiting[0] && waiting[1]);

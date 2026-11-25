@@ -1,0 +1,52 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-11-08",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0013-voice-dac at his update 3a98e23, for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/voice-dac",
+   "version": "1.4.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.4",
+   "revision": "01254ab5f69f7083a70746b18de715d52335e499",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "voice-dac/os1.74/voice-dac.s",
+     "to": "src/voice-dac.s",
+     "sha256": "007159d77b54cb7daf49677e59581331f22ab622153e7bd87ad57cf171b45311"
+    },
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "shared/shared.s",
+     "to": "shared/shared.s",
+     "sha256": "8cc89465abdc5e5c7b70f5a2f2789af0181578a882f0460a5ca0dc03f35062d6"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "voice-dac/README.md",
+     "to": "upstream/README.md",
+     "sha256": "560c2a91624bd46aa3c4eaef6f655f5f1c55a940b528575775a6b66ae5251dbe"
+    }
+   ],
+   "excluded": [
+    "voice-dac/mod.json",
+    "voice-dac/voice-dac.s"
+   ],
+   "transformations": [
+    "mod.json's 27 OS 1.74 port sites became address, length and SHA-256 guards in build.json's 1.74 release. Its bytes sites keep their new bytes; its ptr and jmp sites keep their targets.",
+    "mod.json's storage fields (vd_flt, vd_shp, vd_dac), its ev_project subscription and its core_page_fns, core_params and core_view_pages entries became build.json's storage, subscribe and contribute.",
+    "The OS 1.73 source and sites are not imported: core-ar2 0.3 and later are for OS 1.74 only.",
+    "include/ar2-1.74.inc and shared/shared.s keep their paths relative to the source, so the .include lines in src/voice-dac.s are unchanged."
+   ]
+  }
+ ]
+}

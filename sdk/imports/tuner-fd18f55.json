@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/timhastie/octatrick-modules",
+  "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/octabam/modules/tuner",
+  "modules": [
+    "tuner"
+  ],
+  "excluded": [
+    "Unrelated modules and repository tools",
+    "Firmware images, device/card data and generated packages"
+  ],
+  "notes": [
+    "The upstream directory contains all four Tuner files copied byte-for-byte from annotated v2.20 at fd18f5530989be348e6aa4c6e38f93beba555e6d, including the local stock-guard reader and README.",
+    "The local adapter retains three Modwerk-form digest guards. The immutable upstream manifest uses its own two-argument reader and requires the build working directory local MAIN section at import; neither manifest was imported during this source update.",
+    "LICENSE is copied unchanged from the same repository root. Local documentation and the adapter do not inherit upstream hardware qualification.",
+    "Historical captures and build evidence remain attributed to the prior v2.19/card-sdk integration; no build, test, generator or runtime was run for this re-vendor."
+  ],
+  "status": "Unqualified card-only v2.20 production proposal, based on draft 5a56f1f8d4c1c426c07195c26e552c677a8c44ac and main 4e2226f1be6347f74d51a0d5b99ee572ba3a82bb. Current-source checks and catalogue generation are pending. All earlier build and capture evidence remains historical.",
+  "authorPin": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d"
+  },
+  "files": [
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/README.md",
+      "sourceBytes": 8791,
+      "sourceGitBlob": "71ab21c524bea7609e00a6a939c62d601456559f",
+      "sourceSha256": "4db778ea5cf4ecea2677fd54e97f648f4ed4bb622639c6ade8d125780470794a",
+      "vendoredSha256": "4db778ea5cf4ecea2677fd54e97f648f4ed4bb622639c6ade8d125780470794a"
+    },
+    {
+      "path": "upstream/manifest.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/manifest.py",
+      "sourceBytes": 2848,
+      "sourceGitBlob": "cb0215a8ba4d2b78946849200ec7e7eb9ec4efb8",
+      "sourceSha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc",
+      "vendoredSha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc"
+    },
+    {
+      "path": "upstream/stock_guard.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/stock_guard.py",
+      "sourceBytes": 1111,
+      "sourceGitBlob": "f1c59f7a844beb091b784c6b77d42a401ca554c9",
+      "sourceSha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d",
+      "vendoredSha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
+    },
+    {
+      "path": "upstream/tuner.s",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "tuner/tuner.s",
+      "sourceBytes": 30833,
+      "sourceGitBlob": "b28b20460db384336b15dc453b6fac42254c3e19",
+      "sourceSha256": "45be936153c27dc7582cf3d01af7b599349df269af8445d5a0a3b0b2ca5bee3a",
+      "vendoredSha256": "45be936153c27dc7582cf3d01af7b599349df269af8445d5a0a3b0b2ca5bee3a"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 5068,
+      "sourceGitBlob": "abff1c76e215ecd0c0b20e46a9e71913c77942cc",
+      "sourceSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+      "vendoredSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7"
+    }
+  ]
+}

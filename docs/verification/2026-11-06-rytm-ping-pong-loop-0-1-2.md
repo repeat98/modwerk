@@ -1,0 +1,8 @@
+# Analog Rytm MKII: Ping Pong Loop 0.1.2-experimental — 6 November 2026
+
+Nathaniel Pavel's (@npp1993) Ping Pong Loop 0.1.2 stops its four voice gates in stock's sample prefetch from calling the mirror routine for every voice every block: `pipo_loop_audio` keeps a byte of the voices armed for a turn, and the gates test it first. Playback, the LOP switch and the zero snap are unchanged. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-pipo-loop-2026-11-06.json` (commit `0aee586f`), replacing 0.1.1's pin.
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `8f3b70d4…`) from a clean checkout of `93d4d830`, the source the package commit carries. Exported with `package-elemod-recipe.mjs`, which reproduces it with `--check`; Silent Pad+Trig 0.7.0's committed package reproduces from the same build.
+- **Package:** `pipo-loop-0.1.2-experimental-os1.74.elemod` `74771bfd…a8b1`. 0.1.1's source-only package stays in `sdk/imports`.
+- **Emulator:** PP21 (vendored core-ar2 0.7 + this source, `df1762de…`) in rytm-emu `c5732f0`: the ten media plans replay; nine frames are byte-identical to 0.1.1's PP17, and markers-playing differs only in the playhead's position.
+- **On a unit:** measured on the author's Analog Rytm MKII with a private telemetry base (audio block timed on DTIM0, sent over USB MIDI), sequencer stopped: removing 0.1.1 from the author's 16-module set lowered the idle block from 72.9 % to 70.6 %; LF01 (that set with this source and QPERF's and Sample Playback Rate's idle fixes) idles at 71.1 %, and PIPO loops still work, as reported. Not run alone on a unit.

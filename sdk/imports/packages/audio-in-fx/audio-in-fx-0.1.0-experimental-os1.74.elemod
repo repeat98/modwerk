@@ -1,0 +1,872 @@
+{
+ "elemod": 2,
+ "id": "audio-in-fx",
+ "version": "0.1.0-experimental",
+ "title": "Audio In FX",
+ "description": "Two knobs on the FX track's DISTORTION page send the AUDIO IN jacks into the master distortion and compressor, and into the delay and the reverb.",
+ "category": "system",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 2819,
+   "parts": [
+    [
+     "hex",
+     "206f0004226f000820914e75700123c000000000203c000000004e754eb94017fa0a42a72040486801604eb9400a67ca204022502f00206900284e904fef000c4a806714222f000406810000039073c1204041f01a0020084e75206f0004725a7002214100044e75598f2f032f02487800804eb940081c28588f4a80660000fc487800454eb940081c28588f4a80660000ea4eb9401816f42f004eb9400363702f40000c588f4a80660000d042822f024eb940081c28588f4a80660000b252827010b08266e8206f001022680020206900184a8867402009068000000014b1c067342268000822110c81401e2ee86700009a0c81401e2a54670000900c81401e305c670000860c81401e26c4677c206800044a8866c842824eb9401816f4761f204020022268015c0680ffffffe022280158b6826d262009050066324eb9401816f45282761f204020022268015c0680ffffffe022280158b6826cda52820101660c7640b68266b076012f430008202f0008241f261f588f4e7542af0008202f0008241f261f588f4e75243c000000902f024eb940081c28588f4a8066d052820c820000009c66e842826000ff6c4fefffe448d71c3c4eb94017fa0a2f004eb9400af0ac4878000c2f004eb9400ab29e222f002c41f90000000026301c0026402f034ebafe384fef001028404a8b67044a80660e428420044cd71c3c4fef001c4e7571c342844282d0802440d5fc000109f84eb9401816f47a1f20402028015c22280158ba826d20050066364eb9401816f4528245ea00587a1f20402028015c22280158ba826ce020020680ffffffe00101660e52827040b082679a45ea005860b0206b002c22502f08206900284e90588f73f208000c810000ffff6772e0814aaf00246e427a6eba816d1c48780001780142802f002f032f022f0b4eb9400c058c4fef001460ac48780001203c00006e002f0078012f032f022f0b4eb9400c058c4fef0014608c706db0816cda48780001203c00007f002f0078012f032f022f0b4eb9400c058c4fef00146000ff6673d4e081608a598f2f02487800804eb940081c28588f4a80670000ce4aaf0014670000bc206f00107408203900000000220043f90000000041e8fe4392b18c00b4816400009a23808c0070012f2f00142f082f48000c23c0000000004ebafe60508f2200206f00044a806708241f2001588f4e7543f9000000002f318c002f4000084ebafca8588f222f00044a80674e204071d0e0884aaf00146e000098746eb480654e2f4100044eb94017fa0a42a74878000c2f004eb9400af51a48780001487800014878000c222f001c2f012f2f002c2f004eb9400a906c4fef002472012001241f588f4e75241f42812001588f4e75223c00006e002f4100044eb94017fa0a42a74878000c2f004eb9400af51a48780001487800014878000c222f001c2f012f2f002c2f004eb9400a906c4fef002460aa726db28064b8223c00007f002f4100044eb94017fa0a42a74878000c2f004eb9400af51a48780001487800014878000c222f001c2f012f2f002c2f004eb9400a906c4fef00246000ff624feffff048d71c0442b900000000203c0000000042822842247c419a629847fafb7249ec781823c0401c565c203c0000000023c0401c56542f0a4874a8004e93588a508fb5fc419a62a866ec2f3c419a627820020680419ada902f004e932f3c419a627c20020680419ada942f004e934fef00107054b082671074542842247c419a629849ec781860ae4cd71c044fef00104e7573798000fbd24fefffd448d74cfce08138016b0000946b72c9c171798000fb98720de080c9fc056b3c00e2a424444a406d504a406d2ecdc0203900000000220a740d8280cdfc056be4a64a816600011c223900000000828666584cd74cfc4fef002c4e754240220a740dcdc02039000000008280cdfc056be4a64a8167d2600000ea42464a406cae60da424171798000fb98e0803c00c9c1720dc9fc056be2a424444a406c8c60da42444a416c00ff6a60d8243900000000280698b9000000002a39000000002c7c80007b44eb8a227c80007a44207c80007468720d7e0d2010e2a02602d48422280004ea83eea12f4000244a856600018e2f41002842812e37182447f118002013e4804c037800d0870c80e00000006c00011a203ce0000000e58845f6180026802012e480d0870c80e00000006c0000e8203ce0000000e588588124807008b08166b441e800305089508eb1fc80007a68668023c6000000004cd74cfc4fef002c4e757a037e0bcab942f921242200240aeb892639000000009480207c80007468efad2245d3fc800000302a10700d2e01e0a528280004ea87e0a4d2824a836704da84280520114c075800e188ec85e08090850c80ff8000006c0000ae203cff800000028000ffffff26494c047800ec8726c02013e188e08090870c80ff8000006c5c203cff800000028000ffffff41e8003043e900402680b1fc80007a68668a22390000000023ca0000000082866700fe426000fe960c801fffffff6f00ff18203c1fffffff6000ff0e0c801fffffff6f00fee6203c1fffffff6000fedc0c80007fffff6fa2203c007fffff028000ffffff41e8003043e900402680b1fc80007a686600ff2660980c80007fffff6f00ff52203c007fffff6000ff48d0812f4000282f40002442816000fe6c4feffff070012f0a2f02222f00202041226f002441e8fe432f6f001c0014b088656c487800802f4100102f4800142f49000c4eb940081c28588f222f000c206f0010226f00084a8067444a896734223900000000240145f90000000094b28c002f4200147408b4af0014641625818c0070012f092f0823c0000000004ebaf99a508f7001241f245f4fef00104e752f4900242f4100202f6f0014001c241f245f4fef00104ef9400385f84ab9000000006708700123c00000000042b9000000004e7520390000000052b9000000004a806d1052807208b2806c0270ff23c0000000004ab90000000067107201206f000442b900000000114100204e75206f00087003b0a8000c670442804e752039000000004a8067f44ab9000000006dea203900000000528023c0000000007202b2806c0c70ff23c000000000428060cc70014e754e56fff4206e000c2f022228001044c16b442028000c0c80000000806738740fb4806c322040740741e8ff90b48865307473b48066204ab900000000671808010000660000cc4ab9000000006c3070ff23c000000000242efff042804e5e4e757001242efff023c000000000428042b90000000042b9000000004e5e4e752f2e00084ebaf70c588f4a8067c22239000000004a8157c07100448023c0000000004a81660000d2223c00000000203c0000000023c1401c565c23c0401c56544ab9000000006770486efff7203c000000002f007401486efff84eb9401bcff04eb9401816f4486efff82f004eb940035fe8486efff84eb9401bb54023c2000000004fef001870ff23c0000000006000ff482f2e00084ebaf67a588f242efff042b9000000007201b380448023c00000000042804e5e4e75486efff7203c000000002f007401486efff84eb9401bcff04eb9401816f4486efff82f004eb940035fe8486efff84eb9401bb54023c2000000004fef0018608e223c00000000203c000000006000ff2e00004eb9000000004fefffbc48d77cfc4ef94010da2c00000064ffffffff000001bd000001be0000000000000000000000000000000a000000000000000a000000000000005a0000005b00000050000001bd000001be000000000000005100000059496e70757420546f20465800496e7075742053746572656f004946580053544500496e707574204d6f6e6f004d4e4f000000001d00000000444953544f5254494f4e00"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 36
+  }
+ },
+ "symbols": {
+  "copy_word": [
+   ".run",
+   0
+  ],
+  "dist_info": [
+   ".run",
+   12
+  ],
+  "asked": [
+   ".bss",
+   24
+  ],
+  "dist_page": [
+   ".run",
+   2712
+  ],
+  "kit_word": [
+   ".run",
+   28
+  ],
+  "text": [
+   ".run",
+   90
+  ],
+  "plain_press": [
+   ".run",
+   104
+  ],
+  "lock_snap": [
+   ".run",
+   430
+  ],
+  "word_of": [
+   ".run",
+   2800
+  ],
+  "delta": [
+   ".run",
+   758
+  ],
+  "ui_ticks": [
+   ".run",
+   2676
+  ],
+  "jump_tick": [
+   ".bss",
+   0
+  ],
+  "redraw": [
+   ".bss",
+   16
+  ],
+  "mono": [
+   ".bss",
+   12
+  ],
+  "gain": [
+   ".bss",
+   28
+  ],
+  "page_up": [
+   ".bss",
+   20
+  ],
+  "tap_ticks": [
+   ".run",
+   2680
+  ],
+  "tap_turns": [
+   ".bss",
+   8
+  ],
+  "short_mono": [
+   ".run",
+   2796
+  ],
+  "long_mono": [
+   ".run",
+   2785
+  ],
+  "audio_in_fx_resume": [
+   "abs",
+   1074846252
+  ],
+  "audio_in_fx_short_in": [
+   ".run",
+   2781
+  ],
+  "audio_in_fx_params": [
+   ".run",
+   2684
+  ],
+  "audio_in_fx_key": [
+   ".run",
+   2264
+  ],
+  "audio_in_fx_enc": [
+   ".run",
+   2194
+  ],
+  "audio_in_fx_block": [
+   ".run",
+   1282
+  ],
+  "audio_in_fx_short_fx": [
+   ".run",
+   2777
+  ],
+  "audio_in_fx_long_in": [
+   ".run",
+   2764
+  ],
+  "audio_in_fx_view_lock_delta": [
+   ".run",
+   1942
+  ],
+  "audio_in_fx_gate": [
+   ".run",
+   2656
+  ],
+  "audio_in_fx_project": [
+   ".run",
+   1134
+  ],
+  "audio_in_fx_page": [
+   ".run",
+   2704
+  ],
+  "audio_in_fx_tick": [
+   ".run",
+   2136
+  ],
+  "audio_in_fx_long_fx": [
+   ".run",
+   2752
+  ],
+  "audio_in_fx_draw": [
+   ".run",
+   2112
+  ]
+ },
+ "exports": [
+  "audio_in_fx_block",
+  "audio_in_fx_draw",
+  "audio_in_fx_enc",
+  "audio_in_fx_gate",
+  "audio_in_fx_key",
+  "audio_in_fx_long_fx",
+  "audio_in_fx_long_in",
+  "audio_in_fx_page",
+  "audio_in_fx_params",
+  "audio_in_fx_project",
+  "audio_in_fx_short_fx",
+  "audio_in_fx_short_in",
+  "audio_in_fx_tick",
+  "audio_in_fx_view_lock_delta"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   16,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   22,
+   "abs32",
+   "sec:.run",
+   2712
+  ],
+  [
+   ".run",
+   470,
+   "abs32",
+   "sec:.run",
+   2800
+  ],
+  [
+   ".run",
+   796,
+   "abs32",
+   "sec:.run",
+   2676
+  ],
+  [
+   ".run",
+   804,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   840,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   870,
+   "abs32",
+   "sec:.run",
+   2800
+  ],
+  [
+   ".run",
+   1144,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1150,
+   "abs32",
+   "sec:.run",
+   2781
+  ],
+  [
+   ".run",
+   1180,
+   "abs32",
+   "sec:.run",
+   2764
+  ],
+  [
+   ".run",
+   1340,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1364,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   1392,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1462,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   1470,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   1476,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1630,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   1662,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1804,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   1810,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   2022,
+   "abs32",
+   "sec:.run",
+   2676
+  ],
+  [
+   ".run",
+   2030,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2062,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2114,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   2124,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2130,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   2138,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2144,
+   "abs32",
+   "sec:.run",
+   2676
+  ],
+  [
+   ".run",
+   2164,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2170,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2184,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2212,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2222,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2230,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   2238,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   2252,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2320,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2336,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2346,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2368,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2376,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2382,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   2406,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   2420,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   2432,
+   "abs32",
+   "sec:.run",
+   2796
+  ],
+  [
+   ".run",
+   2438,
+   "abs32",
+   "sec:.run",
+   2785
+  ],
+  [
+   ".run",
+   2456,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   2468,
+   "abs32",
+   "sec:.run",
+   2785
+  ],
+  [
+   ".run",
+   2516,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2528,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2552,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   2564,
+   "abs32",
+   "sec:.run",
+   2680
+  ],
+  [
+   ".run",
+   2580,
+   "abs32",
+   "sec:.run",
+   2764
+  ],
+  [
+   ".run",
+   2628,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2640,
+   "abs32",
+   "sec:.run",
+   2781
+  ],
+  [
+   ".run",
+   2646,
+   "abs32",
+   "sec:.run",
+   2764
+  ],
+  [
+   ".run",
+   2658,
+   "abs32",
+   "sec:.run",
+   1282
+  ],
+  [
+   ".run",
+   2696,
+   "abs32",
+   "sec:.run",
+   758
+  ],
+  [
+   ".run",
+   2700,
+   "abs32",
+   "sec:.run",
+   90
+  ],
+  [
+   ".run",
+   2708,
+   "abs32",
+   "sec:.run",
+   12
+  ],
+  [
+   ".run",
+   2716,
+   "abs32",
+   "sec:.run",
+   2808
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4010da24",
+   "len": 8,
+   "stock_sha256": "3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:audio_in_fx_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c562c",
+   "len": 4,
+   "stock_sha256": "1fc244af2b96d0169a177e2559af29e0484744e4b8501d1044d76c9f7b3cf307",
+   "new": "0000003b",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401c5630",
+   "len": 4,
+   "stock_sha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4",
+   "new": "0000001d",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401c5654",
+   "len": 4,
+   "stock_sha256": "0e6f7d4359c597fbbc30c6c55f96055f695cbcbdd7ce5a17508edd763c7962e3",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_long_in",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c565c",
+   "len": 4,
+   "stock_sha256": "22be147347612fa8b29916cbf8fb1a978d19836984255a4d93ac062d1505f476",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_short_in",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c5660",
+   "len": 4,
+   "stock_sha256": "1fc244af2b96d0169a177e2559af29e0484744e4b8501d1044d76c9f7b3cf307",
+   "new": "0000003b",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401c5664",
+   "len": 4,
+   "stock_sha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401c5670",
+   "len": 4,
+   "stock_sha256": "6e90b5d2b8ce7b775b3f74bafd0a28d18344b287eff41d0cf938f18344ea8fa2",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401c5688",
+   "len": 4,
+   "stock_sha256": "4cda4b796bc0a05981ff710c47d3760b572547fc2b4b078e1e6a9d5f4b073da3",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_long_fx",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401c5690",
+   "len": 4,
+   "stock_sha256": "3017adae335e242402ac97061bbbd83d18b3137b2872e5b6ae36029d961bc69c",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_short_fx",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401cc3ec",
+   "len": 4,
+   "stock_sha256": "fdf12e96caa21c2bac267344c6fb62d1c46341eca4588870b56a8abd71e04014",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_view_lock_delta",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_project",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_project",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_draw",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_draw",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_enc",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_enc",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_key",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_key",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_page_fns",
+   "order": 40,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_page",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_params",
+   "order": 40,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:audio_in_fx_params",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:FX track DISTORTION page knobs D and E",
+   "ui:FUNC + turn of D and E on the DISTORTION page",
+   "ui:a tap of encoder D on the DISTORTION page",
+   "param:FX track words 0 and 29"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

@@ -7,7 +7,7 @@ export class AccountMailError extends HttpError {}
 
 type MailOutcome='accepted'|'failed'|'limited'
 /** Daily counts per purpose, without addresses, content or links. */
-export async function recordMail(db: Database, purpose: 'verify' | 'reset' | 'activity' | 'welcome' | 'news' | 'beta', outcome: MailOutcome) {
+export async function recordMail(db: Database, purpose: 'verify' | 'reset' | 'activity' | 'welcome' | 'news' | 'beta' | 'diagnostics', outcome: MailOutcome) {
   // The column comes only from this fixed internal allowlist.
   await db.prepare(`INSERT INTO account_mail_daily(day,purpose,${outcome}) VALUES(?,?,1) ON CONFLICT(day,purpose) DO UPDATE SET ${outcome}=${outcome}+1`).bind(new Date().toISOString().slice(0,10),purpose).run()
 }
@@ -16,7 +16,8 @@ export async function sendAccountEmail(env: Env, db: Database, to: string, purpo
   if (!emailReady(env)) throw new HttpError(503, 'Account email is not connected yet. Please try again later.')
   const record=(outcome:MailOutcome)=>recordMail(db,purpose,outcome)
   try{
-    await reserveMailBudget(env, db, 'account')
+    // Password resets have their own budget, so a flood of sign-ups cannot leave members locked out.
+    await reserveMailBudget(env, db, purpose === 'reset' ? 'reset' : 'account')
   }catch(error){if(error instanceof HttpError&&error.status===429){await record('limited');throw new AccountMailError(429,'Account email is temporarily limited.')}throw error}
   const url = new URL(env.APP_URL!)
   url.hash = 'account/' + purpose + '/' + value

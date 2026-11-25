@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "Two extra playheads on one delay: a double-time ghost an octave up and a half-time drag an octave down, locked to tempo. Built for drums."
+    ]
+  }
+]

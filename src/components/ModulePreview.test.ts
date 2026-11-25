@@ -12,7 +12,7 @@ describe('module previews', () => {
       const html = renderToStaticMarkup(createElement(ModulePreview, { id: module.id }))
       expect(html).toContain('signal-art')
       if (!html.includes('presentation/thumbnail.svg')) continue
-      const thumbnail = fileURLToPath(new URL('../../sdk/octabam/modules/' + module.id + '/presentation/thumbnail.svg', import.meta.url))
+      const thumbnail = fileURLToPath(new URL('../../sdk/octatrack/modules/' + module.id + '/presentation/thumbnail.svg', import.meta.url))
       expect(existsSync(thumbnail), module.id + ' has no hand-drawn art, so it needs presentation/thumbnail.svg').toBe(true)
     }
   })

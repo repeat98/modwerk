@@ -1,0 +1,1 @@
+Octatrack live load: the note under the chart now says what the CPU meter reads on an Octatrack without modules (about 45 % stopped, 60 to 75 % playing) and that the base takes no further module machine or effect from 85 %. A reading of 70 % with two tracks playing looked like an overload and is close to what the stock OS uses by itself.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  findVendorInterface, parseInventory, parseMissing, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
+  findVendorInterface, parseInventory, parseMissing, parseOff, parseRestore, RESTORE_GUARD, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
   VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_RESULT_BYTES, VENDOR_SUBCLASS,
 } from './upload-usb'
 
@@ -104,7 +104,7 @@ function device(outs: ('ok' | 'stall' | 'throw')[], results: (sent: number[]) =>
       expect(setup).toMatchObject({ requestType: 'vendor', recipient: 'interface', request: 1, index: 6 })
       sent.push(setup.value)
       const outcome = outs.shift() ?? 'ok'
-      if (outcome === 'throw') throw new Error('transfer error')
+      if (outcome === 'throw') throw new DOMException('transfer error', 'NetworkError')
       return outcome === 'ok' ? { status: 'ok', bytesWritten: data.length } : { status: 'stall', bytesWritten: 0 }
     },
     async controlTransferIn(setup, length) {
@@ -122,6 +122,30 @@ const exchange = (d: ControlDevice, signal = new AbortController().signal) =>
   new UsbVendorTransport(d, 6, { pollMs: 0 }).exchange(frame, signal)
 
 describe('vendor transport', () => {
+  it('resumes a retained trial from the current sequence after a status client used the interface', async () => {
+    let sequence = 15, responseTag = 0
+    const accepted: number[] = []
+    const unit: ControlDevice = {
+      async controlTransferIn() {
+        return { status: 'ok', data: new DataView(ready(sequence, responseTag).buffer) }
+      },
+      async controlTransferOut(setup, data) {
+        if (setup.value === sequence) return { status: 'stall', bytesWritten: 0 }
+        sequence = setup.value
+        responseTag = data[7]
+        accepted.push(sequence)
+        return { status: 'ok', bytesWritten: data.length }
+      },
+    }
+    const trial = new UsbVendorTransport(unit, 6), status = new UsbVendorTransport(unit, 6)
+    const signal = new AbortController().signal
+    const enter = frame.slice()
+    enter[7] = 1
+    await trial.exchange(enter, signal)
+    await status.exchange(frame, signal) // HELLO while the trial owner is idle
+    expect((await trial.exchange(enter, signal))[0]).toBe(1)
+    expect(accepted).toEqual([16, 17, 18])
+  })
   it('continues from the device sequence, wraps through zero and polls until ready', async () => {
     const d = device(['ok'], sent => [Uint8Array.from(header(1, sent[0])), ready(sent[0])])
     expect(await exchange(d)).toEqual(new Uint8Array(144).fill(7))
@@ -142,16 +166,18 @@ describe('vendor transport', () => {
   })
   it('stops when a failed transfer has no positive refusal', async () => {
     const d = device(['throw'], () => [Uint8Array.from(header(3, 0x1234))])
-    await expect(exchange(d)).rejects.toMatchObject({ name: 'VendorTransportError', notExecuted: false })
+    await expect(exchange(d)).rejects.toMatchObject({ name: 'VendorTransportError', notExecuted: false, cause: { name: 'NetworkError' } })
     expect(d.sent).toEqual([0xffff])
   })
   it('stops on another submission, a dropped frame or repeated refusals', async () => {
     await expect(exchange(device(['ok'], sent => [Uint8Array.from(header(1, sent[0] + 3))]))).rejects.toThrow(/different submission/)
     await expect(exchange(device(['ok'], sent => [Uint8Array.from(header(3, sent[0]))]))).rejects.toMatchObject({ notExecuted: true })
     const d = device(new Array(20).fill('stall'), sent => [Uint8Array.from(header(3, sent.at(-1)!))])
-    await expect(new UsbVendorTransport(d, 6, { retries: 2 }).exchange(frame, new AbortController().signal))
+    const attempts: number[] = []
+    await expect(new UsbVendorTransport(d, 6, { retries: 2 }).exchange(frame, new AbortController().signal, seq => attempts.push(seq)))
       .rejects.toMatchObject({ notExecuted: true })
-    expect(d.sent).toHaveLength(3)
+    expect(attempts).toEqual([65535, 0, 1])
+    expect(attempts).toEqual(d.sent)
   })
   it('stops polling when aborted and refuses overlapping or out-of-bounds frames', async () => {
     const abort = new AbortController()
@@ -205,5 +231,73 @@ describe('the modules a project names that are not installed', () => {
     })
     expect(await new UsbVendorTransport(unit(false), 6).inventory()).toEqual([{ handle: 0xff, layout: 0, module: '0000002a', name: '' }])
     expect(await new UsbVendorTransport(unit(true), 6).inventory()).toBeUndefined() // a base from before INVENTORY
+  })
+  it('reads OFF, the modules switched off on the unit, in pages of 5 ("MWO"), asking again while the list moves', async () => {
+    const reply = (ids: number[], count: number) => {
+      const view = new DataView(new ArrayBuffer(8 + 56 * ids.length))
+      ;[0x4d, 0x57, 0x4f, ids.length, count >> 8, count & 255].forEach((b, i) => view.setUint8(i, b))
+      ids.forEach((id, i) => { const at = 8 + 56 * i
+        view.setUint8(at, 0xff); view.setUint16(at + 2, 3); view.setUint32(at + 4, id)
+        ;[...'Tape Echo'].forEach((c, k) => view.setUint8(at + 8 + k, c.charCodeAt(0)))
+        for (let k = 0; k < 32; k++) view.setUint8(at + 24 + k, id + k & 255) })
+      return view
+    }
+    expect(parseOff(reply([0x2a], 1))).toEqual({ count: 1, modules: [{ handle: 0xff, layout: 3, module: '0000002a', name: 'Tape Echo',
+      sha256: Array.from({ length: 32 }, (_, k) => (0x2a + k).toString(16).padStart(2, '0')).join('') }] })
+    expect(() => parseOff(new DataView(new ArrayBuffer(8)))).toThrow(VendorTransportError)
+    expect(() => parseInventory(reply([0x2a], 1))).toThrow(VendorTransportError)
+    const asked: number[] = []
+    let stalls = 2
+    const unit = (older: boolean): ControlDevice => ({
+      async controlTransferOut() { throw new Error('read-only') },
+      async controlTransferIn(setup, length) {
+        expect(setup).toMatchObject({ request: 40 }); expect(length).toBe(288)
+        if (older || stalls-- > 0) return { status: 'stall' }
+        asked.push(setup.value)
+        return { status: 'ok', data: setup.value ? reply([6, 7], 7) : reply([1, 2, 3, 4, 5], 7) }
+      },
+    })
+    expect((await new UsbVendorTransport(unit(false), 6).off())!.map(module => module.module)).toEqual([1, 2, 3, 4, 5, 6, 7].map(id => id.toString(16).padStart(8, '0')))
+    expect(asked).toEqual([0, 5])
+    expect(await new UsbVendorTransport(unit(true), 6).off()).toBeUndefined() // a base from before the MODULES page
+  })
+  it('reads RESTORE, what the start’s restore did with every saved module, in pages of 5 ("MWR"), and nothing from an older base', async () => {
+    // Each package: state (1 loaded, 2 left out), check, refusal u16, id, bytes, largest free run, name 16 (modset.c).
+    const reply = (ids: number[], count: number) => {
+      const view = new DataView(new ArrayBuffer(8 + 32 * ids.length))
+      ;[0x4d, 0x57, 0x52, ids.length, count >> 8, count & 255, 10, 1].forEach((b, i) => view.setUint8(i, b))
+      ids.forEach((id, i) => { const at = 8 + 32 * i
+        view.setUint8(at, id % 2 ? 2 : 1); view.setUint8(at + 1, id % 2 ? 1 : 0); view.setUint16(at + 2, id === 1 ? 0x100 : id % 2 ? 2 : 0)
+        view.setUint32(at + 4, id); view.setUint32(at + 8, 1000 * id); view.setUint32(at + 12, id % 2 ? 512 : 0)
+        ;[...'Supercalifragil'].forEach((c, k) => view.setUint8(at + 16 + k, c.charCodeAt(0))) })
+      return view
+    }
+    expect(parseRestore(reply([1, 2, 3], 3))).toEqual({ result: 10, count: 3, modules: [
+      { module: '00000001', name: 'Supercalifragil', loaded: false, refusal: RESTORE_GUARD, check: 1, bytes: 1000, largestFree: 512 },
+      { module: '00000002', name: 'Supercalifragil', loaded: true, refusal: 0, check: 0, bytes: 2000, largestFree: 0 },
+      { module: '00000003', name: 'Supercalifragil', loaded: false, refusal: 2, check: 1, bytes: 3000, largestFree: 512 }] })
+    const wrongVersion = reply([], 0); wrongVersion.setUint8(7, 2)
+    for (const bad of [new DataView(new ArrayBuffer(8)), wrongVersion, new DataView(reply([1], 1).buffer, 0, 39)])
+      expect(() => parseRestore(bad)).toThrow(VendorTransportError)
+    const state = reply([2], 1); state.setUint8(8, 3); expect(() => parseRestore(state)).toThrow(VendorTransportError)
+    expect(() => parseOff(reply([1], 1))).toThrow(VendorTransportError)
+    const asked: number[] = []
+    const unit = (older: boolean, count: number): ControlDevice => ({
+      async controlTransferOut() { throw new Error('read-only') },
+      async controlTransferIn(setup, length) {
+        expect(setup).toMatchObject({ request: 43 }); expect(length).toBe(168)
+        if (older) return { status: 'stall' }
+        asked.push(setup.value)
+        const ids = Array.from({ length: Math.max(0, Math.min(5, count - setup.value)) }, (_, i) => setup.value + i + 1)
+        return { status: 'ok', data: reply(ids, count) }
+      },
+    })
+    const seven = await new UsbVendorTransport(unit(false, 7), 6).restore()
+    expect(seven!.modules.map(module => module.module)).toEqual([1, 2, 3, 4, 5, 6, 7].map(id => id.toString(16).padStart(8, '0')))
+    expect([seven!.count, seven!.result, asked]).toEqual([7, 10, [0, 5]])
+    asked.length = 0
+    expect((await new UsbVendorTransport(unit(false, 5), 6).restore())!.modules).toHaveLength(5)
+    expect(asked).toEqual([0]) // a full page that holds the whole set: no second ask
+    expect(await new UsbVendorTransport(unit(true, 0), 6).restore()).toBeUndefined() // a base from before RESTORE
   })
 })

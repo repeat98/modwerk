@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-05",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: try something, then get back to where you were.",
+      "FUNC + YES saves the active pattern and its kit, performance and scene locks included: TEMP SAVED.",
+      "FUNC + NO reloads both: RELOADED. NO TEMP SAVE if you changed pattern or kit, or loaded a project, since.",
+      "Screens that use YES or NO, and a trig held, keep them."
+    ]
+  }
+]

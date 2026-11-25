@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.13.0-experimental",
+    "date": "2026-11-07",
+    "changes": [
+      "The EXPRESSION page opens from SETTINGS > EXPRESSION; TRK + trig moves it to another track, and NO goes back.",
+      "Nothing changes until you switch it on: THRU and BEND start OFF. Save a preset with them ON as your default to start that way.",
+      "The power-on file is written only while the sequencer is stopped, so a write never lands in playback.",
+      "Installs beside Digi Perform."
+    ]
+  }
+]

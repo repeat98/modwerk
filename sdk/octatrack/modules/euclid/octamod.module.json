@@ -1,0 +1,491 @@
+{
+  "schemaVersion": 2,
+  "id": "euclid",
+  "key": "EUCLID",
+  "name": "Euclid",
+  "version": "0.1.5-experimental",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "name": "Jannik Aßfalg",
+    "credits": [
+      "Jannik Aßfalg",
+      "octabam: Sam Banks; additional source attribution in SDK THIRD_PARTY.md"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "RHYTHMIC FILTER",
+    "family": "Sequencing",
+    "summary": "Euclidean rhythms for filters and amplitude.",
+    "overview": "Euclidean rhythms drive filter cutoff or amplitude. Set the number of steps and pulses, rotate the pattern, and shape each movement with the envelope controls. Euclid automatically follows the swing amount and selected swing steps of its audio track, including changes made with SWING ALL.",
+    "highlights": [
+      "Step, pulse and rotation controls",
+      "LP, BP, HP, notch and amplitude modes",
+      "Rhythmic filtering or amplitude movement",
+      "Follows track swing, including SWING ALL"
+    ],
+    "usage": [
+      "Set STEPS for the pattern length and PULSE for the number of evenly distributed events.",
+      "ROT rotates the rhythm and RATE sets its time grid. TYPE selects low-pass, band-pass, high-pass, notch or amplitude modulation.",
+      "FREQ sets the base cutoff, DEPTH controls movement and DEC / LEN shapes each event. AMP mode relabels these controls for level and amount.",
+      "Euclid automatically follows the swing amount and selected swing steps of its audio track, including changes made with SWING ALL.",
+      "Select the track, enter Grid Recording with REC, then open TRACK TRIG EDIT with FUNC+BANK and select SWING. Turn LEVEL for this track or hold FUNC while turning LEVEL for all tracks; 50% is straight timing."
+    ]
+  },
+  "controls": [
+    {
+      "name": "FREQ",
+      "default": 48,
+      "count": 128,
+      "doc": "Base filter cutoff or AMP level; cutoff is 30 Hz..15 kHz logarithmic",
+      "labels": null
+    },
+    {
+      "name": "RES",
+      "default": 48,
+      "count": 128,
+      "doc": "Filter resonance; inert for AMP",
+      "labels": null
+    },
+    {
+      "name": "DEPTH",
+      "default": 100,
+      "count": 128,
+      "doc": "Cutoff or gain modulation: negative/down, zero/static, positive/up",
+      "labels": null
+    },
+    {
+      "name": "DECAY",
+      "default": 48,
+      "count": 128,
+      "doc": "Envelope decay up to eight steps / gate length; inert for random",
+      "labels": null
+    },
+    {
+      "name": "STEPS",
+      "default": 15,
+      "count": 64,
+      "doc": "Euclidean cycle length 1..64 (stored as length minus one)",
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63",
+        "64"
+      ]
+    },
+    {
+      "name": "PULSE",
+      "default": 5,
+      "count": 65,
+      "doc": "Pulse count; values above STEPS are clamped to STEPS",
+      "labels": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63",
+        "64"
+      ]
+    },
+    {
+      "name": "ROT",
+      "default": 0,
+      "count": 64,
+      "doc": "Shift rhythm and captured values right, modulo STEPS",
+      "labels": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63"
+      ]
+    },
+    {
+      "name": "RATE",
+      "default": 1,
+      "count": 5,
+      "doc": "Division relative to the track speed; 1/16 = one track step",
+      "labels": [
+        "1/32",
+        "1/16",
+        "1/8",
+        "1/4",
+        "1/2"
+      ]
+    },
+    {
+      "name": "TYPE",
+      "default": 0,
+      "count": 5,
+      "doc": "Two-pole low/high/band/notch filter response, or amplitude modulation",
+      "labels": [
+        "LP",
+        "BP",
+        "HP",
+        "AMP",
+        "NOTCH"
+      ]
+    },
+    {
+      "name": "ATK",
+      "default": 0,
+      "count": 128,
+      "doc": "Attack / gate edge / random slew, 0..one step",
+      "labels": null
+    },
+    {
+      "name": "OUT",
+      "default": 0,
+      "count": 4,
+      "doc": "Pulse envelope, timed gate, random sample-and-hold, captured random",
+      "labels": [
+        "ENV",
+        "GATE",
+        "RAND",
+        "LOOP"
+      ]
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "Dry/wet; zero is exact passthrough, 127 fully wet (the input through the pulsed filter or amp)",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX1 / FX2",
+    "conflicts": [],
+    "limitations": [
+      "The source describes pattern, timing, changing-type and cutoff-sweep verification. No current hardware-load percentage or final storage measurement is claimed here."
+    ],
+    "effectId": 29
+  },
+  "resources": {
+    "recorded": "Source documentation",
+    "storage": {
+      "label": "Module storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "An exact code and runtime footprint is not published for this catalog revision.",
+      "source": "README.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "ColdFire modulation drives the filter/amplitude path. A comparable CPU/DSP utilization measurement is not available.",
+      "source": "README.md"
+    },
+    "impact": {
+      "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "ColdFire drives transport-synchronized rhythm, envelopes and control publication. This adds control work but not Tape Echo-style CPU sample processing, so relative CPU demand is estimated low; mode changes and modulation still matter.",
+        "source": "README.md"
+      },
+      "dsp": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "The dedicated AMP mode uses about 462 host instructions per 16-sample block compared with about 2,276 for the described filter path. The filter updates under a moving cutoff still add work, so Moderate conservatively covers the more expensive modes. These counts do not establish hardware headroom.",
+        "source": "README.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "The README states DSP state is private to each instance and no audio buffer is allocated. Small rhythm/control state, code and tables remain; low is an estimate, not an exact total memory claim.",
+        "source": "README.md"
+      }
+    },
+    "cpuPrice": {
+      "value": 7.2,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-18",
+      "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 43.5 % installed and used nowhere, 48.2 % on T1 FX2; CPU meter 59.5 % before, 61.8 % at rest, 64.9 % in use.",
+      "source": "evidence/cpu-price.json"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "PLAY and resume reset the clock with audio interrupts masked, restore the full prior status register, and publish initialized after every clock field. Current-build hardware and chip timing are not measured. Software verification is recorded in TESTING.md.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "tools/verify/verify_euclid.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module sources retain upstream authorship and permissive licences. See ../../THIRD_PARTY.md for component-specific credits and terms. No rights or hardware qualification are newly asserted by this import. Original OT LCD captures are declared in media/LICENSE.md as LicenseRef-OT-UI-Documentation; underlying Elektron rights remain reserved. Reviewer verification is required before publication and is not automatic legal clearance."
+  },
+  "media": [
+    {
+      "path": "media/ot-controls-monochrome.png",
+      "captureType": "emulator",
+      "caption": "Euclid main controls in its default filter/envelope mode: FREQ, RES, DEPTH, DEC, STEPS and PULSE.",
+      "alt": "Euclid main controls in its default filter/envelope mode: FREQ, RES, DEPTH, DEC, STEPS and PULSE.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "0186288f6fa4059fec7df0d1f1b9aec0ce67a79d7ed201dcf7ad37457edced0f",
+        "setup": "Reviewed headless ot_emu; MKII panel; unchanged approved Euclid native source; dedicated Euclid-only FX2 chooser and stock FX1 rows; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6 in monochrome. See docs/fx-capture.md."
+      }
+    },
+    {
+      "path": "media/ot-setup-monochrome.png",
+      "captureType": "emulator",
+      "caption": "Euclid selected in FX2 SETUP: ROT, RATE, TYPE, ATK, ENV output mode and MIX.",
+      "alt": "Euclid selected in FX2 SETUP: ROT, RATE, TYPE, ATK, ENV output mode and MIX.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "0186288f6fa4059fec7df0d1f1b9aec0ce67a79d7ed201dcf7ad37457edced0f",
+        "setup": "Reviewed headless ot_emu; MKII panel; unchanged approved Euclid native source; dedicated Euclid-only FX2 chooser and stock FX1 rows; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6 in monochrome. See docs/fx-capture.md."
+      }
+    },
+    {
+      "path": "media/ot-swing-track.png",
+      "captureType": "emulator",
+      "caption": "Track swing: REC enables Grid Recording; FUNC+BANK opens TRACK TRIG EDIT. Select SWING and turn LEVEL for this track. Euclid follows its track's swing amount and selected swing steps.",
+      "alt": "Octatrack TRACK TRIG EDIT with SWING selected on track 1 and SWING TR1:62 displayed.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TRIG EDIT / SWING",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+        "setup": "Reviewed headless ot_emu; MKII panel; verified unmodified stock 1.40C MAIN OS; empty scratch card; transport stopped; Grid Recording enabled on T1. Actual 128x64 LCD pixels at integer scale 6. This shared stock swing menu configures the track timing followed by Euclid; no Euclid runtime was loaded for these stock-menu captures. See docs/swing-capture.md."
+      }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "Owner-supplied modpad.wav at 128 BPM. An eight-bar middle excerpt (22.5–37.5 s) leaves both render-error ends out and preserves the supplied modulation and decay. Peak adjusted with short edge fades; no added gaps or DSP. Recording setup and module version were not supplied; this clip adds no hardware qualification.",
+      "alt": "A flowing Euclid pad phrase at 128 BPM from the middle of the supplied recording.",
+      "credit": "Audio supplied by repeat98; excerpt preparation by Modwerk contributors.",
+      "license": "LicenseRef-Owner-Provided-Audio-Permission",
+      "source": "original"
+    }
+  ],
+  "access": {
+    "location": "Audio track FX1 or FX2 SETUP: Euclid in the effect chooser. These captures use FX2.",
+    "steps": [
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press FX1 or FX2 to open that effect slot's SETUP.",
+      "Turn LEVEL to Euclid and press YES to assign it.",
+      "Press the same FX key to close SETUP for FREQ, RES, DEPTH, DEC, STEPS and PULSE.",
+      "Hold FUNC and press that FX key again for ROT, RATE, TYPE, ATK, output mode and MIX. Labels change with TYPE and output mode."
+    ],
+    "screenshots": [
+      "media/ot-controls-monochrome.png",
+      "media/ot-setup-monochrome.png",
+      "media/ot-swing-track.png"
+    ]
+  },
+  "source": {
+    "repository": "https://github.com/sambanks/octabam",
+    "revision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+    "path": "modules/euclid"
+  }
+}

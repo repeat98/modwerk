@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "identity": "0c92aa45c2148caa5152f46b809dade8f43db323a599641f6c777f8f43dd1a5e",
+  "identity": "3ece243b6267198c6c300ae248e32a8c815d437b8a35659c5e474cea95560452",
   "package": "core-0.7.elemod",
   "sections": {
     ".boot": 94,
-    ".run": 27007,
-    ".bss": 68164
+    ".run": 33006,
+    ".bss": 4172
   },
-  "sites": 63,
+  "sites": 70,
   "built": {
     "kit": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40",
     "toolchain": {
@@ -16,5 +16,10 @@
       "binutils": "2.47"
     },
     "stock": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123"
+  },
+  "variants": {
+    "send-bus": "3ece243b6267198c6c300ae248e32a8c815d437b8a35659c5e474cea95560452",
+    "voices": "dd771eae8bd9397d074d53e85de5a4ab63f9763facec664ff5e52fcc67d47b03",
+    "plain": "1c14b6b058d473ca20ba93a128ca39fe74a69f0b08603ca566ee0300933713b6"
   }
 }

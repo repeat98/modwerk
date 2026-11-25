@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "module": "screen-off",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "19ca6dfce558328e17fc2157261204316cccd328709cbd50223e37895372ec95",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 25033,
+    "budget": 26600000,
+    "method": "ot_emu executed instructions from so_draw entry to its rts, interrupts included, on development twin 878307834ad3c23a (MAIN.raw, not a unit). Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c. One UP+NO set off to 1. Of 45 draws, 12 returned in 10 instructions while the blank was still off, 26 cleared the 1024-byte frame in 6157 with no interrupt inside the draw, and the dearest was 25033, the same clear with an interrupt inside it. An earlier run on the same image peaked at 25033 as well."
+  },
+  "stress": {
+    "events": 20,
+    "playing": true,
+    "hangs": 0,
+    "method": "ot_emu --dsp --dsp-rt, development twin 878307834ad3c23a, set OCTABAM, project ONEAUX, pattern 0, internal clock. Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c. YES cleared SET DATE/TIME. PLAY set transport 0x800065b8 to 1. Ten UP+NO chords while it stayed 1 took toggles from 0 to 10, STOP cleared it, PART+RIGHT changed the Part byte from 0 to 1, PLAY set the transport to 1, and ten more chords took toggles to 20. The diagnostic log at 0x100fc000 stayed at 3 incidents (start, base, set), crash_seen 0, stall_seen 0, freeze_state 0. The trial was not kept."
+  }
+}

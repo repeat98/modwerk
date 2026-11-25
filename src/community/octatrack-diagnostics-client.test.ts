@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { LinkDiagnostic, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { OctatrackLink, RECONNECT_WAIT_MS, type LinkDiagnostic } from '../engine/elekloader/octatrack-link'
+import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
 import { collectOctatrackDiagnostics, changeDiagnosticSharing, diagnosticPreference } from './octatrack-diagnostics'
 import { api, apiFetch, post } from './api'
 import { countOctatrackAction } from './usage'
@@ -16,7 +17,7 @@ afterEach(()=>{cleanup?.();cleanup=undefined;vi.useRealTimers()})
 async function fixture() {
   let listener:((event:LinkDiagnostic)=>void)|undefined
   const health=vi.fn(async()=>({state:2,failed:0,modules:2,dsp:2,intact:2,ran:2,cpu:300,tracks1to4:200,tracks5to8:200,frameGap:47900,saved:7,savedCount:2,live:2,culprit:0,refusal:0}))
-  const link={subscribeDiagnostics:(fn:(event:LinkDiagnostic)=>void)=>{listener=fn;return()=>{listener=undefined}},health,getState:()=>({status:'ready',identity:{base:'a'.repeat(64),canSubmit:true},active:'b'.repeat(64)})} as unknown as OctatrackLink
+  const link={subscribe:()=>()=>{},subscribeDiagnostics:(fn:(event:LinkDiagnostic)=>void)=>{listener=fn;return()=>{listener=undefined}},health,getState:()=>({status:'ready',identity:{base:'a'.repeat(64),canSubmit:true},active:'b'.repeat(64)})} as unknown as OctatrackLink
   cleanup=collectOctatrackDiagnostics('member',link,()=>({moduleIds:['everb'],removedStockFx:[]}))
   await vi.advanceTimersByTimeAsync(0)
   return {health,emit:(event:LinkDiagnostic)=>listener?.(event)}
@@ -28,7 +29,51 @@ describe('beta diagnostic collection',()=>{
     emit({event:'sync_failed',phase:'sending',error:'device',refusal:3})
     await vi.advanceTimersByTimeAsync(30000)
     expect(health).not.toHaveBeenCalled();expect(apiFetch).not.toHaveBeenCalled()
-    expect(countOctatrackAction).toHaveBeenNthCalledWith(1,'usb_sync_started');expect(countOctatrackAction).toHaveBeenNthCalledWith(2,'usb_sync_failed')
+    expect(countOctatrackAction).toHaveBeenNthCalledWith(1,'usb_sync_started');expect(countOctatrackAction).toHaveBeenNthCalledWith(2,'usb_sync_failed','refused-3')
+  })
+  it.each([
+    ['keep', undefined], ['undo', undefined], ['timeout', 'timeout'], ['ended', 'closed'],
+    ['other trial', 'mismatch'], ['no interface', 'unreadable'], ['lost again', 'lost-again'], ['unplug', undefined],
+  ] as const)('counts the final sync outcome and reports a failed reconnect on %s', async (outcome, reconnect) => {
+    vi.useRealTimers()
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
+    cleanup = collectOctatrackDiagnostics('member', link, () => undefined)
+    const stop = link.start()
+    try {
+      await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+      expect(await changeDiagnosticSharing(true)).toBe(true)
+      await link.update('module', [{ module: 'module', data: new Uint8Array(4000), reconnects: outcome !== 'unplug' }])
+      expect(link.getState().status).toBe('trial')
+      unit.orphan = link.getState().active ?? undefined
+      if (outcome === 'timeout') vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      unit.unplug()
+      if (outcome !== 'unplug') {
+        expect(vi.mocked(countOctatrackAction).mock.calls).toEqual([['usb_sync_started']])
+        if (outcome === 'timeout') await vi.advanceTimersByTimeAsync(RECONNECT_WAIT_MS)
+        else {
+          if (outcome === 'ended') unit.orphan = undefined
+          if (outcome === 'other trial') unit.orphanTransaction = 8
+          unit.taken = outcome === 'lost again'
+          unit.plug(outcome === 'no interface' ? 'stock' : 'base')
+          if (outcome === 'lost again') {
+            await vi.waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([, options]) =>
+              JSON.parse(String(options?.body)).data.failure === 'claim-failed')).toBe(true))
+            unit.unplug()
+          }
+          await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+          if (outcome === 'keep') await link.keep()
+          if (outcome === 'undo') await link.undo()
+        }
+      }
+      const terminal = outcome === 'keep' ? ['usb_sync_kept'] : outcome === 'undo' ? ['usb_sync_undone'] : ['usb_sync_failed', 'disconnected']
+      expect(vi.mocked(countOctatrackAction).mock.calls).toEqual([['usb_sync_started'], terminal])
+      const failures = () => vi.mocked(apiFetch).mock.calls.map(([, options]) => JSON.parse(String(options?.body)).data)
+        .filter(event => event.event === 'sync_failed')
+      if (reconnect) await vi.waitFor(() => expect(failures()).toEqual([expect.objectContaining({
+        phase: 'trial', error: 'disconnected', step: 'trial', reconnect, base: unit.base,
+      })]))
+      else expect(failures()).toEqual([])
+    } finally { stop() }
   })
   it('collects numeric status after consent and stops on remote revocation',async()=>{
     const {health}=await fixture();await changeDiagnosticSharing(true)
@@ -95,6 +140,20 @@ describe('beta diagnostic collection',()=>{
     await vi.advanceTimersByTimeAsync(30000)
     emit({event:'sync_started',phase:'sending'})
     expect(health).not.toHaveBeenCalled();expect(apiFetch).not.toHaveBeenCalled();expect(diagnosticPreference().enabled).toBe(false)
+  })
+  it('reads the choice once without a connected unit, and again when the tab comes back into view',async()=>{
+    const page=Object.assign(new EventTarget(),{visibilityState:'hidden'});vi.stubGlobal('document',page)
+    const link={subscribe:()=>()=>{},subscribeDiagnostics:()=>()=>{},getState:()=>({status:'idle'})} as unknown as OctatrackLink
+    cleanup=collectOctatrackDiagnostics('member',link,()=>undefined)
+    await vi.advanceTimersByTimeAsync(10*30000)
+    expect(api).toHaveBeenCalledTimes(1)
+    page.dispatchEvent(new Event('visibilitychange'));await vi.advanceTimersByTimeAsync(0)
+    expect(api).toHaveBeenCalledTimes(1)
+    page.visibilityState='visible';page.dispatchEvent(new Event('visibilitychange'));await vi.advanceTimersByTimeAsync(0)
+    expect(api).toHaveBeenCalledTimes(2)
+    cleanup();cleanup=undefined;page.dispatchEvent(new Event('visibilitychange'));await vi.advanceTimersByTimeAsync(0)
+    expect(api).toHaveBeenCalledTimes(2)
+    vi.unstubAllGlobals()
   })
   it('requires the consent account to match the rendered member before collecting',async()=>{
     vi.mocked(api).mockResolvedValue({...consent(),accountId:'another',enabled:true} as never)

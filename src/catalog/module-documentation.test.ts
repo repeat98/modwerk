@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { deflateSync } from 'node:zlib'
-import { parseModuleDocument, requireModuleQualificationForPublication } from './module-contract'
+import { parseModuleDocument, requireModuleQualificationForPublication, requireModuleUiForPublication } from './module-contract'
 import { requireCompleteReadme, requireMonochromePng, REQUIRED_README_SECTIONS } from '../../scripts/module-documentation.mjs'
 import { qualificationFixture, qualificationMedia, qualificationReadme, qualificationPng } from './test-fixtures/qualification'
 import example from '../../public/module-repository.example.json'
@@ -27,6 +27,19 @@ describe('release documentation gates',()=>{
     for(const change of [{...docs,tutorial:{...docs.tutorial,steps:docs.tutorial.steps.slice(0,2)}},{...docs,screenshots:[]},{...docs,screenshots:['media/ui.png','media/ui.png']},{...docs,screenshotStyle:'yellow'},undefined]) expect(()=>parse(change)).toThrow()
     const bad=document();bad.tests.qualification!.documentation.screenshots=['media/missing.png']
     expect(()=>requireModuleQualificationForPublication(bad)).toThrow('declared in media')
+  })
+  it('lets a module that draws nothing give access.noUiReason in place of screenshots, at any location, and still needs the tutorial',()=>{
+    const docs={...qualificationFixture().documentation,screenshots:[]}
+    const noUi={...example,controls:[],compatibility:{...example.compatibility,effectId:null,location:'Project sequencer',uiClaims:['key:TRIG+A']},access:{location:'The tempo LED, while the sequencer plays',steps:['Press PLAY and watch the tempo LED.'],screenshots:[],noUiReason:'It draws nothing: the tempo LED turns green on the pattern\'s first step.'},media:[],tests:{...example.tests,hardwareStatus:'verified',qualification:{...qualificationFixture(),documentation:docs}}}
+    const parsed=parseModuleDocument(noUi)
+    expect(()=>requireModuleUiForPublication(parsed)).not.toThrow()
+    expect(()=>requireModuleQualificationForPublication(parsed)).not.toThrow()
+    expect(()=>requireCompleteReadme(parsed,qualificationReadme.replace('![Synthetic test LCD](media/ui.png)','It draws nothing, so there are no screenshots.'))).not.toThrow()
+    const {noUiReason:_reason,...access}=noUi.access
+    expect(_reason).toBeTruthy()
+    expect(()=>parseModuleDocument({...noUi,access})).toThrow('real documentation screenshots')
+    for(const draws of [{controls:example.controls},{compatibility:{...noUi.compatibility,uiClaims:['key:TRIG+A','screen:TEMPO']}},{compatibility:{...noUi.compatibility,effectId:10}}]) expect(()=>parseModuleDocument({...noUi,...draws})).toThrow('no dedicated OT UI')
+    expect(()=>parseModuleDocument({...noUi,tests:{...noUi.tests,qualification:{...noUi.tests.qualification,documentation:{...docs,tutorial:{...docs.tutorial,steps:docs.tutorial.steps.slice(0,2)}}}}})).toThrow('three practical tutorial steps')
   })
   it('accepts real grayscale/RGB/RGBA PNG representations and all standard row filters',()=>{
     expect(()=>requireMonochromePng(qualificationPng)).not.toThrow()

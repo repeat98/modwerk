@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-fill-trig-condition",
+  "version": "0.2.0-experimental",
+  "date": "2026-11-04",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7, as Quick Trig Conditions (was Quick Fill Trig Condition). With a trig held in GRID RECORDING, FILL steps FILL, NOT FILL and no lock; UP steps a ratio's first number and DOWN its second, 1:2 to 8:8."
+  ],
+  "runtimeSourceSha256": "8dc0f988998de93a3a33ffd3640a4c03b2a50c46d6ac395d7971c3e0b8bc89a5",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-fill-trig-condition/quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod",
+      "sha256": "0480e613140879da6d728c63b990113f080f98d0c12a543f0d03e22049ec1772"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-fill-trig-condition/TESTING.md",
+  "requires": []
+}

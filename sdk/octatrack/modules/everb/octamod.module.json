@@ -1,0 +1,331 @@
+{
+  "schemaVersion": 2,
+  "id": "everb",
+  "key": "EVERB",
+  "name": "E-Verb",
+  "version": "0.1.2-experimental",
+  "category": "effects",
+  "author": {
+    "github": "user1303836",
+    "credits": [
+      "user1303836",
+      "Design after Tom Erbe, “Building the Erbe-Verb”, ICMC 2015 (CC BY 3.0); not affiliated with Make Noise",
+      "octabam builder: Sam Banks; additional source attribution in SDK THIRD_PARTY.md"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "MODULATED SPACE",
+    "family": "Reverb",
+    "summary": "A modulated feedback-delay reverb after the Erbe-Verb: size, decay past 100 %, absorb, chorus, grains, shimmer, reverse and tilt.",
+    "overview": "Four delay lines with diffusing allpasses, absorbing low-passes and a soft-saturating decay feed each other through a Hadamard matrix at 22.05 kHz. DPTH sweeps from a cyclic chorus through random ergodic grains into octave shimmer; REV plays the pre-delay backwards; EDCY and ESIZ route the reverb's own envelope into decay and size. The dry signal is never processed.",
+    "highlights": [
+      "Size from a 2 ms box to a 143 ms hall, gliding without zipper noise",
+      "Decay up to 120 %: sustains and saturates above about 106",
+      "Cyclic, ergodic and shimmer modulation on one bipolar knob, with its speed beside it",
+      "Reverse pre-delay, tilt EQ and envelope-to-decay/size routings",
+      "MIX 0 is the exact dry signal"
+    ],
+    "usage": [
+      "Choose E-Verb in FX2 SETUP: hold FUNC, press FX2, turn LEVEL to the end of the list and press YES.",
+      "On the main page, MIX (encoder F) sets dry/wet; SIZE, DCY and ABSB shape the space; DPTH left is chorus, right is grains, the last sixteen steps are shimmer; SPD sets how fast it moves. Hold FUNC while turning a knob to jump between 0, the centre (64) and 127.",
+      "On the SETUP page, TILT darkens or brightens the wet, PRE sets the pre-delay, REV reverses it, and EDCY/ESIZ send the reverb's envelope into DCY and SIZE.",
+      "The six main-page knobs take parameter locks, LFOs, scenes and MIDI CC like any stock effect's; the SETUP knobs are set per Part."
+    ]
+  },
+  "controls": [
+    {
+      "name": "SIZE",
+      "default": 64,
+      "count": 128,
+      "doc": "Scales every delay and allpass over six octaves: the longest line runs 2.2 ms at 0, 18 ms at 64 and 143 ms at 127. Moving it glides the pitch of the tail, smoothed per frame.",
+      "labels": null
+    },
+    {
+      "name": "DCY",
+      "default": 64,
+      "count": 128,
+      "doc": "Reflection gain from 0 to 120 %. Below about 106 the tail decays (short at 40, minutes at 100 with large sizes); above, it sustains and the in-loop saturation holds the level.",
+      "labels": null
+    },
+    {
+      "name": "ABSB",
+      "default": 60,
+      "count": 128,
+      "doc": "0..38 adds diffusion (allpass gain up to 0.8); 38..127 adds damping inside the loop, darker and shorter.",
+      "labels": null
+    },
+    {
+      "name": "DPTH",
+      "default": 64,
+      "count": 128,
+      "doc": "Bipolar modulation, 0 at the centre. Left: cyclic chorus/doppler. Right: ergodic grains to +47; from +48 a growing share of grains glides up an octave (shimmer), about half at +56.",
+      "labels": null
+    },
+    {
+      "name": "SPD",
+      "default": 64,
+      "count": 128,
+      "doc": "Modulation speed 0.5 Hz to 256 Hz (about 12 Hz at 64): the cyclic rate or the grain rate; in the shimmer zone SIZE sets the grain length.",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 51,
+      "count": 128,
+      "doc": "Equal-power dry/wet. 0 is exactly the dry input; 127 is all reverb.",
+      "labels": null
+    },
+    {
+      "name": "TILT",
+      "default": 64,
+      "count": 128,
+      "doc": "SETUP A. Bipolar wet tone. Left: lows below 250 Hz up to +12 dB, highs down (about -14 dB at 9 kHz). Right: highs above 2 kHz up to +24 dB, lows down 3 to 5 dB. Centre is flat. Not lockable (SETUP page).",
+      "labels": null
+    },
+    {
+      "name": "PRE",
+      "default": 25,
+      "count": 128,
+      "doc": "SETUP B. Pre-delay 7 ms at 0, 42 ms at 64, 227 ms from 124 to 127 (up to 250 ms before 0.1.2); with REV on, the reverse window (at least 42 ms). Not lockable (SETUP page).",
+      "labels": null
+    },
+    {
+      "name": "REV",
+      "default": 0,
+      "count": 2,
+      "doc": "SETUP C. Plays the pre-delay buffer backwards in crossfaded windows; a change ducks, switches in silence and reopens without a click. Not lockable (SETUP page).",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "EDCY",
+      "default": 64,
+      "count": 128,
+      "doc": "SETUP D. Bipolar: the reverb's envelope into DCY. Left reins the tail in when loud; right rings longer when loud, up to the decay of DCY 95, never into sustain (no effect from DCY 96 up). Centre is off. Not lockable (SETUP page).",
+      "labels": null
+    },
+    {
+      "name": "ESIZ",
+      "default": 64,
+      "count": 128,
+      "doc": "SETUP E. Bipolar: the reverb's envelope into SIZE. Left shrinks the space when loud; right grows it. Centre is off. Not lockable (SETUP page).",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX2",
+    "conflicts": [],
+    "limitations": [
+      "0.1.1 and 0.1.2 have not run on hardware. 0.1.1 changed only FUNC + turn on SIZE, DCY, ABSB and SPD (four descriptor bytes); 0.1.2 shortens the DSP ring to 15,870 words and caps the pre-delay at 227 ms from PRE 124 (issue #696), measured on the DSP emulator. The owner's MKII report (working sound, two distinct simultaneous T1/T5 instances, Part/project save and reload, physical reboot) is for 0.1.0 on EVRB01T01. MKI, maximum-load silicon timing and broader hardware modulation/recovery tests remain unverified.",
+      "FX2 only: the effect needs the 16K-word delay buffer the OS gives FX2 instances. It uses the first 15,870 words and leaves the last 514 (+$3DFE..+$3FFF) to Sidechain Compressor's cross-core key window on T3 and T7 (issue #696).",
+      "Projects saved with 0.1.1 store the same knob values and should sound the same unless PRE is 124 or higher; those settings now play 227 ms (they gave 230 to 250 ms). Reloading a 0.1.1 project into 0.1.2 is not tested.",
+      "With stock DSP code built in, E-Verb's 1,602 words take the space of two FX2-only stock reverbs. On its own it gives up SPRING REV and DARK REV: they leave the FX2 chooser, and a saved project that uses either on FX2 plays that slot dry. PLATE REV and every other stock effect stay. Other modules in the same build can change the choice.",
+      "The SETUP page (TILT, PRE, REV, EDCY, ESIZ) is not lockable: the OS keeps parameter locks, LFO, scene and CC targets for the six main-page knobs of an FX slot only.",
+      "Dearer than any stock effect: up to 376 executed instructions per sample without trig splits (SPRING REV 258, DJ EQ 293) and 382 with them (SPRING REV 314, DJ EQ 331). Four per core fit the static budget; real-chip headroom beside heavy FX1 effects is not measured.",
+      "A sustained full-scale tone on a room resonance can clip at high MIX, and TILT far right or a sustaining DCY can clip the wet at the tank rate; DCY above about 106 sustains and saturates by design.",
+      "No tempo sync: as on the hardware and the stock reverbs, SPD is in Hz and PRE in milliseconds."
+    ],
+    "effectId": 27
+  },
+  "resources": {
+    "recorded": "2026-10-09",
+    "storage": {
+      "label": "DSP program / buffer",
+      "display": "1,602 words / 15,870-word ring",
+      "value": null,
+      "unit": "see display",
+      "method": "static",
+      "conditions": "1,602 assembled program words on each DSP core, placed in the space of SPRING REV and DARK REV with 435 words to spare before PLATE REV's helper; a 132-word X state block per instance; the first 15,870 of the 16,384 Y words the OS already allocates to every FX2 instance.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "DSP instruction peak",
+      "display": "382 instructions/sample per instance",
+      "value": null,
+      "unit": "see display",
+      "method": "emulator",
+      "conditions": "benchmark_stock_dsp.py's method (one instance per core, 16-sample blocks, null stub subtracted) with the stock effects run through the same cases: worst case at the dearest settings with a trig split, 381.7 (375.8 unsplit). Static loop count 468 cycles/sample. Executed instructions, not chip cycles.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One active instance at its dearest settings (SIZE 0, DPTH 127, REV on) with moving controls and trig splits; the 16K buffer is the stock FX2 allocation, reused.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No ColdFire code: the stock parameter pages publish the knobs, as for any FX2 effect.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "high",
+        "basis": "measured-comparison",
+        "rationale": "381.7 executed instructions/sample worst case with trig splits, against 314.2 for SPRING REV and 330.9 for DJ EQ (the dearest stock effect) under the same cases; the full-call software bound for four per core is 47,680 of 49,920 modeled cycles per 16-frame block. Chip timing is unmeasured.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "1,602 program words per core in two given-up stock reverbs' space, a 132-word X block per instance, and 15,870 words of the 16K-word FX2 delay buffer every reverb already gets.",
+        "source": "TESTING.md"
+      }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-18",
+      "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.8 % before, 60.6 % at rest, 61.2 % in use.",
+      "source": "evidence/cpu-price.json"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "0.1.2 stops E-Verb's delay ring at 15,870 words (modulus $3dfd), so on T3 and T7 it no longer writes or reads Sidechain Compressor's cross-core key window in the last 514 words of the FX2 buffer (issue #696). The 499 words come off the top of the pre-delay: PRE 124 to 127 now all give 227 ms. A new verify.py gate fails 0.1.1 (514 of 514 window words written on both cores) and passes 0.1.2 (none written or read; the frame loop reaches +$3DFD). Every tested setting with PRE at 123 or below renders bit-identically to 0.1.1, and the 27 earlier gates print 0.1.1's output except the placement lines (1,602 words) and PRE 127's onset. The matched benchmark reproduces 0.1.1's figures, a 2 s stress run with eight instances has no hang, stray write or clobber, the captures are byte-identical and FUNC stops pass on the 0.1.2 image. TESTING.md records where the zipper and DPTH-lock gates, unchanged, would also flag 0.1.1 at other alignments or seeds. Hardware evidence is the owner's MKII audition of 0.1.0 (EVRB01T01); 0.1.1 and 0.1.2 have not run on hardware.",
+    "hardwareStatus": "historical",
+    "evidenceRevision": "1ba324004b56b0a051b8f01d06c41f39bb08626b",
+    "gates": [
+      "verify.py: source and init rules, static cycles, native placement, exact dry, reverb laws, idle, eight-instance isolation (-guard -dirty), garbage start, zipper census, trig splits, REV switching, DPTH locks, EDCY latch, FUNC editor words in the built descriptor, Sidechain Compressor's key window on T3 and T7 never written or read",
+      "func_stops.py: FUNC + turn on all six main-page knobs in ot_emu stops at 0, 64 and 127; once a FUNC turn has settled, a plain turn still moves one step per detent",
+      "evidence/performance.json: perf:audit (static, stock benchmark under matched cases; stress 32 s on 0.1.0, 2 s on 0.1.2)",
+      "npm run fx:audit at the dearest settings, the defaults and each modulation mode",
+      "Hardware: 0.1.1 and 0.1.2 not run; owner-reported MKII functional audition of 0.1.0 on EVRB01T01, detailed coverage in evidence/owner-hardware.md."
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select an audio track, hold FUNC and press FX2, turn LEVEL to E-Verb at the end of the list and press YES.",
+          "Press FX2 to open the main page, turn encoder F (MIX) to 100 and play a sample: the reverb follows each hit. Turn encoder D (DPTH) to +56 for grains with a rising octave shimmer.",
+          "Turn MIX back to 0 to hear the exact dry signal, or set FX2 back to DELAY or NONE in FX2 SETUP to remove the effect."
+        ]
+      },
+      "screenshots": [
+        "media/ot-setup.png",
+        "media/ot-mix.png",
+        "media/ot-depth.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code and documentation by user1303836 under MIT. The design follows Tom Erbe's ICMC 2015 paper (CC BY 3.0), credited, not copied; no code, constants or tables from another reverb. Not affiliated with Make Noise. No Elektron firmware, extracted routines or tables."
+  },
+  "media": [
+    {
+      "path": "media/ot-setup.png",
+      "captureType": "emulator",
+      "caption": "Hold FUNC and press FX2, turn LEVEL to E-Verb at the end of the effect list and press YES. The SETUP page then shows TILT, PRE and REV above EDCY and ESIZ.",
+      "alt": "FX2 SETUP with E-Verb highlighted at the end of the effect list; knobs TILT, PRE and REV above EDCY and ESIZ.",
+      "credit": "user1303836 (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "6f2cdb56a8787456a8137c58f97df2a24df4173b68abc83cd7046d9015256020",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-main.png",
+      "captureType": "emulator",
+      "caption": "The FX2 main page at the defaults: SIZE, DCY and ABSB on encoders A-C, DPTH, SPD and MIX on D-F. All six take locks, LFOs and scenes.",
+      "alt": "FX2 main page of E-Verb with SIZE, DCY and ABSB above DPTH, SPD and MIX, all at their defaults.",
+      "credit": "user1303836 (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "6f2cdb56a8787456a8137c58f97df2a24df4173b68abc83cd7046d9015256020",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-mix.png",
+      "captureType": "emulator",
+      "caption": "Press FX2 for the main page and turn encoder F (MIX) to 100: mostly reverb. MIX 0 is the exact dry signal.",
+      "alt": "FX2 main page with SIZE, DCY and ABSB above DPTH, SPD and MIX; MIX shows 100.",
+      "credit": "user1303836 (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "6f2cdb56a8787456a8137c58f97df2a24df4173b68abc83cd7046d9015256020",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-depth.png",
+      "captureType": "emulator",
+      "caption": "Turn encoder D (DPTH) right to +56: random grains with a rising octave shimmer. Left of 0 gives a chorus; 0 is no modulation. SPD on encoder E sets the pace.",
+      "alt": "FX2 main page with DPTH at +56 and MIX at 100.",
+      "credit": "user1303836 (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "6f2cdb56a8787456a8137c58f97df2a24df4173b68abc83cd7046d9015256020",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-reverse.png",
+      "captureType": "emulator",
+      "caption": "On the SETUP page (FUNC + FX2), encoder C turns REV ON: the pre-delay plays backwards, so hits swell in. PRE (encoder B) sets the window.",
+      "alt": "FX2 SETUP with E-Verb selected and REV showing ON.",
+      "credit": "user1303836 (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "6f2cdb56a8787456a8137c58f97df2a24df4173b68abc83cd7046d9015256020",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "Legowelt Juno 106 chord: dry (0 s), long bright hall (0.9 s; SIZE 110, DCY 100, ABSB 20, MIX 95), sustaining shimmer (5.4 s; DCY 127, ABSB 5, DPTH +52, MIX 110). 11.4 s, no added gaps; tails edited short. First-hit RMS matched (80 ms). Rendered offline on a computer through E-Verb 0.1.1, not recorded on an Octatrack.",
+      "alt": "A bright Legowelt chord opens into a long hall and a sustaining shimmer.",
+      "credit": "Legowelt — 106 Synth Chord Blue Synth 2.wav. Modwerk contributors (offline processing).",
+      "license": "LicenseRef-Legowelt-Juno106-Sample-Permission",
+      "source": "https://legowelt.org/samples/"
+    }
+  ],
+  "access": {
+    "location": "Audio track FX2 SETUP: E-Verb at the end of the effect chooser.",
+    "steps": [
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press FX2 to open FX2 SETUP.",
+      "Turn LEVEL to E-Verb at the end of the list and press YES to assign it; the SETUP knobs TILT, PRE, REV, EDCY and ESIZ appear on the right.",
+      "Press FX2 for the main page: SIZE, DCY, ABSB above DPTH, SPD, MIX."
+    ],
+    "screenshots": [
+      "media/ot-setup.png",
+      "media/ot-main.png",
+      "media/ot-mix.png",
+      "media/ot-depth.png",
+      "media/ot-reverse.png"
+    ]
+  }
+}

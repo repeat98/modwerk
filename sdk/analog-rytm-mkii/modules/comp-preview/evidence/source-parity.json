@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "tool": "scripts/verify-elemod-source-parity.mjs",
+  "note": "Modwerk's compiled package for this folder (modwerk-source-tools: m68k-elf GCC 16.2.0, binutils 2.47), materialised against the owner's stock OS 1.74 and linked with elekloader's released core-ar2 0.7 (the core Modwerk's base is built from), compared with the same core linked with rytm2_mods v1.3's release object comp-preview-1.1-os1.74.elemod. Firmware stayed local; only hashes are recorded.",
+  "stock": {
+    "1.74": {
+      "syxSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+      "mainSha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b"
+    }
+  },
+  "testedBuilds": {},
+  "sourceSha256Method": "sha256 of `sha256sum src/calib.inc src/comp-preview.s` output (manifest evidence.sourceSha256)",
+  "cases": [
+    {
+      "machine": "analog-rytm-mkii",
+      "id": "comp-preview",
+      "release": "1.74",
+      "version": "1.1.0",
+      "compiler": {
+        "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+        "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+        "linker": "GNU ld (GNU Binutils) 2.47.20260726",
+        "node": "v24.21.0"
+      },
+      "artifactSha256": "fe630766350a57e12ae8a1ce46c4dac367267f0f54dc2616056f6b49bbc4ed10",
+      "authorObjectSha256": "0af33e7ceb3c6753d95c0c4ae790414959b93874224dd3a0765e8e8a024c79d6",
+      "ownSha256": "cf6463cbc654d159219c550c1d05bd6b4ba4695193fec4c5aa3857b8120c66ef",
+      "referenceSha256": "cf6463cbc654d159219c550c1d05bd6b4ba4695193fec4c5aa3857b8120c66ef",
+      "status": "byte-parity",
+      "sections": {
+        ".run": 3912
+      },
+      "referenceSections": {
+        ".run": 3912
+      },
+      "equalsTestedBuild": false,
+      "core": {
+        "id": "core",
+        "version": "0.7",
+        "release": "elekloader core-ar2-v0.7 (fb58292)",
+        "elemodSha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1"
+      }
+    }
+  ]
+}

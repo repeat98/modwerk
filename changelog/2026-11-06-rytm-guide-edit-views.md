@@ -1,0 +1,1 @@
+Docs: the Analog Rytm MKII guide no longer calls 0x401e2a54 and 0x401e2ee8 the FX track's performance and scene views. They are the edit views stock opens while a pad is held in PERF or SCNE mode, on any track; the FX track uses the pad tracks' views.

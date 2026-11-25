@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "digisophie-2026-11-08",
+  "about": "Modwerk source-only SOPHIE 1.2.0 packages for Digitakt I OS 1.53 and 1.54, compiled from the author’s v1.2.0 sources in sdk/digitakt/modules/digisophie for Core 2.1 and Machine Pages.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "digisophie-1.2.0-experimental-os1.53.elemod",
+      "sha256": "04a809dfdcafe1be7f057acb5db0d27aebacd601540bc574c7f7eace7135afbe",
+      "id": "digisophie",
+      "version": "1.2.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "MIT",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "145358feca4920de216ee59cbf2f64596c06daed",
+        "path": "sdk/imports/packages/digisophie/digisophie-1.2.0-experimental-os1.53.elemod"
+      },
+      "title": "SOPHIE",
+      "requires": [
+        "core",
+        "machine-pages"
+      ],
+      "conflicts": [],
+      "summary": "A metallic percussion machine with four models: FUSE, BOOM, PIPE and SHARD.",
+      "description": "Two-operator metallic percussion adaptation of Sophie with four distinct models. Its audio enters the normal Digitakt AMP, filter, mixer and sends; the source filter and drive are intentionally not ported.",
+      "category": "Synthesis",
+      "author": "digisophie contributors",
+      "needs_core": "2.1",
+      "on_unit": "Not tested on a unit yet. The author tested 1.1.13 on OS 1.53: one track runs without FAST AUDIO, two ran with it on; eight tracks are not claimed. 1.2.0 renders the same sound with a lighter loop, by the author’s static estimate."
+    },
+    {
+      "file": "digisophie-1.2.0-experimental-os1.54.elemod",
+      "sha256": "025675fc72ce15d9708fd5c4fd6f39dd1ae6aa1c9ea3624ec9641f26f9cf2ed7",
+      "id": "digisophie",
+      "version": "1.2.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "MIT",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "145358feca4920de216ee59cbf2f64596c06daed",
+        "path": "sdk/imports/packages/digisophie/digisophie-1.2.0-experimental-os1.54.elemod"
+      },
+      "title": "SOPHIE",
+      "requires": [
+        "core",
+        "machine-pages"
+      ],
+      "conflicts": [],
+      "summary": "A metallic percussion machine with four models: FUSE, BOOM, PIPE and SHARD.",
+      "description": "Two-operator metallic percussion adaptation of Sophie with four distinct models. Its audio enters the normal Digitakt AMP, filter, mixer and sends; the source filter and drive are intentionally not ported.",
+      "category": "Synthesis",
+      "author": "digisophie contributors",
+      "needs_core": "2.1",
+      "on_unit": "Not tested on a unit yet. The author tested 1.1.13 on OS 1.53: one track runs without FAST AUDIO, two ran with it on; eight tracks are not claimed. 1.2.0 renders the same sound with a lighter loop, by the author’s static estimate."
+    }
+  ]
+}
