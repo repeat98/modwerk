@@ -15,6 +15,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   approval:
+    # Only Modwerk publishes; every later job needs this one, so a fork that syncs main skips them all and mails no one.
+    if: github.repository == 'repeat98/modwerk'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
