@@ -202,12 +202,12 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans QPERF beside Live Rec Retrig Fix and Temp Save from its pinned source-only package on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
+  it('plans Improved Modulation (with QPER) beside Live Rec Retrig Fix and Temp Save from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'quick-velocity-aftertouch-assign', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7.1' },
       mods: [
         { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
-        { id: 'qperf', file: 'qperf-0.3.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3.0-experimental' },
+        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.4.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.4.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],

@@ -20,6 +20,11 @@
     },
     {
       "event": "ev_tick",
+      "fn": "qperf_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
       "fn": "quick_velocity_aftertouch_assign_tick",
       "order": 50
     },
@@ -32,11 +37,6 @@
       "event": "ev_key",
       "fn": "qperf_key",
       "order": 40
-    },
-    {
-      "event": "ev_tick",
-      "fn": "qperf_tick",
-      "order": 50
     },
     {
       "event": "ev_project",

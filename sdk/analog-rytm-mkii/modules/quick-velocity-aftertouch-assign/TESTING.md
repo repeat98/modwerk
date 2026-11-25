@@ -2,6 +2,23 @@
 
 The module was called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.4.0; since 0.5.0 it holds QPER Live Rec (`qperf`), whose own records follow at the end. The records keep the names they were written with.
 
+## 0.5.0: QPER Live Rec folded in (25 Nov 2026)
+
+QPER Live Rec 0.3.0's source moved in unchanged as `src/qperf.c` (only its header's name changed), with its hooks, three stock sites and claims; its tick still runs before this module's own, as when the two were separate (core-ar2 orders equal orders by module id). Nothing else in either part changed.
+
+rytm-emu (revision 2ac0f1f, ramboot build of `dtboot`), not hardware evidence:
+
+| Check | Result |
+| --- | --- |
+| QB01 (the published Improved Mod Assign 0.4.0 and QPER Live Rec 0.3.0 packages linked side by side, plain base 1c14b6b0) against QF01 and QF02 (this folder, the same base) | 14 screens byte-identical: the seven FIX/SAMPLER/LFO/SCENE captures, SCENE + REC, QPER held with a knob, QPER + YES, QPER + PLAY, and the two quick perf rec captures (cold boot, LIVE RECORDING, RECORD + YES and RECORD + NO) |
+| Free shared mod RAM | QB01 and QF02 both 94,136 bytes; the base alone 118,836, so the module takes 24,700 |
+| The screenshots | QF02's nine captures are byte-identical to the committed files (QM46 and QX07) |
+| Rig cases (31, the SCENE and earlier cases) | pass on QS11 and QS12 (the development base 25f2c915 with the link) |
+
+On the author's unit, by the test rig with the author's go, 25 Nov 2026: QS11 (this source before the tick-order fix, RAM-booted over FXCJ, image CRC `aaf0e7a3`, scratch project). SCENE + knob, SCENE + pad + knob and the scene-mode pad as on 0.4.0; QPER + BD linked performance 1, QPER + A drew its lock box, QPER + PLAY showed CLEAR PERFORMANCE and PLAY again UNDO CLEAR with the box back. Not on a unit: QS12 and this package's own image.
+
+An independent code review of the fold: no symbol or section clash between the two parts; its fixes are in (the retired id kept readable in saved sets, the capture record, the library test, the tick order, the memory figure).
+
 The rytm-emu runs below were observed on the named build; the emulator is not hardware evidence. The unit results are the author's reports, labelled as reported.
 
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, the owner's file. Base: Modwerk base for core-ar2 0.7, `0c92aa45`.

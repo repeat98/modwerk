@@ -4,7 +4,7 @@ An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.5.0-experimenta
 
 ## Overview
 
-Linking velocity or aftertouch to a parameter on stock takes a trip through SOUND SETTINGS: FUNC + FLTR, down to VELOCITY MOD, YES, scroll a long list for the destination, turn the amount, then NO, NO back to the page. Improved Mod Assign does it from the page you are playing:
+Linking velocity or aftertouch to a parameter on stock takes a trip through SOUND SETTINGS: FUNC + FLTR, down to VELOCITY MOD, YES, scroll a long list for the destination, turn the amount, then NO, NO back to the page. Improved Modulation does it from the page you are playing:
 
 - **Hold FIX and turn a knob**: that parameter is linked to velocity, and the turn sets the amount.
 - **Hold SAMPLER and turn a knob**: the same for aftertouch.
@@ -141,21 +141,23 @@ Kits are not changed by loading them: only a pad or trig press with QPER held ch
 - After a knob press in an LFO hold, the other knobs do nothing until LFO is let go.
 - A turn that reaches the LFO hold through stock's locker interface without a Rytm encoder event (MIDI through a module that uses stock's locker, for one) sets the depth by the change in the value it passes (one value step moves DEP by 1.00); from 0.3.0. Earlier, only the Rytm's encoder set the depth there.
 - SCENE + knob writes through stock's own scene locker routines on an object of the module's own, so the lock is stock's: absolute, among the kit's 48 scene locks, saved with the kit, and shown in scene edit as usual. It never takes a scene pad's own locker.
-- It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPER Live Rec does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc`, `ev_tick` and `ev_draw` (the LFO depth's box, in stock's label font). No storage.
+- FIX, SAMPLER, LFO and SCENE patch no stock site: they set the module's own locker in stock's parameter UI while a key is held, as QPER does, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc`, `ev_tick` and `ev_draw` (the LFO depth's box, in stock's label font). No storage.
 - A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.
 - On a unit, 0.2.0: the package's own image beside LFO RND (QP02, flashed) passed the author's hand checks, kit save and power cycle included, and the test rig's six cases passed in QL13 (with Loop Sync): see [TESTING.md](TESTING.md).
 - On a unit, by the author's report: QM06 (FIX + knob, the FIX key, save and power cycle) RC18's QM10 (SAMPLER aftertouch links, the lock-style display, envelopes following, mods full, kit save and reload, power cycle) RC19's QM11 and QM12 alone (the FX track, and the checks above again) pass: see [TESTING.md](TESTING.md).
 
-It patches three stock sites (the QPER knob's message, the QPER view's pad and trig link, and the routine run after every whole-kit change) and subscribes to `ev_key`, `ev_tick`, `ev_project` and `ev_render_out`. Claims QPER + knob, pads and trigs, PLAY, YES, RECORD and STOP, RECORD + YES, RECORD + NO and the live recording of performance moves. It needs no other module.
+QPER and the quick perf rec patch three stock sites (the QPER knob's message, the QPER view's pad and trig link, and the routine run after every whole-kit change). The module subscribes to `ev_key`, `ev_enc`, `ev_tick`, `ev_draw`, `ev_project` and `ev_render_out`. Claims QPER + knob, pads and trigs, PLAY, YES, RECORD and STOP, RECORD + YES, RECORD + NO and the live recording of performance moves. It needs no other module.
 
 The quick perf rec lives in RAM: a pattern change, project load or power off drops a take you have not applied, and it loops every 64 steps at most. A track at another speed, in Euclidean mode, with a track-wide loop-counting condition, or of a length that does not divide 64 under an INF or longer master is left out of RECORD + YES. See [The quick perf rec](#the-quick-perf-rec).
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined images with builds QM10 and QM11 and on QM12 alone, and for 0.2.0 the test rig and the author's hand checks on the author's unit (QL02 to QL13). Memory (0.2.0 package): 7,578 bytes of code and initialised data and 72 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined images with builds QM10 and QM11 and on QM12 alone, and for 0.2.0 the test rig and the author's hand checks on the author's unit (QL02 to QL13).
 
-On the author's Analog Rytm MKII: builds QP01 to QC13 for the QPER controls and QT01 to QT08 (with a debug trace over USB MIDI) for the quick perf rec, QPERF alone, and rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)). Memory: 17,876 bytes of the 128 KiB shared mod area (Modwerk's linker, base alone against base with QPERF), 6,912 of them the quick perf rec (12 performances, 64 steps, 8 points a step, and a bit for each point). Load: the quick perf rec's record and playback run once per audio block; not measured with the base's CPU reading.
+On the author's Analog Rytm MKII: builds QP01 to QC13 for the QPER controls and QT01 to QT08 (with a debug trace over USB MIDI) for the quick perf rec, QPERF alone, and rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)).
+
+Memory (0.5.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 24,700 bytes of the shared mod area, 16,580 of them QPER and the quick perf rec (6,912 of those the quick perf rec's lane: 12 performances, 64 steps, 8 points a step). Load: FIX, SAMPLER, LFO and SCENE are UI only, on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
 
 ## Authorship and licences
 
@@ -163,7 +165,7 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build QF02 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build QF02, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +11](media/sampler-amp.png)
 
