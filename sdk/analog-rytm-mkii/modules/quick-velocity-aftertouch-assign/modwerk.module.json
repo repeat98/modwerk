@@ -17,7 +17,7 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "QUICK MOD ASSIGN",
+    "label": "IMPROVED MOD ASSIGN",
     "family": "Performance",
     "summary": "Link a parameter to velocity, aftertouch or the LFO by holding FIX, SAMPLER or LFO and turning its knob; hold SCENE and turn to lock it in the active scene.",
     "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod. Hold SCENE and turn a knob: the parameter is locked in the active scene, as scene edit does with the scene's pad held, without leaving the page.",

@@ -273,4 +273,29 @@ Rig cases, rytm-emu, QS04 (`e03614c6…`, dev base 25f2c915) and QS05 (`a2e4afd7
 
 An independent code review: no serious bug; its three small points are in (a foreign locker held: the pad stays stock's; a redraw after the select; the README says the last scene is kept across kit loads) with the stale comments.
 
+## Pads on the unit, scene edit locks, copy and clear (0.4.0, QS06 to QS10, QM43 to QM45)
+
+On the author's unit, 25 Nov 2026 (debug image QS06, RAM-booted over FXCJ, scratch project): after some use every SCENE press was declined with `DBG PAD`. The link's memory read showed stock's key table (0x40081c28's bitmap at 0x418d1340, bits 0x48..0x53) reporting all 12 pads held with none touched, and a tap of BD and SD did not clear them; in rytm-emu those bits stay 0. From QS07 the module counts held pads from its own pad events (and drops a pad when the table says it is up). Two of the author's earlier tries ran another session's RAM image, not this module (image CRCs `6777a391`, `9312221b`); the unit was held in the queue from then on.
+
+rytm-emu, QM43/QM44/QM45 (plain base 1c14b6b0), against stock QS00 where stock does something:
+
+| Check | QS00 (stock) | QM43 to QM45 |
+| --- | --- | --- |
+| SCENE held 0.2 s, nothing else | | scene 1's boxes (DEC 22, MOD 6, LEV 127) |
+| SCENE tapped | | no boxes flash |
+| Scene edit, SD pad (scene 2), SCENE + B | SCENE + B is a plain edit | SWT box, `SCENE: 2 LOCKS: 1`, scene edit stays |
+| Scene edit, SCENE tapped | closes scene edit | closes scene edit |
+| Scene edit, SCENE held with nothing | stays open | stays open |
+| Scene edit, FUNC + REC | `COPY SCENE 1` | (stock's) |
+| SCENE held, REC | | `COPY SCENE 1` |
+| Scene 2 engaged, SCENE held, STOP | | `PASTE SCENE`; scene 2 then shows scene 1's boxes |
+| SCENE held, PLAY; PLAY again | | `CLEAR SCENE`, no boxes after; `UNDO CLEAR`, boxes back; the sequencer stays stopped |
+| SCENE rolled into PLAY (50 ms) | the sequencer starts | the sequencer starts (QM45) |
+
+Rig cases, rytm-emu: all 31 pass on QS08, QS09 and QS10.
+
+On the author's unit, reported by the author, 25 Nov 2026: QS07 (pads from events) "everything seemed to work"; QS09 (scene edit locks, early boxes, copy, paste, clear) "all that looks good". Not on the unit: QS10's later changes (the transport keys wait 0.2 s; a pad's bit clears when the table says up), the exact package image.
+
+An independent code review of the whole of 0.4.0: nothing that leaves a key or the locker taken. Its two medium points are in QS10 (the transport keys taken only once the hold shows; pads_down self-clearing), and its README points are fixed.
+
 Not tested: scene edit opened by a held SCENE on the unit (needs a person); 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.

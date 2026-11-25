@@ -1,10 +1,10 @@
 [
   {
     "version": "0.4.0-experimental",
-    "date": "2026-11-24",
+    "date": "2026-11-25",
     "changes": [
-      "Now called Improved Mod Assign. Hold SCENE and turn a knob: that parameter is locked in the active scene, without leaving the page, and in scene edit too.",
-      "Hold SCENE and press a knob to remove that scene lock; SCENE + REC, STOP or PLAY copies, pastes or clears the scene.",
+      "Now called Improved Mod Assign. Hold SCENE and turn a knob to lock it in the scene, also in scene edit.",
+      "SCENE + knob press removes a lock; SCENE + REC, STOP or PLAY copies, pastes or clears the scene.",
       "SCENE held and let go with no knob opens scene edit as before, now on the release.",
       "With no scene engaged the locks go to the scene engaged last; tap pads while holding SCENE to lock other tracks.",
       "Holding LFO on the LFO page shows its values in PERF, SCNE, MUTE and CHRO too, as on stock."

@@ -980,7 +980,8 @@ QMA_UI static int scene_knob(void)
 // would engage the pad's scene; the module takes the press, its repeats and its release there and
 // selects the pad's track as the pages' pad does with AUTO TRK SWITCH on, so the scene
 // being set up stays where it is: 0 passes the press on, 1 takes it.
-// REC, STOP or PLAY pressed during a SCENE hold: copy, paste or clear the scene the
+// REC, STOP or PLAY pressed during a SCENE hold (once the boxes show or a knob or pad
+// made it a hold, so SCENE rolled into PLAY still starts the sequencer): copy, paste or clear the scene the
 // locks go to, with stock's own routines and words, as scene edit's FUNC + REC, STOP and
 // PLAY do (a second STOP or PLAY undoes, as there). It ends the hold as a knob does. The
 // key's release is the module's too (transport_taken), so the transport does nothing.
@@ -994,6 +995,8 @@ QMA_UI static int scene_transport(int key)
     static char text[16] = "COPY SCENE ";
     if (!scene_screen() || ANY_TRIG_HELD() || ANY_PAD_HELD())
         return 0;
+    if (!scn_locking && ticks - holds[SCN].since < SHOW_TICKS)
+        return 0;                       // SCENE rolled into PLAY: the transport's, as on stock
     scene_touched();
     transport_taken |= 1u << (key - KEY_REC);
     scene_refresh();
@@ -1399,6 +1402,12 @@ QMA_UI void quick_velocity_aftertouch_assign_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     keep_locker();
+    if (pads_down) {                    // a release that never reached ev_key: stock's table may say held
+        int pad;                        // when none is, but never says up while one is
+        for (pad = 0; pad <= KEY_PAD_LAST - KEY_PAD_FIRST; pad++)
+            if ((pads_down & 1u << pad) && !IS_KEY_HELD(KEY_PAD_FIRST + pad))
+                pads_down &= ~(1u << pad);
+    }
     if (views)                          // a key has gone through, so the project is up
         target_scene(PROJECT_KIT(PROJECT()));   // follows the engaged scene, by panel or MIDI
     if (redraw) {
