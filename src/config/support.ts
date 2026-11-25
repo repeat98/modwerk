@@ -3,7 +3,8 @@
 export const SUPPORT_URL = 'https://ko-fi.com/jannikassfalg'
 
 /** Running costs shown in the support dialogs, whole euros, updated by hand: `monthly` for hosting and the AI tokens
- * Modwerk is built with (0 hides them), optionally split into `hosting` and `tokens`. Set `month` and `covered` (what Ko-fi
- * tips brought in that month) to add a bar; leave them out while the amount is unknown. */
+ * Modwerk is built with (0 hides them), optionally split into `hosting` and `tokens`. The Ko-fi bar reads the month's tips
+ * from the webhook (server/kofi.ts); `month` ('YYYY-MM') and `covered` add tips it did not see, such as ones from before
+ * it was set up, and alone show a bar while the webhook is not connected. */
 export type SupportCosts = { monthly: number; hosting?: number; tokens?: number; month?: string; covered?: number }
 export const SUPPORT_COSTS: SupportCosts = { monthly: 145 }
