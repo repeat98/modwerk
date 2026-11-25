@@ -61,7 +61,7 @@ import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
-import { stageRefusal } from './octatrack-step-base.mjs'
+import { bootOverPendingUpdate, stageRefusal } from './octatrack-step-base.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -75,6 +75,7 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   scale: { type: 'string', default: '2' },
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
+  'spend-tries': { type: 'boolean', default: false }, // boot: even over a base update not yet confirmed (bootOverPendingUpdate)
 } })
 const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
 
@@ -83,7 +84,7 @@ const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
   screen [--png FILE] [--scale 1-4]
   try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
   recover | lifecycle
-  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  boot BUILD_DIR [--chunk 1-4096] [--spend-tries] | flash BUILD_DIR
   key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
   mem ADDR LENGTH | probe 0|1 | meter 0|1
 
@@ -842,6 +843,15 @@ if (command === 'serve') {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
+    // A base update flashed and not yet confirmed loses one of its starts to each restart, a RAM boot's too (20 November 2026)
+    const slotsNow = () => transport.slots().catch(() => undefined)
+    let pending = values.emulator || values['spend-tries'] ? undefined : bootOverPendingUpdate(await slotsNow())
+    if (pending?.wait) {
+      console.log('waiting up to 20 s for the base update the unit runs to confirm itself…')
+      for (let second = 0; second < 20 && pending?.wait; second++) { await wait(1000); pending = bootOverPendingUpdate(await slotsNow()) }
+    }
+    if (pending?.refusal) throw new Error(pending.refusal)
+    if (pending?.warning) console.log(pending.warning)
     const arm = async (s, base, flashed = false) => {
       const tooBig = stageRefusal(join(file, 'MAIN.raw'), image.length, s.status.capacity, flashed)
       if (tooBig) throw new Error(tooBig)

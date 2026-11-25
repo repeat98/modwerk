@@ -51,7 +51,9 @@ section at `0x4012`, ours a 6-byte jump, to `0x40000400` and calls it; the stub 
 1. reads both records: a slot counts when its record checks and the container's own section sum matches;
 2. picks the newest counting slot. If it is not confirmed, it clears one *tries* bit first (a single-word program
    run from SRAM, since NOR answers status while it programs); after two tries without a confirmation it
-   starts the other counting slot, clearing one more bit so the base can tell it went back;
+   starts the other counting slot, clearing one more bit so the base can tell it went back. A RAM boot's soft
+   reset is a start too, so `npm run device -- boot` refuses while the newest slot is unconfirmed (an update
+   lost to RAM boots, 20 November 2026) and waits when that update is the base running;
 3. unpacks that slot with the bootloader's own unpacker and enters it exactly as the bootloader would: its cache
    settings, its stack (return address and boot word), every register as it left them;
 4. invalidates the instruction cache before that jump (CACR bit 8, as `runtime.c` does on the unit). The

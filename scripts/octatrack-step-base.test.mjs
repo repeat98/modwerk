@@ -1,7 +1,48 @@
 import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { stageRefusal } from './octatrack-step-base.mjs'
+import { bootOverPendingUpdate, stageRefusal } from './octatrack-step-base.mjs'
+
+// SLOTS as upload-usb.ts parseBaseSlots gives them: slot A the confirmed old base, slot B the newer update.
+const slots = (b, running = null) => ({ layout: 'two', running, fellBack: false, confirmed: false, slots: [
+  { generation: 6, whole: true, confirmed: true, tries: 1 }, { generation: 7, whole: true, confirmed: false, tries: 0, ...b }] })
+
+describe('bootOverPendingUpdate', () => {
+  it('lets the boot go when nothing is pending', () => {
+    expect(bootOverPendingUpdate(undefined)).toBeUndefined() // a base before the two slots
+    expect(bootOverPendingUpdate(null)).toBeUndefined() // before the base's first look
+    expect(bootOverPendingUpdate({ layout: 'one', running: null, fellBack: false, confirmed: false, slots: [] })).toBeUndefined()
+    expect(bootOverPendingUpdate(slots({ confirmed: true, tries: 1 }, 1))).toBeUndefined()
+    expect(bootOverPendingUpdate(slots({ tries: 3 }, 0))).toBeUndefined() // already went back: UPDATE UNDONE
+    expect(bootOverPendingUpdate(slots({ whole: false }, 0))).toBeUndefined() // a cut write never counts
+  })
+  it('refuses over an update written and not yet started, and says how to confirm it', () => {
+    const { refusal, wait } = bootOverPendingUpdate(slots({ tries: 0 }, 0))
+    expect(wait).toBeUndefined()
+    expect(refusal).toContain('slot B is not confirmed yet (0 of its 2 starts used)')
+    expect(refusal).toContain('Power-cycle it')
+    expect(refusal).toContain('--spend-tries')
+  })
+  it('refuses on a RAM-booted base over an update started once (20 November 2026)', () => {
+    expect(bootOverPendingUpdate(slots({ tries: 1 })).refusal).toContain('(1 of its 2 starts used)')
+  })
+  it('waits while the update itself runs, which confirms itself', () => {
+    const pending = bootOverPendingUpdate(slots({ tries: 1 }, 1))
+    expect(pending.wait).toBe(true)
+    expect(pending.refusal).toContain('one of its 1 start left')
+    expect(bootOverPendingUpdate(slots({ tries: 2 }, 1)).refusal).toContain('it has no start left')
+  })
+  it('only warns when the update has no start left and is not running: the next restart undoes it either way', () => {
+    const pending = bootOverPendingUpdate(slots({ tries: 2 }))
+    expect(pending.refusal).toBeUndefined()
+    expect(pending.warning).toContain('no start left')
+  })
+  it('takes the newest whole slot as the stub does (slots.c slot_newest)', () => {
+    const swapped = { layout: 'two', running: null, fellBack: false, confirmed: false, slots: [
+      { generation: 9, whole: true, confirmed: false, tries: 1 }, { generation: 8, whole: true, confirmed: true, tries: 1 }] }
+    expect(bootOverPendingUpdate(swapped).refusal).toContain('slot A')
+  })
+})
 
 describe('stageRefusal', () => {
   it('passes an image the running base stages', () => {
