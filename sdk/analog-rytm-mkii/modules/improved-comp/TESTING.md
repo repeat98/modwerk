@@ -10,6 +10,19 @@ Version 0.1.0-experimental: THR and MUP read in dB on the COMP page. Run by the 
 - Host: every THR and RAT setting's number is within half a dB of the line (512 settings).
 - Two independent reviews of the label code found no defect. The first noted that THR's line was rounded twice (15 of 512 settings 1 dB off), fixed; the second asked for a limit on the view-stack walk and on the value, both added in this build.
 
+## Edge cases
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| THR's lowest and highest numbers | the text grows to six characters (-129dB) and gains a plus above 0 | host: all 512 THR and RAT settings against the line; unit and emulator: THR 20 reads -110dB | pass on the host and for THR 20; not run on the unit: THR 0 and THR 127 |
+| Each ratio | THR's number is moved by the ratio's own amount | unit and emulator text case: MAX and 1:2; host: all four | pass for MAX and 1:2; not run on the unit: 1:4 and 1:8 |
+| Scene and performance mode | stock hands the text a lock's offset there, not the knob's value | unit and emulator text case in scene mode: THR reads stock's 21 | pass for scene mode; not run: performance mode |
+| The page's other six values | the record sits in the table every value text passes through | the unit's and emulator's screens: ATK, REL, RAT, SEQ, MIX and VOL read as stock | pass |
+| A value set over MIDI | the text must follow a CC as well as the knob | the text case sets THR, MUP and RAT by CC, then nudges | pass |
+| Beside other modules' value texts | the first record to answer wins | unit: the author's combined set (IC38) with Filter Hz, Improved AMP and others; emulator: alone on the plain base (ICS1) | pass |
+| A trig held (parameter lock) | the text then shows a lock's value, and RAT is read as it is now | not run | not run: no lock was set in the rig's cases |
+| A power cycle | nothing is saved, so there is nothing to lose | not run | not run: the image ran from RAM only |
+
 ## THR and MUP in dB (laws measured on the unit, IC04 from RAM, 24 November 2026)
 
 Run by the rig, hands off; MAIN's rms against BD's own output's rms (the USB channels), SEQ OFF.
