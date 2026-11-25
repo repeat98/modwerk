@@ -34,7 +34,8 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
   const key = inputs + '#' + attempt
   const [view, setView] = useState<DigiBuildState>({ phase: 'idle', key: '' })
   // Local build outcomes include preview machines; their download gates remain separate.
-  const usageMachine = machine
+  // The usage counts name the machines the Worker's contract lists (usage-contract.ts); the Digitone II's beta builds are not among them.
+  const usageMachine = machine === 'digitone-ii' ? undefined : machine
   const client = useRef<Builder | null>(null), operation = useRef(0), storageRef = useRef(storage)
   useEffect(() => { storageRef.current = storage })
   useEffect(() => () => { client.current?.dispose(); client.current = null }, [])

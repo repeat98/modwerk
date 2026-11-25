@@ -1,0 +1,1 @@
+Digitone II: beta users can build Modwerk's Digitone II base on its machine page from their own OS 1.12 file, the base that ran on a unit. There are no modules yet, and downloads stay off until the owner turns them on. Its builds count in the usage statistics like every other machine's.
