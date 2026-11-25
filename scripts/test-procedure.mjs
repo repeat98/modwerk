@@ -20,11 +20,15 @@
 //   npm run test:procedure -- … --target emulator --share SOCK --dev-socket SOCK   # steps 6 to 10 against an emulator session
 //                                                       # (npm run device -- serve --emulator): the same cases, never hardware evidence
 //   npm run test:procedure -- … --out DIR --soak-seconds 120 --scene "A01, Part 1, stopped"
+//   npm run test:procedure -- … --price-base "base 0.8.1, MKII"   # step 9 also writes the CPU price and the instance curve
+//                                                       # into the module's folder, a draft's too (device:price --write)
 //   npm run test:procedure -- … --soak-programs 32-35 --soak-pc-channel 11 [--soak-auto-channel 11]   # the soak's program
 //                                                       # changes and channels, as the project receives them (octatrack-soak.mjs)
 //
 // With the unit queue (`npm run unit`, when the repository has it) the unit steps run as one turn of it, so no other session
-// takes the unit between reading it and checking it was put back.
+// takes the unit between reading it and checking it was put back. With a unit session, the preflight
+// (scripts/octatrack-preflight.py) reads the unit before step 1 and again as the turn starts: a release base, a changed Part,
+// a busy pick pattern or a dead MIDI bridge then fails step 6 in seconds, with the fix, before anything is installed.
 import { spawn, execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -41,7 +45,9 @@ export const ROOT = resolve(import.meta.dirname, '..')
 const SOAK_OPTIONS = [['programs', 'programs', 'soak-programs'], ['pcChannel', 'pc-channel', 'soak-pc-channel'], ['autoChannel', 'auto-channel', 'soak-auto-channel']]
 const soakOptions = ctx => SOAK_OPTIONS.flatMap(([key, flag]) => ctx.soak?.[key] ? ['--' + flag, String(ctx.soak[key])] : [])
 const soakFlags = ctx => SOAK_OPTIONS.flatMap(([key, , flag]) => ctx.soak?.[key] ? ['--' + flag, String(ctx.soak[key])] : [])
-const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs'
+const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs', PREFLIGHT_TOOL = 'scripts/octatrack-preflight.py'
+const SOAK_MIDI = '127.0.0.1:50124' // the MIDI bridge the soak sends through (its default --midi)
+const NOT_READY = 'stopped: the preflight found the unit not ready (step 6)'
 // The Part the run starts on: step 6 reads it (and SAVEs a clean one once, so RELOAD works after a RAM boot), the soak's end
 // and step 10 put the bank, pattern and Part back and RELOAD a Part that was clean at the start (docs/TEST_PROCEDURE.md).
 const PART_TOOL = 'scripts/octatrack-part-state.mjs', NOT_PUT_BACK = /^not (?:put back|read): .*$/m
@@ -190,7 +196,9 @@ export function plan(step, ctx) {
       if (module && ctx.baseBound) return { skip: 'a base-bound package: device:price leaves it out, since a development twin does not trust it' }
       // A module also reads its instance curve and runs the admission test (alone on the empty and the medium pattern: admitted,
       // nothing dropped), and device:price fails the step when either does not carry a release (owner, 23 November 2026).
+      // --price-base names the base for the record: then the price and the curve land in the module's folder, a draft's too.
       return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE,
+        ...(module && ctx.priceBase && ctx.source ? ['--write', '--base', ctx.priceBase] : []),
         ...(module ? ['--curve', CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
     case 'restore':
       return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share), partRestore(ctx)], compare: 'unit-read', compareAt: 0, why: NOT_PUT_BACK }
@@ -221,6 +229,7 @@ export async function runSteps(ids, ctx, deps, results = []) {
     const p = plan(step, ctx)
     result.commands = [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown)
     if (p.emulator) result.emulator = true
+    if (ctx.halt) { result.reason = ctx.halt; continue }
     // Put back runs after a failed unit step too, once the unit was read: a soak that failed has still edited the Part.
     const putBack = step.always && results.some(r => r.id === 'unit-read' && r.status === 'passed')
     if (stop && stop !== result && !putBack) { result.reason = `stopped: step ${STEPS.findIndex(s => s.id === stop.id) + 1} (${stop.title}) failed`; continue }
@@ -284,10 +293,50 @@ export async function runSteps(ids, ctx, deps, results = []) {
   return results
 }
 
+/** The preflight's command: read-only requests (with --midi, one tune request through the soak's MIDI bridge) that find in
+ * seconds what failed unit runs minutes in (25 November 2026). Null where it has nothing to check. A module's pick goes on
+ * the pattern the unit is on (device:test), so a module's run checks that pattern too; the emulator gets neither the pick's
+ * admission nor the soak. */
+export function preflightCommand(ctx) {
+  if (other(ctx) || !ctx.unit?.available) return null
+  const unit = ctx.target !== 'emulator'
+  return py(PREFLIGHT_TOOL, ...(unit && ctx.kind === 'module' ? ['--pick-pattern', String(ctx.pickPattern ?? 2)] : []), ...(unit && ctx.tools?.soak ? ['--midi', SOAK_MIDI] : []))
+}
+
+/** The problems the preflight printed, one with its fix each; none when it passed or had nothing to check. */
+export async function preflight(ctx, deps, log) {
+  const argv = preflightCommand(ctx)
+  if (!argv) return []
+  const run = await deps.exec(argv, log, ctx.env)
+  if (run.code === 0) return []
+  const lines = (run.output ?? '').split('\n').filter(line => line.startsWith('preflight: ')).map(line => line.slice('preflight: '.length))
+  return lines.length ? lines : [`exit ${run.code}: ${shown(argv)}`]
+}
+
+/** Step 6 failed by the preflight's problems: nothing after it ran. */
+function notReady(ctx, results, problems, log) {
+  Object.assign(results.find(result => result.id === 'unit-read'), { status: 'failed', reason: 'the unit is not ready: ' + problems.join('; '), log: relative(ctx.out, log) })
+  return results
+}
+
+/** The unit steps, after the preflight: a problem it finds fails step 6 before anything is installed. */
+export async function unitSteps(ctx, deps, results = []) {
+  const ids = STEPS.filter(step => step.unit).map(step => step.id), log = join(ctx.out, 'logs', '06-preflight.log')
+  const problems = await preflight(ctx, deps, log)
+  if (!problems.length) return runSteps(ids, ctx, deps, results)
+  await runSteps(ids, { ...ctx, halt: NOT_READY }, deps, results)
+  return notReady(ctx, results, problems, log)
+}
+
 /** The whole procedure: the steps before the unit here, the unit steps in one turn of the unit queue when there is one. */
 export async function runProcedure(ctx, deps) {
   const local = STEPS.filter(step => !step.unit && !step.hand).map(step => step.id)
   const unit = STEPS.filter(step => step.unit).map(step => step.id)
+  // The preflight before step 1, unless another session's turn holds the unit: what it reads then is that run's (a Part it
+  // changed), so it waits for this run's own turn, where it runs again.
+  const early = join(ctx.out, 'logs', '00-preflight.log')
+  const problems = ctx.tools?.unitQueue && ctx.target !== 'emulator' && await deps.unitBusy?.() ? [] : await preflight(ctx, deps, early)
+  if (problems.length) return notReady(ctx, await runSteps(STEPS.map(step => step.id), { ...ctx, halt: NOT_READY + ', before step 1' }, deps), problems, early)
   const results = await runSteps(local, ctx, deps)
   const blocked = results.some(result => result.status === 'failed')
   if (!blocked && ctx.unit?.available && ctx.tools?.unitQueue && ctx.target !== 'emulator') {
@@ -303,7 +352,8 @@ export async function runProcedure(ctx, deps) {
       results.find(result => result.id === 'unit-read').status = 'failed'
       results.find(result => result.id === 'unit-read').seconds = Math.round((deps.now() - started) / 100) / 10
     }
-  } else await runSteps(unit, ctx, deps, results)
+  } else if (blocked) await runSteps(unit, ctx, deps, results)
+  else await unitSteps(ctx, deps, results)
   await runSteps(STEPS.filter(step => step.hand).map(step => step.id), ctx, deps, results)
   return results
 }
@@ -397,7 +447,7 @@ export function context(root, values, positionals, env = process.env) {
   let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
     // The session's line socket for device:test's steps; an emulator takes no turn of the unit queue.
     env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120),
-    soak: { programs: values['soak-programs'], pcChannel: values['soak-pc-channel'], autoChannel: values['soak-auto-channel'] }, scene: values.scene, pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], emulatorSocket: values['emulator-socket'],
+    soak: { programs: values['soak-programs'], pcChannel: values['soak-pc-channel'], autoChannel: values['soak-auto-channel'] }, scene: values.scene, priceBase: values['price-base'], pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], emulatorSocket: values['emulator-socket'],
     tools: { cycleScan: existsSync(join(root, SCAN_TOOL)), soak: existsSync(join(root, SOAK_TOOL)), unitQueue: !!scripts.unit },
     build: { revision: git('rev-parse', 'HEAD') || 'unknown', dirty: !!git('status', '--porcelain', '--untracked-files=no') } }
   const named = positionals[0]
@@ -477,6 +527,13 @@ function realDeps(root) {
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
     exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
+    // Another session's turn (not a hold of this checkout's): its first line, which the run prints, else null.
+    unitBusy: async () => {
+      const { checkoutOf, describe } = await import('./unit-queue.mjs'), queue = describe()
+      if (queue.state !== 'held' || process.env.MODWERK_UNIT_TURN || queue.holder?.checkout === checkoutOf(root).checkout) return null
+      console.log(`\n${queue.text.split('\n')[0]} The preflight waits for this run's own turn.`)
+      return queue.text.split('\n')[0]
+    },
     start: (argv, log, env) => {
       const { child, state } = launch(argv, log, env)
       let ended = false
@@ -503,14 +560,14 @@ function realDeps(root) {
 const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, published: { type: 'boolean' }, plan: { type: 'boolean' }, out: { type: 'string' },
   share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, 'soak-programs': { type: 'string' },
   'soak-pc-channel': { type: 'string' }, 'soak-auto-channel': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' },
-  'price-modules': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
+  'price-modules': { type: 'string' }, 'price-base': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
   stock: { type: 'string' }, elemod: { type: 'string' }, label: { type: 'string' }, link: { type: 'boolean' }, cases: { type: 'string' }, emu: { type: 'string' } }
 
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
   if (values.help || (!values.base && !positionals.length)) {
     console.log('Usage: npm run test:procedure -- <module id> | FILE.mwrm | --base [machine]  [--plan] [--package FILE] [--published] [--share SOCKET] [--no-unit]\n' +
-      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b]\n' +
+      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b] [--price-base TEXT]\n' +
       '         another machine: [--stock STOCK.syx --elemod BASE.elemod --label XX01] [--link] [--cases DIR] [--emu DTBOOT]   (docs/TEST_PROCEDURE.md)')
     process.exit(values.help ? 0 : 2)
   }
@@ -519,7 +576,7 @@ async function main() {
   const deps = realDeps(ROOT)
   if (values['unit-phase']) {
     // One turn of the unit queue: only the unit steps, their results for the run that started it.
-    const results = await runSteps(STEPS.filter(step => step.unit).map(step => step.id), ctx, deps)
+    const results = await unitSteps(ctx, deps)
     writeFileSync(values['unit-phase'], JSON.stringify(results, null, 1) + '\n')
     process.exit(results.some(result => result.status === 'failed') ? 1 : 0)
   }
