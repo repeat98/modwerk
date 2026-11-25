@@ -1,7 +1,10 @@
-import { readFileSync } from 'node:fs'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { expect, it } from 'vitest'
 import { parse } from 'yaml'
-import { bodyProblems } from './pr-body.mjs'
+import { bodyProblems, localBase, parseArgs } from './pr-body.mjs'
 
 const template = readFileSync(new URL('../.github/pull_request_template.md', import.meta.url), 'utf8')
 
@@ -83,7 +86,7 @@ it('asks a ready pull request that changes what runs on an instrument for its ed
   const described = 'Octatrack base 0.7.8: a module that no track uses rests out of the per-frame hooks; checked with pr:ready.\n\nGuides: HOOKS.md.\n\nTested on a unit: base 8d1db124, MKII, the large set.'
   const files = ['src/engine/assets/octatrack-base.elemod']
   const missing = expect.stringMatching(/^This pull request changes what runs on an instrument, so it lists the edge cases/)
-  const incomplete = expect.stringMatching(/lacks its case or its result/)
+  const incomplete = expect.stringMatching(/^The edge-case table under "Edge cases" has a row still to finish: row "/)
   const table = '\n\n## Edge cases\n\n| Case | Why this change makes it a risk | How run | Result |\n|---|---|---|---|\n'
   const row = '| A module resting while its page is open | resting skips its tick | trial, open the page, stop the transport | pass |\n'
   // A change that runs nowhere needs none; a draft does, and may say honestly what it has not run yet.
@@ -113,3 +116,87 @@ it('asks a ready pull request that changes what runs on an instrument for its ed
     .replace('- **Tested on a unit:**', '- **Tested on a unit:** base 8d1db124, MKII.')
   expect(bodyProblems(filled, template, { files })).toEqual([])
 })
+
+const ready = 'Mackity 0.1.0: a desk input stage for FX1/FX2; checked with pr:ready and on the unit.\n\nGuides: nothing.\n\nTested on a unit: package 64d0386d9aa1, MKII, eight instances.'
+const edgeTable = '\n\n## Edge cases\n\n| Case | Why this change makes it a risk | How run | Result |\n|---|---|---|---|\n| Eight instances at once | per-instance state | device:test | pass |\n'
+const mwrm = ['public/octatrack-modules/mackity/0.1.0-experimental.mwrm']
+
+it('names each unfinished edge-case row and what it lacks', () => {
+  // #2148: the last row said "not run" without why, and the check only asked for a table.
+  expect(bodyProblems(ready + edgeTable + '| Part/project reload | stored knob bytes | not run on the unit | not run |\n', template, { files: mwrm })).toEqual([
+    'The edge-case table under "Edge cases" has a row still to finish: row "Part/project reload": the result says "not run" without why; write "not run: <why>". Each case is a row | Case | Why this change makes it a risk | How run | Result |, the result "pass", "fail: what happened" or "not run: why" (docs/TEST_PROCEDURE.md#edge-cases).'])
+  const one = extra => bodyProblems(ready + edgeTable + extra, template, { files: mwrm })[0]
+  expect(one('| Silence after audio | limit cycles | verify.py | |\n')).toContain('row "Silence after audio": its last cell, the result, is empty; write "pass", "fail: what happened" or "not run: why"')
+  expect(one('| Part switches | device:test | pass |\n')).toContain('row "Part switches": it has 3 cells, and a case has four: | Case |')
+  expect(one('| | knob words | device:test | pass |\n')).toContain('row "| | knob words | device:test | pass |": its first cell, the case, is empty')
+  expect(one('| Undo | the same | trial | Not run. |\n')).toContain('the result says "Not run." without why')
+  expect(one('| ' + 'A very long case name that goes on and on about the Part, the project and a reload'.padEnd(80, '.') + ' | x | y | not run |\n'))
+    .toContain('row "A very long case name that goes on and on about the Part,…":')
+  // Every unfinished row, each once, though two lines name the same table.
+  const two = bodyProblems(ready + '\n\n## Edge cases\n\nEdge cases from the procedure:\n\n| Case | Why | How | Result |\n|---|---|---|---|\n| A | x | y | not run |\n| B | x | y | pass |\n| C | x | y | |\n', template, { files: mwrm })
+  expect(two).toHaveLength(1)
+  expect(two[0]).toMatch(/^The edge-case table under "Edge cases" has 2 rows still to finish: row "A": the result says "not run" without why; write "not run: <why>"; row "C": its last cell, the result, is empty/)
+})
+
+it('says why no edge cases were found', () => {
+  const missing = extra => bodyProblems(ready + extra, template, { files: mwrm })
+  expect(missing('')).toEqual([expect.stringContaining('No line or heading "Edge cases" was found.')])
+  expect(missing('\n\nEdge cases: none.')).toEqual([expect.stringContaining('It says "none" without why: write "Edge cases: none, because …".')])
+  expect(missing('\n\n## Edge cases\n\n| Case | Why | How | Result |\n|---|---|---|---|\n')).toEqual([expect.stringContaining('no table row with its case and result follows')])
+  for (const problem of [...missing(''), ...missing('\n\nEdge cases: none.')]) expect(problem).toMatch(/^This pull request changes what runs on an instrument, so it lists the edge cases/)
+})
+
+it('reads the local command line', () => {
+  expect(parseArgs(['body.md'])).toEqual({ file: 'body.md', draft: false, since: null })
+  expect(parseArgs(['--draft', '-', '--changed-since', 'base/octatrack-next'])).toEqual({ file: '-', draft: true, since: 'base/octatrack-next' })
+  expect(parseArgs([]).error).toMatch(/Name the description file/)
+  expect(parseArgs(['a.md', 'b.md']).error).toMatch(/One description file/)
+  expect(parseArgs(['a.md', '--changed-since']).error).toMatch(/--changed-since needs a ref/)
+  expect(parseArgs(['a.md', '--changed-since', '--draft']).error).toMatch(/--changed-since needs a ref/)
+  expect(parseArgs(['a.md', '--ready']).error).toMatch(/Unknown option --ready/)
+  expect(localBase(null, ['origin', 'upstream'])).toBe('upstream/main')
+  expect(localBase(null, ['origin'])).toBe('origin/main')
+  expect(localBase('base/octatrack-next', ['origin', 'upstream'])).toBe('base/octatrack-next')
+})
+
+it('checks a description file locally as CI would on this branch: ready or draft, against the base it merges into', () => {
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'modwerk-pr-body-')))
+  const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: join(directory, 'no-global-config') }
+  for (const name of ['PR_FILES', 'PR_BODY', 'PR_DRAFT', 'INIT_CWD']) delete env[name]
+  const git = (...args) => execFileSync('git', ['-c', 'user.name=Description test', '-c', 'user.email=description@example.invalid', '-c', 'commit.gpgsign=false', ...args],
+    { cwd: directory, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
+  const run = (args, extra = {}) => spawnSync(process.execPath, [join(directory, 'scripts', 'pr-body.mjs'), ...args], { cwd: directory, encoding: 'utf8', ...extra, env: { ...env, ...extra.env } })
+  try {
+    mkdirSync(join(directory, 'scripts')); mkdirSync(join(directory, '.github'))
+    copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(directory, 'scripts', 'pr-body.mjs'))
+    copyFileSync(new URL('../.github/pull_request_template.md', import.meta.url), join(directory, '.github', 'pull_request_template.md'))
+    git('init', '--initial-branch=main', '.'); git('add', '.'); git('commit', '-m', 'Baseline')
+    git('update-ref', 'refs/remotes/origin/main', 'HEAD'); git('switch', '-c', 'topic')
+    mkdirSync(join(directory, 'public', 'octatrack-modules', 'mackity'), { recursive: true })
+    writeFileSync(join(directory, mwrm[0]), 'package\n'); git('add', '.'); git('commit', '-m', 'Mackity')
+    const unfinished = ready + edgeTable + '| Part/project reload | stored knob bytes | not run on the unit | not run |\n'
+    writeFileSync(join(directory, 'body.md'), unfinished)
+    const refused = run(['body.md'])
+    expect(refused.status, refused.stderr).toBe(1)
+    expect(refused.stdout).toContain('as a ready pull request: 1 file changed since origin/main, 1 that runs on an instrument.')
+    expect(refused.stdout).toContain('✗ The edge-case table under "Edge cases" has a row still to finish: row "Part/project reload": the result says "not run" without why')
+    expect(refused.stdout).toContain('CI\'s describe check would fail')
+    // A draft needs no unit line yet but its edge cases; stdin and the caller's own directory work too.
+    const draft = ready.replace(/\n\nTested on a unit:.*$/, '') + edgeTable + '| Part/project reload | stored knob bytes | not run on the unit | not run: needs a Keep and a power cycle |\n'
+    expect(run(['-'], { input: draft }).status).toBe(1)
+    const passed = run(['-', '--draft'], { input: draft })
+    expect(passed.status, passed.stdout).toBe(0)
+    expect(passed.stdout).toContain('Passes: CI\'s describe check reads it the same way.')
+    mkdirSync(join(directory, 'notes')); writeFileSync(join(directory, 'notes', 'draft.md'), draft)
+    expect(run(['draft.md', '--draft'], { env: { INIT_CWD: join(directory, 'notes') } }).status).toBe(0)
+    // Against a base that already holds the package, nothing runs on an instrument.
+    const since = run(['body.md', '--changed-since', 'topic'])
+    expect(since.stdout).toContain('0 files changed since topic, none that runs on an instrument.')
+    expect(since.status).toBe(0)
+    // A base that cannot be read stops the check rather than passing it with no files.
+    const unknown = run(['body.md', '--changed-since', 'nowhere/main'])
+    expect(unknown.status).toBe(2)
+    expect(unknown.stderr).toContain('Could not list this branch\'s changes against nowhere/main')
+    expect(run(['missing.md']).status).toBe(2)
+  } finally { rmSync(directory, { recursive: true, force: true }) }
+}, 20_000)

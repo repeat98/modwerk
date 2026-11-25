@@ -200,13 +200,12 @@ SVG thumbnails consistent with the displayed illustration.
 - Keep diagrams conceptual. They must not imply measured audio, processor
   load, hardware verification or instrument-screen authenticity.
 
-Older native qualification fingerprints and every owner-approved update's
-`sourceSha256` include the original `presentation/thumbnail.svg`, even though
-the compiled-package fingerprint excludes presentation files; changing it makes
-`modules:generate` fail with "does not cover this exact native source". For
-these modules, replace the displayed artwork
-through an `ART` entry in `ModulePreview.tsx` and preserve the bound
-asset; do not rewrite evidence hashes for an illustration change.
+Native qualification fingerprints and owner-approved updates' `sourceSha256`
+include `presentation/thumbnail.svg`; the package fingerprint and performance
+stamp do not. Changing it makes `modules:generate` fail with "does not cover
+this exact native source": replace the displayed art through an `ART` entry
+in `ModulePreview.tsx` and keep the bound file; never rewrite evidence hashes
+for art. They read text with Git's LF endings, so CRLF on Windows matches CI.
 
 ## Screenshot walkthroughs
 
