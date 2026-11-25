@@ -42,6 +42,7 @@ from pathlib import Path
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
 CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'confirm': 0x13, 'ramboot': 0x14,
+       'pad': 0x15,
        'screen': 0x20, 'mem': 0x21}
 STATUS = {0: 'ok', 1: 'not armed (GLOBAL > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
@@ -110,6 +111,9 @@ KEYS = {
     'OH': 0x99, 'CY': 0x9a, 'CB': 0x9b,
 }
 KEYS.update({'T%d' % (i + 1): i for i in range(16)})
+# The pads, as the panel's pad and pressure messages name them (0..11), and what a `pad` request does.
+PADS = {name: KEYS[name] - 0x90 for name in ('BD', 'SD', 'RS', 'CP', 'BT', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'CB')}
+PAD_UP, PAD_DOWN, PAD_PRESSURE = 0, 1, 2
 KEYS.update({'PUSH_' + c: 0x70 + i for i, c in enumerate('ABCDEFGH')})
 ENCODERS = {c: i for i, c in enumerate('ABCDEFGH')}
 ENCODERS['LEVEL'] = 8
@@ -273,6 +277,13 @@ class Link:
                 self.key(name, False)
         finally:
             self.call('release')
+
+    def pad(self, name, what, value=0):
+        """A pad as the panel plays it: PAD_DOWN with a velocity 1..127, PAD_PRESSURE with the panel's pressure byte
+        0..255 (MIDI poly pressure sends half of it), PAD_UP with 0."""
+        status, _ = self.call('pad', PADS[name], what, value)
+        if status:
+            raise RuntimeError('pad %s: %s' % (name, STATUS.get(status, status)))
 
     def enc(self, name, delta):
         for _ in range(50):                         # busy: the UI loop is behind

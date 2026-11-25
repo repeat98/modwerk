@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// All machine integrations use the unchanged Elekloader kit. A machine extends its catalogue/core, not its builder;
-// a device the pinned kit lacks is carried by Modwerk's builder (carried-devices.ts), in the page and in the worker.
+// All machine integrations use Elekloader's kit (vendor/elekloader/README.md names the files Modwerk replaces). A
+// machine extends its catalogue/core, not its builder; a device the pinned kit lacks is carried by Modwerk's builder
+// (carried-devices.ts), in the page and in the worker.
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
 import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }

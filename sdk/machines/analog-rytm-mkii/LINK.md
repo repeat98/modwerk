@@ -43,13 +43,14 @@ send effect's work area could hold them; the tool reads there when `ident` names
 **GLOBAL > REMOTE CTRL**, the last row after SYSTEM, with stock's wrench icon. It is ON at every
 boot, power-on included: a development image is meant to be driven. YES on the row toggles it
 (OFF lasts until the next boot); RIGHT sets it ON. The row is the only place a person sees the
-arm: the base also draws a 2 x 5 notch at x 126-127 of the header bar, but on the unit it reads
-as part of stock's stop square, and only screen compares see it.
+arm; the screen is stock's. (Bases before 21 Nov 2026 drew a 2 x 5 notch at x 126-127 of the header
+bar while armed; the test runner's screen compares skip it, so references recorded with it still pass.)
 
-Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, `confirm` and `ramboot` need the arm,
+Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, pads, `confirm` and `ramboot` need the arm,
 and stop as soon as a person touches the panel: a press or turn on the panel while armed lets go
-of every key the link holds and refuses the link's keys and turns for about 3 s (status
-`a person is at the unit`). A press of the key whose event was just dispatched, in the same tick,
+of every key and pad the link holds and refuses the link's keys, turns and pads for about 3 s (status
+`a person is at the unit`). A person playing a pad is not seen: the panel's pad messages never reach
+`ev_key` or `ev_enc`, where the link watches for a person. A press of the key whose event was just dispatched, in the same tick,
 is what a module playing a held-back tap again through `core_key` looks like (Quick Mod Assign's
 LFO tap): it counts only when the panel's key bitmap holds that key. A module's own key messages
 (Control In Actions' `CIA1`) are not panel keys. A panel tap held 10 ms still counts.
@@ -77,6 +78,7 @@ range, 5 a person is at the unit.
 | `release` | 0x12 | yes | lets go of every key the link holds |
 | `confirm` | 0x13 | yes | YES pressed and let go, for stock's UPGRADE OS NOW? |
 | `ramboot ULEN UCRC CLEN CCRC` | 0x14 | yes | as `confirm`, but the next boot runs the upload from RAM (below) |
+| `pad PAD WHAT VALUE` | 0x15 | yes | a pad (0-11, BD to CB) as the panel posts it: WHAT 1 down with a velocity (1-127), 2 its pressure (0-255, the panel's byte: MIDI sends half), 0 up (0); every view's pad and pressure methods see it as a hand on the pad. `release` and `disarm` send a held pad's pressure 0 and its up. A base before this answers `bad request` |
 | `screen OFF` | 0x20 | no | 512 bytes of the frame on the screen from OFF (0 or 512) |
 | `mem ADDR N` | 0x21 | no | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 
@@ -181,8 +183,8 @@ flashed image's, and the code that writes the request is the running image's.
 
 The gate calls nothing of the bootstrap or the OS: a MKII's SRAM did not hold the 1.74 container's
 bootstrap bytes (`ident`'s probe), so an earlier gate that called the bootstrap's depacker would
-have refused. The gate runs from the mod area (0x47be0000 up), its stack at 0x48000000 down, and
-the unpack writes below 0x403c8b00.
+have refused. The gate runs from the flashed base's mod area (0x47be0000 up on a 0.7 base,
+0x47b50000 up from 0.7.1), its stack at 0x48000000 down, and the unpack writes below 0x403c8b00.
 
 The cache: stock runs DDR copyback, and the soft reset does not write dirty lines out. A mailbox
 written through the cache and pushed with `cpushl` alone was not in DDR after the reset on a MKII.
