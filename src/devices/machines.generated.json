@@ -594,8 +594,8 @@
       "flash": "open",
       "loader": "open",
       "status": "open",
-      "diagnostics": "open",
-      "tools": "open"
+      "diagnostics": "started",
+      "tools": "started"
     },
     "art": {
       "body": "wide",

@@ -63,9 +63,9 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read the link identity of a Model:Cycles running a Modwerk base, the image in --elektron-images that matches its set, and its runtime loader’s live modules.'),
-  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, the audio load of a Model:Cycles running a Modwerk base, over its link. Read-only.'),
-  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, the log of a Model:Cycles running a Modwerk base, over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read the link identity of a Model:Cycles or an Analog Rytm MKII running a Modwerk base and the image in --elektron-images that matches its set; on a Model:Cycles also its runtime loader’s live modules.'),
+  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, the audio load of a Model:Cycles or an Analog Rytm MKII running a Modwerk base, over its link. Read-only.'),
+  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, the log of a Model:Cycles or an Analog Rytm MKII running a Modwerk base, over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes. With --elektron-midi alone (a Model:Cycles), moduleIds is one change: a runtime package file NAME.mwrm in --elektron-images, or remove:NAME to take out the module built as NAME.', { moduleIds: strings }, ['moduleIds']),
@@ -314,7 +314,25 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   // The Model:Cycles: a fresh MIDI port list per read (RtMidi has no hot-plug here), its link's ident, and the built
   // image in --elektron-images whose set identity matches the one the unit took at boot.
-  const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a Modwerk base (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
+  const noCycles = 'No Model:Cycles answered over USB MIDI, nor an Analog Rytm MKII. Either needs a Modwerk base with the link (sdk/machines/model-cycles/LINK.md, sdk/machines/analog-rytm-mkii/LINK.md), Elektron Transfer closed, and exactly one such unit connected.'
+  // The Analog Rytm MKII over the same link, in every Modwerk base since 25 November 2026: identity, load and log (the
+  // runtime loader is not ported to it yet). Asked when no Model:Cycles answers.
+  const noRytmLoader = 'The Analog Rytm MKII has no runtime loader yet (sdk/machines/analog-rytm-mkii/LINK.md): device_status, device_load and device_log read it; modules reach it in a built image.'
+  async function matchImage(set, setIdentity) {
+    if (!set || !options.elektronImages) return null
+    for (const name of (await readdir(options.elektronImages)).filter(name => /\.syx$/i.test(name)).sort()) {
+      const bytes = new Uint8Array(await readFile(join(options.elektronImages, name)))
+      let got
+      try { got = setIdentity(bytes, set.bytes) } catch { continue }
+      if (got.crc === set.crc) return { file: name, sha256: hash(bytes) }
+    }
+    return null
+  }
+  async function rytmSnapshot(access) {
+    const identity = await frontend.readRytmIdentity(access)
+    if (!identity) return null
+    return { machine: 'analog-rytm-mkii', state: { status: 'ready', identity }, build: await matchImage(identity.set, frontend.rytmSetIdentity), inventory: null, loader: 'unsupported' }
+  }
   async function withCycles(what, read) {
     const turn = dependencies.elektronAccess || trialTurn ? null : await unitTurn(what, 10000)
     let access
@@ -325,35 +343,33 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   const cyclesSnapshot = () => cyclesSerial(() => withCycles('read Model:Cycles', async access => {
     const identity = await frontend.readMcIdentity(access)
-    if (!identity) throw new Error(noCycles)
-    const loader = await frontend.withMc(access, 2000, call => cyclesModules(call))
-    let build = null
-    if (identity.set && options.elektronImages) {
-      for (const name of (await readdir(options.elektronImages)).filter(name => /\.syx$/i.test(name)).sort()) {
-        const bytes = new Uint8Array(await readFile(join(options.elektronImages, name)))
-        let set
-        try { set = frontend.mcSetIdentity(bytes, identity.set.bytes) } catch { continue }
-        if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
-      }
+    if (!identity) {
+      const rytm = await rytmSnapshot(access)
+      if (rytm) return rytm
+      throw new Error(noCycles)
     }
+    const loader = await frontend.withMc(access, 2000, call => cyclesModules(call))
+    const build = await matchImage(identity.set, frontend.mcSetIdentity)
     const trial = cyclesTrialState()
     return { machine: 'model-cycles', state: { status: !trial ? 'ready' : trial.lost ? 'trial-lost' : trial.kept ? 'trial-kept' : 'trial', identity, ...(trial && { trial }) }, build, inventory: null, loader }
   }))
   // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
   const cyclesLoad = () => cyclesSerial(() => withCycles('read Model:Cycles load', async access => {
-    const reading = await frontend.readMcLoad(access)
+    let machine = 'model-cycles', reading = await frontend.readMcLoad(access)
+    if (!reading) { machine = 'analog-rytm-mkii'; reading = await frontend.readRytmLoad(access) }
     if (!reading) throw new Error(noCycles)
-    return reading === 'unsupported' ? { machine: 'model-cycles', supported: false, reading: null } : { machine: 'model-cycles', supported: true, reading }
+    return reading === 'unsupported' ? { machine, supported: false, reading: null } : { machine, supported: true, reading }
   }))
   // The base's diagnostics log (LINK.md `diag`), in the Octatrack's layout; an older development base refuses it.
   const cyclesLog = () => cyclesSerial(() => withCycles('read Model:Cycles log', async access => {
-    const read = await frontend.readMcLog(access)
+    let machine = 'model-cycles', read = await frontend.readMcLog(access)
+    if (!read) { machine = 'analog-rytm-mkii'; read = await frontend.readRytmLog(access) }
     if (!read) throw new Error(noCycles)
-    if (read === 'unsupported') return { machine: 'model-cycles', supported: false, log: null }
-    if (!read.log) throw new Error('The Model:Cycles sent a log in no layout the site reads.')
+    if (read === 'unsupported') return { machine, supported: false, log: null }
+    if (!read.log) throw new Error('The unit sent a log in no layout the site reads.')
     // The nonce identifies the unit's log across connections; like the Octatrack's, it stays out.
     const { boot, seq, loads, incidents } = read.log
-    return { machine: 'model-cycles', supported: true, log: { boot, seq, loads, incidents } }
+    return { machine, supported: true, log: { boot, seq, loads, incidents } }
   }))
   // The Model:Cycles' runtime loader (LINK.md "Loading modules"): one change a trial, read from --elektron-images. The
   // unit undoes a trial by itself after ten seconds without a link request, so a trial pings every three seconds until
@@ -362,7 +378,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const cyclesSerial = work => { const run = cyclesChain.then(work, work); cyclesChain = run.catch(() => {}); return run }
   const cyclesLine = (what, work) => cyclesSerial(() => withCycles(what, async access => {
     const out = await frontend.withMc(access, 10000, work)
-    if (out === null) throw new Error(noCycles)
+    if (out === null) throw new Error(await frontend.readRytmIdentity(access) ? noRytmLoader : noCycles)
     return out
   }))
   const cyclesModules = call => frontend.mcModules(call).catch(error => { if (error instanceof frontend.McRefused && error.status === 2) return 'unsupported'; throw error })
@@ -401,6 +417,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   async function cyclesReview(args) {
     if (cyclesTrial) throw new Error('Finish the current trial first.')
+    // A Rytm answers the same link but has no runtime loader yet: say so before asking for a package.
+    await cyclesSerial(() => withCycles('check the Elektron unit', async access => {
+      if (!await frontend.readMcIdentity(access) && await frontend.readRytmIdentity(access)) throw new Error(noRytmLoader)
+    }))
     if (args.moduleIds.length !== 1) throw new Error('The Model:Cycles takes one change a trial: one package or one remove:NAME.')
     const change = await cyclesPackage(args.moduleIds[0])
     const before = await cyclesLine('review Model:Cycles', async call => {

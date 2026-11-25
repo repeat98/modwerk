@@ -7,7 +7,9 @@ and presses keys, plays pads, turns encoders and confirms an OS upgrade as a per
 would: with it an agent flashes or RAM-boots a test image and drives a test without a hand on the
 unit. It is the Rytm's transport the [machine recipe](../../../docs/MACHINE_RECIPE.md) asks for,
 SysEx because USB MIDI is all the unit offers. The Model:Cycles' link follows this one (the same
-wire, the same commands); the MCP's device tools and the machine page do not reach it yet.
+wire, the same commands). The developer MCP's `device_status`, `device_load` and `device_log` read it
+with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analog-rytm-mkii-over-its-link),
+`src/engine/elektron/rytm-link.ts`); the machine page does not yet.
 
 - Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s)
   and the log and load ([`diag.c`](elekloader/base/diag.c), [`load.c`](elekloader/base/load.c)),

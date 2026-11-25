@@ -330,6 +330,22 @@ saved: there are no saved sets. Close Elektron Transfer first. Tests run
 against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the
 base's own transport, controller and loader compiled for the computer.
 
+### An Analog Rytm MKII over its link
+
+The same `--elektron-midi` tools read an Analog Rytm MKII when no Model:Cycles
+answers: every Modwerk base on the Rytm carries the link's read-only part
+([LINK.md](../sdk/machines/analog-rytm-mkii/LINK.md), 25 November 2026).
+`device_status` gives its identity (`label` the flashed image's, as stock shows
+it; `release` true for a release base, which refuses keys, screen, memory and
+the RAM boot; a development base's arm and RAM boot) and `build`, the `.syx` in
+`--elektron-images` whose set identity matches: the `.run` block sits before
+the storage lockfile the linker appends, and `scripts/link-image.mjs` prints the
+same numbers as `run`. `device_load` and `device_log` read as for the
+Model:Cycles; the Rytm's `cpu` is the audio block's share of its period, its
+`playing` the half seconds the sequencer played. The Rytm has no runtime loader
+yet, so `device_review` and the trial tools say so; modules reach it in a built
+image. Tests run against a fake unit (`scripts/rytm-device.test.mjs`).
+
 ## A member's unit through a remote session
 
 An administrator can read a member's Octatrack through their browser, with
