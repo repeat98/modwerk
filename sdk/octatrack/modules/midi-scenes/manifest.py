@@ -12,7 +12,8 @@ Sam's OK, 13 November 2026), which follows bkkbrls-del's MIDISC2.1. Changed
 for the Modwerk base: the project events come from the base's hooks
 (runtime.json, sdk/machines/octatrack/HOOKS.md) instead of octabam's STORE, and
 its file and CRC helpers are in scenes.s; scenes.work is read slot by slot
-(no second 256 KiB buffer); the copy kept in battery RAM over a power cycle
+(no second 256 KiB buffer); 0.3.1 keeps lock tables for at most 24 Parts (121 KB
+instead of 272 KB of the module pool); the copy kept in battery RAM over a power cycle
 holds only the current bank's locks, packed, at 0x100f9800 (battery-ram.json).
 The manifest names each stock site by the SHA-256 of its bytes, never the
 bytes. USB only: the package needs the base's hooks, so there is no card form.

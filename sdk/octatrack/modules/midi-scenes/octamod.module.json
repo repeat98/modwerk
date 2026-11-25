@@ -3,7 +3,7 @@
   "id": "midi-scenes",
   "key": "MIDI SCENES",
   "name": "MIDI Scenes",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "category": "scenes",
   "author": {
     "github": "bkkbrls-del",
@@ -82,18 +82,20 @@
       "A damaged scenes.work, or one from a newer version, is never overwritten: the project then starts with no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.",
       "Keep MIDI Scenes installed while you save, reload or copy projects that use it: without it scenes.work is not saved, reloaded or copied with the project.",
       "Part Save and Reload leave the MIDI locks as they are; a Kit or a Part copy does not carry them.",
-      "Uses about 272 KB of the shared module memory (a lock table for each of the project's 64 Parts)."
+      "Up to 24 of a project's 64 Parts hold MIDI scene locks. A lock in a 25th Part is refused (LOCKS: 24 PARTS); clearing a Part's locks frees its place.",
+      "A project saved with more than 24 locked Parts loads the first 24 and says LOCKS NOT LOADED; its scenes.work is then never written over, so nothing on the card is lost, and edits made meanwhile are not saved.",
+      "Uses about 121 KB of the shared module memory (24 lock tables and the file buffers)."
     ]
   },
   "resources": {
     "recorded": "16 November 2026; from the assembled unit, unmeasured on a unit",
     "storage": {
       "label": "Storage",
-      "display": "5.4 KB of code, 0.7 KB of data and 266 KB of buffers; scenes.work on the card (262 KB a project)",
-      "value": 278004,
+      "display": "6.5 KB of code, 0.7 KB of data and 114 KB of buffers; scenes.work on the card (262 KB a project)",
+      "value": 123562,
       "unit": "bytes",
       "method": "static",
-      "conditions": "m68k-elf-size of scenes.s: 5,430 bytes of code, 654 of data, 271,920 of bss (64 lock tables of 4,096 bytes, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 9,984 bytes at 0x100f9800.",
+      "conditions": "m68k-elf-size of scenes.s (0.3.1): 6,468 bytes of code, 726 of data, 116,368 of bss (24 lock tables of 4,096 bytes, the empty table and the refusal sink, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 9,984 bytes at 0x100f9800.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -120,9 +122,9 @@
         "source": "manifest.py"
       },
       "memory": {
-        "level": "high",
+        "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "About 272 KB of the 768 KiB module memory all modules share.",
+        "rationale": "About 121 KB of the 768 KiB module memory all modules share (0.3.0 took 272 KB).",
         "source": "TESTING.md"
       }
     },

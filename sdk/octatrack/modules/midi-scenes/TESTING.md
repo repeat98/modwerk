@@ -1,5 +1,68 @@
 # MIDI Scenes testing
 
+## 0.3.1-experimental (draft, 25 November 2026)
+
+0.3.0 kept a 4,096-byte lock table for each of the project's 64 Parts: 266 KiB of bss, 35 % of the base's 768 KiB
+module pool, whether or not a Part had a lock. On 25 November a set of 42 unused published packages, 0.3.0 among them,
+was refused on the owner's MKII with RUNTIME_MEMORY (the packages' code, data and bss came to 791 KiB). 0.3.1 keeps 24
+tables and gives one to a Part when it is displayed or gets locks; every other Part reads one shared empty table. The
+crossfader's mix never allocates (it runs in the sequencer step). A table with no lock goes back when another Part needs
+one, unless its Part is displayed or mixed. scenes.work keeps 0.3.0's format: all 64 slots, a Part without a table
+written as empty.
+
+### Sizes
+
+`m68k-elf-as -mcpu=5475 scenes.s`: 6,468 bytes of code, 726 of data, 116,368 of bss (0.3.0: 5,430, 654, 271,920).
+`npm run module:dev -- midi-scenes --build-only`: package `17f934ff`, 7,196 bytes of code and data, 116,368 of bss,
+11 hooks, 33 stock-code sites, the same sites as 0.3.0.
+
+### Emulator: locks, the limit, save, reload and a project over the limit
+
+`ot_emu` (the adapted build, paced to the wall clock, no DSP) on the development twin `8fd6d456` of base 0.8.1, with a
+throwaway card (set MODWERK, project DRUMS), never the owner's card. Two builds of this source: `17f934ff` (24 tables)
+and a test build `1d80e110` with NBLK 2 (two tables, never committed), each installed with `device try` and rolled
+back. Gestures over USB (`MIDI`, `T1`, `+SCENEA encA+N -SCENEA`, `PUSHA`, `part1`-`part3`, PROJECT > SAVE / RELOAD);
+locks read from the battery-RAM copy at 0x100f9800 (bank 0's count and entries).
+
+| Step | Build | Observed |
+|---|---|---|
+| Install | 2 tables | ev_modules_ready ran: SCS2, bank 0, 0 locks |
+| Lock in Part 1, then Part 2 | 2 tables | 1, then 2 locks (Part 1 value 53, Part 2 value 53) |
+| Lock in Part 3 | 2 tables | refused: the toast LOCKS: 24 PARTS, still 2 locks |
+| Clear Part 1's lock (PUSHA), lock in Part 3 | 2 tables | Part 1's empty table went to Part 3: Part 2 = 53, Part 3 = 55 |
+| SAVE, clear Part 2's lock, RELOAD | 2 tables | the saved state came back: Part 2 = 53, Part 3 = 55 |
+| Install over that project, lock in Part 1, SAVE | 24 tables | Parts 2 and 3 read from scenes.work at the install; 3 Parts saved (57, 53, 55) |
+| Install over the 3-Part project | 2 tables | Parts 1 and 2 loaded, Part 3 left out; the battery copy's magic 0; LOCKS NOT LOADED at the next scene gesture, the edit there applied |
+| SAVE in that state, then install the 24-table build | 24 tables | all 3 Parts loaded with the values saved before (57, 53, 55): scenes.work was not written over |
+
+Every trial rolled back with "no crash, stall, freeze or skipped track logged during the trial".
+
+### MKII: the largest set, idle
+
+The owner's MKII on OS 1.40C, RAM-booted into the development twin `8fd6d456` (the flashed release `eb667962`'s source
+with `--dev` and controller rows), the loaded project unchanged, no module assigned anywhere, measured as the other idle
+records ([MODULE_PERFORMANCE.md](../../../../docs/MODULE_PERFORMANCE.md)): `guard` over 8 s after a settle, the mean of
+ten `stats`, three `profile:3` windows. Every set was a rolled-back trial; nothing was kept or flashed, and the release
+image was RAM-booted back afterwards with the nine kept modules.
+
+- The 42 packages with 0.3.1 in place of 0.3.0 now pass the memory check; the set was refused instead with
+  RUNTIME_STOCK, which 15 s trials of the 32 others plus each of the last ten traced to Recorder Loop Fix 0.1.0 alone
+  (its stock bytes differ under base 0.8.1). The other nine each installed beside the 32.
+- The remaining 41 (every published Octatrack package but Recorder Loop Fix, USB Audio, Analog BD, Sidechain and
+  Output Matrix) installed in one trial and rolled back: "no crash, stall, freeze or skipped track logged".
+
+| Set | Frame interrupt stopped / playing | CPU meter stopped / playing | Longest frame playing | Module UI tick stopped / playing |
+|---|---|---|---|---|
+| none (before) | 23.6 / 29.3 % | 35.4 / 44.5 % | 62.8 % | 139 / 168 µs |
+| none (between) | 24.9 / 29.4 % | 36.8 / 44.7 % | 62.6 % | 142 / 160 µs |
+| 41 unused, MIDI Scenes 0.3.1 among them | 27.0 / 34.9 % | 41.6 / 51.2 % | 72.2 % | 595 / 744 µs |
+| none (after) | 23.8 / 29.6 % | 38.5 / 48.3 % | 62.8 % | 140 / 169 µs |
+
+No render was skipped in any window. The crash and stall records (12 and 56) did not change.
+
+Not run for 0.3.1: scene gestures, the crossfader and CC output on a unit (the logic they reach is 0.3.0's, but msc_a0
+now allocates), a power cycle, `device:price` at rest and in use, a MIDISC 2.x project over the limit, the MKI.
+
 ## 0.3.0-experimental (draft, 16 November 2026)
 
 ### Install trial on an MKII, 16 November 2026
