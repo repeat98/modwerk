@@ -1,5 +1,5 @@
 ; MACKITY -- DSP56300 port of Chris Johnson's Airwindows Mackity (MIT).
-; Copyright (c) 2016 Chris Johnson; port (c) 2026 Jannik Assfalg.
+; Copyright (c) 2016 Chris Johnson (Airwindows), MIT.
 ; Upstream revision and full MIT licence: upstream/, LICENSE.
 ;
 ; A buffer-free stereo insert for FX1 or FX2: no allocator, no bus role,

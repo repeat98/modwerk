@@ -1,6 +1,6 @@
 # Mackity
 
-Version 0.1.0-experimental · Chris Johnson's Airwindows Mackity, ported by @repeat98 · a draft, not tested on a unit yet.
+Version 0.1.0-experimental · Chris Johnson's Airwindows Mackity.
 
 ## Overview
 
@@ -67,12 +67,10 @@ run on a unit yet.
 
 ## Authorship and licences
 
-Chris Johnson (Airwindows) wrote Mackity and published it under the MIT licence:
-<https://github.com/airwindows/airwindows>, revision
-`e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea`, `plugins/LinuxVST/src/Mackity`. His
-source and licence are kept unchanged in [upstream/](upstream/). Jannik Aßfalg
-(repeat98) wrote the DSP56300 port, its tests and the thumbnail, under the same
-MIT terms. See [LICENSE](LICENSE).
+Original: [Chris Johnson / Airwindows](https://www.airwindows.com/),
+[Mackity source](https://github.com/airwindows/airwindows/tree/e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea/plugins/LinuxVST/src/Mackity),
+MIT. His source and licence are kept unchanged in [upstream/](upstream/); the
+Octatrack adaptation is distributed under the same terms. See [LICENSE](LICENSE).
 
 ## Screens and audio
 

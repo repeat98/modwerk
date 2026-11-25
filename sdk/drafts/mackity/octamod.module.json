@@ -8,8 +8,7 @@
   "author": {
     "github": "repeat98",
     "credits": [
-      "Chris Johnson / Airwindows: original Mackity algorithm and MIT-licensed source",
-      "Jannik Aßfalg (repeat98): DSP56300 fixed-point port and control smoothing"
+      "Chris Johnson / Airwindows: original Mackity algorithm and MIT-licensed source"
     ]
   },
   "nativeManifest": "manifest.py",
@@ -98,7 +97,7 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "Chris Johnson's published Mackity source and his full MIT copyright and permission notice are retained in upstream/ and LICENSE. The DSP56300 adaptation, its tests and the thumbnail are original work under MIT. No desktop binary, firmware, extracted stock routine or table, or memory dump is included."
+    "declaration": "Chris Johnson's published Mackity source and his full MIT copyright and permission notice are retained in upstream/ and LICENSE; the Octatrack adaptation is distributed under the same terms. No desktop binary, firmware, extracted stock routine or table, or memory dump is included."
   },
   "media": [],
   "access": {

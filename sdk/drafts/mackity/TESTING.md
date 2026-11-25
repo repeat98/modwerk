@@ -31,12 +31,39 @@ folder with `npm run module:dev -- mackity --build-only --cycles 226
   trial. It rose the same way with no module installed (9 to 14 in 20
   seconds, serve running): the session's requests to a release base, not the
   module.
-- `npm run device:test` did not run: the release base answers no development
-  requests ("build it with --dev"). It needs a development twin.
+- `npm run device:test` did not run on that base: the release base answers no
+  development requests ("build it with --dev").
 
-Not tested on the unit: the effect placed on a track, its sound, the CPU
-meters, both DSP cores, several instances, Part and project reload, and a
-power cycle.
+### Agent test on the unit (device:test), 2026-11-25
+
+The same package, on the owner's MKII RAM-booted on development twin
+`8fd6d456abf3865b` of base 0.8.1, through the unit queue. The project's banks
+A-E play only patterns on Part 1, whose working copy differs from its saved
+one; so, on the owner's choice, trigs were placed on T1 and T5 (steps 1, 5, 9,
+13) of empty bank F pattern 1, whose Part 1 equals its saved copy, in the
+twin's RAM only. Afterwards the release image (`eb6679620d0c9ed7`) was booted
+back and the inventory read the same nine modules as before.
+
+Command: `npm run device:test -- --share SOCK --testing-entry run.md mackity.mwrm`
+
+- Installed as a trial in RAM and rolled back at the end: nothing was kept.
+- Self-test with the package installed: passed; modules 1/1 intact, 1 with DSP
+  effects; together 1/1 ran (last batch `- - - - 0x1a - - -`); peaks CPU 45.5 %,
+  T1-4 33.8 %, T5-8 49.8 %; longest frame 406 us; card set 4, 0/1.
+- MACKITY on FX2 alone: T1 peak 419 per mille of a frame, admitted in 118 ms;
+  T5 peak 498 per mille, admitted in 117 ms.
+- On all eight tracks at once, playing: CPU 458, T1-4 peak 663, T5-8 peak 743
+  per mille.
+- Part switches: 12 of 12 ran their own effects within 3 s.
+- Crash test: not run (device:test has none).
+- Inventory at the end: the same as before the run. Result: passed.
+
+Bank F's Part has no samples on its tracks, so the effect ran on silence there:
+this proves install, admission, CPU and stability, not the sound.
+
+Not tested on the unit by an agent: listening, MIDI, scenes and recording, the
+module beside the other installed modules, the Keep, a power cycle and what
+survives it.
 
 ## Stock flows
 
