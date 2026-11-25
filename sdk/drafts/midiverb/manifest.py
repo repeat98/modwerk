@@ -8,8 +8,8 @@ Owner waiver for the Alesis programs, 25 Nov 2026 (PR #2179).
 import json
 import pathlib
 
-from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, MenuEntry,
-                          Module, Param, Proof, YBase)
+from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, Linked,
+                          MenuEntry, Module, Param, Proof, YBase)
 
 _TABLE = json.loads((pathlib.Path(__file__).resolve().parent / "programs.json").read_text())["programs"]
 _INDEX = []
@@ -24,7 +24,7 @@ MODULE = Module(
     category=Category.TRACK, author="repeat98", author_url="https://github.com/repeat98",
     proof=Proof.RENDER, proof_note="verify.py: bit-exact against the program table in dsp_host; not on a unit yet",
     doc="The Alesis Midiverb's programs at their original 16-bit arithmetic, half rate, own FX2 ring.",
-    menu=MenuEntry(fx2_id=0x0e, donor_desc=0x400d58b8,   # DARK REV
+    menu=MenuEntry(fx2_id=0x0a, donor_desc=0x400d58b8,   # DARK REV; the base picks the id at install
                    abbr=b"MVRB", fullname=b"Midiverb", build_tag=False),
     params=(
         Param(b"PROG", 0, len(_TABLE), True, Formatter.WIDE_STEPPED, labels=tuple(p["label"] for p in _TABLE),
@@ -38,6 +38,8 @@ MODULE = Module(
     dsp=DspSection(asm="modules/midiverb/engine.asm", priority=15, bus_role=BusRole.NONE, ybase=YBase.NEVER,
                    r7_latch_slot=None, gate_label=None, ptable=tuple(_INDEX + _BODY)),
     claims=Claims(stock_instance_buffer=True, buffer_words=15870),
+    # The program's name in stock's message box when PROG turns (popup.s, through the base's ev_in_use).
+    linked=(Linked("midiverb", "modules/midiverb/popup.s", cpu="5475", dram=True),),
     harness=Harness(layout_char=None, is_server=False),
     gates=(Gate("modules/midiverb/verify.py", remix_arg=False),),
     dear={"PROG": _DEAREST, "LEVL": 127, "MIX": 127},

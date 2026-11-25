@@ -207,6 +207,15 @@ const MV1_NAMES = ['.2 SM BRT', '.2 SM WARM', '.2 MD BRT', '.3 SM BRT', '.3 SM W
   'GATE 100', 'GATE 150', 'GATE 200', 'GATE 250', 'GATE 300', 'GATE 350', 'GATE 400', 'GATE 500', 'GATE 600',
   'REV 300', 'REV 400', 'REV 500', 'REV 600'];
 
+// A program's full name for the message box popup.s shows: 19 characters at most.
+export function fullName(label) {
+  const size = { SM: 'SMALL', MD: 'MEDIUM', LG: 'LARGE', XL: 'XLARGE' }, tone = { BRT: 'BRIGHT', WARM: 'WARM', DARK: 'DARK' };
+  const [a, b, c] = label.split(' ');
+  const name = a === 'GATE' ? `GATED ${b}MS` : a === 'REV' ? `REVERSE ${b}MS` : `${a}S ${size[b]} ${tone[c]}`;
+  if (name.length > 19) throw new Error(`${name}: longer than the message box's 19 characters`);
+  return name;
+}
+
 // The first build, before the base can load programs on demand: 24 Midiverb I
 // programs resident in the effect's own table (16 reverbs, 4 gated, 4 reverse).
 // Each fits the base's one-slot cycle allowance (measured in dsp_host, at most
@@ -291,6 +300,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const pick = process.argv.includes('--all') ? programs.MV1.map((_, i) => i) : TRIAL;
     const trial = pick.map((i) => ({ bank: 'MV1', number: i + 1, label: MV1_NAMES[i],
       trimmed: relocate(programs.MV1[i], size).trimmed, words: encode(compile(programs.MV1[i], size)) }));
+    if (!arg('--out')) {
+      const popup = join(HERE, 'popup.s'), text = readFileSync(popup, 'utf8');
+      const names = trial.map((t) => { const n = fullName(t.label); return `        .ascii  "${n}"\n        .space  ${20 - n.length}\n`; }).join('');
+      writeFileSync(popup, text.replace(/(\| names begin\n)[\s\S]*(\| names end)/, `$1${names}$2`));
+    }
     writeFileSync(arg('--out') ?? OUT, '{"size": ' + size + ', "programs": [\n' +
       trial.map((t) => JSON.stringify(t)).join(',\n') + '\n]}\n');
     console.log(`wrote ${arg('--out') ?? OUT}: ${trial.length} programs, ${trial.reduce((n, t) => n + t.words.length, 0)} words`);

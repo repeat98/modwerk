@@ -87,7 +87,7 @@
       "Experimental: 24 Midiverb programs; not yet tested on a unit.",
       "Costs about three times SPRING REV on the DSP in this build."
     ],
-    "effectId": 14
+    "effectId": 10
   },
   "resources": {
     "recorded": "Not measured",
