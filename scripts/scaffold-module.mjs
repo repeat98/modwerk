@@ -125,7 +125,7 @@ if(upstream){
   // A port's reference model, its host test and the gates on the shared harness (sdk/octatrack/tools/dsp_gate.py), over the dsp
   // template; upstream's files as they are at the pinned commit, and the import record a listing moves to sdk/imports/.
   const portTemplate=resolve(root,'sdk/templates/dsp-port'),fill=text=>text.replaceAll('__ID__',id).replaceAll('__NAME__',document.name).replaceAll('__UPSTREAM__',upstream.name).replaceAll('__REVISION__',upstream.revision)
-  for(const file of await readdir(portTemplate))if(file!=='README.md')await writeFile(resolve(destination,file),fill(await readFile(resolve(portTemplate,file),'utf8')))
+  for(const entry of await readdir(portTemplate,{withFileTypes:true}))if(entry.isFile()&&entry.name!=='README.md'&&!entry.name.endsWith('.pyc'))await writeFile(resolve(destination,entry.name),fill(await readFile(resolve(portTemplate,entry.name),'utf8')))
   await mkdir(resolve(destination,'upstream'))
   const vendored=[...upstream.files,{...upstream.licence,file:'LICENSE'}]
   for(const item of vendored)await writeFile(resolve(destination,'upstream',item.file),item.bytes)
