@@ -39,7 +39,7 @@ describe('module:dev', () => {
   // A draft has no committed page recipe, so module-dev-package.py derives one from its manifest. Derived for listed effects, it must
   // equal their committed recipes, and its packing must equal build.py's.
   it.skipIf(!tools)('derives and packs an effect page exactly as the catalogue build and build.py do', () => {
-    for (const id of ['airwindows-chorus', 'miniverb', 'everb', 'lofi2']) {
+    for (const id of ['airwindows-chorus', 'miniverb', 'everb', 'lofi2', 'euclid', 'tapeecho', 'tapehead']) {
       const result = spawnSync(python, ['-B', 'scripts/module-dev-package.py', id, '-o', '/dev/null', '--check-page', id], { cwd: root, encoding: 'utf8' })
       expect(result.stdout.trim().split('\n').at(-1), id + ': ' + result.stderr).toBe('packing identical recipe identical')
     }

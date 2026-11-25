@@ -7,7 +7,7 @@ import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with {
 import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, poolExtent, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -104,7 +104,7 @@ describe('preparing a module set', () => {
     const target = { name: 'All published', moduleIds: USB_MODULE_IDS }, fetched = vi.fn(load)
     // RINGMOD SC is a published ABI 9 package (a key bus reader) and Analog BD's carries its engine for the base's hook
     // site (ABI 10): a capable base reports ABI 10.
-    const events = { abi: 10, features: 7 | 128 | 512 | RuntimeFeature.uiRoots, maxSites: 128, maxCopies: 128 } // Tuner asks for uiRoots (base 0.7.5)
+    const events = { abi: 10, features: 7 | 128 | 512 | RuntimeFeature.uiRoots | RuntimeFeature.judgedRests | RuntimeFeature.frameCosts, maxSites: 128, maxCopies: 128 } // Tuner asks for uiRoots (base 0.7.5); Tape Echo 0.1.9 for judged rests and frame costs (base 0.8)
     await expect(prepareModuleSet(target, empty, fetched)).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, { ...events, features: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired) // Repitch subscribes
     await expect(prepareModuleSet(target, empty, fetched, { ...events, abi: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired)
@@ -113,16 +113,25 @@ describe('preparing a module set', () => {
     expect(fetched).not.toHaveBeenCalled()
     const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
     const extraNames = audio ? [audio.name] : []
-    const result = await prepareModuleSet(target, empty, fetched, events, baseBinding.identity)
-    expect(result.changes.map(change => change.module)).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames])
-    expect(result.changes.every(change => change.undo?.length === 32)).toBe(true)
+    // Every published package at once needs more than the base's module pool, so they compose in two sets that share
+    // it out: the largest first, each into the lighter set.
+    await expect(prepareModuleSet(target, empty, fetched, events, baseBinding.identity)).rejects.toThrow('module memory')
+    const cost = (id: string) => { const entry = manifest.packages.find(item => item.id === id); return entry ? poolExtent(entry, file(entry.path)) : 0 }
+    const compose = async (ids: readonly string[], capabilities: typeof events) => {
+      const halves: string[][] = [[], []], used = [0, 0]
+      for (const id of [...ids].sort((a, b) => cost(b) - cost(a))) { const half = used[0] <= used[1] ? 0 : 1; halves[half].push(id); used[half] += cost(id) }
+      return (await Promise.all(halves.map(moduleIds => prepareModuleSet({ name: 'Half', moduleIds }, empty, fetched, capabilities, baseBinding.identity)))).flatMap(result => result.changes)
+    }
+    const changes = await compose(USB_MODULE_IDS, events)
+    expect(changes.map(change => change.module).sort()).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames].sort())
+    expect(changes.every(change => change.undo?.length === 32)).toBe(true)
     // An ABI 8 loader still takes every package but the ABI 9 and 10 ones (RINGMOD SC, Analog BD's engine package),
     // which ask for the base update.
     const abi9 = manifest.packages.filter(entry => ((entry as { abi?: number }).abi ?? 0) >= 9).map(entry => entry.id)
     expect([...abi9].sort()).toEqual(['analog-bassdrum', 'ring-sc'])
     for (const id of abi9) await expect(prepareModuleSet({ name: id, moduleIds: [id] }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)).rejects.toBeInstanceOf(BaseUpdateRequired)
-    const older = await prepareModuleSet({ name: 'ABI 8', moduleIds: USB_MODULE_IDS.filter(id => !abi9.includes(id)) }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)
-    expect(older.changes.map(change => change.module)).toEqual([...manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name), ...extraNames])
+    const older = await compose(USB_MODULE_IDS.filter(id => !abi9.includes(id)), { ...events, abi: 8 })
+    expect(older.map(change => change.module).sort()).toEqual([...manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name), ...extraNames].sort())
   })
   it('refuses hook words a subscriber’s manifest does not declare, or more than the base dispatches', async () => {
     const entry = manifest.packages.find(item => item.id === 'repitch')!, data = file(entry.path)

@@ -15,6 +15,30 @@ describe('trial verdict', () => {
     expect(trialVerdict(before, before)).toEqual({ failed: false, lines: ['no crash, stall, freeze or skipped track logged during the trial'] })
   })
 
+  it('fails when the brake caught the frame falling behind', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'brake', 0x02000001)]))
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toMatch(/^FAIL .*brake silenced the module machines \(1 since boot\)/)
+  })
+
+  it('notes, and passes, a pattern begun with module machines silenced as predicted', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'brake', 1 << 23 | 2)]))
+    expect(verdict.failed).toBe(false)
+    expect(verdict.lines[0]).toMatch(/^note .*predicted past the frame ceiling .*\(2 since boot\)/)
+  })
+
+  it('fails when a late frame entry made the DSP skip a frame', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'late', 4)]))
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toMatch(/^FAIL .*DSP skipped a frame.*\(4 since boot\)/)
+  })
+
+  it('prints a USB re-offer (#1985) but passes: the link, not the module', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'usb', 0x0800 << 16 | 0x1000)]))
+    expect(verdict.failed).toBe(false)
+    expect(verdict.lines[0]).toMatch(/offered itself on USB again \(OTGSC 0x800, PORTSC1 0x1000\)/)
+  })
+
   it('fails on a crash, stall, freeze or skip logged after the trial began, and names the crash', () => {
     const before = log(10, [incident(9, 'stall', 1)])
     const after = log(14, [incident(9, 'stall', 1), incident(11, 'crash', 0x40a00004), incident(12, 'freeze', 40), incident(13, 'shed', 0x05000003), incident(14, 'stall', 2)])
@@ -27,6 +51,32 @@ describe('trial verdict', () => {
       'FAIL (boot 7 +3s) DSP stall (eDMA refused a transfer)',
       'npm run device -- do diaglog prints the whole log; do crash or do stall the record',
     ])
+  })
+
+  it('judges skips by the guard’s live count where the base pages it, so a late-logged shed from before is no fault', () => {
+    const sheds = (count: number, tracks = 0xff) => ({ sheds: { count, tracks } })
+    // diag.c logs a SHED incident at most once in ten minutes: this one carries an earlier trial's 33 skips.
+    const late = { ...log(14, [incident(13, 'shed', 0xff000021)]), ...sheds(33) }
+    expect(trialVerdict({ ...log(10), ...sheds(33) }, late)).toEqual({ failed: false, lines: ['no crash, stall, freeze or skipped track logged during the trial'] })
+    const verdict = trialVerdict({ ...log(10), ...sheds(33) }, { ...log(10), ...sheds(35, 0x05) })
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toBe('FAIL the frame guard skipped 2 renders during the trial (tracks it skipped on since the start: T1, T3)')
+    // An older base pages no count: its incidents decide, as before.
+    expect(trialVerdict(log(10), log(14, [incident(13, 'shed', 0x05000003)])).failed).toBe(true)
+  })
+
+  it('fails when a frame entry came later than the late-entry wait can hold, by the live count where the base pages it', () => {
+    const paged = (lateOver?: number) => ({ sheds: { count: 33, tracks: 0, ...(lateOver === undefined ? {} : { lateOver }) } })
+    const verdict = trialVerdict({ ...log(10), ...paged(1) }, { ...log(10), ...paged(3) })
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toBe('FAIL 2 frame entries came later than the late-entry wait can hold (190 µs) during the trial, which can stall the DSP')
+    expect(trialVerdict({ ...log(10), ...paged(3) }, { ...log(10), ...paged(3) }).failed).toBe(false) // none during it
+    expect(trialVerdict({ ...log(10), ...paged() }, { ...log(10), ...paged() }).failed).toBe(false) // a base that pages none
+    // The LATE incident carries them in its top byte, with or without entries held, and fails either way.
+    const alone = trialVerdict(log(10), log(11, [incident(11, 'late', 1 << 24)]))
+    expect(alone.failed).toBe(true)
+    expect(alone.lines[0]).toMatch(/^FAIL .*no late frame entry held; 1 frame entry since boot came later than the wait can hold/)
+    expect(trialVerdict(log(10), log(11, [incident(11, 'late', 255 << 24 | 4)])).lines[0]).toMatch(/\(4 since boot\); 255 or more frame entries since boot/)
   })
 
   it('notes a hot CPU without failing, and ignores the trial\'s own set and start records', () => {

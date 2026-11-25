@@ -37,12 +37,12 @@ function useZoomLoad(link: ZoomLink | null, active: boolean) {
 }
 
 /** Why there is no load to show, or undefined when it can be read. */
-function noLoad(identity: ZoomIdentity | undefined, unsupported: boolean) {
+function noLoad(identity: ZoomIdentity | undefined, unsupported: boolean, base: boolean) {
   if (!identity) return 'Connect your pedal to see its load.'
   if (isUpdateMode(identity)) return 'In update mode the pedal runs only its bootloader.'
   if (identity.midistomp) return unsupported ? 'MIDISTOMP ' + identity.midistomp.version + ' answers over USB but doesn’t send its load yet.' : undefined
   if (identity.firmware === ZOOM_BASE.tag) return ZOOM_BASE.name + ' shows its load on the pedal (at the top of MENU, and in MENU › SYSTEM) but doesn’t send it over USB. The next MIDISTOMP will.'
-  return 'Zoom’s firmware doesn’t report its load. The base will (Setup).'
+  return base ? 'Zoom’s firmware doesn’t report its load. The base will (Setup).' : 'Zoom’s firmware doesn’t report its load.'
 }
 
 /**
@@ -50,9 +50,10 @@ function noLoad(identity: ZoomIdentity | undefined, unsupported: boolean) {
  * now, the last five minutes, and where the time goes in this patch, from MIDISTOMP's SYSTEM screen over USB
  * (zoom-protocol.ts parseLoad). `identity` is the connected pedal's; `active` while Status shows.
  */
-export function ZoomLoad({ link, identity, active }: { link: ZoomLink | null; identity?: ZoomIdentity; active: boolean }) {
+/** `base`: whether this pedal has a base that reports its load (only the MS-70CDR so far). */
+export function ZoomLoad({ link, identity, active, base = true }: { link: ZoomLink | null; identity?: ZoomIdentity; active: boolean; base?: boolean }) {
   const id = useId(), { points, now, unsupported, clear } = useZoomLoad(link, active && !!identity?.midistomp && !isUpdateMode(identity))
-  const off = noLoad(identity, unsupported), last = points.at(-1)
+  const off = noLoad(identity, unsupported, base), last = points.at(-1)
   const latest = !off && active && last && now - last.at <= 6000 ? last.reading : null
   const slots = latest?.slots.reduce((sum, slot) => sum + slot.cpu, 0) ?? 0
   const parts: [string, number][] = latest ? [['Mixer', latest.audio - latest.perform - slots], ['PERFORM', latest.perform], ['MIDI', latest.midi], ['SYSTEM meter', latest.system], ['Zoom’s OS and screen', latest.cpu - latest.audio - latest.system - latest.midi]] : []

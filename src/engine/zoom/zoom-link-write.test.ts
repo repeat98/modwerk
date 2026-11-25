@@ -173,15 +173,19 @@ describe('installing and removing over the link', { timeout: 15_000 }, () => {
     expect(await link.installFile('LOOP.ZDL', newer.data)).toMatchObject({ unchanged: false })   // and it installs again
     expect(list(twice)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL'])
   })
-  it('writes only to an MS-70CDR on Zoom’s 2.10 or the base, and sends nothing to another model or firmware', async () => {
-    for (const options of [{ deviceId: 0x58, firmware: '3.10' }, { firmware: '2.00' }, { deviceId: 0x7a }]) {
+  it('writes only to the supported MS-70CDR builds', async () => {
+    for (const options of [{ deviceId: 0x58, firmware: '3.10' }, { firmware: '2.00' }, { firmware: 'D005' }, { deviceId: 0x58, firmware: 'D004' }, { deviceId: 0x7a }]) {
       const fake = pedal(options), link = await connect(fake)
-      await expect(link.installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)).rejects.toThrow(/tested only on the MS-70CDR/)
-      await expect(link.removeFile('LOOP.ZDL')).rejects.toThrow(/tested only on the MS-70CDR/)
+      await expect(link.installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)).rejects.toThrow(/require the MS-70CDR/)
+      await expect(link.removeFile('LOOP.ZDL')).rejects.toThrow(/require the MS-70CDR/)
       expect(fake.sent.some(m => m[1] === 0x52)).toBe(false)   // no file command at all
     }
-    const base = pedal({ firmware: 'M201' })
-    await (await connect(base)).installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)
-    expect(list(base)).toContain('8:NAM1SMOK.ZDL')
+    for (const firmware of ['M201', 'D004']) {
+      const base = pedal({ firmware }), link = await connect(base)
+      await link.installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)
+      expect(list(base)).toContain('8:NAM1SMOK.ZDL')
+      await link.removeFile('NAM1SMOK.ZDL')
+      expect(list(base)).not.toContain('8:NAM1SMOK.ZDL')
+    }
   })
 })

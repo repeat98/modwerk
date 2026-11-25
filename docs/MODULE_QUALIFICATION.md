@@ -113,27 +113,35 @@ A module that changes stock behaviour and draws nothing of its own (no controls,
 
 ## Record in the module manifest
 
-Complete [the qualification template](../public/module-qualification.example.json) using actual results and place its object under `tests.qualification` in `octamod.module.json`. The downloadable file and scaffold copy are deliberately incomplete: null numbers, placeholder identities and pending/failed statuses fail validation. Leave a draft without `tests.qualification` while developing; it cannot pass submission/publication checks. Never replace unknown quantities with zero, averages or invented measurements.
+`npm run module:qualify` writes `tests.qualification` from the evidence ([below](#write-the-record-from-the-evidence)). [The qualification template](../public/module-qualification.example.json) shows its shape. The downloadable file and scaffold copy are deliberately incomplete: null numbers, placeholder identities and pending/failed statuses fail validation. Leave a draft without `tests.qualification` while developing; it cannot pass submission/publication checks. Never replace unknown quantities with zero, averages or invented measurements.
 
 Keep `tests.report`, `tests.evidenceRevision`, README, native declarations and the qualification reports synchronized. `tests.evidenceRevision` identifies the exact tested source commit; `qualification.moduleVersion` must match the submitted version. `qualification.sourceSha256` binds the evidence to the current native source inventory and `qualification.imageSha256` identifies the exact local image tested on hardware (a reviewer may reproduce it from the unchanged DSP source). Commit only the hashes, never the firmware bytes. Source changes invalidate the qualification hash.
 
 Each qualification `report` must reference `TESTING.md` or a `.md`, `.json` or `.txt` report under `evidence/`. Reports must be regular, nonempty local files. The manifest and draft template are not evidence reports. Keep executable source and runtime inputs outside `evidence/`.
 
-Compute the source identity from the repository root with Node 24, after source and local text report paths are final:
+### Write the record from the evidence
+
+Do not write the record by hand. After [the test procedure](TEST_PROCEDURE.md) has run, draft it from what was measured, for a draft in `sdk/drafts/<id>` or a listed module:
 
 ```sh
-node --input-type=module - <<'JS'
-import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
-import { parseModuleDocument } from './src/catalog/module-contract.ts'
-import { moduleNativeSourceSha256 } from './scripts/module-qualification.mjs'
-const folder = resolve('sdk/octatrack/modules/my-module')
-const document = parseModuleDocument(JSON.parse(await readFile(resolve(folder, 'octamod.module.json'), 'utf8')))
-console.log(await moduleNativeSourceSha256(folder, document))
-JS
+npm run module:qualify -- <id> --procedure DIR --base "development twin 8fd6d456 of base 0.8.1, MKII, OS 1.40C"   # prints what changes
+npm run module:qualify -- <id> --procedure DIR --base "…" --write                                             # writes it
+npm run module:qualify -- <id> --check
 ```
 
-For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute: a change to the module's own probe (`qualification/probe.cpp`, its runner) alone moves the fingerprint and needs the evidence re-pinned like any source change. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
+`DIR` is the procedure's `--out` folder. The command reads its `procedure.json` and `price.json`, the package it tested, `evidence/performance.json` and `media/capture.json`. From these it writes:
+
+- the CPU price, `evidence/cpu-price.json` and `evidence/frame-cost.json`, as `device:price --write` would have (`--base` names the base the unit ran);
+- the storage and processing gauges, `tests.qualification` with the hardware record (model, date, tester, tested commit and package);
+- the cycles from the perf:audit record and the memory regions from the package header.
+
+It computes `sourceSha256` last, over the folder as it will be written. Numbers and identities come from the evidence. Words a person must stand behind are kept as written: rationales, conditions, the hardware summary and limitations, and the tutorial. Where none exist, they are drafted from the data and start with `[module:qualify draft]`. `--check` and `module:doctor` fail until you have read and edited each one. A value with no source stays out, and the command says what would supply it. `--image SHA`, `--tester LOGIN` and `--model` name what the record cannot know.
+
+The drafted cycle bound is the performance record's static floor. Add any per-call setup and trigger-split cost that floor leaves out (Mackity charges both per 16-frame block). The drafted memory regions are what the package header shows. Add the stock blocks the effect reuses, the stack and any scratch.
+
+When only files that are not code changed after the test (evidence, presentation), `npm run module:qualify -- <id> --rehash --write` recomputes `sourceSha256`. `--check` lists every file changed since the tested commit. If one of them is code, run the procedure again instead.
+
+The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values, each file read as Git stores it (text with LF line endings, `.gitattributes`), so a CRLF working tree on Windows gives CI's hash. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute: a change to the module's own probe (`qualification/probe.cpp`, its runner) alone moves the fingerprint and needs the evidence re-pinned like any source change. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
 
 ## Worst-case cycle counts
 

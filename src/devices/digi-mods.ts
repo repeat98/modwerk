@@ -119,6 +119,18 @@ export function isDigiDevice(id: string): id is DigiMachine { return (DIGI_DEVIC
 
 export function categorySlug(category: string) { return category.toLowerCase() }
 
+// Retired from a machine's library for good. A saved configuration or version pin that still names one loses it quietly
+// when it is read, instead of becoming unreadable, as REMOVED_MODULE_IDS does for the Octatrack. A module that leaves the
+// library adds its id here in the same change.
+export const RETIRED_DIGI_MODULE_IDS: Readonly<Partial<Record<DigiMachine, readonly string[]>>> = {
+  // #1650 (16 November 2026), #1944 (21 November 2026), #2008 (Pad Pressure Fix, into the base)
+  'analog-rytm-mkii': ['pipo-loop', 'improved-performance', 'chromatic-aftertouch-fix'],
+}
+export function withoutRetiredDigiModules(device: DigiMachine, ids: readonly string[]): string[] {
+  const retired = RETIRED_DIGI_MODULE_IDS[device] ?? []
+  return ids.filter(id => !retired.includes(id))
+}
+
 export function resolveDigiSelection(device: DigiMod['device'], ids: readonly string[]): DigiMod[] {
   const mods = DIGI_MODS.filter(mod => mod.device === device)
   const unknown = ids.filter(id => !mods.some(mod => mod.id === id))

@@ -277,6 +277,84 @@ Package `f501a6a4`, by the release session for the owner, on his MKII with 19 ot
   Undo of 9 November above.
 - Not heard: the twin's `off` layout has no USB audio. Not tested: the MKI, a MIDI flood, an LFO on a SYNTIZ control.
 
+## 0.1.1: the same samples for less work a frame (22 November 2026)
+
+Why: on the owner's MKII (OS 1.40C, a development twin of base 0.7.14, `b36f9c53e`, project Dev17 pattern C01 at
+126 BPM, trigs on steps 1, 5, 9 and 13 of T1-T8, a big set installed), the frame interrupt took 50.7 % of each frame with
+every track STATIC and 65.2 % with T2 a SYNTIZ 0.1.0 track: +14.5 points, the CPU meter +11, 24 renders dropped in 8 s.
+That is the owner's session's measurement, not repeated here. The 0.1.0 record above already found about 2.5 cycles an
+instruction warm and up to 8.8 cold, so the memory operands and the code a frame fetches weigh as much as the instruction
+count.
+
+What changed, with no change to the samples:
+
+- What depends only on the controls and the pitch (increments, detunes, chord ratios, gains, crushes, the subs' fade-in,
+  MORPH's crossfade step, and the divides among them) is worked out when one of the track's bytes changes (`wave_prepare`),
+  not every frame. `machine.c` keys it on the model, PTCH, SRC B-F and SETUP A-F; a lock, an LFO or a scene that moves
+  a byte works it out again for that frame. The controls struct is no longer rebuilt every frame either.
+- A block runs one short loop per oscillator (the saw, each detuned pair, each chord note, the subs) summing into the
+  packer's L longs, then one loop for the output stage, so each loop's state stays in registers. 0.1.0 ran every
+  oscillator and the output stage in one loop, which spilled to the stack every sample.
+- The output stage writes the packer's L and R longs itself (the glue's copy loop is gone), silent subs only move their
+  phases on, and the saw's test for its fall is one compare instead of two (`p + inc < 2 inc`, exact for the audible
+  increments that reach it).
+- `engine.h`: `wave_prepare` and `wave_play` beside `wave_render`, which the host tests still call. A block is at most
+  16 samples, a frame: the header said 64, and nothing calls it with more.
+
+The same samples, checked three ways:
+
+- **Host**, `python3 -B tools/cf_probe.py host origin/main`: `tools/render_matrix.c` (every model with every control at
+  0, 1, 63, 64, 65, 126 and 127 over every third note in blocks of 1 to 16, then 3,000 random walks of 200 blocks that
+  move controls, models and the pitch, with trigs) renders 5,845,711 samples, identical to 0.1.0's engine. Both builds ran
+  under UBSan and ASan with no report.
+- **ColdFire**, `python3 -B tools/cf_probe.py compare origin/main`: both versions' three objects, compiled and linked
+  as `build.py` does, run on upstream ot_emu's V4e core through `wave_render_track`, against a synthetic stock
+  environment (Part signature, parameter record, live lane, event bytes, a 2^(x/12) curve built as `test_machine_map.c`
+  builds it, no stock byte). 300 random scenarios of 600 frames each, two tracks, with model changes, moving knobs and
+  PTCH, SETUP bytes out of range, trigs with RTRG on and off, and frames split at every offset: 2,880,000 samples,
+  identical, the callee-saved registers and the cursor as before.
+- `verify.py`: the host checks pass, and the package rebuilds byte for byte.
+
+Not covered: the emulator times nothing and models no cache, DMA or bus, so the counts below are not the unit's time.
+The synthetic curve is not stock's (both versions read the same one; the pitch against stock's curve is
+`test_machine_map.c`'s). Not run: the MKI, a mute module.
+
+Counts, `python3 -B tools/cf_probe.py count` for this tree and `count origin/main` for 0.1.0: one track at C3 (PTCH 64),
+the mean of 63 frames after the first, each frame a `[0,0)` and a `[0,16)` call as a frame without a trig is. Code bytes
+are the 16-byte lines executed in a frame. The allowance weighs each executed instruction with Grain's zero-wait
+allowances (`grain/evidence/timing/bound.py`: 4 a register instruction, 12 with a memory operand, 16 a multiply, 48 a
+divide): a yardstick, not cycles. Heavy settings are `bench_cf.c`'s.
+
+| Model | Settings | Instructions | Memory operands | Code bytes | Allowance |
+| --- | --- | --- | --- | --- | --- |
+| SAW | defaults | 2,436 → 1,773 | 492 → 205 | 2,208 → 1,312 | 18,431 → 12,400 |
+| SAW | heavy | 4,717 → 3,779 | 1,100 → 428 | 3,504 → 2,544 | 34,690 → 25,039 |
+| PULSE | defaults | 3,125 → 2,268 | 671 → 219 | 2,624 → 1,696 | 22,750 → 14,612 |
+| PULSE | heavy | 4,966 → 3,952 | 1,149 → 505 | 3,744 → 3,024 | 35,966 → 25,732 |
+| ENS | defaults | 3,659 → 2,995 | 964 → 462 | 2,768 → 1,952 | 28,835 → 20,960 |
+| ENS | heavy | 6,854 → 5,943 | 1,456 → 710 | 3,632 → 2,832 | 49,947 → 39,077 |
+| TABLE | defaults | 2,629 → 1,967 | 647 → 268 | 2,160 → 1,376 | 20,514 → 13,983 |
+| TABLE | heavy | 3,816 → 3,193 | 755 → 384 | 2,784 → 2,112 | 27,667 → 21,554 |
+| MORPH | defaults | 2,659 → 2,106 | 563 → 350 | 2,064 → 1,456 | 19,987 → 15,064 |
+| MORPH | heavy | 3,685 → 3,509 | 831 → 711 | 2,528 → 2,848 | 27,800 → 26,289 |
+| CHOIR | defaults | 3,761 → 2,872 | 1,042 → 462 | 2,800 → 1,904 | 29,630 → 20,333 |
+| CHOIR | heavy | 5,550 → 4,610 | 1,454 → 707 | 3,456 → 2,560 | 42,528 → 32,066 |
+
+MORPH heavy changes WAV1 every frame, so it works the controls out every frame, and runs more code than 0.1.0. A lock
+or an LFO on a SYNTIZ knob does the same, once a frame while it moves. What is left is mostly the output stage (the
+emphasis, the curve's antiderivative, a divide a sample from about C3 up, the DC blocker): 1,305 of SAW's 1,773, about
+82 instructions a sample. A hand count of the same steps in ColdFire assembly came to about as many, so assembly would
+not shorten it, and the divide is what keeps the samples bit-exact.
+
+The package `c3a97ecc` (`public/octatrack-modules/syntiz/0.1.1-experimental.mwrm`, 46,944 bytes) holds 46,008 bytes
+of code and data and 20,644 of bss, against 0.1.0's 53,500 and 19,804: the engine's code fell from about 16 KB to
+8,360 bytes, and each track now keeps its controls and what was worked out from them.
+
+**Not tested on a unit.** To compare it with the 0.1.0 measurement above: the same twin, set and pattern, T2 SYNTIZ at
+its defaults (SAW, PTCH 64), the frame interrupt's share and the guard's skips over 8 s against 65.2 % and 24; then
+T2 with a heavy SAW (DET 40, UNI 127, WIDE 90, SUB and SUB2 90) and a heavy ENS (three chord notes, SHAP 32, CHOR 100,
+both subs 90). A null test against 0.1.0 by ear or recording needs both to start their oscillators at the same frame.
+
 ## Qualification record
 
 `evidence/performance.json` carries the 7 November figures as the audit asks (`npm run perf:audit -- check`): the
@@ -289,3 +367,7 @@ pull request is in order. The waiver covers rows with no numbers, so the load an
 measurements stay in their `method` text and here. The manifest's
 `tests.qualification` records one render as the event (at most three a frame; their worst sum exceeds the frame and
 is left to the base's guard), the exact package memory, and the functional hardware report.
+
+0.1.1 has no `tests.qualification` and no approval yet: 0.1.0's covered package `f501a6a4` only, so the manifest drops
+it, marks the hardware untested and names the new package's static memory. `evidence/performance.json` still holds
+0.1.0's run until `c3a97ecc` is measured on a unit.

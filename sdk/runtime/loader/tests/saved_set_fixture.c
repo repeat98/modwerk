@@ -56,6 +56,7 @@ int olog_stock_write(struct file_object *f, const void *data, unsigned n)
 }
 int olog_stock_close(struct file_object *f) { CHECK(f->word[3] == 0x5e7u); f->word[3] = 0; return card_fail_close ? -1 : 0; }
 int modwerk_test_export_size(struct file_object *f) { return (int)card_length[f->word[0]]; }
+int modwerk_test_card_size(struct file_object *f) { return (int)card_length[f->word[0]]; }
 
 /* The legacy baseline 111/112 as boot.c records its installs, saved: the RAM set is the live set. */
 static void seed_saved_set(void)

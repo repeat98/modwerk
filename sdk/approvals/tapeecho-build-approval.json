@@ -1,17 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "tapeecho",
-  "version": "0.1.6-experimental",
-  "sourceSha256": "3c3f70d7f2cc5a44d0bab31db964b3eed7e756bc314bc5286b99ce35bb84e861",
+  "version": "0.1.9-experimental",
+  "sourceSha256": "db9c74c4ee8b91d9b61658528b74020ded25e6dbba7fc4e0a82de6e5b021c193",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-27",
+  "approvedOn": "2026-11-23",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds",
     "release-documentation"
   ],
-  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release Tape Echo 0.1.6-experimental with BBD's MIX law and default MIX 40 (#969).",
-  "reason": "Owner released the Tape Echo MIX law change for issue #969 after software verification: the ColdFire kernels match the native oracle bit for bit and every Tape Echo gate passes on the emulator. No chip-cycle or complete memory measurement exists for this version and the earlier freeze at seven instances remains open. This binds only this exact version and native source; on 27 Oct 2026 the USB package was measured on a unit (levels at MIX 0/40/64/90/127, MIX sweeps without clicks; TESTING.md), while the card build, a seventh instance and listening stay untested.",
+  "ownerStatement": "Approved by repeat98 on 23 Nov 2026 (\"yes, approve tape echo 0.1.9\"), answering: \"Do you approve releasing it? Its hardware evidence would be today's runs on the unit; listening and Keep + power cycle stay with you.\"",
+  "reason": "Tape Echo 0.1.9 (0.1.7's rests, 0.1.8's ColdFire changes and overload hold, 0.1.9's ev_frame_deadline hold and rest) ships with base 0.8, which it requires. Unit evidence, owner's MKII, development twin 856cbbcf of base 0.8 (base/octatrack-next 9ac83b232), 23 Nov 2026, plain test package 9219d9e5 of this source (the release package differs only in its stock-copy records; evidence/frame-cost.json): in base 0.8's overload scene (seven other modules, 15 s takes, three of 0.1.9 against two of 0.1.6) the longest frame was 129.1-131.2 % against 138.8-139.3 %, the frame-interrupt share 55.6 % against 69.0 %, the latest frame entry 109-118 us late against 144-146 us, no stall or crash, and the base's predicted brake fired; both trials rolled back. Its instance curve in ordinary use is first 11.5, each 4.1 % of a frame against 0.1.6's 9.1 and 5.0 in the same run: dearer for one to three instances, cheaper at four, each a single 8 s reading (twin 28 on 22 Nov read 10.7/4.2 against 13.6/4.0); on one slot in use the CPU meter rose 9.7 points against 5.2. Not run: listening, the hold and rest by ear, Keep and a power cycle, test:procedure, the six- and seven-instance limit. No chip cycle or complete memory measurement exists for this version. The controls and pages are unchanged since 0.1.6, which already showed 0.1.2's captures. This binds only this exact version and native source.",
   "retainedUiVersion": "0.1.2-experimental"
 }

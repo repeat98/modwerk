@@ -64,10 +64,11 @@ describe('pr:ready verdict', () => {
     expect(readiness({}).ok).toBe(true)
     for (const state of [{ dirty: ['a.ts'] }, { behind: true }, { regenerated: ['src/catalog/module-documents.json'] }, { checkPassed: false }]) expect(readiness(state).ok).toBe(false)
   })
-  it('says the checks need Python 3.10+ instead of letting an older one crash inside them', () => {
-    for (const version of ['3.10.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+  it('says the checks need Python 3.12+ instead of letting an older one crash inside them', () => {
+    for (const version of ['3.12.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+    expect(pythonProblem({ version: '3.11.0' })).toContain('python3 is 3.11.0')   // sdk:check parses 3.12 f-strings
     const old = pythonProblem({ command: 'python3', version: '3.9.6' })
-    expect(old).toContain('needs Python 3.10 or newer')
+    expect(old).toContain('needs Python 3.12 or newer')
     expect(old).toContain('python3 is 3.9.6')
     expect(pythonProblem({ command: 'python', error: 'spawn python ENOENT' })).toContain('python did not run (spawn python ENOENT)')
     expect(pythonProblem({ version: null })).toContain('an unknown version')
@@ -107,12 +108,32 @@ describe('pr:ready verdict', () => {
     expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
     expect(readiness({}).instrument).toBe(false)
   })
+  it('checks the description with --body as CI\'s describe check does, and otherwise says how to', () => {
+    const refused = readiness({ description: ['The edge-case table under "Edge cases" has a row still to finish: row "Undo": …'] })
+    expect(refused.ok).toBe(false)
+    expect(refused.problems).toEqual(['Description: The edge-case table under "Edge cases" has a row still to finish: row "Undo": …'])
+    const passed = readiness({ description: [] })
+    expect(passed.ok).toBe(true)
+    expect(passed.notes.join(' ')).toContain('with the description you checked')
+    expect(readiness({}).notes.join(' ')).toContain('npm run pr:body -- FILE.md')
+  })
   it('routes a base build to the cumulative draft without prompting for a topic PR', () => {
     const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
     expect(verdict.baseDraft).toBe(true)
     expect(verdict.notes.join(' ')).toContain('directly to base/<machine>-next')
     expect(verdict.notes.join(' ')).not.toContain('gh pr create --draft')
     expect(verdict.notes.join(' ')).not.toContain('open or update the PR')
+  })
+  it('prompts the agent to verify GitHub after full readiness on a contribution', () => {
+    for (const input of [{}, { instrument: ['public/octatrack-modules/synth/example.mwrm'] }]) {
+      const notes = readiness(input).notes.join(' ')
+      expect(notes).toContain('gh pr view <URL> --json state,headRefOid,isDraft')
+      expect(notes).toContain('gh pr ready <URL>')
+      expect(notes).toContain('verify isDraft is false')
+    }
+    for (const input of [{ draftOnly: true }, { checkPassed: false }, { baseDraft: true }]) {
+      expect(readiness(input).notes.join(' ')).not.toContain('gh pr ready <URL>')
+    }
   })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
@@ -199,16 +220,21 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
+      // --body checks the description against the template, as CI's describe check does.
+      mkdirSync(join(checkout, '.github'))
+      copyFileSync(new URL('../.github/pull_request_template.md', import.meta.url), join(checkout, '.github', 'pull_request_template.md'))
+      writeFileSync(join(directory, 'body.md'), 'Moves the README line and checks it with pr:ready on the topic branch.\n')
       // A stale branch must stop before any generator/check invocation.
-      const result = spawnSync(process.execPath, [script, '--remote', 'origin'], { cwd: checkout,
+      const result = spawnSync(process.execPath, [script, '--remote', 'origin', '--body', join(directory, 'body.md')], { cwd: checkout,
         env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })
       expect(result.status, result.stderr).toBe(1)
       expect(result.stdout).toContain('git merge origin/main')
+      expect(result.stdout).toContain('✗ Description: Say what the guides lacked')
       expect(result.stdout).toContain('Not ready yet.')
       expect(git(checkout, 'rev-parse', 'origin/main')).toBe(current)
       git(checkout, 'merge', '--ff-only', 'origin/main')
       expect(git(checkout, 'rev-parse', 'HEAD')).toBe(current)
-      git(checkout, 'add', 'scripts', 'src')
+      git(checkout, 'add', 'scripts', 'src', '.github')
       git(checkout, 'commit', '-m', 'Track the local check fixture')
       writeFileSync(join(checkout, 'new-helper.ts'), 'export const enabled = true\n')
       const dirty = spawnSync(process.execPath, [script], { cwd: checkout,
