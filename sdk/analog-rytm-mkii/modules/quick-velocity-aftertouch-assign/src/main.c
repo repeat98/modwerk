@@ -263,7 +263,10 @@ QMA_UI static int any_held(int first, int last)
 }
 
 #define ANY_TRIG_HELD() any_held(0, TRIG_KEYS - 1)
-#define ANY_PAD_HELD() any_held(KEY_PAD_FIRST, KEY_PAD_LAST)
+// The pads held, from their own events (ev_key): on the author's unit stock's key table
+// (0x40081c28) reported every pad held with none touched (25 Nov 2026), so it is not asked.
+static unsigned pads_down;
+#define ANY_PAD_HELD() (pads_down != 0)
 
 QMA_UI static void show(const char *text)
 {
@@ -994,6 +997,12 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     word_t locker_now;
     if (replaying)
         return 0;                       // our own replayed LFO tap: the rest of the chain's
+    if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST && !(flags & REPEAT)) {
+        if (down)
+            pads_down |= 1u << (key - KEY_PAD_FIRST);
+        else
+            pads_down &= ~(1u << (key - KEY_PAD_FIRST));
+    }
     views = *(void **)((char *)brain + BRAIN_VIEWS);
     if (shown == SCN && !IS_KEY_HELD(KEY_SCENE))
         locker_remove();                // SCENE's release was dropped: do not wait for the tick
