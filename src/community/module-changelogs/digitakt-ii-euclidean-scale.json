@@ -6,7 +6,8 @@
       "Follow the pattern scale on stock Euclidean audio tracks with SCF.",
       "Reroll a repeating in-scale melody with RNN.",
       "Set separate low and high octave bounds for each pattern and track.",
-      "Save the scale follow settings, octave bounds and melody with the project."
+      "Save the scale follow settings, octave bounds and melody with the project.",
+      "Documentation only: the README no longer says the browser builder selects core 1.0."
     ]
   }
 ]

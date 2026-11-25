@@ -3,7 +3,8 @@
  * contribution the window is stock's and no key is taken; with two, the parents and actions move as the contract says,
  * PART's YES is stock's on the chosen row, a contribution's YES closes the popup and calls choose once with its action,
  * the press and its release are taken together, the window opens on the parent chosen last, LEVEL scrolls, a closed
- * popup hides the window, and a bad record is skipped. No stock byte is used. */
+ * popup hides the window, a bad record is skipped, and a record of abi 2 leaves its own row or PART out as it
+ * answers, and PART left out with one row shown draws stock's popup with that row's actions. No stock byte is used. */
 #define PM_HOST
 #include <stdint.h>
 #include <stdio.h>
@@ -33,7 +34,9 @@ static void host_popup(uint32_t n, uint32_t row, uint32_t *out, const char *cons
 }
 #define PM_POPUP(n, row, out, names, cbs) host_popup(n, row, out, names, cbs)
 #define PM_CLOSE() (++closes, popup_open = 0)
-#define PM_TEXT(x, top, t) (texts < 16u ? (void)strncpy(drawn[texts++], (t), 23) : (void)0)
+static const unsigned char *bound; /* the frame the text surface points at: text drawn before it is bound is lost */
+#define PM_BIND(frame) (bound = (frame))
+#define PM_TEXT(x, top, t) (texts < 16u ? (void)strncpy(drawn[texts++], bound ? (t) : "UNBOUND", 23) : (void)0)
 #define PM_WIDTH(t) ((int)strlen(t) * 5)
 #define PM_MASK() 0u
 #define PM_UNMASK(m) ((void)(m))
@@ -46,7 +49,7 @@ static unsigned pm_entries(const struct modwerk_part_menu **out)
     unsigned n = 0;
     for (unsigned k = 0; table[k] && n < 7u; ++k) {
         const struct modwerk_part_menu *e = table[k];
-        if (e->abi == MODWERK_PART_MENU_ABI && e->label && e->actions && e->choose && e->count >= 1u && e->count <= 6u)
+        if ((e->abi == MODWERK_PART_MENU_ABI || e->abi == MODWERK_PART_MENU_ABI_ASK) && e->label && e->actions && e->choose && e->count >= 1u && e->count <= 6u)
             out[n++] = e;
     }
     return n;
@@ -62,6 +65,13 @@ static const uint32_t icon_a[9] = {0, 0x700, 0x880, 0x880, 0x1fc0, 0x1dc0, 0x1fc
 static const struct modwerk_part_menu a = {MODWERK_PART_MENU_ABI, "LOCKS", 2, actions_a, choose_a, icon_a};
 static const struct modwerk_part_menu b = {MODWERK_PART_MENU_ABI, "KITS", 1, actions_b, choose_b, 0};
 static const struct modwerk_part_menu bad = {MODWERK_PART_MENU_ABI, "BAD", 0, actions_b, choose_b, 0};
+static uint32_t says; static unsigned asked;
+static uint32_t ask(void) { ++asked; return says; }
+static const char *const kit_actions[3] = {"SAVE KIT", "RELOAD KIT", "RENAME KIT"};
+static const struct modwerk_part_menu_ask k = {{MODWERK_PART_MENU_ABI_ASK, "KITS", 3, kit_actions, choose_b, 0}, ask};
+static const char *const other_actions[1] = {"OTHER"};
+static const struct modwerk_part_menu_ask k2 = {{MODWERK_PART_MENU_ABI_ASK, "OTHER", 1, other_actions, choose_b, 0}, ask};
+static const struct modwerk_part_menu_ask one_asks = {{MODWERK_PART_MENU_ABI, "OLD", 1, actions_b, choose_b, 0}, ask}; /* abi 1: never asked */
 
 static void open_part_edit(void)
 {
@@ -158,6 +168,84 @@ int main(void)
     table[0] = 0; table[0] = &b; table[1] = 0;
     open_part_edit();
     CHECK(pm_shown && pm_parent == 0 && !pm_focus);
+
+    /* A record of abi 2 is asked when the window opens. LEAVE_PART: PART is left out, the window starts on the first row. */
+    table[0] = &a; table[1] = &k.menu; table[2] = &one_asks.menu; table[3] = 0;
+    pm_was = PM_PART_ID; pm_was_focus = 1; says = MODWERK_PART_MENU_LEAVE_PART; asked = 0;
+    open_part_edit();
+    CHECK(asked == 1 && pm_shown && !pm_list && pm_parent == 1 && !pm_focus); /* PART was chosen last: the first row instead */
+    texts = 0; mw_part_menu_draw(frame);
+    CHECK(!strcmp(drawn[1], "LOCKS") && !strcmp(drawn[2], "KITS") && !strcmp(drawn[3], "OLD") && !strcmp(drawn[4], "LOCK SAMPLES"));
+    for (unsigned t = 0; t < texts; ++t) CHECK(strcmp(drawn[t], "PART") && strcmp(drawn[t], "RENAME"));
+    CHECK(pixel(8, 11) && pixel(55, 19));                           /* LOCKS in PART's place, inverted */
+    CHECK(press(PM_UP) && pm_parent == 1 && press(PM_DOWN) && pm_parent == 2);
+    CHECK(mw_part_menu_enc(6, -8) && pm_parent == 1);               /* LEVEL stops at the first shown as well */
+    CHECK(press(PM_DOWN) && press(PM_RIGHT) && press(PM_YES) && calls_b == 1 && chosen_b == 0 && !pm_shown);
+    /* It answers 0: PART is back, and the window opens where it was left. */
+    says = 0;
+    open_part_edit();
+    CHECK(asked == 2 && pm_parent == 2 && pm_focus);
+    CHECK(press(PM_LEFT) && press(PM_UP) && press(PM_UP) && pm_parent == 0);
+    mw_part_menu_key(PM_NO, 1); mw_part_menu_key(PM_NO, 0);
+    /* LEAVE_ROW: its own row is left out, PART stays (a module that is inactive). */
+    says = MODWERK_PART_MENU_LEAVE_ROW | MODWERK_PART_MENU_LEAVE_PART;
+    open_part_edit();
+    CHECK(asked == 3 && pm_shown && !pm_lo && !pm_list);
+    texts = 0; mw_part_menu_draw(frame);
+    CHECK(!strcmp(drawn[1], "PART") && !strcmp(drawn[2], "LOCKS") && !strcmp(drawn[3], "OLD") && strcmp(drawn[4], "KITS"));
+    CHECK(press(PM_DOWN) && press(PM_DOWN) && pm_parent == 2 && press(PM_DOWN) && pm_parent == 2); /* KITS is not there */
+    mw_part_menu_key(PM_NO, 1); mw_part_menu_key(PM_NO, 0);
+    /* Every row left out: stock's window, nothing taken. */
+    table[0] = &k.menu; table[1] = 0;
+    open_part_edit();
+    CHECK(asked == 4 && !pm_shown && popup_open && !press(PM_DOWN));
+    /* PART left out and one row shown: stock's popup with that row's actions, the cursor in them. */
+    says = MODWERK_PART_MENU_LEAVE_PART;
+    open_part_edit();
+    CHECK(asked == 5 && pm_shown && pm_list && pm_parent == 1 && pm_focus);
+    memset(frame, 0, sizeof frame); texts = 0; bound = 0; mw_part_menu_draw(frame);
+    CHECK(bound == frame);
+    CHECK(texts == 3 && !strcmp(drawn[0], "SAVE KIT") && !strcmp(drawn[1], "RELOAD KIT") && !strcmp(drawn[2], "RENAME KIT"));
+    /* The box fits the widest action (RENAME KIT, 50 pixels in this test's text): x 43-99, y 16-47, shadow to 101. */
+    CHECK(pixel(43, 16) && pixel(43, 47) && pixel(99, 30) && pixel(101, 30) && pixel(45, 18 + 7 * pm_child) && !pixel(30, 30) && !pixel(103, 30));
+    CHECK(press(PM_LEFT) && pm_focus && press(PM_RIGHT) && pm_focus);  /* no left column to go to */
+    unsigned at = pm_child;
+    CHECK(press(PM_DOWN) && pm_child == (at + 1u < 3u ? at + 1u : at));
+    CHECK(press(PM_UP) && press(PM_UP) && press(PM_UP) && pm_child == 0);
+    CHECK(press(PM_DOWN) && press(PM_YES) && calls_b == 2 && chosen_b == 1 && !pm_shown && !popup_open);
+    open_part_edit();
+    CHECK(pm_list && pm_child == 1);                                 /* it reopens on the row chosen */
+    CHECK(mw_part_menu_key(PM_NO, 1) == 0 && !pm_shown);              /* NO: stock closes its popup */
+    mw_part_menu_key(PM_NO, 0);
+    /* The module removed while it is open: the window is stock's again and its keys are stock's. */
+    open_part_edit();
+    table[0] = 0;
+    CHECK(!press(PM_DOWN) && !pm_shown);
+    texts = 0; mw_part_menu_draw(frame); CHECK(texts == 0);
+    table[0] = &k.menu; open_part_edit(); CHECK(pm_list); table[0] = 0;
+    CHECK(mw_part_menu_enc(6, 4) == 0 && !pm_shown);                /* LEVEL too */
+    table[0] = &k.menu; open_part_edit(); CHECK(pm_list); table[0] = 0;
+    mw_part_menu_tick(); CHECK(!pm_shown);                           /* and the next tick, with no key pressed */
+    CHECK(asked == 9);                                              /* once an opening; abi 1's field never asked */
+    /* Kits hiding PART beside Locks, then only Kits removed while it is open: PART is back though Locks stays. */
+    table[0] = &a; table[1] = &k.menu; table[2] = 0;
+    open_part_edit();
+    CHECK(asked == 10 && pm_shown && pm_lo && !pm_list && pm_parent >= 1);    /* on KITS, the row used last */
+    table[1] = 0;
+    CHECK(press(PM_UP) && !pm_lo && !pm_list && pm_parent == 0);
+    texts = 0; mw_part_menu_draw(frame);
+    CHECK(!strcmp(drawn[1], "PART") && !strcmp(drawn[2], "LOCKS"));
+    CHECK(press(PM_RIGHT) && press(PM_UP) && press(PM_UP) && press(PM_UP) && press(PM_DOWN) && popup_row == 1 && mw_part_menu_key(PM_YES, 1) == 0 && !pm_shown); /* RELOAD: stock's */
+    mw_part_menu_key(PM_YES, 0);
+    /* Two records leaving PART out: it stays out until both are gone. */
+    table[0] = &a; table[1] = &k.menu; table[2] = &k2.menu; table[3] = 0;
+    open_part_edit();
+    CHECK(asked == 12 && pm_lo);
+    table[1] = &k2.menu; table[2] = 0;
+    CHECK(press(PM_DOWN) && pm_lo && pm_parent >= 1);
+    table[1] = 0;
+    CHECK(press(PM_UP) && !pm_lo && pm_parent == 0);
+    mw_part_menu_key(PM_NO, 1); mw_part_menu_key(PM_NO, 0);
 
     if (failures) { fprintf(stderr, "%u failed\n", failures); return 1; }
     puts("part menu: ok");

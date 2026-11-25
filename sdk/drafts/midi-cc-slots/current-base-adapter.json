@@ -1,0 +1,10 @@
+{
+  "version": "0.0.19-experimental",
+  "base": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e",
+  "site": "0x4003678a",
+  "length": 8,
+  "sha256": "47052304944b9cfc9cfc341c0fc61d2b8bc4e9bcd990d9608a46aef99cde5bda",
+  "continuation": "0x40036792",
+  "replaces": "0x40036548",
+  "reason": "The current base owns the NOTE SETUP entry for ot_midi_generators; draw MIDI2 labels at the private stock epilogue instead."
+}

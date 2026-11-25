@@ -1,0 +1,42 @@
+{
+  "module": "grain",
+  "version": "0.1.3-experimental",
+  "base": "95adb64b (0.8 development twin, built from main 4035fdfa8)",
+  "scene": "C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (the scene FM Synth 0.1.5's curve used); picks on empty C02; Grain on T1, whose Flex slot holds a loaded 16-bit stereo sample. One instance: a second (T3, the other track with a loaded sample) was refused on 23 November and on T6/T7 Grain would render silence; owner's MKII",
+  "seconds": 8,
+  "measuredAt": "2026-11-23T17:33:05.742Z",
+  "tracks": [
+    "T1"
+  ],
+  "rest": 0,
+  "first": 33.3,
+  "each": 33.3,
+  "points": [
+    81.1,
+    114.4
+  ],
+  "adds": [
+    33.3
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 51.3,
+      "frame": 32.7,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": false
+    }
+  ],
+  "notes": []
+}

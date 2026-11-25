@@ -225,8 +225,9 @@ static void view_close(uintptr_t fp, const View *v)
 }
 #define POOL_WINDOW 0x460e70e0u
 /* The pool's audition (FUNC + YES) starts the track's voice with this flag; a sequencer trig never sets it (MKII,
- * 21 November 2026: 0xe0 against 0xc0). Only that voice plays as a plain Flex, until the track's next trig: opening the
- * pool leaves Grain playing. */
+ * 21 November 2026: 0xe0 against 0xc0). Every manual trig sets it too (trig keys, CHROMATIC keys, MIDI notes: stock's
+ * 0x40005030 with 0x1d), so only one with the pool window open on the selected track is the audition. That voice plays
+ * as a plain Flex, until the track's next trig: opening the pool leaves Grain playing. */
 #define AUDITION 0x20u
 static uint8_t audition; /* a bit a track */
 static inline int auditioning(unsigned track) { return audition >> track & 1u; }
@@ -248,7 +249,7 @@ static void plain_view(uintptr_t fp, View *v)
 static int bank_ok(void);
 static volatile uint8_t *part_at(unsigned i);
 /* Lo que GRAIN guarda en la Part pasa por si solo la comprobacion de stock (regla de Modwerk, docs/ADD_A_MODULE.md):
- * PTCH como el de FLEX (64 = 0, 40..88 para +-24); SHAP (0..3) y MODE (0..1) en LOOP y RATE; los octavos de POS en
+ * PTCH como el de FLEX (64 = 0, 4..124, 5 por semitono); SHAP (0..3) y MODE (0..1) en LOOP y RATE; los octavos de POS en
  * TSNS (0..127); DIR y PAN, que necesitan 0..127, en el bloque NEIGHBOR de la pista (sin uso; como VECTOR y FM Synth):
  * tras la firma GR 1 (60 + 30 t), DIR en 63 + 30 t y PAN en 64 + 30 t. Sus casillas FLEX (SLIC, LEN) quedan en 0. */
 #define NB_DIR(t) (63u + 30u * (t))
@@ -261,30 +262,37 @@ static inline int scan_steps(unsigned v)
     return v > 127u ? 0 : v == 127u ? 64 : (int)v - 64;
 }
 
-/* PTCH (palabra, 0x4000 = 0, 0x100 por semitono ?) -> paso de lectura Q32.32: 2^(st/12) */
+/* PTCH (word, 0x4000 = 0) -> read step Q32.32. Flex's units: 60 a octave, 5 a semitone, the knob 4..124 (-12..+12).
+ * CHROMATIC keys (5 * key + 4) and MIDI notes (5 * note - 100) lock PTCH in these units (OS 1.40C 0x4004fc58, 0x4000e74c),
+ * so Grain plays them in tune. At whole semitones the ratios are the original Model-TG coefficients, as in 0.1.2. */
 static void pitch_step(uint16_t ptch, int32_t *whole, uint32_t *frac)
 {
-    /* The original 12 Q31 semitone coefficients expanded across -24..+24. */
-    static const uint8_t integer[49] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,
-        4,
+    static const uint32_t fraction[128] = {
+        0x7a383febu, 0x7ba3cd37u, 0x7d1393eeu, 0x7e87a09fu, 0x80000000u, 0x817cbeeeu,
+        0x82fdea6bu, 0x84838f9fu, 0x860dbbdbu, 0x879c7c97u, 0x892fdf71u, 0x8ac7f233u,
+        0x8c64c2cdu, 0x8e065f5au, 0x8facd5eeu, 0x9158358au, 0x93088c36u, 0x94bde8e8u,
+        0x96785a92u, 0x9837f052u, 0x99fcb971u, 0x9bc6c569u, 0x9d9623e0u, 0x9f6ae4aau,
+        0xa14517ccu, 0xa324cd7au, 0xa50a1616u, 0xa6f50235u, 0xa8e5a29eu, 0xaadc080fu,
+        0xacd8445cu, 0xaeda683au, 0xb0e28571u, 0xb2f0adc6u, 0xb504f334u, 0xb71f67eau,
+        0xb9401e4eu, 0xbb6728fbu, 0xbd949ac7u, 0xbfc886deu, 0xc203001eu, 0xc4441a6bu,
+        0xc68be95cu, 0xc8da80e1u, 0xcb2ff23au, 0xcd8c5a9fu, 0xcfefc5e6u, 0xd25a4be5u,
+        0xd4cc01bbu, 0xd744ee43u, 0xd9c552b4u, 0xdc4d1957u, 0xdedc66d7u, 0xe1735196u,
+        0xe411c762u, 0xe6b859aeu, 0xe966a51fu, 0xec1cea00u, 0xeedb4009u, 0xf1a16c61u,
+        0xf4707fd6u, 0xf7479a6fu, 0xfa2727dbu, 0xfd0f413du, 0x00000000u, 0x02f97ddcu,
+        0x05fbd4d6u, 0x09071f3fu, 0x0c1b77b7u, 0x0f38f92eu, 0x125fbee2u, 0x158fe465u,
+        0x18c98599u, 0x1c0cbeb3u, 0x1f59abdcu, 0x22b06b13u, 0x2611186cu, 0x297bd1d0u,
+        0x2cf0b524u, 0x306fe0a4u, 0x33f972e2u, 0x378d8ad2u, 0x3b2c47c0u, 0x3ed5c955u,
+        0x428a2f98u, 0x46499af3u, 0x4a142c2bu, 0x4dea046au, 0x51cb453cu, 0x55b8101eu,
+        0x59b088b9u, 0x5db4d074u, 0x61c50ae1u, 0x65e15b8cu, 0x6a09e668u, 0x6e3ecfd4u,
+        0x72803c9bu, 0x76ce51f7u, 0x7b29358du, 0x7f910dbcu, 0x8406003bu, 0x888834d6u,
+        0x8d17d2b7u, 0x91b501c3u, 0x965fe474u, 0x9b18b53eu, 0x9fdf8bcdu, 0xa4b497c9u,
+        0xa9980376u, 0xae89dc86u, 0xb38aa568u, 0xb89a32afu, 0xbdb8cdaeu, 0xc2e6a32cu,
+        0xc8238ec4u, 0xcd70b35du, 0xd2cd4a3fu, 0xd839d400u, 0xddb68011u, 0xe342d8c2u,
+        0xe8e0ffabu, 0xee8f34deu, 0xf44e4fb7u, 0xfa1e827au, 0x00000000u, 0x05f2fbb8u,
+        0x0bf7a9abu, 0x120e3e7du,
     };
-    static const uint32_t fraction[49] = {
-        0x40000000u, 0x43ce3e4bu, 0x47d66af7u, 0x4c1bf829u, 0x50a28be6u, 0x556e0407u,
-        0x5a82799au, 0x5fe4436fu, 0x6597f91du, 0x6ba27721u, 0x7208e3b1u, 0x78d0b630u,
-        0x80000000u, 0x879c7c97u, 0x8facd5eeu, 0x9837f052u, 0xa14517ccu, 0xaadc080fu,
-        0xb504f334u, 0xbfc886deu, 0xcb2ff23au, 0xd744ee43u, 0xe411c762u, 0xf1a16c61u,
-        0x00000000u, 0x0f38f92eu, 0x1f59abdcu, 0x306fe0a4u, 0x428a2f98u, 0x55b8101eu,
-        0x6a09e668u, 0x7f910dbcu, 0x965fe474u, 0xae89dc86u, 0xc8238ec4u, 0xe342d8c2u,
-        0x00000000u, 0x1e71f25cu, 0x3eb357b8u, 0x60dfc148u, 0x85145f30u, 0xab70203cu,
-        0xd413ccd0u, 0xff221b78u, 0x2cbfc8e8u, 0x5d13b90cu, 0x90471d88u, 0xc685b184u,
-        0x00000000u,
-    };
-    unsigned word = ptch >> 8;
-    unsigned note = word < 40u ? 0u : word > 88u ? 48u : word - 40u;
-    *whole = integer[note]; *frac = fraction[note];
+    unsigned r = (unsigned)ptch >> 8 & 127u;
+    *whole = r >= 124u ? 2 : r >= 64u ? 1 : 0; *frac = fraction[r];
 }
 
 /* The waveform reads the last effective SRC words after slides, locks and scenes. */
@@ -357,7 +365,7 @@ int grain_start(unsigned track, unsigned sample, unsigned flags)
     uintptr_t fp = lane(track);
     if (!fp) return 0;
     View v;
-    if (flags & AUDITION) audition |= (uint8_t)(1u << track);
+    if ((flags & AUDITION) && U32(POOL_WINDOW) && track == U8(0x100b14ccu)) audition |= (uint8_t)(1u << track);
     else audition &= (uint8_t)~(1u << track);
     if (auditioning(track)) {
         plain_view(fp, &v);
@@ -424,17 +432,17 @@ static void scan_text(char *out, int v)
     *out++ = (char)('0' + c / 100u); *out++ = '.'; *out++ = (char)('0' + c / 10u % 10u); *out++ = (char)('0' + c % 10u); *out = 0;
 }
 static void blank_text(char *out, int v) { (void)v; *out = 0; }
+/* PTCH in semitones, 5 units each: "+7", or "-2.4" between them (an LFO, an older Grain's value). */
 static void ptch_text(char *out, int v)
 {
-    int st = v - 64;
-    if (st > 24) st = 24;
-    if (st < -24) st = -24;
-    if (st < 0) { *out++ = '-'; st = -st; } else if (st > 0) *out++ = '+';
-    number(out, (unsigned)st);
+    int tenths = (v - 64) * 2;
+    if (tenths < 0) { *out++ = '-'; tenths = -tenths; } else if (tenths > 0) *out++ = '+';
+    number(out, (unsigned)tenths / 10u);
+    if (tenths % 10) { while (*out) ++out; *out++ = '.'; *out++ = (char)('0' + tenths % 10); *out = 0; }
 }
 #define KNOBS 12u
 static const struct { uint8_t slot, start, count; char name[6]; void (*text)(char *, int); } knobs[KNOBS] = {
-    {0, 64, 49, "PTCH", ptch_text},          /* 40..88 (minimo puesto aparte): -24..+24 */
+    {0, 64, 125, "PTCH", ptch_text},         /* 4..124 (minimo puesto aparte): -12..+12, como FLEX */
     {1, 0, 128, "POS", 0}, {2, 64, 128, "SIZE", 0}, {3, 64, 128, "DENS", 0}, {4, 0, 128, "SPRY", 0},
     {5, 64, 128, "SCAN", scan_text},
     {6, 0, 4, "SHAP", shape_text}, {7, 0, 128, "DIR", 0}, {8, 0, 128, "PAN", pan_text}, {9, 0, 2, "MODE", mode_text},
@@ -496,23 +504,23 @@ static int pos_step(int slot, int detents, int value)
     return e >> 3;
 }
 
-/* PTCH (slot 0, Part 40..88 con 64 = 0 semitonos). El paso de serie de la base acumulaba y aceleraba los detents: en el
- * emulador 3 detents subian 1, 10 subian 4 y 30 bajaban 11, y con FUNC los valores saltaban sin llegar a 0 (author, 22/11).
- * Aqui: un semitono por detent. Con FUNC, de octava en octava (-24, -12, 0, +12, +24): FUNC + girar lleva siempre a 0
- * exacto. Con el mando pulsado, como el paso de serie, de 7 en 7. Girando con un trig pulsado (p-lock) no pasa por aqui. */
+/* PTCH (slot 0, Part 4..124 con 64 = 0, 5 por semitono, como FLEX). El paso de serie de la base acumulaba y aceleraba los
+ * detents: en el emulador 3 detents subian 1, 10 subian 4 y 30 bajaban 11, y con FUNC los valores saltaban sin llegar a 0
+ * (author, 22/11). Aqui: un semitono (5) por detent, sobre la rejilla de las notas (64 + 5 n). Con FUNC, de octava en octava
+ * (-12, 0, +12): FUNC + girar lleva siempre a 0 exacto. Con el mando pulsado, de 7 semitonos en 7. Girando con un trig
+ * pulsado (p-lock) no pasa por aqui. */
 static int ptch_step(int slot, int detents, int value)
 {
     int v = value;
     if (slot != 0) return value + detents;
     if (KEY_HELD(K_FUNC)) {
-        if (detents > 0) v = v < 52 ? 52 : v < 64 ? 64 : v < 76 ? 76 : 88;
-        else if (detents < 0) v = v > 76 ? 76 : v > 64 ? 64 : v > 52 ? 52 : 40;
-    } else if (U32(0x46c7d8eeu + 24u * 56u)) {
-        v += detents * 7;
+        if (detents > 0) v = v < 64 ? 64 : 124;
+        else if (detents < 0) v = v > 64 ? 64 : 4;
     } else {
-        v += detents;
+        int st = v >= 64 ? (v - 64 + 2) / 5 : -((64 - v + 2) / 5);   /* the nearest semitone */
+        v = 64 + 5 * (st + detents * (U32(0x46c7d8eeu + 24u * 56u) ? 7 : 1));
     }
-    return v < 40 ? 40 : v > 88 ? 88 : v;
+    return v < 4 ? 4 : v > 124 ? 124 : v;
 }
 
 /* Las ruedas de DIR y PAN (casillas 1 y 2 de la pagina 2): las dibuja la propia Octatrack con su rutina de ruedas
@@ -566,7 +574,7 @@ static uint32_t grain_page_any(void)
             uint32_t f = (uint32_t)(uintptr_t)ptch_step;
             for (unsigned i = 0; i < 4; ++i) page[0x38 + 0x12a + i] = (uint8_t)(f >> (24 - 8 * i));
         }
-        modwerk_page_put32(page, 0xa2u, 40u);    /* PTCH: minimo 40 (stock FLEX: 4..124, 64 = 0) */
+        modwerk_page_put32(page, 0xa2u, 4u);     /* PTCH: minimo 4, como stock FLEX (4..124, 64 = 0) */
         /* la rutina de dibujo de DIR y PAN (casillas 7 y 8; matriz de dibujo B, P + 0xfa + 4 * casilla) */
         modwerk_page_put32(page + 0x38, 0xfau + 4u * 7u, (uint32_t)(uintptr_t)grain_dial);
         modwerk_page_put32(page + 0x38, 0xfau + 4u * 8u, (uint32_t)(uintptr_t)grain_dial);
@@ -665,9 +673,9 @@ static void grain_pool_left(unsigned key, unsigned edge)
     ((void (*)(unsigned, unsigned))(uintptr_t)0x4007893cu)(key, edge);
 }
 static volatile uint8_t want_src_page;      /* ui_tick: volver a la pagina SRC (tras FUNC + PLAYBACK) */
-/* Partes guardadas con la 0.3.14 o antes: DIR y PAN estaban en SLIC y LEN (0..127, que stock no admite) y PTCH en 0..48
- * con 24 = 0. Se pasan a su sitio nuevo en las cuatro Parts del banco y su copia de SRAM. Un PTCH entre 40 y 48 ya no se
- * distingue (se toma como nuevo). */
+/* Partes guardadas con la 0.3.14 o antes: DIR y PAN estaban en SLIC y LEN (0..127, que stock no admite). Se pasan a su
+ * sitio nuevo en las cuatro Parts del banco y su copia de SRAM. Su PTCH (0..48, 24 = 0) ya no se migra: desde la 0.1.3 PTCH
+ * va en las unidades de FLEX (4..124), donde todo valor por debajo de 40 es valido. */
 static void grain_migrate(void)
 {
     if (!bank_ok()) return;
@@ -680,10 +688,6 @@ static void grain_migrate(void)
                 part[NB_DIR(t)] = mirror[NB_DIR(t)] = part[s + 1] & 127u;
                 part[NB_PAN(t)] = mirror[NB_PAN(t)] = part[s + 2] & 127u;
                 part[s + 1] = mirror[s + 1] = 0; part[s + 2] = mirror[s + 2] = 0;
-            }
-            if (part[0x30u + 30u * t] < 40u) {
-                uint8_t v = (uint8_t)(part[0x30u + 30u * t] + 40u);
-                part[0x30u + 30u * t] = mirror[0x30u + 30u * t] = v;
             }
         }
     }

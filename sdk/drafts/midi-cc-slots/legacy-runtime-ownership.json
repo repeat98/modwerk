@@ -1,0 +1,359 @@
+{
+  "base": "0c5934e1bea411fc43143a75ee2a0fcf1c09a71b8c386732ed7526517d3b0846",
+  "source": "75baff51:sdk/machines/octatrack/events.json",
+  "sourceSha256": "bf9161f939ade7f8516cc4f34cad8bdeae60cf64c7fa015a850f8ad3caa02da3",
+  "events": [
+    {
+      "site": 1073758464,
+      "length": 8,
+      "event": "ev_play_increment"
+    },
+    {
+      "site": 1073768480,
+      "length": 8,
+      "event": "ev_voice_bind"
+    },
+    {
+      "site": 1073768480,
+      "length": 8,
+      "event": "ev_voice_bind_run"
+    },
+    {
+      "site": null,
+      "length": 0,
+      "event": "ev_mute_keep"
+    },
+    {
+      "site": 1073801030,
+      "length": 6,
+      "event": "ev_midi_note_on"
+    },
+    {
+      "site": 1073799124,
+      "length": 8,
+      "event": "ev_midi_note_off"
+    },
+    {
+      "site": 1074026776,
+      "length": 8,
+      "event": "ev_octave_key"
+    },
+    {
+      "site": 1074022846,
+      "length": 8,
+      "event": "ev_octave_number"
+    },
+    {
+      "site": 1073807890,
+      "length": 6,
+      "event": "ev_settings_sanitise"
+    },
+    {
+      "site": 1073896130,
+      "length": 6,
+      "event": "ev_project_defaults"
+    },
+    {
+      "site": 1074022760,
+      "length": 8,
+      "event": "ev_keyboard_draw"
+    },
+    {
+      "site": 1074068446,
+      "length": 6,
+      "event": "ev_chromatic_release"
+    },
+    {
+      "site": 1074068478,
+      "length": 8,
+      "event": "ev_chromatic_held"
+    },
+    {
+      "site": 1074068568,
+      "length": 10,
+      "event": "ev_chromatic_pitch"
+    },
+    {
+      "site": 1074068628,
+      "length": 8,
+      "event": "ev_chromatic_trig"
+    },
+    {
+      "site": 1074068704,
+      "length": 8,
+      "event": "ev_chromatic_record"
+    },
+    {
+      "site": 1074068742,
+      "length": 6,
+      "event": "ev_chromatic_recorded"
+    },
+    {
+      "site": 1074068768,
+      "length": 6,
+      "event": "ev_chromatic_locked"
+    },
+    {
+      "site": 1074070100,
+      "length": 8,
+      "event": "ev_chromatic_index"
+    },
+    {
+      "site": 1074073184,
+      "length": 10,
+      "event": "ev_plock_store"
+    },
+    {
+      "site": 1074090352,
+      "length": 6,
+      "event": "ev_knob_store"
+    },
+    {
+      "site": 1074292428,
+      "length": 8,
+      "event": "ev_project_load"
+    },
+    {
+      "site": 1074292642,
+      "length": 8,
+      "event": "ev_project_line"
+    },
+    {
+      "site": 1074301098,
+      "length": 8,
+      "event": "ev_project_write"
+    },
+    {
+      "site": null,
+      "length": 0,
+      "event": "ot_machines"
+    },
+    {
+      "site": null,
+      "length": 0,
+      "event": "ot_sequencer_rows"
+    },
+    {
+      "site": 1073761548,
+      "length": 10,
+      "event": "ev_tail_kill"
+    }
+  ],
+  "owned": [
+    {
+      "site": 1073750808,
+      "length": 8,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073946228,
+      "length": 10,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073951960,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073980710,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073980718,
+      "length": 8,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073987572,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073989836,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073989928,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073989968,
+      "length": 2,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073990016,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073991064,
+      "length": 8,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073991990,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1073993496,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074053994,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074078238,
+      "length": 10,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074103772,
+      "length": 10,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074103788,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074103802,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074112022,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074112592,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074190212,
+      "length": 8,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074232156,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074235000,
+      "length": 2,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074235080,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074235086,
+      "length": 2,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074235526,
+      "length": 10,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074237924,
+      "length": 8,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074238024,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074239516,
+      "length": 6,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074239748,
+      "length": 2,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074585870,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074591482,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074591490,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074591508,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074619448,
+      "length": 4,
+      "table": "ot_machines"
+    },
+    {
+      "site": 1074158538,
+      "length": 6,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158552,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158558,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158716,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158788,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158910,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158936,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    },
+    {
+      "site": 1074158962,
+      "length": 4,
+      "table": "ot_sequencer_rows"
+    }
+  ]
+}

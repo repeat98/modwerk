@@ -272,6 +272,7 @@ def _qz_include(modules):
     FM's), and its legato keys reach the engine. The panel transaction is enabled only
     with both matching modules selected; the second pass supplies its adapter source."""
     flags = (f".set HAVE_SYDRUM, {int('SY DRUM' in modules)}\n"
+             f".set HAVE_SYNTH, {int('SYNTH MACHINE' in modules)}\n"
              f".set HAVE_PANEL_TRANSACTION, {int('SYNTH MACHINE' in modules and 'SCALE QUANTIZER' in modules)}\n")
     with open(os.path.join(_HERE, "panel_transaction.inc.s"), encoding="utf-8") as source:
         transaction = source.read()

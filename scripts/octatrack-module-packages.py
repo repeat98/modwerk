@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Portable host entry point for the qualified Octatrack package builder."""
+import hashlib
 import importlib.util
 import json
 import os
@@ -16,6 +17,25 @@ APP = Path(__file__).resolve().parents[1]
 
 def preparing_ports():
     return any(arg.partition('=')[0] == '--prepare-ports' for arg in sys.argv[1:])
+
+
+def write_base_package_urls():
+    """Publish the digest URLs used by octatrack-publication.ts for rebound versions."""
+    assets = APP / 'src/engine/assets'
+    linked = json.loads((assets / 'linked-audio-0.7.11/linked-base-packages.json').read_text())
+    previous = {(row['id'], row['version']): row['sha256'] for row in linked}
+    public = APP / 'public'
+    for row in json.loads((assets / 'octatrack-module-packages.json').read_text())['packages']:
+        old_digest = previous.get((row['id'], row['version']))
+        if old_digest is None or old_digest == row['sha256']:
+            continue
+        data = (public / row['path']).read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != row['sha256']:
+            raise ValueError(f"{row['path']} differs from its package manifest")
+        destination = public / 'octatrack-base-packages' / (digest + '.mwrm')
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(data)
 
 
 def lag_guard(builder, check):
@@ -397,3 +417,5 @@ if __name__ == '__main__':
         release = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(release)
         release.generate(args.check, args.stock, args.upstream)
+        if not args.check:
+            write_base_package_urls()

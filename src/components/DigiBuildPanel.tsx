@@ -5,6 +5,8 @@ import { DownloadedBuildOverview } from '../community/HardwareFeedbackCheckIn'
 import { builtModules } from '../community/build-follow-up'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { trackFirmwareDownload } from '../community/usage'
+import { noteSupportInstall } from '../community/support-prompt'
+import { SupportLine } from './SupportDialog'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
 import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
@@ -83,7 +85,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         {result && downloadsEnabled && <RecoveryNotice machine={device.id} steps={result.recovery || device.firmware?.recovery} checked={knowsRecovery} onChange={checked => setRecoveryKnown(checked ? result.sha256 : '')}/>}
       </div>
       <div className="build-actions">
-        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
+        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { noteSupportInstall(); const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
         {!busy && (state.phase === 'ready' || state.phase === 'failed' || state.phase === 'built'
           ? <button className={'button ' + (result ? 'button-quiet' : 'button-primary')} disabled={!!versionError || !riskAccepted} onClick={() => void build(shown)} aria-describedby="digi-build-status"><Icon name="sliders" size={16} />{result ? 'Build again' : 'Build firmware'}</button>
           : <button className="button button-primary" disabled={!ready || !!missing.length || busy} onClick={() => void check()} aria-describedby="digi-build-status"><Icon name="check" size={16} />{state.phase === 'blocked' ? 'Check again' : 'Check selection'}</button>)}
@@ -99,7 +101,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         <ol><li>Connect the {device.name} over USB and open Elektron Transfer.</li><li>Select the unit, connect, and drop the .syx onto Transfer.</li><li>Press YES on the unit and keep it powered until the update finishes.</li></ol>
         <p className="service-note">{FLASHING_RISKS} Flash at your own risk. Local checks cannot guarantee hardware safety.</p>
         <p className="service-note">{FIRMWARE_SHARING_NOTICE}</p>
-        {downloaded === key && <p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}
+        {downloaded === key && <><p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p><SupportLine /></>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}
       {result && downloadsEnabled && downloaded === key && state.phase === 'built' && <DownloadedBuildOverview build={{ machine: device.name, os: release ?? '', modules: builtModules(state.moduleIds.map(id => device.id + '-' + id)) }}/>}
       {result && <section className="configuration-section"><details><summary>File identity &amp; builder</summary><dl className="build-identity">
         <dt>SHA-256</dt><dd>{result.sha256}</dd><dt>Mods</dt><dd>{result.mods.join(', ')}</dd>

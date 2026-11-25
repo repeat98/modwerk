@@ -4,6 +4,7 @@
 //   npm run pr:ready -- --commit "Message"  # check a fully staged change once, commit it, then finish the PR checks
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
+//   npm run pr:ready -- --body FILE.md      # also the description, as CI's describe check reads it (with --draft, as a draft)
 //
 // It reads and writes only this checkout, plus the agent board's claims and inbox (docs/AGENT_BOARD.md): no push, no GitHub API.
 // CI repeats the same checks against the PR's base, and the author-update bot runs the same scope inspection
@@ -13,7 +14,7 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { alternation, moduleFolders } from './machine-folders.mjs'
-import { instrumentFiles } from './pr-body.mjs'
+import { changedFiles as branchFiles, descriptionProblems, instrumentFiles, readDescription } from './pr-body.mjs'
 
 const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate']]
 
@@ -48,13 +49,14 @@ export function moduleScopeProblems(files, { author = null, owner = null, opened
 const gateProblem = files => 'This pull request changes a module and also ' + files.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.'
 const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. Add the base commits directly to the machine’s base/<machine>-next branch and update its cumulative draft (docs/DEVELOPER_WORKFLOW.md#change-a-base). Resume the module on main once that draft has shipped.'
 
-/** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
- * (macOS's own is 3.9) crashes inside scripts/module-compat.py while it loads the Octatrack manifests, with no word on why. */
+/** Why the checks cannot run on this Python, or null. npm run check needs Python 3.12+: macOS's own 3.9 crashes inside
+ * scripts/module-compat.py while it loads the Octatrack manifests, and 3.10 or 3.11 inside sdk:check, which parses Octatrack
+ * build tools written with 3.12's f-strings, both with no word on why. */
 export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
   const [major, minor] = (version ?? '').split('.').map(Number)
-  if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
+  if (!error && (major > 3 || (major === 3 && minor >= 12))) return null
   const found = error ? `${command} did not run (${error})` : `${command} is ${version || 'an unknown version'}`
-  return `npm run check needs Python 3.10 or newer, and ${found}. Install Python 3.10+ and put it first on PATH, then run this again.`
+  return `npm run check needs Python 3.12 or newer, and ${found}. Install Python 3.12+ and put it first on PATH, then run this again.`
 }
 
 /** pythonProblem for the interpreter the gates call (scripts/modules.mjs): python3, or python on Windows. */
@@ -77,7 +79,7 @@ export function mergeMain(git, ref) {
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false, description = null }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
@@ -88,6 +90,8 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
     : `Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
   if (!checkPassed) problems.push('npm run check failed: fix every failure above; CI runs the same checks.')
+  // --body: the description, as CI's describe check reads it (scripts/pr-body.mjs); null when no description was given.
+  for (const problem of description ?? []) problems.push('Description: ' + problem)
   if (author) {
     if (scope?.error) problems.push(`This is not an automatic author update (${scope.error}). Keep the PR to your own module's folder and its changelog entry, or ask the owner for a review.`)
     else if (scope) notes.push('Automatic merge: the bot can merge this update to ' + scope.modules.join(', ') + ' once both release boxes are ticked and CI is green.')
@@ -105,7 +109,8 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
     '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it. Until then, pr:ready -- --draft and the draft\'s CI list missing qualification, captures or approval as warnings.')
   if (baseDraft) notes.push('Watch the existing cumulative draft’s checks with gh pr checks <number> --watch. If main moves before the merge, run this again.')
   else {
-    notes.push('Push and open or update the PR using the description template. Check the description locally with node scripts/pr-body.mjs FILE.md.')
+    notes.push(description ? 'Push and open or update the PR with the description you checked.'
+      : 'Push and open or update the PR using the description template. Check the description first with npm run pr:body -- FILE.md (add --draft for a draft), or here with --body FILE.md: the same rules as CI\'s describe check.')
     if (!draftOnly && !problems.length) notes.push('Once the work and testing are complete, run gh pr view <URL> --json state,headRefOid,isDraft. On the checked commit, run gh pr ready <URL> if it is a draft. Read the state again and verify isDraft is false before reporting it ready.')
     notes.push('Watch gh pr checks <URL> --watch until green. If main moves before the merge, run this again and push.')
   }
@@ -129,9 +134,10 @@ export async function boardClaims(root, base, board) {
   else for (const item of open) {
     try {
       // A claim says what the work is; a note its holder wrote by hand stays, and one the server refuses never costs the claim.
-      const request = { kind: item.kind, key: item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
+      // A run you hold that covers this item is renewed whole, so claiming the part never gives up the rest of the run.
+      const request = { kind: item.kind, key: item.claim?.key ?? item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
       const result = note ? await board.claim({ ...request, note }).catch(error => { if (error instanceof board.BoardError && error.status === 400) return board.claim(request); throw error }) : await board.claim(request)
-      notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + item.key + ' for @' + login + '.')
+      notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + request.key + ' for @' + login + '.')
     } catch (error) {
       if (error instanceof board.BoardUnavailable) { notes.push('Board: could not claim ' + item.kind + ' ' + item.key + '. ' + error.message); continue }
       problems.push('Board: ' + item.kind + ' ' + item.key + ': ' + error.message)
@@ -178,6 +184,10 @@ async function main(argv) {
   // --draft: the pull request stays a draft until the exact build ran on a unit, so missing release evidence warns (scripts/modules.mjs).
   if (argv.includes('--draft')) process.env.MODWERK_EVIDENCE_PENDING = '1'
   if (argv.includes('--commit') && (!commit?.trim() || commit.startsWith('--'))) throw new Error('--commit needs a commit message.')
+  const bodyFile = option('--body')
+  if (argv.includes('--body') && (!bodyFile || bodyFile.startsWith('--'))) throw new Error('--body needs the description file (or - for stdin).')
+  // Read before the long check, so a wrong path stops at once.
+  const body = bodyFile ? readDescription(bodyFile) : null
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
   const npm = (...args) => spawnSync(process.execPath, [npmCli, 'run', ...args], { cwd: root, stdio: 'inherit' }).status === 0
@@ -244,15 +254,16 @@ async function main(argv) {
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
   const baseDraft = changed.some(file => BASE.test(file)) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
   const draftOnly = process.env.MODWERK_EVIDENCE_PENDING === '1'
-  const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
+  const description = body === null ? null : descriptionProblems(body, { draft: argv.includes('--draft'), files: branchFiles(git, base) })
+  const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board, description })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
   if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : draftOnly ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
-    ? 'Ready: local checks passed. Finish the GitHub handoff after the exact build has run on a unit.'
-    : 'Ready: local checks passed. Verify the PR status on GitHub after pushing.')
+    ? 'Ready: local checks passed. Once unit results for the exact build are recorded, mark the draft ready on GitHub and verify its status.'
+    : 'Ready: local checks passed. Push the checked commit, mark any draft ready on GitHub, and verify its status.')
   return verdict.ok ? 0 : 1
 }
 
