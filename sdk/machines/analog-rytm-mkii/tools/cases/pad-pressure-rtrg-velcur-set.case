@@ -1,0 +1,47 @@
+# The base's pad pressure: RTRG held, VEL.CUR 1. The curve sets the roll's velocity, and stock's RETRIG
+# menu drops the pressure, so nothing follows it. With the base the sound's aftertouch and MIDI poly
+# pressure follow it; the roll's velocity does not (equal at both pressures).
+# The menu opens on the row it was left on, hence UP x4. Expects BD's VEL.CUR OFF and ALWAYS ON off;
+# sets VEL.CUR to 1 (one RIGHT) and back (one LEFT). Leaves BD's aftertouch at 0.
+name: pad-pressure-rtrg-velcur-set
+state: changes
+
+hold RTRG
+wait 300
+key UP x4
+key DOWN x2
+key RIGHT
+wait 300
+screen menu
+release RTRG
+wait 500
+hold RTRG
+wait 300
+midi m begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 500
+mem at60 0x800067de 2
+mem roll60 0x42ac6b4c 2
+pad BD pressure 30
+wait 500
+mem at30 0x800067de 2
+mem roll30 0x42ac6b4c 2
+pad BD pressure 0
+pad BD up
+wait 300
+midi m end
+key UP x4
+key DOWN x2
+key LEFT
+wait 300
+screen after
+release RTRG
+wait 300
+expect menu == ref region 0 15 56 40
+expect after == ref region 0 15 56 40
+expect at60 == 1e00
+expect at30 == 0f00
+expect roll60 == roll30
+expect m.polyat > 1

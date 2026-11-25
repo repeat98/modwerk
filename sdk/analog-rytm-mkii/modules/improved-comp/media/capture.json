@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "improved-comp",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-25T19:20:00Z",
+  "imageSha256": "d26771e9228bec53ab82131f241450b5454add3e5332310dcf717816946c2076",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant 2977431b) + this folder's Improved Compressor 0.1.0-experimental (built by scripts/build-elemod-packages.mjs), materialised against stock OS 1.74, --version ICS1",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f (the author's local build with a RAM-boot patch, as Improved AMP's captures); no card (starts formatted); JIT on; --every 1000M; DTBOOT_TURN_PNG=a after each turn"
+  },
+  "conditions": "Cold boot; eight NO presses from 7003M, 300M apart, close the calibration notices. FX at 11003M and AMP at 11303M open the COMPRESSOR page. Values are set over DIN MIDI on the FX track's channel 13 (CC 82 RAT, 78 THR, 81 MUP) and each knob is then nudged (a turn of -16, then +4, 20M apart) so the page shows its value text: RAT MAX and THR 96; RAT 1:2 and THR 96; MUP 32. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/thr-max.png",
+      "frame": "turn02.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-ICS1-os1.74.syx --instr 14000M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FX@11003M:12M --press AMP@11303M:12M --midi bc5203@11600M --midi bc4e60@11650M --turn 0:-16@12003Mx1 --turn 0:4@12023Mx1 --midi bc5200@12300M --midi bc4e60@12350M --turn 0:-16@12603Mx1 --turn 0:4@12623Mx1 --midi bc5120@12900M --turn 3:-16@13203Mx1 --turn 3:4@13223Mx1",
+      "sha256": "f8634d45c87a92216ef45c0afd70cecf7abdacc9f9cdc4a23a19db3b8c22cad0"
+    },
+    {
+      "path": "media/thr-ratio.png",
+      "frame": "turn04.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-ICS1-os1.74.syx --instr 14000M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FX@11003M:12M --press AMP@11303M:12M --midi bc5203@11600M --midi bc4e60@11650M --turn 0:-16@12003Mx1 --turn 0:4@12023Mx1 --midi bc5200@12300M --midi bc4e60@12350M --turn 0:-16@12603Mx1 --turn 0:4@12623Mx1 --midi bc5120@12900M --turn 3:-16@13203Mx1 --turn 3:4@13223Mx1",
+      "sha256": "356cc7a33e54ff4eac52ca0fd4911183b9de964502451ba7eac443f703b87bbc"
+    },
+    {
+      "path": "media/mup.png",
+      "frame": "turn06.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-ICS1-os1.74.syx --instr 14000M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FX@11003M:12M --press AMP@11303M:12M --midi bc5203@11600M --midi bc4e60@11650M --turn 0:-16@12003Mx1 --turn 0:4@12023Mx1 --midi bc5200@12300M --midi bc4e60@12350M --turn 0:-16@12603Mx1 --turn 0:4@12623Mx1 --midi bc5120@12900M --turn 3:-16@13203Mx1 --turn 3:4@13223Mx1",
+      "sha256": "a5bcd198f6d06d702464e843e03d77ed9453c133c3430a173db5841ecd8edc93"
+    }
+  ]
+}

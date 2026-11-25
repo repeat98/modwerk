@@ -47,6 +47,7 @@ describe('modules removed from the library',()=>{
   expect(validateConfiguration(saved)).toEqual(current)
   expect(validateConfiguration({...current,moduleIds:['pipo-loop'],moduleVersions:{'pipo-loop':'0.2.0-experimental'}})).toMatchObject({moduleIds:[],moduleVersions:{}})
   expect(pinModuleVersions(['improved-performance','improved-fltr'],rytm)).toEqual(pinModuleVersions(['improved-fltr'],rytm))
+  expect(validateConfiguration({...current,moduleIds:['chromatic-aftertouch-fix','improved-fltr'],moduleVersions:{...current.moduleVersions,'chromatic-aftertouch-fix':'0.2.0-experimental'}})).toEqual(current)
   expect(()=>validateConfiguration({...current,moduleIds:['not-a-module']})).toThrow('Unknown module')
  })
  it('lists only modules that have left their library as retired',()=>{

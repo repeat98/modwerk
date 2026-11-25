@@ -390,6 +390,27 @@ class MachineBases(unittest.TestCase):
         with self.assertRaises(ValueError):
             machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
 
+    def test_the_rytm_base_stages_its_own_version_over_the_imported_recipe_in_every_variant(self):
+        # The builder picks a base's mod area by its version (the kit's coreDdr), so base.json names it and the
+        # imported mod.json stays exact. reference.keeps cannot hold the version then.
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        imported = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/mod.json").read_text())
+        self.assertEqual(imported["version"], "0.7")
+        self.assertEqual(config["version"], "0.7.1")
+        self.assertNotIn("version", config["reference"]["keeps"])
+        for name, add, leave in machine_base.variants(config):
+            with tempfile.TemporaryDirectory() as work:
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                self.assertEqual(json.loads((core / "mod.json").read_text())["version"], "0.7.1", name)
+        # a base that names no version keeps its recipe's, and one with nothing to merge stays the imported file
+        plain = {key: value for key, value in config.items() if key not in ("version", "common", "add", "dev")}
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("analog-rytm-mkii", plain, pathlib.Path(work), add=False)
+            self.assertEqual((core / "mod.json").read_text(), (APP / "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/mod.json").read_text())
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("analog-rytm-mkii", dict(plain, version="9.9"), pathlib.Path(work), add=False)
+            self.assertEqual(json.loads((core / "mod.json").read_text())["version"], "9.9")
+
     def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
         config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
         variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}

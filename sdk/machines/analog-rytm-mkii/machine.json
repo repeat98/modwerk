@@ -89,26 +89,26 @@
       {
         "name": "Shared mod memory",
         "unit": "bytes",
-        "value": 131072,
-        "note": "DDR 0x47BE0000–0x47C00000, shared by the core and every mod; a boot-time fill was read back intact on a unit (DDR-area canary, elekloader core-ar2 evidence)."
+        "value": 3866624,
+        "note": "DDR 0x47B50000–0x47F00000 (3.7 MiB) for the core and every mod of a set on base 0.7.1 or later; a 0.7 base keeps 128 KiB at 0x47BE0000. On one unit, fills around the old area read back intact and RAM-booted sets placed from 0x47B50000 ran (17 November 2026). Not tested: a flashed set, a second unit."
       },
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 12160,
-        "note": "Modwerk's base, plain variant (1c14b6b0), for a set with no send effect or digital voice machine: 10,792 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+        "value": 16275,
+        "note": "Modwerk's base, plain variant (2977431b), for a set with no send effect or digital voice machine: 14,715 bytes .run plus 1,560 bytes .bss (3,879 and 189 of them the lean engine, 44 of .run pad pressure) in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
       },
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
-        "value": 37178,
-        "note": "The base's send-bus variant (3ece243b), for a set with a send effect: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "value": 41309,
+        "note": "The base's send-bus variant (b485034b), for a set with a send effect: 36,945 bytes .run plus 4,364 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       },
       {
         "name": "Core image with the digital voices",
         "unit": "bytes",
-        "value": 17708,
-        "note": "The base's voices variant (dd771eae), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,876 bytes .run plus 2,832 bytes .bss."
+        "value": 21839,
+        "note": "The base's voices variant (1a8a1488), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 18,815 bytes .run plus 3,024 bytes .bss."
       }
     ]
   },

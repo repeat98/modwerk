@@ -90,6 +90,38 @@ describe('elemod linker', () => {
     await expect(linkMods([on(core), on(sized('vast', 0x40000300, 0x10000))], image)).rejects.toThrow('past 0x41009000')
   })
 
+  it('links every set on a core new enough for a coreDdr entry in that entry\'s area, whatever its size, and takes no ddrMore there', async () => {
+    const big: [number, number] = [0x40ffc000, 0x41009000]
+    const on = (coreDdr: LinkDevice['coreDdr'], extra: Partial<LinkDevice> = {}) => (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [{ ...device, coreDdr, ...extra }])
+    const sized = (id: string, addr: number, bss: number) => mod(id, addr, { sections: { '.run': { parts: [['hex', '4e75']] }, '.bss': { size: bss } } })
+    // the core is 1.0: an entry for 1.0 or older applies, one for a newer core does not
+    for (const version of ['1.0', '0.9']) {
+      const at = on([[version, big]])
+      const small = await linkMods([at(core), at(mod('one', 0x40000100))], image)
+      expect(small.layout.ddr[0], version).toBe(big[0])
+      expect(small.layout.ddrSpare, version).toBe(big[1] - small.layout.bss[1])
+      // past the old 4 KiB, in the same area
+      const large = await linkMods([at(core), at(sized('large', 0x40000200, 0x8000))], image)
+      expect(large.layout.ddr[0], version).toBe(big[0])
+      expect(large.layout.bss[1], version).toBeGreaterThan(0x41001000)
+      await expect(linkMods([at(core), at(sized('vast', 0x40000300, 0x10000))], image)).rejects.toThrow('past 0x41009000')
+    }
+    const older = on([['1.0.1', big]])
+    const kept = await linkMods([older(core), older(mod('one', 0x40000100))], image)
+    expect(kept.layout.ddr[0]).toBe(0x41000000)
+    expect(kept.image).toEqual((await linkMods([parse(core), parse(mod('one', 0x40000100))], image)).image)
+    // as the kit says it: the core that would give the set room
+    await expect(linkMods([older(core), older(sized('large', 0x40000200, 0x8000))], image)).rejects.toThrow(/past 0x41001000 \(\d+ bytes over\); core 1\.0\.1 or newer gives them 53248 bytes/)
+    // the last entry a core is new enough for wins, as in the kit's ddrFor
+    const two = on([['0.5', [0x40ffe000, 0x41001000]], ['1.0', big]])
+    expect((await linkMods([two(core), two(mod('one', 0x40000100))], image)).layout.ddr[0]).toBe(big[0])
+    // a coreDdr area is the core's whole area: no ddrMore beyond it, and none in its place
+    const more = on([['1.0', [0x40ffe000, 0x41001000]]], { ddrMore: [{ area: big }] })
+    await expect(linkMods([more(core), more(sized('large', 0x40000200, 0x8000))], image)).rejects.toThrow('past 0x41001000')
+    const before = on([['1.0.1', [0x40ffe000, 0x41001000]]], { ddrMore: [{ area: big }] })
+    expect((await linkMods([before(core), before(sized('large', 0x40000200, 0x8000))], image)).layout.ddr[0]).toBe(big[0])
+  })
+
   it('applies a single whole build and refuses two', async () => {
     const whole = (id: string) => ({ elemod: 1, id, version: '1.0', target, sites: [], blob: { load: '0x40001000', len: 2, sha256: sha(Uint8Array.from([0x4e, 0x75])), parts: [['hex', '4e75']] } })
     expect((await applyWholeBuilds([parse(whole('os'))], image)).length).toBe(image.length + 2)

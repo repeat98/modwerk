@@ -1,0 +1,76 @@
+# The base's pad pressure: BD set to ALWAYS ON, played without RTRG. With VEL.CUR OFF stock writes the
+# pressure to the roll's velocity only; the base also sends it to the sound's aftertouch and MIDI. With
+# VEL.CUR 1 stock already sends it there and the curve sets the velocity: the base keeps that.
+# Expects BD's VEL.CUR OFF and ALWAYS ON off; turns ALWAYS ON on (YES on its row) and VEL.CUR to 1 for the
+# second half, and puts both back. Leaves BD's aftertouch at 0.
+name: pad-pressure-always-on
+state: changes
+
+hold RTRG
+wait 300
+key UP x4
+key DOWN x3
+key YES
+wait 300
+screen aon
+release RTRG
+wait 500
+midi off begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 500
+mem at60 0x800067de 2
+mem roll60 0x42ac6b4c 2
+pad BD pressure 30
+wait 500
+mem at30 0x800067de 2
+mem roll30 0x42ac6b4c 2
+pad BD pressure 0
+pad BD up
+wait 300
+midi off end
+hold RTRG
+wait 300
+key UP x4
+key DOWN x2
+key RIGHT
+release RTRG
+wait 500
+midi set begin
+pad BD down 100
+wait 300
+pad BD pressure 60
+wait 500
+mem sat60 0x800067de 2
+mem sroll60 0x42ac6b4c 2
+pad BD pressure 30
+wait 500
+mem sat30 0x800067de 2
+mem sroll30 0x42ac6b4c 2
+pad BD pressure 0
+pad BD up
+wait 300
+midi set end
+hold RTRG
+wait 300
+key UP x4
+key DOWN x2
+key LEFT
+key DOWN
+key YES
+wait 300
+screen after
+release RTRG
+wait 300
+expect aon == ref region 0 15 56 40
+expect after == ref region 0 15 56 40
+expect at60 == 1e00
+expect at30 == 0f00
+expect roll60 == 1e00
+expect roll30 == 0f00
+expect off.polyat > 1
+expect sat60 == 1e00
+expect sat30 == 0f00
+expect sroll60 == sroll30
+expect set.polyat > 1

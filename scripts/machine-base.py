@@ -266,7 +266,8 @@ def stage(machine, config, root, sites=None, add=True, recipe_sites=None, dev=Fa
     mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out;
     without `add` (a variant that leaves them out) only common is merged, and with no common either the imported
     recipe is staged alone; `leave` takes add without what its patterns match. `dev` merges base.json's dev on top,
-    for a development base."""
+    for a development base. base.json's `version` names the base in place of the imported recipe's: the builder picks
+    a base's mod area by it (the kit's coreDdr)."""
     own = APP / 'sdk/machines' / machine / 'elekloader'
     source = APP / 'sdk/machines' / config.get('source', machine) / 'elekloader'
     mods = root / 'mods'
@@ -298,9 +299,12 @@ def stage(machine, config, root, sites=None, add=True, recipe_sites=None, dev=Fa
     recipe = dict(config.get('recipe', {}))
     if recipe_sites is None:
         recipe.pop('sites', None)
-    if add or recipe:
+    version = config.get('version')
+    if add or recipe or version:
         path = core / 'mod.json'
         mod = retarget(json.loads(path.read_text()), recipe, recipe_sites or [])
+        if version:
+            mod['version'] = version
         path.write_text(json.dumps(merge(mod, add, sites or []), indent=1) + '\n')
     return core
 

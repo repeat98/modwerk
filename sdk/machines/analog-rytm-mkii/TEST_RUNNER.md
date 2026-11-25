@@ -81,6 +81,9 @@ screen up                # capture the screen under a name
 mem m 0x417e32b8 1       # capture 1 to 1024 bytes
 ident i                  # capture the link's ident
 note BD                  # a MIDI note for a track: velocity 100, held 100 ms
+pad BD down 100          # a pad as the panel plays it (BD to CB): down with a velocity 1 to 127, pressure 0 to 255, up alone
+pad BD pressure 60       #   the link lets go of a pad it holds at the end. Needs a base with the link's `pad`
+pad BD up
 note SD 64 250           # velocity 1 to 127, held 10 to 10000 ms
 cc 79 42                 # a controller (0 to 119) on the auto channel: the active track's
 nrpn 1:20 64 0           # an NRPN on the auto channel as a controller sends it: CC 99, 98, 6 (and 38)
@@ -104,16 +107,19 @@ expect fb has nrpn 1:20 100          # a parameter the Rytm sent: nrpn MSB:LSB o
 expect fb lacks cc 74                # value (an NRPN's data entry, 0 to 127)
 expect fb has nrpn 5:0 1 ch2         # a last chN: only on that channel (rytm-emu sends on the auto channel)
 expect fb.count == 0                 # how many parameter messages: == != < >
+expect fb has polyat 36 30           # a note on (note N [VELOCITY]) or poly pressure (polyat N [PRESSURE]) it sent
+expect fb.polyat > 1                 # how many poly pressure messages (fb.notes: note ons): == != < >
 ```
 
 Every case starts with `release` and ends with the up of every key still held, then `release`. References are kept
 per target, `<refs>/<case folder>/<case>/<emu|unit>/NAME.pbm`, screens and sound measures only: a memory reference
 would be a memory dump, so `mem` compares with bytes written in the case or another capture. They are captures of the
-unit's screen and never enter Git. `--record` writes a reference only when the case had no problem and every other
-check passed, and says when it replaced a different one; it still records whatever the screen shows, so look at the
-PNGs before keeping a reference: one recorded from a wrong screen passes for ever. An `expect` that could not be
-checked (a failed capture, a short reply, no reference) makes the case an error, never a pass. A case with no `expect`
-passes when every request was answered, marked `(no checks)`.
+unit's screen and never enter Git. Every screen compare skips x 126-127, y 2-6, where bases before 21 Nov 2026 drew
+the link's armed mark, so references recorded with it still pass. `--record` writes a reference only when the case
+had no problem and every other check passed, and says when it replaced a different one; it still records whatever
+the screen shows, so look at the PNGs before keeping a reference: one recorded from a wrong screen passes for ever.
+An `expect` that could not be checked (a failed capture, a short reply, no reference) makes the case an error, never
+a pass. A case with no `expect` passes when every request was answered, marked `(no checks)`.
 
 ## Writing cases
 
@@ -225,7 +231,7 @@ no locked values until a knob turns; `key T1` takes the lock trig and its locks 
 
 ## What a pass does not show
 
-How a sound is beyond the measures (nobody listens), pad hits and pressure (a `note` is MIDI), LEDs, anything the
+How a sound is beyond the measures (nobody listens), the panel's own pad scan (a `pad` starts at the UI queue, after it), LEDs, anything the
 128 x 64 frame or the read bytes do not hold, timing finer than about one UI frame, a power cycle, project save and
 load, the +Drive and an external clock. An emulator pass is not hardware evidence. Write what the runner measured into
 the module's TESTING.md as the rig's report, on the named image, labelled as run by the rig, not by a person, and list
