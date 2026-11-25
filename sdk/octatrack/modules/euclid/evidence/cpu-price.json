@@ -1,51 +1,96 @@
 {
   "module": "euclid",
-  "version": "0.1.5-experimental",
-  "base": "development twin d3d71297 of base 0.7.8 (main 02dfa20ca)",
-  "scene": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE",
+  "version": "0.1.6-experimental",
+  "base": "cd450fed (development twin of base 0.8.2 fad2c729's source: the beta flags, --dev, controller rows; owner's MKII, OS 1.40C)",
+  "scene": "LIVE/Dev17, C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (Grain's and FM Synth's curve scene); picks on empty C02",
+  "inputs": {
+    "transport": "playing"
+  },
   "seconds": 8,
-  "measuredAt": "2026-11-18T13:14:59.997Z",
+  "readings": 3,
+  "measuredAt": "2026-11-25T14:26:25.482Z",
   "result": {
     "id": "euclid",
-    "version": "0.1.5-experimental",
+    "version": "0.1.6-experimental",
+    "packageSha256": "27263940b8322448b69e13dc1d11108c6b909f9ba2b2c33bb96824e44093adf6",
     "before": {
-      "frame": 41,
-      "frameMax": 75,
-      "frames": 22775,
+      "frame": 32.5,
+      "frameMax": 82.3,
+      "frames": 67255,
       "skipped": 0,
-      "cpu": 59.5,
-      "dsp1to4": 38.9,
-      "dsp5to8": 45.6
+      "cpu": 52.1,
+      "dsp1to4": 33.7,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.7,
+        "dsp1to4": 0.4,
+        "dsp5to8": 0,
+        "frameMax": 1.1,
+        "dsp1to4Peak": 0.2,
+        "dsp5to8Peak": 0.9
+      }
     },
     "atRest": {
-      "frame": 43.5,
-      "frameMax": 76.2,
-      "frames": 22764,
+      "frame": 32.6,
+      "frameMax": 81,
+      "frames": 67189,
       "skipped": 0,
-      "cpu": 61.8,
-      "dsp1to4": 35.5,
-      "dsp5to8": 45.6
+      "cpu": 52.2,
+      "dsp1to4": 33.9,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 42.7,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.7,
+        "dsp1to4": 0.1,
+        "dsp5to8": 0,
+        "frameMax": 0.5,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0.7
+      }
     },
     "atRestAdds": {
-      "frame": 2.5,
-      "cpu": 2.3,
-      "dsp1to4": -3.4,
-      "dsp5to8": 0
+      "frame": 0.1,
+      "cpu": 0.1,
+      "dsp1to4": 0.2,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": -0.2
     },
     "inUse": {
-      "frame": 48.2,
-      "frameMax": 78.1,
-      "frames": 22765,
+      "frame": 36.2,
+      "frameMax": 85.1,
+      "frames": 67187,
       "skipped": 0,
-      "cpu": 64.9,
-      "dsp1to4": 44.4,
-      "dsp5to8": 45
+      "cpu": 55.4,
+      "dsp1to4": 36.8,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 41.7,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.1,
+        "dsp1to4": 4.9,
+        "dsp5to8": 0,
+        "frameMax": 0.4,
+        "dsp1to4Peak": 1,
+        "dsp5to8Peak": 0.9
+      }
     },
     "inUseAdds": {
-      "frame": 7.2,
-      "cpu": 5.4,
-      "dsp1to4": 5.5,
-      "dsp5to8": -0.6
+      "frame": 3.7,
+      "cpu": 3.3,
+      "dsp1to4": 3.1,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 5.9,
+      "dsp5to8Peak": 0
     },
     "inUseOn": "T1 FX2",
     "rolledBack": true

@@ -383,12 +383,12 @@
       }
     },
     "cpuPrice": {
-      "value": 7.2,
+      "value": 3.7,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-18",
-      "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 43.5 % installed and used nowhere, 48.2 % on T1 FX2; CPU meter 59.5 % before, 61.8 % at rest, 64.9 % in use.",
+      "date": "2026-11-25",
+      "conditions": "LIVE/Dev17, C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (Grain's and FM Synth's curve scene); picks on empty C02; base cd450fed (development twin of base 0.8.2 fad2c729's source: the beta flags, --dev, controller rows; owner's MKII, OS 1.40C); 3 readings of 8 s a state. Frame interrupt 32.5 % before, 32.6 % installed and used nowhere, 36.2 % on T1 FX2; CPU meter 52.1 % before, 52.2 % at rest, 55.4 % in use.",
       "source": "evidence/cpu-price.json"
     }
   },
