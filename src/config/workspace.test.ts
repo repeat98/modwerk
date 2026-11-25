@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fresh } from '../../vendor/elekloader/kit/src/store.ts'
 import { afterDeleting, configurationDevice, newConfiguration, validateConfiguration, pinModuleVersions, startupSettings } from './workspace'
+import { DIGI_MODS, RETIRED_DIGI_MODULE_IDS } from '../devices/digi-mods'
 describe('persistent configuration version pins',()=>{
  it('starts empty with stock FX2 disabled while dynamic loading is unavailable',()=>{
   const configuration=newConfiguration('Empty')
@@ -39,6 +40,17 @@ describe('modules removed from the library',()=>{
   expect(copy.moduleIds).toEqual(['repitch'])
   expect(copy.moduleVersions).toEqual(pinModuleVersions(['repitch']))
   expect(pinModuleVersions(['spectrum','repitch'])).toEqual(pinModuleVersions(['repitch']))
+ })
+ it('drops a module retired from the Rytm library and its pin from a saved set, and keeps the rest',()=>{
+  const rytm='analog-rytm-mkii',current=newConfiguration('Rytm set',['improved-fltr'],true,undefined,rytm)
+  const saved={...current,moduleIds:['improved-performance','improved-fltr','pipo-loop'],moduleVersions:{...current.moduleVersions,'improved-performance':'0.1.0-experimental','pipo-loop':'0.2.0-experimental'}}
+  expect(validateConfiguration(saved)).toEqual(current)
+  expect(validateConfiguration({...current,moduleIds:['pipo-loop'],moduleVersions:{'pipo-loop':'0.2.0-experimental'}})).toMatchObject({moduleIds:[],moduleVersions:{}})
+  expect(pinModuleVersions(['improved-performance','improved-fltr'],rytm)).toEqual(pinModuleVersions(['improved-fltr'],rytm))
+  expect(()=>validateConfiguration({...current,moduleIds:['not-a-module']})).toThrow('Unknown module')
+ })
+ it('lists only modules that have left their library as retired',()=>{
+  for(const [device,ids] of Object.entries(RETIRED_DIGI_MODULE_IDS))for(const id of ids??[])expect(DIGI_MODS.some(mod=>mod.device===device&&mod.id===id)).toBe(false)
  })
  it('still refuses a module the catalog never had',()=>{
   expect(()=>newConfiguration('Unknown',['not-a-module'])).toThrow('Unknown module')
