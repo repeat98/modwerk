@@ -19,7 +19,7 @@ const LOG_AT = 0x47f0315c, LOG_SIZE = 6148
 function fakeDigitone({ playing = false, delayMs = 0, garble = '' } = {}) {
   const names = Object.fromEntries(Object.entries(UploadCommand).map(([name, code]) => [code, name]))
   const before = UPLOAD_BASE
-  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: before, staged: '', previous: before, frames: [], inFlight: 0, mostInFlight: 0 }
+  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: before, staged: '', previous: before, frames: [], times: [], inFlight: 0, mostInFlight: 0, memReads: 0 }
   const memory = new Map()
   ;[...be(0x4d574447), ...be(2), ...be(0x1234), ...be(1), ...be(0), ...be(0), ...be(1)].forEach((b, i) => memory.set(LOG_AT + i, b))
   const base = LOG_AT + 40 + 92 + 32 * 96
@@ -35,7 +35,7 @@ function fakeDigitone({ playing = false, delayMs = 0, garble = '' } = {}) {
   }
   const controller = frame => {
     const view = new DataView(frame.buffer, frame.byteOffset), command = view.getUint16(6), transaction = view.getUint32(8), name = names[command]
-    state.frames.push(name)
+    state.frames.push(name); state.times.push(Date.now())
     switch (name) {
       case 'enter': if (playing) return respond(command, transaction, 'unsafe'); state.phase = state.phase === 'trial' ? 'pending' : 'ready'; break
       case 'leave': state.phase = state.phase === 'pending' ? 'trial' : 'normal'; break
@@ -62,6 +62,7 @@ function fakeDigitone({ playing = false, delayMs = 0, garble = '' } = {}) {
     if (cmd === 0x22) return reply(seq, cmd, 0, [LOG_AT, LOG_SIZE, 1500, 30].flatMap(u32))
     if (cmd === 0x21) {
       const at = get32(data, 8), n = get32(data, 13)
+      state.memReads++
       return reply(seq, cmd, 0, [...u32(at), ...pack7(Uint8Array.from({ length: n }, (_, i) => memory.get(at + i) ?? 0))])
     }
     if (cmd === 0x30) {
@@ -116,6 +117,24 @@ describe('a Digitone II over the computer’s MIDI', () => {
     expect(fake.state.mostInFlight).toBe(1)
     expect(await unit.undo()).toMatchObject({ kept: false, phase: 'normal' })
   })
+
+  it('lets a due keepalive go between the requests of a slow log read, one exchange at a time', async () => {
+    // The 6,148-byte log is 49 requests. Scaled down ten times from replies 220 ms apart and the unit's ten-second
+    // trial watchdog: replies 22 ms apart, a keepalive every 100 ms, and the watchdog's 1,000 ms. The whole read takes
+    // about 1.1 s, longer than the watchdog, so a read that held the line throughout would let the trial expire.
+    const fake = fakeDigitone({ delayMs: 22 }), unit = new DigitoneUnit(midiLinkLine(fake.access), 100)
+    await unit.trial(new Uint8Array(300).fill(4))
+    const start = Date.now(), before = fake.state.frames.length
+    expect(await unit.log()).toMatchObject({ version: 2 })
+    const end = Date.now(), during = fake.state.times.slice(before).filter(t => t <= end)
+    expect(end - start).toBeGreaterThan(1000)
+    expect(fake.state.memReads).toBe(49)
+    expect(during.length).toBeGreaterThanOrEqual(5)
+    const gaps = [start, ...during, end].slice(1).map((t, i, all) => t - (i ? all[i - 1] : start))
+    expect(Math.max(...gaps)).toBeLessThan(500)          // well inside the watchdog, all through the read
+    expect(fake.state.mostInFlight).toBe(1)
+    expect(await unit.undo()).toMatchObject({ kept: false, phase: 'normal' })
+  }, 15000)
 
   it('stops the keepalive when Keep is not confirmed, and reads the loader again through a fresh session', async () => {
     const fake = fakeDigitone({ garble: 'accept' }), unit = new DigitoneUnit(midiLinkLine(fake.access), 10)

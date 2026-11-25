@@ -47,7 +47,9 @@ export function midiLinkLine(access: MidiAccessLike): LinkLine {
 }
 
 /** One complete request and reply at a time on the unit's line: an upload frame (a session's or the keepalive's), an
- * ident or a whole log read. The line hands replies over in order, so two requests in flight could take each other's. */
+ * ident or one request of a log read. The line hands replies over in order, so two requests in flight could take each
+ * other's. A log read takes a turn per request, not one for the whole log, so a due keepalive goes between its requests
+ * and a slow line cannot hold a trial's frames back past the unit's watchdog. */
 export class LineLock {
   private tail: Promise<unknown> = Promise.resolve()
   run<T>(work: () => Promise<T>): Promise<T> {
@@ -94,7 +96,7 @@ export class DigitoneUnit {
     return { link, base, loader: { phase: loader.phase, generation: loader.generation, activeKnown: loader.activeKnown, active: loader.active }, trialOpen: !!this.session }
   }
   /** The diagnostics log, as the site parses the Octatrack's. Read-only. */
-  async log() { return (await this.lock.run(() => readLog(this.line))).log ?? null }
+  async log() { return (await readLog(this.line, work => this.lock.run(work))).log ?? null }
   /** Loads a runtime package (sdk/runtime/loader/build.py) for a trial; never keeps it. The unit must be stopped and
    * SETTINGS > REMOTE CTRL on. Until keep or undo, a frame every KEEPALIVE_MS holds the trial open. */
   async trial(data: Uint8Array) {
