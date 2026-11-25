@@ -737,7 +737,16 @@
       "state": 32,
       "buffer": 0,
       "version": "0.1.0-experimental",
-      "path": "octatrack-modules/mackity/0.1.0-experimental.mwrm"
+      "path": "octatrack-modules/mackity/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Mackity",
+      "module": "f265b22c",
+      "bytes": 1376,
+      "sha256": "5a58d4cc9ce2e5c2878ddafab9fa4437d4ded051066e1d0788307693330b39ac"
     },
     {
       "id": "butter-fingers",

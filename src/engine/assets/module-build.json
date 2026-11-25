@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "35ea8e27cb3f148b0cb7886bc49039c17382a946",
+  "sourceCommit": "51764af027baea07b8289299fefd2a69c6431ff3",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "0140f4665ecafdba822208a82e84ac4baf401a7c4a29a936b2fa315b23af7952",
-  "compilerSha256": "cf83b1dd46431e5bd257abe5aeebf6961075dc2cde35e7c8e48e15e2bbbf09fc",
+  "sourceTreeSha256": "40e985b3b33c7c2029f94e541cced230cf54a48cc3b7841a089244d54231ab89",
+  "compilerSha256": "3a8e520b5a5a803c280f22f28376e3b1cca11784347d049f5739533430639c79",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
@@ -18,6 +18,7 @@
     "ring-sc": "0.2.1-experimental",
     "vibrato": "0.1.0-experimental",
     "resonator": "0.1.0-experimental",
+    "mackity": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.4.0-experimental",
     "quantizer": "0.1.5-experimental",
@@ -45,8 +46,8 @@
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 86027,
-      "sha256": "111b8dad5bc68547bf938ac59316a4b889906d656b91e038941a43da7b7c468b"
+      "bytes": 88424,
+      "sha256": "65cd6f2c41b67e718ea9fbb2faea3114e9fb989b9acc8070ef4e8b69544f244b"
     },
     "resident-dsp.json": {
       "bytes": 6981,
@@ -69,8 +70,8 @@
       "sha256": "427972231beb55518aee663db1df9f4cf4d8debf1d7aa6b574f97d499f6a0842"
     },
     "descriptor-recipes.json": {
-      "bytes": 77122,
-      "sha256": "07342b7a6793e0526b0fca8776f49e750d9793461333fb53536d5414622aef4b"
+      "bytes": 82723,
+      "sha256": "ff892f69baae7c18bb2b15e94a31d2dfa489fd766cffb5de18722591d2eede08"
     },
     "platform-writes.json": {
       "bytes": 15585,
