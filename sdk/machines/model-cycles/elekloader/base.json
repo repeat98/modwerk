@@ -73,7 +73,11 @@
       "ev_key_leds": 4
     },
     "cflags": [
-      "-DSYSEX_SEND_AT=0x400828fe",
+      "-DUSB_LOCK_AT=0x400032ca",
+      "-DUSB_UNLOCK_AT=0x400032da",
+      "-DUSB_WRITE_AT=0x40003396",
+      "-DMIDI_ON_AT=0x40fe4228",
+      "-DUSB_SYSEX_AT=0x404a096c",
       "-DRUNTIME_MODULES=16u",
       "-DRUNTIME_POOL_BYTES=65536u"
     ],

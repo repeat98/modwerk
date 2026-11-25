@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Development bases only (base.json's dev): the audio load, from the probe in load.s. Each codec block's busy time
+// Every base (base.json's add): the audio load, from the probe in load.s. Each codec block's busy time
 // (the audio function, in DMA timer 0 ticks) is summed over a window of 750 blocks (half a second): the window's share
 // of the CPU is the sum over 750 nominal blocks, in tenths of a percent. The link's LOAD reports it, the window's
 // dearest block and the dearest block since boot. About 25 instructions a block.

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * Development bases only (base.json's dev): loading modules without a reflash over the development link. The
+ * Every base (base.json's add): loading modules without a reflash over the link. The
  * Octatrack's upload controller (sdk/runtime/upload: wire envelope version 1) drives the runtime loader's backend
  * (sdk/runtime/loader); where the Octatrack carries one wire frame in an EP0 data stage, the link carries it in parts
  * (link.c: UP_PART, then UP_RUN), each SysEx under 128 bytes as stock's own upgrade messages are. Frames run on the UI

@@ -17,8 +17,9 @@
 // - Receive: stock's SysEx router (0x400812f6, MIDI task) gets every complete SysEx as (msg, len, port).
 //   link.s takes its first instructions: F0 7D 'MWL' is copied into a ring here and goes no further;
 //   anything else goes on to stock unchanged (Elektron's F0 00 20 3C, universal F0 7E).
-// - Work: ev_tick (UI task) takes the ring, acts and replies with stock's SysEx send (0x400828fe,
-//   send(bytes, len, error flag or 0, port)), which writes 144-byte parts. Ports as that routine routes
+// - Work: ev_tick (UI task) takes the ring, acts and replies on USB through stock's USB MIDI writer
+//   (0x40003396), in 144-byte parts as stock's SysEx send (0x400828fe) does, but under stock's USB lock for the whole
+//   reply and never while another sender's SysEx is open (LINK.md). Ports as stock's send routes
 //   them: 1 the MIDI setting's choice, 2 USB (it writes the USB controller), 3 DIN, 4 both. A request
 //   from USB arrives with port 2 (a unit, 23 November 2026); the link serves USB only and drops its
 //   messages from any other port. The reply goes back on port 2; IDENT reports the port.
@@ -47,8 +48,25 @@
 
 #define LINK_VERSION 1
 
-// Stock, OS 1.13.
-#define SYSEX_SEND ((int (*)(const uint8_t *, int, uint8_t *, int))SYSEX_SEND_AT)
+// Stock, OS 1.13: its USB MIDI writer, the lock around it and the writer's SysEx state (LINK.md, "Stock's send
+// from two tasks").
+#ifdef MODWERK_HOST /* test_link.c: stock's USB writer, upload and the mailbox are the test's */
+extern void mw_test_usb_lock(void), mw_test_usb_unlock(void), mw_test_usb_write(int len, const uint8_t *bytes);
+extern volatile uint32_t mw_test_midi_on, mw_test_usb_sysex;
+#define USB_LOCK mw_test_usb_lock
+#define USB_UNLOCK mw_test_usb_unlock
+#define USB_WRITE mw_test_usb_write
+#define MIDI_ON mw_test_midi_on
+#define USB_SYSEX mw_test_usb_sysex
+#else
+#define USB_LOCK ((void (*)(void))USB_LOCK_AT)         // takes stock's USB MIDI lock, waiting for it
+#define USB_UNLOCK ((void (*)(void))USB_UNLOCK_AT)
+#define USB_WRITE ((void (*)(int, const uint8_t *))USB_WRITE_AT)   // write(len, bytes): MIDI bytes to USB packets
+#define MIDI_ON (*(volatile uint32_t *)MIDI_ON_AT)     // stock's send sends nothing while it is 0
+#define USB_SYSEX (*(volatile uint32_t *)USB_SYSEX_AT) // 0xF0 while a SysEx is written but not yet ended
+#endif
+#define SYSEX_OPEN (USB_SYSEX == 0xF0)
+#define PART 144                        // bytes in one write, as stock's send splits a message
 
 #define USB 2                           // the port stock's router reports for USB MIDI (seen on a unit)
 
@@ -90,17 +108,27 @@
 #define PEND_TICKS 30                   // about 1 s: a posted event never seen at ev_key/ev_enc is given up
 
 // RAM boot.
+#ifdef MODWERK_HOST
+extern uint32_t mw_test_upload[], mw_test_mailbox[];
+#define UPLOAD_STATE (*(const volatile uint8_t *)mw_test_upload)
+#define STAGED ((const uint32_t *)mw_test_upload + 8)
+#define MAILBOX ((volatile uint32_t *)mw_test_mailbox)
+#define COPY ((uint8_t *)(mw_test_mailbox + 16))
+#define MASK_INTERRUPTS() ((void)0)
+#else
 #define UPLOAD_STATE (*(const volatile uint8_t *)0x4028da80)  // stock's upload header: 3 when complete
 #define STAGED ((const uint32_t *)0x4028daa0)             // its length, its sum, then the ELE3 container
 #define MAILBOX ((volatile uint32_t *)0x46000000)          // high DDR: the bootstrap's stage (0x40200000 up) and
 #define COPY ((uint8_t *)0x46000040)                      //   the unpacked OS (0x40000400 up) stay below it
+#define MASK_INTERRUPTS() __asm__ volatile("move.w #0x2700, %%sr" ::: "memory")
+#endif
 #define MB_ASKED 0x4d574254             // 'MWBT': boot the copy
 #define MB_SPENT 0x4d574255             // 'MWBU': the unpack began
 #define MB_BOOTED 0x4d574253            // 'MWBS': the unpacked image checked out and was entered
 #define MB_CHECK 0x4d634c6b             // the check word's seed
 #define OS_BASE 0x40000400              // MAIN OS: its first long is the entry
 #define IMAGE_MAX 0x400000              // the unpacked MAIN OS, well below COPY
-#define CONTAINER_MAX 0x200000          // the container (the flash takes 0x1e0000 from 0x20000)
+#define CONTAINER_MAX 0x1c0000          // the container: flashed from 0x20000, it must end below the OS's stores at 0x1e0000
 #define MAIN_OS 3                       // the container's section id
 #define BOOT_ARG (*(const uint32_t *)0x4013e4d0)  // where the OS entry keeps what the bootstrap passed it
 #define RSR (*(volatile uint8_t *)0xEC090001)     // reset status: bit 5 software reset
@@ -339,13 +367,29 @@ static uint8_t *begin(int seq, int cmd, int status)
     return p;
 }
 
+// Stock's send releases its lock after every 144-byte part, so another task's part could land between two of a
+// reply's (and the reverse), which breaks both SysEx. The link writes the whole reply under the lock, and never
+// while another sender's SysEx is open: the tick waits for it (mw_link_tick). The link answers USB only.
 static void send(uint8_t *end, int port)
 {
+    int n, k;
+    (void)port;
     *end++ = 0xF7;
-    if (SYSEX_SEND(reply, end - reply, 0, port))
-        sent_count++;
-    else
+    n = (int)(end - reply);
+    if (!MIDI_ON) {
         send_fails++;
+        return;
+    }
+    USB_LOCK();
+    if (SYSEX_OPEN) {                   // opened since the tick looked: a writer that does not take the lock
+        USB_UNLOCK();
+        send_fails++;
+        return;
+    }
+    for (k = 0; k < n; k += PART)
+        USB_WRITE(n - k < PART ? n - k : PART, reply + k);
+    USB_UNLOCK();
+    sent_count++;
 }
 
 #ifdef MODWERK_DEV
@@ -383,20 +427,20 @@ static void act(const uint8_t *m, int len, int port)
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
-#else
-        for (int i = 0; i < 5; i++)     // the same fields: a release base has no keys, so never armed
-            p = put32(p, 0);
-#endif
         p = put32(p, MAILBOX[0]);
         p = put32(p, MAILBOX[6]);
         p = put32(p, MAILBOX[4]);
+#else
+        for (int i = 0; i < 8; i++)     // the same fields: a release base has no keys and no RAM boot, so never
+            p = put32(p, 0);            // armed, and the RAM-boot words are 0 (the mailbox holds whatever DDR does)
+#endif
         p = put32(p, run_crc);
         p = put32(p, run_bytes);
         send(p, port);
         return;
-    case CMD_DIAG:                      // where the log is and its size: a host reads it with MEM
+    case CMD_DIAG:                      // where the log is and its size: a host reads it with LOG
         p = begin(seq, cmd, ST_OK);
-        p = put32(p, (uint32_t)&mw_diag_log);
+        p = put32(p, (uint32_t)(uintptr_t)&mw_diag_log);
         p = put32(p, sizeof mw_diag_log);
         send(p, port);
         return;
@@ -437,14 +481,19 @@ static void act(const uint8_t *m, int len, int port)
             status = ST_HUMAN;
         else if (n < 20)
             status = ST_BAD;
+        else if (ramboot_due)
+            status = ST_BUSY;           // one accepted already: its copy is a few ticks away
         else {
+            uint32_t r[4];              // stored only once they pass: the copy reads ramboot[]
             for (i = 0; i < 4; i++)
-                ramboot[i] = get32(a + 5 * i);
-            if (UPLOAD_STATE != 3 || STAGED[0] != ramboot[2] || ramboot[2] < 0x30 || ramboot[2] > CONTAINER_MAX
-                || ramboot[0] - 1 >= IMAGE_MAX)
+                r[i] = get32(a + 5 * i);
+            if (UPLOAD_STATE != 3 || STAGED[0] != r[2] || r[2] < 0x30 || r[2] > CONTAINER_MAX || r[0] - 1 >= IMAGE_MAX)
                 status = ST_RANGE;      // no complete upload of that length
-            else
+            else {
+                for (i = 0; i < 4; i++)
+                    ramboot[i] = r[i];
                 ramboot_due = 1;        // after this reply: the next tick copies and resets
+            }
         }
         if (status != ST_OK)
             refused_count++;
@@ -499,7 +548,7 @@ static void act(const uint8_t *m, int len, int port)
         p = begin(seq, cmd, ST_OK);
         p = put32(p, addr);
         p = put32(p, count);
-        p = pack(p, (const volatile uint8_t *)addr, (int)count);
+        p = pack(p, (const volatile uint8_t *)(uintptr_t)addr, (int)count);
         send(p, port);
         return;
     }
@@ -542,12 +591,20 @@ static uint32_t mb_check(const volatile uint32_t *mb)
 
 // The container to COPY, the cache out and off, the mailbox straight to DDR, then stock's reset. The upload
 // came through the data cache, and a soft reset does not write dirty lines out (the Rytm's lesson).
+#ifdef MODWERK_HOST
+extern void mw_test_ramboot(const uint32_t *numbers);  // instead of the copy and the reset
+static void mw_link_ramboot_go(void)
+{
+    ramboot_due = 0;
+    mw_test_ramboot(ramboot);
+}
+#else
 static void __attribute__((noinline, noreturn)) mw_link_ramboot_go(void)
 {
     volatile uint32_t *mb = MAILBOX;
     const uint8_t *from = (const uint8_t *)(STAGED + 2);
     uint32_t i;
-    __asm__ volatile("move.w #0x2700, %%sr" ::: "memory");
+    MASK_INTERRUPTS();
     for (i = 0; i < ramboot[2]; i++)
         COPY[i] = from[i];
     mw_cache_off();                     // no memory write may come between its push and its switch: it has none
@@ -560,6 +617,7 @@ static void __attribute__((noinline, noreturn)) mw_link_ramboot_go(void)
     mb[0] = MB_ASKED;
     mw_link_reset();
 }
+#endif
 #endif
 
 void mw_link_tick(char *ctrl)
@@ -584,8 +642,8 @@ void mw_link_tick(char *ctrl)
         pend_age = 0;
     }
 #endif
-    for (done = 0; done < PER_TICK && ring_tail != ring_head; done++) {
-        uint32_t t = ring_tail;
+    for (done = 0; done < PER_TICK && ring_tail != ring_head && !SYSEX_OPEN; done++) {
+        uint32_t t = ring_tail;         // another sender's SysEx open: the request waits for a later tick
         act(ring[t % RING], ring_len[t % RING], ring_port[t % RING]);
         ring_tail = t + 1;
     }
@@ -751,7 +809,7 @@ static void ramboot_gate(void)
     if (be32(e + 12) != OS_BASE || plen < 8 || off > clen || plen > clen - off)
         return;
     arg = BOOT_ARG;                     // inside the image the unpack overwrites
-    __asm__ volatile("move.w #0x2700, %%sr" ::: "memory");
+    MASK_INTERRUPTS();
     mb[0] = MB_SPENT;                   // from here the running image is gone: enter the new one or reset
     if (depack(c + off, plen, (uint8_t *)OS_BASE, ulen) == ulen && crc32((const uint8_t *)OS_BASE, ulen) == mb[4]) {
         mb[6] = BOOT_RAM;
@@ -764,7 +822,7 @@ static void ramboot_gate(void)
 
 void mw_boot_gate(void)
 {
-    run_bytes = (uint32_t)__run_words * 4;  // first: no handler has written to .run yet
+    run_bytes = (uint32_t)(uintptr_t)__run_words * 4;  // first: no handler has written to .run yet
     run_crc = crc32(__run_start, run_bytes);
     mw_modules_identity(run_crc);
     mw_diag_start(LOAD_TIMER_NOW ^ run_crc, run_crc);
