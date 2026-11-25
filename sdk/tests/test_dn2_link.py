@@ -185,6 +185,47 @@ class Dn2DiagSave(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), b"earlier capture")
         self.assertEqual(sorted(p.name for p in pathlib.Path(self.dir.name).iterdir()), ["log.bin"])
 
+    def unit_writing(self, log, writes):
+        """A unit whose log gets a new record (seq and incidents raised, a record filled) before the request numbered
+        in writes: the header and the records of a read that spans one come from before and after it."""
+        state = {"log": bytearray(log), "requests": 0}
+
+        def answer(f):
+            state["requests"] += 1
+            if state["requests"] in writes:
+                mem_ = state["log"]
+                mem_[16] += 1                           # seq
+                mem_[24] += 1                           # incidents
+                mem_[200:204] = bytes([0xEE] * 4)      # the new record, past the first chunk
+            addr, n = link.get32(f, 8), link.get32(f, 13)
+            return [mem_reply(f[6], addr, bytes(state["log"][addr - 0x47F00000:][:n]))]
+        return FakeLine(answer), state
+
+    def test_a_record_written_mid_read_is_read_again(self):
+        log = bytes(range(256)) + bytes(44)            # 300 bytes: a header read, three chunks, a header read
+        line, state = self.unit_writing(log, {3})      # the write lands between the first and second chunk
+        data = link.save_log(0x47F00000, len(log), str(self.path), "x", line)
+        self.assertEqual(state["requests"], 10)        # read twice
+        self.assertEqual(self.path.read_bytes(), bytes(state["log"]))
+        self.assertEqual(data[16], log[16] + 1)        # the header after the write, with the record it counts
+        self.assertEqual(data[200:204], bytes([0xEE] * 4))
+
+    def test_a_log_that_keeps_changing_saves_nothing(self):
+        log = bytes(range(256)) + bytes(44)
+        line, _ = self.unit_writing(log, {3, 8, 13})   # a record during each of the three reads
+        with self.assertRaises(SystemExit) as e:
+            link.save_log(0x47F00000, len(log), str(self.path), "x", line)
+        self.assertIn("changed during each", str(e.exception.code))
+        self.assertEqual(self.path.read_bytes(), b"earlier capture")
+        self.assertEqual(sorted(p.name for p in pathlib.Path(self.dir.name).iterdir()), ["log.bin"])
+
+    def test_a_write_after_the_last_chunk_is_caught_by_the_header_read_after(self):
+        log = bytes(range(256)) + bytes(44)
+        line, state = self.unit_writing(log, {5})      # after the third chunk, before the closing header read
+        link.save_log(0x47F00000, len(log), str(self.path), "x", line)
+        self.assertEqual(state["requests"], 10)
+        self.assertEqual(self.path.read_bytes(), bytes(state["log"]))
+
 
 if __name__ == "__main__":
     unittest.main()

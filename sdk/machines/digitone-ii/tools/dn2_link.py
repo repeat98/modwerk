@@ -206,20 +206,40 @@ def key_id(name):
     return KEYS[name.upper()] if name.upper() in KEYS else int(name, 0)
 
 
+# The log's header (struct diag_log up to freeze_state): diag.c raises its seq, and loads or incidents, with every
+# record it finishes, and changes freeze_state as a freeze starts and ends, so an unchanged header means no record
+# was written in between.
+LOG_HEADER = 40
+LOG_TRIES = 3
+
+
+def read_stable_log(at, size, port, line):
+    """The log's size bytes from at, read while the log stood still: the header before the read, the header inside
+    it and the header after it must be the same, or the read is repeated (LOG_TRIES in all). A log that keeps changing
+    exits nonzero; a capture is never a header from before a write with records from after it."""
+    for _ in range(LOG_TRIES):
+        before = mem(at, LOG_HEADER, port, line)
+        data = b''.join(mem(at + o, min(128, size - o), port, line) for o in range(0, size, 128))
+        if len(data) != size:
+            sys.exit('the log came back %d bytes of %d: nothing saved' % (len(data), size))
+        if before == data[:LOG_HEADER] == mem(at, LOG_HEADER, port, line):
+            return data
+    sys.exit('the log changed during each of %d reads (a record was written): nothing saved; try again' % LOG_TRIES)
+
+
 def save_log(at, size, path, port, line=None):
-    """The log's size bytes from at into path, only when every chunk came back whole (mem checks each reply): the file
-    is written beside path and renamed over it, so a failed read leaves an earlier capture as it was."""
+    """The log's size bytes from at into path, only when every chunk came back whole (mem checks each reply) and no
+    record was written during the read (read_stable_log): the file is written beside path and renamed over it, so a
+    failed read leaves an earlier capture as it was."""
     import os
     import tempfile
     own = line is None
     line = MidiLine(port) if own else line
     try:
-        data = b''.join(mem(at + o, min(128, size - o), port, line) for o in range(0, size, 128))
+        data = read_stable_log(at, size, port, line)
     finally:
         if own:
             line.close()
-    if len(data) != size:
-        sys.exit('the log came back %d bytes of %d: nothing saved' % (len(data), size))
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), prefix='.dn2-diag-')
     try:
         with os.fdopen(fd, 'wb') as f:
