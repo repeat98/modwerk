@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 3,
+  "id": "improved-comp",
+  "name": "Improved Compressor",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "name": "Nathaniel Pavel",
+    "credits": [
+      "npp1993"
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "IMPROVED COMP",
+    "family": "Display",
+    "summary": "THR and MUP on the COMP page read in dB: where the compressor starts at the ratio selected, and how much makeup.",
+    "overview": "The Rytm's compressor is analog, and stock shows THR and MUP as bare knob values. Improved Compressor shows them in dB, by laws measured on a unit with a sine through the compressor. THR reads the level where the compressor starts, and follows RAT: the lower ratios start later (8, 15 and 18 dB at 1:8, 1:4 and 1:2), so the number moves when you change the ratio. MUP reads the makeup gain over MUP 0. Nothing else on the page changes, nothing is drawn but the two texts, and nothing runs on a tick or in the audio block.",
+    "highlights": [
+      "THR reads in dBFS where the compressor starts, at the ratio selected.",
+      "MUP reads the makeup gain in dB.",
+      "Measured on a unit with a sine through the compressor.",
+      "Nothing on a tick, a draw or in the audio: only the two value texts change."
+    ],
+    "usage": [
+      "Use a build containing Improved Compressor. Select the FX track and press AMP for the COMP page.",
+      "Turn THR: its value reads in dB, for example -36dB at THR 96 with RAT MAX.",
+      "Change RAT to 1:2 and turn THR again: the same knob position now reads 18 dB later.",
+      "Turn MUP: its value reads the makeup, for example +20.6dB at MUP 32."
+    ]
+  },
+  "access": {
+    "location": "FX track, COMP page (AMP key): the value texts of THR (knob A) and MUP (knob D).",
+    "steps": [
+      "Select the FX track.",
+      "Press AMP for the COMP page.",
+      "Turn THR or MUP to see its value."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "COMP > THR",
+      "default": null,
+      "doc": "Reads in dBFS where the compressor starts: about 0.97 dB a step, THR 96 at -36dB with RAT MAX, and 8, 15 and 18 dB later at 1:8, 1:4 and 1:2 (measured on a unit with SEQ OFF, from THR 64 to 112). The level is that of a centred voice on its own channel. Below THR 64 the compressor already cuts the bus's own hiss, so the number there is the line extended, not where it starts. In scene and performance mode the text is stock's. The knob, locks and LFO are stock's.",
+      "labels": null
+    },
+    {
+      "name": "COMP > MUP",
+      "default": null,
+      "doc": "Reads the makeup in dB over MUP 0, 0.645 dB a step (measured on a unit to MUP 48). From about MUP 56 the gain measured stopped near +40 dB with MAIN's output near its ceiling, so above that the number is the gain asked for. In scene and performance mode the text is stock's. The knob, locks and LFO are stock's.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on Modwerk's Rytm base.",
+      "The laws were measured on one unit; another may differ by a dB or so.",
+      "THR's number is where the compressor starts with SEQ OFF; SEQ's filters were not measured.",
+      "At 1:2, 1:4 and 1:8 a THR step measured 0.89 to 0.94 dB against the text's 0.97, so the number can be about 1.5 dB off 20 steps from THR 90.",
+      "THR's number uses the ratio as it is now: a RAT lock on a trig is not followed while that trig is held.",
+      "The text shows the knob's value: with a scene, performance or lock holding THR or MUP elsewhere, the compressor follows that, not the number.",
+      "In scene and performance mode THR and MUP read as stock."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:value text of COMP THR and MUP (dB)"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "None: no tick, draw or audio-block work; two value texts are formatted when the page draws them",
+      "method": "static",
+      "conditions": "Read from src/main.c: the module subscribes to no event and contributes one parameter-text record."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Rig runs on the author's MKII from RAM (IC38): the text case passes (THR 96 reads -36dB at RAT MAX and -18dB at 1:2, MUP 32 +20.6dB, stock texts in scene mode). The laws come from a sine measured through the compressor. See TESTING.md."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Nathaniel Pavel's original work, under GPL-3.0-or-later. The source names firmware addresses only."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Improved Compressor",
+      "alt": "Original illustration of a compressor's level curve with its threshold marked and THR and MUP labelled in dB",
+      "credit": "Nathaniel Pavel",
+      "license": "GPL-3.0-or-later",
+      "source": "Original vector illustration; not a device screenshot."
+    }
+  ]
+}
