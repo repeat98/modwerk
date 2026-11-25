@@ -1,88 +1,44 @@
-"""<Module name> -- one line on what it is.
+"""Midiverb: the Alesis Midiverb's own programs, run on the DSP from a table generate.mjs makes.
 
-`npm run module:new` made this draft under sdk/drafts/. It builds as it is:
-`npm run module:dev -- <id>` tries it on your unit over USB, and
-`npm run module:doctor -- --draft <id>` checks it.
-
-Say what the module is, what it changes, what is measured and what is
-open. Delete every comment below once answered.
-
-sdk/octabam/docs/remixer/MODULES.md is the guide; sdk/octabam/tools/remix/schema.py
-the field list; docs/OCTATRACK_API.md the hooks. This is the skeleton of a DSP
-effect. sdk/octatrack/modules/miniverb/ is a finished one (an in-place insert
-with its own verify gate). A module that changes what the firmware does starts
-from `npm run module:new -- <id> --kind coldfire` (then sdk/octatrack/modules/repitch/).
+The original machine's arithmetic is kept bit-exact (generate.mjs proves the table against it; verify.py
+proves this engine against the table). This first build carries 24 Midiverb I programs in its own P table;
+loading every Midiverb, Midiverb II and Midifex program on demand needs a base feature not yet built.
+Owner waiver for the Alesis programs, 25 Nov 2026 (PR #2179).
 """
+import json
+import pathlib
 
-from remix.schema import (Category, Proof, BusRole, DspSection, Formatter, Gate, Harness, Kind,
-                          MenuEntry, Module, Param, YBase)
+from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, MenuEntry,
+                          Module, Param, Proof, YBase)
+
+_TABLE = json.loads((pathlib.Path(__file__).resolve().parent / "programs.json").read_text())["programs"]
+_INDEX = []
+_BODY = []
+for _p in _TABLE:
+    _INDEX.append(len(_TABLE) + len(_BODY))
+    _BODY += _p["words"]
+_DEAREST = max(range(len(_TABLE)), key=lambda i: len(_TABLE[i]["words"]))
 
 MODULE = Module(
-    # `name` MUST equal the directory name. `key` is the build identifier and
-    # appears in the build report, which other tools parse -- so it is API.
-    name="midiverb",
-    key="MIDIVERB",
-    kind=Kind.DSP_EFFECT,          # or DSP_CLIENT / CF_PATCH / HYBRID
-    doc="One line, shown in the build report.",
+    name="midiverb", key="MIDIVERB", kind=Kind.DSP_EFFECT,
     category=Category.TRACK, author="repeat98", author_url="https://github.com/repeat98",
-    proof=Proof.UNTESTED, proof_note="Development scaffold; no module behavior has been verified.",
-
-    menu=MenuEntry(
-        # 0x00-0x03 are stock's "no effect" synonyms and are rejected. Pick an
-        # id no other module claims; the ledger will tell you if you clash.
-        fx2_id=0x0a,
-        # The stock descriptor this one is cloned from. EVERY FIELD YOU DO NOT
-        # WRITE STAYS THE DONOR'S -- including formatters, which override the
-        # value counts you do write.
-        donor_desc=0x400d58b8,     # DARK REV
-        # Both fields are NUL-terminated: abbr is 5 bytes = four characters,
-        # fullname 13 bytes = twelve (a 5-char abbr crashes the unit on LFO
-        # modulation). The schema rejects both over-lengths.
-        abbr=b"MIDI",              # <=4 chars
-        fullname=b"Midiverb",      # <=12 chars, before any build tag
-        build_tag=False,           # append the image's build tag to the name
-    ),
-
-    # Exactly twelve slots. Page 1 is 0-5; page 2 is 6-11. The page-2
-    # knob field carries even slots, the companion field odd slots.
-    # Either can carry a stepped value; put MODE on an EVEN slot, where
-    # the panel's page-2 knob editor has been proven to reach it (Param).
-    #
-    #   name=None inherits the donor's label; b"" blanks it. Prefer writing
-    #   the label even when the donor has it: the test harness reads these.
-    #   count=None leaves the donor's value count.
-    #   active=False means the panel does not draw it, which makes it
-    #   unreachable no matter how completely it is implemented.
-    #   A default outside its count is used as an INDEX and is rejected.
+    proof=Proof.RENDER, proof_note="verify.py: bit-exact against the program table in dsp_host; not on a unit yet",
+    doc="The Alesis Midiverb's programs at their original 16-bit arithmetic, half rate, own FX2 ring.",
+    menu=MenuEntry(fx2_id=0x0e, donor_desc=0x400d58b8,   # DARK REV
+                   abbr=b"MVRB", fullname=b"Midiverb", build_tag=False),
     params=(
-        Param(b"P0", 64, active=True, formatter=Formatter.PLAIN),
-        Param(b"P1", 0, active=True, formatter=Formatter.PLAIN),
-        Param(), Param(), Param(), Param(),
-        Param(), Param(), Param(), Param(), Param(), Param(),
+        Param(b"PROG", 0, len(_TABLE), True, Formatter.WIDE_STEPPED, labels=tuple(p["label"] for p in _TABLE),
+              doc="Midiverb program: decay in seconds, size, tone; gated and reverse"),
+        Param(b"LEVL", 64, 128, True, Formatter.PLAIN,
+              doc="input level into the 12-bit converter: unity at 32, 64 is +6 dB"),
+        Param(), Param(), Param(),
+        Param(b"MIX", 40, 128, True, Formatter.PLAIN, doc="dry/wet; 0 is exact dry, 127 wet only"),
+        *(Param() for _ in range(6)),
     ),
-
-    dsp=DspSection(
-        asm="modules/midiverb/engine.asm",
-        # BYTE-LOAD-BEARING: the donor region is packed in this order, so
-        # changing it moves everything after it.
-        priority=10,
-        bus_role=BusRole.NONE,
-        # When `$30000` is rewritten to this payload's half of the shared
-        # window. The rewrite is a BLANKET string replace, comments included.
-        ybase=YBase.NEVER,
-        r7_latch_slot=None,
-        gate_label=None,
-    ),
-
-    # A letter for send_probe layout strings, if this is something a local
-    # render should be able to place on a track.
+    dsp=DspSection(asm="modules/midiverb/engine.asm", priority=15, bus_role=BusRole.NONE, ybase=YBase.NEVER,
+                   r7_latch_slot=None, gate_label=None, ptable=tuple(_INDEX + _BODY)),
+    claims=Claims(stock_instance_buffer=True, buffer_words=15870),
     harness=Harness(layout_char=None, is_server=False),
-
-    # The checks the build runs on this module: your render gates
-    # (sdk/octatrack/modules/miniverb has verify.py). stage="image" for one that reads the built image.
     gates=(Gate("modules/midiverb/verify.py", remix_arg=False),),
-    # Every knob at its DEAREST setting, by name: the mode the pricer calls
-    # the worst loop, work-gating knobs at maximum. The pressure render, the
-    # stress fixture and npm run perf:audit use it. Checked against `params`.
-    dear={"P0": 127, "P1": 127},
+    dear={"PROG": _DEAREST, "LEVL": 127, "MIX": 127},
 )

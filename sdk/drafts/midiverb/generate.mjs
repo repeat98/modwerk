@@ -196,6 +196,39 @@ export function compiledMachine(ops, size) {
   };
 }
 
+// Midiverb I's chart, program 1 on.
+const MV1_NAMES = ['.2 SM BRT', '.2 SM WARM', '.2 MD BRT', '.3 SM BRT', '.3 SM WARM', '.4 MD BRT', '.4 MD WARM',
+  '.6 SM BRT', '.6 MD WARM', '.6 MD DARK', '.8 SM BRT', '.8 LG WARM', '1.0 SM WARM', '1.0 MD WARM', '1.0 LG BRT',
+  '1.2 MD WARM', '1.2 SM WARM', '1.2 SM BRT', '1.4 LG WARM', '1.4 LG DARK', '1.4 MD WARM', '1.6 SM DARK',
+  '1.6 LG BRT', '1.6 MD BRT', '1.8 LG DARK', '1.8 LG BRT', '1.8 MD WARM', '2.0 LG BRT', '2.0 MD WARM',
+  '2.0 LG WARM', '2.5 MD WARM', '2.5 LG BRT', '2.5 MD DARK', '2.8 SM BRT', '2.8 MD BRT', '3.0 LG BRT',
+  '3.0 LG WARM', '3.0 MD DARK', '3.5 LG BRT', '3.5 MD WARM', '4.0 LG DARK', '4.0 MD BRT', '5 LG WARM',
+  '8 LG BRT', '8 LG WARM', '10 LG BRT', '10 LG WARM', '16 LG DARK', '18 XL BRT', '20 XL DARK',
+  'GATE 100', 'GATE 150', 'GATE 200', 'GATE 250', 'GATE 300', 'GATE 350', 'GATE 400', 'GATE 500', 'GATE 600',
+  'REV 300', 'REV 400', 'REV 500', 'REV 600'];
+
+// The first build, before the base can load programs on demand: 24 Midiverb I
+// programs resident in the effect's own table (17 reverbs, 4 gated, 3 reverse).
+export const TRIAL = [0, 3, 6, 9, 12, 14, 17, 19, 22, 25, 27, 31, 35, 40, 43, 47, 49, 50, 53, 56, 58, 59, 61, 62];
+
+// One program as DSP words: its unit count, then the units. A run of k reads
+// is k then k ring offsets; every other operation is one word, bit 23 set, its
+// kind in bits 16..22 (the assembler has no backward branch, so the engine
+// walks the units in a DO loop).
+export const KIND = { st: 0x810000, ld: 0x820000, stn: 0x840000, in: 0x880000, outR: 0x980000, outL: 0xa80000,
+  stR: 0xb80000, stL: 0xc80000, stnR: 0xd80000, stnL: 0xe80000 };
+export function encode(ops) {
+  const words = [0];
+  for (let i = 0; i < ops.length; words[0]++) {
+    if (ops[i][0] === 'mac') {
+      let j = i; while (j < ops.length && ops[j][0] === 'mac') j++;
+      words.push(j - i, ...ops.slice(i, j).map(([, a]) => a));
+      i = j;
+    } else { words.push(KIND[ops[i][0]] | ops[i][1]); i++; }
+  }
+  return words;
+}
+
 function testSignal(n, seed = 1) {
   let x = seed; const out = new Int16Array(n);
   for (let i = 0; i < n; i++) {
@@ -248,4 +281,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (outWorst > 2) { console.error('the DSP form left the original arithmetic'); process.exit(1); }
   if (bad.length) { console.error('relocation changed untrimmed programs:', bad); process.exit(1); }
   console.log('untrimmed programs: bit-identical to the original machine');
+  if (process.argv.includes('--write') && programs.MV1) {
+    const trial = TRIAL.map((i) => ({ bank: 'MV1', number: i + 1, label: MV1_NAMES[i],
+      trimmed: relocate(programs.MV1[i], size).trimmed, words: encode(compile(programs.MV1[i], size)) }));
+    writeFileSync(OUT, '{"size": ' + size + ', "programs": [\n' +
+      trial.map((t) => JSON.stringify(t)).join(',\n') + '\n]}\n');
+    console.log(`wrote ${OUT}: ${trial.length} programs, ${trial.reduce((n, t) => n + t.words.length, 0)} words`);
+  }
 }

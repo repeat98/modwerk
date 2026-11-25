@@ -3,52 +3,91 @@
   "id": "midiverb",
   "key": "MIDIVERB",
   "name": "Midiverb",
-  "version": "0.1.0",
+  "version": "0.1.0-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",
+    "name": "Jannik Aßfalg",
     "credits": [
-      "repeat98"
+      "Jannik Aßfalg",
+      "Programs: Alesis Midiverb (1986), Keith Barr; machine semantics after Eric Brombaugh's MIT reverse engineering (emeb/MIDIVERB_RE) and the ROM layout documented by thement (thement/midiverb_emulator)"
     ]
   },
   "nativeManifest": "manifest.py",
   "presentation": {
-    "label": "FILTER",
-    "family": "Filter",
-    "summary": "Describe the module and its sound.",
-    "overview": "Explain its signal path and practical uses.",
+    "label": "1986 DIGITAL REVERB",
+    "family": "Reverb",
+    "summary": "The Alesis Midiverb's own reverb programs, run at their original 16-bit arithmetic.",
+    "overview": "Each program is the original unit's, read from its ROM and played step for step: the same delay lines, the same 12-bit input and the same rounding, at half rate like the original. This first build carries 24 Midiverb programs; the rest follow.",
     "highlights": [
-      "Describe an actual feature."
+      "24 original Midiverb programs: rooms, halls, gated and reverse",
+      "The original's grain: 12-bit input, 16-bit memory, its own rounding",
+      "MIX 0 is exact dry"
     ],
     "usage": [
-      "Explain where to find it and a useful starting point."
+      "Choose MIDIVERB in FX2. PROG picks a program; changing it mutes the reverb for about 46 ms while its memory clears.",
+      "LEVL drives the 12-bit input: unity at 32, 64 is +6 dB; turn it down if the reverb crackles.",
+      "MIX on encoder F: 0 dry, 127 wet only."
     ]
   },
   "controls": [
     {
-      "name": "P0",
+      "name": "PROG",
+      "default": 0,
+      "count": 24,
+      "doc": "Midiverb program: decay in seconds, size, tone; gated and reverse",
+      "labels": [
+        ".2 SM BRT",
+        ".3 SM BRT",
+        ".4 MD WARM",
+        ".6 MD DARK",
+        "1.0 SM WARM",
+        "1.0 LG BRT",
+        "1.2 SM BRT",
+        "1.4 LG DARK",
+        "1.6 LG BRT",
+        "1.8 LG BRT",
+        "2.0 LG BRT",
+        "2.5 LG BRT",
+        "3.0 LG BRT",
+        "4.0 LG DARK",
+        "8 LG BRT",
+        "16 LG DARK",
+        "20 XL DARK",
+        "GATE 100",
+        "GATE 250",
+        "GATE 400",
+        "GATE 600",
+        "REV 300",
+        "REV 500",
+        "REV 600"
+      ]
+    },
+    {
+      "name": "LEVL",
       "default": 64,
       "count": 128,
-      "doc": "Explain what this control does, including limits and interactions.",
+      "doc": "input level into the 12-bit converter: unity at 32, 64 is +6 dB",
       "labels": null
     },
     {
-      "name": "P1",
-      "default": 0,
+      "name": "MIX",
+      "default": 40,
       "count": 128,
-      "doc": "Explain the second control.",
+      "doc": "dry/wet; 0 is exact dry, 127 wet only",
       "labels": null
     }
   ],
   "compatibility": {
     "firmware": "1.40C",
-    "location": "FX1",
+    "location": "FX2",
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Scaffold only; audio behavior and hardware operation have not been tested."
+      "Experimental: 24 Midiverb programs; not yet tested on a unit.",
+      "Costs about three times SPRING REV on the DSP in this build."
     ],
-    "effectId": 10
+    "effectId": 14
   },
   "resources": {
     "recorded": "Not measured",
