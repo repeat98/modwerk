@@ -1,0 +1,38 @@
+{
+ "module": "songbook",
+ "version": "0.1.0-experimental",
+ "base": "development twin 4c7eb79b of the beta base (main 3043f8339), RAM-booted from the flashed eb667962",
+ "scene": "MKI (OS 1.40C), the developer's test project in pattern mode, transport stopped, T1 selected; installed as a trial and used by no key press, menu or setting",
+ "seconds": 8,
+ "measuredAt": "2026-11-24T11:53:32.587Z",
+ "result": {
+  "id": "songbook",
+  "version": "0.1.0-experimental",
+  "packageSha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47",
+  "before": {
+   "frame": 58.1,
+   "frameMax": 96.4,
+   "frames": 22259,
+   "skipped": 0,
+   "cpu": 68.3,
+   "dsp1to4": 48,
+   "dsp5to8": 48.3
+  },
+  "atRest": {
+   "frame": 57.7,
+   "frameMax": 94.6,
+   "frames": 22257,
+   "skipped": 0,
+   "cpu": 66.9,
+   "dsp1to4": 47.9,
+   "dsp5to8": 48
+  },
+  "atRestAdds": {
+   "frame": -0.4,
+   "cpu": -1.4,
+   "dsp1to4": -0.1,
+   "dsp5to8": -0.3
+  },
+  "rolledBack": true
+ }
+}

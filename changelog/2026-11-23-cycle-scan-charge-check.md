@@ -1,0 +1,1 @@
+The cycle-scan check now compares each scanned module's DSP admission charge with its modelled dearest cycles: near misses are listed, and a charge below the model is refused for modules first listed from 24 November 2026 (reported for earlier ones).

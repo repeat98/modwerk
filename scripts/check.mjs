@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { stripVTControlCharacters } from 'node:util'
+import { checkBaseBound } from './base-bound.mjs'
 import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
@@ -131,7 +132,7 @@ async function all(...steps) {
 
 // The combined module list and changelog are generated, never committed; write them as npm ci does before anything reads them.
 let passed = await run('prepare')
-// The module gates run in Python 3.10+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
+// The module gates and sdk:check run in Python 3.12+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
 if (!buildOnly && !suiteOnly && passed && (plan.metadata || plan.native)) {
   const python = localPythonProblem(root)
   if (python) { console.error(python); passed = false }
@@ -144,9 +145,11 @@ if (!buildOnly && !suiteOnly && passed) {
 }
 // Every active Octatrack module must still install beside every other (declarations only, no firmware).
 if (!buildOnly && !suiteOnly && plan.native && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
-// How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs).
+// How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs), and
+// whether its base-bound packages name it (scripts/base-bound.mjs): both follow a base change, so one run names both.
 if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope.base)) {
   try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
+  try { console.log(checkBaseBound(root)) } catch (error) { console.error(error.message); passed = false }
 }
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 // The bundle imports the generated media too, so a frontend-only change needs the writes as much as a module change does.

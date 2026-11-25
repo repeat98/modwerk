@@ -65,7 +65,7 @@ static int stopped = 1;
 int modwerk_machine_stopped(void) { return stopped; }
 int modwerk_machine_usb_disk(void) { return usb_disk; }
 uint8_t modwerk_cfg_fs[512], modwerk_cfg_hs[512], modwerk_cfg_os_fs[512], modwerk_cfg_os_hs[512];
-volatile uint32_t modwerk_cfg_len = MODWERK_USB_CFG_BYTES;
+volatile uint32_t modwerk_cfg_len_fs = MODWERK_USB_CFG_BYTES, modwerk_cfg_len_hs = MODWERK_USB_CFG_BYTES;
 static uintptr_t volatile function_row[2], isr_row[2] = {H_ISR}, bus_end_row[2] = {H_BUS_END}, control_row[3] = {H_CONTROL}, frame_row[2] = {H_FRAME};
 #define modwerk_runtime_event_row host_rows
 static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
@@ -202,6 +202,106 @@ static void profile_admission(void)
     }
 }
 
+/* The high-speed function exposes a third streaming interface with EP3 OUT. */
+static const uint8_t input_desc[] = {
+    9, 4, 6, 0, 0, 1, 2, 0x20, 0,
+    9, 4, 6, 1, 1, 1, 2, 0x20, 0,
+    7, 5, 0x03, 5, 96, 0, 2,
+};
+#define TABLE_AT 64u
+#define SPEED_BLOCKS_AT (TABLE_AT + 8u * UF_BLOCK_RECORD)
+#define DUPLEX_LEN (BLOCK + sizeof input_desc)
+
+static void speed_package(uint8_t *bytes, uint32_t base)
+{
+    memset(bytes, 0, SPEED_BLOCKS_AT + BLOCK + DUPLEX_LEN);
+    uint8_t *record = bytes + RECORD_AT;
+    put32(record, MODWERK_USB_SPEED_PROFILES_ABI);
+    put32(record + 4, UF_PROFILE_RECORD);
+    put32(record + 12, UF_ENDPOINTS);
+    put16(record + 32, 2);
+    record[34] = 1;
+    memcpy(bytes + SPEED_BLOCKS_AT, block, BLOCK);
+    uint8_t *duplex = bytes + SPEED_BLOCKS_AT + BLOCK;
+    memcpy(duplex, block, BLOCK);
+    duplex[3] = 3;
+    memcpy(duplex + BLOCK, input_desc, sizeof input_desc);
+    for (unsigned k = 0; k < 4u; ++k) {
+        unsigned table = TABLE_AT + 2u * k * UF_BLOCK_RECORD;
+        put32(record + 16u + 4u * k, base + table);
+        for (unsigned i = 0; i < 2u; ++i) {
+            uint8_t *entry = bytes + table + i * UF_BLOCK_RECORD;
+            unsigned duplex_at_speed = i && (k & 1u);
+            put16(entry, duplex_at_speed ? 3u : 2u);
+            put16(entry + 2, duplex_at_speed ? DUPLEX_LEN : BLOCK);
+            put32(entry + 4, base + SPEED_BLOCKS_AT + (duplex_at_speed ? BLOCK : 0u));
+        }
+    }
+}
+
+static void speed_admission(void)
+{
+    uint8_t bytes[SPEED_BLOCKS_AT + BLOCK + DUPLEX_LEN];
+    struct runtime_dsp d = candidate();
+    d.image = bytes;
+    d.image_bytes = sizeof bytes;
+    for (unsigned relocated = 0; relocated < 2u; ++relocated) {
+        uint32_t base = relocated ? UF_IMAGE_ADDRESS(bytes) : 0;
+        unsigned operation = relocated ? RUNTIME_METADATA_SWITCH : RUNTIME_METADATA_PREPARE;
+        uint8_t *r = bytes + RECORD_AT;
+        uint8_t *other_hs = bytes + TABLE_AT + 7u * UF_BLOCK_RECORD;
+#define BAD_SPEED(change) do { speed_package(bytes, base); change; \
+        CHECK(modwerk_usb_function_admit(&d, operation) == RUNTIME_MALFORMED); } while (0)
+        speed_package(bytes, base);
+        CHECK(modwerk_usb_function_admit(&d, operation) == RUNTIME_OK);
+        BAD_SPEED(put32(r + 12, 0x00080000u)); /* The high-speed OUT endpoint must be retired at switch. */
+        BAD_SPEED(put32(r + 16, base + TABLE_AT + 1u));
+        BAD_SPEED(put16(r + 8, 2u));
+        BAD_SPEED(put16(r + 32, MODWERK_USB_SPEED_PROFILES_MAX + 1u));
+        BAD_SPEED(r[35] = 2u);
+        BAD_SPEED(put16(other_hs + 2, DUPLEX_LEN - 1u));
+        BAD_SPEED(put32(other_hs + 4, base + sizeof bytes - DUPLEX_LEN + 1u));
+#undef BAD_SPEED
+    }
+}
+
+static void speed_compose(void)
+{
+    struct modwerk_usb_profile_block ordinary = {2u, BLOCK, block};
+    uint8_t full[2 * BLOCK], duplex[DUPLEX_LEN];
+    memcpy(full, block, BLOCK);
+    memcpy(full + BLOCK, block, BLOCK);
+    memcpy(duplex, block, BLOCK);
+    duplex[3] = 3;
+    memcpy(duplex + BLOCK, input_desc, sizeof input_desc);
+    struct modwerk_usb_profile_block fs[] = {ordinary, {2u, BLOCK, full + BLOCK}};
+    struct modwerk_usb_profile_block hs[] = {ordinary, {3u, DUPLEX_LEN, duplex}};
+    struct modwerk_usb_profiles profiles = {
+        {MODWERK_USB_SPEED_PROFILES_ABI, UF_PROFILE_RECORD, 0, 0, UF_ENDPOINTS,
+         (const uint8_t *)fs, (const uint8_t *)hs, (const uint8_t *)fs, (const uint8_t *)hs}, 2, 1, 0
+    };
+    function_row[0] = (uintptr_t)&profiles;
+    modwerk_usb_functions_changed();
+    uf_compose();
+    CHECK(profiles.active == 1);
+    CHECK(modwerk_cfg_len_fs == MODWERK_USB_CFG_BYTES + BLOCK);
+    CHECK(modwerk_cfg_len_hs == MODWERK_USB_CFG_BYTES + DUPLEX_LEN);
+    CHECK(modwerk_cfg_fs[4] == MODWERK_USB_CFG_INTERFACES + 2u);
+    CHECK(modwerk_cfg_hs[4] == MODWERK_USB_CFG_INTERFACES + 3u);
+    CHECK(modwerk_cfg_os_fs[2] == modwerk_cfg_fs[2] && modwerk_cfg_os_fs[4] == modwerk_cfg_fs[4]);
+    CHECK(modwerk_cfg_os_hs[2] == modwerk_cfg_hs[2] && modwerk_cfg_os_hs[4] == modwerk_cfg_hs[4]);
+    CHECK(!memcmp(modwerk_cfg_hs + MODWERK_USB_CFG_BYTES, duplex, sizeof duplex));
+    CHECK(!memcmp(modwerk_cfg_fs + MODWERK_USB_CFG_BYTES, block, BLOCK));
+    profiles.requested = 0;
+    uf_compose();
+    CHECK(profiles.active == 0);
+    CHECK(modwerk_cfg_len_fs == modwerk_cfg_len_hs && modwerk_cfg_hs[4] == modwerk_cfg_fs[4]);
+    function_row[0] = 0;
+    modwerk_usb_functions_changed();
+    uf_compose();
+    CHECK(modwerk_cfg_len_fs == MODWERK_USB_CFG_BYTES && modwerk_cfg_len_hs == MODWERK_USB_CFG_BYTES);
+}
+
 static unsigned status(unsigned k) { uint8_t out[8]; CHECK(modwerk_usb_function_status(out) == 8u); return out[k]; }
 static unsigned ticks(unsigned n, int quiet) { unsigned lapsed = 0; while (n--) lapsed += (unsigned)modwerk_usb_function_tick(quiet); return lapsed; }
 static int attached(void) { return (int)(UF_REG(USBCMD) & 1u); }
@@ -217,7 +317,7 @@ static void describes(int with)
 {
     uint8_t *const slot[4] = {modwerk_cfg_fs, modwerk_cfg_hs, modwerk_cfg_os_fs, modwerk_cfg_os_hs};
     unsigned total = MODWERK_USB_CFG_BYTES + (with ? BLOCK : 0u);
-    CHECK(modwerk_cfg_len == total);
+    CHECK(modwerk_cfg_len_fs == total && modwerk_cfg_len_hs == total);
     for (unsigned k = 0; k < 4u; ++k) {
         CHECK(slot[k][2] == (uint8_t)total && slot[k][3] == (uint8_t)(total >> 8));
         CHECK(slot[k][4] == MODWERK_USB_CFG_INTERFACES + (with ? 2u : 0u));
@@ -233,7 +333,10 @@ static void leave(void) { function_row[0] = 0; modwerk_usb_functions_changed(); 
 int main(void)
 {
     admission();
-    if (!modwerk_cfg_native.audio_linked) profile_admission();
+    if (!modwerk_cfg_native.audio_linked) {
+        profile_admission();
+        speed_admission();
+    }
 #ifdef MODWERK_USB_AUDIO_LINKED
     if (failures) return 1;
     puts("usb function: a base with USB Audio linked in refuses every function");
@@ -419,6 +522,7 @@ int main(void)
     describes(1);
 
     if (failures) return 1;
+    speed_compose();
     puts("usb function: admission, slots, reconnect and its holds pass");
     return 0;
 }

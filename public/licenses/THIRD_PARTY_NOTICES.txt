@@ -88,6 +88,7 @@ src/community/ot-log.ts
 src/community/profile-links.ts
 src/community/remote-session-contract.ts
 src/community/report-closure.ts
+src/community/support-report.ts
 src/community/usage-contract.ts
 src/community/usage-pages.ts
 src/config/beta-invitation.ts
@@ -912,9 +913,9 @@ SOFTWARE.
 
 ========================================================================
 
-Airwindows Chorus
+Airwindows Chorus and Mackity
 SPDX: MIT
-Used in: modules/airwindows-chorus: Chorus
+Used in: modules/airwindows-chorus: Chorus; modules/mackity: Mackity
 Notice source: https://raw.githubusercontent.com/airwindows/airwindows/e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea/LICENSE
 
 MIT License
@@ -4621,10 +4622,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================
 
-MultiStomp Editor effect animations by Roman Rusinov
+MultiStomp Editor effect animations and controls by Roman Rusinov
 SPDX: MIT
-Used in: Zoom effect library previews (src/devices/zoom-previews)
+Used in: Zoom effect library previews (src/devices/zoom-previews); MS-70CDR Editor controls (src/devices/zoom-control-choices.ts)
 Notice source: https://github.com/themanro/ZoomMultistompZDL/tree/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx
+Notice source: https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/build/selector_metadata.py
 
 MIT License
 

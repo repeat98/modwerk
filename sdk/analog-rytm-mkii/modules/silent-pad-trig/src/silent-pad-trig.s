@@ -1,5 +1,5 @@
         | SPDX-License-Identifier: GPL-2.0-only
-        | silent-pad-trig - three SEQUENCER CONFIG checkboxes:
+        | silent-pad-trig (Improved Configs) - four SEQUENCER CONFIG checkboxes:
         |   SILENT PAD+TRIG     stopped, playing and every mode but LIVE and
         |                       STEP REC: a pad or TRIG key 1-13 press is
         |                       silent (pads and TRIG 1-12 select their
@@ -13,6 +13,9 @@
         |                       a muted track, and a pad or TRIG key sends no
         |                       MIDI note on or poly pressure; recording is
         |                       untouched, so trigs still go down.
+        |   PAD LEAVES FX       with the FX track up, a pad or TRIG 1-12 press
+        |                       that selects its track leaves FX for it, as
+        |                       TRK + pad does.
         | The first two: STEP REC is stock, and aftertouch is untouched, so a held pad modulates
         | its track without sounding.
         |
@@ -71,7 +74,19 @@
         |   at_key_gate 0x400c75f2  and their MIDI poly pressure, skipped; the
         |   at_chro_gate 0x400c626e pressure still reaches the sound
         |
-        | and for the switches, three SEQUENCER CONFIG items after AUTO TRK SWITCH:
+        | PAD LEAVES FX: stock selects a track only through 0x400d4ba0 (track,
+        | keep_fx). TRK + pad passes 0; the pad and TRIG handlers' pending select
+        | (view +176, +180, run by 0x400c6de8) passes keep_fx = (the active
+        | track, record +8, is the FX track 12), so stock sets the pad's sound
+        | track (+12) and stays on FX. Both stores of that flag compute it with
+        | `moveq #12; cmpl; seq %d0` and then `negl %d0; moveb %d0,+180`:
+        |   fx_pad      0x400c7b5c  the pad handler's, d3 = +8
+        |   fx_trig     0x400c7eb4  the TRIG handler's, d0 = +8
+        | Checked, the flag is 0 and the select leaves FX. Silent Pad+Trig's
+        | silent select reaches the same stores. MIDI in, CHROMATIC pads and
+        | the PERF and SCENE views never select a track, so stay stock.
+        |
+        | and for the switches, four SEQUENCER CONFIG items after AUTO TRK SWITCH:
         |   menu_add    0x400ec184  SeqSettingsMenuView's constructor, between
         |                           AUTO TRK SWITCH's item and SAMPLE POS RES's
         |
@@ -94,6 +109,7 @@
         | at GLOBAL_LIVE + 228 k (core-ar2's GLOBAL_LIVE, as voice-dac has it).
         .extern core_store_get, core_store_set
         .extern silent_pad_trig_on, silent_pt_live_rec_on, silent_mute_on
+        .extern pad_leaves_fx_on
         .equ    GLOBAL_LIVE,    0x413192ff
         .equ    GLOBAL_STRIDE,  228
         .equ    PROJ_GLOBALS,   236               | the project's ProjectGlobals
@@ -410,6 +426,33 @@ silent_pad_trig_glow:
         rts
 
         | ------------------------------------------------------------------
+        | fx_pad / fx_trig: in place of `moveq #12; cmpl; seq %d0` before each
+        | handler's `negl %d0; moveb %d0,%a2@(180)`, the keep_fx of its pending
+        | select. In: the active track (+8), d3 at the pad site, d0 at the
+        | TRIG site. Out: d0 = -1 to stay on FX, as stock's 0xff negates to a
+        | stored 1; 0 otherwise, also while PAD LEAVES FX is checked. Both
+        | sites read only d0 after, so d1/a0/a1 are free; flag_get clobbers
+        | them and keeps the rest.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_fx_pad
+        .globl  silent_pad_trig_fx_trig
+silent_pad_trig_fx_pad:
+        move.l  %d3,%d0
+silent_pad_trig_fx_trig:
+        moveq   #12,%d1
+        cmp.l   %d0,%d1
+        bne.s   8f                                | not on FX: 0, as stock
+        movea.l #pad_leaves_fx_on,%a1
+        bsr.w   flag_get
+        tst.l   %d0
+        bne.s   8f                                | checked: leave FX
+        moveq   #-1,%d0                           | stay on FX, as stock
+        rts
+8:      moveq   #0,%d0
+        rts
+
+        | ------------------------------------------------------------------
         | tick (ev_tick, the UI task): mute_all follows MUTE ALL SOUND for
         | engine_gate. Its lookup clobbers d0/d1/a0/a1 only.
         | ------------------------------------------------------------------
@@ -603,7 +646,8 @@ rec_active:
         | re-emitted after. a3 is the view; a2 (mem_new), d2..d5 and the stack
         | are as SAMPLE POS RES's item expects them, so the registers used
         | here are saved, and each item's four functions live in a frame of
-        | item_add's own. SILENT PAD+TRIG, SILENT P+T LIVEREC, MUTE ALL SOUND.
+        | item_add's own. SILENT PAD+TRIG, SILENT P+T LIVEREC, MUTE ALL SOUND,
+        | PAD LEAVES FX.
         | ------------------------------------------------------------------
         .align  2
         .globl  silent_pad_trig_menu_add
@@ -617,6 +661,9 @@ silent_pad_trig_menu_add:
         move.l  %a0,%d4
         bsr.w   item_add
         lea     items_mute,%a0
+        move.l  %a0,%d4
+        bsr.w   item_add
+        lea     items_fx,%a0
         move.l  %a0,%d4
         bsr.w   item_add
         movem.l (%sp),%d2-%d4/%a2
@@ -720,6 +767,8 @@ items_live:
         .long   lbl_live, act_live, drw_live, chg_live
 items_mute:
         .long   lbl_mute, act_mute, drw_mute, chg_mute
+items_fx:
+        .long   lbl_fx, act_fx, drw_fx, chg_fx
 
         | lbl_*(a0 = the std::string to construct) -> d0 = a0, as stock's
         | label invokers (AUTO TRK SWITCH's, OS 1.74 0x400eb710).
@@ -732,6 +781,9 @@ lbl_live:
         bra.s   lbl_invoke
 lbl_mute:
         lea     txt_mute,%a1
+        bra.s   lbl_invoke
+lbl_fx:
+        lea     txt_fx,%a1
 lbl_invoke:
         link.w  %fp,#-4
         move.l  %d2,-(%sp)
@@ -759,6 +811,9 @@ act_live:
         bra.s   act_invoke
 act_mute:
         movea.l #silent_mute_on,%a1
+        bra.s   act_invoke
+act_fx:
+        movea.l #pad_leaves_fx_on,%a1
 act_invoke:
         move.l  4(%sp),%a0
         move.l  %a2,-(%sp)
@@ -779,6 +834,9 @@ chg_live:
         bra.s   chg_invoke
 chg_mute:
         movea.l #silent_mute_on,%a1
+        bra.s   chg_invoke
+chg_fx:
+        movea.l #pad_leaves_fx_on,%a1
 chg_invoke:
         move.l  12(%sp),%d1
         bne.s   1f
@@ -813,6 +871,9 @@ drw_live:
         bra.s   drw_invoke
 drw_mute:
         movea.l #silent_mute_on,%a1
+        bra.s   drw_invoke
+drw_fx:
+        movea.l #pad_leaves_fx_on,%a1
 drw_invoke:
         bsr.w   flag_get
         move.l  %d0,%d1
@@ -839,6 +900,8 @@ txt_live:
         .asciz  "SILENT P+T LIVEREC"
 txt_mute:
         .asciz  "MUTE ALL SOUND"
+txt_fx:
+        .asciz  "PAD LEAVES FX"
 
         | Written at run time: whether the press in hand is silent.
         .align  2

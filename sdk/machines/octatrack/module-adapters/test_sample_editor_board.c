@@ -17,6 +17,8 @@ static uint32_t force_slot;
 static int stopped,transport,storage;
 static uint32_t extent[2048];
 static struct runtime_owner owner;
+static const void *scan_posted;
+static uint32_t scan_reads;
 static uint32_t get(uint32_t address)
 {for(unsigned i=0;i<used;++i)if(memory[i].address==address)return memory[i].value;return 0;}
 static void put(uint32_t address,uint32_t value)
@@ -112,8 +114,16 @@ void mw_sample_menu_retire_locked(const struct runtime_dsp *from)
 {(void)from;if(!masked)bad=1;++retired;}
 void mw_sample_host_refresh(void)
 {if(!locked || masked)bad=1;++refreshes;}
+void mw_sample_host_post(const void *message)
+{if(!masked || scan_posted)bad=1;scan_posted=message;put(0x460d17d2u,1);}
+int mw_sample_host_read_pair(const struct mw_sample_capture *before,uint32_t position,int32_t *left,int32_t *right)
+{
+    if(!locked || masked || position+1u>=before->view.frames)bad=1;
+    ++scan_reads;left[0]=left[1]=right[0]=right[1]=0;return 1;
+}
 static uint32_t setup(unsigned kind,unsigned slot)
 {
+    scan_posted=0;scan_reads=0;
     used=masked=locked=bad=writes=refreshes=retired=metadata_reads=frame_services=0;live=1;
     fail_address=fail_mode=inject_writer=queued_writer=engine_writes=row_writes=0;stopped=transport=storage=1;
     commit_mask=commit_reads=commit_writes=commit_max_reads=commit_spans=0;
@@ -125,6 +135,7 @@ static uint32_t setup(unsigned kind,unsigned slot)
     owner.package_sha256[31]=33;owner.controller_sha256[31]=44;
     put(0x46c8d1a0,kind);put(0x46c8d19c,slot);put(0x46105408,1);
     put(0x460d1cb8,1);put(0x80001814,2880);put(0x400ceb3c,9);
+    put(0x460d17deu,7);
     uint32_t controls=(kind?0x46c922c4u:0x46c90a78u)+44u*slot;
     uint32_t settings=(kind?0x100b14f0u:0x100d5b30u)+1096u*slot;
     active_settings=settings;
@@ -520,6 +531,33 @@ int main(void)
         CHECK(get(settings+1092u)==(cancel?63u:64u) && commit_spans==1 && commit_max_reads<=20 && !bad);
         if(cancel)for(unsigned i=0;i<192;++i)CHECK(old[i]==get(settings+312u+4u*i));
         else CHECK(get(settings+312u+12u*63u)==1389150u && get(settings+316u+12u*63u)==1411200u);
+    }
+    for(unsigned action=0;action<5;++action) {
+        uint32_t settings=setup(1,0);
+        const struct modwerk_sample_editor_api *public_api=mw_sample_editor_public_api();
+        CHECK(public_api->bytes==sizeof(struct modwerk_sample_editor_options_api));
+        const struct modwerk_sample_editor_options_api *options=(const void *)public_api;
+        CHECK(mw_sample_editor_begin(&mw_sample_editor,&owner,&token)==MODWERK_SAMPLE_OK);
+        grid->count=4;for(unsigned i=0;i<4;++i)grid->starts[i]=22050u*i;
+        CHECK(options->replace_options(token,grid,1)==MODWERK_SAMPLE_CONFIRMING && !scan_reads && !scan_posted);
+        CHECK(mw_sample_editor_answer(&mw_sample_editor,token,1)==MODWERK_SAMPLE_ANALYZING && !scan_reads);
+        mw_sample_analysis_queue();CHECK(scan_posted && get(0x460d17d2u)==1);
+        if(action==1)mw_sample_editor_cancel(&mw_sample_editor,token);
+        if(action==2)live=0;
+        if(action==3)put(0x46c922d8u,get(0x46c922d8u)+1u);
+        if(action==4)storage=0;
+        const void *message=scan_posted;scan_posted=0;put(0x460d17d2u,0);
+        mw_sample_engine_job(message);mw_sample_engine_idle();
+        CHECK(!scan_posted && !bad && !masked && !locked);
+        if(action==4) {
+            CHECK(mw_sample_editor.state==MW_SAMPLE_ANALYZE && !scan_reads);
+            storage=1;mw_sample_analysis_queue();CHECK(scan_posted);
+            message=scan_posted;scan_posted=0;put(0x460d17d2u,0);
+            mw_sample_engine_job(message);mw_sample_engine_idle();CHECK(!scan_posted);
+        }
+        if(!action || action==4)CHECK(mw_sample_editor.completion==MODWERK_SAMPLE_APPLIED && scan_reads==6 &&
+            get(settings+1092u)==4 && get(settings+316u)==22049u && get(settings+352u)==88200u);
+        else CHECK(!scan_reads && !writes && !get(settings+1092u));
     }
     setup(0,0);CHECK(mw_sample_editor_begin(&mw_sample_editor,&owner,&token)==MODWERK_SAMPLE_OK);
     struct runtime_dsp from={0};from.present=1;from.module=owner.module;

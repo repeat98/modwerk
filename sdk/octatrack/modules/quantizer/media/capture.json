@@ -1,263 +1,560 @@
 {
   "schemaVersion": 1,
-  "captured": "2026-10-29",
+  "captured": "2026-11-15",
   "moduleId": "quantizer",
-  "moduleVersion": "0.1.4-experimental",
+  "moduleVersion": "0.1.5-experimental",
   "firmware": "1.40C",
-  "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
-  "emulatorSha256": "07a7c08e3d4562f7b51ee5985bd2595cced383f1b8090995f1dfecfb404f092d",
-  "imageProfile": {
-    "modules": [
-      "SCALE QUANTIZER"
-    ],
-    "keepStockFx2": true
+  "imageSha256": "f0e8d4175eaf33ce9baf3d3ab1864944635d15c2bd5c7396a23da474e599b61f",
+  "imageMeaning": "Default Modwerk base alone; the module is installed separately over USB. This is not a combined-image digest.",
+  "emulatorSha256": "3926598c06761a12b8e2b991474c80f701c3fc8c4ba990a32cf89385b27927b4",
+  "usbPackage": {
+    "file": "quantizer/0.1.5-experimental.mwrm",
+    "bytes": 7038,
+    "sha256": "092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50",
+    "installation": "Keep accepted; inventory confirms the module. Self-test snapshots were incomplete, not a completed pass."
+  },
+  "baseSource": {
+    "builtFrom": "b52d11e00a124a7e1ae35d23eff5b4d072ab961f",
+    "currentMain": "328f2fb5ae60a3d1c7de42f3516b97f9e4e98821",
+    "matchingRecordedInputs": 233
+  },
+  "authorSource": {
+    "repo": "https://github.com/timhastie/octatrick-modules",
+    "tag": "v2.23",
+    "commit": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb"
   },
   "sourceFiles": {
-    "manifest.py": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+    "upstream/quantizer/README.md": "f04a9795b2a956ad6d667f159b4f59b01b28cab861e154a093b7eba9bc9b3338",
     "upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-    "upstream/quantizer/manifest.py": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+    "upstream/quantizer/manifest.py": "bdfd9d1de96cc3a8ea07bb9ebed41db0107fa497501f32bf254c29df400e3016",
     "upstream/quantizer/panel_transaction.inc.s": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
-    "upstream/quantizer/quantizer.s": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+    "upstream/quantizer/quantizer.s": "c1a320ad9b807dc9af995e93fbd3e2bdd00324cff93889b016003138bf73e41d",
     "upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
-    "upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
+    "upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d",
+    "manifest.py": "4768b9e1421fa7681187b208e94ad9995d3fd97b11c057cc7481484f4e1742de"
   },
+  "nativeSourceSha256": "6d43e1316d17393b1089b88657cc8e17f97e4d1f8d1153b6ac1258341f617ed7",
   "accessSteps": [
-    "On the MKII panel, press PROJ to open the project menu.",
+    "On MKII, press PROJ to open the project menu; on MKI, use FUNC+MIXER.",
     "Use UP/DOWN to select CONTROL, then press RIGHT to enter its list.",
     "Select SEQUENCER with UP/DOWN and press YES.",
     "Scroll DOWN to SCALE and turn LEVEL to choose a scale. OFF restores stock pitch behavior.",
-    "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track\u2019s LEG setting.",
-    "Below GLIDE, TRACK picks a track (AUDIO 1..8, MIDI 1..8) and FOLLOW switches it: turn LEVEL left on FOLLOW for OFF (that track stays stock), right for ON."
+    "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track\u2019s LEG setting. TRACK and FOLLOW follow (TRACK picks a track, FOLLOW is its ON / OFF)."
   ],
   "screenshots": [
     {
-      "path": "media/ot-location.png",
-      "sha256": "0952ec125cce3492be4344cd93616000b3bf4990461d62fccad3e1a0409b82a7",
-      "page": "PROJECT > CONTROL"
+      "path": "media/ot015-location.png",
+      "sha256": "2e26a06b1412cdc5c54851993f60b91d4f9fc9d9bb8b3630dfd01616e7bbbafa",
+      "page": "PROJECT > CONTROL",
+      "session": "project-loaded",
+      "originalCaptureDate": "2026-11-15",
+      "visualReview": "Actual visible labels match the caption; no error popup or visibly missing control value.",
+      "rendererCompletion": "Not traced in this retained export; no complete-frame pixel-equivalence claim."
     },
     {
-      "path": "media/ot-scale.png",
-      "sha256": "ca9c8e10f158cfca51eb8a21e688b9c84dcde4a7d30050810e4757f304cef145",
-      "page": "CONTROL SEQUENCER: SCALE"
+      "path": "media/ot015-scale.png",
+      "sha256": "ed6266d9c7decce09a7be6fc7ff3cb76ba5531a5c80a315da4e7f0859de74f08",
+      "page": "CONTROL SEQUENCER: SCALE",
+      "session": "project-loaded",
+      "originalCaptureDate": "2026-11-15",
+      "visualReview": "Actual visible labels match the caption; no error popup or visibly missing control value.",
+      "rendererCompletion": "Not traced in this retained export; no complete-frame pixel-equivalence claim."
     },
     {
-      "path": "media/ot-root.png",
-      "sha256": "e269d5015dadb9ecc902dda8551c3263813fbdfabd9fcf1d73ec7ddab5a0f421",
-      "page": "CONTROL SEQUENCER: ROOT"
+      "path": "media/ot015-root.png",
+      "sha256": "9cac1eb194ffa09924826d121f9e8ace5fba520dd77fef052f9148c4a63f19ff",
+      "page": "CONTROL SEQUENCER: ROOT",
+      "session": "project-loaded",
+      "originalCaptureDate": "2026-11-15",
+      "visualReview": "Actual visible labels match the caption; no error popup or visibly missing control value.",
+      "rendererCompletion": "Not traced in this retained export; no complete-frame pixel-equivalence claim."
     },
     {
-      "path": "media/ot-glide.png",
-      "sha256": "1971e09d70c681aa61bf8dd6e098e0f27df5fba26a23d0e1f734e79d389e7c37",
-      "page": "CONTROL SEQUENCER: GLIDE"
+      "path": "media/ot015-glide.png",
+      "sha256": "d109a28be5f8de59e6d838646de68d63a7ea335e9ee6a2f72a2d96b742136875",
+      "page": "CONTROL SEQUENCER: GLIDE",
+      "session": "project-loaded",
+      "originalCaptureDate": "2026-11-15",
+      "visualReview": "Actual visible labels match the caption; no error popup or visibly missing control value.",
+      "rendererCompletion": "Not traced in this retained export; no complete-frame pixel-equivalence claim."
     },
     {
-      "path": "media/ot-track-rows.png",
-      "sha256": "aaa8c176d6f133a92ee986c0437414a3fe3404e8598787b5a64bc04c101b2539",
-      "page": "CONTROL SEQUENCER: FOLLOW"
+      "path": "media/ot015-follow.png",
+      "sha256": "8cc00dfd391ebda502fd57bc98cdb1650c4d97e6d42bd35cfb4269eedbd1cb1a",
+      "page": "CONTROL SEQUENCER: FOLLOW",
+      "session": "saved-project-battery-ram-restored",
+      "originalCaptureDate": "2026-11-15",
+      "visualReview": "Actual visible labels match the caption; no error popup or visibly missing control value.",
+      "rendererCompletion": "Not traced in this retained export; no complete-frame pixel-equivalence claim."
     },
     {
-      "path": "media/ot-midi-trig-mode.png",
-      "sha256": "91b5a59f01d172c012cbc7036c82b83db4a185a0f676cc143b950e28ccb0b776",
-      "page": "MIDI trig mode"
+      "path": "media/ot015-midi-trig-mode.png",
+      "sha256": "a1b96b8941dec650e3f03c5e6d80c1a75a044f30147ec223ee59da9bd013bc3e",
+      "page": "MIDI trig mode",
+      "session": "saved-project-battery-ram-restored",
+      "originalCaptureDate": "2026-11-15",
+      "visualReview": "Actual visible labels match the caption; no error popup or visibly missing control value.",
+      "rendererCompletion": "Not traced in this retained export; no complete-frame pixel-equivalence claim."
+    }
+  ],
+  "sessions": [
+    {
+      "id": "project-loaded",
+      "input": "Copied disposable card containing the USB-kept module and synthetic project; native LOAD PROJECT completed.",
+      "keyMs": 150,
+      "encoderSettleMs": 200,
+      "emulatedRtc": 1794729600,
+      "emulatedRtcIsCaptureDate": false,
+      "result": "Emulator exited0; no guard abort or timeout.",
+      "panelPlan": [
+        [
+          "run",
+          1500
+        ],
+        [
+          "key",
+          "MENU"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "RIGHT"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "capture",
+          "media/ot015-location.png"
+        ],
+        [
+          "key",
+          "YES"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          1
+        ],
+        [
+          "capture",
+          "media/ot015-scale.png"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "capture",
+          "media/ot015-root.png"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "capture",
+          "media/ot015-glide.png"
+        ]
+      ],
+      "commandTemplate": "ot_emu --image <default-base-MAIN> --card <disposable-copy> --set <synthetic-set> --project <synthetic-project> --mount --load-ms 20000 --max 500000000 --card-rw --frame --dsp --interactive --lcd <temporary-framebuffer> --main-level 64 --rtc 1794729600 --mkii"
+    },
+    {
+      "id": "saved-project-battery-ram-restored",
+      "cardSha256": "5042a44af535ef88a798b328326a8e6bdf69adfa3e6741593804e374a0e80ea6",
+      "batteryRamSha256": "bf34b184b8bf3a2e85b78a03f8412dc6957fb7fe7c28f1ddf06bdd7dc7760fde",
+      "input": "A completed SAVE PROJECT, copied saved card and its battery-RAM image; no new project load posted.",
+      "keyMs": 150,
+      "encoderSettleMs": 200,
+      "emulatedRtc": 1794729600,
+      "emulatedRtcIsCaptureDate": false,
+      "result": "Emulator exited0; no guard abort or timeout.",
+      "panelPlan": [
+        [
+          "run",
+          1500
+        ],
+        [
+          "key",
+          "YES",
+          "NO"
+        ],
+        [
+          "key",
+          "MENU",
+          "DOWN",
+          "DOWN",
+          "RIGHT",
+          "DOWN",
+          "DOWN",
+          "YES"
+        ],
+        [
+          "key",
+          "DOWN",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "key",
+          "DOWN"
+        ],
+        [
+          "key",
+          "UP",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "DOWN"
+        ],
+        [
+          "capture",
+          "media/ot015-follow.png"
+        ],
+        [
+          "key",
+          "UP",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "DOWN"
+        ],
+        [
+          "key",
+          "UP",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "RIGHT",
+          "DOWN"
+        ],
+        [
+          "key",
+          "NO",
+          "NO"
+        ],
+        [
+          "key",
+          "MIDI",
+          "T1",
+          "SRC"
+        ],
+        [
+          "key",
+          "MENU",
+          "YES"
+        ],
+        [
+          "key",
+          "DOWN",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          -1
+        ],
+        [
+          "key",
+          "NO",
+          "NO",
+          "REC"
+        ],
+        [
+          "hold",
+          "TRIG1"
+        ],
+        [
+          "enc",
+          "A",
+          1
+        ],
+        [
+          "enc",
+          "A",
+          -1
+        ],
+        [
+          "release",
+          "TRIG1"
+        ],
+        [
+          "hold",
+          "TRIG5"
+        ],
+        [
+          "enc",
+          "A",
+          10
+        ],
+        [
+          "release",
+          "TRIG5"
+        ],
+        [
+          "hold",
+          "TRIG9"
+        ],
+        [
+          "enc",
+          "A",
+          -5
+        ],
+        [
+          "release",
+          "TRIG9"
+        ],
+        [
+          "hold",
+          "TRIG13"
+        ],
+        [
+          "enc",
+          "A",
+          5
+        ],
+        [
+          "release",
+          "TRIG13"
+        ],
+        [
+          "key",
+          "REC"
+        ],
+        [
+          "key",
+          "PLAY"
+        ],
+        [
+          "run",
+          4500
+        ],
+        [
+          "key",
+          "STOP"
+        ],
+        [
+          "key",
+          "MENU",
+          "YES",
+          "DOWN",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          1
+        ],
+        [
+          "key",
+          "NO",
+          "NO"
+        ],
+        [
+          "key",
+          "PLAY"
+        ],
+        [
+          "run",
+          4500
+        ],
+        [
+          "key",
+          "STOP"
+        ],
+        [
+          "key",
+          "MENU",
+          "YES",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "key",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "LEFT",
+          "DOWN"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          -1
+        ],
+        [
+          "key",
+          "NO",
+          "NO"
+        ],
+        [
+          "key",
+          "PLAY"
+        ],
+        [
+          "run",
+          4500
+        ],
+        [
+          "key",
+          "STOP"
+        ],
+        [
+          "key",
+          "MENU",
+          "YES",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          1
+        ],
+        [
+          "key",
+          "UP",
+          "UP",
+          "UP"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          2
+        ],
+        [
+          "key",
+          "NO",
+          "NO"
+        ],
+        [
+          "key",
+          "PLAY"
+        ],
+        [
+          "run",
+          4500
+        ],
+        [
+          "key",
+          "STOP"
+        ],
+        [
+          "key",
+          "MENU",
+          "YES",
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "enc",
+          "LEVEL",
+          -2
+        ],
+        [
+          "key",
+          "NO",
+          "NO",
+          "MIDI"
+        ],
+        [
+          "hold",
+          "FUNC"
+        ],
+        [
+          "key",
+          "DOWN",
+          "DOWN"
+        ],
+        [
+          "run",
+          300
+        ],
+        [
+          "capture",
+          "media/ot015-midi-trig-mode.png"
+        ]
+      ],
+      "commandTemplate": "ot_emu --image <default-base-MAIN> --card <disposable-copy> --set <synthetic-set> --project <synthetic-project> --mount --load-ms 20000 --max 500000000 --card-rw --frame --dsp --interactive --lcd <temporary-framebuffer> --main-level 64 --rtc 1794729600 --mkii --cs1-in <completed-save-battery-ram> --no-post"
     }
   ],
   "reproduction": {
-    "script": "scripts/capture-module-ui.py",
-    "setup": "Headless ot_emu (macOS build); MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware.",
-    "keyMs": 150,
-    "plan": [
-      {
-        "wait": 3000
-      },
-      {
-        "press": [
-          "YES"
-        ]
-      },
-      {
-        "wait": 2000
-      },
-      {
-        "press": [
-          "NO"
-        ]
-      },
-      {
-        "press": [
-          "MENU"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "RIGHT"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "capture": "ot-location.png"
-      },
-      {
-        "press": [
-          "YES"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "encoder": {
-          "name": "LEVEL",
-          "delta": 1
-        }
-      },
-      {
-        "capture": "ot-scale.png"
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "capture": "ot-root.png"
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "capture": "ot-glide.png"
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "UP"
-        ]
-      },
-      {
-        "encoder": {
-          "name": "LEVEL",
-          "delta": 7
-        }
-      },
-      {
-        "press": [
-          "DOWN"
-        ]
-      },
-      {
-        "encoder": {
-          "name": "LEVEL",
-          "delta": -1
-        }
-      },
-      {
-        "capture": "ot-track-rows.png"
-      },
-      {
-        "press": [
-          "NO"
-        ]
-      },
-      {
-        "press": [
-          "NO"
-        ]
-      },
-      {
-        "press": [
-          "NO"
-        ]
-      },
-      {
-        "press": [
-          "MIDI"
-        ]
-      },
-      {
-        "hold": [
-          "FUNC",
-          "DOWN"
-        ]
-      },
-      {
-        "wait": 500
-      },
-      {
-        "capture": "ot-midi-trig-mode.png"
-      },
-      {
-        "release": [
-          "DOWN"
-        ]
-      },
-      {
-        "press": [
-          "UP"
-        ]
-      },
-      {
-        "wait": 500
-      },
-      {
-        "release": [
-          "FUNC"
-        ]
-      }
+    "driver": "Existing native ot_emu interactive key/knob/run protocol; lcd_view.py composes its actual framebuffer and popup planes.",
+    "setup": "Headless native ot_emu; MKII panel; stopped transport; actual 128\u00d764 LCD pixels at integer scale 6. Default base with Scale Quantizer 0.1.5 installed over USB; disposable synthetic project, no physical hardware.",
+    "rendering": "Original pixels, integer scale6, gray palette24/240. No reconstruction or label editing.",
+    "mainWalkthrough": [
+      "Open PROJECT > CONTROL, select SEQUENCER and capture the location.",
+      "Press YES, move DOWN to SCALE, choose MAJOR with LEVEL and capture.",
+      "Move DOWN to ROOT C and capture; then DOWN to GLIDE OFF and capture.",
+      "On the completed saved-project/battery-RAM session, choose TRACK AUDIO8, then FOLLOW OFF and capture."
     ],
-    "captureFiles": {
-      "media/ot-location.png": "ot-location.png",
-      "media/ot-scale.png": "ot-scale.png",
-      "media/ot-root.png": "ot-root.png",
-      "media/ot-glide.png": "ot-glide.png",
-      "media/ot-track-rows.png": "ot-track-rows.png",
-      "media/ot-midi-trig-mode.png": "ot-midi-trig-mode.png"
-    }
+    "supplementaryMidi": "On a MIDI track, hold FUNC+DOWN, select CHROMATIC and capture the popup while held; release to the keyboard."
   },
+  "historicalEvidence": "media/0.1.4/capture.json preserves the actual 0.1.4 record; its PNGs and capture metadata are not relabelled.",
   "limitations": [
-    "Rendered emulator interface only; physical hardware, audio, physical reboot, chip timing and complete memory bounds untested.",
-    "The five screens that 0.1.3 also shows are pixel-identical to its captures; ot-track-rows.png is new."
+    "Actual emulator UI documentation only; no hardware, audio-quality, timing or full qualification claim.",
+    "Fixed input/run delays preceded these retained exports. Their actual renderer completion was not traced; they are not a complete-frame pixel-comparison proof.",
+    "The synthetic fixture is populated, not an empty card. The MIDI/FOLLOW captures use saved battery RAM with no posted project load."
   ]
 }

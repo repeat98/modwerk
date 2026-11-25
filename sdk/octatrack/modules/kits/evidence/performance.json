@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "module": "kits",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "No static count and no event counter (waived by the owner, sdk/approvals). On the unit, six Kit loads while playing beside 14 modules moved the CPU meter 0.3 points with no skipped render (TESTING.md)."
+    "method": "No static count and no event counter (waived by the owner, sdk/approvals). On the unit, six Kit loads while playing moved the CPU meter 0.1 points with no skipped render, and a Kit load's longest frame matched a stock Part switch's (TESTING.md)."
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": 144.0,
-    "moduleLongestUs": 145.5,
-    "stockIdlePercent": 51.6,
-    "moduleIdlePercent": 51.3,
-    "method": "Hardware, not cfmeter: the owner's MKII on a development twin of base 0.7.4 with ot_sample_memory, 16 November 2026, package f1c13a07 beside 14 kept modules. Pattern B16 playing with crossfader sweeps; with Kits, six LOAD KIT loads during the run. Without Kits, then with it: the frame guard's longest frame interrupt (39.7 % and 40.1 % of a frame) and the CPU meter (48.4 % and 48.7 %; idle taken as 100 less the meter) (TESTING.md)."
+    "stockLongestUs": 178.9,
+    "moduleLongestUs": 177.8,
+    "stockIdlePercent": 58.2,
+    "moduleIdlePercent": 58.1,
+    "method": "Hardware, not cfmeter: an MKII on a development twin of base 0.8 (95adb64b), 24 November 2026, package c1cb63e5, no other module installed. Pattern C16 playing with crossfader sweeps, ten CPU readings and the frame guard per run. Stock with six Part switches (PART+arrow), then Kits as a trial with six LOAD KIT loads: the frame guard's longest frame interrupt 49.3 % and 49.0 % of a frame, the CPU meter 41.8 % and 41.9 % (idle taken as 100 less the meter); stock without Part switches: 40.9 %, 41.8 %. No skipped render (TESTING.md)."
   },
   "stress": {
     "floodMessagesPerSecond": null,
