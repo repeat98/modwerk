@@ -1,5 +1,14 @@
 # USB Audio testing
 
+## 0.4.1-experimental (draft), 25 November 2026
+
+**Windows 11 shows Code 10 with 0.4.0 and INPUTS AB, the reporter's error; 0.4.1 starts and plays with INPUTS ABCD, and all three Undos reconnected.** One agent-run unit turn on the owner's Octatrack MKII, base 0.8.1 `e11525835106` RAM-booted from its release image with an empty set (24 November had the owner's kept set of four modules loaded), Windows 11 (usbaudio2 10.0.26100.9974), RAM trials only, nothing kept. Each trial was rolled back and the unit checked 30 s later.
+
+- **0.4.0, Main + INPUTS AB** (published package with the preset `0x8100010C`, `443ca2b0…`, 150 s): the audio function (MI_04, `usbaudio2`) stopped with **Code 10** for the whole trial (31 samples), and Windows offered no Octatrack playback device. This is the Windows 10 report's error, so Windows 11 rejects the implicit-feedback input stream as well and can stand in for Windows 10. Undo: the unit came back on `e11525835106`.
+- **0.4.1, Main + INPUTS ABCD** (`5a16b47e…`, 150 s): MI_04 started with `usbaudio2`, status OK, problem 0 (29 samples). WASAPI shared mode played a −30 dBFS 440 Hz tone on all four channels for 60.15 s (2,646,000 frames), no stream status flags. Vendor request 0x56 over 55 s: the host 56.4 ppm faster than the unit, 137 frames absorbed, none repeated; fill 92-112, no underrun, overrun, bad packet or reprime until the tone ended (then one underrun as the stream stopped). Undo: the unit came back.
+- **0.4.1, Main + INPUTS AB** (`1c8f7da4…`, the 24 November package, 150 s): MI_04 started, status OK. The player opened the four-channel endpoint Windows still listed from the ABCD trial and failed ("Invalid device"), so no audio was sent in this trial. Undo: the unit came back.
+- **The 24 November failure did not recur** in three Undos, one of them after 60 s of four-channel input. Not known whether it depends on the kept set, on the longer stream (240 s), or is intermittent.
+
 ## 0.4.1-experimental (draft), 24 November 2026
 
 **Windows 11 accepted the input stream and played into INPUTS AB for four minutes; the unit then left USB after the trial's Undo.** Release package `6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502`, tried with the install preset Main + INPUTS AB (`1c8f7da4…`, word `0x8143210c`) as a 330 s RAM trial on the owner's Octatrack MKII, on base 0.8.1 `e11525835106` RAM-booted from its release image, the owner's kept set (Tape Echo, Air Chorus, Grain, Analog BD) loaded. Windows 11 (usbaudio2 10.0.26100.9974), agent-run, nothing kept.
@@ -14,10 +23,10 @@ Host: the trim's tests (`sdk/tests/test_usb_audio_input_trim.py`: bit-for-bit co
 
 | Case | Why this change makes it a risk | How run | Result |
 | --- | --- | --- | --- |
-| Windows enumerates the audio function with INPUTS on | the endpoint attributes | trial with INPUTS AB, PnP status and descriptor on Windows 11 | pass on Windows 11; not run on Windows 10 |
+| Windows enumerates the audio function with INPUTS on | the endpoint attributes | trials with INPUTS AB and ABCD, PnP status and descriptor on Windows 11; 0.4.0 with INPUTS AB for comparison | pass on Windows 11 (0.4.0: Code 10, as reported on Windows 10); not run on Windows 10 |
 | Minutes of playback into INPUTS with the host on its own clock | the trim must hold the ring | 240 s tone, 0x56 counters every 5 s | pass: 58.1 ppm absorbed, no underrun |
-| Undo of a duplex trial on Windows | the reconnect after the package leaves | the trial's rollback | fail: the unit left USB, port reset failed |
-| INPUTS ABCD | four channels, 192-byte packets | trial with INPUTS ABCD | not run: the unit was away |
+| Undo of a duplex trial on Windows | the reconnect after the package leaves | the trial's rollback | 24 Nov fail (kept set loaded, after 240 s of input): the unit left USB, port reset failed; 25 Nov pass three times (empty set; 0.4.0 AB, 0.4.1 ABCD after 60 s of input, 0.4.1 AB) |
+| INPUTS ABCD | four channels, 192-byte packets | trial with INPUTS ABCD | pass on Windows 11: 60 s on four channels, 56.4 ppm absorbed, no underrun |
 | Sound of the trims | an interpolated block every 0.4 s at 58 ppm | by ear | not run: the owner's |
 | macOS, Linux | they no longer get implicit feedback | — | not run: not available here |
 
