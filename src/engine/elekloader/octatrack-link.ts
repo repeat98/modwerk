@@ -15,7 +15,8 @@ import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from 
 import { isStagingCommand } from '../../community/octatrack-diagnostics-contract'
 import type { Ep0Diagnostics } from './upload-usb.ts'
 import { encodeModuleSet, frameCostTable } from './set-package.ts'
-import { baseName } from './base-variants.ts'
+import { describeBase } from './base-variants.ts'
+import { LinkTrail, linkAttachment } from './link-trail.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
 import loaderRefusals from '../../../sdk/runtime/loader-refusals.json' with { type: 'json' }
 
@@ -270,17 +271,26 @@ export class OctatrackLink {
   readonly subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
   readonly getState = () => this.state
   readonly subscribeDiagnostics = (listener: (event: LinkDiagnostic) => void) => { this.diagnosticListeners.add(listener); return () => { this.diagnosticListeners.delete(listener) } }
+  /** Every diagnostic event, kept in this page alone for Copy details, Save report and Report a problem (link-trail.ts),
+   * also for a member who doesn't share. Shared diagnostics still go only to `subscribeDiagnostics`' listeners. */
+  readonly trail = new LinkTrail()
+  /** The trail's newest `count` events with the unit, for the member to copy, save or attach (support-report.ts). */
+  readonly supportAttachment = (count?: number) => linkAttachment(this.state, this.trail, count)
   private diagnostic(event: LinkDiagnostic['event'], fields: Partial<LinkDiagnostic> = {}) {
-    if (!this.diagnosticListeners.size) return
     const {identity,active,status} = this.state
     const reading: LinkDiagnostic = {event,phase:status,...(identity ? {base:identity.base} : {}),...(active ? {active} : {}),...fields}
+    try { this.trail.record(reading) } catch { /* Diagnostics never affect USB work. */ }
     for (const listener of this.diagnosticListeners) { try { listener(reading) } catch { /* Diagnostics never affect USB work. */ } }
   }
   private recordReconnectFailure(reconnect: NonNullable<LinkDiagnostic['reconnect']>, connection = this.connection) {
     if (connection === this.connection && this.state.reconnecting) this.diagnostic('sync_failed', { error: 'disconnected', step: 'trial', reconnect })
   }
   // Every state carries the base update's step, so the restarts in between (idle, then ready again) keep showing it.
-  private set(state: LinkState) { this.state = { ...state, baseUpdate: this.baseStep, slots: this.slotsRead }; for (const listener of this.listeners) listener() }
+  private set(state: LinkState) {
+    this.state = { ...state, baseUpdate: this.baseStep, slots: this.slotsRead }
+    if (state.notice?.tone === 'error') this.trail.noteError(state.notice.text)
+    for (const listener of this.listeners) listener()
+  }
   private setFor(connection: number, state: LinkState) { if (connection === this.connection) this.set(state) }
   private live(connection: number) { if (connection !== this.connection) throw new DOMException('The Octatrack connection changed.', 'AbortError') }
   private ready(notice?: LinkState['notice'], active = this.state.active) { this.set({ status: 'ready', identity: this.state.identity, active, notice }) }
@@ -721,7 +731,7 @@ export class OctatrackLink {
     let cycled = false // asked for a power cycle, and the unit came back on the base it was armed from: armed once more
     // Only the flashed base's gate reads the mailbox: armed from a RAM-booted base, the unit comes back on the flashed one, which arms it properly.
     while (current !== expected) {
-      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0) + (cycled ? 1 : 0)) throw new Error(`The Octatrack came back on base ${baseName(current)}, not the new one. A power cycle returns to the flashed base.`)
+      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0) + (cycled ? 1 : 0)) throw new Error(`The Octatrack came back on base ${describeBase(current, expected)}, not the new one. A power cycle returns to the flashed base.`)
       armedFrom.push(current)
       report('staging', 0)
       const connection = this.connection
@@ -763,7 +773,7 @@ export class OctatrackLink {
         }
         report('restarting')
         const back = await this.returned(connection, signal, 90000, NOT_BACK_SAVED, () => report('restarting', undefined, true))
-        if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${baseName(back)}, not the new one.`)
+        if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${describeBase(back, expected)}, not the new one.`)
         return report('done')
       } catch (error) {
         // Saved and checked, then not back from the restart (a base before the two slots restarts on NOR): nothing is
@@ -776,7 +786,7 @@ export class OctatrackLink {
         const back = await this.steady(connection, late, signal)
         // After the trial, back on another base means the unit booted NOR, which still holds that base whole: the
         // write never landed.
-        if (back !== expected) throw new Error(`The Octatrack restarted on its current base (${baseName(back)}) before the new one was saved, so nothing changed. Try again.`, { cause: error })
+        if (back !== expected) throw new Error(`The Octatrack restarted on its current base (${describeBase(back, expected)}) before the new one was saved, so nothing changed. Try again.`, { cause: error })
       }
     }
   }

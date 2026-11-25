@@ -14,7 +14,8 @@ import { accountHref } from './member-access'
 import type { BellItem } from './notification-contract'
 import type { NotificationLine } from './notification-text'
 import { dismissPublicAnnouncement, latestPublicAnnouncement, pageBusy, publicAnnouncementDismissed, publicAnnouncementLine } from './public-announcement'
-import { trackAnnouncement, trackUsage } from './usage'
+import { countSupportPrompt, trackAnnouncement, trackUsage } from './usage'
+import { answerSupportPrompt } from './support-prompt'
 
 /** The same card is used in the public prompt and the operator's preview. It never takes focus. `signup` adds Create account to a Discord card. */
 export function PublicAnnouncementCard({ line, signup, onDismiss, onOpen }: { line: NotificationLine; signup?: string; onDismiss: () => void; onOpen: (action?: 'signup') => void }) {
@@ -22,7 +23,7 @@ export function PublicAnnouncementCard({ line, signup, onDismiss, onOpen }: { li
   if (line.href === LEGACY_AUDIO_PREVIEW_GUIDE_HREF) line = { ...line, href: AUDIO_PREVIEW_GUIDE_HREF }
   const titleId = useId(), moduleLink = /^#(?:module\/|(?:digitakt|digitone)\/module\/)/.test(line.href), supportLink = !!SUPPORT_URL && line.href === SUPPORT_URL, discordLink = line.href === DEVELOPMENT_DISCORD_URL, previewGuide = line.href === AUDIO_PREVIEW_GUIDE_HREF, external = /^https?:/.test(line.href)
   const betaInvite = line.href === '#beta/join/public'
-  const action = <a className="public-announcement-action" href={line.href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} onClick={() => { if (supportLink) trackUsage('support_link_opened'); onOpen() }}>{supportLink && <Icon name="heart" size={15} />}{discordLink && <img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" />}{supportLink ? 'Support on Ko-fi' : discordLink ? 'Join Discord' : betaInvite ? 'Join the beta' : previewGuide ? 'Show me how' : moduleLink ? 'Explore module' : 'Take a look'}<Icon name="arrow" size={16} />{external && <span className="sr-only"> (opens in a new tab)</span>}</a>
+  const action = <a className="public-announcement-action" href={line.href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} onClick={() => { if (supportLink) { trackUsage('support_link_opened'); countSupportPrompt('announcement-kofi'); answerSupportPrompt('kofi') } onOpen() }}>{supportLink && <Icon name="heart" size={15} />}{discordLink && <img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" />}{supportLink ? 'Support on Ko-fi' : discordLink ? 'Join Discord' : betaInvite ? 'Join the beta' : previewGuide ? 'Show me how' : moduleLink ? 'Explore module' : 'Take a look'}<Icon name="arrow" size={16} />{external && <span className="sr-only"> (opens in a new tab)</span>}</a>
   return <section className="public-announcement-card" aria-labelledby={titleId} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); onDismiss() } }}>
     <header>
       <span className="public-announcement-brand"><img src={assetUrl('modwerk-mark.svg')} width={28} height={28} alt="" /><span>Modwerk news</span></span>

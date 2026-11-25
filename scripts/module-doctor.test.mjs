@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -70,6 +70,44 @@ describe('module doctor', () => {
     }
     rmSync(out, { recursive: true, force: true })
   }, 2 * moduleCheckTimeout + 2 * 120_000)
+  // A port starts from upstream's files at the commit checked out, a reference model, its host test and gates on the shared harness
+  // (sdk/octatrack/tools/dsp_gate.py). As written it must pass the experimental lines; its own host test fails until it is ported.
+  it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('checks a draft where every gate looks: a module:new port of an Airwindows plugin', () => {
+    const clone = mkdtempSync(join(tmpdir(), 'modwerk-airwindows.')), plugin = join(clone, 'plugins/LinuxVST/src/Fakeity')
+    const git = (...args) => execFileSync('git', ['-C', clone, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...args], { encoding: 'utf8' })
+    mkdirSync(plugin, { recursive: true })
+    writeFileSync(join(clone, 'LICENSE'), 'MIT License\n\nCopyright (c) 2018 Example Author\n')
+    writeFileSync(join(plugin, 'FakeityProc.cpp'), 'void processReplacing() {}\n')
+    git('init', '-q'); git('add', '-A'); git('commit', '-qm', 'one')
+    const revision = git('rev-parse', 'HEAD').trim()
+    writeFileSync(join(plugin, 'FakeityProc.cpp'), 'an edit not committed\n')
+    const id = 'zz-port-' + process.pid, draft = join(root, 'sdk/drafts', id)
+    const scaffold = (...args) => spawnSync(process.execPath, ['scripts/scaffold-module.mjs', ...args, '--author', 'example-author'], { cwd: root, encoding: 'utf8', env: { ...process.env, MODWERK_BOARD: 'off' } })
+    try {
+      expect(scaffold(id, '--kind', 'coldfire', '--port', 'airwindows', '--upstream', plugin).stderr).toContain('--kind dsp --port airwindows')
+      expect(scaffold(id, '--kind', 'dsp', '--port', 'airwindows', '--upstream', clone).stderr).toContain('name the plugin\'s folder')
+      expect(existsSync(draft)).toBe(false)
+      const made = scaffold(id, '--kind', 'dsp', '--port', 'airwindows', '--upstream', plugin)
+      expect(made.status, made.stderr).toBe(0)
+      // Upstream's bytes at HEAD, not the working tree, each recorded for sdk/imports/.
+      expect(readFileSync(join(draft, 'upstream/FakeityProc.cpp'), 'utf8')).toBe('void processReplacing() {}\n')
+      const record = JSON.parse(readFileSync(join(draft, 'import-record.json'), 'utf8'))
+      expect(record.revision).toBe(revision)
+      expect(record.files.map(file => file.path)).toEqual(['upstream/FakeityProc.cpp', 'upstream/LICENSE'])
+      expect(readFileSync(join(draft, 'LICENSE'), 'utf8')).toContain('Example Author')
+      const manifest = JSON.parse(readFileSync(join(draft, 'octamod.module.json'), 'utf8'))
+      expect(manifest.source).toEqual({ repository: 'https://github.com/airwindows/airwindows', revision, path: 'plugins/LinuxVST/src/Fakeity' })
+      for (const file of ['reference.py', 'test_reference.py', 'verify.py', 'perf.py', 'engine.asm']) expect(existsSync(join(draft, file)), file).toBe(true)
+      expect(readFileSync(join(draft, 'verify.py'), 'utf8')).toContain('import dsp_gate as G')
+      const host = spawnSync('python3', ['-B', join(draft, 'test_reference.py')], { encoding: 'utf8' })
+      expect(host.status).not.toBe(0)
+      expect(host.stderr).toContain('set PORTED = True')
+      const result = doctor('--draft', id)
+      expect(result.stdout).toContain('The experimental lines are green')
+      expect(result.status, result.stdout).toBe(0)
+    } finally { rmSync(draft, { recursive: true, force: true }); rmSync(clone, { recursive: true, force: true }) }
+    expect(existsSync(join(root, 'sdk/octatrack/modules', id))).toBe(false)
+  }, moduleCheckTimeout + 30_000)
   // Two tiers: a draft is judged on what trying and sharing it needs; what listing it needs reads as still to do until --release.
   it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('judges a draft as experimental, and as a release with --release', () => {
     const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octatrack/modules', name)))

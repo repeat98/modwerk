@@ -88,7 +88,7 @@ import type { ZoomLink } from './engine/zoom/zoom-link'
 import { DIGI_DEVICES, DIGI_MODS, isDigiDevice, type DigiMod } from './devices/digi-mods'
 import { configurationDevice, type Configuration } from './config/workspace'
 import './devices/devices.css'
-import { SupportButton, SupportDialog } from './components/SupportDialog'
+import { SupportButton, SupportDialog, SupportMilestone, SupportMilestonePreview } from './components/SupportDialog'
 import { OverviewPage } from './overview/OverviewPage'
 import { DevelopCard } from './overview/DevelopCard'
 import { developHighlight, machineOverview } from './overview/overview'
@@ -133,6 +133,7 @@ const MoreModsPrompt = lazy(() => import('./components/MoreModsPrompt').then(mod
 const BetaModuleSets = lazy(() => beta().then(module => ({ default: module.BetaModuleSets })))
 const FirmwareFeedbackPreview = import.meta.env.DEV ? lazy(() => import('./components/FirmwareFeedbackPreview')) : () => null
 const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'firmware-feedback'
+const supportThanksPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'support-thanks'
 // Dev previews of the USB card and the base install prompt against a pretend unit.
 const usbPreview = import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('preview') : null
 const usbLinkPreview = usbPreview === 'usb-link' || usbPreview === 'screen' || usbPreview === 'base-install'
@@ -661,6 +662,7 @@ export default function App() {
       </Suspense>
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}
       <HardwareFeedbackCheckIn enabled={!accountRoute && !developerRoute && !adminRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content', 'submit'].includes(route.split('/')[0]) && !firmwareFeedbackPreview}/>
+      <SupportMilestone enabled={!supportOpen && !accountRoute && !developerRoute && !adminRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content', 'submit'].includes(route.split('/')[0])}/>
       <div className="workspace">
         <header className="app-toolbar" ref={toolbarRef}>
           <a className="toolbar-brand" href="#overview" aria-label="Modwerk overview"><img src={import.meta.env.BASE_URL + 'modwerk-mark.svg'} width="30" height="30" alt="" /><BrandName session={session} /></a>
@@ -687,6 +689,7 @@ export default function App() {
         </header>
         <main className="workspace-content" id="main-content" ref={mainRef} tabIndex={-1}>
           {firmwareFeedbackPreview && <Suspense fallback={null}><FirmwareFeedbackPreview/></Suspense>}
+          {supportThanksPreview && <SupportMilestonePreview/>}
           {!accountRoute && <SignupWelcome key={route} />}
           {!accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !adminRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <HardwareFeedbackReminder />}
           {workspace.storageError && <div className="file-error" role="alert">{workspace.storageError} Export important configurations before closing this tab.</div>}

@@ -4,6 +4,8 @@ Existing published module authors may use the [automatic author-update workflow]
 
 Contribute modules, fixes, documentation, screenshots and audio as pull requests to this repository. The owner approves first releases and changes beyond registered-author scope; later scoped author updates can publish automatically after evidence verification and required checks; the website has no second approval step. Guest comments and author issue reports on the site need no registration.
 
+New here, or sitting on a fork? [Make your own mod](https://modwerk.app/submit/?utm_source=github-contributing) walks you through it: agree the plan with your agent, build, test on your unit or in the emulator, open the pull request, get it reviewed and check it live. Work that stays in a fork never reaches Modwerk; only a pull request here does.
+
 ## Modules
 
 Follow [Add or port a module](docs/ADD_A_MODULE.md). It covers porting from octabam or elekloader and writing your own, for every machine, with the commands to run. Read [the guide for your module's category](docs/module-guides/README.md) before you write it: it says how a module must behave beside parameter locks, LFOs, scenes, saved projects and other modules, and a module that acts in time uses the instrument's own tempo, track speed and swing. `npm run module:doctor -- <id>` must be green.

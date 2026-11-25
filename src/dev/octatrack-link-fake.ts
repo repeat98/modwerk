@@ -283,7 +283,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
  * Dev previews (`?preview=usb-link|base-install&unit=base|stock|none|unsupported`): the link against a pretend
  * unit, driven from the console through `modwerkUsbPreview`: plug('base' | 'stock'), unplug(),
  * playing = true, taken = true. Add `inventory=empty` for a freshly installed base and `missing=project` for
- * a project needing E-Verb, Euclid, Air Chorus and TapeHead, and `status=old` for a base without a self-test record or live load.
+ * a project needing E-Verb, Euclid, Air Chorus and TapeHead, `status=old` for a base without a self-test record or live load,
+ * and `refusal=7` for a sync the loader refuses (a module in use).
  * There is no pretend base build: a preview must never save a file
  * that looks like firmware.
  */
@@ -333,6 +334,10 @@ export function previewKit() {
     unit.slots = new Uint8Array(24)
     unit.slots.set([0x4d, 0x57, 0x53, 0x53, slots === 'two' ? 1 : 0, slots === 'two' ? 0 : 0xff])
   }
+  // &refusal=7: the loader refuses every sync with this reason (loader.h runtime_refusal), so a failed sync and its
+  // Copy details, Save report and Report a problem can be looked at; `modwerkUsbPreview.refusal = 0` lets syncs through.
+  const refusal = Number(params.get('refusal'))
+  if (Number.isInteger(refusal) && refusal > 0) unit.refusal = refusal
   if (params.get('missing') === 'project') unit.project = [{ id: 'everb', name: 'E-Verb' }, { id: 'euclid', name: 'Euclid' }, { id: 'airwindows-chorus', name: 'Air Chorus' }, { id: 'tapehead', name: 'TapeHead' }]
   Object.assign(window, { modwerkUsbPreview: unit })
   return {
