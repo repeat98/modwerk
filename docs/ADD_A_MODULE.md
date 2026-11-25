@@ -65,7 +65,7 @@ Keep unqualified Octatrack work under `sdk/drafts/<id>/`, with its draft
 release notes in `CHANGELOG.json`; `npm run module:new` starts it there. Every
 folder in `sdk/octatrack/modules/` is validated for publication even when absent
 from `sdk/catalog.json`, so a draft there blocks catalogue generation for
-everyone. Move it there, and its notes into `src/community/module-changelogs/`,
+everyone. List it there with `npm run module:list` ([step 4](#octatrack))
 only when the publication requirements are met. A listed module's update
 waits as a draft PR, where CI and `pr:ready -- --draft` warn about its missing
 evidence; marking it ready requires it.
@@ -117,7 +117,7 @@ npm run modules:compat -- <id>                # Octatrack: installs beside every
 
 ## What CI runs
 
-- **Documentation-only pull requests:** licence, generated catalogue, release-note coverage, module contract, tutorial and screenshot-provenance validation, plus the catalogue tests (`src/catalog`, about 15 seconds), because some of them check that the guides link to files that exist. No full application test suite, bundle, Windows runner or native compiler.
+- **Documentation-only pull requests:** licence, generated catalogue, release-note coverage, module contract, tutorial and screenshot-provenance validation, plus the catalogue tests (`src/catalog`), which check the guides' links. No full application test suite, bundle, Windows runner or native compiler.
 - **Application or behaviour changes:** the full `npm run check` (lint, tests, types, build).
 - **Only a pull request that changes module source, the module build or the committed packages:** the Docker compile that must reproduce the committed packages. Changes to module folders or their path handling also run the Windows check. These are the same inputs the release uses to decide whether to rebuild the modules.
 - **After the merge:** the release verifies the merge approval, re-verifies the generated files, licences and module records, then type-checks and bundles what the pull request already tested. It rebuilds the modules only if module inputs changed.
@@ -160,7 +160,7 @@ Documentation/media-only fixes add a clearly marked documentation-only or media-
 
 ## Documentation-only updates
 
-Local module `README.md`, `TESTING.md` and `CPU.md` can be edited without updating import checksums. Their recorded hashes remain import history. Code, licences, archived snapshots and preserved `upstream/` documentation retain exact checksums. The lightweight `npm run sdk:imports:check` uses Node alone and runs on documentation PRs; the full SDK check at publication uses the same policy.
+Local module `README.md`, `TESTING.md` and `CPU.md` can be edited without updating import checksums. Their recorded hashes remain import history. Code, licences, archived snapshots and preserved `upstream/` documentation retain exact checksums. `npm run sdk:imports:check` applies this on documentation PRs, as the SDK check does at publication.
 
 Fixing the README, tutorial, captions or screenshots of a module that has its qualification record needs none of the heavy steps: no version bump, rebuilt packages, fresh approval or Docker compile in CI when only README, Markdown, `media/`, `presentation/` or `evidence/` files change. Compiled packages bind to the module’s code fingerprint (`moduleSourceFingerprint` in `scripts/module-source.mjs`), which ignores those files and the manifest’s prose (`presentation`, `access`, `controls`, `tests`, `media`, and on Digitakt, Digitone, Rytm and Four the credited names and `compatibility.conflicts`). Any other manifest field, the `evidence` block included, still needs a greater version, so record a new hardware run in `TESTING.md`, `evidence/*.json` and `tests.summary`; older native evidence can also bind the thumbnail, so replace it through the [shared preview artwork path](#module-thumbnail-style). Open a normal pull request and run `npm run check -- --base origin/main`. In PR checks and deployment, prose and media skip native compilation; source, build inputs and compiler changes keep it. The frozen baseline modules, `cc-map` and `previewvol` keep their older exact-folder rules (see [retained evidence](MODULE_QUALIFICATION.md#risk-based-update-checks--3-october-2026)).
 
@@ -332,7 +332,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
    - Add a hardware report from a real unit, stating its model, how long it ran, what was tested and the limitations. There is no minimum duration or track count.
    - A fix for a stock bug can be regressed in the emulator: `ot_emu`'s `call <address> [args]` runs a stock routine on a booted image, after `poke` has set up the state (Direct Jump Kyoti's `verify.py`, part 6, runs the MIDI Plays-Free stall on the original OS and on the module image).
    - If you could not test on hardware, say so in the pull request. Only the owner can waive this, for one exact version.
-4. **List it and compile the packages without firmware.** The build compiles every module in `sdk/catalog.json`, so add an entry for yours first: `id`, `version` and `addedAt`, the UTC time it was first added (for example `2026-10-05T12:00:00Z`). From then on, `modules:check` also requires the complete qualification record, documentation and screenshots. Commit, then run this from the clean checkout. The output folder must not exist yet.
+4. **List it and compile the packages without firmware.** The build compiles every module in `sdk/catalog.json`, so list yours first: for a DSP effect, `npm run module:list -- <id>` moves the draft into place and writes its listing (`--dry-run` shows what; it prints what stays by hand); for any other, add `id`, `version` and `addedAt` (UTC) to the catalogue. From then on, `modules:check` also requires the complete qualification record, documentation and screenshots. Commit, then run this from the clean checkout. The output folder must not exist yet.
    ```sh
    image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
    bash scripts/build-modules-isolated.sh . ../module-packages "$image"
