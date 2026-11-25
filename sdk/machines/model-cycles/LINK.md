@@ -15,9 +15,9 @@ the OS. No flash over the link yet: a base still goes on the unit as an OS updat
 
 ## Every base, and development bases
 
-Every base answers `ident`, `diag`, `load`, `log` and the loader (`up_part`, `up_run`, `mods`). It costs 37994 bytes
+Every base answers `ident`, `diag`, `load`, `log` and the loader (`up_part`, `up_run`, `mods`). It costs 38214 bytes
 of `.run` and 115796 of `.bss` in the 256 KiB shared mod area, 96 KB of it the module pool and the upload staging
-(release base `4d4d91d2`). Any USB host can load modules, as on the Octatrack; a trial goes back on its own when the
+(release base `646706ff`). Any USB host can load modules, as on the Octatrack; a trial goes back on its own when the
 host falls quiet for ten seconds, and a power cycle always restores the flashed set.
 
 Development bases add `mem`, `key`, `enc`, `release`, `disarm` and `ramboot` (a release base answers them `bad
