@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// QPERF for the Analog Rytm MKII: set performance locks from the QPER key.
+// QPER and performance locks for the Analog Rytm MKII (QPER Live Rec before 0.5.0).
 //
 // Stock lets QPER link several performances, which add up. Here a press links
 // one: with QPER held, a pad or trig moves the link to that performance, and the
 // linked one unlinks it. A kit that brings several keeps them until that press.
-// So, with QPER held and one performance linked:
+// Since 0.6.0 the PERF hold (main.c) does the rest, on the linked performance (in
+// performance edit, the one it shows), through qperf_locker and qperf_action:
 //
 //   turn a knob   Stock's own lock edit on the linked performance, drawn as when
 //                 a performance pad is held. The kit has 48 lock slots for all
@@ -358,13 +359,21 @@ static unsigned linked(void *kit)
     return (unsigned)KIT_QPER_MASK(kit) & 0xfff;
 }
 
+// The performance the PERF hold edits and acts on: the one performance edit shows, or
+// QPER's link (from 0.6.0 PERF holds the gestures QPER held before; QPER keeps its link).
+static int forced = -1;
+static unsigned target(void *kit)
+{
+    return forced >= 0 ? 1u << forced : linked(kit);
+}
+
 // What the last QPER + YES applied, so a second YES in the same QPER hold puts it back:
 // the kit's values as they were and the locks it removed. Any other QPER action, a lock
 // edit, a new hold or another kit forgets it, as stock's undo for clear and paste does.
 static struct {
     void *kit;
     int index, count, valid;
-    struct { unsigned char track, param; short lock; int old, now; } e[SLOTS];
+    struct { unsigned char track, param; short lock; int old, now, expect; } e[SLOTS];
 } applied;
 
 static const unsigned char *lock_table(void *perf)
@@ -419,11 +428,23 @@ QPERF_UI static int param_read(void *set, int id)
     return (*(set_read_t *)(*(word_t *)set + VT_READ))(set, id);
 }
 
+// A value as stock's setter keeps it: within the parameter row's range (as RECORD + YES
+// clamps its locks), so an undo can tell its own write from a change made since, even if
+// the setter lands a moment after it is called.
+QPERF_UI static int clamp_id(int id, int value)
+{
+    const unsigned char *row = (const unsigned char *)ID_TABLE_AT + ID_ROW * id;
+    int lo = *(const int *)(row + ID_MIN), hi = *(const int *)(row + ID_MAX);
+    lo = lo < 0 ? 0 : lo;
+    hi = hi > 0x7fff ? 0x7fff : hi;
+    return value < lo ? lo : value > hi ? hi : value;
+}
+
 // The linked performance's lock on (track, param), 0 for none, or with several.
 static const unsigned char *find_lock(void *kit, int track, int param)
 {
     const unsigned char *t = lock_table((void *)KIT_PERF(kit));
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int i;
     if (several(mask))
         return 0;
@@ -438,7 +459,7 @@ static int locker_has_any(void *self)
 {
     void *kit = active_kit();
     const unsigned char *t = lock_table((void *)KIT_PERF(kit));
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int i;
     (void)self;
     for (i = 0; i < SLOTS; i++, t += SLOT_BYTES)
@@ -450,7 +471,7 @@ static int locker_has_any(void *self)
 static void locker_clear(void *self, int track, int param)
 {
     void *kit = active_kit();
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     (void)self;
     if (mask && !several(mask))
         PERF_CLEAR_ONE((void *)KIT_PERF(kit), lowest_linked(mask), track, param);
@@ -459,7 +480,7 @@ static void locker_clear(void *self, int track, int param)
 static void locker_clear_all(void *self)
 {
     void *kit = active_kit();
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     (void)self;
     if (mask && !several(mask))
         PERF_CLEAR((void *)KIT_PERF(kit), lowest_linked(mask));
@@ -469,7 +490,7 @@ static void locker_set(void *self, int track, int param, int value)
 {
     void *kit = active_kit();
     void *perf = (void *)KIT_PERF(kit);
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     (void)self;
     if (!mask) {
         show("NO PERFORMANCE LINKED");
@@ -512,22 +533,6 @@ static const void *const locker_vtable[] = {
     (const void *)LOCKER_RELATIVE_AT, (const void *)LOCKER_LOCKABLE_AT,
 };
 static struct { const void *const *vtable; } locker = { locker_vtable };
-
-static void locker_install(void)
-{
-    void *ui = (void *)PARAM_UI();
-    if (GET_LOCKER(ui))
-        return;                         // a performance or scene pad holds it: stock's
-    SET_LOCKER(ui, &locker);
-    LOCK_EDIT(ui, 1);
-}
-
-static void locker_remove(void)
-{
-    void *ui = (void *)PARAM_UI();
-    if (GET_LOCKER(ui) == (word_t)&locker)
-        END_LOCK_EDIT(ui);
-}
 
 // A message with the linked performance's number in it.
 QPERF_UI static void show_numbered(const char *before, unsigned mask, const char *after)
@@ -582,7 +587,7 @@ QPERF_UI static int undo_apply(void *kit, unsigned mask)
         int track = applied.e[i].track, param = applied.e[i].param, id;
         void *set = (void *)KIT_PARAM_SET(kit, track);
         id = param_id(set, track, param);
-        if (id && param_read(set, id) == applied.e[i].now)
+        if (id && (param_read(set, id) == applied.e[i].now || param_read(set, id) == applied.e[i].expect))
             SET_VALUE(set, id, applied.e[i].old, track, 1, 1);     // unless MIDI changed it since
         PERF_SET(perf, applied.index, track, param, applied.e[i].lock);
     }
@@ -594,7 +599,7 @@ QPERF_UI static void apply_linked(void *kit)
 {
     void *perf = (void *)KIT_PERF(kit);
     const unsigned char *t = lock_table(perf);
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int i, changed = 0;
     if (undo_apply(kit, mask))
         return;
@@ -620,6 +625,7 @@ QPERF_UI static void apply_linked(void *kit)
         applied.e[applied.count].old = param_read(set, id);
         applied.count++;
         applied.index = index;
+        applied.e[applied.count - 1].expect = clamp_id(id, param_read(set, id) + value);
         SET_VALUE(set, id, param_read(set, id) + value, track, 1, 1);
         applied.e[applied.count - 1].now = param_read(set, id);
         PERF_CLEAR_ONE(perf, index, track, param);
@@ -661,7 +667,7 @@ QPERF_UI static void perf_action(int key)
 {
     void *kit = active_kit();
     void *perf = (void *)KIT_PERF(kit);
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int index;
     if (several(mask)) {
         show(SEVERAL);
@@ -1407,15 +1413,11 @@ QPERF_UI int qperf_key(void *brain, void *event)
     views = *(void **)((char *)brain + BRAIN_VIEWS);
     if (key == KEY_QPER) {
         if (!(flags & PRESSED)) {
-            if (held)
-                locker_remove();
             held = 0;
             close_qper_view();
         } else if (!(flags & REPEAT) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
-            held = 1;
+            held = 1;                   // QPER keeps only its link (QPER + pad or trig)
             swallowed = 0;
-            applied.valid = 0;          // the undo of a YES lasts one hold
-            locker_install();
         }
         return 0;
     }
@@ -1453,13 +1455,56 @@ QPERF_UI int qperf_key(void *brain, void *event)
         perf_rec_action(key);
         return 1;
     }
-    if (key == KEY_NO)
-        return 0;                       // QPER + NO stays stock's
-    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || top_view() != QPER_VTABLE)
-        return 0;
-    swallowed |= bit;
+    return 0;                           // QPER + YES, PLAY, RECORD, STOP: stock's (PERF has them)
+}
+
+// For the PERF hold (main.c): the locker on the performance it edits (index, or -1 for
+// QPER's link), whether a locker is that one, and YES, PLAY, RECORD or STOP on it. A
+// new hold starts with no undo of an earlier YES.
+void *qperf_locker(int index)
+{
+    forced = index;
+    return &locker;
+}
+
+int qperf_is_locker(unsigned long object)
+{
+    return object == (word_t)&locker;
+}
+
+void qperf_hold_start(void)
+{
+    applied.valid = 0;
+}
+
+void qperf_action(int key, int index)
+{
+    forced = index;
     perf_action(key);
-    return 1;
+}
+
+// For SCENE + YES (main.c): a kit parameter by a lock's track and parameter index, read
+// and written as QPER + YES does. Returns -1 when the index has no parameter here.
+int qperf_kit_clamp(int track, int param, int value)
+{
+    void *set = (void *)KIT_PARAM_SET(active_kit(), track);
+    int id = param_id(set, track, param);
+    return id ? clamp_id(id, value) : value;
+}
+
+int qperf_kit_read(int track, int param)
+{
+    void *set = (void *)KIT_PARAM_SET(active_kit(), track);
+    int id = param_id(set, track, param);
+    return id ? param_read(set, id) : -1;
+}
+
+void qperf_kit_write(int track, int param, int value)
+{
+    void *set = (void *)KIT_PARAM_SET(active_kit(), track);
+    int id = param_id(set, track, param);
+    if (id)
+        SET_VALUE(set, id, value, track, 1, 1);
 }
 
 // A kit can bring other links: its own stay, and the amounts follow them. Acting
