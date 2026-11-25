@@ -205,7 +205,7 @@ export function plan(step, ctx) {
       const emu = { ...ctx, target: 'emulator', share: sockets.share, devSocket: sockets.dev, out: join(ctx.out, 'emulator') }
       const [read, pass, back] = ['unit-read', 'unit-pass', 'restore'].map(id => plan(STEPS.find(s => s.id === id), emu))
       const commands = [...read.commands, ...pass.commands, ...back.commands]
-      return { commands, emulator: true, failOn: pass.failOn, same: [read.commands.length - 1, commands.length - 1], env: sessionEnv(sockets),
+      return { commands, emulator: true, failOn: pass.failOn, same: [read.commands.length - 1, read.commands.length + pass.commands.length + (back.compareAt ?? 0)], env: sessionEnv(sockets),
         session: { emulator: r.emulator, image: r.image, dir: r.dir, dsp: module ? undefined : true, package: pkg },
         twin: `the development twin ${r.identity ?? r.image} in ot_emu, not hardware evidence` }
     }

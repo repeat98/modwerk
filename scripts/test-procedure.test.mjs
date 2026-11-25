@@ -474,14 +474,16 @@ describe('the emulator rehearsal (step 5)', () => {
     expect(deps.sessions[0].spec).toEqual({ emulator: '/emu/ot_emu', image: '/twins/t1/MAIN.raw', dir: '/tmp/mw-emu-1', dsp: undefined, package: '/out/vibrato.mwrm' })
     expect(deps.sessions[0].stopped).toBe(true)
     // Step 6, 7 and 10's commands on the session's sockets, in its environment, then the same on the unit.
-    expect(deps.ran.slice(3, 7)).toEqual([
+    expect(deps.ran.slice(4, 10)).toEqual([
       'node scripts/device.mjs status --socket /tmp/mw-emu-1/share.sock',
+      'node scripts/octatrack-part-state.mjs read --socket /tmp/mw-emu-1/share.sock --out /out/emulator/part-start.json',
       'node scripts/device.mjs do inventory --socket /tmp/mw-emu-1/share.sock',
       'npm run device:test -- --share /tmp/mw-emu-1/share.sock --testing-entry /out/emulator/device-test.md --soak 120 /out/vibrato.mwrm',
       'node scripts/device.mjs do inventory --socket /tmp/mw-emu-1/share.sock',
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/mw-emu-1/share.sock --start /out/emulator/part-start.json',
     ])
-    expect(deps.envs.slice(3, 7).every(env => env.MODWERK_UNIT === 'emulator' && env.MODWERK_DEV_SOCKET === '/tmp/mw-emu-1/dev.sock')).toBe(true)
-    expect(deps.ran[7]).toBe('node scripts/device.mjs status --socket /tmp/share.sock')
+    expect(deps.envs.slice(4, 10).every(env => env.MODWERK_UNIT === 'emulator' && env.MODWERK_DEV_SOCKET === '/tmp/mw-emu-1/dev.sock')).toBe(true)
+    expect(deps.ran[11]).toBe('node scripts/device.mjs status --socket /tmp/share.sock')
     expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'passed', emulator: true, reason: expect.stringContaining('twin 8fd6d456abf3865b in ot_emu, not hardware evidence') })
     const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- vibrato' }))
     expect(md).toMatch(/\| 5 \| Emulator rehearsal \(emulator\) \| emulator \| passed: the development twin 8fd6d456abf3865b/)
@@ -560,7 +562,7 @@ describe('the emulator rehearsal (step 5)', () => {
     writeFileSync(join(dir, 'ot_emu'), '')
     const ctx = context(root, { out: mkdtempSync(join(tmpdir(), 'procedure-')) }, ['vibrato'], { MODWERK_OT_EMU: join(dir, 'ot_emu'), MODWERK_OT_TWIN: dir })
     expect(ctx.rehearsal).toMatchObject({ emulator: join(dir, 'ot_emu'), image: join(dir, 'MAIN.raw'), identity: '0123456789abcdef' })
-    expect(ctx.rehearsal.dir.length).toBeLessThan(60)
+    expect(join(ctx.rehearsal.dir, 'share.sock').length).toBeLessThan(104) // a Unix socket path holds about 104 characters on macOS
     const p = plan(STEPS.find(step => step.id === 'emulator'), ctx)
     expect(p.commands.map(argv => argv.join(' '))).toContain('node scripts/device.mjs status --socket ' + join(ctx.rehearsal.dir, 'share.sock'))
     // Inside an emulator session (device:emulator) the unit steps are the rehearsal, and step 5 is not run again.
