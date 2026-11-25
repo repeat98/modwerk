@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 2,
+  "id": "mackity",
+  "key": "MACKITY",
+  "name": "Mackity",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "Chris Johnson / Airwindows: original Mackity algorithm and MIT-licensed source",
+      "Jannik Aßfalg (repeat98): DSP56300 fixed-point port and control smoothing"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "MACKITY",
+    "family": "Saturation",
+    "summary": "Chris Johnson's Airwindows Mackity: the input stage of a Mackie-style mixing desk, driven by IN TRIM, on FX1 or FX2 of any track.",
+    "overview": "Mackity is Airwindows' model of a Mackie-style desk's input stage. The track's audio passes a gentle low cut, the desk's high-frequency rolloff, the IN TRIM gain and the console's clip, rounded by its curve, then a second rolloff and a DC blocker. At TRIM 13 it adds only the desk's colour; turning TRIM up drives the channel into the clip, from warm thickening to hard, square distortion. PAD sets the output level. The algorithm is upstream's, unchanged, in 24-bit fixed point at the Octatrack's 44.1 kHz.",
+    "highlights": [
+      "Upstream's complete Mackity algorithm, credited to Chris Johnson",
+      "TRIM from silence through 0 dB (13) to +39.6 dB into the console's clip",
+      "Stereo and buffer-free: FX1 or FX2 on any track"
+    ],
+    "usage": [
+      "Put MACKITY on FX1 of a drum or bass track. At TRIM 13 and PAD 127 it adds the desk's colour without a change in level.",
+      "Turn TRIM up for drive: at 26 (+12 dB) a track peaking at -12 dBFS reaches the clip, and above that it clips harder.",
+      "Turn PAD down to set the output level after heavy drive."
+    ]
+  },
+  "controls": [
+    {
+      "name": "TRIM",
+      "default": 13,
+      "count": 128,
+      "labels": null,
+      "doc": "In Trim: the gain into the desk, (TRIM/13)^2 as in the original. 13 is 0 dB, 26 is +12 dB, 52 is +24 dB, 127 is +39.6 dB; 0 is silence. More gain drives the signal into the console's clip."
+    },
+    {
+      "name": "PAD",
+      "default": 127,
+      "count": 128,
+      "labels": null,
+      "doc": "Out Pad: the output level, PAD/128; 127 is exactly 0 dB, 64 is -6 dB, 0 is silence. With heavy drive the desk's rolloff peaks up to about 0.6 dB over full scale, which the Octatrack's output limits; PAD 120 or lower keeps every peak."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX1 / FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Not yet tested on a unit: the DSP code is checked bit for bit in the DSP emulator only.",
+      "At high TRIM the clip makes harmonics above 22 kHz that fold back below it, as the original does at 44.1 kHz.",
+      "With heavy drive, peaks up to about 0.6 dB over full scale are limited by the Octatrack's output; PAD 120 or lower keeps them.",
+      "The original's 32-bit float dither is left out: the Octatrack's path is 24-bit fixed point."
+    ],
+    "effectId": 26
+  },
+  "resources": {
+    "recorded": "Not measured on a unit",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No buffer: 32 words of the track's own X state block per instance. Not measured as a package on a unit yet.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "dsp_host's meter reads 225.3 cycles a sample at every setting (TESTING.md); not measured on a unit yet.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "verify.py renders the assembled module in dsp_host and matches the bit-exact model in every case it runs; test_reference.py holds that model to the original within 0.001 dB in level and -100 dB in residual. Not tested on a unit.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Worst-case cycles on a unit, on both DSP cores",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "source": {
+    "repository": "https://github.com/airwindows/airwindows",
+    "revision": "e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea",
+    "path": "plugins/LinuxVST/src/Mackity"
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Chris Johnson's published Mackity source and his full MIT copyright and permission notice are retained in upstream/ and LICENSE. The DSP56300 adaptation, its tests and the thumbnail are original work under MIT. No desktop binary, firmware, extracted stock routine or table, or memory dump is included."
+  },
+  "media": [],
+  "access": {
+    "location": "Any audio track's FX1 or FX2 SETUP; MACKITY in the chooser.",
+    "steps": [
+      "Select an audio track that plays something.",
+      "Hold FUNC and press FX1 (or FX2), highlight MACKITY with UP/DOWN, and press YES to assign it.",
+      "Press FX1 (or FX2) and edit TRIM with knob A and PAD with knob B.",
+      "Set TRIM 13 and PAD 127 for the desk's colour at unchanged level, or select NONE to remove it."
+    ],
+    "screenshots": []
+  }
+}
