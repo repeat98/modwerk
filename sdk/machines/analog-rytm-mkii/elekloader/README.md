@@ -14,8 +14,10 @@ sections (`sections.c`; [machine list sections](../README.md#machine-list-sectio
 [lean engine](#lean-engine) (`perf-*`) and [pad pressure](#pad-pressure) (`pad-pressure.s`). `add` holds the FX track's lock
 words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
 [send effects](../README.md#send-effects)). A site names the stock bytes it replaces by length and SHA-256 only; the
-build fills them from your OS. `dev` goes only into development bases (`npm run machine:base -- analog-rytm-mkii --dev`,
-never recorded or released): the USB link (`link.c`, `link.s`; [LINK.md](../LINK.md)).
+build fills them from your OS. `common` holds the USB link's part every base carries (`link.c`, `link.s`, `load.c`, `diag.c`: identity, set
+identity, load and the diagnostics log; [LINK.md](../LINK.md)). `dev` goes only into development bases (`npm run
+machine:base -- analog-rytm-mkii --dev`, never recorded or released): the rest of the link (`link.c` with `MODWERK_DEV`,
+`link-dev.s`: keys, pads, turns, screen, memory and the RAM boot).
 
 The base comes in three variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
 names; **voices**, `common` and `add` without what the variant's `leave` names (the FX track's lock words `locks.c`,

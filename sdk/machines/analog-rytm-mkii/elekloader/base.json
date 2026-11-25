@@ -44,7 +44,11 @@
       "../base/perf-engine.s",
       "../base/perf-cpu-mark.c",
       "../base/perf-screen-rate.c",
-      "../base/pad-pressure.s"
+      "../base/pad-pressure.s",
+      "../base/link.c",
+      "../base/link.s",
+      "../base/load.c",
+      "../base/diag.c"
     ],
     "sites": [
       {
@@ -252,15 +256,33 @@
         "op": "bytes",
         "new": "4e71",
         "kind": "code"
+      },
+      {
+        "addr": "0x40083dd8",
+        "len": 8,
+        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+        "op": "jmp",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x400008c6",
+        "len": 8,
+        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
+        "op": "jsr",
+        "target": "mw_boot_site"
       }
     ],
     "cflags": [
+      "-fno-late-combine-instructions",
       "-DMACHINE_SECTION_AT=0x40257d70",
       "-DLE_TEXT_DRAW_AT=0x4007154c",
       "-DLE_TEXT_FONT_AT=0x40071be8",
       "-DLE_TEXT_CTX_AT=0x417e389c",
       "-DLE_FRAME_STEP_AT=0x400a2ce6",
-      "-DLE_UI_QUEUE_AT=0x41943f54"
+      "-DLE_UI_QUEUE_AT=0x41943f54",
+      "-DSEQ_PLAYING_AT=0x405c8cf8",
+      "-DSYSEX_SEND_AT=0x40085a18",
+      "-DUSB_SYSEX_STATE_AT=0x413db244"
     ],
     "defsym": {
       "LE_VERIFY": "0",
@@ -327,7 +349,10 @@
       "LE_NSC": "1",
       "LE_VDC": "1",
       "LE_CMW": "1",
-      "LE_SMO": "1"
+      "LE_SMO": "1",
+      "mw_link_router_resume": "0x40083de0",
+      "mw_boot_data": "0x400007e4",
+      "mw_boot_bss": "0x4000083a"
     },
     "subscribe": [
       {
@@ -344,6 +369,26 @@
         "event": "ev_draw",
         "fn": "le_cpu_warning_draw",
         "order": 95
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_diag_tick",
+        "order": 239
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_diag_key",
+        "order": 0
+      },
+      {
+        "event": "ev_render_out",
+        "fn": "mw_load_out",
+        "order": 101
       }
     ],
     "collections": {
@@ -660,19 +705,11 @@
     ]
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity, screen and memory reads over USB MIDI SysEx, and while GLOBAL > REMOTE CTRL is on (at every boot) panel keys, encoder turns, the remote YES of stock's OS upgrade and a RAM boot of another image. Any USB host can drive it with no hand on the unit: development bases only.",
+    "about": "What the development link adds to every base's (base/link.c with MODWERK_DEV, link-dev.s): the screen and memory reads, and while GLOBAL > REMOTE CTRL is on (at every boot) panel keys, encoder turns and pads, the remote YES of stock's OS upgrade and a RAM boot of another image. Any USB host can drive it with no hand on the unit: development bases only.",
     "sources": [
-      "../base/link.c",
-      "../base/link.s"
+      "../base/link-dev.s"
     ],
     "sites": [
-      {
-        "addr": "0x40083dd8",
-        "len": 8,
-        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
-        "op": "jmp",
-        "target": "mw_link_router"
-      },
       {
         "addr": "0x40081c28",
         "len": 6,
@@ -686,31 +723,18 @@
         "stockSha256": "9f8a100ff33cc7cd854b0b01e86de843b19d6b517737e658d8a00b6a43e242d0",
         "op": "jsr",
         "target": "mw_link_program"
-      },
-      {
-        "addr": "0x400008c6",
-        "len": 8,
-        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
-        "op": "jsr",
-        "target": "mw_boot_site"
       }
     ],
     "cflags": [
-      "-fno-late-combine-instructions",
-      "-DSEQ_PLAYING_AT=0x405c8cf8",
-      "-DSYSEX_SEND_AT=0x40085a18",
-      "-DUSB_SYSEX_STATE_AT=0x413db244",
+      "-DMODWERK_DEV",
       "-DUI_QUEUE_AT=0x4011fb56",
       "-DQUEUE_POST_AT=0x400013b2",
       "-DVIEW_INVALIDATE_AT=0x40078580",
       "-DFB_FRONT_AT=0x40287b6c"
     ],
     "defsym": {
-      "mw_link_router_resume": "0x40083de0",
       "mw_link_string": "0x401bcff0",
-      "mw_link_flash": "0x4009f404",
-      "mw_boot_data": "0x400007e4",
-      "mw_boot_bss": "0x4000083a"
+      "mw_link_flash": "0x4009f404"
     },
     "subscribe": [
       {
@@ -722,11 +746,6 @@
         "event": "ev_enc",
         "fn": "mw_link_enc",
         "order": 1
-      },
-      {
-        "event": "ev_tick",
-        "fn": "mw_link_tick",
-        "order": 240
       },
       {
         "event": "ev_project",

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Drive an Analog Rytm MKII that runs a development base with the link (base/link.c, ../LINK.md).
+"""Drive an Analog Rytm MKII that runs a Modwerk base with the link (base/link.c, ../LINK.md).
 
-Talks to the unit over its USB MIDI port (mido). Identity, the screen and memory reads work any
-time; keys, encoders and the remote YES need GLOBAL > REMOTE CTRL: ON on the unit, and stop as
-soon as someone touches the panel (status HUMAN).
+Talks to the unit over its USB MIDI port (mido). Every base answers ident (with the set identity),
+load and log; a development base also the screen and memory reads, and keys, encoders and the remote
+YES, which need GLOBAL > REMOTE CTRL: ON on the unit and stop as soon as someone touches the panel
+(status HUMAN).
 
     rytm_link.py ident
+    rytm_link.py load                           # the audio load: last half second, its dearest block, since boot
+    rytm_link.py log [--json FILE] [--raw FILE] # the diagnostics log, the Octatrack's layout
     rytm_link.py screen --png shot.png          # the 128x64 screen; --ascii prints it
     rytm_link.py mem 0x402728bd 8
     rytm_link.py steps 'GLOBAL w300 DOWN*3 YES png:shot.png NO'
@@ -43,7 +46,7 @@ from pathlib import Path
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
 CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'confirm': 0x13, 'ramboot': 0x14,
        'pad': 0x15,
-       'screen': 0x20, 'mem': 0x21}
+       'screen': 0x20, 'mem': 0x21, 'diaglog': 0x22, 'load': 0x23, 'log': 0x24}
 STATUS = {0: 'ok', 1: 'not armed (GLOBAL > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 KEY_DOWN, KEY_UP, KEY_FUNC = 1, 0x10, 2
@@ -162,8 +165,50 @@ def ident_text(p):
     if len(p) >= 78:                                # the unpacked CRC32 of a RAM-booted image, else 0
         d['image_crc'] = '%08x' % get32(p, 73)
     if len(p) >= 83:                                # where the gate keeps its diagnostics (DIAG_OLD before that)
-        d['diag'] = '%08x' % get32(p, 78)
+        d['diag'] = '%08x' % get32(p, 78)       # 0 in a release base: no RAM boot
+    if len(p) >= 93:                                # the set identity: link-image.mjs prints the same as `run`
+        d['set_crc'] = '%08x' % get32(p, 83)
+        d['set_bytes'] = get32(p, 88)
     return d
+
+
+def load_text(p):
+    """LOAD's reply: tenths of a percent of the audio block's period (load.c)."""
+    names = ['window', 'window_peak', 'peak', 'windows', 'blocks']
+    d = {n: get32(p, 5 * i) for i, n in enumerate(names)}
+    for n in ('window', 'window_peak', 'peak'):
+        d[n + '_percent'] = d.pop(n) / 10
+    return d
+
+
+LOG_KINDS = {1: 'START', 2: 'HOT', 3: 'FREEZE', 4: 'CRASH', 5: 'STALL', 6: 'SET', 7: 'BASE', 8: 'SHED', 9: 'CPU'}
+
+
+def log_text(raw):
+    """The diagnostics log (base/diag.h, the Octatrack's layout version 2, big-endian), as a dict."""
+    magic, version, nonce, boot, seq, loads, incidents = struct.unpack_from('>7I', raw, 0)
+    if magic != 0x4d574447:
+        raise ValueError('no diagnostics log (magic %08x)' % magic)
+    def incident(at):
+        s_, b, second, a, kind, cpu = struct.unpack_from('>4I2H', raw, at)
+        keys = [k for k in raw[at + 64:at + 80] if k != 0xff]
+        playing, = struct.unpack_from('>I', raw, at + 88)
+        return {'seq': s_, 'second': second, 'kind': LOG_KINDS.get(kind, kind), 'a': a, 'cpu_percent': cpu / 10,
+                'keys': keys, 'playing': playing}
+    out = {'version': version, 'nonce': '%08x' % nonce, 'boot': boot, 'seq': seq, 'loads': [], 'incidents': []}
+    at = 40 + 92
+    for i in range(96):
+        s_, b, minute, cm, cp, _, _, _, _, samples, playing, fgap, tgap = struct.unpack_from('>3I10H', raw, at + 32 * i)
+        if s_:
+            out['loads'].append({'seq': s_, 'minute': minute, 'cpu_mean_percent': cm / 10, 'cpu_peak_percent': cp / 10,
+                                 'windows': samples, 'playing': playing, 'frame_gap_us': fgap, 'tick_gap': tgap})
+    at += 32 * 96
+    for i in range(32):
+        if struct.unpack_from('>I', raw, at + 92 * i)[0]:
+            out['incidents'].append(incident(at + 92 * i))
+    out['loads'].sort(key=lambda r: r['seq'])
+    out['incidents'].sort(key=lambda r: r['seq'])
+    return out
 
 
 def frame_rows(fb):
@@ -259,6 +304,19 @@ class Link:
     def mem(self, addr, n):
         p = self.ok('mem', addr, n)
         return unpack7(p[5:])[:n]
+
+    def load(self):
+        return load_text(self.ok('load'))
+
+    def log(self):
+        """The diagnostics log's bytes, read with LOG (every base), 128 at a time."""
+        p = self.ok('diaglog')
+        size, out = get32(p, 5), b''
+        while len(out) < size:
+            n = min(128, size - len(out))
+            p = self.ok('log', len(out), n)
+            out += unpack7(p[10:])[:n]
+        return out
 
     def key(self, name, down):
         flags = self.keys.flags(name, down)
@@ -579,8 +637,12 @@ def main():
     s = sub.add_parser('steps')
     s.add_argument('text')
     sub.add_parser('disarm')
-    s = sub.add_parser('diag')
+    s = sub.add_parser('diag', help="what a development base's RAM boot gate found at the last boot")
     s.add_argument('image', nargs='?', help='the image last uploaded, to compare the upload CRCs with')
+    sub.add_parser('load', help='the audio load (every base)')
+    s = sub.add_parser('log', help='the diagnostics log (every base)')
+    s.add_argument('--json', help='write it as JSON here')
+    s.add_argument('--raw', help='write its bytes here')
     sub.add_parser('release')
     s = sub.add_parser('flash')
     s.add_argument('image')
@@ -617,6 +679,7 @@ def main():
         data = open(a.file, 'rb').read()
         i = n = 0
         first = bytes(512)
+        log_bytes = bytearray()
         while (s := data.find(b'\xF0', i)) != -1:
             e = data.find(b'\xF7', s)
             if e < 0:
@@ -643,10 +706,21 @@ def main():
                             n += 1
                 elif name == 'mem' and not status:
                     extra = '%#x: %s' % (get32(p, 0), unpack7(p[5:]).hex(' '))
+                elif name == 'load' and not status:
+                    extra = load_text(p)
+                elif name == 'diaglog' and not status:
+                    extra = 'the log at %#x, %d bytes' % (get32(p, 0), get32(p, 5))
+                elif name == 'log' and not status:
+                    at, count = get32(p, 0), get32(p, 5)
+                    log_bytes[at:at + count] = unpack7(p[10:])[:count]
+                    extra = '%d bytes at %d' % (count, at)
                 print('seq %d %s: %s %s' % (seq, name, STATUS.get(status, status), extra))
             elif msg.startswith(EK_HEADER):
                 d = ek_decode(msg)
                 print('elektron seq %d cmd %#x: %s' % (d[0] << 8 | d[1], d[4], d[5:17].hex(' ')))
+        if len(log_bytes) >= 40 + 92 + 32 * 96 + 92 * 32:  # the whole log was read: print it
+            import json
+            print(json.dumps(log_text(bytes(log_bytes)), indent=1))
         return
 
     link = Link(a.port)
@@ -661,6 +735,19 @@ def main():
             print(ascii_art(rows))
     elif a.cmd == 'mem':
         print(link.mem(a.addr, a.count).hex(' '))
+    elif a.cmd == 'load':
+        for k, v in link.load().items():
+            print('%s: %s' % (k, v))
+    elif a.cmd == 'log':
+        import json
+        raw = link.log()
+        if a.raw:
+            Path(a.raw).write_bytes(raw)
+        text = json.dumps(log_text(raw), indent=1)
+        if a.json:
+            Path(a.json).write_text(text + '\n')
+        else:
+            print(text)
     elif a.cmd == 'diag':
         at = int(link.ident().get('diag', '%x' % DIAG_OLD), 16)
         print(diag_text(link.mem(at, 60), open(a.image, 'rb').read() if a.image else None))
