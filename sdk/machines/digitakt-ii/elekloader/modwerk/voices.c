@@ -25,12 +25,15 @@
  * on the lead itself only takes the lead's new values (its trig locks) without copying them, and each frame one voice
  * track holding no note is copied from the lead in full.
  *
- * When a track leaves a group (VOICES lowered, or its lead's group moved) while it holds a note its lead sent, that
- * note's note-off still names the lead: the base sends it to the track that holds the note until the note ends or the
- * track plays a note of its own, and the track keeps its lead's machine until then. Stock reloads a track's sound in
- * full only when the sound a note names differs from the one it last loaded (0x8000470c, one pointer a track); the
- * base clears that pointer for a track that leaves a group, so its next note loads its own sound again instead of the
- * lead's values it was given.
+ * Stock loads a track's sound in full only when the sound a note names (+0x3c; a note from the keys or MIDI names
+ * none, which means the track's own) differs from the one the track last loaded (0x8000470c, one pointer a track).
+ * A note-on the base moves to a voice track names the lead's sound, so the voice loads the lead's sound whenever it
+ * last loaded another (its own, after stock forgot what it loaded), never its own.
+ *
+ * A track that leaves a group (VOICES lowered, or its lead's group moved) stays its lead's former voice until it plays
+ * a note of its own: it keeps the lead's machine, so a note still ringing or fading there is not handed to another
+ * machine's player midway, and a note-off naming the lead for a note it still holds goes to it. Its own note forgets
+ * the sound it last loaded, so that note loads its own sound in full.
  *
  * The setting is the project's (core_project_archive, tag VOC1), saved with the project and reset by a project
  * saved without it. With every track at 1 nothing here changes a note. See VOICES.md for what was checked.
@@ -55,12 +58,15 @@ enum {
 #define MUTES_OVERRIDE (*(const volatile uint32_t *)0x80004680u) /* nonzero: the inverse of the mutes in force */
 /* The sound each track last loaded in full (vector-191 handler, 0x4002e53e); 0 makes its next note load its own. */
 #define LOADED_SOUND ((volatile uint32_t *)0x8000470cu)
+/* The kit's track sounds: track t's at this + 0x34 + 0x450 * t (what a note naming none loads, 0x4002e522). */
+#define TRACK_SOUNDS (*(const volatile uint32_t *)0x80004704u)
+#define SOUND_STRIDE 0x450u
 
 static uint8_t voices[TRACKS];      /* the project's setting, 0 or 1 for a track that plays only its own notes */
-static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group */
-static volatile uint8_t drain_of[TRACKS] = { [0 ... TRACKS - 1] = NONE }; /* a track that left a group holding its
-                                                                             * lead's note: that lead, else NONE */
-static volatile uint8_t draining;   /* nonzero while a drain_of entry may be set */
+static uint8_t lead_of[TRACKS] = { [0 ... TRACKS - 1] = NONE }; /* each track's lead, NONE outside a group */
+static volatile uint8_t former_of[TRACKS] = { [0 ... TRACKS - 1] = NONE }; /* a track that left a group and has not
+                                                                              * played a note of its own: its lead */
+static volatile uint8_t formers;    /* nonzero while a former_of entry may be set */
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
 static uint8_t sync_next[TRACKS];   /* per lead: the voice track the idle copy looks at next */
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
@@ -104,19 +110,15 @@ static void regroup(void)
             }
         }
     }
-    /* A voice track back on its own: a note it still holds from its lead ends where it plays (core_voice_event), with
-     * its lead's sound and machine (core_voice_lead); then, or at once with no note, its next note loads its own sound
-     * in full (forget). */
+    /* A voice track back on its own stays its lead's former voice until it plays a note of its own (core_voice_event,
+     * core_voice_lead); a track in a group now is no one's former voice. */
     for (unsigned int t = 0; t < TRACKS; ++t) {
         const unsigned int lead = was[t];
-        if (lead == NONE || lead == t || (lead_of[t] != NONE && lead_of[t] != t)) {
-            continue; /* not a voice before, or a voice again (regroup gave it its new lead's values) */
-        }
-        if (NOTE_SOURCE[t]) {
-            drain_of[t] = (uint8_t)lead;
-            draining = 1;
-        } else {
-            LOADED_SOUND[t] = 0;
+        if (lead_of[t] != NONE && lead_of[t] != t) {
+            former_of[t] = NONE;
+        } else if (lead != NONE && lead != t) {
+            former_of[t] = (uint8_t)lead;
+            formers = 1;
         }
     }
     leads = found;
@@ -157,28 +159,22 @@ static int32_t record_pitch(const uint8_t *record)
     return (int8_t)lock[2];
 }
 
-/* A track that left a group is done with its lead's note: its next note loads its own sound. */
-static void forget(unsigned int track)
-{
-    drain_of[track] = NONE;
-    LOADED_SOUND[track] = 0;
-}
-
-/* A note-off of `track` for a note that a track which left its group still holds goes to that track (the older note
- * ends first, as it would on one track); a note-on of a waiting track's own ends its wait. Nonzero: the record is
- * routed. */
-static int drain(uint8_t *record, unsigned int track)
+/* Former voices (regroup): a note-on of a former voice's own makes it its own track again, loading its own sound in
+ * full; a note-off of `track` for a note a former voice of it still holds goes there (the older note ends first, as it
+ * would on one track). Nonzero: the record is routed. */
+static int former(uint8_t *record, unsigned int track)
 {
     if (*(const uint32_t *)(record + 4) == 1u) {
-        if (drain_of[track] != NONE) {
-            forget(track);
+        if (former_of[track] != NONE) {
+            former_of[track] = NONE;
+            LOADED_SOUND[track] = 0;
         }
         return 0;
     }
     const uint32_t source = *(const uint32_t *)(record + 0x14);
     const int32_t pitch = record_pitch(record);
     for (unsigned int t = 0; t < TRACKS; ++t) {
-        if (drain_of[t] == track && NOTE_SOURCE[t] == source && NOTE_PITCH[t] == pitch) {
+        if (former_of[t] == track && NOTE_SOURCE[t] == source && NOTE_PITCH[t] == pitch) {
             *(uint32_t *)(record + 0x10) = t;
             return 1;
         }
@@ -188,14 +184,14 @@ static int drain(uint8_t *record, unsigned int track)
 
 void core_voice_event(uint8_t *record)
 {
-    if (!(leads || draining) || *(const uint32_t *)record > 1u) {
+    if (!(leads || formers) || *(const uint32_t *)record > 1u) {
         return;
     }
     const uint32_t lead = *(const uint32_t *)(record + 0x10);
     if (lead >= TRACKS) {
         return;
     }
-    if (draining && drain(record, lead)) {
+    if (formers && former(record, lead)) {
         return;
     }
     if (!((leads >> lead) & 1u)) {
@@ -244,6 +240,10 @@ void core_voice_event(uint8_t *record)
         }
     } else {
         *(uint32_t *)(record + 0x10) = to;
+        /* A note-on from the keys or MIDI names no sound, which would load the voice's own: name the lead's. */
+        if (*(const uint32_t *)(record + 4) == 1u && !*(const uint32_t *)(record + 0x3c)) {
+            *(uint32_t *)(record + 0x3c) = TRACK_SOUNDS + 0x34u + SOUND_STRIDE * lead;
+        }
     }
 }
 
@@ -260,19 +260,12 @@ void core_voice_frame(void)
 {
     const uint16_t taken = absorb;
     absorb = 0;
-    if (draining) {
-        unsigned int waiting = 0;
+    if (formers) {
+        unsigned int any = 0;
         for (unsigned int t = 0; t < TRACKS; ++t) {
-            if (drain_of[t] == NONE) {
-                continue;
-            }
-            if (NOTE_SOURCE[t]) {
-                waiting = 1;
-            } else {
-                forget(t);
-            }
+            any |= former_of[t] != NONE;
         }
-        draining = (uint8_t)waiting;
+        formers = (uint8_t)any;
     }
     for (unsigned int lead = 0; lead < TRACKS; ++lead) {
         if (!((leads >> lead) & 1u)) {
@@ -312,8 +305,9 @@ void core_voice_frame(void)
     }
 }
 
-/* The track whose machine a track plays: its lead while it is linked or still holds its lead's note, else itself
- * (machine-frame.c sends that track's machine type for the sound chip's player dispatch). */
+/* The track whose machine a track plays: its lead while it is linked, and as its lead's former voice until it plays a
+ * note of its own, else itself (machine-frame.c sends that track's machine type for the sound chip's player
+ * dispatch). */
 unsigned int core_voice_lead(unsigned int track)
 {
     if (track >= TRACKS) {
@@ -322,7 +316,7 @@ unsigned int core_voice_lead(unsigned int track)
     if (lead_of[track] != NONE) {
         return lead_of[track];
     }
-    const unsigned int lead = drain_of[track];
+    const unsigned int lead = former_of[track];
     return lead != NONE ? lead : track;
 }
 
@@ -351,7 +345,7 @@ static const char *const counts[MAX_VOICES] = { "1", "2", "3", "4", "5", "6", "7
 static char label[16] = "   T1 VOICES";
 
 /* The icon, rows top to bottom, bit c lit at x + c. */
-static const uint16_t icon[9] = { 0x080, 0x180, 0x080, 0x080, 0x0e0, 0x06e, 0x011, 0x011, 0x00e };
+static const uint16_t icon[9] = { 0x080, 0x180, 0x080, 0x08a, 0x0e0, 0x06e, 0x011, 0x011, 0x00e };
 
 static uint32_t get_voices(void)
 {
