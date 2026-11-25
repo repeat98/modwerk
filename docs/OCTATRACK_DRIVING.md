@@ -15,10 +15,9 @@ On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` l
 ## The rules
 
 - Never SAVE, SAVE ALL or SYNC TO CARD the owner's project, unless the owner asks to recover something.
-- Do not change the owner's Parts. Test on a bank whose working Part equals its saved Part (bank B in
-  LIVE/Dev12: every Part FILTER/DELAY). Check that with `mem` (below) first, and put it back with `reload`
-  afterwards; then both copies must equal the saved copy read before. (Until 11 October 2026 this said
-  PART+FUNC+PLAY, which clears: Dev12's bank B Part 1 is named `PART 1` from it.)
+- Do not change the owner's Parts. Test on [a test bank](TEST_PROCEDURE.md#a-test-bank), whose working Part equals its
+  saved Part. Check that with `mem` (below) first, and put it back with `reload` afterwards; then both copies must equal
+  the saved copy read before.
 - Read the state before you change it, and after you put it back.
 - RELOAD needs a Part that was saved at least once. On one that never was, it shows SAVE PART FIRST! and
   changes nothing, even when its working and saved copies matched before the test. Picking the original effects
@@ -290,7 +289,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
   FUNC + BANK there opens the menu. Steps choose by the MKII flag (`0x46c8d18c`); `device:emulator -- --mki`. After a RAM boot
   every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test` and
   `device:qualify` SAVE the Part once before they change anything, while its working copy equals its saved one: the
-  same bytes, and their closing RELOAD then works. `reload` reports no failure: compare
+  same bytes, and their closing RELOAD then works. `test:procedure` does too, and RELOADs the Part after its soak and
+  at put-back (`octatrack-part-state.mjs`). `reload` reports no failure: compare
   the Part with its saved copy afterwards (SAVE PART FIRST! above).
 - **Patterns.** PATTERN+TRIG n selects pattern n of this bank. Another bank: BANK, then TRIG b (bank b), then
   TRIG n (pattern n) within four seconds (the manual's "CHOOSE BANK", "CHOOSE PATTERN"). Stopped, it applies
