@@ -1,0 +1,1 @@
+Analog Rytm MKII: the machine page can send a build to the unit over USB, as for the Model:Cycles: **Send over USB** in the install guide sends it as an OS update, and the unit asks UPGRADE OS NOW?, where only YES installs it. Close Elektron Transfer and leave every menu on the unit first.

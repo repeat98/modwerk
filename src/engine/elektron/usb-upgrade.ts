@@ -7,8 +7,10 @@ import { sendUpgrade, type UpgradeProgress } from './os-upgrade'
 import { findUnit, midiLine, type MidiAccessLike } from './os-upgrade-midi'
 
 /** The model name each machine's USB MIDI port carries. The Model:Cycles took the upgrade from the site's sender on a
- * unit (sdk/machines/model-cycles/LINK.md). */
-export const USB_UPGRADE_PORTS: Partial<Record<DigiMachine, string>> = { 'model-cycles': 'Model:Cycles' }
+ * unit (sdk/machines/model-cycles/LINK.md); so did the Analog Rytm MKII (port "Elektron Analog Rytm MKII": 958 blocks
+ * in 7 s to UPGRADE OS NOW?, answered NO there, 25 November 2026; sdk/machines/analog-rytm-mkii/LINK.md, Flash). An
+ * Analog Rytm MKI's port, "Analog Rytm" alone, is not matched. */
+export const USB_UPGRADE_PORTS: Partial<Record<DigiMachine, string>> = { 'model-cycles': 'Model:Cycles', 'analog-rytm-mkii': 'Analog Rytm MKII' }
 
 export function usbUpgradePort(machine: string): string | undefined {
   return Object.hasOwn(USB_UPGRADE_PORTS, machine) ? USB_UPGRADE_PORTS[machine as DigiMachine] : undefined
