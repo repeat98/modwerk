@@ -14,8 +14,10 @@ function pack7(data: Uint8Array): number[] {
   return out
 }
 
-/** A unit running the development link: it answers ident, mem (DDR only) and diag as link.c does, from `memory`. */
-function unit(memory: Map<number, number>, log?: { at: number; size: number }): LinkLine & { requests: number } {
+/** A unit running the development link: it answers ident, screen, mem (DDR only) and diag as link.c does, from
+ * `memory` and `frame` (screen copies it at part 0; `recopy` makes every later part claim another copy). */
+function unit(memory: Map<number, number>, log?: { at: number; size: number }, frame = new Uint8Array(1024), recopy = false): LinkLine & { requests: number } {
+  let copy = 0, copied = new Uint8Array(1024)
   const queue: Uint8Array[] = []
   const reply = (seq: number, cmd: number, status: number, payload: number[] = []) =>
     queue.push(Uint8Array.from([...LINK_HEADER, seq, cmd | 0x40, status, ...payload, 0xf7]))
@@ -26,6 +28,12 @@ function unit(memory: Map<number, number>, log?: { at: number; size: number }): 
       const seq = data[6], cmd = data[7]
       if (cmd === 0x01) reply(seq, cmd, 0, [1, 7, 0, 300, 1, 0, 3, 40, 0, 1, 0x1bf3c432, 0x47feffbc].flatMap(u32))
       else if (cmd === 0x22) reply(seq, cmd, 0, [log!.at, log!.size, 1500, 30].flatMap(u32))
+      else if (cmd === 0x20) {
+        const off = get32(data, 8)
+        if (off >= 1024 || off % 128 || (off && !copy)) return reply(seq, cmd, 4)
+        if (off === 0) { copy++; copied = frame.slice() }
+        reply(seq, cmd, 0, [...u32(off), ...u32(recopy && off ? copy + 1 : copy), ...pack7(copied.subarray(off, off + 128))])
+      }
       else if (cmd === 0x21) {
         const address = get32(data, 8), n = get32(data, 13)
         if (n < 1 || n > 128 || address < 0x40000000 || address + n > 0x48000000) return reply(seq, cmd, 4)
@@ -58,14 +66,20 @@ describe('the Digitone II link from the site', () => {
     await expect(ask(line, 'mem', [0x40000000])).rejects.toBeInstanceOf(LinkError)
   })
 
-  it('reads the frame on the screen through its pointer', async () => {
-    const memory = new Map<number, number>(), frame = 0x44623fc8
-    put(memory, 0x402a10c8, [...be(0x44623bc8), ...be(frame)])
-    put(memory, frame + 7, [0x01])               // x 0, y 0
-    put(memory, frame + 8 * 127, [0x80])         // x 127, y 63
-    const rows = await screen(unit(memory))
+  it('reads the frame on the screen in eight parts of one copy, asking for no address', async () => {
+    const frame = new Uint8Array(1024)
+    frame[7] = 0x01                              // x 0, y 0
+    frame[8 * 127] = 0x80                        // x 127, y 63
+    const line = unit(new Map(), undefined, frame), sent: number[][] = [], send = line.send
+    line.send = data => { sent.push([data[7], get32(data, 8)]); send(data) }
+    const rows = await screen(line)
     expect(rows.flatMap((row, y) => row.flatMap((px, x) => px ? [[x, y]] : []))).toEqual([[0, 0], [127, 63]])
+    expect(sent).toEqual([0, 128, 256, 384, 512, 640, 768, 896].map(off => [0x20, off]))
     expect(frameRows(new Uint8Array(1024))[0]).toHaveLength(128)
+  })
+
+  it('refuses a screen whose parts come from two copies', async () => {
+    await expect(screen(unit(new Map(), undefined, new Uint8Array(1024), true))).rejects.toThrow('copied the screen again')
   })
 
   it.each([
