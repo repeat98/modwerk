@@ -15,6 +15,8 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import console from 'node:console';
+import process from 'node:process';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, 'programs.json');
@@ -97,7 +99,7 @@ export function lines(steps) {
   const pos = []; let s = 0;
   for (const [, off] of steps) { pos.push(s); s = (s + off) & (DRAM - 1); }
   if (s !== 1) throw new Error(`pointer moves ${s} per sample, expected 1`);
-  const writes = steps.map(([op], pc) => pc).filter((pc) => pc === 0 || steps[pc][0] >= 2);
+  const writes = steps.map((_, pc) => pc).filter((pc) => pc === 0 || steps[pc][0] >= 2);
   const live = liveReads(steps);
   const access = steps.map(([op], pc) => {
     if (pc === 0 || op >= 2) return { line: pc, delay: 0 };
