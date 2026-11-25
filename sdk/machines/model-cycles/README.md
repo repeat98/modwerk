@@ -39,7 +39,7 @@ Use the exact owner-supplied `model-cycles_OS1.13.syx`. Build the base with the 
 npm run machine:base -- model-cycles --stock /private/model-cycles_OS1.13.syx --out /private/mc-base
 ```
 
-A normal OS update uses Elektron Transfer. For recovery, hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock `.syx` over 5-pin MIDI; this recovery mode does not use USB.
+A normal OS update uses Elektron Transfer. For recovery, hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock `.syx` to MIDI IN, the 3.5 mm TRS jack (a DIN interface through a TRS-to-DIN adapter); this recovery mode does not use USB.
 
 ## Status
 
