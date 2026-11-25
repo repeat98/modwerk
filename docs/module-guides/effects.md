@@ -10,7 +10,7 @@ Read [the module guides index](README.md) first. If your effect does anything in
 
 On every machine, a module is one effect. A MODE select may switch between ways of doing the same job, as Euclid's TYPE switches between low-pass, band-pass, high-pass, notch and amplitude modulation. A set of different effects in one module, picked with a type select (a send rack with a chorus, a filter bank, a drive and two delays, say), is sent back: split it into one module per effect.
 
-The base shares the effect slots so that effects from different authors sit side by side: on the Octatrack it gives each installed effect module its own effect id in the FX lists. One effect per module lets a musician choose, combine, update and remove exactly the effects they want, lets the gates judge each effect's cost and conflicts on its own, and keeps a fix to one effect from shipping as an update to all. Where the effects need the same stock site, such as a send return the machine's core has no hook for yet, that site becomes a shared hook first, in its own owner-reviewed pull request ([propose a hook](README.md#propose-a-hook); [on the elemod machines](README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)), and each effect subscribes to it.
+The base shares the effect slots so that effects from different authors sit side by side: on the Octatrack it gives each installed effect module its own effect id in the FX lists. One effect per module lets a musician choose, combine, update and remove exactly the effects they want, lets the gates judge each effect's cost and conflicts on its own, and keeps a fix to one effect from shipping as an update to all. Where the effects need the same stock site, such as a send return the machine's core has no hook for yet, add the shared hook to the machine’s cumulative base draft first ([propose a hook](README.md#propose-a-hook); [on the elemod machines](README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)), and each effect subscribes to it.
 
 Design the effect yourself. One modelled on another current product of the same maker waits for the owner, even in your own DSP and under new names ([refuse infringing work](../DEVELOPER_WORKFLOW.md#refuse-infringing-work)).
 
@@ -45,6 +45,21 @@ Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Cho
 - **ColdFire units that may move (stock-DSP effects).** List them in `placement.json` (`{"schema": 1, "moduleId": "<id>", "joinRuntime": ["<label>", …]}`): the builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise. Crowded sets keep their cave, and a set without DRAM code takes no sample memory (the runtime reserves about 10 MB of it). A listed unit has no `include`, `defsyms` or stock copies and assembles the same for both ISAs. Sidechain Compressor's two units are the first (#1175).
 - **`dear`:** every knob at its dearest setting. Pressure renders and the stress project read it.
 - **`gates`:** the verifiers `make check` runs when a remix carries your module.
+
+### Choose the widget
+
+The formatter decides how the panel draws a knob, so pick it by what the knob holds. `module:doctor` refuses a draft that breaks these rules and tells a listed module.
+
+| The knob holds | Formatter | The panel draws | Example |
+|---|---|---|---|
+| a range, 0-127 | `PLAIN` | a knob and its number | TIME, DCAY, MIX |
+| a range around a centre (64 is neutral) | `BIPOLAR` | -64…+63; FUNC + turn jumps to the centre | TONE (low-pass left, flat at 64, high-pass right), BAL |
+| two to five choices | `STEPPED`, a word for each | a switch with that many positions | SYNC FREE / BEAT, VOIC 1-4 |
+| six or more named choices | `WIDE_STEPPED`, a word for each | a dial that prints the word | CHRD, TYPE, SCALE |
+
+- **A mode select names itself.** The `mode_slot` knob shows its value's word in place of its name (`mode_names.with_selfname`), so its words say what each mode is: FREE / BEAT, NOTE / COLUN. OFF / ON leaves a switch without a name (Resonator, 24 November 2026).
+- **Distinct things are a select.** Use a knob only where the steps between values make sense to turn through.
+- **A number the musician has to translate** (a MIDI note, a time, a gain in dB) can get its own formatter cave (`FormatterReg`), as Tape Echo's TIME does. Where it does not, the README says what the number means.
 
 ## Behave like the instrument
 
@@ -150,6 +165,7 @@ Octabam's behaviour tests run through its DSP host and need a native toolchain (
 
 - No `rep` anywhere in a DSP source (`npm run modules:check` refuses one in a module listed from 23 October 2026; `do #n,>label / <one instruction> / label:` is bit-identical and interruptible): a `rep` cannot be interrupted, so the host-port handlers that arm the ColdFire's DMA answer late. The audio crackles, a core's tracks go silent or ColdFire RAM is written out of place, on hardware only. A `do` loop is bit-identical. Keep dense X work out of the 8K memory blocks a DMA uses as well; both are in [OCTATRACK_HARDWARE_TRAPS.md](../OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code).
 - `dsp56kDisassemble` prints a `DO` endpoint as the exclusive next-instruction address (`LA+1`); the encoded loop-address word is the inclusive last loop word. CFG/cycle tooling must use `pc < printed_endpoint`. Do not reprice existing effects by confusing the two representations.
+- `div` is a fractional divide. For positive integers N and D, put N's high word in a1 and low word in a0, put D in x0 and clear carry (`andi #$fe,ccr`). After 24 `div x0,a` steps, a0 holds floor(N / (2D)). To get floor(N / D), shift N left once (`asl a`) or store 2N. This works only while the dividend, including after doubling, is smaller than the divisor when both are interpreted as fractions. Ghost Cut's tempo-synced loop lengths came out half as long until its table held 2N (measured in `dsp_host`). A module's own reference model compared sample for sample with `dsp_host` catches it.
 - The DSP assembler silently mis-encodes some instructions: [octabam's AGENTS.md](../../sdk/octabam/AGENTS.md). Disassemble what you assemble.
 - A knob rename or count change is a stored-data change. Stamp every project before anyone plays it.
 - A formatter overrides the count it sits beside; declare `formatter=` per slot.

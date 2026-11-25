@@ -22,6 +22,7 @@
     "session": "node scripts/agent-session.mjs",
     "todo": "node scripts/maintenance-bot/todo.mjs",
     "check": "node scripts/check.mjs",
+    "agent:eval": "node scripts/agent-eval/run.mjs",
     "pr:ready": "node scripts/pr-ready.mjs",
     "preinstall": "node scripts/require-node.mjs",
     "prepare": "node scripts/require-node.mjs && node scripts/mirror-octatrack-modules.mjs && node scripts/machine-modules.mjs && node scripts/module-changelogs.mjs --write && node scripts/elekloader-vendor.ts --write",
@@ -117,5 +118,11 @@
   },
   "overrides": {
     "source-map-js": "1.2.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260926.1": true,
+    "fsevents@2.3.3": true,
+    "@julusian/midi@3.8.1": true
   }
 }

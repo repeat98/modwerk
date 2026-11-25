@@ -216,15 +216,15 @@
          blt     xwnext
          move    #>@XWSTART@,r0
          move    #>xwpasses,r1
-@@ -145,10 +147,11 @@
- 
- 
+@@ -147,10 +149,11 @@
  CORE1_WAIT = (0x57, (0x0cd341, 0x000000))  # payload B: brclr #1,y:<<$ffffd3,* (core 1 waits for core 0)
--CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        clr     a\n        move    a1,x:>$2840\n')
+ # Core 1 clears its count through x1, which the frame head sets again before reading it (dsp_receiver.asm): no data
+ # ALU result moved on at once, so no stall.
+-CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        move    #<0,x1\n        move    x1,x:>$2840\n')
 -
 -
 -def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, burn_at=None, cold=None):
-+CORE1_METER = ('        move    b1,x0\n', '        move    x:>@IDLECOUNTER@,x0\n        clr     a\n        move    a1,x:>@IDLECOUNTER@\n')
++CORE1_METER = ('        move    b1,x0\n', '        move    x:>@IDLECOUNTER@,x0\n        move    #<0,x1\n        move    x1,x:>@IDLECOUNTER@\n')
 +
 +
 +def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, hook_control=None, hook_reset=None,
@@ -232,7 +232,7 @@
      """The receiver with its table's size and stock's null stub (dry ids) filled in, its idle count
      core 1's counted wait on payload B; `burn` (calibration builds) spends that many more cycles every
      frame, so the load meter's idle count falls by a known amount. `burn_at` (address, words): the burn
-@@ -180,12 +183,16 @@
+@@ -182,12 +185,16 @@
      fill = lambda value, label: ('        move    #>$%x,x0\n        do      #%d,%s\n        move    x0,x:(r1)+\n%s:\n' % (
          value, ids - 32, label, label)) if ids > 32 else ''  # DO #0 would loop 65,536 times
      watched = TABLE_END - TABLE_HOME - 2 * ids
@@ -251,7 +251,7 @@
                              ('@DLWORDS@', str(table_words), 4)) + tuple(
                                  ('@%s@' % key, '$%x' % (cold or {}).get(key, 1), count) for key, count in COLD_FIELDS):
          if text.count(old) != count:
-@@ -300,7 +307,7 @@
+@@ -302,7 +309,7 @@
      return code, labels, table, staged
  
  
@@ -260,7 +260,7 @@
      """-> (sites, layout) for both payloads. `assemble(path)` is Elekloader's
      sdk.build.dsp_assemble (octabam's dsp_asm at two origins)."""
      metadata = json.loads(METADATA.read_text())
-@@ -361,9 +368,25 @@
+@@ -363,9 +370,25 @@
          # The receiver's size does not depend on its table's: every operand it moves is a long one.
          # One core at a time: with 2,000 more cycles a frame on both cores the unit hung at its logo (10 October 2026).
          burned = abs(burn) if (tag == 'B') == (burn < 0) else 0  # a negative burn is core 1's
@@ -287,7 +287,7 @@
          # The least arena that still runs every stock effect on its own: the largest, DARK REV.
          if table < SAVED + max(len(s['words']) for s in stock.values()):
              raise ValueError('Payload %s: the receiver and the largest stock effect do not fit the block.' % tag)
-@@ -372,7 +395,7 @@
+@@ -374,7 +397,7 @@
          if [labels[k] - labels['missoffset'] for k in ('tablebase', 'missexpected', 'missactual')] != [-3, 1, 2]:
              raise ValueError('Payload %s: the receiver\'s mismatch record is not three consecutive words.' % tag)
          # The saved entries must start empty; the window half waits in the table's top words until the first frame.
@@ -296,7 +296,7 @@
          for space, start, count, first in records:  # one site per payload record
              a, b = max(lo, start), min(hi, start + count)
              if space or a >= b:
-@@ -392,6 +415,16 @@
+@@ -394,6 +417,16 @@
          first = at(0, FRAME[tag]) - device.main_load
          sites.append(dict(addr=hex(at(0, FRAME[tag])), stock=image[first:first + 6].hex(), op='bytes', kind='data',
                            new=b''.join(w.to_bytes(3, 'little') for w in (0x0bf080, frame)).hex()))
@@ -313,7 +313,7 @@
          if tag == 'B':  # core 1's wait for core 0, counted (c1wait)
              if [read(0, CORE1_WAIT[0] + k) for k in range(2)] != list(CORE1_WAIT[1]):
                  raise ValueError('Payload B: core 1 no longer waits for core 0 at P:$57.')
-@@ -418,6 +451,13 @@
+@@ -420,6 +453,13 @@
                             miss=origin + labels['missoffset'], meter=origin + labels['idlepub'], null=null, free=free,
                             stock={fx: {k: v for k, v in s.items() if k != 'words'} for fx, s in stock.items()},
                             reads=reads, words={fx: s['words'] for fx, s in stock.items()}, shared=routines, fills=fills)
@@ -342,22 +342,22 @@
  ; The first refused packet of a boot leaves a record (missoffset, then two words):
  ;   $01rrrr: its halfwords sum to rrrr, not 0; the sequence that arrived; their
  ;            position-weighted sum (each halfword times 64 - its index), mod 2^24.
-@@ -72,7 +76,7 @@
+@@ -75,7 +79,7 @@
  tblset:
  ; Load meter: core 0's main loop (P:$4b) counts its idle iterations in b until a frame is due, and
  ; this runs before stock stores that count (P:$92); b stays untouched. Core 1 counts its wait for
 -; core 0 in X:$2840 (c1wait), taken and cleared here (the build substitutes that for core 1).
 +; core 0 in the base's reserved X wait-counter word (c1wait), taken and cleared here (the build substitutes that for core 1).
  ; Each window of 1024 frames is published after its serial: the least and most idle
- ; counts, their sum and the frames with none (missed). Core 1 keeps no such count.
-         move    b1,x0
-@@ -153,7 +157,15 @@
+ ; counts, their sum and the frames with none (missed). Core 1 keeps no such count. r1 names idlewin
+ ; (frame); the frames left stay in x1 for the test at counted: stock writes x1 before it reads it after both frame heads.
+@@ -158,7 +162,15 @@
          and     #>$ffff,a
-         cmp     #>1,a
+         cmp     #<1,a
          beq     accepted
-+        cmp     #>10,a
++        cmp     #<10,a
 +        beq     hookcontrol
-+        cmp     #>11,a
++        cmp     #<11,a
 +        beq     hookreset
          bra     coldops
 +hookcontrol:
@@ -367,7 +367,7 @@
  coldsum:
          move    #>@COLDSUM@,r1          ; a torn packet: its record is kept by the window's half (badsum)
          jmp     (r1)
-@@ -558,13 +570,16 @@
+@@ -563,14 +575,17 @@
          rts
  ;=private=
  ; Core 1's wait for core 0 (P:$57, brclr #1,y:<<$ffffd3) as a counted one: each pass adds one to
@@ -375,20 +375,20 @@
 +; The reserved X counter, outside the dispatch tables and Analog BD's coefficient/voice banks.
 +; Reset at each wait entry, including boot, before reading otherwise uninitialized private X.
  ; DO FOREVER and BRKCS, not a branch back: dsp_asm writes a backward brclr's target absolute.
+ ; Its add stays the two-word form: status.c's idle_cycles[1] is this pass as calibrated on the unit (11 October 2026).
  c1wait:
 +        move    #>0,a
 +        move    a1,x:>@IDLECOUNTER@
          do      forever,c1over
 -        move    x:>$2840,a
--        add     #>1,a
--        move    a1,x:>$2840
 +        move    x:>@IDLECOUNTER@,a
-+        add     #>1,a
+         add     #>1,a
+-        move    a1,x:>$2840
 +        move    a1,x:>@IDLECOUNTER@
          btst    #1,y:<<$ffffd3
          brkcs
  c1over:
-@@ -578,6 +593,10 @@
+@@ -584,6 +599,10 @@
          nop
  missactual:
          nop
@@ -396,6 +396,6 @@
 +        nop
 +hookready:                             ; a complete observed reset is required before any activation
 +        nop
- idlewin:                                  ; never executed: the load meter (see frame): frames left,
-         nop                             ; least, most, sum and missed of this window
+ tblready:                               ; 1 once the first frame set the dispatch tables up; idlewin follows it (frame)
          nop
+ idlewin:                                  ; never executed: the load meter (see frame): frames left,

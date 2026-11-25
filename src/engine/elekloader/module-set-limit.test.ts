@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { SET_MODULE_LIMIT } from '../../catalog/set-limit'
 import { USB_AUDIO_MODULE } from '../../config/usb-audio'
 import type { OctatrackLink } from './octatrack-link'
@@ -7,7 +7,7 @@ import { moduleSetKit, moduleSetReview, SetLimitError, USB_MODULE_IDS } from './
 
 const ids = USB_MODULE_IDS.filter(id => id !== USB_AUDIO_MODULE), over = SET_MODULE_LIMIT + 3
 const empty = { moduleIds: [], removedStockFx: [] }
-const capable = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+const capable = { abi: 10, features: 7 | 128 | 512 | 2048 | 4096, maxSites: 128, maxCopies: 128 }
 
 describe('the site’s sync of a set over the module limit', () => {
   it('reviews a set over the limit as one it cannot sync, and a trimmed one as ready', () => {

@@ -9,7 +9,7 @@ A claim has a kind and a key, and each key has one holder at a time:
 | Kind | Key | Example |
 | --- | --- | --- |
 | `module` | machine and module id | `octatrack/tape-echo`, `digitone/swarm` |
-| `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines. Consecutive new indices are one claim on a run, which `pr:ready` makes and which takes the place of your own claims inside it | `octatrack/39`, `octatrack/38-51`, `digitakt/events/7`, `digitakt/tables/1` |
+| `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines. Consecutive new indices are one claim on a run, which `pr:ready` makes and which takes the place of your own claims inside it. A run claimed ahead of the work also covers a branch that adds only part of it | `octatrack/39`, `octatrack/38-51`, `digitakt/events/7`, `digitakt/tables/1` |
 | `migration` | D1 migration number | `0085` |
 | `dsp-region` | machine and DSP memory claim name; no file declares these yet, so they are claimed by hand | `octatrack/fx2-delay-line` |
 | `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |
@@ -19,7 +19,7 @@ A claim also records the holder's GitHub login, the branch, the pull request onc
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the pull request on its branch (`<holder>:<branch>`), open or merged since the claim was made, releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
 - **Expiry reminders.** `npm run board -- inbox` and `board_inbox` list your active claims expiring within three days. `pr:ready` alerts you when any need review. Review them with the developer before renewing or releasing a claim.
-- **Limits.** At most 10 active claims per person and 30 claim writes an hour.
+- **Limits.** At most 10 active claims per person (the owner has no limit) and 30 claim writes an hour. For the approved MS-70CDR import, the owner runs `npm run board -- claim-collection zoom-multistomp` to reserve its 28 named effects together on `codex/zoom-multistomp-effects`. Each has an exclusive key.
 - **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main` (a machine id: one its [machine guide](module-guides/machines.md) lists as free), skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
 - **Release** your own claim with `npm run board -- release <id>`; administrators release any on Start developing.
 

@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "New: Ghost Cut, a microlooper on FX2. GRAB loops a tempo-synced piece of the track (LEN 1/64 to 1/4); let go and the track fades back.",
+      "TAPE plays the loop from a quarter speed to almost four times; GRAIN keeps that speed and sets the pitch with PTCH (±24 semitones).",
+      "DRFT adds a second head that drifts against the first over MOTN bars (1/4 to 32), in stereo on TAPE.",
+      "CAPT loops the last LEN, the next LEN or the ring as it was; DIR plays forwards, backwards or back and forth.",
+      "Not yet tried on a unit."
+    ]
+  }
+]

@@ -4,6 +4,7 @@ import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
 import { claimNote, messageBody, syncAgentClaims, CLAIM_LIMIT, OPEN_THREADS } from '../../server/agent-board'
+import { finishPilotCase, pilotRecords, recordPilot } from '../../server/eval-pilot'
 import * as client from '../../scripts/agent-board.mjs'
 
 const databases: DatabaseSync[] = []
@@ -81,6 +82,32 @@ describe('agent board', () => {
     await reply(ada, message.id, 'Which version?')
     vi.setSystemTime(now + 14 * day)
     expect(await drafts()).toContainEqual(expect.objectContaining({ id: message.id }))
+  })
+
+  it('posts one task per gap and routes it to an independent holder through the real board', async () => {
+    const { env, boardLogin, call, inbox, db } = await fixture()
+    const adapter = env.DB!
+    db.prepare("INSERT INTO maintenance_bot_state VALUES ('fingerprint','plain text')").run()
+    const author = await boardLogin('ada'), verifier = await boardLogin('bo')
+    const review = { number: 42, merge: 'f'.repeat(40), authorId: 101, verdict: 'gap', hint: 'Keeps the final row' }
+    await recordPilot(adapter, review)
+    await recordPilot(adapter, review)
+    const [record] = await pilotRecords(adapter), id = record.task!
+    expect((await inbox(author)).pilotTasks).toBeUndefined()
+    expect((await inbox(verifier)).pilotTasks).toEqual([expect.objectContaining({ id, source: 42 })])
+    const take = (token: string) => call('/agent-board/messages/' + id + '/take', 'POST', {}, token)
+    expect((await take(author)).status).toBe(403)
+    expect((await take(verifier)).status).toBe(200)
+    const decline = (token: string) => call('/agent-board/messages/' + id + '/replies', 'POST', { outcome: 'different-result', body: 'The earlier version passes the same check.' }, token)
+    expect((await decline(author)).status).toBe(403)
+    expect((await decline(verifier)).status).toBe(201)
+    await finishPilotCase(adapter, 42, { result: 'different-result' })
+    await finishPilotCase(adapter, 42, { result: 'added', evidence: 99 })
+    expect((await pilotRecords(adapter))[0].result).toBe('different-result')
+    expect((await inbox(verifier)).pilotTasks).toBeUndefined()
+    for (let number = 43; number <= 47; number++) await recordPilot(adapter, { ...review, number, verdict: 'covered' })
+    expect(await pilotRecords(adapter)).toHaveLength(5)
+    expect(db.prepare("SELECT COUNT(*) AS n FROM agent_messages WHERE user_id='tars' AND kind='wanted'").get()?.n).toBe(1)
   })
 
   it('groups independent tasks under an issue or claim and keeps their holders and PRs separate', async () => {
@@ -204,6 +231,29 @@ describe('agent board', () => {
     expect(claimNote(' Porting the echo, BBD first ')).toBe('Porting the echo, BBD first')
     for (const note of ['see https://example.com', 'in ~/src/mod', 'sdk/octatrack/modules/x', 'patch 0x40098a5c', 'hash 02baba67a7ec7d7b', 'run `rm -rf`', 'ghp_' + 'a'.repeat(36), 'two\nlines', 'x'.repeat(121), 'modwerk.app'])
       expect(() => claimNote(note), note).toThrow()
+  })
+
+  it('reserves the approved Zoom keys together, and the owner holds any number of claims', async () => {
+    const { boardLogin, db, call, claim } = await fixture()
+    const owner = await boardLogin('repeat98'), other = await boardLogin('other')
+    db.prepare("UPDATE users SET github_id=? WHERE github_login='repeat98'").run('67785539')
+    const reserve = (token: string) => call('/agent-board/collections/zoom-multistomp', 'POST', {}, token)
+    expect((await reserve(other)).status).toBe(403)
+    const conflict = await (await claim(other, { kind: 'module', key: 'zoom/spiral' })).json()
+    expect((await reserve(owner)).status).toBe(409)
+    const mine = async () => (await (await call('/agent-board/claims?holder=repeat98')).json()).claims
+    expect(await mine()).toHaveLength(0)
+    await call('/agent-board/claims/' + conflict.claim.id, 'DELETE', undefined, other)
+    for (let i = 0; i <= CLAIM_LIMIT; i++) expect((await claim(owner, { kind: 'issue', key: String(100 + i) })).status).toBe(201)
+    expect(await mine()).toHaveLength(CLAIM_LIMIT + 1)
+    const release = await reserve(owner)
+    expect(release.status).toBe(200)
+    const result = await release.json()
+    expect(result.claims).toHaveLength(28)
+    expect(new Set(result.claims.map((item: { key: string }) => item.key)).size).toBe(28)
+    expect((await (await reserve(owner)).json()).claims).toEqual(result.claims)
+    expect((await claim(other, { kind: 'module', key: 'zoom/spiral' })).status).toBe(409)
+    expect((await claim(owner, { kind: 'module', key: 'zoom/other' })).status).toBe(201)
   })
 
   it('limits how many claims one person holds', async () => {

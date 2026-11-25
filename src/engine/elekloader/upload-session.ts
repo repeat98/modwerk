@@ -9,7 +9,7 @@ import {
 /** One complete request/reply exchange; no implicit retries or command queue.
  * After cancellation, the adapter must not deliver a late reply to a new request. */
 export interface UploadTransport {
-  exchange(frame: Uint8Array, signal: AbortSignal): Promise<Uint8Array>
+  exchange(frame: Uint8Array, signal: AbortSignal, onSubmit?: (sequence: number) => void): Promise<Uint8Array>
 }
 export interface UploadPackage {
   readonly base: string
@@ -23,17 +23,27 @@ interface Offer {
   digest: string
   length: number
 }
+export interface FailedUpload {
+  command: UploadRequest['command']
+  chunkOffset?: number
+  /** Local correlation with the base's last EP0 OUT. Never shared in a report. */
+  sequence?: number
+}
 export class UploadDeviceError extends Error {
   readonly status: UploadStatus
-  constructor(status: UploadStatus) {
+  readonly upload?: FailedUpload
+  constructor(status: UploadStatus, upload?: FailedUpload) {
     super(`Device refused ${status.command}: ${status.result}.`)
     this.name = 'UploadDeviceError'; this.status = status
+    this.upload = upload
   }
 }
 export class UploadUnconfirmedError extends Error {
   readonly lastConfirmed: UploadStatus | undefined
-  constructor(message: string, lastConfirmed?: UploadStatus, cause?: unknown) {
+  readonly upload?: FailedUpload
+  constructor(message: string, lastConfirmed?: UploadStatus, cause?: unknown, upload?: FailedUpload) {
     super(message, { cause }); this.name = 'UploadUnconfirmedError'; this.lastConfirmed = lastConfirmed
+    this.upload = upload
   }
 }
 
@@ -74,24 +84,25 @@ export class UploadSession {
     this.busy = true
     try { return await run() } finally { this.busy = false }
   }
-  private uncertain(message: string, cause?: unknown): never {
+  private uncertain(message: string, cause?: unknown, upload?: FailedUpload): never {
     this.broken = true
-    throw new UploadUnconfirmedError(message, this.current, cause)
+    throw new UploadUnconfirmedError(message, this.current, cause, upload)
   }
   private expect(condition: boolean, message: string) {
     if (!condition) this.uncertain(message)
   }
-  private ok(status: UploadStatus) {
-    if (status.result !== 'ok') throw new UploadDeviceError(status)
+  private ok(status: UploadStatus, chunkOffset?: number) {
+    if (status.result !== 'ok') throw new UploadDeviceError(status, { command: status.command, chunkOffset })
   }
   private async exchange(request: UploadRequest, validate?: (status: UploadStatus) => void): Promise<UploadStatus> {
     const frame = encodeUploadRequest(request), abort = new AbortController()
+    let sequence: number | undefined
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
       const deadline = new Promise<never>((_, reject) => {
         timer = setTimeout(() => { abort.abort(); reject(Object.assign(new Error('Upload acknowledgement timed out.'), { name: 'TimeoutError' })) }, this.timeout)
       })
-      const bytes = await Promise.race([this.transport.exchange(frame, abort.signal), deadline])
+      const bytes = await Promise.race([this.transport.exchange(frame, abort.signal, next => { sequence = next }), deadline])
       const status = decodeUploadResponse(bytes, request, { base: this.base, session: this.current?.session })
       this.expect(!this.current || status.capacity === this.current.capacity, 'Device staging capacity changed within a session.')
       validate?.(status)
@@ -99,7 +110,8 @@ export class UploadSession {
       return status
     } catch (error) {
       abort.abort()
-      return this.uncertain(`${request.command} was not confirmed; no further commands will be sent on this connection.`, error)
+      return this.uncertain(`${request.command} was not confirmed; no further commands will be sent on this connection.`, error,
+        { command: request.command, chunkOffset: request.command === 'chunk' ? request.offset : undefined, sequence })
     } finally { if (timer !== undefined) clearTimeout(timer) }
   }
   private control(command: 'verify' | 'commit' | 'accept' | 'rollback' | 'abort' | 'leave', transaction: number, validate?: (status: UploadStatus) => void) {
@@ -181,7 +193,7 @@ export class UploadSession {
             this.expect(status.phase === 'receiving' && status.received === offset + (status.result === 'ok' ? chunk.length : 0),
               'The device did not confirm the complete chunk.')
           })
-          this.ok(status)
+          this.ok(status, offset)
           options.progress?.(status.received, data.length)
         }
         cancelled()

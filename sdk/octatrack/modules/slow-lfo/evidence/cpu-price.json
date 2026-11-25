@@ -1,0 +1,112 @@
+{
+  "module": "slow-lfo",
+  "version": "0.1.0-experimental",
+  "base": "8850f5399c453b9c (development twin, ef6099b0a)",
+  "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory",
+  "seconds": 8,
+  "measuredAt": "2026-11-21T07:47:49.132Z",
+  "result": {
+    "id": "slow-lfo",
+    "version": "0.1.0-experimental",
+    "packageSha256": "3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4",
+    "before": {
+      "frame": 32.7,
+      "frameMax": 71.3,
+      "frames": 22258,
+      "skipped": 0,
+      "cpu": 45.2,
+      "dsp1to4": 45.8,
+      "dsp5to8": 41.5,
+      "allocation": {
+        "modulePoolBytes": 9920,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRest": {
+      "frame": 33.2,
+      "frameMax": 71.5,
+      "frames": 22259,
+      "skipped": 0,
+      "cpu": 45.9,
+      "dsp1to4": 46.5,
+      "dsp5to8": 42.1,
+      "allocation": {
+        "modulePoolBytes": 1456,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRestAdds": {
+      "frame": 0.5,
+      "cpu": 0.7,
+      "dsp1to4": 0.7,
+      "dsp5to8": 0.6
+    },
+    "rolledBack": true,
+    "repetitions": [
+      {
+        "measuredAt": "2026-11-21T07:47:49.132Z",
+        "before": {
+          "frame": 32.7,
+          "frameMax": 71.3,
+          "frames": 22258,
+          "skipped": 0,
+          "cpu": 45.2,
+          "dsp1to4": 45.8,
+          "dsp5to8": 41.5,
+          "allocation": {
+            "modulePoolBytes": 9920,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 33.2,
+          "frameMax": 71.5,
+          "frames": 22259,
+          "skipped": 0,
+          "cpu": 45.9,
+          "dsp1to4": 46.5,
+          "dsp5to8": 42.1,
+          "allocation": {
+            "modulePoolBytes": 1456,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        }
+      },
+      {
+        "measuredAt": "2026-11-21T07:48:18.542Z",
+        "before": {
+          "frame": 32.7,
+          "frameMax": 71.1,
+          "frames": 22256,
+          "skipped": 0,
+          "cpu": 45.4,
+          "dsp1to4": 47.1,
+          "dsp5to8": 41.9,
+          "allocation": {
+            "modulePoolBytes": 1456,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 33.2,
+          "frameMax": 70.9,
+          "frames": 22262,
+          "skipped": 0,
+          "cpu": 45.6,
+          "dsp1to4": 45.6,
+          "dsp5to8": 41,
+          "allocation": {
+            "modulePoolBytes": 1456,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        }
+      }
+    ]
+  }
+}

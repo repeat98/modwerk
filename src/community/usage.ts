@@ -5,7 +5,7 @@ import { visitSource } from './visit-source'
 import { usagePage } from './usage-pages'
 import { USAGE_CONSENT_VERSION } from '../legal/policy'
 import { canTrackModuleDownload } from './module-downloads'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/octatrack-publication.ts'
 const preferenceKey = 'octamod.usage.consent', visitorKey = 'octamod.usage.daily-visitor', configurationsKey = 'octamod.usage.started-configurations'
 let withdrawnForThisPage=false
 /** Saved only when a visitor objects to identifier-free counts; nothing is stored while they are allowed. */

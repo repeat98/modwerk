@@ -202,6 +202,7 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
 
 const hookSpan = key => { const [, list, first, last] = /^(.+)\/(\d+)(?:-(\d+))?$/.exec(key); return { list, first: Number(first), last: Number(last ?? first) } }
 const overlaps = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.last && y.first <= x.last }
+const covers = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.first && y.last <= x.last }
 /** Consecutive new hook indices of one list become one claim (octatrack/38-51): a base change may add more hooks than
  * one person may hold claims. */
 function hookRuns(items) {
@@ -217,19 +218,21 @@ function hookRuns(items) {
   return out
 }
 
-/** Compare what a branch needs with the board. Without a login it can name holders but not tell whether they are you. */
-export async function compareClaims(needed, login, options = {}) {
+/** Compare what a branch needs with the board. Without a login it can name holders but not tell whether they are you.
+ * A claim tied to `pullRequest` belongs to that pull request: a maintainer finishing a contributor's PR holds it for them. */
+export async function compareClaims(needed, login, { pullRequest, ...options } = {}) {
   if (!needed.length) return { mine: [], others: [], free: [], unknown: [] }
   const claims = await listClaims({}, options), byKey = new Map(claims.map(item => [item.kind + ' ' + item.key, item]))
   const result = { mine: [], others: [], free: [], unknown: [] }
   for (const item of needed) {
-    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed.
+    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed. A run claimed
+    // ahead of the work (tables/4-6 while the branch adds 4-5 so far) covers the part a branch adds.
     const near = item.kind === 'hook' ? claims.filter(claim => claim.kind === 'hook' && overlaps(claim.key, item.key)) : [byKey.get(item.kind + ' ' + item.key)].filter(Boolean)
-    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase()), exact = near.find(claim => claim.key === item.key)
+    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase() && !(pullRequest && claim.pullRequest === pullRequest)), held = near.find(claim => claim.key === item.key) ?? (item.kind === 'hook' ? near.find(claim => covers(claim.key, item.key)) : undefined)
     if (!near.length) result.free.push(item)
     else if (!login) result.unknown.push({ ...item, claim: near[0] })
     else if (theirs) result.others.push({ ...item, claim: theirs })
-    else if (exact) result.mine.push({ ...item, claim: exact })
+    else if (held) result.mine.push({ ...item, claim: held })
     else result.free.push(item)
   }
   return result
@@ -298,6 +301,7 @@ export async function inboxNotes(options = {}) {
   if (!box) return []
   const parts = [box.waiting.length && box.waiting.length + ' question' + (box.waiting.length > 1 ? 's wait' : ' waits') + ' for your answer', box.replies.length && box.replies.length + ' of your questions and findings ' + (box.replies.length > 1 ? 'have' : 'has') + ' a reply'].filter(Boolean)
   const notes = []
+  if (box.pilotTasks?.length) notes.push('Board: independent Node fix verification is available. See npm run board -- inbox and the five-fix pilot in docs/AGENT_EVALS.md.')
   if (box.followups?.length) notes.push('Board: questions of yours have GitHub follow-up drafts. Read them with npm run board -- inbox.')
   if (parts.length) notes.push('Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).')
   const expiring = box.expiring?.length ?? 0
@@ -349,18 +353,19 @@ function openBrowser(url) {
   try { spawn(command, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref() } catch { /* the printed address still works */ }
 }
 
-/** Who opened the pull request CI runs for, from the GitHub Actions event. */
-function pullRequestAuthor() {
-  try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request?.user?.login ?? null } catch { return null }
+/** The pull request CI runs for, from the GitHub Actions event. */
+function pullRequestEvent() {
+  try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request ?? null } catch { return null }
 }
+const pullRequestAuthor = () => pullRequestEvent()?.user?.login ?? null
 
 /** npm run board -- check: refuse what someone else holds; name what is unclaimed. Never fails on an outage.
  * A pull request's CI run (requireClaims) also refuses what nobody claimed: reviewers asked for the claim on one module PR in seven. */
-export async function checkBranch({ root, base, login, requireClaims = false }) {
+export async function checkBranch({ root, base, login, requireClaims = false, pullRequest = null }) {
   const needed = neededClaims({ root, base })
   if (!needed.length) return { ok: true, lines: ['Board: this branch adds nothing that needs a claim.'] }
   let compared
-  try { compared = await compareClaims(needed, login) } catch (error) {
+  try { compared = await compareClaims(needed, login, { pullRequest }) } catch (error) {
     if (error instanceof BoardUnavailable) return { ok: true, lines: ['Board: not checked. ' + error.message] }
     throw error
   }
@@ -372,7 +377,7 @@ export function branchVerdict(compared, { requireClaims = false } = {}) {
   const lines = []
   for (const item of compared.others) lines.push(`✗ ${item.kind} ${item.key} (${item.why}) is claimed by ${describeClaim(item.claim)}. Ask them, or renumber / rename.`)
   for (const item of compared.unknown) lines.push(`· ${item.kind} ${item.key} is claimed by ${describeClaim(item.claim)}; sign in (npm run board -- login) so the check can tell whether that is you.`)
-  for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours.`)
+  for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours${item.claim && item.claim.key !== item.key ? ' (claim ' + item.claim.key + ')' : ''}.`)
   for (const item of compared.free) lines.push(requireClaims
     ? `✗ ${item.kind} ${item.key} (${item.why}) is unclaimed. Claim it so nobody else starts the same work: npm run board -- login once, then npm run pr:ready (it claims what the branch adds) or npm run board -- claim ${item.kind} ${item.key}. Then rerun this check.`
     : `· ${item.kind} ${item.key} (${item.why}) is unclaimed: npm run board -- claim ${item.kind} ${item.key}`)
@@ -396,7 +401,9 @@ async function main(argv) {
   if (command === 'logout') { await rm(tokenFile(), { force: true }); console.log('Signed out.'); return 0 }
   if (command === 'whoami') { const name = await whoami(); console.log(name ? '@' + name : 'Not signed in: npm run board -- login'); return name ? 0 : 1 }
   if (command === 'list') {
-    const query = new URLSearchParams(Object.entries({ kind: rest[0], key: rest[1], holder: option('--holder'), released: flag('--released') && '1' }).filter(([, value]) => value))
+    const holder = option('--holder')
+    if (flag('--holder') && (!holder?.trim() || holder.startsWith('-'))) throw new Error('Give a GitHub login after --holder.')
+    const query = new URLSearchParams(Object.entries({ kind: rest[0], key: rest[1], holder, released: flag('--released') && '1' }).filter(([, value]) => value))
     const { claims, released } = await boardRequest('/agent-board/claims' + (query.size ? '?' + query : ''))
     if (!claims.length) console.log('No active claims' + (rest.length ? ' for ' + rest.join(' ') : '') + '.')
     claims.forEach(print)
@@ -421,7 +428,8 @@ async function main(argv) {
     const box = await inbox()
     if (!box) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
     const expiring = box.expiring ?? []
-    if (!box.waiting.length && !box.replies.length && !expiring.length && !box.followups?.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
+    if (!box.waiting.length && !box.replies.length && !expiring.length && !box.followups?.length && !box.pilotTasks?.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
+    for (const task of box.pilotTasks ?? []) console.log('Verify source PR #' + task.source + ' · «' + task.body + '»\n  npm run board -- take ' + task.id + ' (docs/AGENT_EVALS.md).')
     for (const item of box.followups ?? []) console.log(formatFollowup(item))
     if (box.waiting.length || box.replies.length) console.log(UNTRUSTED)
     if (box.waiting.length) console.log('\nWaiting for your answer (npm run board -- reply <id> "…"):\n' + box.waiting.map(thread => describeThread(thread).join('\n')).join('\n'))
@@ -465,6 +473,14 @@ async function main(argv) {
     if (command === 'delete') console.log('Deleted ' + result.deleted + '.'); else console.log(describeThread(result.message).join('\n'))
     return 0
   }
+  if (command === 'claim-collection') {
+    if (rest[0] !== 'zoom-multistomp') throw new Error('Usage: npm run board -- claim-collection zoom-multistomp')
+    const token = await readToken()
+    if (!token) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+    const result = await boardRequest('/agent-board/collections/zoom-multistomp', { method: 'POST', token, body: {} })
+    console.log(result.claims.length + ' Zoom effects reserved on ' + result.claims[0].branch + '.')
+    return 0
+  }
   if (command === 'claim') {
     const [kind, key] = rest
     if (!KINDS.includes(kind) || !key) throw new Error('Usage: npm run board -- claim <' + KINDS.join('|') + '> <key> [--note "…"] [--pr <n>] [--branch <name>]')
@@ -484,7 +500,7 @@ async function main(argv) {
     let name = pullRequestAuthor()
     if (!name) try { name = await whoami() } catch (error) { if (!(error instanceof BoardUnavailable)) throw error }
     // In a pull request's CI run the author is known from the event, and an unclaimed module, hook or migration fails.
-    const result = await checkBranch({ root, base, login: name, requireClaims: Boolean(pullRequestAuthor()) })
+    const result = await checkBranch({ root, base, login: name, requireClaims: Boolean(pullRequestAuthor()), pullRequest: pullRequestEvent()?.number ?? null })
     result.lines.forEach(line => console.log(line))
     return result.ok ? 0 : 1
   }

@@ -1,5 +1,47 @@
 # Direct Jump Kyoti: hardware record
 
+## 0.2.0-experimental over USB (19 November 2026)
+
+The author, Zac Kyoti, on his Octatrack MKI, OS 1.40C, at the owner's request (#1714), the USB side driven by the coding agent with `npm run device` on his say-so; he did the keys, the listening and the power cycle. Nothing was saved to his project.
+
+- Base: a development build of the site from this branch (commit `994c44863`) gave the Modwerk base; he flashed it from the card (OS UPGRADE). Identity `c889442d9b119d5f…`, no modules kept before the run.
+- USB package: `direct-jump-kyoti/0.2.0-experimental.mwrm`, SHA-256 `ed3ba88a2f57c7f5ab122a5f572a8a814c91a338c5baa3a56da324c86d71060d` (4,546 bytes), the published file of this branch.
+
+1. Install and Keep: `npm run device -- try <package> --seconds 5 --accept`, the same offer the site's Sync sends: a 5 s trial with no crash, stall, freeze or skipped track logged, accepted, generation 1, the module list `DirectJmp Kyoti` (`075d79a3`).
+2. With Direct Jump ON, his checks, all passed: a jump from a pattern on Part 1 into one on Part 2; the restart case (A01, 16 steps, from PLAY; a normal change with Direct Jump OFF to the 12-step A02; Direct Jump ON and, about 4 steps into A02, a jump to the 12-step A03: A03 landed in phase with A02 and the 1:2 hi-hat stayed in step); a latched [FILL] stayed on across a jump; a Part-changing jump with SILENCE TRACKS on made no pop.
+3. Power cycle: [PTN] + [YES] showed DIRECT JUMP ON on its first press, so it came back OFF; the module list still held DirectJmp Kyoti.
+4. Removal while Direct Jump was ON and a pattern played: `npm run device -- remove <package> --accept`, a 5 s trial with nothing logged, accepted, the list empty (the unit's log: the set went from `[075d79a3]` to `[]`). Afterwards [PTN] + [YES] and a cue behaved as stock.
+5. A trial left to roll back: `npm run device -- try <package> --seconds 10` without `--accept`: 10 s running, nothing logged, rolled back, the list empty.
+6. CPU price, on a development twin of the same base built from this branch (`878307834ad3c23a…`, RAM-booted; a power cycle returns to the flashed base), the transport stopped between readings, his project's A02 (12 steps) on Part 1 playing for each reading: `npm run device:price -- direct-jump-kyoti`: frame interrupt 54.3 % before and 54.3 % installed (OFF), CPU meter 63.9 % both, DSP cores +0.4 and +0.8 per mille, rolled back. Direct Jump turned ON by him during a second rolled-back trial: 51.7 % and 62.0 %; without the module right after, twice: 51.7 % and 51.7 %, CPU 62.2 % and 62.5 %. No render skipped. Price 0.0.
+
+Limitations: one MKI and one project; the checks are his by ear and eye, nothing recorded. The Plays-Free MIDI track, other lengths and scales and LFO AUTO CHANGE were not run again over USB (they passed on the card image, below). The install went through `npm run device`, not the site's own Sync page. No MKII ran this version.
+
+## 0.2.0-experimental (17 November 2026)
+
+The author, Zac Kyoti, on his Octatrack MKI, OS 1.40C. He flashed the native card image of this module alone with every stock effect kept: `OCTATRACK_MW_DJK73B.bin` (card OS UPGRADE, SHA-256 `912343943b156624d75e526ff8d382bbd3ddc3b8dca950cc9c707d8d3990b20e`), OS VERSION MW_DJK73B, MAIN OS SHA-256 `a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c`, built from this branch's source at `20d216e1b454edee281d66dcfb179275fe24b4b0` (DIRECT JUMP V7.3 as in Zac-Kyoti/octatrack-kyoti-fw `cd788e9`, byte for byte, and his MIDI Plays-Free fix). His report: "Flashed. All tests pass."
+
+The checklist he ran, all 13 items passed:
+
+1. Boot: starts normally, OS version MW_DJK73B.
+2. Toggle: [PTN] + [YES] shows DIRECT JUMP ON; releasing [PTN] leaves the pattern chooser shut; again shows DIRECT JUMP OFF.
+3. OFF at power-on: turned ON, power-cycled, it came up OFF (a cue waits for the pattern end).
+4. A jump from a pattern on Part 1 to one on Part 2 lands on the next step with Part 2 active and its sounds.
+5. Lengths and scales: jumps between patterns of other lengths and into a PER TRACK pattern with differing track scales land where the pattern would be had it played since PLAY, or since the last normal pattern change (in time, no step shift).
+6. A cue in the playing pattern's last step lands on its grid point.
+7. Trig conditions: 1:2 and 1:4 trigs keep alternating across jumps, in step with what was playing; a latched [FILL] stays on after a jump; a PRE trig right after a jump plays.
+8. Restart (V7.3): A01 (16 steps) from PLAY, a normal change with Direct Jump OFF to a 12-step A02, then Direct Jump ON and, about 4 steps into A02, a jump to a 12-step A03: A03 lands in phase with A02, and a 1:2 hi-hat stays in step across the jump.
+9. LFO AUTO CHANGE on: a sample ringing from the old pattern keeps its LFO until its own track's first trig in the new pattern; tracks with no trig get the new Part's LFOs at once.
+10. SILENCE TRACKS on: a Part-changing jump that silences ringing tracks does not pop.
+11. A Plays Free MIDI track with trig quantize DIRECT in PER TRACK mode keeps playing after its trig key starts it and lands with its own scale on a jump; with gear on MIDI OUT, the Program Change follows the pattern that plays and no MIDI START is sent on a jump.
+12. With Direct Jump OFF, pattern changes, the arranger and chains behave as on the stock OS.
+13. Nothing odd: no crash, freeze or wrong landing.
+
+Items 5 and 7 were worded for V7.3's rule (since PLAY, or since the last normal pattern change) before the run.
+
+Limitations: a functional report from one MKI. The project, how long it ran and whether gear was attached to MIDI OUT for item 11 are not stated; nothing was timed or recorded. The USB package `ed3ba88a…` was not installed in this run (it ran on 19 November 2026, above), and no MKII ran this version.
+
+His own builds of the same Direct Jump code (not Modwerk builds) before this run: on 15 November 2026 the standalone image `140C_KDJ7` (mainos `7c6131e7…`, V7.2.2) ended the SILENCE TRACKS pop at a Part-changing jump, and KYOTI V1.8C (beside his Clyps module) passed landings at other lengths and scales, a cue in the last step, trig conditions across a jump and each track's Part with LFO AUTO CHANGE on; on 16 November 2026 KYOTI V1.8C with V7.3 (`KY18C DJR1`, mainos `9d1a29c9…`) passed the restart case and a Clyps load after the jump.
+
 ## 0.1.2-experimental (25 October 2026)
 
 The same unit, base and kept set as the 0.1.1 run below, the same day, at the owner's request; no power cycle, no flash, nothing saved, the kept set put back.

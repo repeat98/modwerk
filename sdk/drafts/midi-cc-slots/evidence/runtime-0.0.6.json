@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-24",
+  "version": "0.0.6-experimental",
+  "package": {
+    "version": "0.0.6-experimental",
+    "sha256": "8b3c10ad5e670da3eca6eba7094dbf1be95fefcb4313e8f48f1df9a7e2da920e",
+    "bytes": 7732,
+    "imageBytes": 5616,
+    "abi": 7,
+    "features": 3,
+    "sites": 21,
+    "copies": 16,
+    "profile": true
+  },
+  "sourceSha256": {
+    "profile.c": "ebbdee0400704d969006c554e9fed0761afae24990bad32f23860129bce64401",
+    "profile_140c.c": "dbbab63d40563d19fdaa5ebbb9ea37a33c0fa875c7b26f80f0128f53382add78",
+    "profile_names.s": "679fd2a0f53190879e670b8daa1ea4746d873b5add87b6ab3c8c6c40b510481e",
+    "slots.s": "1b89d3aef8f476258ef17abbe12b65c21368374a210ad9542599699f5e48f137"
+  },
+  "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+  "guardedReconstruction": {
+    "packageSha256": "8b3c10ad5e670da3eca6eba7094dbf1be95fefcb4313e8f48f1df9a7e2da920e",
+    "sites": 21,
+    "copies": 16,
+    "imageBytes": 5616,
+    "relocations": 81,
+    "stockFreeScan": "passed at 16 bytes",
+    "currentBaseDirectOverlap": "none",
+    "installedFileGuards": true,
+    "images": [
+      {
+        "origin": "0x400d64e0",
+        "sha256": "07ed61970573b1d57d141c14470bfaf2bf47a3d77e9b99c399c85a755722c183"
+      },
+      {
+        "origin": "0x400d65e0",
+        "sha256": "9445dd903ffe4a6c63723b51fe9a428ea890cf1cc9793a094a229be71d1b4079"
+      }
+    ],
+    "hardware": "not tested",
+    "loaderLifecycle": "not tested on device"
+  },
+  "nativeCard": {
+    "candidateSha256": "07ed61970573b1d57d141c14470bfaf2bf47a3d77e9b99c399c85a755722c183",
+    "scheduledCandidateSha256": "174e6b1514ef86cb347c274d7843132ac5db0e0152af0f6ca1a913b20a6d64c5",
+    "uiTickShim": {
+      "site": "0x4005221e",
+      "stub": "0x400d7c00",
+      "sha256": "4b9231342318b444b4f00b0af2fe55f8068dda78c248181e556e9467b18c4db7"
+    },
+    "packageSha256": "8b3c10ad5e670da3eca6eba7094dbf1be95fefcb4313e8f48f1df9a7e2da920e",
+    "origin": "0x400d64e0",
+    "checks": [
+      "create: engine loads project profile",
+      "native F opens stock editor",
+      "native UP enters name 0",
+      "native YES commits project name",
+      "Bank 1 supplies channel 2 default",
+      "create: panel selects bank 2",
+      "Bank 2 inherits Bank 1 channel",
+      "Bank 2 accepts channel 5 override",
+      "create: panel selects bank 3",
+      "Bank 3 inherits Bank 1 rather than Bank 2 override",
+      "same name follows bank changes",
+      "create: card writes flushed without errors",
+      "create: retirement starts with editor open",
+      "create: editor closes after module poisoning",
+      "create: SRC caches remain on stock after retirement",
+      "create: both project-local checkpoints exist",
+      "create: checkpoint checksum matches card contents",
+      "create: checkpoint checksum matches card contents",
+      "restart: engine loads project profile",
+      "fresh native process restores name from card",
+      "fresh native process restores Bank 1 default",
+      "restart: panel selects bank 2",
+      "fresh native process restores Bank 2 override",
+      "stock SRC setup reads restored channel 5",
+      "restart: panel selects bank 3",
+      "fresh native process preserves Bank 3 default",
+      "restart: card writes flushed without errors",
+      "restart: retirement starts with editor open",
+      "restart: editor closes after module poisoning",
+      "restart: SRC caches remain on stock after retirement",
+      "restart: both project-local checkpoints exist",
+      "restart: checkpoint checksum matches card contents",
+      "restart: checkpoint checksum matches card contents"
+    ],
+    "hardware": "not tested",
+    "fixture": "Empty FAT16 card; stock firmware initializes missing working banks. No name/channel/project-file injection; explicit retirement-site restoration and code poisoning."
+  },
+  "secondPlacementCard": {
+    "candidateSha256": "9445dd903ffe4a6c63723b51fe9a428ea890cf1cc9793a094a229be71d1b4079",
+    "scheduledCandidateSha256": "e739e95e4fb7db6edcddc67b92094c163ee0da8e8bcc023d8b46a0cfca39e29a",
+    "uiTickShim": {
+      "site": "0x4005221e",
+      "stub": "0x400d7c00",
+      "sha256": "621b97748d6fc98dc63b92266789a3764fa298ac9b10af71058cecb8336272a5"
+    },
+    "packageSha256": "8b3c10ad5e670da3eca6eba7094dbf1be95fefcb4313e8f48f1df9a7e2da920e",
+    "origin": "0x400d65e0",
+    "checks": [
+      "create: engine loads project profile",
+      "native F opens stock editor",
+      "native UP enters name 0",
+      "native YES commits project name",
+      "Bank 1 supplies channel 2 default",
+      "create: panel selects bank 2",
+      "Bank 2 inherits Bank 1 channel",
+      "Bank 2 accepts channel 5 override",
+      "create: panel selects bank 3",
+      "Bank 3 inherits Bank 1 rather than Bank 2 override",
+      "same name follows bank changes",
+      "create: card writes flushed without errors",
+      "create: retirement starts with editor open",
+      "create: editor closes after module poisoning",
+      "create: SRC caches remain on stock after retirement",
+      "create: both project-local checkpoints exist",
+      "create: checkpoint checksum matches card contents",
+      "create: checkpoint checksum matches card contents",
+      "restart: engine loads project profile",
+      "fresh native process restores name from card",
+      "fresh native process restores Bank 1 default",
+      "restart: panel selects bank 2",
+      "fresh native process restores Bank 2 override",
+      "stock SRC setup reads restored channel 5",
+      "restart: panel selects bank 3",
+      "fresh native process preserves Bank 3 default",
+      "restart: card writes flushed without errors",
+      "restart: retirement starts with editor open",
+      "restart: editor closes after module poisoning",
+      "restart: SRC caches remain on stock after retirement",
+      "restart: both project-local checkpoints exist",
+      "restart: checkpoint checksum matches card contents",
+      "restart: checkpoint checksum matches card contents"
+    ],
+    "hardware": "not tested",
+    "fixture": "Empty FAT16 card; stock firmware initializes missing working banks. No name/channel/project-file injection; explicit retirement-site restoration and code poisoning."
+  },
+  "ccRegression": {
+    "checkCount": 398,
+    "candidateSha256": "07ed61970573b1d57d141c14470bfaf2bf47a3d77e9b99c399c85a755722c183",
+    "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+    "coverage": "MKII double-tap SETUP and independent click toggles; eight distinct channels; all CC assignments; stock controls; native restore; two actual sequencer locks with live base unchanged"
+  },
+  "hostCore": "Fresh processes; eight names; defaults; independent overrides including OFF; project isolation; playback gate; shortened names; failed and torn writes; foreign-file refusal; owned truncated peer is repaired and new data survives another fresh process",
+  "loader": "Actual C loader with host glue: install/Undo/removal/allocation recovery; exact 0.0.5 upgrade/Undo; simulated module-set save/restart/removal with synthetic companion",
+  "hardware": "not tested",
+  "limitations": [
+    "Private scheduling shim supplies base hook 0 on stock reconstruction; not full resident base/coexistence qualification.",
+    "Native project SAVE AS/copy/reload and physical restart unqualified.",
+    "Two project sidecars must be copied with project backups."
+  ]
+}

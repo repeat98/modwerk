@@ -12,7 +12,8 @@
 //       frozen UI or skipped track during the trial fails it (exit 1) and it is rolled back even with --accept
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
-//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
+//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back);
+//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial
 //   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
@@ -23,6 +24,7 @@
 //   npm run device -- do 'T5 FX2 FUNC+FX2 DOWN*4 YES w300 encC+3 ui stats'  # a sequence in one connection
 //   npm run device -- mem 0x80000ec4 16             # RAM, read-only (development bases)
 //   npm run device -- state                         # stopped / playing, recording
+//   npm run device -- usb                           # a module's USB function and the base's own reconnect for it (USB FUNCTION, usb_function.h)
 //   npm run device -- loader                        # the DSP loader's counters (--dsp-loader bases)
 //   npm run device -- report                        # its full report (dsp.c modwerk_dsp_report, version 11: 78 words; miss0-2 the first refused packet (dsp_receiver.asm))
 //   npm run device -- stats                         # CPU and DSP load, DSP arena, delay buffers, module pool (status.c; the modal is CUE + PROJ)
@@ -48,32 +50,51 @@ import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
-import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
-import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
+import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
+import { stageRefusal } from './octatrack-step-base.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
+  help: { type: 'boolean', short: 'h' },
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
+  split: { type: 'boolean', default: false },
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
+const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
+
+  serve [--share PATH]
+  status | stats | usb | state | missing | ui | loader | report
+  screen [--png FILE] [--scale 1-4]
+  try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
+  recover | lifecycle
+  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
+  mem ADDR LENGTH | probe 0|1 | meter 0|1
+
+  -h, --help   Show this help`
+if (values.help) {
+  console.log(usage)
+  process.exit(0)
+}
 let seconds = Number(values.seconds)
-if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
-  (['serve', 'status', 'stats', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
+if (!['serve', 'status', 'stats', 'usb', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
+  (['serve', 'status', 'stats', 'usb', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || (values.chunk && !(Number(values.chunk) >= 1 && Number(values.chunk) <= 4096 && Number.isInteger(Number(values.chunk))))) {
-  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | recover | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error(usage)
   process.exit(2)
 }
 
@@ -271,10 +292,26 @@ async function until(test, ms = 5000) {
   for (const start = Date.now(); Date.now() - start < ms; await wait(50)) if (await test()) return true
   return false
 }
-/** PART + an arrow (1 up, 2 right, 3 down, 4 left), then wait for the Part to change. */
+/** Is the unit an MKII? Stock's boot probe sets the flag at 0x46c8d18c on an MKII and clears it on an MKI. */
+let isMkii
+async function mkii() {
+  if (isMkii === undefined) isMkii = (await mem(0x46c8d18c, 4)).some(b => b)
+  return isMkii
+}
+/** Select Part n (1 up, 2 right, 3 down, 4 left), then wait for the Part to change. An MKII holds PART and taps the arrow.
+ * An MKI has no PART key, and stock checks FUNC there instead: FUNC + MIDI opens its Part window on the current Part, an
+ * arrow moves the cursor, YES selects and closes it (#2099). */
 async function part(n) {
-  await keys('PART+' + ['UP', 'RIGHT', 'DOWN', 'LEFT'][n - 1])
+  const arrow = ['UP', 'RIGHT', 'DOWN', 'LEFT'][n - 1]
+  if (await mkii()) await keys('PART+' + arrow)
+  else await run(`FUNC+MIDI w300 ${arrow} w150 YES`)
   if (!await until(async () => (await mem(0x80000003, 1))[0] === n - 1)) throw new Error('Part ' + n + ' did not become active.')
+}
+/** The Part menu (RENAME, RELOAD, SAVE, SAVE ALL), then `steps` in it. FUNC + PART on an MKII; on an MKI, FUNC + BANK in
+ * the Part window (FUNC + MIDI), which NO closes afterwards (#2099). The menu keeps its cursor and stops at RENAME. */
+async function partMenu(steps) {
+  if (await mkii()) await run('FUNC+PART w600 ' + steps)
+  else await run('FUNC+MIDI w300 FUNC+BANK w600 ' + steps + ' w300 NO w200')
 }
 /** Pick an effect by name through the stock chooser, then wait until the track runs it (effectTables: id -> descriptor
  * and id -> chooser row); what runs, 0x80000ec4 (FX1 T1-8, FX2). */
@@ -345,8 +382,10 @@ async function missing() {
  * bases: the next start leaves the set's first module out, or holds every module, as after a crash in its restore),
  * saved (the card set's result, modset.c: 1 restored, 10 left out, 11 held; development bases), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
- * inventory (the installed modules, INVENTORY),
- * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
+ * inventory (the installed modules, INVENTORY), restore (what this start's restore did with each saved module, RESTORE),
+ * adopt / adopt:off (development bases: from the next start, restore the card's set another base wrote, writing none),
+ * reload (the current Part from its saved copy, through the Part menu), savepart (SAVE there), gap (the longest time between frames since the last gap),
+ * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
@@ -354,7 +393,7 @@ async function missing() {
  * (spaces in NAME as _; it waits until the track runs it). */
 /** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
  * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
-export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|restore|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -383,6 +422,8 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if (step === 'missing') console.log(await missing())
     else if (step === 'inventory') console.log(JSON.stringify(await transport.inventory() ?? 'this base does not answer INVENTORY'))
     else if (step === 'off') console.log(JSON.stringify(await transport.off() ?? 'this base does not answer OFF')) // switched off in PROJ > MODWERK > MODULES
+    else if (step === 'restore') console.log(JSON.stringify(await transport.restore() ?? 'this base does not answer RESTORE')) // what this start's restore did with each saved module
+    else if (step.startsWith('adopt')) await devIn(43, step === 'adopt:off' ? 0 : 1, 1) // development bases: from the next start, restore the card's set another base wrote, and write none
     else if (step === 'xwatch') { // probe X bases (dev request 26): does anything write X:$7a92-$7fff? per core
       for (const core of [1, 0]) {
         for (const until = Date.now() + 10000; !(await devIn(26, 0x100 | core, 1))[0]; await wait(100))
@@ -422,6 +463,11 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       const [max, late, busy, frames, skips, tracks, share] = [0, 4, 8, 12, 16, 20, 24].map(at => b.readUInt32BE(at))
       console.log(`frame max ${pc(max)}, latest start ${pc(late)}, in the frame interrupt ${frames ? pc(busy * 256 / frames) : '-'} over ${frames} frames, skipped ${skips} on ${[...Array(8).keys()].filter(t => tracks >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'}, share ${pc(share)}`)
     }
+    else if ((m = /^late(?::(on|off))?$/.exec(step))) { // LATE (dev request 42): the late-entry wait's counts since the last read; late:off / late:on switch it
+      const b = Buffer.from(await devIn(42, m[1] === 'off' ? 1 : m[1] === 'on' ? 2 : 0, 20)), us = n => `${(n / 132).toFixed(1)} us`
+      const [latest, hits, waits, longest, on] = [0, 4, 8, 12, 16].map(at => b.readUInt32BE(at))
+      console.log(`late-entry wait ${on ? 'on' : 'off'}: latest entry ${us(latest)} late, ${hits} in the window (80-190 us), ${waits} waited, longest wait ${us(longest)}`)
+    }
     else if (step === 'cpu' || step.startsWith('cpu:')) { // CPU (dev request 30): cpu:PERCENT sets the CPU budget's allowance
       const b = Buffer.from(await devIn(30, Number(step.slice(4)) || 0, 76)), pc = n => (n / 478.91).toFixed(1)
       const tracks = [...Array(8).keys()].filter(t => b.readUInt32BE(8) >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'
@@ -431,7 +477,9 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     }
     else if (step === 'gap') { const g = Buffer.from(await devIn(23, 0, 4)).readUInt32BE(0); console.log(`gap ${g} counts ${(g / 132).toFixed(0)} us`) } // since the last read
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
-    else if (step === 'reload') await run('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w200 YES w1000')
+    else if (step === 'reload') await partMenu('UP w150 UP w150 UP w150 DOWN w200 YES w1000')
+    // SAVE from the same menu: only on a Part whose working copy equals its saved one (device:test, device:qualify).
+    else if (step === 'savepart') await partMenu('UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES w1000')
     else if ((m = /^hold:(\d)$/.exec(step))) await devIn(22, Number(m[1]), 1) // development bases: host frames wait N seconds, as after a boot
     else if (step === 'saved') { // the self-test record's card set, read without starting a test (modset.c's result)
       const b = Buffer.from(await devIn(21, 0, 96))
@@ -478,6 +526,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +
           `T5-8 ${r.dsp5to8.map(v => v / 10).join('/')}% playing ${r.playing}/${r.samples}` + (r.frameGap !== undefined ? ` frame gap ${r.frameGap} us, tick gap ${r.tickGap} frames` : ''))
+        if (log.sheds) console.log(`  live: ${log.sheds.count} renders skipped since the start (MWSK)${log.sheds.lateOver !== undefined ? `, ${log.sheds.lateOver} frame entries later than the late-entry wait can hold` : ''}`)
         if (log.crash) console.log(`  crash record ${log.crash.count}: vector ${log.crash.vector} PC 0x${log.crash.pc.toString(16)} code ${log.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${log.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}` + lined(crashNames(namesFor(identity.base), log.crash.pc, log.crash.stack)))
         if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words` + [describeStallFrames(log.stall.frames, log.stall)].filter(Boolean).map(line => '\n    ' + line).join(''))
       }
@@ -595,7 +644,9 @@ if (command === 'serve') {
         bench.socket.end(); await wait(300)
         // MODWERK_UNIT=served: whoever sent this line took the unit's turn for it (device-send.py), so the boot waits for none
         const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000, env: { ...process.env, MODWERK_UNIT: 'served' } })
-        out.push(r.stdout, r.stderr, 'serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
+        out.push(r.stdout, r.stderr)
+        if (r.status !== 0) out.push('error: ' + verb + ' failed (' + (r.error?.message ?? r.signal ?? 'exit ' + r.status) + ')')
+        out.push('serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
       } else if (verb === 'recover') { // a transaction left behind (an install whose reply went missing): undo it, as the site does
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const phase = session.status.phase
@@ -695,6 +746,15 @@ if (command === 'serve') {
     if (!['0', '1'].includes(file)) throw new Error('Use probe 0 or probe 1.')
     console.log('probe core', file, (await devIn(12, Number(file), 1))[0] ? 'sent' : 'not sent (busy or not idle)'); process.exit(0)
   }
+  if (command === 'usb') { // USB FUNCTION (0xC1, bRequest 41; usb_function.h): any base with ot_usb_functions, not only development ones
+    const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: 41, value: 0, index }, 8)
+    if (reply.status !== 'ok' || reply.data?.byteLength !== 8) throw new Error('This base takes no USB function from a module (it has no ot_usb_functions).')
+    const [state, live, table, reconnects, forced] = new Uint8Array(reply.data.buffer, reply.data.byteOffset, 8)
+    console.log(`${['settled', 'a reconnect is due', 'off the bus', 'back on the bus, waiting for the host'][state] ?? 'state ' + state}; ` +
+      `the configuration the host read ${live ? "holds a module's function" : "is the base's own"}; ${table ? 'a module contributes one' : 'no module contributes one'}; ` +
+      `${reconnects} reconnects, ${forced} of them without an idle control endpoint`)
+    process.exit(0)
+  }
   if (command === 'state') { const [stopped, recording] = await devIn(6, 0, 2); console.log(stopped ? 'stopped' : 'playing', recording ? '(recording)' : ''); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.
   const session = await UploadSession.connect(transport, identity.base, { timeoutMs: command === 'flash' ? 180000 : command === 'boot' ? 60000 : 10000 })
@@ -726,10 +786,22 @@ if (command === 'serve') {
     const packages = file.split(',').flatMap(name => name === '+refuse'
       ? [runtimePackage(identity.base, tick, 0x6d770002, [ENTRY]).data, runtimePackage(identity.base, tick, 0x6d770003, [[0x40000402, [0xff, 0xe4]]]).data]
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
-    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages)
-    console.log(`set: ${packages.length} changes, ${data.length} bytes`)
-    try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
-    catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
+    // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
+    if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
+    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+    const offer = async packages => {
+      const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
+      console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
+      try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
+      catch (error) {
+        // 38 catalogue packages outgrew the module pool on 23 November 2026 (MKII, 0.8.1 twin): halves of 17 and 16 ran
+        const split = values.split && packages.length > 1 && /RUNTIME_MEMORY/.test(error.message)
+        console.log((split ? `too large for one trial (RUNTIME_MEMORY), in halves: ` : 'refused: ') + error.message)
+        await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status))
+        if (split) for (const half of [packages.slice(0, Math.ceil(packages.length / 2)), packages.slice(Math.ceil(packages.length / 2))]) await offer(half)
+      }
+    }
+    await offer(packages)
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
   }
   if (command === 'flash') {
@@ -738,6 +810,8 @@ if (command === 'serve') {
     const parsed = formats.parse(new Uint8Array(readFileSync(join(file, 'NOT_FLASH_CANDIDATE.bin'))), OCTATRACK), container = parsed.container
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (identity.base !== expected) throw new Error(`The unit runs base ${identity.base.slice(0, 16)}…, not ${expected.slice(0, 16)}…: RAM-boot it first (boot DIR); a base writes only itself.`)
+    const tooBig = stageRefusal("The base's container", container.length, session.status.capacity)
+    if (tooBig) throw new Error(tooBig)
     let shown = 0
     await session.stage({ base: identity.base, data: container, sha256: sha(container) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
       if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
@@ -763,7 +837,9 @@ if (command === 'serve') {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
-    const arm = async (s, base) => {
+    const arm = async (s, base, flashed = false) => {
+      const tooBig = stageRefusal(join(file, 'MAIN.raw'), image.length, s.status.capacity, flashed)
+      if (tooBig) throw new Error(tooBig)
       let shown = 0
       await s.stage({ base, data: image, sha256: sha(image) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
         if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
@@ -780,7 +856,7 @@ if (command === 'serve') {
       // the boot falls back to the flashed one, which can then arm it properly.
       if (back.base !== expected && back.base !== identity.base) {
         console.log(`came back on the flashed base ${back.base.slice(0, 16)}…: arming again from it`)
-        await arm(back.session, back.base)
+        await arm(back.session, back.base, true)
         backBench.socket.end()
         back = await rebooted()
       }

@@ -12,7 +12,7 @@ import { moduleHref } from '../routing'
 import { Icon } from './Icon'
 import { ModulePreview } from './ModulePreview'
 import { ModuleRelease } from './ModuleRelease'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase, USB_AUDIO_MODULE } from '../config/usb-audio'
 import { ModuleWorksCount } from '../community/ModuleWorksCount'
 import { ModuleAuthors } from './ModuleAuthors'
 import { AddBlockChip, AddBlockPrompt } from './AddBlockPrompt'
@@ -85,7 +85,7 @@ export function CardProof({ stability, statistics, name, compared, canCompare, o
 // A flagged module (module-cautions.ts) carries a warning badge; the reason is in its title and read out to screen readers.
 export function CautionBadge({ id, descriptionId }: { id: string; descriptionId?: string }) {
   const caution = moduleCaution(id)
-  return caution ? <span id={descriptionId} className="module-caution-badge" title={caution.title + '. ' + caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">: {caution.title}. {caution.detail}</span></span> : null
+  return caution ? <span id={descriptionId} className="module-caution-badge" data-tier={caution.tier} title={caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">. {caution.detail}</span></span> : null
 }
 
 export function ModuleCard({ module, selected, statistics, viewedVersion, baseline, compared, canCompare, onToggle, onCompare, onBrowse, block, onSwap }: ModuleCardProps) {
@@ -105,7 +105,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
     <div className="module-card-body" inert={prompt.open}>
       <div className="module-card-title">
         <div className="module-card-heading"><a href={moduleHref(module.id)} aria-describedby={caution ? cautionId : undefined} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
-        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
+        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={comesWithBase(module.id)} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>

@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-24",
+    "changes": [
+      "In arranger mode, RELOAD PART (FUNC + CUE) keeps the current arrangement row's scenes A and B instead of the Part's.",
+      "The row's scenes are heard at once; a side set to -- gets the scene the rows above left, as the row plays without a reload.",
+      "Pattern mode and every other reload stay exactly as stock."
+    ]
+  }
+]

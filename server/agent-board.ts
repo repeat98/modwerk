@@ -7,6 +7,8 @@ import type { Database, Env } from './platform'
 import { throttle } from './auth'
 import { digest, HttpError, jsonBody, response } from './security'
 import { githubConfig } from './github'
+import zoomRelease from '../sdk/approvals/zoom-release-waivers.json'
+import authors from '../.github/module-authors.json'
 
 export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'] as const
 export type ClaimKind = typeof CLAIM_KINDS[number]
@@ -116,9 +118,9 @@ const held = (row: ClaimRow) => `${row.kind} ${row.claim_key} is claimed by @${r
 export async function boardUser(request: Request, env: Env, db: Database) {
   const value = request.headers.get('X-Modwerk-Developer') ?? ''
   if (!env.GITHUB_OAUTH_CLIENT_ID || !env.GITHUB_OAUTH_CLIENT_SECRET || !/^[a-f0-9]{64}$/.test(value)) return null
-  return await db.prepare('SELECT u.id,u.github_login FROM users u JOIN developer_sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.client_hash=? AND s.expires>? AND u.suspended=0 AND u.github_id IS NOT NULL AND u.github_login IS NOT NULL').bind(await digest(value), await digest(env.GITHUB_OAUTH_CLIENT_ID + ':' + env.GITHUB_OAUTH_CLIENT_SECRET), Math.floor(Date.now() / 1000)).first<{ id: string; github_login: string }>()
+  return await db.prepare('SELECT u.id,u.github_login,u.github_id FROM users u JOIN developer_sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.client_hash=? AND s.expires>? AND u.suspended=0 AND u.github_id IS NOT NULL AND u.github_login IS NOT NULL').bind(await digest(value), await digest(env.GITHUB_OAUTH_CLIENT_ID + ':' + env.GITHUB_OAUTH_CLIENT_SECRET), Math.floor(Date.now() / 1000)).first<{ id: string; github_login: string; github_id: string }>()
 }
-function needBoardUser(user: { id: string; github_login: string } | null) {
+function needBoardUser(user: Awaited<ReturnType<typeof boardUser>>) {
   if (!user) throw new HttpError(401, 'Sign in for the board first: npm run board -- login')
   return user
 }
@@ -126,6 +128,38 @@ async function expireKey(db: Database, kind: ClaimKind, key: string, now: string
   await db.prepare("UPDATE agent_claims SET released_at=?,released_reason='expired' WHERE kind=? AND claim_key=? AND released_at IS NULL AND expires_at IS NOT NULL AND expires_at<=?").bind(now, kind, key, now).run()
 }
 const expiry = (now: number, linked: boolean) => linked ? null : new Date(now + CLAIM_DAYS * DAY).toISOString()
+
+// Each effect keeps its own unique board key. The owner reserves this named release's keys together on its branch.
+const zoomBranch = 'codex/zoom-multistomp-effects'
+const zoomKeys = Object.keys(zoomRelease.modules).map(id => 'zoom/' + id)
+const jsonZoomKeys = JSON.stringify(zoomKeys)
+const zoomMember = "kind='module' AND branch=? AND claim_key IN (SELECT value FROM json_each(?))"
+const activeClaim = 'released_at IS NULL AND (expires_at IS NULL OR expires_at>?)'
+
+async function reserveZoomCollection(db: Database, userId: string, now: string, nowMs: number) {
+  const keys = 'SELECT value FROM json_each(?)'
+  const other = await db.prepare(SELECT + ` WHERE c.kind='module' AND c.claim_key IN (${keys}) AND c.released_at IS NULL
+    AND (c.expires_at IS NULL OR c.expires_at>?) AND (c.user_id<>? OR c.branch IS NOT ?) LIMIT 1`)
+    .bind(jsonZoomKeys, now, userId, zoomBranch).first<ClaimRow>()
+  if (other) throw new HttpError(409, held(other))
+
+  // One transaction expires stale rows and acquires every missing key. A racing holder rolls back the entire insert.
+  const members = JSON.stringify(zoomKeys.map(key => ({ key, id: crypto.randomUUID() })))
+  await db.batch([
+    db.prepare(`UPDATE agent_claims SET released_at=?,released_reason='expired' WHERE kind='module' AND claim_key IN (${keys})
+      AND released_at IS NULL AND expires_at<=?`).bind(now, jsonZoomKeys, now),
+    db.prepare(`INSERT INTO agent_claims(id,kind,claim_key,user_id,branch,note,created_at,renewed_at,expires_at)
+      SELECT json_extract(m.value,'$.id'),'module',json_extract(m.value,'$.key'),?,?,
+      'MS-70CDR collection release',?,?,? FROM json_each(?) m WHERE NOT EXISTS
+      (SELECT 1 FROM agent_claims c WHERE c.kind='module' AND c.claim_key=json_extract(m.value,'$.key')
+      AND c.released_at IS NULL AND c.user_id=? AND c.branch=?)`)
+      .bind(userId, zoomBranch, now, now, expiry(nowMs, false), members, userId, zoomBranch),
+  ]).catch(() => { throw new HttpError(409, 'The collection could not be reserved. Check its individual claims and try again.') })
+  const { results } = await db.prepare(SELECT + ` WHERE c.user_id=? AND ${zoomMember} AND c.released_at IS NULL`)
+    .bind(userId, zoomBranch, jsonZoomKeys).all<ClaimRow>()
+  if (results.length !== zoomKeys.length) throw new HttpError(409, 'The collection could not be reserved. Check its individual claims and try again.')
+  return response({ claims: results.map(view) })
+}
 
 type Outcome = 'reproduced' | 'different-result'
 type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; priority: string | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null; parent_issue: number | null; parent_claim: string | null; outcome: Outcome | null; evidence: number | null }
@@ -170,7 +204,11 @@ export async function boardReply(db: Database, userId: string, id: string, value
   if (!parent) throw new HttpError(404, 'No open board thread has that id.')
   const reference = pullRequest(evidence)
   if (outcome !== undefined || reference !== null) {
-    if (parent.kind !== 'finding' || (outcome !== 'reproduced' && outcome !== 'different-result')) throw new HttpError(400, 'Record reproduced or different-result on a finding.')
+    const pilot = parent.kind === 'wanted' && parent.user_id === 'tars' && parent.topic_key?.startsWith('eval-pilot-')
+    if (pilot) {
+      const holder = await db.prepare('SELECT github_login FROM users WHERE id=?').bind(userId).first<{ github_login: string }>()
+      if (!holder || holder.github_login !== parent.to_login || outcome !== 'different-result') throw new HttpError(403, 'Only the verifier who took this task can record a different result. Link your case PR for a successful verification.')
+    } else if (parent.kind !== 'finding' || (outcome !== 'reproduced' && outcome !== 'different-result')) throw new HttpError(400, 'Record reproduced or different-result on a finding.')
     if (parent.user_id === userId) throw new HttpError(400, 'An independent result comes from another developer.')
     if (pr) throw new HttpError(400, 'Use evidence for the issue or PR that records your result.')
   }
@@ -269,6 +307,10 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
   if (action === 'take') {
     // A wanted task has one holder at a time, named in to_login; taking it again renews it, and --pr links its pull request.
     if (row.kind !== 'wanted') throw new HttpError(400, 'Only a wanted task is taken; answer a question with reply.')
+    if (row.user_id === 'tars' && row.topic_key?.startsWith('eval-pilot-')) {
+      const source = await db.prepare("SELECT json_extract(value,'$.authorId') AS author FROM maintenance_bot_state WHERE key GLOB 'eval-pilot/*' AND json_extract(value,'$.task')=?").bind(id).first<{ author: number }>()
+      if (!source || String(source.author) === String(user!.github_id)) throw new HttpError(403, 'A different developer verifies this fix.')
+    }
     await db.prepare('UPDATE agent_messages SET to_login=?,active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=? AND (to_login IS NULL OR to_login=?)').bind(user!.github_login, now, pr, pr, id, user!.github_login).run()
     const taken = (await thread(db, id, nowMs))!
     if (taken.to !== user!.github_login) throw new HttpError(409, `@${taken.to} has taken this task. Ask them (npm run board -- ask ${row.topic_kind} ${row.topic_key} "…" --to ${taken.to}), or pick another.`)
@@ -342,7 +384,12 @@ async function inbox(db: Database, user: { id: string; github_login: string }, n
   const expiresBy = new Date(nowMs + CLAIM_EXPIRY_NOTICE_DAYS * DAY).toISOString()
   const { results: expiring } = await db.prepare(SELECT + ' WHERE c.user_id=? AND c.released_at IS NULL AND c.pull_request IS NULL AND c.expires_at>? AND c.expires_at<=? ORDER BY c.expires_at, c.id').bind(user.id, now, expiresBy).all<ClaimRow>()
   const drafts = await followups(db, nowMs, user.id)
-  return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs), expiring: expiring.map(view), ...(drafts.length ? { followups: drafts } : {}) }
+  const { results: pilotTasks } = await db.prepare(`SELECT m.id,m.body,json_extract(s.value,'$.number') AS source FROM maintenance_bot_state s
+    JOIN agent_messages m ON m.id=json_extract(s.value,'$.task') JOIN users u ON u.id=?
+    WHERE s.key GLOB 'eval-pilot/*' AND json_extract(s.value,'$.result') IS NULL AND m.ended_at IS NULL
+      AND m.created_at>? AND (m.to_login IS NULL OR m.to_login=u.github_login) AND CAST(json_extract(s.value,'$.authorId') AS TEXT)<>CAST(u.github_id AS TEXT)
+    ORDER BY m.created_at LIMIT 5`).bind(user.id, live[2]).all<{ id: string; source: number; body: string }>()
+  return { login: user.github_login, ...(pilotTasks.length ? { pilotTasks } : {}), waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs), expiring: expiring.map(view), ...(drafts.length ? { followups: drafts } : {}) }
 }
 
 /** How many developers use the board: counts only, no names. */
@@ -422,6 +469,12 @@ export async function agentBoardRoutes(request: Request, env: Env, db: Database,
     return response(weeks === null ? await activity(db, nowMs) : await weeklyActivity(db, nowMs, weeks))
   }
   if (path === '/api/agent-board/messages' || path.startsWith('/api/agent-board/messages/')) return await messageRoutes(request, url, env, db, adminId, nowMs)
+  if (path === '/api/agent-board/collections/zoom-multistomp' && request.method === 'POST') {
+    const user = needBoardUser(await boardUser(request, env, db))
+    if (user.github_id !== String(authors.accounts.repeat98)) throw new HttpError(403, 'This reservation belongs to the release owner.')
+    await throttle(db, 'agent-board:' + user.id, CLAIM_WRITES_PER_HOUR)
+    return await reserveZoomCollection(db, user.id, now, nowMs)
+  }
   if (path === '/api/agent-board/claims' && request.method === 'GET') {
     const kind = url.searchParams.get('kind'), key = url.searchParams.get('key'), holder = url.searchParams.get('holder')?.replace(/^@/, '').toLowerCase()
     const where: string[] = [], binds: unknown[] = []
@@ -456,8 +509,11 @@ export async function agentBoardRoutes(request: Request, env: Env, db: Database,
       await db.prepare('UPDATE agent_claims SET renewed_at=?,branch=COALESCE(?,branch),pull_request=COALESCE(?,pull_request),note=CASE WHEN ?=1 THEN ? ELSE note END,expires_at=CASE WHEN COALESCE(?,pull_request) IS NULL THEN ? ELSE NULL END WHERE id=?').bind(now, branch, pr, body.note === undefined ? 0 : 1, note, pr, expiry(nowMs, false), current.id).run()
       return response({ claim: view((await db.prepare(SELECT + ' WHERE c.id=?').bind(current.id).first<ClaimRow>())!), renewed: true })
     }
-    const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_claims WHERE user_id=? AND released_at IS NULL AND (expires_at IS NULL OR expires_at>?)').bind(user.id, now).first<{ n: number }>()
-    if ((count?.n ?? 0) >= CLAIM_LIMIT) throw new HttpError(409, `You hold ${CLAIM_LIMIT} claims. Release one you no longer need first (npm run board -- release <id>).`)
+    // The limit keeps one developer's agents from hoarding keys. The owner, who assigns the work, has none (24 Nov 2026).
+    if (user.github_id !== String(authors.accounts.repeat98)) {
+      const count = await db.prepare(`SELECT COUNT(*) AS n FROM agent_claims WHERE user_id=? AND ${activeClaim}`).bind(user.id, now).first<{ n: number }>()
+      if ((count?.n ?? 0) >= CLAIM_LIMIT) throw new HttpError(409, `You hold ${CLAIM_LIMIT} claims. Release one you no longer need first (npm run board -- release <id>).`)
+    }
     const id = crypto.randomUUID()
     try {
       await db.prepare('INSERT INTO agent_claims(id,kind,claim_key,user_id,branch,pull_request,note,created_at,renewed_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id, kind, key, user.id, branch, pr, note, now, now, expiry(nowMs, pr !== null)).run()
@@ -513,7 +569,8 @@ export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
     db.prepare(`UPDATE agent_messages AS m SET ended_at=?,ended_reason='expired' WHERE m.parent_id IS NULL AND m.ended_at IS NULL AND ${ENDED}`).bind(now, ...cutoffs(nowMs)),
   ])
   if (!githubConfig(env)) return
-  const folds = (await db.prepare('SELECT id,pull_request FROM agent_messages WHERE parent_id IS NULL AND ended_at IS NULL AND pull_request IS NOT NULL ORDER BY checked_at IS NOT NULL,checked_at LIMIT ?').bind(batch).all<{ id: string; pull_request: number }>()).results
+  // Pilot tasks close when their independent case passes the controls and enters the suite.
+  const folds = (await db.prepare("SELECT id,pull_request FROM agent_messages WHERE parent_id IS NULL AND ended_at IS NULL AND pull_request IS NOT NULL AND NOT (user_id='tars' AND kind='wanted' AND topic_key GLOB 'eval-pilot-*') ORDER BY checked_at IS NOT NULL,checked_at LIMIT ?").bind(batch).all<{ id: string; pull_request: number }>()).results
   for (const row of folds) {
     try {
       const pull = await pulls(env, '/pulls/' + row.pull_request) as PullState

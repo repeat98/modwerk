@@ -50,11 +50,12 @@ class SynthRelease(unittest.TestCase):
             self.assertEqual(set(guard), {'path', 'address', 'length', 'sha256'})
             self.assertRegex(guard['sha256'], r'^[a-f0-9]{64}$')
 
-    def test_experimental_release_does_not_claim_hardware_or_timing(self):
+    def test_experimental_release_keeps_scoped_hardware_and_unmeasured_timing(self):
         doc = json.loads((FOLDER/'octamod.module.json').read_text())
         self.assertEqual(doc['version'], RECORD['version'])
         self.assertNotIn('build', doc)
-        self.assertEqual(doc['tests']['hardwareStatus'], 'untested')
+        # The catalogue test binds a reported USB trial to this exact package's bytes and report.
+        self.assertIn(doc['tests']['hardwareStatus'], ('untested', 'reported'))
         self.assertNotIn('qualification', doc['tests'])
         self.assertTrue((APP/'sdk/octabam/modules/synth').exists())
         for name in ['sdk/catalog.json','src/catalog/module-documents.json']:

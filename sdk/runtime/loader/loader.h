@@ -201,12 +201,23 @@ extern uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS];
 extern const uint8_t modwerk_events_code[], modwerk_events_code_end[];
 #ifdef RUNTIME_SITE_EVENT_IN_USE
 /* The machine's UI tick (a task, never an interrupt): asks each module that subscribes the event the base asks
- * (RUNTIME_SITE_EVENT_IN_USE) and moves those answering 0 out of the rows of the events that rest
- * (RUNTIME_SITE_EVENT_RESTS), and those answering nonzero back. 1 when the rows changed. */
+ * (RUNTIME_SITE_EVENT_IN_USE), and the machine for each module it judges (modwerk_machine_in_use), and moves those
+ * answering 0 out of the rows of the events that rest (RUNTIME_SITE_EVENT_RESTS), and those answering nonzero back.
+ * 1 when the rows changed. A machine may call it from its own task when it needs a module awake at once. */
 int modwerk_runtime_rest_poll(void);
 #endif
 #endif
+/* The UI tick, unlocked (a task): whether module m, which contributes to the table the machine judges
+ * (RUNTIME_SITE_EVENT_JUDGED: the Octatrack's ot_machines) and does not subscribe ev_in_use itself, is in use. 0 rests
+ * it as an ev_in_use answer of 0 would: out of the resting events' rows, its resting sites on stock's bytes; nonzero
+ * wakes it. Asked at every rest poll, so keep it to a lookup. Weak: 1, nothing the machine judges ever rests. */
+int modwerk_machine_in_use(const struct runtime_module *m);
+/* Masked or locked: whether the live module whose pool extent holds `address` (one of its records) rests now. A
+ * machine that judges modules reads it from modwerk_machine_tables_changed, which every change of the resting set
+ * calls. 0 without resting. */
+int modwerk_runtime_resting_at(uintptr_t address);
 void modwerk_machine_tables_changed(void);          /* masked, after rows changed; weak no-op by default */
+void modwerk_machine_frame_costs(const uint8_t *table, unsigned n); /* MWMS v2's frame cost table (set_package.h); weak no-op */
 /* Masked: a site's bytes went back to stock (`patched` were its module's), so stock data that copied them can follow;
  * weak no-op by default. */
 void modwerk_machine_site_restored(uint32_t address, uint32_t length, const uint8_t *patched, const uint8_t *stock);

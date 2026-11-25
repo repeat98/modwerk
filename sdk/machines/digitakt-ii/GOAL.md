@@ -19,7 +19,7 @@ This is the Octatrack's stack on the Digitakt II ([machine recipe](../../../docs
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
 | MCP device tools | Not started | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
 | Machine page | Status only. The Octatrack's unit pages (status, module sets, guided sync) are not built yet | [`OctatrackHub.tsx`](../../../src/components/OctatrackHub.tsx) is the model |
-| Modules | Track Names is in the library. Downloads stay off until the owner turns them on | [modules](../../digitakt-ii/modules/), open pull requests, the board |
+| Modules | Track Names, Mute Latch, Chord Arp and Euclidean Scale are in the library. Downloads stay off until the owner turns them on | [modules](../../digitakt-ii/modules/), open pull requests, the board |
 
 When a piece moves, update this table, the [recipe's table](../../../docs/MACHINE_RECIPE.md#where-each-machine-stands) and `machine.json`'s `stack` in the same pull request.
 
@@ -33,7 +33,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 Two kinds of work can happen at any time:
 
-- **Base services that several modules will want:** a sample pool, machine registration, per-kit state in one table the base owns, SHARC DSP dispatch. Each one goes in as its own base pull request, before the module that needs it.
+- **Base services that several modules will want:** a sample pool, machine registration, per-kit state in one table the base owns, SHARC DSP dispatch. Add these services directly to the machine’s cumulative base draft before releasing a module that uses them.
 - **Modules.** Each one builds, installs and works as the only module chosen.
 
 ## USB link
@@ -46,18 +46,17 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 
 ## Rules that matter most here
 
-- **Only your own code.** Nothing can come in that is derived from digikit, because its AGPL and UI credit terms would bind every build. Ideas and research findings are welcome: write the code yourself and describe it in its own terms. The imported core keeps its GPL-2.0-or-later licence and its provenance in `sdk/imports/`.
+- **Only your own code.** Nothing derived from an AGPL project comes in, because its terms would bind every build. The imported core keeps its GPL-2.0-or-later licence and its provenance in `sdk/imports/`.
 - **Sequencer, LFO and voice sites go through the base.** A module never patches one of these sites. It proposes a base hook first ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 - **What modules share belongs to the base.** That includes Mixer pages, a send bus, a sample pool and per-kit state. A kit record holds 143 bytes of kit data for all mods together.
 - **SHARC code** follows the [SHARC code rules](README.md#sharc-code-rules), and only a unit run proves it.
 - **No raw block writes to the +Drive** (`fw_card_write`). The preflight refuses a build that uses one.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. Emulator runs are for iteration only.
 - **Firmware stays on your computer.** Never commit the OS file, extracted stock code or built images.
-- **One piece per pull request.** A base change, the link, a loader port and the page each go in their own pull request for the owner to review, never inside a module release.
+- **Owner review.** Add base changes directly to `base/digitakt-ii-next` and update its cumulative draft. A separate link, loader port or page outside the base has its own review.
 
 ## Open questions
 
-- **Kit data that changes alone.** Does OS 1.17 save a kit when only a module's block changed? The test steps are in the [machine guide](README.md#core-hooks), and any unit owner can run them.
 - **More units.** The pinned base has run on one unit so far.
 - **A SHARC assembler.** No Modwerk build writes SHARC code yet. The first one to do so brings its toolchain, pinned through `npm run upstream:tools`, and a build check for the rules above.
 

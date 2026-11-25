@@ -116,7 +116,7 @@ export function stepsDone(device: DeviceProfile) {
   return deviceSteps(device).filter(step => device.steps[step.id] === 'done').length
 }
 
-const DEVICE_KEY = 'modwerk.device'
+const DEVICE_KEY = 'modwerk.device', MACHINE_KEY = 'modwerk.machine'
 
 // 'all' is the All machines library; anything else is a machine id.
 export const ALL_MACHINES = 'all'
@@ -125,8 +125,19 @@ export function rememberedDevice() {
   try { const id = localStorage.getItem(DEVICE_KEY); return id && (id === ALL_MACHINES || DEVICES_BY_ID[id]) ? id : undefined } catch { return undefined }
 }
 
+/** The last machine whose pages were open. All machines and the overview do not replace it, so they can still show it. */
+export function lastMachine() {
+  try {
+    const id = localStorage.getItem(MACHINE_KEY) ?? localStorage.getItem(DEVICE_KEY)
+    return id && DEVICES_BY_ID[id] ? id : undefined
+  } catch { return undefined }
+}
+
 export function rememberDevice(id: string) {
-  try { localStorage.setItem(DEVICE_KEY, id) } catch { /* the choice is a convenience only */ }
+  try {
+    localStorage.setItem(DEVICE_KEY, id)
+    if (DEVICES_BY_ID[id]) localStorage.setItem(MACHINE_KEY, id)
+  } catch { /* the choice is a convenience only */ }
 }
 
 // Library and configuration views keep hash routes; Digitakt/Digitone module pages have public paths.

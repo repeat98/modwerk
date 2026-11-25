@@ -35,11 +35,11 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 ## Rules that matter most here
 
-- **Only your own code.** Nothing derived from digikit or another AGPL project comes in. Ideas and findings are welcome: write the code yourself and describe it in its own terms.
+- **Only your own code.** Nothing derived from an AGPL project comes in.
 - **One base for the platform.** Change the Digitakt II base's shared files in a way both machines build, and run the Digitakt II's checks too.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. Emulator runs are for iteration only.
 - **Firmware stays on your computer.** Never commit the OS file, extracted stock code or built images.
-- **One piece per pull request**, each reviewed by the owner, never inside a module release.
+- **Owner review.** Add base work directly to the cumulative draft from `base/digitone-ii-next`. Review other shared SDK work in its own pull request before a module uses it.
 
 ## Recovery
 

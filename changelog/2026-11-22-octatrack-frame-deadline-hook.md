@@ -1,0 +1,1 @@
+Octatrack base: a new hook for module authors, ev_frame_deadline. At each audio frame the base tells a ColdFire effect by when its work must end so the next frame starts on time. Tape Echo will use it to hold an echo block instead of pushing the frame late, which could click or stop the audio.

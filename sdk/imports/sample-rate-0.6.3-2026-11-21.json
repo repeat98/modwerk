@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.6.3-experimental",
+  "date": "2026-11-21",
+  "changes": [
+    "PIPO's loop follower rests whenever its last pass found no voice in PIPO (LOP OFF or ON), not only with LOP OFF everywhere. Same per-block state and audio as 0.6.2 in rytm-emu; 164 fewer audio-interrupt instructions a block with forward loops and no PIPO (emulator count)."
+  ],
+  "runtimeSourceSha256": "1c907ef2a32febfa4e40df9f99f1bf7a9a7c949c16201a9bb905cc66ead6faf4",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.6.3-experimental-os1.74.elemod",
+      "sha256": "2d0bf20568e831b1ef1a73915f13b522e1cda89094653d04b64e89c2f71b99e7"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}
