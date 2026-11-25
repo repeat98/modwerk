@@ -11,6 +11,7 @@
 //   node generate.mjs --mv1 <rom> --mv2 <rom> --fex <rom> [--write] [--check]
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -196,52 +197,68 @@ export function compiledMachine(ops, size) {
   };
 }
 
-// Midiverb I's chart, program 1 on.
-const MV1_NAMES = ['.2 SM BRT', '.2 SM WARM', '.2 MD BRT', '.3 SM BRT', '.3 SM WARM', '.4 MD BRT', '.4 MD WARM',
-  '.6 SM BRT', '.6 MD WARM', '.6 MD DARK', '.8 SM BRT', '.8 LG WARM', '1.0 SM WARM', '1.0 MD WARM', '1.0 LG BRT',
-  '1.2 MD WARM', '1.2 SM WARM', '1.2 SM BRT', '1.4 LG WARM', '1.4 LG DARK', '1.4 MD WARM', '1.6 SM DARK',
-  '1.6 LG BRT', '1.6 MD BRT', '1.8 LG DARK', '1.8 LG BRT', '1.8 MD WARM', '2.0 LG BRT', '2.0 MD WARM',
-  '2.0 LG WARM', '2.5 MD WARM', '2.5 LG BRT', '2.5 MD DARK', '2.8 SM BRT', '2.8 MD BRT', '3.0 LG BRT',
-  '3.0 LG WARM', '3.0 MD DARK', '3.5 LG BRT', '3.5 MD WARM', '4.0 LG DARK', '4.0 MD BRT', '5 LG WARM',
-  '8 LG BRT', '8 LG WARM', '10 LG BRT', '10 LG WARM', '16 LG DARK', '18 XL BRT', '20 XL DARK',
-  'GATE 100', 'GATE 150', 'GATE 200', 'GATE 250', 'GATE 300', 'GATE 350', 'GATE 400', 'GATE 500', 'GATE 600',
-  'REV 300', 'REV 400', 'REV 500', 'REV 600'];
-
-// A program's full name for the message box popup.s shows: 19 characters at most.
-export function fullName(label) {
-  const size = { SM: 'SMALL', MD: 'MEDIUM', LG: 'LARGE', XL: 'XLARGE' }, tone = { BRT: 'BRIGHT', WARM: 'WARM', DARK: 'DARK' };
-  const [a, b, c] = label.split(' ');
-  const name = a === 'GATE' ? `GATED ${b}MS` : a === 'REV' ? `REVERSE ${b}MS` : `${a}S ${size[b]} ${tone[c]}`;
-  if (name.length > 19) throw new Error(`${name}: longer than the message box's 19 characters`);
-  return name;
-}
-
-// The first build, before the base can load programs on demand: 24 Midiverb I
-// programs resident in the effect's own table (16 reverbs, 4 gated, 4 reverse).
-// Each fits the base's one-slot cycle allowance (measured in dsp_host, at most
-// 390 executed instructions a sample); the small rooms (.2-1.2 s, 420-512) wait
-// for a faster engine.
-export const TRIAL = [11, 21, 20, 23, 19, 25, 32, 34, 33, 36, 40, 42, 45, 47, 48, 49, 50, 52, 54, 58, 59, 60, 61, 62];
-
-// One program as DSP words: units of [handler * 2][argument], ending with the
-// end unit. A run of k reads is [0][k] then k ring offsets; every other
-// operation is [handler * 2][ring offset], handlers in engine.asm's jump table
-// order. The P table keeps each program as its word count, then its words; the
-// engine copies them above the ring when PROG changes (256 words at most).
+// One program as streamed: a header ($8000 | N, N the words after it), the units, a checksum (the low 16 bits of
+// the sum of every word before it, xor $a5a5). Units are [handler * 2][argument]: a run of k reads is [0][k] then
+// k ring offsets; every other operation is [handler * 2][ring offset], handlers in engine.asm's jump table order.
+// The engine keeps the whole program above the ring (262 words at most).
 export const HANDLER = ['run', 'st', 'ld', 'stn', 'in', 'outR', 'outL', 'stR', 'stL', 'stnR', 'stnL', 'end'];
-export const PROGRAM_WORDS = 256;
+export const PROGRAM_WORDS = 262;
 export function encode(ops) {
-  const words = [];
+  const body = [];
   for (let i = 0; i < ops.length;) {
     if (ops[i][0] === 'mac') {
       let j = i; while (j < ops.length && ops[j][0] === 'mac') j++;
-      words.push(0, j - i, ...ops.slice(i, j).map(([, a]) => a));
+      body.push(0, j - i, ...ops.slice(i, j).map(([, a]) => a));
       i = j;
-    } else { words.push(2 * HANDLER.indexOf(ops[i][0]), ops[i][1]); i++; }
+    } else { body.push(2 * HANDLER.indexOf(ops[i][0]), ops[i][1]); i++; }
   }
-  words.push(2 * HANDLER.indexOf('end'), 0);
-  if (words.length > PROGRAM_WORDS) throw new Error(`a program of ${words.length} words passes the ${PROGRAM_WORDS}-word area`);
-  return [words.length, ...words];
+  body.push(2 * HANDLER.indexOf('end'), 0);
+  const words = [0x8000 | (body.length + 1), ...body];
+  if (words.length + 1 > PROGRAM_WORDS) throw new Error(`a program of ${words.length + 1} words passes the ${PROGRAM_WORDS}-word area`);
+  return [...words, (words.reduce((t, w) => (t + w) & 0xffff, 0) ^ 0xa5a5)];
+}
+
+// Every program the stream carries: each bank in chart order, less Midiverb II's Defeat (0) and its 20 chorus and
+// flange programs (50-69, which patch their own code from an LFO: not handled yet), less the programs whose DSP
+// cost passes what the base admits for one instance (declared 400; measured in dsp_host with engine v2, 25 Nov
+// 2026, executed instructions a sample). A faster engine brings these back.
+export const OVER_BUDGET = {
+  MV1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 44, 45],
+  FEX: [6, 12, 21, 23, 24, 28, 34, 35, 39, 49, 50, 51, 52],
+  MV2: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 46, 47, 91, 97],
+};
+export const BANKS = ['MV1', 'MV2', 'FEX'];
+const FIRST = { MV1: 1, MV2: 0, FEX: 1 };
+export function streamed(programs) {
+  const out = [];
+  for (const bank of BANKS) programs[bank].forEach((steps, i) => {
+    const number = i + FIRST[bank];
+    if (bank === 'MV2' && (number === 0 || (number >= 50 && number <= 69))) return;
+    if (OVER_BUDGET[bank].includes(number)) return;
+    out.push({ bank, number, steps });
+  });
+  return out;
+}
+// The message box holds 19 characters.
+export function shortName(name) {
+  const n = name.toUpperCase().replace('REGENERATED', 'REGEN').replace(/ SEC\b/, 'S').replace('  ', ' ').trim();
+  return n.length > 19 ? n.slice(0, 19).trimEnd() : n;
+}
+// stream.h for the ColdFire: every streamed program's words (its count first), where each starts, each bank's
+// first program and count, and the names stock's message box shows.
+export function streamHeader(list, size, names) {
+  const words = [], start = [];
+  for (const p of list) { start.push(words.length); words.push(...encode(compile(p.steps, size))); }
+  if (words.some((w) => w > 0xffff)) throw new Error('a program word passes 16 bits: the stream carries 16');
+  const first = BANKS.map((b) => list.findIndex((p) => p.bank === b)), count = BANKS.map((b) => list.filter((p) => p.bank === b).length);
+  const name = (p) => shortName(names[p.bank][p.number - FIRST[p.bank]]);
+  const rows = (arr, per) => arr.reduce((t, v, i) => t + (i % per ? ' ' : '\n    ') + v + ',', '');
+  return `/* Generated by generate.mjs --write: the programs Midiverb streams (${list.length}). Ring ${size} words. */\n` +
+    `#define MV_PROGRAMS ${list.length}\n` +
+    `static const unsigned short mv_words[${words.length}] = {${rows(words, 16)}\n};\n` +
+    `static const unsigned short mv_start[MV_PROGRAMS] = {${rows(start, 16)}\n};\n` +
+    `static const unsigned char mv_bank_first[3] = {${first.join(', ')}}, mv_bank_count[3] = {${count.join(', ')}};\n` +
+    `static const char mv_names[MV_PROGRAMS][20] = {${list.map((p, i) => (i % 4 ? ' ' : '\n    ') + JSON.stringify(name(p)) + ',').join('')}\n};\n`;
 }
 
 function testSignal(n, seed = 1) {
@@ -275,9 +292,27 @@ export function check(programs, size, samples = 48000) {
   return report;
 }
 
+// stream.s, the unit manifest.py links: stream.c compiled for the ColdFire, then entry.s. --stream writes it,
+// --stream --check exits 1 when it is stale. Needs m68k-elf-gcc; no ROM.
+const CF_FLAGS = ['-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-common',
+  '-fno-jump-tables', '-fno-asynchronous-unwind-tables', '-fno-ident', '-fomit-frame-pointer'];
+function streamSource() {
+  const asm = execFileSync('m68k-elf-gcc', [...CF_FLAGS, '-S', '-o', '-', join(HERE, 'stream.c')], { encoding: 'utf8' });
+  return '| Generated by generate.mjs --stream from stream.c (and stream.h) and entry.s; edit those.\n' + asm + '\n' +
+    readFileSync(join(HERE, 'entry.s'), 'utf8');
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
-  const size = Number(arg('--size') ?? 15614); // 15,870 below Sidechain's window, less the program area
+  if (process.argv.includes('--stream')) {
+    const text = streamSource(), dest = join(HERE, 'stream.s');
+    if (process.argv.includes('--check')) {
+      if (!existsSync(dest) || readFileSync(dest, 'utf8') !== text) { console.error('stream.s is stale: node generate.mjs --stream'); process.exit(1); }
+      console.log('stream.s matches stream.c, stream.h and entry.s');
+    } else { writeFileSync(dest, text); console.log('wrote stream.s'); }
+    process.exit(0);
+  }
+  const size = Number(arg('--size') ?? 15608); // 15,870 below Sidechain's window, less the 262-word program area
   const programs = {};
   for (const kind of Object.keys(ROMS)) {
     const p = arg(`--${kind.toLowerCase()}`);
@@ -296,17 +331,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (outWorst > 2) { console.error('the DSP form left the original arithmetic'); process.exit(1); }
   if (bad.length) { console.error('relocation changed untrimmed programs:', bad); process.exit(1); }
   console.log('untrimmed programs: bit-identical to the original machine');
-  if (process.argv.includes('--write') && programs.MV1) {
-    const pick = process.argv.includes('--all') ? programs.MV1.map((_, i) => i) : TRIAL;
-    const trial = pick.map((i) => ({ bank: 'MV1', number: i + 1, label: MV1_NAMES[i],
-      trimmed: relocate(programs.MV1[i], size).trimmed, words: encode(compile(programs.MV1[i], size)) }));
-    if (!arg('--out')) {
-      const popup = join(HERE, 'popup.s'), text = readFileSync(popup, 'utf8');
-      const names = trial.map((t) => { const n = fullName(t.label); return `        .ascii  "${n}"\n        .space  ${20 - n.length}\n`; }).join('');
-      writeFileSync(popup, text.replace(/(\| names begin\n)[\s\S]*(\| names end)/, `$1${names}$2`));
-    }
-    writeFileSync(arg('--out') ?? OUT, '{"size": ' + size + ', "programs": [\n' +
-      trial.map((t) => JSON.stringify(t)).join(',\n') + '\n]}\n');
-    console.log(`wrote ${arg('--out') ?? OUT}: ${trial.length} programs, ${trial.reduce((n, t) => n + t.words.length, 0)} words`);
+  if (process.argv.includes('--write') && programs.MV1 && programs.MV2 && programs.FEX) {
+    const names = JSON.parse(readFileSync(join(HERE, 'names.json'), 'utf8'));
+    const list = streamed(programs);
+    writeFileSync(join(HERE, 'stream.h'), streamHeader(list, size, names));
+    writeFileSync(OUT, '{"size": ' + size + ', "programs": [\n' + list.map((p) =>
+      JSON.stringify({ bank: p.bank, number: p.number, words: encode(compile(p.steps, size)) })).join(',\n') + '\n]}\n');
+    console.log(`wrote stream.h and programs.json: ${list.length} programs`);
   }
 }

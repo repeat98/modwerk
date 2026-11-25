@@ -1,9 +1,11 @@
 """Midiverb's DSP gate: engine.asm in dsp_host, bit for bit against a model of what it must compute.
 
-The model runs each program from programs.json exactly as generate.mjs's DSP form defines it (the original
-machine's 16-bit arithmetic on pre-halved words), with the engine's half-rate input, LEVL, output
-interpolation and MIX, all in the DSP's integer arithmetic. generate.mjs proves the DSP form against the
-original machine; this proves the engine against the DSP form.
+The ColdFire half streams a program through FX2's page 2 (stream.c); here a test driver placed before the engine
+copies each call's three stream words into the parameter block, as stream.c leaves them in the frame record, then
+runs the engine unchanged. The model takes the stream as engine.asm must (chunk 0 first, in order, the checksum,
+the ring cleared meanwhile) and runs each program as generate.mjs's DSP form defines it, with the engine's half-rate
+input, LEVL, output interpolation and MIX in the DSP's integer arithmetic. generate.mjs proves the programs against
+the original machine; this proves the engine against them.
 """
 import json
 import pathlib
@@ -19,16 +21,32 @@ import dsp_gate as G  # noqa: E402
 TABLE = json.loads((HERE / "programs.json").read_text())
 RING = TABLE["size"]
 PROGRAMS = TABLE["programs"]
-TABLE_AT = 0x3000
+STREAM_AT = 0x3000
 FS = 1 << 23
-
-
-def ptable():
-    index, body = [], []
-    for p in PROGRAMS:
-        index.append(len(PROGRAMS) + len(body))
-        body += p["words"]
-    return index + body
+NONE = None
+DRIVER = """
+; verify.py's test driver: this call's three stream words into the parameter block, then the engine.
+proc:
+        move    #>$ffffff,m4
+        move    x:(r7+$40),a
+        move    a,b
+        asl     b
+        add     b,a                     ; 3c
+        move    a,n4
+        move    #>$fab2e0,r4
+        nop
+        move    (r4)+n4
+        move    p:(r4)+,x0
+        move    x0,x:(r6+$c)
+        move    p:(r4)+,x0
+        move    x0,x:(r6+$d)
+        move    p:(r4)+,x0
+        move    x0,x:(r6+$e)
+        move    x:(r7+$40),a
+        add     #>$1,a
+        move    a,x:(r7+$40)
+        bra     mvqPROC
+"""
 
 
 def clamp(v):
@@ -44,35 +62,84 @@ def half(x):
     return ((x >> 1) & ~0xFF) + (0x100 if x < 0 else 0)
 
 
-def model(words, left, right, knobs, block=16):
-    """What the engine outputs for one instance, block by block (no splits)."""
-    prog, lev, mix = knobs[0], knobs[1] << 16, knobs[5] << 16
+def stream(plan, calls):
+    """The three page-2 words of every call, as stream.c sends them: plan is [(from_call, program or None)]."""
+    out, k, sent = [], 0, None
+    for c in range(calls):
+        g = next((p for start, p in reversed(plan) if c >= start), None)
+        if g is None:
+            out.append((0, 0, 0))
+            sent = None
+            continue
+        if isinstance(g, tuple):        # a deliberately broken stream: (program, word index to corrupt)
+            g, broken = g
+        else:
+            broken = None
+        if g != sent:
+            sent, k = g, 0
+        w = list(PROGRAMS[g]["words"])
+        if broken is not None:
+            w[broken] ^= 1
+        words, i = (w[0] & 0x7FFF) + 1, 2 * k
+        a, b = w[i], (w[i + 1] if i + 1 < words else 0)
+        out.append(((k << 16) | (g << 8), a << 8, b << 8))
+        k = k + 1 if i + 2 < words else 0
+    return out
+
+
+def model(chunks, left, right, knobs, block=16):
+    """What the engine outputs for one instance, a call a block (no splits)."""
+    lev, mix = knobs[1] << 16, knobs[5] << 16
     mix = 0x7FFFFF if mix == 0x7F0000 else mix
-    ring = [0] * RING
-    p = acc = phase = s = 0
+    s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0)
+    area, ring = [0] * 262, [0] * RING
+    p = acc = phase = held = 0
     y_prev, y_cur, out_run = [0, 0], [0, 0], [0, 0]
     out_l, out_r = list(left), list(right)
-    calls, armed, counter = 0, False, 0
-    for start in range(0, len(left), block):
-        calls += 1
-        if counter:
-            counter -= 1
+    for call, start in enumerate(range(0, len(left), block)):
+        c, d, e = chunks[call]
+        k, g, A, B = c >> 16, (c >> 8) & 0xFF, (d >> 8) & 0xFFFF, (e >> 8) & 0xFFFF
+        if s["playing"] != g:
+            if s["loading"] != g and k == 0 and A & 0x8000 and 4 <= (A & 0x7FFF) <= 0x105:
+                s.update(loading=g, n=A & 0x7FFF, next=0, loaded=False, sum=0, chk=None, playing=NONE, counter=0x80)
+                p = acc = phase = 0
+                y_prev, y_cur = [0, 0], [0, 0]
+                ring = [0] * RING
+            if s["loading"] == g and not s["loaded"] and s["next"] == k:
+                i, n = 2 * k, s["n"]
+                area[i] = A
+                if i == n:
+                    s["chk"] = A
+                else:
+                    s["sum"] += A
+                if i + 1 <= n:
+                    area[i + 1] = B
+                    if i + 1 == n:
+                        s["chk"] = B
+                    else:
+                        s["sum"] += B
+                s["next"] = k + 1
+                if 2 * (k + 1) > n:
+                    if ((s["sum"] & 0xFFFF) ^ 0xA5A5) == s["chk"]:
+                        s["loaded"] = True
+                    else:
+                        s["loading"] = NONE
+        if s["counter"]:
+            s["counter"] -= 1
             continue
-        if not armed:
-            armed, counter = True, 0x80
+        if s["loaded"]:
+            s.update(playing=s["loading"], loading=NONE, loaded=False)
+        if s["playing"] is NONE:
             continue
         for n in range(start, min(start + block, len(left))):
             dl, dr = left[n], right[n]
             if phase == 0:
-                s = (dl + dr) >> 1
-                phase = 1
+                held, phase = (dl + dr) >> 1, 1
                 wet = [(y_prev[0] + y_cur[0]) >> 1, (y_prev[1] + y_cur[1]) >> 1]
             else:
-                x0 = (dl + dr + 2 * s) >> 2
+                x0 = (dl + dr + 2 * held) >> 2
                 x1 = clamp((x0 * lev) >> 21)
-                v = (x1 >> 3) & ~0x1FF
-                w_in = half(v)
-                acc, p = run(words, ring, p, acc, w_in, out_run)
+                acc, p = run(area, ring, p, acc, half((x1 >> 3) & ~0x1FF), out_run)
                 y_prev, y_cur = y_cur, list(out_run)
                 wet, phase = list(y_prev), 0
             out_l[n] = mixed(dl, wet[0], mix)
@@ -81,8 +148,7 @@ def model(words, left, right, knobs, block=16):
 
 
 def mixed(dry, wet, mix):
-    a = (dry << 24) - 2 * dry * mix + 2 * wet * mix
-    return clamp(a >> 24)
+    return clamp(((dry << 24) - 2 * dry * mix + 2 * wet * mix) >> 24)
 
 
 HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR", "stnL", "end"]
@@ -90,7 +156,7 @@ HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR"
 
 def run(words, ring, p, acc, w_in, out):
     at = lambda off: (p + off) % RING  # noqa: E731
-    i = 1  # words[0] is the count the engine copies
+    i = 1  # words[0] is the header
     while True:
         kind, arg = HANDLERS[words[i] // 2], words[i + 1]
         i += 2
@@ -122,30 +188,41 @@ def main():
     G.require_tools()
     tmp = G.workdir("midiverb-gate-")
     work = pathlib.Path(tmp.name)
-    asm = G.assemble(HERE / "engine.asm", work, replace={"$fab1e0": f"${TABLE_AT:x}"})
+    source = DRIVER + (HERE / "engine.asm").read_text().replace("\nproc:\n", "\nmvqPROC:\n")
+    asm = G.assemble(source, work, replace={"$fab2e0": f"${STREAM_AT:x}"})
     problems = G.trap_problems(asm)
     ok = not problems
     print(("[PASS]" if ok else "[FAIL]") + f" assembler traps: {problems or 'none'}")
-    image = G.write_image(asm.words, work / "m.mem", org=asm.org, extra=[(G.P, TABLE_AT, ptable())])
-    n = 16 * 360
-    sig = [0] * 2400 + G.burst(1400, n - 2400, amp=0.45)
-    right = [0] * 2400 + G.burst(1400, n - 2400, amp=0.3, seed=7)
-    # (PROG, LEVL, -, -, -, MIX)
-    cases = [(0, 32, 0, 0, 0, 127), (9, 64, 0, 0, 0, 90), (17, 127, 0, 0, 0, 127), (21, 16, 0, 0, 0, 127),
-             (23, 32, 0, 0, 0, 0)]
+    blocks = 900
+    n = 16 * blocks
+    sig = [0] * 5200 + G.burst(2400, n - 5200, amp=0.45)
+    right = [0] * 5200 + G.burst(2400, n - 5200, amp=0.3, seed=7)
+    late = [0] * 11600 + G.burst(1200, n - 11600, amp=0.45, seed=5)
+    by = {(q["bank"], q["number"]): i for i, q in enumerate(PROGRAMS)}
+    a, b = by[("MV1", 12)], by[("FEX", 2)]
+    cases = [
+        ("streamed from the start", [(0, a)], sig, right, (0, 32, 0, 0, 0, 127)),
+        ("switched to another program", [(0, a), (520, b)], late, late, (0, 64, 0, 0, 0, 90)),
+        ("no stream: dry", [(0, None)], sig, right, (0, 32, 0, 0, 0, 127)),
+        ("a broken checksum: dry", [(0, (a, 9))], sig, right, (0, 32, 0, 0, 0, 127)),
+    ]
     meter = 0
-    for k in cases:
+    for name, plan, left_in, right_in, knobs in cases:
+        chunks = stream(plan, blocks)
+        image = G.write_image(asm.words, work / "m.mem", org=asm.org,
+                              extra=[(G.P, STREAM_AT, [w for t in chunks for w in t])])
         # One instance a run: the synthetic image hands every instance the same allocator buffer.
-        r = G.run(asm, [G.Instance(sig, right, knobs=k)], image=image)
+        r = G.run(asm, [G.Instance(left_in, right_in, knobs=knobs)], image=image)
         meter = max(meter, r.meter)
         got_l, got_r = r.outputs[0]
-        want_l, want_r = model(PROGRAMS[k[0]]["words"], sig, right, k)
+        want_l, want_r = model(chunks, left_in, right_in, knobs)
         diff = next((i for i in range(n) if (got_l[i], got_r[i]) != (want_l[i], want_r[i])), None)
-        good = diff is None and any(got_l)
+        dry = (got_l, got_r) == (list(left_in), list(right_in))
+        good = diff is None and (dry if "dry" in name else not dry)
         ok &= good
         where = "" if diff is None else f", first difference at frame {diff}: got {got_l[diff], got_r[diff]} want {want_l[diff], want_r[diff]}"
-        print(("[PASS]" if good else "[FAIL]") + f" {PROGRAMS[k[0]]['label']} PROG {k[0]} LEVL {k[1]} MIX {k[5]}: bit-exact{where}")
-    print(f"meter: {meter} executed instructions a sample, the dearest case")
+        print(("[PASS]" if good else "[FAIL]") + f" {name}: bit-exact{' and dry' if dry else ''}{where}")
+    print(f"meter: {meter} executed instructions a sample, the dearest case (the driver's few included)")
     sys.exit(0 if ok else 1)
 
 

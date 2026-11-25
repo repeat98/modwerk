@@ -1,48 +1,47 @@
-"""Midiverb: the Alesis Midiverb's own programs, run on the DSP from a table generate.mjs makes.
+"""Midiverb: the Alesis Midiverb, Midiverb II and Midifex programs, run on the DSP at the originals' 16-bit arithmetic.
 
-The original machine's arithmetic is kept bit-exact (generate.mjs proves the table against it; verify.py
-proves this engine against the table). This first build carries 24 Midiverb I programs in its own P table;
-loading every Midiverb, Midiverb II and Midifex program on demand needs a base feature not yet built.
+The ColdFire half (stream.s from stream.c) keeps every program and streams the one PROG and BANK pick to the DSP
+through FX2's page 2, on the base's ev_frame_record; the DSP part (engine.asm) keeps only the engine and the one
+program. generate.mjs proves the programs against the original machine; verify.py the engine against them.
 Owner waiver for the Alesis programs, 25 Nov 2026 (PR #2179).
 """
-import json
+import re
 import pathlib
 
 from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, Linked,
                           MenuEntry, Module, Param, Proof, YBase)
 
-_TABLE = json.loads((pathlib.Path(__file__).resolve().parent / "programs.json").read_text())["programs"]
-_INDEX = []
-_BODY = []
-for _p in _TABLE:
-    _INDEX.append(len(_TABLE) + len(_BODY))
-    _BODY += _p["words"]
-_DEAREST = max(range(len(_TABLE)), key=lambda i: len(_TABLE[i]["words"]))
+_COUNTS = [int(n) for n in re.search(r"mv_bank_count\[3\] = \{([^}]*)\}",
+                                      (pathlib.Path(__file__).resolve().parent / "stream.h").read_text()).group(1).split(",")]
+_PROGS = max(_COUNTS)
 
 MODULE = Module(
-    name="midiverb", key="MIDIVERB", kind=Kind.DSP_EFFECT,
+    name="midiverb", key="MIDIVERB", kind=Kind.HYBRID,
     category=Category.TRACK, author="repeat98", author_url="https://github.com/repeat98",
     proof=Proof.RENDER, proof_note="verify.py: bit-exact against the program table in dsp_host; not on a unit yet",
     doc="The Alesis Midiverb's programs at their original 16-bit arithmetic, half rate, own FX2 ring.",
     menu=MenuEntry(fx2_id=0x0a, donor_desc=0x400d58b8,   # DARK REV; the base picks the id at install (ids past 31 cannot pin)
                    abbr=b"MVRB", fullname=b"Midiverb", build_tag=False),
     params=(
-        # The dial, not stock's stepped tick widget: that widget holds five positions, and on 25 Nov 2026 forcing it
-        # to 24 crashed the owner's unit (it read the labels as an address, vector 11 at PC 0x524b00a2, "RK").
-        Param(b"PROG", 0, len(_TABLE), True, Formatter.WIDE_STEPPED, labels=tuple(p["label"] for p in _TABLE),
-              doc="Midiverb program: decay in seconds, size, tone; gated and reverse"),
+        # PROG on the dial: stock's stepped tick widget holds five positions, and forcing it to 24 crashed the
+        # owner's unit on 25 Nov 2026 (it read the labels as an address, vector 11 at PC 0x524b00a2).
+        Param(b"PROG", 0, _PROGS, True, Formatter.WIDE_STEPPED, labels=tuple(str(i + 1) for i in range(_PROGS)),
+              doc="the bank's program; its name shows in a message box when it turns"),
         Param(b"LEVL", 64, 128, True, Formatter.PLAIN,
               doc="input level into the 12-bit converter: unity at 32, 64 is +6 dB"),
-        Param(), Param(), Param(),
+        Param(),
+        Param(b"BANK", 0, 3, True, Formatter.STEPPED, labels=("MV1", "MV2", "FEX"),
+              doc="Midiverb, Midiverb II or Midifex programs"),
+        Param(),
         Param(b"MIX", 40, 128, True, Formatter.PLAIN, doc="dry/wet; 0 is exact dry, 127 wet only"),
         *(Param() for _ in range(6)),
     ),
     dsp=DspSection(asm="modules/midiverb/engine.asm", priority=15, bus_role=BusRole.NONE, ybase=YBase.NEVER,
-                   r7_latch_slot=None, gate_label=None, ptable=tuple(_INDEX + _BODY)),
+                   r7_latch_slot=None, gate_label=None),
     claims=Claims(stock_instance_buffer=True, buffer_words=15870),
-    # The program's full name in stock's message box when PROG turns (popup.s, through the base's ev_knob_store).
-    linked=(Linked("midiverb", "modules/midiverb/popup.s", cpu="5475", dram=True),),
+    # The ColdFire half: the programs, their stream and their names (stream.s, runtime.json).
+    linked=(Linked("midiverb", "modules/midiverb/stream.s", cpu="5475", dram=True),),
     harness=Harness(layout_char=None, is_server=False),
     gates=(Gate("modules/midiverb/verify.py", remix_arg=False),),
-    dear={"PROG": _DEAREST, "LEVL": 127, "MIX": 127},
+    dear={"LEVL": 127, "MIX": 127},
 )

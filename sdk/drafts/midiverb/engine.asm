@@ -1,23 +1,33 @@
 ; Midiverb: the Alesis Midiverb's programs on the Octatrack's DSP.
 ; The original runs 128 steps a sample over 16K words; generate.mjs turns each
-; program into delay lines packed into this slot's ring and into the words in
-; our P table. Every word in the ring is stored already halved, with the
-; original's rounding (half(x) = floor(x/2) + [x<0]), so a read is a plain add
-; and the state stays bit-exact. Values are 16-bit, left-aligned in 24 bits
-; (the low 8 bits zero), so 16-bit wrapping is free in a1.
+; program into delay lines packed into this slot's ring and into the words the
+; module's ColdFire half streams here (stream.c). Every word in the ring is
+; stored already halved, with the original's rounding (half(x) = floor(x/2) +
+; [x<0]), so a read is a plain add and the state stays bit-exact. Values are
+; 16-bit, left-aligned in 24 bits (the low 8 bits zero), so 16-bit wrapping is
+; free in a1.
 ;
 ; Half rate: a program sample every second frame (22.05 kHz), its input the
 ; average of the last two frames' L and R, its output interpolated linearly.
-; Own 16K allocator buffer: a 15,614-word ring (m = $3cfd), then the selected
-; program's words at +$3cfe..+$3dfd, copied from the P table when PROG changes.
-; The slot's last $202 words, Sidechain's key window on T3 and T7, stay untouched.
+; Own 16K allocator buffer: a 15,608-word ring (m = $3cf7), then the program
+; area at +$3cf8..+$3dfd (262 words: header, program, checksum). The slot's last $202 words, Sidechain's
+; key window on T3 and T7, stay untouched.
+;
+; The stream: every frame FX2's page 2 carries one chunk of the selected
+; program, round and round: r6+$c the chunk k (bits 16-23) and the program g
+; (bits 8-15), r6+$d and r6+$e the program's words 2k and 2k+1 (bits 8-23).
+; Word 0 is a header ($8000 | N), the last word a checksum (the sum of the
+; others, low 16 bits, xor $a5a5). A program other than the one playing is
+; taken from its chunk 0, in order, while the ring clears; it plays once both
+; are done and the checksum holds. Until a program plays the audio passes.
 ;
 ; State, r7+: 00 base  01 ring pointer  02 clear counter  03 phase
 ; 04 acc  05 first frame's (L+R)/2  06/07 previous out L/R  08/09 current L/R
-; 0a program  0b/0c this run's out L/R  0d mix  0e level  0f half(input)
+; 0a program playing ($ffffff none)  0b/0c this run's out L/R  0d mix  0e level
+; 0f half(input)  10 program loading ($ffffff none)  11 its next chunk
+; 12 loaded (1)  13 its running sum  14 its N  15 its checksum
 ; Program words: units [handler*2][argument]; a run of reads is [0][k] then k
-; ring offsets; the handlers are the jump table's order below. The P table:
-; an index of program starts, each program its word count, then its words.
+; ring offsets; the handlers are the jump table's order below.
 
 init:
         move    #>$ffffff,m4
@@ -32,10 +42,148 @@ mvqZERO:
         move    a,x:(r7+$00)
         move    a,x:(r7+$01)
         move    #>$ffffff,a
-        move    a,x:(r7+$0a)            ; no program yet: the first call arms a clear
+        move    a,x:(r7+$0a)            ; nothing plays until a program arrives
+        move    a,x:(r7+$10)
         rts
 
 proc:
+        move    #>$ffffff,m4
+        move    #>$ffffff,m1
+        move    #>$ffffff,m3
+; The stream's chunk: k and g from r6+$c.
+        move    x:(r6+$c),x1
+        move    x1,a
+        lsr     #$10,a
+        move    a1,x0                   ; k
+        move    x1,a
+        lsr     #$8,a
+        and     #>$0000ff,a
+        move    a1,y1                   ; g
+        move    x:(r7+$0a),a
+        cmp     y1,a
+        beq     mvqRCVX                 ; it offers what plays
+        move    x:(r7+$10),a
+        cmp     y1,a
+        beq     mvqLOAD
+; Another program: only from its chunk 0, whose first word is the header
+; $8000 | N, N the words after it (the last of them the checksum), 4..261.
+        move    x0,a
+        tst     a
+        bne     mvqRCVX
+        move    x:(r6+$d),a
+        lsr     #$8,a
+        and     #>$00ffff,a
+        move    a1,x1
+        move    x1,b
+        and     #>$008000,b
+        move    b1,y0
+        move    y0,b
+        tst     b
+        beq     mvqRCVX                 ; no header: not a stream
+        move    x1,b
+        and     #>$007fff,b
+        move    b1,y0
+        move    y0,b                    ; N
+        cmp     #>$4,b
+        blt     mvqRCVX
+        cmp     #>$105,b
+        bgt     mvqRCVX
+        move    b,x:(r7+$14)
+        move    y1,x:(r7+$10)
+        clr     a
+        move    a,x:(r7+$11)
+        move    a,x:(r7+$12)
+        move    a,x:(r7+$13)
+        move    a,x:(r7+$03)
+        move    a,x:(r7+$04)
+        move    a,x:(r7+$06)
+        move    a,x:(r7+$07)
+        move    a,x:(r7+$08)
+        move    a,x:(r7+$09)
+        move    x:(r7+$00),a
+        move    a,x:(r7+$01)
+        move    #>$ffffff,a
+        move    a,x:(r7+$0a)            ; nothing plays while it loads
+        move    #>$80,a
+        move    a,x:(r7+$02)            ; the ring clears meanwhile
+; Chunk k, in order: words 2k and 2k+1 into the area; every word before the
+; last adds to the sum, the last is the checksum.
+mvqLOAD:
+        move    x:(r7+$12),a
+        tst     a
+        bne     mvqRCVX                 ; complete already
+        move    x:(r7+$11),a
+        cmp     x0,a
+        bne     mvqRCVX                 ; not the chunk due: wait for it
+        move    x0,a
+        asl     a
+        move    a,y0                    ; i = 2k
+        move    x:(r7+$00),x1
+        add     x1,a
+        move    #>$3cf8,x1
+        add     x1,a
+        move    a,r3                    ; word i's place
+        move    x:(r6+$d),a
+        lsr     #$8,a
+        and     #>$00ffff,a
+        move    a1,x1
+        move    x1,y:(r3)+
+        move    y0,a
+        move    x:(r7+$14),b
+        cmp     b,a
+        beq     mvqCKA                  ; i = N: the checksum
+        move    x:(r7+$13),a
+        add     x1,a
+        move    a,x:(r7+$13)
+        bra     mvqWB
+mvqCKA:
+        move    x1,x:(r7+$15)
+mvqWB:
+        move    y0,a
+        add     #>$1,a                  ; i + 1
+        move    x:(r7+$14),b
+        cmp     b,a
+        bgt     mvqNEXK                 ; past the checksum: nothing
+        move    x:(r6+$e),a
+        lsr     #$8,a
+        and     #>$00ffff,a
+        move    a1,x1
+        move    x1,y:(r3)
+        move    y0,a
+        add     #>$1,a
+        cmp     b,a
+        beq     mvqCKB
+        move    x:(r7+$13),a
+        add     x1,a
+        move    a,x:(r7+$13)
+        bra     mvqNEXK
+mvqCKB:
+        move    x1,x:(r7+$15)
+mvqNEXK:
+        move    x0,a
+        add     #>$1,a
+        move    a,x:(r7+$11)
+        asl     a                       ; 2(k+1) words in
+        move    x:(r7+$14),b
+        cmp     b,a
+        ble     mvqRCVX                 ; the checksum, word N, not in yet
+        move    x:(r7+$13),a
+        and     #>$00ffff,a
+        move    a1,x1
+        move    #>$00a5a5,a
+        eor     x1,a
+        move    a1,x1
+        move    x:(r7+$15),a
+        cmp     x1,a
+        bne     mvqBAD
+        move    #>$1,a
+        move    a,x:(r7+$12)            ; loaded
+        bra     mvqRCVX
+mvqBAD:
+        move    #>$ffffff,a
+        move    a,x:(r7+$10)            ; a broken stream: wait for chunk 0 again
+mvqRCVX:
+
 ; Bounded clearing: 128 calls, the last 122 clear 128 words each under the
 ; ring's modulus (the program area above it is kept). Audio passes untouched.
         move    x:(r7+$02),a
@@ -49,7 +197,7 @@ proc:
         move    x:(r7+$00),x0
         add     x0,a
         move    a,r4
-        move    #>$3cfd,m4
+        move    #>$3cf7,m4
         clr     a
         do      #128,>mvqCLR_
         move    a,y:(r4)+
@@ -60,47 +208,21 @@ mvqCLRX:
         rts
 
 mvqREDY:
-; PROG: a new program is copied into the buffer and the ring cleared first.
-        move    #>$ffffff,m4
-        move    #>$ffffff,m1
-        move    x:(r6),a
-        asr     #$10,a,a
-        move    a1,x0                   ; the knob's index, its fraction dropped
-        move    x0,a
-        cmp     #>$17,a                 ; 24 programs: 0..23
-        ble     mvqPRGA
-        move    #>$17,a
-mvqPRGA:
-        move    x:(r7+$0a),x0
-        cmp     x0,a
-        beq     mvqPRGB
+; A loaded program plays from the next call; without one the audio passes.
+        move    x:(r7+$12),a
+        tst     a
+        beq     mvqPLAY
+        move    x:(r7+$10),a
         move    a,x:(r7+$0a)
-        move    #>$fab1e0,r4
-        move    a,n4
-        move    #>$3cfe,a
-        move    x:(r7+$00),x0
-        add     x0,a
-        lua     (r4+n4),r2
-        move    a,r3
-        move    p:(r2),n4
-        move    #>$ffffff,m3
-        move    (r4)+n4
-        move    p:(r4)+,n2              ; the program's word count
-        do      n2,>mvqCOPY
-        move    p:(r4)+,x0
-        move    x0,y:(r3)+
-mvqCOPY:
+        move    #>$ffffff,a
+        move    a,x:(r7+$10)
         clr     a
-        move    a,x:(r7+$03)
-        move    a,x:(r7+$04)
-        move    a,x:(r7+$06)
-        move    a,x:(r7+$07)
-        move    a,x:(r7+$08)
-        move    a,x:(r7+$09)
-        move    x:(r7+$00),a
-        move    a,x:(r7+$01)
-        move    #>$80,a
-        move    a,x:(r7+$02)
+        move    a,x:(r7+$12)
+mvqPLAY:
+        move    x:(r7+$0a),a
+        move    #>$ffffff,x0
+        cmp     x0,a
+        bne     mvqPRGB
         rts
 mvqPRGB:
 ; MIX (F): 127 is full wet. LEVL (B): k/32, unity at 32.
@@ -114,7 +236,7 @@ mvqMIXA:
         move    x:(r6+$1),a
         move    a,x:(r7+$0e)
 
-        move    #>$3cfd,m5
+        move    #>$3cf7,m5
         move    x:(r7+$01),r5
         move    #>$000100,y0            ; one 16-bit LSB, left-aligned
         move    #>$1,n0
@@ -165,10 +287,10 @@ mvqFRMB:
         add     y0,b
 mvqHIN_:
         move    b,x:(r7+$0f)
-        move    #>$3cfe,a
+        move    #>$3cf9,a               ; the program's words, after its header
         move    x:(r7+$00),x0
         add     x0,a
-        move    a,r4                    ; the program's words
+        move    a,r4
         move    #>mvqJTAB,r1
         move    x:(r7+$04),a            ; acc
         move    y:(r4)+,n1

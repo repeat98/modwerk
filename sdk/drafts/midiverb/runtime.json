@@ -1,6 +1,7 @@
 {
  "schema": 1,
  "subscribe": [
+  {"event": "ev_frame_record", "fn": "mv_frame", "order": 50},
   {"event": "ev_knob_store", "fn": "mv_take_knob", "order": 69}
  ]
 }
