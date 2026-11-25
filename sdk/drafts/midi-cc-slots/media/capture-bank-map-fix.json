@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "captured": "2026-10-25",
+  "moduleId": "midi-cc-slots",
+  "moduleVersion": "0.0.13-experimental",
+  "sourceRevision": "93dd9ae36514b141ac38f84f7363762bd55dcf33",
+  "packageSha256": "086fc3c73468bd58db823bf2857106ebe05f7d1197fd226c595d4139eeca000a",
+  "runtimeFixtureSha256": "36a91bc80dbd6f3bda8d241fe62c78f860e792d1a68e996592eb26643ce5755e",
+  "runtimeModuleSha256": "bf47ae2ff7ca1981079ad0d34da87b409f4d3826ad9768bd62911a58ac0225c0",
+  "emulatorSha256": "489024df15f4ccc562b22365f7251180f3965c7887b1aa1fe4b94fe4e186c776",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "captureScriptSha256": "273d4d861e0cb34857339b0b4056cd7e3e014573bde72312ff791b76111f74ee",
+  "verificationReportSha256": "37d0ddf5529ef803fde4c3a6a658470a3b46c09794602f8ecf9f93f34ba1b0f6",
+  "reportedProjectReports": {
+    "apply": "643a7d71670323e8c63c6420812290507b25a65f1424647f2e1f910cae6239fa",
+    "cancel": "440c27e848a4975a09db9a83440ee8d2909afc1f65a66e789c7538b1c90fa0de",
+    "interrupt": "b4699bf2fffbee0dffafa29fb6b4f7e1a8370be5d4cfd2b75e3afdb71299720e"
+  },
+  "rendererSha256": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
+  "images": {
+    "21-map-init.png": {
+      "sha256": "e500667ff5873074aa9c2eca7c8b780d99060861af7ff0bcb96b6f80fc256428",
+      "planeSha256": "093c2c0ab586a1590d81dbaba42a4f11ca51e84770dff751b1d728f2c7e78e97"
+    },
+    "22-map-progress.png": {
+      "sha256": "12a8f40466e68c69d955820711c495e0c367d8eb612151fa95536144c6bcb1fc",
+      "planeSha256": "bbd4c90587688ace262a2f616d462d23ff673241be6f9192407fcd89b8e97139"
+    },
+    "23-map-confirm.png": {
+      "sha256": "27dfa2663a4f50c469ceb3c289d154dd4abac86d7708d2e721572eac3ec99b57",
+      "planeSha256": "1a682cedf3bbe1d43c3f2b2441d7c346640e2c09643c4f3cacfbdf19612956fb"
+    }
+  },
+  "rendering": "Native 128\u00d764 LCD and popup planes, unchanged pixels, integer scale 6, grayscale 24/240.",
+  "limitations": [
+    "Private publication, UI tick and separately recorded IRQ fixture; no physical 0.0.13 result or timing measurement."
+  ]
+}

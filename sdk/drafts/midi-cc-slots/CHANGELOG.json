@@ -1,0 +1,202 @@
+[
+  {
+    "version": "0.0.20-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Use paired shared bank-load notifications instead of a private bank-load patch.",
+      "Preserve cached names and recovery state on failed or same-project load notifications.",
+      "Defer project changes to the settled engine task and wake idle profile processing.",
+      "Initialize the historical card builder through Modwerk firmware_codec.",
+      "Experimental: current-base hardware and native load-failure testing are still pending."
+    ]
+  },
+  {
+    "version": "0.0.19-experimental",
+    "date": "2026-11-05",
+    "changes": [
+      "Prepared local installation on the current Modwerk base with updated companion packages.",
+      "Retains the same CC controls, track naming and project storage.",
+      "Experimental candidate: hardware testing on this base is pending."
+    ]
+  },
+  {
+    "version": "0.0.18-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Integrate the current upstream base and refreshed local site.",
+      "Keep the shared MIDI generator drawer entry and draw NAME/INIT at a private exit hook.",
+      "Build current-base installers with newly pinned companion packages.",
+      "Preserve the older tested USB lifecycle packages separately; new-base hardware tests remain pending."
+    ]
+  },
+  {
+    "version": "0.0.17-usb-test",
+    "date": "2026-10-26",
+    "changes": [
+      "Add a separate local USB replacement test with a visible MIDI2 TEST 17 inventory name.",
+      "Verify original/test package identities, companions, Undo, card save and startup restoration.",
+      "Keep MIDI behavior and project format identical to the original 0.0.13 implementation.",
+      "Leave the normal catalogue package and C16 installer unchanged."
+    ]
+  },
+  {
+    "version": "0.0.16-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Build a local card installer with the standard USB-capable Modwerk base.",
+      "Include the selected original USB module packages in both saved-set files for boot restoration.",
+      "Retain USB updates, Keep, Undo and removal through the normal loader.",
+      "Keep the working 0.0.13 MIDI implementation; hardware testing of this installer is pending."
+    ]
+  },
+  {
+    "version": "0.0.15-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Build Midi Mode 2 card firmware from the local configuration page.",
+      "Combine with Sidechain Compressor, Play Modes and Mute Modes in reviewed selections.",
+      "Retain the 0.0.13 MIDI controls and saved settings; the USB listing is unchanged.",
+      "Card firmware uses MIDI2 C15 and omits the USB loader; combined hardware testing is pending."
+    ]
+  },
+  {
+    "version": "0.0.14-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Add a private standalone CF firmware test build that starts Midi Mode 2 at boot.",
+      "Retain the reviewed 0.0.13 controls, names and explicit bank initialization.",
+      "Use the shared core and Modwerk startup artwork; other modules and the USB loader are not included.",
+      "Keep the normal local USB listing on 0.0.13; physical card testing is pending."
+    ]
+  },
+  {
+    "version": "0.0.13-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Allow valid working and saved bank files with different MIDI channel values.",
+      "Record both original maps so cancellation and interrupted recovery restore each file exactly.",
+      "Keep checksum, unrelated-data and unsaved working-channel checks.",
+      "Show CHECK FAILED with a bank code instead of repeatedly asking to save.",
+      "Keep this update installed before INIT so it can recover its new pending journal after restart."
+    ]
+  },
+  {
+    "version": "0.0.12-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Run INIT again to replace every bank\u2019s names and channels from Bank A / Part 1.",
+      "Confirm REPLACE ALL with YES, or leave the previous setup with NO.",
+      "Bank changes and restart still never reapply defaults automatically.",
+      "Keep progress, safe cancellation and rollback to the previous saved setup."
+    ]
+  },
+  {
+    "version": "0.0.11-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Center INIT beneath CHAN in MIDI SRC SETUP.",
+      "Show FN+ and PUSH inside the INIT cell to explain FUNC + encoder D.",
+      "Keep the existing one-time setup and safe cancellation behavior."
+    ]
+  },
+  {
+    "version": "0.0.10-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Browse ordinary SRC/AMP/LFO/FX pages while Apply runs; editing and bank changes stay held.",
+      "Reduce CRC verification work without dropping bank checks or rollback protection.",
+      "Keep FUNC + D Apply, progress and safe NO cancellation.",
+      "Follow-up to the reported 0.0.9 success with a control hold over ten seconds; new physical timing remains unmeasured."
+    ]
+  },
+  {
+    "version": "0.0.9-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Apply Bank A setup with FUNC + encoder D in SRC SETUP; no typed confirmation.",
+      "Show bank progress and allow NO to cancel safely.",
+      "Restore a failed live attempt in place without automatically reloading the project.",
+      "Keep a stage/bank failure code and close each bank read before writing.",
+      "Experimental retest for the reported 0.0.8 hardware failure; physical fix qualification remains pending."
+    ]
+  },
+  {
+    "version": "0.0.8-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Apply Bank A / Part 1 MIDI setup once using INIT/PUSH and the APPLY confirmation.",
+      "Keep independent names and native channels afterward; bank changes no longer restore a sidecar channel map.",
+      "Carry names and the initialization marker through Save to New.",
+      "Recover interrupted initialization from a verified previous snapshot.",
+      "Local experimental test; back up a disposable project and save normally before INIT."
+    ]
+  },
+  {
+    "version": "0.0.7-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Use Bank 1 as the default MIDI track-name template.",
+      "Rename tracks independently in Banks 2\u201316 without changing Bank 1; names are shared across each bank\u2019s Parts.",
+      "Keep unedited names following Bank 1; save explicit bank overrides, including blank names.",
+      "Import existing saved names and channels while preserving the original 0.0.6 checkpoint files.",
+      "Documentation: add actual emulator screenshots for naming and bank-specific overrides."
+    ]
+  },
+  {
+    "version": "0.0.6-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Share eight MIDI track names throughout each project.",
+      "Save names and channel profiles to the project folder while stopped.",
+      "Use Bank 1, Part 1 channel defaults for new empty banks; retain independent bank/Part overrides.",
+      "Local experimental test; native project copy/reload and physical restart remain unqualified."
+    ]
+  },
+  {
+    "version": "0.0.5-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add temporary MIDI track names through NAME/PUSH on encoder F in MIDI SRC SETUP.",
+      "Align PUSH with the neighboring value in SETUP.",
+      "Keep the extra CC modes and numeric CC headers.",
+      "Known issue: names are temporary and do not save or follow bank/project changes."
+    ]
+  },
+  {
+    "version": "0.0.4-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Both MIDI CONTROL pages show each assigned CC number above its encoder instead of CC1\u2013CC10 slot names.",
+      "The remapped PB/AT positions show their assigned numbers; native positions keep PB and AT.",
+      "SETUP captions follow the mode as PB, AT or CC, fitting the full stock selection highlight.",
+      "Local USB trial update; saved-project behavior and this display change on hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.0.3-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Adds a local development page for compiling and reviewing a temporary USB trial.",
+      "Preserves the installed set and offers Undo without Keep or firmware flashing.",
+      "Hardware and saved-project behavior remain unqualified."
+    ]
+  },
+  {
+    "version": "0.0.2-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Double-tap FX1 on MIDI CONTROL 1, then click A or B to switch its PB/AT position to CC mode.",
+      "Turn the encoder to choose CC0\u2013127; click again to restore PB or AT.",
+      "Turning alone preserves the selected mode, including stock fast editing while an encoder is held.",
+      "Emulator research draft; saved projects, USB integration and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.0.1-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Starts an unqualified emulator prototype for assigning MIDI CONTROL 1 PB and AT to CC numbers.",
+      "Native PB and AT remain the proposed defaults; no installable release is added."
+    ]
+  }
+]

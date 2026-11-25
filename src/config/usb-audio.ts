@@ -20,7 +20,10 @@ export const USB_AUDIO_LAYOUTS = [
   { id: 'master', define: 2, key: 'USB AUDIO OUT MASTER', name: 'Track 8 / Master', channels: 2, pairs: ['Track 8'], tap: 'pre', description: 'Track 8 after its effects, before its fader. Enable MASTER TRACK on the Octatrack for a master-bus feed.' },
 ] as const
 export type UsbAudioLayout = typeof USB_AUDIO_LAYOUTS[number]['id']
-export type UsbAudioPackageKind = UsbAudioLayout | 'configurable'
+/** `configurable` is the published package; `configurable-0.3` the output-only 0.3.0 one a unit may still run, kept
+ * for its exact Undo and replaced on the next sync. */
+export type UsbAudioPackageKind = UsbAudioLayout | 'configurable' | 'configurable-0.3'
+export const isConfigurable = (kind?: UsbAudioPackageKind) => kind === 'configurable' || kind === 'configurable-0.3'
 export type UsbAudioConfiguration = { version: typeof USB_AUDIO_VERSION; layout: UsbAudioLayout; destination: 'computer' | 'outbox'; outboxPairs: number[] }
 export function usbAudioLayout(id: UsbAudioLayout) { return USB_AUDIO_LAYOUTS.find(layout => layout.id === id)! }
 export function usbAudioPreset(destination: UsbAudioConfiguration['destination']): UsbAudioConfiguration {

@@ -1,0 +1,48 @@
+{
+ "firmware": "1.40C",
+ "moduleVersion": "0.1.0-experimental",
+ "hardware": true,
+ "model": "MKII",
+ "capturedOn": "2026-11-24",
+ "capturedBy": "repeat98",
+ "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+ "baseIdentity": "8fd6d456abf3865b36ac024d19324290dc36cb04a7efe29be4838ce6e825afb3",
+ "packageSha256": "16600fb3681f45e8c2708f4f69da1befe24df696b5e0c4f868bd0eb891eb0fb5",
+ "sourceRevision": "2a622a8f5cad8e0010b161944651fdc07dfdb0d4",
+ "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 8fd6d456 of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image; baseIdentity is the identity the unit reported). The module ran as a RAM trial of the package named here, built by npm run module:dev -- resonator --build-only --cycles 256 --cycles-kind executed --state 89 from the source revision named here; its pages are drawn from the same manifest as the release package's. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session (T2; FUNC+FX1; LEVEL down to Resonator; YES; FX1 SETUP; FUNC+FX1).",
+ "palette": {
+  "on": [
+   24,
+   24,
+   24
+  ],
+  "off": [
+   255,
+   255,
+   255
+  ]
+ },
+ "images": [
+  {
+   "path": "resonator-chooser.png",
+   "sha256": "f12c46faef92d8c8d3f1104b6f5f0e9aba542b535ce2dbda6fbdfad0ff5fb213",
+   "scale": 2,
+   "page": "FX1 SETUP (effect chooser)",
+   "state": "Project Dev17, pattern C04, track 2 on FILTER, the cursor moved to Resonator before YES."
+  },
+  {
+   "path": "resonator-main.png",
+   "sha256": "17a9469ffdb9cebd10129f2dc8b856deffbea36b363ffb1db3423364dc2cfce3",
+   "scale": 2,
+   "page": "FX1",
+   "state": "Track 2 with Resonator on FX1 at the defaults, stopped."
+  },
+  {
+   "path": "resonator-setup.png",
+   "sha256": "f388c0bc79c91efc1d15980a56ebb48d5ce5d046aa54fbb447a09a7c6aaeb0b5",
+   "scale": 2,
+   "page": "FX1 SETUP",
+   "state": "Track 2 with Resonator on FX1 at the defaults: FX1 SETUP."
+  }
+ ]
+}

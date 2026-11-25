@@ -31,13 +31,16 @@
 ; The table (dltable, its size filled in by the build) keeps each id's original entries in its
 ; first 64 words; the rest is the code arena. Both cores' frame hooks run this
 ; before any effect. Entry changes keep the stock per-instance state.
+; Every frame takes the path to finish below with no packet waiting, so it keeps an address register from being used
+; right after it is loaded (a pipeline stall of up to three cycles, DSP56300 Family Manual A.2.4): r1 is loaded before
+; the displaced instruction, and tblready's post-increment leaves r1 on the load meter's words, which follow it.
 frame:
+        move    #>tblready,r1
         move    r6,x:>$207              ; the instruction the hook displaced
 ; The dispatch tables (docs/OCTATRACK_MORE_EFFECT_IDS.md step 4): init[@IDS@] at X:@INITTABLE@, then proc[@IDS@], where
 ; stock's six reads of X:$215 and X:$235 now point (dsp_loader.py). No payload record loads that region, so the first
 ; frame sets it up before any effect runs: stock's 32 entries copied, every id past them on the null stub.
-        move    #>tblready,r1
-        move    p:(r1),a
+        move    p:(r1)+,a
         tst     a
         bne     tblset
         move    #>$215,r0
@@ -68,68 +71,70 @@ coldcopied:
         move    x0,p:(r1)
         move    #>tblready,r1
         move    #>1,x0
-        move    x0,p:(r1)
+        move    x0,p:(r1)+
 tblset:
 ; Load meter: core 0's main loop (P:$4b) counts its idle iterations in b until a frame is due, and
 ; this runs before stock stores that count (P:$92); b stays untouched. Core 1 counts its wait for
 ; core 0 in X:$2840 (c1wait), taken and cleared here (the build substitutes that for core 1).
 ; Each window of 1024 frames is published after its serial: the least and most idle
-; counts, their sum and the frames with none (missed). Core 1 keeps no such count.
+; counts, their sum and the frames with none (missed). Core 1 keeps no such count. r1 names idlewin
+; (frame); the frames left stay in x1 for the test at counted: stock writes x1 before it reads it after both frame heads.
         move    b1,x0
-        move    #>idlewin,r0
-        move    p:(r0),a
-        sub     #>1,a
-        move    a1,p:(r0)+              ; frames left
-        move    p:(r0),a
+        move    p:(r1),a
+        sub     #<1,a
+        move    a1,x1
+        move    a1,p:(r1)+              ; frames left
+        move    p:(r1),a
         cmp     x0,a
         tgt     x0,a
-        move    a1,p:(r0)+              ; least
-        move    p:(r0),a
+        move    a1,p:(r1)+              ; least
+        move    p:(r1),a
         cmp     x0,a
         tlt     x0,a
-        move    a1,p:(r0)+              ; most
-        move    p:(r0),a
+        move    a1,p:(r1)+              ; most
+        move    p:(r1),a
         add     x0,a
-        move    a1,p:(r0)+              ; sum
+        move    a1,p:(r1)+              ; sum
         move    x0,a
         tst     a
         bne     counted
-        move    p:(r0),a
-        add     #>1,a
-        move    a1,p:(r0)               ; missed
+        move    p:(r1),a
+        add     #<1,a
+        move    a1,p:(r1)               ; missed
 counted:
-        move    #>idlewin,r0
-        move    p:(r0),a
+        move    x1,a
         tst     a
         bgt     tallied
+        move    #>idlewin,r1
         move    #>1024,x0
-        move    x0,p:(r0)+
-        move    #>idlepub,r1
-        move    p:(r1),a
-        add     #>1,a
-        move    a1,p:(r1)+
+        move    x0,p:(r1)+
+        move    #>idlepub,r0
+        move    p:(r0),a
+        add     #<1,a
+        move    a1,p:(r0)+
         move    #>$7fffff,x1            ; the next window's least starts high
-        move    #>0,x0
-        move    p:(r0),a
-        move    a1,p:(r1)+
-        move    x1,p:(r0)+
-        move    p:(r0),a
-        move    a1,p:(r1)+
-        move    x0,p:(r0)+
-        move    p:(r0),a
-        move    a1,p:(r1)+
-        move    x0,p:(r0)+
-        move    p:(r0),a
-        move    a1,p:(r1)+
-        move    x0,p:(r0)+
+        move    #<0,x0
+        move    p:(r1),a
+        move    a1,p:(r0)+
+        move    x1,p:(r1)+
+        move    p:(r1),a
+        move    a1,p:(r0)+
+        move    x0,p:(r1)+
+        move    p:(r1),a
+        move    a1,p:(r0)+
+        move    x0,p:(r1)+
+        move    p:(r1),a
+        move    a1,p:(r0)+
+        move    x0,p:(r1)+
 tallied:
-        move    r6,a
-        add     #>$320,a
-        move    a,r0
-        move    x:(r0),a
+        ; The magic read through r6 itself, so no frame waits for r0; a packet's frame then sets r0 to the packet.
+        move    x:(r6+$320),a
         eor     #>$4c44,a
         and     #>$ffff,a               ; Z from A1 only: a junk top byte cannot hide the magic
         bne     finish
+        move    r6,a
+        add     #>$320,a
+        move    a,r0
         ; Keep the header's 16 bits only. `and` leaves A2 stale, and cmp, tst and do read all of A:
         ; on the owner's MKII a WRITE whose masked count and offset were in range was refused (AB2).
         move    r0,r1
@@ -139,7 +144,7 @@ tallied:
         move    a1,x:(r1)+
 cleaned:
         move    r0,r1
-        move    #>0,x1
+        move    #<0,x1
         do      #<$40,checksumdone
         move    x:(r1)+,a
         and     #>$ffff,a
@@ -151,7 +156,7 @@ checksumdone:
         move    r3,x:(r0+63)
         move    x:(r0+2),a
         and     #>$ffff,a
-        cmp     #>1,a
+        cmp     #<1,a
         beq     accepted
         bra     coldops
 coldsum:
@@ -162,7 +167,7 @@ coldops:
         jmp     (r1)
 accepted:
         move    x:(r0+63),r3
-        move    #>0,x0                  ; HF3 clear: done
+        move    #<0,x0                  ; HF3 clear: done
         bra     reply
 badsaved:
         move    x:(r0+63),r3
@@ -174,7 +179,7 @@ reply:
         or      x0,a
         eor     #>$8,a
         movep   a1,x:<<$ffffc2
-        move    #>0,a
+        move    #<0,a
         move    a1,x:(r0)               ; consume the packet
 finish:
         rts
@@ -186,26 +191,26 @@ finish:
 coldops:
         move    x:(r0+2),a
         and     #>$ffff,a
-        cmp     #>3,a
+        cmp     #<3,a
         beq     upload
-        cmp     #>4,a
+        cmp     #<4,a
         beq     binding
-        cmp     #>5,a
+        cmp     #<5,a
         beq     binding
-        cmp     #>6,a
+        cmp     #<6,a
         beq     binding
-        cmp     #>7,a
+        cmp     #<7,a
         beq     setbase
-        cmp     #>8,a
+        cmp     #<8,a
         beq     peekbit
-        cmp     #>9,a
+        cmp     #<9,a
         beq     summed
         bra     refusewrite
 summed:
         ; SUM (9): WRITE's read-back over (r0+4) words, 1-256, from table offset (r0+5), nothing written.
         move    x:(r0+4),a
         and     #>$ffff,a
-        cmp     #>1,a
+        cmp     #<1,a
         blt     refusewrite
         cmp     #>256,a
         bgt     refusewrite
@@ -221,9 +226,9 @@ summed:
 upload:
         move    x:(r0+4),a
         and     #>$ffff,a
-        cmp     #>1,a
+        cmp     #<1,a
         blt     refusewrite
-        cmp     #>24,a
+        cmp     #<24,a
         bgt     refusewrite
         move    a1,x1
         move    x:(r0+5),a
@@ -239,7 +244,7 @@ upload:
         add     x0,a
         move    a,r3
         move    r0,a
-        add     #>8,a
+        add     #<8,a
         move    a,r1
         move    x1,a
         do      a,written
@@ -253,7 +258,7 @@ upload:
         move    a1,x0
         move    x0,p:(r3)
         move    r3,a
-        add     #>1,a
+        add     #<1,a
         move    a,r3
 written:
         ; Read back the entire chunk through P and compare it with the packet's sum.
@@ -263,7 +268,7 @@ written:
         move    #>@TABLE@,a
         add     x0,a
         move    a,r3
-        move    #>0,x1
+        move    #<0,x1
         move    x:(r0+4),a
         and     #>$ffff,a
         do      a,verified
@@ -272,7 +277,7 @@ written:
         add     x0,a
         move    a1,x1
         move    r3,a
-        add     #>1,a
+        add     #<1,a
         move    a,r3
 verified:
         move    x:(r0+56),a
@@ -290,7 +295,7 @@ verified:
 wrongsum:
         move    x:(r0+2),a              ; a SUM refuses without WRITE's record
         and     #>$ffff,a
-        cmp     #>9,a
+        cmp     #<9,a
         beq     badsaved
 mismatch:
         move    x:(r0+5),a
@@ -300,9 +305,9 @@ mismatch:
         add     x0,a
         move    a,r3                    ; P, from the chunk's first word
         move    r0,a
-        add     #>8,a
+        add     #<8,a
         move    a,r1                    ; the packet's words
-        move    #>0,x0
+        move    #<0,x0
         move    x0,x:(r0+61)            ; the first wrong word's P address, 0 none yet
         move    x:(r0+4),a
         and     #>$ffff,a
@@ -329,7 +334,7 @@ mismatch:
         move    x0,x:(r0+60)
 nextword:
         move    r3,a
-        add     #>1,a
+        add     #<1,a
         move    a,r3
 scanned:
         move    x:(r0+61),a
@@ -368,8 +373,8 @@ badsum:
         and     #>$ffff,a
         move    a1,x:(r0+59)
         move    r0,r1
-        move    #>0,x1
-        move    #>0,x0
+        move    #<0,x1
+        move    #<0,x0
         do      #<$40,weighed
         move    x:(r1)+,a
         and     #>$ffff,a
@@ -410,7 +415,7 @@ binding:
         ; Only stock's 32 ids have originals to keep: past them the saved pair is the null stub's, so BIND keeps
         ; nothing and UNBIND and BYPASS put the stub back.
         move    x1,a
-        cmp     #>31,a
+        cmp     #<31,a
         ble     ownsaved
         move    #>@NULLENTRY@,r3
 ownsaved:
@@ -419,9 +424,9 @@ ownsaved:
         move    a,r1
         move    x:(r0+2),a
         and     #>$ffff,a
-        cmp     #>5,a
+        cmp     #<5,a
         beq     restoreentry
-        cmp     #>6,a
+        cmp     #<6,a
         beq     stubentry
         ; Check both offsets before touching either dispatch entry.
         move    x:(r0+5),a
@@ -443,7 +448,7 @@ ownsaved:
         move    x:(r1),x0
         move    x0,p:(r3)
         move    r3,a
-        add     #>1,a
+        add     #<1,a
         move    a,r3
         move    x:(r1+@IDS@),x0
         move    x0,p:(r3)
@@ -468,7 +473,7 @@ restoreentry:
         beq     accepted
         move    x0,x:(r1)
         move    r3,a
-        add     #>1,a
+        add     #<1,a
         move    a,r3
         move    p:(r3),x0
         move    x0,x:(r1+@IDS@)
@@ -481,7 +486,7 @@ stubentry:
         move    x:(r1),x0
         move    x0,p:(r3)
         move    r3,a
-        add     #>1,a
+        add     #<1,a
         move    a,r3
         move    x:(r1+@IDS@),x0
         move    x0,p:(r3)
@@ -496,7 +501,7 @@ stubsaved:
 setbase:
         move    x:(r0+4),a
         and     #>$ffff,a
-        cmp     #>7,a
+        cmp     #<7,a
         bgt     badsaved
         add     #>$255,a
         move    a1,r1
@@ -540,7 +545,7 @@ testbit:
         bra     accepted
 accepted:
         move    x:(r0+63),r3
-        move    #>0,x0                  ; HF3 clear: done
+        move    #<0,x0                  ; HF3 clear: done
         bra     reply
 badsaved:
         move    x:(r0+63),r3
@@ -552,7 +557,7 @@ reply:
         or      x0,a
         eor     #>$8,a
         movep   a1,x:<<$ffffc2
-        move    #>0,a
+        move    #<0,a
         move    a1,x:(r0)               ; consume the packet
 finish:
         rts
@@ -560,6 +565,7 @@ finish:
 ; Core 1's wait for core 0 (P:$57, brclr #1,y:<<$ffffd3) as a counted one: each pass adds one to
 ; X:$2840 (core 1's, untouched by stock), which its frame hook takes as its idle count (see frame).
 ; DO FOREVER and BRKCS, not a branch back: dsp_asm writes a backward brclr's target absolute.
+; Its add stays the two-word form: status.c's idle_cycles[1] is this pass as calibrated on the unit (11 October 2026).
 c1wait:
         do      forever,c1over
         move    x:>$2840,a
@@ -578,6 +584,8 @@ missexpected:
         nop
 missactual:
         nop
+tblready:                               ; 1 once the first frame set the dispatch tables up; idlewin follows it (frame)
+        nop
 idlewin:                                  ; never executed: the load meter (see frame): frames left,
         nop                             ; least, most, sum and missed of this window
         nop
@@ -592,7 +600,5 @@ idlepub:                            ; then the published window: serial, least, 
         nop
 nullentry:                              ; the saved pair of every id past 31: the null stub's init and proc
         nop
-        nop
-tblready:                               ; 1 once the first frame set the dispatch tables up
         nop
 dltable:

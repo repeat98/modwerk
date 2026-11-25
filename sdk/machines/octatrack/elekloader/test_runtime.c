@@ -84,6 +84,23 @@ int main(void)
     next = 31;
     CHECK(!modwerk_runtime_next_hook(RUNTIME_DRAW, &next));
     set_live(30, 0); set_live(32, 0); set_live(127, 0);
+    /* The transport long and the track bytes as the owner's MKII left them (23 November 2026): 0 after a panel STOP, 2
+     * after a MIDI STOP or a pause, every track byte the same; 1 playing. Both stopped states are stopped, playing is
+     * not, nor a value never seen. Before the fix only all zeros was, so a unit a host had stopped read as playing: a
+     * braked Part stayed silent and the CPU guard judged stopped readings as played ones
+     * (docs/verification/2026-11-23-octatrack-transport-word.md). */
+    { uint8_t tracks[16] = {0};
+      CHECK(modwerk_machine_transport_stopped(0u, tracks));
+      for (unsigned i = 0; i < 16u; ++i) tracks[i] = 2u;
+      CHECK(modwerk_machine_transport_stopped(2u, tracks));
+      for (unsigned i = 0; i < 16u; ++i) tracks[i] = 1u;
+      CHECK(!modwerk_machine_transport_stopped(1u, tracks));
+      tracks[0] = 2u;
+      CHECK(!modwerk_machine_transport_stopped(2u, tracks)); /* one track still running */
+      for (unsigned i = 0; i < 16u; ++i) tracks[i] = 0u;
+      CHECK(!modwerk_machine_transport_stopped(1u, tracks) && !modwerk_machine_transport_stopped(3u, tracks));
+      tracks[15] = 3u;
+      CHECK(!modwerk_machine_transport_stopped(0u, tracks)); }
     /* Activation only while nothing plays or records; stock code only, below the bootloader copy. */
     modwerk_test_stopped = 0;
     CHECK(!modwerk_runtime_backend.enter(0));

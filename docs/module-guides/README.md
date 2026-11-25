@@ -39,8 +39,10 @@ In the library, categories describe the instrument function a musician wants to 
 
 - *Install beside others.* `npm run modules:compat` checks your module's declarations against every other module and the base, and the unit admits each package when a set is synced.
 - *Declare conflicts; never hope.* Put what you cannot share in `compatibility.conflicts` and in the resource claims (FX2 ids, caves, hook sites, DSP data ranges). The ledger refuses collisions by name. A declared conflict never makes an overlap with another module acceptable: the [cross-compatibility gate](#cross-compatibility) refuses it anyway. Analog BD admits only its reviewed DSP companions (`analogBdCompanions`), subject to actual placement; an effect that builds beside the stock FX2 effects is named in `FITS_BESIDE_STOCK_FX2` (`src/catalog/selection-conflicts.ts`). The library reads the same conflicts to flag a module on its card, and offer a swap, before anyone adds it (`src/catalog/add-blocks.ts`), so a declared conflict needs no extra interface work.
+- *Leave your declared bytes as installed.* The base checks every byte a poke or a symbol ref wrote before it installs, replaces or removes a module; a byte changed at run time (text written into a poked string) makes it refuse every later change as busy until a power cycle. Keep what changes in your own memory and point the stock reference at it with a `SymbolRef`. Before you poke a stock string, check that no other reference points inside it: compilers share string tails, and a poked `"... %d"` emptied every number drawn with the shared `"%d"` (Songbook, 23 November 2026).
 - *Appear everywhere from the manifest.* The `sdk/catalog.json` entry (`id`, `version`, `addedAt`) puts the module in the library, the configurator and its module page. Add `presentation/thumbnail.svg` (320×192) or hand-drawn art in `ModulePreview.tsx`, and `resources.impact`.
 - *Survive saved work.* Saved configurations pin module versions, and saved Octatrack projects store knob bytes. A new version must load what an old one saved, or the README says exactly what breaks and how to migrate.
+- *Read a project's own file once it is the project in use.* Loading another project (PROJECT > CHANGE), stock's project directory still names the last project at `ev_banks_load` and at `ev_banks_loaded`; the new name is only in the load job's record until the load is over. Read the file once the project name in use is the new one, or in a card job of your own after the load (Songbook, 24 November 2026).
 - *Use the same documentation contract.* README sections, a tutorial of at least three steps, TESTING.md, real black-and-white screenshots. See [MODULE_QUALIFICATION.md](../MODULE_QUALIFICATION.md).
 - *Ship by the same CI.* Every PR gets the quick check. Only code changes get the Docker compile, the Windows check and a version bump; documentation and media edits need none.
 
@@ -186,7 +188,7 @@ The more of these the base owns, the more modules combine. Propose each hook on 
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
-| Module settings | Not built: the base's own per-module store is planned |
+| Module settings | Base table `ot_settings`: a choice for the whole instrument, kept through a power cycle (PROJ > MODWERK > SETTINGS). A store for other per-module state: not built |
 
 ### Read the gate's message
 
