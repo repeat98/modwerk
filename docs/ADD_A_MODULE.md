@@ -15,7 +15,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 | You want to | Go to | Start with |
 | --- | --- | --- |
 | Port an octabam module | [Octatrack](#octatrack) | the module's folder in octabam at an exact commit |
-| Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module), then `npm run module:dev -- my-filter` to hear it ([the fast loop](#the-fast-loop)); a DSP gate imports `sdk/octatrack/tools/dsp_gate.py`; an Airwindows port adds `--port airwindows --upstream <its folder>` ([how](../sdk/templates/dsp-port/README.md)) |
+| Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module), then `npm run module:dev -- my-filter` to hear it ([the fast loop](#the-fast-loop)); DSP gates import `sdk/octatrack/tools/dsp_gate.py`; an Airwindows port adds `--port airwindows --upstream <folder>` ([how](../sdk/templates/dsp-port/README.md)) |
 | Bring an elekloader mod to Digitakt or Digitone | [Digitakt and Digitone](#digitakt-and-digitone) | the author's released `.elemod` files |
 | Write a new Digitakt or Digitone mod | [Digitakt and Digitone](#digitakt-and-digitone) | `npm run module:new -- my-mod --machine digitakt --author <github-login>` |
 | Write or port an Analog Rytm MKII mod | [the Rytm guide](../sdk/machines/analog-rytm-mkii/README.md) | `npm run module:new -- my-mod --machine analog-rytm-mkii --author <github-login>` |
