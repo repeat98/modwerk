@@ -90,6 +90,8 @@ Emulator checks of base `2ead25d6` (image `b6ee842b`, the same Morpha package), 
 
 The emulator's sequencer stops after a pattern's first step, so the kick pattern of the report was not replayed.
 
+On a unit: Claptom-music tested image `b6ee842b` (base `2ead25d6` with Morpha) on a Digitakt II, OS 1.17, over USB, 25 November 2026, with the steps above (icon, the kick when lowering VOICES while playing, edits kept after VOICES 3, 1, 3, a held chord when VOICES drops, a former voice played on its own), and reported it ready for review; no case was reported failing.
+
 ## Open
 
 - A knob turned in the same frame as a sequencer note-on on the lead reaches a ringing voice only when it moves again (a voice with no note gets it from the idle copy).
