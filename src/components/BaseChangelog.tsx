@@ -15,6 +15,7 @@ const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelea
       version: '0.8.2', title: 'Recording costs less CPU', note: '2026-11-23-octatrack-recorder-cs1-skip',
       changes: [
         { area: 'Recording', detail: 'Tracks that record cost less CPU: the recorder leaves out two memory writes that would store what is already there.' },
+        { area: 'CPU', detail: 'Every audio frame costs about one point of CPU less: the Octatrack reads which Part plays from its fast memory instead of its slow one.', note: '2026-11-25-octatrack-part-read-sram' },
         { area: 'Sync', detail: 'When a track runs a module that a sync changes, the site names that track and its FX slot.', note: '2026-11-24-octatrack-in-use-track' },
       ],
     },

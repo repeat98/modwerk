@@ -242,6 +242,13 @@ BASE_OWNS = {'usb-audio-out-tracks-main-cue': 'the base owns the USB configurati
              'midi-scenes': 'its writes meet Elekloader\'s own sites; it needs a port',
              'output-matrix': 'resident bases own its CUE CFG project-load clamp and CS1 power-up widening (cue_cfg.s); '
                               'its controller package leaves those sites out'}
+# Modwerk's: the frame interrupt's per-track call 0x400068e4 (twice a track, 16 times a frame, from 0x4000d340 and
+# 0x4000d36c) reads the current Part from CS1 (0x100b14cf) on entry. Stock keeps the same byte in on-chip SRAM at
+# 0x80000003 and writes the two together everywhere it writes either (0x40062142/8, 0x400621e2/8, 0x40087ea6/ac: SRAM
+# first, the next instruction CS1; the boot's 0x4001fa76 and the reset's 0x40025aaa set CS1 and copy it to SRAM). So the
+# base reads SRAM there: the same `mvzb`, the same flags, one CS1 read fewer per call. (Address, length, the stock
+# instruction's SHA-256, its replacement.) The ISR's other read of the byte (0x4000d212) is a rare branch and stays.
+PART_READ = (0x400068f0, 6, 'd0ec7e0980705bdda9e9859f3b6caa119d97dab71385585f3a78e9e893f81d5d', '71b980000003')
 # resident-runtime/cue_cfg.s: (address, guard bytes, guard SHA-256 = Output Matrix's manifest guard, the base's site).
 CUE_CFG_WIDENING = ((0x4008732a, 14, '968adf63466a054aefd6609f18536e3719bbcc144b6dc0a43de49794c3bb3718',
                      dict(op='jmp', target='modwerk_cue_cfg_clamp', length=6)),
@@ -2256,6 +2263,11 @@ modwerk_retained_end:
             raise ValueError('Stock bytes at %#x are not the CUE CFG clamp/check cue_cfg.s widens.' % addr)
         recipe['sites'].append(dict({k: v for k, v in site.items() if k != 'length'},
                                     addr=hex(addr), stock=stock_at(addr, site['length']).hex()))
+    # The frame interrupt reads the current Part from SRAM, not CS1 (PART_READ): every base.
+    addr, n, guard, new = PART_READ
+    if sha(stock_at(addr, n)) != guard:
+        raise ValueError('Stock bytes at %#x are not the current-Part read PART_READ names.' % addr)
+    recipe['sites'].append(dict(addr=hex(addr), stock=stock_at(addr, n).hex(), op='bytes', new=new))
     # Stock OS fixes (stock-fixes/): every base, whatever its flags, so every layout and twin patches the same sites.
     for name in STOCK_FIXES.SOURCES:
         shutil.copyfile(HERE / 'stock-fixes' / name, source / name)

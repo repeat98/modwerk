@@ -166,3 +166,40 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
   (832,656 bytes). Base-bound packages relinked to it; Recorder Loop Fix 0.1.0's bytes change with the base's addresses
   (`6b568782…`, written under `public/octatrack-base-packages/`).
 - Not run on a unit: any of this. Next: the per-module `profile:3` pass on a twin of this source, and the price at rest.
+
+## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
+
+- **Why:** the frame interrupt calls `0x400068e4` twice a track, 16 times a frame (`0x4000d340`, `0x4000d36c`), and it
+  begins with `mvzb 0x100b14cf,%d0`, the current Part from CS1. Stock keeps the same byte in on-chip SRAM at `0x80000003`
+  and writes both wherever it writes either: SRAM, then CS1 in the next instruction (`0x40062142`/`8`, `0x400621e2`/`8`,
+  `0x40087ea6`/`ac`); the boot (`0x4001fa76`) and the reset (`0x40025aaa`) set CS1 and memcpy copies it to SRAM
+  (`0x400208ae`). The pairs are not masked, so in the one instruction between them stock's other 94 readers of
+  `0x80000003` already see a new Part and this one sees it a frame later: with the change it sees it with them.
+- **Change:** `build_core.py` `PART_READ`: the six bytes at `0x400068f0` become `mvzb 0x80000003,%d0` (`op: bytes`, guard
+  on the stock instruction): the same flags, one CS1 read fewer per call. The ISR's other read (`0x4000d212`) is a rare
+  branch and stays.
+- **Found with** `ot_emu` (stock 1.40C, project CPUCURVE: Part 1, 120 BPM, A01 a trig every four steps on T1-T4, T6, T7
+  with T2 and T4 playing a 2 s loop, Dev17 C04 style) and a local counter of data accesses outside cached SDRAM by PC
+  (not in this tree): over 11,025 frames A01 made 28.1 CS1 accesses a frame, 16.0 of them this read, besides 12 of the
+  renderer's per-voice CS1 record. Most of the 9,000 accesses outside SDRAM go to SRAM, which is as cheap as a cache hit.
+- **Emulator A/B:** development twins of this source without (`f8c3f344…`, MAIN `7a306ec6…`) and with the change
+  (`30592832…`, MAIN `ceb6f9a2…`), the beta flags without controller rows plus `--dev`, the same 11,025 frames of A01:
+  the same instructions over the frames (350,396,946); all 353,406 writes to the DSP host port equal (address, value,
+  PC); SRAM and `0x46c80000..0x46cbffff` equal; CS1 equal but the eight bytes of the base identity. CS1 accesses 46.3 →
+  30.3 a frame. At `0x400068f0` the two bytes were equal at all 176,400 calls, also on a project saved on Part 3 (the
+  load writes 2 through the `0x40087ea6` pair). Not checked in the emulator: a Part switch while playing.
+- **On Laslo's MKII** (OS 1.40C, the flashed base 0.8 `e1152583`, RAM boots of the two twins A, B, A; CPUCURVE3 on the
+  card; `guard` 8 s readings):
+
+  | Frame interrupt mean (longest frame) | A | B | A again |
+  | --- | --- | --- | --- |
+  | A01, six tracks trigging, two samples (6 readings) | 37.0-37.1 % (77.6-79.8) | 36.0 % (76.4-79.1) | 37.0-37.1 % (76.9-80.3) |
+  | A03, four trigging, no sample (3) | 29.8 % (63.3-63.7) | 28.8 % (62.3-62.5) | 29.8 % (62.9-64.6) |
+  | A02, empty, playing (2) | 29.8 % (40.2-40.7) | 28.8 % (39.3) | 29.8 % (40.2-40.6) |
+  | stopped (2) | 29.8 % (40.1-40.3) | 28.7 % (39.1-39.3) | 29.7-29.8 % (40.1-40.4) |
+
+  One point of the frame interrupt in every state (about 3.6 µs, 0.23 µs a CS1 byte read); the longest frame about a
+  point lower where the pattern does not set it. Nothing skipped. CPU meter: 49.4-50.2 → 48.3-49.1 % on A01.
+- Release 0.8.2 rebuilt: base `880c0a34538757dd…` (was `fad2c729`); browser = native `.bin` `a4ecb83fcea5f609…`
+  (832,628 bytes). Base-bound packages relinked.
+- Not run: the release image on a unit; a Part switch while playing on the unit; by ear.
