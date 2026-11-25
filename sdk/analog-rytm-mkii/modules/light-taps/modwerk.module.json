@@ -72,7 +72,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 1116,
+    "memoryBytes": 1728,
     "fastBytes": 0,
     "load": {
       "display": "No measurable change: audio load L 71-73 % with and without Light Taps, peak 75 % against 76 %",

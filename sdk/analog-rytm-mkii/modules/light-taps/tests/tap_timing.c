@@ -9,13 +9,19 @@
 
 #define LIGHT_TAPS_HOST
 static int strike_codes[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-static int queue, posts, last_code, last_velocity, last_type;
+static int queue, posts, releases, order_ok, last_code, last_velocity, last_type;
 static unsigned host_now;
 static void host_post(void *q, void *event)
 {
     unsigned char *e = event;
     if (q != &queue)
         return;
+    if (e[0] == 4) {
+        releases++;
+        if (posts < releases || e[8] != 0)   // a release before its strike, or with a velocity
+            order_ok = 0;
+        return;
+    }
     posts++;
     last_type = e[0];
     memcpy(&last_code, e + 4, sizeof last_code);
@@ -37,7 +43,10 @@ static void reset(unsigned start)
     memset((void *)held, 0, sizeof held);
     memset((void *)releases_seen, 0, sizeof releases_seen);
     ms = start;
-    posts = last_code = last_velocity = last_type = 0;
+    posts = releases = last_code = last_velocity = last_type = 0;
+    order_ok = 1;
+    memset((void *)tapped, 0, sizeof tapped);
+    memset((void *)release_due, 0, sizeof release_due);
     on = 1;
 }
 
@@ -71,6 +80,16 @@ static void strike(int pad)
     memcpy(ev + 4, &strike_codes[pad], sizeof strike_codes[pad]);
     ev[8] = 100;
     light_taps_event(ev);
+}
+
+static void expect_releases(const char *name, int wanted)
+{
+    if (releases == wanted && order_ok)
+        printf("ok %s\n", name);
+    else {
+        printf("FAIL %s: %d pad releases posted (wanted %d), order %s\n", name, releases, wanted, order_ok ? "ok" : "wrong");
+        failures++;
+    }
 }
 
 static void expect(const char *name, int wanted)
@@ -201,6 +220,64 @@ int main(void)
     tick(3);
     release(4);
     expect("tap, release, tap again: two light taps", 2);
+
+    reset(100);
+    press(7);
+    tick(3);
+    expect_releases("a light tap still held: no pad release yet", 0);
+    tick(200);
+    release(7);
+    expect_releases("a light tap let go: one pad release, after its strike", 1);
+    release(7);
+    expect_releases("a second release with no tap: nothing more", 1);
+
+    reset(100);
+    press(7);
+    tick(1);
+    release(7);
+    expect_releases("let go before the strike is due: no release yet", 0);
+    tick(3);
+    expect("let go before the strike is due: the strike", 1);
+    expect_releases("let go before the strike is due: then its release", 1);
+
+    reset(100);
+    press(7);
+    strike(7);
+    tick(10);
+    release(7);
+    expect_releases("a firm hit: the driver releases it, not the module", 0);
+
+    reset(100);
+    on = 0;
+    press(7);
+    tick(1);
+    release(7);
+    tick(10);
+    press(7);
+    tick(10);
+    release(7);
+    expect_releases("LIGHT TAPS off: no pad releases", 0);
+
+    reset(100);
+    press(7);
+    tick(3);
+    release(7);
+    press(7);
+    tick(5);
+    for (int r = 0; r < 20; r++) {
+        press(7);
+        tick(100);
+    }
+    release(7);
+    expect_releases("a held light tap: one release per tap, when let go", 2);
+
+    reset(100);
+    press(7);
+    tick(5);
+    strike(7);                      // pressed on into a firm hit
+    tick(5);
+    release(7);
+    expect_releases("a light tap pressed on into a firm hit: the driver's release only", 0);
 
     return failures;
 }

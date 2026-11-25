@@ -10,6 +10,11 @@
 // plays it as any hit. A strike can come just before its press, so a press
 // within TAP_MS after its pad's strike waits for nothing.
 //
+// The driver follows a real strike with a pad release (type 4) when the pad
+// lets go; that is what ends a held note and a pad's retrig roll. It sends
+// none for a light tap, so on the pad's key release the module posts one for
+// its own strike, and right after the strike if the release came first.
+//
 // The switch is a row in the GLOBAL menu, saved with the project.
 
 #ifndef LIGHT_TAPS_HOST
@@ -31,7 +36,7 @@ typedef void (*post_t)(void *queue, void *event);
 #define PAD_KEY 0x90
 #define TAP_MS 3
 #define TAP_VELOCITY 8                             // of 0-255, as the driver's strikes
-#define TAPS 8
+#define TAPS 32                                   // posted records the queue may still hold: two per pad, with room
 
 static volatile int on;                // the setting, cached for the panel task
 
@@ -46,6 +51,8 @@ static volatile unsigned char recent[PADS];       // a strike in the last TAP_MS
 static volatile unsigned struck_at[PADS];
 static volatile unsigned char held[PADS];          // pressed and not yet released
 static volatile unsigned char releases_seen[PADS]; // this pad's releases reach us
+static volatile unsigned char tapped[PADS];        // our strike is the pad's last; it owes a pad release
+static volatile unsigned char release_due[PADS];   // the key came up before our strike was posted
 // The driver's strike record: type 3, the pad's strike code, the velocity, a time stamp.
 static struct { unsigned char type, unused[3]; int code; unsigned char velocity, unused2[3]; unsigned time; } taps[TAPS];
 static unsigned next_tap;
@@ -56,6 +63,16 @@ static void read_setting(void)
     on = core_store_get(STORE(light_taps_enabled), 0, 0) != 0;
 }
 #endif
+
+static void post(int type, int code, int velocity)
+{
+    taps[next_tap].type = type;
+    taps[next_tap].code = code;
+    taps[next_tap].velocity = velocity;
+    taps[next_tap].time = NOW;
+    POST(QUEUE, &taps[next_tap]);
+    next_tap = (next_tap + 1) % TAPS;
+}
 
 // Called from hooks.s for each event the panel driver posts.
 void light_taps_event(char *ev)
@@ -69,6 +86,12 @@ void light_taps_event(char *ev)
         if (!(ev[11] & 1)) {            // a release
             held[pad] = 0;
             releases_seen[pad] = 1;
+            if (waiting[pad])
+                release_due[pad] = 1;   // light_taps_poll posts it after the strike
+            else if (tapped[pad]) {
+                tapped[pad] = 0;
+                post(4, STRIKE_CODE(pad), 0);
+            }
             return;
         }
         // A press while the pad is still held is a key repeat, not a new tap.
@@ -85,6 +108,8 @@ void light_taps_event(char *ev)
         for (p = 0; p < PADS; p++)
             if (STRIKE_CODE(p) == *(int *)(ev + 4)) {
                 waiting[p] = 0;
+                release_due[p] = 0;
+                tapped[p] = 0;          // a real strike: the driver sends its release
                 struck_at[p] = now;
                 recent[p] = 1;
             }
@@ -103,14 +128,16 @@ void light_taps_poll(void)
             continue;
         waiting[p] = 0;
         code = STRIKE_CODE(p);
-        if (!on || code < 0)
+        if (!on || code < 0) {
+            release_due[p] = 0;
             continue;
-        taps[next_tap].type = 3;
-        taps[next_tap].code = code;
-        taps[next_tap].velocity = TAP_VELOCITY;
-        taps[next_tap].time = NOW;
-        POST(QUEUE, &taps[next_tap]);
-        next_tap = (next_tap + 1) % TAPS;
+        }
+        post(3, code, TAP_VELOCITY);
+        if (release_due[p]) {
+            release_due[p] = 0;
+            post(4, code, 0);
+        } else
+            tapped[p] = 1;
     }
 }
 
