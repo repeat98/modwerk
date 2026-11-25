@@ -122,3 +122,47 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
   0.2.4 at rest +0.0 / +0.2. Both installed and rolled back.
 - Not run: this source's own twin; MUTE MODE switched from OT to OTFX, OTFX-T and DT-T with a muted track while
   playing (0.2.4 waking); an upgrade from 0.2.3 in a kept set; an MKI.
+
+## 25 November 2026: the UI tick's bookkeeping kept between changes (idle cost of installed modules)
+
+- **Why:** the owner's goal (25 November 2026) is that installed modules nobody uses cost next to nothing, so big sets
+  stay safe. A per-module scan on the owner's MKII (0.8.1 development twin, `profile:3`, stopped) found every DSP
+  effect adding 33 to 37 µs to each UI tick while used nowhere, machines 17 to 22, Tape Echo 78, and the empty tick
+  itself about 157 µs. ot_emu on development twins of this branch, PC watches at each stage of `mw_ui_tick`, traced it
+  to the base, not the modules (instructions a tick, medians over 243 ticks):
+
+  | | nothing installed | Mini Verb | Tape Echo |
+  | --- | --- | --- | --- |
+  | before (`bd301dacc`): whole tick | 12,793 | 15,673 (peaks 21,087) | 17,647 |
+  | of which `modwerk_status_hush` | 11,092 | 12,059 | 13,131 |
+  | of which the rest poll | 41 | 1,954 (peaks 7,368) | 1,824 |
+  | of which deadline rows, machines, tables | 1,076 | 1,076 | 2,108 |
+  | after, without the rest-poll loop: whole tick | 4,147 | 6,599 | 6,701 |
+  | of which `modwerk_status_hush` | 2,387 | 3,310 | 3,361 |
+
+- **What changed:**
+  - `machine_registry.c` `modwerk_machine_pattern_trigs`: each track's 64-step trig mask is read once (8 bytes) and
+    every step counted at once in bit planes. It was a byte read per step and track, 512 reads of the uncached banks a
+    tick, for the busiest step and the tracks that trig of the pattern that plays (and one queued). A host test
+    compares it with the step-by-step count on 2,000 random patterns of every density.
+  - `machine_registry.c` `modwerk_machine_rest_booked`: the sum is kept while the loader's owner epoch (even) and the
+    cost table (`status.c` `modwerk_status_costs_key`) stand; it was a search of the cost table for every installed
+    module, every tick.
+  - `machine_registry.c` `deadline_rows` / `modwerk_machine_deadline_effects`: the `ev_frame_deadline` rows' effect
+    handles are kept while the rows, the owner epoch and the handle map's generation stand. Each row's owner was a walk
+    of the loader's modules, twice a tick (Tape Echo: about 1,000 instructions, resting or not).
+  - `fxmap.c`: the whole check of the handle map (3 KB of battery RAM, about 420 µs on a unit) runs once a second by
+    DTIM3, with 3,600 calls as a backstop, instead of once in 60 calls. Every UI tick asks the map for each installed
+    effect module, so the more effects, the more often it ran (Mini Verb's rest poll peaks of 7,368). With nothing
+    installed it now runs once a second where before it rarely did: about 5,400 instructions once a second. And
+    `modwerk_fxmap_handle` keeps its answers for the checked generation until an entry is written (`put`, `widened`).
+  - `loader.c` rest poll: only the asking positions are judged. Stepping through all 32 for one asking module cost
+    about 1,300 instructions a tick (`trace_fn`: the judge itself, `modwerk_machine_in_use`, is about 190).
+- **Tests:** `test_fxmap.c` (the cache answers a reassignment and an unsealed write at once; damage that keeps the
+  generation is found by the timed whole check), `test_machine_registry.c` (the bit-plane count; the rest booking
+  across an install, a table change and a removal), `test_runtime_loader.py`, `test_machine_events.py`,
+  `test_fract_public_registry.py`, `test_table_declarations.py`, elekloader `test_recipe`: pass.
+- Release 0.8.2 rebuilt: base `fad2c7297a6ca7f1…` (was `910e6625`); browser = native `.bin` `1520e947a31dfcd9…`
+  (832,656 bytes). Base-bound packages relinked to it; Recorder Loop Fix 0.1.0's bytes change with the base's addresses
+  (`6b568782…`, written under `public/octatrack-base-packages/`).
+- Not run on a unit: any of this. Next: the per-module `profile:3` pass on a twin of this source, and the price at rest.

@@ -1551,6 +1551,12 @@ int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
     *use = costs_copy.entry[i][1] >> 16, *wake = costs_copy.entry[i][1] & 0xffffu;
     return 1;
 }
+/* The cost table as last checked, for what is kept from it (machine_registry.c's rest booking): another table, or
+ * none, reads another key. */
+uint32_t modwerk_status_costs_key(void)
+{
+    return costs_valid() ? (costs_copy.sum ^ costs_copy.count * 2654435761u) | 1u : 0u;
+}
 /* What the module adds installed on no track or slot, per mille; 0 when the table does not list it. */
 uint32_t modwerk_status_module_rest(uint32_t module)
 {
