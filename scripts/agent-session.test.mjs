@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { gzipSync } from 'node:zlib'
@@ -7,7 +7,7 @@ import { testServer } from '../src/community/test-server.ts'
 import { handleCommunity } from '../server/transport.ts'
 import { SESSION_CONSENT_VERSION } from '../src/community/agent-sessions.ts'
 import { COMMUNITY_RULES_VERSION } from '../src/legal/policy.ts'
-import { accountRequest, asAccount, pullSessions } from './agent-session.mjs'
+import { accountRequest, alreadyShared, asAccount, buildSession, pullSessions, sharedMoments } from './agent-session.mjs'
 import { BoardError } from './agent-board.mjs'
 
 const password = 'private session pull test passphrase'
@@ -60,5 +60,31 @@ describe('npm run session -- pull', () => {
     const admin = await member('owner', true), plain = await member('somebody')
     await expect(asAccount({ email: admin, password: 'not the right passphrase' }, () => { throw new Error('must not run') }, options)).rejects.toBeInstanceOf(BoardError)
     await expect(asAccount({ email: plain, password }, session => pullSessions(folder, async path => (await accountRequest(path, { ...options, session })).value), options)).rejects.toMatchObject({ status: 401 })
+  })
+})
+
+describe('npm run session -- share --new', () => {
+  it('leaves out what an earlier share of the same session already sent, and fetches only shares made since it started', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'session-new-'))
+    cleanup.push(() => rm(folder, { recursive: true, force: true }))
+    const line = (type, text, timestamp) => JSON.stringify({ type, timestamp, message: { role: type, content: type === 'user' ? text : [{ type: 'text', text }] } })
+    const file = join(folder, 'transcript.jsonl')
+    await writeFile(file, [
+      line('user', 'Measure the rest peaks.', '2026-11-20T12:00:00.000Z'),
+      line('assistant', 'POLY8 is the one.', '2026-11-20T12:05:00.000Z'),
+      line('user', 'Now the curves.', '2026-11-24T10:00:00.000Z'),
+      line('assistant', 'FM Synth first is 17.3.', '2026-11-24T10:20:00.000Z'),
+    ].join('\n') + '\n')
+    const fetched = []
+    const get = async path => {
+      fetched.push(path)
+      if (path === '/agent-sessions') return { sessions: [{ id: 'aaaaaaaa-0000-4000-8000-000000000001', createdAt: '2026-11-20T12:10:00.000Z' }, { id: 'bbbbbbbb-0000-4000-8000-000000000002', createdAt: '2026-11-01T09:00:00.000Z' }] }
+      return { session: { entries: [{ who: 'developer', text: 'Measure the rest peaks.', at: '2026-11-20T12:00:00.000Z' }, { who: 'agent', text: 'POLY8 is the one.', at: '2026-11-20T12:05:00.000Z' }] } }
+    }
+    const session = await buildSession({ file, agent: 'claude-code', note: 'rest', shared: since => sharedMoments(get, since) })
+    expect(session.entries.map(entry => entry.text)).toEqual(['Now the curves.', 'FM Synth first is 17.3.'])
+    // The share from before this transcript started cannot hold any of it and is not fetched.
+    expect(fetched).toEqual(['/agent-sessions', '/agent-sessions/aaaaaaaa-0000-4000-8000-000000000001'])
+    expect(alreadyShared([{ who: 'agent', at: '2026-11-20T12:05:00.000Z' }, { who: 'developer', at: '2026-11-20T12:05:00.000Z' }, { who: 'tool' }], new Set(['agent 2026-11-20T12:05:00.000Z']))).toEqual([0])
   })
 })

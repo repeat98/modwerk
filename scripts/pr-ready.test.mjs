@@ -108,6 +108,15 @@ describe('pr:ready verdict', () => {
     expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
     expect(readiness({}).instrument).toBe(false)
   })
+  it('checks the description with --body as CI\'s describe check does, and otherwise says how to', () => {
+    const refused = readiness({ description: ['The edge-case table under "Edge cases" has a row still to finish: row "Undo": …'] })
+    expect(refused.ok).toBe(false)
+    expect(refused.problems).toEqual(['Description: The edge-case table under "Edge cases" has a row still to finish: row "Undo": …'])
+    const passed = readiness({ description: [] })
+    expect(passed.ok).toBe(true)
+    expect(passed.notes.join(' ')).toContain('with the description you checked')
+    expect(readiness({}).notes.join(' ')).toContain('npm run pr:body -- FILE.md')
+  })
   it('routes a base build to the cumulative draft without prompting for a topic PR', () => {
     const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
     expect(verdict.baseDraft).toBe(true)
@@ -211,16 +220,21 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
+      // --body checks the description against the template, as CI's describe check does.
+      mkdirSync(join(checkout, '.github'))
+      copyFileSync(new URL('../.github/pull_request_template.md', import.meta.url), join(checkout, '.github', 'pull_request_template.md'))
+      writeFileSync(join(directory, 'body.md'), 'Moves the README line and checks it with pr:ready on the topic branch.\n')
       // A stale branch must stop before any generator/check invocation.
-      const result = spawnSync(process.execPath, [script, '--remote', 'origin'], { cwd: checkout,
+      const result = spawnSync(process.execPath, [script, '--remote', 'origin', '--body', join(directory, 'body.md')], { cwd: checkout,
         env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })
       expect(result.status, result.stderr).toBe(1)
       expect(result.stdout).toContain('git merge origin/main')
+      expect(result.stdout).toContain('✗ Description: Say what the guides lacked')
       expect(result.stdout).toContain('Not ready yet.')
       expect(git(checkout, 'rev-parse', 'origin/main')).toBe(current)
       git(checkout, 'merge', '--ff-only', 'origin/main')
       expect(git(checkout, 'rev-parse', 'HEAD')).toBe(current)
-      git(checkout, 'add', 'scripts', 'src')
+      git(checkout, 'add', 'scripts', 'src', '.github')
       git(checkout, 'commit', '-m', 'Track the local check fixture')
       writeFileSync(join(checkout, 'new-helper.ts'), 'export const enabled = true\n')
       const dirty = spawnSync(process.execPath, [script], { cwd: checkout,
