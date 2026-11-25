@@ -35,7 +35,11 @@ describe('the Rytm sets\' Modwerk base', () => {
     expect(Object.keys(plain.collections)).not.toContain('mw_fx')
     for (const name of FX_EXPORTS) expect(plain.exports).not.toContain(name)
     expect(plain.storage).toBeUndefined()
-    expect(plain.sections['.bss'].len ?? plain.sections['.bss'].size).toBeLessThan(2048)
+    // No send bus state on plain: its .bss is the core's, the lean engine's and the USB link's every-base part, whose
+    // diagnostics log is 6,148 bytes (LINK.md), with the link's ring and reply beside it; send-bus adds the bus.
+    const bss = (pkg: typeof plain) => pkg.sections['.bss'].len ?? pkg.sections['.bss'].size
+    expect(bss(plain)).toBeLessThan(2048 + 6148 + 1024)
+    expect(bss(plain)).toBeLessThan(bss(bus))
   })
   it('gives the voices variant send-bus\'s digital voices, and none of the send bus, its lock words, its clock or the FX list', () => {
     const voices = variantPackage('voices'), bus = variantPackage('send-bus')
