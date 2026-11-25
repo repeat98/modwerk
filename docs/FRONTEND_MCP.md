@@ -344,7 +344,11 @@ same numbers as `run`. `device_load` and `device_log` read as for the
 Model:Cycles; the Rytm's `cpu` is the audio block's share of its period, its
 `playing` the half seconds the sequencer played. The Rytm has no runtime loader
 yet, so `device_review` and the trial tools say so; modules reach it in a built
-image. Tests run against a fake unit (`scripts/rytm-device.test.mjs`).
+image. Tests run against a fake unit (`scripts/rytm-device.test.mjs`). On a unit (Nathaniel Pavel's MKII, 25
+November 2026): on SR01 (a development base with the link change, RAM-booted) `device_status` gave the set identity
+and named SR01's `.syx` in `--elektron-images`, `device_load` 58.5 %, `device_log` START and BASE, and
+`device_review` said the Rytm has no loader; on an image from before the change, the identity with no set and load
+and log unsupported.
 
 ## A member's unit through a remote session
 
