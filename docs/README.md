@@ -91,6 +91,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SOCIAL-PREVIEW.md](SOCIAL-PREVIEW.md): sharing preview artwork.
 - [COMMUNITY_OPERATIONS.md](COMMUNITY_OPERATIONS.md): running the community: registrations, moderation, [email sendouts](COMMUNITY_OPERATIONS.md#preparing-an-email-sendout).
 - [DOMAIN_AND_MAIL.md](DOMAIN_AND_MAIL.md): the modwerk.app domain, hosting and mail setup.
+- [KOFI_WEBHOOK.md](KOFI_WEBHOOK.md): the Ko-fi webhook that fills the support dialogs' cost bar, and its setup.
 - [PLATFORM_LICENSING.md](PLATFORM_LICENSING.md): the backend's and frontend's licences.
 - [LEGAL_COMPLIANCE.md](LEGAL_COMPLIANCE.md): German and EU compliance preparation.
 
