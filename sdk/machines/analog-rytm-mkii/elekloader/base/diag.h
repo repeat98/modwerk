@@ -40,8 +40,9 @@ typedef char diag_log_layout[sizeof(struct diag_log) == 40u + 92u + 32u * DIAG_L
  * the dearest block, per mille; `samples` the looks; `playing` the looks that ended with the sequencer playing;
  * `frame_gap` 0 (only the audio interrupt sees the blocks' spacing, and nothing of the log runs there); `tick_gap` the
  * longest time between two UI ticks, in audio blocks (about 75 a tick). The DSP fields stay 0: the Rytm's audio runs on the ColdFire. Incidents: START (a 0) and BASE (a the set
- * identity, link.c) at a boot's first tick, HOT (a the half-seconds at 90 % or more), FREEZE (the UI standing still
- * five seconds or more, logged when it comes back; a the audio blocks it stood still). `keys` the last 16 key ids pressed, oldest
+ * identity, link.c) at a boot's first tick, HOT (a the looks at 90 % or more; a look is ten UI ticks, half a second
+ * while the UI keeps up), FREEZE (the UI standing still five seconds or more, logged when it comes back, audio
+ * playing or not; a the audio blocks that time holds; a stall past DMA timer 0's wrap, about 32 s, is sized short). `keys` the last 16 key ids pressed, oldest
  * first (0xff none); `cpu` the last window's share; `playing` 1 while the sequencer plays. `machine`, `fx`, `screen`
  * and `tempo24` stay 0: the base does not read them yet. The log lives in the base's memory: it starts again at every
  * boot, so `boot` is 1. */

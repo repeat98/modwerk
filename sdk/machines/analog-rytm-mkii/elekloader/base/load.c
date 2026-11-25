@@ -25,8 +25,10 @@ uint32_t mw_load_tenths(uint32_t l)
 // blocks (a stopped interrupt) changes the readings.
 void mw_load_look(uint32_t sum, uint32_t blocks, uint32_t peak)
 {
-    if (!blocks)
+    if (!blocks) {
+        mw_diag_window(0, 0, 0);    // the log still marks the look's time, so its next block length is one look's
         return;
+    }
     if (peak > FULL)
         peak = FULL;
     // sum is at most 256 a block, so sum * 1000 fits 32 bits up to 16,777 blocks (11 s); a longer look (a stalled UI)

@@ -23,7 +23,7 @@ with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analo
 Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`.
 They read and change nothing else: no host can press a key, read memory outside the log or
 confirm an upgrade on a release base, which answers every other request `bad request`. On the
-send-bus variant they cost 3,396 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
+send-bus variant they cost 3,460 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
 it the log (the voices and plain variants the same), and one site each in stock's SysEx router and
 boot (`0x40083dd8`, `0x400008c6`). The boot site computes the set identity, with the data cache off
 (stock's own state at that point), over the `.run` block once a boot.

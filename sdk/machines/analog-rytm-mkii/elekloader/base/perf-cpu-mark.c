@@ -79,7 +79,7 @@ void le_cpu_warning_out(void)
 // counted in the wrong look or lost, one in 750.
 CW_UI void le_cpu_warning_tick(void *ctrl)
 {
-    uint32_t s, n, h, f, mean;
+    uint32_t s, n, h, f, p, mean;
     uint8_t now;
     if (level && ++blink_ticks >= CW_BLINK) {
         blink_ticks = 0;
@@ -89,10 +89,9 @@ CW_UI void le_cpu_warning_tick(void *ctrl)
     if (++ticks < CW_TICKS)
         return;
     ticks = 0;
-    s = sum; n = blocks; h = high; f = full;
-    sum = 0; blocks = 0; high = 0; full = 0;
-    mw_load_look(s, n, peak);
-    peak = 0;
+    s = sum; n = blocks; h = high; f = full; p = peak;
+    sum = 0; blocks = 0; high = 0; full = 0; peak = 0;
+    mw_load_look(s, n, p);              // read and cleared with the others: a block during the call counts in the next look
     mean = n ? s / n : 0;               // no block in a look: the levels run out
     if (mean >= CW_OVER_MEAN || f >= CW_OVER_BLOCKS)
         over_left = CW_HOLD;

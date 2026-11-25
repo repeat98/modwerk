@@ -113,6 +113,19 @@ int main(void)
     mw_diag_tick(0);
     CHECK(mw_diag_log.incidents == frozen);
 
+    // Audio stops for three looks and comes back: the empty looks keep the look's time, so the length a block takes
+    // comes from one look again, not four, and a five-second stall still reads as one.
+    for (unsigned i = 0; i < 3u; i++) {
+        mw_test_timer += 750u * BLOCK;
+        mw_load_look(0u, 0u, 0u);
+    }
+    look(100u, 100u);
+    unsigned stopped = mw_diag_log.incidents;
+    mw_test_timer += 7600u * BLOCK;
+    mw_diag_tick(0);
+    CHECK(mw_diag_log.incidents == stopped + 1u && last()->kind == DIAG_FREEZE && last()->a == 7600u);
+    frozen = mw_diag_log.incidents;
+
     // A ring past its size keeps the newest.
     for (unsigned i = 0; i < 40u; i++) {
         mw_test_timer += 8000u * BLOCK;

@@ -27,6 +27,8 @@ extern volatile uint32_t mw_test_timer;
 #define HOT 900u                 // per mille
 #define HOT_GAP 1200u            // looks between two HOT incidents: ten minutes
 #define SETTLED 120u             // no HOT in the first minute
+#define CALIBRATE_MAX 24000u     // blocks a look may hold and still give a block's length: 16 s, under DMA timer 0's
+                                 //   wrap (2^32 counts, about 32 s); a longer look keeps the last length
 
 volatile struct diag_log mw_diag_log;
 #define LOG (&mw_diag_log)
@@ -79,12 +81,15 @@ void mw_diag_start(uint32_t nonce, uint32_t set_crc)
 // audio blocks. The timer between two looks over their blocks gives a block's length in timer counts, for the stalls.
 void mw_diag_window(uint32_t avg, uint32_t wmax, uint32_t n)
 {
-    uint32_t w = ++windows, now = DTCN0;
+    uint32_t w, now = DTCN0;
     if (LOG->magic != DIAG_MAGIC)
         return;
-    if (look_at && n)
+    if (look_at && n && n <= CALIBRATE_MAX)
         block_counts = (now - look_at) / n;
     look_at = now;
+    if (!n)
+        return;                         // a look without audio blocks: only its time counts
+    w = ++windows;
     blocks += n;
     last_avg = avg;
     w_sum += avg;
