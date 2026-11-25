@@ -16,6 +16,8 @@ import { cleanupForumMedia } from './server/forum-media'
 import { cleanupAudioPreviews } from './server/audio-previews'
 import { cleanupRemoteSessions } from './server/remote-sessions'
 import { syncAgentClaims } from './server/agent-board'
+import { cleanupAgentSessions } from './server/agent-sessions'
+import { dispatchMaintenance } from './server/maintenance-bot'
 import { handleCommunity } from './server/transport'
 import type { Env } from './server/platform'
 export { RemoteSessionRelay } from './server/remote-relay'
@@ -45,6 +47,7 @@ export default {
     }
     if (event.cron === '*/5 * * * *') {
       context.waitUntil(sendMemberWelcomes(env, env.DB))
+      context.waitUntil(dispatchMaintenance(env, env.DB).catch(error => console.error(`Maintenance bot dispatch failed: ${failureDetail(error)}`)))
       return
     }
     const db = env.DB
@@ -52,7 +55,7 @@ export default {
     context.waitUntil(runHourly({
       'Octatrack diagnostics cleanup': () => cleanupOctatrackDiagnostics(db), 'remote session cleanup': () => cleanupRemoteSessions(db),
       'push cleanup': () => cleanupPush(db), 'usage cleanup': () => cleanupUsage(db), 'presence cleanup': () => cleanupPresence(db), 'account cleanup': () => cleanupAccounts(db),
-      'developer auth cleanup': () => cleanupDeveloperAuth(db), 'beta inactivity': () => remindInactiveBetaTesters(env, db), 'module threads': () => ensureModuleThreads(db), 'activity digests': activity, 'forum media cleanup': () => cleanupForumMedia(env), 'audio preview cleanup': () => cleanupAudioPreviews(env), 'agent board': () => syncAgentClaims(env, db),
+      'developer auth cleanup': () => cleanupDeveloperAuth(db), 'beta inactivity': () => remindInactiveBetaTesters(env, db), 'module threads': () => ensureModuleThreads(db), 'activity digests': activity, 'forum media cleanup': () => cleanupForumMedia(env), 'audio preview cleanup': () => cleanupAudioPreviews(env), 'agent board': () => syncAgentClaims(env, db), 'agent session cleanup': () => cleanupAgentSessions(db),
     }))
   },
 }

@@ -1,0 +1,1 @@
+Developer tools: `npm run device -- set` and `try` now give the unit up to 20 seconds to finish rolling a trial back. An Octatrack undoes a set one module at a time, and the old 3-second limit ended a 24-module trial with 16 modules undone and the unit waiting in recovery until `npm run device -- recover`.

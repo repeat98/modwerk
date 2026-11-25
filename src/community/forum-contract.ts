@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
-import type { MemberRole } from './member-standing'
+import type { ContributionRoles, MemberRole } from './member-standing'
 import { machineModules } from './modules'
 import { compareModuleVersions } from '../catalog/versions'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
@@ -39,8 +39,9 @@ export function sharedConfiguration(value: unknown): SharedConfiguration {
   if (Object.keys(item).some(key => !['name','device','moduleIds','moduleVersions','keepStockFx2','usbAudio'].includes(key))) throw new Error('Only configuration names, machine, module choices, versions and settings can be shared. Firmware and other files are not accepted.')
   const device = item.device ?? 'octatrack'
   if (item.device !== undefined && typeof item.device !== 'string') throw new Error('Choose a valid configuration machine.')
-  if (typeof device !== 'string' || !['octatrack','digitakt','digitone'].includes(device)) throw new Error('Choose a machine with configurable modules.')
-  if (typeof item.name !== 'string' || !item.name.trim() || item.name.length > 80 || typeof item.keepStockFx2 !== 'boolean' || !Array.isArray(item.moduleIds) || !item.moduleIds.length || item.moduleIds.length > 100 || new Set(item.moduleIds).size !== item.moduleIds.length || item.moduleIds.some(id => typeof id !== 'string' || !machineModules(device).some(module => module.moduleId === id))) throw new Error('This configuration has invalid module choices or settings.')
+  const modules = machineModules(device)
+  if (!modules.length) throw new Error('Choose a machine with configurable modules.')
+  if (typeof item.name !== 'string' || !item.name.trim() || item.name.length > 80 || typeof item.keepStockFx2 !== 'boolean' || !Array.isArray(item.moduleIds) || !item.moduleIds.length || item.moduleIds.length > 100 || new Set(item.moduleIds).size !== item.moduleIds.length || item.moduleIds.some(id => typeof id !== 'string' || !modules.some(module => module.moduleId === id))) throw new Error('This configuration has invalid module choices or settings.')
   if (!item.moduleVersions || typeof item.moduleVersions !== 'object' || Array.isArray(item.moduleVersions) || Object.keys(item.moduleVersions).length !== item.moduleIds.length || Object.keys(item.moduleVersions).some(id => !item.moduleIds.includes(id))) throw new Error('Include the exact version of every module.')
   for (const id of item.moduleIds) {
     const version = item.moduleVersions[id]
@@ -82,10 +83,10 @@ export type ForumAttachment = {id:string;kind:'image'|'audio';caption:string}
 /** A recent post with images or sound clips, for the Showcase strip. `page` is the thread page that holds it. */
 export type ForumShowcaseItem = {id:string;thread_id:string;created_at:string;username:string|null;avatar?:string|null;official:number;title:string;category:ForumCategory;machine:string|null;page:number;attachments:ForumAttachment[]}
 /** `maintainer` marks a post by a linked maintainer of the thread's module: a claim confirmed by the reviewed catalog and a GitHub sign-in, never the manifest alone. */
-export type ForumPost = {id:string;body:string;username:string|null;avatar?:string|null;displayName?:string|null;user_id?:string;created_at:string;edited_at:string|null;hidden:number;likes:number;liked:boolean;canEdit:boolean;canRemoveMedia?:boolean;official?:boolean;maintainer?:boolean;role?:MemberRole|null;betaTester?:boolean;attachments:ForumAttachment[]}
+export type ForumPost = {id:string;body:string;username:string|null;avatar?:string|null;displayName?:string|null;user_id?:string;created_at:string;edited_at:string|null;hidden:number;likes:number;liked:boolean;canEdit:boolean;canRemoveMedia?:boolean;official?:boolean;maintainer?:boolean;contributions?:ContributionRoles;role?:MemberRole|null;betaTester?:boolean;attachments:ForumAttachment[]}
 /** A reply as a profile or highlight lists it; `page` is the thread page that holds it. */
 export type ForumReplyItem = {id:string;thread_id:string;title:string;excerpt:string;created_at:string;page:number}
-export type MemberProfile = {username:string;displayName:string;bio:string;avatar:string|null;memberSince:string;role:MemberRole;betaTester?:boolean;threads:number;replies:number;likesReceived:number;reports:number;maintains:{id:string;name:string;machine:string;href:string}[];recentReplies:ForumReplyItem[]} & ProfileLinks
+export type MemberProfile = {username:string;displayName:string;bio:string;avatar:string|null;memberSince:string;contributions?:ContributionRoles;role:MemberRole;betaTester?:boolean;threads:number;replies:number;likesReceived:number;reports:number;maintains:{id:string;name:string;machine:string;href:string}[];recentReplies:ForumReplyItem[]} & ProfileLinks
 export type ForumMember = {username:string;avatar:string|null}
 export type ForumHighlights = {since:string;topPosts:(ForumReplyItem&ForumMember&{category:ForumCategory;likes:number})[];topMembers:(ForumMember&{likes:number})[];newMembers:ForumMember[]}
 /** All active site visitors, and consenting member names; `more` includes anonymous and unnamed visitors. */

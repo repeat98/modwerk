@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.5.1-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "The sample preview (stock's FUNC + YES in a sample list, which plays from stock's own slot 129) plays at 1x again: the FIN gate leaves any voice on slot 128 or above at 1x, and the block handler never turns such a voice backward (issue #1591)."
+  ],
+  "runtimeSourceSha256": "8645bba773bee01d6e0be5a8373be1d56c3c46aa1f8a00045ae2d274bd004c1e",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.5.1-experimental-os1.74.elemod",
+      "sha256": "a0064aa622cc04a98a0c7b7620a40ceeaedcbaf18eacb7d3b1302eb7d3791786"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

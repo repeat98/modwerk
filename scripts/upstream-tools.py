@@ -3,6 +3,7 @@
 """Keep verified developer checkouts of upstream Octabam, Elekloader, rytm-emu and Ziddle outside Git.
 
     npm run upstream:tools                 # check out the pinned commits
+    npm run upstream:tools -- --for octatrack  # only Octabam and Elekloader
     npm run upstream:tools -- --update     # move rytm-emu to upstream main first
     npm run upstream:tools -- --dir DIR    # default ~/.cache/modwerk-upstream
 
@@ -160,8 +161,12 @@ def update_plain(pins_path, name, base, today=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--dir', type=Path, default=DEFAULT_DIR)
+    parser.add_argument('--for', dest='instrument', choices=('octatrack', 'rytm', 'zoom'),
+                        help='Set up tools for one instrument family (default: all three).')
     parser.add_argument('--update', action='store_true', help='Move the rytm-emu pin to upstream main first.')
     args = parser.parse_args()
+    if args.update and args.instrument not in (None, 'rytm'):
+        parser.error('--update moves the Rytm pin; use it alone or with --for rytm.')
     base = args.dir.expanduser().resolve()
     try:
         outside_git(base)
@@ -170,30 +175,34 @@ def main():
             head, moved = update_plain(PINS, 'rytm-emu', base)
             print('rytm-emu pin %s %s.' % ('moved to' if moved else 'already at', head[:7]))
         pins = json.loads(PINS.read_text())
-        kit = json.loads((APP / pins['elekloader']['commitFrom']).read_text())
-        octabam = sync('octabam', pins['octabam']['repository'], pins['octabam']['commit'], base, True)
-        elekloader = sync('elekloader', pins['elekloader']['repository'], kit['commit'], base, False)
-        rytm_emu = sync('rytm-emu', pins['rytm-emu']['repository'], pins['rytm-emu']['commit'], base, False)
-        ziddle = fetch_archive(pins['ziddle'], base)
-        if args.update:
-            main_head = git(elekloader, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
-            if main_head != kit['commit']:
-                print('Elekloader main (%s) is ahead of kit %s. The kit and catalogue follow releases: '
-                      'npm run elekloader:update -- elekloader-kit-<version>.zip' % (main_head[:7], kit['version']))
+        if args.instrument in (None, 'octatrack'):
+            kit = json.loads((APP / pins['elekloader']['commitFrom']).read_text())
+            octabam = sync('octabam', pins['octabam']['repository'], pins['octabam']['commit'], base, True)
+            elekloader = sync('elekloader', pins['elekloader']['repository'], kit['commit'], base, False)
+            print('octabam     %s (%s)  %s  repaired: %s' % (pins['octabam']['commit'][:7], pins['octabam']['updated'],
+                                                            octabam, ', '.join(adapter.TOOLS)))
+            print('elekloader  %s (kit %s)  %s' % (kit['commit'][:7], kit['version'], elekloader))
+            count = sum(p.is_file() for p in (octabam / 'tools/hw').iterdir())
+            print('Hardware tools (%d): %s/tools/hw' % (count, octabam))
+            print('Recorder:    swiftc -O %s/tools/hw/rec.swift -o %s/tools/rec' % (octabam, octabam))
+            print('Emulator and DSP assembler: run "make setup" then "make emu-cf" in %s (builds into its ignored vendor/).' % octabam)
+            if args.update:
+                main_head = git(elekloader, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
+                if main_head != kit['commit']:
+                    print('Elekloader main (%s) is ahead of kit %s. The kit and catalogue follow releases: '
+                          'npm run elekloader:update -- elekloader-kit-<version>.zip' % (main_head[:7], kit['version']))
+        if args.instrument in (None, 'rytm'):
+            rytm = pins['rytm-emu']
+            rytm_emu = sync('rytm-emu', rytm['repository'], rytm['commit'], base, False)
+            print('rytm-emu    %s (%s)  %s' % (rytm['commit'][:7], rytm['updated'], rytm_emu))
+            print('Rytm emulator: run "cargo build --release --bin dtboot" in %s (builds into its ignored target/).' % rytm_emu)
+        if args.instrument in (None, 'zoom'):
+            ziddle = fetch_archive(pins['ziddle'], base)
+            print('ziddle      %s (%s)  %s' % (ziddle.name, pins['ziddle']['updated'], ziddle))
+            print('Zoom effect emulator: run "cargo build --release --locked -p ziddle-cli" in %s (Rust 1.88 or newer), '
+                  'then use only "ziddle effect show|check|render" on your own .ZDL files.' % ziddle)
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         parser.error(str(error))
-    tools = sorted(p.name for p in (octabam / 'tools/hw').iterdir() if p.is_file())
-    print('octabam     %s (%s)  %s  repaired: %s' % (pins['octabam']['commit'][:7], pins['octabam']['updated'],
-                                                    octabam, ', '.join(adapter.TOOLS)))
-    print('elekloader  %s (kit %s)  %s' % (kit['commit'][:7], kit['version'], elekloader))
-    print('rytm-emu    %s (%s)  %s' % (pins['rytm-emu']['commit'][:7], pins['rytm-emu']['updated'], rytm_emu))
-    print('ziddle      %s (%s)  %s' % (ziddle.name, pins['ziddle']['updated'], ziddle))
-    print('Hardware tools (%d): %s/tools/hw' % (len(tools), octabam))
-    print('Recorder:    swiftc -O %s/tools/hw/rec.swift -o %s/tools/rec' % (octabam, octabam))
-    print('Emulator and DSP assembler: run "make setup" then "make emu-cf" in %s (builds into its ignored vendor/).' % octabam)
-    print('Rytm emulator: run "cargo build --release --bin dtboot" in %s (builds into its ignored target/).' % rytm_emu)
-    print('Zoom effect emulator: run "cargo build --release --locked -p ziddle-cli" in %s (Rust 1.88 or newer), '
-          'then use only "ziddle effect show|check|render" on your own .ZDL files.' % ziddle)
 
 
 if __name__ == '__main__':

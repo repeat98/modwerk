@@ -62,6 +62,21 @@ void modwerk_machine_site_restored(uint32_t address, uint32_t length, const uint
 }
 #endif
 
+/* The transport long at 0x800065b8 (OS 1.40C) is 0 stopped and rewound, 1 running and 2 stopped with the position
+ * kept (octabam's docs/firmware/STEM_REC.md, Sam Banks: seven sites clear it, five write 1, one writes 2), and each
+ * track's running byte (0x80006500, 16 tracks) follows it. On the owner's MKII (23 November 2026) the panel's STOP
+ * wrote 0 at once, and 2 came from PLAY while playing (pause) and from every MIDI STOP, with all sixteen track bytes
+ * 2: a host that stops the unit leaves it there until a panel STOP. Both are stopped: brake release, the ceiling's
+ * re-time, the CPU guard, the predicted brake, the module switch and the loader's own gate all mean "not running".
+ * An unknown value counts as running, the cautious side for an install. Readings:
+ * docs/verification/2026-11-23-octatrack-transport-word.md. */
+int modwerk_machine_transport_stopped(uint32_t word, const volatile uint8_t *tracks)
+{
+    if (word != 0u && word != 2u) return 0;
+    for (unsigned i = 0; i < 16u; ++i) if (tracks[i] != 0u && tracks[i] != 2u) return 0;
+    return 1;
+}
+
 /* Code/data references may retain either alias of the same physical DRAM. */
 uint32_t modwerk_machine_reference(uint32_t value)
 {
@@ -86,12 +101,12 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max, const s
 #else
 #define U8(a) (*(volatile uint8_t *)(a))
 #define U32(a) (*(volatile uint32_t *)(a))
-/* The logger's flush check (sdk/runtime/logging/stock_140c.c), minus its
- * card and engine-task conditions: no track running, no recorder active. */
+/* The logger's flush check (sdk/runtime/logging/stock_140c.c), minus its card and engine-task conditions: no recorder
+ * active, and the transport and every track stopped, rewound or paused (the logger itself still waits for a rewind). */
 int modwerk_machine_stopped(void)
 {
-    for (unsigned i = 0; i < 16; ++i) if (U8(0x80006500u + i) || U8(0x80004f1eu + i * 84u)) return 0;
-    return U32(0x800065b8u) == 0;
+    for (unsigned i = 0; i < 16; ++i) if (U8(0x80004f1eu + i * 84u)) return 0;
+    return modwerk_machine_transport_stopped(U32(0x800065b8u), (const volatile uint8_t *)0x80006500u);
 }
 /* Stock's USB DISK MODE is open (its flag, 1 while it is): stock holds the DSP frames still there and starts them
  * again with the project it loads on the way out. dsp.c's stall watchdog stays out: its recovery, run inside the
@@ -224,16 +239,6 @@ int modwerk_machine_patchable(uint32_t address, uint32_t length)
     return address >= STOCK_FROM && address < BOOTLOADER_FROM && length <= BOOTLOADER_FROM - address;
 }
 
-/* Hooks run in the sys task (core-ot's ev_tick, ev_key, ev_enc and nearly
- * always ev_draw), in position order: the first key or encoder hook that
- * returns nonzero takes the event. The tick also counts, for diagnostics. */
-/* Reads the position once: memory a hook still runs in is not reclaimed while
- * this task holds an address inside it. */
-static uintptr_t hook(unsigned position, enum runtime_event e)
-{
-    const struct runtime_module *m = modwerk_runtime_module(position);
-    return m ? m->hook[e] : 0;
-}
 /* Stock draws a page only on its own events, so a module that changes how stock draws one (Output Matrix's LEV box)
  * shows only at the next key that redraws it. The restore after a boot comes about three seconds after the first
  * draw: on the owner's MKII (16 October 2026) the LEV box kept stock's split bars until CUE was pressed. So once the
@@ -270,50 +275,58 @@ static void REDRAW(void)
 }
 #endif
 static uint32_t drawn_epoch, drawn_set;
-static void redraw_after_change(void)
+static int set_changed(void)
 {
-    if (modwerk_runtime_redraw_wanted) modwerk_runtime_redraw_wanted = 0, REDRAW();
     uint32_t epoch = modwerk_runtime_owner_epoch(), set = 0; /* none live: 0, as the screen was first drawn */
-    if (epoch == drawn_epoch || (epoch & 1u)) return;
+    if (epoch == drawn_epoch || (epoch & 1u)) return 0;
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
         const struct runtime_module *m = modwerk_runtime_module(i);
         if (m) set = (set ^ (uint32_t)(uintptr_t)m ^ m->id ^ (uint32_t)i << 24) * 0x01000193u;
     }
-    if (modwerk_runtime_owner_epoch() != epoch) return; /* changed while read: the next tick reads it again */
+    if (modwerk_runtime_owner_epoch() != epoch) return 0; /* changed while read: the next tick reads it again */
     drawn_epoch = epoch;
-    if (set != drawn_set) drawn_set = set, REDRAW();
+    if (set == drawn_set) return 0;
+    drawn_set = set; return 1;
 }
+/* The UI hooks run in position order. The first key or encoder hook that takes the event ends dispatch.
+ * The shared status word (modwerk_runtime_api.value, the diagnostics' value) is whatever tick wrote it last. Once the
+ * live set changes it starts at 0 again, before the ticks run, so it never shows a module that left: before, a removed
+ * module's value stayed until some live tick wrote the word, with none that does until a power cycle (#1314). Cleared
+ * here, in the task that runs the ticks, so a removed module's tick that was paused mid-write has finished. */
 void modwerk_runtime_tick(void)
 {
     MW_STAMP(1);
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
-        uintptr_t f = hook(i, RUNTIME_TICK);
-        if (f) ((void (*)(struct modwerk_runtime_api *))f)(&modwerk_runtime_api);
-    }
-    redraw_after_change();
+    int changed = set_changed();
+    if (changed) modwerk_runtime_api.value = 0;
+    unsigned next = 0;
+    uintptr_t f;
+    while ((f = modwerk_runtime_next_hook(RUNTIME_TICK, &next)))
+        ((void (*)(struct modwerk_runtime_api *))f)(&modwerk_runtime_api);
+    if (modwerk_runtime_redraw_wanted) modwerk_runtime_redraw_wanted = 0, REDRAW();
+    if (changed) REDRAW();
     modwerk_runtime_ticks = modwerk_runtime_ticks + 1;
 }
 void modwerk_runtime_draw(unsigned char *frame)
 {
     MW_STAMP(21);
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
-        uintptr_t f = hook(i, RUNTIME_DRAW);
-        if (f) ((void (*)(unsigned char *))f)(frame);
-    }
+    unsigned next = 0;
+    uintptr_t f;
+    while ((f = modwerk_runtime_next_hook(RUNTIME_DRAW, &next)))
+        ((void (*)(unsigned char *))f)(frame);
 }
 int modwerk_runtime_key(int code, int pressed)
 {
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
-        uintptr_t f = hook(i, RUNTIME_KEY);
-        if (f && ((int (*)(int, int))f)(code, pressed)) return 1;
-    }
+    unsigned next = 0;
+    uintptr_t f;
+    while ((f = modwerk_runtime_next_hook(RUNTIME_KEY, &next)))
+        if (((int (*)(int, int))f)(code, pressed)) return 1;
     return 0;
 }
 int modwerk_runtime_enc(int encoder, int delta)
 {
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
-        uintptr_t f = hook(i, RUNTIME_ENC);
-        if (f && ((int (*)(int, int))f)(encoder, delta)) return 1;
-    }
+    unsigned next = 0;
+    uintptr_t f;
+    while ((f = modwerk_runtime_next_hook(RUNTIME_ENC, &next)))
+        if (((int (*)(int, int))f)(encoder, delta)) return 1;
     return 0;
 }

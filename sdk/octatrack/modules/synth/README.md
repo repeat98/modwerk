@@ -1,14 +1,18 @@
-# FM Synth — 0.1.3 experimental
+# FM Synth — 0.1.5 experimental
+
+FM Synth 0.1.5 rests while nothing in the project uses it: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. A silent FM track was meant to cost less, but on an MKII a track that had played notes still cost about 11 points of the frame interrupt on an empty pattern and while stopped; a fix is to follow (TESTING.md). Sound and controls are 0.1.4's (TESTING.md). Its CPU price, measured again on 0.1.5 on an MKII, is 4 % of a frame a track (0.1.4: 6), so the base's CPU budget no longer refuses an FM Synth track of a Part on its own.
 
 ## Overview
 
 FM SYNTH is a dedicated track machine beside FLEX, STATIC, THRU, NEIGHBOR and PICKUP. It uses Tim Hastie’s octatrick v2.9 two-operator FM engine: a sine carrier with a sine modulator, feedback and an index-decay envelope. One to four paraphonic voices feed the track’s existing AMP, filter and effects.
 
+Version 0.1.4 tells the Octatrack base what one playing track of FM Synth costs: 6 % of a frame, measured on an MKII with 0.1.3 (TESTING.md). The base's CPU budget then admits FM Synth on up to seven tracks of a Part, where it charged a machine that names no price 12 % and refused the fourth. The budget is in every Modwerk base from 0.7 on. Nothing else changes: sound, controls and the code are 0.1.3's.
+
 Version 0.1.3 makes FM Synth cheaper on the CPU, above all while it is installed and on no track: a track the engine would not change never enters FM Synth's code, and which tracks need the engine is worked out once a frame. On an MKII with four sample tracks playing it costs about 3 points of the frame interrupt on no track (0.1.2: 19; TESTING.md has the readings). It also fixes track 1's LFO 3, which did nothing while FM Synth was installed. Sound and controls are meant to be unchanged: one FM Synth track recorded on an MKII matches 0.1.2 as closely as two takes of 0.1.2 match each other, and a FLEX track beside it is sample-identical. Chords, glide, MIDI and legacy FMSYNTH samples have not been checked on this version.
 
 Version 0.1.2 fixed the MIDI chromatic selector stack imbalance and added 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
 
-The dedicated machine plays without a sample. This experimental version has emulator playback and shared native/browser composition evidence. The owner explicitly authorized releasing 0.1.2 without current hardware validation on 8 October. Hardware is untested. Worst-case chip timing and complete stack/lifetime bounds remain unmeasured. Version-matched release notes are published in the community changelog. These measurements remain unknown; see TESTING.md for the release limits.
+The dedicated machine plays without a sample. On an MKII at 140 BPM, installing 0.1.5 with no FM track added 0.619 percentage points to the frame interrupt on MWREPROB/TARGET. The first FM note, two-way glide and a saved FLEX marker played on the unit. TESTING.md records the individual readings and the limits of the trial.
 
 ## Controls
 

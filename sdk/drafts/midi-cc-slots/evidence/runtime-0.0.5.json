@@ -1,0 +1,32 @@
+{
+  "packageSha256": "0012a6d8a4c4fd9714d3dca7c52b80555aa86052a25e0a92f86b40d317e0cc09",
+  "sites": 20,
+  "copies": 16,
+  "imageBytes": 1756,
+  "relocations": 0,
+  "stockFreeScan": "passed at 16 bytes",
+  "currentBaseDirectOverlap": "none",
+  "installedFileGuards": true,
+  "images": [
+    {
+      "origin": "0x400d6b20",
+      "sha256": "027bf36e9646f27f0390752f49e38e4d8ec579d5b9938543b4566d90653d31a8"
+    },
+    {
+      "origin": "0x400d7000",
+      "sha256": "70e91b7f33384474a14be1aac0bfa9b6aeb4b9cdf31fd3a2d3af7eed9b6ff66a"
+    }
+  ],
+  "hardware": "not tested",
+  "loaderLifecycle": "not tested on device",
+  "version": "0.0.5-experimental",
+  "ccAssertions": 398,
+  "ccSourceSha256": "1b89d3aef8f476258ef17abbe12b65c21368374a210ad9542599699f5e48f137",
+  "namesSourceSha256": "7b749985ead69d397e9a401b500b55bc04d182258d2a615f926c596ac1f32201",
+  "namesVerifierSha256": "7f7a41e6f79e8a7ec08351de054a965aae6c151166c2bbf1c00944c7e028050b",
+  "namedUi": "actual LCD reviewed; PUSH/OFF pixel baselines checked",
+  "namePersistence": "not implemented",
+  "namingAssertionsPerPlacement": 81,
+  "placements": 2,
+  "previousPackageUpgrade": "0.0.4 -> 0.0.5, Undo -> 0.0.4, Keep 0.0.5 and removal: real C loader, host glue passed"
+}

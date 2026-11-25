@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { BaseDialogFrame, BaseIntro, StagePlan, type BasePromise } from './BaseDialogFrame'
 import { LinkHero } from './LinkHero'
 import { Icon } from './Icon'
-import { BASE_RECOVERY_NOTICE } from '../firmware-notices'
+import { BASE_RECOVERY_NOTICE, USB_BROWSERS } from '../firmware-notices'
 import { CARD_SET_FILE } from '../engine/elekloader/card-set'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -23,9 +23,9 @@ const JOURNEY = [
 ] as const
 
 /**
- * The welcome to modules over USB (useOctatrackWelcome decides when): what is new, the way there in three steps (both
+ * The welcome to modules over USB: what is new, the way there in three steps (both
  * ways to load modules: USB or a file on the card), what it needs, and the first step. Set up opens the base install
- * guide on Your Octatrack. A browser without WebUSB (`usbBrowser` false, or the link says unsupported) is told the
+ * guide for the current install. A browser without WebUSB (`usbBrowser` false, or the link says unsupported) is told the
  * card is its way. `savedSets`: this browser has configurations from before.
  */
 export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp, onLater }: {
@@ -41,13 +41,12 @@ export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp,
     <BaseIntro hero={<LinkHero label="USB" />} title="Modules now load over USB, for everyone" promises={NEW} beta={false}
       intro="Send modules to your Octatrack straight from this page. It takes one install of the Modwerk base."
       needs="You need your original OS 1.40C file and a CompactFlash card for the first install."
-      missing={usb ? undefined : 'This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.'} />
+      route={usb ? undefined : <>This browser can’t use USB, so modules go onto the card as a file. For USB sync, use {USB_BROWSERS}.</>} />
     <section className="base-install-stage" aria-labelledby="welcome-steps-title">
       <h3 id="welcome-steps-title">How it works</h3>
       <StagePlan stages={JOURNEY} progressLabel="How it works" />
       {savedSets && <p className="link-hint">Your saved configurations are here as module sets.</p>}
       <details className="base-install-recovery"><summary>Before you install</summary><p>{BASE_RECOVERY_NOTICE}</p></details>
-      <p className="link-hint">No Octatrack? Close this and it won’t come back.</p>
     </section>
   </BaseDialogFrame>
 }

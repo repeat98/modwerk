@@ -13,7 +13,10 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
+import { USB_AUDIO_MODULE } from '../src/config/usb-audio.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
+// The pipeline may not import the maintenance bot's policy.mjs (npm run licenses:check), so it names the owner itself.
+const OWNER = 'repeat98'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
@@ -21,8 +24,10 @@ const API = process.env.MODWERK_API_URL ?? 'https://octamod-community.octamod.wo
 const OUT = join(homedir(), '.cache/modwerk-local/diagnostics')
 /** Module ids (the package's `module`, 8 hex digits) to names, for the unit's `set` records. */
 const MODULE_NAMES = new Map((() => { try { return JSON.parse(readFileSync(new URL('src/engine/assets/octatrack-module-packages.json', ROOT), 'utf8')).packages.map(p => [p.module, p.name ?? p.id]) } catch { return [] } })())
+// All USB Audio layouts share a runtime ID. The catalogue lists them separately from ordinary packages.
+MODULE_NAMES.set(createHash('sha256').update(USB_AUDIO_MODULE).digest('hex').slice(0, 8), 'USB Audio')
 const PAGE = 500
-const PROBLEMS = ['sync_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
+const PROBLEMS = ['sync_failed', 'link_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
 
 /** Pages through every retained record, oldest first; `page(since)` answers with the endpoint's JSON. */
 export async function pullAll(page, from) {
@@ -43,20 +48,33 @@ export async function pullAll(page, from) {
 /** This computer's local time, as Discord shows it. */
 export const when = iso => new Date(iso).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })
 const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username, data.event, data.phase,
+  data.failure && 'failure=' + data.failure, data.client && [data.client.browser, data.client.major].filter(Boolean).join(' ') + '/' + data.client.os,
+  cardSaveFailed(data) && 'card=' + SAVED[data.reading.saved],
   data.error && 'error=' + data.error, data.result && 'result=' + data.result, data.refusal !== undefined && 'refusal=' + data.refusal,
-  data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reason && 'reason=' + data.reason,
+  data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.step && 'step=' + data.step, data.reconnect && 'reconnect=' + data.reconnect, data.reason && 'reason=' + data.reason,
+  data.upload && 'command=' + data.upload.command, data.upload?.chunkOffset !== undefined && 'chunkOffset=' + data.upload.chunkOffset,
+  data.upload?.remainingBytes !== undefined && 'remainingBytes=' + data.upload.remainingBytes,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
-const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down'],
+const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down', 'window open', 'meets a buffer'],
   { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base'] // records that carry no cpu, keys or screen
+/** A refused restore's set record from base 0.7.10 on (diag.c): the loader's check that refused it (dsp1, read as dsp1to4;
+ * loader.h runtime_check) and the module pool then, in 16-byte units (cpu the bytes used, dsp0 the largest free run, read as
+ * dsp5to8). Older bases leave all three 0. A module-memory refusal by the claims check is a DSP claim meeting a delay buffer. */
+const REFUSED_CHECKS = ['', 'the module pool', 'its DSP claims', 'the machine metadata', 'the DSP limits']
+const refusedPool = r => !(r.cpu || r.dsp5to8 || r.dsp1to4) ? '' :
+  (r.dsp1to4 ? `, by ${r.tempo24 === 2 && r.dsp1to4 === 2 ? 'its DSP claims meeting a delay buffer' : REFUSED_CHECKS[r.dsp1to4] ?? 'check ' + r.dsp1to4}` : '') +
+  `, module memory ${Math.round(r.cpu / 64)} KiB used, largest free block ${(r.dsp5to8 / 64).toFixed(1)} KiB`
+// diag.c stores up to fourteen package IDs in the set record. A full record can be only part of the inventory.
+const SET_ID_CAPACITY = 14
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
-  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
-    (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
-  (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? ` ${r.a & 0xffffff} machines refused for CPU, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
+  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a === SET_ID_CAPACITY ? 'at least ' : ''}${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
+    (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +
+  (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? ` ${r.a & 0xffffff} machines refused for CPU, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'brake' ? (r.a >>> 23 & 1 ? ` module machines silenced on a pattern predicted past the frame ceiling (${r.a & 0x7fffff} since boot)` : ` module machines silenced (${r.a & 0xffffff} since boot), the frame fell behind`) : r.kind === 'late' ? ` late frame entries held, each a skipped DSP frame (${r.a & 0xffffff} since boot)` + (r.a >>> 24 ? `, ${r.a >>> 24} later than the wait can hold` : '') : r.kind === 'usb' ? ` the host never enumerated it: offered again (OTGSC 0x${(r.a >>> 16).toString(16)}, PORTSC1 0x${(r.a & 0xffff).toString(16)})` : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
 
@@ -84,14 +102,36 @@ const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NA
  * 95 % CPU or more after PROJ … RIGHT YES (PROJ may have left the 16 keys the unit keeps), with the log's last set record
  * showing none installed, is likely one too, or USB disk mode (beta finding 72): only a hint, since the base stayed the same.
  * A freeze until a restart, stopped, in a session whose next start runs another base is the upgrade seen by diag.c's
- * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed is left as it is. */
+ * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed but whose keys
+ * end in that walk (PROJ … YES YES: pick the file, confirm) is likely the same image flashed again: the 17 November 2026
+ * pull had 21 stopped freezes after the walk, all until a restart, 9 before another base and 12 before the same one.
+ * Any other stopped freeze until a restart after PROJ … RIGHT YES is likely USB disk mode (or an upgrade prompt) left
+ * open, as finding 72's stalls: 13 of the 42 stopped freezes from 25 October to 24 November 2026 followed that walk. */
 export function unitLines(incidents, names = namesFor) {
   const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
+  const { at, base, note } = hangNotes(all)
+  const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
+  // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
+  const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
+  // Base 0.8 on logs a brake and late frame entries at most starts, before anything is installed: the start's own frame lag,
+  // released at STOP (machine_registry.c brake_tick). On 24 November 2026 they filled most of a unit's 12 lines.
+  const starting = r => (r.kind === 'brake' || r.kind === 'late') && r.second === 0 && !r.cpu && !r.playing, lag = all.filter(starting).length
+  return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [],
+    ...lag ? [`  unit: ${lag} brake or late-entry record${lag > 1 ? 's' : ''} at a start left out (the start's own frame lag)`] : [],
+    ...all.filter(r => r.kind !== 'start' && !brief(r) && !starting(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
+    note(r) + (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
+}
+/** One log's incidents, sorted: each start's base, and why a stall or freeze is no hang ('' when it may be one). */
+function hangNotes(all) {
   const at = (r, boot = r.boot) => r.epoch + '/' + boot
   const base = new Map(all.filter(r => r.kind === 'base').map(r => [at(r), r.a]))
   const upgrade = r => r.kind === 'stall' && base.has(at(r)) && base.has(at(r, r.boot - 1)) && base.get(at(r)) !== base.get(at(r, r.boot - 1))
   // The freeze twin: stock's OS upgrade stops the UI tick while the frames still run, and the record keeps the boot it happened in.
   const upgraded = r => r.kind === 'freeze' && !r.a && !r.playing && base.has(at(r)) && base.has(at(r, r.boot + 1)) && base.get(at(r)) !== base.get(at(r, r.boot + 1))
+  const reflashed = r => {
+    const keys = r.keys.filter(k => k !== 255)
+    return r.kind === 'freeze' && !r.a && !r.playing && base.has(at(r)) && base.get(at(r)) === base.get(at(r, r.boot + 1)) && keys.includes(PROJ) && keys.at(-1) === YES && keys.at(-2) === YES
+  }
   const system = r => {
     if (r.kind !== 'stall') return false
     const last = all.findLast(p => at(p) === at(r, r.boot - 1) && !STATELESS.includes(p.kind))
@@ -99,22 +139,77 @@ export function unitLines(incidents, names = namesFor) {
     const keys = last?.keys.filter(k => k !== 255) ?? [], from = keys.lastIndexOf(PROJ), walk = from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : []
     return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
-  const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
-  // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
-  const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
-  return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [], ...all.filter(r => r.kind !== 'start' && !brief(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
-    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
-    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
+  const diskMode = r => {
+    if (r.kind !== 'freeze' || r.a || r.playing) return false
+    const keys = r.keys.filter(k => k !== 255), from = keys.lastIndexOf(PROJ)
+    return rightYes(from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : [])
+  }
+  return { at, base, note: r => upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : reflashed(r) ? ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)'
+    : diskMode(r) ? ' (likely USB disk mode or an upgrade prompt, beta finding 72: PROJ … RIGHT YES before it; not a hang)' : '' }
+}
+
+/** Per base the units ran: starts, the hours their load logs cover, and the hangs no OS upgrade or reflash explains
+ * (a stall counts for the session before the start that found it), with each base's syncs. The owner's development
+ * unit is left out: it stalls on purpose. Named bases (base-versions.json) by version; the rest add up as one line. */
+export function stabilityLines(found, events, versions = new Map(), owner = OWNER) {
+  const rows = new Map(), blank = () => ({ units: new Set(), starts: 0, hours: 0, playing: 0, stall: 0, crash: 0, stopped: 0, frozen: 0, started: 0, kept: 0, lost: 0 })
+  const row = id => rows.get(id) ?? rows.set(id, blank()).get(id)
+  const hex = a => a.toString(16).padStart(8, '0')
+  for (const [name, member] of found) {
+    if (name === owner) continue
+    const all = [...member.incidents?.values() ?? []].sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
+    const { at, base, note } = hangNotes(all)
+    for (const r of all) {
+      const a = base.get(at(r, r.kind === 'stall' && base.has(at(r, r.boot - 1)) ? r.boot - 1 : r.boot))
+      if (a === undefined || note(r)) continue
+      const b = row(hex(a)); b.units.add(name)
+      if (r.kind === 'start') b.starts++
+      else if (r.kind === 'stall' || r.kind === 'crash') b[r.kind]++
+      else if (r.kind === 'freeze' && !r.a) b[r.playing ? 'frozen' : 'stopped']++
+    }
+    // Hours count only starts whose base the incident log still holds (85 % of load records on 24 November 2026). The base
+    // the site saw at upload would credit a just-updated unit's older sessions to the newest base and flatter it.
+    // shortcut: the two logs are matched by epoch and start number; give loads their own base records if they drift apart.
+    for (const r of member.loads?.values() ?? []) {
+      const a = base.get(at(r))
+      if (a === undefined) continue
+      const b = row(hex(a)); b.units.add(name)
+      b.hours += 5 / 60; b.playing += r.samples ? 5 / 60 * r.playing / r.samples : 0
+    }
+  }
+  for (const { username, data } of events) {
+    if (username === owner || !data.base || !['sync_started', 'kept', 'sync_failed'].includes(data.event)) continue
+    const b = row(data.base.slice(0, 8)); b.units.add(username)
+    if (data.event === 'sync_started') b.started++
+    else if (data.event === 'kept') b.kept++
+    else if (data.error === 'transport') b.lost++
+  }
+  const named = [...rows].filter(([id]) => versions.has(id)), other = [...rows].filter(([id]) => !versions.has(id))
+  const sum = list => list.reduce((s, [, r]) => { for (const k in r) s[k] = k === 'units' ? new Set([...s[k], ...r[k]]) : s[k] + r[k]; return s }, blank())
+  // Each layout of a version has its own identity: one line per version.
+  const byVersion = Map.groupBy(named, ([id]) => versions.get(id))
+  const lines = [...byVersion].map(([version, list]) => [version, sum(list)]).sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))
+  if (other.length) lines.push([`${other.length} other bases`, sum(other)])
+  const one = h => h.toFixed(1)
+  return lines.map(([label, r]) => {
+    const hard = r.stall + r.crash + r.stopped + r.frozen
+    // Under 15 logged hours or 20 starts a rate swings with one event: none is printed.
+    return `  ${label}: units ${r.units.size}, starts ${r.starts}, ${one(r.hours)} h logged (${one(r.playing)} playing); stalls ${r.stall}, crashes ${r.crash}, ` +
+      `freezes until a restart ${r.stopped + r.frozen} (${r.frozen} playing)` + (r.hours >= 15 ? `; hard events ${one(100 * hard / r.hours)} per 100 h` : '') +
+      (r.starts >= 20 ? `; stalls ${one(100 * r.stall / r.starts)} per 100 starts` : '') + `; syncs kept ${r.kept} of ${r.started}, link lost ${r.lost}`
+  })
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (PROJ or FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
   'left out after a failed start', 'held after a failed start']
+const cardSaveFailed = data => data.event === 'health' && (data.reading?.saved === 8 || data.reading?.saved === 9)
 
 /** Each member's records in order: the bases, set reloads, the last finished self-test and the event counts. */
 export function members(events) {
   const found = new Map()
-  for (const { username, createdAt, data } of [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+  for (const entry of [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
+    const { username, createdAt, data } = entry
     const member = found.get(username) ?? { last: '', kinds: {}, bases: [], reloads: [], selftest: undefined }
     member.last = createdAt
     member.kinds[data.event] = (member.kinds[data.event] ?? 0) + 1
@@ -128,6 +223,15 @@ export function members(events) {
       const missing = (saved === 6 || saved === 10) && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
       if ((saved >= 1 && saved <= 6 || saved === 10 || saved === 11) && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
         member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
+    }
+    // A base with RESTORE (request 43) says itself which modules that start left out and why: it replaces the guess.
+    if (data.restore?.length && data.reading && member.reloads.at(-1)?.saved === data.reading.saved) member.reloads.at(-1).restore = data.restore
+    // A write can fail after Keep. Keep its first status reading and let a new set or a recovery start a new occurrence.
+    if (data.event === 'health' && data.reading) {
+      const last = member.lastCardReading
+      if (cardSaveFailed(data) && (last?.reading.saved !== data.reading.saved || last.base !== data.base || last.active !== data.active))
+        (member.saveFailures ??= []).push(entry)
+      member.lastCardReading = data
     }
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
@@ -180,11 +284,20 @@ function restarts(member) {
   })
 }
 
-export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor } = {}) {
+// crash.s refreshes the two instruction snapshots only when the program counter is in SDRAM.
+function crashLine({ count, vector, pc, code, memory }) {
+  const line = `  crash record ${count}: vector ${vector} pc 0x${pc.toString(16)}`
+  if (pc < 0x40000000 || pc >= 0x41000000) return line + ', instruction bytes unavailable (PC outside SDRAM)'
+  const hex = words => words.map(word => word.toString(16).padStart(8, '0')).join(' ')
+  return line + ` code ${hex(code)} uncached ${hex(memory)}`
+}
+
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor, versions = new Map() } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
-  const problems = events.filter(entry => !selection(entry) && (PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
+  const saveFailures = new Set([...found.values()].flatMap(member => member.saveFailures ?? []))
+  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
@@ -197,13 +310,15 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       '', `@${name}  last ${when(member.last)}` + (member.bases.length ? '  base ' + member.bases.map(baseName).join(' → ') : ''),
       ...(reports.get(name) ?? []).map(issue => `  report #${issue.number} ${issue.state.toLowerCase()}: ${issue.title}`),
       ...restarts(member),
-      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
+      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.restore?.length ? ` (left out ${r.restore.map(m => `${m.id}: ${REFUSALS[m.refusal] ?? 'refusal ' + m.refusal}`).join(', ')})`
+        : r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
+      ...member.saveFailures?.length ? ['  card save failures: ' + member.saveFailures.map(({ createdAt, data }) => `${when(createdAt)} ${SAVED[data.reading.saved]}`).join(', ')] : [],
       ...member.selftest ? [`  last self-test ${member.selftest.state === 2 ? 'passed' : 'failed (bits ' + member.selftest.failed + ')'}` + (member.selftest.ran ? '' : ', no DSP module ran')] : [],
       ...member.peak ? [`  highest self-test peaks ${when(member.peak.at)}: CPU ${percent(member.peak.cpu)}, DSP T1-4 ${percent(member.peak.tracks1to4)}, T5-8 ${percent(member.peak.tracks5to8)}`] : [],
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
       ...member.loads?.size ? [`  unit's load log: ${member.loads.size} five-minute records, CPU peak ${percent(Math.max(...[...member.loads.values()].map(r => r.cpu[1])))}, mean ${percent([...member.loads.values()].reduce((a, r) => a + r.cpu[0], 0) / member.loads.size)}`] : [],
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
-      ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`,
+      ...member.crash ? [crashLine(member.crash),
         ...[crashNames(names(member.crashBase), member.crash.pc, member.crash.stack ?? [])].filter(Boolean).map(line => '    ' + line)] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
         ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
@@ -214,6 +329,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',
     '', `Problems (${problems.length}, newest first, up to 30):`, ...problems.slice(0, 30).map(entry => '  ' + line(entry)),
     ...checks.length ? ['', 'Card-build checks that refused a selection (on every module change; not failures): ' + checks.map(([name, rows]) => `@${name} ${rows.length}`).join(', ')] : [],
+    '', `Stability per base (without @${OWNER}'s development unit; OS upgrades and reflashes left out; hours from the units' load logs):`,
+    ...stabilityLines(found, events, versions),
     '', 'Daily USB sync counts (everyone, sharing or not):',
     ...[...days].map(([day, rows]) => '  ' + day + '  ' + rows.map(row => row.event.replace('usb_sync_', '') + ' ' + row.count).join(', ')),
   ].join('\n')
@@ -252,16 +369,18 @@ async function main() {
   writeFileSync(file, JSON.stringify({ pulledAt: new Date().toISOString(), ...data }, null, 2), { mode: 0o600 })
   chmodSync(file, 0o600)
   // The site serves main's base; a checkout on an older commit would name current bases older.
-  let binding
-  try { binding = execFileSync('git', ['show', 'origin/main:sdk/machines/octatrack/base-binding.json'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) }
-  catch { binding = readFileSync(new URL('sdk/machines/octatrack/base-binding.json', ROOT), 'utf8') }
-  const { identity: base, variants: layouts } = JSON.parse(binding)
+  const fromMain = path => {
+    try { return execFileSync('git', ['show', 'origin/main:' + path], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) }
+    catch { return readFileSync(new URL(path, ROOT), 'utf8') }
+  }
+  const { identity: base, variants: layouts } = JSON.parse(fromMain('sdk/machines/octatrack/base-binding.json'))
+  const versions = new Map(JSON.parse(fromMain('sdk/machines/octatrack/base-versions.json')).bases.flatMap(b => b.identities.map(id => [id.slice(0, 8), b.version])))
   let reports = new Map(), note = ''
   try {
     reports = reportsByMember(JSON.parse(execFileSync('gh', ['issue', 'list', '--label', 'issue-report', '--state', 'all', '--limit', '300',
       '--search', 'created:>=' + from.slice(0, 10), '--json', 'number,title,state,body'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })))
   } catch (error) { note = '\n\nGitHub reports not matched: ' + (error.stderr?.toString().trim() || error.message) }
-  console.log(summary(data, { base, layouts, reports }) + note + '\n\nEvery record: ' + file)
+  console.log(summary(data, { base, layouts, reports, versions }) + note + '\n\nEvery record: ' + file)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

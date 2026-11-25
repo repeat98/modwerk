@@ -16,6 +16,8 @@ import stock_hook_controllers  # noqa: E402
 UPSTREAM = Path.home() / '.cache/modwerk-upstream/elekloader'
 TOOLS = bool(shutil.which('m68k-elf-as')) and (UPSTREAM / 'elekloader/sdk/octabam.py').is_file() and \
     bool(os.environ.get('ELEKLOADER_DSP_ASM') or shutil.which('dsp_asm') or base_bound.DSP_ASM.is_file())  # Analog BD's engine
+if os.environ.get('MODWERK_REQUIRE_BASE_BOUND') == '1' and not TOOLS:
+    raise RuntimeError('Base-bound verification requires the pinned Elekloader sources, ColdFire tools and DSP assembler.')
 MANIFEST = json.loads((ROOT / 'src/engine/assets/octatrack-module-packages.json').read_text())
 
 

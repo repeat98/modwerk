@@ -1,5 +1,47 @@
 [
   {
+    "version": "0.6.3-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Also costs the Rytm less processing when samples loop forward (LOP ON) but none is set to PIPO.",
+      "Nothing you hear or see changes.",
+      "Documentation only: the test report names the author as Nathaniel Pavel (GitHub @npp1993)."
+    ]
+  },
+  {
+    "version": "0.6.2-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Costs the Rytm less processing while LOP is OFF on every track.",
+      "Nothing you hear or see changes."
+    ]
+  },
+  {
+    "version": "0.6.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Ping Pong Loop has left the library: its PIPO loop and zero snap live here, unchanged.",
+      "No change on the unit."
+    ]
+  },
+  {
+    "version": "0.6.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Ping Pong Loop now lives here: LOP's third value PIPO plays the loop forward, then backward.",
+      "FUNC + turn on STA or END steps that point to the next zero crossing; S and E label their lines on the waveform.",
+      "Both play and look exactly as before. Remove Ping Pong Loop from your set: the two can't be installed together."
+    ]
+  },
+  {
+    "version": "0.5.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Previewing a sample (FUNC + YES in a sample list) plays it at normal speed again, whatever the track's RATE.",
+      "In 0.5.0 the preview was silent at RATE 0 (as on a sound saved on stock OS) and bent by an LFO on RATE."
+    ]
+  },
+  {
     "version": "0.5.0-experimental",
     "date": "2026-11-12",
     "changes": [

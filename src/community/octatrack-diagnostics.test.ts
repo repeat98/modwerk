@@ -225,11 +225,11 @@ describe('private consented Octatrack diagnostics',()=>{
     await consent(true,token)
     for(const event of ['browser_error','unhandled_rejection'])expect((await send({...browser(),event},token)).status).toBe(200)
     for(const [index,buildKind] of DIAGNOSTIC_BUILD_KINDS.entries()) {
-      for(const phase of DIAGNOSTIC_BUILD_PHASES)expect((await send({id:crypto.randomUUID(),event:'build_failed',phase,buildKind,error:DIAGNOSTIC_BUILD_ERRORS[index]},token)).status).toBe(200)
+      for(const phase of DIAGNOSTIC_BUILD_PHASES)expect((await send({id:crypto.randomUUID(),event:'build_failed',phase,buildKind,error:DIAGNOSTIC_BUILD_ERRORS[index%DIAGNOSTIC_BUILD_ERRORS.length]},token)).status).toBe(200)
     }
     for(const error of DIAGNOSTIC_BUILD_ERRORS)expect((await send({id:crypto.randomUUID(),event:'build_failed',phase:'building',buildKind:'elekloader',error},token)).status).toBe(200)
     const events=(await(await call('/octatrack/diagnostics','GET',undefined,token)).json()).events
-    expect(events).toHaveLength(22)
+    expect(events).toHaveLength(2+DIAGNOSTIC_BUILD_KINDS.length*DIAGNOSTIC_BUILD_PHASES.length+DIAGNOSTIC_BUILD_ERRORS.length)
     expect(events.every((entry:{data:{event:string}})=>['browser_error','unhandled_rejection','build_failed'].includes(entry.data.event))).toBe(true)
     expect(db.prepare('SELECT count(*) AS n FROM usage_visitors').get()).toEqual({n:0})
   })
@@ -259,6 +259,16 @@ describe('private consented Octatrack diagnostics',()=>{
       {...ids,event:'device_log',log:{loads:[],incidents:[],stall:{...stall,report:Array(97).fill(0)}}},{...ids,event:'device_log',log:{loads:[],incidents:[],dump:[1]}}]
     for(const value of cases)expect((await send(fresh(value),token)).status).toBe(400)
   })
+  it('accepts only fixed reconnect outcomes from a disconnected trial', async () => {
+    const { consent, send } = await fixture()
+    await consent()
+    const failure = { event: 'sync_failed', phase: 'trial', step: 'trial', error: 'disconnected', reconnect: 'timeout' }
+    for (const reconnect of ['timeout', 'closed', 'mismatch', 'unreadable', 'lost-again'])
+      expect((await send({ ...failure, id: crypto.randomUUID(), reconnect })).status).toBe(200)
+    for (const fields of [{ reconnect: 'arbitrary text' }, { reconnect: undefined }, { event: 'kept' },
+      { phase: 'busy' }, { step: 'stage' }, { error: 'device' }])
+      expect((await send({ ...failure, ...fields, id: crypto.randomUUID() })).status).toBe(400)
+  })
   it('rejects raw browser/build data and cross-event USB fields instead of storing them',async()=>{
     const {consent,send}=await fixture(), token='c'.repeat(64);await consent(true,token)
     const browser={id:crypto.randomUUID(),event:'browser_error',phase:'browser',area:'octatrack',kind:'TypeError'}
@@ -267,13 +277,15 @@ describe('private consented Octatrack diagnostics',()=>{
       {...browser,filename:'private.bin'},{...browser,message:'private error'},{...browser,base:'a'.repeat(64)},{...browser,modules:[]},{...browser,phase:'sending'},{...browser,area:'/private/route'},{...browser,kind:'private message'},{...browser,area:undefined},
       {...build,phase:'sending'},{...build,buildKind:'private file name'},{...build,error:'private failure'},{...build,reading:{}},{...build,result:'ok'},{...build,packages:[]},
       {...build,phase:undefined},{...build,buildKind:undefined},{...build,error:undefined},{id:crypto.randomUUID(),event:'sync_failed',phase:'browser'},
-      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'build_failed',phase:'building',buildKind:'elekloader-octatrack',error:'build'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'},
       {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'private message'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',kind:'TypeError'},
       {id:crypto.randomUUID(),event:'kept',phase:'ready',kind:'TypeError'},
-      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',step:'private step'},{id:crypto.randomUUID(),event:'kept',phase:'ready',step:'stage'}]
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',step:'private step'},{id:crypto.randomUUID(),event:'kept',phase:'ready',step:'stage'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',usb:[0,8,0,0,0,0]},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',usb:[0,8,0]},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',usb:[0,8,0,0,0,'private']}]
     for(const value of cases)expect((await send(value,token)).status).toBe(400)
     expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'TypeError'},token)).status).toBe(200)
-    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',step:'stage',kind:'VendorTransportError'},token)).status).toBe(200)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',step:'stage',kind:'VendorTransportError',usb:[0,8,0,0,0,0]},token)).status).toBe(200)
     expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',result:'rejected',refusal:7,step:'activate'},token)).status).toBe(200)
   })
   it('keeps the 1000 event cap for regular-member collections',async()=>{

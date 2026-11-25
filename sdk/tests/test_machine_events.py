@@ -36,12 +36,36 @@ def host(test, *sources):
 
 
 class MachineEventTests(unittest.TestCase):
+    def test_machine_can_ask_for_muted_tracks_without_a_subscription(self):
+        with tempfile.TemporaryDirectory() as temp:
+            Path(temp, 'runtime.json').write_text(json.dumps({'schema': 1, 'raise': ['ev_trig_muted']}))
+            declared = machine_ports.declaration('synth', folder=temp)
+        self.assertEqual(declared['raise'], ['ev_trig_muted'])
+        self.assertIn('ot_machines', [row['to'] for row in declared['contribute']])
+        builder = machine_ports._builder()
+        hooks = builder.subscribe([], [], {'raise_ev_trig_muted': 16}, raises=declared['raise'])
+        self.assertEqual(hooks[35], builder.RAISE << 24 | 16)
+
     def test_registry_on_the_host(self):
         result = host(self, OT / 'elekloader/test_machine_registry.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_charge_resolves_each_track_owner_once(self):
+        result = host(self, '-finstrument-functions', ROOT / 'sdk/tests/test_machine_charge.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_midi_generators_on_the_host(self):
         result = host(self, OT / 'elekloader/test_midi_generators.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_part_menu_on_the_host(self):
+        # ot_part_menu (part_menu.c): the Part Edit window's two columns, stock's with no contribution.
+        result = host(self, OT / 'elekloader/test_part_menu.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_sample_memory_on_the_host(self):
+        # ot_sample_memory (sample_memory.c): pages borrowed from stock's sample pool survive a cold init and come back.
+        result = host(self, OT / 'elekloader/test_sample_memory.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_registry_knows_every_protect_port_signature(self):
@@ -82,6 +106,22 @@ class MachineEventTests(unittest.TestCase):
                         'sample_editor_actions')))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_ordinary_modules_are_not_retired_while_their_ui_is_open(self):
+        result = host(self, ADAPTERS / 'test_module_ui_roots.c',
+                      *(ADAPTERS / (name + '.c') for name in ('machine_contributors', 'machine_lifetime', 'machine_parts',
+                        'machine_admission', 'machine_declarations', 'table_admission', 'table_declarations',
+                        'sample_editor_actions')))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_ui_roots_admission_cross_compiles(self):
+        gcc = shutil.which('m68k-elf-gcc')
+        if not gcc:
+            self.skipTest('no ColdFire compiler')
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([gcc, '-mcpu=5475', '-msoft-float', '-O2', '-std=c99', '-ffreestanding', '-fno-builtin', '-Wall', '-Wextra',
+                            '-Werror', '-DMODWERK_RUNTIME_EVENTS', '-DMODWERK_RUNTIME_UI_ROOTS', '-DRUNTIME_MODULES=128u', *INCLUDES, '-c',
+                            ADAPTERS / 'machine_admission_runtime.c', '-o', temp + '/a.o'], check=True, capture_output=True)
+
     def test_registry_cross_compiles_without_new_optimisation_flags(self):
         gcc = shutil.which('m68k-elf-gcc')
         if not gcc:
@@ -94,6 +134,27 @@ class MachineEventTests(unittest.TestCase):
                             source, '-o', temp + '/' + source.stem + '.o'], check=True, capture_output=True)
             subprocess.run(['m68k-elf-as', '-mcpu=5475', OT / 'elekloader/machine_registry.s', '-o', temp + '/s.o'],
                            check=True, capture_output=True)
+
+    def test_assignment_counter_is_defined_once_with_or_without_the_controller_board(self):
+        """mw_assign counts into modwerk_machine_assigned. controller_board.c defines it, but only a base built with
+        --resident-stock-hooks links that file, so a base without it (the minimal dev base) failed its core link.
+        machine_registry.c defines it exactly when MODWERK_RESIDENT_ON_DEMAND (which comes with those hooks) is off."""
+        gcc, nm = shutil.which('m68k-elf-gcc'), shutil.which('m68k-elf-nm')
+        if not gcc or not nm:
+            self.skipTest('no ColdFire compiler')
+        with tempfile.TemporaryDirectory() as temp:
+            for on_demand, kind in ((False, 'defined'), (True, 'U')):
+                with self.subTest(resident_on_demand=on_demand):
+                    out = temp + '/registry.o'
+                    subprocess.run([gcc, '-mcpu=54455', '-msoft-float', '-O2', '-std=c99', '-ffreestanding', '-fno-builtin',
+                                    '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u',
+                                    *(['-DMODWERK_RESIDENT_ON_DEMAND'] if on_demand else []), *INCLUDES, '-c',
+                                    OT / 'elekloader/machine_registry.c', '-o', out], check=True, capture_output=True)
+                    symbols = {line.split()[-1]: line.split()[-2] for line in
+                               subprocess.check_output([nm, out], text=True).splitlines() if line.strip()}
+                    found = symbols.get('modwerk_machine_assigned')
+                    self.assertIsNotNone(found)
+                    self.assertEqual(found == 'U', kind == 'U', found)
 
     def test_ports_are_bound_to_the_sources_they_were_reviewed_against(self):
         for name in FIVE:

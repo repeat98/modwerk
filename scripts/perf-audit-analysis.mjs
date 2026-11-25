@@ -94,7 +94,8 @@ export function judgeRecord(record, options = {}) {
     else {
       const added = (load.moduleLongestUs - load.stockLongestUs) / frame, idle = load.stockIdlePercent - load.moduleIdlePercent
       const state = added > limits.loadFail || idle > limits.idleFail ? 'fail' : added > limits.loadNote || idle > limits.idleNote ? 'note' : 'ok'
-      row('stock benchmark', state, 'under the same flood the longest frame interrupt grows by ' + (load.moduleLongestUs - load.stockLongestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) and idle time falls by ' + idle.toFixed(1) + ' points vs stock' + (state === 'ok' ? '' : state === 'note' ? '; say what it costs' : ''), state === 'fail' ? 'move work out of the interrupt, or do it once per event and not per message' : undefined)
+      const priced = limits.cpuPrice ? ', judged against the ' + limits.cpuPrice + '% of a frame the base books for this machine' : ''
+      row('stock benchmark', state, 'under the same flood the longest frame interrupt grows by ' + (load.moduleLongestUs - load.stockLongestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) and idle time falls by ' + idle.toFixed(1) + ' points vs stock' + priced + (state === 'ok' ? '' : state === 'note' ? '; say what it costs' : ''), state === 'fail' ? 'move work out of the interrupt, or do it once per event and not per message' : undefined)
     }
   }
 
@@ -141,16 +142,52 @@ export function judgeRecord(record, options = {}) {
   return rows
 }
 
+/** Whether a record's numbers were measured on the module's current source: its `sourceSha256`, written by
+ * `perf:audit check FILE --stamp`, against modulePerformanceSourceSha256. `required` (a module listed from the day stamps began,
+ * or a draft judged as a release) turns a missing stamp from a note into a failure; a stamp for other source always fails.
+ * `earlierSha256`, from moduleEarlierPerformanceSourceSha256, is what a stamp written before presentation/ left the hash names. */
+export function stampVerdict(record, sourceSha256, required, file = '<module>/evidence/performance.json', earlierSha256 = undefined) {
+  if (earlierSha256 && record?.sourceSha256 === earlierSha256 && earlierSha256 !== sourceSha256)
+    return { state: 'ok', detail: 'measured on this source (' + earlierSha256.slice(0, 12) + '…, a stamp from before art left it; the next --stamp writes ' + sourceSha256.slice(0, 12) + '…)' }
+  const fix = 'measure again on this source, then npm run perf:audit -- check ' + file + ' --stamp'
+  if (record?.sourceSha256 === undefined) return required
+    ? { state: 'fail', detail: 'its numbers name no source, so nothing shows they were measured on this code', fix: 'npm run perf:audit -- check ' + file + ' --stamp, right after you measure' }
+    : { state: 'note', detail: 'not stamped: stamp it when you next measure (npm run perf:audit -- check ' + file + ' --stamp)' }
+  if (record.sourceSha256 !== sourceSha256) return { state: 'fail', detail: 'measured on other source (stamp ' + String(record.sourceSha256).slice(0, 12) + '…, the source is now ' + sourceSha256.slice(0, 12) + '…): the code changed after the numbers were taken', fix }
+  return { state: 'ok', detail: 'measured on this source (' + sourceSha256.slice(0, 12) + '…)' }
+}
+
+/** A track machine is admitted by the base against its CPU price (resources.cpuPrice measured as 'machine-render': the share
+ * of a frame the base books for each track playing it). Its load is judged against that price; the default limits suit effects
+ * and MIDI modules, which the base does not book. Returns limit options for judgeRecord, or none. */
+export function priceLimits(document) {
+  const price = document?.category === 'machines' && document.resources?.cpuPrice?.measure === 'machine-render' ? document.resources.cpuPrice.value : null
+  return positive(price) && price <= 100 ? { cpuPrice: price, loadFail: price / 100, idleFail: price } : {}
+}
+
+/** Whether the owner's approval binds this exact module version and native source. That hash covers the module's whole folder,
+ * its performance record included, so a record it covers needs no stamp of its own. */
+export function approvalCoversSource(approval, id, version, sourceSha256) {
+  return approval?.kind === 'owner-approved-update' && approval.approvedBy === 'repeat98' && approval.id === id && approval.version === version &&
+    HEX64.test(sourceSha256 ?? '') && approval.sourceSha256 === sourceSha256
+}
+
 /** Only missing measurements may be excused by the existing exact-source owner approval.
  * The publication validator separately validates the complete approval and documentation.
  * A cycles row may also be excused when only the static bound is missing and a measurement with its budget is given (code whose cost
  * lies in stock routines nothing here bounds); a measurement over its budget, or without one, is never excused. Measured failures and ordinary audit verdicts remain failures. */
 export function ownerWaivedPerformanceRow(record, row, approval, sourceSha256) {
-  if (row.state !== 'fail' || !HEX64.test(sourceSha256 ?? '') || approval?.kind !== 'owner-approved-update' || approval.approvedBy !== 'repeat98' || approval.id !== record.module || approval.version !== record.version || approval.sourceSha256 !== sourceSha256 || !Array.isArray(approval.waived)) return false
+  if (row.state !== 'fail' || !approvalCoversSource(approval, record.module, record.version, sourceSha256) || !Array.isArray(approval.waived)) return false
   if (row.name === 'cycles') return approval.waived.includes('chip-worst-case-cycles') && record.kind === 'coldfire' && record.cycles?.unit === 'cycles/event' && record.cycles.static === null && (['measured', 'budget'].every(key => record.cycles[key] === null) || (['measured', 'budget'].every(key => positive(record.cycles[key])) && record.cycles.measured <= record.cycles.budget)) && text(record.cycles.method, 10)
   if (!approval.waived.includes('current-build-hardware') || record.kind !== 'coldfire') return false
   if (row.name === 'stock benchmark') return ['stockLongestUs', 'moduleLongestUs', 'stockIdlePercent', 'moduleIdlePercent'].every(key => record.load?.[key] === null) && text(record.load?.method, 10)
-  if (row.name === 'stress') return ['floodMessagesPerSecond', 'clockBpm', 'seconds', 'stuckNotes', 'hangs', 'dropped'].every(key => record.stress?.[key] === null)
+  if (row.name === 'stress') {
+    const stress = record.stress ?? {}
+    if (['floodMessagesPerSecond', 'clockBpm', 'seconds', 'stuckNotes', 'hangs', 'dropped'].every(key => stress[key] === null)) return true
+    // A flood that ran at the audit's rate without a hang, whose stuck notes or lost messages were not counted: only those are missing.
+    return stress.floodMessagesPerSecond >= LIMITS.midiRate && stress.clockBpm >= 240 && stress.seconds >= LIMITS.midiSeconds && stress.hangs === 0 &&
+      [stress.stuckNotes, stress.dropped].every(count => count === null || count === 0)
+  }
   return false
 }
 

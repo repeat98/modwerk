@@ -1,17 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "euclid",
-  "version": "0.1.4-experimental",
-  "sourceSha256": "2c9fe3297910decfc7adc3f5d2137b64995d701d388820f6b693a0537e676653",
+  "version": "0.1.5-experimental",
+  "sourceSha256": "ff35c2418497641bbf4647cc8ed50adc1e6a31d2269e0133ecb5e5701af4c964",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-07",
+  "approvedOn": "2026-11-18",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds",
     "release-documentation"
   ],
-  "ownerStatement": "Approve the experimental updates after software checks",
-  "reason": "Owner approved the requested octabam USB Audio lifecycle and Euclid clock reset ports after software verification, without new hardware, chip-cycle or complete memory measurements, and retaining the existing UI documentation. This binds only this exact version and native source; hardware remains untested.",
+  "ownerStatement": "Fix #1690 through the full issue-fix flow",
+  "reason": "Owner-requested fix of #1690 (the AMP gain left mixing the dry signal into every filter type after TYPE passed AMP): one DSP instruction clears AMP's weight in the filter path. Reproduced and verified bit-exactly in the vendored DSP56300 interpreter (LP, one AMP block, LP against LP throughout: a -6.2 dB dry leak before, identical output after). Released after software checks, without new hardware, chip-cycle or complete memory measurements, and retaining the 0.1.3 UI captures, which this change does not touch. This binds only this exact version and native source; hardware remains untested.",
   "retainedUiVersion": "0.1.3-experimental"
 }

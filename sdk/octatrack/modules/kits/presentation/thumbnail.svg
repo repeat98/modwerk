@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Kits — a library of saved Parts, one per pattern</title>
+<desc id="description">Named Kits stack on the left; each pattern dot points at the Kit it plays, and the playing pattern's Kit loads into the Part.</desc>
+<style>.signal-art{ width: 100%; height: calc(100% - 55px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
+.signal-main{ stroke: #83c7bc; stroke-width: 2.7; }
+.signal-secondary{ stroke: #83c7bc; opacity: .65; stroke-width: 1.7; }
+.signal-ghost{ stroke: #83c7bc; opacity: .2; stroke-width: 1.3; }
+.signal-dot{ fill: #83c7bc; }
+.signal-art text{ fill: #83c7bc; opacity: .8; font: 10px monospace; letter-spacing: .7px; stroke: none; }</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
+<g><path class="signal-secondary" d="M34 58H118"></path><text x="38" y="54">001 ONE</text><path class="signal-secondary" d="M34 82H118"></path><text x="38" y="78">002 TWO</text><path class="signal-secondary" d="M34 106H118"></path><text x="38" y="102">003 BASS</text><path class="signal-secondary" d="M34 130H118"></path><text x="38" y="126">004 PADS</text><path class="signal-ghost" d="M180 146 C150 120 140 64 120 58"></path><path class="signal-ghost" d="M212 146 C170 120 150 88 120 82"></path><path class="signal-ghost" d="M244 146 C190 130 160 108 120 106"></path><path class="signal-main" d="M276 146 C230 140 170 132 120 130"></path><circle class="signal-dot" cx="180" cy="150" r="3"></circle><circle class="signal-dot" cx="212" cy="150" r="3"></circle><circle class="signal-dot" cx="244" cy="150" r="3"></circle><circle class="signal-dot" cx="276" cy="150" r="3"></circle><path class="signal-main" d="M232 52H292V84H232Z"></path><path class="signal-secondary" d="M120 130 C160 110 200 76 232 68"></path><text x="246" y="72">PART</text><text x="34" y="36">KITS</text><text x="186" y="177">PATTERNS</text></g>
+</svg>

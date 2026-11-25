@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "kits",
+  "version": "0.1.1-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-24",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware"
+  ],
+  "sourceSha256": "6d9ce6ebaad7bb57bd0f92840616b44c7008b61018d857b4d59f3aad9dd895c1",
+  "ownerStatement": "Release Kits 0.1.1-experimental. I waive the static cycle bound and the hardware qualification of this exact build for this version.",
+  "reason": "Kits 0.1.1-experimental (#2066, by twwwy) adds SAVE KIT, RELOAD KIT and RENAME KIT to the shared Part Edit menu, on the plan the owner agreed on the agent board; the owner ported Kits 0.1.0 from Sam Banks' octabam KITS (MIT) and approves this update as its maintainer here. On an MKII, as trials on a development twin of base 0.8 (95adb64b), package c1cb63e5 ran alone and beside Pattern Sample Locks 0.1.9 and passed (TESTING.md). Not run: Keep, a power cycle, the flashed base 0.8, or an MKI. No static cycle count was made, and device:qualify did not run on the exact release package and base."
+}

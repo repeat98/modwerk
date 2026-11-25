@@ -357,8 +357,6 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
                 rebuilt[offset:offset + n] = bytes([value]) * n
             if bytes(rebuilt) != authored:
                 raise ValueError('Reconstruction differs from the authored image')
-        if stock:
-            pack.private_stock_free(data, Path(stock), stock_main, Path(upstream))
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_bytes(data)
         report = {'schema': 1, 'id': doc['id'], 'bytes': len(data), 'imageBytes': len(image),

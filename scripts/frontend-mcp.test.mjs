@@ -1,3 +1,5 @@
+import { publishedBinding } from '../src/engine/elekloader/published-octatrack.fixture.ts'
+import { publishedUsbAudioPackage } from '../src/config/published-usb-audio.fixture.ts'
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { mkdtemp, rm, readFile, writeFile, chmod, symlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -25,8 +27,9 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const midi = await service.call('site_catalogue', { query: 'digitakt midi' })
     expect(midi.modules.length).toBeGreaterThan(0)
     expect(midi.modules.every(module => module.machine === 'digitakt')).toBe(true)
-    expect((await service.call('site_catalogue', { query: 'air chorus' })).modules).toHaveLength(0)
-    expect((await service.call('site_catalogue', { query: 'air chorus', beta: true })).modules.map(module => module.id)).toEqual(['airwindows-chorus'])
+    expect((await service.call('site_catalogue', { query: 'air chorus' })).modules.map(module => module.id)).toEqual(['airwindows-chorus'])
+    // The tool runs its own bundle of the site, so a test cannot stand a beta module in; the paused gate holds with and without beta.
+    for (const beta of [false, true]) expect((await service.call('site_catalogue', { query: 'stem rec', beta })).modules.map(module => module.id)).not.toContain('stem-rec')
   })
   it('bounds USB error logs without dumping bundled stacks, causes or account objects', () => {
     const error = new Error('The self-test record has the wrong length.', { cause: { session: 'private-session' } })
@@ -71,23 +74,26 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const usb = catalogue.modules.filter(module => module.usb).map(module => module.id)
     expect(usb.length).toBeGreaterThanOrEqual(4)
     expect(usb).toContain('usb-audio-out-tracks-main-cue')
-    // Every published package alone, every pair and all together, on the published base with site events (every subset
-    // of 19 would be 2^19 sets; preparing one only preflights each package).
-    const { identity: base } = JSON.parse(await readFile(new URL('../sdk/machines/octatrack/base-binding.json', import.meta.url), 'utf8'))
-    const capabilities = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 } // ABI 10: Analog BD's engine
-    const sets = [...usb.map(id => [id]), ...usb.flatMap((a, i) => usb.slice(i + 1).map(b => [a, b])), usb]
+    // Every published package alone and every pair, on the published base with site events (every subset of 19 would be
+    // 2^19 sets; preparing one only preflights each package). All together they need more than the base's module pool.
+    const { identity: base } = publishedBinding
+    const capabilities = { abi: 10, features: 7 | 128 | 512 | 1024 | 2048 | 4096, maxSites: 128, maxCopies: 128 } // ABI 10: Analog BD's engine; 1024: Tuner's window (base 0.7.5); 2048 | 4096: judged rests and frame costs (base 0.8, Tape Echo 0.1.9)
+    const sets = [...usb.map(id => [id]), ...usb.flatMap((a, i) => usb.slice(i + 1).map(b => [a, b]))]
+    await expect(service.call('site_selection', { moduleIds: usb, usb: true, capabilities, base })).rejects.toThrow('module memory')
     for (const moduleIds of sets) {
       const prepared = await service.call('site_selection', { moduleIds, usb: true, capabilities, base })
       // USB Audio comes with the base (here in its default layout, the set's), so it adds no package.
-      expect(prepared.changes).toHaveLength(moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue').length)
+      const expected = publishedUsbAudioPackage ? moduleIds : moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue')
+      expect(prepared.changes).toHaveLength(expected.length)
       expect(prepared.changes.every(change => /^[a-f0-9]{64}$/.test(change.sha256) && change.undoSha256)).toBe(true)
     }
     await expect(service.call('site_selection', { moduleIds: ['sidechain-compressor'], usb: true, capabilities })).rejects.toThrow('latest Modwerk base')
     const cardOnly = catalogue.modules.find(module => module.machine === 'octatrack' && !module.usb)
-    if (cardOnly) await expect(service.call('site_selection', { moduleIds: [cardOnly.id], usb: true })).rejects.toThrow('USB')
+    // A card-only module and one whose package is not published yet (a release in progress) are both refused over USB.
+    if (cardOnly) await expect(service.call('site_selection', { moduleIds: [cardOnly.id], usb: true })).rejects.toThrow(/USB|can’t be loaded onto the base/)
     // A module that needs the base is in the catalogue like any other: there is no card form to keep it from.
     expect((await service.call('site_catalogue', { machine: 'octatrack' })).modules.some(module => module.id === 'ring-sc')).toBe(true)
-  })
+  }, 60000) // every pair of published packages: grows with each USB release (5-8 s at 40 modules), past vitest's 5 s default
   it('offers the agent board, refuses claims without --allow-api-writes and never reaches the live board in tests', async () => {
     expect((await service.call('site_features')).tools).toEqual(expect.arrayContaining(['board_claims', 'board_claim', 'board_release', 'board_messages', 'board_inbox', 'board_activity', 'board_post', 'board_reply', 'board_close']))
     await expect(service.call('board_claim', { kind: 'migration', key: '0085' })).rejects.toThrow('--allow-api-writes')
@@ -98,6 +104,22 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     await expect(service.call('board_post', { kind: 'note', topic: 'machine', key: 'octatrack', text: 'x' })).rejects.toThrow()
     await expect(service.call('board_claims', { kind: 'module' })).rejects.toThrow('turned off')
     await expect(service.call('board_messages', { machine: 'octatrack' })).rejects.toThrow('turned off')
+  })
+  it.runIf(publishedUsbAudioPackage)('starts fresh sets on stereo Main and retains saved USB routing on edit', async () => {
+    const moduleIds = ['usb-audio-out-tracks-main-cue']
+    const fresh = await service.call('set_save', { name: 'Fresh USB', moduleIds })
+    try {
+      expect(fresh.usbAudio).toMatchObject({ destination: 'computer', layout: 'main', outboxPairs: [1, 0, 0, 0] })
+      const saved = { ...fresh.usbAudio, destination: 'outbox', layout: 'tracks-post', outboxPairs: [7, 1, 7, 0] }
+      await service.call('set_save', { id: fresh.id, name: 'Outbox', moduleIds, usbAudio: saved })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Renamed', moduleIds })).usbAudio).toEqual(saved)
+      const classic = { ...fresh }
+      delete classic.usbAudio
+      await service.call('set_import', { configurations: [classic] })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Classic', moduleIds })).usbAudio).toBeUndefined()
+    } finally {
+      await service.call('set_delete', { id: fresh.id })
+    }
   })
   it('round trips sets through frontend validation without including private firmware', async () => {
     const created = await service.call('set_save', { name: 'MCP test', moduleIds: ['miniverb'] })
@@ -153,7 +175,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const script = fileURLToPath(new URL('./frontend-mcp.mjs', import.meta.url))
     try {
       await expect(createFrontendTools({ dataDir: other })).rejects.toThrow('separate MCP process')
-      await expect(promisify(execFile)(process.execPath, [script, '--data-dir', folder])).rejects.toThrow('already locked')
+      await expect(promisify(execFile)(process.execPath, [script, '--data-dir', folder])).rejects.toThrow('in use by a running MCP server')
       const candidate = join(other, 'candidate'), workspace = join(other, 'state')
       await mkdir(candidate)
       // Candidate checkouts may predate the MCP itself. Read their real source,

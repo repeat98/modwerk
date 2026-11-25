@@ -12,7 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef MODWERK_HOST_OVERLAP_STOCK
+#define STOCK ((uint32_t)(uintptr_t)pool)
+#else
 #define STOCK 0x1000u
+#endif
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 static uint8_t stock[256], original[256], paused[64], saved_registers[64];
@@ -23,7 +27,8 @@ int modwerk_machine_stopped(void) { return stopped; }
 static unsigned uncached_calls, pool_flushes, pool_flushes_invalidated;
 static uint32_t pushed_at, pushed_bytes;
 static int push_pending;
-static int in_pool(uint32_t a, uint32_t n) { uint32_t lo = (uint32_t)(uintptr_t)pool; return a >= lo && n <= RUNTIME_POOL_BYTES - (a - lo); }
+/* The offset modulo 2^32: a 64-bit host can place the pool across a 4 GB line, where its 32-bit addresses wrap. */
+static int in_pool(uint32_t a, uint32_t n) { uint32_t at = a - (uint32_t)(uintptr_t)pool; return at <= RUNTIME_POOL_BYTES && n <= RUNTIME_POOL_BYTES - at; }
 void *modwerk_machine_uncached(void *p) { ++uncached_calls; return p; }
 void modwerk_machine_invalidate_code(void) { if (push_pending) push_pending = 0, ++pool_flushes_invalidated; }
 int modwerk_machine_patchable(uint32_t a, uint32_t n) { return a >= STOCK + 16u && n <= STOCK + sizeof stock - a; }
@@ -33,8 +38,13 @@ uint8_t *modwerk_machine_code(uint32_t a) { CHECK(locked); return stock + (a - S
 void modwerk_machine_flush_data(uint32_t a, uint32_t n)
 {
     flushed++;
-    if (!in_pool(a, n)) { CHECK(masked); return; }
-    CHECK(!push_pending && !locked && !masked && !(a & 15u) && !(n & 15u)); /* whole lines, off-line: nothing runs there yet */
+    /* A host pool address truncated to 32 bits can overlap our fake stock addresses. A stock flush
+     * covers one patch site. A pool flush includes at least the much larger runtime_module header. */
+    if (n <= RUNTIME_SITE_BYTES) {
+        CHECK(masked && n && a - STOCK <= sizeof stock - n);
+        return;
+    }
+    CHECK(in_pool(a, n) && !push_pending && !locked && !masked && !(a & 15u) && !(n & 15u));
     ++pool_flushes, pushed_at = a, pushed_bytes = n, push_pending = 1;
 }
 #ifdef MODWERK_CACHED_MODULES
@@ -291,7 +301,7 @@ int main(void)
     uint8_t capabilities[14]; memset(capabilities, 0xa5, sizeof capabilities);
     CHECK(modwerk_runtime_capabilities(capabilities) == 12u);
     CHECK(!memcmp(capabilities, "MWCP", 4) && capabilities[4] == 1 && capabilities[5] == 10);
-    CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
+    CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY | COSTS_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
     CHECK(capabilities[12] == 0xa5 && capabilities[13] == 0xa5);
 
     struct runtime_module alias_group; memset(&alias_group, 0, sizeof alias_group);
@@ -303,7 +313,7 @@ int main(void)
     CHECK(!retiring(&alias_group, 0x40010007u) && !retiring(&alias_group, 0x48010040u));
 
     /* Refusals before any memory is taken. */
-    for (uint32_t bad = 0; bad < 14; ++bad) {
+    for (uint32_t bad = 0; bad < 15; ++bad) {
         begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
         if (bad == 0) p[0] = 'X';
         if (bad == 1) p[5] = 2;                                        /* ABI 2 */
@@ -319,6 +329,7 @@ int main(void)
         if (bad == 11) { begin(8, 4, 2, twice, 2, 0, 0); }              /* the same word twice */
         if (bad == 12) { begin(8, 4, 2, 0, 0, 1, 0); site(STOCK + 32, 6); emit(0); } /* trailing bytes */
         if (bad == 13) n = 71u;
+        if (bad == 14) { begin(8, RUNTIME_MODULE_BYTES - 7, 0, 0, 0, 0, 0); }  /* image and bss past the module limit */
         CHECK(!b->prepare(0, p, n) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
     }
     CHECK(!masked && !locked && memcmp(stock, original, sizeof stock) == 0);
@@ -431,6 +442,10 @@ int main(void)
     const uint32_t one_size = one->size;
     CHECK(modwerk_runtime_active() == 2 && one->id == 1 && two->id == 2 && stock[32] == 0x4e && stock[64] == 0x4e);
     CHECK(word(STOCK + 34) == (uint32_t)(uintptr_t)one->hook[RUNTIME_TICK] && word(STOCK + 66) == (uint32_t)(uintptr_t)two->hook[RUNTIME_TICK]);
+    unsigned next = 0;
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == one->hook[RUNTIME_TICK] && next == 1);
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == two->hook[RUNTIME_TICK] && next == 2);
+    CHECK(!modwerk_runtime_next_hook(RUNTIME_TICK, &next));
     /* A third patching bytes module 1 patches is refused before anything changes. */
     id = 3; begin(8, 0, 0, 0, 0, 1, 0xd3); site(STOCK + 34, 6);
     free = modwerk_runtime_free(0);
@@ -441,10 +456,14 @@ int main(void)
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED);
     CHECK(bytes_at(STOCK + 32, original + 32, 2) && stock[34] == 0x4e && modwerk_runtime_module(1) == two && stock[64] == 0x4e);
     CHECK(b->restore(0) && modwerk_runtime_module(0) == one && stock[32] == 0x4e && bytes_at(STOCK + 38, original + 38, 2));
+    next = 0;
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == one->hook[RUNTIME_TICK]);
     /* Removing module 1 leaves module 2 live; a new module takes the free position. */
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
     CHECK(!modwerk_runtime_module(0) && modwerk_runtime_module(1) == two && bytes_at(STOCK + 30, original + 30, 10) && stock[64] == 0x4e);
+    next = 0;
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == two->hook[RUNTIME_TICK] && next == 2);
     uint32_t largest;
     CHECK(modwerk_runtime_free(&largest) == RUNTIME_POOL_BYTES - two->size && largest == RUNTIME_POOL_BYTES - two->size - one_size); /* module 1 left a hole below 2 */
     id = 4; begin(8, 0, 0, 0, 0, 0, 0xd5);
@@ -464,6 +483,7 @@ int main(void)
         ++fitted;
     }
     CHECK(fitted > 0 && modwerk_runtime_refusal() == RUNTIME_MEMORY && modwerk_runtime_active() == 2 + fitted);
+    CHECK(modwerk_runtime_refused_check() == RUNTIME_CHECK_POOL); /* the pool itself is full */
     CHECK(modwerk_runtime_module(1) == two && stock[64] == 0x4e);
     /* Small modules fill every position; one more is refused. */
     for (; id < 1000 && modwerk_runtime_active() < RUNTIME_MODULES; ++id) {
@@ -740,6 +760,7 @@ int main(void)
     id = 94; begin9(4, 0); claim9(1, 1, RUNTIME_CLAIM_READ, 0x2840, 4); dsp_words9(4);
     unsigned seen = claims_seen;
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MEMORY && modwerk_runtime_free(0) == free && claims_seen == seen + 1);
+    CHECK(modwerk_runtime_refused_check() == RUNTIME_CHECK_CLAIMS); /* the same code, told apart from a full pool */
     claims_why = 0;
     for (id = 90; id <= 92; ++id) {
         begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
@@ -1042,6 +1063,14 @@ int main(void)
     }
     CHECK(modwerk_runtime_active()==2 && live[0]==baseline0 && live[1]==baseline1);
     CHECK(modwerk_runtime_free(0)==baseline_free && !memcmp(stock,baseline_stock,sizeof stock));
+    /* Bss past the image limit, within RUNTIME_MODULE_BYTES, is admitted where the pool has room; removal returns it. */
+    id=117;
+    begin(8,RUNTIME_IMAGE_BYTES,0,0,0,0,0);
+    CHECK(b->enter(0) && b->prepare(0,p,n) && b->publish(0)==MU_APPLIED && b->retire(0) && b->leave(0));
+    CHECK(modwerk_runtime_active()==3 && modwerk_runtime_free(0)<=baseline_free-RUNTIME_IMAGE_BYTES);
+    begin(0,0,RUNTIME_NONE,0,0,0,0);
+    CHECK(b->enter(0) && b->prepare(0,p,n) && b->publish(0)==MU_APPLIED && b->retire(0) && b->leave(0));
+    CHECK(modwerk_runtime_active()==2 && modwerk_runtime_free(0)==baseline_free);
 #ifdef MODWERK_RUNTIME_SETS
     set_checks();
 #endif

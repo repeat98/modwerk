@@ -18,7 +18,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert exact['packageSha256']==PACKAGE and exact['phaseImageUnchanged']
     original=port.command
     def u32(at):return int.from_bytes(port.peek(at,4),'big')
-    base=u32(0x4002dc6a)-exact['psl_open']
+    base=fixture.module_base(port,exact)
     # Reviewed exact-object instructions; no module code or SR is patched.
     offsets={'taskRaise':0x16f0,'taskRestore':0x1742,'maskRaise':0x3a,'maskRestore':0x88}
     for name,expected in [('taskRaise','46c0'),('taskRestore','46c1'),('maskRaise','46fc2700'),('maskRestore','46c2')]:

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fresh } from '../../vendor/elekloader/kit/src/store.ts'
 import { afterDeleting, configurationDevice, newConfiguration, validateConfiguration, pinModuleVersions, startupSettings } from './workspace'
+import { DIGI_MODS, RETIRED_DIGI_MODULE_IDS } from '../devices/digi-mods'
 describe('persistent configuration version pins',()=>{
  it('starts empty with stock FX2 disabled while dynamic loading is unavailable',()=>{
   const configuration=newConfiguration('Empty')
@@ -29,16 +30,27 @@ describe('persistent configuration version pins',()=>{
 describe('modules removed from the library',()=>{
  it('drops a removed module and its pin from a saved configuration and keeps the rest',()=>{
   const current=newConfiguration('Live set',['miniverb','euclid'])
-  const saved={...current,moduleIds:['spectrum','miniverb','euclid','midi-scenes'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental','midi-scenes':'0.2.5-experimental'}}
+  const saved={...current,moduleIds:['spectrum','miniverb','euclid','modulation'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental',modulation:'0.1.1-experimental'}}
   expect(validateConfiguration(saved)).toEqual(current)
   const only={...current,moduleIds:['character','modulation'],moduleVersions:{character:'0.1.1-experimental'}}
   expect(validateConfiguration(only)).toMatchObject({moduleIds:[],moduleVersions:{}})
  })
  it('leaves a removed module out of a copied or imported configuration',()=>{
-  const copy=newConfiguration('Copy',['midi-scenes','repitch'],true,{'midi-scenes':'0.2.5-experimental',repitch:'0.1.1-experimental'})
+  const copy=newConfiguration('Copy',['modulation','repitch'],true,{modulation:'0.1.1-experimental',repitch:'0.1.1-experimental'})
   expect(copy.moduleIds).toEqual(['repitch'])
   expect(copy.moduleVersions).toEqual(pinModuleVersions(['repitch']))
   expect(pinModuleVersions(['spectrum','repitch'])).toEqual(pinModuleVersions(['repitch']))
+ })
+ it('drops a module retired from the Rytm library and its pin from a saved set, and keeps the rest',()=>{
+  const rytm='analog-rytm-mkii',current=newConfiguration('Rytm set',['improved-fltr'],true,undefined,rytm)
+  const saved={...current,moduleIds:['improved-performance','improved-fltr','pipo-loop'],moduleVersions:{...current.moduleVersions,'improved-performance':'0.1.0-experimental','pipo-loop':'0.2.0-experimental'}}
+  expect(validateConfiguration(saved)).toEqual(current)
+  expect(validateConfiguration({...current,moduleIds:['pipo-loop'],moduleVersions:{'pipo-loop':'0.2.0-experimental'}})).toMatchObject({moduleIds:[],moduleVersions:{}})
+  expect(pinModuleVersions(['improved-performance','improved-fltr'],rytm)).toEqual(pinModuleVersions(['improved-fltr'],rytm))
+  expect(()=>validateConfiguration({...current,moduleIds:['not-a-module']})).toThrow('Unknown module')
+ })
+ it('lists only modules that have left their library as retired',()=>{
+  for(const [device,ids] of Object.entries(RETIRED_DIGI_MODULE_IDS))for(const id of ids??[])expect(DIGI_MODS.some(mod=>mod.device===device&&mod.id===id)).toBe(false)
  })
  it('still refuses a module the catalog never had',()=>{
   expect(()=>newConfiguration('Unknown',['not-a-module'])).toThrow('Unknown module')
@@ -59,8 +71,8 @@ describe('deleting a configuration',()=>{
  const ot=newConfiguration('Octatrack set'),digi=(name:string)=>newConfiguration(name,[],true,undefined,'digitakt')
  it('opens another configuration for the same machine first, then any other',()=>{
   const a=digi('A'),b=digi('B')
-  expect(afterDeleting([ot,a,b],a.id)).toEqual({remaining:[ot,b],next:b})
-  expect(afterDeleting([ot,a],a.id)).toEqual({remaining:[ot],next:ot})
+  expect(afterDeleting([ot,a,b],a.id)).toEqual({remaining:[ot,b],next:b,created:false})
+  expect(afterDeleting([ot,a],a.id)).toEqual({remaining:[ot],next:ot,created:false})
  })
  it('replaces a machine’s only configuration with an empty one for that machine',()=>{
   const only=digi('Only'),{remaining,next}=afterDeleting([only],only.id)

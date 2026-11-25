@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "ev_banks_load", "fn": "kits_ev_banks_load", "order": 50},
+    {"event": "ev_banks_loaded", "fn": "kits_ev_banks_loaded", "order": 50},
+    {"event": "ev_bank_load", "fn": "kits_ev_bank_load", "order": 50},
+    {"event": "ev_bank_loaded", "fn": "kits_ev_bank_loaded", "order": 50},
+    {"event": "ev_project_new", "fn": "kits_ev_project_new", "order": 50},
+    {"event": "ev_bank_written", "fn": "kits_ev_bank_written", "order": 50},
+    {"event": "ev_project_store", "fn": "kits_ev_project_store", "order": 50},
+    {"event": "ev_project_stored", "fn": "kits_ev_project_stored", "order": 50},
+    {"event": "ev_project_reloaded", "fn": "kits_ev_project_reloaded", "order": 50},
+    {"event": "ev_part_saved", "fn": "kits_ev_part_saved", "order": 50},
+    {"event": "ev_part_clear", "fn": "kits_ev_part_clear", "order": 50},
+    {"event": "ev_modules_ready", "fn": "kits_ev_modules_ready", "order": 50},
+    {"event": "module_enc", "fn": "kits_level"}
+  ],
+  "contribute": [
+    {"to": "ot_sample_memory", "data": "kits_pages", "order": 50},
+    {"to": "ot_part_menu", "data": "kits_part_menu", "order": 60}
+  ]
+}

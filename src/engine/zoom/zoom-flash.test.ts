@@ -28,8 +28,8 @@ describe('the MS-70CDR flash', () => {
     const fake = fakeZoomPedal({ firmware: '1.10', badCrcAt: 7 }), link = await connect(fake), main = os(), preset = Uint8Array.from({ length: 0x3000 }, (_, i) => i & 0x7f)
     fake.flash.fill(0)   // whatever was there: only an erase makes room
     await link.flashBase(main, preset)
-    expect(fake.flash.subarray(0x040000, 0x0f0000)).toEqual(main)
-    expect(fake.flash.subarray(0x3fd000, 0x400000)).toEqual(preset)
+    expect(Buffer.compare(fake.flash.subarray(0x040000, 0x0f0000), main), 'flashed OS bytes').toBe(0)
+    expect(Buffer.compare(fake.flash.subarray(0x3fd000, 0x400000), preset), 'flashed preset bytes').toBe(0)
     expect(fake.flash.subarray(0, 0x040000).every(b => b === 0)).toBe(true)
     expect(fake.flash.subarray(0x0f0000, 0x3fd000).every(b => b === 0)).toBe(true)
     expect(fake.sent.filter(m => m[4] === 0x02).length).toBe(6 + 352 + 1)
@@ -42,6 +42,12 @@ describe('the MS-70CDR flash', () => {
     expect(running.sent.some(m => m[1] === 0x52)).toBe(false)   // only the identity request and MIDISTOMP's hello
     const stuck = fakeZoomPedal({ firmware: '1.10', slow: { cmd: 0x02, nth: 5, ms: null } })
     await expect((await connect(stuck)).flashBase(os())).rejects.toThrow(/step 8 of 356 \(no answer\).*bootloader is untouched/)
+  })
+
+  it('refuses an MS-50G in update mode, sending it nothing: the base is the MS-70CDR’s firmware', async () => {
+    const other = fakeZoomPedal({ deviceId: 0x58, firmware: '1.10' }), link = await connect(other)
+    await expect(link.flashBase(os())).rejects.toThrow(/MS-50G in update mode.*only on an MS-70CDR/)
+    expect(other.sent.some(m => m[1] === 0x52)).toBe(false)
   })
 
   // On a computer with Zoom's stock MS-70CDR 2.10 Mac updater: the browser's `hello` flash sends exactly the 357

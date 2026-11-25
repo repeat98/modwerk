@@ -271,7 +271,7 @@
     "name": "Digitakt II",
     "family": "elektron",
     "status": "preview",
-    "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Track Names is the first library module; downloads stay off until the owner turns them on.",
+    "summary": "Experimental OS 1.17 support on the Modwerk Digitakt II base. Track Names is the first library module. Downloads stay disabled.",
     "steps": {
       "format": "done",
       "rebuild": "done",
@@ -320,9 +320,9 @@
         "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
       },
       {
-        "label": "core-dt2 1.1 source (toonst's elekloader fork)",
-        "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dt2",
-        "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events; its author reports emulator runs only. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
+        "label": "core-dt2 1.1 source (Elekloader PR #221)",
+        "url": "https://github.com/elekloader/elekloader/tree/0df84098c8e29472208c9629e70d24012fe82555/mods/core-dt2",
+        "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events. Modwerk's base uses this reviewed source and adds its own sequencer and project hooks."
       }
     ],
     "sdk": {
@@ -331,10 +331,10 @@
       "catalog": null,
       "guide": "sdk/machines/digitakt-ii/README.md",
       "core": {
-        "version": "1.0",
+        "version": "1.1",
         "path": "sdk/digitakt-ii/core-profile"
       },
-      "toolchain": "m68k-elf GCC and binutils, Modwerk's elemod packager, and the vendored elekloader kit 0.5.0; firmware builds start from the owner's exact OS 1.17 .syx.",
+      "toolchain": "m68k-elf GCC and binutils and the pinned Elekloader kit; firmware builds start from the owner's exact OS 1.17 .syx.",
       "budgets": [
         {
           "name": "Shared mod memory",
@@ -345,8 +345,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 500,
-          "note": "Core 1.0 build: 480 bytes .run plus 20 bytes .bss; package link check measures each selected module set."
+          "value": 19880,
+          "note": "Pinned Modwerk base: 10,032 bytes .run plus 9,848 bytes .bss. The linker measures each selected set."
         },
         {
           "name": "Fast SRAM for code",
@@ -358,7 +358,7 @@
           "name": "Per-event subscriptions",
           "unit": "slots",
           "value": 4,
-          "note": "Core 1.0 allocates four hook entries per shared event collection."
+          "note": "The Modwerk base allocates four hook entries per shared event collection."
         }
       ]
     }
@@ -370,11 +370,11 @@
     "name": "Digitone II",
     "family": "elektron",
     "status": "research",
-    "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and a draft core with the Digitakt II's six events runs in the emulator.",
+    "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and modified builds boot on units: core-dn2 0.3's six UI events ran on a unit, and stock 1.12 restores it.",
     "steps": {
       "format": "done",
       "rebuild": "done",
-      "boot": "started",
+      "boot": "done",
       "core": "started",
       "mods": "open"
     },
@@ -405,7 +405,7 @@
         }
       ],
       "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. Modwerk has no Digitone II build path yet and downloads stay disabled.",
-      "recovery": "Hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx over MIDI DIN; recovery mode does not use USB. Not yet tried on a Digitone II."
+      "recovery": "Hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx over MIDI DIN; recovery mode does not use USB. Checked on toonst's unit with stock 1.12 (23 October 2026, elekloader's build guide); on a second unit only the normal Transfer update back to stock 1.12 was tried (18 November 2026)."
     },
     "research": [
       {
@@ -421,7 +421,12 @@
       {
         "label": "core-dn2 0.3 (toonst's elekloader fork)",
         "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dn2",
-        "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Not copied into Modwerk yet."
+        "note": "The Digitone II core with the Digitakt II 1.1 additions, input, SysEx and SHARC bridges. 0.1's UI events ran on toonst's unit; 0.3 booted and its six UI events ran on a second unit (18 November 2026). Its 1.1 additions and bridges are untested on hardware. Not copied into Modwerk yet."
+      },
+      {
+        "label": "Digitone II core on a unit, 18 November 2026",
+        "url": "https://github.com/repeat98/modwerk/blob/main/docs/verification/2026-11-18-digitone-ii-core-on-a-unit.md",
+        "note": "prodbysmolec's unit: stock 1.12 with core-dn2 0.3 and hello-marker, then hooks-check-dn2, built with toonst's elekloader at 3d7c2e3 and flashed with Transfer; boot, normal playback, all six UI events and the return to stock 1.12 observed."
       }
     ]
   },
@@ -679,13 +684,19 @@
           "name": "Core image",
           "unit": "bytes",
           "value": 12160,
-          "note": "Modwerk's base, plain variant (1c14b6b0), for a set with no send effect: 10,792 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+          "note": "Modwerk's base, plain variant (1c14b6b0), for a set with no send effect or digital voice machine: 10,792 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
         },
         {
           "name": "Core image with the send bus",
           "unit": "bytes",
           "value": 37178,
-          "note": "The base's send-bus variant (3ece243b), for a set with a send effect or a digital voice machine: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+          "note": "The base's send-bus variant (3ece243b), for a set with a send effect: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        },
+        {
+          "name": "Core image with the digital voices",
+          "unit": "bytes",
+          "value": 17708,
+          "note": "The base's voices variant (dd771eae), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,876 bytes .run plus 2,832 bytes .bss."
         }
       ]
     }
@@ -697,7 +708,7 @@
     "name": "Analog Rytm",
     "family": "elektron",
     "status": "research",
-    "summary": "OS 1.74 rebuilt in the browser builder (ELE2); marked builds boot, stock restores, DIN recovery works; the MKII base built for the MKI passed on a unit.",
+    "summary": "OS 1.74 rebuilt in the browser builder (ELE2); the Modwerk base passed on a unit and ten MKII modules ran on it; site builds wait for an Elekloader release with the MKI.",
     "steps": {
       "format": "done",
       "rebuild": "done",
@@ -749,7 +760,32 @@
         "url": "https://github.com/mischa85/elektron-firmware-tool",
         "note": "Documents the SysEx transport, ELE2 container and aPLib codec that Modwerk's ele2.ts reads and rebuilds (docs/RYTM_MKI_OS_RESEARCH.md). No firmware hosted."
       }
-    ]
+    ],
+    "sdk": {
+      "platform": "elemod",
+      "modules": "sdk/analog-rytm-mki/modules",
+      "catalog": null,
+      "guide": "sdk/machines/analog-rytm-mki/README.md",
+      "core": {
+        "version": "0.7",
+        "path": "sdk/analog-rytm-mki/core-profile"
+      },
+      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder with the Analog Rytm MKI device (elekloader/elekloader#351, awaiting a release): Modwerk's MKI base, from core-ar2 0.7's source at the MKI's addresses, and the owner's exact MKI OS 1.74 .syx.",
+      "budgets": [
+        {
+          "name": "Shared mod memory",
+          "unit": "bytes",
+          "value": 131072,
+          "note": "DDR 0x47BE0000–0x47C00000, shared by the core and every mod; a boot-time canary over 0x47B00000–0x47F00000 read back intact on a unit (MW02, 8 November 2026)."
+        },
+        {
+          "name": "Core image",
+          "unit": "bytes",
+          "value": 12064,
+          "note": "Modwerk's MKI base, plain variant: 10,696 bytes .run plus 1,368 bytes .bss in the shared area, and a 100-byte .boot copier. The link check measures each selected module set."
+        }
+      ]
+    }
   },
   {
     "schemaVersion": 1,
@@ -1138,11 +1174,11 @@
     },
     "stack": {
       "base": "started",
-      "link": "started",
+      "link": "done",
       "flash": "done",
-      "loader": "open",
+      "loader": "started",
       "status": "done",
-      "diagnostics": "open",
+      "diagnostics": "started",
       "tools": "started"
     },
     "art": {

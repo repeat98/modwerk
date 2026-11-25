@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 2,
+  "id": "arr-rows",
+  "key": "ARR ROWS",
+  "name": "Arr Rows",
+  "version": "0.2.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "Andrey-Sidorkin",
+    "credits": [
+      "Andrey-Sidorkin: the module, its research, tests and documentation."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Select, copy and paste many arrangement rows",
+    "family": "Editing",
+    "summary": "Select several rows in the arrangement editor and copy, clear, paste or insert them together, also into another arrangement.",
+    "overview": "Stock copies, clears and pastes one arrangement row at a time. Arr Rows adds a selection: hold CUE and press UP or DOWN to mark rows from the cursor, then the usual FUNC + REC, FUNC + PLAY and FUNC + STOP act on all of them. FUNC + STOP replaces the selected rows, or the cursor row, with the copied rows; CUE + FUNC + STOP inserts them and moves what follows down. CUE + LEFT and CUE + RIGHT move the selected rows up and down. The copied rows stay until power off, so a section of one arrangement can go into another. Without a selection everything is stock, and the arrangement is saved in stock's own format.",
+    "highlights": [
+      "CUE + UP/DOWN marks rows; their numbers show inverted.",
+      "FUNC + REC, FUNC + PLAY and FUNC + STOP act on the selection; repeating a paste, clear or insert in the same place undoes it, as stock does for one row.",
+      "CUE + FUNC + STOP inserts the copied rows at the cursor; LOOP and JUMP targets below move with their rows.",
+      "CUE + LEFT/RIGHT move the selected rows, or the cursor row, up or down one place; LOOP and JUMP targets follow their rows.",
+      "Copied rows survive ARR CHANGE: paste them into another arrangement.",
+      "No stock code patched, no file format change, no setting."
+    ],
+    "usage": [
+      "Open the arrangement editor (MKII: ARR, then EDIT; MKI: FUNC + PATTERN for arrangement mode, then FUNC + BANK and EDIT).",
+      "Put the cursor on the first row you want, hold CUE and press DOWN (or UP) until the rows are marked.",
+      "Press FUNC + REC to copy them, or FUNC + PLAY to clear them.",
+      "Move the cursor to where they should go and press FUNC + STOP to replace that row with them (or select rows first to replace those), or hold CUE and press FUNC + STOP to insert them.",
+      "Hold CUE and press LEFT or RIGHT to move the selected rows (or the cursor row) up or down one place; the marks and the cursor move with them.",
+      "Press the same keys again in the same place to undo the paste, clear or insert."
+    ]
+  },
+  "access": {
+    "location": "The arrangement editor",
+    "steps": [
+      "Open the arrangement editor (MKII: ARR, then EDIT; MKI: FUNC + PATTERN for arrangement mode, then FUNC + BANK and EDIT).",
+      "Put the cursor on the first row you want, hold CUE and press DOWN (or UP) until the rows are marked.",
+      "Press FUNC + REC to copy them, or FUNC + PLAY to clear them.",
+      "Move the cursor to where they should go and press FUNC + STOP to replace that row with them (or select rows first to replace those), or hold CUE and press FUNC + STOP to insert them.",
+      "Hold CUE and press LEFT or RIGHT to move the selected rows (or the cursor row) up or down one place; the marks and the cursor move with them.",
+      "Press the same keys again in the same place to undo the paste, clear or insert."
+    ],
+    "screenshots": [
+      "media/ot-select.png",
+      "media/ot-copy.png",
+      "media/ot-paste.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:CUE+UP@ARRANGER",
+      "key:CUE+DOWN@ARRANGER",
+      "key:CUE+RIGHT@ARRANGER",
+      "key:CUE+LEFT@ARRANGER",
+      "key:FUNC+REC@ARRANGER",
+      "key:FUNC+PLAY@ARRANGER",
+      "key:FUNC+STOP@ARRANGER",
+      "key:CUE+FUNC+STOP@ARRANGER",
+      "key:FUNC+DOWN@ARRANGER",
+      "screen:ARRANGEMENT EDITOR"
+    ],
+    "limitations": [
+      "OS 1.40C, tested on an MKI (the developer's own checks: 0.1.0 on base 0.7.5, 0.2.0 build 50bb1e6b2 on base 0.7.13); not tested on an MKII.",
+      "In the arrangement editor, CUE + UP/DOWN still move the cursor as UP/DOWN do, and now also mark rows; CUE + LEFT/RIGHT move rows instead of changing columns; after rows were copied here, FUNC + STOP replaces the cursor row with them instead of pasting stock's one copied row until the next stock copy. Remove the module to restore stock behaviour.",
+      "The copied rows live in RAM until power off or until the module is removed.",
+      "A paste or insert that would pass 256 rows is refused with stock's ROW LIMIT REACHED."
+    ]
+  },
+  "resources": {
+    "recorded": "17 November 2026",
+    "storage": {
+      "label": "Runtime package",
+      "display": "3,864 B code and data + 11,320 B state",
+      "value": 3864,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "npm run module:dev -- arr-rows --build-only: one ColdFire unit, three runtime hooks, 15 relocations, no stock-code sites, no DSP code. The state holds the clipboard and the undo copy, 256 rows of 22 bytes each.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per key and UI tick",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "instructions/event",
+      "method": "unmeasured",
+      "conditions": "A few compares per key and tick; a copy, paste, clear or insert walks at most 256 rows once and sums them twice, only when pressed in the editor. Nothing per sample or frame.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "UI task: key events, the 60 Hz tick and the composed frame while the editor is open.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Panel-event work only; the row walks run once per editing key press.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A 3.8 KB unit and 11 KB of state.",
+        "source": "TESTING.md"
+      }
+    },
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-17",
+      "conditions": "The developer's Octatrack MKI, OS 1.40C, a development twin of the beta base (7db3251b, RAM-booted), the developer's scratch project, Part 2, the selected pattern playing 8 s per reading, the module installed and used nowhere (at rest; it works only on key presses in the arrangement editor). Two runs: the frame interrupt's share -0.1 and +0.2 points, the CPU meter -0.2 and -1.7; DSP 5-8 read +37.5 and +18.9, but the control module Tiempos (no DSP code either) read -9.7 in the same scene, so that meter is noise here.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate (verify.py, 98 checks); stock key routing measured under ot_emu (MKI panel). On the developer's MKI: selecting, copying, clearing, pasting, inserting and undo (0.1.0, base 0.7.5); FUNC + DOWN on a HALT row keeping both HALTs, FUNC + DOWN on other rows and FUNC + UP as stock, and moving rows up and down with the editor scrolling along and the row ahead in view (0.2.0, build 50bb1e6b2, base 0.7.13, beside USB AUDIO), as the developer reported them.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "50bb1e6b2034bc911d0656451f7971972ae19a63",
+    "gates": [
+      "modules/arr-rows/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by Andrey Sidorkin, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": [
+    {
+      "path": "media/ot-select.png",
+      "captureType": "emulator",
+      "caption": "Hold CUE and press DOWN in the arrangement editor: the selected rows' numbers show inverted (here rows 002-007, the list scrolled).",
+      "alt": "The arrangement editor with row numbers 002 to 007 inverted and the cursor on row 007.",
+      "credit": "Andrey-Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARRANGEMENT EDITOR",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu (octabam f7d72906, scripts/octatrack-emulator/build.py), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-copy.png",
+      "captureType": "emulator",
+      "caption": "FUNC + REC copies the selected rows; stock's message box says how many.",
+      "alt": "The arrangement editor with a message box reading COPY 6 ROWS.",
+      "credit": "Andrey-Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARRANGEMENT EDITOR",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu (octabam f7d72906, scripts/octatrack-emulator/build.py), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-paste.png",
+      "captureType": "emulator",
+      "caption": "With rows 001-002 selected, FUNC + STOP replaced them with the six copied rows; the rows below moved down.",
+      "alt": "The arrangement editor after a paste: rows 001 to 006 hold patterns A03 to A08.",
+      "credit": "Andrey-Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARRANGEMENT EDITOR",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu (octabam f7d72906, scripts/octatrack-emulator/build.py), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6."
+      }
+    }
+  ]
+}

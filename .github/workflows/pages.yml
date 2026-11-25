@@ -15,6 +15,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   approval:
+    # Only Modwerk publishes; every later job needs this one, so a fork that syncs main skips them all and mails no one.
+    if: github.repository == 'repeat98/modwerk'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -32,21 +34,29 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      - name: Verify owner or scoped module-author approval for this exact source commit
+      # The last successful release, not the previous commit: everything since it is published now, so a failed module
+      # build is never skipped and every commit since it needs its own approval.
+      - name: Find the last successful release
+        id: last
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow pages.yml --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          if [ -n "$last" ] && git cat-file -e "$last^{commit}" 2>/dev/null; then echo "sha=$last" >> "$GITHUB_OUTPUT"; fi
+      - name: Verify owner or scoped module-author approval for this commit and every main commit since the last release
         id: approval
         run: node scripts/verify-merge-approval.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OCTAMOD_APPROVER_ID: ${{ vars.MODULE_APPROVER_GITHUB_ID }}
+          OCTAMOD_LAST_RELEASE: ${{ steps.last.outputs.sha }}
       - name: Rebuild modules only when module source changed since the last successful release
         id: changes
         env:
-          GH_TOKEN: ${{ github.token }}
+          LAST: ${{ steps.last.outputs.sha }}
         run: |
-          # Compare with the last successful release, not the previous commit, so a failed module build is never skipped.
-          last=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow pages.yml --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
-          if [ -n "$last" ] && git cat-file -e "$last^{commit}" 2>/dev/null; then
-            node scripts/change-scope.mjs --base "$last" --head HEAD >> "$GITHUB_OUTPUT"
+          if [ -n "$LAST" ]; then
+            node scripts/change-scope.mjs --base "$LAST" --head HEAD >> "$GITHUB_OUTPUT"
           else
             echo 'modules=true' >> "$GITHUB_OUTPUT"
           fi
@@ -156,6 +166,9 @@ jobs:
           MODWERK_AUTHOR_RELEASE_MODULES: ${{ needs.approval.outputs.author-modules }}
           VITE_COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
           VITE_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+      # A tab opened before this release still asks for the previous module versions' clips and screenshots.
+      - name: Keep the module media this release drops for a week, copied from the live site
+        run: node scripts/retain-module-media.mjs dist
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: module-release-inventory-${{ github.sha }}

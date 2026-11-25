@@ -4,6 +4,11 @@
 
 The bases named below are development builds of the Modwerk base with the digital voices (and, for BL01, a USB test link), not published and not rebuildable from this repository; the published base is the send-bus variant of repeat98/modwerk#1447 (3ece243b): this module ran on it in rytm-emu (BA21) and, by hand, on the author's unit (VB01, 12 November 2026: chosen from the BD section and offered on SD and BT only, the 808/909 tap, a kit reload keeping the type, a sound lock changing the type, a project save and power cycle; docs/verification/2026-11-12-rytm-base-digital-voices.md), but not the rig's knob sweeps.
 
+- CD02 (0.2.2-experimental, sha256 3ea8d38b…, solo on a development base of the author's with a USB test link and the base's centred-dial fix, not published): flashed on the author's MKII on 21 November 2026 and run by the author's rig (below). This module's source in CD02 is the release's (fingerprint below).
+- BA23 (0.2.2-experimental, sha256 0504d80a…, solo on the published voices base dd771eae): the README's three screens captured again with capture.json's plans; the machine list byte for byte 0.2.1's, the two SYNTH pages without the bottom bar's 808 / 909.
+- RC42 (0.2.1-experimental, sha256 1ac19211…, a private 17-module combo: this module beside 16 others on a base of the digital voices without the send bus, 1,564 B of module RAM left): flashed, tried by hand by the author on 16 November 2026. Reported: everything works and sounds as before; with three BD ANALOG voices playing the unit gets laggy. Not measured by the rig.
+- BA22 (0.2.1-experimental, sha256 b5b06ee1…, solo on the published base 3ece243b): the README's three screens captured again with capture.json's plans; each frame byte for byte 0.2.0's (BA21).
+- AB23 (0.2.1-experimental, sha256 3f7bbb91…, solo on the published base 3ece243b): the knob tables read only when a knob changes stored as 16-bit steps above their smallest word (`NAME_LO + (NAME[i] << NAME_SH)`); the body's level, velocity and ATK worked out instead of read; HIGH's weight twice LOW's from one table. T_AP, T_GT, T_GD and T_DKP stay Q31 words. Every per-sample routine is instruction for instruction the same as 0.2.0's (objdump). tools/asm_check.py: every routine saves its registers; desk, bodies, click and noise match their C, 0 differences. emu_check: all pass, meter unchanged (mean 3.4 %, dearest block 4.6 %). Not on the unit yet.
 - AB16 (0.2.0-experimental, sha256 d7bba966…, solo on Modwerk base 6fca633f): AB15 with BD ANALOG offered on the BD, SD and BT tracks only, after the unit's stress (below). emu_check: all pass, meter unchanged.
 - BP02 (rytm-emu only): this module on the base of the digital voices pull request (send-bus 3ece243b, merged in repeat98/modwerk#1447): emu_check all pass, mean 3.4 %, dearest block 4.6 % of a block.
 - AB15 (0.2.0-experimental, sha256 f3142d40…, solo on Modwerk base 6fca633f, send-bus with machine-list sections): the 909 of Analog BD 0.1.7 (refitted to the recorded TR-909: body from two tables, the click from a table and two decaying words, the noise envelope ramped, control every 16 samples, the model's rest), and LOW/HIGH as one weight per band for both models. tools/asm_check.py (`--pass` 1-4, machine-list sections base): every routine saves its registers; desk 134,991, bodies 270,542, click 13,156, noise 31,648 blocks checked, 0 differences. emu_check: all pass. rytm-emu meter, 808 then 909, against 0.1.0 with the lite desk on the same base: mean 3.4 % of a block (4.1 %), dearest block 4.6 % (6.5 %). Emulator counts, not unit time: the unit pays roughly three times them. Not on the unit.
@@ -22,6 +27,36 @@ The bases named below are development builds of the Modwerk base with the digita
 ## Source fingerprint, 0.2.0
 
 `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/machine.c src/ab_dsp.c src/ab_desk.s src/ab_body.s src/ab_body808.s src/ab_noise.s src/ab_click.s src/ab_tone808.s src/ab_trig808.s src/ab_dsp.h src/tables.h` (in that order): `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+## Source fingerprint, 0.2.2
+
+The same command as for 0.2.1: `b73ba4308810126d1c102488838da382c59a57a514d6ae0ddc1c167b41fe30d3`.
+
+## Source fingerprint, 0.2.1
+
+`evidence.sourceSha256`, worked out in the module's folder as `sha256sum build.json src/machine.c src/ab_dsp.c src/ab_desk.s src/ab_body.s src/ab_body808.s src/ab_noise.s src/ab_click.s src/ab_tone808.s src/ab_trig808.s src/ab_dsp.h src/tables.h | sha256sum`: `4583f70cdd8cf66f0273f681865ddd7c29c9273eba8dab1f371fd66f70a1c9d0`. 0.2.0's recorded value above is the hash of empty input (the command hashed nothing); the same command gives `5dc3e042…` for 0.2.0's files.
+
+## Unit rig, 0.2.2 (21 November 2026)
+
+Run by the author's automated rig on the author's MKII, not by a person: CD02 flashed, scratch project, BD track. Three screen and memory cases (the rig's, not in this repository), each choosing BD ANALOG from the machine list and checking the track's machine byte reads slot 36 first:
+
+- No type badge: the bottom bar's right end (x 96-127, y 56-63) is the same for the 808 and, after a tap of B, the 909 (blank; with 0.2.1 the two differ there), B reads TON then SWT, and a second tap brings the type back.
+- TUN, LOW and HI turn their dials to both ends (the base's centred-dial fix, not this module): the dial differs between 0 and 8 and between 119 and 127 for each. One step of TUN or DEC moves the stored value by one (0x4000 to 0x4100).
+- The same cases in rytm-emu: pass on CD02, fail on CD00 (the same development base without the dial fix, with 0.2.1): there the dials sit on one end stop at 0 and 8, one TUN step (the rig's 4 counts) moves 4/256 of a value, and the badge is drawn.
+- Not covered: pads and pressure, sound (0.2.2 changes no sound code), save and reload, power cycle.
+
+## Memory, 0.2.1 (16 November 2026)
+
+5,024 bytes less than 0.2.0: `ramSpare` from `scripts/link-image.mjs` on the published base 3ece243b, 76,272 bytes with this module (71,248 with 0.2.0). The module's `.run` (m68k-elf-size): 15,186 bytes (20,206); the tables shrank by 5,120 bytes (.rodata 14,394 to 9,274) and the two settings routines grew by 100.
+
+## Host, 0.2.1 (16 November 2026)
+
+- Each table's worst error against the Q31 word it replaces (`python3 tools/gen_tables.py --errors`): at most 1.5e-5 of full scale (T_GD's and LOW/HIGH's weights), 3.1e-4 of the word for a decay coefficient (T_DKD), 6.4e-5 for a pitch (B_INC, 0.1 cent), 1.0e-5 for the 909's (T_INCB). The body's level is exact; velocity and ATK within 8 of 2^31. LOW or HIGH at 1 now weights its band 0 (was -111 dB).
+- Every setting a block uses, 0.2.0 against 0.2.1, over each knob from 0 to 127 and over all 2,097,152 TUN x TON x SWP settings of the 909: the sweep (INCA) and the thump (GDCH, its row picked by the sweep's size) the same as 0.2.0's, which is why T_AP, T_GT and T_GD stay Q31 words (as 16-bit steps, 505 settings took the neighbouring thump row).
+- Host renders, 0.2.0 against 0.2.1 (tools/host_render.c, UBSan), 462 scenarios (each knob at its ends and middle, both models, and 300 random settings): largest difference -55.8 dBFS (an 808 at TUN 2, DEC 112: its pitch 0.1 cent apart drifts the phase over the long hit); median -79.5 dB of the hit's peak.
+- tools/compare.py against repeat98's models: every scenario within 1 dB of 0.2.0's residual, the 808 default 3 dB closer; worst -23.3 dB as before.
+- rytm-emu, AB21 (0.2.0) against AB23, emu_check's sequence (808 trigs, the tap, the 909) captured for half a second: the two images run 31 samples apart; aligned, voice 1's codec slot is the same within 1 of 32,767 (peak 14,184), the analog voice's slot the same.
+- Code review (independent agent): no bugs; its points taken: the LOW clamp is asserted in the generator, and T_DKP stays a Q31 word (as 16-bit steps it cost the 909 default 2 dB against the model).
 
 ## Memory, 0.2.0 (12 November 2026)
 
@@ -108,7 +143,7 @@ Over USB (MIDI and the unit's audio), 808 pass: select and switch passed, but 39
 ## Unit rig, AB06 (5 November 2026)
 
 808 pass over USB: select and switch passed; 39 of 40 hits still silent. A probe of four hits each (note 0 on channels 1 and 10, note 60 on channel 1) sounded about one in four on every channel: the trig arrived but the base marked it taken while its timer still pointed a block or more ahead. Fixed in AB07.
-Open: the type's name in the bottom bar draws over the menu a double tap of SRC opens (the author, AB06).
+Open: the type's name in the bottom bar draws over the menu a double tap of SRC opens (the author, AB06). (Fixed in AB08; since 0.2.2 no type name is drawn.)
 
 ## Unit rig, AB07 (5 November 2026)
 

@@ -23,6 +23,13 @@ extern volatile uint32_t dl_frames;
 void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
 extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
+extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
+extern volatile uint32_t mw_frame_hushes;                         /* status.c: patterns begun with them silenced */
+extern volatile uint32_t mw_frame_skips;                          /* ... and the late entries held, each a DSP frame skipped */
+extern volatile uint32_t mw_late_over;                            /* ... and the entries later than the wait can hold */
+extern volatile uint16_t mw_late_ring[8];                         /* ... and the last entries' lateness */
+extern volatile uint32_t mw_late_count;
+extern volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;   /* ep0.c: the attach watchdog (usb_attach.h) */
 extern const uint8_t modwerk_base_digest[32];       /* the base's identity (build_core.py) */
 
 #ifdef MODWERK_HOST /* test_diag.c models the unit's memory */
@@ -31,6 +38,8 @@ extern volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test
     modwerk_test_screen, modwerk_test_timer;
 extern volatile struct diag_trace modwerk_test_trace;
 #define TRACE (&modwerk_test_trace)
+extern volatile struct diag_lates modwerk_test_lates;
+#define LATES (&modwerk_test_lates)
 extern volatile uint8_t modwerk_test_running[16];
 #define LOG (&modwerk_test_log)
 #define CRASH modwerk_test_crash
@@ -51,6 +60,8 @@ typedef char diag_fits_battery_ram[0x100fc000u + sizeof(struct diag_log) <= 0x10
 #define STALL ((const volatile uint32_t *)0x100ff900u) /* dsp.c: "MWST", count, reason */
 #define TRACE ((volatile struct diag_trace *)0x100ffb30u) /* after modset.c's boot guard (battery-ram.json) */
 typedef char diag_trace_fits_battery_ram[0x100ffb30u + sizeof(struct diag_trace) <= 0x100fff00u ? 1 : -1];
+#define LATES ((volatile struct diag_lates *)0x100f9710u) /* after status.c's MWER (battery-ram.json) */
+typedef char diag_lates_fit[sizeof(struct diag_lates) == 24u ? 1 : -1];
 #define PLAYING (*(volatile uint32_t *)0x800065b8u == 1u) /* dsp.c's PLAYING */
 #define TEMPO24 (*(volatile uint32_t *)0x80001814u)        /* the tempo times 24, as Recorder Loop Fix reads it */
 #define SCREEN (*(volatile uint32_t *)0x460d165cu)         /* stock's list of input layers, the top one (status.c) */
@@ -75,7 +86,7 @@ static unsigned installed(uint32_t *ids, unsigned most)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, late_overs, skip_at, hushes, hush_at;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 static volatile uint16_t trace[DIAG_TRACE_FRAMES][2]; /* the last frames (diag.h's struct diag_trace), in ordinary memory */
 static volatile uint32_t traced;
@@ -194,6 +205,10 @@ static void keep_trace(uint32_t count)
     for (uint32_t i = 0, from = traced; i < DIAG_TRACE_FRAMES; ++i)
         t->frame[i][0] = trace[(from + i) % DIAG_TRACE_FRAMES][0], t->frame[i][1] = trace[(from + i) % DIAG_TRACE_FRAMES][1];
     t->count = count, t->magic = DIAG_TRACE_MAGIC;
+    volatile struct diag_lates *e = LATES;
+    e->magic = 0;
+    for (uint32_t i = 0, from = mw_late_count; i < 8u; ++i) e->late[i] = mw_late_ring[(from + i) & 7u];
+    e->count = count, e->magic = DIAG_LATES_MAGIC;
 }
 void modwerk_diag_tick(void)
 {
@@ -214,6 +229,17 @@ static void diag_tick(void)
     uint32_t refusals = mw_cpu_refusals; /* the CPU budget refused a machine: the tracks and the count, as the skips */
     if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP))
         add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | (refusals & 0xffffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+    uint32_t braked = mw_frame_brakes; /* the brake caught the frame interrupt falling behind: each time, with the tracks shed */
+    if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
+    uint32_t hushed = mw_frame_hushes; /* a pattern predicted past the ceiling began with them silenced: flagged, once in HOT_GAP */
+    if (hushed != hushes && (!hush_at || ticks - hush_at >= HOT_GAP)) add(l, DIAG_BRAKE, 1u << 23 | (hushed & 0x7fffffu), 1), hush_at = ticks, hushes = hushed;
+    /* A late entry held, which skips a DSP frame (a click), or one later than the wait can hold (diag.h's LATE): at most
+     * one incident in HOT_GAP. */
+    uint32_t held = mw_frame_skips, over = mw_late_over;
+    if ((held != frame_skips || over != late_overs) && (!skip_at || ticks - skip_at >= HOT_GAP))
+        add(l, DIAG_LATE, (over < 255u ? over : 255u) << 24 | (held < 0xffffffu ? held : 0xffffffu), 1), skip_at = ticks, frame_skips = held, late_overs = over;
+    uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */
+    if (reoffered != reoffers) { if (!reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1); reoffers = reoffered; } /* a boot's first: five with no host would crowd the log */
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
     uint32_t cpu = modwerk_status[0], d0p = modwerk_status[2], d1p = modwerk_status[4];
     ++n, cpu_sum += cpu, d0_sum += modwerk_status[1], d1_sum += modwerk_status[3], played += PLAYING;
@@ -242,18 +268,26 @@ static void diag_tick(void)
     n = cpu_sum = cpu_peak = d0_sum = d0_peak = d1_sum = d1_peak = played = hot_count = 0;
 }
 /* modset.c, engine task: the installed set after a restore from the card and after each Keep, as ids. */
-static uint32_t refused_module, refused_code;
-void modwerk_diag_refused(uint32_t module, uint32_t refusal) { refused_module = module, refused_code = refusal; }
+static uint32_t refused_module, refused_code, refused_used, refused_largest, refused_check;
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check)
+{
+    refused_module = module, refused_code = refusal, refused_used = used, refused_largest = largest, refused_check = check;
+}
+/* Bytes in the pool's 16-byte units, so its 768 KiB fit a u16. */
+static uint16_t sixteenths(uint32_t bytes) { bytes = (bytes + 15u) / 16u; return (uint16_t)(bytes < 65535u ? bytes : 65535u); }
 void modwerk_diag_set(void)
 {
-    if (!started) { refused_module = refused_code = 0; return; } /* never carried into a later set's record */
+    if (!started) { refused_module = refused_code = refused_used = refused_largest = refused_check = 0; return; } /* never carried into a later set's record */
     volatile struct diag_log *l = LOG;
     uint32_t ids[14];
     unsigned count = installed(ids, 14u);
     volatile struct diag_incident *r = slot(l);
     bare(r, DIAG_SET);
     r->boot = l->boot, r->second = ticks / 60u, r->a = count;
-    r->screen = refused_module, r->tempo24 = refused_code, refused_module = refused_code = 0; /* a set record has no context */
+    r->screen = refused_module, r->tempo24 = refused_code; /* a set record has no context */
+    if (refused_module) /* the module pool at the refusal, and the loader's check that refused (loader.h runtime_check) */
+        r->cpu = sixteenths(refused_used), r->dsp0 = sixteenths(refused_largest), r->dsp1 = (uint16_t)refused_check;
+    refused_module = refused_code = refused_used = refused_largest = refused_check = 0;
     volatile uint8_t *b = r->machine; /* machine, fx and keys: one run of 56 bytes */
     for (unsigned i = 0; i < 56u; ++i) b[i] = i < 4u * count ? (uint8_t)(ids[i / 4u] >> (24u - 8u * (i % 4u))) : 0;
     push(l, r);
@@ -297,10 +331,12 @@ unsigned modwerk_diag_read(uint8_t *out, unsigned page)
 {
     const volatile uint8_t *log = (const volatile uint8_t *)LOG, *crash = (const volatile uint8_t *)CRASH, *stall = (const volatile uint8_t *)STALL,
         *frames = (const volatile uint8_t *)TRACE;
+    const uint32_t sheds[4] = {DIAG_SHEDS_MAGIC, mw_frame_sheds, mw_frame_shed_tracks, mw_late_over};
     for (unsigned i = 0, at = page * DIAG_PAGE; i < DIAG_PAGE; ++i, ++at)
         out[i] = at < sizeof(struct diag_log) ? log[at]
                : at < sizeof(struct diag_log) + DIAG_CRASH_BYTES ? crash[at - sizeof(struct diag_log)]
                : at < sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES ? stall[at - sizeof(struct diag_log) - DIAG_CRASH_BYTES]
-               : at < DIAG_IMAGE_BYTES ? frames[at - sizeof(struct diag_log) - DIAG_CRASH_BYTES - DIAG_STALL_BYTES] : 0;
+               : at < DIAG_IMAGE_BYTES ? frames[at - sizeof(struct diag_log) - DIAG_CRASH_BYTES - DIAG_STALL_BYTES]
+               : at < DIAG_IMAGE_BYTES + DIAG_SHEDS_BYTES ? (uint8_t)(sheds[(at - DIAG_IMAGE_BYTES) / 4u] >> (24u - 8u * ((at - DIAG_IMAGE_BYTES) % 4u))) : 0;
     return DIAG_PAGE;
 }

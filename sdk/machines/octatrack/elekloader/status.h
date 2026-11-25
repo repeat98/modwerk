@@ -38,7 +38,28 @@ extern volatile uint32_t modwerk_modset_switch_result;
 #define MODSET_OFF_ENTRY 56u
 #define MODSET_OFF_PAGE 5u /* entries a USB reply holds (ep0.c's OFF request) */
 unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most);
+/* What this start's restore did with each package of the card's set, in the set's order: "MWR", the entries here, the
+ * set's packages (u16, past the loader's rows too), the restore's result (modset.c's RESTORED to HELD, 0 before it ran)
+ * and 1, then 32 bytes each: state (1 loaded, 2 left out), the loader's check that refused it (loader.h runtime_check),
+ * why (u16: loader.h runtime_refusal, 0x100 the boot guard), module id, package bytes, the module pool's largest free
+ * run when it was left out, and its name as the chooser shows it (15 and a zero). */
+#define MODSET_RESTORE_ENTRY 32u
+#define MODSET_RESTORE_PAGE 5u /* entries a USB reply holds (ep0.c's RESTORE request) */
+unsigned modwerk_modset_restore_list(uint8_t *out, unsigned first, unsigned most);
 /* 1 when the module is switched off (on the shelf), for status.c's MISSING page and dsp.c's track notice: such a module
  * is not missing (owner, 16 November 2026). 0 also while the shelf moves; any task. */
 int modwerk_modset_is_off(uint32_t module);
+/* machine_registry.c's map of the machines a project uses (owner, 16 November 2026), and their MISSING entries: handle
+ * 0xff (a module without DSP code, as INVENTORY says it), byte 1 0x80 and the map entry. */
+#define MODWERK_MACHINE_MAP 16u
+#define MODWERK_MISSING_MAX (MODWERK_FX_IDS + MODWERK_MACHINE_MAP)
+int modwerk_machine_absent(unsigned k, uint32_t *module, char *name);
+int modwerk_machine_track_absent(unsigned track, uint32_t *module, char *name);
+int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *track);
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track);
+void modwerk_machine_map_refresh(void);
+void modwerk_machine_map_begin(void);
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name);
+void modwerk_machine_map_loaded(int ok);
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name);
 #endif

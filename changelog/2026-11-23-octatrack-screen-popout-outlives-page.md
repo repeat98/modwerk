@@ -1,0 +1,1 @@
+A popped-out Octatrack screen now keeps previewing and recording when you leave the Octatrack page. Closing the pop-out window ends it and saves the video; coming back to Screen shows the running preview with its recording controls.

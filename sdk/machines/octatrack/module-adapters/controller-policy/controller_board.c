@@ -96,7 +96,7 @@ static uint16_t kb_reset[2];   /* reset words ACKed since this core last disable
  * before anything else may use the window, so a reader installed later never takes a stale mark for a live bus. */
 static uint8_t kb_dirty[2];
 static uint8_t kb_wanted;      /* the last tick's verdict, for held() and the view */
-static uint8_t kb_readers;     /* ... and whether a live package requires it (a reader) */
+uint8_t modwerk_keybus_readers;     /* ... and whether a live package requires it (a reader) */
 #ifdef MODWERK_RESIDENT_ON_DEMAND
 static uint8_t kb_priced;      /* the tap's price is charged on both cores (dsp.c): only for readers */
 #endif
@@ -114,7 +114,7 @@ static int __attribute__((unused)) keybus_down(void)
 /* A live reader whose key bus cannot come up this boot (dsp.c: the self-test fails with it and the self-test record's
  * refusal says RUNTIME_FEATURE while it holds and the loader has none of its own, on production bases too). A reader admitted before its core was lost
  * stays installed and dry until a restart; this is how the unit says so. */
-int modwerk_controller_keybus_lost(void) { return kb_readers && keybus_down(); }
+int modwerk_controller_keybus_lost(void) { return modwerk_keybus_readers && keybus_down(); }
 /* In-place page extensions: the stock descriptor's bytes before, the SHA-256 of what was written. */
 static struct { uint32_t generation, donor; uint8_t slot, applied; uint8_t saved[PAGE_BYTES], digest[32]; } pages[2];
 static uint32_t page_refused[MW_CONTROLLER_SLOTS];
@@ -220,20 +220,22 @@ static const struct runtime_module *module_of(const struct mw_controller_binding
 static int live(const struct mw_controller_binding *b) { return module_of(b) != 0; }
 
 /* A packaged feature's engine (dsp_ledger.h MW_DSP_PACKAGED, ABI 10) is its controller's package's DSP section: the
- * trust row pins the rest (the controller digest), so this is its whole check, at admission. One entry, at the
- * feature's one site, on the feature's cores, entered at word 0 (the receiver's stub enters a packaged engine there),
- * with an exit exactly where the site has one (its package's build checks the long branch before it); its claims
+ * trust row pins the rest (the controller digest), so this is its whole check, at admission. One entry, at the one
+ * chain site that hosts the feature, on the feature's cores, entered at word 0 (the chain's stub calls a packaged
+ * engine there), with an exit exactly where the site has one (its package's build checks the long branch before it,
+ * and the base aims it at the chain's trampoline, mw_engine_exit_of); its claims
  * exactly the feature's regions on each core, in the ledger's order (its reset's), each written with its initial
  * words; no larger than the engines' buffer. */
 static int applies(const struct runtime_dsp_claim *q, unsigned c) { return q->core == c || q->core == RUNTIME_CLAIM_BOTH_CORES; }
 static int engine_shape(const struct runtime_dsp *d, unsigned feature)
 {
     unsigned sites = 0;
-    for (unsigned s = 0; s < MW_DSP_SITES; ++s) sites += mw_dsp_sites[s].feature == feature;
+    for (unsigned s = 0; s < MW_DSP_SITES; ++s) sites += mw_dsp_sites[s].chain && (mw_dsp_sites[s].feature & feature);
     if (!(MW_DSP_PACKAGED & feature) || sites != 1u || !d->engine_count || d->engine_count > MW_ENGINE_PACKAGED_WORDS ||
         d->entry_count != 1u || !d->entries || (d->claim_count && !d->claims)) return 0;
     const struct runtime_dsp_entry *e = &d->entries[0];
-    if (e->site >= MW_DSP_SITES || mw_dsp_sites[e->site].feature != feature || e->cores != cores(feature) || e->entry) return 0;
+    if (e->site >= MW_DSP_SITES || !mw_dsp_sites[e->site].chain || !(mw_dsp_sites[e->site].feature & feature) ||
+        e->cores != cores(feature) || e->entry) return 0;
     for (unsigned c = 0; c < 2u; ++c) {
         if (!(cores(feature) >> c & 1u)) continue;
         if (!mw_dsp_sites[e->site].exit[c] != !e->exit) return 0;
@@ -400,13 +402,15 @@ static int resources_idle(void *u, const struct mw_controller_binding *b)
 static int writes_blocked(void *u) { (void)u; return modwerk_saved_set_busy() != 0; }
 static int publication_confirmed(void *u, const struct mw_controller_binding *b)
 { (void)u; return live(b) && !modwerk_runtime_broken(); }
-/* Nothing can resume or point into the image: unpublished, no journal that
- * could roll back to it, no reviewed UI root, and for Matrix no destination
- * codes left for stock to read as cue levels. */
+/* Nothing can resume or point into the image: unpublished, no journal or
+ * trial that could roll back to it (#1736: released while a trial ran, a
+ * rolled-back controller came back unbound until a power cycle), no reviewed
+ * UI root, and for Matrix no destination codes left for stock to read as cue
+ * levels. */
 static int roots_clear(void *u, const struct mw_controller_binding *b)
 {
     (void)u;
-    if (modwerk_runtime_volatile_busy() || live(b)) return 0;
+    if (modwerk_runtime_volatile_busy() || modwerk_runtime_restorable(b->generation) || live(b)) return 0;
     if (b->identity.feature == 2u && (READ8(MATRIX_MODE) == 2u || READ8(MATRIX_MODE_CS1) == 2u)) return 0;
     return b->canonical_extent <= UINTPTR_MAX - b->extent_bytes && UI_CLEAR(b->canonical_extent, b->canonical_extent + b->extent_bytes);
 }
@@ -475,12 +479,12 @@ static void view(void)
 {
     struct mw_engines_view *v = &mw_engines_view;
     for (unsigned c = 0; c < 2u; ++c) {
-        for (unsigned k = 0; k < MW_ENGINE_FEATURES; ++k)
+        for (unsigned k = 0; k < MW_ENGINE_VIEW_FEATURES && k < MW_ENGINE_FEATURES; ++k)
             v->state[c][k] = mw_engines[c][k].state, v->wait[c][k] = mw_engines_wait[c][k], v->offset[c][k] = mw_engines[c][k].offset;
         v->keybus_reset[c] = (uint8_t)(kb_reset[c] / 8u);
         v->arena[c] = (uint16_t)modwerk_dsp_arena_now(c), v->reserved[c] = (uint16_t)dl_engine_reserved(c), v->claim_why[c] = dl_engine_why[c];
     }
-    for (unsigned k = 0; k < MW_ENGINE_FEATURES; ++k) v->admitted[k] = mw_engines_admitted[k];
+    for (unsigned k = 0; k < MW_ENGINE_VIEW_FEATURES && k < MW_ENGINE_FEATURES; ++k) v->admitted[k] = mw_engines_admitted[k];
     v->keybus = (uint8_t)(kb_wanted | kb_lane[0].op << 1 | kb_lane[1].op << 4 | (keybus_down() ? 0x80u : 0u));
     v->held = (uint8_t)modwerk_controller_held();
     v->evacuation = (uint8_t)dl_engine_evacuation();
@@ -535,7 +539,7 @@ static void use_tick(void)
                 if (s->binding.identity.module == module[i]) seen |= s->binding.identity.feature & unseen;
         }
     }
-    used = (uint8_t)(seen | 2u | (modwerk_dsp_bank_names(COMPRESSOR) ? 1u : 0u));
+    used = (uint8_t)(seen | 2u | (mw_project_sidechain_used(COMPRESSOR) ? 1u : 0u));
 }
 /* Slot `at` needs its engine: held and used, or on its way out of use (its DISABLE not yet complete, so Sidechain goes
  * off before the key bus does). A slot that never placed one and is not used needs none. */
@@ -544,6 +548,8 @@ static int engine_wanted(unsigned at)
     const struct mw_controller_slot *s = &REGISTRY.slots[at];
     if (!held(s)) return 0;
     if (parked[at]) return s->state != MW_CTL_RETIRING;
+    /* Removed by a trial that can still roll back (#1736): kept only for the rollback, so its room is the trial's. */
+    if (s->state == MW_CTL_RETIRING && modwerk_runtime_restorable(s->binding.generation)) return 0;
     if (roomless[at] && s->state <= MW_CTL_BOUND) return 0;
     return (used & s->binding.identity.feature) || s->touched || s->state > MW_CTL_BOUND;
 }
@@ -655,13 +661,13 @@ static void keybus_tick(void)
 {
     keybus_poll();
     unsigned sidechain = KEYBUS_IMPLIED(engine_features());
-    kb_readers = (uint8_t)keybus_read();
-    kb_wanted = (uint8_t)(sidechain || kb_readers);
+    modwerk_keybus_readers = (uint8_t)keybus_read();
+    kb_wanted = (uint8_t)(sidechain || modwerk_keybus_readers);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
     mw_engines_want(engine_features() | sidechain | (kb_wanted ? KEYBUS : 0u));
     /* The tap's price, on both cores, only while a reader requires the key bus: Sidechain alone is admitted and charged
      * as before the key bus (its tap never was), so without a reader nothing changes for it. */
-    if (kb_readers && !kb_priced && modwerk_dsp_keybus_charge(1)) kb_priced = 1;
+    if (modwerk_keybus_readers && !kb_priced && modwerk_dsp_keybus_charge(1)) kb_priced = 1;
 #endif
     uint8_t busy[2] = {(uint8_t)(transport.held[0] || kb_lane[0].op), (uint8_t)(transport.held[1] || kb_lane[1].op)};
     if (kb_wanted && (mask[0] & mask[1] & KEYBUS) != KEYBUS) {
@@ -701,7 +707,7 @@ static void keybus_tick(void)
  * bus), otherwise once the bus is off and unplaced on both cores. */
 static void keybus_release(void)
 {
-    if (kb_priced && !kb_readers && (KEYBUS_IMPLIED(engine_features()) ||
+    if (kb_priced && !modwerk_keybus_readers && (KEYBUS_IMPLIED(engine_features()) ||
         (!kb_wanted && !((mask[0] | mask[1]) & KEYBUS) && mw_engines[0][3].state == MW_ENGINE_FREE && mw_engines[1][3].state == MW_ENGINE_FREE)))
         (void)modwerk_dsp_keybus_charge(0), kb_priced = 0;
 }
@@ -778,9 +784,12 @@ static void advance(unsigned at)
             if (!engine_shape(&m->dsp, b->identity.feature)) break; /* admitted whole: never, but never placed then */
             const struct runtime_dsp_entry *e = &m->dsp.entries[0];
             struct mw_engine_unit units[2] = {{0}};
+            unsigned aimless = 0; /* an exit with no trampoline to aim at: never for a catalogued chain, never placed */
+            for (unsigned c = 0; c < 2u; ++c) aimless |= (need >> c & 1u) && e->exit && !mw_engine_exit_of(e->site, c);
+            if (aimless) break;
             for (unsigned c = 0; c < 2u; ++c)
-                if (need >> c & 1u) units[c] = (struct mw_engine_unit){m->dsp.engine, m->dsp.engine_relocations, (uint16_t)m->dsp.engine_count,
-                                                                       m->dsp.engine_relocation_count, e->exit, mw_dsp_sites[e->site].exit[c]};
+                if (need >> c & 1u) units[c] =(struct mw_engine_unit){m->dsp.engine, m->dsp.engine_relocations, (uint16_t)m->dsp.engine_count,
+                                                                       m->dsp.engine_relocation_count, e->exit, mw_engine_exit_of(e->site, c)};
             mw_engines_package(b->identity.feature, b->generation, units);
         }
         /* The whole engine or nothing: admission's dry run, now when it is used (a partial claim goes back, collected).

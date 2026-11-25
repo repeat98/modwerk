@@ -64,7 +64,7 @@ MATCH_WINDOW = 64           # a reply is looked for this far ahead: sequence num
 FUNC_TURN_AT = 0x417e32b8   # OS 1.74: 1 while the last turn that moved a value was with FUNC
 IDENT_NUM = ('link', 'armed', 'human', 'human_count', 'posted', 'refused', 'drops', 'received', 'ticks',
              'boot_rsr', 'playing', 'boot')
-IDENT_TEXT = ('label', 'os_build', 'boot_text', 'depack_crc', 'image_crc')
+IDENT_TEXT = ('label', 'os_build', 'boot_text', 'depack_crc', 'image_crc', 'diag')
 NOTE_MS, NOTE_VEL = 100, 100    # a `note` without a length or a velocity
 AUDIO_MAX_MS = 30000
 AUDIO_RATE = 48000
@@ -380,16 +380,25 @@ class Case:
                 self.after_turn()                           # a turn before it has reached the sound
                 self.req(n, 'note', 'on', track, int(vel), gap=int(ms))
                 self.req(n, 'note', 'off', track, 0)
+            elif verb in ('cc', 'nrpn') and args and re.fullmatch(r'ch\d+', args[-1]) \
+                    and not 1 <= int(args[-1][2:]) <= 16:
+                self.fail(n, 'a channel is ch1 to ch16, as: nrpn 1:20 64 ch2')
             elif verb == 'cc':
+                ch = [int(args.pop()[2:])] if args and re.fullmatch(r'ch\d+', args[-1]) else []
+                if len(args) != 2:
+                    self.fail(n, 'cc takes a controller 0 to 119 and a value 0 to 127, as: cc 79 42')
                 number, value = args
                 if not (number.isdigit() and value.isdigit() and int(number) <= 119 and int(value) <= 127):
                     self.fail(n, 'cc takes a controller 0 to 119 and a value 0 to 127, as: cc 79 42')
                 self.after_turn()
-                self.req(n, 'cc', int(number), int(value))
+                self.req(n, 'cc', int(number), int(value), *ch)
                 self.after_input = True
             elif verb == 'nrpn':
                 # As a controller sends it, on the auto channel: NRPN MSB (CC 99), LSB (98), the value
                 # (data entry, CC 6), and its fine part (CC 38) when given.
+                ch = [int(args.pop()[2:])] if args and re.fullmatch(r'ch\d+', args[-1]) else []
+                if not args:
+                    self.fail(n, 'nrpn takes MSB:LSB (0 to 127 each), a value 0 to 127 and a fine part, as: nrpn 1:20 64 0')
                 number, value = args[0], args[1:]
                 m = re.fullmatch(r'(\d+):(\d+)', number)
                 if not m or not 1 <= len(value) <= 2 or not all(v.isdigit() and int(v) <= 127 for v in value) \
@@ -398,7 +407,7 @@ class Case:
                 self.after_turn()
                 for cc, v in [(99, int(m.group(1))), (98, int(m.group(2))), (6, int(value[0]))] + \
                         ([(38, int(value[1]))] if len(value) == 2 else []):
-                    self.req(n, 'cc', cc, v)
+                    self.req(n, 'cc', cc, v, *ch)
                 self.after_input = True
             elif verb == 'midi':
                 # What the Rytm sends on MIDI between two link answers (USB MIDI on both targets).
@@ -494,8 +503,13 @@ class Case:
                              'region': region, 'within': within})
 
     def expect_midi(self, n, a, text):
-        """fb has|lacks nrpn 1:20 [VALUE] | cc 74 [VALUE], or fb.count ==|!=|<|> N."""
+        """fb has|lacks nrpn 1:20 [VALUE] [chN] | cc 74 [VALUE] [chN], or fb.count ==|!=|<|> N."""
         name, _, field = a[0].partition('.')
+        channel = None
+        if len(a) >= 5 and re.fullmatch(r'ch\d+', a[-1]):
+            channel, a = int(a[-1][2:]), a[:-1]             # only on that channel
+            if not 1 <= channel <= 16:
+                self.fail(n, 'a channel is ch1 to ch16, as: expect fb has nrpn 5:0 1 ch2')
         if field == 'count' and len(a) == 3 and a[1] in ('==', '!=', '<', '>') and a[2].isdigit():
             want = ('count', int(a[2]))
         elif not field and len(a) in (4, 5) and a[1] in ('has', 'lacks') and a[2] in ('nrpn', 'cc'):
@@ -509,7 +523,7 @@ class Case:
             value = int(a[4]) if len(a) == 5 else None
             if value is not None and not 0 <= value <= 127 or a[2] == 'cc' and not 0 <= number <= 127:
                 self.fail(n, 'a controller and a value are 0 to 127')
-            want = (a[1], (a[2], number, value))
+            want = (a[1], (a[2], number, value, channel))
         else:
             self.fail(n, 'a MIDI capture is checked as: NAME has|lacks nrpn 1:20 [VALUE], NAME has|lacks cc 74 [VALUE], '
                          'or NAME.count ==|!=|<|> N')
@@ -664,8 +678,9 @@ def check_midi(e, got):
         have = len(got)
         return {'==': have == what, '!=': have != what, '<': have < what, '>': have > what}[e['op']], \
             '%d messages: %s' % (have, seen)
-    kind, number, value = what
-    hit = any(ev[0] == kind and ev[2] == number and (value is None or ev[3] == value) for ev in got)
+    kind, number, value, channel = what
+    hit = any(ev[0] == kind and ev[2] == number and (value is None or ev[3] == value)
+              and (channel is None or ev[1] == channel) for ev in got)
     return hit == (how == 'has'), 'heard: %s' % seen
 
 def decode(kind, ops, got):
@@ -847,8 +862,9 @@ def check_audio(e, caps, refs, record, clean):
 def note_bytes(op, channel):
     """The MIDI message of a `note` or `cc` op on the auto channel: a note's number is the track's place, 0
     for BD; a controller change goes to the active track."""
-    if op.name == 'cc':
-        return bytes([0xb0 | (channel - 1), op.values[0], op.values[1]])
+    if op.name == 'cc':                 # a third value: its own channel (`ch2`), a track that is not active
+        ch = op.values[2] if len(op.values) > 2 else channel
+        return bytes([0xb0 | (ch - 1), op.values[0], op.values[1]])
     on, track, vel = op.values
     return bytes([(0x90 if on == 'on' else 0x80) | (channel - 1), TRACKS.index(track), vel])
 

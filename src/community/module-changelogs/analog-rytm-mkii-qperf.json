@@ -1,5 +1,31 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Make the pattern longer and the quick perf rec repeats over the new steps: 16 to 32 plays your take twice, 16 to 24 plays steps 1 to 8 again.",
+      "Shortening still plays just the start; once a whole loop has played that way, lengthening again repeats it over the hidden steps.",
+      "A QPER knob take runs to the loop's new end when the length changes during it."
+    ]
+  },
+  {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "Takes less of the Rytm's processing time while nothing moves, stopped or playing, leaving more room for other modules.",
+      "Uses about 0.35 KB more of the module memory.",
+      "Nothing else changes from 0.2.1."
+    ]
+  },
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Uses about 1.9 KB less of the module memory, leaving more room for other modules beside it.",
+      "Nothing else changes from 0.2.0."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-05",
     "changes": [

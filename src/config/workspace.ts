@@ -2,7 +2,7 @@ import { DSP_LOADER } from '../engine/protocol'
 import { normalizeRemovedStockFx } from '../catalog/stock-effects'
 import { resolveSelection, withoutRemovedModules } from '../catalog/modules'
 import { compareModuleVersions } from '../catalog/versions'
-import { isDigiDevice, resolveDigiSelection } from '../devices/digi-mods'
+import { isDigiDevice, resolveDigiSelection, withoutRetiredDigiModules } from '../devices/digi-mods'
 import { isZoomSetDevice, resolveZoomSelection } from '../devices/zoom-effects'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from './usb-audio'
 import type { Lock as StorageLock } from '../../vendor/elekloader/kit/src/store.ts'
@@ -15,7 +15,7 @@ function resolveIds(ids: readonly string[], device: string): { id: string; versi
   if (device === DEFAULT_DEVICE) return resolveSelection(withoutRemovedModules(ids))
   if (isZoomSetDevice(device)) return resolveZoomSelection(device, ids)
   if (!isDigiDevice(device)) throw new Error('A saved configuration is for an unknown machine.')
-  return resolveDigiSelection(device, ids)
+  return resolveDigiSelection(device, withoutRetiredDigiModules(device, ids))
 }
 
 function deviceId() {
@@ -31,8 +31,10 @@ export type Configuration = { id: string; name: string; device?: string; moduleI
 export function afterDeleting(configurations: Configuration[], id: string) {
   const deleted = configurations.find(item => item.id === id), device = deleted ? configurationDevice(deleted) : DEFAULT_DEVICE
   const remaining = configurations.filter(item => item.id !== id)
-  const next = remaining.find(item => configurationDevice(item) === device) ?? remaining[0] ?? newConfiguration('My configuration', [], DSP_LOADER, undefined, device)
-  return { remaining: remaining.includes(next) ? remaining : [...remaining, next], next }
+  const existing = remaining.find(item => configurationDevice(item) === device) ?? remaining[0]
+  if (existing) return { remaining, next: existing, created: false }
+  const next = newConfiguration('My configuration', [], DSP_LOADER, undefined, device)
+  return { remaining: [next], next, created: true }
 }
 export function newConfiguration(name: string, moduleIds: string[] = [], keepStockFx2 = DSP_LOADER, moduleVersions?: Record<string,string>, device = DEFAULT_DEVICE, usbAudio?: UsbAudioConfiguration): Configuration {
   const now = new Date().toISOString()

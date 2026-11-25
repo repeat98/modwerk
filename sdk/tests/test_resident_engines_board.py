@@ -27,6 +27,10 @@ COMPRESSOR for Sidechain, a reader's effect for the key bus), park it when a new
 parked or never-used module. Mode 59: an engine is placed on all its cores or none. Mode 61 (owner, 24 October 2026):
 a reader goes in whatever room the Part leaves; the pick that brings its effect pays the key bus's price, or is DSP FULL.
 Mode 64: a core's owned channel closed from outside the engines (MKII, 27 October 2026) refuses at admission.
+Modes 67-68 (#1736): a trial that removes Analog BD frees its engine's room but keeps its slot, so a rollback binds it
+again; 68 is the whole-set trial `device -- set` sends, run in a build with the set backend.
+Modes 69–75 cover saved-Part priority, a fragmented stock effect, a refused move, USB and pattern transitions,
+module ownership, and playback starting during a copy. The light Part readmits Sidechain after the move.
 """
 import importlib.util
 import hashlib
@@ -89,19 +93,22 @@ def unit(tag, feature, n):
     return result
 
 
+CHAIN_EXIT = {'A': 0x1ff9, 'B': 0x1ffa}  # site 5's exit trampoline per core in these made-up blocks (the real ones' places)
+
+
 def bundles():
     out = {}
     for tag in 'AB':
         engines = {f: unit(tag, f, n) for (t, f), n in SIZES.items() if t == tag}
-        out[tag] = dict(onDemand=sum(engines) | resident_dsp.PACKAGED, engines=engines)
+        out[tag] = dict(onDemand=sum(engines) | resident_dsp.PACKAGED, engines=engines, labels={'hcx5': CHAIN_EXIT[tag]})
     return out
 
 
 def ab_relocated(seed, core, base):
-    """Analog BD's package engine at absolute P `base` on a core, its exit pointed at its site's continuation there."""
+    """Analog BD's package engine at absolute P `base` on a core, its exit pointed at its chain's trampoline there."""
     words, relocations, exit = board.ab_engine(seed, AB_SIZES[seed])
     out = resident_dsp.relocate(dict(words=words, relocations=relocations), base)
-    out[exit] = (board.AB_EXITS[core] - (base + exit - 1)) & 0xffffff
+    out[exit] = (CHAIN_EXIT['AB'[core]] - (base + exit - 1)) & 0xffffff
     return out
 
 
@@ -179,6 +186,8 @@ void test_fx(unsigned p, unsigned n)
     dl_codes[0][p] = dl_codes[1][p] = (struct code){fx_words[p], 0, (uint16_t)n, 0, 1, 0};
 }
 /* One Part switch through the actual selection route: prepare, poll to READY, commit, retire. */
+/* The real observer queues a generation and pumps the manager from the UI tick. */
+void test_observe(const uint8_t ids[16]) { begin(ids, ++auto_serial, 1); }
 static uint32_t select_token = 1;
 int test_select(const uint8_t ids[16], void (*pump)(void))
 {
@@ -227,6 +236,7 @@ void test_inject_target(unsigned c, unsigned p, unsigned offset, unsigned n);
 void test_force_table(unsigned c, unsigned e);
 int test_table_matches(unsigned c, unsigned e);
 void test_advance(void);
+void test_observe(const uint8_t ids[16]);
 void test_fx(unsigned p, unsigned n);
 void test_none(void);
 int test_select(const uint8_t ids[16], void (*pump)(void));
@@ -270,6 +280,11 @@ int modwerk_dsp_keybus_charge(int on)
  * (Sidechain) or a reader's effect (every module holds handle 63 here), and the features whose controllers ask for the
  * write lease each frame (Analog BD's renderer, for each track carrying its machine). Everything is used unless a mode
  * says (modes 54-58). */
+volatile uint32_t modwerk_project_loaded;
+int modwerk_fxmap_loading(void) { return 0; }
+static int upload_settled = 1;
+int modwerk_upload_settled(void) { return upload_settled; }
+const uint16_t modwerk_dsp_arena[2] = {MODWERK_DSP_WORDS0 - 64u, MODWERK_DSP_WORDS1 - 64u};
 static uint32_t board_bank = 1;
 static unsigned names_compressor = 1, names_reader = 1, leasing = 0xffu;
 volatile uint8_t modwerk_controller_lease_seen;
@@ -432,6 +447,24 @@ static const uint8_t *removal(uint32_t module)
     for (unsigned k = 0; k < 4; ++k) empty[28 + k] = (uint8_t)(module >> (24 - 8 * k));
     return empty;
 }
+#ifdef MODWERK_RUNTIME_SETS
+#include "journal.h"
+/* An MWMS set of these packages (set_package.h) on the journal's current baseline, as `npm run device -- set` sends. */
+static uint8_t set_buf[65536];
+static unsigned set_of(const uint8_t *const *package, const unsigned *length, unsigned count)
+{
+    memset(set_buf, 0, sizeof set_buf); memcpy(set_buf, "MWMS", 4); set_buf[5] = 1; set_buf[7] = (uint8_t)count;
+    unsigned at = 80;
+    for (unsigned i = 0; i < count; ++i) {
+        assert(at + 4u + length[i] + 3u <= sizeof set_buf);
+        for (unsigned k = 0; k < 4; ++k) set_buf[at + k] = (uint8_t)(length[i] >> (24 - 8 * k));
+        memcpy(set_buf + at + 4, package[i], length[i]); at += 4u + length[i] + (4u - length[i] % 4u) % 4u;
+    }
+    for (unsigned k = 0; k < 4; ++k) set_buf[8 + k] = (uint8_t)(at >> (24 - 8 * k));
+    assert(modwerk_runtime_journal_digest(set_buf + 48));
+    return at;
+}
+#endif
 static const struct mw_controller_slot *slot_for(uint32_t module, unsigned state)
 {
     for (unsigned i = 0; i < MW_CONTROLLER_SLOTS; ++i)
@@ -459,8 +492,8 @@ static const struct mw_engine_unit *unit_for(unsigned c, unsigned f)
 {
     static struct mw_engine_unit ab[2];
     if (f != 4u) return &mw_engine_units[c][K(f)];
-    ab[c] = ab_seed ? (struct mw_engine_unit){ab_engine_words_1, ab_engine_relocations_1, AB_COUNT_1, AB_RELOCATIONS_1, AB_EXIT_1, c ? 0x221u : 0x426u}
-                    : (struct mw_engine_unit){ab_engine_words_0, ab_engine_relocations_0, AB_COUNT_0, AB_RELOCATIONS_0, AB_EXIT_0, c ? 0x221u : 0x426u};
+    ab[c] = ab_seed ? (struct mw_engine_unit){ab_engine_words_1, ab_engine_relocations_1, AB_COUNT_1, AB_RELOCATIONS_1, AB_EXIT_1, c ? 0x1ffau : 0x1ff9u}
+                    : (struct mw_engine_unit){ab_engine_words_0, ab_engine_relocations_0, AB_COUNT_0, AB_RELOCATIONS_0, AB_EXIT_0, c ? 0x1ffau : 0x1ff9u}; /* the chain's trampoline */
     return &ab[c];
 }
 /* Each core's Analog BD reset wrote its package's initial words (the seed's), whole. */
@@ -561,6 +594,99 @@ int main(int argc, char **argv)
     (void)kb;
     test_none(); test_fx(3, 900); test_fx(5, 400); test_fx(6, 400); test_fx(7, 400); test_fx(8, 400); test_fx(9, 300);
     run(2);
+    if (mode >= 70 && mode <= 75) {
+        /* A small incumbent leaves a hole too small for any of the four incoming effects.
+         * Both layouts ask for 1,890 out of 1,936 words. Sidechain initially holds 388. */
+        uint8_t initial[16] = {0}, heavy[16] = {0};
+        unsigned kept = mode == 74 ? 40u : 4u; /* a module can occupy the same span */
+        test_fx(5, 100); test_fx(kept, 210);
+        for (unsigned p = 6; p <= 9; ++p) test_fx(p, 420);
+        initial[4] = 5; initial[5] = (uint8_t)kept;
+        memcpy(test_parts[0], initial, 16);
+        assert(test_select(initial, pump) == 1 && test_live(0, kept) == 100);
+        leasing = 0; assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED); run(400);
+        assert(dsp_mask[0] == 9 && dsp_mask[1] == 9);
+        heavy[4] = 6; heavy[5] = (uint8_t)kept; heavy[6] = 7; heavy[7] = 8; heavy[12] = 9;
+        memcpy(test_parts[0], heavy, 16);
+        ++modwerk_project_loaded;
+        int ready = mw_project_fx_wait(heavy);
+        assert(ready < 0);
+        for (unsigned tick = 0; tick < 600 && ready < 0; ++tick) { run(1); ready = mw_project_fx_wait(heavy); }
+        assert(ready == 1 && test_capacity(0) == top);
+        if (mode == 71) upload_settled = 0; /* an Undo or a publication owns the unit */
+        if (mode == 72) refuse_write[0] = 64u + top - 210u;
+        if (mode == 73) queued = 1;
+        unsigned before = dl_residency_failures, rollbacks = dl_residency_rollbacks;
+        test_observe(heavy);
+        unsigned began_playing = 0;
+        for (unsigned n = 0; n < 3000 && !test_idle(); ++n) {
+            if (mode == 75 && test_target(0, kept) == (int)top - 210)
+                began_playing = 1, transport_running = 1, quiet = 0;
+            run(1);
+        }
+        assert(test_idle());
+        if (mode == 70 || mode == 75) {
+            assert(dl_residency_failures == before && test_live(0, kept) == (int)top - 210);
+            for (unsigned i = 0; i < 16; ++i) assert(test_active(i) == heavy[i]);
+            assert(!dsp_mask[0] && !dsp_mask[1] && began_playing == (mode == 75));
+            transport_running = 0; quiet = 1;
+            assert(mw_project_fx_wait(heavy) == 0);
+            memcpy(test_parts[0], initial, 16);
+            ++modwerk_project_loaded;
+            assert(mw_project_fx_wait(initial) == 0);
+            test_observe(initial);
+            run(1000);
+            assert(test_idle() && dl_residency_failures == before);
+            assert(dsp_mask[0] == 9 && dsp_mask[1] == 9 && test_live(0, kept) < (int)sc);
+            assert(test_active(4) == 5 && test_active(5) == kept);
+        } else {
+            assert(dl_residency_failures > before && test_live(0, kept) == 100);
+            assert(dl_residency_rollbacks == rollbacks + (mode == 72));
+        }
+        assert(frames_checked);
+        return 0;
+    }
+    if (mode == 69) {
+        uint8_t light[16] = {0}, heavy[16] = {0};
+        leasing = 0;
+        assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
+        run(400);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9);
+        unsigned starts = cas_count;
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(light) == 0);
+        run(100);
+        assert(cas_count == starts && !mw_project_sidechain_notice());
+        test_fx(4, 900); test_fx(5, 970);
+        heavy[4] = heavy[6] = 4; heavy[5] = 5; /* the repeated effect costs its code once */
+        memcpy(test_parts[0], heavy, 16);
+        transport_running = 1;
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(heavy) == 0 && mw_project_sidechain_used(24u));
+        transport_running = 0;
+        heavy[0] = 4; heavy[1] = 5; heavy[2] = 6; /* core 1 exceeds even its full arena */
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(heavy) == 0 && mw_project_sidechain_used(24u));
+        heavy[0] = heavy[1] = heavy[2] = 0;
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(heavy) < 0);
+        int ready = -1;
+        for (unsigned tick = 0; tick < 600 && ready < 0; ++tick) {
+            run(1); ready = mw_project_fx_wait(heavy);
+        }
+        assert(ready == 1 && !mw_project_sidechain_notice());
+        assert(test_select(heavy, pump) == 1 && mw_project_fx_wait(heavy) == 0);
+        run(600);
+        assert(test_active(4) == 4 && test_active(5) == 5 && test_active(6) == 4);
+        assert(slot_for(SC, MW_CTL_BOUND) && !dsp_mask[0] && !dsp_mask[1]);
+        assert(mw_project_sidechain_notice() && !mw_project_sidechain_notice());
+        ++modwerk_project_loaded;
+        memcpy(test_parts[0], light, 16);
+        assert(mw_project_fx_wait(light) == 0 && test_select(light, pump) == 1);
+        run(600);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !sc_before_bus);
+        return 0;
+    }
     if (mode == 0) {
         /* Place, switch on, run, switch off, unplace, free. */
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
@@ -1814,6 +1940,66 @@ int main(int argc, char **argv)
         bank_module = 0; ++board_bank;
         run(400);
         assert(slot_for(AB, MW_CTL_RETIRING)); unplaced(0, 4); unplaced(1, 4);
+    } else if (mode == 67) {
+        /* #1736 (a tester's MKII, 18 November 2026): a trial that removes Analog BD and is rolled back left it silent
+         * until a power cycle. The rollback brings back the same owner generation, so the board must still hold its
+         * slot then: it may retire it only once no transaction can restore that image. Kept, the removal releases it. */
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        run(600);
+        const struct mw_controller_slot *was = slot_for(AB, MW_CTL_ACTIVE);
+        assert(was && dsp_mask[0] == 4 && dsp_mask[1] == 4);
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        uint32_t generation = was->binding.generation;
+        leasing = 0; /* the trial's set no longer names it: no track renders it */
+        assert(refused(removal(AB), 32) == RUNTIME_BUSY);
+        run(20);
+        assert(loader->enter(0) && loader->prepare(0, removal(AB), 32) && loader->publish(0) == MU_APPLIED);
+        run(400); /* the trial runs */
+        assert(slot_for(AB, MW_CTL_RETIRING) && !slot_for(AB, MW_CTL_RELEASED));
+        unplaced(0, 4); unplaced(1, 4); /* its room is free for the trial's modules */
+        assert(loader->restore(0) && loader->leave(0)); /* rolled back */
+        leasing = 0xffu;
+        run(600);
+        const struct mw_controller_slot *back = slot_for(AB, MW_CTL_ACTIVE);
+        assert(back && back->binding.generation == generation && dsp_mask[0] == 4 && dsp_mask[1] == 4);
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        /* The same removal kept: released, its engine unplaced. */
+        leasing = 0;
+        assert(refused(removal(AB), 32) == RUNTIME_BUSY);
+        run(20);
+        assert(install(removal(AB), 32) == MU_APPLIED);
+        run(400);
+        assert(slot_for(AB, MW_CTL_RELEASED) && !slot_for(AB, MW_CTL_RETIRING));
+        unplaced(0, 4); unplaced(1, 4);
+#ifdef MODWERK_RUNTIME_SETS
+    } else if (mode == 68) {
+        /* #1736 as the tester ran it: a whole-set trial (`device -- set`) that takes Analog BD out, rolled back. The set
+         * publishes over several calls (BUSY until the board has quiesced it) and restores one row per call. */
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        run(600);
+        const struct mw_controller_slot *was = slot_for(AB, MW_CTL_ACTIVE);
+        assert(was && dsp_mask[0] == 4 && dsp_mask[1] == 4);
+        uint32_t generation = was->binding.generation;
+        const struct mu_backend *sets = &modwerk_runtime_set_backend;
+        leasing = 0;
+        const uint8_t *package[1] = {removal(AB)}; const unsigned length[1] = {32};
+        unsigned n = set_of(package, length, 1);
+        assert(sets->enter(0) && sets->prepare(0, set_buf, n));
+        enum mu_publication p; unsigned tries = 0;
+        while ((p = sets->publish(0)) == MU_PUBLISHING_MORE) { assert(++tries < 400u); run(1); }
+        assert(p == MU_APPLIED);
+        run(400); /* the trial runs */
+        assert(slot_for(AB, MW_CTL_RETIRING) && !slot_for(AB, MW_CTL_RELEASED));
+        unplaced(0, 4); unplaced(1, 4);
+        tries = 0;
+        while (!sets->restore(0)) { assert(++tries < 50u); run(1); } /* rolled back */
+        assert(sets->leave(0));
+        leasing = 0xffu;
+        run(600);
+        const struct mw_controller_slot *back = slot_for(AB, MW_CTL_ACTIVE);
+        assert(back && back->binding.generation == generation && dsp_mask[0] == 4 && dsp_mask[1] == 4);
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+#endif
     } else assert(0);
     return 0;
 }
@@ -1904,8 +2090,9 @@ def generated(work, units):
                                     + MODEL)
 
 
-def build(work):
-    flags = ['-std=c11', '-Wall', '-Wextra', '-Werror', *SANITIZE, '-fno-omit-frame-pointer',
+def build(work, sets=False):
+    """The fixture binary; `sets` builds it with the whole-set backend (build_core.py's --module-sets) for mode 68."""
+    flags = [*(['-DMODWERK_RUNTIME_SETS'] if sets else []), '-std=c11', '-Wall', '-Wextra', '-Werror', *SANITIZE, '-fno-omit-frame-pointer',
              '-DDL_NATIVE_TEST', '-DMW_CONTROLLER_TRANSPORT_TEST', '-DMW_CONTROLLER_BOARD_TEST', '-DMW_ENGINES_TEST',
              '-DMODWERK_RESIDENT_STOCK_HOOKS', '-DMODWERK_RESIDENT_ON_DEMAND', '-DMODWERK_DEV',
              '-DMODWERK_RUNTIME_METADATA_EXTERNAL', '-DMODWERK_FX_IDS=64', '-DMODWERK_DSP_TABLE0=%d' % TABLE,
@@ -1913,9 +2100,9 @@ def build(work):
              '-DMODWERK_DSP_ALLOWANCE0=3120', '-DMODWERK_DSP_ALLOWANCE1=3565', '-DBOARD_ROWS', '-DBOARD_MANAGER',
              '-I' + str(work), '-I' + str(POLICY), '-I' + str(ADAPTER), '-I' + str(RUNTIME), '-I' + str(ELEK),
              '-I' + str(ROOT / 'sdk/runtime/loader'), '-I' + str(ROOT / 'sdk/runtime/upload')]
-    out = work / 'engines-board'
+    out = work / ('engines-board-sets' if sets else 'engines-board')
     # The board alone sees the key window through the fixture's board_buffer_ranges_idle (mode 48).
-    board = work / 'controller_board.o'
+    board = work / ('controller_board-sets.o' if sets else 'controller_board.o')
     built = subprocess.run(['cc', *flags, '-Ddl_hook_buffer_ranges_idle=board_buffer_ranges_idle', '-c',
                             str(POLICY / 'controller_board.c'), '-o', str(board)], capture_output=True, text=True)
     if built.returncode:
@@ -1923,14 +2110,14 @@ def build(work):
     sources = [work / 'fixture.c', board, POLICY / 'controller_transport.c',
                POLICY / 'controller_association.c', ROOT / 'sdk/runtime/loader/loader.c', ROOT / 'sdk/runtime/upload/sha256.c',
                ADAPTER / 'machine_lifetime.c', work / 'manager_unit.c', work / 'allocator.c', work / 'buffers.c',
-               RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_resources.c', RUNTIME / 'resident_engines.c',
-               work / 'resident-engines-data.c']
+               RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_resources.c', RUNTIME / 'resident_engines.c', RUNTIME / 'project_fx.c',
+               work / 'resident-engines-data.c', *([ROOT / 'sdk/runtime/upload/upload.c'] if sets else [])]
     return out, subprocess.run(['cc', *flags, *map(str, sources), '-o', str(out)], capture_output=True, text=True)
 
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 67
+    MODES = 68
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -1938,7 +2125,20 @@ class ResidentEnginesBoard(unittest.TestCase):
             generated(work, bundles())
             binary, result = build(work)
             self.assertEqual(result.returncode, 0, result.stderr)
-            for mode in range(self.MODES):
+            for mode in (*range(self.MODES), *range(69, 76)):
+                with self.subTest(mode=mode):
+                    result = subprocess.run([str(binary), str(mode)], capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_a_rolled_back_removal_binds_again_on_both_backends(self):
+        """#1736: a trial that removes Analog BD, rolled back, leaves it bound, placed and switched on again; built with
+        the whole-set backend, both the single-module trial (67) and the set trial `device -- set` sends (68)."""
+        with tempfile.TemporaryDirectory() as temp:
+            work = Path(temp)
+            generated(work, bundles())
+            binary, result = build(work, sets=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for mode in (67, 68):
                 with self.subTest(mode=mode):
                     result = subprocess.run([str(binary), str(mode)], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)

@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "analog-bd",
-  "moduleVersion": "0.2.0-experimental",
+  "moduleVersion": "0.2.2-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-11T23:30:00Z",
-  "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
-  "build": "Modwerk's linker: the Modwerk base's send-bus variant 3ece243b (repeat98/modwerk#1447, merged) + this folder's BD ANALOG 0.2.0-experimental, materialised against stock OS 1.74, --version BA21",
+  "capturedAt": "2026-11-21T22:00:00Z",
+  "imageSha256": "0504d80a1264526548eb381d14152038754c36e02f067677af136aa53e39d3d7",
+  "build": "Modwerk's linker: the Modwerk base's voices variant dd771eae + this folder's BD ANALOG 0.2.2-experimental, materialised against stock OS 1.74, --version BA23",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -14,25 +14,25 @@
     "settings": "blank card, JIT on",
     "revision": "2ac0f1f"
   },
-  "conditions": "CARD: dtboot ba20.syx --every 999G --card card.img --instr 9G --card-save --press YES@3900M:12M --press NO@6001M:12M --press NO@6503M:12M (formats the card, clears the notices). Then the plans below on that card: the four NO presses clear the calibration notices, FUNC + SRC opens BD's machine list on BD HARD, four DOWN presses reach BD ANALOG, YES chooses it, PUSH_B taps encoder B. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "conditions": "CARD: dtboot ba23.syx --every 999G --card card.img --instr 9G --card-save --press YES@3900M:12M --press NO@6001M:12M --press NO@6503M:12M (formats the card, clears the notices). Then the plans below on that card: the four NO presses clear the calibration notices, FUNC + SRC opens BD's machine list on BD HARD, four DOWN presses reach BD ANALOG, YES chooses it, PUSH_B taps encoder B. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
   "captures": [
     {
       "path": "media/machine-list.png",
       "frame": "step10_DOWN.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=png dtboot ba20.syx --every 999G --card card.img --instr 16500M --press NO@9201M:12M --press NO@10001M:12M --press NO@10801M:12M --press NO@11601M:12M --press FUNC@13201M:300M --press SRC@13301M:12M --press DOWN@13701M:12M --press DOWN@13801M:12M --press DOWN@13901M:12M --press DOWN@14001M:12M --press YES@14601M:12M --press PUSH_B@15601M:12M",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=png dtboot ba23.syx --every 999G --card card.img --instr 16500M --press NO@9201M:12M --press NO@10001M:12M --press NO@10801M:12M --press NO@11601M:12M --press FUNC@13201M:300M --press SRC@13301M:12M --press DOWN@13701M:12M --press DOWN@13801M:12M --press DOWN@13901M:12M --press DOWN@14001M:12M --press YES@14601M:12M --press PUSH_B@15601M:12M",
       "sha256": "bc947ce72c040fd8a030107a6eac048da6df893f8053635ae69062d491e4cb1a"
     },
     {
       "path": "media/synth-808.png",
       "frame": "end",
-      "plan": "DTBOOT_END_PNG=end808.png dtboot ba20.syx --every 999G --card card.img --instr 15500M --press NO@9201M:12M --press NO@10001M:12M --press NO@10801M:12M --press NO@11601M:12M --press FUNC@13201M:300M --press SRC@13301M:12M --press DOWN@13701M:12M --press DOWN@13801M:12M --press DOWN@13901M:12M --press DOWN@14001M:12M --press YES@14601M:12M",
-      "sha256": "ffc8dd5a88091b64bff927060527c34937fc71ec0981dc07a659e3332430ba7a"
+      "plan": "DTBOOT_END_PNG=end808.png dtboot ba23.syx --every 999G --card card.img --instr 15500M --press NO@9201M:12M --press NO@10001M:12M --press NO@10801M:12M --press NO@11601M:12M --press FUNC@13201M:300M --press SRC@13301M:12M --press DOWN@13701M:12M --press DOWN@13801M:12M --press DOWN@13901M:12M --press DOWN@14001M:12M --press YES@14601M:12M",
+      "sha256": "aa3ec3ee6113243d11b7b649d022750d8ea40605dad8524a8d7b57fe49c15afc"
     },
     {
       "path": "media/synth-909.png",
       "frame": "step12_PUSH_B.png",
       "plan": "(the machine-list plan) step 12, after the PUSH_B release",
-      "sha256": "00a46cc4438151b777c4a179edc4402c32fdb9949ba31bafcb85186ef08a0881"
+      "sha256": "6c3616713893321e679ba98667cac0a184b139ec73458b6b26c06985fc84bdfe"
     }
   ]
 }

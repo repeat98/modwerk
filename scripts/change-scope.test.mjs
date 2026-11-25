@@ -20,7 +20,7 @@ describe('documentation and firmware scheduling', () => {
   it.each(['scripts/frontend-mcp.mjs', 'scripts/frontend-mcp-private-host.mjs', 'sdk/tests/test_frontend_mcp_host.py'])('checks actual native Windows MCP refusal for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
-  it.each(['scripts/modules.mjs', 'scripts/machine-modules.mjs', 'scripts/module-qualification.mjs'])('runs the Windows module path check for %s, which modules:check runs', path => {
+  it.each(['scripts/modules.mjs', 'scripts/module-cpu-price.mjs', 'scripts/machine-modules.mjs', 'scripts/module-qualification.mjs'])('runs the Windows module path check for %s, which modules:check runs', path => {
     expect(scope(change(path))).toMatchObject({ windows: true })
   })
   it.each(['scripts/prepare-runtime-spans.py', 'scripts/runtime_private_paths.py', 'sdk/tests/test_runtime_spans.py'])('runs native Windows privacy checks for %s without firmware compilation', path => {
@@ -148,6 +148,12 @@ describe('documentation and firmware scheduling', () => {
       const base = git('rev-parse', 'HEAD')
       writeFileSync(resolve(root, 'README.md'), 'Better'); git('add', '.'); git('commit', '-m', 'docs')
       expect(readChangeScope({ root, base, head: 'HEAD' }).documentation).toBe(true)
+      const zoom = 'sdk/zoom/modules/demo/modwerk.module.json'
+      mkdirSync(dirname(resolve(root, zoom)), { recursive: true })
+      writeFileSync(resolve(root, zoom), JSON.stringify({ ...digi, machine: 'zoom-ms-70cdr' }))
+      git('add', zoom); git('commit', '-m', 'Zoom release')
+      expect(readChangeScope({ root, base, head: 'HEAD' })).toMatchObject({ worker: true, modules: false, elemod: false })
+      expect(readChangeScope({ root, base: 'HEAD', head: base }).worker).toBe(true)
       mkdirSync(resolve(root, 'sdk/digitakt/modules/demo/src'), { recursive: true })
       writeFileSync(resolve(root, 'sdk/digitakt/modules/demo/src/demo.c'), 'void demo(void) {}')
       expect(readChangeScope({ root, base }).elemod).toBe(true)
@@ -164,16 +170,19 @@ describe('documentation and firmware scheduling', () => {
 
 describe('SDK suite reach', () => {
   it.each(['src/components/ModuleCard.tsx', 'src/community/Forum.tsx', 'src/hooks/useSheetFocus.ts', 'src/App.tsx', 'src/styles.css',
-    'src/routing.test.ts', 'server/community/routes.ts', 'worker.ts', 'changelog/2026-10-26-forum.md', 'docs/APP_DEVELOPMENT.md'])('skips the SDK suite locally for %s', path => {
+    'src/devices/MachinePages.tsx', 'src/devices/library-parity.test.ts', 'src/routing.test.ts', 'server/community/routes.ts', 'worker.ts',
+    'changelog/2026-10-26-forum.md', 'docs/APP_DEVELOPMENT.md'])('skips the SDK suite for %s', path => {
     expect(reachesSdkSuite(path)).toBe(false)
   })
   it.each(['sdk/tests/test_base_bound.py', 'src/engine/rom-package.ts', 'src/catalog/modules.ts', 'src/config/usb-audio.ts',
     'src/community/module-changelogs.json', 'src/community/module-release-notes.ts', 'src/routing.ts', 'scripts/module-pairs.py',
-    'public/octatrack-modules/euclid/0.1.4-experimental.mwrm', 'docs/media/startup/verification.json', 'package-lock.json'])('runs the SDK suite for %s', path => {
+    'public/octatrack-modules/euclid/0.1.4-experimental.mwrm', 'docs/media/startup/verification.json', 'package-lock.json',
+    'src/devices/machines.generated.json', 'src/devices/machine-contract.ts'])('runs the SDK suite for %s', path => {
     expect(reachesSdkSuite(path)).toBe(true)
   })
   it('runs it for every site path the suite itself names', () => {
-    const files = execFileSync('git', ['ls-files', '-z', '--', 'sdk', 'scripts/*.py', 'scripts/octatrack-module-page.mjs', 'scripts/sdk-imports.mjs'], { cwd: repository, encoding: 'utf8' })
+    const files = execFileSync('git', ['ls-files', '-z', '--', 'sdk', 'scripts/*.py', 'scripts/octatrack-module-page.mjs', 'scripts/sdk-imports.mjs',
+      'scripts/sdk-check.mjs', 'scripts/module-tests.mjs', 'scripts/machine-folders.mjs'], { cwd: repository, encoding: 'utf8' })
       .split('\0').filter(path => /\.(py|sh|mjs|cpp|c|h)$/.test(path))
     const named = files.flatMap(path => [...readFileSync(resolve(repository, path), 'utf8').matchAll(/(?<![\w./-])(?:src|server|changelog)\/[\w./-]+|(?<![\w./-])worker\.ts\b/g)].map(match => match[0]))
     expect(named.length).toBeGreaterThan(0)
@@ -190,8 +199,12 @@ describe('SDK suite reach', () => {
       expect(readChangeScope({ root, base }).sdk).toBe(true)
       writeFileSync(resolve(root, 'src/components/Card.tsx'), 'new')
       expect(readChangeScope({ root, base }).sdk).toBe(false)
+      git('add', '.'); git('commit', '-m', 'UI')
+      expect(readChangeScope({ root, base, head: 'HEAD' }).sdk).toBe(false)
       writeFileSync(resolve(root, 'sdk/tests/test_new.py'), 'untracked')
       expect(readChangeScope({ root, base }).sdk).toBe(true)
+      git('add', '.'); git('commit', '-m', 'SDK')
+      expect(readChangeScope({ root, base, head: 'HEAD' }).sdk).toBe(true)
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
 })
@@ -222,6 +235,26 @@ describe('module version rule', () => {
 })
 
 describe('release export reproduction', () => {
+  it('schedules the compiler for the internal imports of its builder and release verifier', () => {
+    const files = new Set(), pending = ['scripts/build-elemod-packages.mjs', 'scripts/verify-elemod-release-exports.mjs']
+    while (pending.length) {
+      const path = pending.pop()
+      if (files.has(path)) continue
+      files.add(path)
+      const source = readFileSync(resolve(repository, path), 'utf8')
+      for (const [, spec] of source.matchAll(/^(?:import|export)\s+(?!type\b)[^'";]*?from\s*['"](\.[^'"]+)['"]/gm)) {
+        pending.push(relative(repository, resolve(repository, dirname(path), spec)).replaceAll('\\', '/'))
+      }
+    }
+    expect(files.has('scripts/elemod-compiler-flags.mjs')).toBe(true)
+    expect([...files].filter(path => !scope(change(path)).elemod)).toEqual([])
+  })
+  it.each(['sdk/machines/octatrack/base-binding.json', 'sdk/machines/octatrack/module-adapters/base_bound.py',
+    'public/octatrack-modules/cc-map/test.mwrm', 'sdk/tests/test_base_bound.py', 'vendor/elekloader/kit/kit.json'])(
+    'runs the pinned Octatrack rebuild for %s', path => expect(scope(change(path)).modules).toBe(true))
+  it('reproduces a changed committed Elemod export', () => {
+    expect(scope(change('sdk/imports/packages/demo/demo-1.0.0-os1.54.elemod')).elemod).toBe(true)
+  })
   it.each(['scripts/package-elemod-recipe.mjs', 'scripts/verify-elemod-release-exports.mjs'])('recompiles the elemod sources for %s', path =>
     expect(scope(change(path)).elemod).toBe(true))
 })

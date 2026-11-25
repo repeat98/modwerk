@@ -34,7 +34,7 @@ public/module-media/
 # SDK toolchains and local firmware-containing native output.
 **/__pycache__/
 *.pyc
-sdk/octabam/vendor/
+sdk/octabam/vendor
 sdk/octabam/out/
 
 # Local agent state and internal session notes stay off the public repository.
@@ -45,6 +45,7 @@ sdk/octabam/out/
 !.agents/skills/
 .claude/*
 !.claude/skills/
+!.claude/settings.json
 AGENTS.local.md
 GEMINI.md
 /GOAL.md
@@ -60,3 +61,4 @@ docs/HANDOFF-*.md
 src/catalog/machine-modules.json
 src/community/module-changelogs.json
 vendor/elekloader/catalog/catalog.json
+desktop/dist/

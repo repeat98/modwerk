@@ -15,7 +15,7 @@ import { hasBetaAccess } from '../community/beta-access'
 import { catalogNeighbors, type CatalogBrowse } from '../catalog/catalog-browse'
 import { CatalogNavigation } from './CatalogNavigation'
 import { ModuleAuthors } from './ModuleAuthors'
-import type { ModuleContributor } from '../catalog/module-authors'
+import { DISPLAY_AUTHORS, type ModuleContributor } from '../catalog/module-authors'
 import { refusesAdd, type AddBlock } from '../catalog/add-blocks'
 import { AddBlockChip, AddBlockPrompt } from './AddBlockPrompt'
 import { useAddBlockPrompt } from './use-add-block-prompt'
@@ -56,6 +56,18 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   const issues = useModuleIssues(id)
   const workingCount = useModuleWorksReports(id)
   const [discussionCount, setDiscussionCount] = useState<number | null>(null)
+  const backRef = useRef<HTMLAnchorElement>(null)
+  // Esc goes back, like the back link, unless it is already doing something else (typing, a dialog, a menu).
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest("input, textarea, select, [contenteditable]") || document.querySelector("dialog[open], [role=dialog], [aria-modal=true]")) return
+      backRef.current?.click()
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [])
   useEffect(() => { const navigate = () => setTab(linkedTab()); window.addEventListener('hashchange', navigate); return () => window.removeEventListener('hashchange', navigate) }, [])
   function showConfiguration() {
     setTab('Overview')
@@ -73,7 +85,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   return <div className={'detail-page' + (navigation && navigation.total > 1 ? ' has-catalog-navigation' : '')}>
     {navigation && navigation.total > 1 && <CatalogNavigation navigation={navigation} />}
     {!modal && <div className="module-page-actions">
-      <div className="module-browse-context"><a className="back-link" href={navigation?.backHref ?? backHref} onClick={navigation ? onBackToResults : undefined}><Icon name="back" size={15} />{navigation ? 'Back to results' : backLabel}</a>{navigation && <span className="catalog-position" aria-label={'Module ' + navigation.position + ' of ' + navigation.total + ' results'}>{navigation.position} of {navigation.total}</span>}</div>
+      <div className="module-browse-context"><a ref={backRef} className="back-link" href={navigation?.backHref ?? backHref} onClick={navigation ? onBackToResults : undefined}><Icon name="back" size={15} />{navigation ? 'Back to results' : backLabel}</a>{navigation && <span className="catalog-position" aria-label={'Module ' + navigation.position + ' of ' + navigation.total + ' results'}>{navigation.position} of {navigation.total}</span>}</div>
       <div className="module-page-buttons"><ShareModuleButton id={id} title={title} /></div>
     </div>}
     <section className="detail-hero detail-hero-with-resources" aria-labelledby="module-title">
@@ -81,7 +93,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
       <div className="detail-intro">
         <div className="detail-tags"><span className="pill">{family}</span><span className="subtle">{detail}</span></div>
         <div className="detail-title"><h1 id="module-title">{title}</h1>{titleBadge && <span className="module-compatibility-badge">{titleBadge}</span>}</div>
-        <div className="module-creator"><ModuleAuthors name={author} url={authorUrl} contributors={contributors} by arrows><CreatorSupport key={id} id={id}/></ModuleAuthors></div>
+        <div className="module-creator"><ModuleAuthors name={author} url={authorUrl} contributors={contributors} by arrows>{!DISPLAY_AUTHORS[id] && <CreatorSupport key={id} id={id}/>}</ModuleAuthors></div>
         <p className="detail-description">{description}</p>
         {notice && <div className="detail-notice">{notice}</div>}
         <div className="module-add-region">

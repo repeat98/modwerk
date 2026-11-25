@@ -5,6 +5,8 @@
  * it. SYNTHETIC: no card, file system, loader or module code is established here. */
 #include "sha256.c"
 #include "modset.c"
+uint32_t modwerk_runtime_free(uint32_t *largest) { if (largest) *largest = RUNTIME_POOL_BYTES; return RUNTIME_POOL_BYTES; }
+enum runtime_check modwerk_runtime_refused_check(void) { return RUNTIME_CHECK_NONE; }
 #include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +16,7 @@ static unsigned failures;
 const uint8_t modwerk_base_digest[32] = {4, 5, 6};
 uint8_t modwerk_test_card_io[512];
 void modwerk_diag_set(void) {}
-void modwerk_diag_refused(uint32_t module, uint32_t refusal) { (void)module; (void)refusal; }
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check) { (void)module; (void)refusal; (void)used; (void)largest; (void)check; }
 enum runtime_refusal modwerk_runtime_refusal(void) { return RUNTIME_BUSY; }
 void modwerk_runtime_refused(enum runtime_refusal why) { (void)why; }
 
@@ -25,9 +27,10 @@ static jmp_buf power;
 int olog_stock_open(struct file_object *f, const char *path, const char *mode, void *io, unsigned n)
 {
     (void)io, (void)n;
-    f->word[0] = path[8] == '1', f->word[1] = 0, f->word[2] = mode[0] == 'w';
+    f->word[0] = path[8] == '1', f->word[1] = 0, f->word[2] = mode[0] == 'w', f->word[4] = 0;
     return f->word[2] || card_length[f->word[0]] ? 0 : -1; /* a write keeps what the file held: in place */
 }
+int modwerk_test_card_size(struct file_object *f) { return (int)card_length[f->word[0]]; }
 int olog_stock_read(struct file_object *f, void *out, unsigned n)
 {
     if (f->word[1] + n > card_length[f->word[0]]) return 0;
@@ -40,9 +43,15 @@ int olog_stock_write(struct file_object *f, const void *data, unsigned n)
     if (f->word[1] + n > sizeof card[0]) return 0;
     memcpy(card[f->word[0]] + f->word[1], data, n), f->word[1] += n;
     if (f->word[1] > card_length[f->word[0]]) card_length[f->word[0]] = f->word[1];
+    if (f->word[1] > f->word[4]) f->word[4] = f->word[1];
     return 1;
 }
-int olog_stock_close(struct file_object *f) { (void)f; return 0; }
+/* As stock's: the length from word 4. A shorter one would leave the file's chain ending in freed clusters (#1830). */
+int olog_stock_close(struct file_object *f)
+{
+    if (f->word[2]) { CHECK(f->word[4] >= card_length[f->word[0]]); card_length[f->word[0]] = f->word[4]; }
+    return 0;
+}
 
 /* The loader: which modules run. */
 static uint32_t running[8], offered;

@@ -5,6 +5,7 @@ import { useSheetFocus } from '../hooks/useSheetFocus'
 import { Icon } from './Icon'
 import type { IconName } from './Icon'
 import { SupportButton } from './SupportDialog'
+import { isAdminRoute } from '../community/admin-navigation'
 import { useSetWords } from '../community/beta-ui'
 
 type MenuLink = { href: string; label: string; icon: IconName; current: boolean; count?: number; online?: number | null; tag?: string; isNew?: boolean }
@@ -42,7 +43,7 @@ export function MobileMenu({ route, online, selectedCount, configurationHref, ad
       { href: '#account', label: 'Account / sign in', icon: 'shield', current: route.startsWith('account') },
       ...(developer ? [{ href: '#developer', label: 'Creator settings', icon: 'sliders' as const, current: route.startsWith('developer') }] : []),
       ...(highlightDevelop ? [] : [develop]),
-      ...(admin ? [{ href: '#admin', label: 'Admin workspace', icon: 'shield' as const, current: route === 'admin' || route === 'review' }] : []),
+      ...(admin ? [{ href: '#admin', label: 'Admin workspace', icon: 'shield' as const, current: isAdminRoute(route) }] : []),
     ],
     [
       { href: '#base', label: 'Base firmware', icon: 'shield', current: route === 'base', isNew: true },
@@ -59,7 +60,7 @@ export function MobileMenu({ route, online, selectedCount, configurationHref, ad
         <div className="mobile-menu-scrim" aria-hidden="true" onClick={() => setOpen(false)} />
         <div ref={panelRef} id="mobile-menu-panel" className="mobile-menu-panel" role="dialog" aria-modal="true" aria-label="Menu" tabIndex={-1}>
           <div className="sheet-head"><span className="sheet-handle" aria-hidden="true" /><strong>Menu</strong><button type="button" className="sheet-close" aria-label="Close menu" onClick={() => { setOpen(false); buttonRef.current?.focus() }}><Icon name="close" size={18} /></button></div>
-          {groups.map((links, index) => <div key={index} className="mobile-menu-group">{links.map(link => <a key={link.href} href={link.href} className={link.tag ? 'is-highlight' : undefined} aria-current={link.current ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={link.icon} size={18} /><span>{link.label}</span>{link.tag && <small>{link.tag}</small>}{link.isNew && <small className="menu-feature-new">New</small>}{link.count !== undefined && <small>{link.count}</small>}{link.online ? <small className="menu-online"><span className="online-dot" aria-hidden="true"/>{link.online} online</small> : null}</a>)}{index === 0 && onConfigurations && <button type="button" onClick={() => { setOpen(false); buttonRef.current?.focus(); onConfigurations() }}><Icon name="file" size={18} /><span>{'Saved ' + w.sets}</span></button>}</div>)}
+          {groups.map((links, index) => <div key={index} className="mobile-menu-group">{links.map(link => <a key={link.href} href={link.href} className={link.tag ? 'is-highlight' : undefined} aria-current={link.current ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={link.icon} size={18} /><span>{link.label}</span>{link.tag && <small>{link.tag}</small>}{link.isNew && <small className="menu-feature-new">New</small>}{link.count !== undefined && <small>{link.count}</small>}{link.online != null ? <small className="menu-online"><span className="online-dot" aria-hidden="true"/>{link.online} online</small> : null}</a>)}{index === 0 && onConfigurations && <button type="button" onClick={() => { setOpen(false); buttonRef.current?.focus(); onConfigurations() }}><Icon name="file" size={18} /><span>{'Saved ' + w.sets}</span></button>}</div>)}
 
           {onSupport && <div className="mobile-menu-support"><SupportButton onClick={() => { setOpen(false); buttonRef.current?.focus(); onSupport() }} /></div>}
         </div>

@@ -2,16 +2,15 @@
 // The builder for USB module sets: what loading a set onto an Octatrack with the Modwerk base sends. Modules the site
 // publishes as runtime packages (public/octatrack-modules, made from source by `npm run octatrack:module-packages`)
 // are installed from them; anything the set leaves out is removed with an empty package naming its module.
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedBinding as baseBinding, publishedPackages as manifest } from './octatrack-publication.ts'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import dspSites from '../../../sdk/machines/octatrack/dsp-sites.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { MODULES } from '../../catalog/modules.ts'
 import { inventoryChanges, type Inventory, type InventoryTarget } from '../../config/inventory.ts'
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
-import { USB_AUDIO_MODULE } from '../../config/usb-audio.ts'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, isConfigurable, usbAudioInstallPreset, usbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio.ts'
 import { baseLayout, isPublishedBase, layoutIdentity, layoutName, MEMBER_LAYOUT, type BaseLayout } from './base-variants.ts'
 import { cardSetGeneration, encodeCardSet } from './card-set.ts'
 import { SET_MAX_ABI } from './set-package.ts'
@@ -21,13 +20,16 @@ import { overLimitMessage } from '../../catalog/set-limit.ts'
 export class ModuleSetError extends Error {}
 export interface RuntimePackage {
   bytes: number; sha256: string; path: string; name?: string
-  abi?: number; features?: number; sites?: number; copies?: number; fills?: number
+  abi?: number; features?: number; sites?: number; copies?: number; fills?: number; installPresets?: boolean
   /** ABI 9: the base DSP features the package's DSP code needs (BASE_DSP_FEATURES) and its count of DSP claims. */
   requires?: number; claims?: number
   /** ABI 10: its hook entries, which only an engine for the base's hook sites has (a base-bound controller's). */
   entries?: number
   /** Exact IDENTIFY digest when authored code depends on this base's addresses. */
   requiredBase?: string
+  /** Loader capability bits (MWCP) the package needs beyond what its records imply, such as RuntimeFeature.uiRoots for a
+   * module with a window of its own: only a base that refuses to retire it while the window is open may take it. */
+  requiresCapabilities?: number
 }
 export interface MachineVariant extends RuntimePackage {
   layout: number; current: boolean; members: { id: string; version: string }[]
@@ -35,7 +37,16 @@ export interface MachineVariant extends RuntimePackage {
 export interface RuntimePackageManifest {
   packages: (RuntimePackage & { id: string; name: string; octabam?: boolean })[]
   groups?: { id: string; name: string; variants: MachineVariant[] }[]
+  /** USB Audio as a module (docs/OCTATRACK_USB_AUDIO_MODULE.md): the configurable package and any older layouts needed for Undo,
+   * each with the layout's number (usbAudioLayoutNumber) in its header, as the unit's inventory reports it. While no
+   * layout is listed, USB Audio comes with the base in its layout (base-variants.ts), as before. */
+  usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
+/** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
+const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
+const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
+for (const kind of ['configurable', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
@@ -60,10 +71,8 @@ export class SetLimitError extends ModuleSetError {}
 export const CURRENT_BASE: string = baseBinding.identity
 export const baseOutdated = (base?: string) => !!base && !isPublishedBase(base)
 /** The USB Audio layout a set asks of the base; undefined when it leaves USB Audio out (any layout's base takes it). */
-export const setLayout = (target: InventoryTarget): BaseLayout | undefined =>
-  target.moduleIds.includes(USB_AUDIO_MODULE) ? target.usbAudio?.layout ?? 'tracks-main-cue' : undefined
-/** The set without USB Audio: what the runtime packages must make the unit match. */
-const packagedTarget = (target: InventoryTarget): InventoryTarget => ({ ...target, moduleIds: target.moduleIds.filter(id => id !== USB_AUDIO_MODULE) })
+export const setLayout = (target: InventoryTarget, packaged = USB_AUDIO_PACKAGED): BaseLayout | undefined =>
+  !packaged && target.moduleIds.includes(USB_AUDIO_MODULE) ? target.usbAudio?.layout ?? 'tracks-main-cue' : undefined
 
 /** A module's runtime id (sdk/runtime/loader/build.py module_id): the first four bytes of the SHA-256 of its catalogue
  * id, hex. The inventory names a module the catalogue does not know by this id. */
@@ -116,12 +125,17 @@ export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identit
 /** loader.h RUNTIME_DSP_CLAIMS: the X/Y spans one package may claim outside its own slot; RUNTIME_DSP_HOOK_ENTRIES, an
  * engine's entries; RUNTIME_DSP_INIT_WORDS, its claims' initial words. */
 const DSP_CLAIMS = 16, HOOK_ENTRIES = 8, INIT_WORDS = 4096
+/** The base's module pool (build_core.py RUNTIME_POOL_BYTES), and the loader's records in it on the ColdFire: loader.h's
+ * runtime_module, runtime_site, runtime_dsp_claim and runtime_dsp_entry, as the unit's pool readings confirm
+ * (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
+export const OCTATRACK_POOL_BYTES = 768 * 1024
+const MODULE_RECORD = 736, SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
-      !bounded(entry.features ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
+      !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
       !bounded(requires, 65535) || !bounded(claims, DSP_CLAIMS) || (abi < 9 && (requires || claims)) || (requires & ~BASE_DSP_FEATURES) ||
       !bounded(entries, HOOK_ENTRIES) || (entries && (abi < 10 || entry.requiredBase === undefined)) ||
       (group && abi !== 8) || (entry.requiredBase !== undefined && (typeof entry.requiredBase !== 'string' || !/^[0-9a-f]{64}$/.test(entry.requiredBase))) ||
@@ -130,7 +144,7 @@ function requirements(entry: RuntimePackage, group = false) {
     throw invalidPackage()
   // Required features follow the actual record types even if a manifest accidentally omits a bit.
   const features = (entry.features ?? 0) | (sites ? RuntimeFeature.sites : 0) | (copies ? RuntimeFeature.stockCopies : 0) |
-    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0)
+    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0) | (entry.requiresCapabilities ?? 0)
   return { abi, sites, copies, fills, features, requires, claims, entries }
 }
 /** Two ABI 9 claims meet as the loader says (loader.c claims_meet): the same core (an ABI 10 claim on both cores, core 2,
@@ -140,7 +154,7 @@ type DspClaim = { space: number; core: number; address: number; words: number }
 const claimsMeet = (a: DspClaim, b: DspClaim) => (a.address >= 0x30000 && b.address >= 0x30000 ||
   (a.core === b.core || a.core === 2 || b.core === 2) && a.space === b.space) && a.address < b.address + b.words && b.address < a.address + a.words
 /** The manifest and fetched header must agree before anything is staged, including retained Undo packages. */
-function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, variant?: MachineVariant) {
+function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, variant?: MachineVariant, layout?: number) {
   const fail = () => { throw invalidPackage() }, want = requirements(entry, !!variant)
   if (data.length !== entry.bytes || sha(data) !== entry.sha256 || data.length < 68) fail()
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength), abi = view.getUint16(4)
@@ -155,7 +169,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
   // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
-  if (flags & ~(abi >= 8 ? 7 : 3) || image + bss > 131072 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
+  if (flags & ~(abi >= 8 ? 7 : 3) || image > 131072 || image + bss > 294912 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
       view.getUint32(32) > 4096 || view.getUint16(36) > 256 || header + 4 * hooks + image + 4 * relocations > data.length) fail()
   if (variant) {
     const mask = variant.members.reduce((value, member) => value | MACHINE_BITS[member.id], 0), start = header + 4 * hooks
@@ -163,6 +177,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
         view.getUint32(start) !== 0x4d574d47 || data[start + 4] !== 1 || data[start + 5] !== mask ||
         data.subarray(start + 6, start + 16).some(byte => byte !== 0)) fail()
   } else if (flags & 4) fail() // a group cannot masquerade as one ordinary module
+  if (layout !== undefined && view.getUint16(66) !== layout) fail() // a USB Audio package names its layout
   const imageStart = header + 4 * hooks, imageRelocations: number[] = [], changedSpans: [number, number][] = []
   const overlaps = (start: number, size: number, spans: [number, number][]) => spans.some(([at, length]) => start < at + length && at < start + size)
   let subscribed = false
@@ -188,7 +203,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   const sites: [number, number][] = []
   for (let i = 0; i < want.sites; i++) {
     if (end + 8 > data.length) fail()
-    const address = view.getUint32(end), bytes = abi >= 7 ? view.getUint8(end + 4) : view.getUint16(end + 4)
+    const address = view.getUint32(end), bytes = abi >= 7 ? view.getUint8(end + 4) & 0x7f : view.getUint16(end + 4) // bit 7: the site rests with its module (loader.h RUNTIME_SITE_RESTS)
     const keep = abi >= 7 ? view.getUint8(end + 5) : 0, checked = abi >= 7 ? view.getUint8(end + 6) : bytes
     const local = abi >= 7 ? view.getUint8(end + 7) : view.getUint16(end + 6), held = abi >= 7 ? 32 : bytes
     const length = 8 + held + bytes + 2 * local
@@ -259,7 +274,13 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
     if (at >= dspWords || at <= previous || (!fixed && view.getUint32(end + 4 * at) >= dspWords) || exits.includes(at)) fail()
     previous = at
   }
+  // What the loader takes from the pool for it (loader.c prepare: head + code + tail, each in whole 16-byte lines).
+  const lines = (n: number) => Math.ceil(n / 16) * 16
+  return lines(MODULE_RECORD + SITE_RECORD * want.sites) + lines(image + bss) +
+    lines(((4 * dspWords + 2 * dspRelocations + 3) & ~3) + CLAIM_RECORD * want.claims + ENTRY_RECORD * want.entries + 4 * initWords)
 }
+/** The bytes of the base's module pool a published package takes once installed. */
+export const poolExtent = (entry: RuntimePackage & { id: string }, data: Uint8Array) => checkPackage(entry, data, entry.id)
 
 /** Expand known machine groups for display, while planning replacements from their exact inventory layouts. */
 export function createRuntimeCatalogue(document: RuntimePackageManifest) {
@@ -284,9 +305,16 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       layouts.add(variant.layout); if (variant.current) current.add(key)
     }
   }
-  // USB Audio comes with the base once the base is published in its layouts (base-variants.ts), not as a package.
+  // USB Audio: a package for each layout the manifest lists, or else with the base, in its layouts (base-variants.ts).
+  const audio = document.usbAudio ?? {}, audioLayouts = Object.keys(audio) as UsbAudioPackageKind[], audioPackages = audioLayouts.length > 0
+  if (audioLayouts.some(layout => !isConfigurable(layout) && !USB_AUDIO_LAYOUTS.some(item => item.id === layout)) || published.has(USB_AUDIO_MODULE)) throw invalidPackage()
+  for (const layout of audioLayouts) requirements(audio[layout]!)
+  const audioEntry = new Map<RuntimePackage, number>(audioLayouts.map(layout => [audio[layout]!, usbAudioLayoutNumber(layout)]))
+  /** What the runtime packages must make the unit match: the set, without USB Audio while the base provides it. */
+  const packagedTarget = (target: InventoryTarget): InventoryTarget =>
+    audioPackages ? target : { ...target, moduleIds: target.moduleIds.filter(id => id !== USB_AUDIO_MODULE) }
   const ids = [...new Set([...published.keys(), ...groups.flatMap(group => group.variants.filter(variant => variant.current).flatMap(variant => variant.members.map(member => member.id))),
-    ...(Object.keys((baseBinding as { variants?: object }).variants ?? {}).length > 1 ? [USB_AUDIO_MODULE] : [])])]
+    ...(audioPackages || Object.keys((baseBinding as { variants?: object }).variants ?? {}).length > 1 ? [USB_AUDIO_MODULE] : [])])]
   const name = (id: string) => published.get(id)?.name ?? MODULES.find(module => module.id === id)?.name ?? id
   type Step = { id: string; name: string; add?: RuntimePackage; undo?: RuntimePackage; group?: boolean }
   function plan(target: InventoryTarget, current: Inventory) {
@@ -324,12 +352,38 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     for (const id of current.moduleIds) if (members.has(id) && !inGroup(id) && target.moduleIds.includes(id)) removals.push(id)
     if (removals.some(id => members.has(id)))
       throw new ModuleSetError('This site can’t identify the exact individual machine package on your Octatrack, so it can’t safely replace it or undo that change.')
-    const added = changes.add.filter(id => !members.has(id))
+    // Once published, every set installs the same configurable package. Legacy variants supply exact Undo data.
+    const audioSteps: Step[] = []
+    if (audioPackages) {
+      const wanted: UsbAudioPackageKind | undefined = target.moduleIds.includes(USB_AUDIO_MODULE)
+        ? audio.configurable ? 'configurable' : target.usbAudio?.layout ?? 'tracks-main-cue'
+        : undefined
+      const installed = current.moduleIds.includes(USB_AUDIO_MODULE) || current.offIds?.includes(USB_AUDIO_MODULE)
+      const entry = (layout: UsbAudioPackageKind | undefined) => layout && audio[layout]
+      if (installed && !entry(current.usbAudioLayout) && !(wanted && wanted === current.usbAudioLayout))
+        throw new ModuleSetError('This site doesn’t have the USB Audio package currently on your Octatrack, so it can’t safely replace it or undo that change.')
+      if (wanted && wanted !== 'configurable' && !entry(wanted)) throw new ModuleSetError(`${layoutName(wanted)} isn’t published as a module package yet. Choose another USB Audio setup.`)
+      const switchedOff = installed && !current.moduleIds.includes(USB_AUDIO_MODULE)
+      const changePreset = wanted === 'configurable' && current.usbAudioLayout === wanted && !!audio.configurable?.installPresets &&
+        Object.hasOwn(target, 'usbAudio') && current.usbAudioInstallPreset !== usbAudioInstallPreset(target.usbAudio)
+      if (isConfigurable(current.usbAudioLayout) && entry(current.usbAudioLayout)?.installPresets &&
+          current.usbAudioInstallPreset === undefined && !switchedOff && (!wanted || changePreset))
+        throw new ModuleSetError('Reconnect the Octatrack to read the USB Audio routing before changing its installation.')
+      if (wanted && installed && (wanted !== current.usbAudioLayout || changePreset) && !switchedOff) updates.push(USB_AUDIO_MODULE)
+      if (wanted !== current.usbAudioLayout || !installed || changePreset) {
+        if (wanted && (!installed || !switchedOff)) audioSteps.push({ id: USB_AUDIO_MODULE, name: name(USB_AUDIO_MODULE), add: entry(wanted), undo: installed ? entry(current.usbAudioLayout) : undefined })
+        else if (!wanted && installed) audioSteps.push({ id: USB_AUDIO_MODULE, name: name(USB_AUDIO_MODULE), undo: entry(current.usbAudioLayout) })
+      }
+    }
+    const audioOut = (id: string) => !audioPackages || id !== USB_AUDIO_MODULE
+    const added = changes.add.filter(id => !members.has(id) && audioOut(id))
     return { updates, steps: [
-      ...[...new Set(removals)].map(id => ({ id, name: name(id), undo: published.get(id) })),
+      ...[...new Set(removals)].filter(audioOut).map(id => ({ id, name: name(id), undo: published.get(id) })),
+      ...audioSteps.filter(step => !step.add),
       ...steps.filter(step => !step.add),
       ...steps.filter(step => step.add),
       ...added.map(id => ({ id, name: name(id), add: published.get(id) })),
+      ...audioSteps.filter(step => step.add),
     ] as Step[] }
   }
   function requireBase(steps: Step[], capabilities?: RuntimeCapabilities, base?: string) {
@@ -355,6 +409,9 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     const moduleIds: string[] = [], runtimeGroups: NonNullable<Inventory['runtimeGroups']> = []
     const named = (item: MissingModule) => { const variant = byGroup.get(item.module)?.variants.find(variant => variant.layout === item.layout)
       return variant ? variant.members.map(member => member.id) : [BY_RUNTIME_ID.get(item.module) ?? item.module] }
+    // USB Audio's package names its layout by number; a number the site does not know leaves the layout unknown.
+    const audioItem = audioPackages ? [...modules, ...(off ?? [])].find(item => item.module === runtimeId(USB_AUDIO_MODULE)) : undefined
+    const usbAudioLayout = audioItem && LAYOUT_BY_NUMBER.get(audioItem.layout)
     for (const item of modules) {
       const group = byGroup.get(item.module)
       if (group) runtimeGroups.push({ id: group.id, layout: item.layout })
@@ -362,11 +419,12 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
     if (new Set(moduleIds).size !== moduleIds.length) throw new ModuleSetError('The Octatrack’s module list contains overlapping machine packages. Reconnect and read it again.')
     const offIds = off && [...new Set(off.flatMap(named))].filter(id => !moduleIds.includes(id))
-    return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {}, ...offIds ? { offIds } : {} }
+    return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {}, ...offIds ? { offIds } : {}, ...usbAudioLayout ? { usbAudioLayout } : {} }
   }
   /** The base layout the set needs, when the connected base runs another (or isn't a published base at all). */
   function requireLayout(target: InventoryTarget, base?: string) {
-    const layout = setLayout(target)
+    if (audioPackages) return // USB Audio is a package: its layout is the package's
+    const layout = setLayout(target, false)
     if (layout === undefined || base === undefined || baseLayout(base) === layout) return
     throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet.`)
   }
@@ -385,23 +443,63 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
   }
   return {
-    ids, inventory, review,
+    ids, inventory, review, audioPackages, installPresets: !!audio.configurable?.installPresets,
     problem: (target: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) => review(target, current, capabilities, base).problem,
     async prepare(full: InventoryTarget, current: Inventory, load = fetchPackage, capabilities?: RuntimeCapabilities, base?: string): Promise<{ name: string; changes: SetChange[] }> {
       const target = packagedTarget(full), { steps } = plan(target, current); requireBase(steps, capabilities, base); requireLayout(full, base)
       // Fetch and verify every forward and rollback package before the first write to the unit.
-      const packages = new Map<RuntimePackage, Uint8Array>()
+      const packages = new Map<RuntimePackage, Uint8Array>(), extents = new Map<RuntimePackage, number>()
       await Promise.all(steps.flatMap(step => [step.add, step.undo].filter((entry): entry is RuntimePackage => !!entry).map(async entry => {
         const data = await load(entry)
-        checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined)
+        extents.set(entry, checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined, audioEntry.get(entry)))
         packages.set(entry, data)
       })))
+      // The set must fit the base's module pool. The loader refuses a package it has no room for (RUNTIME_MEMORY) only
+      // after the transfer, and a card set loses modules at power-on. A module the site can't name counts nothing.
+      // shortcut: a module that stays at an older version is priced at the published one; read the unit's package
+      // hashes (INVENTORY) here if a release ever changes its pool use by much.
+      const staying = await Promise.all(target.moduleIds.filter(id => current.moduleIds.includes(id) && !steps.some(step => step.id === id)).map(async id => {
+        const entry = audioPackages && id === USB_AUDIO_MODULE ? current.usbAudioLayout && audio[current.usbAudioLayout] : published.get(id)
+        return { name: name(id), bytes: entry ? checkPackage(entry, await load(entry), id, undefined, audioEntry.get(entry)) : 0 }
+      }))
+      const priced = [...steps.flatMap(step => step.add ? [{ name: step.name, bytes: extents.get(step.add)! }] : []), ...staying]
+      const total = priced.reduce((sum, item) => sum + item.bytes, 0), kB = (bytes: number) => Math.ceil(bytes / 1000)
+      if (total > OCTATRACK_POOL_BYTES) {
+        const largest = priced.sort((a, b) => b.bytes - a.bytes).slice(0, 3).map(item => `${item.name} (${kB(item.bytes)} kB)`)
+        throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. Take out ${kB(total - OCTATRACK_POOL_BYTES)} kB or more. The largest here are ${list(largest)}.`)
+      }
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.
-      return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? packages.get(step.add)! : removalPackage(step.id),
-        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}) })) }
+      function configured(entry: RuntimePackage, preset: number) {
+        const data = packages.get(entry)!
+        return entry.installPresets ? audioWithPreset(data, preset) : data
+      }
+      return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? configured(step.add, step.add === audio.configurable ? usbAudioInstallPreset(target.usbAudio) : 0) : removalPackage(step.id),
+        // A switched-off package is already held byte-for-byte in the unit's shelf.
+        // The atomic set transaction preserves it for rollback without a host copy.
+        undo: step.undo?.installPresets && current.offIds?.includes(step.id) &&
+          current.usbAudioInstallPreset === undefined ? undefined : step.undo ? configured(step.undo, current.usbAudioInstallPreset ?? 0) : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}),
+        // USB Audio's package changes the unit's USB configuration: the base reconnects once (usb_function.c).
+        ...(audioPackages && step.id === USB_AUDIO_MODULE ? { reconnects: true } : {}) })) }
     },
   }
+}
+
+/** Only the four-byte preset field of the installed settings record varies between sets.
+ * prepare() has already checked the complete canonical package against its manifest. */
+function audioWithPreset(data: Uint8Array, preset: number) {
+  if (!preset) return data
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  const index = siteEvents.events.find(event => event.event === 'ot_settings')?.index
+  const hooks = view.getUint32(20), header = HEADERS[view.getUint16(4)]
+  if (index === undefined || index < 4 || hooks <= index) throw invalidPackage()
+  const offset = view.getUint32(header + index * 4) & 0xffffff
+  const record = header + 4 * hooks + offset
+  if (offset + 24 > view.getUint32(8) || view.getUint32(record) !== 3 || view.getUint32(record + 20) !== 0)
+    throw invalidPackage()
+  const seeded = Uint8Array.from(data)
+  new DataView(seeded.buffer).setUint32(record + 20, preset)
+  return seeded
 }
 
 const catalogue = createRuntimeCatalogue(manifest)
@@ -438,7 +536,18 @@ export function moduleSetKit(link: OctatrackLink) {
     if (!modules) throw new ModuleSetError('This Octatrack’s base doesn’t list its modules. Install the latest Modwerk base, then try again.')
     // Undefined from a base before PROJ > MODWERK > MODULES, and when the list can't be read where the modules could
     // (a remote read-only session's scope has no OFF request): the unit's modules are still known, the off ones are not.
-    return inventoryFrom(modules, await link.off().catch(() => undefined))
+    const inventory: Inventory = inventoryFrom(modules, await link.off().catch(() => undefined))
+    if (isConfigurable(inventory.usbAudioLayout) && inventory.moduleIds.includes(USB_AUDIO_MODULE)) {
+      if (catalogue.installPresets) {
+        for (let attempt = 0; attempt < 4; ++attempt) {
+          const presets = await link.settingPresets()
+          inventory.usbAudioInstallPreset = presets?.get(USB_AUDIO_SETTING_KEY)
+          if (inventory.usbAudioInstallPreset !== undefined) break
+          if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 80))
+        }
+      }
+    }
+    return inventory
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
     const limit = overLimitMessage(target.moduleIds, 'sync')

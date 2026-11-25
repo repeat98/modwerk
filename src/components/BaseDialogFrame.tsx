@@ -4,17 +4,19 @@ import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { Icon, type IconName } from './Icon'
 import './link-hero.css'
 import './octatrack-link.css'
+import { useDesktopProgress } from '../desktop-shell'
 
 /** The modal: it focuses its title, and each stage's as `focus` changes; closes only when `canClose`; and while `busy`
  * the browser asks before the page is left. `finishedRef` is set by whoever closes it on purpose, so the browser's own
  * close (Escape before the page was clicked) reaches `onClose` as not done. `intro`: a first view (BaseIntro), laid
  * out to fit the window without scrolling (link-hero.css, .is-intro). */
-export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = false, onClose, footer, children }: {
+export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = false, className, onClose, footer, children }: {
   canClose: boolean
   busy: boolean
   focus: string
   finishedRef: RefObject<boolean>
   intro?: boolean
+  className?: string
   onClose: (done: boolean) => void
   footer: ReactNode
   children: ReactNode
@@ -33,7 +35,7 @@ export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = fa
     window.addEventListener('beforeunload', stay)
     return () => window.removeEventListener('beforeunload', stay)
   }, [busy])
-  return <dialog ref={dialog} className={'base-install-dialog' + (intro ? ' is-intro' : '')} aria-labelledby="base-install-title" aria-describedby="base-install-intro" onCancel={event => { event.preventDefault(); if (canClose) finish() }} onClose={() => { if (!finishedRef.current && !dialog.current?.open) onClose(false) }}>
+  return <dialog ref={dialog} className={['base-install-dialog', intro && 'is-intro', className].filter(Boolean).join(' ')} aria-labelledby="base-install-title" aria-describedby="base-install-intro" onCancel={event => { event.preventDefault(); if (canClose) finish() }} onClose={() => { if (!finishedRef.current && !dialog.current?.open) onClose(false) }}>
     {canClose && <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={finish}><Icon name="close" size={18} /></button>}
     {children}
     <footer className="base-install-footer">{footer}</footer>
@@ -44,14 +46,16 @@ export function BaseDialogFrame({ canClose, busy, focus, finishedRef, intro = fa
 export type BasePromise = [IconName, string, string, boolean?]
 
 /** The first view: a picture, the title, what the base brings and what the install needs (`missing`: why this browser
- * can't). `beta` marks a machine whose base is still in the beta (the Zoom pedals'); the Octatrack's is released. */
-export function BaseIntro({ hero, title, intro, promises, needs, missing, beta = true }: { hero: ReactNode; title: ReactNode; intro: ReactNode; promises: BasePromise[]; needs: string; missing?: string; beta?: boolean }) {
+ * can't; `route`: the other way this browser has, said as a note, not a failure). `beta` marks a machine whose base is
+ * still in the beta (the Zoom pedals'); the Octatrack's is released. */
+export function BaseIntro({ hero, title, intro, promises, needs, missing, route, beta = true }: { hero: ReactNode; title: ReactNode; intro: ReactNode; promises: BasePromise[]; needs: string; missing?: string; route?: ReactNode; beta?: boolean }) {
   return <>
     {hero}
     <h2 id="base-install-title" className="link-title" tabIndex={-1}>{title}{beta && <> <span className="module-beta-badge">Beta</span></>}</h2>
     <p id="base-install-intro" className="base-install-intro">{intro}</p>
     <ul className="link-promises">{promises.map(([icon, lead, rest, explainOnPhone]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong><span className={explainOnPhone ? 'link-feature-kept' : 'link-feature-rest'}>{rest}</span></span></li>)}</ul>
     <p className={'link-needs' + (missing ? ' is-missing' : '')}>{needs}</p>
+    {route && <p className="base-install-route" role="note"><Icon name="help" size={16} /><span>{route}</span></p>}
     {missing && <p className="file-error" role="alert">{missing}</p>}
   </>
 }
@@ -81,6 +85,7 @@ export function StagePlan({ stages, run, progressLabel, compact = false }: { sta
  * framed track, with its percentage beside it when `percent`. Without a `value` its length isn't known and it runs
  * along; `busy` keeps a sheen moving over a bar that stands still, so a long step never looks hung. */
 export function ProgressBar({ value, label, busy = false, percent = false }: { value?: number; label: string; busy?: boolean; percent?: boolean }) {
+  useDesktopProgress(value) // the desktop app's taskbar button or Dock icon fills with it
   const part = value === undefined ? undefined : Math.round(100 * Math.min(1, Math.max(0, value)))
   return <div className="progress-row">
     <div className={'progress-bar' + (part === undefined ? ' is-indeterminate' : busy ? ' is-busy' : '')} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={part}>

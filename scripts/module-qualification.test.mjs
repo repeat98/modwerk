@@ -1,12 +1,72 @@
 import { afterEach, expect, it } from 'vitest'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { evidenceOnBaseProblem, testingVersionProblem } from './module-qualification.mjs'
+import { crlfModuleFiles, evidenceOnBaseProblem, gitStoredBytes, moduleEarlierPerformanceSourceSha256, moduleFolderSha256, moduleNativeSourceSha256, modulePerformanceSourceSha256, modulePricelessFolderSha256, testingVersionProblem } from './module-qualification.mjs'
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
+
+it('reads each file as Git stores it under the repository\'s .gitattributes', () => {
+  const root = mkdtempSync(join(tmpdir(), 'git-bytes-')); roots.push(root)
+  const git = (...args) => execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
+  git('init', '-q')
+  writeFileSync(join(root, '.gitattributes'), readFileSync(new URL('../.gitattributes', import.meta.url)))
+  const files = {
+    'crlf.svg': '<svg>\r\n  <path d="M0 0"/>\r\n</svg>\r\n',
+    'mixed.c': 'int a;\r\nint b;\nint c;\r\n',
+    'lf.py': 'x = 1\ny = 2\n',
+    'lone-cr.txt': 'one\rtwo\r\n',
+    'nul.bin': 'a\r\n\0b\r\n',
+    'controls.bin': '\x01\x02\x03\r\nabc\r\n',
+    'ctrl-z.txt': 'end\r\n\x1a',
+    'utf8.md': 'Grüße — é\r\n',
+  }
+  for (const [name, text] of Object.entries(files)) writeFileSync(join(root, name), text)
+  git('add', '.')
+  for (const name of Object.keys(files)) {
+    const stored = git('cat-file', 'blob', ':' + name), here = readFileSync(join(root, name))
+    expect(Buffer.from(gitStoredBytes(here)).equals(stored), name).toBe(true)
+  }
+  expect(gitStoredBytes(readFileSync(join(root, 'crlf.svg'))).includes(13)).toBe(false)
+})
+
+it('hashes a module with CRLF text as the LF checkout CI has, and names the CRLF files', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'crlf-')); roots.push(folder)
+  const document = { id: 'echo', version: '0.1.0-experimental', tests: {} }
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(document, null, 2) + '\n')
+  writeFileSync(join(folder, 'native.c'), 'int echo;\nint gain;\n')
+  mkdirSync(join(folder, 'presentation')); writeFileSync(join(folder, 'presentation/thumbnail.svg'), '<svg>\n  <rect/>\n</svg>\n')
+  const hashes = async () => [await moduleFolderSha256(folder), await modulePricelessFolderSha256(folder), await moduleNativeSourceSha256(folder, document), await modulePerformanceSourceSha256(folder, document)]
+  const lf = await hashes()
+  expect(await crlfModuleFiles(folder)).toEqual([])
+  // Mackity (#2148): the thumbnail written on Windows with CRLF, the source too.
+  writeFileSync(join(folder, 'presentation/thumbnail.svg'), '<svg>\r\n  <rect/>\r\n</svg>\r\n')
+  writeFileSync(join(folder, 'native.c'), 'int echo;\r\nint gain;\r\n')
+  expect(await hashes()).toEqual(lf)
+  expect(await crlfModuleFiles(folder)).toEqual(['native.c', 'presentation/thumbnail.svg'])
+  // A change Git would store is still a change.
+  writeFileSync(join(folder, 'native.c'), 'int echo;\r\nint gain = 1;\r\n')
+  expect((await hashes()).some((hash, i) => hash === lf[i])).toBe(false)
+})
+
+it('leaves the art out of the performance source, and keeps the earlier hash for older stamps', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'art-')); roots.push(folder)
+  const document = { id: 'echo', version: '0.1.0-experimental', tests: {} }
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(document) + '\n')
+  writeFileSync(join(folder, 'native.c'), 'int echo;\n')
+  mkdirSync(join(folder, 'presentation')); writeFileSync(join(folder, 'presentation/thumbnail.svg'), '<svg/>\n')
+  const performance = await modulePerformanceSourceSha256(folder, document), earlier = await moduleEarlierPerformanceSourceSha256(folder, document), native = await moduleNativeSourceSha256(folder, document)
+  expect(earlier).not.toBe(performance)
+  writeFileSync(join(folder, 'presentation/thumbnail.svg'), '<svg><circle/></svg>\n')
+  expect(await modulePerformanceSourceSha256(folder, document)).toBe(performance)
+  // The earlier stamp and the qualification source still cover the art, as recorded hashes on main expect.
+  expect(await moduleEarlierPerformanceSourceSha256(folder, document)).not.toBe(earlier)
+  expect(await moduleNativeSourceSha256(folder, document)).not.toBe(native)
+  writeFileSync(join(folder, 'native.c'), 'int echo = 1;\n')
+  expect(await modulePerformanceSourceSha256(folder, document)).not.toBe(performance)
+})
 
 it('refuses a new module whose tested commit is already on main, and judges no other commit', () => {
   const root = mkdtempSync(join(tmpdir(), 'evidence-')); roots.push(root)
@@ -46,4 +106,25 @@ it('asks a new version\'s TESTING.md to name it, and leaves an unchanged version
   // 0.2.0 is not 0.2.01 or 10.2.0.
   write(folder + 'TESTING.md', 'Ran 10.2.0 and 0.2.01.')
   expect(testingVersionProblem({ root, base: main })).toMatch(/does not name/)
+})
+
+it('keeps a qualified folder retained when only a measured CPU price and its readings were added, and nothing else', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'priced-')); roots.push(folder)
+  const document = { id: 'echo', version: '0.1.0-experimental', author: { name: 'Jannik A\u00dffalg' }, resources: { memory: 'small' } }
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(document, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  writeFileSync(join(folder, 'echo.c'), 'int echo;\n')
+  const qualified = await moduleFolderSha256(folder), source = await moduleNativeSourceSha256(folder, { tests: {} })
+  // What device:price --write adds: resources.cpuPrice, in the file's own escaping, and evidence/cpu-price.json.
+  const priced = { ...document, resources: { ...document.resources, cpuPrice: { value: 7.7, unit: 'percent-of-frame', measure: 'frame-interrupt', source: 'evidence/cpu-price.json' } } }
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(priced, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  mkdirSync(join(folder, 'evidence')); writeFileSync(join(folder, 'evidence/cpu-price.json'), '{}\n')
+  expect(await moduleFolderSha256(folder)).not.toBe(qualified)
+  expect(await modulePricelessFolderSha256(folder)).toBe(qualified)
+  expect(await moduleNativeSourceSha256(folder, { tests: {} })).toBe(source)
+  // Anything else changed beside the price is a changed module.
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify({ ...priced, version: '0.1.1-experimental' }, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  expect(await modulePricelessFolderSha256(folder)).not.toBe(qualified)
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(priced, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  writeFileSync(join(folder, 'echo.c'), 'int echo = 1;\n')
+  expect(await modulePricelessFolderSha256(folder)).not.toBe(qualified)
 })

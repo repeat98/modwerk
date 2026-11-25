@@ -656,6 +656,305 @@
           "sha256": "64930e3c966c8621732e4c28422236697dc30739c96f102f7615ee9628e78393"
         }
       ]
+    },
+    {
+      "id": "vibrato",
+      "key": "VIBRATO",
+      "author": "bryantysinger",
+      "slot": 6,
+      "name": "SHP",
+      "labels": [
+        "SINE",
+        "TRI",
+        "SQR",
+        "RND"
+      ],
+      "renames": {},
+      "wideMaximum": null,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 66,
+          "sha256": "03d924967bad03a1e25e7ccc96f618614b187a8be1452522cf421c8bc81fe55e"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 66,
+          "sha256": "03d924967bad03a1e25e7ccc96f618614b187a8be1452522cf421c8bc81fe55e"
+        }
+      ]
+    },
+    {
+      "id": "resonator",
+      "key": "RESONATOR",
+      "author": "repeat98",
+      "slot": 1,
+      "name": "CHRD",
+      "labels": [
+        "OCT",
+        "5TH",
+        "SUS2",
+        "SUS4",
+        "MAJ",
+        "MIN",
+        "MAJ7",
+        "MIN7",
+        "DOM7",
+        "DIM",
+        "AUG",
+        "ADD9",
+        "5THS",
+        "4THS"
+      ],
+      "renames": {},
+      "wideMaximum": 13,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 132,
+          "sha256": "cfd9c4657bf1234bd5666bbef9227d81dc6e51641e42722fd797c22594e601da"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 132,
+          "sha256": "cfd9c4657bf1234bd5666bbef9227d81dc6e51641e42722fd797c22594e601da"
+        }
+      ]
+    },
+    {
+      "id": "resonator",
+      "key": "RESONATOR",
+      "author": "repeat98",
+      "slot": 6,
+      "name": "COLUN",
+      "labels": [
+        "NOTE",
+        "COLUN"
+      ],
+      "renames": {
+        "0": {
+          "0": "PTCH",
+          "6": "NOTE"
+        },
+        "1": {
+          "0": "DEG",
+          "6": "COLUN"
+        }
+      },
+      "wideMaximum": null,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 158,
+          "sha256": "03af2ba7be5a9fde189e94daaaa9443935daf30328eb66ee7becfeb6c9b31c18"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 158,
+          "sha256": "b4c833c1f8c4ddbd28a0085e37721421bca2f7e87d81da173d7dd8e3e3793258"
+        }
+      ]
+    },
+    {
+      "id": "resonator",
+      "key": "RESONATOR",
+      "author": "repeat98",
+      "slot": 7,
+      "name": "TYPE",
+      "labels": [
+        "PURE",
+        "STRNG",
+        "TUBE",
+        "BAR",
+        "PLATE",
+        "DRUM",
+        "BELL"
+      ],
+      "renames": {},
+      "wideMaximum": 6,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 90,
+          "sha256": "9ba6f8c00ee73866ad19cd3fdde2f332d6b903457f5b0b320b25e97f328f3687"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 90,
+          "sha256": "9ba6f8c00ee73866ad19cd3fdde2f332d6b903457f5b0b320b25e97f328f3687"
+        }
+      ]
+    },
+    {
+      "id": "resonator",
+      "key": "RESONATOR",
+      "author": "repeat98",
+      "slot": 8,
+      "name": "VOIC",
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "renames": {},
+      "wideMaximum": null,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 56,
+          "sha256": "42b8e4b97537e9fb9bd871e971c457ab16ecf1cc84f45c61d6c59c83d30db8cd"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 56,
+          "sha256": "42b8e4b97537e9fb9bd871e971c457ab16ecf1cc84f45c61d6c59c83d30db8cd"
+        }
+      ]
+    },
+    {
+      "id": "resonator",
+      "key": "RESONATOR",
+      "author": "repeat98",
+      "slot": 9,
+      "name": "SCALE",
+      "labels": [
+        "OFF",
+        "CMAJ",
+        "CMIN",
+        "CDOR",
+        "CPHR",
+        "CLYD",
+        "CMIX",
+        "CHMI",
+        "CMMI",
+        "CPMA",
+        "CPMI",
+        "C#MAJ",
+        "C#MIN",
+        "C#DOR",
+        "C#PHR",
+        "C#LYD",
+        "C#MIX",
+        "C#HMI",
+        "C#MMI",
+        "C#PMA",
+        "C#PMI",
+        "DMAJ",
+        "DMIN",
+        "DDOR",
+        "DPHR",
+        "DLYD",
+        "DMIX",
+        "DHMI",
+        "DMMI",
+        "DPMA",
+        "DPMI",
+        "D#MAJ",
+        "D#MIN",
+        "D#DOR",
+        "D#PHR",
+        "D#LYD",
+        "D#MIX",
+        "D#HMI",
+        "D#MMI",
+        "D#PMA",
+        "D#PMI",
+        "EMAJ",
+        "EMIN",
+        "EDOR",
+        "EPHR",
+        "ELYD",
+        "EMIX",
+        "EHMI",
+        "EMMI",
+        "EPMA",
+        "EPMI",
+        "FMAJ",
+        "FMIN",
+        "FDOR",
+        "FPHR",
+        "FLYD",
+        "FMIX",
+        "FHMI",
+        "FMMI",
+        "FPMA",
+        "FPMI",
+        "F#MAJ",
+        "F#MIN",
+        "F#DOR",
+        "F#PHR",
+        "F#LYD",
+        "F#MIX",
+        "F#HMI",
+        "F#MMI",
+        "F#PMA",
+        "F#PMI",
+        "GMAJ",
+        "GMIN",
+        "GDOR",
+        "GPHR",
+        "GLYD",
+        "GMIX",
+        "GHMI",
+        "GMMI",
+        "GPMA",
+        "GPMI",
+        "G#MAJ",
+        "G#MIN",
+        "G#DOR",
+        "G#PHR",
+        "G#LYD",
+        "G#MIX",
+        "G#HMI",
+        "G#MMI",
+        "G#PMA",
+        "G#PMI",
+        "AMAJ",
+        "AMIN",
+        "ADOR",
+        "APHR",
+        "ALYD",
+        "AMIX",
+        "AHMI",
+        "AMMI",
+        "APMA",
+        "APMI",
+        "A#MAJ",
+        "A#MIN",
+        "A#DOR",
+        "A#PHR",
+        "A#LYD",
+        "A#MIX",
+        "A#HMI",
+        "A#MMI",
+        "A#PMA",
+        "A#PMI",
+        "BMAJ",
+        "BMIN",
+        "BDOR",
+        "BPHR",
+        "BLYD",
+        "BMIX",
+        "BHMI",
+        "BMMI",
+        "BPMA",
+        "BPMI"
+      ],
+      "renames": {},
+      "wideMaximum": 120,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 936,
+          "sha256": "a6052af87719be821d84b3b0939a3286a2a7604d617723142663570c8e300096"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 936,
+          "sha256": "a6052af87719be821d84b3b0939a3286a2a7604d617723142663570c8e300096"
+        }
+      ]
     }
   ],
   "repitchPatches": [
@@ -993,41 +1292,5 @@
       "overflowCursor": 1074603216,
       "caveLimit": 1074625596
     }
-  ],
-  "sourceCommit": "40307ecd410d7e4f306d10f04025b8f44ab70447",
-  "moduleVersions": {
-    "miniverb": "0.2.3-experimental",
-    "tapeecho": "0.1.6-experimental",
-    "euclid": "0.1.4-experimental",
-    "repitch": "0.2.0-experimental",
-    "tapehead": "0.1.2-experimental",
-    "airwindows-chorus": "0.1.2-experimental",
-    "everb": "0.1.2-experimental",
-    "bbd": "0.1.2-experimental",
-    "lofi2": "0.1.1-experimental",
-    "ring-sc": "0.2.1-experimental",
-    "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
-    "quantizer": "0.1.4-experimental",
-    "synth": "0.1.3-experimental",
-    "previewvol": "0.1.2-experimental",
-    "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.2.2-experimental",
-    "vector": "0.3.2-experimental",
-    "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.2-experimental",
-    "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.3-experimental",
-    "output-matrix": "0.1.1-experimental",
-    "quantize-live-rec-toggle": "0.1.1-experimental",
-    "apply-scene": "0.2.0-experimental",
-    "direct-jump-kyoti": "0.1.2-experimental",
-    "dejavu": "0.1.0-experimental",
-    "arp-key-locks": "0.1.0-experimental",
-    "temp-save": "0.1.1-experimental",
-    "tuner": "0.1.0-experimental",
-    "slow-lfo": "0.1.0-experimental",
-    "bar-led": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental"
-  }
+  ]
 }

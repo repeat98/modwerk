@@ -39,10 +39,10 @@ def main():
         def read(at,n):
             return b''.join(port.peek(at+i,min(4096,n-i)) for i in range(0,n,4096))
         def u32(at):return int.from_bytes(port.peek(at,4),'big')
-        guard='d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf'
+        import stress_emulator as fixture
         def stock_sites():
-            for at in (0x4002dc68,0x4002dc90,0x4002dcc4):
-                assert hashlib.sha256(port.peek(at,6)).hexdigest()==guard,'module unexpectedly restored'
+            # Not installed here: the base's ot_part_menu row holds no record.
+            assert fixture.part_menu_record(port)==0,'module unexpectedly restored'
         stock_sites()
         port.attest=stock_sites
         initial_work=hashlib.sha256(read(u32(0x46c82456),8*0x91a)).hexdigest()

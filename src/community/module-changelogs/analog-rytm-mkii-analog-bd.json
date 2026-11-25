@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "The SYNTH page's bottom bar no longer shows 808 or 909: knob B's label already says which (TON for the 808, SWT for the 909).",
+      "The sound is unchanged."
+    ]
+  },
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Takes about 5 KB less of the Rytm's module memory, so BD ANALOG fits in larger module sets.",
+      "The sound is unchanged: knob settings are stored more compactly, within a hair of the earlier values."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-11",
     "changes": [

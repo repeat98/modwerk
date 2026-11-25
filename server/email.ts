@@ -7,7 +7,7 @@ export class AccountMailError extends HttpError {}
 
 type MailOutcome='accepted'|'failed'|'limited'
 /** Daily counts per purpose, without addresses, content or links. */
-export async function recordMail(db: Database, purpose: 'verify' | 'reset' | 'activity' | 'welcome' | 'news' | 'beta', outcome: MailOutcome) {
+export async function recordMail(db: Database, purpose: 'verify' | 'reset' | 'activity' | 'welcome' | 'news' | 'beta' | 'diagnostics', outcome: MailOutcome) {
   // The column comes only from this fixed internal allowlist.
   await db.prepare(`INSERT INTO account_mail_daily(day,purpose,${outcome}) VALUES(?,?,1) ON CONFLICT(day,purpose) DO UPDATE SET ${outcome}=${outcome}+1`).bind(new Date().toISOString().slice(0,10),purpose).run()
 }

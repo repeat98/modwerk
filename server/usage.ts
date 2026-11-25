@@ -1,11 +1,12 @@
 import type { Database, Env } from './platform'
-import { OCTATRACK_COUNTS, OCTATRACK_STEP_COUNTS, type OctatrackStepCount } from '../src/community/octatrack-diagnostics-contract'
+import { DIAGNOSTIC_RETENTION_DAYS, OCTATRACK_COUNTS, OCTATRACK_STEP_COUNTS, type OctatrackStepCount } from '../src/community/octatrack-diagnostics-contract'
+import { OCTATRACK_INSTALL_EVENTS, type InstallActivity } from '../src/community/usage-contract'
 import { USAGE_CONSENT_VERSION } from '../src/legal/policy'
 import { boundedBody, HttpError, response } from './security'
 import { throttle } from './auth'
 import { isUsagePage } from '../src/community/usage-pages'
 import { canTrackModuleDownload } from '../src/community/module-downloads'
-import { ANNOUNCEMENT_COUNTS, DEVICE_EVENTS, USAGE_DEVICES, USAGE_EVENTS, type AnnouncementCountEvent, type UsageDevice, type UsageEvent, type UsageDay, type UsageDeviceTotals, type UsageHour, type UsagePageDay } from '../src/community/usage-contract'
+import { ANNOUNCEMENT_COUNTS, DEVICE_EVENTS, SITE_COUNTS, USAGE_DEVICES, USAGE_EVENTS, type SiteCount, type SiteCountTotal, type AnnouncementCountEvent, type UsageDevice, type UsageEvent, type UsageDay, type UsageDeviceTotals, type UsageHour, type UsagePageDay } from '../src/community/usage-contract'
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/
 const columns: Record<UsageEvent, string> = { page_view:'page_views', configuration_started:'configurations', build_succeeded:'builds', build_failed:'builds_failed', firmware_download_requested:'downloads', configuration_exported:'exports', support_opened:'support_opens', support_link_opened:'support_clicks', discord_member_prompt_shown:'discord_member_shown', discord_member_join_clicked:'discord_member_joins', discord_member_dismissed:'discord_member_dismissals', discord_visitor_prompt_shown:'discord_visitor_shown', discord_visitor_signup_clicked:'discord_visitor_signups', discord_visitor_join_clicked:'discord_visitor_joins', discord_visitor_dismissed:'discord_visitor_dismissals', discord_welcome_join_clicked:'discord_welcome_joins' }
 /** Optional machine on builds, failed builds and download requests: one of the fixed supported machine names, never anything else. */
@@ -98,12 +99,12 @@ export async function recordAnonymousCount(request: Request, env: Env, db: Datab
   catch(error) { if(error instanceof HttpError)throw error; throw new HttpError(400,'Invalid usage count.') }
   const keys = Object.keys(body).sort().join(',')
   const octatrackCount = keys === 'event' && OCTATRACK_COUNTS.some(event => event === body.event)
-  const stepCount = octatrackStep(body, keys)
+  const stepCount = octatrackStep(body, keys), siteCount = siteCountOf(body, keys)
   const moduleCount = keys === 'event,moduleId' && body.event === 'module_download' && typeof body.moduleId === 'string' && canTrackModuleDownload(body.moduleId)
   const announcementCount = keys === 'announcementId,event' && typeof body.event === 'string' && Object.hasOwn(ANNOUNCEMENT_COUNTS,body.event) && typeof body.announcementId === 'string' && /^announcement-[a-f0-9]{32}$/.test(body.announcementId)
-  if (stepCount === undefined) throw new HttpError(400,'Invalid usage count.')
-  if (!octatrackCount && !stepCount && !moduleCount && !announcementCount && (!['event','device,event','event,page'].includes(keys) || typeof body.event !== 'string' || !USAGE_EVENTS.includes(body.event as UsageEvent))) throw new HttpError(400,'Invalid usage count.')
-  const device = moduleCount || announcementCount || stepCount ? null : deviceOf(body,body.event as UsageEvent), page = pageOf(body)
+  if (stepCount === undefined || siteCount === undefined) throw new HttpError(400,'Invalid usage count.')
+  if (!octatrackCount && !stepCount && !siteCount && !moduleCount && !announcementCount && (!['event','device,event','event,page'].includes(keys) || typeof body.event !== 'string' || !USAGE_EVENTS.includes(body.event as UsageEvent))) throw new HttpError(400,'Invalid usage count.')
+  const device = moduleCount || announcementCount || stepCount || siteCount ? null : deviceOf(body,body.event as UsageEvent), page = pageOf(body)
   if (device === undefined || page === undefined) throw new HttpError(400,'Invalid usage count.')
   const now = new Date(), today = day(now)
   await throttleAddress(request,db,secret,today)
@@ -114,6 +115,13 @@ export async function recordAnonymousCount(request: Request, env: Env, db: Datab
   if (stepCount) {
     await db.prepare('INSERT INTO octatrack_count_daily(day,event,detail,count) VALUES(?,?,?,1) ON CONFLICT(day,event,detail) DO UPDATE SET count=count+1').bind(today,stepCount.event,stepCount.detail).run()
     return response({ok:true}) // As above: an event name and at most one fixed category, nothing about who.
+  }
+  if (siteCount) {
+    await db.batch([
+      db.prepare('INSERT INTO site_count_daily(day,event,detail,count) VALUES(?,?,?,1) ON CONFLICT(day,event,detail) DO UPDATE SET count=count+1').bind(today,siteCount.event,siteCount.detail),
+      db.prepare("INSERT INTO usage_meta(key,value) VALUES('site_counts_started',?) ON CONFLICT DO NOTHING").bind(now.toISOString()),
+    ])
+    return response({ok:true}) // An event name and one fixed category; no visitor digest, address or referrer.
   }
   if (announcementCount) {
     const column = ANNOUNCEMENT_COUNTS[body.event as AnnouncementCountEvent], id = (body.announcementId as string).slice('announcement-'.length) // Column from the closed map above.
@@ -153,7 +161,14 @@ function octatrackStep(body: Record<string, unknown>, keys: string): { event: Oc
   if (!details.length) return keys === 'event' ? { event, detail: '' } : undefined
   if (keys !== 'detail,event' || typeof body.detail !== 'string' || body.detail.length > 32) return undefined
   if (details.includes(body.detail)) return { event, detail: body.detail }
-  return event === 'base_install_failed' ? { event, detail: 'other' } : undefined
+  return details.includes('other') ? { event, detail: 'other' } : undefined // base_install_failed, usb_sync_failed_reason
+}
+/** A site count (SITE_COUNTS): null when the body is something else, undefined when it is one but malformed. Every one
+ * carries exactly one category from its fixed list; an unknown one is refused, never stored. */
+function siteCountOf(body: Record<string, unknown>, keys: string): { event: SiteCount; detail: string } | null | undefined {
+  if (typeof body.event !== 'string' || !Object.hasOwn(SITE_COUNTS, body.event)) return null
+  const event = body.event as SiteCount, details: readonly string[] = SITE_COUNTS[event]
+  return keys === 'detail,event' && typeof body.detail === 'string' && details.includes(body.detail) ? { event, detail: body.detail } : undefined
 }
 /** Called hourly by the Worker and available to other backend adapters. */
 export async function cleanupUsage(db: Database, now = new Date()) {
@@ -163,6 +178,7 @@ export async function cleanupUsage(db: Database, now = new Date()) {
     db.prepare('DELETE FROM usage_visitors WHERE day<?').bind(before(now,1)),
     db.prepare("DELETE FROM usage_meta WHERE key LIKE 'visitor-salt:%' AND key<?").bind('visitor-salt:' + day(now)),
     db.prepare('DELETE FROM usage_daily WHERE day<?').bind(before(now,89)),
+    db.prepare('DELETE FROM site_count_daily WHERE day<?').bind(before(now,89)),
     db.prepare('DELETE FROM usage_hourly WHERE hour<?').bind(before(now,13) + 'T00'),
     db.prepare('DELETE FROM usage_page_daily WHERE day<?').bind(before(now,89)),
     db.prepare('DELETE FROM usage_device_daily WHERE day<?').bind(before(now,89)),
@@ -170,6 +186,8 @@ export async function cleanupUsage(db: Database, now = new Date()) {
     db.prepare('DELETE FROM rate_limits WHERE expires<?').bind(Math.floor(now.getTime()/1000)),
   ])
 }
+/** Binary order, as SQLite's ORDER BY gives it. */
+const byText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0
 /** Authorization is enforced by the enclosing /api/admin/ boundary. */
 export async function usageStatistics(db: Database, days: number, now = new Date()) {
   if (![7,30,90].includes(days)) throw new HttpError(400,'Choose 7, 30 or 90 days.')
@@ -177,22 +195,38 @@ export async function usageStatistics(db: Database, days: number, now = new Date
   // Compare equal windows of completed days; today and the first partial collection day are excluded.
   const previousFrom = before(now,2 * (days-1)), previousTo = before(now,days)
   const outsideRetention = previousFrom < before(now,89)
-  const [meta,daily,devices,hourly,pages] = await Promise.all([
-    db.prepare("SELECT key,value FROM usage_meta WHERE key IN ('collection_started','breakdowns_started','hourly_started','discord_invites_started','pages_started','machine_coverage_expanded')").all<{key:string;value:string}>(),
+  const retainedFrom = before(now, DIAGNOSTIC_RETENTION_DAYS - 1)
+  const activityFrom = from > retainedFrom ? from : retainedFrom
+  const [meta,daily,devices,hourly,periodCounts] = await Promise.all([
+    db.prepare(`SELECT key,value FROM usage_meta WHERE key IN ('collection_started','breakdowns_started','hourly_started','discord_invites_started','pages_started','machine_coverage_expanded','site_counts_started')
+      UNION ALL SELECT 'guide_from',MIN(day) FROM octatrack_count_daily WHERE day BETWEEN ? AND ?
+      UNION ALL SELECT 'sync_from',MIN(day) FROM octatrack_beta_daily WHERE day BETWEEN ? AND ?`).bind(retainedFrom,to,retainedFrom,to).all<{key:string;value:string|null}>(),
     db.prepare(`SELECT day,${USAGE_COLUMNS} FROM usage_daily WHERE day>=? AND day<=? ORDER BY day`).bind(outsideRetention?from:previousFrom,to).all<UsageDay>(),
     db.prepare('SELECT device,SUM(builds) AS builds,SUM(builds_failed) AS builds_failed,SUM(downloads) AS downloads FROM usage_device_daily WHERE day>=? AND day<=? GROUP BY device').bind(from,to).all<UsageDeviceTotals>(),
     // Hours are kept for 14 days, so only the 7-day view can show them.
     days===7 ? db.prepare(`SELECT hour,${USAGE_COLUMNS} FROM usage_hourly WHERE hour>=? AND hour<=? ORDER BY hour`).bind(from+'T00',to+'T23').all<UsageHour>() : null,
-    db.prepare('SELECT day,page,views FROM usage_page_daily WHERE day>=? AND day<=? ORDER BY day,page').bind(from,to).all<UsagePageDay>(),
+    // Independent daily aggregates share one read. Joining their rows would multiply counts.
+    db.prepare(`SELECT 'page' AS kind,day,page AS name,views AS count FROM usage_page_daily WHERE day BETWEEN ? AND ?
+      UNION ALL SELECT event,'',detail,SUM(count) FROM site_count_daily WHERE day BETWEEN ? AND ? GROUP BY event,detail
+      UNION ALL SELECT 'install',day,event,count FROM octatrack_count_daily WHERE day BETWEEN ? AND ? AND event IN ('base_first_connection','base_usb_update_done') AND detail=''
+      UNION ALL SELECT 'install',day,event,count FROM octatrack_beta_daily WHERE day BETWEEN ? AND ? AND event='usb_sync_kept'`).bind(from,to,from,to,activityFrom,to,activityFrom,to).all<{kind:string;day:string;name:string;count:number}>(),
   ])
+  const pages: UsagePageDay[] = periodCounts.results.filter(row => row.kind==='page').map(row => ({day:row.day,page:row.name,views:row.count})).sort((a,b) => byText(a.day,b.day) || byText(a.page,b.page))
+  const siteCounts: SiteCountTotal[] = periodCounts.results.filter(row => Object.hasOwn(SITE_COUNTS,row.kind)).map(row => ({event:row.kind as SiteCount,detail:row.name,count:row.count})).sort((a,b) => byText(a.event,b.event) || b.count-a.count || byText(a.detail,b.detail))
   const metaValue = (key: string) => meta.results.find(row => row.key===key)?.value ?? null
+  const installActivity: InstallActivity = { guideFrom: metaValue('guide_from'), syncFrom: metaValue('sync_from'), counts: [] }
+  for (const row of periodCounts.results) {
+    if (row.kind !== 'install') continue
+    const event = OCTATRACK_INSTALL_EVENTS.find(name => name === row.name)
+    if (event) installActivity.counts.push({ day: row.day, event, count: row.count })
+  }
   const collectionStarted = metaValue('collection_started'), breakdownsStarted = metaValue('breakdowns_started'), hourlyStarted = metaValue('hourly_started')
   const byDevice = new Map(devices.results.map(row => [row.device,row]))
   const rows = daily.results.filter(row=>row.day>=from)
   const unavailableReason = outsideRetention ? 'retention' : !collectionStarted || previousFrom <= collectionStarted.slice(0,10) ? 'collection' : null
   const previousRows = unavailableReason ? [] : daily.results.filter(row=>row.day>=previousFrom&&row.day<=previousTo)
-  return response({generatedAt:now.toISOString(),collectionStarted,from,to,days,rows,comparison:{from:previousFrom,to:previousTo,rows:previousRows,unavailableReason},
-    machineCoverageExpanded:metaValue('machine_coverage_expanded'),pagesStarted:metaValue('pages_started'),pages:pages.results,breakdownsStarted,hourlyStarted,discordInvitesStarted:metaValue('discord_invites_started'),...(hourly ? {hourly:hourly.results} : {}),devices:USAGE_DEVICES.map(device => byDevice.get(device) ?? {device,builds:0,builds_failed:0,downloads:0})})
+  return response({generatedAt:now.toISOString(),collectionStarted,from,to,days,rows,installActivity,comparison:{from:previousFrom,to:previousTo,rows:previousRows,unavailableReason},
+    machineCoverageExpanded:metaValue('machine_coverage_expanded'),pagesStarted:metaValue('pages_started'),pages,siteCountsStarted:metaValue('site_counts_started'),siteCounts,breakdownsStarted,hourlyStarted,discordInvitesStarted:metaValue('discord_invites_started'),...(hourly ? {hourly:hourly.results} : {}),devices:USAGE_DEVICES.map(device => byDevice.get(device) ?? {device,builds:0,builds_failed:0,downloads:0})})
 }
 
 /** Each request names one build-integrated module; no configuration grouping is stored. */

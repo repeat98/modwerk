@@ -1,0 +1,1 @@
+The MS-50G's pedal page reads the pedal: its model and firmware, its files, and a backup of all of them. It names the MS-50G's own firmware (3.10) and says the base isn't for it yet, instead of the MS-70CDR's. A pedal in update mode is shown as update mode, and the base is never offered or flashed to it, since the base is the MS-70CDR's firmware.

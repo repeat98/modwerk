@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 2,
+  "id": "kits",
+  "key": "KITS",
+  "name": "Kits",
+  "version": "0.1.1-experimental",
+  "category": "scenes",
+  "author": {
+    "github": "sambanks",
+    "credits": [
+      "Sam Banks: KITS in octabam (MIT)",
+      "Em (June Kiff, @emuyia): the Octakit design KITS follows (MIT)",
+      "bkkbrls-del: the slot cases the edit pool and the unassigned-pattern rule cover",
+      "Modwerk contributors: the port to the Modwerk base's hooks and borrowed sample memory"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "255 Kits per project",
+    "family": "Parts and Kits",
+    "summary": "255 Kits per project instead of four Parts per bank: each pattern plays its own Kit, saved and loaded by name.",
+    "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save, reload or rename the pattern's Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
+    "highlights": [
+      "LOAD KIT and SAVE KIT lists with the Kits' names, UNDO KIT, and seven-character names.",
+      "Each pattern plays its Kit; copying and pasting a pattern carries its Kit.",
+      "Copy, paste and clear Kits in the list; FUNC+CUE reloads the pattern's Kit as saved.",
+      "Projects without Kits are migrated: each stock Part becomes a Kit and its patterns keep playing it."
+    ],
+    "usage": [
+      "Press PART (MKI: FUNC+MIDI): LOAD KIT lists UNDO KIT and the 255 Kits. Choose one with YES: the current pattern plays it now.",
+      "Press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK). Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
+      "The status line shows the current pattern's Kit as NNN name."
+    ]
+  },
+  "access": {
+    "location": "PART (MKII) or FUNC+MIDI (MKI) from any page",
+    "steps": [
+      "Press PART on the MKII, or FUNC+MIDI on the MKI, to open LOAD KIT.",
+      "Move to a Kit with UP and DOWN or the LEVEL encoder and press YES: the current pattern plays that Kit.",
+      "Press FUNC+PART and YES on SAVE KIT on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI; press YES on a Kit, edit its name and confirm to save the current Part into it."
+    ],
+    "screenshots": [
+      "media/ot-status-kit.png",
+      "media/ot-load-kit.png",
+      "media/ot-part-edit-kits.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:PART",
+      "key:FUNC+MIDI",
+      "key:FUNC+CUE",
+      "key:STOP+PART",
+      "key:FUNC+STOP+PART",
+      "key:FUNC+STOP+MIDI",
+      "key:PATTERN+FUNC+RIGHT",
+      "key:PATTERN+FUNC+TRIG",
+      "key:PATTERN+FUNC+TRIG+REC",
+      "key:PATTERN+FUNC+TRIG+STOP",
+      "key:PATTERN+FUNC+TRIG+PLAY",
+      "key:FUNC+REC@KITS",
+      "key:FUNC+STOP@KITS",
+      "key:FUNC+PLAY@KITS",
+      "key:FUNC+BANK@KITS",
+      "key:LEVEL@KITS"
+    ],
+    "limitations": [
+      "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
+      "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
+      "Needs Modwerk base 0.8 or newer: FUNC+PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place. Stock's Part Edit rows are left out while Kits is on; while it is off its row is left out and the window is stock's.",
+      "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
+      "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
+      "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
+      "Keep Kits installed while you save, reload or copy a project that uses it: without it, kits.work is not saved or reloaded with the project.",
+      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once."
+    ]
+  },
+  "resources": {
+    "recorded": "16 November 2026; from the assembled unit, unmeasured on a unit",
+    "storage": {
+      "label": "Storage",
+      "display": "10.5 KB code, 38 KB buffers, 2 MB borrowed sample memory; kits.work 1.6 MB a project",
+      "value": 49712,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "m68k-elf-size of kits.s: 10,548 bytes of code, 196 of data, 38,968 of bss. Sample memory: 331 pages of 6,144 bytes for the library (1,622,944 bytes) and the edit pool (405,632 bytes). Battery RAM: 72 bytes at 0x100f85a0 and 256 at 0x100fbf00.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens when a pattern is requested or chained (a Kit copied into a slot: up to four Part compares and two Part copies), at LOAD KIT, SAVE KIT and the list operations, and at a project load or save (kits.work is read or written whole). Nothing on the DSP.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "Pattern changes while playing; project loads and saves.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Work happens at pattern requests and panel actions, not per sample or per step; not measured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code: Kits runs on the ColdFire and changes what the Parts hold.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "About 2 MB of the sample memory while installed, and about 49 KB of the module memory all modules share.",
+        "source": "TESTING.md"
+      }
+    },
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-16",
+      "conditions": "MKII, a development twin of base 0.7.4 with ot_sample_memory (7250475e), the owner's project A01 playing, installed with its 331 pages taken and used nowhere, 8 s per reading: frame interrupt 28.7 % before and after, CPU meter 46.7 to 46.8 %. Six LOAD KIT loads while playing beside 14 kept modules moved the meter 0.3 points.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Assembled and packaged only. No install, gesture, save, reload or power cycle tested on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "e39515311e23a259fefb00a38c5b73d47893db6a",
+    "gates": [],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.",
+          "Change a sound on the current track, press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
+          "Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit."
+        ]
+      },
+      "screenshots": [
+        "media/ot-status-kit.png",
+        "media/ot-load-kit.png",
+        "media/ot-part-edit-kits.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Sam Banks' MIT module from octabam with Modwerk's port changes, MIT; after Em's Octakit design (MIT). Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
+  },
+  "media": [
+    {
+      "path": "media/ot-status-kit.png",
+      "captureType": "hardware",
+      "caption": "With Kits installed the status line names the Kit the pattern plays: 009 ONE.",
+      "alt": "Pattern screen of C16 on the SRC page; the status line reads 009 ONE where stock shows the Part.",
+      "credit": "Modwerk contributors (capture on the developer's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Pattern screen",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+        "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C16, stopped."
+      }
+    },
+    {
+      "path": "media/ot-load-kit.png",
+      "captureType": "hardware",
+      "caption": "Press PART: LOAD KIT lists the project's Kits. YES on a Kit makes the current pattern play it, at once.",
+      "alt": "LOAD KIT list over the pattern screen: 008 FOUR, 009 ONE, 010 TWO, 011 THREE (selected).",
+      "credit": "Modwerk contributors (capture on the developer's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "LOAD KIT (PART)",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+        "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C16 playing; PART, then DOWN."
+      }
+    },
+    {
+      "path": "media/ot-part-edit-kits.png",
+      "captureType": "hardware",
+      "caption": "Press FUNC + PART: the Part Edit window holds Kits' actions in PART's place. SAVE KIT saves the current Part into a Kit, RELOAD KIT brings the pattern's Kit back as saved, RENAME KIT renames it.",
+      "alt": "Part Edit popup over the pattern screen: SAVE KIT, RELOAD KIT (selected), RENAME KIT.",
+      "credit": "Modwerk contributors (capture on the developer's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Part Edit (FUNC + PART)",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+        "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C02, stopped; FUNC+PART, the window reopened on the row used last. NO closed it."
+      }
+    }
+  ]
+}
