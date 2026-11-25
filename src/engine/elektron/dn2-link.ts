@@ -99,9 +99,13 @@ export async function mem(line: LinkLine, address: number, length: number): Prom
   if (bytes.length !== length) throw new LinkError(`mem: expected ${length} bytes, received ${bytes.length}`)
   return bytes
 }
-async function read(line: LinkLine, address: number, length: number): Promise<Uint8Array> {
+/** Runs one request and its reply. A caller that shares the line with other work (a trial's keepalive) passes its
+ * lock here, so each request takes its own turn and other work can go between the requests of a long read. */
+export type LinkTurn = <T>(work: () => Promise<T>) => Promise<T>
+const ownTurn: LinkTurn = work => work()
+async function read(line: LinkLine, address: number, length: number, turn: LinkTurn = ownTurn): Promise<Uint8Array> {
   const out = new Uint8Array(length)
-  for (let at = 0; at < length; at += MEM_MAX) out.set(await mem(line, address + at, Math.min(MEM_MAX, length - at)), at)
+  for (let at = 0; at < length; at += MEM_MAX) out.set(await turn(() => mem(line, address + at, Math.min(MEM_MAX, length - at))), at)
   return out
 }
 /** The frame on the screen as 64 rows of 128 pixels, top row first (the Rytm's layout). A draw between its eight
@@ -114,10 +118,10 @@ export function frameRows(frame: Uint8Array): number[][] {
   return Array.from({ length: 64 }, (_, y) => Array.from({ length: 128 }, (_, x) => frame[(7 - (y >> 3)) + 8 * x] >> (y & 7) & 1))
 }
 /** The diagnostics log (diag.c): its bytes, read through mem, and the log the site's parser reads from them. */
-export async function readLog(line: LinkLine): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined }> {
-  const p = await ask(line, 'diag'), address = get32(p, 0), size = get32(p, 5)
+export async function readLog(line: LinkLine, turn: LinkTurn = ownTurn): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined }> {
+  const p = await turn(() => ask(line, 'diag')), address = get32(p, 0), size = get32(p, 5)
   if (size < 8 || size > DEVICE_LOG_IMAGE_BYTES) throw new LinkError(`diag: a ${size}-byte log`)
-  const bytes = await read(line, address, size), image = new Uint8Array(DEVICE_LOG_IMAGE_BYTES)
+  const bytes = await read(line, address, size, turn), image = new Uint8Array(DEVICE_LOG_IMAGE_BYTES)
   image.set(bytes)                       // the Digitone II keeps no crash or stall record: zeros, as an older base answers
   return { bytes, log: parseDeviceLog(image) }
 }

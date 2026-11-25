@@ -281,6 +281,32 @@ counterpart for; once a Zoom base loads modules over USB, that goes behind
 `device_review`, `device_trial`, Keep and Undo, as the
 [recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
 
+## A Digitone II over MIDI
+
+A Digitone II with a development base (`npm run machine:base -- digitone-ii --dev`, booted from RAM or flashed)
+needs no bridge either: [`digitone-device.ts`](../scripts/digitone-device.ts) runs the site's own link client
+([`dn2-link.ts`](../src/engine/elektron/dn2-link.ts)) over the computer's MIDI, as the Zoom tools do, and joins the
+SysEx RtMidi hands over in pieces.
+
+```sh
+node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --digitone-midi [--digitone-packages DIR] [--digitone-base FILE] [--allow-device-writes]
+```
+
+`digitone_status` reads the link (version, arm, a person at the panel, RAM boot status, modules live) and the runtime
+loader's phase and live set; `digitone_log` the diagnostics log in the Octatrack's layout. `digitone_trial` loads one
+runtime package (`sdk/runtime/loader/build.py`), by name from the startup-selected `--digitone-packages` directory,
+into RAM as a trial through the site's `UploadSession`; `digitone_keep` keeps it until the next power cycle and
+`digitone_undo` rolls it back. Trial and Keep need `--allow-device-writes` and `confirm: true`; the unit must be
+stopped with SETTINGS > REMOTE CTRL on. The unit rolls back a trial whose host sent nothing for ten seconds, so the
+server sends a frame every three seconds until Keep or Undo, and rolls an open trial back when it closes. One
+request and its reply at a time go over the unit's line (status and log reads wait for a keepalive frame and the
+other way round). If Keep or Undo is not confirmed, the keepalive stops so the unit settles the trial by itself,
+and the tool reports the loader's phase from a fresh read. The upload base is the one the unit names in HELLO (a
+development build's layout digest); `--digitone-base` takes the build's `.identity` file (`machine:base --dev
+--out`) and refuses a unit running another build. There is
+no raw memory, key or flashing tool (the loader and its link: `sdk/machines/digitone-ii/LOADER.md` on the Digitone II base drafts, #1842). Tests run against
+`fakeDigitone` in [`digitone-device.test.mjs`](../scripts/digitone-device.test.mjs).
+
 ## A member's unit through a remote session
 
 An administrator can read a member's Octatrack through their browser, with

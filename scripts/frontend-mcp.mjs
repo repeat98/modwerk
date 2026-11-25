@@ -15,6 +15,7 @@ import { saveSavedBackup } from './frontend-mcp-saved-backup.mjs'
 import { openRemoteUnit } from './frontend-mcp-remote.mjs'
 import * as board from './agent-board.mjs'
 import { nodeMidiAccess, zoomCommand } from './zoom-device.ts'
+import { DigitoneUnit, midiLinkLine } from './digitone-device.ts'
 import { acquire, UnitBusyError } from './unit-queue.mjs'
 import { isUpdateMode, ZOOM_DEVICE_IDS } from '../src/engine/zoom/zoom-protocol.ts'
 
@@ -78,6 +79,11 @@ const TOOLS = [
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('zoom_install', 'Install one added effect file, by name from the startup-selected --zoom-effects directory, as the site does: an effect ID clash moves it to a local ID, it is written and read back, then added to the effect list (the list from before is saved in the workspace). Requires --allow-device-writes and confirm=true; power-cycle the pedal to load it.', { file: string, confirm: { type: 'boolean' } }, ['file', 'confirm'], true),
   tool('zoom_remove', 'Remove one added effect (group 8) from the Zoom pedal\u2019s effect list and its files, then list to check it went; Zoom\u2019s own effects are refused. Requires --allow-device-writes and confirm=true.', { file: string, confirm: { type: 'boolean' } }, ['file', 'confirm'], true),
+  tool('digitone_status', 'Connect to a Digitone II with a development base over MIDI (startup --digitone-midi) through the site\u2019s own link client and read the link (version, arm, a person at the panel, RAM boot status, modules live) and the runtime loader\u2019s phase and live set. Read-only.'),
+  tool('digitone_log', 'Read the Digitone II\u2019s diagnostics log (the Octatrack\u2019s layout: five-minute load records and incidents such as a FREEZE) through the link. Read-only.'),
+  tool('digitone_trial', 'Load one runtime package, by name from the startup-selected --digitone-packages directory, into the Digitone II\u2019s RAM as a trial through the site\u2019s UploadSession; never keeps it. The unit must be stopped with SETTINGS > REMOTE CTRL on. The server holds the trial open until digitone_keep or digitone_undo; if it exits, the unit rolls the trial back by itself. Requires --allow-device-writes and confirm=true.', { file: string, confirm: { type: 'boolean' } }, ['file', 'confirm'], true),
+  tool('digitone_keep', 'Keep the open Digitone II trial until the next power cycle. Requires --allow-device-writes and confirm=true.', { confirm: { type: 'boolean' } }, ['confirm'], true),
+  tool('digitone_undo', 'Roll back the open Digitone II trial to the module set before it.', {}, [], true),
   tool('remote_session_request', 'Ask a member, by username, for a read-only remote debug session on their Octatrack. They see who asks and why, and must accept in their browser. Administrators only; needs --allow-api-writes and confirm=true.', { username: string, reason: string, minutes: { type: 'number' }, confirm: { type: 'boolean' } }, ['username', 'reason', 'confirm'], true),
   tool('remote_session_status', 'Read a remote session request: pending, declined, active (with its end time), ended or expired, and the relay state when connected.', { session: string }, ['session']),
   tool('remote_session_connect', 'Connect the device tools to an accepted remote session. Until it ends, device_status and device_load read the member’s Octatrack through their browser; writes and saved-file backups are refused.', { session: string }, ['session']),
@@ -199,7 +205,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       globalThis.localStorage.setItem((key === 'session' ? 'octamod.community.session:' : 'modwerk.developer.session:') + api.href, value)
     }
   }
-  let bench, link, release, trial, closed = false, closing, remote, zoom
+  let bench, link, release, trial, closed = false, closing, remote, zoom, digitone
   // Remote sessions call admin routes; the Worker checks Origin on writes, so name the site it trusts (--site).
   const adminApi = async (path, method = 'GET', body) => {
     const response = await frontend.apiFetch(path, { method, redirect: 'error', signal: AbortSignal.timeout(30000), headers: { Origin: deployment.origin, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) })
@@ -309,6 +315,27 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (name && !options.zoomEffects) throw new Error('Choose the effect files at startup with --zoom-effects DIR.')
     return name ? join(options.zoomEffects, args.file) : args.file
   }
+  // The Digitone II: the computer's MIDI and the site's link client, opened on first use and again after an error.
+  async function digitoneUnit() {
+    if (!options.digitoneMidi) throw new Error('Digitone II tools require --digitone-midi at startup.')
+    if (!digitone) {
+      const access = await (dependencies.digitoneAccess ?? nodeMidiAccess)()
+      try { digitone = { access, unit: new DigitoneUnit(midiLinkLine(access), undefined, options.digitoneBase) } } catch (error) { access.close?.(); throw error }
+    }
+    return digitone.unit
+  }
+  async function digitoneRun(run) {
+    try { return await run(await digitoneUnit()) }
+    catch (error) { if (!digitone?.unit.trialOpen) { digitone?.access.close?.(); digitone = undefined } throw error }
+  }
+  const digitoneWrite = args => {
+    if (!options.allowDeviceWrites || args.confirm !== true) throw new Error('Digitone II writes require --allow-device-writes and confirm=true.')
+  }
+  async function digitonePackage(file) {
+    if (!options.digitonePackages) throw new Error('Choose the runtime packages at startup with --digitone-packages DIR.')
+    if (typeof file !== 'string' || !/^[A-Za-z0-9_-]{1,64}\.mwrm$/.test(file)) throw new Error('Name one runtime package in that directory: letters, digits, _ or -, then .mwrm.')
+    return new Uint8Array(await readFile(join(options.digitonePackages, file)))
+  }
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
     if (unit.getState().status === 'trial') return { state: unit.getState(), before: trial?.before, trial: trial?.id }
@@ -354,7 +381,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     return token
   }
   const handlers = {
-    site_features: async () => ({ beta: true, tools: TOOLS.map(item => item.name), coverage: ['instrument/module catalogue, search and module guides', 'catalogue availability and USB package preflight/Undo', 'isolated set CRUD/import/export/current versions', 'community API with normal permissions', 'saved public firmware download receipts', 'real site USB review/trial/self-test/Keep/Undo', 'cached live load and fixed saved-module-file backup receipts', 'read-only remote sessions on a member’s unit through their browser, after they accept', 'a Zoom MultiStomp over MIDI (--zoom-midi): identity, files, backup, and installing or removing one added effect'], limits: ['Domain/API tests do not measure CSS pixels or audible output.', 'OAuth/browser sign-in and upload file selection use their separate existing workflows.', 'No raw memory, key injection, whole-OS flash or automatic Keep.', 'Local sources and private workspace are distinct from a live signed-in browser.', 'A saved-module-file backup does not qualify recovery or permit Keep over foreign saved files.'] }),
+    site_features: async () => ({ beta: true, tools: TOOLS.map(item => item.name), coverage: ['instrument/module catalogue, search and module guides', 'catalogue availability and USB package preflight/Undo', 'isolated set CRUD/import/export/current versions', 'community API with normal permissions', 'saved public firmware download receipts', 'real site USB review/trial/self-test/Keep/Undo', 'cached live load and fixed saved-module-file backup receipts', 'read-only remote sessions on a member’s unit through their browser, after they accept', 'a Zoom MultiStomp over MIDI (--zoom-midi): identity, files, backup, and installing or removing one added effect', 'a Digitone II development base over MIDI (--digitone-midi): link status, the diagnostics log, and a runtime package\u2019s trial, Keep and Undo'], limits: ['Domain/API tests do not measure CSS pixels or audible output.', 'OAuth/browser sign-in and upload file selection use their separate existing workflows.', 'No raw memory, key injection, whole-OS flash or automatic Keep.', 'Local sources and private workspace are distinct from a live signed-in browser.', 'A saved-module-file backup does not qualify recovery or permit Keep over foreign saved files.'] }),
     site_catalogue: async args => {
       const machine = args.machine ?? 'all', octa = frontend.availableModules(!!args.beta).map(module => ({ ...module, machine: 'octatrack', usb: catalogue.ids.includes(module.id) })), digi = frontend.digiModules.map(module => ({ ...module, name: module.title, description: module.summary, machine: module.device }))
       return { machines: frontend.machines, ...preparedModules ? { privatePreparation: preparedModules.info } : {}, modules: [...octa, ...digi].filter(module => (machine === 'all' || module.machine === machine) && (!args.category || (module.libraryCategory ?? module.category) === args.category) && (module.machine === 'octatrack' ? frontend.octatrackMatchesQuery(module, args.query ?? '') : frontend.digiMatchesQuery(module, args.query ?? ''))) }
@@ -466,6 +493,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     zoom_backup: async () => zoomRun('backup'),
     zoom_install: async args => zoomRun('install', zoomWrite(args, true), true),
     zoom_remove: async args => zoomRun('remove', zoomWrite(args, false), true),
+    digitone_status: async () => digitoneRun(unit => unit.status()),
+    digitone_log: async () => digitoneRun(unit => unit.log()),
+    digitone_trial: async args => { digitoneWrite(args); const data = await digitonePackage(args.file); return digitoneRun(unit => unit.trial(data)) },
+    digitone_keep: async args => { digitoneWrite(args); return digitoneRun(unit => unit.keep()) },
+    digitone_undo: async () => digitoneRun(unit => unit.undo()),
     board_claims: async args => {
       const query = new URLSearchParams(Object.entries({ kind: args.kind, key: args.key, holder: args.holder, released: args.released && '1' }).filter(([, value]) => value))
       const { claims, released } = await board.boardRequest('/agent-board/claims' + (query.size ? '?' + query : ''), boardOptions())
@@ -579,7 +611,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
-    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); closeZoom() } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
+    close() { return closing ??= (async () => { closed = true; clearTimeout(idleTimer); try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); closeZoom(); if (digitone) { await digitone.unit.undo().catch(() => { /* the unit rolls an unkept trial back by itself */ }); digitone.access.close?.() } } finally { endTrialTurn(); activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }
@@ -605,8 +637,14 @@ export function createProtocol(service) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   for (const method of ['log', 'info', 'debug', 'warn', 'error']) console[method] = (...args) => process.stderr.write(formatMcpLog(...args) + '\n')
   try {
-  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
-  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
+  /** --digitone-base: a development build's .identity file (machine-base.py --dev --out) or its 64 hex digits. */
+  const buildIdentity = async given => {
+    const text = /^[0-9a-f]{64}$/i.test(given) ? given : (await readFile(resolve(given), 'utf8')).trim()
+    if (!/^[0-9a-f]{64}$/i.test(text)) throw new Error('--digitone-base takes a build .identity file or its 64 hex digits.')
+    return text.toLowerCase()
+  }
+  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'digitone-midi': { type: 'boolean' }, 'digitone-packages': { type: 'string' }, 'digitone-base': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
+  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), digitoneMidi: values['digitone-midi'], digitonePackages: values['digitone-packages'] && resolve(values['digitone-packages']), digitoneBase: values['digitone-base'] && await buildIdentity(values['digitone-base']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
   const protocol = createProtocol(service), input = createInterface({ input: process.stdin, crlfDelay: Infinity })
   let queue = Promise.resolve()
   input.on('line', line => { queue = queue.then(async () => { let reply; try { if (Buffer.byteLength(line) > 64 * 1024) throw new Error('Message too large.'); reply = await protocol(JSON.parse(line)) } catch { reply = { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC message.' } } } if (reply) process.stdout.write(JSON.stringify(reply) + '\n') }) })
