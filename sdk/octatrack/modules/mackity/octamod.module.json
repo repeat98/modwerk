@@ -121,7 +121,7 @@
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "7acd01de4889f51c0bdf984d4c3d7544c0cafc3df37df5d4c6f652c4bcd6fee9",
+      "sourceSha256": "7271f6d9bb015b103e2048bf65912cd8b78bdcbe6205c37cb58f7434f22af846",
       "cycles": [
         {
           "processor": "dsp",
