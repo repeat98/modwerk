@@ -1,4 +1,6 @@
-# Quick Mod Assign testing
+# Improved Mod Assign testing
+
+The module was called Quick Mod Assign up to 0.3.1; the records below keep the names they were written with.
 
 The rytm-emu runs below were observed on the named build; the emulator is not hardware evidence. The unit results are the author's reports, labelled as reported.
 
@@ -197,3 +199,103 @@ Not tested: this package's own image on a unit, and no hand test on the unit.
 **Screenshots:** re-captured in rytm-emu from this version (QM31, `55a50da7…`: plain base `1c14b6b0` and this folder's
 0.3.1 source, linked by Modwerk's linker against stock OS 1.74) with `media/capture.json`'s plans. All six PNGs are
 byte-identical to 0.3.0's (QM30).
+
+## rytm-emu (0.4.0, SCENE + knob; QS01 against stock QS00)
+
+Observed in rytm-emu (ramboot build of `dtboot`), not hardware evidence. QS01: the Modwerk development base (send-bus, `25f2c915`) from the author's tree and this folder's Quick Mod Assign 0.4.0 source, `ddca9904aa424173f85ac1a4930a5e18689d6898154c782f4e4b91e4149fada2`. QS00: the same base without the module, `9c5249d7edc3…`, for stock's behaviour. The default kit, BD's SYNTH page unless named; keys and knobs through the test link, except where "panel" says the emulator's own key scan held the key (the link's held keys never repeat, so only a panel hold reaches stock's scene edit).
+
+| Check | QS00 (stock) | QS01 |
+| --- | --- | --- |
+| SCENE + B with scene 1 engaged | SWT itself moves to 105 | SWT drawn as stock's lock box 105, the scene's other locks (DEC 22, MOD 6, LEV 127) boxed; SWT itself unchanged; a further turn 111 |
+| SCENE let go after the turn, BD tapped, SCENE + B again | | the box comes back at 111: scene mode was not toggled by the release, scene 1 still engaged |
+| SCENE + press B | | SWT's lock removed (plain 99), the other boxes stay |
+| SCENE + B with no scene engaged | SWT moves | popup `NO ACTIVE SCENE`, SWT unchanged |
+| FX track, scene 1 engaged, SCENE + A | | TIM boxed at 30; after the release TIM reads 1/8. as before |
+| Panel SCENE held 1.5 s, screen at 1 s | scene edit's footer (SCENE: 1, LOCKS: 20) | the page; scene edit opens on the release |
+| Panel SCENE held 1.5 s, then BD held | scene 1's locks boxed, footer SCENE: 1 | the same |
+| Panel SCENE tap, BD, then SCENE + B | | scene mode toggled on as stock: BD engaged scene 1 and the turn locks |
+| FIX held, SCENE tapped, BD tapped, SCENE + B | | `NO ACTIVE SCENE`: SCENE did not toggle scene mode during the FIX hold |
+| FUNC + SCENE | PATTERN menu | the same |
+| The 11 earlier rig cases (qma-fix-velocity, the LFO cases, the look cases) against the repository's references | | all pass |
+
+After an independent code review (a trig held after the first knob makes its p-lock; with no scene active the release stays stock's; a stale scene locker is cleared on the next key), QS02 `c8d79660d71bc554fa1151e0e517acf6799f64f8fe0d830b332b29d5b529ae90` gives the same screens as QS01 in every case above, the 11 earlier cases pass, and:
+
+| Check | QS02 |
+| --- | --- |
+| Scene 1 engaged, SCENE + A, then trig 1 held + B | the scene's boxes go; B shows 105 as trig 1's lock; after the trig, the scene's boxes are back and SWT is not scene-locked |
+
+## Hardware (0.4.0, QS02; run by the test rig, not by a person)
+
+On the author's Analog Rytm MKII, OS 1.74: QS02 (above) booted from RAM over the development link (image CRC `c9250fbe`; the flash kept the author's own build), a scratch project open, 24 Nov 2026. Keys and knobs came from the rig's link, screens from the unit; nobody touched the unit. The rig does not reset the unit between cases, so each case started from the scene state the one before left: where that changed what a case meant, the row says so.
+
+| Check | Seen on the unit |
+| --- | --- |
+| FX track, scene engaged, SCENE + A | THR drawn as a lock box at 108; after the release THR reads 102 as before |
+| SCENE + A, then trig 1 held + B | TUN boxed at -2.95 and SWT at 96 (an earlier lock); with the trig held, no boxes and TUN at -3.00 (the trig's view); after the trig, both boxes back |
+| SCENE + B, then SCENE + press B | SWT boxed at 108, then removed (plain 96); TUN's box stays |
+| SCENE + B, let go, BD tapped, SCENE + B | the box comes back: the release did not toggle scene mode |
+| Scene mode by a tap, BD, SCENE + B | SWT boxed at 102 |
+| SCENE + B with no scene active (the case before had disengaged it) | popup `NO ACTIVE SCENE`, SWT unchanged afterwards |
+| FUNC + SCENE | PATTERN menu |
+| SCENE held 1.5 s and let go (the link's hold) | the page: the link's held keys never repeat, so this is a tap to stock and to the module; scene edit by a hold was not seen on the unit |
+| The 6 earlier qma- rig cases against their unit references | same boxes, values and popups; the only differences are the scratch kit's own sound (the filter envelope's shape, SMP OFF against 52), plus the next row |
+| LFO held on the LFO page, WAV turned, scene mode on (left on by the cases before) | `NOT AN LFO DEST`: the module took the LFO key. After a SCENE tap (scene mode off) the same gesture moved WAV, as on stock. This is 0.2.0's LFO-page check (it needs the pages on top, and scene mode's view sits above them), not new in 0.4.0 |
+
+## LFO on the LFO page in a pad mode (0.4.0, QS03)
+
+0.2.0 left the LFO key stock's on the LFO page only with the pages on top, so in PERF, SCNE, MUTE and CHRO, which draw the page as it is, LFO held there was the module's and every knob said `NOT AN LFO DEST` (QP03 above recorded that as intended). 0.4.0 leaves the key stock's in those modes too; scene edit and performance edit (a pad held) are unchanged. QS03 `9ce1326ab922c353afeca61cb181f8d9a73a93c7bb76a922339a6897d1f8d82f`: QS02's base and this folder's source (built before a comment-only reflow).
+
+| Check | QS00 (stock), rytm-emu | QS02, rytm-emu | QS03, rytm-emu | QS03, the author's unit (rig, 25 Nov 2026, image CRC `4510c911`, scratch project) |
+| --- | --- | --- | --- | --- |
+| BD's LFO page, PERF, SCNE, MUTE or CHRO on, LFO held, WAV turned | header LFO while held, WAV moves to EXP | `NOT AN LFO DEST`, WAV stays | identical to stock, every screen, all four modes | header LFO while held, WAV moves to EXP, all four modes |
+| SCNE on, FILTER page, LFO held, FRQ turned | | | FRQ shown as the depth box (0) | the same; FRQ reads 64 after the release |
+| qma-lfo-on-lfo-page (pages on top) | | | pass | WAV moves as on stock (no unit reference recorded yet) |
+| The other 30 rig cases above | | | pass, scene cases' screens identical to QS02 | qma-lfo-tap: only the scratch kit's own sound differs, as on QS02 |
+
+## The author's hand test of QM40, and what changed after it (0.4.0, QM41/QM42, QS04/QS05)
+
+Reported by the author, 25 Nov 2026, QM40 (the plain-base package image, flashed): a SCENE hold with nothing touched opened scene edit on the release, as designed. Inside scene edit, SCENE + knob did nothing, also as designed (stock's scene edit locks only with a scene pad held). With no scene engaged, SCENE + FILTER locked nothing; in rytm-emu QM40 showed `NO ACTIVE SCENE` there, so the unit screen was most likely still scene edit (not confirmed). The author asked for: locks with no scene engaged going to the scene engaged last, and pads during a SCENE hold switching tracks (AUTO TRK SWITCH on), not engaging scenes, with no scene edit after.
+
+rytm-emu, QM41 (`44d63b99…`) and QM42 (`7990c1ee…`, after the review fixes, every screen identical to QM41's), plain base 1c14b6b0, against stock QS00 where stock does something:
+
+| Check | QS00 (stock) | QM40 | QM41 / QM42 |
+| --- | --- | --- | --- |
+| SCENE + B, no scene ever engaged | | `NO ACTIVE SCENE` | SWT locked at 105 in scene 1, its other locks (DEC, MOD, LEV) boxed |
+| Scene 2 engaged, then disengaged, scene mode left, SCENE + B | | `NO ACTIVE SCENE` | SWT locked at 105, the only box: scene 2 (no other locks) |
+| SCENE held, SD tapped | scene edit open (0.2 s), the pad picks scene 2 | SD selected | SD selected |
+| ...SCENE let go | scene edit | scene edit opens (the pad did not count) | the SD page, no scene edit |
+| Scene mode, SCENE held, SD tapped, B turned | scene edit, scene 2 | scene 2 engaged, BD stays | SD selected, SWT box; let go: no scene edit |
+| ...then SCENE held alone and let go | | | scene edit on SCENE 1: the pad engaged no scene |
+| Scene mode, SD tapped (no SCENE) | scene 2 engaged | | scene 2 engaged, as stock |
+| SCENE held, B turned on BD, SD tapped, B turned | | | SWT box on SD |
+
+Rig cases, rytm-emu, QS04 (`e03614c6…`, dev base 25f2c915) and QS05 (`a2e4afd7…`): all 31 pass; s3-noscene now locks into scene 1 instead of the popup.
+
+An independent code review: no serious bug; its three small points are in (a foreign locker held: the pad stays stock's; a redraw after the select; the README says the last scene is kept across kit loads) with the stale comments.
+
+## Pads on the unit, scene edit locks, copy and clear (0.4.0, QS06 to QS10, QM43 to QM45)
+
+On the author's unit, 25 Nov 2026 (debug image QS06, RAM-booted over FXCJ, scratch project): after some use every SCENE press was declined with `DBG PAD`. The link's memory read showed stock's key table (0x40081c28's bitmap at 0x418d1340, bits 0x48..0x53) reporting all 12 pads held with none touched, and a tap of BD and SD did not clear them; in rytm-emu those bits stay 0. From QS07 the module counts held pads from its own pad events (and drops a pad when the table says it is up). Two of the author's earlier tries ran another session's RAM image, not this module (image CRCs `6777a391`, `9312221b`); the unit was held in the queue from then on.
+
+rytm-emu, QM43/QM44/QM45 (plain base 1c14b6b0), against stock QS00 where stock does something:
+
+| Check | QS00 (stock) | QM43 to QM45 |
+| --- | --- | --- |
+| SCENE held 0.2 s, nothing else | | scene 1's boxes (DEC 22, MOD 6, LEV 127) |
+| SCENE tapped | | no boxes flash |
+| Scene edit, SD pad (scene 2), SCENE + B | SCENE + B is a plain edit | SWT box, `SCENE: 2 LOCKS: 1`, scene edit stays |
+| Scene edit, SCENE tapped | closes scene edit | closes scene edit |
+| Scene edit, SCENE held with nothing | stays open | stays open |
+| Scene edit, FUNC + REC | `COPY SCENE 1` | (stock's) |
+| SCENE held, REC | | `COPY SCENE 1` |
+| Scene 2 engaged, SCENE held, STOP | | `PASTE SCENE`; scene 2 then shows scene 1's boxes |
+| SCENE held, PLAY; PLAY again | | `CLEAR SCENE`, no boxes after; `UNDO CLEAR`, boxes back; the sequencer stays stopped |
+| SCENE rolled into PLAY (50 ms) | the sequencer starts | the sequencer starts (QM45) |
+
+Rig cases, rytm-emu: all 31 pass on QS08, QS09 and QS10.
+
+On the author's unit, reported by the author, 25 Nov 2026: QS07 (pads from events) "everything seemed to work"; QS09 (scene edit locks, early boxes, copy, paste, clear) "all that looks good". Not on the unit: QS10's later changes (the transport keys wait 0.2 s; a pad's bit clears when the table says up), the exact package image.
+
+An independent code review of the whole of 0.4.0: nothing that leaves a key or the locker taken. Its two medium points are in QS10 (the transport keys taken only once the hold shows; pads_down self-clearing), and its README points are fixed.
+
+Not tested: scene edit opened by a held SCENE on the unit (needs a person); 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.

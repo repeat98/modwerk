@@ -24,6 +24,9 @@ spec.loader.exec_module(build)
 spec = importlib.util.spec_from_file_location('runtime_loader_verify', LOADER / 'verify_static.py')
 verify_static = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verify_static)
+spec = importlib.util.spec_from_file_location('model_cycles_build_sites', ROOT / 'sdk/machines/model-cycles/tools/build_sites.py')
+SITES = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(SITES)
 
 
 class LoaderTests(unittest.TestCase):
@@ -64,6 +67,21 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual(verify_static.unpack(data), (b'\x4e\x75\0\0', (0,), [(0x40094296, site[1], site[2], (2,))]))
         with self.assertRaisesRegex(ValueError, 'bounds'):
             build.package(b'', 0, [], [], [(0x40000400, b'\0' * 34, b'\0' * 34, [])])
+
+    def test_c_sources_patch_declared_sites_with_hashes_only(self):
+        # the Model:Cycles' build_sites.py: a jsr or jmp to the module's function, NOPs after it, its target word a relocation; the package holds
+        # the stock bytes' SHA-256 and no stock byte (ABI 7)
+        digest = hashlib.sha256(b'stock!').digest()
+        declared = [dict(addr='0x40007678', len=8, stockSha256=digest.hex(), op='jsr', target='frames_end')]
+        sites = SITES.c_sites(declared, {'frames_end': 0x20})
+        self.assertEqual(sites, [(0x40007678, digest, bytes.fromhex('4eb9000000204e71'), [2], 0, 8)])
+        data = build.package(b'\x4e\x75' * 32, 0, [build.NONE] * 4, [], sites, name='frames', hashed=True, title='frames')
+        self.assertEqual(struct.unpack('>H', data[4:6])[0], 7)
+        self.assertIn(digest, data)
+        self.assertNotIn(b'stock!', data)
+        for bad in (dict(op='bra'), dict(target='nowhere'), dict(len=4), dict(len=7)):
+            with self.assertRaises(ValueError):
+                SITES.c_sites([dict(declared[0], **bad)], {'frames_end': 0x20})
 
     def test_abi8_constant_initializers_are_explicit_and_bounded(self):
         image = bytes(544)

@@ -1,0 +1,1 @@
+Development: `npm run module:new` gives a new Octatrack DSP effect the first FX2 id that neither stock nor a listed module holds, instead of the template's fixed 0x0a. Once every id the build takes (0x04-0x1f) is held, `module:new` and `module:doctor` say so plainly: a new effect waits until the build takes ids past 0x1f.

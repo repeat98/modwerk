@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'desktop/dist/**', '.wrangler/**', 'vendor/**', '.claude/**'] }, // agent worktrees nest under .claude/worktrees
+  { ignores: ['dist/**', 'node_modules/**', 'desktop/dist/**', '.wrangler/**', 'vendor/**', '.claude/**', '.codex/**', '**/*.local/**'] }, // agent worktrees nest under .claude/ and .codex/; *.local folders are private (.gitignore)
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

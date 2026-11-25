@@ -21,7 +21,7 @@ import { gzipSync } from 'node:zlib'
 import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 import { boardRequest, readToken, BoardError, BoardUnavailable } from './agent-board.mjs'
-import { formatReview, readCalls, reviewSession } from './agent-session-review.mjs'
+import { formatReview, heavyProcesses, readCalls, reviewSession } from './agent-session-review.mjs'
 import { claudeProjectFolder, firmwareFindings, prepareSession, readClaudeTranscript, readCodexRollout, SESSION_CONSENT_VERSION, SESSION_GZIP_LIMIT, SESSION_NOTE_LIMIT } from '../src/community/agent-sessions.ts'
 
 const PREFERENCES = ['ask', 'always', 'never']
@@ -37,7 +37,7 @@ async function writePrivate(file, text) {
 }
 
 /** What the agent does before its final message, whatever the developer chose about sharing (pr:ready prints it). */
-export const reviewLine = 'Session review: before your final message, run npm run session -- review, add what its figures cannot show, and tell the developer at most three things that cost time, each with its fix. A concrete fix goes in its own "Workflow: …" pull request (docs/AGENT_SESSIONS.md#review-the-session-first).'
+export const reviewLine = 'Session review: before your final message, run /modwerk-post-eval: npm run session -- review, add what its figures cannot show, and tell the developer at most three things that cost time, each with its fix. A concrete fix goes in its own "Workflow: …" pull request (docs/AGENT_SESSIONS.md#review-the-session-first).'
 
 /** What the agent should do about sharing at the end of a task, in one line (pr:ready prints it too). */
 export function sharingLine(preference) {
@@ -233,7 +233,9 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === 'status') { console.log(sharingLine(await readPreference())); return 0 }
   if (command === 'review') {
     const found = await findTranscript({ file: values.file, agent: values.agent })
-    for (const line of formatReview(reviewSession(readCalls((await readFile(found.file, 'utf8')).split('\n').filter(Boolean), found.agent)))) console.log(line)
+    let processes = []
+    try { processes = heavyProcesses(execFileSync('ps', ['-Ao', 'pid=,pcpu=,time=,etime=,command='], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })) } catch { /* no ps (Windows): the review goes on without it */ }
+    for (const line of formatReview(reviewSession(readCalls((await readFile(found.file, 'utf8')).split('\n').filter(Boolean), found.agent)), processes)) console.log(line)
     return 0
   }
   if (command === 'prefer') {

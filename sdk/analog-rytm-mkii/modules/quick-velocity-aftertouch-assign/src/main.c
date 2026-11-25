@@ -9,6 +9,11 @@
 //   LFO + turn a knob       makes that parameter the LFO's destination (DST),
 //                           at depth 0 on the first turn; further turns set DEP
 //                           (-128.00..+127.99) at DEP's own step.
+//   SCENE + turn a knob     locks that parameter in the active scene (with none
+//                           engaged, the scene engaged last), as stock's scene
+//                           edit does with the scene's pad held.
+//   SCENE + a pad           moves to that pad's track for its locks (in scene
+//                           mode too, with AUTO TRK SWITCH on).
 //
 // While a key is held, stock draws every knob already linked with its
 // amount, as it does for a held performance or scene pad. The module puts its
@@ -101,11 +106,22 @@ typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile,
 #define EVENT_DTOR ((event_dtor_t)KEY_EVENT_DTOR_AT)
 #define ENC_DELTA ((enc_delta_t)ENC_DELTA_AT)
 #define ENC_ACCUMULATE ((enc_accumulate_t)ENC_ACCUMULATE_AT)
+#define KIT_SCENES ((word1_t)KIT_SCENES_AT)
+#define ACTIVE_SCENE ((int1_t)ACTIVE_SCENE_AT)
+#define CONSUME_KEY ((void (*)(int))CONSUME_KEY_AT)
 
 #define KEY_FIX 0xb3
 #define KEY_SAMPLER 0xb4
 #define KEY_LFO 0x35
 #define KEY_FUNC 0x80
+#define KEY_SCENE 0x13
+#define KEY_YES 0x44
+#define KEY_NO 0x45
+#define KEY_REC 0x50                // REC, PLAY, STOP: copy, clear, paste with SCENE held
+#define KEY_PLAY 0x51
+#define KEY_STOP 0x52
+#define KEY_PUSH_FIRST 0x70         // the knobs' presses, A..H
+#define KEY_PUSH_LAST 0x77
 #define KEY_PAD_FIRST 0x90          // BD .. CB
 #define KEY_PAD_LAST 0x9b
 #define TRIG_KEYS 16                // trig keys 0..15
@@ -113,6 +129,8 @@ typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile,
 #define EV_FLAGS 16                 // event + 16: bit 0 down (clear on release), 8 repeat
 #define PRESSED 1
 #define REPEAT 8
+#define CLEAN 0x10                  // on a release: no other key went down during the hold
+#define ENC_CLICKS 16               // encoder event + 16: its clicks
 #define BRAIN_VIEWS 32              // brain + 32: the view manager
 #define MANAGER_LIST 20             // view manager + 20: its list's sentinel node
 #define MANAGER_LAST 24             // view manager + 24: the top view's list node
@@ -126,9 +144,10 @@ typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile,
 #define AMOUNT_MAX (127 * STEP)
 #define POPUP_TICKS 4               // at most one popup in four ticks (about 200 ms)
 
-enum { NONE = -1, VEL, AT, LFO, KINDS };
+enum { NONE = -1, VEL, AT, LFO, SCN, KINDS };
 
-// One hold per key: FIX for velocity, SAMPLER for aftertouch, LFO for the LFO.
+// One hold per key: FIX for velocity, SAMPLER for aftertouch, LFO for the LFO,
+// SCENE for scene locks.
 // A hold is ours only when its press came on a page of ours without FUNC.
 struct hold {
     int key;
@@ -139,11 +158,14 @@ struct hold {
 };
 static struct hold holds[KINDS] = {
     { KEY_FIX, 0, 0, 0, 0 }, { KEY_SAMPLER, 0, 0, 0, 0 }, { KEY_LFO, 0, 0, 0, 0 },
+    { KEY_SCENE, 0, 0, 0, 0 },
 };
 // A hold of about half a second with no turn is a look at the amounts, not a tap: counted in ev_tick's
 // calls, as stock's UI loop runs them. Not by stock's key repeat: it moves to the last key pressed, so a
 // page key pressed during the hold stopped the count (rytm-emu, 15 Nov 2026).
 #define LOOK_TICKS 10
+// A SCENE hold shows the scene's locks this many ticks in (about 0.2 s), so a tap does not flash them.
+#define SHOW_TICKS 4
 static unsigned ticks;              // ev_tick's count
 
 static void *views;
@@ -155,6 +177,12 @@ static int shown = NONE;            // the kind our locker shows, NONE when not 
 static unsigned lfo_flags;          // the LFO press held back, for its replay
 static int lfo_swallowed;           // that press was held back and its release not seen yet
 static int replaying;               // the held-back tap is going round the key chain now
+static unsigned scn_flags;          // SCENE's press, for the replayed repeat
+static int scn_ours;                // that press started a SCENE hold, its release not seen yet
+static int scn_repeated;            // a SCENE repeat was swallowed: the release opens scene edit
+static int scn_locking;             // a knob or pad event ended SCENE's hold for scene locks
+static int last_scene;              // the scene engaged last (0, scene 1, until one is)
+static unsigned pads_taken;         // pads whose press the module took in scene mode: their releases too
 
 // core-ar2's ev_key site (core.s): every mod's ev_key handler in order, then
 // stock's Brain::key, as for a key from the panel. Every core-ar2 0.7 and
@@ -191,6 +219,50 @@ QMA_UI static int on_pages(void)
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
 
+// The page shown as itself: the pages on top, or a pad mode (PERF, SCNE, MUTE,
+// CHRO), which only changes what the pads do and draws the page as it is. Not
+// scene edit or performance edit, where stock's own edit owns the knobs and pads.
+QMA_UI static int page_shown(void)
+{
+    word_t top;
+    if (!views)
+        return 0;
+    top = top_view();
+    return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
+        || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
+}
+
+// The top view's object, past the popups; 0 for none.
+QMA_UI static char *top_object(void)
+{
+    char *sentinel = (char *)views + MANAGER_LIST;
+    char *node = *(char **)((char *)views + MANAGER_LAST);
+    while (node && node != sentinel) {
+        char *view = *(char **)(node + NODE_VIEW);
+        if (*(word_t *)view != POPUP_VTABLE)
+            return view;
+        node = *(char **)(node + NODE_PREV);
+    }
+    return 0;
+}
+
+// Scene edit with none of its scene pads held: a SCENE hold locks the scene it shows.
+QMA_UI static int scene_edit_free(void)
+{
+    char *view;
+    if (!views || top_view() != SCENE_EDIT_VTABLE)
+        return 0;
+    view = top_object();
+    return view && !*(unsigned *)(view + SCENE_EDIT_PADS);
+}
+
+// Where a SCENE hold may make scene locks: the pages and pad modes as page_shown, and
+// scene edit while no scene pad is held there (a held pad edits its own scene's locks).
+QMA_UI static int scene_screen(void)
+{
+    return page_shown() || scene_edit_free();
+}
+
 QMA_UI static const char *row(int id)
 {
     return (const char *)PARAM_TABLE + id * PARAM_ROW_BYTES;
@@ -224,7 +296,10 @@ QMA_UI static int any_held(int first, int last)
 }
 
 #define ANY_TRIG_HELD() any_held(0, TRIG_KEYS - 1)
-#define ANY_PAD_HELD() any_held(KEY_PAD_FIRST, KEY_PAD_LAST)
+// The pads held, from their own events (ev_key): on the author's unit stock's key table
+// (0x40081c28) reported every pad held with none touched (25 Nov 2026), so it is not asked.
+static unsigned pads_down;
+#define ANY_PAD_HELD() (pads_down != 0)
 
 QMA_UI static void show(const char *text)
 {
@@ -246,12 +321,25 @@ QMA_UI static int sound_track(int track)
 }
 
 // The tracks a kind works on: velocity and aftertouch on the sound tracks,
-// the LFO on the FX track too.
+// the LFO and scene locks on the FX track too.
 QMA_UI static int kind_track(int kind, int track)
 {
-    return kind == LFO ? track >= 0 && track <= FX_TRACK : sound_track(track);
+    return kind == LFO || kind == SCN ? track >= 0 && track <= FX_TRACK : sound_track(track);
 }
 
+// SCENE (from 0.4.0). Stock opens scene edit on SCENE's first key repeat, about
+// 0.2 s into the hold, and toggles scene mode on a clean release. The module lets
+// the press pass (stock does nothing on it), swallows the repeats while SCENE is
+// held and decides at the release: a tap (no repeat seen) is stock's toggle; a
+// hold with no knob replays one repeat, so stock opens scene edit then; a hold
+// with a knob turn or press puts a locker of the module's own into the parameter
+// UI that forwards to stock's SceneParamLocker routines for the target scene, and
+// ends SCENE's hold as stock does when it opens a screen (CONSUME_KEY), so its
+// release is dropped and neither scene edit nor the toggle happens. Stock's lock
+// edit then writes the lock (absolute, as scene locks are) and draws the boxes.
+// The module writes no lock bytes. With no scene engaged the locks go to the scene
+// engaged last. A pad during the hold ends it as a knob does (scene_pad).
+//
 // The kind held now, NONE without one. A release that never reached ev_key
 // must not leave knobs taken, so the key's own state is asked too.
 QMA_UI static int held_kind(void)
@@ -424,9 +512,10 @@ QMA_UI static void *lfo_accumulator(void)
     return 0;
 }
 
-// The LFO page is the page shown: no screen (PERF, SCNE, MUTE, CHRO) above the
-// pages, and the holder's LFO view, a sound's (+ 248) or the FX track's (+ 296;
-// the holder keeps a sound's page views at (26 + page) * 8 and the FX track's at
+// The LFO page is the page shown: the pages or a pad mode on top (in every pad
+// mode stock's LFO hold shows the page's values; rytm-emu, OS 1.74), and the
+// holder's LFO view, a sound's (+ 248) or the FX track's (+ 296; the holder
+// keeps a sound's page views at (26 + page) * 8 and the FX track's at
 // (32 + page) * 8, 0x400cbbd6), is on the view stack. There the LFO key stays
 // stock's, so holding it shows the page's values as holding any page key does,
 // and its taps step to a module's page behind it.
@@ -434,7 +523,7 @@ QMA_UI static int lfo_page_shown(void)
 {
     char *sentinel, *node, *holder = 0;
     word_t lfo, fx_lfo;
-    if (!views || top_view() != PAGES_TOP_VTABLE)
+    if (!page_shown())
         return 0;
     sentinel = (char *)views + MANAGER_LIST;
     for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
@@ -527,9 +616,10 @@ QMA_UI static void lfo_turn(int track, int index)
 // Its "param" is a parameter's index, as the slots and LFO DST store it.
 
 // The kind our locker answers for on track, NONE when it has nothing to say.
+// SCENE has a locker of its own (scene_locker).
 QMA_UI static int shown_on(int track)
 {
-    return shown != NONE && kind_track(shown, track) ? shown : NONE;
+    return shown != NONE && shown != SCN && kind_track(shown, track) ? shown : NONE;
 }
 
 QMA_UI static int locker_has_any(void *self)
@@ -655,9 +745,94 @@ static const void *const locker_vtable[] = {
 };
 static struct { const void *const *vtable; } locker = { locker_vtable };
 
+// ---- The target scene's locker, while SCENE is held ---------------------------
+// Shaped as stock's SceneParamLocker {vtable, scenes, scene}, whose slot routines read
+// only + 4 and + 8, so the module calls them on this object after pointing it at the
+// kit's Scenes and the target scene. Not stock's own per-scene object: a scene pad in
+// scene edit sets that same pointer, and the module must never take a pad's locker
+// for its own.
+static struct { const void *const *vtable; word_t scenes; int scene; } scene_locker;
+
+// The scene the locks go to: the active one, or with none engaged the one engaged last
+// (scene 1 until one is), so a disengaged scene can still be set up without hearing it.
+QMA_UI static int target_scene(word_t kit)
+{
+    int scene;
+    if (scene_edit_free()) {
+        scene = *(int *)(top_object() + SCENE_EDIT_SCENE);
+        if (scene >= 0 && scene < SCENES)
+            return scene;               // scene edit: the scene it shows
+    }
+    scene = ACTIVE_SCENE(kit);
+    if (scene >= 0 && scene < SCENES)
+        last_scene = scene;
+    return last_scene;
+}
+
+// Points scene_locker at the target scene.
+QMA_UI static void scene_refresh(void)
+{
+    word_t kit = PROJECT_KIT(PROJECT());
+    scene_locker.scenes = KIT_SCENES(kit);
+    scene_locker.scene = target_scene(kit);
+}
+
+QMA_UI static int scene_has_any(void *self)
+{
+    (void)self;
+    scene_refresh();
+    return ((unsigned char (*)(void *))SCENE_HAS_ANY_AT)(&scene_locker) != 0;
+}
+
+QMA_UI static int scene_get(void *self, int track, int param)
+{
+    (void)self;
+    scene_refresh();
+    return ((int (*)(void *, int, int))SCENE_GET_AT)(&scene_locker, track, param);
+}
+
+QMA_UI static void scene_clear(void *self, int track, int param)
+{
+    (void)self;
+    if (!IS_KEY_HELD(KEY_SCENE))
+        return;
+    scene_refresh();
+    ((void (*)(void *, int, int))SCENE_CLEAR_AT)(&scene_locker, track, param);
+}
+
+// Stock's lock edit turns a knob through here, with the value it worked out from the
+// lock's (or the parameter's) and the turn.
+QMA_UI static int scene_set(void *self, int track, int param, int value)
+{
+    int written;
+    (void)self;
+    if (!IS_KEY_HELD(KEY_SCENE))
+        return -1;                      // a lost release: the tick takes the locker away
+    if (ANY_TRIG_HELD())
+        return -1;                      // a trig's turn is its p-lock: the tick hands the knobs back
+    scene_refresh();
+    written = ((int (*)(void *, int, int, int))SCENE_SET_AT)(&scene_locker, track, param, value);
+    if (written == -1 && track >= 0 && track <= FX_TRACK)
+        show("SCENE LOCKS FULL");       // all 48 in use: stock's scene edit says nothing
+    return written;
+}
+
+// Stock's slots for has (through this vtable's get), relative (0) and lockable;
+// clear all is never ours: stock's wipes every scene's locks.
+static const void *const scene_vtable[] = {
+    locker_never, locker_never, scene_has_any, scene_clear, locker_clear_all,
+    scene_set, scene_get,
+    (const void *)SCENE_HAS_AT, (const void *)SCENE_RELATIVE_AT, (const void *)SCENE_LOCKABLE_AT,
+};
+
+QMA_UI static int is_ours(word_t current)
+{
+    return current && (current == (word_t)&locker || current == (word_t)&scene_locker);
+}
+
 QMA_UI static int ours(void)
 {
-    return GET_LOCKER(PARAM_UI()) == (word_t)&locker;
+    return is_ours(GET_LOCKER(PARAM_UI()));
 }
 
 // Sets our locker for kind if the UI's is free (or already ours), on a track
@@ -666,10 +841,13 @@ QMA_UI static int ours(void)
 QMA_UI static void locker_install(int kind)
 {
     word_t ui = PARAM_UI(), current = GET_LOCKER(ui);
-    if (!kind_track(kind, selected_track()) || (current && current != (word_t)&locker))
+    void *mine = kind == SCN ? (void *)&scene_locker : (void *)&locker;
+    if (!kind_track(kind, selected_track()) || (current && current != (word_t)mine))
         return;
+    if (kind == SCN)
+        scene_locker.vtable = scene_vtable;
     shown = kind;
-    SET_LOCKER(ui, &locker);
+    SET_LOCKER(ui, mine);
     LOCK_EDIT(ui, 1);
     redraw = 1;
 }
@@ -677,7 +855,7 @@ QMA_UI static void locker_install(int kind)
 QMA_UI static void locker_remove(void)
 {
     word_t ui = PARAM_UI();
-    if (GET_LOCKER(ui) == (word_t)&locker)
+    if (is_ours(GET_LOCKER(ui)))
         END_LOCK_EDIT(ui);
     shown = NONE;
     redraw = 1;
@@ -692,8 +870,8 @@ QMA_UI static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
 {
     int kind = held_kind(), track, index, logical;
     (void)view;
-    if (kind == NONE)
-        return 0;
+    if (kind == NONE || kind == SCN)
+        return 0;                       // SCENE: stock's lock edit takes its turns, or stock's edit
     holds[kind].turned = 1;             // any turn makes the hold a hold, not a tap
     if (func || !delta || id < 0 || id >= PARAM_ROWS || ANY_TRIG_HELD()
         || row_word(id, ROW_CATEGORY) == CATEGORY_TRIG)
@@ -748,6 +926,148 @@ QMA_UI static void replay_lfo(void *brain, unsigned release_flags)
     replaying = 0;
 }
 
+// A SCENE press with nothing else that SCENE means on stock: no FUNC (the PATTERN
+// menu), no YES or NO (quick save, reload), no trig or pad, the UI's locker free, on a
+// screen of scene_screen's. It passes on (stock does nothing on it).
+QMA_UI static int scene_press(unsigned flags)
+{
+    if (IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_YES) || IS_KEY_HELD(KEY_NO) || !scene_screen()
+        || ANY_TRIG_HELD() || ANY_PAD_HELD() || GET_LOCKER(PARAM_UI()))
+        return 0;
+    scn_flags = flags;
+    scn_ours = 1;
+    holds[SCN].held = 1;
+    holds[SCN].turned = 0;
+    holds[SCN].since = ticks;
+    return 0;
+}
+
+// The first knob or pad event of a SCENE hold ends the hold as stock does when its hold
+// opens a screen: its release is dropped, so neither scene edit nor the toggle happens.
+QMA_UI static void scene_touched(void)
+{
+    if (!scn_locking) {
+        scn_locking = 1;
+        CONSUME_KEY(KEY_SCENE);
+    }
+}
+
+// A knob turned (with clicks) or pressed during a SCENE hold, before stock sees it.
+// The first ends SCENE's hold (no scene edit, no toggle) and sets the scene locker, so
+// stock's lock edit takes this same event: it always passes on (0).
+QMA_UI static int scene_knob(void)
+{
+    word_t now;
+    if (!scene_screen() || ANY_TRIG_HELD()) {
+        if (shown == SCN)
+            locker_remove();            // a trig held now makes its p-lock, as on stock
+        return 0;                       // scene edit came up, or a trig edits its own locks
+    }
+    now = GET_LOCKER(PARAM_UI());
+    if (now && now != (word_t)&scene_locker)
+        return 0;                       // a pad, a trig or QPER holds stock's lock edit
+    holds[SCN].turned = 1;
+    scene_touched();
+    if (!now)
+        locker_install(SCN);
+    return 0;
+}
+
+// A pad pressed during a SCENE hold, before stock sees it. It ends SCENE's hold as a knob
+// does (no scene edit, no toggle on the release), so a hold can pick tracks and lock them.
+// On the pages and in PERF, MUTE and CHRO the pad stays stock's (on the pages it plays
+// and, with AUTO TRK SWITCH on, selects its track). In scene mode stock's SceneSelectView
+// would engage the pad's scene; the module takes the press, its repeats and its release there and
+// selects the pad's track as the pages' pad does with AUTO TRK SWITCH on, so the scene
+// being set up stays where it is: 0 passes the press on, 1 takes it.
+// REC, STOP or PLAY pressed during a SCENE hold (once the boxes show or a knob or pad
+// made it a hold, so SCENE rolled into PLAY still starts the sequencer): copy, paste or clear the scene the
+// locks go to, with stock's own routines and words, as scene edit's FUNC + REC, STOP and
+// PLAY do (a second STOP or PLAY undoes, as there). It ends the hold as a knob does. The
+// key's release is the module's too (transport_taken), so the transport does nothing.
+static unsigned transport_taken;
+QMA_UI static int scene_transport(int key)
+{
+    typedef unsigned char (*op2_t)(word_t, int);
+    typedef unsigned char (*op3_t)(word_t, int, int);
+    word_t scenes;
+    int scene;
+    static char text[16] = "COPY SCENE ";
+    if (!scene_screen() || ANY_TRIG_HELD() || ANY_PAD_HELD())
+        return 0;
+    if (!scn_locking && ticks - holds[SCN].since < SHOW_TICKS)
+        return 0;                       // SCENE rolled into PLAY: the transport's, as on stock
+    scene_touched();
+    transport_taken |= 1u << (key - KEY_REC);
+    scene_refresh();
+    scenes = scene_locker.scenes;
+    scene = scene_locker.scene;
+    if (key == KEY_REC) {
+        if (((op2_t)SCENE_COPY_AT)(scenes, scene)) {
+            text[11] = scene >= 9 ? '1' : '0' + scene + 1;
+            text[12] = scene >= 9 ? '0' + scene - 9 : 0;
+            text[13] = 0;
+            show(text);
+        }
+    } else if (key == KEY_STOP) {
+        if (((op3_t)SCENE_UNDO_AT)(scenes, scene, 2))
+            show("UNDO PASTE");
+        else if (((op3_t)SCENE_PASTE_AT)(scenes, scene, 1))
+            show("PASTE SCENE");
+    } else if (((op3_t)SCENE_UNDO_AT)(scenes, scene, 1))
+        show("UNDO CLEAR");
+    else if (((op3_t)SCENE_CLEAR_ALL_AT)(scenes, scene, 1))
+        show("CLEAR SCENE");
+    redraw = 1;
+    return 1;
+}
+
+QMA_UI static int scene_pad(int pad)
+{
+    word_t project;
+    int selected;
+    word_t now;
+    if (!scene_screen() || ANY_TRIG_HELD())
+        return 0;                       // scene edit came up, or a trig edits its own locks
+    now = GET_LOCKER(PARAM_UI());
+    if (now && now != (word_t)&scene_locker)
+        return 0;                       // QPER or a lock edit of stock's holds the knobs
+    scene_touched();
+    if (top_view() != SCENE_VTABLE)
+        return 0;
+    pads_taken |= 1u << pad;
+    project = PROJECT();
+    selected = selected_track();
+    if (pad != selected
+        && ((unsigned char (*)(word_t))AUTO_TRK_SWITCH_AT)(((word1_t)PROJECT_GLOBALS_AT)(project))) {
+        ((void (*)(int, int))SELECT_TRACK_AT)(pad, selected == FX_TRACK);
+        redraw = 1;                     // the boxes follow the new track at once
+    }
+    return 1;
+}
+
+// SCENE's release, when its press was ours. After a knob event it is dropped by stock
+// and never comes. A tap passes: stock toggles scene mode. After a swallowed repeat the
+// release is the module's, and one repeat then the release (without its clean flag, so
+// MainView does not toggle scene mode as well) go round the key chain: stock opens
+// scene edit as its own hold would have, and the mods after this one see the key go up.
+QMA_UI static int scene_release(void *brain, unsigned flags)
+{
+    scn_ours = 0;
+    holds[SCN].held = 0;
+    if (shown == SCN)
+        locker_remove();
+    if (scn_locking)
+        return 1;
+    if (!scn_repeated)
+        return 0;
+    replaying = 1;
+    replay_key(brain, KEY_SCENE, scn_flags | REPEAT);
+    replay_key(brain, KEY_SCENE, flags & ~CLEAN);
+    replaying = 0;
+    return 1;
+}
+
 QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
 {
     encoder_turn = 0;
@@ -758,14 +1078,51 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     word_t locker_now;
     if (replaying)
         return 0;                       // our own replayed LFO tap: the rest of the chain's
+    if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST && !(flags & REPEAT)) {
+        if (down)
+            pads_down |= 1u << (key - KEY_PAD_FIRST);
+        else
+            pads_down &= ~(1u << (key - KEY_PAD_FIRST));
+    }
     views = *(void **)((char *)brain + BRAIN_VIEWS);
+    if (shown == SCN && !IS_KEY_HELD(KEY_SCENE))
+        locker_remove();                // SCENE's release was dropped: do not wait for the tick
     if (key == KEY_FIX)
         k = VEL;
     else if (key == KEY_SAMPLER)
         k = AT;
     else if (key == KEY_LFO)
         k = LFO;
+    else if (key == KEY_SCENE)
+        k = SCN;
     else {
+        if (key >= KEY_REC && key <= KEY_STOP) {
+            unsigned bit = 1u << (key - KEY_REC);
+            if (down && !(flags & REPEAT))
+                transport_taken &= ~bit;
+            else if (transport_taken & bit) {
+                if (!down)
+                    transport_taken &= ~bit;
+                return 1;               // its repeats and release are the module's too
+            }
+            if (down && !(flags & REPEAT) && held_kind() == SCN)
+                return scene_transport(key);
+        }
+        if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST) {
+            unsigned bit = 1u << (key - KEY_PAD_FIRST);
+            if (down && !(flags & REPEAT))
+                pads_taken &= ~bit;     // a fresh press: a lost release leaves nothing taken
+            else if (pads_taken & bit) {
+                if (!down)
+                    pads_taken &= ~bit;
+                return 1;               // a pad taken in scene mode: its repeats and release too
+            }
+            if (down && !(flags & REPEAT) && held_kind() == SCN)
+                return scene_pad(key - KEY_PAD_FIRST);
+        }
+        if (down && !(flags & REPEAT) && key >= KEY_PUSH_FIRST && key <= KEY_PUSH_LAST
+            && held_kind() == SCN)
+            return scene_knob();
         if (holds[LFO].held && (flags & PRESSED))
             dest_knob = -1;             // a page key may have moved the knobs
         if (holds[LFO].held && (flags & PRESSED))
@@ -779,6 +1136,8 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
             h->ignored = 0;
             return 1;
         }
+        if (k == SCN)                   // the tick may have seen SCENE go up first
+            return scn_ours ? scene_release(brain, flags) : 0;
         if (k == LFO && lfo_swallowed) {
             lfo_swallowed = 0;          // the press was ours even if the tick saw the key go up first
             h->held = 1;
@@ -803,8 +1162,14 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
         }
         return turned;                  // SAMPLER: a tap's release opens stock's recorder
     }
-    if (flags & REPEAT)
+    if (flags & REPEAT) {
+        if (k == SCN) {
+            if (scn_ours && !scn_locking)
+                scn_repeated = 1;       // a hold: scene edit opens on the release
+            return h->ignored || scn_ours;
+        }
         return h->ignored || (k != AT && h->held);   // SAMPLER's own repeats are stock's
+    }
     // A fresh press starts a new hold, even if a lost release left one set.
     if (h->held && shown == k)
         locker_remove();
@@ -812,10 +1177,14 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     h->ignored = 0;
     if (k == LFO)
         lfo_swallowed = 0;
+    if (k == SCN)
+        scn_ours = scn_repeated = scn_locking = 0;
     if (held_kind() != NONE) {
         h->ignored = 1;                 // during another key's hold: nothing
         return 1;
     }
+    if (k == SCN)
+        return scene_press(flags);
     if (IS_KEY_HELD(KEY_FUNC) || !on_pages() || !kind_track(k, selected_track())
         || (k == LFO && lfo_page_shown()))
         return 0;                       // FUNC (+ FIX: FIXED VELOCITY), another screen, or the FX track for FIX and SAMPLER
@@ -843,6 +1212,12 @@ QMA_UI int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 {
     int k;
     (void)brain;
+    if (held_kind() == SCN) {
+        int knob = *(int *)((char *)event + ENC_KNOB);
+        if (knob >= 0 && knob < KNOBS && *(int *)((char *)event + ENC_CLICKS))
+            return scene_knob();
+        return 0;                       // LEVEL, or no clicks: stock's
+    }
     if (holds[LFO].held) {
         int knob = *(int *)((char *)event + ENC_KNOB);
         encoder_turn = knob >= 0 && knob < KNOBS;   // LEVEL never reaches a locker set
@@ -861,9 +1236,13 @@ QMA_UI int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 QMA_UI static void keep_locker(void)
 {
     int kind = held_kind();
-    if (shown != NONE && (shown != kind || !kind_track(shown, selected_track())))
+    if (shown != NONE && (shown != kind || !kind_track(shown, selected_track())
+        || (shown == SCN && (!scene_screen() || ANY_TRIG_HELD()))))
         locker_remove();
-    if (kind != NONE && !ours() && !GET_LOCKER(PARAM_UI()) && on_pages())
+    if (kind != NONE && !ours() && !GET_LOCKER(PARAM_UI())
+        && (kind == SCN ? (scn_locking || ticks - holds[SCN].since >= SHOW_TICKS)
+                          && scene_screen() && !ANY_TRIG_HELD()
+            : on_pages()))
         locker_install(kind);
 }
 
@@ -1023,6 +1402,14 @@ QMA_UI void quick_velocity_aftertouch_assign_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     keep_locker();
+    if (pads_down) {                    // a release that never reached ev_key: stock's table may say held
+        int pad;                        // when none is, but never says up while one is
+        for (pad = 0; pad <= KEY_PAD_LAST - KEY_PAD_FIRST; pad++)
+            if ((pads_down & 1u << pad) && !IS_KEY_HELD(KEY_PAD_FIRST + pad))
+                pads_down &= ~(1u << pad);
+    }
+    if (views)                          // a key has gone through, so the project is up
+        target_scene(PROJECT_KIT(PROJECT()));   // follows the engaged scene, by panel or MIDI
     if (redraw) {
         redraw = 0;
         ((char *)ctrl)[CTRL_REDRAW] = 1;
