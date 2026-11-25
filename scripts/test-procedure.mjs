@@ -36,6 +36,7 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
+import { bankPrograms } from './octatrack-part-state.mjs'
 
 export const ROOT = resolve(import.meta.dirname, '..')
 
@@ -47,6 +48,16 @@ const soakFlags = ctx => SOAK_OPTIONS.flatMap(([key, , flag]) => ctx.soak?.[key]
 const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs', PREFLIGHT_TOOL = 'scripts/octatrack-preflight.py'
 const SOAK_MIDI = '127.0.0.1:50124' // the MIDI bridge the soak sends through (its default --midi)
 const NOT_READY = 'stopped: the preflight found the unit not ready (step 6)'
+// The Part the run starts on: step 6 reads it (and SAVEs a clean one once, so RELOAD works after a RAM boot), the soak's end
+// and step 10 put the bank, pattern and Part back and RELOAD a Part that was clean at the start (docs/TEST_PROCEDURE.md).
+const PART_TOOL = 'scripts/octatrack-part-state.mjs', NOT_PUT_BACK = /^not (?:put back|read): .*$/m
+const partFile = ctx => join(ctx.out, 'part-start.json')
+const partRead = ctx => node(PART_TOOL, 'read', '--socket', ctx.share, '--out', partFile(ctx), ...(ctx.soak?.programs ? ['--programs', String(ctx.soak.programs)] : []))
+const partRestore = ctx => node(PART_TOOL, 'restore', '--socket', ctx.share, '--start', partFile(ctx))
+/** The soak's program changes: those given, else patterns 1 to 4 of the bank the run started on, never the owner's bank A. */
+const soakPrograms = ctx => !ctx.soak?.programs && ctx.partStart ? ['--programs', bankPrograms(ctx.partStart.bank)] : []
+/** The part tool's JSON line ({"part": …}) in a step's output. */
+const partReading = text => { for (const line of (text ?? '').trim().split('\n').reverse()) { try { const part = JSON.parse(line).part; if (part) return part } catch { /* not this line */ } } return undefined }
 const REFUSED = /^refused: .*$/m // device.mjs set prints a refusal and exits 0, so the large-set steps read their output
 const CURVE_TRACKS = 'T1,T3,T6,T7' // empty tracks of the test bank (docs/MODULE_PERFORMANCE.md)
 const DEFAULT_SCENE = 'the bank, pattern and Part the unit was on, transport stopped (test:procedure)'
@@ -79,7 +90,7 @@ export const STEPS = [
   { id: 'unit-pass', title: 'Scripted unit pass', baseTitle: 'Large set and Undo', applies: 'both', unit: true },
   { id: 'soak', title: 'Soak', applies: 'both', unit: true },
   { id: 'cost-unit', title: 'Cost on the unit', applies: 'both', unit: true },
-  { id: 'restore', title: 'Put back', applies: 'both', unit: true },
+  { id: 'restore', title: 'Put back', applies: 'both', unit: true, always: true }, // also after a later unit step failed
   { id: 'by-hand', title: 'Agent by hand', applies: 'both', hand: true },
   { id: 'developer', title: 'Submitter\'s own stage', applies: 'both', hand: true },
 ]
@@ -165,7 +176,7 @@ export function plan(step, ctx) {
       return { commands: [module ? node('scripts/device.mjs', 'try', pkg, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)
         : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--split', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true, failOn: REFUSED }
     case 'unit-read':
-      return { commands: [node('scripts/device.mjs', 'status', '--socket', ctx.share), node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)] }
+      return { commands: [node('scripts/device.mjs', 'status', '--socket', ctx.share), partRead(ctx), node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)], why: NOT_PUT_BACK }
     case 'unit-pass':
       if (!module) return { commands: [node('scripts/device.mjs', 'set', set, '--seconds', '30', '--split', '--socket', ctx.share)], failOn: REFUSED }
       return { commands: [npmRun('device:test', '--share', ctx.share, '--testing-entry', join(ctx.out, 'device-test.md'),
@@ -174,9 +185,11 @@ export function plan(step, ctx) {
       if (ctx.target === 'emulator' && ctx.tools?.soak) return { skip: 'the fast soak sends USB MIDI to the unit\'s port, which the emulator has not' }
       if (!ctx.tools?.soak) return module ? { inside: 'unit-pass', note: 'ran inside the scripted pass as device:test --soak ' + ctx.soakSeconds + '; the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
         : { skip: 'the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
-      const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), ...soakOptions(ctx), '--log', join(ctx.out, 'soak.json'))
-      // A module soaks inside a trial of its own, rolled back at the end; a base soaks with whatever the unit runs.
-      return module ? { commands: [soak], trial: node('scripts/device.mjs', 'try', pkg, '--seconds', String(ctx.soakSeconds + 300), '--socket', ctx.share) } : { commands: [soak] }
+      const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), ...soakPrograms(ctx), ...soakOptions(ctx), '--log', join(ctx.out, 'soak.json'))
+      // A module soaks inside a trial of its own, rolled back at the end; a base soaks with whatever the unit runs. Its program
+      // changes and CCs move the pattern and edit the Part, so step 9 starts where step 6 did, with the Part reloaded.
+      return module ? { commands: [soak, partRestore(ctx)], why: NOT_PUT_BACK, trial: node('scripts/device.mjs', 'try', pkg, '--seconds', String(ctx.soakSeconds + 300), '--socket', ctx.share) }
+        : { commands: [soak, partRestore(ctx)], why: NOT_PUT_BACK }
     }
     case 'cost-unit':
       if (ctx.target === 'emulator') return { skip: EMULATOR_FIGURES }
@@ -188,7 +201,7 @@ export function plan(step, ctx) {
         ...(module && ctx.priceBase && ctx.source ? ['--write', '--base', ctx.priceBase] : []),
         ...(module ? ['--curve', CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
     case 'restore':
-      return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)], compare: 'unit-read' }
+      return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share), partRestore(ctx)], compare: 'unit-read', compareAt: 0, why: NOT_PUT_BACK }
     case 'by-hand': return { todo: BY_HAND[ctx.kind] }
     case 'developer': return { todo: DEVELOPER[ctx.kind] }
   }
@@ -217,7 +230,9 @@ export async function runSteps(ids, ctx, deps, results = []) {
     result.commands = [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown)
     if (p.emulator) result.emulator = true
     if (ctx.halt) { result.reason = ctx.halt; continue }
-    if (stop && stop !== result) { result.reason = `stopped: step ${STEPS.findIndex(s => s.id === stop.id) + 1} (${stop.title}) failed`; continue }
+    // Put back runs after a failed unit step too, once the unit was read: a soak that failed has still edited the Part.
+    const putBack = step.always && results.some(r => r.id === 'unit-read' && r.status === 'passed')
+    if (stop && stop !== result && !putBack) { result.reason = `stopped: step ${STEPS.findIndex(s => s.id === stop.id) + 1} (${stop.title}) failed`; continue }
     if (p.skip) { result.reason = p.skip; continue }
     if (step.unit && !ctx.unit?.available) { result.reason = ctx.unit?.reason ?? 'no unit session'; continue }
     if (p.todo) { result.status = 'to do'; result.todo = p.todo; continue }
@@ -236,13 +251,15 @@ export async function runSteps(ids, ctx, deps, results = []) {
         trial = deps.start(p.trial, log, ctx.env)
         await trial.waitFor(/^trial:.*running$/m, 60000)
       }
-      const outputs = []
+      const outputs = [], codes = []
       let code = 0
       for (const argv of p.commands) {
         const run = await deps.exec(argv, log, ctx.env)
-        outputs.push(run.output ?? '')
-        if (run.code !== 0) { code = run.code; result.reason = `exit ${run.code}: ${shown(argv)}`; break }
+        outputs.push(run.output ?? ''); codes.push(run.code)
+        if (run.code !== 0) { code = run.code; result.reason = (p.why && (run.output ?? '').match(p.why)?.[0].slice(0, 400)) || `exit ${run.code}: ${shown(argv)}`; break }
       }
+      const part = partReading(outputs.join('\n'))
+      if (part?.summary) result.part = part.summary
       const refused = code === 0 && p.failOn && outputs.join('\n').match(p.failOn)
       if (refused) { code = 1; result.reason = refused[0].slice(0, 200) }
       if (trial) {
@@ -255,10 +272,16 @@ export async function runSteps(ids, ctx, deps, results = []) {
         if (!deps.exists(ctx.pkg)) { code = 1; result.reason = 'no package at ' + ctx.pkg }
         else ctx.build.package = { path: ctx.pkg, sha256: deps.sha256(ctx.pkg) }
       }
-      if (code === 0 && step.id === 'unit-read') ctx.startInventory = reading(outputs.at(-1))
-      if (code === 0 && p.compare) {
-        const now = reading(outputs.at(-1))
-        if (JSON.stringify(now) !== JSON.stringify(ctx.startInventory)) { code = 1; result.reason = 'the inventory differs from the one read first: ' + JSON.stringify(ctx.startInventory) + ' then ' + JSON.stringify(now) }
+      if (code === 0 && step.id === 'unit-read') { ctx.startInventory = reading(outputs.at(-1)); if (part?.banks) ctx.partStart = part }
+      // The inventory is compared whenever its own command ran, also when the Part could not be put back after it.
+      const at = p.compareAt ?? p.commands.length - 1
+      if (p.compare && codes[at] === 0) {
+        const now = reading(outputs[at])
+        if (JSON.stringify(now) !== JSON.stringify(ctx.startInventory)) {
+          const why = 'the inventory differs from the one read first: ' + JSON.stringify(ctx.startInventory) + ' then ' + JSON.stringify(now)
+          result.reason = code ? result.reason + '; and ' + why : why
+          code ||= 1
+        }
       }
       result.status = code === 0 ? 'passed' : 'failed'
     } catch (error) {
@@ -368,7 +391,7 @@ export function recordMarkdown(record) {
     `Build: revision \`${build.revision.slice(0, 12)}\`${build.dirty ? ' with uncommitted changes' : ''}, ${build.package ? `package \`${basename(build.package.path)}\` SHA-256 \`${sha}\`` : 'no package named'}. ` +
     `\`${record.command}\`, ${record.seconds} s. Emulator results are not hardware evidence; only what ran on the unit is.`, '',
     '| # | Step | Layer | Result | Command | Evidence |', '|---|---|---|---|---|---|',
-    ...steps.map((step, index) => `| ${index + 1} | ${step.title}${step.emulator ? ' (emulator)' : ''} | ${step.layer === 'target' ? (step.emulator ? 'emulator' : 'unit') : step.layer ?? ''} | ${STATUS_WORD[step.status]}${step.reason ? ': ' + cell(step.reason) : ''} | ${step.commands.map(c => '`' + cell(c) + '`').join('<br>')} | ${step.log ?? ''} |`),
+    ...steps.map((step, index) => `| ${index + 1} | ${step.title}${step.emulator ? ' (emulator)' : ''} | ${step.layer === 'target' ? (step.emulator ? 'emulator' : 'unit') : step.layer ?? ''} | ${STATUS_WORD[step.status]}${step.reason ? ': ' + cell(step.reason) : ''}${step.part && step.status === 'passed' ? (step.reason ? '; ' : ': ') + cell(step.part) : ''} | ${step.commands.map(c => '`' + cell(c) + '`').join('<br>')} | ${step.log ?? ''} |`),
     '', '#### Edge cases for this change', '',
     'Derive them from what the change touches and run each one (docs/TEST_PROCEDURE.md#edge-cases). A start, from the manifest and the changed files:', '',
     ...(record.edgeCases.suggested.length ? record.edgeCases.suggested.map(s => `- ${s.touches}: ${s.ask} (docs/${s.see})`) : ['- nothing matched: read the diff']), '',
@@ -573,7 +596,7 @@ async function main() {
   const result = record(ctx, steps, { started, finished: Date.now(), command })
   writeFileSync(join(ctx.out, 'procedure.json'), JSON.stringify(result, null, 1) + '\n')
   writeFileSync(join(ctx.out, 'procedure.md'), recordMarkdown(result))
-  console.log('\n' + steps.map((step, index) => `${String(index + 1).padStart(2)}. ${step.title}: ${step.status}${step.reason ? ' (' + step.reason + ')' : ''}`).join('\n'))
+  console.log('\n' + steps.map((step, index) => `${String(index + 1).padStart(2)}. ${step.title}: ${step.status}${step.reason ? ' (' + step.reason + ')' : step.part ? ' (' + step.part + ')' : ''}`).join('\n'))
   console.log(`\nRecord: ${join(ctx.out, 'procedure.md')} and procedure.json, ${result.seconds} s. Fill in its edge-case table, run each case, then copy the entry to ` +
     (ctx.kind === 'base' ? 'docs/verification/<YYYY-MM-DD>-<topic>.md' : `the module's TESTING.md`) + ' and its last two lines to the pull request.')
   process.exitCode = steps.some(step => step.status === 'failed') ? 1 : 0

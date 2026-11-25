@@ -55,10 +55,12 @@ describe('the steps', () => {
       'npm run module:dev -- vibrato --build-only --out /out/vibrato.mwrm',
       PREFLIGHT,
       'node scripts/device.mjs status --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs read --socket /tmp/share.sock --out /out/part-start.json',
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
       'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md --soak 120 /out/vibrato.mwrm',
       expect.stringMatching(/^npm run device:price -- --share \/tmp\/share.sock --out \/out\/price.json --scene .+ --curve T1,T3,T6,T7 \/out\/vibrato.mwrm$/), // the curve and the admission run
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json',
     ])
     expect(statuses(steps)).toEqual({ software: 'passed', compat: 'passed', build: 'passed', 'cost-model': 'not run', emulator: 'not run', 'unit-read': 'passed',
       'unit-pass': 'passed', soak: 'passed', 'cost-unit': 'passed', restore: 'passed', 'by-hand': 'to do', developer: 'to do' })
@@ -90,6 +92,56 @@ describe('the steps', () => {
   it('fails the put-back step when the inventory at the end differs from the one read first', async () => {
     const steps = await runProcedure(moduleCtx(), fakeDeps({ inventories: [INVENTORY, '[]'] }))
     expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/inventory differs/) })
+  })
+
+  const START = JSON.stringify({ part: { bank: 2, pattern: 0, part: 0, stopped: true, saved: true, banks: { 2: [] }, summary: 'Part 1 on C01: working = saved, saved once so that RELOAD works at the end' } })
+  const READ = 'octatrack-part-state.mjs read', RESTORE = 'octatrack-part-state.mjs restore'
+
+  it('reads the Part at step 6, keeps the soak in that bank, and puts the bank, pattern and Part back after the soak and at step 10', async () => {
+    const tools = { cycleScan: false, soak: true, unitQueue: false }
+    const back = JSON.stringify({ part: { ok: true, summary: 'Part 1 on C01: transport stopped, back on C01 from C03, Part 1 on C01 reloaded; working = saved' } })
+    const deps = fakeDeps({ said: { [READ]: START, [RESTORE]: back } }), ctx = moduleCtx({ tools })
+    const steps = await runProcedure(ctx, deps)
+    const unit = deps.ran.slice(deps.ran.indexOf('node scripts/device.mjs status --socket /tmp/share.sock'))
+    expect(unit).toEqual([
+      'node scripts/device.mjs status --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs read --socket /tmp/share.sock --out /out/part-start.json',
+      'node scripts/device.mjs do inventory --socket /tmp/share.sock',
+      'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md /out/vibrato.mwrm',
+      'node scripts/octatrack-soak.mjs --seconds 120 --programs 32-35 --log /out/soak.json', // bank C's patterns 1-4, not the owner's bank A
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json', // before step 9 prices the scene
+      expect.stringMatching(/^npm run device:price /),
+      'node scripts/device.mjs do inventory --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json',
+    ])
+    expect(steps.find(step => step.id === 'unit-read')).toMatchObject({ status: 'passed', part: 'Part 1 on C01: working = saved, saved once so that RELOAD works at the end' })
+    expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'passed', part: expect.stringMatching(/reloaded; working = saved$/) })
+    const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- vibrato' }))
+    expect(md).toContain('| 10 | Put back | unit | passed: Part 1 on C01: transport stopped, back on C01 from C03, Part 1 on C01 reloaded; working = saved |')
+    // Programs given on the command line stay as given, and the read covers their banks too.
+    const given = fakeDeps({ said: { [READ]: START } })
+    await runProcedure(moduleCtx({ tools, soak: { programs: '0-3' } }), given)
+    expect(given.ran).toContain('node scripts/octatrack-part-state.mjs read --socket /tmp/share.sock --out /out/part-start.json --programs 0-3')
+    expect(given.ran).toContain('node scripts/octatrack-soak.mjs --seconds 120 --programs 0-3 --log /out/soak.json')
+  })
+
+  it('fails the put-back loudly, with the fix, when the Part cannot be reloaded, and still compares the inventory', async () => {
+    const refused = 'not put back: RELOAD did not bring Part 1 on C01 back: put it back by hand (docs/OCTATRACK_DRIVING.md#the-rules)'
+    const steps = await runProcedure(moduleCtx(), fakeDeps({ said: { [READ]: START, [RESTORE]: refused }, fail: [RESTORE], inventories: [INVENTORY, '[]'] }))
+    expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'failed', reason: refused + '; and the inventory differs from the one read first: [{"name":"KITS","version":"0.2.0"}] then []' })
+  })
+
+  it('puts back after a failed soak, but not when the unit was never read', async () => {
+    const tools = { cycleScan: false, soak: true, unitQueue: false }
+    const deps = fakeDeps({ said: { [READ]: START }, fail: ['octatrack-soak.mjs'] })
+    const steps = await runProcedure(moduleCtx({ tools }), deps)
+    expect(statuses(steps)).toMatchObject({ soak: 'failed', 'cost-unit': 'not run', restore: 'passed', 'by-hand': 'not run' })
+    expect(deps.ran.at(-1)).toBe('node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json')
+    const unread = fakeDeps({ said: { [READ]: 'not read: The unit did not answer the position read' }, fail: [READ] })
+    const none = await runProcedure(moduleCtx(), unread)
+    expect(none.find(step => step.id === 'unit-read')).toMatchObject({ status: 'failed', reason: 'not read: The unit did not answer the position read' })
+    expect(none.find(step => step.id === 'restore')).toMatchObject({ status: 'not run', reason: 'stopped: step 6 (Read the unit) failed' })
+    expect(unread.ran.some(line => line.includes(RESTORE))).toBe(false)
   })
 
   it('uses a package it is given instead of building one, and names it by its SHA-256', async () => {
