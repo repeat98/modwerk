@@ -31,7 +31,8 @@
     "mods": "done"
   },
   "stack": {
-    "base": "started"
+    "base": "started",
+    "link": "started"
   },
   "research": [
     {
@@ -95,20 +96,20 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 16275,
-        "note": "Modwerk's base, plain variant (2977431b), for a set with no send effect or digital voice machine: 14,715 bytes .run plus 1,560 bytes .bss (3,879 and 189 of them the lean engine, 44 of .run pad pressure) in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+        "value": 27003,
+        "note": "The base's plain variant (096b0d40), for a set with no send effect or digital voice machine: 18,519 bytes .run plus 8,484 .bss (the lean engine 3,879 and 189, pad pressure 44, the link's identity, load and log 3,848 and 6,924), and a 94-byte .boot copier."
       },
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
-        "value": 41309,
-        "note": "The base's send-bus variant (b485034b), for a set with a send effect: 36,945 bytes .run plus 4,364 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "value": 52085,
+        "note": "The base's send-bus variant (03902b3a), for a set with a send effect: 40,793 bytes .run plus 11,292 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       },
       {
         "name": "Core image with the digital voices",
         "unit": "bytes",
-        "value": 21839,
-        "note": "The base's voices variant (1a8a1488), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 18,815 bytes .run plus 3,024 bytes .bss."
+        "value": 32615,
+        "note": "The base's voices variant (5f84b65d), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 22,667 bytes .run plus 9,948 bytes .bss."
       }
     ]
   },

@@ -1,0 +1,1 @@
+Analog Rytm MKII base: every variant now answers the USB link's identity, load and diagnostics requests: a host can tell which build a unit runs (the set identity, also printed by `link-image.mjs`), read the audio load and read a diagnostics log in the Octatrack's layout. Keys, pads, turns, the screen, memory reads and the RAM boot stay in development bases only.

@@ -1,4 +1,4 @@
-"""The Analog Rytm MKII development link's host tool (sdk/machines/analog-rytm-mkii/tools/rytm_link.py) against the
+"""The Analog Rytm MKII link's host tool (sdk/machines/analog-rytm-mkii/tools/rytm_link.py) against the
 base's link.c: the same commands, statuses and framing, and stock's key flags. No unit, MIDI port or firmware."""
 import importlib.util
 import pathlib
@@ -21,7 +21,8 @@ class RytmLink(unittest.TestCase):
     def test_commands_match_the_base(self):
         base = defines("CMD_")
         names = {"IDENT": "ident", "DISARM": "disarm", "KEY": "key", "ENC": "enc", "RELEASE_ALL": "release",
-                 "CONFIRM": "confirm", "RAMBOOT": "ramboot", "PAD": "pad", "SCREEN": "screen", "MEM": "mem"}
+                 "CONFIRM": "confirm", "RAMBOOT": "ramboot", "PAD": "pad", "SCREEN": "screen", "MEM": "mem",
+                 "DIAG": "diaglog", "LOAD": "load", "LOG": "log"}
         self.assertEqual({names[n]: v for n, v in base.items() if n in names}, rytm_link.CMD)
 
     def test_statuses_match_the_base(self):
@@ -56,6 +57,39 @@ class RytmLink(unittest.TestCase):
         self.assertNotIn("diag", rytm_link.ident_text(old))
         self.assertEqual(rytm_link.ident_text(old + rytm_link.u32(diag))["diag"], "%08x" % diag)
         self.assertEqual(rytm_link.DIAG_OLD, 0x47bfffbc)
+
+    def test_ident_ends_with_the_set_identity(self):
+        """Every base's IDENT ends with the .run block's CRC32 and length (link.c's boot gate), after the fields a
+        release base sends as 0; an older base's shorter reply reads as before."""
+        fields = re.search(r"case CMD_IDENT:(.*?)send\(p\);", LINK_C, re.S).group(1)
+        self.assertLess(fields.index("put32(p, run_crc)"), fields.index("put32(p, run_bytes)"))
+        self.assertGreater(fields.index("put32(p, run_crc)"), fields.index("(uint32_t)DIAG"))
+        reply = bytes(83) + rytm_link.u32(0xf2fe7324) + rytm_link.u32(40649)
+        got = rytm_link.ident_text(reply)
+        self.assertEqual((got["set_crc"], got["set_bytes"]), ("f2fe7324", 40649))
+        self.assertNotIn("set_crc", rytm_link.ident_text(bytes(83)))
+
+    def test_load_reads_tenths_of_a_percent(self):
+        reply = b"".join(rytm_link.u32(v) for v in (742, 851, 1000, 12, 9000))
+        self.assertEqual(rytm_link.load_text(reply), {"window_percent": 74.2, "window_peak_percent": 85.1,
+                                                      "peak_percent": 100.0, "windows": 12, "blocks": 9000})
+
+    def test_log_reads_the_octatracks_layout(self):
+        import struct
+        head = struct.pack(">10I", 0x4d574447, 2, 0x1234, 1, 3, 1, 2, 0, 0, 0)
+        incident = lambda seq, kind, a: struct.pack(">4I4H", seq, 1, 5, a, kind, 970, 0, 0) + bytes(40) + bytes([16, 9] + [0xff] * 14) + struct.pack(">3I", 0, 0, 1)
+        loads = struct.pack(">3I10H", 3, 1, 5, 742, 851, 0, 0, 0, 0, 600, 300, 666, 74) + bytes(32 * 95)
+        incidents = incident(2, 7, 0xf2fe7324) + incident(1, 1, 0) + bytes(92 * 30)
+        raw = head + bytes(92) + loads + incidents
+        self.assertEqual(len(raw), 40 + 92 + 32 * 96 + 92 * 32)
+        log = rytm_link.log_text(raw)
+        self.assertEqual([i["kind"] for i in log["incidents"]], ["START", "BASE"])
+        self.assertEqual(log["incidents"][1]["a"], 0xf2fe7324)
+        self.assertEqual(log["incidents"][0]["keys"], [16, 9])
+        self.assertEqual(log["loads"], [{"seq": 3, "minute": 5, "cpu_mean_percent": 74.2, "cpu_peak_percent": 85.1,
+                                         "windows": 600, "playing": 300, "frame_gap_us": 666, "tick_gap": 74}])
+        with self.assertRaises(ValueError):
+            rytm_link.log_text(bytes(len(raw)))
 
     def test_parse_takes_a_reply_and_refuses_anything_else(self):
         reply = rytm_link.HEADER + bytes([5, 0x21 | 0x40, 0]) + b"\x00\x7f" + b"\xF7"

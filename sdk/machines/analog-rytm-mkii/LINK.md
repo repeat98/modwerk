@@ -1,22 +1,36 @@
-# Analog Rytm MKII development link
+# Analog Rytm MKII link
 
-A development base's link over USB MIDI: a host on the computer reads the unit's identity, its
-screen and memory, and presses keys, turns encoders and confirms an OS upgrade as a person at
-the panel would. With it an agent flashes or RAM-boots a test image and drives a test without a
-hand on the unit. It is the Rytm's transport the [machine recipe](../../../docs/MACHINE_RECIPE.md)
-asks for, SysEx because USB MIDI is all the unit offers; the MCP's device tools do not reach it
-yet.
+The Rytm's link over USB MIDI. Every Modwerk base carries the part for musicians' units, as the
+Octatrack's and the Model:Cycles' do: a host reads the unit's identity with the set identity (which
+build runs), the audio load and the diagnostics log. A development base adds the screen and memory,
+and presses keys, plays pads, turns encoders and confirms an OS upgrade as a person at the panel
+would: with it an agent flashes or RAM-boots a test image and drives a test without a hand on the
+unit. It is the Rytm's transport the [machine recipe](../../../docs/MACHINE_RECIPE.md) asks for,
+SysEx because USB MIDI is all the unit offers. The Model:Cycles' link follows this one (the same
+wire, the same commands); the MCP's device tools and the machine page do not reach it yet.
 
-- Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s),
+- Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s)
+  and the log and load ([`diag.c`](elekloader/base/diag.c), [`load.c`](elekloader/base/load.c)),
+  base.json's `common` (every base); [`link-dev.s`](elekloader/base/link-dev.s) and `MODWERK_DEV`,
   base.json's `dev`.
 - Host side: [`tools/rytm_link.py`](tools/rytm_link.py) (Python 3 and `mido` with `python-rtmidi`).
 - Written by Nathaniel Pavel; the unit results below are from his MKII on OS 1.74.
 
-## Development bases only
+## Every base, and development bases
 
-Any USB host can drive the link with no hand on the unit, and that includes confirming stock's
-OS upgrade, so a host could write the flash. Release bases never carry it, as the Octatrack's
-key injection and RAM boot live only in its development bases. Build one with
+Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`.
+They read and change nothing else: no host can press a key, read memory outside the log or
+confirm an upgrade on a release base, which answers every other request `bad request`. On the
+send-bus variant they cost 3,848 bytes of `.run` and 6,928 of RAM in the shared mod area, 6,148 of
+it the log (release base `03902b3a`, 25 November 2026; the voices and plain variants the same), and
+one site each in stock's SysEx router and boot (`0x40083dd8`, `0x400008c6`). The boot site
+computes the set identity, with the data cache off (stock's own state at that point), over the
+`.run` block once a boot.
+
+A development base adds the rest. Any USB host can drive it with no hand on the unit, and that
+includes confirming stock's OS upgrade, so a host could write the flash. Release bases never
+carry it, as the Octatrack's key injection and RAM boot live only in its development bases. Build
+one with
 
 ```
 npm run machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out NEW-DIR
@@ -31,8 +45,8 @@ builds but has not run on a unit.
 The link adds one project storage bit (`mw_link_carry`), so a development image has another
 storage layout than the release base: link it with `--lock-in` of the image the unit runs, use a
 scratch project, and do not go back from a link image to one without it on a project the link
-image saved (that project's module data would read as zeros). Cost on the send-bus base: about
-4.6 KB of `.run` and 1.8 KB of RAM in the shared mod area. The RAM boot's diagnostics are 68 bytes
+image saved (that project's module data would read as zeros). Cost on the send-bus base, on top of
+every base's part: about 5.3 KB of `.run` and 1.7 KB of RAM in the shared mod area. The RAM boot's diagnostics are 68 bytes
 at `0x47FEFFBC`, above every area the linker gives the mods and 64 KB under the boot stack's top
 ([shared mod memory](README.md#memory-and-budgets)); `ident` names the place. A base built before that
 kept them in the top 68 bytes of the 128 KiB mod area (`0x47BFFFBC`), where a full set's `.bss` or a
@@ -46,7 +60,7 @@ boot, power-on included: a development image is meant to be driven. YES on the r
 arm; the screen is stock's. (Bases before 21 Nov 2026 drew a 2 x 5 notch at x 126-127 of the header
 bar while armed; the test runner's screen compares skip it, so references recorded with it still pass.)
 
-Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, pads, `confirm` and `ramboot` need the arm,
+Reads (`ident`, `load`, `diag`, `log`, `screen`, `mem`) work disarmed. Keys, turns, pads, `confirm` and `ramboot` need the arm,
 and stop as soon as a person touches the panel: a press or turn on the panel while armed lets go
 of every key and pad the link holds and refuses the link's keys, turns and pads for about 3 s (status
 `a person is at the unit`). A person playing a pad is not seen: the panel's pad messages never reach
@@ -71,7 +85,10 @@ range, 5 a person is at the unit.
 
 | Request | cmd | Arm | What comes back |
 | --- | --- | --- | --- |
-| `ident` | 0x01 | no | link version, armed, person-at-unit flag, counters (person, posted, refused, drops, received), the link's tick count, reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM; and where the gate keeps its diagnostics (a base before that names no place) |
+| `ident` | 0x01 | no | every base: link version, armed, person-at-unit flag, counters (person, posted, refused, drops, received), the link's tick count, reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM; where the gate keeps its diagnostics; and the set identity (below). A release base sends the arm, person and RAM boot fields as 0. An older base ends earlier: before the set identity, or before the diagnostics' place |
+| `diag` | 0x22 | no | every base: the diagnostics log's address and size in bytes (the Model:Cycles' and Digitone II's number) |
+| `load` | 0x23 | no | every base: the audio block's share of its period over the last half second, the half second's dearest block and the dearest block since boot (tenths of a percent), the half seconds and the blocks counted (`load.c`) |
+| `log OFF N` | 0x24 | no | every base: up to 128 bytes of the diagnostics log from OFF, as `mem`'s reply (offset, count, bytes); nothing outside the log |
 | `disarm` | 0x02 | no | turns the arm off and clears every key the link held |
 | `key ID FLAGS` | 0x10 | yes | a panel key message on the UI queue with the flags as given; a held key reads as held to `is_key_held` |
 | `enc N DELTA` | 0x11 | yes | an encoder message (0-7 A-H, 8 LEVEL) of one raw count, as the panel task posts it |
@@ -79,8 +96,27 @@ range, 5 a person is at the unit.
 | `confirm` | 0x13 | yes | YES pressed and let go, for stock's UPGRADE OS NOW? |
 | `ramboot ULEN UCRC CLEN CCRC` | 0x14 | yes | as `confirm`, but the next boot runs the upload from RAM (below) |
 | `pad PAD WHAT VALUE` | 0x15 | yes | a pad (0-11, BD to CB) as the panel posts it: WHAT 1 down with a velocity (1-127), 2 its pressure (0-255, the panel's byte: MIDI sends half), 0 up (0); every view's pad and pressure methods see it as a hand on the pad. `release` and `disarm` send a held pad's pressure 0 and its up. A base before this answers `bad request` |
-| `screen OFF` | 0x20 | no | 512 bytes of the frame on the screen from OFF (0 or 512) |
-| `mem ADDR N` | 0x21 | no | up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `screen OFF` | 0x20 | no | development bases: 512 bytes of the frame on the screen from OFF (0 or 512) |
+| `mem ADDR N` | 0x21 | no | development bases: up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+
+The rows marked yes (`disarm` too) are development bases' only.
+
+**The set identity** is the CRC32 and the length of the `.run` block: the base and every module
+linked into the image, as the linker placed them, taken by the boot site before any handler runs
+(the core has copied the block from the image to DDR unchanged just before). `scripts/link-image.mjs`
+prints the same two numbers as `run` for the image it writes, so a host tells which build a unit runs
+by comparing them; the base cannot carry its own package hash. Seen in rytm-emu on LK01 (release
+send-bus base `9413108d` + Filter Hz): `fbcf1ac8`, 42,384 bytes, from both.
+
+**The diagnostics log** is the Octatrack's layout, version 2 ([`diag.h`](elekloader/base/diag.h),
+checked against the Octatrack's by `sdk/tests/test_machine_base.py`), so the site's parser reads it.
+The Rytm fills the five-minute load records (the audio's mean and dearest block, the half seconds the
+sequencer played, the longest gap between audio blocks in µs and the longest run of blocks without a
+UI tick) and START, BASE (the set identity), HOT (a second at 90 % or more) and FREEZE (the UI tick
+standing still for five seconds while audio runs) with the last 16 keys pressed and whether the
+sequencer played. Machines, FX, screen and tempo stay 0: not read yet. It lives in the base's RAM and
+starts again at every boot. Times come from the audio's own clock (1,500 blocks a second), the gaps
+from DMA timer 0 measured against it, so no timer rate is assumed.
 
 USB only: the router hook drops link messages from DIN. A key or turn the link posted that never
 reaches `ev_key`/`ev_enc` within about a second is given up, so one lost message cannot make every
@@ -222,6 +258,9 @@ Limits, none checked by the base:
   flashed OS reads the stamped project's module settings, and each sound or kit the RAM-booted
   image stamped, as zeros. Stock data is not touched. RAM-boot such an image in a scratch project
   and load no other.
+- A RAM-booted image with a release base answers no `ramboot`: only a power cycle leaves it.
+  `rytm_link.py ramboot` reports such an image by its set identity, since a release base sends the
+  RAM boot's fields as 0.
 - A hang in the gate or the RAM-booted image is cleared by a power cycle. The gate runs with
   interrupts masked for the seconds its CRCs take.
 
@@ -232,7 +271,9 @@ cold code calls, so the depacker is marked `hot`.
 ## Host tool
 
 ```
-rytm_link.py ident
+rytm_link.py ident                               # with the set identity: set_crc, set_bytes
+rytm_link.py load                                # the audio load (every base)
+rytm_link.py log [--json FILE] [--raw FILE]      # the diagnostics log (every base)
 rytm_link.py screen --png shot.png               # --ascii prints it
 rytm_link.py mem 0x402728bd 8
 rytm_link.py steps 'GLOBAL w300 DOWN*3 YES png:shot.png NO'
@@ -245,7 +286,8 @@ rytm_link.py ramboot-args IMAGE.syx | encode ... | decode FILE   # for rytm-emu
 Steps: key taps by rytm-emu's panel names (YES, NO, FUNC, T1..T16, BD..CB, PLAY, STOP ...),
 `KEY+KEY` holds all but the last, `KEY*N` repeats, `+KEY`/`-KEY` hold and let go, `encA+3` raw
 counts, `nudgeA+3` and `nudgeB+3/3` steps (Turns), `w300` waits, `png:PATH` and `ascii` capture
-the screen, `ident` prints the identity. A failed step sends `release` before the tool stops.
+the screen, `ident` prints the identity. `rytm_link.py diag` is the RAM boot gate's record (above); the
+diagnostics log is `log`. A failed step sends `release` before the tool stops.
 The unit sends MIDI clock all the time, and closing rtmidi's input then hangs, so the tool leaves
 with `os._exit`. If `ramboot` waits 110 s and exits, read `ident`: the unit has usually come up and
 the host's port reopen hung (2 of 33 boots).
@@ -279,9 +321,27 @@ since, the link has not.
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).
+- Every base's part on a unit (25 November 2026, the test rig, hands off): SR01 (the combo set of
+  FXCJ on its voices development base with this change, layout unchanged) RAM-booted over FXCJ:
+  `ident`'s set identity `91b73d51`, 207,400 bytes, as `link-image.mjs` printed; `load` 59.2 %
+  stopped, 68.4 % playing (dearest block 74.2 %); the log's START and BASE, then its first
+  five-minute record (mean 62.3 %, dearest block 76.5 %, 10 half seconds playing, longest block gap
+  742 µs, longest run without a UI tick 371 blocks); `link-global-menu`, `link-func-nudge` and
+  `pad-pressure-pad-plain` pass. SR02 (the same set on the release base) RAM-booted from SR01:
+  set identity `600cdffc`, 202,044 bytes, as printed; `load` and the log (BASE `600cdffc`);
+  `key`, `pad`, `enc`, `release`, `confirm`, `ramboot`, `disarm`, `screen` and `mem` all
+  `bad request`.
+- Every base's part in rytm-emu, on the build before its review fixes (the HOT run, the nonce): LK01 (release send-bus base `9413108d` + Filter Hz) answers `ident` with the set identity `link-image.mjs` printed, `load`,
+  `diag` and the whole log (START, then BASE with the set identity), and refuses `key`, `screen`
+  and `mem` (`bad request`). LD01 (the same set on development base `a24f78c1`): the runner's
+  `link-global-menu`, `link-func-nudge` and `pad-pressure-pad-plain` pass. rytm-emu counts
+  instructions, so its load figures are no measure of the unit's.
 
 ## Not tested
 
+- On a unit: a flashed release base (only RAM-booted ones); the boot time the set identity adds
+  (not measured: RAM boots came back in 11 to 14 s, as before); the plain and send-bus variants of
+  every base's part; a HOT or FREEZE incident.
 - On a unit: the plain variant with `dev`; cancelling a RAM boot by a panel press, `disarm` or the
   timeout (emulator only); a RAM boot across storage layouts read back by the flashed OS (read in
   the code only); `flash` in Overbridge mode; a watchdog in a longer gate run (none bit in 13 s

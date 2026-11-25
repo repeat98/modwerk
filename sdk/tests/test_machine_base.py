@@ -411,6 +411,56 @@ class MachineBases(unittest.TestCase):
             core = machine_base.stage("analog-rytm-mkii", dict(plain, version="9.9"), pathlib.Path(work), add=False)
             self.assertEqual(json.loads((core / "mod.json").read_text())["version"], "9.9")
 
+    def test_every_rytm_base_carries_the_read_only_link_and_only_a_development_base_the_rest(self):
+        """The router, the boot gate (the set identity), LOAD and the log are in every variant, release or not, as on
+        the Octatrack and the Model:Cycles; keys, turns, the remote YES and the RAM boot need MODWERK_DEV."""
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        dev_only = {"mw_link_held", "mw_link_program"}
+        for name, add, leave in machine_base.variants(config):
+            for dev in (False, True):
+                parts = machine_base.parts(config, add=add, dev=dev, leave=leave)
+                targets = {site.get("target") for site in parts["sites"]}
+                fns = {sub["fn"] for sub in parts["subscribe"]}
+                self.assertLessEqual({"mw_link_router", "mw_boot_site"}, targets, name)
+                self.assertLessEqual({"mw_link_tick", "mw_diag_tick", "mw_diag_key", "mw_load_out"}, fns, name)
+                for source in ("../base/link.c", "../base/link.s", "../base/load.c", "../base/diag.c"):
+                    self.assertIn(source, parts["sources"], name)
+                self.assertIn("-fno-late-combine-instructions", parts["cflags"], name)
+                self.assertEqual(dev, "-DMODWERK_DEV" in parts["cflags"], name)
+                self.assertEqual(dev, dev_only <= targets, name)
+                self.assertEqual(dev, not targets.isdisjoint(dev_only), name)
+                self.assertEqual(dev, "../base/link-dev.s" in parts["sources"], name)
+                self.assertEqual(dev, {"mw_link_key", "mw_link_enc", "mw_link_settings"} <= fns, name)
+                self.assertEqual(dev, "mw_link_carry" in [field["sym"] for field in parts.get("storage", [])], name)
+
+    def test_the_rytm_diagnostics_log_is_the_octatrack_layout(self):
+        """The site reads the Rytm's log with the Octatrack's parser, so its numbers and structs are the Octatrack's
+        word for word (base/diag.h), and every kind it names is the Octatrack's."""
+        def layout(path):
+            text = path.read_text()
+            parts = [re.search(r"#define %s .*" % name, text).group(0) for name in ("DIAG_MAGIC", "DIAG_VERSION", "DIAG_LOADS", "DIAG_INCIDENTS")]
+            parts += [re.search(r"struct %s \{.*?\n\};" % name, text, re.S).group(0) for name in ("diag_load", "diag_incident", "diag_log")]
+            return [re.sub(r"\s*/\*.*?\*/", "", part) for part in parts]
+        def kinds(path):
+            return dict(re.findall(r"(DIAG_[A-Z]+) = (\d+)", re.search(r"enum diag_kind \{[^}]*\};", path.read_text()).group(0)))
+        rytm = APP / "sdk/machines/analog-rytm-mkii/elekloader/base/diag.h"
+        octatrack = APP / "sdk/machines/octatrack/elekloader/diag.h"
+        self.assertEqual(layout(rytm), layout(octatrack))
+        self.assertLessEqual(kinds(rytm).items(), kinds(octatrack).items())
+
+    def test_the_rytm_diagnostics_log_and_load_on_the_host(self):
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/analog-rytm-mkii/elekloader/base"
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST", "-I", here,
+                            "-I", APP / "sdk/machines/analog-rytm-mkii/include", here / "diag.c", here / "load.c",
+                            here / "test_diag.c", "-o", temp + "/t"], check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
         config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
         variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}

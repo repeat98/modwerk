@@ -14,8 +14,10 @@ sections (`sections.c`; [machine list sections](../README.md#machine-list-sectio
 [lean engine](#lean-engine) (`perf-*`) and [pad pressure](#pad-pressure) (`pad-pressure.s`). `add` holds the FX track's lock
 words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
 [send effects](../README.md#send-effects)). A site names the stock bytes it replaces by length and SHA-256 only; the
-build fills them from your OS. `dev` goes only into development bases (`npm run machine:base -- analog-rytm-mkii --dev`,
-never recorded or released): the USB link (`link.c`, `link.s`; [LINK.md](../LINK.md)).
+build fills them from your OS. `common` holds the USB link's part every base carries (`link.c`, `link.s`, `load.c`, `diag.c`: identity, set
+identity, load and the diagnostics log; [LINK.md](../LINK.md)). `dev` goes only into development bases (`npm run
+machine:base -- analog-rytm-mkii --dev`, never recorded or released): the rest of the link (`link.c` with `MODWERK_DEV`,
+`link-dev.s`: keys, pads, turns, screen, memory and the RAM boot).
 
 The base comes in three variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
 names; **voices**, `common` and `add` without what the variant's `leave` names (the FX track's lock words `locks.c`,
@@ -157,11 +159,11 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`b485034b`) has 36,945 bytes of `.run` and 4,364 of `.bss` (3,875 and 192 of them since
-the lean engine, 44 of `.run` pad pressure), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
+The send-bus variant (`03902b3a`) has 40,793 bytes of `.run` and 11,292 of `.bss` (3,875 and 192 of them since
+the lean engine, 44 of `.run` pad pressure, 3,848 and 6,928 the link's identity, load and diagnostics log), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
 [mod area](../README.md#memory-and-budgets) stays for modules and the effect that runs, whose work area is the RAM they
-leave free (`sendbus.c`). The voices variant (`1a8a1488`) has 18,815 bytes of `.run` and 3,024 of `.bss`, and plain (`2977431b`) 14,715
-and 1,560, the lean engine and pad pressure included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
+leave free (`sendbus.c`). The voices variant (`5f84b65d`) has 22,667 bytes of `.run` and 9,948 of `.bss`, and plain (`096b0d40`) 18,519
+and 8,484, the lean engine, pad pressure and the link's part included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
 than on send-bus.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.

@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The Rytm's development link over USB MIDI, in development bases only (base.json's dev,
-// npm run machine:base -- analog-rytm-mkii --dev); release bases never carry it.
-// A host on the computer's USB port asks for the unit's identity, its screen and
-// read-only memory, and, while the unit is armed on its own panel, presses keys and
-// turns encoders as the panel does. Built so an agent can flash or RAM-boot a test image (stock's
-// OS upgrade, then a remote YES) and run a test without a hand on the unit.
+// The Rytm's link over USB MIDI. Every base (base.json's common) answers IDENT (with the set identity:
+// the CRC32 and length of the .run block, taken at boot), DIAG, LOAD and LOG (the diagnostics log,
+// diag.c): a host identifies the unit and reads what it runs and how it runs, and nothing more, as on
+// the Octatrack and the Model:Cycles. Development bases (base.json's dev, MODWERK_DEV, npm run
+// machine:base -- analog-rytm-mkii --dev) add the screen and read-only memory and, while the unit is
+// armed on its own panel, keys, encoder turns and pads as the panel posts them, the remote YES of
+// stock's OS upgrade and a RAM boot. Built so an agent can flash or RAM-boot a test image (stock's OS
+// upgrade, then a remote YES) and run a test without a hand on the unit; a release base answers those
+// requests `bad request`, so no host can press a key or confirm an upgrade on a musician's unit.
 //
 // Wire format (SysEx, manufacturer 0x7D, private use):
 //   host -> unit  F0 7D 'M' 'W' 'L' 01 seq cmd payload.. F7
@@ -68,7 +71,10 @@
 #include <stdint.h>
 #define COLD __attribute__((cold, noinline))     // sized, not timed: what runs once at boot or per host command.
                                                  // GCC sizes what only cold code calls too: mark that `hot` if timed
+#ifdef MODWERK_DEV
 #include "analog-rytm-mk2/store.h"
+#endif
+#include "diag.h"
 
 #define LINK_VERSION 1
 
@@ -115,6 +121,9 @@
 #define CMD_PAD 0x15                    // pad, what (0 up, 1 down, 2 pressure), velocity 1..127 or pressure 0..255
 #define CMD_SCREEN 0x20
 #define CMD_MEM 0x21
+#define CMD_DIAG 0x22                   // the log's address and size (the Model:Cycles' and Digitone II's number)
+#define CMD_LOAD 0x23                   // the audio load (load.c)
+#define CMD_LOG 0x24                    // bytes of the diagnostics log, and nothing else
 #define ST_OK 0
 #define ST_NOT_ARMED 1
 #define ST_BAD 2
@@ -187,7 +196,9 @@
                                         // 7: no longer given (was: SRAM does not hold the 1.74 bootstrap's depacker)
 #define BOOT_FAILED 8                   // the unpacked image was wrong: reset, and this is the flashed OS
 
+#ifdef MODWERK_DEV
 STORE_FIELD(mw_link_carry);             // project, 1 bit: armed across the YES's reset
+#endif
 
 // ---- the ring the router fills ------------------------------------------------
 static uint8_t ring[RING][CMD_BYTES];
@@ -217,15 +228,19 @@ int mw_link_rx(const uint8_t *msg, int len, int iface)
     return 1;
 }
 
+static uint32_t ticks, boot_rsr;        // UI ticks; the reset status as the boot gate found it
+static uint32_t run_crc, run_bytes;     // the set identity: the .run block (the base and every module) at boot
+static uint32_t boot_status, boot_depack_crc, boot_image;   // the RAM boot's, for IDENT: 0 in a release base
+
+#ifdef MODWERK_DEV
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed, booted, carry_ticks, human_ticks = -1, ui_dirty, release_due;
-static uint32_t human_count, posted_count, refused_count, boot_rsr, ticks;
+static uint32_t human_count, posted_count, refused_count;
 static uint8_t held_bits[32];           // keys this link holds down, a bit each
 static uint16_t pads_held;              // pads this link holds down, a bit each
 int mw_link_ramboot_due;                // link.s reads it where stock's job would flash:
                                         //   0 flash, 1 RAM boot, 2 cancelled (reset, no write)
 static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
-static uint32_t boot_status, boot_depack_crc, boot_image;
 #define HELD(k) (held_bits[(k) >> 3] >> ((k) & 7) & 1)
 #define HOLD(k, on) (held_bits[(k) >> 3] = (uint8_t)((held_bits[(k) >> 3] & ~(1 << ((k) & 7))) | (!!(on) << ((k) & 7))))
 
@@ -414,15 +429,20 @@ void mw_link_project(int how, unsigned dropped)
         return;
     }
     booted = 1;
-    boot_rsr = RSR;
     armed = 1;                          // on at every boot; the row turns it off
     human_ticks = -1;
     ui_dirty = 1;
     set_carry(0);
 }
 
+#endif
+
 // ---- replies ---------------------------------------------------------------
-static uint8_t reply[HEADER + 1 + 5 + (SCREEN_PART / 7 + 1) * 8 + 1];
+#ifdef MODWERK_DEV
+static uint8_t reply[HEADER + 1 + 5 + (SCREEN_PART / 7 + 1) * 8 + 1];   // the largest: SCREEN's
+#else
+static uint8_t reply[HEADER + 1 + 10 + (MEM_MAX / 7 + 1) * 8 + 1];      // the largest: LOG's (IDENT's is 103)
+#endif
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -474,16 +494,21 @@ static void send(uint8_t *end)
     SYSEX_SEND(reply, end - reply, 0, USB);
 }
 
+#ifdef MODWERK_DEV
 static int readable(uint32_t a, uint32_t n)
 {
     if (n == 0 || n > MEM_MAX || a + n < a)
         return 0;
     return (a >= 0x40000000 && a + n <= DDR_END) || (a >= 0x80000000 && a + n <= 0x80010000);
 }
+#endif
+
+extern uint32_t mw_load_avg, mw_load_wmax, mw_load_peak, mw_load_windows, mw_load_blocks;
+uint32_t mw_load_tenths(uint32_t l);
 
 static void COLD act(const uint8_t *m, int len)
 {
-    int seq = m[6], cmd = m[7], n = len - HEADER - 1, status = ST_OK;
+    int seq = m[6], cmd = m[7], n = len - HEADER - 1;
     const uint8_t *a = m + HEADER;
     uint8_t *p;
     int i;
@@ -495,11 +520,16 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_IDENT:
         p = begin(seq, cmd, ST_OK);
         p = put32(p, LINK_VERSION);
+#ifdef MODWERK_DEV
         p = put32(p, (uint32_t)armed);
         p = put32(p, human_ticks >= 0 && human_ticks < HUMAN_TICKS);
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
+#else
+        for (i = 0; i < 5; i++)         // the same fields: a release base has no keys and no arm
+            p = put32(p, 0);
+#endif
         p = put32(p, ring_drops);
         p = put32(p, rx_count);
         p = put32(p, ticks);
@@ -512,9 +542,47 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, boot_status);
         p = put32(p, boot_depack_crc);
         p = put32(p, boot_image);
+#ifdef MODWERK_DEV
         p = put32(p, (uint32_t)DIAG);
+#else
+        p = put32(p, 0);                // no RAM boot, so no place for its diagnostics
+#endif
+        p = put32(p, run_crc);          // the set identity (link-image.mjs prints the same two as `run`)
+        p = put32(p, run_bytes);
         send(p);
         return;
+    case CMD_DIAG:                      // where the log is and its size: a host reads it with LOG
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, (uint32_t)&mw_diag_log);
+        p = put32(p, sizeof mw_diag_log);
+        send(p);
+        return;
+    case CMD_LOAD:                      // the last window's share, its dearest block, the dearest since boot
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, mw_load_avg);
+        p = put32(p, mw_load_tenths(mw_load_wmax));
+        p = put32(p, mw_load_tenths(mw_load_peak));
+        p = put32(p, mw_load_windows);
+        p = put32(p, mw_load_blocks);
+        send(p);
+        return;
+    case CMD_LOG: {                     // offset into the log and a count, as MEM's reply: offset, count, bytes
+        uint32_t at, count;
+        if (n < 10) {
+            send(begin(seq, cmd, ST_BAD));
+            return;
+        }
+        at = get32(a);
+        count = get32(a + 5);
+        if (count == 0 || count > MEM_MAX || at > sizeof mw_diag_log || count > sizeof mw_diag_log - at) {
+            send(begin(seq, cmd, ST_RANGE));
+            return;
+        }
+        p = put32(put32(begin(seq, cmd, ST_OK), at), count);
+        send(pack(p, (const volatile uint8_t *)&mw_diag_log + at, (int)count));
+        return;
+    }
+#ifdef MODWERK_DEV
     case CMD_DISARM:
         disarm();
         send(begin(seq, cmd, ST_OK));
@@ -551,7 +619,8 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_RELEASE_ALL:
     case CMD_CONFIRM:
     case CMD_RAMBOOT:
-    case CMD_PAD:
+    case CMD_PAD: {
+        int status = ST_OK;
         if (!armed || !booted)          // before the boot's settle its set_carry(0) would drop a request
             status = ST_NOT_ARMED;
         else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
@@ -606,6 +675,8 @@ static void COLD act(const uint8_t *m, int len)
             refused_count++;
         send(begin(seq, cmd, status));
         return;
+    }
+#endif
     default:
         send(begin(seq, cmd, ST_BAD));
     }
@@ -615,6 +686,7 @@ void mw_link_tick(char *ctrl)
 {
     int done;
     ticks++;
+#ifdef MODWERK_DEV
     if (!booted && ticks > 200)
         mw_link_project(1, 0);          // no project load seen at boot: settle the carry anyway
     if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
@@ -638,6 +710,7 @@ void mw_link_tick(char *ctrl)
         pend_tail = pend_seen = pend_head;
         pend_age = 0;
     }
+#endif
     for (done = 0; done < PER_TICK && ring_tail != ring_head; done++) {
         uint32_t t = ring_tail;
         if (USB_SYSEX_STATE == 0xF0)
@@ -645,12 +718,17 @@ void mw_link_tick(char *ctrl)
         act(ring[t % RING], ring_len[t % RING]);
         ring_tail = t + 1;
     }
+#ifdef MODWERK_DEV
     if (ui_dirty) {
         ui_dirty = 0;
         ctrl[0x20] = 1;
     }
+#else
+    (void)ctrl;
+#endif
 }
 
+#ifdef MODWERK_DEV
 // ---- RAM boot ---------------------------------------------------------------
 extern void core_finish_drain(void);    // core-ar2/finish.s: masks interrupts, lets the panel and UART queues empty
 extern void mw_cache_push(void);        // link.s: every dirty line of the data cache out to DDR
@@ -696,6 +774,7 @@ void COLD mw_link_ramboot_go(const uint32_t *st)
     }
     mw_link_reset();
 }
+#endif
 
 static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  // zlib's
 {
@@ -709,6 +788,7 @@ static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  /
     return ~c;
 }
 
+#ifdef MODWERK_DEV
 static uint32_t be32(const uint8_t *p)
 {
     return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
@@ -809,11 +889,9 @@ static uint32_t __attribute__((noinline, hot)) depack(const uint8_t *sec, uint32
     return s.bad || s.p != s.end ? 0 : n;
 }
 
-// From link.s at boot (OS 1.74 0x400008c6): after the core's boot hook (this code is
-// in place, its .bss zeroed), before stock fills SRAM and clears its own .bss. The
-// data cache is off here. Returns to boot the image that is running; does not return
-// when it unpacks and enters the staged one.
-void COLD mw_boot_gate(void)
+// The RAM boot's part of the boot gate (mw_boot_gate). Returns to boot the image that is
+// running; does not return when it unpacks and enters the staged one.
+static void COLD ramboot_gate(void)
 {
     volatile uint32_t *mb = MAILBOX;
     const uint8_t *c = (const uint8_t *)(STAGED + 2), *e;
@@ -873,7 +951,29 @@ void COLD mw_boot_gate(void)
     }
     mw_link_reset();
 }
+#endif
 
+extern uint8_t __run_start[], __run_words[];
+#define DTCN0 (*(volatile uint32_t *)0xfc07000c)   // the core's timer (core-ar2/load.s), for the log's nonce
+
+// From link.s at boot (OS 1.74 0x400008c6), in every base: after the core's boot hook
+// (this code is in place, its .bss zeroed), before stock fills SRAM and clears its own
+// .bss. The data cache is off here. First the set identity, before any handler has
+// written to .run: the block the core just copied, the base and every module linked
+// into the image, which `link-image.mjs` prints as `run` for the image it writes. Then a
+// new diagnostics log, then a development base's RAM boot.
+void COLD mw_boot_gate(void)
+{
+    boot_rsr = RSR;
+    run_bytes = (uint32_t)__run_words * 4;
+    run_crc = crc32(__run_start, run_bytes);
+    mw_diag_start(DTCN0 ^ run_crc, run_crc);
+#ifdef MODWERK_DEV
+    ramboot_gate();
+#endif
+}
+
+#ifdef MODWERK_DEV
 // ---- GLOBAL > REMOTE CONTROL ---------------------------------------------------
 extern void mw_link_row_label(void);
 extern void core_additem(void *menu, const void *row);
@@ -913,3 +1013,4 @@ void COLD mw_link_settings(void *menu)
 {
     core_additem(menu, row);
 }
+#endif

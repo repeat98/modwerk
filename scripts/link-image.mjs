@@ -19,6 +19,7 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+import { crc32 } from 'node:zlib'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { materializeElemodRecipe } from '../src/catalog/elemod-recipe.ts'
@@ -69,4 +70,8 @@ if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(linked.store, null
 const built = writeEle3Syx(stock, packMain(linked.image), device, version)
 const facts = verifyEle3Build(built, stock, linked.image, device, version)
 await writeFile(resolve(out), built)
-console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare, ...(fx && { fxWork: fx }) }, null, 1))
+// The set identity a Rytm base's link reports (ident's set CRC and bytes): the .run block as the linker placed it, which
+// the core copies unchanged to DDR at boot.
+const [runStart, runEnd] = linked.layout.ddr, runAt = linked.layout.runLoad - device.mainLoad
+const run = { crc32: (crc32(linked.image.subarray(runAt, runAt + runEnd - runStart)) >>> 0).toString(16).padStart(8, '0'), bytes: runEnd - runStart }
+console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare, run, ...(fx && { fxWork: fx }) }, null, 1))

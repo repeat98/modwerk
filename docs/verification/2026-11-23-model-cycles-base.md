@@ -80,3 +80,56 @@ nobody answered "Upgrade OS now?", and the link answered ok and reset the unit. 
 repeated: the unit reset by itself, TRIG 16 blinked, and `ident` reported the mailbox `booted`, `booted from RAM` and
 CRC `0x36fc4fa1`. A power cycle then booted the flashed image: TRIG 16 did not blink. Nothing was flashed for the RAM
 boot.
+
+## The page and its send dialog (24 and 25 November 2026)
+
+The catalogue record pins `modwerk-base-model-cycles-646706ff.elemod` (base `646706ff`, #2077). The kit's `build` in
+Node (`prepareBuild`, the version name `1.13`, `buildWithLock`, as the page runs them) writes `89edf78e…`
+(1,006,880 bytes) from the stock `model-cycles_OS1.13.syx` (`44fe5862…`): byte for byte the image Elekloader's
+patcher built, which ran flashed in #2077's record.
+
+In a browser (`npm run dev` with `npm run dev:community`, Chrome on a Mac, `'model-cycles': true` in
+`DIGI_DOWNLOADS_ENABLED` locally, not committed), on the submitter's Model:Cycles:
+
+- **25 November, base `646706ff`:** the page built from the stock 1.13 file and its download was `89edf78e…`, byte for
+  byte. The send dialog sent it to the unit on stock 1.13; YES at UPGRADE OS NOW? installed it (`ident`: set CRC
+  `0x7c774e99`, 38,272 bytes).
+- **24 and 25 November, base `4d4d91d2`:** the page built `ec928894…`, byte for byte. Chrome asked for MIDI device
+  control once the site's permission was reset; the dialog's Connect, Send and Confirm on the unit ticked. NO at
+  UPGRADE OS NOW? kept the running OS without a restart (the dialog stays at "Press YES on the unit", since the page
+  cannot see the answer); YES installed it (`0x15eddb5a`, 38,052 bytes), also after stock 1.13 was flashed over it.
+  With Transfer open and connected the dialog sent and the unit asked (macOS).
+- **Not run:** Windows, where a MIDI port opens only once (no Windows machine here).
+
+Beta only: the preview, `#model-cycles/configuration` and its button follow `hasBetaUi`. Checked by tests that render
+a released build (`USB_LINK` off): `core-build-preview-gate.test.ts` (the button for a beta tester, not a visitor)
+and `App.model-cycles-preview.test.ts` (the route waits for the session, keeps a beta tester, sends a visitor to the
+machine page). Not checked in a deployed build.
+
+## The site's build of 4d4d91d2 (24 November 2026)
+
+The catalogue record now pins `modwerk-base-model-cycles-4d4d91d2.elemod`. The kit's `build` in Node (the same
+`prepareBuild` and `buildWithLock` the page runs), given the stock `model-cycles_OS1.13.syx` (`44fe5862…`) and no
+module, writes `ec928894…` (1,006,496 bytes): byte for byte the image Elekloader's Python patcher built, which ran
+flashed on the unit above.
+
+## The site's build of 2e5243e6 (24 November 2026)
+
+The machine page builds the base through the vendored Elekloader kit 0.7.0, with `modwerk-base-model-cycles-2e5243e6.elemod`
+pinned in `sdk/imports/elekloader-modwerk-base-model-cycles-2026-11-24.json`. `planBuild('model-cycles', '1.13', [])`
+picks that file, not core-mc 0.3 (`digi-build.test.ts`). The kit's `build` in Node, given the stock
+`model-cycles_OS1.13.syx` (`44fe5862…`) and that package with no version name, logs 6 sites, RAM
+`0x47e00000–0x47e00104`, sections 2, 4 and 5 byte for byte, flash end `0x0dc280` (1,064,320 bytes spare), and writes
+`f8b652a0…` (976,800 bytes): byte for byte the image Elekloader's Python patcher built from the same files on
+23 November. Downloads are off, so the page offers no file yet. Not run here: the page itself in a browser (it needs
+a signed-in member).
+
+## Sending from the page's sender over USB (24 November 2026)
+
+The site's own sender (`src/engine/elektron/os-upgrade.ts` over `os-upgrade-midi.ts`, as `usb-upgrade.ts` calls it),
+bundled with Vite and run from Node through the MCP's `nodeMidiAccess` on a Mac, sent `f8b652a0…` (the base
+`2e5243e6` alone, no module) to the unit over USB with Elektron Transfer closed: 478 messages, each answered, in 2.2 s.
+The unit asked UPGRADE OS NOW?; after YES it wrote the flash and booted normally, as stock (tester's report). This is
+also the first run of the base with no subscriber on `ev_key_leds`. Not run: the page's dialog in a browser (its
+button waits for the downloads approval), NO at UPGRADE OS NOW?.
+
