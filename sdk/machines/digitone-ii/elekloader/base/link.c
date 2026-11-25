@@ -354,7 +354,7 @@ static int readable(uint32_t a, uint32_t n)
 }
 
 // zlib's CRC32 a nibble at a time (16 words of table): the staged container is up to CONTAINER_MAX bytes, read in the
-// UI task while UPGRADE OS NOW? waits, so eight times fewer steps than the bitwise crc32 the gate uses.
+// UI task while UPGRADE OS NOW? waits: two table steps a byte, a quarter of the bitwise crc32 the gate uses.
 static uint32_t crc32_nibble(const uint8_t *p, uint32_t n)
 {
     static const uint32_t t[16] = {
