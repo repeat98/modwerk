@@ -34,6 +34,8 @@ static void reset(unsigned start)
 {
     memset((void *)waiting, 0, sizeof waiting);
     memset((void *)recent, 0, sizeof recent);
+    memset((void *)held, 0, sizeof held);
+    memset((void *)releases_seen, 0, sizeof releases_seen);
     ms = start;
     posts = last_code = last_velocity = last_type = 0;
     on = 1;
@@ -52,6 +54,14 @@ static void press(int pad)
     memcpy(ev + 4, &code, sizeof code);
     ev[11] = 1;                     // the flags long's low byte: pressed
     light_taps_event(ev);
+}
+
+static void release(int pad)
+{
+    char ev[16] = {0};
+    int code = PAD_KEY + pad;
+    memcpy(ev + 4, &code, sizeof code);
+    light_taps_event(ev);           // pressed bit clear
 }
 
 static void strike(int pad)
@@ -147,6 +157,50 @@ int main(void)
     press(9);
     tick(3);
     expect("two pads tapped together: two light taps", 2);
+
+    reset(100);
+    press(5);
+    tick(3);
+    release(5);
+    press(5);
+    tick(5);
+    for (int r = 0; r < 20; r++) {  // held for two seconds; the panel repeats the key
+        press(5);
+        tick(100);
+    }
+    release(5);
+    expect("a held light tap: one soft hit, key repeats ignored", 2);
+
+    reset(100);
+    press(5);
+    strike(5);
+    tick(5);
+    release(5);
+    press(5);
+    strike(5);
+    for (int r = 0; r < 20; r++) {
+        press(5);
+        tick(100);
+    }
+    release(5);
+    expect("a held firm hit: no light taps from its key repeats", 0);
+
+    reset(100);
+    for (int r = 0; r < 3; r++) {   // a panel that posts no releases
+        press(2);
+        tick(50);
+    }
+    expect("no releases ever posted: every press still plays", 3);
+
+    reset(100);
+    press(4);
+    tick(3);
+    release(4);
+    tick(20);
+    press(4);
+    tick(3);
+    release(4);
+    expect("tap, release, tap again: two light taps", 2);
 
     return failures;
 }

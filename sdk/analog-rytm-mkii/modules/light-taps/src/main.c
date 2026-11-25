@@ -44,6 +44,8 @@ static volatile unsigned char waiting[PADS];      // a press still waiting for i
 static volatile unsigned pressed_at[PADS];
 static volatile unsigned char recent[PADS];       // a strike in the last TAP_MS; light_taps_poll expires it
 static volatile unsigned struck_at[PADS];
+static volatile unsigned char held[PADS];          // pressed and not yet released
+static volatile unsigned char releases_seen[PADS]; // this pad's releases reach us
 // The driver's strike record: type 3, the pad's strike code, the velocity, a time stamp.
 static struct { unsigned char type, unused[3]; int code; unsigned char velocity, unused2[3]; unsigned time; } taps[TAPS];
 static unsigned next_tap;
@@ -62,7 +64,20 @@ void light_taps_event(char *ev)
     int p;
     if (ev[0] == 0) {
         unsigned pad = (unsigned)*(int *)(ev + 4) - PAD_KEY;
-        if (pad < PADS && (ev[11] & 1) && !(recent[pad] && now - struck_at[pad] <= TAP_MS)) {
+        if (pad >= PADS)
+            return;
+        if (!(ev[11] & 1)) {            // a release
+            held[pad] = 0;
+            releases_seen[pad] = 1;
+            return;
+        }
+        // A press while the pad is still held is a key repeat, not a new tap.
+        // Only once a release has been seen on this pad, so that a panel which
+        // posts no releases still plays every press.
+        if (held[pad] && releases_seen[pad])
+            return;
+        held[pad] = 1;
+        if (!(recent[pad] && now - struck_at[pad] <= TAP_MS)) {
             pressed_at[pad] = now;
             waiting[pad] = 1;
         }
