@@ -2,7 +2,7 @@
  * Midiverb's ColdFire half. Every frame (the base's ev_frame_record, after stock's parameter builder, scenes and
  * LFOs) it streams each Midiverb track's program, chosen by PROG and BANK, to the DSP through FX2's page 2: one
  * chunk a frame, round and round (engine.asm takes a program from its chunk 0 to its checksum, then plays it).
- * mv_name gives entry.s the name stock's message box shows when PROG or BANK turns. */
+ * mv_name and mv_bank_name give entry.s what stock's message box shows when PROG or BANK turns. */
 #include "stream.h"
 
 typedef unsigned char u8;
@@ -44,6 +44,12 @@ static unsigned mv_program(unsigned bank, unsigned prog)
 const char *mv_name(unsigned bank, unsigned prog)
 {
     return mv_names[mv_program(bank, prog)];
+}
+
+const char *mv_bank_name(unsigned bank)
+{
+    static const char names[3][12] = {"MIDIVERB", "MIDIVERB II", "MIDIFEX"};
+    return names[bank > 2u ? 2u : bank];
 }
 
 void mv_frame(void)

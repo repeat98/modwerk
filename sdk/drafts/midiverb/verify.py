@@ -91,46 +91,62 @@ def model(chunks, left, right, knobs, block=16):
     """What the engine outputs for one instance, a call a block (no splits)."""
     lev, mix = knobs[1] << 16, knobs[5] << 16
     mix = 0x7FFFFF if mix == 0x7F0000 else mix
-    s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0)
+    s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0, fade=0)
     area, ring = [0] * 262, [0] * RING
     p = acc = phase = held = 0
+    wet_mix = step = 0
     y_prev, y_cur, out_run = [0, 0], [0, 0], [0, 0]
     out_l, out_r = list(left), list(right)
     for call, start in enumerate(range(0, len(left), block)):
         c, d, e = chunks[call]
         k, g, A, B = c >> 16, (c >> 8) & 0xFF, (d >> 8) & 0xFFFF, (e >> 8) & 0xFFFF
-        if s["playing"] != g:
-            if s["loading"] != g and k == 0 and A & 0x8000 and 4 <= (A & 0x7FFF) <= 0x105:
-                s.update(loading=g, n=A & 0x7FFF, next=0, loaded=False, sum=0, chk=None, playing=NONE, counter=0x80)
-                p = acc = phase = 0
-                y_prev, y_cur = [0, 0], [0, 0]
-                ring = [0] * RING
-            if s["loading"] == g and not s["loaded"] and s["next"] == k:
-                i, n = 2 * k, s["n"]
-                area[i] = A
-                if i == n:
-                    s["chk"] = A
-                else:
-                    s["sum"] += A
-                if i + 1 <= n:
-                    area[i + 1] = B
-                    if i + 1 == n:
-                        s["chk"] = B
+        if s["fade"]:
+            s["fade"] -= 1
+            if not s["fade"]:
+                s["playing"] = NONE
+        elif s["playing"] != g:
+            if s["loading"] != g and s["playing"] is not NONE:
+                s["fade"], step = 16, mix >> 8          # the wet's mix falls from the mix by a 256th a sample
+                wet_mix = mix
+            else:
+                if s["loading"] != g and k == 0 and A & 0x8000 and 4 <= (A & 0x7FFF) <= 0x105:
+                    s.update(loading=g, n=A & 0x7FFF, next=0, loaded=False, sum=0, chk=None, playing=NONE, counter=31)
+                    p = acc = phase = 0
+                    y_prev, y_cur = [0, 0], [0, 0]
+                    ring = [0] * RING
+                if s["loading"] == g and not s["loaded"] and s["next"] == k:
+                    i, n = 2 * k, s["n"]
+                    area[i] = A
+                    if i == n:
+                        s["chk"] = A
                     else:
-                        s["sum"] += B
-                s["next"] = k + 1
-                if 2 * (k + 1) > n:
-                    if ((s["sum"] & 0xFFFF) ^ 0xA5A5) == s["chk"]:
-                        s["loaded"] = True
-                    else:
-                        s["loading"] = NONE
+                        s["sum"] += A
+                    if i + 1 <= n:
+                        area[i + 1] = B
+                        if i + 1 == n:
+                            s["chk"] = B
+                        else:
+                            s["sum"] += B
+                    s["next"] = k + 1
+                    if 2 * (k + 1) > n:
+                        if ((s["sum"] & 0xFFFF) ^ 0xA5A5) == s["chk"]:
+                            s["loaded"] = True
+                        else:
+                            s["loading"] = NONE
+        quiet = False
         if s["counter"]:
             s["counter"] -= 1
+            quiet = True
+        else:
+            if s["loaded"]:
+                s.update(playing=s["loading"], loading=NONE, loaded=False)
+            quiet = s["playing"] is NONE
+        if quiet:                                   # the reverb silent, the dry at its mix
+            for n in range(start, min(start + block, len(left))):
+                out_l[n], out_r[n] = mixed(left[n], 0, mix, 0), mixed(right[n], 0, mix, 0)
             continue
-        if s["loaded"]:
-            s.update(playing=s["loading"], loading=NONE, loaded=False)
-        if s["playing"] is NONE:
-            continue
+        if not s["fade"]:
+            wet_mix = mix
         for n in range(start, min(start + block, len(left))):
             dl, dr = left[n], right[n]
             if phase == 0:
@@ -142,13 +158,15 @@ def model(chunks, left, right, knobs, block=16):
                 acc, p = run(area, ring, p, acc, half((x1 >> 3) & ~0x1FF), out_run)
                 y_prev, y_cur = y_cur, list(out_run)
                 wet, phase = list(y_prev), 0
-            out_l[n] = mixed(dl, wet[0], mix)
-            out_r[n] = mixed(dr, wet[1], mix)
+            if s["fade"]:
+                wet_mix = max(0, wet_mix - step)
+            out_l[n] = mixed(dl, wet[0], mix, wet_mix)
+            out_r[n] = mixed(dr, wet[1], mix, wet_mix)
     return out_l, out_r
 
 
-def mixed(dry, wet, mix):
-    return clamp(((dry << 24) - 2 * dry * mix + 2 * wet * mix) >> 24)
+def mixed(dry, wet, mix, wet_mix):
+    return clamp(((dry << 24) - 2 * dry * mix + 2 * wet * wet_mix) >> 24)
 
 
 HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR", "stnL", "end"]
@@ -190,7 +208,7 @@ def main():
     work = pathlib.Path(tmp.name)
     source = DRIVER + (HERE / "engine.asm").read_text().replace("\nproc:\n", "\nmvqPROC:\n")
     asm = G.assemble(source, work, replace={"$fab2e0": f"${STREAM_AT:x}"})
-    problems = G.trap_problems(asm)
+    problems = G.trap_problems(asm, forms=("x0,y1", "y0,x0"))  # TRAPS.md: both orders encode signed
     ok = not problems
     print(("[PASS]" if ok else "[FAIL]") + f" assembler traps: {problems or 'none'}")
     blocks = 900
@@ -199,12 +217,12 @@ def main():
     right = [0] * 5200 + G.burst(2400, n - 5200, amp=0.3, seed=7)
     late = [0] * 11600 + G.burst(1200, n - 11600, amp=0.45, seed=5)
     by = {(q["bank"], q["number"]): i for i, q in enumerate(PROGRAMS)}
-    a, b = by[("MV1", 12)], by[("FEX", 2)]
+    a, b = by[("MV1", 12)], by[("MV2", 25)]  # both reverbs that answer at once
     cases = [
         ("streamed from the start", [(0, a)], sig, right, (0, 32, 0, 0, 0, 127)),
         ("switched to another program", [(0, a), (520, b)], late, late, (0, 64, 0, 0, 0, 90)),
-        ("no stream: dry", [(0, None)], sig, right, (0, 32, 0, 0, 0, 127)),
-        ("a broken checksum: dry", [(0, (a, 9))], sig, right, (0, 32, 0, 0, 0, 127)),
+        ("no stream: the reverb silent", [(0, None)], sig, right, (0, 32, 0, 0, 0, 90)),
+        ("a broken checksum: the reverb silent", [(0, (a, 9))], sig, right, (0, 32, 0, 0, 0, 90)),
     ]
     meter = 0
     for name, plan, left_in, right_in, knobs in cases:
@@ -217,11 +235,12 @@ def main():
         got_l, got_r = r.outputs[0]
         want_l, want_r = model(chunks, left_in, right_in, knobs)
         diff = next((i for i in range(n) if (got_l[i], got_r[i]) != (want_l[i], want_r[i])), None)
-        dry = (got_l, got_r) == (list(left_in), list(right_in))
-        good = diff is None and (dry if "dry" in name else not dry)
+        quiet = (got_l, got_r) == tuple(map(list, zip(*[(mixed(l, 0, knobs[5] << 16, 0), mixed(r, 0, knobs[5] << 16, 0))
+                                                         for l, r in zip(left_in, right_in)])))
+        good = diff is None and (quiet if "silent" in name else not quiet)
         ok &= good
         where = "" if diff is None else f", first difference at frame {diff}: got {got_l[diff], got_r[diff]} want {want_l[diff], want_r[diff]}"
-        print(("[PASS]" if good else "[FAIL]") + f" {name}: bit-exact{' and dry' if dry else ''}{where}")
+        print(("[PASS]" if good else "[FAIL]") + f" {name}: bit-exact{' and silent' if quiet else ''}{where}")
     print(f"meter: {meter} executed instructions a sample, the dearest case (the driver's few included)")
     sys.exit(0 if ok else 1)
 

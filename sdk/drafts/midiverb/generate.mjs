@@ -220,12 +220,14 @@ export function encode(ops) {
 
 // Every program the stream carries: each bank in chart order, less Midiverb II's Defeat (0) and its 20 chorus and
 // flange programs (50-69, which patch their own code from an LFO: not handled yet), less the programs whose DSP
-// cost passes what the base admits for one instance (declared 400; measured in dsp_host with engine v2, 25 Nov
-// 2026, executed instructions a sample). A faster engine brings these back.
+// cost passes what the base admits for one instance (declared 400; measured in dsp_host on the streaming engine,
+// 25 Nov 2026, the worst of unsplit and split calls at LEVL 127, executed instructions a sample). A faster engine
+// brings these back.
 export const OVER_BUDGET = {
-  MV1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 44, 45],
-  FEX: [6, 12, 21, 23, 24, 28, 34, 35, 39, 49, 50, 51, 52],
-  MV2: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 46, 47, 91, 97],
+  MV1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 34, 39, 41, 42, 44, 45, 46, 47],
+  FEX: [6, 8, 12, 21, 23, 24, 27, 28, 34, 35, 39, 49, 50, 51, 52],
+  MV2: [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 27, 30, 31, 32, 33, 34, 35, 37, 39, 40, 45,
+    46, 47, 48, 49],
 };
 export const BANKS = ['MV1', 'MV2', 'FEX'];
 const FIRST = { MV1: 1, MV2: 0, FEX: 1 };

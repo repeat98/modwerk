@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: MIT
-| Midiverb's program name in stock's message box when PROG or BANK turns. The base's ev_knob_store take
+| Midiverb's program name in stock's message box when PROG turns, the bank's name when BANK does. The base's ev_knob_store take
 | (runtime.json) hands Midiverb the knob handler's store while the FX2 page is shown; the entry names the
 | program when the page's slot A is PROG (the page is known by its descriptor's slot name), then stores the
 | byte as stock does. Only a knob turn stores there: locks, LFOs and scenes never pop a name up. Stock
@@ -42,13 +42,16 @@ mv_knob_entry:
         bne.s   2f
         move.b  %d2,%d1                 | PROG turned: BANK from the Part
         move.b  3(%a2),%d0
-        bra.s   3f
-2:      move.b  %d2,%d0                 | BANK turned: PROG from the Part
-        move.b  -3(%a2),%d1
-3:      move.l  %d1,-(%sp)
+        move.l  %d1,-(%sp)
         move.l  %d0,-(%sp)
         jsr     mv_name
         addq.l  #8,%sp
+        bra.s   3f
+2:      move.b  %d2,%d0                 | BANK turned: its name
+        move.l  %d0,-(%sp)
+        jsr     mv_bank_name
+        addq.l  #4,%sp
+3:
         moveq   #72,%d1                 | 1.2 s
         move.l  %d1,-(%sp)
         move.l  %d0,-(%sp)

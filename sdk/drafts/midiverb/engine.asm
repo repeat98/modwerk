@@ -19,13 +19,15 @@
 ; Word 0 is a header ($8000 | N), the last word a checksum (the sum of the
 ; others, low 16 bits, xor $a5a5). A program other than the one playing is
 ; taken from its chunk 0, in order, while the ring clears; it plays once both
-; are done and the checksum holds. Until a program plays the audio passes.
+; are done and the checksum holds. A program playing fades out first (16
+; calls); while none plays the reverb is silent and the dry stays at its mix.
 ;
 ; State, r7+: 00 base  01 ring pointer  02 clear counter  03 phase
 ; 04 acc  05 first frame's (L+R)/2  06/07 previous out L/R  08/09 current L/R
 ; 0a program playing ($ffffff none)  0b/0c this run's out L/R  0d mix  0e level
 ; 0f half(input)  10 program loading ($ffffff none)  11 its next chunk
 ; 12 loaded (1)  13 its running sum  14 its N  15 its checksum
+; 16 fade calls left  17 the wet's mix  18 its fall a sample
 ; Program words: units [handler*2][argument]; a run of reads is [0][k] then k
 ; ring offsets; the handlers are the jump table's order below.
 
@@ -59,13 +61,39 @@ proc:
         lsr     #$8,a
         and     #>$0000ff,a
         move    a1,y1                   ; g
+; A fade in progress: the program playing fades out over 16 calls; then
+; nothing plays until the new one has loaded.
+        move    x:(r7+$16),a
+        tst     a
+        beq     mvqNOFD
+        sub     #>$1,a
+        move    a,x:(r7+$16)
+        bne     mvqRCVX
+        move    #>$ffffff,a
+        move    a,x:(r7+$0a)            ; faded out: nothing plays
+        bra     mvqRCVX
+mvqNOFD:
         move    x:(r7+$0a),a
         cmp     y1,a
         beq     mvqRCVX                 ; it offers what plays
         move    x:(r7+$10),a
         cmp     y1,a
         beq     mvqLOAD
-; Another program: only from its chunk 0, whose first word is the header
+; Another program while one plays: that one fades out first.
+        move    x:(r7+$0a),a
+        move    #>$ffffff,x1
+        cmp     x1,a
+        beq     mvqNEWP
+        move    #>$10,a
+        move    a,x:(r7+$16)
+        move    x:(r7+$0d),a
+        move    a,x:(r7+$17)            ; the wet's mix falls from the mix
+        asr     #$8,a,a
+        move    a1,x1
+        move    x1,x:(r7+$18)           ; by a 256th of it a sample
+        bra     mvqRCVX
+mvqNEWP:
+; Nothing plays: a program only from its chunk 0, whose first word is the header
 ; $8000 | N, N the words after it (the last of them the checksum), 4..261.
         move    x0,a
         tst     a
@@ -104,7 +132,7 @@ proc:
         move    a,x:(r7+$01)
         move    #>$ffffff,a
         move    a,x:(r7+$0a)            ; nothing plays while it loads
-        move    #>$80,a
+        move    #>$1f,a
         move    a,x:(r7+$02)            ; the ring clears meanwhile
 ; Chunk k, in order: words 2k and 2k+1 into the area; every word before the
 ; last adds to the sum, the last is the checksum.
@@ -131,14 +159,14 @@ mvqLOAD:
         move    y0,a
         move    x:(r7+$14),b
         cmp     b,a
-        beq     mvqCKA                  ; i = N: the checksum
+        beq     mvqCKA_                  ; i = N: the checksum
         move    x:(r7+$13),a
         add     x1,a
         move    a,x:(r7+$13)
-        bra     mvqWB
-mvqCKA:
+        bra     mvqWB__
+mvqCKA_:
         move    x1,x:(r7+$15)
-mvqWB:
+mvqWB__:
         move    y0,a
         add     #>$1,a                  ; i + 1
         move    x:(r7+$14),b
@@ -152,12 +180,12 @@ mvqWB:
         move    y0,a
         add     #>$1,a
         cmp     b,a
-        beq     mvqCKB
+        beq     mvqCKB_
         move    x:(r7+$13),a
         add     x1,a
         move    a,x:(r7+$13)
         bra     mvqNEXK
-mvqCKB:
+mvqCKB_:
         move    x1,x:(r7+$15)
 mvqNEXK:
         move    x0,a
@@ -175,40 +203,37 @@ mvqNEXK:
         move    a1,x1
         move    x:(r7+$15),a
         cmp     x1,a
-        bne     mvqBAD
+        bne     mvqBAD_
         move    #>$1,a
         move    a,x:(r7+$12)            ; loaded
         bra     mvqRCVX
-mvqBAD:
+mvqBAD_:
         move    #>$ffffff,a
         move    a,x:(r7+$10)            ; a broken stream: wait for chunk 0 again
 mvqRCVX:
 
-; Bounded clearing: 128 calls, the last 122 clear 128 words each under the
-; ring's modulus (the program area above it is kept). Audio passes untouched.
+; The ring clears 512 words a call while a program loads (nothing plays, so
+; the time is free): 31 calls cover its 15,608 words, modulo the ring.
         move    x:(r7+$02),a
         tst     a
         beq     mvqREDY
         sub     #>$1,a
         move    a,x:(r7+$02)
-        cmp     #>$00007a,a
-        bge     mvqCLRX
-        asl     #$7,a,a
+        asl     #$9,a,a
         move    x:(r7+$00),x0
         add     x0,a
         move    a,r4
         move    #>$3cf7,m4
         clr     a
-        do      #128,>mvqCLR_
+        do      #512,>mvqCLR_
         move    a,y:(r4)+
 mvqCLR_:
         nop
         move    #>$ffffff,m4
-mvqCLRX:
-        rts
+        bra     mvqQUIT
 
 mvqREDY:
-; A loaded program plays from the next call; without one the audio passes.
+; A loaded program plays from this call; without one the reverb is silent.
         move    x:(r7+$12),a
         tst     a
         beq     mvqPLAY
@@ -223,7 +248,7 @@ mvqPLAY:
         move    #>$ffffff,x0
         cmp     x0,a
         bne     mvqPRGB
-        rts
+        bra     mvqQUIT
 mvqPRGB:
 ; MIX (F): 127 is full wet. LEVL (B): k/32, unity at 32.
         move    x:(r6+$5),a
@@ -233,6 +258,12 @@ mvqPRGB:
         move    #>$7fffff,a
 mvqMIXA:
         move    a,x:(r7+$0d)
+        move    a,b
+        move    x:(r7+$16),a
+        tst     a
+        bne     mvqFADG
+        move    b,x:(r7+$17)            ; no fade: the wet's mix is the mix
+mvqFADG:
         move    x:(r6+$1),a
         move    a,x:(r7+$0e)
 
@@ -266,6 +297,7 @@ mvqMIXA:
 
 ; Frame B: one program sample.
 mvqFRMB:
+        move    #>$000100,y0            ; one 16-bit LSB, left-aligned
         move    x:(r0),a
         move    x:(r0+n0),x0
         add     x0,a
@@ -455,24 +487,60 @@ mvqEND_:
         clr     a
         move    a,x:(r7+$03)
 
-; out = dry + MIX (wet - dry)
+; out = dry - MIX dry + WET wet: WET is MIX, falling to 0 while a program fades out.
 mvqMIX_:
+        move    x:(r7+$16),a
+        tst     a
+        beq     mvqFNON
+        move    x:(r7+$17),a
+        move    x:(r7+$18),x1
+        sub     x1,a
+        bge     mvqFPOS
+        clr     a
+mvqFPOS:
+        move    a,x:(r7+$17)
+mvqFNON:
         move    x:(r7+$0d),y1
+        move    x:(r7+$17),y0
         move    x:(r0),x0
         mpy     x0,y1,b
         move    x0,a
         sub     b,a
         move    x:(r7+$0b),x0
-        mac     x0,y1,a
+        mac     y0,x0,a
         move    x:(r0+n0),x0
         move    a,x:(r0)+
         mpy     x0,y1,b
         move    x0,a
         sub     b,a
         move    x:(r7+$0c),x0
-        mac     x0,y1,a
+        mac     y0,x0,a
         move    a,x:(r0)+
 mvqSMPE:
         move    r5,x:(r7+$01)
         move    #>$ffffff,m5
+        rts
+
+; No program plays (none yet, a fade ended, or one loading): the reverb is
+; silent and the dry stays at its mix, so a switch never jumps to full dry.
+mvqQUIT:
+        move    x:(r6+$5),a
+        move    #>$7f0000,x0
+        cmp     x0,a
+        bne     mvqQMIX
+        move    #>$7fffff,a
+mvqQMIX:
+        move    a,y1
+        do      n7,>mvqQEND
+        move    x:(r0),x0
+        mpy     x0,y1,b
+        move    x0,a
+        sub     b,a
+        move    a,x:(r0)+
+        move    x:(r0),x0
+        mpy     x0,y1,b
+        move    x0,a
+        sub     b,a
+        move    a,x:(r0)+
+mvqQEND:
         rts
