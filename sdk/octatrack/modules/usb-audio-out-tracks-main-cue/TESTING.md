@@ -9,6 +9,21 @@
 - **0.4.1, Main + INPUTS AB** (`1c8f7da4…`, the 24 November package, 150 s): MI_04 started, status OK. The player opened the four-channel endpoint Windows still listed from the ABCD trial and failed ("Invalid device"), so no audio was sent in this trial. Undo: the unit came back.
 - **The 24 November failure did not recur** in three Undos, one of them after 60 s of four-channel input. Not known whether it depends on the kept set, on the longer stream (240 s), or is intermittent.
 
+### Performance (25 November 2026)
+
+`evidence/performance.json`, measured on the owner's MKII on base 0.8.1 `e11525835106` (release image, RAM-booted, empty set, transport stopped: a release base answers no PLAY key and no `stats` or `guard` request), from the base's own 5-minute load windows (`device.mjs diaglog`):
+
+| | Base alone | 0.4.1, INPUTS ABCD, Windows 11 duplex (4 ch in, 2 ch out) |
+| --- | --- | --- |
+| CPU meter mean / peak | 43.8 / 44.1 % | 62.7 / 87.9 % |
+| DSP T1-4 mean / peak | 32.9 / 33.9 % | 33.6 / 34.8 % |
+| DSP T5-8 mean / peak | 41.9 / 43 % | 42.7 / 99.4 % |
+| Longest time between two audio frames | 427 µs | 403 µs |
+| Longest run of frames without a UI tick | 47 | 2,780 (about 1.0 s; no freeze incident; cause not isolated) |
+| Renders skipped, late frame entries | 0, 0 | 0, 0 |
+
+Streaming both ways costs about 19 points of the CPU meter with nothing playing, past the audit's default of 10 points of idle time; not separated into output and input, not measured with a pattern playing, and 0.4.0 not measured the same way. 600 s of duplex: no underrun, overrun or bad packet, 1,511 frames absorbed (57 ppm), no stream status flag on Windows; the Undo reconnected. What changed against the audit's ColdFire template, and why: no static cycle bound and no cfmeter capture (the owner's 0.4.1 approval waives worst-case cycles and current-build hardware evidence), and no MIDI flood (the package has no MIDI path of its own); the measured figures are in the record's method texts and the scored fields stay empty, as `ownerWaivedPerformanceRow` requires.
+
 ## 0.4.1-experimental (draft), 24 November 2026
 
 **Windows 11 accepted the input stream and played into INPUTS AB for four minutes; the unit then left USB after the trial's Undo.** Release package `6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502`, tried with the install preset Main + INPUTS AB (`1c8f7da4…`, word `0x8143210c`) as a 330 s RAM trial on the owner's Octatrack MKII, on base 0.8.1 `e11525835106` RAM-booted from its release image, the owner's kept set (Tape Echo, Air Chorus, Grain, Analog BD) loaded. Windows 11 (usbaudio2 10.0.26100.9974), agent-run, nothing kept.
