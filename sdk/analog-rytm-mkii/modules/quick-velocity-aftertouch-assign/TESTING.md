@@ -197,3 +197,29 @@ Not tested: this package's own image on a unit, and no hand test on the unit.
 **Screenshots:** re-captured in rytm-emu from this version (QM31, `55a50da7…`: plain base `1c14b6b0` and this folder's
 0.3.1 source, linked by Modwerk's linker against stock OS 1.74) with `media/capture.json`'s plans. All six PNGs are
 byte-identical to 0.3.0's (QM30).
+
+## rytm-emu (0.4.0, SCENE + knob; QS01 against stock QS00)
+
+Observed in rytm-emu (ramboot build of `dtboot`), not hardware evidence. QS01: the Modwerk development base (send-bus, `25f2c915`) from the author's tree and this folder's Quick Mod Assign 0.4.0 source, `ddca9904aa424173f85ac1a4930a5e18689d6898154c782f4e4b91e4149fada2`. QS00: the same base without the module, `9c5249d7edc3…`, for stock's behaviour. The default kit, BD's SYNTH page unless named; keys and knobs through the test link, except where "panel" says the emulator's own key scan held the key (the link's held keys never repeat, so only a panel hold reaches stock's scene edit).
+
+| Check | QS00 (stock) | QS01 |
+| --- | --- | --- |
+| SCENE + B with scene 1 engaged | SWT itself moves to 105 | SWT drawn as stock's lock box 105, the scene's other locks (DEC 22, MOD 6, LEV 127) boxed; SWT itself unchanged; a further turn 111 |
+| SCENE let go after the turn, BD tapped, SCENE + B again | | the box comes back at 111: scene mode was not toggled by the release, scene 1 still engaged |
+| SCENE + press B | | SWT's lock removed (plain 99), the other boxes stay |
+| SCENE + B with no scene engaged | SWT moves | popup `NO ACTIVE SCENE`, SWT unchanged |
+| FX track, scene 1 engaged, SCENE + A | | TIM boxed at 30; after the release TIM reads 1/8. as before |
+| Panel SCENE held 1.5 s, screen at 1 s | scene edit's footer (SCENE: 1, LOCKS: 20) | the page; scene edit opens on the release |
+| Panel SCENE held 1.5 s, then BD held | scene 1's locks boxed, footer SCENE: 1 | the same |
+| Panel SCENE tap, BD, then SCENE + B | | scene mode toggled on as stock: BD engaged scene 1 and the turn locks |
+| FIX held, SCENE tapped, BD tapped, SCENE + B | | `NO ACTIVE SCENE`: SCENE did not toggle scene mode during the FIX hold |
+| FUNC + SCENE | PATTERN menu | the same |
+| The 11 earlier rig cases (qma-fix-velocity, the LFO cases, the look cases) against the repository's references | | all pass |
+
+After an independent code review (a trig held after the first knob makes its p-lock; with no scene active the release stays stock's; a stale scene locker is cleared on the next key), QS02 `c8d79660d71bc554fa1151e0e517acf6799f64f8fe0d830b332b29d5b529ae90` gives the same screens as QS01 in every case above, the 11 earlier cases pass, and:
+
+| Check | QS02 |
+| --- | --- |
+| Scene 1 engaged, SCENE + A, then trig 1 held + B | the scene's boxes go; B shows 105 as trig 1's lock; after the trig, the scene's boxes are back and SWT is not scene-locked |
+
+Not tested: the unit; 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.

@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "quick-velocity-aftertouch-assign",
   "name": "Quick Mod Assign",
-  "version": "0.3.1-experimental",
+  "version": "0.4.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -19,12 +19,13 @@
   "presentation": {
     "label": "QUICK MOD ASSIGN",
     "family": "Performance",
-    "summary": "Link a parameter to velocity, aftertouch or the LFO by holding FIX, SAMPLER or LFO and turning its knob.",
-    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.",
+    "summary": "Link a parameter to velocity, aftertouch or the LFO by holding FIX, SAMPLER or LFO and turning its knob; hold SCENE and turn to lock it in the active scene.",
+    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod. Hold SCENE and turn a knob: the parameter is locked in the active scene, as scene edit does with the scene's pad held, without leaving the page.",
     "highlights": [
       "Velocity, aftertouch or the LFO to any parameter in one gesture",
       "Stays on the page you are playing",
-      "Uses stock's slots, saved with the kit"
+      "Uses stock's slots, saved with the kit",
+      "SCENE + knob writes a scene lock from the page"
     ],
     "usage": [
       "Select a sound track and press FLTR. Hold FIX: FRQ and RES show 0 boxes, the new kit's velocity links.",
@@ -35,11 +36,12 @@
     ]
   },
   "access": {
-    "location": "The FIX and SAMPLER keys, on a sound track's pages and in PERF, SCNE, MUTE and CHRO.",
+    "location": "The FIX, SAMPLER, LFO and SCENE keys, on a track's pages (FIX and SAMPLER on the sound tracks only) and in PERF, SCNE, MUTE and CHRO.",
     "steps": [
       "Select a sound track and open its SYNTH, SAMPLE, FILTER, AMP or LFO page.",
       "Hold FIX: linked knobs show their velocity amounts. Turn a knob to link it or change its amount.",
       "Hold SAMPLER for aftertouch: the aftertouch amounts.",
+      "With a scene active, hold SCENE and turn a knob: that parameter is locked in the scene. Hold SCENE without a knob and let go: scene edit opens, as before.",
       "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity, tap SAMPLER alone to open the recorder, as before."
     ],
     "screenshots": [
@@ -58,7 +60,12 @@
       "Each sound has four velocity and four aftertouch mods; with all four in use a popup says VELOCITY MODS FULL or AFTERTOUCH MODS FULL.",
       "A FIX tap toggles fixed velocity on the release instead of the press.",
       "While FIX or SAMPLER is held, the TRIG page's knobs, knobs turned with a trig held and FUNC + a knob do nothing.",
-      "FUNC + FIX, the FX track and a performance, scene or trig lock edit keep stock's behaviour."
+      "FUNC + FIX, the FX track and a performance, scene or trig lock edit keep stock's behaviour.",
+      "SCENE held and let go with no knob opens scene edit on the release, not while it is held.",
+      "SCENE + knob needs an active scene: with none, a popup says NO ACTIVE SCENE and nothing changes. With all 48 scene locks in use it says SCENE LOCKS FULL.",
+      "While SCENE is held after a knob, every knob turn writes a scene lock, in LIVE RECORDING too, and the TRIG page's knobs do nothing.",
+      "The first knob event of a SCENE hold ends SCENE's hold as stock does when scene edit opens: any other key held at that moment loses its clean release.",
+      "During a FIX, SAMPLER or LFO hold SCENE does nothing, and during a SCENE hold FIX, SAMPLER and LFO do nothing."
     ]
   },
   "platform": {
@@ -76,7 +83,9 @@
       "ui:SAMPLER + knob on the sound pages",
       "ui:FIX tap toggles fixed velocity on the release",
       "ui:LFO + knob on the sound pages and the FX track",
-      "ui:LFO page key shows its page on the release"
+      "ui:LFO page key shows its page on the release",
+      "ui:SCENE + knob on the sound pages and the FX track",
+      "ui:SCENE hold opens scene edit on the release"
     ]
   },
   "resources": {
@@ -89,26 +98,13 @@
     }
   },
   "evidence": {
-    "tier": "author-hardware",
-    "moduleVersion": "0.3.1-experimental",
-    "sourceSha256": "5479afc2a9689e446a3093f18c50f18c8508781ee7412140760d4098cefc8591",
+    "tier": "none",
+    "moduleVersion": "0.4.0-experimental",
+    "sourceSha256": null,
     "reports": [
       "TESTING.md"
     ],
-    "hardware": {
-      "model": "Analog Rytm MKII",
-      "release": "1.74",
-      "testedOn": "2026-11-16",
-      "tester": "npp1993",
-      "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, Modwerk's test rig (key presses and knob turns over USB, screens read back, with npp1993's go) ran CA02 on 16 Nov 2026: a private development image RAM-booted from RB08 that carries this version's source (differing only in a comment) beside Control In Actions, Improved AMP and Filter Hz, cold-marked the same way. qma-fix-velocity, qma-lfo-depth, qma-lfo-grab, qma-lfo-regrab and qma-lfo-tap pass against the repository's unit references. In rytm-emu, CA01 (the new sources) gives the same screens and measures as CB00 (the old sources) in all eleven Quick Mod Assign cases, the half-second look included. The change only marks UI-task functions cold: old and new objects at -O2 are byte-identical apart from relocation offsets.",
-      "limitations": [
-        "This package itself has not run on a unit: CA02 is a private combined image that carries the same source, comment text aside.",
-        "qma-lfo-on-lfo-page was not checked on the unit (no unit reference for its screen); the look cases ran in rytm-emu only.",
-        "No hand test on the unit for 0.3.1; 0.3.0's hand checks are in TESTING.md.",
-        "Duration not recorded."
-      ]
-    },
+    "hardware": null,
     "verifiedBy": null
   },
   "tests": {

@@ -65,6 +65,30 @@
 #define LOCKER_RELATIVE_AT 0x40199202     // PerformanceParamLocker: relative values
 #define LOCKER_LOCKABLE_AT 0x400acca8     // PerformanceParamLocker: lockable(id)
 
+// Scenes. A kit's Scenes object is kit + 4964 (0x400a680a); the active scene is
+// 0x400a6fdc(kit), 0..11, -1 for none (the kit's byte + 2430). Its lock table holds 48
+// five-byte entries shared by the 12 scenes: s16 value, u8 track, u8 parameter index, s8 scene.
+// Each scene has a SceneParamLocker {vtable 0x401df974, scenes, scene} (ctor 0x400b84e8);
+// its slots read only + 4 (scenes) and + 8 (scene), so they work on any object of that
+// shape. Values are absolute (relative returns 0). set returns -1 when all 48 are in use
+// or the track is above 12, and then writes nothing.
+#define KIT_SCENES_AT 0x400a680a
+#define ACTIVE_SCENE_AT 0x400a6fdc
+#define SCENES 12
+#define SCENE_HAS_ANY_AT 0x400b8694      // (locker): this scene has a lock (a bool in d0's low byte)
+#define SCENE_CLEAR_AT 0x400b87dc        // (locker, track, index)
+#define SCENE_SET_AT 0x400b8964          // (locker, track, index, value): value, or -1 when full
+#define SCENE_GET_AT 0x400b89d6          // (locker, track, index): the value, -1 for none
+#define SCENE_HAS_AT 0x4019caa4          // (locker, track, index): get >= 0, through the vtable's get
+#define SCENE_RELATIVE_AT 0x4019cac8     // 0: absolute values
+#define SCENE_LOCKABLE_AT 0x400b843c     // (locker, id): refuses the TRIG page's categories
+
+// Ends a held key for the rest of its hold, as stock does when its hold opens a
+// screen (0x40071ed0, 15 stock callers): its release is dropped (0x418d1320), its
+// repeat stops, and "last key down" is cleared, so every key held now loses its
+// clean-release flag. 0x40081c28 still reports it held until it is let go.
+#define CONSUME_KEY_AT 0x40071ed0
+
 // The LFO: a sound's (or the FX track's) parameters 64..71 in its parameter
 // set. DST holds the destination's parameter index << 8 (the index the mod
 // slots store; 0 none); DEP 0..32767, 16384 for 0 (shown -128.00..+127.99).
