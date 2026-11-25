@@ -405,8 +405,9 @@ if (import.meta.filename === process.argv[1]) {
         `put this checkout's table back with npm run device -- set ${packagePath} --seconds 1 --socket ${args.share}`
     }
     if (measuring) try { unlinkSync(costsFile) } catch { /* already gone */ }
-    if ((await patternTrigs()) !== trigs) result.restore = 'it wrote trigs into pattern ' + [...new Set([args['pick-pattern'], args['measure-pattern'], admissionPattern])].join(' or ') +
-      ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'
+    // Both can be needed: keep the table note when the trigs note follows it.
+    if ((await patternTrigs()) !== trigs) result.restore = [result.restore, 'it wrote trigs into pattern ' + [...new Set([args['pick-pattern'], args['measure-pattern'], admissionPattern])].join(' or ') +
+      ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'].filter(Boolean).join('; and ')
     results.push(result)
     // Written after every module: a unit that hangs on the next one must not take the finished readings with it.
     if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, inputs, seconds, readings, slot: args.slot, measuredAt, results }, null, 1) + '\n')
