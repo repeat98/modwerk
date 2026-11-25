@@ -6,7 +6,7 @@ What a module developer needs on the Digitone II: the base's hooks, what the uni
 
 ## Modwerk stack
 
-The Digitone II follows the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). Where it stands: the base, the Digitakt II base's core-dt2 1.1 source at the Digitone II's addresses ([`elekloader/`](elekloader/README.md)), runs on a unit and is the cumulative draft #1767; the USB link and the runtime loader are in review; flashing from the site, base updates over USB and the machine page are not built ([goal](GOAL.md)). Its contract is [`sdk/digitone-ii/core-profile/interface.json`](../../digitone-ii/core-profile/interface.json): a module uses those events, tables and exports and nothing else. The development link (SysEx over USB MIDI: memory reads, key presses, screenshots, RAM boots) is in review (#1763, #1842); the reads below were made with it.
+The Digitone II follows the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). Where it stands: the base, the Digitakt II base's core-dt2 1.1 source at the Digitone II's addresses ([`elekloader/`](elekloader/README.md)), runs on a unit and is the cumulative draft #1767; the USB link and the runtime loader are in review; flashing from the site, base updates over USB and the machine page are not built ([goal](GOAL.md)). Its contract is [`sdk/digitone-ii/core-profile/interface.json`](../../digitone-ii/core-profile/interface.json): a module uses those events, tables and exports and nothing else. The development link (SysEx over USB MIDI: the link's counters, screenshots, key presses, RAM boots) is in review (#1763, #1842). It reads no address a client names; the addresses below were read with research builds of it that still could.
 
 ## Core hooks
 

@@ -172,7 +172,7 @@
     ]
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): diagnostics over USB MIDI SysEx in the Analog Rytm MKII link's wire format (ident; mem, up to 128 bytes of DDR or SRAM, through which the host also reads the screen), and while SETTINGS > REMOTE CTRL is on (at every boot) panel keys and encoder turns, posted on the UI queue as the panel's. Its receive site observes stock's SysEx router at 0x4012197a, where core-dn2 0.3's ev_sysex sits; replies go through stock's sysex_send on USB from ev_tick. is_key_held (0x4011fac4) also sees the keys the link holds. The diagnostics log (base/diag.c, the Octatrack's layout), read through the link's diag and mem. Development bases only.",
+    "about": "The development link (base/link.c, link.s): diagnostics over USB MIDI SysEx in the Analog Rytm MKII link's wire format (ident, the link's counters; screen, the frame on the screen in eight parts of 128 bytes copied when the first is asked for; no request names an address), and while SETTINGS > REMOTE CTRL is on (at every boot) panel keys and encoder turns, posted on the UI queue as the panel's. Its receive site observes stock's SysEx router at 0x4012197a, where core-dn2 0.3's ev_sysex sits; replies go through stock's sysex_send on USB from ev_tick. is_key_held (0x4011fac4) also sees the keys the link holds. The diagnostics log (base/diag.c, the Octatrack's layout), read through the link's diag and log, in parts the unit chooses. Development bases only.",
     "sources": [
       "../base/link.c",
       "../base/link.s",
@@ -197,6 +197,7 @@
     "cflags": [
       "-DSYSEX_SEND_AT=0x401236d2",
       "-DUSB_SYSEX_STATE_AT=0x445090ac",
+      "-DFRAME_POINTERS_AT=0x402a10c8",
       "-DUI_QUEUE_AT=0x4013747a",
       "-DQUEUE_POST_AT=0x40001896",
       "-DKEY_INDEX_AT=0x401f3d10",
