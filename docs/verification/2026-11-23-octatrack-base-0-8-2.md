@@ -166,3 +166,22 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
   (832,656 bytes). Base-bound packages relinked to it; Recorder Loop Fix 0.1.0's bytes change with the base's addresses
   (`6b568782…`, written under `public/octatrack-base-packages/`).
 - Not run on a unit: any of this. Next: the per-module `profile:3` pass on a twin of this source, and the price at rest.
+
+## 25 November 2026: one NO leaves FX SETUP after a module pick
+
+- **Why:** a module effect picked in FX1 or FX2 SETUP seemed stuck: its knobs did nothing until the page was left and
+  entered again (Midiverb, the owner's MKII). After a pick the base shows the memory box for 1.5 s, and `status.c`
+  took NO as well as YES while it showed. The musician's NO back to the effect's page closed only the box and left the
+  knobs on SETUP, where a module without setup parameters has none. The owner's rule (14 October 2026) was "a popup:
+  YES only closes it; any other key goes on to stock"; #640 merged the dialogs' key paths and took NO there too.
+- **Change:** `modwerk_status_key` takes NO only for the other dialogs; on the box after a pick NO closes it and goes on
+  to stock, as every other key does. YES still only closes it.
+- **Tests:** `test_status.c` (NO closes the box and reaches stock, its release too) passes, and fails without the change.
+- **On the owner's MKII (OS 1.40C, 25 November 2026):** a development twin of `8b26f3492` (ev_frame_record) plus this
+  change, the beta flags without controller rows and `--dev` (MAIN `b141d148…`, booted as `f680c696…`), RAM-booted over
+  the twin `e229c6a8`; Midiverb in a trial. T1 FX2 DELAY, then FUNC+FX2, MIDIVERB, YES: the memory box. One NO: the FX2
+  page; PROG moved at once (0, 1, 2, 3 for three turns of three detents). The same steps on `e229c6a8` left FX2 SETUP
+  showing after the NO, with every knob dead until a second NO.
+- Release 0.8.2 rebuilt: base `1306e1255c983bb9…` (was `fad2c729`); browser = native `.bin` `e5ead7406b2b8ee5…`
+  (832,684 bytes). Base-bound packages relinked with unchanged bytes.
+- Not run: the release image; FX1; a pick refused for memory or time (its box still takes NO, unchanged).

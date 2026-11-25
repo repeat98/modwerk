@@ -1070,7 +1070,9 @@ int modwerk_status_key(int code, int pressed)
         taken = code;
         return 1;
     }
-    int closes = code == NO || code == YES; /* the popup after a pick: YES only closes it (owner, 14 October 2026) */
+    /* The popup after a pick: YES only closes it, NO goes on to stock as every other key (owner, 14 October 2026), so
+     * one NO leaves FX SETUP as after a stock effect's pick; taken, it left the knobs on SETUP (Midiverb, 25 Nov 2026). */
+    int closes = code == YES || (code == NO && open != MEMORY);
     open = CLOSED, on_said = 0; /* a refusal MISSING said is not said again when it next opens */
     if (!closes) return 0; /* any other key closes the page and goes on to stock */
     taken = code;

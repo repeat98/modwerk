@@ -459,6 +459,10 @@ int main(void)
     CHECK(open == MEMORY && budget_slot == 12);                        /* Euclid picked on T5 FX2 */
     CHECK(modwerk_status_key(YES, 1) && open == CLOSED);               /* YES only closes it (owner, 14 October 2026) */
     CHECK(modwerk_status_key(YES, 0));                                 /* and takes its release */
+    modwerk_test_live_fx[12] = 27; ++dl_selection_completed; memory_tick();
+    CHECK(open == MEMORY);                                             /* E-Verb picked on T5 FX2 */
+    CHECK(!modwerk_status_key(NO, 1) && open == CLOSED);               /* NO closes it and leaves SETUP, as stock's */
+    CHECK(!modwerk_status_key(NO, 0));                                 /* its release reaches stock too */
     modwerk_test_live_fx[9] = 27, modwerk_test_live_fx[10] = 29; ++dl_selection_completed; memory_tick();
     CHECK(open == CLOSED);                                             /* two slots changed: a Part change */
     ++modwerk_boot_accepted; memory_tick();
