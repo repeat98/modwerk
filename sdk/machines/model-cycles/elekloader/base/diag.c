@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Development bases only (base.json's dev): the unit's diagnostics log, in the Octatrack's layout (diag.h), filled
+// Every base (base.json's add): the unit's diagnostics log, in the Octatrack's layout (diag.h), filled
 // from what the Model:Cycles base sees: the audio load (load.c), the time between codec blocks, the UI tick and the
 // keys pressed. Numbers and stock codes only: no names, patterns or audio. The link's DIAG names its place (link.c).
 //

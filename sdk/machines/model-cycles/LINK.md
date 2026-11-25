@@ -149,9 +149,37 @@ image must carry a development base: only its `ev_boot` handler boots from RAM.
   is 15 + n. Encoders: 1 LEVEL/DATA, 2-15 the parameter knobs (seen on a unit: 2 PITCH, 13 CHANCE, 14 REVERB, 15 DELAY); 0 is
   not one the main screen reads.
 - **USB only.** A request from USB arrives with port 2. The link drops its messages from any other port.
-- **Work.** `ev_tick` (UI task) takes the ring, acts and replies with stock's SysEx send `0x400828fe(bytes, len, 0,
-  port)`, which writes 144-byte parts. Its ports: 1 the MIDI setting's choice, 2 USB, 3 DIN, 4 both. Do not run
-  Transfer at the same time: a reply could land between the parts of one of stock's.
+- **Work.** `ev_tick` (UI task) takes the ring, acts and replies on USB through stock's USB MIDI writer
+  `0x40003396(len, bytes)` in 144-byte parts, under stock's USB lock for the whole reply and never while another
+  sender's SysEx is open (below).
+
+### Stock's send from two tasks
+
+Read from OS 1.13's code, 25 November 2026. Stock's SysEx send `0x400828fe(bytes, len, error flag, port)` returns
+at once while `0x40fe4228` is 0, splits a message into 144-byte parts and hands each to `0x400826b0(len, bytes,
+port)`. For USB (port 2, and 4 with DIN) that takes stock's USB lock (`0x400032ca`: a kernel mutex at `0x422ff010`,
+`0x40001cc4`, which makes another task wait; `0x400032da` gives it back), writes the part with `0x40003396` and
+gives the lock back. So one part is never torn, but the lock is free between the parts of a message. `0x40003396`
+turns MIDI bytes into USB MIDI packets and keeps its SysEx state across calls (`0x404a096c`: `0xF0` from a SysEx's
+`F0` until its `F7`), so a part of another sender between two parts of a message breaks both.
+
+Two tasks do send. The UI task does (the link, and stock's own MIDI out). Stock's SysEx router runs in the MIDI task
+and jumps straight to the handler of an Elektron message (`F0 00 20 3C id sub cmd`, table `0x40148d08`): for id
+`0x10` (Transfer and the screenshot) `0x40085702` builds its reply in a writer of 144-byte parts (`0x400823f6`,
+flushed through `0x400822ec` into `0x400828fe`), so stock's replies to Transfer leave from the MIDI task. Before
+this, a link reply of more than one part (LOG, UP_RUN and MEM are about 170 bytes) could take a part of Transfer's
+reply between its own, or put one of its parts into Transfer's.
+
+The link now writes a reply through `0x40003396` itself, in the same 144-byte parts, holding the lock from the first
+part to the last; a stock sender waits for it as for any part. It acts on no request while `0x404a096c` is `0xF0`
+(another sender is between its parts) and takes the next one at a later tick; if a SysEx opens between that look
+and the lock, the reply is dropped and counted as a send failure. The lock cannot be held across stock's own send:
+its give-back frees it whatever its owner took before.
+
+Left as stock has it: id `0x04`'s commands 1 and 3 (`0x40080822`, `0x4008084a`) write a 9-byte reply on USB with
+`0x40003396` in the MIDI task without the lock, as they do beside stock's own senders. Which of the two tasks runs
+first was not read (the scheduler's order of priorities); the link covers both orders. On a unit: not run yet on
+this build.
 
 The audio load (`base/load.c`, `load.s`, every base): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer.
 
