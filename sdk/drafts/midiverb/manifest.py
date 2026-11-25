@@ -8,8 +8,8 @@ Owner waiver for the Alesis programs, 25 Nov 2026 (PR #2179).
 import json
 import pathlib
 
-from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, Linked,
-                          MenuEntry, Module, Param, Proof, YBase)
+from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, MenuEntry,
+                          Module, Param, Proof, YBase)
 
 _TABLE = json.loads((pathlib.Path(__file__).resolve().parent / "programs.json").read_text())["programs"]
 _INDEX = []
@@ -24,10 +24,12 @@ MODULE = Module(
     category=Category.TRACK, author="repeat98", author_url="https://github.com/repeat98",
     proof=Proof.RENDER, proof_note="verify.py: bit-exact against the program table in dsp_host; not on a unit yet",
     doc="The Alesis Midiverb's programs at their original 16-bit arithmetic, half rate, own FX2 ring.",
-    menu=MenuEntry(fx2_id=0x0a, donor_desc=0x400d58b8,   # DARK REV; the base picks the id at install
+    menu=MenuEntry(fx2_id=0x0a, donor_desc=0x400d58b8,   # DARK REV; the base picks the id at install (ids past 31 cannot pin)
                    abbr=b"MVRB", fullname=b"Midiverb", build_tag=False),
     params=(
-        Param(b"PROG", 0, len(_TABLE), True, Formatter.WIDE_STEPPED, labels=tuple(p["label"] for p in _TABLE),
+        # Stock's stepped tick widget (the CHORUS.TAPS one Tape Echo's SYNC draws with): the owner's choice,
+        # 25 Nov 2026. The builders give it only to five values or fewer; 24 is being tried on the unit.
+        Param(b"PROG", 0, len(_TABLE), True, Formatter.STEPPED, labels=tuple(p["label"] for p in _TABLE),
               doc="Midiverb program: decay in seconds, size, tone; gated and reverse"),
         Param(b"LEVL", 64, 128, True, Formatter.PLAIN,
               doc="input level into the 12-bit converter: unity at 32, 64 is +6 dB"),
@@ -38,8 +40,6 @@ MODULE = Module(
     dsp=DspSection(asm="modules/midiverb/engine.asm", priority=15, bus_role=BusRole.NONE, ybase=YBase.NEVER,
                    r7_latch_slot=None, gate_label=None, ptable=tuple(_INDEX + _BODY)),
     claims=Claims(stock_instance_buffer=True, buffer_words=15870),
-    # The program's name in stock's message box when PROG turns (popup.s, through the base's ev_in_use).
-    linked=(Linked("midiverb", "modules/midiverb/popup.s", cpu="5475", dram=True),),
     harness=Harness(layout_char=None, is_server=False),
     gates=(Gate("modules/midiverb/verify.py", remix_arg=False),),
     dear={"PROG": _DEAREST, "LEVL": 127, "MIX": 127},
