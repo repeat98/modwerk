@@ -202,6 +202,7 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
 
 const hookSpan = key => { const [, list, first, last] = /^(.+)\/(\d+)(?:-(\d+))?$/.exec(key); return { list, first: Number(first), last: Number(last ?? first) } }
 const overlaps = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.last && y.first <= x.last }
+const covers = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.first && y.last <= x.last }
 /** Consecutive new hook indices of one list become one claim (octatrack/38-51): a base change may add more hooks than
  * one person may hold claims. */
 function hookRuns(items) {
@@ -224,13 +225,14 @@ export async function compareClaims(needed, login, { pullRequest, ...options } =
   const claims = await listClaims({}, options), byKey = new Map(claims.map(item => [item.kind + ' ' + item.key, item]))
   const result = { mine: [], others: [], free: [], unknown: [] }
   for (const item of needed) {
-    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed.
+    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed. A run claimed
+    // ahead of the work (tables/4-6 while the branch adds 4-5 so far) covers the part a branch adds.
     const near = item.kind === 'hook' ? claims.filter(claim => claim.kind === 'hook' && overlaps(claim.key, item.key)) : [byKey.get(item.kind + ' ' + item.key)].filter(Boolean)
-    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase() && !(pullRequest && claim.pullRequest === pullRequest)), exact = near.find(claim => claim.key === item.key)
+    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase() && !(pullRequest && claim.pullRequest === pullRequest)), held = near.find(claim => claim.key === item.key) ?? (item.kind === 'hook' ? near.find(claim => covers(claim.key, item.key)) : undefined)
     if (!near.length) result.free.push(item)
     else if (!login) result.unknown.push({ ...item, claim: near[0] })
     else if (theirs) result.others.push({ ...item, claim: theirs })
-    else if (exact) result.mine.push({ ...item, claim: exact })
+    else if (held) result.mine.push({ ...item, claim: held })
     else result.free.push(item)
   }
   return result
@@ -375,7 +377,7 @@ export function branchVerdict(compared, { requireClaims = false } = {}) {
   const lines = []
   for (const item of compared.others) lines.push(`✗ ${item.kind} ${item.key} (${item.why}) is claimed by ${describeClaim(item.claim)}. Ask them, or renumber / rename.`)
   for (const item of compared.unknown) lines.push(`· ${item.kind} ${item.key} is claimed by ${describeClaim(item.claim)}; sign in (npm run board -- login) so the check can tell whether that is you.`)
-  for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours.`)
+  for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours${item.claim && item.claim.key !== item.key ? ' (claim ' + item.claim.key + ')' : ''}.`)
   for (const item of compared.free) lines.push(requireClaims
     ? `✗ ${item.kind} ${item.key} (${item.why}) is unclaimed. Claim it so nobody else starts the same work: npm run board -- login once, then npm run pr:ready (it claims what the branch adds) or npm run board -- claim ${item.kind} ${item.key}. Then rerun this check.`
     : `· ${item.kind} ${item.key} (${item.why}) is unclaimed: npm run board -- claim ${item.kind} ${item.key}`)

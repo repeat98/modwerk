@@ -91,6 +91,17 @@ describe('the board client', () => {
     expect((await compare(claimRow('hook', 'octatrack/38-51', 'ada'))).mine).toHaveLength(1)
     expect((await compare(claimRow('hook', 'octatrack/events/40', 'bo'), claimRow('hook', 'octatrack/52', 'bo'))).free).toHaveLength(1)
   })
+  it('counts a run claimed ahead of the work as covering the part a branch adds', async () => {
+    const needed = [{ kind: 'hook', key: 'digitakt-ii/tables/4-5' }]
+    const compare = (claims, pullRequest) => board.compareClaims(needed, 'Ada', { fetch: answer(200, { claims }), pullRequest })
+    expect((await compare([claimRow('hook', 'digitakt-ii/tables/4-6', 'ada')])).mine[0].claim.key).toBe('digitakt-ii/tables/4-6')
+    expect((await compare([{ ...claimRow('hook', 'digitakt-ii/tables/4-6', 'claptom'), pullRequest: 1999 }], 1999)).mine).toHaveLength(1)
+    expect((await compare([claimRow('hook', 'digitakt-ii/tables/4-6', 'bo')])).others).toHaveLength(1)
+    expect((await compare([claimRow('hook', 'digitakt-ii/tables/4', 'ada')])).free).toHaveLength(1)
+    expect((await compare([claimRow('hook', 'digitakt-ii/tables/5-6', 'ada')])).free).toHaveLength(1)
+    expect((await compare([claimRow('hook', 'digitakt-ii/events/4-6', 'ada')])).free).toHaveLength(1)
+    expect(board.branchVerdict(await compare([claimRow('hook', 'digitakt-ii/tables/4-6', 'ada')]), { requireClaims: true })).toEqual({ ok: true, lines: ['✓ hook digitakt-ii/tables/4-5: yours (claim digitakt-ii/tables/4-6).'] })
+  })
   it('fails an unclaimed item only in a pull request run, and someone else\'s claim always', () => {
     const free = { mine: [], others: [], unknown: [], free: [{ kind: 'module', key: 'octatrack/drummap', why: 'new module' }] }
     expect(board.branchVerdict(free).ok).toBe(true)
@@ -226,6 +237,12 @@ describe('pr:ready and the board', () => {
     const handWritten = { ...claimRow('module', 'octatrack/echo', 'ada'), note: 'Tape echo with wow.' }
     expect(await run({ claims: [handWritten] })).toEqual([{ kind: 'module', key: 'octatrack/slicer', branch: 'work', note: 'Slices a loop.' }, { kind: 'module', key: 'octatrack/echo', branch: 'work' }])
     expect((await run({ refuseNotes: true })).map(item => item.key + (item.note ? ' + note' : ''))).toEqual(['octatrack/slicer + note', 'octatrack/slicer', 'octatrack/echo + note', 'octatrack/echo'])
+  })
+  it('renews a covering run whole instead of claiming only the part the branch adds', async () => {
+    const { taken, module } = fake({ claims: [claimRow('hook', 'octatrack/36-38', 'ada')] })
+    const result = await boardClaims('.', 'main', module)
+    expect(taken.map(item => item.key)).toEqual(['0084', 'octatrack/36-38'])
+    expect(result.notes).toContain('Board: claimed hook octatrack/36-38 for @ada.')
   })
   it('only notes an unreachable board', async () => {
     const result = await boardClaims('.', 'main', fake({ fail: true }).module)
