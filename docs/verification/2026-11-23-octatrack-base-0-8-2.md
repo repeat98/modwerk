@@ -185,3 +185,26 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
 - Release 0.8.2 rebuilt: base `1306e1255c983bb9…` (was `fad2c729`); browser = native `.bin` `e5ead7406b2b8ee5…`
   (832,684 bytes). Base-bound packages relinked with unchanged bytes.
 - Not run: the release image; FX1; a pick refused for memory or time (its box still takes NO, unchanged).
+
+## 25 November 2026: a module page's knob staged in its input layer too
+
+- **Why:** after the NO fix above, the owner still found PROG stuck after a fresh pick until FX2 was left and entered
+  again. Read on the unit: after DELAY, then MIDIVERB picked on FX2 SETUP and one NO, the FX2 page's input layer
+  (stock's, `0x460d165c` +8: 22 bytes a knob, the slot, a 0, then the knob's record) still held DELAY's staging for all
+  six knobs (step 0x100, 128 values). The panel copies a knob's definition into its record (`0x46c7dede` + 20 × knob)
+  before each turn, so `mw_knob_step` found the old step at every detent, restaged the record and cleared the remainder
+  the stepper carries: ten slow detents left PROG at 0, quick bursts moved it about one value in four detents. FX1 →
+  FX2 stages the layer from Midiverb's page, which is why that cleared it.
+- **Change:** `mw_knob_step` (`fxpage.s`) also stages the turned knob's definition in the page's input layer, as its
+  record, when the definition is that knob's and names the main pages' knob routine (`0x40055008`); a held scene's
+  or a window's layer is left as it is, and stock pages still go straight on.
+- **Tests:** `knob_step_fixture.cpp` case E (opt-in `sdk/tests/test_knob_step.py`, run on a development twin's MAIN):
+  the definition staged, the next turn keeps the remainder, a scene's definition and a stock page's layer untouched;
+  8 checks pass, and case E fails without the change.
+- **On the owner's MKII (25 November 2026):** twin `6ff8e526` (this source plus `ev_frame_record`, MAIN `06b3f9ce…`),
+  Midiverb in a trial. T1 FX2 DELAY, then FUNC+FX2, MIDIVERB, YES, NO: the layer held DELAY's staging; twelve slow
+  detents (about 0.5 s apart) took PROG 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, the pace it had after FX1 → FX2 on the
+  twin before; the layer then held PROG's step (0x2aa) and count (48).
+- Release 0.8.2 rebuilt: base `a991caf0e7b55b31…` (was `1306e125`); browser = native `.bin` `247a1173db25f62f…`
+  (832,704 bytes). Base-bound packages relinked with unchanged bytes.
+- Not run: FX1; SRC, AMP and LFO pages of module machines; RINGMOD SC's KEY on a unit.
