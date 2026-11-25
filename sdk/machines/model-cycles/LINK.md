@@ -172,9 +172,17 @@ reply between its own, or put one of its parts into Transfer's.
 
 The link now writes a reply through `0x40003396` itself, in the same 144-byte parts, holding the lock from the first
 part to the last; a stock sender waits for it as for any part. It acts on no request while `0x404a096c` is `0xF0`
-(another sender is between its parts) and takes the next one at a later tick; if a SysEx opens between that look
-and the lock, the reply is dropped and counted as a send failure. The lock cannot be held across stock's own send:
-its give-back frees it whatever its owner took before.
+(another sender is between its parts) and takes the next one at a later tick. If a SysEx opens between that look
+and the lock, the reply is held, not dropped (its request has run: an `UP_RUN` may have kept or undone a set), and
+goes out at a later tick; no request is acted on while a reply is held, and a RAM boot waits for its reply. The lock
+cannot be held across stock's own send: its give-back frees it whatever its owner took before.
+
+Can `0x404a096c` stay `0xF0`? It is cleared when a write ends a SysEx (`F7`) and by the USB MIDI driver's setup
+(`0x40003112`, run when the host configures the port), so a message cut short by unplugging USB is forgotten when
+it comes back. `0x40fe4228` is set once and never cleared, so stock's send does not stop between parts. But the
+writer that builds Transfer's replies (`0x400823f6`) sends whatever it holds when it is closed (`0x40082324`), and
+whether every reply ends in `F7` before that was not read. So the wait has a limit: a SysEx open for more than
+about a second (30 UI ticks) no longer holds the link, and its reply's `F7` ends the open one.
 
 Left as stock has it: id `0x04`'s commands 1 and 3 (`0x40080822`, `0x4008084a`) write a 9-byte reply on USB with
 `0x40003396` in the MIDI task without the lock, as they do beside stock's own senders. Which of the two tasks runs

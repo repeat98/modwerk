@@ -4,7 +4,8 @@
 // RAMBOOT: a request that fails the checks starts no copy; one that comes during the ticks after an accepted one is
 // refused BUSY and leaves the accepted numbers as they were; the copy (here mw_test_ramboot) takes them.
 // Replies: a reply longer than one 144-byte part goes out whole under stock's USB lock, and no request is acted on
-// while another sender's SysEx is open.
+// while another sender's SysEx is open. A reply that meets a SysEx opened between the tick's look and the lock is held,
+// not dropped, and no request is acted on until it is out; an open SysEx stops holding it after about a second.
 // cc -std=c99 -DMODWERK_HOST -DMODWERK_DEV -DUI_QUEUE_PTR_AT=0 -DQUEUE_POST_AT=0 -DKEY_INDEX_AT=0 -DKEY_BITS_AT=0
 //   link.c test_link.c
 #include <stdio.h>
@@ -36,14 +37,21 @@ void mw_boot_enter(uint32_t arg) { (void)arg; abort(); }
 
 // Stock's USB writer: the bytes of the reply being written, the lock's depth, the writes made outside it.
 static uint8_t last_reply[512];
-static int last_len, locked, unlocked_writes, writes;
+static int last_len, locked, unlocked_writes, writes, open_on_lock, order[8], replies;
 volatile uint32_t mw_test_midi_on = 1, mw_test_usb_sysex;
-void mw_test_usb_lock(void) { locked++; }
+void mw_test_usb_lock(void)
+{
+    locked++;
+    if (open_on_lock) { open_on_lock = 0; mw_test_usb_sysex = 0xF0; }   // another sender began a SysEx just before
+}
 void mw_test_usb_unlock(void) { locked--; }
 void mw_test_usb_write(int len, const uint8_t *bytes)
 {
     if (locked != 1) unlocked_writes++;
-    if (bytes[0] == 0xF0) last_len = 0;     // a new reply
+    if (bytes[0] == 0xF0) {                 // a new reply: its seq, in the order written
+        last_len = 0;
+        if (replies < 8) order[replies++] = bytes[6];
+    }
     CHECK(len <= 144 && last_len + len <= (int)sizeof last_reply);
     memcpy(last_reply + last_len, bytes, (size_t)len);
     last_len += len;
@@ -124,5 +132,33 @@ int main(void)
     mw_test_usb_sysex = 0;
     mw_link_tick(0);
     CHECK(writes == 1 && last_reply[6] == 5 && last_reply[8] == 0);
+
+    // a SysEx opens between the tick's look and the lock: the reply is held, the next request waits behind it
+    writes = 0;
+    open_on_lock = 1;
+    log_read(6, 0, 16);
+    mw_link_tick(0);
+    CHECK(writes == 0 && locked == 0);
+    log_read(7, 0, 16);
+    for (int i = 0; i < 3; i++)
+        mw_link_tick(0);
+    CHECK(writes == 0);
+    replies = 0;
+    mw_test_usb_sysex = 0;
+    mw_link_tick(0);                        // the held reply first, then the request behind it
+    CHECK(writes == 2 && replies == 2 && order[0] == 6 && order[1] == 7);
+
+    // a SysEx left open (no F7): after about a second the request is answered anyway
+    writes = 0;
+    mw_test_usb_sysex = 0xF0;
+    log_read(8, 0, 16);
+    for (int i = 0; i < 30; i++)
+        mw_link_tick(0);
+    CHECK(writes == 0);
+    for (int i = 0; i < 3 && !writes; i++)
+        mw_link_tick(0);
+    CHECK(writes == 1 && last_reply[6] == 8);
+    mw_test_usb_sysex = 0;
+    CHECK(unlocked_writes == 0 && locked == 0);
     return failed;
 }
