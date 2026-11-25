@@ -63,6 +63,12 @@ describe('consent-bound fixed site diagnostics', () => {
     expect(receive.mock.calls).toEqual([[{ event: 'browser_error', phase: 'browser', area: 'library', kind: 'OtherError' }], [{ event: 'unhandled_rejection', phase: 'browser', area: 'library', kind: 'OtherError' }]])
     expect(event.defaultPrevented).toBe(false); expect(unhandled.defaultPrevented).toBe(false)
   })
+  it('tells an error without an error object (a cross-origin or extension script) from a real throw', () => {
+    const receive = subscribe(), target = new EventTarget(); cleanups.push(collectBrowserDiagnosticEvents(target))
+    target.dispatchEvent(new ErrorEvent('error', { message: 'Script error.' })); rejection(target, Promise.resolve(), undefined)
+    target.dispatchEvent(new ErrorEvent('error', { error: new TypeError('PRIVATE') }))
+    expect(receive.mock.calls.map(([event]) => event.kind)).toEqual(['NoErrorObject', 'NoErrorObject', 'TypeError'])
+  })
   it('omits expected aborts and cancelled builds, including their unhandled fallback', async () => {
     const receive = subscribe(), target = new EventTarget(); cleanups.push(collectBrowserDiagnosticEvents(target))
     const abort = new DOMException('PRIVATE', 'AbortError')
