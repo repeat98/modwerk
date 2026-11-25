@@ -36,7 +36,7 @@
 // by ar2-1.74.h. Stock returns pointers in d0, while m68k-linux GCC
 // expects them in a0, so those routines are declared as returning a word.
 
-#include "ar2-1.74.h"
+#include "qperf-1.74.h"
 
 // The functions marked QPERF_UI run only from the UI task (keys, tick, project; the quick
 // perf rec bake and clear), never from the audio block. cold puts them out of the hot code

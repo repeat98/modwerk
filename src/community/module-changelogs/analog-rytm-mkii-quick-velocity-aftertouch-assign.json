@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Now called Improved Modulation, and QPER Live Rec is part of it: QPER locks, copy, paste, clear, YES and the quick perf rec work as before.",
+      "QPER Live Rec leaves the library: install this module in its place, never both."
+    ]
+  },
+  {
     "version": "0.4.0-experimental",
     "date": "2026-11-25",
     "changes": [
