@@ -6,6 +6,7 @@ import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with 
 import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
+import CYCLES_BASE from '../../../sdk/machines/model-cycles/base-binding.json' with { type: 'json' }
 import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
 import RYTM_VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json' with { type: 'json' }
 import {
@@ -42,6 +43,11 @@ const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string
   'analog-rytm-mkii': {
     variants: RYTM_BASE.variants,
     variant: moduleIds => rytmVariant(moduleIds, Object.values(RYTM_FX_IDS.ids), RYTM_VOICE_MODULES.ids),
+  },
+  // The Model:Cycles base from core-mc 0.3's source, with ev_key_leds (sdk/machines/model-cycles/elekloader/README.md).
+  'model-cycles': {
+    variants: { base: CYCLES_BASE.identity },
+    variant: () => 'base',
   },
 }
 /** The Rytm base variant a selection needs. A send effect contributes to the send-bus variant's FX list, and a digital
