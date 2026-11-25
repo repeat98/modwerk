@@ -1,0 +1,1 @@
+Modding guidelines: a new section, Respect the instrument. Mods are built for the instrument's own panel and way of working, features from another instrument are redesigned rather than copied one to one, and no mod turns an instrument into a general-purpose machine where nobody can tell what does what.
