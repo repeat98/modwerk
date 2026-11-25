@@ -66,6 +66,7 @@ extern volatile uint32_t mw_test_midi_on, mw_test_usb_sysex;
 #define USB_SYSEX (*(volatile uint32_t *)USB_SYSEX_AT) // 0xF0 while a SysEx is written but not yet ended
 #endif
 #define SYSEX_OPEN (USB_SYSEX == 0xF0)
+#define OPEN_TICKS 30                   // about a second: longer, and the open SysEx counts as one stock left unended
 #define PART 144                        // bytes in one write, as stock's send splits a message
 
 #define USB 2                           // the port stock's router reports for USB MIDI (seen on a unit)
@@ -369,27 +370,42 @@ static uint8_t *begin(int seq, int cmd, int status)
 
 // Stock's send releases its lock after every 144-byte part, so another task's part could land between two of a
 // reply's (and the reverse), which breaks both SysEx. The link writes the whole reply under the lock, and never
-// while another sender's SysEx is open: the tick waits for it (mw_link_tick). The link answers USB only.
+// while another sender's SysEx is open. A reply that meets an open SysEx is held, not dropped (its request has run:
+// an UP_RUN may have kept or undone a set), and goes out at a later tick; the link acts on no request while one is
+// held (mw_link_tick). An open SysEx that lasts more than OPEN_TICKS no longer holds it. The link answers USB only.
+static int reply_held;                  // the bytes of a reply in reply[] not yet written
+static uint32_t open_ticks;             // ticks the current open SysEx has lasted
+
+static int sysex_holds(void)
+{
+    return SYSEX_OPEN && open_ticks <= OPEN_TICKS;
+}
+
+static void write_held(void)
+{
+    int k;
+    USB_LOCK();
+    if (sysex_holds()) {                // opened since the tick looked (a writer that takes no lock): a later tick
+        USB_UNLOCK();
+        return;
+    }
+    for (k = 0; k < reply_held; k += PART)
+        USB_WRITE(reply_held - k < PART ? reply_held - k : PART, reply + k);
+    USB_UNLOCK();
+    reply_held = 0;
+    sent_count++;
+}
+
 static void send(uint8_t *end, int port)
 {
-    int n, k;
     (void)port;
     *end++ = 0xF7;
-    n = (int)(end - reply);
-    if (!MIDI_ON) {
+    if (!MIDI_ON) {                     // stock's send would send nothing either
         send_fails++;
         return;
     }
-    USB_LOCK();
-    if (SYSEX_OPEN) {                   // opened since the tick looked: a writer that does not take the lock
-        USB_UNLOCK();
-        send_fails++;
-        return;
-    }
-    for (k = 0; k < n; k += PART)
-        USB_WRITE(n - k < PART ? n - k : PART, reply + k);
-    USB_UNLOCK();
-    sent_count++;
+    reply_held = (int)(end - reply);
+    write_held();
 }
 
 #ifdef MODWERK_DEV
@@ -626,8 +642,8 @@ void mw_link_tick(char *ctrl)
     (void)ctrl;
     ticks++;
 #ifdef MODWERK_DEV
-    if (ramboot_due && ++ramboot_due > 3)
-        mw_link_ramboot_go();           // a few ticks: the reply is out
+    if (ramboot_due && !reply_held && ++ramboot_due > 3)
+        mw_link_ramboot_go();           // a few ticks after the reply is out
     if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
         human_ticks++;
     if (release_due)
@@ -642,8 +658,12 @@ void mw_link_tick(char *ctrl)
         pend_age = 0;
     }
 #endif
-    for (done = 0; done < PER_TICK && ring_tail != ring_head && !SYSEX_OPEN; done++) {
-        uint32_t t = ring_tail;         // another sender's SysEx open: the request waits for a later tick
+    open_ticks = SYSEX_OPEN ? open_ticks + 1 : 0;
+    if (reply_held && !sysex_holds())
+        write_held();
+    // Another sender's SysEx open, or a reply held: the next request waits for a later tick.
+    for (done = 0; done < PER_TICK && ring_tail != ring_head && !sysex_holds() && !reply_held; done++) {
+        uint32_t t = ring_tail;
         act(ring[t % RING], ring_len[t % RING], ring_port[t % RING]);
         ring_tail = t + 1;
     }
