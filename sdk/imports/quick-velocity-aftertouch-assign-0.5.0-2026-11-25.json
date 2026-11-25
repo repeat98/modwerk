@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
+  "version": "0.5.0-experimental",
+  "date": "2026-11-25",
+  "changes": [
+    "Now called Improved Modulation, and QPER Live Rec is part of it: QPER locks, copy, paste, clear, YES and the quick perf rec work as before.",
+    "Press QPER + YES again in the same hold to undo the apply; SCENE + REC, STOP or PLAY reacts sooner, at once in scene edit.",
+    "QPER Live Rec leaves the library: install this module in its place, never both."
+  ],
+  "runtimeSourceSha256": "2a9e0ac208ef9ed6efd4aae2902c97ccac4eb8118647f8df4314e3148f8b60b3",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.5.0-experimental-os1.74.elemod",
+      "sha256": "4d611ee26892b5991aba76a1252c0dd25cd17fa5f6cada820cf585101f206cf2"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
+  "requires": []
+}
