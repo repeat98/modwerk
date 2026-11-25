@@ -13,7 +13,8 @@
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
 //       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back);
-//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial
+//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial;
+//       --costs FILE sends that frame cost table (frame-costs.json's shape) instead of this checkout's; the unit keeps it either way
 //   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
@@ -68,6 +69,7 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
   split: { type: 'boolean', default: false },
+  costs: { type: 'string' }, // set: the frame cost table to send, in frame-costs.json's shape (device:price's measuring table)
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
@@ -789,7 +791,10 @@ if (command === 'serve') {
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
     // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
     if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
-    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+    // A v2 set's table is kept in battery RAM whether or not the set is kept (loader.c): this checkout's, or --costs.
+    const own = values.costs ? JSON.parse(readFileSync(values.costs, 'utf8')) : undefined
+    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? (own ? frameCostTable(own.costs, own.stock ?? null) : frameCostTable()) : undefined
+    if (own && !costs) throw new Error('--costs: this base keeps no frame cost table (no frame costs capability), so it would not be sent.')
     const offer = async packages => {
       const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
       console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
