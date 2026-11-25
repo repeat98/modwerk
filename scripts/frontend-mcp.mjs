@@ -341,7 +341,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return await read(access)
     } finally { try { access?.close?.() } finally { turn?.release() } }
   }
-  const cyclesSnapshot = () => cyclesSerial(() => withCycles('read Model:Cycles', async access => {
+  const cyclesSnapshot = () => cyclesSerial(() => withCycles('read Elektron unit (Model:Cycles or Rytm)', async access => {
     const identity = await frontend.readMcIdentity(access)
     if (!identity) {
       const rytm = await rytmSnapshot(access)
@@ -354,14 +354,14 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     return { machine: 'model-cycles', state: { status: !trial ? 'ready' : trial.lost ? 'trial-lost' : trial.kept ? 'trial-kept' : 'trial', identity, ...(trial && { trial }) }, build, inventory: null, loader }
   }))
   // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
-  const cyclesLoad = () => cyclesSerial(() => withCycles('read Model:Cycles load', async access => {
+  const cyclesLoad = () => cyclesSerial(() => withCycles('read Elektron unit load', async access => {
     let machine = 'model-cycles', reading = await frontend.readMcLoad(access)
     if (!reading) { machine = 'analog-rytm-mkii'; reading = await frontend.readRytmLoad(access) }
     if (!reading) throw new Error(noCycles)
     return reading === 'unsupported' ? { machine, supported: false, reading: null } : { machine, supported: true, reading }
   }))
   // The base's diagnostics log (LINK.md `diag`), in the Octatrack's layout; an older development base refuses it.
-  const cyclesLog = () => cyclesSerial(() => withCycles('read Model:Cycles log', async access => {
+  const cyclesLog = () => cyclesSerial(() => withCycles('read Elektron unit log', async access => {
     let machine = 'model-cycles', read = await frontend.readMcLog(access)
     if (!read) { machine = 'analog-rytm-mkii'; read = await frontend.readRytmLog(access) }
     if (!read) throw new Error(noCycles)
