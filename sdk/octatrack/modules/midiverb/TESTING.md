@@ -21,13 +21,27 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
 
 - **Stress (`python3 stress.py`, 25 Nov 2026):** eight instances, four a core, 2.0 s in `dsp_host -guard 0x3dfe -guard-shared -dirty 0x5a`: programs switching every sixteenth at 120 BPM (the dearest, Midiverb #16, half the time), STOP's tail kill held twice, three LFOs each (LEVL sine, MIX triangle, slot E square), all twelve slots new every sixteenth, trig splits 1, 3, 7, 8, 12 and 15 on six of them. dsp_host finished (no hang), 0 clobbers and 0 stray writes, every instance sounds, and each instance's output equals itself rendered alone (core 1 position 2, where dsp_host writes a word of its own into the block, equals itself beside seven instances playing on silence). Worst block per core 1,591.9 and 1,566.3 executed instructions a sample. Each instance gets stock's own FX2 buffer: dsp_host booted on stock's DSP payloads (OS 1.40C) shows the allocator giving a core's four FX2 slots Y:$4000, Y:$8000 and two in the window both cores share, $30000 and $34000 on core 0 (T7, T8), $38000 and $3c000 on core 1 (T3, T4); the gate's synthetic image gave every instance $4000, so `stress.py` writes stock's table into it. A test driver copies each instance's own stream (the ColdFire half does not run in dsp_host).
 
+- **Release runs, 25 Nov 2026, the owner's MKII** (OS 1.40C, development twin `4c7eb79b` of base 0.8.1 RAM-booted over the flashed `eb667962`, the scrap project's bank C): `npm run test:procedure -- midiverb` on package `36a276bf`, built by `module:dev` from source 461f05d2 (the module folder as released). Software checks, the DSP cost model, the scripted unit pass (picks on T1 and T5; five instances at once, three on core 1 at a peak of 88.4 % and two on core 0 at 78.6 %; a fourth on core 1 and a third on core 0 refused), the soak, the cost on the unit (1.1 % of a frame in use, 0.8 installed and used nowhere; curve first 0.5, each 0; admitted on the empty and the medium pattern, 0 dropped, 0 stalls) and the put-back passed. By hand: every screen by the README's steps (media/), slow PROG and BANK detents right after a fresh pick (they move from the first turns), and a 10 s USB recording of MAIN with it on T2 at MIX 80 beside USB Audio 0.4.0 (no run of exact zeros, no repeated block). The owner tried it and approved it for release (reported, not itemised).
+- **The shipped package is not the one that ran.** The site's packager builds Midiverb through its octabam path (ABI 8): `5c9cb593`, 52,126 bytes, from the same source; `module:dev` builds `36a276bf` from it, which is what every unit run above used. The shipped bytes were not run on a unit; the owner decided the runs on `36a276bf` cover it (25 Nov 2026).
+
+### perf:audit (`npm run perf:audit -- check sdk/octatrack/modules/midiverb/evidence/performance.json --stamp`, 25 Nov 2026)
+
+| Check | Result |
+| --- | --- |
+| record | dsp record for midiverb@0.1.0-experimental |
+| cycles | 4 x 395.5 = 1582 of 3120 per sample per core (51 %), measured 397.1 per instance |
+| stock benchmark | 397.1 vs DARK REV 242.38 (1.64x); the dearest stock effect 330.94; justified in the record |
+| stress | 4 per core, eight tracks, 3 LFOs and 12 locked slots, 2 s, no clobber, no hang |
+
+Four instances on one core take about half of it in the emulator (1,582 of 3,120 static), which leaves the other half to that core's four FX1 slots and its stock effects. On the unit the base admits by the measured frame and DSP cost, not by this figure: three instances on core 1 beside the stock effects peaked at 88.4 % of the core, and it refused a fourth.
+
 ## Stock flows
 
 Not tested.
 
 ## Sound quality
 
-Not tested (`npm run fx:audit` not run).
+Not tested: `npm run fx:audit` (aliasing, DC, clipping, idle) was not run. The wet path is the originals' on purpose: a 12-bit input, 16-bit memory with its own rounding, at 22.05 kHz, so its grain and its clipping at a hot LEVL are the sound; MIX 0 is exactly dry (verify.py). The owner listened to it on the unit and approved it.
 
 ## Performance
 
