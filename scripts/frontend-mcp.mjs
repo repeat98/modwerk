@@ -63,9 +63,9 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity, the image in --elektron-images that matches its set, and its runtime loader’s live modules.'),
-  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, a Model:Cycles development base’s audio load over its link. Read-only.'),
-  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, a Model:Cycles development base’s log over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read the link identity of a Model:Cycles running a Modwerk base, the image in --elektron-images that matches its set, and its runtime loader’s live modules.'),
+  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, the audio load of a Model:Cycles running a Modwerk base, over its link. Read-only.'),
+  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, the log of a Model:Cycles running a Modwerk base, over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes. With --elektron-midi alone (a Model:Cycles), moduleIds is one change: a runtime package file NAME.mwrm in --elektron-images, or remove:NAME to take out the module built as NAME.', { moduleIds: strings }, ['moduleIds']),
@@ -223,10 +223,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
-  // The Model:Cycles over its development link (startup --elektron-midi): identity, load, log and the runtime loader.
+  // The Model:Cycles over its link, in every Modwerk base (startup --elektron-midi): identity, load, log and the runtime loader.
   const cyclesSelected = () => options.elektronMidi && !options.deviceSocket && !remote
   async function connected() {
-    if (cyclesSelected()) throw new Error('The Model:Cycles has no saved sets: device_status, device_load, device_log, device_review, device_trial, device_keep and device_undo work over its development link.')
+    if (cyclesSelected()) throw new Error('The Model:Cycles has no saved sets: device_status, device_load, device_log, device_review, device_trial, device_keep and device_undo work over its link.')
     if (zoomSelected()) throw new Error('MIDISTOMP does not provide the runtime set loader or saved-set files. Use zoom_list or zoom_backup for the pedal’s files.')
     if (!options.deviceSocket && !remote) throw new Error('Device tools require an explicitly selected --device-socket or a connected remote session (remote_session_connect).')
     if (remote?.relay.state().ended) { remote = undefined; dropLink(); throw new Error('The remote session has ended.') }
@@ -296,7 +296,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   // The Model:Cycles: a fresh MIDI port list per read (RtMidi has no hot-plug here), its link's ident, and the built
   // image in --elektron-images whose set identity matches the one the unit took at boot.
-  const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a development base with the link (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
+  const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a Modwerk base (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
   async function withCycles(what, read) {
     const turn = dependencies.elektronAccess || trialTurn ? null : await unitTurn(what, 10000)
     let access

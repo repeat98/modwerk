@@ -122,7 +122,7 @@ export async function withMc<T>(access: MidiAccessLike, timeoutMs: number, work:
 const mcCall = (access: MidiAccessLike, cmd: number, timeoutMs: number) => withMc(access, timeoutMs, call => call(cmd))
 const put32 = (v: number) => [0, 1, 2, 3, 4].map(i => Math.floor(v / 2 ** (7 * i)) & 0x7f)
 
-/** Ask the connected Model:Cycles for its identity. Needs a development base with the link; null when no unit or no reply. */
+/** Ask the connected Model:Cycles for its identity. Needs a Modwerk base; null when no unit or no reply. */
 export async function readMcIdentity(access: MidiAccessLike, timeoutMs = 2000): Promise<McIdentity | null> {
   const payload = await mcCall(access, IDENT, timeoutMs)
   return payload && parseMcIdent(payload)
@@ -169,7 +169,7 @@ export async function readMcLog(access: MidiAccessLike, timeoutMs = 2000): Promi
   }
 }
 
-/** The base identity a development base's upload controller binds a BEGIN to (base/modules.c): the SHA-256 of its set
+/** The base identity a base's upload controller binds a BEGIN to (base/modules.c): the SHA-256 of its set
  * CRC, big-endian, as hex. */
 export function mcUploadBase(setCrc: number): string {
   return sha(Uint8Array.of(setCrc >>> 24, setCrc >>> 16 & 0xff, setCrc >>> 8 & 0xff, setCrc & 0xff))
@@ -226,7 +226,7 @@ export async function mcUploadSession(call: McCall, timeoutMs = 20000): Promise<
   const payload = await call(IDENT)
   if (!payload) return null
   const set = parseMcIdent(payload).set
-  if (!set) throw new Error('This development base reports no set identity: build a newer one.')
+  if (!set) throw new Error('This base reports no set identity: build a newer one.')
   return UploadSession.connect(mcUploadTransport(call), mcUploadBase(set.crc), { timeoutMs })
 }
 

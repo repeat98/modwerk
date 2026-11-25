@@ -37,7 +37,7 @@ function logBytes() {
   ;[[1, 1, 0], [2, 7, 0x4f182a66]].forEach(([seq, kind, a], n) => { const at = incident + 92 * n; v.setUint32(at, seq); v.setUint32(at + 4, 1); v.setUint32(at + 12, a); v.setUint16(at + 16, kind) })
   return bytes
 }
-// A unit with a development base: answers ident with the given set identity, load (0x23) with the given tenths of a
+// A unit with a Modwerk base: answers ident with the given set identity, load (0x23) with the given tenths of a
 // percent and counts (link.c CMD_LOAD), and diag (0x22) and log (0x24) with a log; without them, as a base before the load
 // probe or the log (status 2, bad request).
 // With `loader`, the base's own upload transport, controller and runtime loader compiled for the host

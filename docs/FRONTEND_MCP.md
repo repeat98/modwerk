@@ -277,7 +277,7 @@ counterpart for; once a Zoom base loads modules over USB, that goes behind
 `device_review`, `device_trial`, Keep and Undo, as the
 [recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
 
-### A Model:Cycles over its development link
+### A Model:Cycles over its link
 
 ```sh
 node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-midi [--elektron-images DIR] [--allow-device-writes]
