@@ -248,6 +248,19 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try` the 33,832-byte package; two 31,832-byte modules kept, then a third | `limit (too large)`; 3 live, 1168 bytes free, the third `rejected` (`memory`) |
 | the same, Transfer open and connected | `try grab.mwrm --seconds 10`, `load`, `log`, `ident` | on trial and undone, the load and the log read; 0 requests dropped, 0 send failures; Transfer still connected |
 | the same | a power cycle | 65536 bytes free, 0 live, no module on the screen |
+| `89edf78e…` (release base `646706ff`: the review round's fixes and whole-reply sends; stock 1.13 + the base alone), flashed with stock's upgrade, 25 November 2026 | `ident` | set CRC `0x7c774e99`, 38272 bytes (as `runid` computes); RAM boot mailbox empty, status none, image CRC 0 (a release base sends 0) |
+| the same | `try frames.mwrm --seconds 10`, `mods` | "F1 n" for 10 s, undone (generation 2), 0 live, 65120 bytes free |
+| the same | `hello` and `corner` (both on the draw hook) kept, then `remove corner --keep` | both squares, 2 live; then only hello's square, 1 live (`2cf24dba`) |
+| the same | `try frames.mwrm --seconds 5` while a pattern plays | `enter: unsafe`, no "F1 n", the square stays, the pattern plays without dropouts |
+| the same | `try frames.mwrm --seconds 60`, Ctrl-C after about 5 s | "F1 n" gone about 10 s after Ctrl-C; the square stays |
+| the same | `try frames.mwrm --seconds 3 --keep`, then `remove frames --keep` | "F1 n" stays, 2 live; after the removal "F1" gone, 1 live |
+| the same, Transfer open and connected | `load`, `log`, `try frames.mwrm --seconds 10`, `ident` | 74.3 / 79.0 / 83.7 %; START and BASE `0x7c774e99`, two load records; on trial and undone; 419 requests, 0 dropped, 418 replies, 0 send failures; Transfer still connected (macOS) |
+| the same | stock 1.13 with Transfer, then this base from the site's send dialog | stock boots and plays as stock, `ident` unanswered; back on the base: set CRC `0x7c774e99` |
+| `1d6c4052…` (development base `d0a26304`, the same source), flashed | `ident` | set CRC `0xb8018c7a`, 42296 bytes, armed; the RAM-boot words read the mailbox as DDR holds it after a cold boot (`4291608025`, `3082223327`, `0xd7f97dbd`): a development base only writes it at a RAM boot |
+| the same | `try frames.mwrm --seconds 5`, `--seconds 3 --keep`, `remove frames --keep`, `mem 0x40007678 6` after each | stock bytes `4e b9 40 07 00 a4` after the undo and after the removal; `4e b9 4f e1 6d e0` while kept (the module's code in the uncached alias) |
+| the same | `mem` of the masked-span counters after those three | 6 spans, the longest 982 DMA-timer counts (7.27 µs; 874 = 6.47 µs before the flush pushed all four ways) |
+| the same | `ramboot` of the same image, `ident` | uploaded in 3.3 s; `ok` before the reset (the held reply went out first); booted from RAM, image CRC `0xe6d65848` (the upload's MAIN OS) |
+| the same, RAM-booted, with a test module that holds `ev_tick` for 6 s on TRIG 16 (not in this repository) kept | TRIG 16 while a pattern plays, then `log` | the screen and keys stand still for about 6 s while the audio plays on without dropouts, no reset; four FREEZE incidents, each 9001 or 9002 blocks without a tick (6.0 s), CPU 72-73 %, the six machines and the last keys (TRIG 16 = 31); trigs pressed in the 6 s play when the UI task runs again (stock's key queue) |
 
 ## Not tested
 
@@ -258,7 +271,7 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 - Keys under FUNC and the flags stock's panel sets on a release.
 - A request while Transfer sends (it offers the Model:Cycles no sample upload; tested with Transfer open and connected) or another SysEx stream runs.
 - A host that stops reading in the middle of a reply.
-- A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
+- A HOT incident on a unit (FREEZE: seen, above).
 - A site under a task paused inside it (the switch is refused and retried).
 - A site's stock bytes after an undo on a release base (`mem` is development-only; seen on a development base).
 - A trial's pool extent is freed at the next change, not at its undo (seen: 416 bytes held until then).
