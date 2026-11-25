@@ -51,18 +51,23 @@
 #define CW_UI __attribute__((cold))
 
 static volatile uint32_t sum, blocks, high, full;    // written by the audio interrupt, cleared by the tick
+static volatile uint32_t peak;                       // the look's dearest block, for the link's LOAD and the log
+void mw_load_look(uint32_t sum, uint32_t blocks, uint32_t peak);   // load.c, on the UI side
 static uint8_t ticks, level, near_left, over_left;
 static uint8_t blink_ticks, dim;    // dim: the blink's second phase (CPU hidden, OVR not inverted)
 #ifdef CW_TEST_CYCLE
 static uint32_t cycle;
 #endif
 
-// The audio interrupt: about a dozen instructions a block.
+// The audio interrupt: about a dozen instructions a block. The link's load and diagnostics log (load.c, diag.c) add
+// nothing here but the look's dearest block: everything else of theirs runs on the UI side, from these sums.
 void le_cpu_warning_out(void)
 {
     uint32_t l = core_audio_load;
     sum += l;
     blocks++;
+    if (l > peak)
+        peak = l;
     if (l >= CW_NEAR_PEAK) {
         high++;
         if (l >= 256)
@@ -86,6 +91,8 @@ CW_UI void le_cpu_warning_tick(void *ctrl)
     ticks = 0;
     s = sum; n = blocks; h = high; f = full;
     sum = 0; blocks = 0; high = 0; full = 0;
+    mw_load_look(s, n, peak);
+    peak = 0;
     mean = n ? s / n : 0;               // no block in a look: the levels run out
     if (mean >= CW_OVER_MEAN || f >= CW_OVER_BLOCKS)
         over_left = CW_HOLD;

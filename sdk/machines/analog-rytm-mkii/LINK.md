@@ -23,11 +23,17 @@ with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analo
 Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`.
 They read and change nothing else: no host can press a key, read memory outside the log or
 confirm an upgrade on a release base, which answers every other request `bad request`. On the
-send-bus variant they cost 3,848 bytes of `.run` and 6,928 of RAM in the shared mod area, 6,148 of
-it the log (release base `03902b3a`, 25 November 2026; the voices and plain variants the same), and
-one site each in stock's SysEx router and boot (`0x40083dd8`, `0x400008c6`). The boot site
-computes the set identity, with the data cache off (stock's own state at that point), over the
-`.run` block once a boot.
+send-bus variant they cost 3,396 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
+it the log (the voices and plain variants the same), and one site each in stock's SysEx router and
+boot (`0x40083dd8`, `0x400008c6`). The boot site computes the set identity, with the data cache off
+(stock's own state at that point), over the `.run` block once a boot.
+
+**Nothing in the audio interrupt.** An idle unit pays for none of it while playing: the load and the
+log run on the UI task, from the sums the lean engine's CPU mark already keeps in the interrupt
+(`perf-cpu-mark.c`; the link adds the look's dearest block there: one compare and branch a block,
+13 instructions instead of 10), and `sdk/tests/test_machine_base.py` refuses a link, load or log
+handler on the render events. On the UI task, about 20 times a second, the link looks at an empty
+ring and the log at the time since the last tick; the router runs only when a SysEx arrives.
 
 A development base adds the rest. Any USB host can drive it with no hand on the unit, and that
 includes confirming stock's OS upgrade, so a host could write the flash. Release bases never
@@ -113,12 +119,12 @@ send-bus base `9413108d` + Filter Hz): `fbcf1ac8`, 42,384 bytes, from both.
 **The diagnostics log** is the Octatrack's layout, version 2 ([`diag.h`](elekloader/base/diag.h),
 checked against the Octatrack's by `sdk/tests/test_machine_base.py`), so the site's parser reads it.
 The Rytm fills the five-minute load records (the audio's mean and dearest block, the half seconds the
-sequencer played, the longest gap between audio blocks in µs and the longest run of blocks without a
-UI tick) and START, BASE (the set identity), HOT (a second at 90 % or more) and FREEZE (the UI tick
-standing still for five seconds while audio runs) with the last 16 keys pressed and whether the
-sequencer played. Machines, FX, screen and tempo stay 0: not read yet. It lives in the base's RAM and
-starts again at every boot. Times come from the audio's own clock (1,500 blocks a second), the gaps
-from DMA timer 0 measured against it, so no timer rate is assumed.
+sequencer played and the longest time between two UI ticks, in audio blocks; the gap between audio
+blocks stays 0, since nothing of the log runs in the interrupt) and START, BASE (the set identity),
+HOT (a second at 90 % or more) and FREEZE (the UI standing still five seconds or more, logged when
+it comes back) with the last 16 keys pressed and whether the sequencer played. Machines, FX, screen and tempo stay 0: not read yet. It lives in the base's RAM and
+starts again at every boot. Times come from the audio's own clock (1,500 blocks a second, counted by
+the CPU mark), the UI's stalls from DMA timer 0 measured against it, so no timer rate is assumed.
 
 USB only: the router hook drops link messages from DIN. A key or turn the link posted that never
 reaches `ev_key`/`ev_enc` within about a second is given up, so one lost message cannot make every
@@ -330,7 +336,8 @@ since, the link has not.
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).
-- Every base's part on a unit (25 November 2026, the test rig, hands off): SR01 (the combo set of
+- Every base's part on a unit (25 November 2026, the test rig, hands off), on the build before the
+  load and log moved out of the audio interrupt (the gap between blocks was then measured): SR01 (the combo set of
   FXCJ on its voices development base with this change, layout unchanged) RAM-booted over FXCJ:
   `ident`'s set identity `91b73d51`, 207,400 bytes, as `link-image.mjs` printed; `load` 59.2 %
   stopped, 68.4 % playing (dearest block 74.2 %); the log's START and BASE, then its first

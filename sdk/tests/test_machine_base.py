@@ -422,7 +422,11 @@ class MachineBases(unittest.TestCase):
                 targets = {site.get("target") for site in parts["sites"]}
                 fns = {sub["fn"] for sub in parts["subscribe"]}
                 self.assertLessEqual({"mw_link_router", "mw_boot_site"}, targets, name)
-                self.assertLessEqual({"mw_link_tick", "mw_diag_tick", "mw_diag_key", "mw_load_out"}, fns, name)
+                self.assertLessEqual({"mw_link_tick", "mw_diag_tick", "mw_diag_key"}, fns, name)
+                # An idle unit pays nothing in the audio interrupt for the link, its load or its log: none of them
+                # subscribes to the render events (load.c reads the CPU mark's sums on the UI side).
+                audio = {sub["fn"] for sub in parts["subscribe"] if sub["event"] in ("ev_render_in", "ev_render_out")}
+                self.assertFalse({fn for fn in audio if fn.startswith(("mw_link", "mw_diag", "mw_load"))}, name)
                 for source in ("../base/link.c", "../base/link.s", "../base/load.c", "../base/diag.c"):
                     self.assertIn(source, parts["sources"], name)
                 self.assertIn("-fno-late-combine-instructions", parts["cflags"], name)

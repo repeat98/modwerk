@@ -35,19 +35,18 @@ typedef char diag_load_layout[sizeof(struct diag_load) == 32u ? 1 : -1];
 typedef char diag_incident_layout[sizeof(struct diag_incident) == 92u ? 1 : -1];
 typedef char diag_log_layout[sizeof(struct diag_log) == 40u + 92u + 32u * DIAG_LOADS + 92u * DIAG_INCIDENTS ? 1 : -1];
 
-/* What the Rytm fills (diag.c). Loads: `cpu_mean` and `cpu_peak` the audio block's share of its period (load.c, from
- * the core's core_audio_load), the mean of the half-second windows and the dearest block, per mille; `samples` the
- * windows; `playing` the windows that ended with the sequencer playing; `frame_gap` the longest time between two audio
- * blocks in µs (one is 667 µs: 32 frames at 48 kHz); `tick_gap` the longest run of audio blocks without a UI tick (about
- * 75 a tick). The DSP fields stay 0: the Rytm's audio runs on the ColdFire. Incidents: START (a 0) and BASE (a the set
- * identity, link.c) at a boot's first tick, HOT (a the half-seconds at 90 % or more), FREEZE (the UI tick standing still
- * for five seconds while audio runs; a the audio blocks it stood still). `keys` the last 16 key ids pressed, oldest
+/* What the Rytm fills (diag.c), all of it on the UI task. Loads: `cpu_mean` and `cpu_peak` the audio block's share of
+ * its period (load.c, from the CPU mark's sums of the core's core_audio_load), the mean of the half-second looks and
+ * the dearest block, per mille; `samples` the looks; `playing` the looks that ended with the sequencer playing;
+ * `frame_gap` 0 (only the audio interrupt sees the blocks' spacing, and nothing of the log runs there); `tick_gap` the
+ * longest time between two UI ticks, in audio blocks (about 75 a tick). The DSP fields stay 0: the Rytm's audio runs on the ColdFire. Incidents: START (a 0) and BASE (a the set
+ * identity, link.c) at a boot's first tick, HOT (a the half-seconds at 90 % or more), FREEZE (the UI standing still
+ * five seconds or more, logged when it comes back; a the audio blocks it stood still). `keys` the last 16 key ids pressed, oldest
  * first (0xff none); `cpu` the last window's share; `playing` 1 while the sequencer plays. `machine`, `fx`, `screen`
  * and `tempo24` stay 0: the base does not read them yet. The log lives in the base's memory: it starts again at every
  * boot, so `boot` is 1. */
 void mw_diag_start(uint32_t nonce, uint32_t set_crc); /* link.c's boot gate */
-void mw_diag_block(uint32_t start);                   /* load.c, each audio block: its end in DMA timer 0 counts */
-void mw_diag_window(uint32_t avg, uint32_t wmax);     /* load.c, each window: its share and dearest block, per mille */
+void mw_diag_window(uint32_t avg, uint32_t wmax, uint32_t blocks); /* load.c, each look: share, dearest block, blocks */
 void mw_diag_tick(void *ctrl);                        /* ev_tick */
 int mw_diag_key(void *brain, char *event);            /* ev_key: remembers presses, takes none */
 extern volatile struct diag_log mw_diag_log;
