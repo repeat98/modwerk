@@ -589,6 +589,14 @@ def main():
                 donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
                 fx2Slot=0x400d6044,
                 slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'midiverb' for row in descriptor_guards):
+            # The same DARK REV donor and stock NONE at unused FX2 id 0x0a (checked against the private OS 1.40C,
+            # 25 Nov 2026, hashes only). Never retain stock bytes. On USB the base gives it an id of its own.
+            descriptor_guards.append(dict(id='midiverb', key='MIDIVERB', author='repeat98',
+                fxId=0x0a, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d6004,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
         for old in descriptor_guards:
             module = byid[old['id']]
             if module.menu.donor_desc + 0x38 != old['donorAddress'] or module.menu.fx2_id != old['fxId']:
