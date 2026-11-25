@@ -98,7 +98,7 @@ static int ask1(int cmd, int words, uint32_t a)    // a request with no value or
     return last_reply[8];
 }
 
-static void unpack(const uint8_t *src, uint8_t *dst, int n)   // as dn2_link.py's unpack7
+static void unpack_reply(const uint8_t *src, uint8_t *dst, int n)   // as dn2_link.py's unpack7
 {
     int i, k, o = 0;
     for (i = 0; o < n; i += 8)
@@ -112,7 +112,7 @@ static int part_fits(uint32_t off, uint32_t *number, uint8_t *out)   // OFF, the
     if (last_len != expected || last_reply[last_len - 1] != 0xF7 || get32(last_reply + 9) != off)
         return 0;
     *number = get32(last_reply + 14);
-    unpack(last_reply + 19, out, SCREEN_PART);
+    unpack_reply(last_reply + 19, out, SCREEN_PART);
     return 1;
 }
 
