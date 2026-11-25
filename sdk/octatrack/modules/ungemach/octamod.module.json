@@ -15,7 +15,7 @@
   "presentation": {
     "label": "Drone",
     "family": "Synth track machine",
-    "summary": "A dissonant, living drone for dark techno: sixteen detuned voices in three groups, a chord that rises from unison to a scream, 32 waveforms from dull to shrill, and a punch on every trig.",
+    "summary": "A dissonant, living drone for dark textures and atmospheres. Turn up PNCH and shorten HOLD and REL to turn it into a hard techno stab machine.",
     "overview": "UNGEMACH is a track machine that makes its own sound on the ColdFire instead of playing a sample. Sixteen detuned voices in three groups, an octave sub and a dark noise run through a resonant low-pass and a saturation. PTCH sets the root, DISS moves the second and third groups from unison through ever wider dissonant chords to a scream, WAVE crossfades through 32 original waveforms from dull to shrill, TONE opens the filter and DIRT adds resonance, drive and a phase push that roughens the voices. RATE lets pitch, filter and level drift on their own, slowly or fast, or pulse in time with the sequencer. On SRC SETUP, SPRD sets the stereo width and PNCH gives every trig a punch that opens the filter and lifts the level for a few dozen milliseconds. The track's AMP envelope, LFOs, locks, scenes and effects act on it as on a sample.",
     "highlights": [
       "Sixteen voices in three detuned groups, an octave sub and noise, in stereo.",
