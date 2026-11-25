@@ -63,3 +63,14 @@ Nathaniel Pavel wrote it; the core is irpina's Elekloader core-ar2. GPL-3.0-or-l
 
 These captures are from rytm-emu running Modwerk's base for core-ar2 0.7 and Improved Compressor alone, from stock OS 1.74 ([capture provenance](media/capture.json)). The emulator's analog side is stubbed, so the screens show the texts, not the sound.
 
+![COMPRESSOR page, the first knob's value reading -36dB above the labels ATK, REL and MUP, with RAT showing MAX.](media/thr-max.png)
+
+COMPRESSOR page with RAT at MAX: THR at 96 reads -36dB.
+
+![COMPRESSOR page, the first knob's value reading -18dB, with RAT showing 1:2.](media/thr-ratio.png)
+
+The same THR with RAT at 1:2: it reads -18dB, 18 dB later.
+
+![COMPRESSOR page, the fourth knob's value reading +20.6dB, the first knob labelled THR.](media/mup.png)
+
+MUP at 32 reads +20.6dB of makeup.

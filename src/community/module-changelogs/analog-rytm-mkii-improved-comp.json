@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: the compressor's THR and MUP read in dB.",
+      "THR shows the level where the compressor starts, and follows RAT: 8, 15 and 18 dB later at 1:8, 1:4 and 1:2 than at MAX.",
+      "MUP shows the makeup gain, 0.645 dB a step.",
+      "Measured on a unit; nothing else on the COMP page changes, and nothing runs in the audio."
+    ]
+  }
+]

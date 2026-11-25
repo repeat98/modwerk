@@ -28,10 +28,11 @@
       "Nothing on a tick, a draw or in the audio: only the two value texts change."
     ],
     "usage": [
-      "Use a build containing Improved Compressor. Select the FX track and press AMP for the COMP page.",
-      "Turn THR: its value reads in dB, for example -36dB at THR 96 with RAT MAX.",
-      "Change RAT to 1:2 and turn THR again: the same knob position now reads 18 dB later.",
-      "Turn MUP: its value reads the makeup, for example +20.6dB at MUP 32."
+      "Use a build containing Improved Compressor. Select the FX track and press AMP: the COMPRESSOR page.",
+      "Set RAT to MAX and turn THR to 96: it reads -36dB. A voice peaking above that level is being compressed.",
+      "Set RAT to 1:2 and nudge THR: the same position now reads -18dB, because at 1:2 the compressor starts 18 dB later.",
+      "Turn MUP to 32: it reads +20.6dB, the gain added after the compressor.",
+      "To go back to stock's numbers, build without the module. Nothing is saved, so projects are unchanged."
     ]
   },
   "access": {
@@ -41,7 +42,11 @@
       "Press AMP for the COMP page.",
       "Turn THR or MUP to see its value."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/thr-max.png",
+      "media/thr-ratio.png",
+      "media/mup.png"
+    ]
   },
   "controls": [
     {
@@ -83,7 +88,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
+    "memoryBytes": 652,
     "fastBytes": null,
     "load": {
       "display": "None: no tick, draw or audio-block work; two value texts are formatted when the page draws them",
@@ -92,16 +97,49 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
-    "verifiedBy": null
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-25",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.1.0's texts ran on npp1993's (the author's) Analog Rytm MKII, OS 1.74, from RAM in the author's private combined test image IC38 (a development base with a USB test link and the modules the author uses), run by the author's automated rig with the author's go, 25 November 2026: THR 96 reads -36dB at RAT MAX and -18dB at RAT 1:2, MUP 32 +20.6dB, THR 20 -110dB, and stock's text in scene mode. The laws behind the texts were measured on the same unit: THR and MUP on its drum voices, the ratios with a sine through AUDIO IN.",
+      "limitations": [
+        "Run by an automated rig; the author looked at the screens it recorded.",
+        "This package's bytes have not been flashed from the site; only the author's combined image ran.",
+        "The laws were measured on one unit, with SEQ OFF.",
+        "Not run: a power cycle (nothing is saved), locks, an LFO or a performance on THR or MUP."
+      ]
+    },
+    "verifiedBy": null,
+    "sourceSha256": "6f415aae173349b12b31db7aa80f9c49b2ebbe6a6bc570b8d210ab9a98b3503e"
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Rig runs on the author's MKII from RAM (IC38): the text case passes (THR 96 reads -36dB at RAT MAX and -18dB at 1:2, MUP 32 +20.6dB, stock texts in scene mode). The laws come from a sine measured through the compressor. See TESTING.md."
+    "summary": "Rig runs on the author's MKII from RAM (IC38): the text case passes (THR 96 reads -36dB at RAT MAX and -18dB at 1:2, MUP 32 +20.6dB, stock texts in scene mode). The laws come from a sine measured through the compressor. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Improved Compressor. Select the FX track and press AMP: the COMPRESSOR page.",
+          "Set RAT to MAX and turn THR to 96: it reads -36dB. A voice peaking above that level is being compressed.",
+          "Set RAT to 1:2 and nudge THR: the same position now reads -18dB, because at 1:2 the compressor starts 18 dB later.",
+          "Turn MUP to 32: it reads +20.6dB, the gain added after the compressor.",
+          "To go back to stock's numbers, build without the module. Nothing is saved, so projects are unchanged."
+        ]
+      },
+      "screenshots": [
+        "media/thr-max.png",
+        "media/thr-ratio.png",
+        "media/mup.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -117,6 +155,54 @@
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/thr-max.png",
+      "kind": "screenshot",
+      "caption": "COMPRESSOR page with RAT at MAX: THR at 96 reads -36dB.",
+      "alt": "COMPRESSOR page, the first knob's value reading -36dB above the labels ATK, REL and MUP, with RAT showing MAX.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d26771e9228bec53ab82131f241450b5454add3e5332310dcf717816946c2076",
+        "setup": "Headless rytm-emu (dtboot) running ICS1: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved Compressor 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit, FX track. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
+    },
+    {
+      "path": "media/thr-ratio.png",
+      "kind": "screenshot",
+      "caption": "The same THR with RAT at 1:2: it reads -18dB, 18 dB later.",
+      "alt": "COMPRESSOR page, the first knob's value reading -18dB, with RAT showing 1:2.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d26771e9228bec53ab82131f241450b5454add3e5332310dcf717816946c2076",
+        "setup": "Headless rytm-emu (dtboot) running ICS1: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved Compressor 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit, FX track. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
+    },
+    {
+      "path": "media/mup.png",
+      "kind": "screenshot",
+      "caption": "MUP at 32 reads +20.6dB of makeup.",
+      "alt": "COMPRESSOR page, the fourth knob's value reading +20.6dB, the first knob labelled THR.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d26771e9228bec53ab82131f241450b5454add3e5332310dcf717816946c2076",
+        "setup": "Headless rytm-emu (dtboot) running ICS1: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved Compressor 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit, FX track. Firmware-rendered 128x64 screen at 3x (media/capture.json). UI documentation only."
+      }
     }
   ]
 }

@@ -6,6 +6,7 @@ Version 0.1.0-experimental: THR and MUP read in dB on the COMP page. Run by the 
 
 - Emulator (rytm-emu): the text case passes. THR 96 reads -36dB at RAT MAX and -18dB at RAT 1:2, MUP 32 reads +20.6dB, THR 20 reads -110dB, and in scene mode THR reads as stock (21). The screens were looked at; nothing else on the page differs from stock.
 - Unit (image CRC 9312221b, from RAM): the text case passes against the references recorded and looked at on IC37 (CRC 6777a391, the same texts before the review's two guards). THR 96 reads -36dB at RAT MAX and -18dB at RAT 1:2, MUP 32 +20.6dB, THR 20 -110dB; in scene mode THR reads as stock (21). The page shows nothing else of the module.
+- The source these runs used is `src/main.c` with SHA-256 `6f415aae173349b12b31db7aa80f9c49b2ebbe6a6bc570b8d210ab9a98b3503e` (the manifest's `evidence.sourceSha256`).
 - Host: every THR and RAT setting's number is within half a dB of the line (512 settings).
 - Two independent reviews of the label code found no defect. The first noted that THR's line was rounded twice (15 of 512 settings 1 dB off), fixed; the second asked for a limit on the view-stack walk and on the value, both added in this build.
 
