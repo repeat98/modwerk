@@ -319,8 +319,12 @@ after ten quiet seconds; `device_keep` keeps it until the next power cycle,
 While a pattern plays the unit refuses both (`unsafe`): the trial and its
 pings stay, so stop playback and call the tool again. A ping that fails shows
 as `state.trial.pingError` in `device_status`, and `state.status` turns
-`trial-lost` once no ping has reached the unit for ten seconds or its loader is
-back in the normal phase. A remote session or a rebuilt site bundle waits for
+`trial-lost` once no ping has reached the unit for ten seconds. When the unit no
+longer has the trial (its loader in the normal phase, or in the ready phase
+after an ACCEPT or ROLLBACK whose answer was lost, which the MCP then leaves),
+its active set tells what happened: the reviewed set means the trial was undone
+(`trial-lost`), another set means a Keep went through (`trial-kept`). A later
+`device_keep` or `device_undo` reports the same, as done when it matches. A remote session or a rebuilt site bundle waits for
 the trial's end. Closing the MCP during a trial undoes it ten seconds later. Nothing is
 saved: there are no saved sets. Close Elektron Transfer first. Tests run
 against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the

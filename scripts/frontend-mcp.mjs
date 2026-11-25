@@ -337,7 +337,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       }
     }
     const trial = cyclesTrialState()
-    return { machine: 'model-cycles', state: { status: !trial ? 'ready' : trial.lost ? 'trial-lost' : 'trial', identity, ...(trial && { trial }) }, build, inventory: null, loader }
+    return { machine: 'model-cycles', state: { status: !trial ? 'ready' : trial.lost ? 'trial-lost' : trial.kept ? 'trial-kept' : 'trial', identity, ...(trial && { trial }) }, build, inventory: null, loader }
   }))
   // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
   const cyclesLoad = () => cyclesSerial(() => withCycles('read Model:Cycles load', async access => {
@@ -367,14 +367,28 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }))
   const cyclesModules = call => frontend.mcModules(call).catch(error => { if (error instanceof frontend.McRefused && error.status === 2) return 'unsupported'; throw error })
   let cyclesTrial
-  // A trial's pings: the last one that reached the unit, the last failure, and whether the unit is known to have
-  // undone it (its loader back in the normal phase, or more than ten seconds without a ping that reached it).
+  // A trial's pings: the last one that reached the unit and the last failure. Once the unit's loader is in the ready
+  // phase (an ACCEPT or ROLLBACK whose answer was lost: upload mode is left here) or back in the normal one, the trial
+  // is over, and its active set tells how: the reviewed one means undone, another means a Keep
+  // went through though its answer was lost. More than ten seconds without a ping that reached it means it was
+  // probably undone.
   const CYCLES_LAPSE = 10000
+  // The unit's set, leaving upload mode when an ACCEPT or ROLLBACK left it in the ready phase.
+  const cyclesSettle = async call => {
+    const session = await frontend.mcUploadSession(call)
+    if (!session) return null
+    const phase = session.status.phase
+    if (phase === 'ready') await session.leaveUploadMode()
+    return { over: phase === 'ready' || phase === 'normal', phase: session.status.phase, generation: session.status.generation, active: session.status.active }
+  }
+  const cyclesEnding = (active, before) => active === before.active
+    ? { kept: false, text: 'The unit no longer has the trial and runs the reviewed set again: the trial was undone (ten seconds without a ping, a power cycle, or an Undo whose answer was lost).' }
+    : { kept: true, text: 'The unit no longer has the trial and runs a different set than the reviewed one: a Keep went through though its answer was lost.' }
   function cyclesTrialState() {
     if (!cyclesTrial) return null
-    const quiet = clock() - cyclesTrial.lastPing
-    const lost = cyclesTrial.lost ?? (quiet > CYCLES_LAPSE ? 'No ping reached the unit for ' + Math.round(quiet / 1000) + ' s; it undoes a trial after ten quiet seconds.' : null)
-    return { lost, pingError: cyclesTrial.pingError }
+    const quiet = clock() - cyclesTrial.lastPing, ended = cyclesTrial.ended
+    const lost = ended ? (ended.kept ? null : ended.text) : quiet > CYCLES_LAPSE ? 'No ping reached the unit for ' + Math.round(quiet / 1000) + ' s; it undoes a trial after ten quiet seconds.' : null
+    return { lost, kept: ended?.kept ? ended.text : null, pingError: cyclesTrial.pingError }
   }
   async function cyclesPackage(change) {
     const removal = /^remove:([A-Za-z0-9._-]{1,64})$/.exec(change)
@@ -411,11 +425,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         if (session.status.base !== plan.before.base || session.status.active !== plan.before.active) throw new Error('The device changed after review; nothing was sent.')
         return frontend.mcTry(call, plan.change.data)
       })
-      const trial = { id: randomUUID(), before: plan.before, lastPing: clock(), pingError: null, lost: null }
+      const trial = { id: randomUUID(), before: plan.before, lastPing: clock(), pingError: null, ended: null }
       trial.ping = setInterval(() => {
-        cyclesLine('keep Model:Cycles trial', call => frontend.mcUploadSession(call)).then(session => {
+        cyclesLine('keep Model:Cycles trial', cyclesSettle).then(now => {
           if (cyclesTrial !== trial) return
-          if (session.status.phase === 'normal') { clearInterval(trial.ping); trial.lost = 'The unit undid the trial by itself: its loader is back in the normal phase.'; return }
+          if (now.over) { clearInterval(trial.ping); trial.ended = cyclesEnding(now.active, trial.before); return }
           trial.lastPing = clock(); trial.pingError = null
         }, error => { if (cyclesTrial === trial) trial.pingError = error.message })
       }, 3000)
@@ -438,7 +452,17 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         return status && { phase: status.phase, generation: status.generation, active: status.active, loader: await cyclesModules(call) }
       })
     } catch (error) {
-      if (/Nothing is on trial/.test(error.message)) { done(); throw new Error('The trial is gone: the unit put the previous set back by itself (ten seconds without a ping, or a power cycle). Nothing was ' + (keep ? 'kept' : 'undone') + ' here.', { cause: error }) }
+      if (/Nothing is on trial/.test(error.message)) {
+        // The trial ended without an answer that said so: the unit's active set tells which way.
+        const now = await cyclesLine('read Model:Cycles set', async call => {
+          const settled = await cyclesSettle(call)
+          return settled && { phase: settled.phase, generation: settled.generation, active: settled.active, loader: await cyclesModules(call) }
+        })
+        done()
+        const ending = cyclesEnding(now.active, completed.before)
+        if (ending.kept === keep) return { kept: keep, completed: true, machine: 'model-cycles', ...now, note: ending.text }
+        throw new Error(ending.text + (keep ? ' Nothing was kept.' : ' Undo changed nothing: remove the module with remove:NAME, or power-cycle the unit.'), { cause: error })
+      }
       throw new Error((keep ? 'Keep' : 'Undo') + ' did not finish: ' + error.message + ' The trial stays on and its pings go on: stop playback if a pattern plays, then call ' + (keep ? 'device_keep' : 'device_undo') + ' again.', { cause: error })
     }
     done()

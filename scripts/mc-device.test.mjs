@@ -44,6 +44,10 @@ function logBytes() {
 // (base/test_modules.c): up_part (0x31) and up_run (0x32) go to it, mods (0x33) answers an empty pool.
 function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null, loader = null) {
   const input = { id: 'i', name, state: 'connected', onmidimessage: null }, requests = {}
+  // lose.cmd: the next frame with that wire command runs on the loader, but its answer is a refusal, as an answer lost
+  // on the way (without the wait for a timeout); frame is the command of the frame whose parts came last
+  const lose = { cmd: null }
+  let frame = null
   const fields = [1, 1, 0, 146, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, ...(set ? [set.crc, set.bytes] : [])]
   const answer = (data, status, reply) => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, status, ...reply, 0xf7]) })
   const output = { id: 'o', name, state: 'connected', send(data) {
@@ -51,9 +55,13 @@ function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null
     requests[data[7]] = (requests[data[7]] ?? 0) + 1
     if (data[7] >= 0x31 && data[7] <= 0x33) {
       if (!loader) { queueMicrotask(() => answer(data, 2, [])); return }
+      if (data[7] === 0x31 && get32(body, 0) === 0) frame = body[5 + 9]   // the wire header's command byte, packed
       const line = data[7] === 0x31 ? 'P ' + get32(body, 0) + ' ' + Buffer.from(Uint8Array.from(body).subarray(5)).toString('hex') : data[7] === 0x32 ? 'R ' + get32(body, 0) : null
       if (!line) { queueMicrotask(() => answer(data, 0, pack7(Uint8Array.from([0, 0, 0xfe, 0x60, 0, 0, 0xfe, 0x60, 0, 0, 0, 0, 0, 0, 0, 0, 0x4d, 0x57, 0x49, 0])))); return }
-      loader.ask(line).then(out => answer(data, data[7] === 0x31 ? (Number(out) ? 0 : 4) : out ? 0 : 4, data[7] === 0x31 || !out ? [] : pack7(Uint8Array.from(Buffer.from(out, 'hex')))))
+      loader.ask(line).then(out => {
+        if (data[7] === 0x32 && lose.cmd !== null && lose.cmd === frame) { lose.cmd = null; answer(data, 4, []); return }
+        answer(data, data[7] === 0x31 ? (Number(out) ? 0 : 4) : out ? 0 : 4, data[7] === 0x31 || !out ? [] : pack7(Uint8Array.from(Buffer.from(out, 'hex'))))
+      })
       return
     }
     const [status, reply] = data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
@@ -64,7 +72,7 @@ function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null
   } }
   const inputs = new Map([['i', input]]), outputs = new Map([['o', output]])
   // unplug() takes the ports away, plug() brings them back
-  return { inputs, outputs, requests, onstatechange: null, close() {}, unplug() { inputs.clear(); outputs.clear() }, plug() { inputs.set('i', input); outputs.set('o', output) } }
+  return { inputs, outputs, requests, lose, onstatechange: null, close() {}, unplug() { inputs.clear(); outputs.clear() }, plug() { inputs.set('i', input); outputs.set('o', output) } }
 }
 
 describe('the developer MCP’s Model:Cycles identity', () => {
@@ -184,7 +192,7 @@ describe('the developer MCP’s Model:Cycles identity', () => {
       await loader.ask('S 0')
       await expect(service.call('device_keep', { trial: trial.trial })).rejects.toThrow(/Keep did not finish: .*unsafe.*trial stays on/s)
       await expect(service.call('device_undo', { trial: trial.trial })).rejects.toThrow(/Undo did not finish: .*unsafe.*trial stays on/s)
-      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial', trial: { lost: null, pingError: null } })
+      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial', trial: { lost: null, kept: null, pingError: null } })
       const idents = access.requests[1]
       await pinged(access, idents)
       expect(access.requests[1]).toBeGreaterThan(idents)
@@ -205,5 +213,35 @@ describe('the developer MCP’s Model:Cycles identity', () => {
       expect((await service.call('device_status')).state).toMatchObject({ status: 'trial-lost', trial: { lost: expect.stringMatching(/ten quiet seconds/) } })
       await service.call('device_undo', { trial: again.trial })
     } finally { vi.useRealTimers(); now = 0; child.stdin.end() }
+  }, 30000)
+  // The unit did the Keep (or the Undo) but its answer went missing: the trial stays, and once the unit no longer has
+  // it, its active set says which way it went.
+  it.skipIf(!cc)('tells a Keep or Undo whose answer was lost by the unit\'s active set', async () => {
+    const { child, loader, pkg } = hostLoader()
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    const pinged = async (access, before) => { vi.advanceTimersByTime(3000); while ((access.requests[1] ?? 0) <= before) await new Promise(resolve => setTimeout(resolve, 5)) }
+    try {
+      await writeFile(join(images, 'frames.mwrm'), pkg)
+      const access = fakeCycles({ crc: 0x12345678, bytes: 64 }, undefined, null, null, loader)
+      service = await open(access, { allowDeviceWrites: true })
+      // a Keep that went through: the ping finds the trial over on another set, and device_keep says it was kept
+      const review = await service.call('device_review', { moduleIds: ['frames.mwrm'] })
+      const trial = await service.call('device_trial', { review: review.review })
+      access.lose.cmd = 6   // ACCEPT
+      await expect(service.call('device_keep', { trial: trial.trial })).rejects.toThrow(/Keep did not finish.*trial stays on/s)
+      await pinged(access, access.requests[1])
+      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial-kept', trial: { lost: null, kept: expect.stringMatching(/a Keep went through/) } })
+      const kept = await service.call('device_keep', { trial: trial.trial })
+      expect(kept).toMatchObject({ kept: true, completed: true, note: expect.stringMatching(/a Keep went through/) })
+      expect(kept.active).not.toBe(review.active)
+      expect((await service.call('device_status')).state.status).toBe('ready')
+      // an Undo that went through: device_undo again reports it undone
+      const before = await service.call('device_review', { moduleIds: ['remove:frames'] })
+      const again = await service.call('device_trial', { review: before.review })
+      access.lose.cmd = 7   // ROLLBACK
+      await expect(service.call('device_undo', { trial: again.trial })).rejects.toThrow(/Undo did not finish.*trial stays on/s)
+      const undone = await service.call('device_undo', { trial: again.trial })
+      expect(undone).toMatchObject({ kept: false, completed: true, active: before.active, note: expect.stringMatching(/undone/) })
+    } finally { vi.useRealTimers(); child.stdin.end() }
   }, 30000)
 })
