@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT
- * Midiverb's ColdFire half. Every frame (the base's ev_frame_record, after stock's parameter builder, scenes and
+ * Midiverb's ColdFire half. Every frame (entry.s's detour at 0x4000d568, after stock's parameter builder, scenes and
  * LFOs) it streams each Midiverb track's program, chosen by PROG and BANK, to the DSP through FX2's page 2: one
  * chunk a frame, round and round (engine.asm takes a program from its chunk 0 to its checksum, then plays it).
  * While STOP's tail kill holds a track (ev_tail_kill) it sends the kill instead: the DSP silences the reverb and

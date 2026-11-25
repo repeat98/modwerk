@@ -64,6 +64,19 @@ mv_knob_entry:
         move.w  %fp,%d1                 | displaced
         rts
 
+| 0x4000d568, the frame interrupt once stock's parameter builder, scenes and LFOs have written the eight records
+| (Euclid's detour at 0x4000d562 returns here): stream each Midiverb track's program into its record, then the
+| displaced instruction. a1 (the next code's pointer) and every other register go back as found.
+        .global mv_frame_hook
+mv_frame_hook:
+        lea     -16(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,(%sp)
+        jsr     mv_frame
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     16(%sp),%sp
+        move.l  #0x75180000,%d0         | displaced
+        jmp     0x4000d56e
+
 | The take record (struct modwerk_take {claims, entry}).
         .global mv_take_knob
 mv_take_knob:

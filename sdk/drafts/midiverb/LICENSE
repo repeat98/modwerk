@@ -28,3 +28,12 @@ distributed here and remains the property of its copyright holder. Nothing in
 this module is endorsed by, supported by, or affiliated with Elektron.
 Octatrack and Elektron are trademarks of Elektron Music Machines MAV AB, used
 only to identify the hardware this module targets.
+
+---
+
+The MIT licence above covers Midiverb's own code and documentation. The reverb
+and effect programs in stream.h, stream.s and programs.json are the Alesis
+Midiverb, Midiverb II and Midifex programs, read by generate.mjs from the
+original ROMs (which are not distributed here); they are not covered by the MIT
+licence and remain their rights holders'. Midiverb is not affiliated with or
+endorsed by Alesis.
