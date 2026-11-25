@@ -98,9 +98,15 @@ def build(args):
     origin = normal['baseRunOrigin']
     # Stock linking includes collection tables after .run, then each section's
     # declared alignment. Never infer BSS from a historical 512-byte boundary.
-    from elekloader import patch
-    _, linked = patch.build(str(args.stock), [str(root / 'src/engine/assets/octatrack-base.elemod')],
-                            version='ELEKLOADER')
+    # The committed package omits DSP words; the standard site path restores
+    # its guarded fills from original stock before calling the pinned linker.
+    layout_receipt = out / 'base-link.json'
+    layout_tool = HERE / 'link_base_layout.mjs'
+    subprocess.run(['node', str(layout_tool), '--stock', str(args.stock),
+                    '--output', str(layout_receipt)], check=True)
+    linked = json.loads(layout_receipt.read_text())
+    if linked['baseIdentity'] != expected_base:
+        raise ValueError('Original-stock linked base identity differs from the named base')
     addresses = counter_addresses(package, origin, linked)
     header = folder / 'qualification/probe_addresses.h'
     header.write_text('/* Private named-base read-only addresses; not a release header. */\n' +
@@ -150,6 +156,7 @@ def build(args):
                'baseIdentity': expected_base, 'normal': normal, 'probe': probe, 'probeSourceSha256': sha(HERE / 'render_probe.c'),
                'originalExecutableSections': sections, 'readOnlyBaseAddresses': addresses,
                'linkedBaseLayout': linked['link']['layout'],
+               'layoutToolSha256': sha(layout_tool),
                'hardware': 'NOT_RUN', 'deviceOpened': False, 'guardDisabled': False,
                'limits': 'Probe is a different package. Original units retain their instruction bytes, but the wrapper adds timer/call overhead. Base frame peak is since boot, not a reset window; guard share is whole-ISR, not free FRACT headroom.'}
     (out / 'probe-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
