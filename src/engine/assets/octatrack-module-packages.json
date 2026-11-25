@@ -28,7 +28,16 @@
       "buffer": 15870,
       "version": "0.1.0-experimental",
       "path": "octatrack-modules/midiverb/0.1.0-experimental.mwrm",
-      "octabam": true
+      "octabam": true,
+      "abi": 8,
+      "features": 129,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "MIDIVERB",
+      "module": "e7e04dd9",
+      "bytes": 52126,
+      "sha256": "5c9cb5930e0bc8add323a0cecb2e60b6391fa45e046984a7aa40f57a524d95e9"
     },
     {
       "id": "miniverb",

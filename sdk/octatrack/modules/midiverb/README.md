@@ -27,9 +27,9 @@ The four controls can be locked per step, modulated by the LFOs and set in scene
 
 ## Quick tutorial
 
-1. Load a drum loop on track 1, press **FX2**, then **FUNC + FX2**, scroll to MIDIVRB I/II with **LEVEL**, press **YES**, then **FX2**: the page shows PROG, LEVL, BANK and MIX.
-2. Play the pattern and turn **A** slowly: the message box names each program, from short bright rooms to 20-second halls. Turn **D** to MV2 for the Midiverb II's programs, or FEX for the Midifex's.
-3. Turn **F** (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back.
+1. Load a drum loop on track 1, press FX2, then FUNC + FX2, scroll to MIDIVRB I/II with LEVEL, press YES, then FX2: the page shows PROG, LEVL, BANK and MIX.
+2. Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs, or FEX for the Midifex's.
+3. Turn F (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back.
 
 ## Compatibility and limitations
 
@@ -56,7 +56,29 @@ The extractor, the DSP engine and the ColdFire streaming code are under the MIT 
 
 ## Screens and audio
 
-None yet.
+Real captures of the Octatrack MKII's LCD, read over USB on the release build (media/capture.json).
+
+![Octatrack FX2 SETUP: the effect list from COMPRESSOR to MIDIVRB I/II, the cursor on MIDIVRB I/II.](media/midiverb-chooser.png)
+
+Select an audio track, hold FUNC and press FX2. Turn LEVEL down the list to MIDIVRB I/II and press YES to put it on FX2.
+
+![Octatrack FX2 page of Midiverb I/II: knobs PROG, LEVL, BANK and MIX.](media/midiverb-page.png)
+
+Press FX2 for its page: PROG (A) picks the program, LEVL (B) drives the input, BANK (D) switches between Midiverb, Midiverb II and Midifex, MIX (F) sets dry and wet.
+
+![The FX2 page with a message box reading .25 MEDIUM BRIGHT.](media/midiverb-prog.png)
+
+Turn PROG: a message box names each program as you go, here .25 MEDIUM BRIGHT. Try the long halls near the end of the Midiverb bank, or the gated and reverse programs.
+
+![The FX2 page with a message box reading MIDIVERB II; the BANK dial shows MV2.](media/midiverb-bank.png)
+
+Turn BANK to MV2 for the Midiverb II's programs or FEX for the Midifex's; the message box names the bank.
+
+![The FX2 page with MIX at 80.](media/midiverb-mix.png)
+
+Turn MIX up to hear more of the reverb: 0 is exactly dry, 127 wet only. STOP, STOP, STOP cuts the tail.
+
+No audio preview yet.
 
 ## Develop
 
