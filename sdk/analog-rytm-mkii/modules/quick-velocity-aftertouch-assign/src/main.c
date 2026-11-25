@@ -166,9 +166,9 @@ static struct hold holds[KINDS] = {
 #define LOOK_TICKS 10
 // A SCENE hold shows the scene's locks this many ticks in (about 0.2 s), so a tap does not flash them.
 #define SHOW_TICKS 4
-// REC, STOP or PLAY this many ticks into a SCENE hold (about 0.1 s) copy, paste or clear; sooner,
-// on a page, they stay the transport's. In scene edit they act at once.
-#define TRANSPORT_TICKS 2
+// REC, STOP or PLAY this many ticks into a SCENE hold (0.1 to 0.15 s, a tick being 50 ms) copy,
+// paste or clear; sooner, on a page, they stay the transport's. In scene edit they act at once.
+#define TRANSPORT_TICKS 3
 static unsigned ticks;              // ev_tick's count
 
 static void *views;

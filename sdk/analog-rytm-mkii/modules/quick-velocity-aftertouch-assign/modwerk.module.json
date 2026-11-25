@@ -123,7 +123,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 24700,
+    "memoryBytes": 25752,
     "fastBytes": 0,
     "load": {
       "display": "About 0.5 % of the audio block idle (QPER's quick perf rec, measured on a unit); the rest is UI only",

@@ -364,7 +364,7 @@ static unsigned linked(void *kit)
 static struct {
     void *kit;
     int index, count, valid;
-    struct { unsigned char track, param; short lock; int old; } e[SLOTS];
+    struct { unsigned char track, param; short lock; int old, now; } e[SLOTS];
 } applied;
 
 static const unsigned char *lock_table(void *perf)
@@ -582,8 +582,8 @@ QPERF_UI static int undo_apply(void *kit, unsigned mask)
         int track = applied.e[i].track, param = applied.e[i].param, id;
         void *set = (void *)KIT_PARAM_SET(kit, track);
         id = param_id(set, track, param);
-        if (id)
-            SET_VALUE(set, id, applied.e[i].old, track, 1, 1);
+        if (id && param_read(set, id) == applied.e[i].now)
+            SET_VALUE(set, id, applied.e[i].old, track, 1, 1);     // unless MIDI changed it since
         PERF_SET(perf, applied.index, track, param, applied.e[i].lock);
     }
     show("UNDO APPLY");
@@ -621,6 +621,7 @@ QPERF_UI static void apply_linked(void *kit)
         applied.count++;
         applied.index = index;
         SET_VALUE(set, id, param_read(set, id) + value, track, 1, 1);
+        applied.e[applied.count - 1].now = param_read(set, id);
         PERF_CLEAR_ONE(perf, index, track, param);
         changed = 1;
     }
@@ -1363,6 +1364,7 @@ void qperf_pad(void *event, int perf)
         void *kit = active_kit();
         unsigned one = 1u << perf, mask = linked(kit) == one ? 0 : one;
         KIT_SET_MASK(kit, (int)mask);
+        applied.valid = 0;
         link_moved(mask);
     }
 }

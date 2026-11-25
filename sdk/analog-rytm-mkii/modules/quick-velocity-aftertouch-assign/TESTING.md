@@ -4,18 +4,20 @@ The module was called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.
 
 ## 0.5.0: QPER Live Rec folded in (25 Nov 2026)
 
-QPER Live Rec 0.3.0's source moved in unchanged as `src/qperf.c` (only its header's name changed), with its hooks, three stock sites and claims; its tick still runs before this module's own, as when the two were separate (core-ar2 orders equal orders by module id). Nothing else in either part changed.
+QPER Live Rec 0.3.0's source moved in unchanged as `src/qperf.c` (only its header's name changed), with its hooks, three stock sites and claims; its tick still runs before this module's own, as when the two were separate (core-ar2 orders equal orders by module id). Since then: a second QPER + YES in the same hold undoes the apply, and SCENE + REC, STOP and PLAY act at once in scene edit and after 3 ticks (0.1 to 0.15 s) on a page; see QF03, QF04 below.
 
 rytm-emu (revision 2ac0f1f, ramboot build of `dtboot`), not hardware evidence:
 
 | Check | Result |
 | --- | --- |
 | QB01 (the published Improved Mod Assign 0.4.0 and QPER Live Rec 0.3.0 packages linked side by side, plain base 1c14b6b0) against QF01 and QF02 (this folder, the same base) | 14 screens byte-identical: the seven FIX/SAMPLER/LFO/SCENE captures, SCENE + REC, QPER held with a knob, QPER + YES, QPER + PLAY, and the two quick perf rec captures (cold boot, LIVE RECORDING, RECORD + YES and RECORD + NO) |
-| Free shared mod RAM | QB01 and QF02 both 94,136 bytes; the base alone 118,836, so the module takes 24,700 |
+| Free shared mod RAM | QB01 and QF02 both 94,136 bytes; the base alone 118,836, so the fold itself takes 24,700; QF04 (with the undo record) 93,084, so the module takes 25,752 |
 | The screenshots | QF02's nine captures are byte-identical to the committed files (QM46 and QX07) |
 | Rig cases (31, the SCENE and earlier cases) | pass on QS11 and QS12 (the development base 25f2c915 with the link) |
 
 On the author's unit, by the test rig with the author's go, 25 Nov 2026: QS11 (this source before the tick-order fix, RAM-booted over FXCJ, image CRC `aaf0e7a3`, scratch project). SCENE + knob, SCENE + pad + knob and the scene-mode pad as on 0.4.0; QPER + BD linked performance 1, QPER + A drew its lock box, QPER + PLAY showed CLEAR PERFORMANCE and PLAY again UNDO CLEAR with the box back. Not on a unit: QS12 and this package's own image.
+
+QF03/QF04 and QS13/QS14 (the undo and the SCENE timing), rytm-emu: QPER held, BD linked, SWT's lock raised, performance 1's amount poked to half: YES showed PERFORMANCE 1 APPLIED, a second YES UNDO APPLY with SWT's lock box back, and the screen after the release is byte-identical to one where YES was never pressed. In scene edit SCENE + REC 0.05 s into the hold showed COPY SCENE 1; on a page REC 0.05 s in toggled record as stock, 0.15 s in COPY SCENE 1. Rig cases: 31 pass on QS13. On the author's unit by the test rig (QS13, CRC `72809630`, scratch project): SCENE + knob, SCENE + pad + knob, the scene-mode pad, SCENE + REC at once in scene edit (COPY SCENE 1), and, with performance 1's amount set by MIDI CC 35, QPER + YES (PERFORMANCE 1 APPLIED) and YES again (UNDO APPLY, the boxes back). An independent review of the undo and timing: correct; its fixes are in QF04/QS14 (a value changed since the apply is left alone, a link move forgets the undo, 3 ticks for the page wait). QF04/QS14 themselves: rytm-emu only.
 
 An independent code review of the fold: no symbol or section clash between the two parts; its fixes are in (the retired id kept readable in saved sets, the capture record, the library test, the tick order, the memory figure).
 

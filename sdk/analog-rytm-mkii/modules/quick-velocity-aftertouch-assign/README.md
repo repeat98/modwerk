@@ -1,6 +1,6 @@
 # Improved Modulation
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.5.0-experimental, OS 1.74 with core-ar2 0.7. Called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.4.0; its id stays `quick-velocity-aftertouch-assign`. Since 0.5.0 it holds QPER Live Rec (`qperf`, 0.3.0) unchanged, and that module has left the library. See [TESTING.md](TESTING.md) for what ran on a unit.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.5.0-experimental, OS 1.74 with core-ar2 0.7. Called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.4.0; its id stays `quick-velocity-aftertouch-assign`. Since 0.5.0 it holds QPER Live Rec (`qperf`, 0.3.0), whose gestures work as before (QPER + YES can now be undone), and that module has left the library. See [TESTING.md](TESTING.md) for what ran on a unit.
 
 ## Overview
 
@@ -49,7 +49,7 @@ QPER links one performance at a time. Hold QPER and press a pad or trig key: the
 | --- | --- | --- |
 | Turn a knob | Edits the linked performance's lock, as holding a performance pad does: the knob inverts and shows the offset. | |
 | PLAY | Clears the linked performance with stock's clear. PLAY again undoes it. | CLEAR PERFORMANCE, UNDO CLEAR |
-| YES | Writes what you hear into the kit and removes those locks. The sound holds at any position. Muted, it still applies, so the sound moves by what the knob would add. At knob zero nothing is added and the locks stay. | PERFORMANCE n APPLIED, NOTHING TO APPLY |
+| YES | Writes what you hear into the kit and removes those locks. The sound holds at any position. Muted, it still applies, so the sound moves by what the knob would add. At knob zero nothing is added and the locks stay. YES again in the same QPER hold undoes it: the kit's values and the locks come back (a value changed since, by MIDI say, is left as it is). | PERFORMANCE n APPLIED, NOTHING TO APPLY, UNDO APPLY |
 | RECORD | Copies the linked performance. | COPY PERFORMANCE n |
 | STOP | Pastes onto the linked performance. STOP again undoes it. | PASTE PERFORMANCE, UNDO PASTE |
 
@@ -103,7 +103,7 @@ Stock's LIVE RECORDING records knob turns but no performance moves. With this mo
 - **Power on.** Stock does not know the QPER knob until it moves, so the amount is 0 and YES adds nothing until then.
 - **Locks past a parameter's range.** Stock lets a lock go past what the parameter can hold, here too. YES stops at the limit, so the sound can change.
 - **Full QPER is at most 99.6% of a lock.** Stock's knob value is 8 bits, times 128, and the engine's full scale is 32768. YES keeps what plays, so +54 at full reads 53.
-- **YES uses up the lock.** Full QPER no longer reaches the old offset, because the part you did not apply is gone. Stock's undo does not bring it back; reloading an unsaved kit does.
+- **YES uses up the lock.** Full QPER no longer reaches the old offset, because the part you did not apply is gone. A second YES in the same QPER hold brings it back; after that, reloading an unsaved kit does.
 
 ## Changes to stock flows
 
@@ -117,7 +117,7 @@ Stock's LIVE RECORDING records knob turns but no performance moves. With this mo
 - **SCENE held with a knob changes what a knob does.** What changes: a turn makes a scene lock (in the active scene, or with none engaged the scene engaged last) instead of moving the parameter, in LIVE RECORDING too (no p-lock is recorded), and the TRIG page's knobs do nothing; a trig held makes its p-lock as on stock. Stock does nothing special with SCENE held and a knob turned before scene edit opens: the knob edits as normal. The first knob event ends SCENE's hold as stock does when its scene edit opens, so SCENE's release does nothing, and any other key held at that moment loses its clean release (a CHRO pad's release, say). On a module voice's type knob, the base's tap still steps the type when it is pressed with SCENE held.
 - **SCENE held makes a scene-mode pad pick its track.** What changes: in scene mode, a pad pressed while SCENE is held selects its track (with AUTO TRK SWITCH on; with it off, nothing) and does not engage or disengage its scene, and a pad during any SCENE hold keeps scene edit from opening on the release. Why: a hold is for setting up locks on several tracks without leaving the page. Stock opens scene edit 0.2 s into the hold, so a pad there picks the edited scene; here scene edit is not open yet. What you see: the pad's track's page, the scene unchanged. A tap of a pad without SCENE held is stock's.
 - **SCENE held with a knob in scene edit makes a lock.** What changes: in scene edit with no scene pad held, SCENE held and a knob turned locks the scene scene edit shows instead of moving the parameter, and SCENE's release then leaves scene edit open. Stock edits the parameter there. Why: a scene picked in scene edit can be locked without leaving it or holding its pad. What you see: the knob's box with the lock, scene edit's LOCKS count going up. A scene pad held keeps stock's own lock edit.
-- **SCENE held takes REC, STOP and PLAY.** What changes: in scene edit at once, and on a page once a SCENE hold is about 0.1 s old or a knob or pad was used, REC copies, STOP pastes and PLAY clears the scene it locks, as FUNC + REC, STOP and PLAY do in scene edit, and the transport does nothing. Pressed sooner on a page, they are the transport's, as on stock. Why: copying a scene's locks without opening scene edit. What you see: stock's `COPY SCENE n`, `PASTE SCENE`, `CLEAR SCENE`; a second STOP or PLAY undoes.
+- **SCENE held takes REC, STOP and PLAY.** What changes: in scene edit at once, and on a page once a SCENE hold is 0.1 to 0.15 s old or a knob or pad was used, REC copies, STOP pastes and PLAY clears the scene it locks, as FUNC + REC, STOP and PLAY do in scene edit, and the transport does nothing. Pressed sooner on a page, they are the transport's, as on stock. In scene edit, SCENE rolled into PLAY clears the scene rather than starting the sequencer (a second PLAY undoes it). Why: copying a scene's locks without opening scene edit. What you see: stock's `COPY SCENE n`, `PASTE SCENE`, `CLEAR SCENE`; a second STOP or PLAY undoes.
 - **The other key does nothing during a hold.** What changes: FIX pressed during a SAMPLER hold does not toggle fixed velocity, and SAMPLER pressed during a FIX hold does not open the recorder. The same holds between SCENE and FIX, SAMPLER or LFO: with one held the others do nothing (SCENE does not toggle scene mode or open scene edit). Why: a key brushed mid-assignment should not change the sound or leave the page. Checked in rytm-emu.
 
 QPER and the quick perf rec:
@@ -157,7 +157,7 @@ rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined im
 
 On the author's Analog Rytm MKII: builds QP01 to QC13 for the QPER controls and QT01 to QT08 (with a debug trace over USB MIDI) for the quick perf rec, QPERF alone, and rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)).
 
-Memory (0.5.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 24,700 bytes of the shared mod area, 16,580 of them QPER and the quick perf rec (6,912 of those the quick perf rec's lane: 12 performances, 64 steps, 8 points a step). Load: FIX, SAMPLER, LFO and SCENE are UI only, on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
+Memory (0.5.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 25,752 bytes of the shared mod area, about 17,000 of them QPER and the quick perf rec (6,912 of those the quick perf rec's lane: 12 performances, 64 steps, 8 points a step). Load: FIX, SAMPLER, LFO and SCENE are UI only, on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
 
 ## Authorship and licences
 

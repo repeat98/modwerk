@@ -1,1 +1,1 @@
-Analog Rytm MKII: QPER Live Rec leaves the library. Its QPER locks, copy, paste, clear, QPER + YES and the quick perf rec live on unchanged in Improved Modulation 0.5.0 (was Improved Mod Assign), so install that instead.
+Analog Rytm MKII: QPER Live Rec leaves the library. Its QPER locks, copy, paste, clear, QPER + YES and the quick perf rec live on in Improved Modulation 0.5.0 (was Improved Mod Assign), so install that instead.
