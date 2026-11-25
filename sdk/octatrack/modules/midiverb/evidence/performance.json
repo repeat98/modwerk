@@ -2,7 +2,7 @@
   "schema": 1,
   "module": "midiverb",
   "version": "0.1.0-experimental",
-  "sourceSha256": "cc3bca0cd5f82207e9d514f42d004f8f9b8d1cd63ea0514edba671119a2e38a8",
+  "sourceSha256": "5f24930e171b2101b7d2666491bf034a28f5da177964d8380303efb86e7d4ebb",
   "kind": "dsp",
   "cycles": {
     "unit": "instructions/sample",
