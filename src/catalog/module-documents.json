@@ -4576,7 +4576,8 @@
           "Patches one stock site of its own (0x4000d568), where each frame's parameters are final; Euclid's patch six bytes before returns into it, so both install together.",
           "Up to 398 executed DSP instructions a sample in the emulator (declared 398), about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more, and the Midiverb II's chorus and flange programs, are not in this release.",
           "Unlike the original: 22.05 kHz instead of about 23.4 kHz (reverb times and delays about 6 % longer), no model of its analog filters and noise, some long delays up to 4.5 % shorter, and a mono input from the average of left and right.",
-          "On base 0.8.1, the first NO after picking it on FX2 SETUP only closes the memory box: press FX2 for its page instead. Base 0.8.2 fixes it."
+          "On base 0.8.1, the first NO after picking it on FX2 SETUP only closes the memory box: press FX2 for its page instead. Base 0.8.2 fixes it.",
+          "With Scale Quantizer or FM Synth installed, the program and bank names do not show and, on base 0.8.1, slow PROG and BANK turns after a pick need an FX2 re-entry: their adapters take the knob store first."
         ]
       },
       "resources": {
@@ -4626,7 +4627,7 @@
           "measure": "frame-interrupt",
           "tool": "npm run device:price -- --write",
           "date": "2026-11-25",
-          "conditions": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C; base base 0.8.1 (development twin 4c7eb79b of eb667962), MKII; 3 readings of 8 s a state. Frame interrupt 34.9 % before, 35.7 % installed and used nowhere, 36 % on T1 FX2; CPU meter 57 % before, 57.8 % at rest, 54.8 % in use.",
+          "conditions": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C; base 0.8.1 (development twin 4c7eb79b of eb667962), MKII; 3 readings of 8 s a state. Frame interrupt 34.9 % before, 35.7 % installed and used nowhere, 36 % on T1 FX2; CPU meter 57 % before, 57.8 % at rest, 54.8 % in use.",
           "source": "evidence/cpu-price.json"
         }
       },

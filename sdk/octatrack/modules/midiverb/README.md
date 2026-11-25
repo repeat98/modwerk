@@ -15,7 +15,7 @@ The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, t
 | D | BANK | MV1, MV2, FEX | MV1 | Midiverb, Midiverb II or Midifex programs. The bank's name shows while you turn. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
 
-The four controls can be locked per step, modulated by the LFOs and set in scenes. A new program fades the reverb out, clears its memory and starts from silence, in under a tenth of a second; the dry signal keeps playing at its MIX level meanwhile.
+The four controls are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as any effect's (exercised in the DSP stress run; not tried on the unit). A new program fades the reverb out, clears its memory and starts from silence, in under a tenth of a second; the dry signal keeps playing at its MIX level meanwhile.
 
 ## Usage
 
@@ -33,12 +33,13 @@ The four controls can be locked per step, modulated by the LFOs and set in scene
 
 ## Compatibility and limitations
 
-- FX2 only, on the Modwerk base 0.8.1 or later. Each instance takes its track's whole FX2 buffer (15,870 words), so it cannot share a core's FX2 memory with Analog BD.
+- FX2 only, on the Modwerk base 0.8.1 or later. Each instance takes 15,870 words of its track's 16K FX2 buffer, so it cannot share a core's FX2 memory with Analog BD.
 - It patches one stock site of its own, where the Octatrack finishes each frame's parameters (0x4000d568). Euclid's patch ends there and returns into it, so both install together.
 - It takes the knob's value store while the FX2 page shows, only to name the program or bank; every value is stored as stock stores it.
 - DSP time: at most 398 instructions a sample in the DSP emulator, about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more are not in this release, nor the Midiverb II's chorus and flange programs.
 - Not like the original: it runs at 22.05 kHz instead of about 23.4 kHz, so reverb times and delays are about 6 % longer; the original's analog filters and noise are not modelled; some long delays are up to 4.5 % shorter to fit the memory; the input is the average of left and right.
-- Known issue on base 0.8.1: after picking it in FX2 SETUP the first NO only closes the memory box; press FX2 for its page instead. Base 0.8.2 fixes it. (PROG and BANK turn from the first detent on either base: Midiverb stages them itself.)
+- With Scale Quantizer or FM Synth installed the program and bank names do not show, and on base 0.8.1 slow PROG and BANK turns right after a pick need an FX2 re-entry: those modules take the knob store first.
+- Known issue on base 0.8.1: after picking it in FX2 SETUP the first NO only closes the memory box; press FX2 for its page instead. Base 0.8.2 fixes it. (Otherwise PROG and BANK turn from the first detent on either base: Midiverb stages them itself.)
 
 ## Tests and measurements
 
