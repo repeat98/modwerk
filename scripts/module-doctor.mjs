@@ -17,9 +17,9 @@ import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
 import { MODULE_V3_CATEGORIES } from '../src/catalog/module-contract-v3.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { moduleSourceFingerprint } from './module-source.mjs'
+import { isDocumentationPath, moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
-import { moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { crlfModuleFiles, moduleEarlierPerformanceSourceSha256, moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
 import { judgeRecord, ownerWaivedPerformanceRow, priceLimits, approvalCoversSource, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
@@ -81,7 +81,7 @@ const nativeParams = compatResult?.nativeParams
 // The modules listed before every module had to name its CPU price, which wait for a measurement.
 const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
-const nativeHashes = new Map(), performanceHashes = new Map(), qualifyChecks = new Map()
+const nativeHashes = new Map(), performanceHashes = new Map(), earlierPerformanceHashes = new Map(), crlfFiles = new Map(), qualifyChecks = new Map()
 // The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
 let packageRows = null
 const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
@@ -158,7 +158,7 @@ function octatrack(id) {
     }
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
     // Were these numbers taken on this code? The stamp names the source they were measured on.
-    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json')
+    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json', earlierPerformanceHashes.get(id))
     if (stamped.state === 'fail' && !record.sourceSha256 && approvalCoversSource(hardwareApproval, id, document.version, nativeHashes.get(id)))
       info('performance stamp', 'not stamped: the owner\'s approval binds this exact source, record included (' + approvalPath + ')')
     else if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
@@ -170,6 +170,13 @@ function octatrack(id) {
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
   else fail('thumbnail', 'no presentation/thumbnail.svg and no hand-drawn art', 'add a 320x192 presentation/thumbnail.svg that shows what the module does')
+
+  // Git stores text with LF (.gitattributes). The evidence hashes read files as Git stores them; the compiled-package fingerprint, here
+  // and in the compiler, reads them as they are, so a CRLF file the compiler reads is a different package fingerprint here than in CI.
+  const crlf = crlfFiles.get(id) ?? [], compiled = moduleCardless(id) ? [] : crlf.filter(path => !isDocumentationPath('modules/' + id + '/' + path))
+  const crlfFix = "sed -i 's/\\r$//' " + crlf.slice(0, 3).map(path => (draft ? 'sdk/drafts/' + id : folder) + '/' + path).join(' ') + (crlf.length > 3 ? ' … (' + crlf.length + ' files)' : '')
+  if (compiled.length) fail('line endings', compiled.slice(0, 3).join(', ') + (compiled.length > 3 ? ' and ' + (compiled.length - 3) + ' more' : '') + ' ha' + (compiled.length === 1 ? 's' : 've') + ' CRLF line endings here, Git stores LF, so the package fingerprint here differs from CI\'s', crlfFix)
+  else if (crlf.length) info('line endings', crlf.slice(0, 3).join(', ') + (crlf.length > 3 ? ' and ' + (crlf.length - 3) + ' more' : '') + ': CRLF here, LF in Git; the evidence hashes read them as Git stores them. To match: ' + crlfFix)
 
   // A page descriptor written by hand is where a short list ends up as a knob: the widget word (desc+0x132) beside the count (desc+0xd2).
   const sources = readdirSync(resolve(root, folder), { recursive: true, encoding: 'utf8' }).filter(name => /\.(c|h|py)$/.test(name)).map(name => [name, readFileSync(resolve(root, folder, name), 'utf8')])
@@ -346,6 +353,8 @@ for (const id of octatrackIds) {
   const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
   nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
   performanceHashes.set(id, await modulePerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  earlierPerformanceHashes.set(id, await moduleEarlierPerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  crlfFiles.set(id, await crlfModuleFiles(resolve(root, 'sdk/octatrack/modules', id)))
   qualifyChecks.set(id, await qualifyProblems({ root, folder: resolve(root, 'sdk/octatrack/modules', id), document, nativeSha: nativeHashes.get(id), evidence: false }))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.

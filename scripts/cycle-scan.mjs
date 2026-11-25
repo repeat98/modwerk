@@ -21,7 +21,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { moduleEarlierPerformanceSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -184,12 +184,12 @@ export function tableDrift(base = root) {
     : `${README}: the table under "Checked against the unit" is not what the records and the unit readings give now: run node scripts/cycle-scan.mjs unit --write`
 }
 
-/** One record's verdict: {fail: [...], info: [...]}. `sourceSha256` is the module's source now; `performance` its
- * evidence/performance.json, or null. */
-export function judge({ id, record, sourceSha256, performance }) {
+/** One record's verdict: {fail: [...], info: [...]}. `sourceSha256` is the module's source now; `earlierSha256` the same
+ * source with presentation/, which records scanned before 25 November 2026 name; `performance` its evidence/performance.json, or null. */
+export function judge({ id, record, sourceSha256, earlierSha256, performance }) {
   const fail = [], info = []
   if (record.schema !== 1 || record.module !== id) fail.push(`${id}: not a cycle-scan record for this module`)
-  if (record.sourceSha256 !== sourceSha256)
+  if (record.sourceSha256 !== sourceSha256 && !(earlierSha256 && record.sourceSha256 === earlierSha256))
     fail.push(`${id}: the module's source changed since its cycle scan: run node scripts/cycle-scan.mjs record ${id} on your computer`)
   const scan = record.dearest
   const measured = performance?.cycles?.unit === 'instructions/sample' ? performance.cycles.measured : undefined
@@ -243,7 +243,8 @@ export async function check(base = root) {
     const folder = join(base, MODULES, id)
     if (!existsSync(join(folder, 'octamod.module.json'))) { fail.push(`${id}: a cycle-scan record for a module that is not in ${MODULES}`); continue }
     const record = readJson(join(dir, id + '.json'))
-    const verdict = judge({ id, record, sourceSha256: await modulePerformanceSourceSha256(folder, documentOf(folder)), performance: performanceOf(folder) })
+    const document = documentOf(folder)
+    const verdict = judge({ id, record, sourceSha256: await modulePerformanceSourceSha256(folder, document), earlierSha256: await moduleEarlierPerformanceSourceSha256(folder, document), performance: performanceOf(folder) })
     const charge = judgeCharge({ id, record, row: packages.find(row => row.id === id), listed: catalog.find(entry => entry.id === id)?.addedAt })
     fail.push(...verdict.fail, ...charge.fail); info.push(...verdict.info, ...charge.info)
   }
