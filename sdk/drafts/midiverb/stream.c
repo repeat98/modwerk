@@ -55,6 +55,26 @@ const char *mv_bank_name(unsigned bank)
     return names[bank > 2u ? 2u : bank];
 }
 
+/* entry.s, on every knob turn of Midiverb's page (desc: the page's descriptor): PROG's and BANK's staging in the page's
+ * input layer, as stock stages a page it enters. Picked on FX SETUP, the page kept the effect before it's staging there
+ * (every stock main page is 0..127), and the panel copies it into the knob's record before each turn, so a slow turn
+ * lost its remainder at every detent and PROG did not move until FX2 was entered again (the owner's MKII, base 0.8.1).
+ * shortcut: base 0.8.2 stages it itself (fxpage.s mw_knob_step); drop this once that is the oldest base it supports. */
+void mv_stage(const u8 *desc)
+{
+    const u8 *layer = *(const u8 *const volatile *)0x460d165cu; /* the input layer: +8 its knob definitions */
+    if (!layer) return;
+    volatile u8 *defs = *(u8 *const volatile *)(layer + 8);
+    if (!defs) return;
+    for (unsigned slot = 0; slot < 6u; slot += 3u) {           /* A PROG, D BANK */
+        u32 count = *(const volatile u32 *)(desc + 0x9a + 4u * slot);
+        volatile u8 *d = defs + 22u * slot;                     /* the slot, a 0, then the knob's record */
+        if (d[0] != slot || *(volatile u32 *)(d + 2) != 0x40055008u) continue; /* a scene's or a window's: not ours */
+        *(volatile u32 *)(d + 10) = 32768u / (count > 40u ? count : 40u);   /* the step, as stock's stager works it out */
+        *(volatile u32 *)(d + 18) = count;
+    }
+}
+
 /* ev_tail_kill: STOP, STOP, STOP holds this track (the frame's record builder, before ev_frame_record runs). */
 void mv_tail_kill(u8 *record, unsigned track)
 {

@@ -26,17 +26,20 @@ mv_knob_claims:
 | store d2 and load d1, and the flags they leave go back to stock.
         .global mv_knob_entry
 mv_knob_entry:
+        move.l  0x16(%a3),%d1
+        cmpi.l  #PROG,%d1
+        bne.s   9f                      | not Midiverb's page: as stock
+        lea     -12(%sp),%sp
+        movem.l %d0/%a0-%a1,(%sp)
+        move.l  %a3,-(%sp)
+        jsr     mv_stage                | PROG's and BANK's staging (stream.c)
+        addq.l  #4,%sp
         tst.l   %d5
         beq.s   1f
         moveq   #3,%d1
         cmp.l   %d1,%d5
-        bne.s   9f
-1:      move.l  0x16(%a3),%d1
-        cmpi.l  #PROG,%d1
-        bne.s   9f
-        lea     -12(%sp),%sp
-        movem.l %d0/%a0-%a1,(%sp)
-        moveq   #0,%d0                  | bank
+        bne.s   8f                      | another slot: no name
+1:      moveq   #0,%d0                  | bank
         moveq   #0,%d1                  | prog
         tst.l   %d5
         bne.s   2f
@@ -57,7 +60,7 @@ mv_knob_entry:
         move.l  %d0,-(%sp)
         jsr     NOTIFY
         addq.l  #8,%sp
-        movem.l (%sp),%d0/%a0-%a1
+8:      movem.l (%sp),%d0/%a0-%a1
         lea     12(%sp),%sp
 9:      move.b  %d2,(%a2)               | displaced: the Part byte
         move.b  %d2,(%a5)               | displaced: its mirror
