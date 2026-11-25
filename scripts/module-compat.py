@@ -408,7 +408,8 @@ def repository_inputs(extra=()):
 
 def native_params(ids, modules):
     return {module_id: [dict(slot=slot, name=p.name.decode('ascii', 'replace') if p.name is not None else None,
-                             default=p.default, count=p.count)
+                             default=p.default, count=p.count, formatter=p.formatter.value if p.formatter else None,
+                             labels=list(p.labels) if p.labels else None, mode=slot == getattr(module, 'mode_slot', None))
                         for slot, p in enumerate(module.params) if p.active]
             for module_id, module in zip(ids, modules)}
 

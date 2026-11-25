@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "checkCount": 398,
+  "candidateSha256": "c00ddf1ca5e6abca8efca968c4b33a38b2149701ca5bb0574d9b2fb3bd818404",
+  "emulatorSha256": "2919901cd9436cf249271362f402fd4781b2dc12a06773e0b3c5ea972b625dd1",
+  "adaptersSha256": "1b89d3aef8f476258ef17abbe12b65c21368374a210ad9542599699f5e48f137",
+  "verifierSha256": "4024a711d27b448834c5e73379c154d6ec8874eebff9d56e06a2d3314a64350e",
+  "coverage": "MKII double-tap SETUP and independent click toggles; eight distinct channels; all CC assignments; stock controls; native restore; two actual sequencer locks with live base unchanged; numeric assignment headers on both pages, eight tracks and native restore; short SETUP captions; other MIDI/audio pages retain stock captions",
+  "notTested": [
+    "persistence",
+    "same-channel arbitration",
+    "LFOs",
+    "USB lifecycle",
+    "hardware"
+  ],
+  "version": "0.0.4-experimental"
+}

@@ -14,14 +14,14 @@ PINS = {
     'keys.s': 'e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587',
     'core.s': '655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8',
     'scale.s': '82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64',
-    'quantizer.s': '6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb',
+    'quantizer.s': 'c1a320ad9b807dc9af995e93fbd3e2bdd00324cff93889b016003138bf73e41d',
 }
 # A standalone package is one module: quantizer.s's remix.inc (HAVE_SYDRUM, 2.11; HAVE_PANEL_TRANSACTION,
 # 2.21) is what the author's include gives a remix without SY DRUM and without FM Synth, written in place
 # of both include lines (2.21 includes it twice: the flags, then the panel adapters, which assemble to
 # their replays with HAVE_PANEL_TRANSACTION 0).
 INCLUDE = '        .include "remix.inc"'
-FLAGS = '.set HAVE_SYDRUM, 0\n.set HAVE_PANEL_TRANSACTION, 0\n'
+FLAGS = '.set HAVE_SYDRUM, 0\n.set HAVE_SYNTH, 0\n.set HAVE_PANEL_TRANSACTION, 0\n'
 
 
 def source_variant(name, source, include=None):
@@ -35,6 +35,13 @@ def source_variant(name, source, include=None):
     standalone = include({})
     if FLAGS not in standalone or not standalone.startswith('.ifndef QZ_PASS1\n'):
         raise ValueError('Quantizer standalone include changed.')
+    # 0.1.5: the package hooks neither panel publication site (the wrapper's _without_panel), so the second
+    # pass, whose replays only those two detours reach, is left out: no instruction of the package then equals the
+    # stock bytes at those sites, and the package carries no stock copy of them.
+    first, sep, rest = standalone.partition('\n.else\n')
+    if not sep or not rest.rstrip('\n').endswith('.endif'):
+        raise ValueError('Quantizer standalone include changed.')
+    standalone = first + '\n.else\n.endif\n'
     source = source.replace(INCLUDE, '\n'.join('        ' + line for line in standalone.rstrip('\n').split('\n')))
     for old, new in (('.set    KEYS_AT, 0x400d2cb0', '.set    KEYS_AT, qz_pkey'),
                      ('.set    SCALE_AT, 0x400d2ca8', '.set    SCALE_AT, qz_scale_at')):

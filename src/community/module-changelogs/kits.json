@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "FUNC + PART now opens Kits' own Part Edit window: SAVE KIT, RELOAD KIT and RENAME KIT, in PART's place.",
+      "RENAME KIT renames the pattern's Kit; RELOAD KIT brings it back as saved.",
+      "Now offered together with Pattern Sample Locks: each has its own row in that window.",
+      "FUNC + PASTE + PART still copies the pasted pattern's Kit to the next empty one.",
+      "Needs Modwerk base 0.8 or newer, over USB."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-16",
     "changes": [

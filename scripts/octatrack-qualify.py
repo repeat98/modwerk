@@ -217,7 +217,7 @@ def save_part(part, saved):
     then works, which a Part not saved since the boot refuses (SAVE PART FIRST!: every Part after a RAM boot, MKII,
     20 November 2026). The menu keeps its cursor and stops at RENAME, so UP three times, DOWN twice. True when both
     copies still equal `saved`."""
-    send('NO w200 FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES w1000')
+    send('NO w200 savepart')  # FUNC + PART, or the MKI's own gesture (device.mjs partMenu)
     return part_copy(part) == saved and part_copy(part, saved=True) == saved
 
 

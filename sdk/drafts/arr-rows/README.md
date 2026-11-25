@@ -27,6 +27,7 @@ and EDIT):
 | FUNC + PLAY | clears the selected rows; again on the same rows undoes it | stock's one-row clear |
 | FUNC + STOP | replaces the selected rows with the copied rows (the rows below move up or down to fit); again in the same place undoes it | after a copy here: replaces the cursor row with the copied rows; after a stock copy: stock's one-row paste |
 | CUE + FUNC + STOP | inserts the copied rows at the cursor; again in the same place undoes it | the same |
+| CUE + LEFT / RIGHT | moves the selected rows up / down one place; the row they pass goes to the other side; the marks and the cursor move with them; moving back undoes it | moves the cursor row the same way |
 
 UP or DOWN without CUE, NO, a stock insert or delete (FUNC + DOWN, FUNC + UP) and leaving the editor end the
 selection. An undo works only while the rows are as the edit left them: after any other change, the same keys edit
@@ -37,6 +38,9 @@ Stock changes, listed as the module guides ask:
 - **CUE + UP/DOWN in the arrangement editor** now also mark rows. Stock gives them no function of their own there
   (they move the cursor as UP/DOWN do, measured: RESEARCH.md), and they still do. Considered instead: a new page or a
   FUNC gesture; a FUNC gesture would take stock's insert and delete. Only while the module is installed.
+- **CUE + LEFT/RIGHT in the arrangement editor** move rows instead of changing columns. Stock gives them no function of
+  their own there (they change columns as LEFT/RIGHT do); LEFT/RIGHT without CUE are unchanged. Chosen by the
+  developer over CUE + FUNC + UP/DOWN. Only while the module is installed.
 - **FUNC + STOP after a copy made here** pastes those rows instead of stock's one copied row, until the next stock copy
   (FUNC + REC with no selection). Only while the module is installed; the neighbouring flows checked are in TESTING.md.
 
@@ -56,8 +60,9 @@ arrangement, open EDIT and paste or insert.
 ## Compatibility and limitations
 
 - OS 1.40C. Not yet tested on a unit.
-- Takes nothing outside the arrangement editor. UI claims: CUE + UP, CUE + DOWN, FUNC + REC, FUNC + PLAY, FUNC + STOP
-  and CUE + FUNC + STOP in the editor, and the editor's screen (the inverted row numbers).
+- Takes nothing outside the arrangement editor. UI claims: CUE + UP, CUE + DOWN, CUE + LEFT, CUE + RIGHT, FUNC + REC,
+  FUNC + PLAY, FUNC + STOP, CUE + FUNC + STOP and FUNC + DOWN (on a HALT row) in the editor, and the editor's screen
+  (the inverted row numbers).
 - Patches no stock code; installs beside every other module (`npm run modules:compat`).
 - A paste or insert past 256 rows is refused with stock's ROW LIMIT REACHED, changing nothing.
 - A paste replaces D rows at row P with the N copied rows (an insert is the same with D = 0). Rows below move by
@@ -70,7 +75,20 @@ arrangement, open EDIT and paste or insert.
 - A paste or insert never turns a LOOP or JUMP into a HALT. A HALT is a row whose target is itself, so a copied JUMP
   whose target would land on its own new row is refused, changing nothing: `JUMP>HALT ROW 8` (or `LOOP>HALT`) names
   the row. Paste one row further, or change the target first. (Stock's one-row delete does turn a JUMP into a HALT
-  this way, silently; the module leaves stock's FUNC + UP and FUNC + DOWN as they are.)
+  this way, silently; the module leaves stock's FUNC + UP as it is.)
+- **A change to a stock flow: FUNC + DOWN on a HALT row** (agreed with the owner in
+  [#1668](https://github.com/repeat98/modwerk/issues/1668)). Stock's insert duplicates the row and leaves the original,
+  moved one row down, pointing at the copy: `HALT: 003` with FUNC + DOWN on it gives `HALT: 003` and `LOOP: 003/∞`
+  below it, an endless loop nobody asked for. With the module installed, the moved row stays a HALT: `HALT: 003` and
+  `HALT: 004`. Stock still does the insert; the module only points the moved row at itself, on the next frame, and only
+  when stock really inserted there. Who notices: anyone inserting on a HALT row; every other FUNC + DOWN, and FUNC + UP
+  (delete), are stock's. Considered instead: an own gesture for it, which would leave stock's endless loop in place.
+  It applies only while the module is installed. Checked beside it under ot_emu: FUNC + DOWN on a pattern row and
+  above a HALT (the HALT follows itself, as on stock), and the module's own paste, insert and move.
+- A move (CUE + LEFT/RIGHT) keeps every LOOP/JUMP target on the row it pointed at, so a HALT stays a HALT. A LOOP
+  moved past its target becomes a JUMP to it, and a JUMP moved past its target a LOOP with no count shown (stock
+  labels a row by its target below or above it). Each press moves one place; holding the key does not repeat. The editor scrolls along, keeping the moved rows and
+  the row they move towards on screen (with up to five rows selected).
 - The copied rows live in RAM: gone after a power cycle or when the module is removed.
 - Editing while the arrangement plays behaves as stock's own edits do; it was not tested separately.
 

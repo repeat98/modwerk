@@ -3,7 +3,7 @@
   "id": "kits",
   "key": "KITS",
   "name": "Kits",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "scenes",
   "author": {
     "github": "sambanks",
@@ -19,7 +19,7 @@
     "label": "255 Kits per project",
     "family": "Parts and Kits",
     "summary": "255 Kits per project instead of four Parts per bank: each pattern plays its own Kit, saved and loaded by name.",
-    "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save the current Part as a Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
+    "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save, reload or rename the pattern's Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
     "highlights": [
       "LOAD KIT and SAVE KIT lists with the Kits' names, UNDO KIT, and seven-character names.",
       "Each pattern plays its Kit; copying and pasting a pattern carries its Kit.",
@@ -28,7 +28,7 @@
     ],
     "usage": [
       "Press PART (MKI: FUNC+MIDI): LOAD KIT lists UNDO KIT and the 255 Kits. Choose one with YES: the current pattern plays it now.",
-      "Press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK): SAVE KIT. Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
+      "Press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK). Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
       "The status line shows the current pattern's Kit as NNN name."
     ]
   },
@@ -37,12 +37,12 @@
     "steps": [
       "Press PART on the MKII, or FUNC+MIDI on the MKI, to open LOAD KIT.",
       "Move to a Kit with UP and DOWN or the LEVEL encoder and press YES: the current pattern plays that Kit.",
-      "Press FUNC+PART on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI, to open SAVE KIT; press YES on a Kit, edit its name and confirm to save the current Part into it."
+      "Press FUNC+PART and YES on SAVE KIT on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI; press YES on a Kit, edit its name and confirm to save the current Part into it."
     ],
     "screenshots": [
       "media/ot-status-kit.png",
       "media/ot-load-kit.png",
-      "media/ot-save-kit.png"
+      "media/ot-part-edit-kits.png"
     ]
   },
   "controls": [],
@@ -50,13 +50,10 @@
     "firmware": "1.40C",
     "effectId": null,
     "location": "Project sequencer",
-    "conflicts": [
-      "pattern-sample-locks"
-    ],
+    "conflicts": [],
     "uiClaims": [
       "key:PART",
       "key:FUNC+MIDI",
-      "key:FUNC+PART",
       "key:FUNC+CUE",
       "key:STOP+PART",
       "key:FUNC+STOP+PART",
@@ -70,19 +67,17 @@
       "key:FUNC+STOP@KITS",
       "key:FUNC+PLAY@KITS",
       "key:FUNC+BANK@KITS",
-      "key:LEVEL@KITS",
-      "screen:PART EDIT"
+      "key:LEVEL@KITS"
     ],
     "limitations": [
       "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
       "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
-      "FUNC+PART opens SAVE KIT, so the stock Part Edit window and the rows other modules add there cannot be opened while Kits is installed.",
+      "Needs Modwerk base 0.8 or newer: FUNC+PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place. Stock's Part Edit rows are left out while Kits is on; while it is off its row is left out and the window is stock's.",
       "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
       "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
       "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
       "Keep Kits installed while you save, reload or copy a project that uses it: without it, kits.work is not saved or reloaded with the project.",
-      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once.",
-      "Not offered with Pattern Sample Locks: Kits' SAVE KIT takes FUNC+PART, the Part edit menu Pattern Sample Locks adds its rows to."
+      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once."
     ]
   },
   "resources": {
@@ -147,14 +142,14 @@
         "title": "Quick tutorial",
         "steps": [
           "Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.",
-          "Change a sound on the current track, press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
+          "Change a sound on the current track, press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
           "Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit."
         ]
       },
       "screenshots": [
         "media/ot-status-kit.png",
         "media/ot-load-kit.png",
-        "media/ot-save-kit.png"
+        "media/ot-part-edit-kits.png"
       ],
       "screenshotStyle": "black-and-white"
     }
@@ -168,52 +163,52 @@
     {
       "path": "media/ot-status-kit.png",
       "captureType": "hardware",
-      "caption": "With Kits installed the status line names the Kit the pattern plays: 001 ONE, the project's Part 1 read in as a Kit.",
-      "alt": "Pattern screen of A01 on the MIDI NOTE page; the status line reads 001 ONE where stock shows the Part.",
-      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "caption": "With Kits installed the status line names the Kit the pattern plays: 009 ONE.",
+      "alt": "Pattern screen of C16 on the SRC page; the status line reads 009 ONE where stock shows the Part.",
+      "credit": "Modwerk contributors (capture on the developer's MKII)",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "Pattern screen",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
-        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+        "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C16, stopped."
       }
     },
     {
       "path": "media/ot-load-kit.png",
       "captureType": "hardware",
-      "caption": "Press PART: LOAD KIT lists UNDO KIT and the project's Kits. YES on a Kit makes the current pattern play it, at once.",
-      "alt": "LOAD KIT list over the pattern screen: UNDO KIT, 001 ONE (selected), 002 TWO, 003 THREE.",
-      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "caption": "Press PART: LOAD KIT lists the project's Kits. YES on a Kit makes the current pattern play it, at once.",
+      "alt": "LOAD KIT list over the pattern screen: 008 FOUR, 009 ONE, 010 TWO, 011 THREE (selected).",
+      "credit": "Modwerk contributors (capture on the developer's MKII)",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "LOAD KIT (PART)",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
-        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+        "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C16 playing; PART, then DOWN."
       }
     },
     {
-      "path": "media/ot-save-kit.png",
+      "path": "media/ot-part-edit-kits.png",
       "captureType": "hardware",
-      "caption": "Press FUNC + PART: SAVE KIT, with the cursor on the current Kit. YES opens the name editor and saves the current Part into that Kit.",
-      "alt": "SAVE KIT list over the pattern screen: 001 ONE (selected), 002 TWO, 003 THREE, 004 FOUR.",
-      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "caption": "Press FUNC + PART: the Part Edit window holds Kits' actions in PART's place. SAVE KIT saves the current Part into a Kit, RELOAD KIT brings the pattern's Kit back as saved, RENAME KIT renames it.",
+      "alt": "Part Edit popup over the pattern screen: SAVE KIT, RELOAD KIT (selected), RENAME KIT.",
+      "credit": "Modwerk contributors (capture on the developer's MKII)",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "SAVE KIT (FUNC + PART)",
+        "page": "Part Edit (FUNC + PART)",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
-        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "109b65143e61cd409be54be96b982764a1114bca24e13076a2a8359673447a94",
+        "setup": "The developer's MKII over USB, 24 November 2026: a development twin of Modwerk base 0.8 (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.1-experimental installed alone as a 120-second trial (package SHA-256 c1cb63e5…), the developer's project in bank C. The unit's LCD framebuffer read over USB (device-send png step), 256 x 128, two pixels a dot. The trial rolled back. Pattern C02, stopped; FUNC+PART, the window reopened on the row used last. NO closed it."
       }
     }
   ]

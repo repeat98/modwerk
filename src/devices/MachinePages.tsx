@@ -292,8 +292,10 @@ function Hero({ device, children, embedded = false }: { device: DeviceProfile; c
 
 // Where a machine stands on the way to the Octatrack's stack (docs/MACHINE_RECIPE.md): the road after the first mod.
 function StackLadder({ device }: { device: DeviceProfile }) {
+  const zoom = device.id === 'zoom-ms-70cdr'
+  const guide = zoom ? 'ZOOM_MULTISTOMP.md#ms-70cdr-stack-progress' : 'MACHINE_RECIPE.md'
   return <section className="configuration-section" aria-labelledby="stack-title">
-    <div className="section-title"><h2 id="stack-title">Road to the Octatrack’s stack</h2><span className="subtle">{MACHINE_STACK.filter(piece => device.stack[piece.id] === 'done').length} of {MACHINE_STACK.length} done · <a href={issueRepository() + '/blob/main/docs/MACHINE_RECIPE.md'} target="_blank" rel="noreferrer">the recipe</a></span></div>
+    <div className="section-title"><h2 id="stack-title">Road to the Octatrack’s stack</h2><span className="subtle">{MACHINE_STACK.filter(piece => device.stack[piece.id] === 'done').length} of {MACHINE_STACK.length} done · <a href={issueRepository() + '/blob/main/docs/' + guide} target="_blank" rel="noreferrer">{zoom ? 'the roadmap' : 'the recipe'}</a></span></div>
     <ol className="device-ladder">{MACHINE_STACK.map((piece, index) => { const state = device.stack[piece.id]; return <li key={piece.id} className={'is-' + state}><span className="device-ladder-marker">{state === 'done' ? <Icon name="check" size={14} /> : index + 1}</span><span><strong>{piece.title}</strong><small>{piece.description}</small></span><span className={'device-step-state is-' + state}>{STEP_LABELS[state]}</span></li> })}</ol>
   </section>
 }

@@ -27,7 +27,7 @@ The stock indicator at the right edge marks the selected page. **FUNC + AMP** or
 
 The module targets Digitakt II OS 1.17 and the Modwerk 1.1 base with the shared audio sequencer pitch hook and active-project kit-data reset. The stock sequencer owns transport, tempo, track speed, swing and note releases. Regular trigs, MIDI tracks and explicit stock trig overrides pass through.
 
-Saving a project saves SCF, the last reroll and both octave bounds per pattern and track. Reloading with the same kit-data layout restores all four. New projects start with SCF off and both bounds on AUTO. Projects saved with the K117 trial use its previous layout and open with default Euclidean Scale settings on this version. The Digitakt II browser builder is still in research and selects core 1.0.
+Saving a project saves SCF, the last reroll and both octave bounds per pattern and track. Reloading with the same kit-data layout restores all four. New projects start with SCF off and both bounds on AUTO. Projects saved with the K117 trial use its previous layout and open with default Euclidean Scale settings on this version.
 
 ## Tests and measurements
 

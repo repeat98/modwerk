@@ -1,0 +1,1 @@
+Admin: the Octatrack tab no longer claims that members who agreed to an earlier diagnostics text must agree again. They keep sharing under the consent they gave, as the site has done since 14 November; the line now says so.

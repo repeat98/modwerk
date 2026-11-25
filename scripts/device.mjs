@@ -292,10 +292,26 @@ async function until(test, ms = 5000) {
   for (const start = Date.now(); Date.now() - start < ms; await wait(50)) if (await test()) return true
   return false
 }
-/** PART + an arrow (1 up, 2 right, 3 down, 4 left), then wait for the Part to change. */
+/** Is the unit an MKII? Stock's boot probe sets the flag at 0x46c8d18c on an MKII and clears it on an MKI. */
+let isMkii
+async function mkii() {
+  if (isMkii === undefined) isMkii = (await mem(0x46c8d18c, 4)).some(b => b)
+  return isMkii
+}
+/** Select Part n (1 up, 2 right, 3 down, 4 left), then wait for the Part to change. An MKII holds PART and taps the arrow.
+ * An MKI has no PART key, and stock checks FUNC there instead: FUNC + MIDI opens its Part window on the current Part, an
+ * arrow moves the cursor, YES selects and closes it (#2099). */
 async function part(n) {
-  await keys('PART+' + ['UP', 'RIGHT', 'DOWN', 'LEFT'][n - 1])
+  const arrow = ['UP', 'RIGHT', 'DOWN', 'LEFT'][n - 1]
+  if (await mkii()) await keys('PART+' + arrow)
+  else await run(`FUNC+MIDI w300 ${arrow} w150 YES`)
   if (!await until(async () => (await mem(0x80000003, 1))[0] === n - 1)) throw new Error('Part ' + n + ' did not become active.')
+}
+/** The Part menu (RENAME, RELOAD, SAVE, SAVE ALL), then `steps` in it. FUNC + PART on an MKII; on an MKI, FUNC + BANK in
+ * the Part window (FUNC + MIDI), which NO closes afterwards (#2099). The menu keeps its cursor and stops at RENAME. */
+async function partMenu(steps) {
+  if (await mkii()) await run('FUNC+PART w600 ' + steps)
+  else await run('FUNC+MIDI w300 FUNC+BANK w600 ' + steps + ' w300 NO w200')
 }
 /** Pick an effect by name through the stock chooser, then wait until the track runs it (effectTables: id -> descriptor
  * and id -> chooser row); what runs, 0x80000ec4 (FX1 T1-8, FX2). */
@@ -368,7 +384,7 @@ async function missing() {
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
  * inventory (the installed modules, INVENTORY), restore (what this start's restore did with each saved module, RESTORE),
  * adopt / adopt:off (development bases: from the next start, restore the card's set another base wrote, writing none),
- * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
+ * reload (the current Part from its saved copy, through the Part menu), savepart (SAVE there), gap (the longest time between frames since the last gap),
  * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
@@ -461,7 +477,9 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     }
     else if (step === 'gap') { const g = Buffer.from(await devIn(23, 0, 4)).readUInt32BE(0); console.log(`gap ${g} counts ${(g / 132).toFixed(0)} us`) } // since the last read
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
-    else if (step === 'reload') await run('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w200 YES w1000')
+    else if (step === 'reload') await partMenu('UP w150 UP w150 UP w150 DOWN w200 YES w1000')
+    // SAVE from the same menu: only on a Part whose working copy equals its saved one (device:test, device:qualify).
+    else if (step === 'savepart') await partMenu('UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES w1000')
     else if ((m = /^hold:(\d)$/.exec(step))) await devIn(22, Number(m[1]), 1) // development bases: host frames wait N seconds, as after a boot
     else if (step === 'saved') { // the self-test record's card set, read without starting a test (modset.c's result)
       const b = Buffer.from(await devIn(21, 0, 96))

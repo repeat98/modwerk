@@ -130,9 +130,10 @@ export async function boardClaims(root, base, board) {
   else for (const item of open) {
     try {
       // A claim says what the work is; a note its holder wrote by hand stays, and one the server refuses never costs the claim.
-      const request = { kind: item.kind, key: item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
+      // A run you hold that covers this item is renewed whole, so claiming the part never gives up the rest of the run.
+      const request = { kind: item.kind, key: item.claim?.key ?? item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
       const result = note ? await board.claim({ ...request, note }).catch(error => { if (error instanceof board.BoardError && error.status === 400) return board.claim(request); throw error }) : await board.claim(request)
-      notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + item.key + ' for @' + login + '.')
+      notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + request.key + ' for @' + login + '.')
     } catch (error) {
       if (error instanceof board.BoardUnavailable) { notes.push('Board: could not claim ' + item.kind + ' ' + item.key + '. ' + error.message); continue }
       problems.push('Board: ' + item.kind + ' ' + item.key + ': ' + error.message)

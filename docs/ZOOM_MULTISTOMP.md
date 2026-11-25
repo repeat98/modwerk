@@ -51,6 +51,31 @@ out.wav` plays a 44.1 kHz WAV through it, both without Zoom firmware. Leave
 whose coefficient knobs (depth, rate, mix) read the firmware refuses to render
 without one; test it on the pedal.
 
+## MS-70CDR stack progress
+
+| Piece | Verified capability and next check |
+| --- | --- |
+| Modwerk base | The browser builds pinned MIDISTOMP from the owner's 2.10 updater. Define the common loader sites and admission limits before publishing the first runtime module. |
+| USB link | The pedal page and the shared developer MCP read identity and installed effects over USB MIDI. |
+| Setup and updates | The pedal page guides backup, a bootloader flash and reconnection. Zoom's updater is the stock recovery route. |
+| Loading without a reflash | The development probe counted ELF-header reads on the original pedal. Qualify read, seek and close, then run one effect from RAM and verify Undo and reboot. Keep needs a separate persistence check. |
+| Status page | Status shows firmware, installed effects and any load snapshot the connected base supplies. |
+| Diagnostics | USB load support and the development loader counter are in place. Device self-test and a consent-gated diagnostic log remain to be wired. |
+| Device tools | Shared status and load calls reach the pedal. Review, Trial, Keep and Undo depend on the qualified RAM loader. |
+
+The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) reads
+the active patch over the same USB link. Stock and Modwerk effects in the
+patch appear in slot order. Names and parameter ranges come from the pedal's
+registered effect files, read locally. Modwerk modules also use named choices
+from their catalog and [Roman Rusinov's editor](https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/tools/patch_editor.html).
+Turn a knob by dragging up or down or using the arrow keys. **Apply to pedal**
+checks that the patch still matches, changes only the staged values and bypass
+states, then reads them back. The pedal's Auto Save setting controls persistence.
+**Refresh patch** reads the current values after a change on the pedal. Switching
+which effects are in a patch happens on the pedal. D004 supports set sync using
+the same file commands as the released base.
+
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |
@@ -334,7 +359,10 @@ finds where they are tied to it.
    releases are built from the MS-70CDR's 2.10 for all three pedals and answer
    as an MS-70CDR; on an MS-50G or MS-60B that runs one model's firmware on
    another, which the [modding guidelines](../MODDING_GUIDELINES.md) refuse, so
-   the page never flashes that build onto another pedal. Their base is
+   the page never offers that build for another pedal. It can't tell over USB:
+   a pedal running that build answers as an MS-70CDR whatever it is (the model
+   byte is in its flash, #2076), so the page asks for the model printed on the
+   pedal before the base flash and the first effect write. Their base is
    MIDISTOMP's patches on the pedal's own OS from its own updater (MIDISTOMP's
    `models/ms50g.yaml` and `ms60b.yaml` name them): a build per pedal agreed
    with Luca, imported like `ms70cdr-2.10` (`BUILD` in

@@ -1,0 +1,523 @@
+{
+  "schemaVersion": 2,
+  "id": "resonator",
+  "key": "RESONATOR",
+  "name": "Resonator",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "name": "Jannik Aßfalg",
+    "credits": [
+      "Jannik Aßfalg"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "RESONATOR",
+    "family": "Resonator",
+    "summary": "Eight tuned partials for one to four voices: a chord of strings, tubes, bars, plates, drums or bells, or Aleksi Perälä's Colundi frequencies, excited by the track's own audio.",
+    "overview": "The track's audio (left and right summed, filtered by TONE) excites eight resonant partials. VOIC shares them between one and four voices; TYPE gives every voice a body, from a pure mode through strings and tubes to bars, plates, drums and bells. PTCH sets the root and CHRD the other voices' notes. COLUN on makes PTCH a degree of the Colundi sequence (128 absolute frequencies from 10.8 Hz to 12 kHz) and snaps each voice to the nearest Colundi frequency; with COLUN off, SCALE snaps the notes into a key, so chords turn diatonic. Lock PTCH or CHRD on trigs to play the ring from the sequencer.",
+    "highlights": [
+      "COLUN: PTCH picks one of the 128 Colundi frequencies (78 = 440 Hz), chords snap to Colundi",
+      "TYPE: PURE, STRNG, TUBE, BAR, PLATE, DRUM and BELL bodies; VOIC: one to four voices",
+      "CHRD: 14 chords and stacks, p-lockable per trig; SCALE keeps them in a key",
+      "Rings from 25 ms to 10 s and ends in digital silence; FX1 or FX2 on any track"
+    ],
+    "usage": [
+      "Put RESONATOR on FX1 of a drum or loop track. The defaults ring a major triad of string voices on A under each hit.",
+      "Hold FUNC and press FX1 for the setup page: the COLUN switch set to COLUN makes PTCH a Colundi degree, TYPE picks the body, VOIC the number of voices, SCALE a key.",
+      "Turn TYPE for the body (BAR and BELL for metal, DRUM for skins) and TONE to choose which partials ring."
+    ]
+  },
+  "controls": [
+    {
+      "name": "PTCH",
+      "default": 57,
+      "count": 128,
+      "labels": null,
+      "doc": "Root. A MIDI note (69 = A at 440 Hz), snapped into SCALE's key when one is set. With COLUN on, a Colundi degree 0-127 (78 = 440 Hz, 79 = 441 Hz); the panel names it DEG."
+    },
+    {
+      "name": "CHRD",
+      "default": 4,
+      "count": 14,
+      "labels": [
+        "OCT",
+        "5TH",
+        "SUS2",
+        "SUS4",
+        "MAJ",
+        "MIN",
+        "MAJ7",
+        "MIN7",
+        "DOM7",
+        "DIM",
+        "AUG",
+        "ADD9",
+        "5THS",
+        "4THS"
+      ],
+      "doc": "The voices' notes above the root: OCT, 5TH, SUS2, SUS4, MAJ, MIN, MAJ7, MIN7, DOM7, DIM, AUG, ADD9, 5THS, 4THS. VOIC sets how many of the four notes sound; one voice plays the root only."
+    },
+    {
+      "name": "DCAY",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Ring time to -60 dB: 25 ms at 0, about 0.5 s at 64, 10 s at 127."
+    },
+    {
+      "name": "TONE",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Filters what excites the partials: left of centre a low-pass from 20 kHz down to 150 Hz (only the low partials ring), centre flat, right a high-pass from 20 Hz up to 3 kHz (only the high ones ring)."
+    },
+    {
+      "name": "GAIN",
+      "default": 32,
+      "count": 128,
+      "labels": null,
+      "doc": "Ring level: 32 is 0 dB, where the ring on noise sits about 4 dB under the dry at any DCAY; 0 is silent, 64 is +6 dB, 127 is +12 dB. Loud rings soft-clip at -3.5 dBFS."
+    },
+    {
+      "name": "MIX",
+      "default": 64,
+      "count": 128,
+      "labels": null,
+      "doc": "Dry/wet at constant power. 0 is exact passthrough and 127 only the ring; the dry falls as (1 - MIX/128)^2 (-12 dB at 64, -26 dB at 100) and the ring rises to keep the power."
+    },
+    {
+      "name": "COLUN",
+      "default": 0,
+      "count": 2,
+      "labels": [
+        "NOTE",
+        "COLUN"
+      ],
+      "doc": "Setup page. The switch shows its setting. NOTE: PTCH is a MIDI note. COLUN: PTCH is a degree of the Colundi sequence and each voice snaps to the nearest of its 128 frequencies (a MAJ chord on 440 Hz rings 440, 528, 639 and 880 Hz). The voices' bodies keep their own overtones."
+    },
+    {
+      "name": "TYPE",
+      "default": 1,
+      "count": 7,
+      "labels": [
+        "PURE",
+        "STRNG",
+        "TUBE",
+        "BAR",
+        "PLATE",
+        "DRUM",
+        "BELL"
+      ],
+      "doc": "Each voice's body, as its partials: PURE (one sine-like mode), STRNG (harmonics), TUBE (odd harmonics, a closed pipe), BAR (a struck beam), PLATE, DRUM (a membrane), BELL (hum, prime, tierce, quint ...)."
+    },
+    {
+      "name": "VOIC",
+      "default": 2,
+      "count": 4,
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "doc": "Setup page. How many voices share the eight partials: 1 voice has all 8, 2 voices 4 each, 3 voices 3, 3 and 2, 4 voices 2 each."
+    },
+    {
+      "name": "SCALE",
+      "default": 0,
+      "count": 121,
+      "labels": [
+        "OFF",
+        "CMAJ",
+        "CMIN",
+        "CDOR",
+        "CPHR",
+        "CLYD",
+        "CMIX",
+        "CHMI",
+        "CMMI",
+        "CPMA",
+        "CPMI",
+        "C#MAJ",
+        "C#MIN",
+        "C#DOR",
+        "C#PHR",
+        "C#LYD",
+        "C#MIX",
+        "C#HMI",
+        "C#MMI",
+        "C#PMA",
+        "C#PMI",
+        "DMAJ",
+        "DMIN",
+        "DDOR",
+        "DPHR",
+        "DLYD",
+        "DMIX",
+        "DHMI",
+        "DMMI",
+        "DPMA",
+        "DPMI",
+        "D#MAJ",
+        "D#MIN",
+        "D#DOR",
+        "D#PHR",
+        "D#LYD",
+        "D#MIX",
+        "D#HMI",
+        "D#MMI",
+        "D#PMA",
+        "D#PMI",
+        "EMAJ",
+        "EMIN",
+        "EDOR",
+        "EPHR",
+        "ELYD",
+        "EMIX",
+        "EHMI",
+        "EMMI",
+        "EPMA",
+        "EPMI",
+        "FMAJ",
+        "FMIN",
+        "FDOR",
+        "FPHR",
+        "FLYD",
+        "FMIX",
+        "FHMI",
+        "FMMI",
+        "FPMA",
+        "FPMI",
+        "F#MAJ",
+        "F#MIN",
+        "F#DOR",
+        "F#PHR",
+        "F#LYD",
+        "F#MIX",
+        "F#HMI",
+        "F#MMI",
+        "F#PMA",
+        "F#PMI",
+        "GMAJ",
+        "GMIN",
+        "GDOR",
+        "GPHR",
+        "GLYD",
+        "GMIX",
+        "GHMI",
+        "GMMI",
+        "GPMA",
+        "GPMI",
+        "G#MAJ",
+        "G#MIN",
+        "G#DOR",
+        "G#PHR",
+        "G#LYD",
+        "G#MIX",
+        "G#HMI",
+        "G#MMI",
+        "G#PMA",
+        "G#PMI",
+        "AMAJ",
+        "AMIN",
+        "ADOR",
+        "APHR",
+        "ALYD",
+        "AMIX",
+        "AHMI",
+        "AMMI",
+        "APMA",
+        "APMI",
+        "A#MAJ",
+        "A#MIN",
+        "A#DOR",
+        "A#PHR",
+        "A#LYD",
+        "A#MIX",
+        "A#HMI",
+        "A#MMI",
+        "A#PMA",
+        "A#PMI",
+        "BMAJ",
+        "BMIN",
+        "BDOR",
+        "BPHR",
+        "BLYD",
+        "BMIX",
+        "BHMI",
+        "BMMI",
+        "BPMA",
+        "BPMI"
+      ],
+      "doc": "Setup page. OFF, or one of 12 keys x 10 scales (MAJ, MIN, DOR, PHR, LYD, MIX, HMI harmonic minor, MMI melodic minor, PMA and PMI pentatonic). The root and chord notes snap to the nearest note of the key; COLUN ignores it."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX1 / FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Three 15-minute RAM trials ran on the owner's unit (drafts of 23 Nov 2026), the first two to their end with no crash, stall, freeze or skipped track; the third, the eight-partial build, was unplugged by the owner at about 8 minutes. This layout (no DAMP, TONE on page 1) has not run on a unit.",
+      "A pitch, chord or type change settles within eight DSP blocks (2.9 ms): one partial retunes per block.",
+      "Pitches assume 44.1 kHz. The input is summed to mono; the ring is spread across the stereo field.",
+      "A sustained tone on a mode's pitch with long DCAY and high GAIN soft-clips; lower GAIN or DCAY for a clean ring."
+    ],
+    "effectId": 7
+  },
+  "resources": {
+    "recorded": "2026-11-24",
+    "storage": {
+      "label": "DSP program / state",
+      "display": "1,511 words / 89-word state",
+      "value": null,
+      "unit": "see display",
+      "method": "static",
+      "conditions": "1,511 assembled program words on each DSP core (844 code, 667 table), placed in the space of SPRING REV and PLATE REV with 146 words to spare; 89 words of the 256-word X block per instance; no buffer and no Y memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "DSP instruction peak",
+      "display": "248 instructions/sample per instance",
+      "value": null,
+      "unit": "see display",
+      "method": "emulator",
+      "conditions": "benchmark_stock_dsp.py's method (one instance per core, 16-sample blocks, null stub subtracted) with the stock effects run through the same 106 cases: worst case 247.8 with a trig split (246.6 unsplit), against 314.2 for SPRING REV. Static loop count 225 cycles/sample. Executed instructions, not chip cycles.",
+      "source": "TESTING.md"
+    },
+    "cpuPrice": {
+      "value": 0.2,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-24",
+      "conditions": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples), picks on empty C02, Part 1; the effect measured on T1 FX2 in place of DELAY; owner's MKII, OS 1.40C; base development twin 8fd6d456 of base 0.8.1 (built from 9d5aec73a); 16 s per reading. Frame interrupt 35.4 % before, 35.5 % installed and used nowhere, 35.6 % on T1 FX2; CPU meter 52.4 % before, 51.4 % at rest, 51.9 % in use.",
+      "source": "evidence/cpu-price.json"
+    },
+    "impact": {
+      "conditions": "One active instance at its dearest settings (four BELL or STRNG voices, Colundi or a key on, DCAY 127) with moving controls and trig splits; no buffer; on the unit, the frame-interrupt price on a medium pattern.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "No ColdFire audio code: the stock FX pages publish the knobs. On the owner's MKII the frame interrupt rose 0.2 points with it on T1 FX2 and 0 installed and unused; the instance curve read first 0.8, each 0.8.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "moderate",
+        "basis": "measured-comparison",
+        "rationale": "247.8 executed instructions/sample worst case with trig splits, against 314.2 for SPRING REV and 330.9 for DJ EQ (the dearest stock effect) under the same cases: 0.79 of SPRING REV. The static bound for four per core is 22,072 of 49,920 modeled cycles per 16-frame block. Chip timing is unmeasured.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "1,511 program words per core in two given-up stock reverbs' space, 89 used words of the 256-word X block per instance, no buffer: 768 bytes per instance, 11,006 shared.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "verify.py passes in dsp_host (47 gates: pitch, chords, Colundi, scale, bodies, decay, silence, MIX at constant power, the soft clip's alias, split, dirty state); perf:audit passes at 0.79 of SPRING REV's worst; npm run test:procedure steps 1-10 passed twice on the owner's MKII (24 Nov 2026) with the by-hand checks and edge cases in TESTING.md.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "2a622a8f5cad8e0010b161944651fdc07dfdb0d4",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "a003c5a5dad4a0f797e1659968c5c4ee2f825e84c3bbb79ac5bc476c8aa07271",
+      "cycles": [
+        {
+          "processor": "dsp",
+          "worstCase": 5518,
+          "maxConfiguration": 22072,
+          "maxInstances": 8,
+          "budget": 49920,
+          "unit": "cycles/block",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "Static union bound per 16-frame block from the assembler listing: cycle_count.py's 225 cycles a sample for the straight-line per-sample loop (x16 frames), plus every one of the 610 code words outside it charged once per call (the main call's knob decode, TONE and MIX interpolation, scale snap, Colundi search, note shift, decay interpolation and both sine/cosine paths, so every knob endpoint and branch is inside), the subroutines a main call enters twice (rzsin, rzsnap, rzlerp) charged twice, the 7-step Colundi search body charged 7 times, and 4 extra cycles for each of the 51 branches, calls, returns and do instructions those paths contain: 959 per call. The init routine (9 words) runs once and is left out.",
+            "parameterModulation": "Two calls per block cover a trig split, each charged the full per-call bound: 16 x 225 + 2 x 959 = 5,518. LFOs, locks, scenes and CC reach the same knob words, decoded every main call. The matched dsp_host benchmark with the stock moving pattern and splits at 1-15 measured at most 247.81 executed instructions a sample (3,965 a block), inside the bound.",
+            "modeSwitching": "COLUN on and off, VOIC 1-4, every TYPE (a partial TYPE leaves out takes the shorter mute path) and SCALE off or any key are branches of the same per-call code, all inside the union bound. There is no bypass state of its own: MIX 0 runs the same code. Part changes reach it as knob changes.",
+            "maxLoad": "Eight instances, four per DSP core (FX2 of four tracks, or FX1 and FX2 of two): 4 x 5,518 = 22,072 per core within the SDK's 49,920 module allowance (3,120 a sample x 16); the stock/scheduling reserve stays separate. Eight per core (FX1 and FX2 on all four tracks) would be 44,144 and also fits, but is not claimed or stress-tested. The 2 s eight-instance stress run beside DJ EQ on every FX1 peaked at 2,308.6 executed instructions a sample per core (evidence/performance.json). Real-chip contention and stalls are not modelled.",
+            "inputConditions": "The word-span bound does not depend on sample values: silence, impulses, full-scale and clipping input, long rings and the soft clip all run the same straight-line loop. The stress run's stems include full-scale squares, impulses, DC steps, noise bursts and a 20 Hz-20 kHz sweep."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Program payload A, P:0x01000..0x015e7 in the card image: 667-word table and 844-word code",
+            "space": "dsp-p",
+            "words": 1511,
+            "wordBits": 24,
+            "bytes": 4533,
+            "scope": "shared"
+          },
+          {
+            "name": "Program payload B, P:0x00dc0..0x013a7 in the card image: 667-word table and 844-word code",
+            "space": "dsp-p",
+            "words": 1511,
+            "wordBits": 24,
+            "bytes": 4533,
+            "scope": "shared"
+          },
+          {
+            "name": "Used and initialized stock X state, r7+0..0x58",
+            "space": "dsp-x",
+            "words": 89,
+            "wordBits": 24,
+            "bytes": 267,
+            "scope": "instance"
+          },
+          {
+            "name": "Reserved remainder of the 256-word stock X block",
+            "space": "dsp-x",
+            "words": 167,
+            "wordBits": 24,
+            "bytes": 501,
+            "scope": "instance"
+          },
+          {
+            "name": "System stack, three entries of two words on both cores",
+            "space": "dsp-x",
+            "words": 12,
+            "wordBits": 24,
+            "bytes": 36,
+            "scope": "shared"
+          },
+          {
+            "name": "Cloned FX descriptor at 0x400D6B20, five label formatters and the shared wide dial",
+            "space": "cpu-flash",
+            "words": 1904,
+            "wordBits": 8,
+            "bytes": 1904,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 768,
+        "sharedBytes": 11006,
+        "maxInstances": 8,
+        "totalBytes": 17150,
+        "conditions": "Native card build (build_bus on OS 1.40C, Resonator in the space of SPRING REV and PLATE REV: 1,511 of 1,657 words on each payload, 146 free; image a438d3a4...). Per instance the stock 256-word r7 block an FX instance gets, of which Resonator initializes and uses $00-$58 (89 words); no allocator buffer, no Y memory (ybase NEVER), no scratch outside r7. Code and table once per core. The system stack is bounded by a bsr into the Colundi search and its do (three entries) on each core; the sample loop's do calls nothing. ColdFire flash in the card image: the 416-byte cloned descriptor (0x400D6B20..0x400D6CC0), five label formatters for CHRD, COLUN, TYPE, VOIC and SCALE (1,372 bytes, 0x400D6CC0..0x400D721C) and the wide-dial helper (116 bytes, used only by Resonator in this build); no ColdFire code runs per frame. The USB package (764 bytes of code and data, no bss) is smaller and is not counted on top. Logical 24-bit DSP words; flash in bytes.",
+        "report": "TESTING.md"
+      },
+      "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-24",
+        "tester": "repeat98",
+        "sourceRevision": "2a622a8f5cad8e0010b161944651fdc07dfdb0d4",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "summary": "On the owner's Octatrack MKII (OS 1.40C), RAM-booted on development twin 8fd6d456 of base 0.8.1 (imageSha256 is that twin's MAIN image), project Dev17 bank C, the agent in the owner's session ran npm run test:procedure on the package of this source (16600fb3681f): software checks, the cost model, device:test (alone on FX2 of T1 and T5, eight at once while playing, 12 Part switches), a 2-minute soak, device:price with the instance curve and admission on the empty C02 and the medium C04, and the inventory put back; all passed. By hand in trials: every page against the README, MAIN recorded over USB with no dropout, two instances on one track, the dearest settings at the clip's ceiling, pattern changes and pick-backs while ringing, CHRD and PTCH locks, scene locks with the crossfader, a soak with four instances in use and 252 pattern changes, and a trial ending while it rang: no crash, stall, freeze or skipped track. The owner waived the hands-on listening stage for this version (24 Nov 2026: \"I don't need the handson trial\").",
+        "limitations": [
+          "One unit and its owner's session, not an independent reviewer; the MKI was not tested.",
+          "The owner's listening, a Part and project save and reload, and the Keep with a power cycle were not run by hand; device:qualify's Keeps cover install and removal.",
+          "LFO modulation of MIX, DCAY and TONE was not run on the unit.",
+          "CUE was not recorded over USB (Windows offered two input channels); MAIN was.",
+          "Single 16-s readings of the DSP load scatter by several points; the DSP cost stands on dsp_host's count.",
+          "A card build beside Analog BD was not built or placed."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Put RESONATOR on FX1 of a drum loop: hold FUNC, press FX1, turn LEVEL to RESONATOR and press YES. The defaults ring a major triad of string voices on A under every hit.",
+            "Press FX1 for the main page. Turn DCAY for a longer ring and MIX to bring the ring in; TONE darkens or brightens what sets it off.",
+            "Hold FUNC and press FX1 for the setup page: turn TYPE to BELL or BAR for metal, DRUM for skins, VOIC for more or fewer voices, SCALE to keep chords in a key.",
+            "Lock CHRD on a few trigs for chord changes, or turn the NOTE switch to COLUN and lock PTCH (now DEG) on trigs: each hit rings at its own Colundi frequency."
+          ]
+        },
+        "screenshots": [
+          "media/resonator-chooser.png",
+          "media/resonator-main.png",
+          "media/resonator-setup.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code, tables, gate and documentation by Jannik Aßfalg, MIT. The Colundi sequence (128 frequencies) is Aleksi Perälä's, from colundi.net, used with the owner's permission recorded on 23 Nov 2026. No firmware, extracted routines or stock tables are included."
+  },
+  "media": [
+    {
+      "path": "media/resonator-chooser.png",
+      "captureType": "hardware",
+      "caption": "Select an audio track, hold FUNC and press FX1. Turn LEVEL down the list to Resonator and press YES to put it on FX1 (FX2 works the same).",
+      "alt": "Octatrack FX1 SETUP: the effect list from FLANGER to LO-FI with the cursor on Resonator, beside the current effect's setup knobs.",
+      "credit": "repeat98; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX1 SETUP (effect chooser)",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 8fd6d456 of Modwerk base 0.8.1, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 24 November 2026, during a RAM trial of this version's package 16600fb3, built by module:dev from source 2a622a8f5. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited."
+      }
+    },
+    {
+      "path": "media/resonator-main.png",
+      "captureType": "hardware",
+      "caption": "Press FX1 for the main page: PTCH sets the root, CHRD the chord, DCAY how long it rings, TONE what sets it off, GAIN the ring's level and MIX the dry against the ring.",
+      "alt": "Octatrack FX1 page of track 2 running Resonator: knobs PTCH, CHRD, DCAY, TONE, GAIN and MIX, tempo 126.0, pattern C04 and the status line FX1>Resonator.",
+      "credit": "repeat98; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX1",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 8fd6d456 of Modwerk base 0.8.1, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 24 November 2026, during a RAM trial of this version's package 16600fb3, built by module:dev from source 2a622a8f5. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited."
+      }
+    },
+    {
+      "path": "media/resonator-setup.png",
+      "captureType": "hardware",
+      "caption": "Hold FUNC and press FX1 for the setup page: the NOTE switch turns to COLUN for Colundi frequencies, TYPE picks the body, VOIC the number of voices and SCALE a key.",
+      "alt": "Octatrack FX1 SETUP page with Resonator chosen: the NOTE switch, the TYPE and VOIC knobs and the SCALE knob beside the effect list.",
+      "credit": "repeat98; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX1 SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 8fd6d456 of Modwerk base 0.8.1, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 24 November 2026, during a RAM trial of this version's package 16600fb3, built by module:dev from source 2a622a8f5. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited."
+      }
+    }
+  ],
+  "access": {
+    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. PTCH, CHRD, DCAY, TONE, GAIN and MIX are on the FX main page; COLUN, TYPE, VOIC and SCALE on its SETUP page.",
+    "steps": [
+      "Select an audio track that plays a sample.",
+      "Hold FUNC and press FX1 (or FX2) to open its SETUP. Turn LEVEL to RESONATOR and press YES.",
+      "Press FX1 (or FX2) for the main page: PTCH, CHRD, DCAY, TONE, GAIN, MIX.",
+      "Hold FUNC and press FX1 (or FX2) again for the setup page: COLUN, TYPE, VOIC, SCALE."
+    ],
+    "screenshots": [
+      "media/resonator-chooser.png",
+      "media/resonator-main.png",
+      "media/resonator-setup.png"
+    ]
+  }
+}
