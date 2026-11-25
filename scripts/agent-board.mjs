@@ -20,6 +20,8 @@
 //   npm run board -- reply <id> "answer" [--pr <n>]  |  link <id> --pr <n>  |  close <id>  |  delete <id>
 //                                                # --pr / link: the thread ends when that pull request merges (fold = link)
 //   npm run board -- inbox                       # questions, replies and your expiring claims
+//   npm run board -- wait [<id>] [--minutes 60]  # ends when someone else answers thread <id>, or anything new reaches your inbox;
+//                                                # run it in the background after asking: exit 0 with the thread, 3 at the deadline
 //   npm run board -- activity                    # how many developers use the board
 //
 // Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7, a run octatrack/38-51), migration (0085), dsp-region (machine/name),
@@ -308,6 +310,28 @@ export async function inboxNotes(options = {}) {
   if (expiring) notes.push(`You have ${expiring} board claim${expiring === 1 ? '' : 's'} expiring within three days. Run npm run board -- inbox to see which claims to review.`)
   return notes
 }
+/** Waits until someone other than `me` has the newest word in a thread `read` returns, a thread is new, or one ends.
+ * Returns the threads that changed, or null at the deadline. A board that does not answer for a moment is read again
+ * at the next turn, so a long wait survives a deploy. */
+export async function waitForReply({ read, me, minutes = 60, every = 60000, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now }) {
+  const state = thread => ({ word: thread.replies?.at(-1)?.id ?? thread.id, by: thread.replies?.at(-1)?.author ?? thread.author, ended: Boolean(thread.endedAt) })
+  const seen = new Map((await read()).map(thread => [thread.id, state(thread)]))
+  const deadline = now() + minutes * 60000
+  while (now() < deadline) {
+    await sleep(Math.min(every, deadline - now()))
+    let threads
+    try { threads = await read() } catch (error) { if (error instanceof BoardUnavailable) continue; throw error }
+    const changed = threads.filter(thread => {
+      const before = seen.get(thread.id), after = state(thread)
+      if (!before) return after.by !== me
+      return (before.word !== after.word && after.by !== me) || before.ended !== after.ended
+    })
+    for (const thread of threads) seen.set(thread.id, state(thread))
+    if (changed.length) return changed
+  }
+  return null
+}
+
 /** One thread as the terminal shows it. Quoted text is another developer's words. */
 export function describeThread(thread) {
   const to = thread.to ? (thread.kind === 'wanted' ? ' taken by @' : ' → @') + thread.to : '', when = thread.endedAt ? 'ended ' + thread.endedAt.slice(0, 10) + ' (' + thread.endedReason + ')' : 'open until ' + thread.endsAt.slice(0, 10)
@@ -438,6 +462,21 @@ async function main(argv) {
       console.log('\nYour claims expiring within three days')
       for (const { id, kind, key, expiresAt } of expiring) console.log(`${id}  ${kind} ${key}  ${expiresAt}`)
     }
+    return 0
+  }
+  if (command === 'wait') {
+    const minutes = flag('--minutes') ? Number(option('--minutes')) : 60
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 720) throw new Error('Give --minutes as a whole number from 1 to 720.')
+    const token = await readToken(), me = token && await whoami({ token })
+    if (!me) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+    const id = rest[0]
+    const read = id ? async () => [(await boardRequest('/agent-board/messages/' + encodeURIComponent(id), { token })).message]
+      : async () => { const box = await inbox({ token }); if (!box) throw new BoardError('The board sign-in ended: npm run board -- login', 401); return [...box.waiting, ...box.replies] }
+    console.log(`Waiting up to ${minutes} minutes for ${id ? 'an answer in ' + id : 'something new in your inbox'}.`)
+    const changed = await waitForReply({ read, me, minutes })
+    if (!changed) { console.log(`No answer within ${minutes} minutes. Run it again to keep waiting.`); return 3 }
+    console.log(UNTRUSTED)
+    for (const thread of changed) console.log(describeThread(thread).join('\n'))
     return 0
   }
   if (command === 'activity') {

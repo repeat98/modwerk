@@ -2,7 +2,8 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { added, allocationReading, combined, curveFit, curveRoom, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
+import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -164,4 +165,18 @@ it('stops the curve before it starts when the booked first instance leaves no ro
   expect(curveRoom({ atRest: 65, booked: 31.3, pattern: '3' })).toBeNull()
   // A module nothing books yet: its first reading decides (curveProblem judges it).
   expect(curveRoom({ atRest: 95, booked: undefined, pattern: '1' })).toBeNull()
+})
+
+it('reads a curve with the module\'s each booked at 0 and every other figure as booked', () => {
+  const list = { about: 'x', stock: { line: 95 }, costs: { grain: { first: 33.3, each: 33.3, rest: 0, points: [33.3] }, amiga: { first: 26.6, each: 4, rest: 0.1 } } }
+  const measuring = measuringCosts(list, 'grain')
+  expect(measuring.costs.grain).toEqual({ first: 33.3, each: 0, rest: 0, points: [33.3] })
+  expect(measuring.costs.amiga).toBe(list.costs.amiga)
+  expect(measuring.stock).toBe(list.stock)
+  expect(list.costs.grain.each).toBe(33.3) // the checkout's table is not changed
+  // What the unit is sent: a further instance adds 0 per mille, the first still its booked 33.3 (wake).
+  expect(frameCostTable({ grain: measuring.costs.grain }, null)).toEqual([{ module: frameCostTable({ grain: list.costs.grain }, null)[0].module, use: 0, wake: 333, rest: 0 }])
+  // Unbooked: the unit charges it by its descriptor, and its table is left alone.
+  expect(measuringCosts(list, 'syntiz')).toBeNull()
+  expect(measuringCosts(null, 'grain')).toBeNull()
 })
