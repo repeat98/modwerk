@@ -159,7 +159,7 @@
     {
       "label": "euclid",
       "moduleId": "euclid",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "key": "EUCLID",
       "author": "repeat98",
       "cpu": "54455",

@@ -2,7 +2,21 @@
 
 Version: 0.1.6-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
 
-## 0.1.6-experimental: rests while no slot uses it (prepared 20 November 2026, not built, not tested)
+## 0.1.6-experimental: one release, at rest on base 0.8.1 (25 November 2026)
+
+0.1.6 is now one release: the resting detours below (#1868) together with octabam's three DSP speed-ups (#2057, `filter.asm`), on main `75a8c5c69`. Packages were rebuilt in the pinned image (`build-modules-isolated.sh`, `modules:import --development`), and Euclid's and Tape Echo's standalone recipes re-pinned to the new `dsp-packages.json` and `filter.asm`. `octatrack:module-packages -- --check`: every package identical (Play Modes held, #764). Published package `27263940…`.
+
+- **At rest, on a unit** (MKII, OS 1.40C, development twin `493c9cc5` of base 0.8.1, project Dev17, `npm run device:price`, three readings of 8 s per state, 25 November 2026). The plain runtime build of this source was used (`module:dev --build-only`, `91af771d`, all three detours flagged resting).
+
+  | | at rest: frame / CPU | in use: frame / CPU / DSP (peak) |
+  | --- | --- | --- |
+  | 0.1.5 (published) | +1.1 / +0.7 | +3.7 / -0.3 / +4.8 (+6.0) |
+  | 0.1.6 | +0.0 / -0.1 | +3.9 / +4.2 / +5.7 (+5.9) |
+
+- **In use:** the DSP reading isn't lower despite the speed-ups (one run of three readings, peaks equal within 0.1); the cycle scan's -9.1 cycles a sample is the static figure. Not re-measured by ear.
+- Not run on this release: the instance curve, the test procedure, Part/project reload and power cycles, an MKI.
+
+## 0.1.6-experimental: rests while no slot uses it (prepared 20 November 2026, tested on 0.7.11 below)
 
 No code change. A `runtime.json` holding only `"rests"` marks its ColdFire detours `eu_frame_hook` (0x4000d562, every frame), `eu_start_hook` (0x4009c3d4) and `eu_resume_hook` (0x4009c4d4). On a base that judges
 effect modules (#1849, base 0.7.11, loader capability 2048) the base rests the module while no slot of the project,
