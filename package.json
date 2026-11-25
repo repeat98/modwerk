@@ -64,6 +64,7 @@
     "module:dev": "node scripts/module-dev.mjs",
     "module:doctor": "node scripts/module-doctor.mjs",
     "module:list": "node scripts/module-list.mjs",
+    "module:qualify": "node scripts/module-qualify.mjs",
     "fx:audit": "node scripts/fx-audit.mjs",
     "perf:audit": "node scripts/perf-audit.mjs",
     "stock:branches": "node scripts/stock-branches.mjs",
