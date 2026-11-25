@@ -1,0 +1,55 @@
+{
+  "module": "midiverb",
+  "version": "0.1.0-experimental",
+  "base": "base 0.8.1 (development twin 4c7eb79b of eb667962), MKII",
+  "scene": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C",
+  "seconds": 8,
+  "measuredAt": "2026-11-25T20:05:27.813Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "rest": 0,
+  "first": 0.5,
+  "each": 0,
+  "points": [
+    82.3,
+    81.6,
+    82.8,
+    82.8,
+    81.4
+  ],
+  "adds": [
+    -0.7,
+    0.5,
+    0.5,
+    -0.9
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 38,
+      "frame": 28.2,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 81.5,
+      "frame": 36,
+      "dropped": 0,
+      "stalls": 0
+    }
+  ],
+  "notes": []
+}
