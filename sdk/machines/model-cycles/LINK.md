@@ -65,7 +65,7 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `up_run` | 0x32 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
 | `mods` | 0x33 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
 
-The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. The developer MCP reads the same identity with `device_status` (`--elektron-midi`, [FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-development-link)) and names the matching image in `--elektron-images`. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
+The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. The developer MCP reads the same identity with `device_status` (`--elektron-midi`, [FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-link)) and names the matching image in `--elektron-images`. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
 The screen needs no command: stock answers Elektron's own screenshot request over USB.
 
@@ -89,7 +89,7 @@ mc_link.py remove NAME --seconds 5 [--keep]   # an empty package with NAME's id:
 ```
 
 The developer MCP does the same with `device_review`, `device_trial`, `device_keep` and `device_undo`
-([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-development-link)), through
+([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-link)), through
 [`mc-link.ts`](../../../src/engine/elektron/mc-link.ts)'s `mcUploadTransport` and the site's `UploadSession`.
 
 A module patches stock code at declared sites: [`tools/build_sites.py`](tools/build_sites.py) `--sites SITES.json` (around the loader's `build.py`) takes them in base.json's format (a `jsr`
