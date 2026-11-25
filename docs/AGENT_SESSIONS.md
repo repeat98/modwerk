@@ -26,6 +26,8 @@ When a task is done (`npm run pr:ready` says Ready, or the developer stops) and 
 - **always**: the developer said to share every session. Share it and say so in a line.
 - **never**: the developer said not to be asked. Don't offer it.
 
+A session that goes on after it was shared is shared again with `--new`: what the developer's earlier shares of it already hold stays out, so the owner gets only the rest, without working out `--skip` by hand.
+
 When the developer answers "always" or "never", save it with `npm run session -- prefer always|never` (in `~/.config/modwerk/session-sharing.json`). Never share without a yes or a standing "always". Ask once per session, never twice.
 
 ## What leaves the computer
