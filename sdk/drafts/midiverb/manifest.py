@@ -27,9 +27,9 @@ MODULE = Module(
     menu=MenuEntry(fx2_id=0x0a, donor_desc=0x400d58b8,   # DARK REV; the base picks the id at install (ids past 31 cannot pin)
                    abbr=b"MVRB", fullname=b"Midiverb", build_tag=False),
     params=(
-        # Stock's stepped tick widget (the CHORUS.TAPS one Tape Echo's SYNC draws with): the owner's choice,
-        # 25 Nov 2026. The builders give it only to five values or fewer; 24 is being tried on the unit.
-        Param(b"PROG", 0, len(_TABLE), True, Formatter.STEPPED, labels=tuple(p["label"] for p in _TABLE),
+        # The dial, not stock's stepped tick widget: that widget holds five positions, and on 25 Nov 2026 forcing it
+        # to 24 crashed the owner's unit (it read the labels as an address, vector 11 at PC 0x524b00a2, "RK").
+        Param(b"PROG", 0, len(_TABLE), True, Formatter.WIDE_STEPPED, labels=tuple(p["label"] for p in _TABLE),
               doc="Midiverb program: decay in seconds, size, tone; gated and reverse"),
         Param(b"LEVL", 64, 128, True, Formatter.PLAIN,
               doc="input level into the 12-bit converter: unity at 32, 64 is +6 dB"),
