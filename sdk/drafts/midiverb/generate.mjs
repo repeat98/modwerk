@@ -208,25 +208,31 @@ const MV1_NAMES = ['.2 SM BRT', '.2 SM WARM', '.2 MD BRT', '.3 SM BRT', '.3 SM W
   'REV 300', 'REV 400', 'REV 500', 'REV 600'];
 
 // The first build, before the base can load programs on demand: 24 Midiverb I
-// programs resident in the effect's own table (17 reverbs, 4 gated, 3 reverse).
-export const TRIAL = [0, 3, 6, 9, 12, 14, 17, 19, 22, 25, 27, 31, 35, 40, 43, 47, 49, 50, 53, 56, 58, 59, 61, 62];
+// programs resident in the effect's own table (16 reverbs, 4 gated, 4 reverse).
+// Each fits the base's one-slot cycle allowance (measured in dsp_host, at most
+// 390 executed instructions a sample); the small rooms (.2-1.2 s, 420-512) wait
+// for a faster engine.
+export const TRIAL = [11, 21, 20, 23, 19, 25, 32, 34, 33, 36, 40, 42, 45, 47, 48, 49, 50, 52, 54, 58, 59, 60, 61, 62];
 
-// One program as DSP words: its unit count, then the units. A run of k reads
-// is k then k ring offsets; every other operation is one word, bit 23 set, its
-// kind in bits 16..22 (the assembler has no backward branch, so the engine
-// walks the units in a DO loop).
-export const KIND = { st: 0x810000, ld: 0x820000, stn: 0x840000, in: 0x880000, outR: 0x980000, outL: 0xa80000,
-  stR: 0xb80000, stL: 0xc80000, stnR: 0xd80000, stnL: 0xe80000 };
+// One program as DSP words: units of [handler * 2][argument], ending with the
+// end unit. A run of k reads is [0][k] then k ring offsets; every other
+// operation is [handler * 2][ring offset], handlers in engine.asm's jump table
+// order. The P table keeps each program as its word count, then its words; the
+// engine copies them above the ring when PROG changes (256 words at most).
+export const HANDLER = ['run', 'st', 'ld', 'stn', 'in', 'outR', 'outL', 'stR', 'stL', 'stnR', 'stnL', 'end'];
+export const PROGRAM_WORDS = 256;
 export function encode(ops) {
-  const words = [0];
-  for (let i = 0; i < ops.length; words[0]++) {
+  const words = [];
+  for (let i = 0; i < ops.length;) {
     if (ops[i][0] === 'mac') {
       let j = i; while (j < ops.length && ops[j][0] === 'mac') j++;
-      words.push(j - i, ...ops.slice(i, j).map(([, a]) => a));
+      words.push(0, j - i, ...ops.slice(i, j).map(([, a]) => a));
       i = j;
-    } else { words.push(KIND[ops[i][0]] | ops[i][1]); i++; }
+    } else { words.push(2 * HANDLER.indexOf(ops[i][0]), ops[i][1]); i++; }
   }
-  return words;
+  words.push(2 * HANDLER.indexOf('end'), 0);
+  if (words.length > PROGRAM_WORDS) throw new Error(`a program of ${words.length} words passes the ${PROGRAM_WORDS}-word area`);
+  return [words.length, ...words];
 }
 
 function testSignal(n, seed = 1) {
@@ -262,7 +268,7 @@ export function check(programs, size, samples = 48000) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
-  const size = Number(arg('--size') ?? 15614);
+  const size = Number(arg('--size') ?? 15614); // 15,870 below Sidechain's window, less the program area
   const programs = {};
   for (const kind of Object.keys(ROMS)) {
     const p = arg(`--${kind.toLowerCase()}`);
@@ -282,10 +288,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (bad.length) { console.error('relocation changed untrimmed programs:', bad); process.exit(1); }
   console.log('untrimmed programs: bit-identical to the original machine');
   if (process.argv.includes('--write') && programs.MV1) {
-    const trial = TRIAL.map((i) => ({ bank: 'MV1', number: i + 1, label: MV1_NAMES[i],
+    const pick = process.argv.includes('--all') ? programs.MV1.map((_, i) => i) : TRIAL;
+    const trial = pick.map((i) => ({ bank: 'MV1', number: i + 1, label: MV1_NAMES[i],
       trimmed: relocate(programs.MV1[i], size).trimmed, words: encode(compile(programs.MV1[i], size)) }));
-    writeFileSync(OUT, '{"size": ' + size + ', "programs": [\n' +
+    writeFileSync(arg('--out') ?? OUT, '{"size": ' + size + ', "programs": [\n' +
       trial.map((t) => JSON.stringify(t)).join(',\n') + '\n]}\n');
-    console.log(`wrote ${OUT}: ${trial.length} programs, ${trial.reduce((n, t) => n + t.words.length, 0)} words`);
+    console.log(`wrote ${arg('--out') ?? OUT}: ${trial.length} programs, ${trial.reduce((n, t) => n + t.words.length, 0)} words`);
   }
 }

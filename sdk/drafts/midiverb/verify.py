@@ -85,33 +85,37 @@ def mixed(dry, wet, mix):
     return clamp(a >> 24)
 
 
+HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR", "stnL", "end"]
+
+
 def run(words, ring, p, acc, w_in, out):
     at = lambda off: (p + off) % RING  # noqa: E731
-    i = 1
-    for _ in range(words[0]):
-        w = words[i]; i += 1
-        if not w & 0x800000:
-            for off in words[i:i + w]:
+    i = 1  # words[0] is the count the engine copies
+    while True:
+        kind, arg = HANDLERS[words[i] // 2], words[i + 1]
+        i += 2
+        if kind == "end":
+            return wrap(acc), (p + 1) % RING
+        if kind == "run":
+            for off in words[i:i + arg]:
                 acc += ring[at(off)]
-            i += w
+            i += arg
             continue
-        kind, off = (w >> 16) & 0x7F, w & 0x3FFF
         x = wrap(acc)
-        if kind == 0x01:
-            ring[at(off)] = half(x); acc = x + ring[at(off)]
-        elif kind == 0x02:
-            acc = ring[at(off)]
-        elif kind == 0x04:
-            ring[at(off)] = half(-x - 0x100); acc = ring[at(off)]
-        elif kind == 0x08:
-            ring[at(off)] = w_in
-        elif kind in (0x18, 0x28):
-            out[0 if kind == 0x28 else 1] = clamp(ring[at(off)] * 16)
+        if kind == "st":
+            ring[at(arg)] = half(x); acc = x + ring[at(arg)]
+        elif kind == "ld":
+            acc = ring[at(arg)]
+        elif kind == "stn":
+            ring[at(arg)] = half(-x - 0x100); acc = ring[at(arg)]
+        elif kind == "in":
+            ring[at(arg)] = w_in
+        elif kind in ("outR", "outL"):
+            out[0 if kind == "outL" else 1] = clamp(ring[at(arg)] * 16)
         else:
-            v = x if kind in (0x38, 0x48) else -x - 0x100
-            ring[at(off)] = half(v)
-            out[0 if kind in (0x48, 0x68) else 1] = clamp(v * 8)
-    return wrap(acc), (p + 1) % RING
+            v = x if kind in ("stR", "stL") else -x - 0x100
+            ring[at(arg)] = half(v)
+            out[0 if kind.endswith("L") else 1] = clamp(v * 8)
 
 
 def main():

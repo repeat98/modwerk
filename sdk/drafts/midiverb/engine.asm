@@ -8,17 +8,16 @@
 ;
 ; Half rate: a program sample every second frame (22.05 kHz), its input the
 ; average of the last two frames' L and R, its output interpolated linearly.
-; Own 16K allocator buffer as a 15,870-word ring (m = $3dfd), as Mini Verb: the
-; slot's last $202 words, Sidechain's key window on T3 and T7, stay untouched.
+; Own 16K allocator buffer: a 15,614-word ring (m = $3cfd), then the selected
+; program's words at +$3cfe..+$3dfd, copied from the P table when PROG changes.
+; The slot's last $202 words, Sidechain's key window on T3 and T7, stay untouched.
 ;
 ; State, r7+: 00 base  01 ring pointer  02 clear counter  03 phase
 ; 04 acc  05 first frame's (L+R)/2  06/07 previous out L/R  08/09 current L/R
 ; 0a program  0b/0c this run's out L/R  0d mix  0e level  0f half(input)
-; 10 program start (P)
-; Table words: a run of k reads is k then k offsets; otherwise bit 23 set, the
-; kind in bits 16..22 ($01 st, $02 ld, $04 stn, $08 in, $18 outR, $28 outL,
-; $38 stR, $48 stL, $58 stnR, $68 stnL) and the ring offset in 0..13. Each
-; program starts with its unit count: a run is one unit.
+; Program words: units [handler*2][argument]; a run of reads is [0][k] then k
+; ring offsets; the handlers are the jump table's order below. The P table:
+; an index of program starts, each program its word count, then its words.
 
 init:
         move    #>$ffffff,m4
@@ -37,20 +36,20 @@ mvqZERO:
         rts
 
 proc:
-; Bounded clearing, as Mini Verb: 128 calls, the last 124 clear 128 words each
-; under the ring's modulus. The audio passes untouched meanwhile.
+; Bounded clearing: 128 calls, the last 122 clear 128 words each under the
+; ring's modulus (the program area above it is kept). Audio passes untouched.
         move    x:(r7+$02),a
         tst     a
         beq     mvqREDY
         sub     #>$1,a
         move    a,x:(r7+$02)
-        cmp     #>$00007c,a
+        cmp     #>$00007a,a
         bge     mvqCLRX
         asl     #$7,a,a
         move    x:(r7+$00),x0
         add     x0,a
         move    a,r4
-        move    #>$3dfd,m4
+        move    #>$3cfd,m4
         clr     a
         do      #128,>mvqCLR_
         move    a,y:(r4)+
@@ -61,8 +60,9 @@ mvqCLRX:
         rts
 
 mvqREDY:
-; PROG: a new program clears the ring first, from silence.
+; PROG: a new program is copied into the buffer and the ring cleared first.
         move    #>$ffffff,m4
+        move    #>$ffffff,m1
         move    x:(r6),a
         asr     #$10,a,a
         move    a1,x0                   ; the knob's index, its fraction dropped
@@ -75,6 +75,21 @@ mvqPRGA:
         cmp     x0,a
         beq     mvqPRGB
         move    a,x:(r7+$0a)
+        move    #>$fab1e0,r4
+        move    a,n4
+        move    #>$3cfe,a
+        move    x:(r7+$00),x0
+        add     x0,a
+        lua     (r4+n4),r2
+        move    a,r3
+        move    p:(r2),n4
+        move    #>$ffffff,m3
+        move    (r4)+n4
+        move    p:(r4)+,n2              ; the program's word count
+        do      n2,>mvqCOPY
+        move    p:(r4)+,x0
+        move    x0,y:(r3)+
+mvqCOPY:
         clr     a
         move    a,x:(r7+$03)
         move    a,x:(r7+$04)
@@ -88,16 +103,6 @@ mvqPRGA:
         move    a,x:(r7+$02)
         rts
 mvqPRGB:
-; The program's first word: the table's base plus its index entry.
-        move    #>$fab1e0,r4
-        move    a,n4
-        nop
-        lua     (r4+n4),r2
-        nop
-        move    p:(r2),x0
-        move    r4,a
-        add     x0,a
-        move    a,x:(r7+$10)
 ; MIX (F): 127 is full wet. LEVL (B): k/32, unity at 32.
         move    x:(r6+$5),a
         move    #>$7f0000,x0
@@ -109,8 +114,9 @@ mvqMIXA:
         move    x:(r6+$1),a
         move    a,x:(r7+$0e)
 
-        move    #>$3dfd,m5
+        move    #>$3cfd,m5
         move    x:(r7+$01),r5
+        move    #>$000100,y0            ; one 16-bit LSB, left-aligned
         move    #>$1,n0
         do      n7,>mvqSMPE
         move    x:(r7+$03),a
@@ -153,60 +159,48 @@ mvqFRMB:
         move    x1,b
         asr     #$3,b,b
         and     #>$fffe00,b             ; 13 bits, the 12-bit converter's clear LSB
-        move    #>$000100,y0            ; one 16-bit LSB, left-aligned
         asr     b
         and     #>$ffff00,b
         bpl     mvqHIN_
         add     y0,b
 mvqHIN_:
         move    b,x:(r7+$0f)
-        move    x:(r7+$04),a
-        move    x:(r7+$10),r4
-        nop
-        move    p:(r4)+,n3              ; the program's unit count
-        nop
-        do      n3,>mvqUDNE
-        move    p:(r4)+,b
-        tst     b
-        bmi     mvqONE_
-        move    b1,n2                   ; a run of reads: its length, then its offsets
-        do      n2,>mvqRUNE
-        move    p:(r4)+,n5
-        nop
-        move    y:(r5+n5),b
-        add     b,a
-mvqRUNE:
-        bra     mvqUMRG
-mvqONE_:
-        move    b1,x0
-        and     #>$003fff,b
-        move    b1,n5
-        move    x0,b
-        and     #>$7f0000,b
-        move    b1,x1                   ; and leaves b2 stale: reload clean
-        move    x1,b
-        cmp     #>$010000,b
-        beq     mvqST__
-        cmp     #>$020000,b
-        beq     mvqLD__
-        cmp     #>$040000,b
-        beq     mvqSTN_
-        cmp     #>$080000,b
-        beq     mvqIN__
-        cmp     #>$180000,b
-        beq     mvqOUTR
-        cmp     #>$280000,b
-        beq     mvqOUTL
-        cmp     #>$380000,b
-        beq     mvqSTR_
-        cmp     #>$480000,b
-        beq     mvqSTL_
-        cmp     #>$580000,b
-        beq     mvqSNR_
-        cmp     #>$680000,b
-        beq     mvqSNL_
-        bra     mvqUMRG
+        move    #>$3cfe,a
+        move    x:(r7+$00),x0
+        add     x0,a
+        move    a,r4                    ; the program's words
+        move    #>mvqJTAB,r1
+        move    x:(r7+$04),a            ; acc
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 
+mvqJTAB:
+        bra     >mvqRUN_
+        bra     >mvqST__
+        bra     >mvqLD__
+        bra     >mvqSTN_
+        bra     >mvqIN__
+        bra     >mvqOUTR
+        bra     >mvqOUTL
+        bra     >mvqSTR_
+        bra     >mvqSTL_
+        bra     >mvqSNR_
+        bra     >mvqSNL_
+        bra     >mvqEND_
+
+; A run of reads, n5 of them: acc += word. The last parallel fetch takes the
+; next unit's handler word.
+mvqRUN_:
+        move    n5,n2
+        move    y:(r4)+,n5
+        do      n2,>mvqRUNE
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqRUNE:
+        move    n5,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 ; word = half(acc), acc += word
 mvqST__:
         move    a1,x1
@@ -218,11 +212,14 @@ mvqST__:
 mvqH1__:
         move    b,y:(r5+n5)
         move    x1,a
-        add     b,a
-        bra     mvqUMRG
+        add     b,a             y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 mvqLD__:
         move    y:(r5+n5),a
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 ; word = half(~acc), acc = word
 mvqSTN_:
         move    a1,x1
@@ -236,22 +233,30 @@ mvqSTN_:
 mvqH2__:
         move    b,y:(r5+n5)
         move    b,a
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 mvqIN__:
         move    x:(r7+$0f),b
         move    b,y:(r5+n5)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 ; An output tap reads a whole word: twice the stored half, then 16-bit << 3.
 mvqOUTR:
         move    y:(r5+n5),b
         asl     #$4,b,b
         move    b,x:(r7+$0c)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 mvqOUTL:
         move    y:(r5+n5),b
         asl     #$4,b,b
         move    b,x:(r7+$0b)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 ; A store at an output step: the stored value goes out, acc is kept.
 mvqSTR_:
         move    a1,x1
@@ -260,7 +265,9 @@ mvqSTR_:
         move    x1,b
         asl     #$3,b,b
         move    b,x:(r7+$0c)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 mvqSTL_:
         move    a1,x1
         move    x1,b
@@ -268,7 +275,9 @@ mvqSTL_:
         move    x1,b
         asl     #$3,b,b
         move    b,x:(r7+$0b)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 mvqSNR_:
         move    a1,x1
         move    x1,b
@@ -279,7 +288,9 @@ mvqSNR_:
         move    x1,b
         asl     #$3,b,b
         move    b,x:(r7+$0c)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 mvqSNL_:
         move    a1,x1
         move    x1,b
@@ -290,7 +301,9 @@ mvqSNL_:
         move    x1,b
         asl     #$3,b,b
         move    b,x:(r7+$0b)
-        bra     mvqUMRG
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
 ; b = half(b), stored at the step's word.
 mvqHST_:
         asr     b
@@ -300,10 +313,6 @@ mvqHST_:
 mvqH3__:
         move    b,y:(r5+n5)
         rts
-mvqUMRG:
-        nop
-        nop
-mvqUDNE:
 
 mvqEND_:
         move    a1,x1                   ; acc carries into the next sample, wrapped
