@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { existsSync } from 'node:fs'
-import { readFile, writeFile, mkdir, rename, lstat, rm } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { readFile, writeFile, mkdir, rename, lstat, rm, stat } from 'node:fs/promises'
+import { resolve, join, isAbsolute } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { createInterface } from 'node:readline'
@@ -144,14 +144,38 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   try { await takeLease(lease, dependencies.lease) } catch (error) { activeWorkspace = false; throw error }
   try {
   await writeFile(join(lease, 'owner.json'), JSON.stringify({ pid: process.pid, started: new Date().toISOString() }), { mode: 0o600, flag: 'wx' })
-  let frontend = injected
-  if (!frontend) {
-    const bridge = join(ROOT, 'scripts/frontend-mcp-bridge.ts')
-    const bundled = await build({ root, configFile: false, logLevel: 'silent', plugins: [{ name: 'mcp-candidate-source', resolveId(id, importer) { if (importer === bridge && id.startsWith('../src/')) return resolve(root, id.slice(3)) } }], define: { 'import.meta.env.VITE_COMMUNITY_API_URL': JSON.stringify(api.href), 'import.meta.env.DEV': 'false', 'import.meta.env.BASE_URL': JSON.stringify('/') }, build: { ssr: bridge, write: false, minify: false, sourcemap: false } })
-    const source = bundled.output.find(entry => entry.type === 'chunk' && entry.isEntry)?.code
+  // The site bundle and the package manifest, with the files they were built from. A branch switch or a base regeneration
+  // changes those files, and a server that kept its first bundle refused the new base until the developer reconnected
+  // (/mcp). So each tool call compares them first and rebuilds what changed (refreshFrontend below).
+  const bridge = join(ROOT, 'scripts/frontend-mcp-bridge.ts')
+  const bundle = dependencies.bundle ?? (async entry => {
+    const bundled = await build({ root, configFile: false, logLevel: 'silent', plugins: [{ name: 'mcp-candidate-source', resolveId(id, importer) { if (importer === bridge && id.startsWith('../src/')) return resolve(root, id.slice(3)) } }], define: { 'import.meta.env.VITE_COMMUNITY_API_URL': JSON.stringify(api.href), 'import.meta.env.DEV': 'false', 'import.meta.env.BASE_URL': JSON.stringify('/') }, build: { ssr: entry, write: false, minify: false, sourcemap: false } })
+    const chunks = bundled.output.filter(item => item.type === 'chunk'), source = chunks.find(item => item.isEntry)?.code
     if (!source) throw new Error('Could not load the frontend testing bridge.')
-    frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
+    return { module: await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64')), files: chunks.flatMap(item => item.moduleIds).filter(id => isAbsolute(id) && existsSync(id)) }
+  })
+  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts'), packagesFile = join(root, 'src/engine/assets/octatrack-module-packages.json')
+  // Size and modification time of each file. A file written while the bundle was being built (a regeneration still running)
+  // leaves the stamp empty, so the next call builds again instead of keeping a bundle of half-written inputs. File times
+  // run on a coarser clock than Date.now() (and some file systems keep 2 s), so the build counts from 2 s before it began.
+  const stamp = async (files, since = Infinity) => {
+    const seen = await Promise.all(files.map(file => stat(file).then(info => ({ line: file + ' ' + info.size + ' ' + info.mtimeMs, late: info.mtimeMs >= since }), () => ({ line: file + ' gone', late: true }))))
+    return seen.some(item => item.late) ? '' : seen.map(item => item.line).join('\n')
   }
+  let frontend, preparedModules, catalogue, built = { files: [], stamp: '' }
+  async function loadFrontend() {
+    const started = (dependencies.now ?? Date.now)() - 2000
+    const site = injected ? { module: injected, files: [] } : await bundle(bridge)
+    // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
+    const published = !options.preparedModules && !injected && existsSync(publication) ? await bundle(publication) : null
+    const nextManifest = published ? published.module.publishedPackages : JSON.parse(await readFile(packagesFile, 'utf8'))
+    const prepared = options.preparedModules && await loadPreparedModules(options.preparedModules, nextManifest, site.module)
+    const files = injected ? [] : [...new Set([...site.files, ...published ? published.files : [packagesFile], ...options.preparedModules ? [options.preparedModules] : []])]
+    const nextCatalogue = prepared?.catalogue ?? site.module.createRuntimeCatalogue(nextManifest)
+    frontend = site.module; preparedModules = prepared; catalogue = nextCatalogue
+    built = { files, stamp: await stamp(files, started) }
+  }
+  await loadFrontend()
   if (!Array.isArray(sets) || sets.length > 100) throw new Error('The local set file is invalid.')
   sets = sets.map(frontend.validateConfiguration)
   const save = async values => {
@@ -159,20 +183,14 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     try { await writeFile(temporary, JSON.stringify(values, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); sets = values }
     finally { await rm(temporary, { force: true }) }
   }
-  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts')
-  // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
-  const manifest = !options.preparedModules && !injected && existsSync(publication)
-    ? (await import(pathToFileURL(publication).href)).publishedPackages
-    : JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
-  const preparedModules = options.preparedModules && await loadPreparedModules(options.preparedModules, manifest, frontend)
-  const catalogue = preparedModules?.catalogue ?? frontend.createRuntimeCatalogue(manifest)
-  const load = preparedModules?.load ?? (async entry => {
+  const load = entry => preparedModules?.load ? preparedModules.load(entry) : loadSitePackage(entry)
+  const loadSitePackage = async entry => {
     if (!/^octatrack-modules\/[a-z0-9-]+\/[a-zA-Z0-9.-]+\.mwrm$/.test(entry.path) &&
         !(/^[a-f0-9]{64}$/.test(entry.sha256) && entry.path === 'octatrack-base-packages/' + entry.sha256 + '.mwrm')) throw new Error('Unexpected module asset path.')
     const bytes = new Uint8Array(await readFile(join(root, 'public', entry.path)))
     if (bytes.length !== entry.bytes || hash(bytes) !== entry.sha256) throw new Error('The local site package differs from its manifest.')
     return bytes
-  })
+  }
   const storage = () => { const map = new Map(); return { getItem: key => map.get(key) ?? null, setItem: (key, value) => map.set(key, value), removeItem: key => map.delete(key) } }
   globalThis.localStorage = storage(); globalThis.sessionStorage = storage()
   if (credentials) {
@@ -533,6 +551,15 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!keep && !frontend.sameModules(result.inventory.moduleIds, completed.before.inventory.moduleIds)) throw new Error('Undo did not restore the reviewed inventory.')
     return { kept: keep, completed: true, ...result }
   }
+  // Before each tool call: rebuild the bundle when a file it was built from changed. An open trial keeps the bundle it
+  // started with until Keep or Undo; the link and reviews belong to the old bundle, so they are dropped.
+  async function refreshFrontend() {
+    if (trial || await stamp(built.files) === built.stamp) return
+    dropLink(); closeZoom()
+    try { await loadFrontend() }
+    catch (error) { throw new Error('The checkout changed since this server bundled the site (a branch switch or base regeneration), and rebuilding failed: ' + error.message + ' Once the checkout builds again, call the tool again; nothing was sent.', { cause: error }) }
+    console.error('Rebuilt the site bundle: the checkout changed since the last tool call.')
+  }
   let running = false
   return {
     tools: TOOLS,
@@ -548,7 +575,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       if (closed) throw new Error('The MCP workspace is closed.')
       if (running) throw new Error('Another frontend/device operation is running.')
       running = true
-      try { return await handlers[name](args) } finally { running = false; releaseIdleLink() }
+      try { if (!name.startsWith('board_')) await refreshFrontend(); return await handlers[name](args) } finally { running = false; releaseIdleLink() }
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
