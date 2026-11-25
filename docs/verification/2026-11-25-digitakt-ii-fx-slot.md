@@ -10,6 +10,7 @@ Effect modules (a delay, a reverb, a drive, a chorus) have to process audio on t
 
 - **Track inserts.** An effect works on the tracks the musician lights. It runs after each track's own sound (machine, filter, amp, pan) and before the stock delay, reverb and chorus sends, so the stock sends hear the effected sound. The stock sends and the master compressor stay as they are.
 - **One FX page.** The base adds one page to the Mixer, after COMP, listing the installed effects. On it, the musician chooses an effect, lights its tracks with the TRIG keys, and sets up to eight values with knobs A-H. Effects need no screen code of their own. Sidechain Comp keeps its SC and ENV pages, since its sources and destinations need them.
+- **Mixer room.** The FX page is the base's own page: it takes none of `core_mixer_pages`' four entries. The base gives it page id 37, past the modules' 33-36. `dt2_mixer_page_list` puts it after COMP (`DT2_MIXER_PAGE_CAPACITY` grows from 9 to 10), and the descriptor and draw lookups answer it before the module table. Only it appears while `core_fx` holds an effect without `DT2_FX_OWN_PAGE`. With Sidechain Comp's two pages, two entries stay free for other modules, and an effect on the shared page needs none. The stock OS has only been shown nine Mixer pages (five stock and four module), so the emulator proof checks that ten navigate and draw.
 - **Saved with the project.** The FX page's settings (each effect's tracks and values) are saved by Save Project and come back on load and after a power cycle. They take no kit-data room. An effect with no track lit is off and costs no sound-chip time, so installing one changes nothing until it is switched on.
 - **Fixed order.** Tone and drive first, then time effects (delay, reverb, chorus), then dynamics. Sidechain Comp ducks the whole effected sound and still listens to its untouched trigger tracks.
 
@@ -51,9 +52,11 @@ Reader: the base's FX page, its project-archive block and its settings line, in 
 
 `void core_fx_set(unsigned int slot, unsigned int index, uint32_t value)`, from the UI task. Index 0-7 is a value. `DT2_FX_TRACKS` (255) is the track mask. The FX page calls it for every effect it shows. An effect with its own page calls it for itself; its slot is its position in `core_fx`, which the base gives it through `core_fx_slot(const struct dt2_fx *)`.
 
-### The settings line
+### The settings line, and what it leaves for `ev_audio_frame`
 
-The base takes the transfer tail's words 0-15 for a shared mailbox. Word 0 is a magic, word 1 a sequence number, then up to seven `{slot << 8 | index, value}` pairs per transfer. When nothing has changed, it sends the next settings in turn, so the sound chip catches up after a load or a restart. The base's frame receiver on the sound chip writes each pair into that slot's settings block. Sidechain Comp's writer (words 0-10, magic `0x53430004`) moves to `core_fx_set`. Words 16-66 stay the machine wire. That wire is now sent while any machine or effect is registered, so effects get the tempo and each track's step (`DT2_BASE_SHARC.stepSamples`).
+The transfer to the sound chip has room for module words only in its tail. Words 0-15 are free today (Sidechain Comp writes 0-10), and words 16-66 are the base's machine wire. Past word 66 the tail is not free: two words a track there garbled every track's sound ([MACHINES.md](../../sdk/machines/digitakt-ii/elekloader/modwerk/MACHINES.md#the-machine-view-from-the-sound-chip-back-to-the-screen-19-november-2026)). Sixteen words cannot be shared out by reservation among eight effects, so the base takes words 0-15 for one mailbox. Word 0 is a magic and word 1 a sequence number, followed by up to seven `{channel << 8 | index, value}` pairs per transfer. That is about 10,000 values a second at 1,500 transfers a second. When nothing has changed, the base sends the next settings in turn, so the sound chip catches up after a load or a restart. Its frame receiver on the sound chip writes each pair into that channel's settings block. Channels 0-7 are the `core_fx` slots, written through `core_fx_set`. Channels 8-15 are kept for machine players and defined when a player needs one. Words 16-66 stay the machine wire, now sent while any machine or effect is registered, so effects get the tempo and each track's step (`DT2_BASE_SHARC.stepSamples`).
+
+So no tail word is left for a subscriber to reserve, and this change narrows `ev_audio_frame` (event 10) to match. A subscriber may read its arguments and update its own state, and it writes no word of the transfer. A module sends data to the sound chip only through the mailbox. The interface entry's purpose and the machine guide's row say so. The preflight refuses a module's mod file that names the transfer's queue pointer (`0x400cd48c`), as it refuses the raw +Drive write, so a module cannot reach the tail even by address. Today only Sidechain Comp writes tail words (unreleased, it moves to `core_fx_set` here). No library module subscribes to event 10, so nothing released changes.
 
 ### Sound-chip slots
 
@@ -67,7 +70,20 @@ Each call has `I4` at that slot's context record: its track mask, its eight valu
 
 ### Cost and memory
 
-A block is 666,667 sound-chip instructions in the emulator, and stock with one note uses about 210,000. A package declares its worst case in instructions per block, all sixteen tracks lit. The builder refuses a set whose sum passes the slot budget, which starts at 160,000 a block (a quarter). A new effect aims for the stock reverb's cost ([effects](../module-guides/effects.md#plan-the-dsp-budget-first)). The budget is set again once a unit cycle count exists. Free L2 is shared with machine players (Granula and Morpha hold ranges above `0x200d0000`). A delay longer than about half a second needs external memory, which is a later base proposal (a shared delay-memory pool), not part of this one.
+A block is 32 samples, 1,500 blocks a second, with 666,667 cycles of the 1 GHz sound chip. Stock's busy instructions per block, from the coupled emulator (digikit `sharc-live`, stock OS 1.17 and its stock sound chip, card-ready snapshot of the sidechain test card, panel scripted, 25 November 2026):
+
+| Stock scenario | Busy instructions per block (min / median / max) |
+| --- | --- |
+| One note on T1 | 1,024 / 208,896 / 212,992 |
+| All sixteen TRIG keys pressed at once | 208,896 / 209,920 / 321,536 |
+| The same, with T1's FX knobs A-H turned up first | 208,896 / 210,944 / 324,608 |
+| The same, with every track's FX knobs A-H turned up first | 208,896 / 221,184 / **342,016** |
+
+Every track sounded (peak 0.69), and the effect tails ran longer with the knobs up. No block was missed, and the sound chip never ran out of idle time. The send effects and the master compressor appear to run in every block whatever their settings: turning the knobs up added at most about 20,000. The master compressor ran at the test project's settings. The emulator's sequencer plays only its first step, so a running pattern was not measured. The knobs took four encoder events each, not their full range. A busier figure on a unit would lower the budget below.
+
+Digikit's cycle model (its `devices/cycle-factors.json`, used here as research, not code) puts the Digitakt II sound chip's real cycles at 1.13 (nominal) to 1.41 (high bound) times the emulator's busy instructions. Stock at its busiest is then 58-72% of the block. The slot budget is what keeps the busiest case under 85% at the high bound: 0.85 × 666,667 / 1.41 − 342,016 ≈ **60,000 busy instructions a block** for all effects together, about 19% at the nominal factor. A quarter of the block (160,000), the first draft's figure, would pass the block at the high bound, so it is dropped.
+
+A package declares its worst case in instructions per block, all sixteen tracks lit. The builder refuses a set whose effects' sum passes 60,000. Added machine players also take time in the same block (Granula up to about 17,000 a voice, where a stock SAMPLE voice takes about 3,600). Whether they share this budget or get one of their own is open for the owner. A new effect aims for the stock reverb's cost ([effects](../module-guides/effects.md#plan-the-dsp-budget-first)). Sidechain Comp's 9,060 fits. The budget is set again from a cycle count on a unit, with stock at its busiest and the slot full, before the base ships. Free L2 is shared with machine players (Granula and Morpha hold ranges above `0x200d0000`). A delay longer than about half a second needs external memory, which is a later base proposal (a shared delay-memory pool), not part of this one.
 
 ### Saved settings
 
@@ -85,5 +101,5 @@ Only Sidechain Comp (`digitakt-ii/dt2-sidechain`, the developer's own module, no
 ## Acceptance before release
 
 1. Builder tests with the owner's OS (`MODWERK_DT2_STOCK`): no effect leaves section 7 stock. Two test effects build through the same base code bytes, with only slots and records differing. A set over the budget, a ninth effect, or code outside a package's own allocation is refused.
-2. Emulator, coupled ColdFire and sound chip, generated 220 Hz tone on T1 as in the earlier records: the dispatcher with no track lit gives PCM byte-identical to stock. A test effect halving T1 gives -6.02 dB on T1 only. Sidechain Comp through the slot matches its 18 November results. The FX page draws, takes TRIG and knob input, and survives a project save and reload.
+2. Emulator, coupled ColdFire and sound chip, generated 220 Hz tone on T1 as in the earlier records: the dispatcher with no track lit gives PCM byte-identical to stock. A test effect halving T1 gives -6.02 dB on T1 only. Sidechain Comp through the slot matches its 18 November results. The FX page draws, takes TRIG and knob input, and survives a project save and reload. Ten Mixer pages (stock, FX and four module pages) navigate both ways and draw.
 3. Unit, OS 1.17, exact image named by SHA-256: boot and playback with nothing lit, the test effect on one track and not another, Sidechain Comp's existing checks, settings after Save Project, reload and a power cycle, and a cycle count with all slots busy.
