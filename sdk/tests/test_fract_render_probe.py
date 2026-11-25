@@ -55,7 +55,7 @@ class RenderProbeBuildGuard(unittest.TestCase):
                                'mw_frame_max': ['.bss', 14], 'mw_frame_share': ['.run', 18],
                                'mw_frame_sheds': ['.bss', 22]}}
         # Collection tables follow .run; BSS starts at the next 2048 boundary.
-        linked = {'link': {'layout': {'ddr': [0x40000000, 0x40001030],
+        linked = {'link': {'layout': {'ddr': [0x3fffffe0, 0x40001030],
                                       'bss': [0x40001030, 0x40001900]}},
                   '_map': {name: (0x40000000 if section == '.run' else 0x40001800) + offset
                            for name, (section, offset) in package['symbols'].items()}}

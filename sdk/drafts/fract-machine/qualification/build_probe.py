@@ -42,7 +42,12 @@ def checked_baseline(args):
 def counter_addresses(package, origin, linked):
     """Use the stock linker's real layout, including collections and BSS padding."""
     layout, mapping = linked['link']['layout'], linked['_map']
-    if layout['ddr'][0] != origin:
+    run_align = package['sections']['.run'].get('align', 4)
+    if (type(run_align) is not int or not 1 <= run_align <= 4096
+            or run_align & (run_align - 1)):
+        raise ValueError('Invalid measurement section alignment: .run')
+    run_align = max(4, run_align)
+    if (layout['ddr'][0] + run_align - 1) & -run_align != origin:
         raise ValueError('Linked base runtime origin differs from the normal package')
     names = {'FRAMES': 'mw_frame_count', 'IDLE': 'modwerk_idle_counts',
              'FRAME_MAX': 'mw_frame_max', 'SHARE': 'mw_frame_share', 'SHEDS': 'mw_frame_sheds'}
