@@ -6,7 +6,6 @@ development bases only (`npm run machine:base -- digitone-ii --dev`, base.json's
 
 ```sh
 python3 sdk/machines/digitone-ii/tools/dn2_link.py ident
-python3 sdk/machines/digitone-ii/tools/dn2_link.py mem 0x47f00000 64
 python3 sdk/machines/digitone-ii/tools/dn2_link.py screen --png screen.png
 python3 sdk/machines/digitone-ii/tools/dn2_link.py press PLAY      # keys: FUNC PLAY STOP TRIG1-16, or an id
 python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-H, LEVEL
@@ -14,25 +13,37 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused, RAM boot status and image, the boot record's address, modules live, the address of the modules' test value |
+| `ident` | 0x01 | the link's own counters: link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused, RAM boot status and image, the boot record's address, modules live, the modules' test value (the value, not its address) |
 | `disarm` | 0x02 | turns the arm off and lets go of every key the link holds; a release the UI queue cannot take yet follows from the UI tick |
 | `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
 | `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
 | `release` | 0x12 | armed: lets go of every key the link holds |
-| `diag` | 0x22 | the diagnostics log's address and size, frame interrupts and UI ticks so far |
+| `screen OFF` | 0x20 | OFF, the copy's number, then 128 bytes of the frame on the screen from OFF (0, 128 … 896) |
+| `diag` | 0x22 | the diagnostics log's size, frame interrupts and UI ticks so far (and where the log is, for reference) |
 | `freeze N` | 0x23 | armed: the next UI tick stands still N frames (at most 15 s), to test FREEZE logging |
 | `ramboot ULEN UCRC CLEN CCRC` | 0x14 | armed: YES at UPGRADE OS NOW?, and the staged image boots from RAM instead of being flashed (below) |
-| `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `log OFF` | 0x24 | OFF, the log's seq, then up to 128 bytes of the diagnostics log from OFF (0, 128 …; the last part shorter) |
+| `bootdiag` | 0x25 | the RAM boot gate's 15 words (what it found at the last start) and the two marks of the way to the reset |
 | `upload FRAME` | 0x30 | armed: one frame of the runtime loader's upload controller, 7-bit packed; the reply holds its response, packed ([LOADER.md](LOADER.md)) |
 
-`screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
-so a draw between its reads can tear a frame. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
+**The unit chooses what each request returns.** No request names an address, so a USB client reads the link's counters
+the screen and the diagnostics log, posts keys and turns while armed, and reaches nothing else of the instrument's
+state. Every other
+command, the earlier `mem` (0x21) included, is refused with status 2 and nothing but the status.
+
+`screen 0` copies the frame on the screen and sends its first part; `screen 128` to `screen 896` send the rest of that
+copy, each with the copy's number, so the eight parts are one frame even if stock draws in between, and the host checks
+the number. A part before any `screen 0`, an offset past the frame or between parts, or a frame pointer that does not
+lie wholly in DDR is refused with status 4. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
-Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES), 7 `ramboot` found no UPGRADE OS NOW? waiting for the upload it describes (container length) and pressed nothing. USB only: a link message from DIN is never acted on.
+Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES), 7 `ramboot` found no UPGRADE OS NOW? waiting for the upload it describes (container length and CRC32) and pressed nothing. A press or turn the link posted before the upload completed, still in stock's queue when the prompt opens, is taken at `ev_key`/`ev_enc` before stock sees it and counted as refused; the link's releases and a person's YES and NO still reach stock. USB only: a link message from DIN is never acted on.
 
-`ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
+`sdk/tests/dn2_link_host.c` compiles `link.c` for the host and checks every request and refusal (`test_dn2_link.py`
+runs it). `ident`, the first version's `mem` and its out-of-range refusal answered on a unit over USB
+([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)); this version's `screen` has
+not run on a unit yet.
 
 ## Where it runs (OS 1.12)
 
@@ -55,6 +66,9 @@ Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at t
   while the frame interrupt goes on (1,500 a second, measured), each with the last 16 keys, and a load window every
   five minutes with the longest run of frames without a tick. No meters, machines or tempo yet, and the log lives in
   .bss, so it starts empty at every start ([record](../../../docs/verification/2026-11-19-digitone-ii-diagnostics-on-a-unit.md)).
+  `log OFF` sends it in parts the unit reads itself; every part carries the log's `seq`. `dn2_link.py diag --save F`
+  and the site's `readLog` read part 0, the rest, then part 0 again, and keep the capture only when the header and
+  the `seq` stayed the same (no record was written in between), reading again up to three times.
 - **Not yet.** The Rytm link's remote YES for a flash (on purpose: only a person's YES writes the flash); the
   diagnostics' upload from the page.
 
@@ -66,8 +80,9 @@ MKII link's RAM boot ([its LINK.md](../analog-rytm-mkii/LINK.md#ram-boot)), at O
 
 1. The host uploads the image with stock's OS upgrade, then sends `ramboot` with the unpacked MAIN OS's length and
    CRC32 and the container's (the Rytm link's `ramboot_args`). The base presses YES and sets a flag, but only while
-   UPGRADE OS NOW? waits for that upload (stock's upload buffer complete, its struct the container's length);
-   otherwise it answers status 7 and leaves the panel alone.
+   UPGRADE OS NOW? waits for that upload: stock's upload buffer complete, its struct the container's length, and the
+   staged container's CRC32 the one the host sent (read in the UI task, a nibble table at a time, before the YES), so
+   another image of the same size is never confirmed. Otherwise it answers status 7 and leaves the panel alone.
 2. Stock's upgrade job validates the upload and saves the working state. Where it calls the erase-and-write routine
    (0x4010921c -> 0x40139104), the base looks at the flag: clear, stock's routine runs. Set, it waits and drains as
    stock does, writes the data cache's dirty lines out, switches the data cache off and, if the staged upload has the
@@ -85,8 +100,8 @@ The CRCs stand guard: a copy that did not survive boots the flashed OS. The same
 same reset and the same cache settings on OS 1.12.
 
 Status in `ident` and `bootdiag`: 0 the flashed OS; 1 booted from RAM; 2 a mailbox without a software reset; 3 check
-word; 4 lengths; 5 the copy's CRC; 6 no MAIN OS section; 8 failed after the unpack. `bootdiag` reads what the gate
-found (the mailbox, the staged struct's first words, the marks of the way to the reset, RSR) from 0x47feffbc.
+word; 4 lengths; 5 the copy's CRC; 6 no MAIN OS section; 8 failed after the unpack. `bootdiag` sends what the gate
+found (the mailbox, the staged struct's first words, the marks of the way to the reset, RSR), from 0x47feffbc.
 `ramboot` exits 0 only when the unit answers after the reset with status 1 and the image CRC it asked for; the
 flashed OS, another CRC, a reply without a boot status or no answer within a minute exit nonzero.
 

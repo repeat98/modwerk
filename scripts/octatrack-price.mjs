@@ -18,6 +18,11 @@
 // the record which (--scene). The unit takes a module only while stopped, so each reading is STOP, PLAY, the reading, STOP, and a
 // reading during which `state` says stopped is refused and ends the run. The curve does not start when the module at rest plus
 // its booked first instance (frame-costs.json) reaches CURVE_ROOM on --measure-pattern: pick a pattern with room.
+// The unit judges picks, and hushes machines while it plays, by the cost table the last v2 set sent, kept through rollbacks
+// and power cycles. So a curve installs its module as a one-package set with this checkout's table, the module's `each`
+// booked at 0 (measuringCosts): a booked guess must not refuse or hush the further instances the curve is there to read
+// (Grain 0.1.3, 24 November 2026: each = first = 33.3 refused T3). Its first instance and the admission runs are judged as
+// booked. After the rollback the same package goes once more with this checkout's own table, which the unit then keeps.
 // Each module runs as a trial that is rolled back; nothing is kept. Base-bound packages are left out:
 // a twin does not trust them (docs/OCTATRACK_DRIVING.md).
 // A machine's in-use cost is read only by --curve, as the only module of its trial (its row in the list is then the sixth).
@@ -26,8 +31,8 @@
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { connect } from 'node:net'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, CURVE_ROOM, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
@@ -82,6 +87,15 @@ export function curveRoom({ atRest, booked, pattern }) {
   if (typeof booked !== 'number' || typeof atRest !== 'number') return null
   return atRest + booked < CURVE_ROOM ? null : `no room on pattern ${pattern}: it reads ${atRest} % with the module at rest, and its booked first instance ` +
     `${booked} would take it to ${tenth(atRest + booked)} %, past ${CURVE_ROOM} %. Pick a pattern with room with --measure-pattern (fewer sample tracks)`
+}
+/** The table a curve installs its module with: `list` (frame-costs.json) with `id`'s `each` at 0, so admission and the
+ *  base's hush charge a further instance nothing while the curve reads what it costs, and its `first` and `rest` as booked.
+ *  The run's --limit and its stop at a dropped render guard the unit, as for any reading. Null when `id` is not booked:
+ *  the unit then charges it by its descriptor, as a module's first curve always was, and the unit's table is left alone. */
+export function measuringCosts(list, id) {
+  const cost = list?.costs?.[id]
+  if (!cost) return null
+  return { ...list, costs: { ...list.costs, [id]: { ...cost, each: 0 } } }
 }
 /** What the second reading added to the first, in points, one decimal: the means, and each core's peak where both have one
  * (a reading taken before 24 November 2026 kept no peak). */
@@ -176,7 +190,8 @@ if (import.meta.filename === process.argv[1]) {
   // --write with --curve also writes each effect's or machine's curve: its evidence/frame-cost.json and its frame-costs.json line.
   const catalogue = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
   // What admission charges a module's first instance now (frame-costs.json): the curve needs that much room to be read.
-  const booked = existsSync(resolve(root, FRAME_COSTS_PATH)) ? JSON.parse(readFileSync(resolve(root, FRAME_COSTS_PATH), 'utf8')).costs ?? {} : {}
+  const costList = existsSync(resolve(root, FRAME_COSTS_PATH)) ? JSON.parse(readFileSync(resolve(root, FRAME_COSTS_PATH), 'utf8')) : null
+  const booked = costList?.costs ?? {}
   const bookedFirst = id => booked[id]?.first
   // An ID is a catalogue row; a path to a .mwrm is that file, for a build that is not published yet. In the order given.
   const files = positionals.filter(name => name.endsWith('.mwrm')), ids = positionals.filter(name => !name.endsWith('.mwrm'))
@@ -335,7 +350,11 @@ if (import.meta.filename === process.argv[1]) {
     const packageSha256 = createHash('sha256').update(readFileSync(packagePath)).digest('hex')
     if (row.sha256 && packageSha256 !== row.sha256) throw new Error('Package SHA-256 differs from the release catalogue for ' + row.id)
     const trigs = await patternTrigs(), before = await measure(readings), result = { id: row.id, version: row.version, packageSha256, before }
-    const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', packagePath, '--seconds', '600', '--socket', args.share])
+    // A curve: one-package set with the measuring table (measuringCosts, the header); otherwise a plain trial, which sends none.
+    const measuring = args.curve ? measuringCosts(costList, row.id) : null, costsFile = resolve(tmpdir(), `modwerk-price-costs-${process.pid}.json`)
+    if (measuring) writeFileSync(costsFile, JSON.stringify(measuring))
+    const device = (...rest) => spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), ...rest, '--socket', args.share])
+    const trial = measuring ? device('set', packagePath, '--costs', costsFile, '--seconds', '600') : device('try', packagePath, '--seconds', '600')
     let log = ''; trial.stdout.on('data', chunk => { log += chunk }); trial.stderr.on('data', chunk => { log += chunk })
     const ended = new Promise(done => trial.on('exit', done))
     // A large package uploads for a minute: wait for the trial or the try's own end, never cut an upload short
@@ -377,8 +396,18 @@ if (import.meta.filename === process.argv[1]) {
     trial.kill('SIGINT') // rolls the trial back
     await ended
     result.rolledBack = /rolled back/.test(log) || Boolean(result.refused) // a refused module was never in
-    if ((await patternTrigs()) !== trigs) result.restore = 'it wrote trigs into pattern ' + [...new Set([args['pick-pattern'], args['measure-pattern'], admissionPattern])].join(' or ') +
-      ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'
+    // The measuring table outlives the rollback: offer the package once more with this checkout's table and roll it back a second later.
+    if (measuring && /frame costs/.test(log)) {
+      let back = ''; const again = device('set', packagePath, '--seconds', '1')
+      again.stdout.on('data', chunk => { back += chunk }); again.stderr.on('data', chunk => { back += chunk })
+      await new Promise(done => again.on('exit', done))
+      if (!/frame costs/.test(back) || !/rolled back/.test(back)) result.restore = `the unit may still judge ${row.id} by the measuring table (each 0): ` +
+        `put this checkout's table back with npm run device -- set ${packagePath} --seconds 1 --socket ${args.share}`
+    }
+    if (measuring) try { unlinkSync(costsFile) } catch { /* already gone */ }
+    // Both can be needed: keep the table note when the trigs note follows it.
+    if ((await patternTrigs()) !== trigs) result.restore = [result.restore, 'it wrote trigs into pattern ' + [...new Set([args['pick-pattern'], args['measure-pattern'], admissionPattern])].join(' or ') +
+      ', which its rollback left: clear them (or reload the project without saving) and measure it on a scratch pattern'].filter(Boolean).join('; and ')
     results.push(result)
     // Written after every module: a unit that hangs on the next one must not take the finished readings with it.
     if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, inputs, seconds, readings, slot: args.slot, measuredAt, results }, null, 1) + '\n')
