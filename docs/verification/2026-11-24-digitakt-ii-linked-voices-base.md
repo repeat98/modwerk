@@ -24,7 +24,18 @@ Emulator (coupled ColdFire and sound chip, from a ready point saved with each im
 
 `npm run test:procedure` was not run for this base: the Digitakt II steps it would add (USB link, soak, price) do not exist yet, as for `a3ced45e`.
 
-Not checked on a unit: MIDI chords, sequencer trigs on a lead, a stock machine as the lead, muted voices.
+Release checks on the same image `27dfadf8`, reported by @Claptom-music, 25 November 2026:
+
+| Case | Result |
+|---|---|
+| Sequencer trigs on a linked lead (Morpha, track 1, VOICES 3) | pass |
+| A stock SAMPLE lead (one-shot, track 5, VOICES 3) | sound pass; the row read `T9 VOICES` on every track (label bug) |
+| A muted voice track | pass; a muted lead still sounds from the keys, not yet compared with stock (open) |
+| MIDI chords | partial: received, but the audio sounds odd, maybe from track 1's own trigs (open, recording to come) |
+| Changing VOICES while playing | no crash; lowering VOICES to 1, the lead's first note played without its own sound, as a plain kick (ungroup bug) |
+| Two different machine modules at once | not run |
+
+The label and ungroup bugs are fixed in the base after this one (`changelog/2026-11-25-digitakt-ii-voices-fixes.md`, `VOICES.md`).
 
 ## Pinned for the browser builder
 

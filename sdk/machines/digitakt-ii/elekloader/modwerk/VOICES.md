@@ -4,11 +4,12 @@ A lead track plays its notes on the tracks after it, so notes overlap instead of
 
 ## What the musician does
 
-SETTINGS shows a row named after the track you are on, `T1 VOICES` to `T16 VOICES`, from 1 (stock) to 8. LEFT and RIGHT change it. With 3 on track 1, tracks 1, 2 and 3 form a group: each new note track 1 plays goes to the first of them, from the lead on, that holds no note, so the lead takes a chord's first note (the trig keys send a chord from the lowest note up); with all three busy, to the next one in turn.
+SETTINGS shows a row named after the track you are on, `T1 VOICES` to `T16 VOICES`, from 1 (stock) to 8: its icon in the stock rows' icon place, the count, then the label. LEFT and RIGHT change it. With 3 on track 1, tracks 1, 2 and 3 form a group: each new note track 1 plays goes to the first of them, from the lead on, that holds no note, so the lead takes a chord's first note (the trig keys send a chord from the lowest note up); with all three busy, to the next one in turn.
 
 - The voice tracks belong to the lead while linked: they play the lead's sound with its machine, with each trig's own locks, and follow knob turns made on the lead. Their own trigs are silent while linked (the base sends their notes to no track), so their own machine never sounds between or after the lead's notes. Their own sounds, trigs and pages are not changed: back at 1 they play as before.
-- A muted lead plays nothing. A muted voice track is skipped.
+- A muted lead's notes are dropped where they reach the base (on a unit a muted lead still sounds from the keys: see Open). A muted voice track is skipped.
 - A track that is already a voice of an earlier lead leads nothing, and a group ends at track 16.
+- Lowering VOICES while notes ring: a track that leaves the group keeps the note it holds, with the lead's sound and machine, until that note's note-off (which still names the lead) reaches it or it plays a note of its own; its next note then loads its own sound.
 - The setting is the project's: saved with it (project archive tag `VOC1`), reset to 1 everywhere by a project saved without it.
 
 The DT2 sequencer keeps one note per trig, so a pattern cannot hold a chord on one track; linking gives overlapping tails from the sequencer and chords from the keys and MIDI.
@@ -35,6 +36,10 @@ Because the record names its sound, a note moved to another track plays the lead
 
 **Sound chip.** The machine wire's per-track types (`machine-frame.c`) give a voice track its lead's type for as long as it is linked, so an added machine's player plays every note its lead sends there, and the track's own machine never takes over its voices mid-note. A voice track's own note records go to track 16 (none) at the same entry.
 
+**Leaving a group.** The frame's note handling (from `0x4002e4fa`) loads a track's sound in full (`0x4002d438`: its 71 targets and its sound-chip row) only when the sound the note names (`+0x40`, `+0x3c`, or the kit's track sound when both are 0) differs from the one it last loaded, kept per track at `0x8000470c`; otherwise it copies only the edited values. A note from the keys names no sound (emulator: a key note moved to track 2 left track 2's pointer as it was), so a voice track that played one still holds its own sound's pointer with the lead's targets the base copied. When `regroup` takes a track out of a group, the base zeroes its pointer (stock's own way to force a full load) so its next note loads its own sound. A track that still holds a note then (`0x47db4310` nonzero) waits first: its note-off arrives naming the lead and would end the lead's note of the same source and pitch instead (every trig of a one-shot pattern has the same pitch), cutting that note's envelope short while the voice's note rings on. `core_voice_event` sends such a note-off to the waiting track, and `core_voice_lead` keeps the lead's machine there, until the frame sees the note end or the track plays a note of its own.
+
+**The row.** SETTINGS builds its rows once, so the label is rewritten each time the menu asks for it (`core_voice_row_label` in `voices-entry.s`, then core's `core_value_label`). The row is core's value row (`core_addrow`, `rows.c`) with its own draw: the icon at x + 0..8, two rows above the label's text like the stock icons (`fw_fillrect` counts the row's lines upward), and the count right-aligned at x + 19.
+
 ## Checked
 
 Emulator only (coupled ColdFire and sound-chip run from a ready point saved with each image, the stock sound-chip image, the test card's one-second tone on track 1, two taps of trig key 1 about half a second apart), 23 November 2026. Not yet tested on a unit.
@@ -57,7 +62,27 @@ On a unit (reported by the author, 23 November 2026), Digitakt II OS 1.17 with t
 | `e6ffc45b` (voice tracks reserved for the lead, filled from the lead, copied at linking; held pitch from the keys dropped) | Chords play; after a while of playing and turning knobs, later chord notes no longer had the lead's settings. |
 | `27dfadf8` (turns copied with key and MIDI notes, idle voices copied in full) | Chords with VOICES 3-4 and knobs turned while playing: every chord note keeps the lead's settings. |
 
-Not checked yet: sequencer trigs on a linked lead on a unit, MIDI chords, muted voices, a stock machine (SAMPLE) as the lead on a unit.
+Release checks of base `948be0c4` on image `27dfadf8` (that base with Morpha), reported by Claptom-music, 25 November 2026:
+
+| Case | Reported |
+| --- | --- |
+| Sequencer trigs on a linked lead (Morpha on track 1, VOICES 3) | Pass. |
+| A stock SAMPLE lead (one-shot, track 5, VOICES 3) | Sound pass. The row read `T9 VOICES` whatever track was on: SETTINGS builds its rows once, so the label kept the track that was on then. Fixed in this base (the label is rewritten each time the menu asks for it). |
+| A muted voice track | Pass. A muted lead still sounds when played from the keys; not yet compared with stock (a muted track at 1 played from the keys), so open. |
+| MIDI chords | Partial: the unit receives them but the audio sounds odd, possibly because of track 1's own trigs. Open; the tester will send a recording. |
+| Changing VOICES while playing | No crash. Lowering VOICES to 1 while playing (a kick sample), the lead's first note played without its own sound (AMP and the rest), as a plain kick; then fine. Fixed in this base: see Leaving a group. |
+| Two different machine modules at once | Not run. |
+
+The fixes, emulator-checked on base `f702c908` with the same Morpha package (image `e0244b16`), against `27dfadf8`, 25 November 2026:
+
+| Check | `27dfadf8` | `f702c908` |
+| --- | --- | --- |
+| SETTINGS on tracks 1, 5, 16 and 5 again, then 1, 9 and 6 (ColdFire panel probe) | `T1 VOICES` every time | `T1`, `T5`, `T16`, `T5` (its count 3 kept), `T1`, `T9`, `T6`; the icon at x 42-50, rows 53-61, the stock icons' box, the count's digit from x 58 |
+| VOICES 3 on track 1, a three-key chord held, VOICES to 1 while held, the keys let go (panel probe, held-note words `0x47db4310`) | tracks 2 and 3 still hold their notes after the release | every note ends; tracks 2 and 3's loaded-sound pointers are 0 |
+| The same with Morpha on track 1 (coupled, 50 ms RMS) | the former voice's note stops at once around the release, no tail | it rings until the release, then both notes fade with the lead's release |
+| Every track at 1, the same script (coupled) | | the first note identical sample for sample; the level identical in every 50 ms window of the run (the second key lands a few milliseconds apart in the two runs, so the mix after it is not compared sample for sample) |
+
+The emulator's sequencer stops after a pattern's first step, so the kick pattern of the report was not replayed; a note-off that reached the lead in its place, as above, ends a lead note of the same pitch, which every trig of a one-shot pattern has.
 
 ## Open
 
@@ -65,4 +90,7 @@ Not checked yet: sequencer trigs on a linked lead on a unit, MIDI chords, muted 
 - A knob turned on the lead overrides a voice's trig lock on that parameter while the voice's note plays.
 - The setting is per project, not per kit or pattern.
 - Chords from the trig keys in chromatic mode are not checked: in the emulator a second key held with the first added no note on either build.
-- Changing VOICES while notes play regroups at once (routing pauses while the groups change); a note-off that then finds no owner stays on the lead.
+- Changing VOICES while notes play regroups at once (routing pauses while the groups change). A note-off for a note no track of the group or waiting track holds stays on the lead.
+- A muted lead played from the keys sounds on a unit (`27dfadf8`); whether stock does the same for a muted track is not yet checked.
+- MIDI chords sound odd on a unit (`27dfadf8`), maybe from track 1's own trigs; a recording is to come.
+- Two machine modules at once are not run on a unit.

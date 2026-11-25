@@ -22,4 +22,15 @@ core_voice_event_entry:
         tst.l   %a0
         rts
 
+/* SETTINGS > VOICES: the row's label, a std::function returning a std::string built at a0 (core-dt2 rows.s,
+ * core_value_label). It rewrites the label for the track on now, then lets core's routine build the string from it
+ * with the same a0 and stack. */
+        .globl core_voice_row_label
+
+core_voice_row_label:
+        move.l  %a0,-(%sp)
+        jsr     core_voice_label_update
+        movea.l (%sp)+,%a0
+        jmp     core_value_label
+
         .section .note.GNU-stack,"",@progbits
