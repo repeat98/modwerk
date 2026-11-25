@@ -15,6 +15,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   scope:
+    # Only Modwerk deploys. A fork that syncs main would run this, fail without the secrets and mail its owner.
+    if: github.repository == 'repeat98/modwerk'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
