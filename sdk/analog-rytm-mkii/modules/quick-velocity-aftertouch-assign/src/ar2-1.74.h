@@ -100,6 +100,7 @@
 // The kit's Scenes object's slot + 40 answers its lock table: 48 entries of 5 bytes (s16 value,
 // u8 track, u8 parameter index, s8 scene); an empty entry has track 0xff (0x400b8986, 0x400b875c).
 #define SCENES_TABLE 40
+#define SCENE_LOCKS 48
 
 // Ends a held key for the rest of its hold, as stock does when its hold opens a
 // screen (0x40071ed0, 15 stock callers): its release is dropped (0x418d1320), its

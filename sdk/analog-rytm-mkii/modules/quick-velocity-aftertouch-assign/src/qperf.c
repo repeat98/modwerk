@@ -120,6 +120,7 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define KEY_STOP 0x52
 #define KEY_FUNC 0x80
 #define KEY_NO 0x45
+#define KEY_SCENE 0x13              // held: the scene lane keeps the scene still
 #define EV_KEY 12                   // event + 12: the key
 #define EV_FLAGS 16                 // event + 16: bit 0 down (clear on release), 8 repeat
 #define PRESSED 1
@@ -251,7 +252,11 @@ static int scene_used;                  // any point recorded
 static int scene_armed;                 // recording from a change to the loop's end
 static int scene_last_pos = -1;         // the position at the last tick, -1 stopped
 static int scene_last_seen = -2;        // the active scene at the last tick
-static int scene_engaged_by_us = -2;    // the scene the lane engaged last
+static int scene_engaged_by_us = -2;    // the scene the lane engaged, for the tick after
+static int scene_engaged_ticks;         // ticks that guard lasts
+static int scene_loop, scene_period;    // the lane's loop and its repeat period, as the
+                                        // performance lanes' (it extends in the UI tick)
+static volatile int scene_wipe;         // the audio block's wipe asks the tick to empty it
 
 // What the audio block reads when nothing happens, together on four cache lines: stock's
 // audio work evicts module data every block, and each cold line costs about 20 ticks.
@@ -378,7 +383,7 @@ static unsigned target(void *kit)
     return forced >= 0 ? 1u << forced : linked(kit);
 }
 
-// What the last QPER + YES applied, so a second YES in the same QPER hold puts it back:
+// What the last PERF + YES applied, so a second YES in the same PERF hold puts it back:
 // the kit's values as they were and the locks it removed. Any other QPER action, a lock
 // edit, a new hold or another kit forgets it, as stock's undo for clear and paste does.
 static struct {
@@ -465,7 +470,7 @@ static const unsigned char *find_lock(void *kit, int track, int param)
     return 0;
 }
 
-// The locker stock edits through while QPER is held. Stock calls these slots.
+// The locker stock edits through while PERF is held (main.c). Stock calls these slots.
 static int locker_has_any(void *self)
 {
     void *kit = active_kit();
@@ -798,9 +803,7 @@ static void wipe(void)
     }
     hot.perf_rec_used = 0;
     hot.perf_rec_hidden = 0;
-    for (s = 0; s < STEPS; s++)
-        scene_rec_has[s] = 0;
-    scene_used = scene_armed = 0;
+    scene_wipe = 1;                     // the UI tick empties the scene lane
     perf_rec_loop = perf_rec_period = perf_rec_steps(live_pattern_data());
 }
 
@@ -825,13 +828,6 @@ static void extend_take(int from, int to)
             perf_rec_has[p][s] = perf_rec_has[p][t];
         }
     }
-    if (scene_used)
-        for (s = from; s < to; s++) {
-            int t = s - perf_rec_period, q;
-            for (q = 0; q < POINTS; q++)
-                scene_rec[s * POINTS + q] = scene_rec[t * POINTS + q];
-            scene_rec_has[s] = scene_rec_has[t];
-        }
 }
 
 // Hand each driven performance back to what it was before the quick perf rec took it.
@@ -1419,6 +1415,11 @@ QPERF_UI static void apply_perf_rec(void)
             wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
     }
     release_driven();
+    if (scenes) {                       // the steps now hold the scenes: one the lane engaged would add again
+        int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);
+        if (active >= 0 && active == scene_engaged_by_us)
+            ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
+    }
     wipe();
     if (skipped) {
         // Moves written where they fit: say how many tracks could not take them.
@@ -1439,7 +1440,7 @@ QPERF_UI static void apply_perf_rec(void)
     }
 }
 
-// QPER + NO: empty the quick perf rec, and bring it back on the next press.
+// RECORD + NO: empty the quick perf rec, and bring it back on the next press.
 QPERF_UI static void clear_perf_rec(void)
 {
     passes = 0;                         // hidden or back: its passes count from here
@@ -1584,6 +1585,7 @@ void qperf_action(int key, int index)
     perf_action(key);
 }
 
+
 // For SCENE + YES (main.c): a kit parameter by a lock's track and parameter index, read
 // and written as QPER + YES does. Returns -1 when the index has no parameter here.
 int qperf_kit_clamp(int track, int param, int value)
@@ -1615,6 +1617,7 @@ void qperf_kit_changed(void)
 {
     kit_changed = 1;
     applied.valid = 0;
+    scene_last_seen = -2;               // another kit's scene is no take
 }
 
 QPERF_UI void qperf_project(int how, unsigned dropped)
@@ -1626,25 +1629,68 @@ QPERF_UI void qperf_project(int how, unsigned dropped)
     hot.perf_rec_pattern = -2;          // a new project: the next block empties it
 }
 
-// The scene lane, once a UI tick (50 ms). While the pattern plays: in LIVE RECORDING a
-// scene change that was not the lane's own starts recording the engaged scene to the
-// loop's end; otherwise, where the lane's value changes between the last tick and this one,
-// the lane engages its scene, so a scene picked by hand stays until the next recorded change.
+// The scene lane, once a UI tick (50 ms); only the UI touches it. While the pattern plays:
+// in LIVE RECORDING a scene change that was not the lane's own records the engaged scene
+// from there to the loop's end; otherwise, where the lane's value changes (or starts after
+// a stretch with none), the lane engages its scene, so a scene picked by hand stays until
+// the next recorded change. A SCENE hold keeps the scene still. A longer loop repeats the
+// lane at its period, as the performance lanes do.
+QPERF_UI static void scene_lane_clear(int steps)
+{
+    int i;
+    for (i = 0; i < STEPS; i++)
+        scene_rec_has[i] = 0;
+    scene_used = scene_armed = 0;
+    scene_loop = scene_period = steps;
+}
+
 QPERF_UI static void scene_lane_tick(void)
 {
     void *kit = active_kit();
-    int active, pos, from, i;
-    if (!hot.ready || !playing()) {
-        scene_last_pos = -1;
-        scene_armed = 0;
+    int active, pos, from, i, steps, engaged = 0;
+    if (!hot.ready)
         return;
+    steps = perf_rec_steps(live_pattern_data());
+    if (scene_wipe) {
+        scene_wipe = 0;
+        scene_lane_clear(steps);
+        scene_last_seen = -2;           // a new pattern or project: no change to record yet
     }
     active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);
+    if (steps != scene_loop && !hot.perf_rec_hidden) {
+        if (steps > scene_loop && scene_used && scene_period)
+            for (i = scene_loop > scene_period ? scene_loop : scene_period; i < steps; i++) {
+                int t = i - scene_period, q;
+                for (q = 0; q < POINTS; q++)
+                    scene_rec[i * POINTS + q] = scene_rec[t * POINTS + q];
+                scene_rec_has[i] = scene_rec_has[t];
+            }
+        scene_loop = steps;
+    }
+    if (!playing()) {
+        scene_last_pos = -1;
+        scene_armed = 0;
+        scene_last_seen = active;       // a change while stopped is not a take
+        return;
+    }
     pos = position();
     from = scene_last_pos;
-    if (live_rec() && scene_last_seen != -2 && active != scene_last_seen && active != scene_engaged_by_us)
+    if (!live_rec())
+        scene_armed = 0;
+    else if (scene_last_seen != -2 && active != scene_last_seen && active != scene_engaged_by_us) {
+        if (hot.perf_rec_hidden) {      // a new take replaces the cleared one
+            hot.perf_rec_busy = 1;
+            release_driven();
+            wipe();
+            hot.perf_rec_busy = 0;
+            scene_wipe = 0;
+            scene_lane_clear(steps);
+        }
+        if (!scene_used || scene_period < scene_loop)
+            scene_period = scene_loop = steps;
         scene_armed = 1;                // the musician changed the scene: record from here
-    if (scene_armed && !hot.perf_rec_hidden) {
+    }
+    if (scene_armed) {
         if (from >= 0 && pos < from)
             scene_armed = 0;            // the loop came round: the take plays from now
         else {
@@ -1656,14 +1702,18 @@ QPERF_UI static void scene_lane_tick(void)
             }
             scene_used = 1;
         }
-    } else if (scene_used && !hot.perf_rec_hidden && from >= 0 && from != pos
-               && (scene_rec_has[pos / POINTS] >> (pos % POINTS) & 1)
-               && (scene_rec_has[from / POINTS] >> (from % POINTS) & 1)
-               && scene_rec[pos] != scene_rec[from] && scene_rec[pos] != active + 1) {
-        scene_engaged_by_us = scene_rec[pos] - 1;
-        ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, scene_engaged_by_us, 1);
-        active = scene_engaged_by_us;
+    } else if (scene_used && !hot.perf_rec_hidden && from != pos && !IS_KEY_HELD(KEY_SCENE)
+               && (scene_rec_has[pos / POINTS] >> (pos % POINTS) & 1)) {
+        int was = from >= 0 && (scene_rec_has[from / POINTS] >> (from % POINTS) & 1) ? scene_rec[from] : -1;
+        if (scene_rec[pos] != was && scene_rec[pos] != active + 1) {
+            ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, scene_rec[pos] - 1, 1);
+            scene_engaged_by_us = active = scene_rec[pos] - 1;
+            scene_engaged_ticks = 2;
+            engaged = 1;
+        }
     }
+    if (!engaged && scene_engaged_ticks && !--scene_engaged_ticks)
+        scene_engaged_by_us = -2;       // the guard covers the engage landing, then a hand may pick it
     scene_last_pos = pos;
     scene_last_seen = active;
 }

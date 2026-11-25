@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.6.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Hold PERF and turn a knob to lock QPER's linked performance; pads pick tracks, and YES, PLAY, RECORD and STOP apply, clear, copy and paste it.",
+      "QPER keeps only its link (QPER + a pad); its other gestures are stock's again.",
+      "Hold CHRO and turn a knob to link aftertouch; SAMPLER is stock's again.",
+      "SCENE + YES writes the scene into the kit; YES again undoes.",
+      "LIVE RECORDING keeps scene changes too: RECORD + YES writes them as locks, RECORD + NO clears them."
+    ]
+  },
+  {
     "version": "0.5.0-experimental",
     "date": "2026-11-25",
     "changes": [

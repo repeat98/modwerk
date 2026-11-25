@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Quick Mod Assign (id quick-velocity-aftertouch-assign) for the Analog Rytm MKII: link a
-// parameter to velocity, aftertouch or the LFO by holding a key and turning
-// its knob.
+// Improved Modulation (id quick-velocity-aftertouch-assign; Quick Mod Assign up to 0.3.1)
+// for the Analog Rytm MKII: link a parameter to velocity, aftertouch or the LFO, or lock it
+// in a scene or performance, by holding a key and turning its knob. QPER's link and the
+// quick perf rec are in qperf.c.
 //
 //   FIX + turn a knob       links that parameter to velocity; the turn sets the
 //                           amount (-128..127), continuing from the slot's amount.
@@ -14,10 +15,14 @@
 //                           edit does with the scene's pad held.
 //   SCENE + a pad           moves to that pad's track for its locks (in scene
 //                           mode too, with AUTO TRK SWITCH on).
+//   SCENE + REC/STOP/PLAY   copies, pastes, clears the scene; SCENE + YES writes it
+//                           into the kit (YES again undoes).
+//   PERF + knob, pad, keys  the same for the performance QPER links (in
+//                           performance edit, the one it shows), through qperf.c.
 //
 // While a key is held, stock draws every knob already linked with its
 // amount, as it does for a held performance or scene pad. The module puts its
-// own locker into stock's parameter UI for that (as QPERF does), and stock's
+// own locker into stock's parameter UI for that, and stock's
 // lock edit turns the knobs through it, so the parameter's own value never
 // moves; a knob's press there clears the link to 0, as it clears a lock. A core_params entry
 // covers a turn that reaches stock's parameter edit instead.
@@ -36,7 +41,7 @@
 // shows the LFO page as stock does (on the release, not the press); after a
 // turn the page stays. A hold of about half a second (LOOK_TICKS) is a
 // look at the amounts: its release does nothing, as after a turn. On the LFO
-// page itself the key is stock's. During one key's hold the other two do
+// page itself the key is stock's. During one key's hold the others do
 // nothing. FUNC + FIX (stock's FIXED VELOCITY), FUNC + LFO, FUNC + CHRO, FIX and CHRO on the FX track, and
 // a performance or scene pad or a trig that holds stock's locker stay stock.
 //
@@ -148,7 +153,7 @@ typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile,
 enum { NONE = -1, VEL, AT, LFO, SCN, PRF, KINDS };
 
 // One hold per key: FIX for velocity, CHRO for aftertouch, LFO for the LFO,
-// SCENE for scene locks.
+// SCENE for scene locks, PERF for performance locks.
 // A hold is ours only when its press came on a page of ours without FUNC.
 struct hold {
     int key;
@@ -188,6 +193,7 @@ static unsigned lk_flags[2];        // the press, for the replayed repeat
 static int lk_ours[2];              // that press started a hold, its release not seen yet
 static int lk_repeated[2];          // a repeat was swallowed: the release opens the edit screen
 static int lk_locking[2];           // a knob, pad or transport key ended the hold
+QMA_UI static void scene_apply_forget(void);
 extern void *qperf_locker(int index);
 extern int qperf_is_locker(unsigned long object);
 extern void qperf_hold_start(void);
@@ -279,7 +285,6 @@ QMA_UI static int lock_screen(int k)
 {
     return page_shown() || edit_free(k);
 }
-#define scene_screen() lock_screen(SCN)
 
 // The performance a PERF hold edits: the one performance edit shows, else QPER's link (-1).
 QMA_UI static int perf_target(void)
@@ -824,6 +829,7 @@ QMA_UI static void scene_clear(void *self, int track, int param)
     (void)self;
     if (!IS_KEY_HELD(KEY_SCENE))
         return;
+    scene_apply_forget();
     scene_refresh();
     ((void (*)(void *, int, int))SCENE_CLEAR_AT)(&scene_locker, track, param);
 }
@@ -838,6 +844,7 @@ QMA_UI static int scene_set(void *self, int track, int param, int value)
         return -1;                      // a lost release: the tick takes the locker away
     if (ANY_TRIG_HELD())
         return -1;                      // a trig's turn is its p-lock: the tick hands the knobs back
+    scene_apply_forget();
     scene_refresh();
     written = ((int (*)(void *, int, int, int))SCENE_SET_AT)(&scene_locker, track, param, value);
     if (written == -1 && track >= 0 && track <= FX_TRACK)
@@ -957,6 +964,7 @@ QMA_UI static void replay_tap(void *brain, int key, unsigned press_flags, unsign
 }
 #define replay_lfo(brain, release_flags) replay_tap(brain, KEY_LFO, lfo_flags, release_flags)
 static unsigned chro_flags;         // the CHRO press held back, for its replay
+static int chro_swallowed;          // that press was held back and its release not seen yet
 
 // A SCENE or PERF press with nothing else that key means on stock: no FUNC (FUNC + SCENE
 // is the PATTERN menu), no YES or NO (quick save, reload), no trig or pad, the UI's locker
@@ -973,6 +981,8 @@ QMA_UI static int lock_press(int k, unsigned flags)
     holds[k].since = ticks;
     if (k == PRF)
         qperf_hold_start();
+    else
+        scene_apply_forget();           // a SCENE + YES undo lasts one hold
     return 0;
 }
 
@@ -1016,8 +1026,13 @@ QMA_UI static int lock_knob(int k)
 // What a SCENE + YES applied, so a second YES in the same hold puts it back.
 static struct {
     int scene, count, valid;
-    struct { unsigned char track, param; short lock; int old, now, expect; } e[48];
+    struct { unsigned char track, param; short lock; int old, now, expect; } e[SCENE_LOCKS];
 } scene_applied;
+
+QMA_UI static void scene_apply_forget(void)
+{
+    scene_applied.valid = 0;
+}
 
 // SCENE + YES: each lock of the scene the locks go to becomes the kit's value and the
 // lock goes, as QPER + YES does for a performance; a second YES in the same hold undoes.
@@ -1044,7 +1059,7 @@ QMA_UI static void scene_apply(void)
     }
     t = ((table_t)vcall(scenes, SCENES_TABLE))(scenes);
     scene_applied.count = 0;
-    for (i = 0; i < 48; i++, t += 5) {
+    for (i = 0; i < SCENE_LOCKS; i++, t += 5) {
         int track = t[2], param = t[3], lock = (short)(t[0] << 8 | t[1]), old;
         if (track > FX_TRACK || (signed char)t[4] != scene)
             continue;
@@ -1196,7 +1211,7 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     struct hold *h;
     word_t locker_now;
     if (replaying)
-        return 0;                       // our own replayed LFO tap: the rest of the chain's
+        return 0;                       // our own replayed tap or repeat: the rest of the chain's
     if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST && !(flags & REPEAT)) {
         if (down)
             pads_down |= 1u << (key - KEY_PAD_FIRST);
@@ -1263,6 +1278,10 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
             lfo_swallowed = 0;          // the press was ours even if the tick saw the key go up first
             h->held = 1;
         }
+        if (k == AT && chro_swallowed) {
+            chro_swallowed = 0;         // the same for CHRO, so a quick tap still toggles
+            h->held = 1;
+        }
         if (!h->held)
             return 0;
         h->held = 0;
@@ -1300,6 +1319,8 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     h->ignored = 0;
     if (k == LFO)
         lfo_swallowed = 0;
+    if (k == AT)
+        chro_swallowed = 0;
     if (LOCK_HOLD(k))
         lk_ours[LK(k)] = lk_repeated[LK(k)] = lk_locking[LK(k)] = 0;
     if (held_kind() != NONE) {
@@ -1321,8 +1342,10 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
         dest_knob = -1;
         lfo_swallowed = 1;
     }
-    if (k == AT)
+    if (k == AT) {
         chro_flags = flags;
+        chro_swallowed = 1;
+    }
     h->held = 1;
     h->turned = 0;
     h->since = ticks;
