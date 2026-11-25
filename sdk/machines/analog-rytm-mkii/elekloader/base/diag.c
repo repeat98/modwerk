@@ -13,9 +13,12 @@
 
 #ifdef MODWERK_HOST /* test_diag.c */
 extern volatile int mw_test_playing;
+extern volatile uint32_t mw_test_timer;
 #define SEQ_PLAYING mw_test_playing
+#define DTCN0 mw_test_timer
 #else
 #define SEQ_PLAYING (*(volatile int *)SEQ_PLAYING_AT)
+#define DTCN0 (*(volatile uint32_t *)0xfc07000c)   // the core's timer (core-ar2/load.s)
 #endif
 
 #define BLOCKS_A_SECOND 1500u    // 32 frames at 48 kHz: the audio's own clock, for every time the log keeps
@@ -85,6 +88,10 @@ void mw_diag_start(uint32_t nonce, uint32_t set_crc)
     LOG->nonce = nonce, LOG->boot = 1;
     LOG->version = DIAG_VERSION, LOG->magic = DIAG_MAGIC;
     start_crc = set_crc, started = 0;
+    // Both sides' counts start again with the log (at boot they are zero already, the core having cleared .bss).
+    key_count = ticks = blocks = windows = last_avg = hot_due = freeze_blocks = done_seq = 0;
+    last_start = since_tick = seen_ticks = w_sum = w_peak = w_n = w_played = w_gap = w_tickgap = hot_run = hot_at = 0;
+    cal_sum = cal_n = block_counts = taken_seq = 0;
 }
 
 // Each audio block, from the audio interrupt: when it ended, and whether the UI ticked since the last one.
@@ -141,8 +148,8 @@ void mw_diag_window(uint32_t avg, uint32_t wmax)
     if (SEQ_PLAYING)
         w_played++;
     if (avg >= HOT) {
-        if (++hot_run == 2 && w > SETTLED && (!hot_at || w - hot_at >= HOT_GAP))
-            hot_at = w, hot_due = hot_run;
+        if (++hot_run >= 2 && w > SETTLED && (!hot_at || w - hot_at >= HOT_GAP))
+            hot_at = w, hot_due = hot_run;      // >= 2: a load hot from boot, or past HOT_GAP, still logs
     } else
         hot_run = 0;
     if (++w_n < WINDOWS)
@@ -165,6 +172,10 @@ void mw_diag_tick(void *ctrl)
         return;
     if (!started) {
         started = 1;
+        // The core starts DMA timer 0 from 0 at every boot and the gate's CRC takes the same time each boot, so the
+        // gate's nonce repeats from one power-up to the next; stock's boot and project load before this tick do not
+        // take the same time twice. The site keys the records it has taken on the nonce.
+        LOG->nonce = LOG->nonce ^ DTCN0 * 2654435761u;
         add(DIAG_START, 0);
         add(DIAG_BASE, start_crc);
     }

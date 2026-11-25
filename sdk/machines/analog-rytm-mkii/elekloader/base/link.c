@@ -547,7 +547,7 @@ static void COLD act(const uint8_t *m, int len)
 #else
         p = put32(p, 0);                // no RAM boot, so no place for its diagnostics
 #endif
-        p = put32(p, run_crc);          // the set identity (rytm_link.py runid IMAGE.syx gives the same two)
+        p = put32(p, run_crc);          // the set identity (link-image.mjs prints the same two as `run`)
         p = put32(p, run_bytes);
         send(p);
         return;
@@ -960,7 +960,7 @@ extern uint8_t __run_start[], __run_words[];
 // (this code is in place, its .bss zeroed), before stock fills SRAM and clears its own
 // .bss. The data cache is off here. First the set identity, before any handler has
 // written to .run: the block the core just copied, the base and every module linked
-// into the image, which `rytm_link.py runid IMAGE.syx` works out from the file. Then a
+// into the image, which `link-image.mjs` prints as `run` for the image it writes. Then a
 // new diagnostics log, then a development base's RAM boot.
 void COLD mw_boot_gate(void)
 {

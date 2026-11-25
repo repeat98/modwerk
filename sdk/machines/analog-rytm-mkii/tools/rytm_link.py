@@ -308,15 +308,22 @@ class Link:
     def load(self):
         return load_text(self.ok('load'))
 
-    def log(self):
-        """The diagnostics log's bytes, read with LOG (every base), 128 at a time."""
+    def log(self, tries=5):
+        """The diagnostics log's bytes, read with LOG (every base), 128 at a time. The unit can write a record between
+        two reads, and records cross the 128-byte reads, so the read is taken again until the log's seq (its count of
+        records written) is the same before and after."""
         p = self.ok('diaglog')
-        size, out = get32(p, 5), b''
-        while len(out) < size:
-            n = min(128, size - len(out))
-            p = self.ok('log', len(out), n)
-            out += unpack7(p[10:])[:n]
-        return out
+        size = get32(p, 5)
+        for _ in range(tries):
+            out = b''
+            while len(out) < size:
+                n = min(128, size - len(out))
+                p = self.ok('log', len(out), n)
+                out += unpack7(p[10:])[:n]
+            p = self.ok('log', 16, 4)                   # the header's seq, after the whole read
+            if len(out) >= 20 and unpack7(p[10:])[:4] == out[16:20]:
+                return out
+        raise RuntimeError('the log kept changing while it was read (%d tries)' % tries)
 
     def key(self, name, down):
         flags = self.keys.flags(name, down)
@@ -750,6 +757,8 @@ def main():
             print(text)
     elif a.cmd == 'diag':
         at = int(link.ident().get('diag', '%x' % DIAG_OLD), 16)
+        if not at:
+            sys.exit('diag: this base has no RAM boot (a release base); the diagnostics log is `log`')
         print(diag_text(link.mem(at, 60), open(a.image, 'rb').read() if a.image else None))
     elif a.cmd == 'steps':
         try:

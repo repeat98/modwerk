@@ -40,6 +40,16 @@ static void key(int id, int flags)
 
 int main(void)
 {
+    // A set hot from boot: a HOT once the first minute is over, though the run of hot windows began in it.
+    mw_diag_start(0x99u, 0x1u);
+    mw_diag_tick(0);
+    for (unsigned w = 0; w < 200u; w++)
+        mw_diag_window(950, 990);
+    mw_diag_tick(0);
+    CHECK(last()->kind == DIAG_HOT && last()->a == 121u);   // the half-seconds hot so far: 121, the first after SETTLED
+    // The nonce takes the timer at the first tick too, so a boot that starts like the last one still gets its own.
+    CHECK(mw_diag_log.nonce != 0x99u);
+
     mw_diag_start(0x1234u, 0xf2fe7324u);
     CHECK(mw_diag_log.magic == DIAG_MAGIC && mw_diag_log.version == 2u && mw_diag_log.boot == 1u && mw_diag_log.nonce == 0x1234u);
     // A slow start before the UI's first tick is no freeze, and START and BASE wait for that tick.

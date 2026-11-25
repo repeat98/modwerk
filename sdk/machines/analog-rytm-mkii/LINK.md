@@ -21,8 +21,8 @@ wire, the same commands); the MCP's device tools and the machine page do not rea
 Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`.
 They read and change nothing else: no host can press a key, read memory outside the log or
 confirm an upgrade on a release base, which answers every other request `bad request`. On the
-send-bus variant they cost 3.7 KB of `.run` and 6.9 KB of RAM in the shared mod area, 6 KB of it
-the log (release base `9413108d`, 25 November 2026; the voices and plain variants the same), and
+send-bus variant they cost 3,848 bytes of `.run` and 6,928 of RAM in the shared mod area, 6,148 of
+it the log (release base `03902b3a`, 25 November 2026; the voices and plain variants the same), and
 one site each in stock's SysEx router and boot (`0x40083dd8`, `0x400008c6`). The boot site
 computes the set identity, with the data cache off (stock's own state at that point), over the
 `.run` block once a boot.
@@ -46,7 +46,7 @@ The link adds one project storage bit (`mw_link_carry`), so a development image 
 storage layout than the release base: link it with `--lock-in` of the image the unit runs, use a
 scratch project, and do not go back from a link image to one without it on a project the link
 image saved (that project's module data would read as zeros). Cost on the send-bus base, on top of
-every base's part: 5.3 KB of `.run` and 1.7 KB of RAM in the shared mod area (dev base `a24f78c1`). The RAM boot's diagnostics are 68 bytes
+every base's part: about 5.3 KB of `.run` and 1.7 KB of RAM in the shared mod area. The RAM boot's diagnostics are 68 bytes
 at `0x47FEFFBC`, above every area the linker gives the mods and 64 KB under the boot stack's top
 ([shared mod memory](README.md#memory-and-budgets)); `ident` names the place. A base built before that
 kept them in the top 68 bytes of the 128 KiB mod area (`0x47BFFFBC`), where a full set's `.bss` or a
@@ -318,8 +318,8 @@ since, the link has not.
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).
-- Every base's part (25 November 2026), rytm-emu only so far: LK01 (release send-bus base
-  `9413108d` + Filter Hz) answers `ident` with the set identity `link-image.mjs` printed, `load`,
+- Every base's part (25 November 2026), rytm-emu only so far, on the build before its review fixes
+  (the HOT run, the nonce): LK01 (release send-bus base `9413108d` + Filter Hz) answers `ident` with the set identity `link-image.mjs` printed, `load`,
   `diag` and the whole log (START, then BASE with the set identity), and refuses `key`, `screen`
   and `mem` (`bad request`). LD01 (the same set on development base `a24f78c1`): the runner's
   `link-global-menu`, `link-func-nudge` and `pad-pressure-pad-plain` pass. rytm-emu counts
