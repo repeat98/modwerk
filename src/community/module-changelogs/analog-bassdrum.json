@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-24",
+    "changes": [
+      "Rewritten to run without the DSP: Analog BD no longer takes DSP room or causes DSP FULL, and it needs far less CPU than 0.1.7.",
+      "909: every hit now opens with the short rise the recorded TR-909 shows before its main fall, and quickly repeated hits no longer click.",
+      "SAT, LOW, HIGH and LPF are gone: use the track's own effects instead. Kicks that used them, or very loud accents, sound different.",
+      "Now needs the Modwerk base over USB: card firmware can no longer include Analog BD.",
+      "Known issue: a fourth Analog BD track in one Part is refused until its CPU price is measured."
+    ]
+  },
+  {
     "version": "0.1.7-experimental",
     "date": "2026-11-10",
     "changes": [
