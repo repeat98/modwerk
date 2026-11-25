@@ -1,5 +1,20 @@
 # Micro Timing per track testing
 
+## Publication package (0.1.1-experimental)
+
+Catalogue USB package `public/octatrack-modules/micro-timing/0.1.1-experimental.mwrm`:
+ABI 7, 2926 B, module `36200ffc`, sha256
+`8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47`, title
+**Micro Timing**. Keep Accept on 18 November 2026 used
+`f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`
+(title `Micro Timing pe`). The two packages differ only in the 16-byte title
+field; ColdFire image sha256
+`08b92351ea2097a9b26578eeebe72968b22df25c650f2a60fbcdd816bc103fbc` and
+module id match. Upstream no longer ships `npm run module:verify` (card
+composer verify removed); this module is listed `usbOnly` like Butter Fingers
+and Screen Off — USB package + native source accounting, not a card
+`module-build.json` row.
+
 ## Commands and exact revision
 
 Stock guards for the TRACK TRIG EDIT sites in `manifest.py` match original OS 1.40C (`section_3_MAIN_OS.bin` SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`) as hashed locally from the developer's own extract. Those bytes are not in this folder. `npm run module:verify` has not been run. A USB package of commit `dbc0652b4` was built on 18 November 2026 and is not in this folder.

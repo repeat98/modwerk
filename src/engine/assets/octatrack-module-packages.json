@@ -859,8 +859,24 @@
       "fills": 0,
       "name": "Midiverb I/II",
       "module": "e7e04dd9",
-      "bytes": 63748,
+"bytes": 63748,
       "sha256": "d554753cf04faaf5dd3921a1b2c6ec34ed8d75521ae55a78148736ff560bd8f9"
+    },
+    {
+      "id": "micro-timing",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/micro-timing/0.1.1-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 39,
+      "copies": 0,
+      "fills": 0,
+      "name": "Micro Timing",
+      "module": "36200ffc",
+      "bytes": 2926,
+      "sha256": "8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47"
     }
   ],
   "usbAudio": {

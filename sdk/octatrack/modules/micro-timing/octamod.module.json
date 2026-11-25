@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "micro-timing",
   "key": "MICRO T",
-  "name": "Micro Timing per track",
+  "name": "Micro Timing",
   "version": "0.1.1-experimental",
   "category": "system",
   "author": {
@@ -107,7 +107,7 @@
       }
     },
     "cpuPrice": {
-      "value": 0.0,
+      "value": 0,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price",
@@ -118,12 +118,138 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. Headless ot_emu captured TRACK TRIG EDIT: MICRO T on grid, and REC.TRG scrolled into the four-row window. From 0.1.1 the remembered row is in the module unit. On 18 November 2026 this package was kept over USB on an MKII and, after a power cycle, the person reported the footer on grid.",
+    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. Headless ot_emu captured TRACK TRIG EDIT: MICRO T on grid, +1/384 after LEVEL, MIDI page, and REC.TRG scrolled into the four-row window. From 0.1.1 the remembered row is module bss (mt_table). On 18 November 2026 package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 was kept over USB on an MKII; after a power cycle the person reported the footer on grid. Shipped catalogue package 8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47 matches that ColdFire image; title field only differs.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "3220ad034c7c55a356ee8ab1d7118495d85ec279",
+    "evidenceRevision": "dbc0652b43bad05a8249364404d30bef0396511e",
     "gates": [
       "modules/micro-timing/verify.py"
-    ]
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.1-experimental",
+      "sourceSha256": "f7ba6f38eda20d5439df076498aecefdc3d7fec7dfbde6ca07c48349b684df57",
+      "imageSha256": "8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 788,
+          "maxConfiguration": 788,
+          "maxInstances": 1,
+          "budget": 26600000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "MICRO T selected; LEVEL stepped on the audio side (787) and with the MIDI button on (788). The dearest counted event is one MIDI-side LEVEL step from mt_level back to stock.",
+            "parameterModulation": "No LFO, p-lock, MIDI CC or scene reaches this module. LEVEL on the MICRO T row is the only control that runs the rewrite.",
+            "modeSwitching": "Twenty LEVEL steps with the MIDI button on: ten while playing, STOP, Part change 1\u21922, page opened again, ten more while playing. The remembered byte moved 0x02\u21920x0c\u21920x16.",
+            "maxLoad": "One instance. No track voice, FX slot or DSP core. The count is this module's instructions only; the stock 64-step writer at 0x4002d640 is not in the number.",
+            "inputConditions": "ot_emu PC watch on every halfword of the 1076-byte image, development twin 878307834ad3c23a, package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 (ColdFire image identical to the shipped package; title field only differs). Transport playing, set OCTABAM, project ONEAUX, pattern 0. Executed instructions, not chip wall-clock."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code",
+            "space": "sdram",
+            "words": 1030,
+            "wordBits": 8,
+            "bytes": 1030,
+            "scope": "shared"
+          },
+          {
+            "name": "MICRO T label",
+            "space": "sdram",
+            "words": 8,
+            "wordBits": 8,
+            "bytes": 8,
+            "scope": "shared"
+          },
+          {
+            "name": "footer buffer",
+            "space": "sdram",
+            "words": 16,
+            "wordBits": 8,
+            "bytes": 16,
+            "scope": "shared"
+          },
+          {
+            "name": "centre 0 glyph",
+            "space": "sdram",
+            "words": 2,
+            "wordBits": 8,
+            "bytes": 2,
+            "scope": "shared"
+          },
+          {
+            "name": "name table",
+            "space": "sdram",
+            "words": 20,
+            "wordBits": 8,
+            "bytes": 20,
+            "scope": "shared"
+          },
+          {
+            "name": "remembered row (mt_table bss)",
+            "space": "sdram",
+            "words": 2048,
+            "wordBits": 8,
+            "bytes": 2048,
+            "scope": "shared"
+          },
+          {
+            "name": "LEVEL rewrite peak on the UI stack",
+            "space": "sdram",
+            "words": 64,
+            "wordBits": 8,
+            "bytes": 64,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 3188,
+        "maxInstances": 1,
+        "totalBytes": 3188,
+        "conditions": "ABI 7 package 8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47 (2926 B, module 36200ffc): linked image 1076 bytes (1030 code + label/footer/glyph/name table) and 2048 bytes of bss (mt_table). Image SHA-256 08b92351ea2097a9b26578eeebe72968b22df25c650f2a60fbcdd816bc103fbc. A LEVEL rewrite pushes 64 bytes on the UI stack. No heap, no battery RAM, no DSP memory. Hardware canaries were not measured. Keep Accept on 18 November 2026 used package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292, which differs only in the 16-byte title field (Micro Timing pe \u2192 Micro Timing); ColdFire image and module id match.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-18",
+        "tester": "jonathanwardle1992-beep",
+        "sourceRevision": "dbc0652b43bad05a8249364404d30bef0396511e",
+        "imageSha256": "8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47",
+        "summary": "On a MKII, OS 1.40C, flashed base 931a91bd7e571216, package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 (title Micro Timing pe; ColdFire image identical to shipped 8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47) was kept with --accept beside 22 modules already on the card. After a power cycle the inventory still listed Micro Timing (module 36200ffc) and the person reported footer MT1:ON GRID. Removal while TRACK TRIG EDIT's key layer was open was refused (loader 11 RUNTIME_UI_OPEN); after a second power cycle with menus closed, remove --accept cleared it. Author also reported LEVEL behaviour on private MICRO T9 card (different image).",
+        "limitations": [
+          "Keep Accept used package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292; the shipped catalogue package is 8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47. They differ only in the 16-byte title field; ColdFire image 08b92351ea2097a9b26578eeebe72968b22df25c650f2a60fbcdd816bc103fbc and module id 36200ffc match.",
+          "LEVEL audio/MIDI separation on this package was not a hardware pass; the development-twin trial was Undo-only and is not a LEVEL pass.",
+          "An MKI was not tried. A card flash of this package was not tried.",
+          "Part save and project save of the remembered row do not apply: the row lives in module bss and clears on load/power-cycle.",
+          "LCD captures in media/ are headless ot_emu frames, not unit photographs.",
+          "Cycle counts are emulator executed instructions, not chip wall-clock."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Grid record, then FUNC+BANK (FUNCTION on MKI). Highlight MICRO T, under TRIGS.",
+            "Turn LEVEL. The footer fraction moves, and every step on this track takes that micro timing.",
+            "Press the MIDI button and turn LEVEL again to set the MIDI track. The audio track keeps the value it already had."
+          ]
+        },
+        "screenshots": [
+          "media/ot-micro-t.png",
+          "media/ot-micro-t-step.png",
+          "media/ot-micro-t-midi.png",
+          "media/ot-rec-trg.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
@@ -145,7 +271,7 @@
         "firmware": "1.40C",
         "moduleVersion": "0.1.1-experimental",
         "imageSha256": "5e359bf64919555125f0225744b5bb886a5661bed0e00279065b7ea38f99597b",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6; DSP cores running. Development twin 5e359bf64919555125f0225744b5bb886a5661bed0e00279065b7ea38f99597b. Package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 installed over the emulator USB link and not kept. YES, REC, FUNC+BANK, DOWN onto MICRO T. Grayscale 24 and 240. Not a hardware result."
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6; DSP cores running. Development twin 5e359bf64919555125f0225744b5bb886a5661bed0e00279065b7ea38f99597b. Package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 installed over the emulator USB link and not kept. YES, REC, FUNC+BANK, DOWN onto MICRO T. Grayscale 24 and 240. Not a hardware result."
       }
     },
     {

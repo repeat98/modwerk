@@ -5,7 +5,8 @@
     "changes": [
       "The remembered MICRO T value now lives with the module. A power cycle clears it, and the row starts on grid again.",
       "Offsets already written on the trigs stay in the pattern.",
-      "On a unit, a power cycle brought the MICRO T footer back to on grid."
+      "On a unit, a power cycle brought the MICRO T footer back to on grid.",
+      "First Modwerk catalog release: TRACK TRIG EDIT gains MICRO T under TRIGS. LEVEL rewrites every step on the selected audio or MIDI track through the stock micro-timing writer. Remembered row lives in module bss (mt_table, 2048 bytes); loader clear and power-cycle drop the unit so the row starts on grid. USB package ABI 7, 2926 B, module 36200ffc, sha256 8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47. Keep Accept + power-cycle footer reported 18 November 2026 on title-variant package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 (ColdFire image identical). ot_emu measured 788 instructions/event; memory total 3188 bytes. No battery RAM."
     ]
   },
   {
