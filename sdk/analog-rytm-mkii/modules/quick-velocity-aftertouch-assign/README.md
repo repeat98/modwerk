@@ -164,7 +164,7 @@ rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined im
 
 On the author's Analog Rytm MKII: builds QP01 to QC13 for the QPER controls and QT01 to QT08 (with a debug trace over USB MIDI) for the quick perf rec, QPERF alone, and rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)).
 
-Memory (0.6.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 30,072 bytes of the shared mod area, about 17,000 of them QPER and the quick perf rec (6,912 of those the quick perf rec's performance lanes: 12 performances, 64 steps, 8 points a step, and 576 its scene lane). Load: FIX, CHRO, LFO, SCENE and PERF are UI only, as is the scene lane (once a UI tick), on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
+Memory (0.6.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 30,492 bytes of the shared mod area, about 21,000 of them the performance and scene locks' code and the quick perf rec (6,912 of those the quick perf rec's performance lanes: 12 performances, 64 steps, 8 points a step, and 576 its scene lane). Load: FIX, CHRO, LFO, SCENE and PERF are UI only, as is the scene lane (once a UI tick), on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
 
 ## Authorship and licences
 
@@ -172,14 +172,14 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build QF04, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build Q605, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
 
-![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +11](media/sampler-amp.png)
+![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with CHRO held: DEC +11](media/chro-amp.png)
 
 ![VELOCITY MODS FULL](media/mods-full.png) ![Stock's MODULATION SETUP showing the link](media/mod-setup.png)
 
 ![FILTER page with LFO held: FRQ is the LFO's destination at depth +46.96](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)
 
-![SYNTH page with SCENE held: SWT locked in scene 1 at 106, the scene's other locks boxed](media/scene-lock.png)
+![SYNTH page with SCENE held: SWT locked in scene 1 at 106, the scene's other locks boxed](media/scene-lock.png) ![SYNTH page with PERF held: SWT locked at +5 in the linked performance](media/perf-lock.png)
 
 ![APPLY QUICK PERF REC after RECORD + YES](media/apply-quick-perf-rec.png) ![CLEAR QUICK PERF REC after RECORD + NO](media/clear-quick-perf-rec.png)

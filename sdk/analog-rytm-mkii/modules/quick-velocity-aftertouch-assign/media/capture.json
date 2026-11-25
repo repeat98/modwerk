@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.5.0-experimental",
+  "moduleVersion": "0.6.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-26T00:30:00Z",
-  "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.5.0-experimental, materialised against stock OS 1.74, --version QF04",
+  "capturedAt": "2026-11-26T03:00:00Z",
+  "imageSha256": "bea515f3eef756b48976765f04ba5e01d126677ed9b648dab7b81d3425c66166",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.6.0-experimental, materialised against stock OS 1.74, --version Q605",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QF04 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first seven captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10700M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held from 9403M with SD pressed (links performance 2) and knob A turned five times; PERF; RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 at 9953M and 0 at 10003M as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held from 10603M with YES or NO at 10633M. All nine are byte-identical to the captures of the same plans on the two earlier packages linked side by side (QB01) and to the files they replace.",
+  "conditions": "SETUP: boot Q605 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first eight captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. Apart from perf-lock.png, which is new, every capture is byte-identical to 0.5.0's file (chro-amp.png to sampler-amp.png, the hold now on CHRO).",
   "captures": [
     {
       "path": "media/fix-filter.png",
@@ -22,9 +22,9 @@
       "sha256": "c1836b90ddd9024b2f98defcb98c4009d03a14bce5b979b0fd3d7a1c723ed665"
     },
     {
-      "path": "media/sampler-amp.png",
+      "path": "media/chro-amp.png",
       "frame": "end.png",
-      "plan": "--press AMP@8020000000:12000000 --press SAMPLER@8120000000:900000000 --nudge 2:1@8240000000x12/30000000",
+      "plan": "--press AMP@8020000000:12000000 --press CHRO@8120000000:900000000 --nudge 2:1@8240000000x12/30000000",
       "sha256": "7d3e22ecde0424e91df3ed3728e7c265b1a916082e87d456f7d3a30d9cf17665"
     },
     {
@@ -58,15 +58,21 @@
       "sha256": "8b130b2f3986d125790afe6f9d031da64d0b7ff5d163ed7d550a1f8c0af2dc56"
     },
     {
+      "path": "media/perf-lock.png",
+      "frame": "end.png",
+      "plan": "--press QPER@8020000000:200000000 --press BD@8060000000:12000000 --press PERF@8320000000:600000000 --nudge 1:1@8440000000x6/30000000",
+      "sha256": "318bd83018c22fd945acad75682ab10e4727c9a8a768334cd7e178cb5c9f8b20"
+    },
+    {
       "path": "media/apply-quick-perf-rec.png",
       "frame": "end.png",
-      "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press YES@10633M:12M",
+      "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:100M --press SD@9423M:12M --press PERF@9523M:150M --turn 0:4@9563Mx5/8M --press PERF@9723M:12M --press RECORD@9823M:80M --press PLAY@9853M:12M --raw 9150@10073M --raw 9100@10123M --press RECORD@10423M:12M --press RECORD@10723M:80M --press YES@10753M:12M",
       "sha256": "ba47455ee9c438eb5c608071791b6649683a0df9bb639f9246e898557b5bc71c"
     },
     {
       "path": "media/clear-quick-perf-rec.png",
       "frame": "end.png",
-      "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press NO@10633M:12M",
+      "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:100M --press SD@9423M:12M --press PERF@9523M:150M --turn 0:4@9563Mx5/8M --press PERF@9723M:12M --press RECORD@9823M:80M --press PLAY@9853M:12M --raw 9150@10073M --raw 9100@10123M --press RECORD@10423M:12M --press RECORD@10723M:80M --press NO@10753M:12M",
       "sha256": "123985db4933e426efdace5853be57b6778272b6f1b3e8489ab46536d4c6d687"
     }
   ]
