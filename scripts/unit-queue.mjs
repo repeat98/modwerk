@@ -191,8 +191,9 @@ function keepTurn(directory, id, ms) {
   if (asked) { endTurn(directory, id); return { kept: false, asked } }
   const file = join(directory, TURN, HOLDER), holder = readJson(file)
   if (holder?.id !== id) return { kept: false } // ended or changed hands meanwhile
-  const { child, expectMs, ...rest } = holder, until = Date.now() + ms
-  try { writeJson(file, { ...rest, kind: 'hold', kept: true, until }) } catch { return { kept: false } }
+  const until = Date.now() + ms, hold = { ...holder, kind: 'hold', kept: true, until }
+  delete hold.child; delete hold.expectMs // a hold belongs to its checkout, not to the run's processes
+  try { writeJson(file, hold) } catch { return { kept: false } }
   return { kept: true, until }
 }
 
@@ -256,8 +257,9 @@ export async function acquire({ directory = unitDirectory(), env = process.env, 
   const kept = current?.holder?.kept && verdict.expired && queued.length
   if (verdict.state === 'held' && !kept && (env.MODWERK_UNIT_TURN === current.holder.id || current.holder.kind === 'hold' && current.holder.checkout === me.checkout)) {
     if (kind === 'hold' && current.holder.kind === 'hold') { // the same checkout asks again: a longer hold, the newest note
-      const { kept: _, ...hold } = current.holder // a kept turn held on purpose is an ordinary hold from now on
-      writeJson(join(turnFolder, HOLDER), { ...hold, until: now() + forMs, note: note || current.holder.note })
+      const hold = { ...current.holder, until: now() + forMs, note: note || current.holder.note }
+      delete hold.kept // a kept turn held on purpose is an ordinary hold from now on
+      writeJson(join(turnFolder, HOLDER), hold)
       return { id: current.holder.id, nested: false, extended: true, release: () => endTurn(directory, current.holder.id), setChild() {} }
     }
     const file = join(turnFolder, `nested-${process.pid}-${randomUUID()}.json`), entry = { ...processEntry(process.pid), who: me.who, note, command, since: now() }
