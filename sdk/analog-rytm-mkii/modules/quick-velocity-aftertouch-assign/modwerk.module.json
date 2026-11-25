@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "id": "quick-velocity-aftertouch-assign",
-  "name": "Quick Mod Assign",
+  "name": "Improved Mod Assign",
   "version": "0.4.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
@@ -87,7 +87,9 @@
       "ui:LFO page key shows its page on the release",
       "ui:SCENE + knob on the sound pages and the FX track",
       "ui:SCENE hold opens scene edit on the release",
-      "ui:SCENE + pad in scene mode selects the track"
+      "ui:SCENE + pad in scene mode selects the track",
+      "ui:SCENE + REC, STOP, PLAY copy, paste, clear the scene",
+      "ui:SCENE + knob in scene edit locks its scene"
     ]
   },
   "resources": {
@@ -158,7 +160,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Quick Mod Assign",
+      "caption": "Improved Mod Assign",
       "alt": "FIX plus a knob turn fills the first of four velocity mod slots with +20; SAMPLER plus a knob turn fills the first of four aftertouch slots with +10; LFO plus a knob turn makes SWT the LFO's destination with depth +12. A knob press sets a link to 0, and the links save with the kit.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",

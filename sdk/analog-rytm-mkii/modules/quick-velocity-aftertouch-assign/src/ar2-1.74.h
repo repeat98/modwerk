@@ -89,6 +89,14 @@
 #define SCENE_HAS_AT 0x4019caa4          // (locker, track, index): get >= 0, through the vtable's get
 #define SCENE_RELATIVE_AT 0x4019cac8     // 0: absolute values
 #define SCENE_LOCKABLE_AT 0x400b843c     // (locker, id): refuses the TRIG page's categories
+// Scene edit's FUNC + REC, STOP and PLAY (0x400d0f6e, 0x400d102a, 0x400d10fa) call these on the
+// kit's Scenes and a scene, each answering in d0's low byte: copy to the clipboard; undo (kind 2
+// a paste, 1 a clear: true when that scene's last paste or clear was undone, as a second press
+// does on stock); paste and clear (last argument 1, as scene edit passes).
+#define SCENE_COPY_AT 0x400b8e60         // (scenes, scene): `COPY SCENE n`
+#define SCENE_UNDO_AT 0x400b8d68         // (scenes, scene, kind): `UNDO PASTE` / `UNDO CLEAR`
+#define SCENE_PASTE_AT 0x400b8f16        // (scenes, scene, 1): `PASTE SCENE`
+#define SCENE_CLEAR_ALL_AT 0x400b8c80    // (scenes, scene, 1): `CLEAR SCENE`
 
 // Ends a held key for the rest of its hold, as stock does when its hold opens a
 // screen (0x40071ed0, 15 stock callers): its release is dropped (0x418d1320), its

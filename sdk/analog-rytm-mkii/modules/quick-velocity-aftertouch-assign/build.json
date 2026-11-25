@@ -54,7 +54,9 @@
     "ui:LFO page key shows its page on the release",
     "ui:SCENE + knob on the sound pages and the FX track",
     "ui:SCENE hold opens scene edit on the release",
-    "ui:SCENE + pad in scene mode selects the track"
+    "ui:SCENE + pad in scene mode selects the track",
+    "ui:SCENE + REC, STOP, PLAY copy, paste, clear the scene",
+    "ui:SCENE + knob in scene edit locks its scene"
   ],
   "requires": [],
   "derive": null,

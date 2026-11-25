@@ -117,6 +117,9 @@ typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile,
 #define KEY_SCENE 0x13
 #define KEY_YES 0x44
 #define KEY_NO 0x45
+#define KEY_REC 0x50                // REC, PLAY, STOP: copy, clear, paste with SCENE held
+#define KEY_PLAY 0x51
+#define KEY_STOP 0x52
 #define KEY_PUSH_FIRST 0x70         // the knobs' presses, A..H
 #define KEY_PUSH_LAST 0x77
 #define KEY_PAD_FIRST 0x90          // BD .. CB
@@ -977,6 +980,45 @@ QMA_UI static int scene_knob(void)
 // would engage the pad's scene; the module takes the press, its repeats and its release there and
 // selects the pad's track as the pages' pad does with AUTO TRK SWITCH on, so the scene
 // being set up stays where it is: 0 passes the press on, 1 takes it.
+// REC, STOP or PLAY pressed during a SCENE hold: copy, paste or clear the scene the
+// locks go to, with stock's own routines and words, as scene edit's FUNC + REC, STOP and
+// PLAY do (a second STOP or PLAY undoes, as there). It ends the hold as a knob does. The
+// key's release is the module's too (transport_taken), so the transport does nothing.
+static unsigned transport_taken;
+QMA_UI static int scene_transport(int key)
+{
+    typedef unsigned char (*op2_t)(word_t, int);
+    typedef unsigned char (*op3_t)(word_t, int, int);
+    word_t scenes;
+    int scene;
+    static char text[16] = "COPY SCENE ";
+    if (!scene_screen() || ANY_TRIG_HELD() || ANY_PAD_HELD())
+        return 0;
+    scene_touched();
+    transport_taken |= 1u << (key - KEY_REC);
+    scene_refresh();
+    scenes = scene_locker.scenes;
+    scene = scene_locker.scene;
+    if (key == KEY_REC) {
+        if (((op2_t)SCENE_COPY_AT)(scenes, scene)) {
+            text[11] = scene >= 9 ? '1' : '0' + scene + 1;
+            text[12] = scene >= 9 ? '0' + scene - 9 : 0;
+            text[13] = 0;
+            show(text);
+        }
+    } else if (key == KEY_STOP) {
+        if (((op3_t)SCENE_UNDO_AT)(scenes, scene, 2))
+            show("UNDO PASTE");
+        else if (((op3_t)SCENE_PASTE_AT)(scenes, scene, 1))
+            show("PASTE SCENE");
+    } else if (((op3_t)SCENE_UNDO_AT)(scenes, scene, 1))
+        show("UNDO CLEAR");
+    else if (((op3_t)SCENE_CLEAR_ALL_AT)(scenes, scene, 1))
+        show("CLEAR SCENE");
+    redraw = 1;
+    return 1;
+}
+
 QMA_UI static int scene_pad(int pad)
 {
     word_t project;
@@ -1051,6 +1093,18 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     else if (key == KEY_SCENE)
         k = SCN;
     else {
+        if (key >= KEY_REC && key <= KEY_STOP) {
+            unsigned bit = 1u << (key - KEY_REC);
+            if (down && !(flags & REPEAT))
+                transport_taken &= ~bit;
+            else if (transport_taken & bit) {
+                if (!down)
+                    transport_taken &= ~bit;
+                return 1;               // its repeats and release are the module's too
+            }
+            if (down && !(flags & REPEAT) && held_kind() == SCN)
+                return scene_transport(key);
+        }
         if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST) {
             unsigned bit = 1u << (key - KEY_PAD_FIRST);
             if (down && !(flags & REPEAT))

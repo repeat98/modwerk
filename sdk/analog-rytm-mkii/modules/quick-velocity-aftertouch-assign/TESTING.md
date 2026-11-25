@@ -1,4 +1,6 @@
-# Quick Mod Assign testing
+# Improved Mod Assign testing
+
+The module was called Quick Mod Assign up to 0.3.1; the records below keep the names they were written with.
 
 The rytm-emu runs below were observed on the named build; the emulator is not hardware evidence. The unit results are the author's reports, labelled as reported.
 
