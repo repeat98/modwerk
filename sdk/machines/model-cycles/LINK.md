@@ -65,7 +65,7 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `up_run` | 0x32 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
 | `mods` | 0x33 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
 
-The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
+The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. The developer MCP reads the same identity with `device_status` (`--elektron-midi`, [FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-link)) and names the matching image in `--elektron-images`. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
 The screen needs no command: stock answers Elektron's own screenshot request over USB.
 
@@ -87,6 +87,10 @@ mc_link.py mods
 mc_link.py keep | undo
 mc_link.py remove NAME --seconds 5 [--keep]   # an empty package with NAME's id: that module out, on trial
 ```
+
+The developer MCP does the same with `device_review`, `device_trial`, `device_keep` and `device_undo`
+([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-link)), through
+[`mc-link.ts`](../../../src/engine/elektron/mc-link.ts)'s `mcUploadTransport` and the site's `UploadSession`.
 
 A module patches stock code at declared sites: [`tools/build_sites.py`](tools/build_sites.py) `--sites SITES.json` (around the loader's `build.py`) takes them in base.json's format (a `jsr`
 or `jmp` to a function of the module, the stock bytes' SHA-256), and the base checks the running code before it
@@ -189,9 +193,9 @@ Left as stock has it: id `0x04`'s commands 1 and 3 (`0x40080822`, `0x4008084a`) 
 first was not read (the scheduler's order of priorities); the link covers both orders. On a unit: not run yet on
 this build.
 
-The audio load (`base/load.c`, `load.s`, every base): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer.
+The audio load (`base/load.c`, `load.s`, every base): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer. The developer MCP's `device_load` reads it (`--elektron-midi`).
 
-The diagnostics log (`base/diag.c`, `diag.h`, every base) is the Octatrack's, layout version 2, so the site's parser reads it unchanged (`sdk/tests/test_machine_base.py` checks the layout word for word). Every five minutes a load record: the mean of the half-second windows and the dearest block (per mille), the longest time between two codec blocks (µs) and the longest run of blocks without a UI tick. Incidents: START and BASE (the set identity) at a boot's first tick, HOT for a second at 90 % or more, FREEZE when the UI tick stands still for five seconds while audio runs, each with the six tracks' machines and the last 16 keys pressed. The DSP fields, the tempo, the screen and `playing` stay 0. It lives in the base's memory and starts again at every boot: a freeze that needs a power cycle is lost with it. The audio interrupt keeps the sums; the UI tick alone writes the records. `test_diag.c` runs it on the host.
+The diagnostics log (`base/diag.c`, `diag.h`, every base) is the Octatrack's, layout version 2, so the site's parser reads it unchanged (`sdk/tests/test_machine_base.py` checks the layout word for word). Every five minutes a load record: the mean of the half-second windows and the dearest block (per mille), the longest time between two codec blocks (µs) and the longest run of blocks without a UI tick. Incidents: START and BASE (the set identity) at a boot's first tick, HOT for a second at 90 % or more, FREEZE when the UI tick stands still for five seconds while audio runs, each with the six tracks' machines and the last 16 keys pressed. The DSP fields, the tempo, the screen and `playing` stay 0. It lives in the base's memory and starts again at every boot: a freeze that needs a power cycle is lost with it. The audio interrupt keeps the sums; the UI tick alone writes the records. `test_diag.c` runs it on the host. The developer MCP's `device_log` reads it through `log` (`--elektron-midi`).
 
 ## Evidence
 
@@ -223,6 +227,7 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try frames.mwrm --seconds 5 --keep`, then `try v2/frames.mwrm --seconds 20` | "F1 n", on trial "F2 n" counting on, after the undo "F1 n" again; 1 live (`594cfd26 frames`) |
 | the same | `try hello.mwrm --seconds 5 --keep` beside frames, then `remove frames --seconds 5 --keep`, `mem 0x40007678 6` | 2 live, "F1 n" and the square; after the removal 1 live (`2cf24dba`), "F1" gone, the square stays, 65200 bytes free; the site holds the stock bytes |
 | `7c794349…` (dev base `d1cc7df8`, the loader at 0x31-0x33), RAM-booted | `try frames.mwrm --seconds 10` | on trial, "F1 n" counting (the OS composes frames without a turn too); undone, 0 live |
+| `7c794349…` RAM-booted again | the developer MCP: `device_review` and `device_trial` with `frames.mwrm` for 15 s, `device_undo`, a second trial and `device_keep`, `device_status` | "F1 n" all 15 s (the MCP's pings); undone to the base's set; kept: 1 live (`594cfd26 frames`) |
 | the same | `try hello.mwrm --seconds 30`, PLAY on trial; STOP 5 s after the tool ends | the pattern plays without dropouts (tester's report); at the end `enter: unsafe (phase trial)`, the square stays while playing and goes about 10 s after the tool ended; 0 live |
 | `7c794349…` RAM-booted from `520f99e7…` | `try big33.mwrm` (33,832 bytes, past the 32 KiB staging), `mods` 15 s later | `begin: limit (too large)`; nothing loaded, 65536 bytes free, no refusal counted (the controller refuses before the loader sees it) |
 | the same | `try --keep` two modules of 31,832 bytes each, then a third | both kept, 1504 bytes free; the third `verify: rejected`, last refusal `memory`, the two still live and drawing |
