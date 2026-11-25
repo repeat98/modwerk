@@ -82,11 +82,11 @@ describe('support thank-you', () => {
     const plain = renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 145 } }))
     expect(plain).toContain('about <strong>€145 a month</strong> for hosting and AI tokens.')
     expect(plain).not.toContain('Ko-fi covered')
-    const split = renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 100, hosting: 40, tokens: 60, month: 'November 2026', covered: 25 } }))
+    const split = renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 100, hosting: 40, tokens: 60, month: '2026-11', covered: 25 } }))
     expect(split).toContain('(hosting €40 · AI tokens €60)')
     expect(split).toContain('Ko-fi covered €25 of €100 in November 2026')
     expect(split).toContain('width:25%')
-    expect(renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 100, month: 'December 2026', covered: 250 } }))).toContain('width:100%')
+    expect(renderToStaticMarkup(createElement(SupportCosts, { costs: { monthly: 100, month: '2026-12', covered: 250 } }))).toContain('width:100%')
   })
 
   it('renders dialogs that close at once and a line that opens Ko-fi in a new tab', () => {

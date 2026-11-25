@@ -32,6 +32,7 @@ export const DEVELOPER_SKILLS = [
   { name: 'modwerk-update-module', summary: 'Update your module' },
   { name: 'modwerk-test-on-unit', summary: 'Test on your machine' },
   { name: 'modwerk-pr-ready', summary: 'Get ready to merge' },
+  { name: 'modwerk-post-eval', summary: 'Speed up your next session' },
   { name: 'modwerk-fix-issue', summary: 'Fix a reported issue' },
   { name: 'modwerk-contribute', summary: 'Find something to help with' },
 ]

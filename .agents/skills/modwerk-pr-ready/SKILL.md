@@ -7,7 +7,7 @@ description: Finish a Modwerk pull request - merge main, regenerate files, run p
 
 Follow `docs/DEVELOPER_WORKFLOW.md#make-it-mergeable`.
 
-1. **Merge** current `origin/main` into the branch. Never rebase: catalogue rows pin the pull request's own commit.
+1. **Merge** current `origin/main` into the branch. Never rebase: catalogue rows pin the pull request's own commit. A pull request that targets `base/<machine>-next` takes that branch instead: pass `--base-branch base/<machine>-next` to every `pr:ready` below, and it fetches, merges and compares with it.
 2. **Regenerate** generated files rather than resolving them by hand: `npm run modules:generate`, `npm run licenses:generate`, `npm run machines:generate`.
 3. **Check once.** For a new commit, stage the intended files and run `npm run pr:ready -- --commit "Message"`. For an existing commit, run `npm run pr:ready`. For a registered author, use `npm run pr:ready -- --author <login>` and include the same `--author` option when committing. Let each command manage its own machine slot so other worktrees can run while you push or watch GitHub. Not before draft pushes: between fixes, run the tests you touched or `npm run check -- --base origin/main --rerun-failed`.
    - On a replay assignment, read the printed TASK.md, attempt it in its snapshot and repeat the same command with `--eval-agent "<tool and model>"`. Do this yourself on the first attempt, including when you could only partly solve it. The score stays on this computer ([agent evals](../../../docs/AGENT_EVALS.md)).
@@ -17,5 +17,5 @@ Follow `docs/DEVELOPER_WORKFLOW.md#make-it-mergeable`.
    - Watch `gh pr checks <URL> --watch` until green. For a red job, read `gh run view <id> --log-failed`.
    - If `main` moves before the merge, start again at 1.
 5. **Answer what pr:ready asks:** a guide edit for what you learned, or "nothing" in the pull request.
-6. **Review the session** when pr:ready prints the session-review line: run `npm run session -- review`, add what its figures cannot show, and tell the developer at most three things that cost time, each with its fix. A concrete fix goes in its own `Workflow: …` pull request (`docs/AGENT_SESSIONS.md#review-the-session-first`).
+6. **Review the session** when pr:ready prints the session-review line: run `/modwerk-post-eval` (`npm run session -- review`), add what its figures cannot show, and tell the developer at most three things that cost time, each with its fix. A concrete fix goes in its own `Workflow: …` pull request (`docs/AGENT_SESSIONS.md#review-the-session-first`).
 7. **Offer to share the session** when pr:ready prints the session-sharing line: ask the developer once whether to share this session with the owner, say why it helps (what slowed it down stays in the session unless shared, and the owner turns it into a guide edit, a check or a fix), and on a yes run `npm run session -- share --note "…"` with a few sentences on what got in the way. "Always" or "never" from the developer goes into `npm run session -- prefer always|never` (`docs/AGENT_SESSIONS.md`).
