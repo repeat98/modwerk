@@ -13,6 +13,7 @@
 //   either regenerates frame-costs.json (as npm run modules:generate does), which admission charges.
 //   --write (needs --base and --scene): each module measured cleanly gets its price in octamod.module.json (resources.cpuPrice) and
 //   its readings in evidence/cpu-price.json, and leaves the pending list; modules:check recomputes the price from those readings.
+//   A module not listed yet gets them in its draft, sdk/drafts/<id>, curve included (moduleFolder).
 // It needs a development twin of the base (the guard request) behind `npm run device -- serve --share
 // /tmp/modwerk-share.sock`, and the scene is the caller's: select the pattern, leave the transport stopped, and say in
 // the record which (--scene). The unit takes a module only while stopped, so each reading is STOP, PLAY, the reading, STOP, and a
@@ -33,7 +34,7 @@ import { createHash } from 'node:crypto'
 import { connect } from 'node:net'
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
-import { basename, dirname, resolve } from 'node:path'
+import { basename, dirname, relative, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, CURVE_ROOM, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
 import { takeUnitTurn } from './unit-queue.mjs'
@@ -148,30 +149,55 @@ export const stockFit = ({ empty, quiet, awake }) => ({ reserve: tenth(Math.max(
 export const machinePick = (track, row = 5) => `NO w200 ${track} w300 ${track} ${track} w500 LEFT w400 UP*12 w200 DOWN*${row} w200 YES w800 NO w300`
 export const machineToStatic = track => `NO w200 ${track} w300 ${track} ${track} w500 LEFT w400 UP*12 w200 YES w800 NO w300`
 
-/** --write for one module's result: its price into its manifest, its readings beside it, its line off the pending list. What it did. */
-export function writePrice({ root, result, base, scene, seconds, measuredAt, readings = 1, inputs }) {
-  const id = result.id, folder = resolve(root, 'sdk/octatrack/modules', id), manifest = resolve(folder, 'octamod.module.json')
-  if (!existsSync(manifest)) return 'not written: no sdk/octatrack/modules/' + id
-  if (result.refused || !result.rolledBack || result.restore || result.inUseError || result.notPlayed || !result.atRestAdds) return 'not written: the run was not clean'
-  const text = readFileSync(manifest, 'utf8'), document = JSON.parse(text)
-  if (document.compatibility?.location === 'Track machine' || machineDescriptors({ root, id }).length) return 'not written: a machine\'s price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)'
-  if (document.compatibility?.effectId != null && !result.inUseAdds) return 'not written: an effect is priced on a slot too, and this run has no reading on one'
-  if (result.version !== 'file' && result.version !== document.version) return 'not written: this measured the published ' + result.version + ' but the manifest is ' + document.version + '; measure the new build\'s .mwrm'
-  const record = { module: id, version: document.version, base, scene, ...(inputs ? { inputs } : {}), seconds, ...(readings > 1 ? { readings } : {}), measuredAt, result }
-  mkdirSync(dirname(resolve(folder, CPU_PRICE_RECORD)), { recursive: true })
-  writeFileSync(resolve(folder, CPU_PRICE_RECORD), JSON.stringify(record, null, 2) + '\n')
+/** Where a module's records go: its listed folder, else its draft (sdk/drafts/<id>), so a draft's price and curve travel with
+ *  it into its release (Mackity, 25 November 2026, had both copied in by hand). Null when it has neither. */
+export function moduleFolder(root, id) {
+  for (const at of ['sdk/octatrack/modules', 'sdk/drafts']) if (existsSync(resolve(root, at, id, 'octamod.module.json'))) return resolve(root, at, id)
+  return null
+}
+/** One module's clean result as its price: { record } for CPU_PRICE_RECORD and { cpuPrice } for resources.cpuPrice, or
+ *  { problem } saying why not. Writes nothing (module:qualify drafts from it too). */
+export function priceRecord({ document, result, base, scene, seconds, measuredAt, readings = 1, inputs, machine = false }) {
+  if (result.refused || !result.rolledBack || result.restore || result.inUseError || result.notPlayed || !result.atRestAdds) return { problem: 'the run was not clean' }
+  if (document.compatibility?.location === 'Track machine' || machine) return { problem: 'a machine\'s price is what one playing track adds ("machine-render"), read on a track (docs/MODULE_PERFORMANCE.md)' }
+  if (document.compatibility?.effectId != null && !result.inUseAdds) return { problem: 'an effect is priced on a slot too, and this run has no reading on one' }
+  if (result.version !== 'file' && result.version !== document.version) return { problem: 'this measured the published ' + result.version + ' but the manifest is ' + document.version + '; measure the new build\'s .mwrm' }
+  const record = { module: document.id, version: document.version, base, scene, ...(inputs ? { inputs } : {}), seconds, ...(readings > 1 ? { readings } : {}), measuredAt, result }
   const { before, atRest, inUse } = result
-  document.resources.cpuPrice = { value: measuredPrice(result), unit: 'percent-of-frame', measure: 'frame-interrupt', tool: 'npm run device:price -- --write', date: measuredAt.slice(0, 10),
+  const cpuPrice = { value: measuredPrice(result), unit: 'percent-of-frame', measure: 'frame-interrupt', tool: 'npm run device:price -- --write', date: measuredAt.slice(0, 10),
     conditions: (scene + '; base ' + base + '; ' + (readings > 1 ? readings + ' readings of ' + seconds + ' s a state' : seconds + ' s per reading') + '. Frame interrupt ' + before.frame + ' % before, ' + atRest.frame + ' % installed and used nowhere' + (inUse ? ', ' + inUse.frame + ' % on ' + result.inUseOn : '') +
       '; CPU meter ' + before.cpu + ' % before, ' + atRest.cpu + ' % at rest' + (inUse ? ', ' + inUse.cpu + ' % in use' : '') + '.').slice(0, 1000),
     source: CPU_PRICE_RECORD }
+  return { record, cpuPrice }
+}
+/** One module's clean curve as its FRAME_COST_RECORD, or { problem }. `wanted`: how many tracks the run asked for. Writes nothing. */
+export function curveRecord({ result, version, base, scene, seconds, measuredAt, wanted = 3 }) {
+  const { first, each, adds, tracks, notes, points, admission } = result.curve
+  // Fewer than three placed is fine when the curve stopped at overload: the module costs what it measured up to there.
+  const overloaded = notes.some(note => note.startsWith('stopped after'))
+  if ((tracks.length < Math.min(3, wanted) && !overloaded) || !tracks.length || !result.rolledBack || result.restore || result.notPlayed) return { problem: 'fewer than three instances, or the run was not clean' }
+  if (result.version !== 'file' && result.version !== version) return { problem: 'this measured the published ' + result.version + ' but the manifest is ' + version }
+  return { record: { module: result.id, version, base, scene, seconds, measuredAt, tracks, rest: restCost(result.before, result.atRest), first, each, points, adds, admission, notes } }
+}
+
+/** --write for one module's result: its price into its manifest, its readings beside it, its line off the pending list. What it did.
+ *  A draft (sdk/drafts/<id>) gets the same as a listed module. */
+export function writePrice({ root, result, base, scene, seconds, measuredAt, readings = 1, inputs }) {
+  const id = result.id, folder = moduleFolder(root, id)
+  if (!folder) return 'not written: no sdk/octatrack/modules/' + id + ' or sdk/drafts/' + id
+  const manifest = resolve(folder, 'octamod.module.json'), text = readFileSync(manifest, 'utf8'), document = JSON.parse(text)
+  const made = priceRecord({ document, result, base, scene, seconds, measuredAt, readings, inputs, machine: machineDescriptors({ root, id }).length > 0 })
+  if (made.problem) return 'not written: ' + made.problem
+  mkdirSync(dirname(resolve(folder, CPU_PRICE_RECORD)), { recursive: true })
+  writeFileSync(resolve(folder, CPU_PRICE_RECORD), JSON.stringify(made.record, null, 2) + '\n')
+  document.resources.cpuPrice = made.cpuPrice
   // shortcut: a hand-formatted manifest (an object on one line) comes back as plain two-space JSON; keep it if review asks.
   // modules:check strips the price with the same serialiser to see that nothing else changed (manifestWithoutPrice).
   writeFileSync(manifest, manifestJson(document, text))
   const pendingPath = resolve(root, CPU_PRICE_PENDING_PATH), pending = existsSync(pendingPath) ? JSON.parse(readFileSync(pendingPath, 'utf8')) : null
   const wasPending = Boolean(pending?.pending?.[id])
   if (wasPending) { delete pending.pending[id]; writeFileSync(pendingPath, JSON.stringify(pending, null, 1) + '\n') }
-  return 'wrote ' + document.resources.cpuPrice.value + ' % of a frame into octamod.module.json and its readings into ' + CPU_PRICE_RECORD + (wasPending ? ', and took it off the pending list' : '')
+  return 'wrote ' + document.resources.cpuPrice.value + ' % of a frame into ' + relative(root, manifest) + ' and its readings into ' + CPU_PRICE_RECORD + (wasPending ? ', and took it off the pending list' : '')
 }
 
 if (import.meta.filename === process.argv[1]) {
@@ -429,19 +455,18 @@ if (import.meta.filename === process.argv[1]) {
       (problem ? '\n' + ''.padEnd(28) + 'NOT RELEASABLE: ' + problem : ''))
     if (problem) process.exitCode = 1 // the test procedure's step 9 stops here: this build does not carry a release
     if (!args['write-costs'] && !args.write) continue
-    // Fewer than three placed is fine when the curve stopped at overload: the module costs what it measured up to there.
-    const overloaded = notes.some(note => note.startsWith('stopped after'))
-    if ((tracks.length < Math.min(3, wanted) && !overloaded) || !tracks.length || !result.rolledBack || result.restore || result.notPlayed) { console.log(result.id.padEnd(28) + 'curve not written: fewer than three instances, or the run was not clean'); continue }
-    const manifestPath = resolve(root, 'sdk/octatrack/modules', result.id, 'octamod.module.json')
-    const version = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')).version : result.version
-    if (result.version !== 'file' && result.version !== version) { console.log(result.id.padEnd(28) + 'curve not written: this measured the published ' + result.version + ' but the manifest is ' + version); continue }
+    // A listed module's folder, else its draft's: the curve travels with the draft (moduleFolder).
+    const folder = moduleFolder(root, result.id)
+    const version = folder ? JSON.parse(readFileSync(resolve(folder, 'octamod.module.json'), 'utf8')).version : result.version
+    const made = curveRecord({ result, version, base: args.base, scene: args.scene, seconds, measuredAt, wanted })
+    if (made.problem) { console.log(result.id.padEnd(28) + 'curve not written: ' + made.problem); continue }
     const measured = `${result.id} ${version} on ${tracks.join(' ')}: ${args.scene}; base ${args.base}; ${seconds} s a reading; ${measuredAt.slice(0, 10)} (npm run device:price -- --curve)`
     let wrote
-    if (args.write && existsSync(manifestPath)) { // the release's own record, which module:doctor and modules:check hold its version to
-      const record = resolve(root, 'sdk/octatrack/modules', result.id, FRAME_COST_RECORD)
+    if (args.write && folder) { // the release's own record, which module:doctor and modules:check hold its version to
+      const record = resolve(folder, FRAME_COST_RECORD)
       mkdirSync(dirname(record), { recursive: true })
-      writeFileSync(record, JSON.stringify({ module: result.id, version, base: args.base, scene: args.scene, seconds, measuredAt, tracks, rest, first, each, points: result.curve.points, adds, admission: result.curve.admission, notes }, null, 2) + '\n')
-      wrote = 'wrote first ' + first + ', each ' + each + ' into ' + FRAME_COST_RECORD
+      writeFileSync(record, JSON.stringify(made.record, null, 2) + '\n')
+      wrote = 'wrote first ' + first + ', each ' + each + ' into ' + relative(root, record)
     } else { // --write-costs: the base's own list (a base-bound module, or the base owner's reading of a published version)
       const path = resolve(root, FRAME_COSTS_BASE_PATH), list = JSON.parse(readFileSync(path, 'utf8'))
       writeFileSync(path, frameCostsJson({ ...list, costs: { ...list.costs, [result.id]: { rest, first, each, points: adds, measured } } }))

@@ -30,6 +30,7 @@ import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
 import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
+import { qualifyProblems } from './module-qualify.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -80,7 +81,7 @@ const nativeParams = compatResult?.nativeParams
 // The modules listed before every module had to name its CPU price, which wait for a measurement.
 const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
-const nativeHashes = new Map(), performanceHashes = new Map()
+const nativeHashes = new Map(), performanceHashes = new Map(), qualifyChecks = new Map()
 // The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
 let packageRows = null
 const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
@@ -212,6 +213,11 @@ function octatrack(id) {
   else if (curve.state === 'ok') ok('frame cost', curve.detail)
   else info('frame cost', curve.detail + (curve.fix ? '. Fix: ' + curve.fix : ''))
 
+  // The release record against the source it was tested on, and drafted words nobody has read yet (npm run module:qualify).
+  const qualified = qualifyChecks.get(id) ?? []
+  if (qualified.length) fail('qualification', qualified.map(problem => problem.detail).join('; '), qualified[0].fix)
+  else if (document.tests.qualification) ok('qualification', 'bound to this source, nothing left drafted (npm run module:qualify -- ' + id + ' --check)')
+
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
@@ -340,6 +346,7 @@ for (const id of octatrackIds) {
   const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
   nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
   performanceHashes.set(id, await modulePerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  qualifyChecks.set(id, await qualifyProblems({ root, folder: resolve(root, 'sdk/octatrack/modules', id), document, nativeSha: nativeHashes.get(id), evidence: false }))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.
 const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(root)) === json('src/engine/assets/module-build.json').sourceTreeSha256
