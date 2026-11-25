@@ -209,9 +209,10 @@ QMA_UI static int on_pages(void)
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
 
-// Where a SCENE hold may make scene locks: the pages and the mode screens, not
-// scene edit or performance edit, where stock's own edit owns SCENE and the pads.
-QMA_UI static int scene_screen(void)
+// The page shown as itself: the pages on top, or a pad mode (PERF, SCNE, MUTE,
+// CHRO), which only changes what the pads do and draws the page as it is. Not
+// scene edit or performance edit, where stock's own edit owns the knobs and pads.
+QMA_UI static int page_shown(void)
 {
     word_t top;
     if (!views)
@@ -220,6 +221,9 @@ QMA_UI static int scene_screen(void)
     return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
+
+// Where a SCENE hold may make scene locks.
+#define scene_screen page_shown
 
 QMA_UI static const char *row(int id)
 {
@@ -466,9 +470,10 @@ QMA_UI static void *lfo_accumulator(void)
     return 0;
 }
 
-// The LFO page is the page shown: no screen (PERF, SCNE, MUTE, CHRO) above the
-// pages, and the holder's LFO view, a sound's (+ 248) or the FX track's (+ 296;
-// the holder keeps a sound's page views at (26 + page) * 8 and the FX track's at
+// The LFO page is the page shown: the pages or a pad mode on top (in every pad
+// mode stock's LFO hold shows the page's values; rytm-emu, OS 1.74), and the
+// holder's LFO view, a sound's (+ 248) or the FX track's (+ 296; the holder
+// keeps a sound's page views at (26 + page) * 8 and the FX track's at
 // (32 + page) * 8, 0x400cbbd6), is on the view stack. There the LFO key stays
 // stock's, so holding it shows the page's values as holding any page key does,
 // and its taps step to a module's page behind it.
@@ -476,7 +481,7 @@ QMA_UI static int lfo_page_shown(void)
 {
     char *sentinel, *node, *holder = 0;
     word_t lfo, fx_lfo;
-    if (!views || top_view() != PAGES_TOP_VTABLE)
+    if (!page_shown())
         return 0;
     sentinel = (char *)views + MANAGER_LIST;
     for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;

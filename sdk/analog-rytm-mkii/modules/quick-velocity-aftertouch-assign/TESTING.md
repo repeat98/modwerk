@@ -239,4 +239,15 @@ On the author's Analog Rytm MKII, OS 1.74: QS02 (above) booted from RAM over the
 | The 6 earlier qma- rig cases against their unit references | same boxes, values and popups; the only differences are the scratch kit's own sound (the filter envelope's shape, SMP OFF against 52), plus the next row |
 | LFO held on the LFO page, WAV turned, scene mode on (left on by the cases before) | `NOT AN LFO DEST`: the module took the LFO key. After a SCENE tap (scene mode off) the same gesture moved WAV, as on stock. This is 0.2.0's LFO-page check (it needs the pages on top, and scene mode's view sits above them), not new in 0.4.0 |
 
+## LFO on the LFO page in a pad mode (0.4.0, QS03)
+
+0.2.0 left the LFO key stock's on the LFO page only with the pages on top, so in PERF, SCNE, MUTE and CHRO, which draw the page as it is, LFO held there was the module's and every knob said `NOT AN LFO DEST` (QP03 above recorded that as intended). 0.4.0 leaves the key stock's in those modes too; scene edit and performance edit (a pad held) are unchanged. QS03 `9ce1326ab922c353afeca61cb181f8d9a73a93c7bb76a922339a6897d1f8d82f`: QS02's base and this folder's source (built before a comment-only reflow).
+
+| Check | QS00 (stock), rytm-emu | QS02, rytm-emu | QS03, rytm-emu | QS03, the author's unit (rig, 25 Nov 2026, image CRC `4510c911`, scratch project) |
+| --- | --- | --- | --- | --- |
+| BD's LFO page, PERF, SCNE, MUTE or CHRO on, LFO held, WAV turned | header LFO while held, WAV moves to EXP | `NOT AN LFO DEST`, WAV stays | identical to stock, every screen, all four modes | header LFO while held, WAV moves to EXP, all four modes |
+| SCNE on, FILTER page, LFO held, FRQ turned | | | FRQ shown as the depth box (0) | the same; FRQ reads 64 after the release |
+| qma-lfo-on-lfo-page (pages on top) | | | pass | WAV moves as on stock (no unit reference recorded yet) |
+| The other 30 rig cases above | | | pass, scene cases' screens identical to QS02 | qma-lfo-tap: only the scratch kit's own sound differs, as on QS02 |
+
 Not tested: scene edit opened by a held SCENE on the unit (needs a person); 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.

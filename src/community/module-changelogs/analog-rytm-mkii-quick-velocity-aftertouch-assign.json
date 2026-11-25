@@ -6,7 +6,8 @@
       "Hold SCENE and turn a knob: that parameter is locked in the active scene, without leaving the page.",
       "Hold SCENE and press a knob to remove that scene lock.",
       "SCENE held and let go with no knob opens scene edit as before, now on the release.",
-      "With no scene active a popup says NO ACTIVE SCENE."
+      "With no scene active a popup says NO ACTIVE SCENE.",
+      "Holding LFO on the LFO page shows its values in PERF, SCNE, MUTE and CHRO too, as on stock."
     ]
   },
   {
