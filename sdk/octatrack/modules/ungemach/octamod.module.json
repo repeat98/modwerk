@@ -142,10 +142,26 @@
     "report": "TESTING.md",
     "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). The release package (24 November 2026, development twin 4c7eb79b): CPU price 14.1 points (15 %), first instance 14.6 % of a frame, admitted alone on an empty and a medium pattern with no dropped render, and device:qualify passed, Part and bank changes included. Kept, it survived a power cycle with the saved project; with the module removed the project loaded with that track on FLEX and a missing-module message. Not run: any MKII.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "8a5d506a212947cff937536337247fe574be2d44",
+    "evidenceRevision": "7a221383e24528f4ff4d2ae7b4c46bbc29984de4",
     "gates": [
-      "python3 -B verify.py"
-    ]
+      "modules/ungemach/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: play an UNGEMACH drone",
+        "steps": [
+          "Select an audio track, hold FUNC and press SRC: PLAYBACK SETUP opens with the machine list. Go DOWN to UNGEMACH and press YES.",
+          "Put a trig on the track, set the AMP envelope's HOLD high and press PLAY: the drone sounds while the sequencer runs.",
+          "Press SRC and turn DISS from unison towards a scream; WAVE goes from dull to shrill, TONE opens the filter and DIRT adds drive.",
+          "Set RATE below 64 for a slow free drift or from 64 for a pulse in time with the track; FUNC + SRC again shows SPRD and PNCH."
+        ]
+      },
+      "screenshots": [
+        "media/ot-machine-list.png",
+        "media/ot-src.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
   },
   "license": {
     "spdx": "MIT",

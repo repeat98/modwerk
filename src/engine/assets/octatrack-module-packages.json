@@ -594,6 +594,27 @@
       "sha256": "c3a97ecc50c92b305a45fcd6cf75d3f48a194538891c5398eedfa5f3aad39df5"
     },
     {
+      "id": "ungemach",
+      "sources": [
+        "sdk/octabam/modules/ungemach/machine.c",
+        "sdk/octabam/modules/ungemach/engine.c"
+      ],
+      "subscribe": [
+        "ev_play_increment:ungemach_play_increment:25",
+        "ot_machines:ungemach_machine:60"
+      ],
+      "partSignature": {
+        "sig": "UG",
+        "lo": 1,
+        "hi": 1,
+        "flags": [
+          "SETUP_ALL"
+        ]
+      },
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/ungemach/0.1.0-experimental.mwrm"
+    },
+    {
       "id": "track-solo",
       "octabam": true,
       "unitName": "Track Solo",
