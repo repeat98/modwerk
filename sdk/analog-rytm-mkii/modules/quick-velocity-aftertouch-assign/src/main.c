@@ -166,6 +166,9 @@ static struct hold holds[KINDS] = {
 #define LOOK_TICKS 10
 // A SCENE hold shows the scene's locks this many ticks in (about 0.2 s), so a tap does not flash them.
 #define SHOW_TICKS 4
+// REC, STOP or PLAY this many ticks into a SCENE hold (about 0.1 s) copy, paste or clear; sooner,
+// on a page, they stay the transport's. In scene edit they act at once.
+#define TRANSPORT_TICKS 2
 static unsigned ticks;              // ev_tick's count
 
 static void *views;
@@ -980,8 +983,8 @@ QMA_UI static int scene_knob(void)
 // would engage the pad's scene; the module takes the press, its repeats and its release there and
 // selects the pad's track as the pages' pad does with AUTO TRK SWITCH on, so the scene
 // being set up stays where it is: 0 passes the press on, 1 takes it.
-// REC, STOP or PLAY pressed during a SCENE hold (once the boxes show or a knob or pad
-// made it a hold, so SCENE rolled into PLAY still starts the sequencer): copy, paste or clear the scene the
+// REC, STOP or PLAY pressed during a SCENE hold (in scene edit at once; on a page 0.1 s
+// in, or after a knob or pad, so SCENE rolled into PLAY still starts the sequencer): copy, paste or clear the scene the
 // locks go to, with stock's own routines and words, as scene edit's FUNC + REC, STOP and
 // PLAY do (a second STOP or PLAY undoes, as there). It ends the hold as a knob does. The
 // key's release is the module's too (transport_taken), so the transport does nothing.
@@ -995,8 +998,8 @@ QMA_UI static int scene_transport(int key)
     static char text[16] = "COPY SCENE ";
     if (!scene_screen() || ANY_TRIG_HELD() || ANY_PAD_HELD())
         return 0;
-    if (!scn_locking && ticks - holds[SCN].since < SHOW_TICKS)
-        return 0;                       // SCENE rolled into PLAY: the transport's, as on stock
+    if (!scn_locking && !scene_edit_free() && ticks - holds[SCN].since < TRANSPORT_TICKS)
+        return 0;                       // SCENE rolled into PLAY on a page: the transport's, as on stock
     scene_touched();
     transport_taken |= 1u << (key - KEY_REC);
     scene_refresh();
