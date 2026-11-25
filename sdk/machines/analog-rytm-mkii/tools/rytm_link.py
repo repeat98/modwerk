@@ -613,7 +613,12 @@ def flash(link, path, label, reboot_s=90, ram=False):
     print('back after %.1f s: build %s, armed %d' % (time.time() - t1, who['label'], who['armed']))
     if 'boot' in who:
         print('boot: %d (%s), SRAM probe crc %s' % (who['boot'], who['boot_text'], who['depack_crc']))
-    if ram:
+    if ram and who.get('diag') == '00000000' and 'set_crc' in who:
+        # A release base has no RAM boot and sends its fields as 0: only its set identity tells what runs.
+        print('the unit runs a release base, which does not report a RAM boot: set identity %s, %d bytes '
+              '(link-image.mjs printed the image\'s as run); a power cycle brings the flash, %s, back'
+              % (who['set_crc'], who['set_bytes'], who['label']))
+    elif ram:
         # Stock shows the label of the image in the flash, whatever runs: the base reports
         # the unpacked CRC32 of the image it entered from RAM.
         if who.get('boot') != 1:

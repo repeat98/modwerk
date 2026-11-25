@@ -258,6 +258,9 @@ Limits, none checked by the base:
   flashed OS reads the stamped project's module settings, and each sound or kit the RAM-booted
   image stamped, as zeros. Stock data is not touched. RAM-boot such an image in a scratch project
   and load no other.
+- A RAM-booted image with a release base answers no `ramboot`: only a power cycle leaves it.
+  `rytm_link.py ramboot` reports such an image by its set identity, since a release base sends the
+  RAM boot's fields as 0.
 - A hang in the gate or the RAM-booted image is cleared by a power cycle. The gate runs with
   interrupts masked for the seconds its CRCs take.
 
@@ -318,8 +321,17 @@ since, the link has not.
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).
-- Every base's part (25 November 2026), rytm-emu only so far, on the build before its review fixes
-  (the HOT run, the nonce): LK01 (release send-bus base `9413108d` + Filter Hz) answers `ident` with the set identity `link-image.mjs` printed, `load`,
+- Every base's part on a unit (25 November 2026, the test rig, hands off): SR01 (the combo set of
+  FXCJ on its voices development base with this change, layout unchanged) RAM-booted over FXCJ:
+  `ident`'s set identity `91b73d51`, 207,400 bytes, as `link-image.mjs` printed; `load` 59.2 %
+  stopped, 68.4 % playing (dearest block 74.2 %); the log's START and BASE, then its first
+  five-minute record (mean 62.3 %, dearest block 76.5 %, 10 half seconds playing, longest block gap
+  742 µs, longest run without a UI tick 371 blocks); `link-global-menu`, `link-func-nudge` and
+  `pad-pressure-pad-plain` pass. SR02 (the same set on the release base) RAM-booted from SR01:
+  set identity `600cdffc`, 202,044 bytes, as printed; `load` and the log (BASE `600cdffc`);
+  `key`, `pad`, `enc`, `release`, `confirm`, `ramboot`, `disarm`, `screen` and `mem` all
+  `bad request`.
+- Every base's part in rytm-emu, on the build before its review fixes (the HOT run, the nonce): LK01 (release send-bus base `9413108d` + Filter Hz) answers `ident` with the set identity `link-image.mjs` printed, `load`,
   `diag` and the whole log (START, then BASE with the set identity), and refuses `key`, `screen`
   and `mem` (`bad request`). LD01 (the same set on development base `a24f78c1`): the runner's
   `link-global-menu`, `link-func-nudge` and `pad-pressure-pad-plain` pass. rytm-emu counts
@@ -327,8 +339,9 @@ since, the link has not.
 
 ## Not tested
 
-- On a unit: every base's part (`ident`'s set identity, `load`, `log`) and a release base's
-  refusals; the boot time the set identity adds; a five-minute load record.
+- On a unit: a flashed release base (only RAM-booted ones); the boot time the set identity adds
+  (not measured: RAM boots came back in 11 to 14 s, as before); the plain and send-bus variants of
+  every base's part; a HOT or FREEZE incident.
 - On a unit: the plain variant with `dev`; cancelling a RAM boot by a panel press, `disarm` or the
   timeout (emulator only); a RAM boot across storage layouts read back by the flashed OS (read in
   the code only); `flash` in Overbridge mode; a watchdog in a longer gate run (none bit in 13 s
