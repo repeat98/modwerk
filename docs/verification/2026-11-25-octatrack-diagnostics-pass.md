@@ -1,8 +1,8 @@
 # Octatrack diagnostics pass, 25 November 2026
 
 An owner's pass ([/modwerk-diagnostics](../../.claude/skills/modwerk-diagnostics/SKILL.md)) over the diagnostics members
-share. Nothing below was reproduced yet: every open item is a hypothesis with the step that would confirm it. No code
-changed in this pass.
+share. Nothing below was reproduced on a unit. Hypothesis 4 turned out to be how the link shares the unit between tabs,
+and 6 got the missing field in its own pull request. The rest are hypotheses, each with the step that would confirm it.
 
 ## Evidence
 
@@ -64,34 +64,40 @@ spells while stopped, and then a UI freeze at +289m45s, stopped, CPU 42.3 %. Sam
 
 To confirm: a soak on a unit with a module machine on T1 and the frame guard shedding, watching the UI tick.
 
-### 4. Shared records repeated up to five times in one second
+### 4. Shared records repeated up to five times in one second: several tabs, by design
 
 `connected`, `disconnected`, `health` and `load` records arrive two to five times within the same second, each with its
-own id, from 9 units on Windows and macOS. Pre-link failures also break their once-per-ten-minutes limit (one unit sent
-five `no-device` in 17 minutes). The collector runs once per page and its cleanup removes every listener and timer
-(`App.tsx`, `collectOctatrackDiagnostics`), so these look like several Modwerk tabs, each holding a working link to the
-unit, rather than one tab sending twice. It would fit the connect and disconnect flapping two units show (three changes in
-two seconds). If it holds, the busy message (`linkBusy`) never shows for these members, and several tabs read the unit at
-once.
+own id, from 9 units on Windows and macOS. One page cannot send them twice: it runs one collector (a newer one silences
+the older through `generation` in `octatrack-diagnostics.ts`), which reads health and load only on its 30-second tick and
+skips a health record that hasn't changed. The link is built to share the unit between tabs: it claims the interface only
+while it talks (`claim` in `octatrack-link.ts`) and the tabs take turns through one Web Lock (`USB_LOCK`). So every open
+Modwerk tab reaches `ready` and its collector reports. A plug or unplug reaches every tab at once. Chrome runs a hidden
+tab's timers on whole seconds, so the tabs' ticks land in the same second. The busy message shows only when two claims
+meet. The ten-minute limit on pre-link failures is per page, so each tab and each reload has its own.
 
-To confirm: two tabs and one unit on Chrome 158, on Windows and on macOS: do both reach `ready`? Instrumentation that
-would show it from the field without an identifier: the number of open Modwerk tabs (a BroadcastChannel count) on health
-records. That extends the contract and the consent text, so it waits for the owner.
+Nothing is counted twice where it matters. The stability lines count the unit's own log, kept per sequence number, and
+sync counts come only from the tab that synced. One unit shows the connect, disconnect, connect within two seconds with a
+single tab, right after a start, which fits the base's own reconnect once the restore changes its USB functions. Not a
+bug: no two-tab test or tab count is needed.
 
 ### 5. An unhandled `TypeError` on the Octatrack page
 
-A unit on 0.8.1 (Chrome 158, Windows) sent two pairs of `unhandled_rejection` records exactly five minutes apart, starting
-three minutes after a disconnect, a `no-device` and a reconnect. Pairs fit hypothesis 4. The records carry the error
-type only, by design.
+A unit on 0.8.1 (Chrome 158, Windows) sent two pairs of `unhandled_rejection` records, a second apart within each pair and
+the pairs exactly five minutes apart. They came from one tab: its `load` and `health` records in that hour arrive once
+each, so hypothesis 4 does not explain the pairs. The tab sent none in the hour before. The first pair came three minutes
+after the unit restarted (its log shows a new start), the page lost it, a device picker closed without a unit and the
+link reopened it by itself. The records carry the error type only, by design. The only five-minute rhythm on the site is
+the collector's `load` summary, every ten 30-second reads. Each pair came a minute after one, and that path catches its
+own errors.
 
-To confirm: unplug and replug quickly on the Octatrack page and wait ten minutes with the console open; look for work on a
-five-minute timer there.
+To confirm: power-cycle a unit with the Octatrack page open, let the link reopen it, and watch the console for ten
+minutes.
 
-### 6. `browser_error` `OtherError` on the configuration page
+### 6. `browser_error` `OtherError` on the configuration page: field added
 
 17 records from 2 units since 15 November (15 within two minutes on 24 November, Chrome on macOS). An `ErrorEvent`
-without an error object is counted as `OtherError` (`diagnosticErrorKind`). The site uses no `ResizeObserver`, so a
+without an error object was counted as `OtherError` (`diagnosticErrorKind`). The site uses no `ResizeObserver`, so a
 browser extension or a cross-origin script is the likelier source than site code.
 
-To confirm or filter: a separate error kind for "no error object", so this splits from real non-standard throws.
-Contract change, so it waits for the owner.
+Fixed by #2176: an error without an error object now arrives as `NoErrorObject`. The disclosure already covers it as
+the type of error, so the consent stays as it is. The next pass can tell these from the site's own throws.
