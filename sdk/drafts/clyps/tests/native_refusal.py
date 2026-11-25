@@ -10,6 +10,7 @@ from mkii_panel import panel, peek
 parser = argparse.ArgumentParser(description=__doc__)
 for name in ('emulator', 'base', 'symbols', 'synthetic_card', 'receipt'):
     parser.add_argument(name, type=Path)
+parser.add_argument('--public-registry', action='store_true', help='Probe only registered lifecycle rows on the public base')
 args = parser.parse_args()
 if not __debug__:
     parser.error('Assertions are required')
@@ -34,7 +35,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
         def inventory():
             # The control has the same registry and 66 slots as the candidate.
-            rows = [word(word(symbols['modwerk_runtime_event_row'] + 4*(n-4))) for n in (42,40,41,63,64,65)]
+            rows = [word(word(symbols['modwerk_runtime_event_row'] + 4*(n-4))) for n in ((42,40,41) if args.public_registry else (42,40,41,63,64,65))]
             return dict(callbacks=rows, active=call('modwerk_runtime_active'),
                         pool=call('modwerk_runtime_free', 0), owners=word(symbols['core:owners']))
 
@@ -54,7 +55,10 @@ with tempfile.TemporaryDirectory() as tmp:
             status = word(symbols['modwerk_modset_switch_result'])
             if status != 1:
                 break
-        assert status == 259, status
+        # The public table ends at 62. Its length check precedes feature
+        # admission: MALFORMED (1), versus CONFLICT (3) on an equal-width twin.
+        expected = 0x101 if args.public_registry else 0x103
+        assert status == expected, (expected, status)
         after = inventory()
         assert before == after and call('modwerk_modset_is_off', module)
         args.receipt.write_text(json.dumps(dict(refusal=status, before=before, after=after)))

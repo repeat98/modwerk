@@ -3,17 +3,20 @@
 #define CLYPS_HOST_TEST
 #define CLYPS_PERFORMANCE
 #include "../live_module.c"
-static unsigned running, popup, midi, record, bad_grid, held_key = 64;
+static unsigned running, popup, midi, record, live_record, bank, pattern_chain, bad_grid, held_key = 64;
 
 static uint32_t host_long(uintptr_t addr)
 {
     if (addr == 0x800065b8u) return running;
     if (addr == 0x460d1e70u) return popup;
+    if (addr == 0x460d172au) return live_record;
+    if (addr == 0x80006546u) return pattern_chain;
     if (addr == 0x460d1736u) return record;
     return 0;
 }
 static uint8_t host_byte(uintptr_t addr)
 {
+    if (addr == 0x80000034u) return bank;
     if (addr == 0x80000015u) return midi;
     if (held_key < 64 && addr == 0x46100b18u + held_key/8) return 1u << (held_key%8);
     if (addr >= BANK_BASE && addr < BANK_BASE+16*PATTERN_BYTES) {
@@ -35,7 +38,13 @@ int main(void)
     assert(!module_key(ARR,1));
     midi=0; record=1;
     assert(!module_key(ARR,1));
-    record=0; held_key=0x2d;
+    record=0; live_record=1;
+    assert(!module_key(ARR,1)); live_record=0;
+    pattern_chain=1;
+    assert(!module_key(ARR,1)); pattern_chain=0;
+    bank=1;
+    assert(!module_key(ARR,1)); bank=0;
+    held_key=0x2d;
     assert(!module_key(ARR,1));
     held_key=64;
     tap(ARR); tap(YES);
@@ -72,6 +81,13 @@ int main(void)
     assert(!locked && !playing && !last_row);
     tap(ARR); tap(YES);
     assert(last_row==2);
+    assert(module_key(DOWN,1)); popup=1;
+    assert(module_key(DOWN,0));  /* Release stays with the initial owner. */
+    popup=0;
+    tap(ARR);
+    clyps_bank_load(1,0);
+    assert(!module_key(ARR,1) && !mode);
+    clyps_bank_loaded();
     clyps_project_init(); assert(!mode && !defined && !last_row && !playing);
     return 0;
 }

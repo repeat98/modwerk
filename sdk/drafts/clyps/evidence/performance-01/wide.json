@@ -1,0 +1,19 @@
+{
+  "events": {
+    "count": 624,
+    "identical": true
+  },
+  "writes": {
+    "count": 608,
+    "identical": true
+  },
+  "states": {
+    "count": 219,
+    "identical": true
+  },
+  "grader": "Eight-lane stock composite matched; three truncated streams rejected.",
+  "source_files_sha256": {
+    "wide3-0.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "wide3-1.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6"
+  }
+}

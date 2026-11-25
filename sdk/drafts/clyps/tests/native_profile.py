@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 for name in ('emulator', 'main', 'symbols', 'synthetic_card', 'output'):
     parser.add_argument(name, type=Path)
 
+parser.add_argument('--performance-overlay', action='store_true', help='Select dense sources through Clip View')
 args = parser.parse_args()
 if not __debug__:
     parser.error('Assertions are required')
@@ -122,10 +123,15 @@ with tempfile.TemporaryDirectory() as tmp:
             cmd(f'poke {bank+stride+t*lane_bytes:#x} 000000000000ffff')
         cmd(f'poke {bank+stride+0x8e50:#x} {peek(cmd,bank+0x8e50,8).hex()}')
         tap(0x1f)
-        cmd('knob 0x36 -7')
-        advance(75)
+        if args.performance_overlay:
+            tap(0x1f)  # Row to Clip.
+        else:
+            cmd('knob 0x36 -7')
+            advance(75)
         for t in range(8):
-            if t:
+            if args.performance_overlay:
+                tap(0x10+t)
+            elif t:
                 cmd('knob 0x36 1')
                 advance(75)
             tap(1)

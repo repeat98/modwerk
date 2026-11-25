@@ -281,12 +281,19 @@ with tempfile.TemporaryDirectory() as tmp:
         if args.row_popup:
             switch(1)
             tap(ARR)
-            tap(ARR)
-            tap(YES)
-            tap(3)      # Save home references as R04.
-            tap(0x1b)   # Zoom, then edit T1.
-            tap(YES)
-            tap(1)      # Stage A02.
+            if args.performance_overlay:
+                move_focus(3)
+                tap(0x1b)
+                tap(YES)   # Capture R04.
+                tap(0x1b)
+                tap(0x20)  # Cell Source, same focused slot.
+            else:
+                tap(ARR)
+                tap(YES)
+                tap(3)     # Save home references as R04.
+                tap(0x1b)
+                tap(YES)
+            tap(1)         # Stage A02.
             # Open the stock timed message with the current project name.
             syms['stock_toast'] = 0x4005a2b8
             call('stock_toast', 0x100f8378, 0x60)
@@ -300,6 +307,8 @@ with tempfile.TemporaryDirectory() as tmp:
             assert not num(0x460d1e70), 'stock message still open'
             tap(ARR)
             assert num(syms['modwerk_runtime_api']) & (1 << 27), 'ARR did not reopen'
+            if args.performance_overlay:
+                tap(ARR)  # Clip view after re-entry.
             tap(1)      # Set T1=A02, then recall R04 to prove A01 survived.
             assert num(syms['modwerk_runtime_api']) & 0xfff == 1
             tap(ARR)
@@ -377,7 +386,10 @@ with tempfile.TemporaryDirectory() as tmp:
             initial = callbacks(), bank_parts(), block(0x400e21e0, 16 * 0x8ed8)
             switch(1)
             tap(ARR)
+            if args.performance_overlay:
+                tap(ARR)
             tap(1)
+            assert num(syms['modwerk_runtime_api']) & 0xf == 1
             switch(0)
             after = arr_run()
             def signature(row):

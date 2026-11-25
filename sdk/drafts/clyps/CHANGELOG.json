@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "In the private MKII overlay, ARR alternates Row and Clip.",
+      "In Row, YES advances through captured rows at the next supported boundary.",
+      "Capture and edit a volatile row through PAGE."
+    ]
+  }
+]

@@ -1,5 +1,7 @@
 # CLYPS — experimental Octatrack performance module (community draft)
 
+Private performance overlay (25 November 2026): [controls, limits and reproduction](PERFORMANCE_SPRINT01.md). Select it explicitly with `build_candidate.py --performance` on the contributor SDK. The earlier SRC/ARR build remains the baseline.
+
 [Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
 
 **Build the eight-track engine.** From the repository root run:

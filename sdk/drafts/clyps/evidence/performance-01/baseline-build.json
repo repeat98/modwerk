@@ -1,0 +1,1 @@
+{"sha256": "32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9", "image": 5600, "bss": 176, "relocations": 248, "hooks": {"ev_bank_load": 40, "ev_bank_loaded": 41, "ev_project_new": 42, "ev_seq_wrap": 63, "ev_audio_seq_source": 64, "ot_modal_input": 65}}

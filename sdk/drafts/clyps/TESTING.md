@@ -231,3 +231,7 @@ The draft was recovered at 188bda33a5d71f2001b941b80bcd1f6b724b8d41. The current
 Two local builds with the contributor SDK at 5c32cbacd2b1efea3d70e9b543a9a43cfe634651 produced identical MWRM SHA-256 32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9. Both used the draft's candidate builder. All ten host tests passed.
 
 To unblock admission, land the shared wrap callback, exclusive audio source selector and modal-input opt-in with loader capability enforcement in the supported development base, then bind the staged module manifest and SDK builder to that contract. Restart the procedure at step 1. The existing integration proposal uses slots 63–65 and feature 0x4000, pending allocation. Before a device trial, independently identify the running base, inventory, saved scratch Part and supported rollback route.
+
+## Private performance overlay · 25 November 2026
+
+See [PERFORMANCE_SPRINT01.md](PERFORMANCE_SPRINT01.md) for the exact package, positive and negative scope and independent stock-composite replay.

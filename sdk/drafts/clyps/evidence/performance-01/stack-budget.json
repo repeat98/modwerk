@@ -1,0 +1,67 @@
+{
+  "baseline": {
+    "object_size": [
+      "5607",
+      "0",
+      "174"
+    ],
+    "individual_frames_bytes": {
+      "stock_window": 0,
+      "stock_src_available": 4,
+      "focus_row": 0,
+      "alone": 8,
+      "grid": 4,
+      "supported": 4,
+      "redraw": 4,
+      "label": 20,
+      "number": 20,
+      "valid": 16,
+      "submit": 8,
+      "submit_lane": 4,
+      "check_src_context": 0,
+      "clyps_bank_load": 0,
+      "clyps_bank_loaded": 0,
+      "clyps_project_init": 0,
+      "clyps_wrap": 8,
+      "clyps_audio_source": 8,
+      "module_key": 40,
+      "module_enc": 16,
+      "module_tick": 8,
+      "module_draw": 188
+    }
+  },
+  "performance": {
+    "object_size": [
+      "6476",
+      "0",
+      "190"
+    ],
+    "individual_frames_bytes": {
+      "clyps_focus_step": 4,
+      "stock_window": 0,
+      "focus_row": 0,
+      "alone": 8,
+      "grid": 4,
+      "supported": 4,
+      "redraw": 4,
+      "set_operation": 0,
+      "label": 20,
+      "number": 20,
+      "session_draw": 152,
+      "valid": 16,
+      "submit": 8,
+      "submit_lane": 4,
+      "open_view": 4,
+      "performance_context": 4,
+      "clyps_bank_load": 0,
+      "clyps_bank_loaded": 0,
+      "clyps_project_init": 0,
+      "clyps_wrap": 8,
+      "clyps_audio_source": 8,
+      "module_key": 36,
+      "module_enc": 20,
+      "module_tick": 8,
+      "module_draw": 120
+    }
+  }
+}

@@ -12,7 +12,8 @@ from mkii_panel import panel, peek
 parser = argparse.ArgumentParser(description=__doc__)
 for name in ('emulator', 'base_dir', 'card', 'module', 'module_symbols', 'octabam', 'output'):
     parser.add_argument(name, type=Path)
-parser.add_argument('--dsp',action='store_true',help='Run the DSP interpreter as well as the panel')
+
+parser.add_argument('--stock-controls',action='store_true',help='Also compare native sound, Scenes and mode selection')
 args = parser.parse_args()
 if not __debug__:
     parser.error('Assertions must be enabled')
@@ -26,10 +27,10 @@ assert hashlib.sha256(args.module.read_bytes()).hexdigest() == module['sha256']
 receipt = {'module': module['sha256'], 'observations': []}
 with tempfile.TemporaryDirectory() as tmp:
     card = Path(tmp)/'test.img'
-    plane = Path(tmp)/'lcd.bin'
+    frame_hashes = {}
     shutil.copyfile(args.card, card)
     with panel(args.emulator, args.base_dir/'MAIN.raw', card,
-               ['--card-rw',*(['--dsp'] if args.dsp else []),'--names-early','--lcd',str(plane)]) as cmd:
+               ['--card-rw','--dsp','--names-early']) as cmd:
         def num(addr, size=4):
             return int.from_bytes(peek(cmd,addr,size),'big')
 
@@ -67,12 +68,57 @@ with tempfile.TemporaryDirectory() as tmp:
             receipt['observations'].append([event,observed])
 
         def shot(name):
-            lcd.png(lcd.screen(lcd.read_plane(plane)),args.output/(name+'.png'))
+            # The base copies the composed panel frame *after* module draw.
+            # The emulator --lcd plane contains the earlier stock renderer.
+            frame = peek(cmd,symbols['core:screen']+0x08000000+4,1024)
+            assert len(frame)==1024 and any(frame), 'missing composed frame'
+            digest=hashlib.sha256(frame).hexdigest()
+            assert digest not in frame_hashes.values(), (name,'unchanged frame')
+            frame_hashes[name]=digest
+            lcd.png(lcd.pixels(frame),args.output/(name+'.png'))
+
+        def stock_controls():
+            # Compare the same physical edges on the same disposable project.
+            def edge(key,pressed):
+                cmd(f'key {32+key//8} {(1 << (key%8)) if pressed else 0}')
+                cmd('run 60')
+            tap(0x10,0x23)  # T1 and stock AMP.
+            part = 0x400e21e0 + 0x8ed80
+            def part_digest():
+                data = b''.join(peek(cmd,part+i,min(1024,0x18b2-i)) for i in range(0,0x18b2,1024))
+                return hashlib.sha256(data).hexdigest()
+            start=part_digest()
+            cmd('knob 0x30 7'); cmd('run 120')
+            moved=part_digest()
+            cmd('knob 0x30 249'); cmd('run 120')
+            assert start != moved and part_digest()==start, 'expected reversible stock AMP knob'
+            scenes = peek(cmd,part+0x10,2)
+            edge(0x19,True); tap((scenes[0]+3)%16); edge(0x19,False)
+            chosen = peek(cmd,part+0x10,2)
+            assert chosen==bytes([(scenes[0]+3)%16,scenes[1]])
+            edge(0x19,True); tap(scenes[0]); edge(0x19,False)
+            assert peek(cmd,part+0x10,2)==scenes
+            fader=[]
+            for adc in (1,128,255,1):
+                cmd(f'key 64 {adc}'); cmd('run 120')
+                fader.append(num(0x460d16c8))
+            assert fader==[0,64,127,0]
+            initial=num(0x460d16f0)
+            edge(0x2d,True); tap(0x20,0x20); edge(0x2d,False)
+            cmd('run 1200')
+            after=num(0x460d16f0)
+            assert initial!=after,(initial,after)
+            edge(0x2d,True); tap(0x33,0x33); edge(0x2d,False)
+            cmd('run 1200')
+            assert num(0x460d16f0)==initial
+            return dict(amp=[start,moved],scene=[scenes.hex(),chosen.hex()],fader=fader,trig_mode=[initial,after,initial])
 
         arr,yes,no,down,right=0x1f,0x31,0x32,0x20,0x21
         cmd('run 3000'); tap(no); cmd('run 3000'); tap(no); cmd('run 500'); tap(yes); cmd('run 2000')
         assert call('modwerk_runtime_active')==0
         free=call('modwerk_runtime_free',0)
+        if args.stock_controls:
+            receipt['stock_controls']=stock_controls()
         switch(1)
         for _ in range(5):
             if not num(0x460d1e70) and not num(0x460d175c):
@@ -112,7 +158,17 @@ with tempfile.TemporaryDirectory() as tmp:
         check('exit with foreign edit lock',view=0,locked=1)
         tap(yes)
         check('stopped restore',playing=0,requested=0,last_row=0,mode=0)
+        if args.stock_controls:
+            tap(arr,no)
+            check('Native mode at home',mode=1,view=0,locked=0)
+            receipt['installed_controls']=stock_controls()
+            assert receipt['stock_controls']==receipt['installed_controls']
+            check('sound page and stock controls preserve sources',playing=0,requested=0)
+            tap(arr,no,0x11,1)
+            check('Native T2 trig launches A02',playing=0x10,locked=1)
+            tap(yes)
         switch(0)
         assert call('modwerk_runtime_active')==0 and call('modwerk_runtime_free',0)==free
         receipt['free_before_after']=free
+        receipt['composed_frames']=frame_hashes
 (args.output/'replay.json').write_text(json.dumps(receipt,indent=2)+'\n')
