@@ -48,7 +48,7 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 3. Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.
 4. Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.
 5. Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth, then let go and tap LFO: the LFO page shows DST FRQ.
-6. Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE and turn SWT: SWT becomes a lock in scene 1, shown as a box with the scene's other locks, and the page stays.
+6. Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE: the scene's locks show as boxes. Turn SWT: it becomes a lock in scene 1, and the page stays. Still holding SCENE, press REC to copy the scene.
 
 ## Changes to stock flows
 
