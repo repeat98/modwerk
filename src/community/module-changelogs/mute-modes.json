@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.4-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Costs nothing while MUTE MODE is OT, the default: Mute Modes then rests and the Octatrack runs its own mute code untouched.",
+      "Choosing OTFX, OTFX-T or DT-T wakes it within one screen refresh; tracks muted before keep the OT cut until unmuted, as before.",
+      "Needs a Modwerk base with resting modules (0.7.8 or newer); older bases run it awake, as 0.2.3."
+    ]
+  },
+  {
     "version": "0.2.3-experimental",
     "date": "2026-11-13",
     "changes": [
