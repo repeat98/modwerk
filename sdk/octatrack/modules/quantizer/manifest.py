@@ -9,12 +9,14 @@ whose FOLLOW is OFF stays stock. The settings live in battery RAM and in the
 project's '#' lines (TRACK itself is not a setting: it only picks the track
 FOLLOW shows, starts at AUDIO 1 and is not saved).
 
-Source: `upstream/` is Tim Hastie's timhastie/octatrick-modules at
-990eff8bf88463af4d396793f1c60eb1dab34ea0 (2.21 + the TRACK / FOLLOW rows, not
-yet published), byte for byte: `upstream/quantizer/` is his `quantizer/`
-folder, and `upstream/LICENSE` / `upstream/README.md` are his repository's.
+Source: `upstream/` is Tim Hastie's timhastie/octatrick-modules at the public
+v2.23 revision e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb, byte for byte:
+`upstream/quantizer/` is his `quantizer/` folder, and `upstream/LICENSE` /
+`upstream/README.md` are his repository's root files at that same revision.
+`sdk/imports/octabam-363861e.json` records their exact source identities.
 Nothing inside `upstream/` is edited here. His manifest declares the units,
-detours, pokes and the SEQUENCER TableGrow; this file re-exports its MODULE.
+detours, pokes and the SEQUENCER TableGrow; this wrapper removes the two panel
+publication detours and re-exports the standalone MODULE.
 
 Guards. His manifest names no stock bytes: it reads every hook site's guard,
 `stock_guard(site, length)`, from the build's own MAIN OS section
@@ -39,7 +41,8 @@ from remix.stock_guard import stock_guard
 
 _UPSTREAM = pathlib.Path(__file__).resolve().parent / "upstream" / "quantizer" / "manifest.py"
 
-# Every guard of the module: 28 detours and the SEQUENCER row-count poke (OS 1.40C).
+# Every guard of the module: 28 detours and the SEQUENCER row-count poke (OS 1.40C). His manifest reads all 28 as it
+# loads; this package hooks 26 of them (_without_panel leaves out the two panel publication sites).
 GUARDS = (
     stock_guard(0x4004fc84, 16, "567a08a47bfcfcbfa686446f812f7d8047929e38330c65d76598eb47e2c4c511"),  # qz_panel_stage (2.21)
     stock_guard(0x40005162,  8, "71fcb998fdf55a8ba0425d107c73e4e5b843fc1b8d75baba2a081207d1306e73"),  # qz_panel_commit (2.21)
@@ -72,6 +75,7 @@ GUARDS = (
     stock_guard(0x40065c7c,  4, "a3e547e08c1f288e512f2e52ac9becc3502ccd0dcfcf55e5ab9863859f34e2bc"),  # SEQUENCER row-count poke
 )
 _BY_SITE = {guard.address: guard for guard in GUARDS}
+_PANEL_SITES = (0x4004fc84, 0x40005162)  # not hooked by this package (_without_panel, below)
 
 
 def _declared(site, length):
@@ -109,7 +113,7 @@ def _guarded(module):
     """Each detour and poke gets the guard declared for its site; the sites must be exactly
     those above, and each guard covers what the hook overwrites."""
     sites = [d.site for d in module.detours] + [p.addr for p in module.pokes]
-    if sorted(sites) != sorted(_BY_SITE):
+    if sorted(sites) != sorted(site for site in _BY_SITE if site not in _PANEL_SITES):
         raise ValueError("Scale Quantizer hook sites differ from the declared guards")
     for d in module.detours:
         if _BY_SITE[d.site].length != (d.pad_to or 6):
@@ -135,7 +139,21 @@ def _without_fm(module):
         dataclasses.replace(unit, include=without(unit.include)) if unit.include else unit for unit in module.linked))
 
 
-MODULE = _without_fm(_guarded(_upstream_module()))
+# The author's panel publication transaction (2.21) runs only beside FM Synth, in FM Synth's own bundled copy of this
+# quantizer. Without it the two panel detours only replay the stock instructions they displace
+# (panel_transaction.inc.s assembles them to their replays with HAVE_PANEL_TRANSACTION 0), so this package does not
+# hook those two sites at all: FM Synth's package may hold them, and the two packages share no stock byte.
+
+
+def _without_panel(module):
+    """His manifest less the two panel publication detours (0.1.5)."""
+    kept = tuple(d for d in module.detours if d.site not in _PANEL_SITES)
+    if len(module.detours) - len(kept) != len(_PANEL_SITES):
+        raise ValueError("Scale Quantizer panel publication sites changed")
+    return dataclasses.replace(module, detours=kept)
+
+
+MODULE = _without_fm(_guarded(_without_panel(_upstream_module())))
 MODULE = dataclasses.replace(
     MODULE,
     # The module table's fields are octabam's (README.md, `make docs`), so they

@@ -1,0 +1,1 @@
+Zoom pedal page: before flashing the base, and before the first effect install, removal or sync on a connection, the page asks you to confirm the model printed on your pedal. An MS-50G running MIDISTOMP answers over USB exactly like an MS-70CDR, so the page could not tell them apart.

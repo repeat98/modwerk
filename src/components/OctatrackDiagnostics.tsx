@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { OctatrackLinkContext } from '../hooks/useOctatrackLink'
+import { SupportActions } from './SupportActions'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { Inventory } from '../config/inventory'
 import { changeDiagnosticSharing, collectOctatrackDiagnostics, diagnosticPreference, subscribeDiagnosticPreference } from '../community/octatrack-diagnostics'
@@ -20,6 +22,7 @@ export function OctatrackDiagnosticsCollector({memberId,link,inventory}: {member
  * Stop sharing and delete turns it off. */
 export function OctatrackDiagnosticsSettings({username}: {username?: string | null}) {
   const state = useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference)
+  const link = useContext(OctatrackLinkContext)
   const privacy = browserRequestsPrivacy(), offer = !state.enabled
   const count = useInvitationCounts('settings', offer)
   async function share() { if (await changeDiagnosticSharing(true)) count('shared') }
@@ -30,6 +33,9 @@ export function OctatrackDiagnosticsSettings({username}: {username?: string | nu
       ? <>That name was made up by the site: <a href="#account">choose your own</a>, ideally your Discord name, so I can match your messages to them.</>
       : 'Use the same name on Discord, so I can match your messages to them.'}</p>}
     <DiagnosticDetails/>
+    {/* link-trail.ts TRAIL_EVENTS */}
+    <p className="link-hint">Whether you share or not, this page keeps the last 100 USB events of your Octatrack in memory until it is reloaded, so you can copy or save them after an error. They stay on this computer unless you copy, save or attach them to a problem report you post.</p>
+    {link && <p><SupportActions link={link} what="Saved from Diagnostics" /></p>}
     {offer && <>
       <p className="diagnostics-choice">Optional. Sharing applies to {state.accountId === DIAGNOSTICS_GUEST ? 'this browser' : 'your signed-in sessions'} for 90 days. Builds and syncing work either way.</p>
       <button type="button" className="button button-primary" disabled={privacy || !state.ready || state.busy} onClick={()=>void share()}>{state.busy ? 'Saving…' : 'Share diagnostics'}</button>

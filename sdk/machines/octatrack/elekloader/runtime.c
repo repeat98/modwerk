@@ -62,6 +62,21 @@ void modwerk_machine_site_restored(uint32_t address, uint32_t length, const uint
 }
 #endif
 
+/* The transport long at 0x800065b8 (OS 1.40C) is 0 stopped and rewound, 1 running and 2 stopped with the position
+ * kept (octabam's docs/firmware/STEM_REC.md, Sam Banks: seven sites clear it, five write 1, one writes 2), and each
+ * track's running byte (0x80006500, 16 tracks) follows it. On the owner's MKII (23 November 2026) the panel's STOP
+ * wrote 0 at once, and 2 came from PLAY while playing (pause) and from every MIDI STOP, with all sixteen track bytes
+ * 2: a host that stops the unit leaves it there until a panel STOP. Both are stopped: brake release, the ceiling's
+ * re-time, the CPU guard, the predicted brake, the module switch and the loader's own gate all mean "not running".
+ * An unknown value counts as running, the cautious side for an install. Readings:
+ * docs/verification/2026-11-23-octatrack-transport-word.md. */
+int modwerk_machine_transport_stopped(uint32_t word, const volatile uint8_t *tracks)
+{
+    if (word != 0u && word != 2u) return 0;
+    for (unsigned i = 0; i < 16u; ++i) if (tracks[i] != 0u && tracks[i] != 2u) return 0;
+    return 1;
+}
+
 /* Code/data references may retain either alias of the same physical DRAM. */
 uint32_t modwerk_machine_reference(uint32_t value)
 {
@@ -86,12 +101,12 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max, const s
 #else
 #define U8(a) (*(volatile uint8_t *)(a))
 #define U32(a) (*(volatile uint32_t *)(a))
-/* The logger's flush check (sdk/runtime/logging/stock_140c.c), minus its
- * card and engine-task conditions: no track running, no recorder active. */
+/* The logger's flush check (sdk/runtime/logging/stock_140c.c), minus its card and engine-task conditions: no recorder
+ * active, and the transport and every track stopped, rewound or paused (the logger itself still waits for a rewind). */
 int modwerk_machine_stopped(void)
 {
-    for (unsigned i = 0; i < 16; ++i) if (U8(0x80006500u + i) || U8(0x80004f1eu + i * 84u)) return 0;
-    return U32(0x800065b8u) == 0;
+    for (unsigned i = 0; i < 16; ++i) if (U8(0x80004f1eu + i * 84u)) return 0;
+    return modwerk_machine_transport_stopped(U32(0x800065b8u), (const volatile uint8_t *)0x80006500u);
 }
 /* Stock's USB DISK MODE is open (its flag, 1 while it is): stock holds the DSP frames still there and starts them
  * again with the project it loads on the way out. dsp.c's stall watchdog stays out: its recovery, run inside the

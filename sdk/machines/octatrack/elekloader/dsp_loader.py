@@ -145,7 +145,9 @@ xwpasses:
 
 
 CORE1_WAIT = (0x57, (0x0cd341, 0x000000))  # payload B: brclr #1,y:<<$ffffd3,* (core 1 waits for core 0)
-CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        clr     a\n        move    a1,x:>$2840\n')
+# Core 1 clears its count through x1, which the frame head sets again before reading it (dsp_receiver.asm): no data
+# ALU result moved on at once, so no stall.
+CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        move    #<0,x1\n        move    x1,x:>$2840\n')
 
 
 def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, burn_at=None, cold=None):

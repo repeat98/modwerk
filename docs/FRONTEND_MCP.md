@@ -35,7 +35,11 @@ Node must resolve to version 24. No HTTP listener, browser extension, cloud MCP
 endpoint or administrator key is installed. The transport implements the
 [MCP stdio protocol](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports).
 
-The frontend is imported through an in-memory Vite bundle. Route
+The frontend is imported through an in-memory Vite bundle. Before each site or
+device tool call the server compares the files that bundle and the package
+manifest were built from, and rebuilds them when a branch switch or a base
+regeneration changed one, so the new base is known without reconnecting (/mcp).
+An open trial keeps its bundle until Keep or Undo. Route
 `console.error`, `warn`, `info` and `debug` through `formatMcpLog(...args)` and
 keep protocol output on stdout. Sanitizing only exceptions leaves warnings
 able to print large data-URL stacks; bounded messages must omit stacks,
@@ -254,6 +258,13 @@ npm run zoom -- status | list | backup [OUT.zip]
 npm run zoom -- install FILE.ZDL --yes | remove NAME.ZDL --yes
 node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --zoom-midi [--zoom-effects DIR] [--allow-device-writes]
 ```
+
+Start with `--zoom-midi` alone for the shared read tools. `device_status`
+identifies the pedal and reads its file inventory, including effect list
+membership where available. In update mode it reads identity only.
+`device_load` returns a reading when the pedal answers MIDISTOMP's load
+command. `device_log` reports unsupported. An Octatrack socket or an active
+remote Octatrack session takes precedence for the shared tools.
 
 `zoom_status` reads the model and firmware (on MIDISTOMP also its version,
 features and load), `zoom_list` the files and the free space, with the

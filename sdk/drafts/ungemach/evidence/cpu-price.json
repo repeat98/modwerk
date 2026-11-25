@@ -1,0 +1,38 @@
+{
+  "module": "ungemach",
+  "version": "0.1.0-experimental",
+  "base": "4c7eb79b (development twin of the beta base, built with --dev from module/ungemach d0dc7166)",
+  "scene": "Author's Octatrack MKI, OS 1.40C, a scratch project, bank A: read on A03 (only T1, a trig on every step, no sample), transport stopped between readings; release package a8bcdca3 (the released 37d7a278 differs only in its price byte). Before: no module installed. At rest: UNGEMACH installed, T1 on FLEX. Its price in use is the machine-render reading in resources.cpuPrice; this record holds only the cost at rest. The tool printed THE TRIAL DID NOT ROLL BACK; recover rolled it back and the inventory read empty.",
+  "seconds": 8,
+  "measuredAt": "2026-11-24T13:33:27.951Z",
+  "result": {
+    "id": "ungemach",
+    "version": "file",
+    "packageSha256": "a8bcdca3ac910e22d538712213756b7cd430d8aced2575e0b0b0f3207aff4de1",
+    "before": {
+      "frame": 32.3,
+      "frameMax": 63.1,
+      "frames": 22357,
+      "skipped": 0,
+      "cpu": 44.6,
+      "dsp1to4": 38.6,
+      "dsp5to8": 47.5
+    },
+    "atRest": {
+      "frame": 32.3,
+      "frameMax": 63.1,
+      "frames": 22361,
+      "skipped": 0,
+      "cpu": 44.7,
+      "dsp1to4": 38.4,
+      "dsp5to8": 47.5
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0.1,
+      "dsp1to4": -0.2,
+      "dsp5to8": 0
+    },
+    "rolledBack": false
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { controlProblems } from './module-controls.mjs'
+import { controlProblems, widgetProblems } from './module-controls.mjs'
 
 const knob = (slot, name, fallback, count = null) => ({ slot, name, default: fallback, count })
 const control = (name, fallback, count = 128) => ({ name, default: fallback, count, doc: 'what it does', labels: null })
@@ -25,5 +25,27 @@ describe('an effect’s knobs, declared twice', () => {
   })
   it('have nothing to say about a module without native knobs', () => {
     expect(controlProblems([], [control('SCALE', 0, 12)])).toEqual([])
+  })
+})
+
+describe('each knob drawn as what it holds', () => {
+  const param = (slot, name, formatter, count, labels = null, mode = false) => ({ slot, name, default: 0, count, formatter, labels, mode })
+  it('passes switches, labelled dials, knobs and bipolar knobs used as they are meant', () => {
+    expect(widgetProblems([param(0, 'TIME', 'plain', 128), param(1, 'TONE', 'bipolar', 128), param(6, 'SYNC', 'stepped', 2, ['FREE', 'BEAT'], true),
+      param(7, 'VOIC', 'stepped', 4, ['1', '2', '3', '4']), param(8, 'TYPE', 'wide-stepped', 7, ['PURE', 'STRNG', 'TUBE', 'BAR', 'PLATE', 'DRUM', 'BELL']),
+      param(9, 'MIX', 'inherit', 3), param(10, 'X', 'plain', null)])).toEqual([])
+  })
+  it('names a switch with too many positions or no words, a knob for a short list and labels a knob never draws', () => {
+    expect(widgetProblems([param(0, 'RATE', 'stepped', 8, ['1', '2', '3', '4', '5', '6', '7', '8']), param(1, 'MODE', 'stepped', 3),
+      param(2, 'TAPS', 'plain', 4), param(3, 'SHAPE', 'plain', 128, Array.from({ length: 128 }, (_, i) => String(i)))])).toEqual([
+      'slot 0 (RATE): a switch for 8 values; a switch has at most five positions, so use WIDE_STEPPED with labels',
+      'slot 1 (MODE): a switch without labels shows numbers; give each position a word',
+      'slot 2 (TAPS): a knob for 4 values; 4 choices are a switch (STEPPED with labels)',
+      'slot 3 (SHAPE): a plain knob never draws its labels; use WIDE_STEPPED for a labelled list, or drop the labels'])
+  })
+  it('refuses a mode select whose words do not name it, since it shows them in place of its name', () => {
+    expect(widgetProblems([param(6, 'COLUN', 'stepped', 2, ['OFF', 'ON'], true)])).toEqual([
+      'slot 6 (COLUN): the mode select names itself with its value, so OFF / ON leaves it without a name; use words that say what each mode is (FREE / BEAT, NOTE / COLUN)'])
+    expect(widgetProblems([param(6, 'COLUN', 'stepped', 2, ['NOTE', 'COLUN'], true), param(7, 'HOLD', 'stepped', 2, ['OFF', 'ON'])])).toEqual([])
   })
 })

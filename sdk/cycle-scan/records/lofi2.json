@@ -18,6 +18,12 @@
       "transfer": 2.56
     }
   },
+  "defaults": {
+    "setting": "RING/def",
+    "instructions": 254.06,
+    "cycles": 424.56,
+    "stalls": 56.19
+  },
   "stock": {
     "comparator": "LO-FI",
     "setting": "defaults/def",

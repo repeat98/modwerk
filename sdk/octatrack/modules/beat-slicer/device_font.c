@@ -1,105 +1,67 @@
-/* SPDX-License-Identifier: MIT */
-/* Original small lettering, extended from the private planner probe. */
+/* SPDX-License-Identifier: MIT
+ * Original UI bindings for stock OS 1.40C. Firmware/fonts stay on the unit.
+ * The module owns both scratch planes; native drawing never targets stock's
+ * home plane or its opacity plane. Only the home pixels are read at compose.
+ */
 #include "device_font.h"
-static const unsigned char letters[26][7]={
- {14,17,17,31,17,17,17},{30,17,17,30,17,17,30},{14,17,16,16,16,17,14},
- {30,17,17,17,17,17,30},{31,16,16,30,16,16,31},{31,16,16,30,16,16,16},
- {14,17,16,23,17,17,14},{17,17,17,31,17,17,17},{31,4,4,4,4,4,31},
- {1,1,1,1,17,17,14},{17,18,20,24,20,18,17},{16,16,16,16,16,16,31},
- {17,27,21,21,17,17,17},{17,25,21,19,17,17,17},{14,17,17,17,17,17,14},
- {30,17,17,30,16,16,16},{14,17,17,17,21,18,13},{30,17,17,30,20,18,17},
- {15,16,16,14,1,1,30},{31,4,4,4,4,4,4},{17,17,17,17,17,17,14},
- {17,17,17,17,17,10,4},{17,17,17,21,21,21,10},{17,17,10,4,10,17,17},
- {17,17,10,4,4,4,4},{31,1,2,4,8,16,31}
-};
-static const unsigned char digits[10][7]={
- {14,17,19,21,25,17,14},{4,12,4,4,4,4,14},{14,17,1,2,4,8,31},
- {30,1,1,14,1,1,30},{2,6,10,18,31,2,2},{31,16,16,30,1,1,30},
- {14,16,16,30,17,17,14},{31,1,2,4,8,8,8},{14,17,17,14,17,17,14},
- {14,17,17,15,1,1,14}
-};
-void bs_device_text_at(unsigned char *frame,uint32_t x,uint32_t y,const char *s){
- if(!frame || !s || y>57)return;
- for(;*s && x+5<=124;x+=6,++s){
-  const unsigned char *glyph=0;
-  if(*s>='A' && *s<='Z')glyph=letters[(unsigned)*s-'A'];
-  if(*s>='0' && *s<='9')glyph=digits[(unsigned)*s-'0'];
-  for(uint32_t row=0;row<7;++row){
-   uint32_t bits=glyph?glyph[row]:0;
-   if(*s==':' && (row==2 || row==5))bits=4;
-   if(*s=='.' && row==6)bits=4;
-   if(*s=='-' && row==3)bits=14;
-   if(*s=='/')bits=1u<<(row*4u/6u);
-   for(uint32_t column=0;column<5;++column)if(bits&(16u>>column))
-    frame[(x+column)*8u+7u-(y+row)/8u]|=(unsigned char)(1u<<((y+row)%8u));
-  }
- }
-}
+#define UI_FONT 0x400ba876u
+#define UI_SURFACE ((const volatile uint32_t *)0x400bf10au)
+#define UI_TEXT ((void (*)(uint32_t,void *,int,int,int,const char *))0x40012bd8u)
+#define UI_WIDTH ((uint32_t (*)(uint32_t,int,const char *))0x40012f30u)
+#define UI_FRAME ((void (*)(void *,const char *,const char *))0x400570b8u)
 
-static void pixel(unsigned char *frame,uint32_t x,uint32_t y,unsigned invert)
+static void surface(uint32_t *out,unsigned char *pixels,unsigned char *opacity)
 {
- if(x>=128 || y>=64)return;
- unsigned char *p=&frame[x*8u+7u-y/8u],bit=(unsigned char)(1u<<(y%8u));
- if(invert)*p^=bit;else *p|=bit;
+    for(unsigned i=0;i<7u;++i)out[i]=UI_SURFACE[i];
+    out[3]=(uint32_t)(uintptr_t)pixels;
+    out[4]=(uint32_t)(uintptr_t)opacity;
 }
-void bs_device_clear(unsigned char *frame,uint32_t x,uint32_t y,uint32_t w,uint32_t h)
+const unsigned char *bs_device_home(void)
+{return (const unsigned char *)(uintptr_t)UI_SURFACE[3];}
+uint32_t bs_device_text_width(const char *text)
+{return text?UI_WIDTH(UI_FONT,-1,text):0;}
+void bs_device_small_text(unsigned char *frame,uint32_t x,uint32_t y,const char *text)
 {
- if(!frame || !w || !h || x>=128 || y>=64 || w>128-x || h>64-y)return;
- /* Clear packed column bytes, rather than revisiting a byte for each pixel. */
- uint32_t last=y+h-1u;
- for(uint32_t band=y/8u;band<=last/8u;++band) {
-  uint32_t low=band==y/8u?y%8u:0u,high=band==last/8u?last%8u:7u;
-  unsigned char keep=(unsigned char)~((255u<<low)&(255u>>(7u-high)));
-  for(uint32_t column=x;column<x+w;++column)frame[column*8u+7u-band]&=keep;
- }
+    if(!frame || !text || y>59u || x>=128u)return;
+    uint32_t s[7];
+    /* The plain text blitter only ORs the picture. Give it a module-owned
+     * second-plane address too, rather than retaining stock's plane pointer. */
+    surface(s,frame,frame);
+    UI_TEXT(UI_FONT,s,(int)x,59-(int)y,-1,text);
 }
-/* Original compact lettering for the instrument-sized popup fields. */
-void bs_device_small_text(unsigned char *frame,uint32_t x,uint32_t y,const char *s)
+static unsigned ink(const unsigned char *frame,unsigned x,unsigned y)
+{return frame[x*8u+7u-y/8u]&(1u<<(y%8u));}
+void bs_device_popup(unsigned char *frame,unsigned char *mask)
 {
- static const unsigned char alpha[26][5]={
-  {2,5,7,5,5},{6,5,6,5,6},{3,4,4,4,3},{6,5,5,5,6},
-  {7,4,6,4,7},{7,4,6,4,4},{3,4,5,5,3},{5,5,7,5,5},
-  {7,2,2,2,7},{1,1,1,5,2},{5,5,6,5,5},{4,4,4,4,7},
-  {5,7,7,5,5},{5,7,7,7,5},{2,5,5,5,2},{6,5,6,4,4},
-  {2,5,5,3,1},{6,5,6,5,5},{3,4,2,1,6},{7,2,2,2,2},
-  {5,5,5,5,7},{5,5,5,5,2},{5,5,7,7,5},{5,5,2,5,5},
-  {5,5,2,2,2},{7,1,2,4,7}
- };
- static const unsigned char digit[10][5]={
-  {7,5,5,5,7},{2,6,2,2,7},{6,1,7,4,7},{6,1,2,1,6},
-  {5,5,7,1,1},{7,4,6,1,6},{3,4,7,5,7},{7,1,2,2,2},
-  {7,5,7,5,7},{7,5,7,1,6}
- };
- if(!frame || !s || y>59)return;
- for(;*s && x+3<=124;x+=4,++s) {
-  const unsigned char *glyph=0;
-  if(*s>='A' && *s<='Z')glyph=alpha[(unsigned)*s-'A'];
-  if(*s>='0' && *s<='9')glyph=digit[(unsigned)*s-'0'];
-  for(uint32_t row=0;row<5;++row) {
-   uint32_t bits=glyph?glyph[row]:0;
-   if(*s==':' && (row==1 || row==3))bits=2;
-   if(*s=='.' && row==4)bits=2;
-   if(*s=='-' && row==2)bits=7;
-   if(*s=='/')bits=1u<<(row/2u);
-   for(uint32_t column=0;column<3;++column)
-    if(bits&(4u>>column))pixel(frame,x+column,y+row,0);
-  }
- }
+    uint32_t window[16];
+    for(unsigned i=0;i<16u;++i)window[i]=0;
+    for(unsigned i=0;i<1024u;++i)frame[i]=mask[i]=0;
+    surface(window+9,frame,mask);
+    window[9]=114;window[10]=64;
+    UI_FRAME(window,"CREATE BEAT GRID","");
+    /* Stock's 114 px surface paints x=1..112. Shift seven columns to leave
+     * the approved eight-pixel home-screen margin on both sides. No scaling. */
+    for(unsigned x=121u;x-- >7u;)
+        for(unsigned b=0;b<8u;++b)frame[x*8u+b]=frame[(x-7u)*8u+b];
+    for(unsigned x=0;x<128u;++x)if(x<7u || x>120u)
+        for(unsigned b=0;b<8u;++b)frame[x*8u+b]=0;
+    /* Derive opacity from the native frame's contour. This preserves its
+     * stepped title and corner geometry without embedding a stock bitmap. */
+    for(unsigned i=0;i<1024u;++i)mask[i]=0;
+    for(unsigned y=0;y<64u;++y) {
+        unsigned left=8u,right=119u;
+        while(left<=right && !ink(frame,left,y))++left;
+        if(left>right)continue;
+        while(right>left && !ink(frame,right,y))--right;
+        unsigned bit=1u<<(y%8u),band=7u-y/8u;
+        for(unsigned x=left;x<=right;++x)mask[x*8u+band]|=(unsigned char)bit;
+    }
 }
-void bs_device_box(unsigned char *frame,uint32_t x,uint32_t y,uint32_t w,uint32_t h)
-{
- if(!frame || !w || !h || x>=128 || y>=64 || w>128-x || h>64-y)return;
- for(uint32_t i=x;i<x+w;++i){pixel(frame,i,y,0);pixel(frame,i,y+h-1,0);}
- for(uint32_t i=y;i<y+h;++i){pixel(frame,x,i,0);pixel(frame,x+w-1,i,0);}
-}
+static void pixel(unsigned char *frame,unsigned x,unsigned y)
+{if(x<128u && y<64u)frame[x*8u+7u-y/8u]|=(unsigned char)(1u<<(y%8u));}
 void bs_device_dashed_box(unsigned char *frame,uint32_t x,uint32_t y,uint32_t w,uint32_t h)
 {
- if(!frame || !w || !h || x>=128 || y>=64 || w>128-x || h>64-y)return;
- for(uint32_t i=0;i<w;++i)if(i%4u<2u){pixel(frame,x+i,y,0);pixel(frame,x+i,y+h-1u,0);}
- for(uint32_t i=0;i<h;++i)if(i%4u<2u){pixel(frame,x,y+i,0);pixel(frame,x+w-1u,y+i,0);}
-}
-void bs_device_invert(unsigned char *frame,uint32_t x,uint32_t y,uint32_t w,uint32_t h)
-{
- if(!frame || x>=128 || y>=64 || w>128-x || h>64-y)return;
- for(uint32_t i=x;i<x+w;++i)for(uint32_t j=y;j<y+h;++j)pixel(frame,i,j,1);
+    if(!frame || !w || !h || x>=128u || y>=64u || w>128u-x || h>64u-y)return;
+    for(unsigned i=0;i<w;++i)if(i%4u<2u){pixel(frame,x+i,y);pixel(frame,x+i,y+h-1u);}
+    for(unsigned i=0;i<h;++i)if(i%4u<2u){pixel(frame,x,y+i);pixel(frame,x+w-1u,y+i);}
 }

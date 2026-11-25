@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/airwindows/airwindows",
+  "revision": "e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/octabam/modules/mackity",
+  "modules": [
+    "mackity"
+  ],
+  "files": [
+    {
+      "path": "upstream/MackityProc.cpp",
+      "sourcePath": "plugins/LinuxVST/src/Mackity/MackityProc.cpp",
+      "sourceBytes": 8595,
+      "sourceGitBlob": "1d148b30af43e2d564c71fc27fe0a418c8efd676",
+      "sourceSha256": "cd87114e2a4cc878ef4a8c95125a0a440c11c67f7aafafb134fa753863ac804c",
+      "vendoredSha256": "cd87114e2a4cc878ef4a8c95125a0a440c11c67f7aafafb134fa753863ac804c"
+    },
+    {
+      "path": "upstream/Mackity.cpp",
+      "sourcePath": "plugins/LinuxVST/src/Mackity/Mackity.cpp",
+      "sourceBytes": 4882,
+      "sourceGitBlob": "1354eafe5dd4e4678f3206e8f7e88f3d1d43d88e",
+      "sourceSha256": "ba1c6cf347a9bc53d557af760658d7d2b353d6ce0e10af46ba96d677f177af3a",
+      "vendoredSha256": "ba1c6cf347a9bc53d557af760658d7d2b353d6ce0e10af46ba96d677f177af3a"
+    },
+    {
+      "path": "upstream/Mackity.h",
+      "sourcePath": "plugins/LinuxVST/src/Mackity/Mackity.h",
+      "sourceBytes": 2618,
+      "sourceGitBlob": "856be80c4737b7dd8e702a7f89c8b9289a92d7de",
+      "sourceSha256": "9f762af4975556fbb64744ede2da6c8d8407e9e43e90b9bd1c46c3dd58b0c0e6",
+      "vendoredSha256": "9f762af4975556fbb64744ede2da6c8d8407e9e43e90b9bd1c46c3dd58b0c0e6"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 1070,
+      "sourceGitBlob": "e8feef9bdb417d8662f50cc43e6329c0bd071460",
+      "sourceSha256": "b4f5719b00ba3fecf8c0ce651e843651bd80f08a10cf4cf1f00e673a5bcaf23b",
+      "vendoredSha256": "b4f5719b00ba3fecf8c0ce651e843651bd80f08a10cf4cf1f00e673a5bcaf23b"
+    }
+  ]
+}

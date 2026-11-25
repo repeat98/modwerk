@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "recorded": "2026-10-29",
+  "moduleVersion": "0.0.18-experimental",
+  "qualification": false,
+  "developmentBase": "8472238a4d448bf8d4be8077a831eb5d549036d490bf26c365ead6cfd7862544",
+  "developmentBaseBinSha256": "eda973906a887869686e812143c58a309c10d076ac7762cc62d018467cd54d2e",
+  "baseSourceRevision": "8fbd3bebf8a16b5fc1a2d42e4f1f65c4b5993232",
+  "method": "Development request 24 free/largest runs; two whole-set temporary trials using the same four companion packages, with and without the unchanged MIDI2 package. Eight readings per trial. Both trials Undone; no Keep.",
+  "packages": [
+    {
+      "id": "sidechain-compressor",
+      "bytes": 1236,
+      "sha256": "f7aa8f3a7894617335b38c990d2b8060eb2e4bdca71dbd8febde883aa1bedf61",
+      "requiredBase": "8472238a4d448bf8d4be8077a831eb5d549036d490bf26c365ead6cfd7862544"
+    },
+    {
+      "id": "analog-bassdrum",
+      "bytes": 25822,
+      "sha256": "9f22f25d5fd8692fb7df5ad2e91e6dd8f66634c5eca043675bd1ea6e70d672fa",
+      "requiredBase": "8472238a4d448bf8d4be8077a831eb5d549036d490bf26c365ead6cfd7862544"
+    },
+    {
+      "id": "playmodes",
+      "bytes": 14846,
+      "sha256": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced"
+    },
+    {
+      "id": "mute-modes",
+      "bytes": 2702,
+      "sha256": "c35b154d7a6ff4d9affc339387d68bde87554aec82a87b60059b6307f5b2b848"
+    },
+    {
+      "id": "midi-cc-slots",
+      "bytes": 33434,
+      "sha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451"
+    }
+  ],
+  "emptyBefore": {
+    "free": 786432,
+    "largest": 786432
+  },
+  "trials": [
+    {
+      "includeMidi": true,
+      "observations": 8,
+      "freeBytes": [
+        709264
+      ],
+      "largestFreeBytes": [
+        709264
+      ],
+      "restoredMemory": {
+        "free": 786432,
+        "largest": 786432
+      },
+      "undoVerified": true
+    },
+    {
+      "includeMidi": false,
+      "observations": 8,
+      "freeBytes": [
+        740480
+      ],
+      "largestFreeBytes": [
+        740480
+      ],
+      "restoredMemory": {
+        "free": 786432,
+        "largest": 786432
+      },
+      "undoVerified": true
+    }
+  ],
+  "fullSetPoolBytes": 77168,
+  "companionsPoolBytes": 45952,
+  "measuredMidiPoolBytes": 31216,
+  "originalBaseRestoration": {
+    "verified": true,
+    "base": "c1ae2ee92a829e06aa9398d35981b8228efdd34c578c9583ef36fba8f5bc637f",
+    "setDigest": "6b9b601b7df88a41b46bd1299397ece3b42d0a825989da3edcd0b06c3fc02e64",
+    "inventory": [
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "95cff696",
+        "name": "SIDECHAIN COMP"
+      },
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "be4ff75a",
+        "name": "Play Modes"
+      },
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "73bab3b1",
+        "name": "Mute Modes"
+      },
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "f36a496d",
+        "name": "MIDI MODE 2"
+      },
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "abdb1445",
+        "name": "Analog BD"
+      }
+    ]
+  },
+  "initialProbe": "The first trial collected the same full-set pool use but its first Undo reply was needs-recovery. A fresh connection subsequently found normal and verified the exact empty baseline; automatic recovery had completed. The repeat allowed the normal bounded recovery wait and verified both Undo operations.",
+  "limitations": [
+    "Pool extent only; no complete stock-callee/assembly stack bound, canaries or whole-system peak.",
+    "Two retained same-size revisions (62432 bytes) remain a calculated pool peak, not measured by this trial.",
+    "This is a development twin: Sidechain/Analog BD are rebound to its addresses. Midi Mode 2, Play Modes and Mute Modes are unchanged.",
+    "No chip WCET, full branch/load matrix or deterministic MIDI-loss qualification is inferred."
+  ]
+}
