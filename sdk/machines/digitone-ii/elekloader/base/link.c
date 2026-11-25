@@ -15,9 +15,13 @@
 //   release 0x12 -> lets go of every key the link holds, armed only
 //   ramboot 0x14 ULEN UCRC CLEN CCRC -> armed: YES for stock's UPGRADE OS NOW?, and where stock would erase and write
 //                   the flash the base resets into the staged image instead (LINK.md, RAM boot). Nothing writes the flash.
-//   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
-//   diag    0x22 -> the diagnostics log's address and size (read it with mem), frame interrupts and UI ticks so far
+//   screen  0x20 OFF -> 128 bytes of the frame on the screen from OFF (0, 128 ... 896), with the frame's number
+//   diag    0x22 -> the diagnostics log's size, frame interrupts and UI ticks so far (and where it is, for reference)
 //   freeze  0x23 N -> armed: the next UI tick stands still N frames (at most 15 s), audio goes on: a FREEZE test
+//   log     0x24 OFF -> up to 128 bytes of the diagnostics log from OFF (0, 128 ...), with the log's seq
+//   bootdiag 0x25 -> the RAM boot gate's diagnostics (15 words) and the way to the reset's two marks
+// The device chooses what each request returns: there is no request for an address the host names, so a client
+// reads the link's counters, the screen and the diagnostics log, and posts keys and turns, and reaches nothing else.
 // Keys and turns go on the UI task's queue (0x4013747a, queue_put 0x40001896) as the panel's messages do, so the UI
 // loop plays them through the core's ev_key/ev_enc sites and stock: modules see them too. A key the link holds reads
 // as held to stock's is_key_held (0x4011fac4, which base.json points at mw_link_held). Arm: SETTINGS > REMOTE CTRL, ON
@@ -67,19 +71,29 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_RAMBOOT 0x14                // armed: YES at UPGRADE OS NOW?, and the staged image is booted from RAM, never flashed
 #define CARRY_TICKS 1800                // a minute: a RAM boot asked for and not reached is cancelled
-#define CMD_MEM 0x21
-#define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its address and size, frames and ticks
+#define CMD_SCREEN 0x20
+#define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its size, frames and ticks
 #define CMD_FREEZE_TEST 0x23            // armed: the next UI tick stands still N frames (diag.c), to see a FREEZE logged
+#define CMD_LOG 0x24                    // a part of the diagnostics log, as the screen's: the unit chooses the bytes
+#define CMD_BOOTDIAG 0x25               // the RAM boot gate's 15 words (DIAG) and the two marks (MARK): fixed, the base's own
+#define LOG_PART 128
 #define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define HUMAN_TICKS 60                  // about 3 s
 #define PEND_TICKS 20                   // about 1 s: a posted event never seen at ev_key/ev_enc is given up
 #define HEADER 8                        // F0 7D M W L ver seq cmd
 #define RING 8                          // requests waiting for the UI task
-#define CMD_BYTES 32                    // a request's bytes, F0..F7 (mem, the longest, is 19)
+#define CMD_BYTES 32                    // a request's bytes, F0..F7 (key and enc, the longest, are 19)
 #define PER_TICK 4                      // requests answered in one tick
-#define MEM_MAX 128
-#define DDR_END 0x48000000
+#define FRAME_BYTES 1024                // 128x64 pixels, 1 bit each
+#define SCREEN_PART 128                 // a screen reply's bytes
+// Stock keeps two frame pointers side by side (OS 1.12, FRAME_POINTERS_AT 0x402a10c8): it sends the one it drew to
+// the display, then swaps them (0x40131fd2), so the frame on the screen is the second.
+#define FRAME_ON_SCREEN (((uint8_t *const volatile *)FRAME_POINTERS_AT)[1])
+#ifndef DDR_START                       // a host test names its own
+#define DDR_START 0x40000000u
+#define DDR_END 0x48000000u
+#endif
 
 static uint8_t ring[RING][CMD_BYTES];
 static uint8_t ring_len[RING];
@@ -108,7 +122,10 @@ void mw_link_rx(const uint8_t *msg, uint32_t len, uint32_t source)
     ring_head = h + 1;                  // published last: the UI task reads it after the bytes
 }
 
-static uint8_t reply[HEADER + 1 + 5 + (MEM_MAX / 7 + 1) * 8 + 1];
+static uint8_t reply[HEADER + 1 + 5 * 9 + (SCREEN_PART / 7 + 1) * 8 + 1];
+// The frame as it was when OFF 0 was asked for: the later parts come from this copy, so the eight parts are one frame.
+static uint8_t frame[FRAME_BYTES];
+static uint32_t frame_number;           // 0 until the first copy
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -294,6 +311,13 @@ static void disarm(void)
     armed = 0;
 }
 
+// A press or turn the link posted that stock would get while UPGRADE OS NOW? waits: taken before stock, counted as
+// refused. The check where the host asks (ST_FLASH) cannot see one already in stock's queue when the upload completes.
+static void held_back(void)
+{
+    refused_count++;
+}
+
 static int ours(int kind, int id, int value)    // the next event the link posted? pops it if so
 {
     struct pend *p;
@@ -313,12 +337,14 @@ static int person_at_panel(void)        // a person pressed or turned something 
 
 static int human(void)                  // a person pressed or turned something; -> 1 takes that first press
 {
+    int any;
     human_count++;
     ramboot_cancel();                   // never a flash where the host asked for a RAM boot
     if (!armed)
         return 0;
     human_ticks = 0;
-    return release_all();
+    any = release_all();
+    return flash_waits() ? 0 : any;     // at UPGRADE OS NOW? a person's press always reaches stock: their YES or NO
 }
 
 // ev_key, ev_enc: (brain, event); the key or encoder at event + 12, a key's flags at + 16. A release alone is not a
@@ -331,9 +357,16 @@ int mw_link_key(void *brain, char *event)
     int32_t key = *(int32_t *)(event + 12), flags = *(int32_t *)(event + 16);
     int replay = key == last_key && ticks == last_tick, person;
     (void)brain;
-    person = (uint32_t)key < KEY_IDS && !ours(MSG_KEY, key, flags) && (flags & KEY_DOWN) && (!replay || panel_down(key));
+    int mine = (uint32_t)key < KEY_IDS && ours(MSG_KEY, key, flags);
+    person = (uint32_t)key < KEY_IDS && !mine && (flags & KEY_DOWN) && (!replay || panel_down(key));
     last_key = key;
     last_tick = ticks;
+    if (mine) {                         // a press the link queued before UPGRADE OS NOW? opened never reaches it
+        if (!(flags & KEY_DOWN) || !flash_waits())
+            return 0;
+        held_back();
+        return 1;
+    }
     return person ? human() : 0;
 }
 
@@ -341,16 +374,28 @@ int mw_link_enc(void *brain, char *event)
 {
     int32_t enc = *(int32_t *)(event + 12);
     (void)brain;
-    if (enc >= ENC_FIRST && enc <= ENC_LAST && !ours(MSG_ENC, enc, 0))
-        return human();
-    return 0;
+    if (enc < ENC_FIRST || enc > ENC_LAST)
+        return 0;
+    if (ours(MSG_ENC, enc, 0)) {        // nor a turn the link queued
+        if (!flash_waits())
+            return 0;
+        held_back();
+        return 1;
+    }
+    return human();
 }
 
-static int readable(uint32_t a, uint32_t n)
+// OFF 0 copies the frame on the screen, if stock's pointer to it lies wholly in DDR; 0 when it does not.
+static int take_frame(void)
 {
-    if (n == 0 || n > MEM_MAX || a + n < a)
+    const uint8_t *fb = FRAME_ON_SCREEN;
+    int i;
+    if ((uintptr_t)fb < DDR_START || (uintptr_t)fb > DDR_END - FRAME_BYTES)
         return 0;
-    return (a >= 0x40000000 && a + n <= DDR_END) || (a >= 0x80000000 && a + n <= 0x80010000);
+    for (i = 0; i < FRAME_BYTES; i++)
+        frame[i] = fb[i];
+    frame_number++;
+    return 1;
 }
 
 // zlib's CRC32 a nibble at a time (16 words of table): the staged container is up to CONTAINER_MAX bytes, read in the
@@ -408,6 +453,34 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, mw_diag_frames());
         p = put32(p, ticks);
         send(p);
+        return;
+    case CMD_BOOTDIAG: {                // only the words the base's gate and the way to the reset write
+        int i;
+        p = begin(seq, cmd, ST_OK);
+        for (i = 0; i < 15; i++)
+            p = put32(p, DIAG[i]);
+        p = put32(p, MARK[0]);
+        p = put32(p, MARK[1]);
+        send(p);
+        return;
+    }
+    case CMD_LOG:                       // the log's own bytes only, from where diag.c keeps it
+        if (n < 5) {
+            send(begin(seq, cmd, ST_BAD));
+            return;
+        } else {
+            uint32_t off = get32(m + HEADER), size = mw_diag_log_bytes();
+            const volatile uint8_t *log = (const volatile uint8_t *)mw_diag_log_at();
+            if (off >= size || off % LOG_PART) {
+                send(begin(seq, cmd, ST_RANGE));
+                return;
+            }
+            p = begin(seq, cmd, ST_OK);
+            p = put32(p, off);
+            p = put32(p, ((const volatile uint32_t *)log)[4]);   // struct diag_log's seq: raised by every record
+            p = pack(p, log + off, size - off < LOG_PART ? (int)(size - off) : LOG_PART);
+            send(p);
+        }
         return;
     case CMD_FREEZE_TEST:
         if (!armed)
@@ -480,23 +553,24 @@ static void COLD act(const uint8_t *m, int len)
             refused_count++;
         send(begin(seq, cmd, status));
         return;
-    case CMD_MEM:
-        if (n < 10) {
+    case CMD_SCREEN:
+        if (n < 5) {
             send(begin(seq, cmd, ST_BAD));
             return;
         } else {
-            uint32_t a = get32(m + HEADER), count = get32(m + HEADER + 5);
-            if (!readable(a, count)) {
+            uint32_t off = get32(m + HEADER);
+            if (off >= FRAME_BYTES || off % SCREEN_PART || (off == 0 ? !take_frame() : !frame_number)) {
                 send(begin(seq, cmd, ST_RANGE));
                 return;
             }
             p = begin(seq, cmd, ST_OK);
-            p = put32(p, a);
-            p = pack(p, (const volatile uint8_t *)a, (int)count);
+            p = put32(p, off);
+            p = put32(p, frame_number);
+            p = pack(p, frame + off, SCREEN_PART);
             send(p);
         }
         return;
-    default:
+    default:                            // anything else, the old mem (0x21) included
         send(begin(seq, cmd, ST_BAD));
     }
 }

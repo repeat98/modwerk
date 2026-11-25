@@ -3,13 +3,12 @@
 """The Digitone II development link's host (sdk/machines/digitone-ii/elekloader/base/link.c).
 
     dn2_link.py ident                # link version, messages received and dropped, ticks
-    dn2_link.py mem 0x47f00000 64    # up to 128 bytes of DDR or SRAM, as hex
-    dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG), read through mem
+    dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG)
     dn2_link.py press KEY [KEY...]   # press and let go, one after the other (dn2_link.py keys lists them, or an id)
     dn2_link.py hold KEY / let KEY   # press, or let go of, one key (FUNC + TRIG: hold FUNC, press TRIG1, let FUNC)
     dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA detents, up to 8 a message
     dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
-    dn2_link.py diag [--save F]      # the diagnostics log (the Octatrack's layout): where it is, and its bytes into F
+    dn2_link.py diag [--save F]      # the diagnostics log (the Octatrack's layout): its size, and its bytes into F
     dn2_link.py freeze SECONDS       # armed: the UI stands still that long (audio goes on), to test FREEZE logging
     dn2_link.py ramboot IMAGE.syx    # armed: upload, then boot it from RAM without writing the flash (LINK.md)
     dn2_link.py bootdiag             # what the boot gate found at the last start, and how far a RAM boot came
@@ -25,7 +24,8 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23, 'ramboot': 0x14}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'ramboot': 0x14, 'screen': 0x20,
+       'diag': 0x22, 'freeze': 0x23, 'log': 0x24, 'bootdiag': 0x25}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit', 6: 'an OS upload waits at UPGRADE OS NOW?: confirm it at the unit',
           7: 'no UPGRADE OS NOW? waits for this upload: nothing pressed'}
@@ -58,10 +58,10 @@ def unpack7(b):
     return bytes(out)
 
 
-# Stock keeps two frame pointers side by side (OS 1.12): it sends the one it drew (0x402a10c8) to the display, then
-# swaps them (0x40131fd2), so the frame on the screen is the second. A frame is 128x64 pixels, 1 bit each, 1024 bytes.
-FRAME_POINTERS = 0x402a10c8
+# A frame is 128x64 pixels, 1 bit each, 1024 bytes; the unit sends it in eight parts. It copies the frame when part 0
+# is asked for and sends every part from that copy, each with the copy's number. No request names an address.
 FRAME_BYTES = 1024
+SCREEN_PART = 128
 
 
 def frame_rows(fb):
@@ -169,30 +169,32 @@ def packed_len(n):
     return n + (n + 6) // 7
 
 
-def mem_reply_fits(addr, n):
-    """A mem reply is this request's only if it echoes addr and carries exactly n bytes (or is a refusal)."""
+def screen_reply_fits(off, number=None):
+    """A screen reply is this request's only if it echoes off, carries exactly one part and, after part 0, the number
+    of part 0's copy (or is a refusal)."""
     def fits(got):
         _, _, status, p = got
         if status:
             return True
-        return len(p) == 5 + packed_len(n) and get32(p, 0) == addr
+        return len(p) == 10 + packed_len(SCREEN_PART) and get32(p, 0) == off and (number is None or get32(p, 5) == number)
     return fits
 
 
-def mem(addr, n, port, line=None):
-    _, _, status, p = ask('mem', addr, n, port=port, accept=mem_reply_fits(addr, n), line=line)
+def screen_part(off, port, line=None, number=None):
+    """(the copy's number, the part's bytes)."""
+    _, _, status, p = ask('screen', off, port=port, accept=screen_reply_fits(off, number), line=line)
     if status:
         sys.exit('refused: ' + STATUS.get(status, str(status)))
-    return unpack7(p[5:])[:n]
+    return get32(p, 5), unpack7(p[10:])[:SCREEN_PART]
 
 
 def screen(port, line=None):
-    """The frame on the screen: its pointer, then the frame in eight reads (a draw between them can tear it)."""
+    """The frame on the screen: part 0 makes the unit copy it, the other seven come from that copy, so it never tears."""
     own = line is None
     line = MidiLine(port) if own else line
     try:
-        front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port, line), 'big')
-        return b''.join(mem(front + at, 128, port, line) for at in range(0, FRAME_BYTES, 128))
+        number, first = screen_part(0, port, line)
+        return first + b''.join(screen_part(at, port, line, number)[1] for at in range(SCREEN_PART, FRAME_BYTES, SCREEN_PART))
     finally:
         if own:
             line.close()
@@ -310,20 +312,63 @@ def key_id(name):
     return KEYS[name.upper()] if name.upper() in KEYS else int(name, 0)
 
 
-def save_log(at, size, path, port, line=None):
-    """The log's size bytes from at into path, only when every chunk came back whole (mem checks each reply): the file
-    is written beside path and renamed over it, so a failed read leaves an earlier capture as it was."""
+# The log's header (struct diag_log up to freeze_state): diag.c raises its seq, and loads or incidents, with every
+# record it finishes, and changes freeze_state as a freeze starts and ends, so an unchanged header means no record
+# was written in between. Every log part also carries the seq.
+LOG_HEADER = 40
+LOG_PART = 128
+LOG_TRIES = 3
+
+
+def log_reply_fits(off, n):
+    """A log reply is this request's only if it echoes off and carries exactly the n bytes of that part (or is a
+    refusal)."""
+    def fits(got):
+        _, _, status, p = got
+        if status:
+            return True
+        return len(p) == 10 + packed_len(n) and get32(p, 0) == off
+    return fits
+
+
+def log_part(off, size, port, line):
+    """(the log's seq, the part's bytes): the unit reads its own log; the host names only the offset."""
+    n = min(LOG_PART, size - off)
+    _, _, status, p = ask('log', off, port=port, accept=log_reply_fits(off, n), line=line)
+    if status:
+        sys.exit('log: ' + STATUS.get(status, str(status)) + ': nothing saved')
+    return get32(p, 5), unpack7(p[10:])[:n]
+
+
+def read_stable_log(size, port, line):
+    """The log's size bytes, read while it stood still: part 0 (the header) before the rest and again after it, the
+    same header and the same seq in every part, or the read is repeated (LOG_TRIES in all). A log that keeps changing
+    exits nonzero; a capture is never a header from before a write with records from after it."""
+    for _ in range(LOG_TRIES):
+        seq, first = log_part(0, size, port, line)
+        parts = [log_part(o, size, port, line) for o in range(LOG_PART, size, LOG_PART)]
+        seq_after, again = log_part(0, size, port, line)
+        if all(s == seq for s, _ in parts) and seq_after == seq and again[:LOG_HEADER] == first[:LOG_HEADER]:
+            data = first + b''.join(b for _, b in parts)
+            if len(data) != size:
+                sys.exit('the log came back %d bytes of %d: nothing saved' % (len(data), size))
+            return data
+    sys.exit('the log changed during each of %d reads (a record was written): nothing saved; try again' % LOG_TRIES)
+
+
+def save_log(size, path, port, line=None):
+    """The log's size bytes into path, only when every part came back whole (each reply is checked) and no record was
+    written during the read (read_stable_log): the file is written beside path and renamed over it, so a failed read
+    leaves an earlier capture as it was."""
     import os
     import tempfile
     own = line is None
     line = MidiLine(port) if own else line
     try:
-        data = b''.join(mem(at + o, min(128, size - o), port, line) for o in range(0, size, 128))
+        data = read_stable_log(size, port, line)
     finally:
         if own:
             line.close()
-    if len(data) != size:
-        sys.exit('the log came back %d bytes of %d: nothing saved' % (len(data), size))
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), prefix='.dn2-diag-')
     try:
         with os.fdopen(fd, 'wb') as f:
@@ -340,9 +385,6 @@ def main():
     parser.add_argument('--port', default='Digitone II')
     sub = parser.add_subparsers(dest='cmd', required=True)
     sub.add_parser('ident')
-    memory = sub.add_parser('mem')
-    memory.add_argument('addr', type=lambda s: int(s, 0))
-    memory.add_argument('n', type=int)
     for name in ('press', 'hold', 'let'):
         sub.add_parser(name).add_argument('keys', nargs='+')
     turn = sub.add_parser('turn')
@@ -355,7 +397,7 @@ def main():
     sub.add_parser('ramboot').add_argument('image')
     sub.add_parser('bootdiag')
     diag = sub.add_parser('diag')
-    diag.add_argument('--save', help='write the log, read through mem, to this file')
+    diag.add_argument('--save', help='write the log, read in parts with log, to this file')
     shot = sub.add_parser('screen')
     shot.add_argument('--png', help='also write the frame as a PNG here')
     a = parser.parse_args()
@@ -380,12 +422,13 @@ def main():
     if a.cmd == 'bootdiag':
         _, _, status, p = ask('ident', port=a.port)
         v = [get32(p, 5 * i) for i in range(len(p) // 5)]
-        at = v[11]
-        d = [int.from_bytes(mem(at + 4 * i, 4, a.port), 'big') for i in range(15)]
+        g = ok('bootdiag', port=a.port)                # the gate's 15 words and the two marks, as the unit sends them
+        d = [get32(g, 5 * i) for i in range(17)]
         print('boot status %d: %s' % (v[9], BOOT_STATUS.get(v[9], '?')))
         print('mailbox as found: ' + ' '.join('%08x' % w for w in d[:8]))
         print('staged struct: ' + ' '.join('%08x' % w for w in d[8:12]))
         print('marks: %08x %08x (%s); RSR %02x' % (d[12], d[13], STAGES.get(d[13] & 0xff, 'none') if d[13] >> 8 == 0x4d5754 else 'none', d[14] & 0xff))
+        print('marks now: %08x %08x' % (d[15], d[16]))
         return
     if a.cmd == 'freeze':
         ok('freeze', int(a.seconds * 1500), port=a.port)
@@ -395,7 +438,7 @@ def main():
         at, size, frames, ticks = (get32(p, 5 * i) for i in range(4))
         print('log at 0x%08x, %d bytes; %d frames, %d ticks' % (at, size, frames, ticks))
         if a.save:
-            save_log(at, size, a.save, a.port)
+            save_log(size, a.save, a.port)
             print('saved %d bytes to %s' % (size, a.save))
         return
     if a.cmd == 'keys':
@@ -433,8 +476,6 @@ def main():
         if len(v) >= 11:
             line += '; boot %d (%s), image crc %08x' % (v[9], BOOT_STATUS.get(v[9], '?'), v[10])
         print(line)
-    else:
-        print('%08x: %s' % (a.addr, mem(a.addr, a.n, a.port).hex()))
 
 
 if __name__ == '__main__':
