@@ -161,6 +161,8 @@ static struct hold holds[KINDS] = {
 // calls, as stock's UI loop runs them. Not by stock's key repeat: it moves to the last key pressed, so a
 // page key pressed during the hold stopped the count (rytm-emu, 15 Nov 2026).
 #define LOOK_TICKS 10
+// A SCENE hold shows the scene's locks this many ticks in (about 0.2 s), so a tap does not flash them.
+#define SHOW_TICKS 4
 static unsigned ticks;              // ev_tick's count
 
 static void *views;
@@ -227,8 +229,36 @@ QMA_UI static int page_shown(void)
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
 
-// Where a SCENE hold may make scene locks.
-#define scene_screen page_shown
+// The top view's object, past the popups; 0 for none.
+QMA_UI static char *top_object(void)
+{
+    char *sentinel = (char *)views + MANAGER_LIST;
+    char *node = *(char **)((char *)views + MANAGER_LAST);
+    while (node && node != sentinel) {
+        char *view = *(char **)(node + NODE_VIEW);
+        if (*(word_t *)view != POPUP_VTABLE)
+            return view;
+        node = *(char **)(node + NODE_PREV);
+    }
+    return 0;
+}
+
+// Scene edit with none of its scene pads held: a SCENE hold locks the scene it shows.
+QMA_UI static int scene_edit_free(void)
+{
+    char *view;
+    if (!views || top_view() != SCENE_EDIT_VTABLE)
+        return 0;
+    view = top_object();
+    return view && !*(unsigned *)(view + SCENE_EDIT_PADS);
+}
+
+// Where a SCENE hold may make scene locks: the pages and pad modes as page_shown, and
+// scene edit while no scene pad is held there (a held pad edits its own scene's locks).
+QMA_UI static int scene_screen(void)
+{
+    return page_shown() || scene_edit_free();
+}
 
 QMA_UI static const char *row(int id)
 {
@@ -724,7 +754,13 @@ static struct { const void *const *vtable; word_t scenes; int scene; } scene_loc
 // (scene 1 until one is), so a disengaged scene can still be set up without hearing it.
 QMA_UI static int target_scene(word_t kit)
 {
-    int scene = ACTIVE_SCENE(kit);
+    int scene;
+    if (scene_edit_free()) {
+        scene = *(int *)(top_object() + SCENE_EDIT_SCENE);
+        if (scene >= 0 && scene < SCENES)
+            return scene;               // scene edit: the scene it shows
+    }
+    scene = ACTIVE_SCENE(kit);
     if (scene >= 0 && scene < SCENES)
         last_scene = scene;
     return last_scene;
@@ -1147,7 +1183,9 @@ QMA_UI static void keep_locker(void)
         || (shown == SCN && (!scene_screen() || ANY_TRIG_HELD()))))
         locker_remove();
     if (kind != NONE && !ours() && !GET_LOCKER(PARAM_UI())
-        && (kind == SCN ? scn_locking && scene_screen() && !ANY_TRIG_HELD() : on_pages()))
+        && (kind == SCN ? (scn_locking || ticks - holds[SCN].since >= SHOW_TICKS)
+                          && scene_screen() && !ANY_TRIG_HELD()
+            : on_pages()))
         locker_install(kind);
 }
 

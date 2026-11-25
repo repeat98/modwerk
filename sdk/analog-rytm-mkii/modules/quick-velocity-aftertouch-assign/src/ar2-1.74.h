@@ -156,5 +156,7 @@
 #define SCENE_VTABLE 0x401e305c          // SceneSelectView: its key handler (0x400d1798) takes
                                          // every pad, engaging or disengaging a scene
 #define SCENE_EDIT_VTABLE 0x401e2ee8     // SceneEditView: what the SCNE key opens
+#define SCENE_EDIT_PADS 188             // SceneEditView + 188: the scene pads held (a mask; 0x400d1378)
+#define SCENE_EDIT_SCENE 192            // SceneEditView + 192: the scene it edits, 0..11 (set by its pads)
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394
