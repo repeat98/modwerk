@@ -44,7 +44,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 MODULE = 'usb-audio-out-tracks-main-cue'
-INPUT_TRIM = HERE / 'usb_audio_input_trim.c'  # the input stream's drift trim (usb_audio_configurable.input_trim)
+INPUT_TRIM = HERE.parents[2] / 'octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_input_trim.c'  # the input stream's drift trim (usb_audio_configurable.input_trim)
 TITLE = 'USB AUDIO'
 SUPPORTED = ('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS', 'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE',
              'USB AUDIO OUT MAIN', 'USB AUDIO OUT TRACKS POST')

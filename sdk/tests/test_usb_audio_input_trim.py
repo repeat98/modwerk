@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
-SOURCE = Path(__file__).resolve().parents[1] / 'machines/octatrack/module-adapters/usb_audio_input_trim.c'
+SOURCE = Path(__file__).resolve().parents[1] / 'octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_input_trim.c'
 RING, BLOCK, TARGET = 1024, 16, 96   # usbaudio_in.s IN_FRAMES, BLOCK, IN_TARGET
 RATE, PACKET = 44100, 250e-6
 
