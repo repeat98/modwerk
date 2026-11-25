@@ -6,6 +6,7 @@ import { encode8in7 as pack7 } from '../engine/elektron/codec/transport'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/elektron/os-upgrade-midi'
 import { runUsbUpgrade, type UsbUpgradeState } from './useUsbUpgrade'
 import { UsbUpgradePanel } from '../components/UsbUpgradePanel'
+import { DIGI_DOWNLOADS_ENABLED, USB_UPGRADE_ENABLED, USB_UPGRADE_MACHINES, usbUpgradeEnabled } from '../engine/elekloader/protocol'
 
 const syx = Uint8Array.from({ length: 5000 }, (_, i) => i * 13 + 1 & 0xff)
 
@@ -32,6 +33,15 @@ async function run(access: MidiAccessLike | Error, name = 'Digitone II') {
 }
 
 describe('installing a build over USB from the page', () => {
+  it('is offered only once the owner turns it on, apart from downloads', () => {
+    expect(USB_UPGRADE_MACHINES).toContain('digitone-ii')                  // the page can install it
+    expect(Object.values(USB_UPGRADE_ENABLED).some(Boolean)).toBe(false)  // but offers it nowhere yet
+    expect(usbUpgradeEnabled('digitone-ii')).toBe(false)
+    expect(DIGI_DOWNLOADS_ENABLED['digitone-ii']).toBe(false)
+    expect(usbUpgradeEnabled('octatrack')).toBe(false)
+    expect(usbUpgradeEnabled('hasOwnProperty')).toBe(false)
+  })
+
   it('sends every block to the named unit, reports its progress, and ends asking for YES on the unit', async () => {
     const unit = midiUnit('Elektron Digitone II'), total = upgradeMessages(syx).length
     const states = await run(unit.access)

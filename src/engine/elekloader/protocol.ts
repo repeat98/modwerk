@@ -18,10 +18,22 @@ export const DIGI_DOWNLOADS_ENABLED: Readonly<Record<BuilderMachine, boolean>> =
   'digitone-ii': false,
 }
 
-// Machines whose page installs a verified build over USB MIDI itself (useUsbUpgrade), as Elektron Transfer does: the
-// Digitone II's beta build preview. The OS upgrade protocol ran on its unit (docs/verification/2026-11-19-digitone-ii-os-upgrade-over-usb.md).
+// Machines whose page can install a verified build over USB MIDI itself (useUsbUpgrade), as Elektron Transfer does:
+// the Digitone II's beta build preview. The OS upgrade protocol ran on its unit (docs/verification/2026-11-19-digitone-ii-os-upgrade-over-usb.md).
 export const USB_UPGRADE_MACHINES: readonly BuilderMachine[] = ['digitone-ii']
-export function usbUpgradeEnabled(machine: string): boolean { return (USB_UPGRADE_MACHINES as readonly string[]).includes(machine) }
+// Whether the page offers that install, apart from downloads: off until the owner turns it on, since an install puts the
+// build on a unit as surely as a download does (owner, #1819, 25 November 2026).
+export const USB_UPGRADE_ENABLED: Readonly<Record<BuilderMachine, boolean>> = {
+  digitakt: false,
+  'digitakt-ii': false,
+  digitone: false,
+  'analog-rytm-mkii': false,
+  'digitone-ii': false,
+}
+export function usbUpgradeEnabled(machine: string): boolean {
+  return (USB_UPGRADE_MACHINES as readonly string[]).includes(machine) && Object.hasOwn(USB_UPGRADE_ENABLED, machine)
+    && USB_UPGRADE_ENABLED[machine as BuilderMachine] === true
+}
 
 export function digiDownloadsEnabled(machine: string): boolean {
   return Object.hasOwn(DIGI_DOWNLOADS_ENABLED, machine) && DIGI_DOWNLOADS_ENABLED[machine as BuilderMachine] === true
