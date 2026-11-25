@@ -6,7 +6,7 @@
   "changes": [
     "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. On the COMPRESSOR page THR reads in dBFS where the compressor starts, following RAT (8, 15 and 18 dB later at 1:8, 1:4 and 1:2 than at MAX), and MUP reads the makeup gain in dB."
   ],
-  "runtimeSourceSha256": "b8a77dfe607e95faa6ac2bd864ca04d97f580348e4b4bad3d19a111b3c731441",
+  "runtimeSourceSha256": "678e9299d642b420577a47f474a70f9456b10b5ef47b00f97fc9720ee4ef4e41",
   "packages": [
     {
       "os": "1.74",
