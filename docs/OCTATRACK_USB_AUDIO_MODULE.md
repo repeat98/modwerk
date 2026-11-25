@@ -122,3 +122,62 @@ browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-
 4. The site: package selection, the reconnect in the Load dialog, the limit, the special cases out.
 5. The base without reserve and variants on `base/octatrack-next`, with the transition, a draft until
    extensively tested on a unit.
+
+## USB input (USB Audio 0.4.0)
+
+**PROJ → MODWERK → SETTINGS → USB AUDIO → INPUTS** offers OFF, AB, CD
+and ABCD for a computer host. OFF is the default. AB and CD use the same
+stereo USB format and select where channels 1/2 arrive. ABCD assigns host
+channels 1–4 to the four inputs. The input stream and its implicit feedback
+are available at high speed. Full speed and Outbox keep their output layouts.
+When a block is unavailable, the affected inputs read from the jacks.
+
+INPUTS does not work on Windows yet. On Windows 10 the audio function fails
+with Code 10 (reported 24 November 2026); Windows 11 has not been run with
+INPUTS on. With INPUTS on, the OUT stream is asynchronous with implicit
+feedback from EP3 IN, and Windows' USB Audio 2.0 driver supports neither
+implicit feedback nor an asynchronous OUT stream without an explicit feedback
+endpoint. The module page and README say so; the fix is a change of the OUT
+stream's synchronisation.
+
+Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA
+scheduler sends a staged input block to core 0 before an FX loader packet
+when both are due. The two transfers use disjoint DSP ranges. The RX hook
+consumes the block marker once so a closed stream or a skipped transfer
+leaves the analog input intact. The base gives USB priority on the crossbar
+while a duplex configuration is selected and restores its previous values
+when that configuration leaves.
+
+USB Audio 0.4.0-experimental publishes this duplex package (`scripts/octatrack-usb-audio-release.py`).
+It reports inventory kind 8. The output-only 0.3.0 package reports kind 7 and stays published as
+`configurable-0.3` in the package manifest, so the site replaces it on the next sync and uses its
+exact bytes for Undo. `npm run octatrack:base -- --beta --stock OS.bin --out DIR` still writes the same
+package as `usb-audio-input.mwrm`. For panel automation, build a development twin with the same USB and DSP flags plus `--dev`.
+Use the existing
+[USB tools](../sdk/machines/octatrack/hw/README.md) to capture counters,
+routing and underruns on a unit.
+
+The pinned [OctaBam optimization](https://github.com/sambanks/octabam/commit/4b0cd42a10a01d8b63f29b11bf9d17d6706a6481)
+uses SRAM staging and a single load per USB input sample. This candidate
+uses that receiver and the optimized DSP loop. OctaBam also queues the
+high-speed output transfer directly from a ring in USB channel order.
+Modwerk's configurable producer still copies to packet buffers to supply
+the selected output routing. Bryan timed the combined OctaBam changes at
+about 34 to 24 µs per frame on his MKII with ABCD and Main/Cue. That is
+upstream timing. Modwerk needs its own loaded-project and DMA overlap runs.
+
+### Candidate checks
+
+Development base `3e4fa8ce4370` and package `35f2a26cf5eb` built on
+21 November 2026. The shipped 0.3.0-experimental package rebuilt
+byte-for-byte. Module doctor and the catalogue compatibility check passed.
+
+The DSP host ran OFF, AB, CD and ABCD in both frame banks over synthetic
+24-bit values with dirty upper bytes. The selected inputs matched bit-for-bit,
+the remaining slots kept their analog fixture values, and the marker was
+consumed. The real-time Octatrack emulator loaded the package with an ABCD
+and Main/Cue preset (`bdad3889b242`), enumerated both descriptor shapes,
+accepted input alternate settings 1 and 0, and restored the original four
+interfaces after Undo. During the streaming attempt the input counters
+remained zero. The released 0.3 output-only package also returned zero
+nonempty audio packets in the same emulator setup. The [MKII RAM trials](verification/2026-11-21-octatrack-usb-input.md) verified all four INPUTS modes, both recorder pairs, playback of R1 over USB and 17 min 34 s of four-channel duplex audio with Vibrato running.

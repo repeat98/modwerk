@@ -49,6 +49,10 @@ function check(failure = '', buildOnly = false, args: string[] = [], env: Record
     for (const file of ['base-sizes.json', 'base-binding.json', 'base-versions.json', 'elekloader/flash.h', 'elekloader/build_core.py']) {
       copyFileSync(new URL('../' + machine + file, runner), join(folder, machine, file))
     }
+    // The base-bound check reads the package manifest beside the base binding (scripts/base-bound.mjs).
+    const packages = 'src/engine/assets/octatrack-module-packages.json'
+    mkdirSync(join(folder, 'src/engine/assets'), { recursive: true })
+    copyFileSync(new URL('../' + packages, runner), join(folder, packages))
     const result = spawnSync(process.execPath, [entry, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
       env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0', ...env },

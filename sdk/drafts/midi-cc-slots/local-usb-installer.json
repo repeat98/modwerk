@@ -1,0 +1,27 @@
+{
+  "version": "0.0.19-experimental",
+  "base": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e",
+  "capabilities": {
+    "abi": 10,
+    "features": 903,
+    "maxSites": 128,
+    "maxCopies": 128
+  },
+  "packages": {
+    "95cff696": "eadf2382bc71fc75a4e911c405f394ac505cc94932a1fa2ea9ce159e658b6447",
+    "be4ff75a": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced",
+    "73bab3b1": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
+    "f36a496d": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451"
+  },
+  "companions": [
+    "sidechain-compressor",
+    "playmodes",
+    "mute-modes"
+  ],
+  "nativeSourceTreeSha256": "dde13b5b19877958384a9d341f4d4b868b76593a9a19727380a8a47da8f1de81",
+  "nativeModuleVersions": {
+    "sidechain-compressor": "0.2.0-experimental",
+    "playmodes": "0.2.0-experimental",
+    "mute-modes": "0.2.2-experimental"
+  }
+}

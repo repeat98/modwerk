@@ -155,7 +155,7 @@
         .globl  kits_partkey, kits_savekey, kits_mkisave, kits_level
         .globl  kits_lcopy, kits_lpaste, kits_lclear, kits_pcopy, kits_psnap, kits_pstore_ptn
         .globl  kits_fright, kits_ptrig, kits_status, kits_freload
-        .globl  kits_pages, KSTATE
+        .globl  kits_pages, kits_part_menu, KSTATE
 
 | ============================================================ the hooks ====
 
@@ -401,17 +401,145 @@ kits_partkey:
         bra.w   load_menu
 2:      rts
 
-| 0x4002dc9c: the Part edit menu (MKII FUNC+PART): SAVE KIT.
+| 0x4002dc9c: the Part edit menu's opener (MKII FUNC+PART). With PASTE held
+| after a pattern paste: the paste clone; else stock's opener, whose popup
+| call is the base's Part Edit menu (ot_part_menu), where KITS > SAVE KIT is.
 kits_savekey:
         tstl    READY
-        bne.s   1f
-        mvzb    0x100b14cf,%d0          | displaced
-        jmp     0x4002dca2
-1:      bsr.w   paste_clone             | MKII FUNC+PASTE+PART
+        beq.s   1f
+        bsr.w   paste_clone             | MKII FUNC+PASTE+PART
         tstl    %d0
         bne.s   2f
-        bra.w   save_menu
+1:      mvzb    0x100b14cf,%d0          | displaced
+        jmp     0x4002dca2
 2:      rts
+
+| ot_part_menu's ask (abi 2), each time the Part Edit window opens: while
+| Kits holds its pages each pattern plays its Kit through the Part slots,
+| so PART's rows are left out and the window is Kits' own popup; without
+| the pages Kits is off and its row is left out (the window is stock's).
+kits_pm_ask:
+        moveq   #2,%d0                  | MODWERK_PART_MENU_LEAVE_ROW
+        tstl    READY
+        beq.s   1f
+        moveq   #1,%d0                  | MODWERK_PART_MENU_LEAVE_PART
+1:      rts
+
+| ot_part_menu's choose (action): SAVE KIT, RELOAD KIT, RENAME KIT, after
+| the base has closed stock's popup. C convention: what it calls keeps
+| d2-d7/a2-a6.
+kits_pm_choose:
+        tstl    READY
+        bne.s   1f
+        lea     T_KOFF,%a0              | the base lent no pages: Kits is off
+        bra.w   toast
+1:      movel   %sp@(4),%d0
+        beq.w   save_menu
+        subql   #1,%d0
+        beq.s   pm_reload
+        subql   #1,%d0
+        beq.s   pm_rename
+        rts
+
+| ptn_kit -> d0 = the Kit the current pattern plays (its own, else the
+| current Part slot's), -1 for none.
+ptn_kit:
+        moveq   #0,%d1
+        moveb   CUR_PTN,%d1
+        bsr.w   assign_at
+        moveq   #0,%d0
+        moveb   %a0@,%d0
+        cmpil   #NUSE,%d0
+        bcs.s   1f
+        bsr.w   cur_kit
+        cmpil   #NUSE,%d0
+        bcc.s   9f
+1:      movel   %d0,%sp@-
+        bsr.w   is_valid
+        movel   %d0,%d1
+        movel   %sp@+,%d0
+        tstl    %d1
+        bne.s   2f
+9:      moveq   #-1,%d0
+2:      rts
+
+| RELOAD KIT: the pattern's Kit as saved, as FUNC+CUE reloads it.
+pm_reload:
+        bsr.s   ptn_kit
+        tstl    %d0
+        bmi.s   pm_nokit
+        bsr.w   kits_load_current
+        lea     T_KRELOAD,%a0
+        bra.w   toast
+pm_nokit:
+        lea     T_NOKIT,%a0
+        bra.w   toast
+
+| RENAME KIT: the pattern's Kit's name in stock's name editor.
+pm_rename:
+        bsr.s   ptn_kit
+        tstl    %d0
+        bmi.s   pm_nokit
+        movel   %d0,SAVEK
+        bsr.w   kit_at
+        lea     NAMEBUF,%a1
+        moveq   #7,%d1
+1:      moveb   %a0@+,%a1@+
+        subql   #1,%d1
+        bpl.s   1b
+        clrb    NAMEBUF+7
+        pea     rename_named
+        pea     1
+        pea     NAMEBUF
+        pea     T_KITNAME
+        pea     7
+        jsr     T_OPEN
+        lea     %sp@(20),%sp
+        rts
+
+| the rename's done (confirmed): the Kit's name, and the current Part's
+| (and its CS1 copy) while its slot holds that Kit, as SAVE KIT names it.
+| An empty name keeps the Kit's.
+rename_named:
+        tstl    %sp@(4)
+        beq.w   9f
+        tstb    NAMEBUF
+        beq.w   9f
+        movel   SAVEK,%d0
+        bsr.w   kit_at
+        lea     NAMEBUF,%a1
+        moveq   #7,%d1
+1:      moveb   %a1@+,%a0@+
+        subql   #1,%d1
+        bpl.s   1b
+        clrb    %a0@(-1)
+        bsr.w   cur_kit
+        cmpl    SAVEK,%d0
+        bne.s   2f
+        moveq   #0,%d0
+        moveb   CUR_BANK,%d0
+        bsr.w   bank_at
+        moveq   #0,%d0
+        moveb   CUR_PART,%d0
+        andil   #3,%d0
+        mulu.w  #7,%d0
+        addal   #PNAMES,%a0
+        addal   %d0,%a0
+        lea     NAMEBUF,%a1
+        bsr.w   name6
+        moveq   #0,%d0
+        moveb   CUR_PART,%d0
+        andil   #3,%d0
+        mulu.w  #7,%d0
+        addil   #CS1_NAMES,%d0
+        moveal  %d0,%a0
+        lea     NAMEBUF,%a1
+        bsr.w   name6
+2:      moveq   #1,%d0
+        movel   %d0,KDIRTY
+        lea     T_RENAMED,%a0
+        bra.w   toast
+9:      rts
 
 | 0x40058a64: the MKI FUNC+BANK dispatch. With the LOAD KIT list open:
 | SAVE KIT in its place (Octakit's FUNC+MIDI, then FUNC+BANK); with the
@@ -3630,12 +3758,27 @@ T_PCOPY:   .asciz  "PATTERN COPIED"
 T_PPASTE:  .asciz  "PATTERN PASTED"
 T_PCLEAR:  .asciz  "PATTERN CLEARED"
 T_NOPCOPY: .asciz  "COPY A PATTERN FIRST"
+T_KOFF:    .asciz  "KITS NOT ACTIVE"
+T_KITS:    .asciz  "KITS"
+T_RELKIT:  .asciz  "RELOAD KIT"
+T_RENKIT:  .asciz  "RENAME KIT"
+T_RENAMED: .asciz  "KIT RENAMED"
+T_NOKIT:   .asciz  "NO KIT ON PATTERN"
 
 | State: .data, as the package loads it at every install.
         .section .data
         .align  4
 | ot_sample_memory (hook 52, include/modwerk_events.h): abi 1, the pages,
 | at (the base writes the pages' address here), two reserved longs.
+| ot_part_menu (hook 53, include/modwerk_events.h): abi 2, the parent row,
+| three actions, their rows, choose, the icon, ask.
+kits_part_menu:
+        .long   2, T_KITS, 3, kits_pm_rows, kits_pm_choose, kits_pm_icon, kits_pm_ask
+kits_pm_rows:
+        .long   T_SAVEKIT, T_RELKIT, T_RENKIT
+| A chest of drawers, drawn for Kits: 9 rows, bit 18 the leftmost of 19.
+kits_pm_icon:
+        .long   0x00000, 0x07ff0, 0x04010, 0x04710, 0x07ff0, 0x04010, 0x04710, 0x07ff0, 0x00000
 kits_pages:
         .word   1, PAGES
         .long   0

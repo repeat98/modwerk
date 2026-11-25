@@ -1,4 +1,6 @@
-# FM Synth — 0.1.4 experimental
+# FM Synth — 0.1.5 experimental
+
+FM Synth 0.1.5 rests while nothing in the project uses it: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. A silent FM track was meant to cost less, but on an MKII a track that had played notes still cost about 11 points of the frame interrupt on an empty pattern and while stopped; a fix is to follow (TESTING.md). Sound and controls are 0.1.4's (TESTING.md). Its CPU price, measured again on 0.1.5 on an MKII, is 4 % of a frame a track (0.1.4: 6), so the base's CPU budget no longer refuses an FM Synth track of a Part on its own.
 
 ## Overview
 
@@ -10,7 +12,7 @@ Version 0.1.3 makes FM Synth cheaper on the CPU, above all while it is installed
 
 Version 0.1.2 fixed the MIDI chromatic selector stack imbalance and added 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
 
-The dedicated machine plays without a sample. This experimental version has emulator playback and shared native/browser composition evidence. The owner explicitly authorized releasing 0.1.2 without current hardware validation on 8 October. Hardware is untested. Worst-case chip timing and complete stack/lifetime bounds remain unmeasured. Version-matched release notes are published in the community changelog. These measurements remain unknown; see TESTING.md for the release limits.
+The dedicated machine plays without a sample. On an MKII at 140 BPM, installing 0.1.5 with no FM track added 0.619 percentage points to the frame interrupt on MWREPROB/TARGET. The first FM note, two-way glide and a saved FLEX marker played on the unit. TESTING.md records the individual readings and the limits of the trial.
 
 ## Controls
 

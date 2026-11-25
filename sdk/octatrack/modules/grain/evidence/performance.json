@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "grain",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": 33640,
     "budget": 95782,
-    "method": "Historical: measured on 0.1.0-experimental (side-first package db843bc2) and not repeated on 0.1.2, whose audio path differs (grain runs are split at the sample edges and the window tables are 3 dB lower). 0.1.1 had changed only which START takes the plain Flex path and the descriptor's meter byte. The 0.1.2 MKI meter readings are in TESTING.md. Exact MKII package db843bc2 on RAM base 3a4c07fe. The longest observed guarded callback during the four matched 60-second playback runs took 16,820 ticks of the 132 MHz timer. The conditional bound for Grain's own zero-wait work is 157,940 core cycles for 16 source frames and 279,860 for 32. Stock calls, external-memory latency and interrupt interference have no proven upper bound. See TESTING.md, evidence/timing/side-first-comparison.json and evidence/timing/guard-trace.json."
+    "method": "Historical: measured on 0.1.0-experimental (side-first package db843bc2) and not repeated on 0.1.2, whose audio path differs (grain runs are split at the sample edges and the window tables are 3 dB lower). 0.1.1 had changed only which START takes the plain Flex path and the descriptor's meter byte. 0.1.3 changes which START takes the plain Flex path (the audition flag now also needs the pool window open on the selected track), so manual trigs run the same render as sequencer trigs, and reads PTCH's step from a 128-entry table in Flex's units instead of a 49-entry one: the same single lookup per prepared frame. The 0.1.2 MKI meter readings are in TESTING.md. Exact MKII package db843bc2 on RAM base 3a4c07fe. The longest observed guarded callback during the four matched 60-second playback runs took 16,820 ticks of the 132 MHz timer. The conditional bound for Grain's own zero-wait work is 157,940 core cycles for 16 source frames and 279,860 for 32. Stock calls, external-memory latency and interrupt interference have no proven upper bound. See TESTING.md, evidence/timing/side-first-comparison.json and evidence/timing/guard-trace.json."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": 388.67,
     "stockIdlePercent": 38.3,
     "moduleIdlePercent": 21.75,
-    "method": "Historical: measured on 0.1.0-experimental (side-first package db843bc2) and not repeated on 0.1.2, whose audio path differs (grain runs are split at the sample edges and the window tables are 3 dB lower). 0.1.1 had changed only which START takes the plain Flex path and the descriptor's meter byte. The 0.1.2 MKI meter readings are in TESTING.md. Matched 60-second runs at 100 BPM on T5, the track with the longest candidate frame. The same 24-bit stereo R3 played under 20-channel USB capture and a musical MIDI phrase. Idle percent is 100 minus the median stock CPU meter reading during playback, excluding its first 3 seconds."
+    "method": "Historical: measured on 0.1.0-experimental (side-first package db843bc2) and not repeated on 0.1.2, whose audio path differs (grain runs are split at the sample edges and the window tables are 3 dB lower). 0.1.1 had changed only which START takes the plain Flex path and the descriptor's meter byte. 0.1.3 changes which START takes the plain Flex path (the audition flag now also needs the pool window open on the selected track), so manual trigs run the same render as sequencer trigs, and reads PTCH's step from a 128-entry table in Flex's units instead of a 49-entry one: the same single lookup per prepared frame. The 0.1.2 MKI meter readings are in TESTING.md. Matched 60-second runs at 100 BPM on T5, the track with the longest candidate frame. The same 24-bit stereo R3 played under 20-channel USB capture and a musical MIDI phrase. Idle percent is 100 minus the median stock CPU meter reading during playback, excluding its first 3 seconds."
   },
   "stress": {
     "floodMessagesPerSecond": 1096,

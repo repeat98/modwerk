@@ -1,0 +1,18 @@
+{
+  "version": "0.0.15-experimental",
+  "firmwareLabel": "MIDI2 C15",
+  "sha256": "1855453aaba61e82f50e8dee17c5591279e341d35a171d1bff52216f6138b690",
+  "implementationSha256": "086fc3c73468bd58db823bf2857106ebe05f7d1197fd226c595d4139eeca000a",
+  "objectSha256": "0cdb83ecd28e501351fbb000c6cb4815f9fd3473698a4176df9bb758449d2044",
+  "companions": [
+    "sidechain-compressor",
+    "playmodes",
+    "mute-modes"
+  ],
+  "nativeSourceTreeSha256": "e2bdc7d8c244528547c30fb62001bf92d25a5e2bda4b47742cde40f297de05fc",
+  "nativeModuleVersions": {
+    "sidechain-compressor": "0.1.2-experimental",
+    "playmodes": "0.2.0-experimental",
+    "mute-modes": "0.2.1-experimental"
+  }
+}

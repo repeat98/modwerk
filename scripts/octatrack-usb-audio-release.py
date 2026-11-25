@@ -24,7 +24,7 @@ def generate(check, stock=None, upstream=None):
         data = output.read_bytes()
         print('USB Audio compiler unavailable, checking the published bytes and metadata')
     else:
-        data, _ = audio.build(None, release=True, stock=stock, upstream=upstream)
+        data, _ = audio.build(None, release=True, stock=stock, upstream=upstream, usb_input=True)
     packages = audio.load('usb_audio_package_metadata', SDK / 'elekloader/module_packages.py')
     entry = dict(name='USB Audio', version=module['version'], path=str(path.as_posix()), bytes=len(data),
                  sha256=hashlib.sha256(data).hexdigest(), **packages.capabilities(data), installPresets=True,

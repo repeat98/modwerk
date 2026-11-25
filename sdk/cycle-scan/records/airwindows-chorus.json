@@ -18,6 +18,12 @@
       "transfer": 1.63
     }
   },
+  "defaults": {
+    "setting": "defaults/def",
+    "instructions": 335.56,
+    "cycles": 601.88,
+    "stalls": 49.19
+  },
   "stock": {
     "comparator": "CHORUS",
     "setting": "defaults/max",

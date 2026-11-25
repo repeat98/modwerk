@@ -1,0 +1,48 @@
+{
+  "module": "ungemach",
+  "version": "0.1.0-experimental",
+  "base": "4c7eb79b (development twin of the beta base, built with --dev from module/ungemach d0dc7166)",
+  "scene": "A scratch project, bank A, Part 1 saved. Picks on the empty pattern A02. The curve was read on A03 (only T1, a trig on every step, no sample): on the medium pattern A01 (T1-T7 with trigs on steps 1/5/9/13, samples on T2 and T3) the first instance read 102.2 % of a frame (+23.5 over 78.7), the overload rather than the module. The medium admission run is from that A01 run. One instance only: UNGEMACH admits one track a Part. Author's Octatrack MKI, OS 1.40C, release package a8bcdca3.",
+  "seconds": 8,
+  "measuredAt": "2026-11-24T13:33:27.951Z",
+  "tracks": [
+    "T1"
+  ],
+  "rest": 0,
+  "first": 14.6,
+  "each": 14.6,
+  "points": [
+    63.1,
+    77.7
+  ],
+  "adds": [
+    14.6
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 70.8,
+      "frame": 43.1,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 1,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 97.6,
+      "frame": 53.2,
+      "dropped": 0,
+      "stalls": 0
+    }
+  ],
+  "notes": [
+    "Medium run on A01 (2026-11-24T13:31:06.173Z): points [78.7, 102.2], adds [23.5]."
+  ]
+}
