@@ -58,6 +58,16 @@
       "addedAt": "2026-11-17T19:20:00Z"
     },
     {
+      "id": "resonator",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-24T11:32:33Z"
+    },
+    {
+      "id": "mackity",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-25T08:23:53Z"
+    },
+    {
       "id": "analog-bassdrum",
       "version": "0.1.7-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
@@ -184,7 +194,7 @@
     },
     {
       "id": "syntiz",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-10-29T21:00:00Z"
     },
     {
@@ -209,7 +219,7 @@
     },
     {
       "id": "kits",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-11-16T21:00:00Z"
     },
     {
@@ -226,6 +236,11 @@
       "id": "grain",
       "version": "0.1.3-experimental",
       "addedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "songbook",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-24T09:10:19Z"
     }
   ]
 }

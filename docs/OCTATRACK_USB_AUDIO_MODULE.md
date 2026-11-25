@@ -148,8 +148,8 @@ adaptive sink and uses no implicit feedback for it. Apple's
 an adaptive endpoint as one that adapts to the host's rate and singles out only adaptive IN; macOS has not run 0.4.1. The unit absorbs the difference to its crystal in `usb_audio_input_trim.c`. Once a
 block, before the block goes to the DSP, it averages the ring's fill over about 1.5 s. It holds that average within
 2 frames of the fill seen over the first 1.5 s after the cushion filled. Past that band, one block reads 17 ring frames (or 15) for its 16,
-linearly interpolated across the block, and the reader moves one frame. Trims are at least 64 blocks (23 ms) apart.
-Every other block is copied bit for bit. Two crystals 50 ppm apart need about 2.2 trims a second. Each trim is a
+interpolated across the block with a four-point Catmull-Rom curve, and the reader moves one frame. Trims are at least 64 blocks (23 ms) apart.
+Every other block is copied bit for bit. On the owner's MKII with Windows 11 (24 and 25 November 2026) the host ran 56 to 58 ppm fast, about 2.5 trims a second. Each trim is a
 pitch change of 1/16 for 0.36 ms. Vendor request 0x56 reports the trims as a sixteenth long, absorbed << 16 | repeated.
 
 Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA

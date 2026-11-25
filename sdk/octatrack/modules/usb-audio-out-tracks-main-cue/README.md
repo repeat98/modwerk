@@ -15,7 +15,7 @@ Open **PROJ → MODWERK → SETTINGS**, highlight **USB AUDIO** and press **YES*
 | TRACK TAP | PRE LEVEL or POST LEVEL for either eight-track layout. POST follows track LEVEL, mutes, solo and crossfader. Main and Cue keep their channel pairs. |
 | OUTPUT MODE | ALL CHANNELS or OFF. The 20-channel layout also offers MAIN + CUE ONLY. |
 | Outbox pairs | Choose a source from the selected layout for each of the four stereo pairs. Choose OFF for silence. A source can feed more than one pair. |
-| INPUTS | OFF, AB, CD or ABCD, with SEND TO COMPUTER. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF, the default, leaves every input on its jack. |
+| INPUTS | OFF, AB, CD or ABCD, with SEND TO COMPUTER. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF, the default, leaves every input on its jack. Works on macOS, not yet on Windows. |
 
 Track 8/Master sends track 8 after effects and before LEVEL. Enable MASTER TRACK on the Octatrack to use it as the master mix. The POST LEVEL stems for tracks 1–7 exclude MAIN LEVEL and master effects. With a master track, those stems lead track 8 by 32 samples.
 
@@ -26,6 +26,8 @@ For recording, choose COMPUTER and the layout you want, then select Octatrack as
 When you load an existing Modwerk set, its saved destination, layout, track tap and Outbox assignments supply the initial settings. A classic set without USB settings starts with eight PRE LEVEL stereo tracks followed by Main and Cue.
 
 ### Play audio from the computer into the Octatrack
+
+This ran on macOS with 0.4.0. Windows needs 0.4.1, which runs on Windows 11; Windows 10 and macOS have not been tried with 0.4.1 yet. If Windows shows an error for the Octatrack after a change of INPUTS, set INPUTS to OFF, unplug the Octatrack and restart Windows; if the error stays, show hidden devices in Device Manager and uninstall the Octatrack entries.
 
 1. Load the USB Audio module and connect the Octatrack to a computer with a high-speed USB port. Open PROJ > MODWERK > SETTINGS > USB AUDIO and select COMPUTER under SEND TO.
 2. Under INPUTS choose AB. The USB device reconnects once and now also shows two output channels to the computer.

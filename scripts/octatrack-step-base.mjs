@@ -21,6 +21,30 @@ export function stageRefusal(what, bytes, capacity, flashed = false) {
     'then boot and flash this base from it (docs/OCTATRACK_TWO_SLOT_BASE.md).'
 }
 
+/** Starts of an unconfirmed slot before the boot stub goes back to the other (slots.h SLOT_TRIES). */
+const SLOT_TRIES = 2
+/** What a RAM boot would cost a base update flashed into the newest slot and not yet confirmed (the SLOTS reply,
+ * upload-usb.ts parseBaseSlots), or undefined when it costs nothing. Every restart, a RAM boot's soft reset included,
+ * runs the boot stub, which spends one of that slot's starts (stub.c, slots.c slot_pick); the base confirms its slot
+ * only after 15 s up from it with a computer connected (flash.c confirm). With its starts spent the unit goes back to
+ * the previous base, UPDATE UNDONE: on 20 November 2026 a site update not yet confirmed was lost to a developer's
+ * RAM boots. `wait`: the update itself is running, so it confirms itself while this computer talks to it. */
+export function bootOverPendingUpdate(slots) {
+  if (slots?.layout !== 'two') return undefined
+  const [a, b] = slots.slots
+  const n = a.whole && b.whole ? (b.generation > a.generation ? 1 : 0) : a.whole ? 0 : b.whole ? 1 : -1
+  if (n < 0 || slots.slots[n].confirmed || slots.slots[n].tries > SLOT_TRIES) return undefined
+  const slot = 'AB'[n], left = SLOT_TRIES - slots.slots[n].tries, override = ' To boot anyway, add --spend-tries.'
+  if (slots.running === n) return { wait: true, refusal: `The base update in slot ${slot} runs but has not confirmed itself (15 s after its start, ` +
+    `with a computer connected). A RAM boot now spends ${left ? `one of its ${left} start${left > 1 ? 's' : ''} left` : 'it: it has no start left'}, ` +
+    `and with none left the Octatrack goes back to the previous base. Leave it on for a moment, then boot again.${override}` }
+  if (!left) return { warning: `The base update in slot ${slot} has no start left, so whatever restarts next goes back to the previous base. ` +
+    'Install it again from modwerk.app afterwards.' }
+  return { refusal: `The base update in slot ${slot} is not confirmed yet (${SLOT_TRIES - left} of its ${SLOT_TRIES} starts used). Every restart, ` +
+    'a RAM boot included, spends one, and with none left the Octatrack goes back to the previous base. Power-cycle it so the update ' +
+    `starts from its slot, keep USB connected for 15 s (npm run device -- status then shows it confirmed), and boot again.${override}` }
+}
+
 /** The step base's build folder from the user's own OS 1.40C: NOT_FLASH_CANDIDATE.bin, MAIN.raw and proofs.json with
  * its identity, as `npm run device -- boot` and `flash` read them. Refuses assets that drifted from their pins and a
  * build that is not the published step base. */
