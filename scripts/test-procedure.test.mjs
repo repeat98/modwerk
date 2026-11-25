@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, LAYER, largeSet, plan, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
+import { context, LAYER, largeSet, plan, preflightCommand, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases, unitSteps } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -37,6 +37,7 @@ function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['
   }
 }
 const statuses = steps => Object.fromEntries(steps.map(step => [step.id, step.status]))
+const PREFLIGHT = 'python3 -B scripts/octatrack-preflight.py --pick-pattern 2'
 
 describe('the steps', () => {
   it('runs in the fixed order, the unit steps after the software, emulator and build steps', () => {
@@ -48,9 +49,11 @@ describe('the steps', () => {
     const deps = fakeDeps()
     const steps = await runProcedure(moduleCtx(), deps)
     expect(deps.ran).toEqual([
+      PREFLIGHT, // before step 1, and again as the unit steps start
       'npm run module:doctor -- vibrato',
       'npm run modules:compat -- vibrato',
       'npm run module:dev -- vibrato --build-only --out /out/vibrato.mwrm',
+      PREFLIGHT,
       'node scripts/device.mjs status --socket /tmp/share.sock',
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
       'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md --soak 120 /out/vibrato.mwrm',
@@ -66,7 +69,7 @@ describe('the steps', () => {
   it('stops at the first failure and records every later step as not run, with the step that stopped it', async () => {
     const deps = fakeDeps({ fail: ['modules:compat'] })
     const steps = await runProcedure(moduleCtx(), deps)
-    expect(deps.ran).toEqual(['npm run module:doctor -- vibrato', 'npm run modules:compat -- vibrato'])
+    expect(deps.ran).toEqual([PREFLIGHT, 'npm run module:doctor -- vibrato', 'npm run modules:compat -- vibrato'])
     expect(statuses(steps)).toMatchObject({ software: 'passed', compat: 'failed', build: 'not run', 'unit-pass': 'not run', 'by-hand': 'not run', developer: 'not run' })
     expect(steps.find(step => step.id === 'build').reason).toBe('stopped: step 2 (Beside every other module) failed')
     expect(steps.find(step => step.id === 'compat').reason).toBe('exit 1: npm run modules:compat -- vibrato')
@@ -123,7 +126,7 @@ describe('the steps', () => {
     const deps = fakeDeps()
     const ctx = moduleCtx({ kind: 'base', id: undefined, machine: 'octatrack', version: '0.7', pkg: '/r/octatrack-base.elemod', setPackages: ['/p/a.mwrm', '/p/b.mwrm'] })
     const steps = await runProcedure(ctx, deps)
-    expect(deps.ran.slice(0, 2)).toEqual(['npm run sdk:check', 'npm run modules:compat'])
+    expect(deps.ran.slice(0, 3)).toEqual(['python3 -B scripts/octatrack-preflight.py', 'npm run sdk:check', 'npm run modules:compat']) // a base picks nothing
     expect(deps.ran).toContain('node scripts/device.mjs set /p/a.mwrm,/p/b.mwrm --seconds 30 --split --socket /tmp/share.sock')
     expect(deps.ran.find(line => line.startsWith('npm run device:price'))).toMatch(/--scene .+[^m]$/) // no package named: every USB package
     expect(steps.find(step => step.id === 'unit-pass').title).toBe('Large set and Undo')
@@ -161,6 +164,49 @@ describe('the steps', () => {
     expect(steps.find(step => step.id === 'unit-pass').reason).toMatch(/unit queue run ended without a result \(exit 1\)/)
   })
 
+})
+
+describe('the preflight', () => {
+  // What failed unit runs minutes in on 25 November 2026, as octatrack-preflight.py prints it.
+  const NOT_READY = 'preflight: Part 1 of bank C differs from its saved copy, …\npreflight: no MIDI bridge on 127.0.0.1:50124 (…): start …'
+
+  it('checks what the unit steps will need: the pick pattern for a module, the MIDI bridge when the soak runs', () => {
+    expect(preflightCommand(moduleCtx())).toEqual(['python3', '-B', 'scripts/octatrack-preflight.py', '--pick-pattern', '2'])
+    expect(preflightCommand(moduleCtx({ pickPattern: '5', tools: { soak: true } })).join(' ')).toBe('python3 -B scripts/octatrack-preflight.py --pick-pattern 5 --midi 127.0.0.1:50124')
+    expect(preflightCommand(moduleCtx({ kind: 'base', id: undefined, tools: { soak: true } })).join(' ')).toBe('python3 -B scripts/octatrack-preflight.py --midi 127.0.0.1:50124')
+    expect(preflightCommand(moduleCtx({ target: 'emulator', tools: { soak: true } })).join(' ')).toBe('python3 -B scripts/octatrack-preflight.py')
+    expect(preflightCommand(moduleCtx({ unit: { available: false, reason: 'none' } }))).toBeNull()
+    expect(preflightCommand(moduleCtx({ machine: 'analog-rytm-mkii' }))).toBeNull()
+  })
+
+  it('fails step 6 before step 1 with each problem, and builds, boots and installs nothing', async () => {
+    const deps = fakeDeps({ fail: ['octatrack-preflight'], said: { 'octatrack-preflight': '> state\n' + NOT_READY } })
+    const ctx = moduleCtx({ tools: { soak: true } }), steps = await runProcedure(ctx, deps)
+    expect(deps.ran).toEqual(['python3 -B scripts/octatrack-preflight.py --pick-pattern 2 --midi 127.0.0.1:50124'])
+    expect(deps.started).toEqual([])
+    expect(steps.find(step => step.id === 'unit-read')).toMatchObject({ status: 'failed', log: 'logs/00-preflight.log',
+      reason: 'the unit is not ready: Part 1 of bank C differs from its saved copy, …; no MIDI bridge on 127.0.0.1:50124 (…): start …' })
+    expect(steps.filter(step => step.id !== 'unit-read').every(step => step.status === 'not run' && /not ready \(step 6\), before step 1/.test(step.reason))).toBe(true)
+    expect(steps.find(step => step.id === 'unit-pass').commands[0]).toMatch(/^npm run device:test/) // still named
+    expect(recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'x' }))).toMatch(/^Not tested on a unit: the unit is not ready: Part 1 of bank C/m)
+  })
+
+  it('reads the unit again as the turn starts, and installs nothing when it is no longer ready', async () => {
+    const deps = fakeDeps({ fail: ['octatrack-preflight'], said: { 'octatrack-preflight': NOT_READY } })
+    const steps = await unitSteps(moduleCtx(), deps)
+    expect(deps.ran).toEqual([PREFLIGHT])
+    expect(statuses(steps)).toEqual({ 'unit-read': 'failed', 'unit-pass': 'not run', soak: 'not run', 'cost-unit': 'not run', restore: 'not run' })
+    expect(steps.find(step => step.id === 'unit-pass').reason).toBe('stopped: the preflight found the unit not ready (step 6)')
+    expect(steps.find(step => step.id === 'unit-read').log).toBe('logs/06-preflight.log')
+  })
+
+  it('leaves the first reading to this run\'s own turn while another session holds the unit', async () => {
+    const deps = fakeDeps({ fail: ['npm run unit'] })
+    deps.unitBusy = async () => 'The unit is in use: other-worktree (fix/x) has it since 10:00 (4m).'
+    await runProcedure(moduleCtx({ tools: { unitQueue: true } }), deps)
+    expect(deps.ran[0]).toBe('npm run module:doctor -- vibrato')
+    expect(deps.ran.some(line => line.includes('octatrack-preflight'))).toBe(false) // the inner run, in the turn, reads it
+  })
 })
 
 describe('every machine', () => {
