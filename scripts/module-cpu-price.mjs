@@ -34,6 +34,17 @@ export function manifestWithoutPrice(text) {
 
 /** The price a device:price reading gives: the larger of what the module added at rest and in use, never below 0. */
 export const measuredPrice = result => Math.max(0, result.atRestAdds.frame, result.inUseAdds?.frame ?? 0)
+/** How far a device:price record's own readings agreed, for module:doctor: '' for a record of one reading a state (every record
+ * before 24 November 2026), else the count and the widest spread of the frame interrupt's share and of the slot core's DSP peak. */
+export function readingsNote(record) {
+  if (!(record?.readings > 1)) return ''
+  const states = ['before', 'atRest', 'inUse'].map(key => record.result?.[key]?.spread).filter(Boolean)
+  const widest = key => { const values = states.map(spread => spread[key]).filter(value => typeof value === 'number'); return values.length ? Math.max(...values) : null }
+  const frame = widest('frame'), track = Number(/^T(\d)/.exec(record.result?.inUseOn ?? '')?.[1])
+  const peak = track ? widest(track <= 4 ? 'dsp1to4Peak' : 'dsp5to8Peak') : null
+  return '; ' + record.readings + ' readings a state' + (frame === null ? '' : ', the frame interrupt within ' + frame + ' points') +
+    (peak === null ? '' : ', the ' + (track <= 4 ? 'T1-4' : 'T5-8') + ' DSP peak within ' + peak)
+}
 
 /** How to measure the price of a machine (true) or of any other module (false), for the messages. */
 export function cpuPriceHowTo(id, machine) {
@@ -147,8 +158,10 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
   if (!declared) return { state: 'fail', detail: 'it names no CPU price (resources.cpuPrice)', fix: howTo }
   if (machine && declared.measure !== 'machine-render') return { state: 'fail', detail: 'it is a machine, so its price is what one playing track adds ("measure": "machine-render"), not ' + declared.measure, fix: howTo }
   if (!machine && declared.measure !== 'frame-interrupt') return { state: 'fail', detail: 'it is not a machine, so its price is the frame interrupt\'s share ("measure": "frame-interrupt"); only a machine\'s descriptor carries a render price', fix: howTo }
+  let repeat = ''
   if (declared.source.endsWith('.json')) { // a price device:price wrote: recomputed from its readings, never taken on trust
     const record = readJson(resolve(root, 'sdk/octatrack/modules', id, declared.source))
+    repeat = readingsNote(record)
     if (record?.module !== id || !record.result?.atRestAdds) return { state: 'fail', detail: 'its price names ' + declared.source + ' as its source, which holds no device:price reading of ' + id, fix: howTo }
     // Tape Echo 0.1.9 carried the price read on 0.1.6: a release from RELEASE_COST_FROM measures its own.
     const date = releaseDate({ root, document }), logged = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json'))
@@ -168,7 +181,7 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
   if (meter) return { state: 'fail', ...meter }
   const what = declared.value + ' % of a frame (' + declared.measure + ', ' + declared.tool + ', ' + declared.date + ')'
   const adds = document.resources.cpuMeter ? '; adds ' + document.resources.cpuMeter.value + ' meter points (reserved[1], ' + document.resources.cpuMeter.date + ')' : ''
-  return { state: 'ok', detail: what + (descriptors.length ? '; ' + descriptors.map(item => item.symbol).join(', ') + ' carries the same in reserved[0]' : '') + adds }
+  return { state: 'ok', detail: what + repeat + (descriptors.length ? '; ' + descriptors.map(item => item.symbol).join(', ') + ' carries the same in reserved[0]' : '') + adds }
 }
 
 /** The meter points a machine adds, recomputed from its paired readings: { added } or { problem }. */
@@ -354,6 +367,15 @@ export function curveProblem(record) {
   }
   return null
 }
+/** The owner's approval of this exact version lists "release-cost" in `waived`: a module too heavy for the medium pattern
+ *  (Grain, POLY8) can still ship an update. It excuses only curveProblem, never a curve read on another version. Only for a
+ *  module without its own qualification record: that is when modules:check validates the approval in full, source hash included. */
+export function releaseCostWaived({ root, document }) {
+  if (document.tests?.qualification || document.tests?.releaseWaiver) return false
+  const approval = readJson(resolve(root, 'sdk/approvals', document.id + '-build-approval.json'))
+  return approval?.kind === 'owner-approved-update' && approval.approvedBy === 'repeat98' && approval.id === document.id &&
+    approval.version === document.version && Array.isArray(approval.waived) && approval.waived.includes('release-cost')
+}
 export const frameCostHowTo = id => 'measure it on a unit with npm run device:price -- --write --curve T1,T3,T6,T7 --base ID --scene TEXT ' + id +
   ' (the longest frame it adds on 1-4 empty tracks of a busy pattern, picked on an empty one; docs/MODULE_PERFORMANCE.md), which writes ' + FRAME_COST_RECORD + ' (npm run modules:generate then carries it into ' + FRAME_COSTS_PATH + ')'
 
@@ -375,6 +397,7 @@ export function frameCostStatus({ root, document, glue = null }) {
     const problem = curveProblem(record)
     if (!problem) return { state: 'ok', detail: detail + '; admitted alone on the empty and the medium pattern, nothing dropped' }
     const strict = logged && (!date || date >= RELEASE_COST_FROM)
+    if (strict && releaseCostWaived({ root, document })) return { state: 'ok', detail: detail + '; ' + problem + ' (waived by the owner for this version: sdk/approvals/' + id + '-build-approval.json)' }
     return strict ? { state: 'fail', detail: problem, fix: frameCostHowTo(id) }
       : { state: 'ok', detail: detail + '; ' + problem + ' (reported, not refused, for a release dated before ' + RELEASE_COST_FROM + ')' }
   }

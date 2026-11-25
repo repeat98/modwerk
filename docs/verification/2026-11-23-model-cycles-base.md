@@ -19,7 +19,15 @@ bytes"), found when the first test module was linked. Nothing subscribed, so the
 - **On a unit** (the submitter's Model:Cycles, flashed as an OS update, then a power cycle): boots normally and behaves
   as with stock 1.13.
 
-## 2e5243e6: the base this pull request vendors
+## 4d4d91d2: the base this pull request vendors (24 November 2026)
+
+`2e5243e6` (below) with the link, the audio load, the diagnostics log and the runtime loader in every base, as the
+owner asked: 76 bytes `.boot`, 37994 `.run`, 115796 `.bss`, 8 sites. Its image `ec928894…` (stock 1.13 and the base
+alone, as the site builds it) ran flashed on the submitter's unit: identity `0x15eddb5a`, the load and the log, the
+loader's edge cases, Transfer connected beside the link, and a power cycle (the rows in
+[LINK.md](../../sdk/machines/model-cycles/LINK.md#evidence)).
+
+## 2e5243e6: the base before the link
 
 core-mc 0.3's own `mod.json` (collections 4, as released) and Modwerk's `ev_key_leds` (`base/key-leds.s`, site
 `0x40006a6e`, collection `ev_key_leds`). The recipe's check passes: it keeps every site, export, import, weak symbol,

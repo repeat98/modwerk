@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The Model:Cycles development link (sdk/machines/model-cycles/LINK.md): the identity a development base reports over
+// The Model:Cycles link (sdk/machines/model-cycles/LINK.md): the identity every Modwerk base reports over
 // USB MIDI SysEx, and the same set identity computed from a built image. The wire format is the Analog Rytm MKII
-// link's; sdk/machines/model-cycles/tools/mc_link.py speaks it from the computer. Reads: `ident`, `load`, `diag`, `mem`
-// and `mods`. The diagnostics log is the Octatrack's layout and reads with its parser, as the Digitone II's. The one
+// link's; sdk/machines/model-cycles/tools/mc_link.py speaks it from the computer. Reads: `ident`, `load`, `diag`, `log`
+// and `mods`, all of them in every base (`mem` is a development base's and is not used here). The diagnostics log is the Octatrack's layout and reads with its parser, as the Digitone II's. The one
 // path that changes the unit is the runtime loader's upload controller (mcUploadTransport for UploadSession): its wire
 // frames go in parts, as the link takes them (base/modules.c), where the Digitone II's link takes a whole frame.
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
@@ -14,12 +14,12 @@ import { ELE3_DEVICES, mainImage, readEle3Syx } from './ele3'
 import { findUnit, midiLine, type MidiAccessLike } from './os-upgrade-midi'
 
 export const MC_LINK_HEADER = [0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1] as const
-const IDENT = 0x01, MEM = 0x21, DIAG = 0x22, LOAD = 0x23, UP_PART = 0x31, UP_RUN = 0x32, MODS = 0x33
+const IDENT = 0x01, DIAG = 0x22, LOAD = 0x23, LOG = 0x24, UP_PART = 0x31, UP_RUN = 0x32, MODS = 0x33
 /** An upload frame's part: 8 + 5 + 110 packed + 1 = 124 bytes a message, under the 128 of stock's upgrade messages. */
 export const MC_PART_BYTES = 96
 /** Package bytes a CHUNK frame carries: 23 parts. */
 export const MC_UPLOAD_CHUNK = 2048
-const MEM_MAX = 128
+const LOG_MAX = 128
 const BAD_REQUEST = 2
 const STATUS = ['ok', 'not armed', 'bad request', 'busy', 'out of range', 'a person is at the unit']
 const PORTS: Record<number, string> = { 1: 'MIDI setting', 2: 'USB', 3: 'DIN', 4: 'USB and DIN' }
@@ -140,21 +140,21 @@ export async function readMcLoad(access: MidiAccessLike, timeoutMs = 2000): Prom
   }
 }
 
-/** The diagnostics log (base/diag.c): `diag` names its place and size, `mem` reads it 128 bytes at a time. Its bytes and
- * the log the Octatrack's parser reads from them; null when no unit or no reply, 'unsupported' from a development base
- * without the log (it refuses `diag` as a bad request). */
+/** The diagnostics log (base/diag.c): `diag` names its size, `log` reads it 128 bytes at a time from an offset into it
+ * and nothing outside it. Its bytes and the log the Octatrack's parser reads from them; null when no unit or no reply,
+ * 'unsupported' from a base without the log or without `log` (it refuses either as a bad request). */
 export async function readMcLog(access: MidiAccessLike, timeoutMs = 2000): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined } | 'unsupported' | null> {
   try {
     return await withMc(access, timeoutMs, async call => {
       const place = await call(DIAG)
       if (!place) return null
-      const address = get32(place, 0), size = get32(place, 5)
+      const size = get32(place, 5)
       if (size < 8 || size > DEVICE_LOG_IMAGE_BYTES) throw new Error(`The Model:Cycles link named a ${size}-byte log.`)
       const bytes = new Uint8Array(size)
-      for (let at = 0; at < size; at += MEM_MAX) {
-        const n = Math.min(MEM_MAX, size - at), p = await call(MEM, [...put32(address + at), ...put32(n)])
+      for (let at = 0; at < size; at += LOG_MAX) {
+        const n = Math.min(LOG_MAX, size - at), p = await call(LOG, [...put32(at), ...put32(n)])
         if (!p) return null
-        if (p.length < 10 || get32(p, 0) !== address + at || get32(p, 5) !== n) throw new Error('The Model:Cycles link sent another block than asked for.')
+        if (p.length < 10 || get32(p, 0) !== at || get32(p, 5) !== n) throw new Error('The Model:Cycles link sent another block than asked for.')
         const data = unpack7(p.subarray(10))
         if (data.length !== n) throw new Error('The Model:Cycles link sent a short block.')
         bytes.set(data, at)
