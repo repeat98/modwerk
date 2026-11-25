@@ -4,6 +4,7 @@
 //   npm run pr:ready -- --commit "Message"  # check a fully staged change once, commit it, then finish the PR checks
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
+//   npm run pr:ready -- --base-branch base/<machine>-next   # a pull request into that branch, not main: fetched, merged and compared with it
 //   npm run pr:ready -- --body FILE.md      # also the description, as CI's describe check reads it (with --draft, as a draft)
 //
 // It reads and writes only this checkout, plus the agent board's claims and inbox (docs/AGENT_BOARD.md): no push, no GitHub API.
@@ -66,7 +67,18 @@ export function localPythonProblem(root) {
   return pythonProblem({ command, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
 }
 
-/** Merges main into a clean branch that lacks it. A conflict is aborted, leaving the branch as it was, and its files are returned. */
+/** The branch the pull request targets: main, or the one --base-branch names (a machine's base/<machine>-next). The fetch, the
+ * merge, the checks' base and the changed files all follow it: a branch cut from base/<machine>-next and compared with main
+ * took main's commits in and counted every base file of that branch as its own (#2188). */
+export function targetBranch(argv) {
+  const index = argv.indexOf('--base-branch')
+  if (index < 0) return 'main'
+  const name = argv[index + 1]
+  if (!name || !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(name) || name.includes('..') || name.endsWith('/') || name.endsWith('.lock')) throw new Error('--base-branch needs the branch the pull request targets, for example base/analog-rytm-mkii-next.')
+  return name
+}
+
+/** Merges the target branch (main, as a rule) into a clean branch that lacks it. A conflict is aborted, leaving the branch as it was, and its files are returned. */
 export function mergeMain(git, ref) {
   try {
     git('merge', '--no-edit', ref)
@@ -79,15 +91,15 @@ export function mergeMain(git, ref) {
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false, description = null }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', target = 'main', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false, description = null }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
   if (baseEdits.length) problems.push(baseProblem(baseEdits))
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(conflicts.length
-    ? `Merging current main conflicts in ${conflicts.join(', ')}. Run git merge ${remote}/main, resolve them, commit, then run this again.`
-    : `Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
+    ? `Merging current ${target} conflicts in ${conflicts.join(', ')}. Run git merge ${remote}/${target}, resolve them, commit, then run this again.`
+    : `Your branch does not contain current ${target}. Merge it (git merge ${remote}/${target}), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
   if (!checkPassed) problems.push('npm run check failed: fix every failure above; CI runs the same checks.')
   // --body: the description, as CI's describe check reads it (scripts/pr-body.mjs); null when no description was given.
@@ -107,12 +119,12 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   if (baseDraft) notes.push('Add these base commits directly to base/<machine>-next and update its cumulative draft. Start the machine’s cumulative draft only if none is open. Record the exact build and unit results there. The owner marks it ready after extensive hardware testing (docs/DEVELOPER_WORKFLOW.md#change-a-base).')
   else if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
     '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it. Until then, pr:ready -- --draft and the draft\'s CI list missing qualification, captures or approval as warnings.')
-  if (baseDraft) notes.push('Watch the existing cumulative draft’s checks with gh pr checks <number> --watch. If main moves before the merge, run this again.')
+  if (baseDraft) notes.push('Watch the existing cumulative draft’s checks with gh pr checks <number> --watch. If ' + target + ' moves before the merge, run this again.')
   else {
     notes.push(description ? 'Push and open or update the PR with the description you checked.'
       : 'Push and open or update the PR using the description template. Check the description first with npm run pr:body -- FILE.md (add --draft for a draft), or here with --body FILE.md: the same rules as CI\'s describe check.')
     if (!draftOnly && !problems.length) notes.push('Once the work and testing are complete, run gh pr view <URL> --json state,headRefOid,isDraft. On the checked commit, run gh pr ready <URL> if it is a draft. Read the state again and verify isDraft is false before reporting it ready.')
-    notes.push('Watch gh pr checks <URL> --watch until green. If main moves before the merge, run this again and push.')
+    notes.push('Watch gh pr checks <URL> --watch until green. If ' + target + ' moves before the merge, run this again and push.')
   }
   return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0, baseDraft }
 }
@@ -179,6 +191,7 @@ async function main(argv) {
   const option = name => { const index = argv.indexOf(name); return index < 0 ? null : argv[index + 1] }
   const remotes = git('remote').split('\n')
   const remote = option('--remote') ?? (remotes.includes('upstream') ? 'upstream' : 'origin')
+  const target = targetBranch(argv)
   const author = option('--author')?.replace(/^@/, '') ?? null
   const commit = option('--commit')
   // --draft: the pull request stays a draft until the exact build ran on a unit, so missing release evidence warns (scripts/modules.mjs).
@@ -193,20 +206,20 @@ async function main(argv) {
   const npm = (...args) => spawnSync(process.execPath, [npmCli, 'run', ...args], { cwd: root, stdio: 'inherit' }).status === 0
   const changedFiles = () => git('status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3))
 
-  console.log(`Fetching ${remote}/main`)
-  // A single-branch clone may fetch main only into FETCH_HEAD. Update the
-  // tracking ref too, so the suggested `git merge <remote>/main` is useful.
-  git('fetch', '--no-tags', remote, `refs/heads/main:refs/remotes/${remote}/main`)
+  console.log(`Fetching ${remote}/${target}`)
+  // A single-branch clone may fetch the target only into FETCH_HEAD. Update the
+  // tracking ref too, so the suggested `git merge <remote>/<target>` is useful.
+  git('fetch', '--no-tags', remote, `refs/heads/${target}:refs/remotes/${remote}/${target}`)
   const base = git('rev-parse', 'FETCH_HEAD')
   let head = git('rev-parse', 'HEAD'), dirty = changedFiles()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
-  // A clean branch takes current main here rather than stopping, and a main that moves during the run needs no second run: the
-  // PR's CI checks the merge with the newest main. A conflict stays the developer's to resolve.
+  // A clean branch takes its current target (main, as a rule) here rather than stopping, and a target that moves during the run
+  // needs no second run: the PR's CI checks the merge with the newest one. A conflict stays the developer's to resolve.
   let conflicts = []
   if (behind && !dirty.length) {
-    const merge = mergeMain(git, `${remote}/main`)
-    if (merge.merged) { head = git('rev-parse', 'HEAD'); behind = false; console.log(`Merged current ${remote}/main into this branch.`) }
+    const merge = mergeMain(git, `${remote}/${target}`)
+    if (merge.merged) { head = git('rev-parse', 'HEAD'); behind = false; console.log(`Merged current ${remote}/${target} into this branch.`) }
     conflicts = merge.conflicts
   }
   const python = localPythonProblem(root)
@@ -255,7 +268,7 @@ async function main(argv) {
   const baseDraft = changed.some(file => BASE.test(file)) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
   const draftOnly = process.env.MODWERK_EVIDENCE_PENDING === '1'
   const description = body === null ? null : descriptionProblems(body, { draft: argv.includes('--draft'), files: branchFiles(git, base) })
-  const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board, description })
+  const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, target, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board, description })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
