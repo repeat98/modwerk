@@ -202,4 +202,8 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
   point lower where the pattern does not set it. Nothing skipped. CPU meter: 49.4-50.2 → 48.3-49.1 % on A01.
 - Release 0.8.2 rebuilt: base `880c0a34538757dd…` (was `fad2c729`); browser = native `.bin` `a4ecb83fcea5f609…`
   (832,628 bytes). Base-bound packages relinked.
-- Not run: the release image on a unit; a Part switch while playing on the unit; by ear.
+- **Part switches while playing** (twin B, A01 playing, Laslo at the unit through the PART menu): Parts 1, 2, 3, 2, 1,
+  2, 3, 4, 1 over about two minutes, the current Part read from SRAM every 4 s. Nothing skipped, no stall, no error in
+  1,003,642 frames; back on Part 1 the frame interrupt read 36.0 % again (the longest frame up to 87.3 % in the readings
+  that held a Part load). By ear: Part 1's sound came back cleanly each time (Parts 2-4 of the project hold no sample).
+- Not run: the release image on a unit.
