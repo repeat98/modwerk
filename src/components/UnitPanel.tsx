@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { CARD_SET_FILE, CARD_RECOVERY_FILE, forCardImport } from '../engine/elekloader/card-set'
 import { firmwareFilename } from '../config/firmware-filename'
 import { prepareCardSet } from '../engine/elekloader/module-set'
-import { baseName, layoutName, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { baseName, describeBase, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import { knownBase } from '../config/base-download'
 import type { InventoryTarget } from '../config/inventory'
 import { comesWithBase } from '../config/usb-audio'
 import { Icon } from './Icon'
 import { trackModuleDownloads } from '../community/usage'
+import { noteSupportInstall } from '../community/support-prompt'
+import { SupportLine } from './SupportDialog'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { installedOnOctatrack } from '../community/installed-follow-up'
 import { save } from './OctatrackBackups'
@@ -41,11 +43,6 @@ export function CardSetButton({ set, onInstall }: { set?: InventoryTarget; onIns
 }
 
 interface Written { file: Uint8Array; ids: string[]; base: string; layout: BaseLayout; other?: { base: string; from: 'unit' | 'download' } }
-/** A base by its version, with its USB Audio layout when the version alone doesn't tell two bases apart. */
-const describeBase = (base: string, other: string) => {
-  const layout = runningLayout(base)
-  return baseName(base) === baseName(other) && layout ? baseName(base) + ' (' + layoutName(layout) + ')' : baseName(base)
-}
 
 /** After the download: where the file goes, which base it is for, and a way to that base. */
 function CardSetDialog({ name, written, error, notice, onDownload, onInstall, onClose }: { name?: string; written?: Written; error?: string; notice?: string; onDownload: (ids: string[]) => void; onInstall?: (layout: BaseLayout) => void; onClose: () => void }) {
@@ -56,7 +53,7 @@ function CardSetDialog({ name, written, error, notice, onDownload, onInstall, on
     try {
       if (retained && retained.name.toUpperCase() !== CARD_RECOVERY_FILE) throw new Error('Choose ' + CARD_RECOVERY_FILE + ' from the top folder of this card.')
       const file = retained ? forCardImport(written.file, new Uint8Array(await retained.arrayBuffer())) : written.file
-      save(file, CARD_SET_FILE); setSaved(true); onDownload(written.ids)
+      save(file, CARD_SET_FILE); setSaved(true); onDownload(written.ids); noteSupportInstall()
     } catch (failure) { setProblem(failure instanceof Error ? failure.message : 'Couldn’t prepare the card file.') }
     finally { setReading(false) }
   }
@@ -80,7 +77,8 @@ function CardSetDialog({ name, written, error, notice, onDownload, onInstall, on
         <li><span aria-hidden="true">1</span><div><strong>Copy the file to the card</strong><p>Top folder, replacing the one there, named exactly {CARD_SET_FILE}: if your browser added a number to the name, take it out. Card reader or USB DISK MODE.</p></div></li>
         <li><span aria-hidden="true">2</span><div><strong>Switch the Octatrack off and on</strong><p>It reads the file when it starts.</p></div></li>
         <li><span aria-hidden="true">3</span><div><strong>Play</strong><p>{name ? <>It starts with the modules of <b>{name}</b>.</> : 'It starts with your modules.'}</p></div></li>
-      </ol> : <fieldset disabled={reading}>
+      </ol> : null}
+      {saved ? <SupportLine /> : <fieldset disabled={reading}>
         <legend>Check the top folder of your card</legend>
         <p>If it contains <b>{CARD_RECOVERY_FILE}</b>, choose that file here. The download will load ahead of it, and the original stays on the card for recovery.</p>
         <label>Choose {CARD_RECOVERY_FILE} <input type="file" accept=".set" onChange={event => { const file = event.target.files?.[0]; if (file) void download(file) }} /></label>

@@ -581,8 +581,8 @@
           "SETUP_ALL"
         ]
       },
-      "version": "0.1.0-experimental",
-      "path": "octatrack-modules/syntiz/0.1.0-experimental.mwrm",
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/syntiz/0.1.1-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -590,8 +590,8 @@
       "fills": 0,
       "name": "syntiz",
       "module": "970f03ad",
-      "bytes": 54416,
-      "sha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8"
+      "bytes": 46944,
+      "sha256": "c3a97ecc50c92b305a45fcd6cf75d3f48a194538891c5398eedfa5f3aad39df5"
     },
     {
       "id": "track-solo",
@@ -663,7 +663,7 @@
       "id": "kits",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "abi": 8,
       "features": 129,
       "sites": 15,
@@ -671,9 +671,9 @@
       "fills": 0,
       "name": "Kits",
       "module": "9ea848b6",
-      "bytes": 12954,
-      "sha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
-      "path": "octatrack-modules/kits/0.1.0-experimental.mwrm"
+      "bytes": 13546,
+      "sha256": "c1cb63e556add9aaf39eea5bfcdafc1ece923b51d9723c49f5caf6fd215ed072",
+      "path": "octatrack-modules/kits/0.1.1-experimental.mwrm"
     },
     {
       "id": "tuner",
@@ -709,6 +709,44 @@
       "module": "d4582ab2",
       "bytes": 3446,
       "sha256": "f311dd620daf296dc6caff7f442533fe6e7262e2a1834bbfbc237fc4d3ff1631"
+    },
+    {
+      "id": "resonator",
+      "slots": "both",
+      "cycles": 256,
+      "cyclesKind": "executed",
+      "state": 89,
+      "buffer": 0,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/resonator/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Resonator",
+      "module": "5bdf8162",
+      "bytes": 8344,
+      "sha256": "16600fb3681f45e8c2708f4f69da1befe24df696b5e0c4f868bd0eb891eb0fb5"
+    },
+    {
+      "id": "mackity",
+      "slots": "both",
+      "cycles": 226,
+      "cyclesKind": "executed",
+      "state": 32,
+      "buffer": 0,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/mackity/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Mackity",
+      "module": "f265b22c",
+      "bytes": 1376,
+      "sha256": "5a58d4cc9ce2e5c2878ddafab9fa4437d4ded051066e1d0788307693330b39ac"
     },
     {
       "id": "butter-fingers",
@@ -760,6 +798,21 @@
       "module": "2c224021",
       "bytes": 30424,
       "sha256": "07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865"
+    },
+    {
+      "id": "songbook",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/songbook/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 129,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "Songbook",
+      "module": "008010d8",
+      "bytes": 7894,
+      "sha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47"
     }
   ],
   "usbAudio": {

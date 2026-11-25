@@ -1,23 +1,23 @@
 # Driving the Octatrack from an agent
 
-Drive an Octatrack MKII over USB with a development twin. Build it with `build_core.py` and the flags that
+Drive an Octatrack, MKI or MKII, over USB with a development twin on your own unit: all of [the test
+procedure](TEST_PROCEDURE.md) runs there, the curve included. Build it with `build_core.py` and the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
 then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
 Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
 `base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
 Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
 analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
-the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR`.
-Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
+the committed file back (twin `80f62ad6`, 13 November 2026).
+On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` loop hands boots to that client and reconnects afterward. For failures see
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
 
 - Never SAVE, SAVE ALL or SYNC TO CARD the owner's project, unless the owner asks to recover something.
-- Do not change the owner's Parts. Test on a bank whose working Part equals its saved Part (bank B in
-  LIVE/Dev12: every Part FILTER/DELAY). Check that with `mem` (below) first, and put it back with `reload`
-  afterwards; then both copies must equal the saved copy read before. (Until 11 October 2026 this said
-  PART+FUNC+PLAY, which clears: Dev12's bank B Part 1 is named `PART 1` from it.)
+- Do not change the owner's Parts. Test on [a test bank](TEST_PROCEDURE.md#a-test-bank), first checking that its working
+  Part equals its saved one (`mem` below, or `scripts/octatrack-preflight.py`); `reload` it afterwards, then both
+  copies must equal the saved copy read before.
 - Read the state before you change it, and after you put it back.
 - RELOAD needs a Part that was saved at least once. On one that never was, it shows SAVE PART FIRST! and
   changes nothing, even when its working and saved copies matched before the test. Picking the original effects
@@ -42,8 +42,7 @@ Keep the default chunk size on Windows so the entire transfer fits WinUSB. The `
   other file in turn (`modset.c` `slot`), so one Keep on a twin replaces only that file. The kept set's whole-set identity
   (USB request 38, order-free: `journal.h` `runtime_journal_set_digest`) names its exact packages: hash candidate files
   the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). A twin's RAM boot
-  that restores its kept set took 72 s to answer on USB after a power-cycled start, past `boot`'s 60 s wait, and 18 s
-  later; keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
+  that restores its kept set can take 72 s to answer on USB, past `boot`'s 60 s wait: keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
   after its Keep, never enumerated (Windows, `a328967d`, same day). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
@@ -210,7 +209,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | one-shot `npm run device:price -- [--out FILE.json] [ID or FILE.mwrm …]` | what a module costs, measured beside the running session (`serve --share /tmp/modwerk-share.sock`, a development twin): for each USB package, or each `.mwrm` file of an unpublished build, a timed trial, then the frame interrupt's share, the CPU meter and both DSPs while the selected pattern plays, before it, with it installed and used nowhere, and for an effect on one slot of `--slot` (T1) at its defaults (a `.mwrm` file of a published effect, named after its id, takes the effect's slots and name from its catalogue row; one of a new effect gets only the at-rest reading, 17 November 2026); `--socket` is the session's socket and `--share` the shared one; the trial is rolled back and the slot's effect picked back. It presses PLAY and STOP itself, so set the scene up first and leave the transport stopped. A machine in use and other settings are not measured. It waits for an upload however long it takes: cutting one short left MODWERK SYNC / RECEIVING MODULES at 57 % on the unit until `npm run device -- recover --socket /tmp/modwerk-share.sock` (14 November 2026). On that day, with four FLEX tracks sounding on an MKII, FM Synth 0.1.2 cost 19.1 points of the frame installed on no track, POLY8 0.3.1 13.5, Repitch 0.2.0 7.9, Euclid 3.0 and every other module under 1 |
 | one-shot `npm run device -- lifecycle` | not a read-out: the single-slot loader test. It stages and accepts test modules, and on a base with module sets it stops at "removal empties the slot" and leaves an unnamed module 0 kept on the card, which a power cycle keeps (26 October 2026, MKII, flashed `92a13ff0`). `npm run device -- remove --seconds 3 --accept` takes it out. For the module list: `npm run device -- do inventory` |
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
-| `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. `node scripts/octatrack-bootsoak.mjs DIR --socket PATH` repeats it in batches of 15 (about four minutes), logs each boot and stops at the first that does not come back: how often a restart loses USB is known from 20 boots only, which still allows one in seven. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
+| `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. Refused over a flashed update not yet confirmed: each restart spends one of its two starts (`--spend-tries` overrides). `node scripts/octatrack-bootsoak.mjs DIR --socket PATH` repeats it in batches of 15 until one does not come back (20 boots so far: up to one loss in seven). From the flashed `usbtest9` on macOS add 4096: it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
 
 STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
 separately when qualifying an edit's recording refusal; that bit alone does not
@@ -236,7 +235,7 @@ stall. Each CC was checked on its own against the Part's bytes and the screen: l
 - MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
   venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
   networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
-  unit's MIDI port. Restart it after a RAM boot: its port goes dead.
+  unit's MIDI port. After a RAM boot it reopens the port on a failed send (copies before 25 November 2026 must restart).
 - The project: track channels 1-8, and TRANSP RECV and PROG CH RECV on in PROJECT > MIDI > SYNC. A project with
   them off ignores START and program changes without an error: the summary then shows no pattern changes and the
   stopped CPU. Program changes arrive on the channel PROG CH RECV names; set to CH AUTO, that is MIDI > CHANNELS'
@@ -288,10 +287,10 @@ not isolated: verify each held-row transition and stock modifier release, and st
   stops at RENAME, so UP three times, DOWN, YES (`savepart`: DOWN twice). Do not use SAVE or SAVE ALL on a Part you changed.
   **An MKI has no PART key** (#2099): FUNC + MIDI opens the Part window, an arrow moves its cursor, YES selects;
   FUNC + BANK there opens the menu. Steps choose by the MKII flag (`0x46c8d18c`); `device:emulator -- --mki`. After a RAM boot
-  every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test` and
-  `device:qualify` SAVE the Part once before they change anything, while its working copy equals its saved one: the
-  same bytes, and their closing RELOAD then works. `reload` reports no failure: compare
-  the Part with its saved copy afterwards (SAVE PART FIRST! above).
+  every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test`,
+  `device:qualify` and `test:procedure` (`octatrack-part-state.mjs`) SAVE the Part once before they change anything,
+  while its working copy equals its saved one: the same bytes, and their closing RELOAD then works (`test:procedure`'s
+  also after its soak). `reload` reports no failure: compare the Part with its saved copy afterwards.
 - **Patterns.** PATTERN+TRIG n selects pattern n of this bank. Another bank: BANK, then TRIG b (bank b), then
   TRIG n (pattern n) within four seconds (the manual's "CHOOSE BANK", "CHOOSE PATTERN"). Stopped, it applies
   at once; playing, it waits for the pattern's end.

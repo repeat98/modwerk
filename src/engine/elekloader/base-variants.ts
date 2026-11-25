@@ -61,6 +61,12 @@ export const isPublishedBase = (identity?: string) => baseLayout(identity) !== u
 /** The identity of the published base with this layout, when the site publishes it. */
 export const layoutIdentity = (layout: BaseLayout) => layout === DEFAULT_LAYOUT ? baseBinding.identity : VARIANTS[layout]
 export const layoutName = (layout: BaseLayout) => layout === 'off' ? 'USB Audio off' : 'USB Audio · ' + USB_AUDIO_LAYOUTS.find(item => item.id === layout)!.name
+/** A base by its version, with its USB Audio layout when the version alone doesn't tell it from `other` (two layouts of
+ * one version: "0.8.1 (USB Audio off)"), or always when there is no `other`. */
+export const describeBase = (base: string, other?: string) => {
+  const layout = runningLayout(base)
+  return layout && (other === undefined || baseName(base) === baseName(other)) ? baseName(base) + ' (' + layoutName(layout) + ')' : baseName(base)
+}
 
 const textSha = (text: string) => sha(new TextEncoder().encode(text))
 

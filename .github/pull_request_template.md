@@ -9,6 +9,8 @@
 
 **A module or module update:** describe the change in behaviour, module version(s), compatibility and source/media attribution. Run it through [the test procedure](../docs/TEST_PROCEDURE.md) and give its "Tested on a unit" line and its edge-case table under a line "Edge cases". Then say what the guides lacked or got wrong while you built it and link the `Docs:` pull request that fixes it, or write "nothing"; the module release itself stays free of guide edits.
 
+Before you save this description, `npm run pr:body -- FILE.md` (add `--draft` for a draft) checks it as CI's describe check will.
+
 The checks do the rest. `npm run pr:ready` (a registered author: `npm run pr:ready -- --author <login>`) runs what CI runs: the module contract, version and release notes, compatibility and UI claims, resource and qualification records, documentation and licences. A pull request with a red check is labelled `needs-work` and leaves the review queue until it is green; after 14 days without a new commit it is closed, and you can reopen it once it is green. Until your first module is published, one module pull request is reviewed at a time.
 
 No check can prove these, so you vouch for them:
