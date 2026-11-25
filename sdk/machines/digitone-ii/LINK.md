@@ -26,7 +26,7 @@ so a draw between its reads can tear a frame. Stock keeps two frame pointers sid
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
-Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES). USB only: a link message from DIN is never acted on.
+Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES). A press or turn the link posted before the upload completed, still in stock's queue when the prompt opens, is taken at `ev_key`/`ev_enc` before stock sees it and counted as refused; the link's releases and a person's YES and NO still reach stock. USB only: a link message from DIN is never acted on.
 
 `ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
 

@@ -226,6 +226,13 @@ static void disarm(void)
     armed = 0;
 }
 
+// A press or turn the link posted that stock would get while UPGRADE OS NOW? waits: taken before stock, counted as
+// refused. The check where the host asks (ST_FLASH) cannot see one already in stock's queue when the upload completes.
+static void held_back(void)
+{
+    refused_count++;
+}
+
 static int ours(int kind, int id, int value)    // the next event the link posted? pops it if so
 {
     struct pend *p;
@@ -240,11 +247,13 @@ static int ours(int kind, int id, int value)    // the next event the link poste
 
 static int human(void)                  // a person pressed or turned something; -> 1 takes that first press
 {
+    int any;
     human_count++;
     if (!armed)
         return 0;
     human_ticks = 0;
-    return release_all();
+    any = release_all();
+    return flash_waits() ? 0 : any;     // at UPGRADE OS NOW? a person's press always reaches stock: their YES or NO
 }
 
 // ev_key, ev_enc: (brain, event); the key or encoder at event + 12, a key's flags at + 16. A release alone is not a
@@ -257,9 +266,16 @@ int mw_link_key(void *brain, char *event)
     int32_t key = *(int32_t *)(event + 12), flags = *(int32_t *)(event + 16);
     int replay = key == last_key && ticks == last_tick, person;
     (void)brain;
-    person = (uint32_t)key < KEY_IDS && !ours(MSG_KEY, key, flags) && (flags & KEY_DOWN) && (!replay || panel_down(key));
+    int mine = (uint32_t)key < KEY_IDS && ours(MSG_KEY, key, flags);
+    person = (uint32_t)key < KEY_IDS && !mine && (flags & KEY_DOWN) && (!replay || panel_down(key));
     last_key = key;
     last_tick = ticks;
+    if (mine) {                         // a press the link queued before UPGRADE OS NOW? opened never reaches it
+        if (!(flags & KEY_DOWN) || !flash_waits())
+            return 0;
+        held_back();
+        return 1;
+    }
     return person ? human() : 0;
 }
 
@@ -267,9 +283,15 @@ int mw_link_enc(void *brain, char *event)
 {
     int32_t enc = *(int32_t *)(event + 12);
     (void)brain;
-    if (enc >= ENC_FIRST && enc <= ENC_LAST && !ours(MSG_ENC, enc, 0))
-        return human();
-    return 0;
+    if (enc < ENC_FIRST || enc > ENC_LAST)
+        return 0;
+    if (ours(MSG_ENC, enc, 0)) {        // nor a turn the link queued
+        if (!flash_waits())
+            return 0;
+        held_back();
+        return 1;
+    }
+    return human();
 }
 
 static int readable(uint32_t a, uint32_t n)

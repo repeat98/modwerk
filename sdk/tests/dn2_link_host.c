@@ -44,6 +44,15 @@ void fw_invalidate(void *view) { (void)view; }
 static int failed;
 #define CHECK(c) do { if (!(c)) { printf("failed at line %d: %s\n", __LINE__, #c); failed = 1; } } while (0)
 
+#define PANEL_YES 10                                    // the YES key (the SDK guide's key codes)
+static int presses_of(int key)
+{
+    int i, n = 0;
+    for (i = 0; i < posted_count_host; i++)
+        n += posted[i].kind == MSG_KEY && posted[i].id == key && posted[i].value == KEY_DOWN;
+    return n;
+}
+
 static int releases_of(int key)
 {
     int i, n = 0;
@@ -66,19 +75,19 @@ static int request(int cmd, uint32_t id, uint32_t v)   // the link's reply statu
     return sent_status[sent_count - 1];
 }
 
-static void ui_sees_key(int key, int flags)            // stock's loop passes a posted key to ev_key
+static int ui_sees_key(int key, int flags)             // stock's loop passes a posted key to ev_key; 1: taken, stock never sees it
 {
     char event[20] = { 0 };
     memcpy(event + 12, &key, 4);
     memcpy(event + 16, &flags, 4);
-    mw_link_key(0, event);
+    return mw_link_key(0, event);
 }
 
-static void ui_sees_enc(int enc)
+static int ui_sees_enc(int enc)
 {
     char event[20] = { 0 };
     memcpy(event + 12, &enc, 4);
-    mw_link_enc(0, event);
+    return mw_link_enc(0, event);
 }
 
 int main(void)
@@ -124,8 +133,49 @@ int main(void)
     CHECK(request(CMD_ENC, 1, 1) == ST_FLASH);
     CHECK(request(CMD_RELEASE_ALL, 0, 0) == ST_OK);    // letting go stays allowed
     CHECK(releases_of(9) == 1);
+    CHECK(ui_sees_key(9, KEY_RELEASE) == 0);           // stock's loop takes the release
     upload[0] = 0;
     CHECK(request(CMD_KEY, 10, KEY_DOWN) == ST_OK);
+    CHECK(ui_sees_key(10, KEY_DOWN) == 0);
+    CHECK(request(CMD_KEY, 10, KEY_RELEASE) == ST_OK);
+    CHECK(ui_sees_key(10, KEY_RELEASE) == 0);
+
+    // The upload completes while a press and a turn the link posted are still in stock's queue: they were accepted
+    // before the prompt, so the request's check cannot stop them. At dispatch the link takes them before stock sees
+    // them; a release the link posted still reaches stock, and a person's YES and NO always do.
+    for (i = 0; i <= HUMAN_TICKS; i++)
+        mw_link_tick();                                // past the person's interval
+    {
+        uint32_t refused = refused_count;
+        int yes = presses_of(PANEL_YES), key = KEY_INDEX[12] >= 0 ? 12 : 10;
+        CHECK(request(CMD_KEY, PANEL_YES, KEY_DOWN) == ST_OK);    // queued, not yet dispatched
+        CHECK(request(CMD_ENC, 2, 1) == ST_OK);
+        CHECK(presses_of(PANEL_YES) == yes + 1);
+        upload[0] = 3;                                 // UPGRADE OS NOW? opens
+        CHECK(ui_sees_key(PANEL_YES, KEY_DOWN) == 1);    // taken: stock never sees the link's YES
+        CHECK(ui_sees_enc(2) == 1);
+        CHECK(refused_count == refused + 2);
+        CHECK(pend_head == pend_tail);                 // both popped: the next event is not mistaken for the link's
+        CHECK(request(CMD_RELEASE_ALL, 0, 0) == ST_OK);
+        CHECK(ui_sees_key(PANEL_YES, KEY_RELEASE) == 0); // the link's release passes
+        CHECK(!mw_link_held(PANEL_YES));
+        CHECK(ui_sees_key(PANEL_YES, KEY_DOWN) == 0);    // a person's YES: stock gets it
+        CHECK(ui_sees_key(PANEL_YES, KEY_RELEASE) == 0);
+        CHECK(request(CMD_KEY, key, KEY_DOWN) != ST_OK);  // the link presses nothing at the prompt
+        CHECK(ui_sees_key(key, KEY_DOWN) == 0);        // a person's NO (any key): stock gets it
+        upload[0] = 0;
+    }
+
+    // A person's press while the link holds a key: taken (it lets the link's keys go) outside the prompt, passed
+    // through at the prompt, where it is the person's answer.
+    for (i = 0; i <= HUMAN_TICKS; i++)
+        mw_link_tick();
+    CHECK(request(CMD_KEY, 9, KEY_DOWN) == ST_OK);
+    CHECK(ui_sees_key(9, KEY_DOWN) == 0);
+    upload[0] = 3;
+    CHECK(ui_sees_key(PANEL_YES, KEY_DOWN) == 0);
+    CHECK(!mw_link_held(9));
+    upload[0] = 0;
 
     if (!failed)
         printf("ok\n");
