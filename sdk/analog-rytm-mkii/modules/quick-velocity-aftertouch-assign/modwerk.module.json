@@ -114,10 +114,10 @@
       "testedOn": "2026-11-25",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, Modwerk's test rig (key presses and knob turns over USB, screens read back, with npp1993's go) ran QS02 on 24 Nov and QS03 on 25 Nov 2026: private development images RAM-booted over the flashed OS, a scratch project open, carrying this version's source (QS03: the final code, differing only in a comment; QS02: before the LFO-page change). SCENE + knob drew the lock box and kept the parameter, on a sound and on the FX track; SCENE + a knob press removed the lock; a trig held after the first knob made the trig's lock; with no scene active NO ACTIVE SCENE showed; the release after a knob did not toggle scene mode; FUNC + SCENE opened the PATTERN menu; on QS03 LFO held on the LFO page in PERF, SCNE, MUTE and CHRO showed the values and moved WAV as on stock. The earlier qma- cases matched their unit references apart from the scratch kit's own sound.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, 24 and 25 Nov 2026: private development images with this version's source, RAM-booted over the flashed OS, a scratch project open. Modwerk's test rig (keys and knobs over USB, screens read back, with npp1993's go) ran QS02 and QS03: SCENE + knob lock boxes on a sound and the FX track, a knob press clearing, a trig held after the first knob making the trig's lock, FUNC + SCENE (PATTERN), the LFO page in PERF, SCNE, MUTE and CHRO as stock; on QS05 SCENE + knob, SCENE + pad + knob and the scene-mode pad without scene edit. npp1993 then tested by hand: QM40 (the package's own image, flashed) opened scene edit on the release; QS07 (held pads counted from events) and QS09 (scene edit locks, boxes 0.2 s in, REC/STOP/PLAY copy, paste, clear) worked as described.",
       "limitations": [
-        "This package itself has not run on a unit: QS02 and QS03 are private development images with the same source.",
-        "Scene edit opened by a held SCENE was seen in rytm-emu only (the rig's held keys never repeat); no hand test of 0.4.0 yet.",
+        "QS10's last two review fixes (REC/STOP/PLAY wait 0.2 s; a held pad clears when stock's table says up) and this package's own image ran in rytm-emu only, not on a unit.",
+        "QM40 (an earlier source of this version) is the only package image that ran on the unit.",
         "Not tested: all 48 scene locks in use, a scene pad or QPER held with SCENE, LIVE RECORDING, a kit save and reload of the new locks, the sound.",
         "Duration not recorded."
       ]
@@ -126,7 +126,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.4.0: rytm-emu QS02/QS03 (scene locks, NO ACTIVE SCENE, scene edit on the release, FX track, trig after, LFO page in pad modes) against stock QS00, and the earlier rig cases; the test rig on the author's unit ran QS02 and QS03 (private development images with this source). Earlier: 0.1 and 0.2.0 by hand on the author's unit (save, reload, power cycle), 0.3.x by the rig.",
+    "summary": "0.4.0: rytm-emu QS00 (stock) against QS02 to QS10 and QM40 to QM46 (scene locks, last engaged scene, pads, scene edit, copy/paste/clear, the LFO page in pad modes) and 31 rig cases; the test rig on the author's unit ran QS02, QS03 and QS05; the author tested QM40, QS07 and QS09 by hand. Earlier: 0.1 and 0.2.0 by hand (save, reload, power cycle), 0.3.x by the rig.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -136,7 +136,7 @@
           "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.",
           "Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.",
           "Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth, then let go and tap LFO: the LFO page shows DST FRQ.",
-          "Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE and turn SWT: SWT becomes a lock in scene 1, shown as a box with the scene's other locks, and the page stays."
+          "Press SCENE, BD's pad and SCENE again: scene 1 is active. Hold SCENE: the scene's locks show as boxes. Turn SWT: it becomes a lock in scene 1, and the page stays. Still holding SCENE, press REC to copy the scene."
         ]
       },
       "screenshots": [
@@ -178,8 +178,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -194,8 +194,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -210,8 +210,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -226,8 +226,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -242,8 +242,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -258,8 +258,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -274,8 +274,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "665b5d360f00e488239d1edf38cfd81d353eedb272b91c3309ce66ac5a14ee0a",
-        "setup": "Headless rytm-emu (dtboot) running QM40: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
+        "setup": "Headless rytm-emu (dtboot) running QM46: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Mod Assign 0.4.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
