@@ -1,0 +1,26 @@
+{
+ "schema": "modwerk-table-layout-v1",
+ "packageSha256": "7542f10c56b431761bdd9b4f44a7a3ccb6d4851f31e2c4bb519281dd5d0b6b8c",
+ "imageSha256": "2ff0a955df0fb115d98b0080799590def9ec8da67b8a774bc8006ffec80b9038",
+ "compiledImageSha256": "2ff0a955df0fb115d98b0080799590def9ec8da67b8a774bc8006ffec80b9038",
+ "recipeSha256": "a486f7a957fdb3fb96061f46ce16eab10a861720707d2cd7897fa59c523d24ef",
+ "family": "mute-modes",
+ "stateLayoutRevision": 1,
+ "parameterLayoutRevision": 1,
+ "arrayOffsets": [
+  1412,
+  1480,
+  1548
+ ],
+ "tableSymbols": [
+  "__runtime_table_0",
+  "__runtime_table_1",
+  "__runtime_table_2"
+ ],
+ "sources": {
+  "sdk/octabam/modules/mute-modes/manifest.py": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd",
+  "sdk/octabam/modules/mute-modes/patch_mutemode.s": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100",
+  "sdk/octabam/modules/mute-modes/patch_softmute.s": "7b0c1658a1e0430a5af739e4bd65580a2754d20705862fb4845fef9a29c26d00",
+  "sdk/octabam/modules/mute-modes/runtime.json": "95d1dcb0affb492a5ba47e175a6845f94ce57a3a0636201039d33f49ea2333c1"
+ }
+}

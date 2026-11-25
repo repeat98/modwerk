@@ -1,0 +1,15 @@
+{
+ "schema": 1,
+ "imageSha256": "2ff0a955df0fb115d98b0080799590def9ec8da67b8a774bc8006ffec80b9038",
+ "sources": {
+  "sdk/octabam/modules/mute-modes/manifest.py": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd",
+  "sdk/octabam/modules/mute-modes/patch_mutemode.s": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100",
+  "sdk/octabam/modules/mute-modes/patch_softmute.s": "7b0c1658a1e0430a5af739e4bd65580a2754d20705862fb4845fef9a29c26d00",
+  "sdk/octabam/modules/mute-modes/runtime.json": "95d1dcb0affb492a5ba47e175a6845f94ce57a3a0636201039d33f49ea2333c1"
+ },
+ "symbols": {
+  "__runtime_table_0": 1412,
+  "__runtime_table_1": 1480,
+  "__runtime_table_2": 1548
+ }
+}

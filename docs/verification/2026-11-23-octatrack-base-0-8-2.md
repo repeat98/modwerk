@@ -102,3 +102,23 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
 - `test:procedure -- --base`'s large set (39 packages) was refused `RUNTIME_CONFLICT` on this twin: it holds RINGMOD SC,
   which a twin without controller rows does not admit, and its 449,088 bytes pass the module pool (0.8.1: 396,428 did not
   fit). Run as the two sets above, without RINGMOD SC.
+
+## 25 November 2026: a table owner may rest its detours; Mute Modes 0.2.4 admitted
+
+- **Why:** Mute Modes 0.2.4 rests while MUTE MODE is OT (`ev_in_use`, runtime.json `"rests"`), so it costs nothing while
+  idle. 0.2.3 added 0.9 points of the frame interrupt at rest. Before this change the base admitted no resting table owner:
+  `table_declarations.validate` read a site's length byte with the rest bit (loader.h `RUNTIME_SITE_RESTS`, 0x80) set
+  as a length, so 0.2.4's declaration was refused.
+- **Change:** `table_declarations.py` reads that bit on a table owner's own detours and refuses it on its table pointer
+  and count sites: those must hold while the module rests, or MUTE MODE's rows would leave PERSONALIZE and the module
+  could not be woken from the menu. `test_table_declarations.py` covers both cases with synthetic packages.
+- **Table owner:** Mute Modes 0.2.4, package `7542f10c…` (3,026 bytes), declaration `64253fe3…`, tables at 1412 / 1480 /
+  1548, beside 0.2.2 and 0.2.3. Approved by the owner on 25 November 2026. Source: Zac-Kyoti/octatrack-kyoti-fw#5.
+- Release 0.8.2 rebuilt: base `910e6625e1a463e2…` (was `8f179f5e`); browser = native `.bin` `f6e46d0663a18d8e…`
+  (831,656 bytes). Base-bound packages relinked with unchanged bytes.
+- **On a unit (MKII, OS 1.40C, 25 November 2026):** a development twin of 0.8.1's source (`493c9cc5`, the beta flags,
+  `--dev`, controller rows) with the same validator change and the three table owners, RAM-booted over the flashed
+  `eb667962`. `device:price`, three readings of 8 s per state, MUTE MODE OT: 0.2.3 at rest +0.9 frame / +0.9 CPU,
+  0.2.4 at rest +0.0 / +0.2. Both installed and rolled back.
+- Not run: this source's own twin; MUTE MODE switched from OT to OTFX, OTFX-T and DT-T with a muted track while
+  playing (0.2.4 waking); an upgrade from 0.2.3 in a kept set; an MKI.
