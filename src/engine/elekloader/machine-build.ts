@@ -18,7 +18,7 @@ import { carryDevices } from './carried-devices'
 
 export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 export type { Builder }
-export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2' } as const
+export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2', 'model-cycles': 'model-cycles' } as const
 export type ElekloaderMachine = keyof typeof MACHINE_DEVICE
 carryDevices()
 export const BUILDER_CATALOG: Catalog = parseCatalog(CATALOG_JSON)
