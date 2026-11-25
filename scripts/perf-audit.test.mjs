@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { judgeRecord, selfTest, templateRecord, ownerWaivedPerformanceRow, stampVerdict, priceLimits, approvalCoversSource } from './perf-audit-analysis.mjs'
-import { modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { moduleEarlierPerformanceSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -32,9 +32,17 @@ describe('performance stamp', () => {
       expect(record.sourceSha256).toBe(await modulePerformanceSourceSha256(folder, document))
       expect(audit('check', file, '--stamp').status).toBe(0)
       expect(JSON.parse(readFileSync(file, 'utf8')).sourceSha256).toBe(record.sourceSha256)
+      // New art for the library card is not new code: the numbers stand (Mackity, #2148, re-stamped for each thumbnail edit).
+      mkdirSync(join(folder, 'presentation'), { recursive: true })
+      writeFileSync(join(folder, 'presentation/thumbnail.svg'), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192"><circle r="9"/></svg>\r\n')
+      expect(stampVerdict(record, await modulePerformanceSourceSha256(folder, document), true).state).toBe('ok')
+      // A stamp written before the art left the hash names the source with it, and holds while that source is unchanged.
+      const earlier = await moduleEarlierPerformanceSourceSha256(folder, document), stampedEarlier = { ...record, sourceSha256: earlier }
+      expect(stampVerdict(stampedEarlier, await modulePerformanceSourceSha256(folder, document), true, file, earlier)).toMatchObject({ state: 'ok', detail: expect.stringContaining('the next --stamp writes') })
       // A code change after the numbers were taken: the doctor's verdict fails until they are measured and stamped again.
       writeFileSync(join(folder, 'native.c'), readFileSync(join(folder, 'native.c'), 'utf8') + '\n/* changed */\n')
       expect(stampVerdict(record, await modulePerformanceSourceSha256(folder, document), false).state).toBe('fail')
+      expect(stampVerdict(stampedEarlier, await modulePerformanceSourceSha256(folder, document), false, file, await moduleEarlierPerformanceSourceSha256(folder, document)).state).toBe('fail')
       // A record for another version is never stamped.
       writeFileSync(file, JSON.stringify({ ...record, version: '9.9.9' }))
       expect(audit('check', file, '--stamp').stderr).toContain('Not stamped')

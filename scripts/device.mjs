@@ -13,7 +13,8 @@
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
 //       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back);
-//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial
+//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial;
+//       --costs FILE sends that frame cost table (frame-costs.json's shape) instead of this checkout's; the unit keeps it either way
 //   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
@@ -60,7 +61,7 @@ import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
-import { stageRefusal } from './octatrack-step-base.mjs'
+import { bootOverPendingUpdate, stageRefusal } from './octatrack-step-base.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -68,11 +69,13 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
   split: { type: 'boolean', default: false },
+  costs: { type: 'string' }, // set: the frame cost table to send, in frame-costs.json's shape (device:price's measuring table)
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
+  'spend-tries': { type: 'boolean', default: false }, // boot: even over a base update not yet confirmed (bootOverPendingUpdate)
 } })
 const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
 
@@ -81,7 +84,7 @@ const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
   screen [--png FILE] [--scale 1-4]
   try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
   recover | lifecycle
-  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  boot BUILD_DIR [--chunk 1-4096] [--spend-tries] | flash BUILD_DIR
   key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
   mem ADDR LENGTH | probe 0|1 | meter 0|1
 
@@ -788,7 +791,10 @@ if (command === 'serve') {
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
     // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
     if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
-    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+    // A v2 set's table is kept in battery RAM whether or not the set is kept (loader.c): this checkout's, or --costs.
+    const own = values.costs ? JSON.parse(readFileSync(values.costs, 'utf8')) : undefined
+    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? (own ? frameCostTable(own.costs, own.stock ?? null) : frameCostTable()) : undefined
+    if (own && !costs) throw new Error('--costs: this base keeps no frame cost table (no frame costs capability), so it would not be sent.')
     const offer = async packages => {
       const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
       console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
@@ -837,6 +843,15 @@ if (command === 'serve') {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
+    // A base update flashed and not yet confirmed loses one of its starts to each restart, a RAM boot's too (20 November 2026)
+    const slotsNow = () => transport.slots().catch(() => undefined)
+    let pending = values.emulator || values['spend-tries'] ? undefined : bootOverPendingUpdate(await slotsNow())
+    if (pending?.wait) {
+      console.log('waiting up to 20 s for the base update the unit runs to confirm itself…')
+      for (let second = 0; second < 20 && pending?.wait; second++) { await wait(1000); pending = bootOverPendingUpdate(await slotsNow()) }
+    }
+    if (pending?.refusal) throw new Error(pending.refusal)
+    if (pending?.warning) console.log(pending.warning)
     const arm = async (s, base, flashed = false) => {
       const tooBig = stageRefusal(join(file, 'MAIN.raw'), image.length, s.status.capacity, flashed)
       if (tooBig) throw new Error(tooBig)
