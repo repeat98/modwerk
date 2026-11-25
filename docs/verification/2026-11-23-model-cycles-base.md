@@ -81,6 +81,31 @@ repeated: the unit reset by itself, TRIG 16 blinked, and `ident` reported the ma
 CRC `0x36fc4fa1`. A power cycle then booted the flashed image: TRIG 16 did not blink. Nothing was flashed for the RAM
 boot.
 
+## The page and its send dialog (24 and 25 November 2026)
+
+The catalogue record pins `modwerk-base-model-cycles-646706ff.elemod` (base `646706ff`, #2077). The kit's `build` in
+Node (`prepareBuild`, the version name `1.13`, `buildWithLock`, as the page runs them) writes `89edf78e…`
+(1,006,880 bytes) from the stock `model-cycles_OS1.13.syx` (`44fe5862…`): byte for byte the image Elekloader's
+patcher built, which ran flashed in #2077's record.
+
+In a browser (`npm run dev` with `npm run dev:community`, Chrome on a Mac, `'model-cycles': true` in
+`DIGI_DOWNLOADS_ENABLED` locally, not committed), on the submitter's Model:Cycles:
+
+- **25 November, base `646706ff`:** the page built from the stock 1.13 file and its download was `89edf78e…`, byte for
+  byte. The send dialog sent it to the unit on stock 1.13; YES at UPGRADE OS NOW? installed it (`ident`: set CRC
+  `0x7c774e99`, 38,272 bytes).
+- **24 and 25 November, base `4d4d91d2`:** the page built `ec928894…`, byte for byte. Chrome asked for MIDI device
+  control once the site's permission was reset; the dialog's Connect, Send and Confirm on the unit ticked. NO at
+  UPGRADE OS NOW? kept the running OS without a restart (the dialog stays at "Press YES on the unit", since the page
+  cannot see the answer); YES installed it (`0x15eddb5a`, 38,052 bytes), also after stock 1.13 was flashed over it.
+  With Transfer open and connected the dialog sent and the unit asked (macOS).
+- **Not run:** Windows, where a MIDI port opens only once (no Windows machine here).
+
+Beta only: the preview, `#model-cycles/configuration` and its button follow `hasBetaUi`. Checked by tests that render
+a released build (`USB_LINK` off): `core-build-preview-gate.test.ts` (the button for a beta tester, not a visitor)
+and `App.model-cycles-preview.test.ts` (the route waits for the session, keeps a beta tester, sends a visitor to the
+machine page). Not checked in a deployed build.
+
 ## The site's build of 4d4d91d2 (24 November 2026)
 
 The catalogue record now pins `modwerk-base-model-cycles-4d4d91d2.elemod`. The kit's `build` in Node (the same
