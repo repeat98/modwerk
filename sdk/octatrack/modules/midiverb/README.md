@@ -38,7 +38,7 @@ The four controls can be locked per step, modulated by the LFOs and set in scene
 - It takes the knob's value store while the FX2 page shows, only to name the program or bank; every value is stored as stock stores it.
 - DSP time: at most 398 instructions a sample in the DSP emulator, about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more are not in this release, nor the Midiverb II's chorus and flange programs.
 - Not like the original: it runs at 22.05 kHz instead of about 23.4 kHz, so reverb times and delays are about 6 % longer; the original's analog filters and noise are not modelled; some long delays are up to 4.5 % shorter to fit the memory; the input is the average of left and right.
-- Known issues on base 0.8.1: after picking it in FX2 SETUP the first NO only closes the memory box; and right after a pick, slow PROG and BANK turns do nothing until you leave the FX2 page and come back. Base 0.8.2 fixes both.
+- Known issue on base 0.8.1: after picking it in FX2 SETUP the first NO only closes the memory box; press FX2 for its page instead. Base 0.8.2 fixes it. (PROG and BANK turn from the first detent on either base: Midiverb stages them itself.)
 
 ## Tests and measurements
 

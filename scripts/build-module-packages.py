@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse, hashlib, importlib.util, json, os, re, shutil, struct, subprocess, sys, tempfile
 
 APP = Path(__file__).resolve().parents[1]
-ORDER = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', 'vibrato', 'resonator', 'mackity']
+ORDER = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', 'vibrato', 'resonator', 'mackity', 'midiverb']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
 REQUESTED = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec', 'songbook']

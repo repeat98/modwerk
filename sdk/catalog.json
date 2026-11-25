@@ -241,6 +241,11 @@
       "id": "songbook",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-24T09:10:19Z"
+    },
+    {
+      "id": "midiverb",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-25T20:15:00Z"
     }
   ]
 }

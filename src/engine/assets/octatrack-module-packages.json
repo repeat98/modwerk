@@ -20,6 +20,17 @@
       "fills": 0
     },
     {
+      "id": "midiverb",
+      "slots": "fx2",
+      "cycles": 398,
+      "cyclesKind": "executed",
+      "state": 32,
+      "buffer": 15870,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/midiverb/0.1.0-experimental.mwrm",
+      "octabam": true
+    },
+    {
       "id": "miniverb",
       "slots": "fx2",
       "cycles": 411,
