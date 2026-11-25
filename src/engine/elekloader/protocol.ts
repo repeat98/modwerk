@@ -23,6 +23,9 @@ export function digiDownloadsEnabled(machine: string): boolean {
 }
 
 // Research machines whose page offers a local core build before any module is published. Build outcomes count
-// by machine; download availability remains governed independently above.
+// by machine; download availability remains governed independently above. The preview, its configuration route
+// and its button are beta-only until the owner releases the machine (MACHINE_RECIPE.md, Beta first): ask
+// coreBuildPreviewOpen with the session's hasBetaUi.
 export const CORE_BUILD_PREVIEWS: readonly BuilderMachine[] = ['model-cycles']
 export function isCoreBuildPreview(machine: string): boolean { return (CORE_BUILD_PREVIEWS as readonly string[]).includes(machine) }
+export function coreBuildPreviewOpen(machine: string, betaUi: boolean): boolean { return betaUi && isCoreBuildPreview(machine) }
