@@ -39,6 +39,36 @@ def checked_baseline(args):
     return expected_base, expected_normal
 
 
+def counter_addresses(package, origin, linked):
+    """Use the stock linker's real layout, including collections and BSS padding."""
+    layout, mapping = linked['link']['layout'], linked['_map']
+    if layout['ddr'][0] != origin:
+        raise ValueError('Linked base runtime origin differs from the normal package')
+    names = {'FRAMES': 'mw_frame_count', 'IDLE': 'modwerk_idle_counts',
+             'FRAME_MAX': 'mw_frame_max', 'SHARE': 'mw_frame_share', 'SHEDS': 'mw_frame_sheds'}
+    addresses = {}
+    for key, name in names.items():
+        section, offset = package['symbols'][name]
+        if section not in ('.run', '.bss'):
+            raise ValueError('Unsupported measurement section: ' + name)
+        definition = package['sections'][section]
+        size = definition['len' if section == '.run' else 'size']
+        alignment = definition.get('align', 4)
+        if (type(alignment) is not int or not 1 <= alignment <= 4096
+                or alignment & (alignment - 1)):
+            raise ValueError('Invalid measurement section alignment: ' + name)
+        if type(offset) is not int or offset < 0 or offset + 4 > size or offset % 2:
+            raise ValueError('Unaligned/out-of-section measurement symbol: ' + name)
+        start, end = layout['ddr' if section == '.run' else 'bss']
+        base = origin if section == '.run' else (start + max(4, alignment) - 1) & -max(4, alignment)
+        address = mapping[name]
+        if (type(address) is not int or address != base + offset or address % 2
+                or not start <= base < base + size <= end):
+            raise ValueError('Measurement symbol differs from the linked layout: ' + name)
+        addresses[key] = address
+    return addresses
+
+
 def build(args):
     out = args.output.resolve()
     if out.exists():
@@ -66,16 +96,12 @@ def build(args):
 
     package = json.loads((root / 'src/engine/assets/octatrack-base.elemod').read_text())
     origin = normal['baseRunOrigin']
-    bss = (origin + package['sections']['.run']['len'] + 511) & ~511
-    names = {'FRAMES': 'mw_frame_count', 'IDLE': 'modwerk_idle_counts',
-             'FRAME_MAX': 'mw_frame_max', 'SHARE': 'mw_frame_share', 'SHEDS': 'mw_frame_sheds'}
-    addresses = {}
-    for key, name in names.items():
-        section, offset = package['symbols'][name]
-        size = package['sections'][section].get('size', package['sections'][section].get('len'))
-        if section not in ('.run', '.bss') or offset < 0 or offset + 4 > size or offset % 4:
-            raise ValueError('Unaligned/out-of-section measurement symbol: ' + name)
-        addresses[key] = (origin if section == '.run' else bss) + offset
+    # Stock linking includes collection tables after .run, then each section's
+    # declared alignment. Never infer BSS from a historical 512-byte boundary.
+    from elekloader import patch
+    _, linked = patch.build(str(args.stock), [str(root / 'src/engine/assets/octatrack-base.elemod')],
+                            version='ELEKLOADER')
+    addresses = counter_addresses(package, origin, linked)
     header = folder / 'qualification/probe_addresses.h'
     header.write_text('/* Private named-base read-only addresses; not a release header. */\n' +
                       ''.join(f'#define FRACT_PROBE_{key} 0x{value:08x}u\n' for key, value in addresses.items()))
@@ -123,6 +149,7 @@ def build(args):
     receipt = {'schema': 1, 'kind': 'PRIVATE_MEASUREMENT_ONLY', 'normalPackageSha256': expected_normal,
                'baseIdentity': expected_base, 'normal': normal, 'probe': probe, 'probeSourceSha256': sha(HERE / 'render_probe.c'),
                'originalExecutableSections': sections, 'readOnlyBaseAddresses': addresses,
+               'linkedBaseLayout': linked['link']['layout'],
                'hardware': 'NOT_RUN', 'deviceOpened': False, 'guardDisabled': False,
                'limits': 'Probe is a different package. Original units retain their instruction bytes, but the wrapper adds timer/call overhead. Base frame peak is since boot, not a reset window; guard share is whole-ISR, not free FRACT headroom.'}
     (out / 'probe-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')

@@ -42,6 +42,10 @@ The builder checks the named tree and normal bytes before deriving fresh counter
 addresses from that base's symbols. It still requires unchanged original code
 sections and both stock scans; new output gets its own receipt. This prepares
 another named build, without transferring any earlier hardware result to it.
+The addresses are checked against the original-stock linker's actual layout,
+including collection tables and declared BSS alignment. Base counters may have
+two-byte alignment; the wrapper declares that alignment for its volatile longword
+reads ([MCF54455 Reference Manual, table 3-12](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
 
 ## Prepared project cases
 
