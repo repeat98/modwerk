@@ -123,8 +123,8 @@ export function categorySlug(category: string) { return category.toLowerCase() }
 // when it is read, instead of becoming unreadable, as REMOVED_MODULE_IDS does for the Octatrack. A module that leaves the
 // library adds its id here in the same change.
 export const RETIRED_DIGI_MODULE_IDS: Readonly<Partial<Record<DigiMachine, readonly string[]>>> = {
-  // #1650 (16 November 2026), #1944 (21 November 2026), #2008 (Pad Pressure Fix, into the base)
-  'analog-rytm-mkii': ['pipo-loop', 'improved-performance', 'chromatic-aftertouch-fix'],
+  // #1650 (16 November 2026), #1944 (21 November 2026), #2008 (Pad Pressure Fix, into the base), QPER Live Rec (into Improved Modulation, 25 November 2026)
+  'analog-rytm-mkii': ['pipo-loop', 'improved-performance', 'chromatic-aftertouch-fix', 'qperf'],
 }
 export function withoutRetiredDigiModules(device: DigiMachine, ids: readonly string[]): string[] {
   const retired = RETIRED_DIGI_MODULE_IDS[device] ?? []

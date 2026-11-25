@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.4.0-experimental",
+  "moduleVersion": "0.5.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-25T15:30:00Z",
-  "imageSha256": "83741629174efc8a749aeea29e896ade9f4eea1b122575840f2daa31b18898f1",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Mod Assign 0.4.0-experimental, materialised against stock OS 1.74, --version QM46",
+  "capturedAt": "2026-11-26T00:30:00Z",
+  "imageSha256": "c15f9d68ca66fb52d43d53f80f8e0bd204cab0532af429fcbca4e6afe976cf9b",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.5.0-experimental, materialised against stock OS 1.74, --version QF04",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QM46 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
+  "conditions": "SETUP: boot QF04 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first seven captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10700M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held from 9403M with SD pressed (links performance 2) and knob A turned five times; PERF; RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 at 9953M and 0 at 10003M as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held from 10603M with YES or NO at 10633M. All nine are byte-identical to the captures of the same plans on the two earlier packages linked side by side (QB01) and to the files they replace.",
   "captures": [
     {
       "path": "media/fix-filter.png",
@@ -56,6 +56,18 @@
       "frame": "end.png",
       "plan": "--press SCNE@8020000000:12000000 --press BD@8120000000:12000000 --press SCNE@8220000000:12000000 --press SCNE@8403000000:1200000000 --nudge 1:1@8523000000x6/30000000",
       "sha256": "8b130b2f3986d125790afe6f9d031da64d0b7ff5d163ed7d550a1f8c0af2dc56"
+    },
+    {
+      "path": "media/apply-quick-perf-rec.png",
+      "frame": "end.png",
+      "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press YES@10633M:12M",
+      "sha256": "ba47455ee9c438eb5c608071791b6649683a0df9bb639f9246e898557b5bc71c"
+    },
+    {
+      "path": "media/clear-quick-perf-rec.png",
+      "frame": "end.png",
+      "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:150M --press SD@9423M:12M --turn 0:4@9463Mx5/8M --press PERF@9603M:12M --press RECORD@9703M:80M --press PLAY@9733M:12M --raw 9150@9953M --raw 9100@10003M --press RECORD@10303M:12M --press RECORD@10603M:80M --press NO@10633M:12M",
+      "sha256": "123985db4933e426efdace5853be57b6778272b6f1b3e8489ab46536d4c6d687"
     }
   ]
 }
