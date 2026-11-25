@@ -1,0 +1,55 @@
+{
+  "module": "mackity",
+  "version": "0.1.0-experimental",
+  "base": "development twin 8fd6d456 of base 0.8.1 (eb6679620d0c9ed7), the owner's MKII, OS 1.40C",
+  "scene": "Project on the owner's development unit, bank C, Part 1 reloaded in RAM to its saved copy; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7) at the project tempo; transport played by the tool",
+  "seconds": 8,
+  "measuredAt": "2026-11-25T09:20:07.215Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "rest": 0,
+  "first": 0.9,
+  "each": 0.9,
+  "points": [
+    87.1,
+    85.3,
+    84.9,
+    88,
+    84.2
+  ],
+  "adds": [
+    -1.8,
+    -2.2,
+    0.9,
+    -2.9
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 36.4,
+      "frame": 27.7,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 83,
+      "frame": 32.3,
+      "dropped": 0,
+      "stalls": 0
+    }
+  ],
+  "notes": []
+}
