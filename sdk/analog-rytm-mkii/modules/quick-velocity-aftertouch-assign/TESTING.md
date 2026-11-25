@@ -222,4 +222,21 @@ After an independent code review (a trig held after the first knob makes its p-l
 | --- | --- |
 | Scene 1 engaged, SCENE + A, then trig 1 held + B | the scene's boxes go; B shows 105 as trig 1's lock; after the trig, the scene's boxes are back and SWT is not scene-locked |
 
-Not tested: the unit; 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.
+## Hardware (0.4.0, QS02; run by the test rig, not by a person)
+
+On the author's Analog Rytm MKII, OS 1.74: QS02 (above) booted from RAM over the development link (image CRC `c9250fbe`; the flash kept the author's own build), a scratch project open, 24 Nov 2026. Keys and knobs came from the rig's link, screens from the unit; nobody touched the unit. The rig does not reset the unit between cases, so each case started from the scene state the one before left: where that changed what a case meant, the row says so.
+
+| Check | Seen on the unit |
+| --- | --- |
+| FX track, scene engaged, SCENE + A | THR drawn as a lock box at 108; after the release THR reads 102 as before |
+| SCENE + A, then trig 1 held + B | TUN boxed at -2.95 and SWT at 96 (an earlier lock); with the trig held, no boxes and TUN at -3.00 (the trig's view); after the trig, both boxes back |
+| SCENE + B, then SCENE + press B | SWT boxed at 108, then removed (plain 96); TUN's box stays |
+| SCENE + B, let go, BD tapped, SCENE + B | the box comes back: the release did not toggle scene mode |
+| Scene mode by a tap, BD, SCENE + B | SWT boxed at 102 |
+| SCENE + B with no scene active (the case before had disengaged it) | popup `NO ACTIVE SCENE`, SWT unchanged afterwards |
+| FUNC + SCENE | PATTERN menu |
+| SCENE held 1.5 s and let go (the link's hold) | the page: the link's held keys never repeat, so this is a tap to stock and to the module; scene edit by a hold was not seen on the unit |
+| The 6 earlier qma- rig cases against their unit references | same boxes, values and popups; the only differences are the scratch kit's own sound (the filter envelope's shape, SMP OFF against 52), plus the next row |
+| LFO held on the LFO page, WAV turned, scene mode on (left on by the cases before) | `NOT AN LFO DEST`: the module took the LFO key. After a SCENE tap (scene mode off) the same gesture moved WAV, as on stock. This is 0.2.0's LFO-page check (it needs the pages on top, and scene mode's view sits above them), not new in 0.4.0 |
+
+Not tested: scene edit opened by a held SCENE on the unit (needs a person); 48 locks full; a scene pad or QPER holding the locker with SCENE in either order; a CHRO pad held through the first knob event; LIVE RECORDING; a kit save and reload of the new locks; the sound.
