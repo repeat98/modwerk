@@ -15,8 +15,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 | You want to | Go to | Start with |
 | --- | --- | --- |
 | Port an octabam module | [Octatrack](#octatrack) | the module's folder in octabam at an exact commit |
-| Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module), then `npm run module:dev -- my-filter` to hear it ([the fast loop](#the-fast-loop)) |
-| Port an Airwindows plugin to the Octatrack | [Octatrack](#octatrack) | `npm run module:new -- my-port --kind dsp --port airwindows --upstream <clone>/plugins/LinuxVST/src/<Plugin> --author <github-login>` ([the port template](../sdk/templates/dsp-port/README.md)) |
+| Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module), then `npm run module:dev -- my-filter` to hear it ([the fast loop](#the-fast-loop)); a DSP gate imports `sdk/octatrack/tools/dsp_gate.py`; an Airwindows port adds `--port airwindows --upstream <its folder>` ([how](../sdk/templates/dsp-port/README.md)) |
 | Bring an elekloader mod to Digitakt or Digitone | [Digitakt and Digitone](#digitakt-and-digitone) | the author's released `.elemod` files |
 | Write a new Digitakt or Digitone mod | [Digitakt and Digitone](#digitakt-and-digitone) | `npm run module:new -- my-mod --machine digitakt --author <github-login>` |
 | Write or port an Analog Rytm MKII mod | [the Rytm guide](../sdk/machines/analog-rytm-mkii/README.md) | `npm run module:new -- my-mod --machine analog-rytm-mkii --author <github-login>` |
@@ -86,7 +85,7 @@ a Modwerk base with the USB bridge ([driving the Octatrack](OCTATRACK_DRIVING.md
 no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md).
 A crash, DSP stall, frozen UI or skipped track in the unit's log fails the
 trial (exit 1) and rolls it back even with `--accept`;
-`npm run device -- do diaglog` shows the log, each incident with its boot and
+`npm run device -- do diaglog` shows it, each incident with its boot and
 seconds since.
 
 **Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
@@ -104,11 +103,6 @@ A test that needs no firmware, unit or emulator goes in the module's folder as
 `module:doctor -- <id>` runs them (a draft's as a release line), and
 `npm run sdk:check` runs every listed module's on each pull request. Name an
 emulator or hardware script otherwise, such as `emulator_test.py`.
-
-A DSP effect's `verify.py` and `perf.py` import the shared `dsp_host` harness,
-`sdk/octatrack/tools/dsp_gate.py`, instead of copying another module's gate
-([how](../sdk/templates/dsp-port/README.md)).
-
 Run this after every edit: about 15 seconds, no firmware, no module code run.
 
 ```sh
@@ -260,9 +254,7 @@ it needs no `--keeps-ok`. It also reads the self-test with the package
 installed and checks that the inventory at the end equals the one before; it
 has no crash test. Its entry lists what it leaves for the developer at the
 unit. It is the agent's own test before a developer gets a build
-(`/modwerk-test-on-unit`); a release still needs `device:qualify`. Added on
-12 November 2026 and not yet run on a unit: record what it does the first
-time.
+(`/modwerk-test-on-unit`); a release still needs `device:qualify`.
 
 **A private USB package of a draft.** `npm run module:dev -- <id> --build-only`
 builds it ([the fast loop](#the-fast-loop)); it refuses a machine module, whose
