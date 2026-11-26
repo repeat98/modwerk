@@ -1,0 +1,1 @@
+Development: Octatrack module-pool readings taken on a later development twin go in their own dated record, which the pool test reads beside the 21 November one, so a release of a measured module adds its own reading instead of dropping the test below its ten measured packages.

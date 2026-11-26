@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "instrument": "Octatrack MKII",
+  "developmentBase": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+  "loaderLayout": {
+    "moduleBytes": 736,
+    "siteBytes": 74,
+    "claimBytes": 12,
+    "entryBytes": 8,
+    "alignment": 16
+  },
+  "method": "Two rolled-back RAM trials per package on the owner’s MKII, on development twin 46c30886 of base 0.8.2 (build_core.py with the beta flags and --dev, no controller rows, built from main 48f4a9b9c), RAM-booted from the flashed base. Each trial is one npm run device:price -- --memory run: the module is the only one installed, and the pool is read before it goes in and again while it is installed and used nowhere. For Mini Verb and Euclid the first trial is their instance-curve run (--curve). The 2026-11-21 record’s twin 8850f539 could not be rebuilt byte for byte from its source (same symbols, another configuration hash), so these readings name their own twin. The loader layout is unchanged from that record.",
+  "scope": "ColdFire module-pool bytes for one installed module, and the resident DSP program words the installed module adds at rest. DSP memory, sample RAM and shared platform allocations use separate regions.",
+  "measurements": []
+}
