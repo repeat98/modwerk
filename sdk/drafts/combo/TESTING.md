@@ -73,6 +73,8 @@ The developer's Octatrack over USB, its flashed base `eb667962` with 12 modules 
 
 **Stage 2, the developer (as reported):** listened for about 15 minutes in a 30-minute trial with their guitar sample on T1: "suena bien para un primer intento". No dropouts were reported. The trial was then ended at the developer's request and rolled back cleanly; nothing was kept. Not reported on: each knob, clicks, the cabinets one by one, locks, LFOs, scenes, a power cycle.
 
+**A missing module (as reported):** the trial ended while bank A track 1's FX1 still named COMBO. After the developer's power cycle back to the flashed base `eb667962`, the unit reported missing modules for that project; nothing failed, and picking FILTER on T1's FX1 clears it. What the track played meanwhile (SEND or NONE) was not checked.
+
 ## Stock flows
 
 Not tested.
