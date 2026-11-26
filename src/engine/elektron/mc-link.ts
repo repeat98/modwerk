@@ -228,6 +228,20 @@ export async function mcModules(call: McCall): Promise<McModules | null> {
   }
 }
 
+export type McStatus = { identity: McIdentity; modules: McModules | null; load: McLoad | null }
+/** What the machine page's Status shows, over one line: the identity, then the live modules and the load, each null
+ * from a base without them (it refuses the command as a bad request). Null when no unit answers the identity. */
+export async function readMcStatus(access: MidiAccessLike, timeoutMs = 2000): Promise<McStatus | null> {
+  return withMc(access, timeoutMs, async call => {
+    const ident = await call(IDENT)
+    if (!ident) return null
+    const optional = async <T>(read: () => Promise<T | null>) => {
+      try { return await read() } catch (error) { if (error instanceof McRefused && error.status === BAD_REQUEST) return null; throw error }
+    }
+    return { identity: parseMcIdent(ident), modules: await optional(() => mcModules(call)), load: await optional(async () => { const p = await call(LOAD); return p && parseMcLoad(p) }) }
+  })
+}
+
 /** The upload controller's session with the connected unit: identity first, so BEGIN names the running base. */
 export async function mcUploadSession(call: McCall, timeoutMs = 20000): Promise<UploadSession | null> {
   const payload = await call(IDENT)
