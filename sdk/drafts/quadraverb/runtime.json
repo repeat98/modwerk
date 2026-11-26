@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "contribute": [
+    {"to": "ot_dsp_effects", "order": 50, "data": "qv_effect"}
+  ]
+}

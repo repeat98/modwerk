@@ -137,7 +137,7 @@ class Plan:
       narrow     the reads that take their word through the stream
       in_words, out_words   halfwords a frame each way"""
 
-    def __init__(self, steps, row=None, fade=None, lat=LAT, budget=None, force=()):
+    def __init__(self, steps, row=None, fade=None, lat=LAT, budget=None, force=(), reserve=0):
         self.steps, self.row, self.fade, self.lat = steps, row, fade, lat
         self.kind = row["kind"] if row else "static"
         self.moving = None
@@ -149,7 +149,7 @@ class Plan:
         self.access, self.length, self.reach = qvc.analyse(steps, self.moving)
         self.accesses = sum(1 for i in qvc.FRAME if i in self.access) + sum(1 for w, l in self.length.items() if l is not None)
         tables = self.accesses + (FADE_WORDS if self.kind == "pitch" else 0)
-        self.budget = (qvc.FX2_WORDS - tables) if budget is None else budget
+        self.budget = (qvc.FX2_WORDS - tables - reserve) if budget is None else budget   # reserve: a unit build's dry scratch
         self.force = set(force)       # lines to stream as far as they can, fit or not (a test)
         self._drift = {}
 
@@ -325,9 +325,10 @@ class Plan:
 
 # ---- the DSP's copy code ---------------------------------------------------------------------------------------
 
-def r7_free(info, need):
-    """need r7 words beside the state, the coefficients (and the word the closing fetch reads) and the LFO's words."""
-    used = set(range(0, qvc.COEF_AT + len(info["coef"]) + 1))
+def r7_free(info, need, taken=()):
+    """need r7 words beside the state, the coefficients (and the word the closing fetch reads), the LFO's words and
+    `taken` (an area build's unit and area words)."""
+    used = set(range(0, qvc.COEF_AT + len(info["coef"]) + 1)) | set(taken)
     if info.get("mod"):
         used |= set(range(qvc.LFO_AT, qvc.LFO_AT + len(qvc.lfo_words(info["mod"]["lfo"]))))
     free = [k for k in range(qvc.R7_END) if k not in used]
@@ -387,7 +388,7 @@ def copy_out(modes):
     return out
 
 
-def stream_code(plan, info, P="qv"):
+def stream_code(plan, info, P="qv", area=None):
     """The stream's DSP code for one program (qvc.assemble_text's hooks): init words, the head of proc (which call
     of the frame this is; at its first, the in-block into the windows) and the tail (at its last, the heads and the
     published addresses into the out-block). r7 words: FLAG (an a=0 call ran this frame), LAST (this call ends the
@@ -395,18 +396,27 @@ def stream_code(plan, info, P="qv"):
     address, written by every tick) and the last LAT published values (FIFO, oldest first)."""
     mw = [x for x in plan.windows if x.kind == "moving"]
     L = plan.lat
-    words = r7_free(info, 4 + len(mw) * (L + 1))
+    # An area build (qvc ASTATE): the blocks come from the slot's record, named by the base; the out-block starts with
+    # the program's tag and K, its frame number since it started (modulo $8000); the copy in waits Q = LAT frames.
+    if area:
+        assert not mw, "an area build streams static windows only so far"
+    taken = (*qvc.USTATE.values(), *qvc.ASTATE.values()) if area else ()
+    words = r7_free(info, 4 + len(mw) * (L + 1) + (2 if area else 0), taken)
     FLAG, LAST, MBIN, MBOUT = words[:4]
+    K, Q = words[-2:] if area else (None, None)
     Uw = [words[4 + j * (L + 1)] for j in range(len(mw))]
     Fw = [[words[4 + j * (L + 1) + 1 + i] for i in range(L)] for j in range(len(mw))]
     S, first4 = plan.size, info["first"][4]
     x7 = lambda k: f"x:(r7+${k:02x})"
     init = ["        clr     b", f"        move    b,{x7(FLAG)}", f"        move    b,{x7(LAST)}"]
+    if area:
+        init += [f"        move    b,{x7(k)}" for k in (MBIN, MBOUT, K, Q)]
     for j, x in enumerate(mw):
         init += [f"        move    {imm(x.U0)},x0", f"        move    x0,{x7(Uw[j])}"]
         init += [f"        move    x0,{x7(f)}" for f in Fw[j]]
     head = ["; The stream (qvs.py): an a=0 call starts a split frame, an a=1 call ends every frame; the frame's first",
             "; call copies the in-block into the windows.",
+            *([f"        move    x:(r7+${qvc.ASTATE['qf']:02x}),a"] if area else []),
             "        tst     a",
             "        move    #>$000001,x0",
             f"        bne     {P}KFLA",
@@ -421,8 +431,33 @@ def stream_code(plan, info, P="qv"):
             f"        move    a,{x7(FLAG)}",
             "        tst     b",
             f"        bne     {P}KCDN",
-            f"{P}KCIN:",
-            f"        move    {x7(MBIN)},r3",
+            f"{P}KCIN:"]
+    if area:
+        # this frame's bank is the parameter page's, r6 & $ffe000; the slot's record at $7fb0 + 4 ((r7 >> 8) & 15)
+        head += ["        move    r7,b",
+                 "        lsr     #6,b",
+                 "        and     #>$00003c,b",
+                 "        add     #>$007fb0,b",
+                 "        move    b1,r3",
+                 f"        move    x:(r7+${qvc.USTATE['r6']:02x}),b",
+                 "        and     #>$ffe000,b",
+                 "        move    b1,x0",
+                 "        move    x:(r3+$2),b",
+                 "        tst     b",
+                 f"        beq     {P}KNOU",
+                 "        add     x0,b",
+                 f"{P}KNOU:",
+                 f"        move    b1,{x7(MBOUT)}",
+                 "        move    x:(r3+$1),b",
+                 "        tst     b",
+                 f"        beq     {P}KCDN",
+                 "        add     x0,b",
+                 f"        move    b1,{x7(MBIN)}",
+                 f"        move    {x7(Q)},b",
+                 f"        move    {imm(L)},x0",
+                 "        cmp     x0,b",
+                 f"        blt     {P}KCDN"]
+    head += [f"        move    {x7(MBIN)},r3",
             "        move    #>$000080,y1",
             f"        move    {imm(S - 1)},m5"]
     statics = [x for x in plan.windows if x.kind == "static"]
@@ -455,8 +490,15 @@ def stream_code(plan, info, P="qv"):
                 modes.append(("+", None))
     tail = []
     if lines:
-        tail += [f"{P}KOST:", f"        move    {x7(LAST)},b", "        tst     b", f"        beq     {P}KOUT",
-                 f"        move    {x7(MBOUT)},r3", "        move    #>$008000,x0",
+        tail += [f"{P}KOST:", f"        move    {x7(LAST)},b", "        tst     b", f"        beq     {P}KOUT"]
+        if area:     # no block while the base has not named it; else the tag and K first
+            tail += [f"        move    {x7(MBOUT)},b", "        tst     b", f"        beq     {P}KOUT",
+                     f"        move    {x7(MBOUT)},r3", f"        move    {imm(area['tag'])},x0", "        move    x0,x:(r3)+",
+                     f"        move    {x7(K)},x0", "        move    x0,x:(r3)+",
+                     "        move    #>$008000,x0"]
+        else:
+            tail += [f"        move    {x7(MBOUT)},r3", "        move    #>$008000,x0"]
+        tail += [
                  f"        move    {imm(plan.head[lines[0]] + 1 - first4)},n5", "        move    r4,r5",
                  "        lua     (r5)+n5,r5"]
         # n5 holds each skip from just after the use before it, far ahead of its own use
@@ -472,21 +514,29 @@ def stream_code(plan, info, P="qv"):
         tail += body
         for j, x in enumerate(mw):
             tail += [f"        move    {x7(Fw[j][L - 1])},x0", "        move    x0,x:(r3)+"]
+        if area:     # K counts the frames sent, modulo $8000; Q up to LAT
+            tail += [f"        move    {x7(K)},b", "        add     #1,b", "        and     #>$007fff,b",
+                     f"        move    b1,{x7(K)}", f"        move    {x7(Q)},b", f"        move    {imm(L)},x0",
+                     "        cmp     x0,b", f"        bge     {P}KQOK", "        add     #1,b", f"        move    b1,{x7(Q)}",
+                     f"{P}KQOK:"]
         tail += [f"{P}KOUT:"]
-    return dict(init=init, head=head, tail=tail, words=dict(FLAG=FLAG, LAST=LAST, MBIN=MBIN, MBOUT=MBOUT),
+    return dict(init=init, head=head, tail=tail, words=dict(FLAG=FLAG, LAST=LAST, MBIN=MBIN, MBOUT=MBOUT, K=K, Q=Q),
                 publish={x.rep: Uw[j] for j, x in enumerate(mw)})
 
 
-def generate(plan, prefix="qv", schedule=True):
-    """The program's code with its stream: (asm text, info), info['stream'] the stream's pieces."""
+def generate(plan, prefix="qv", schedule=True, area=None):
+    """The program's code with its stream: (asm text, info), info['stream'] the stream's pieces. area: dict(sig, tag),
+    the release package's area build (qvc.ASTATE): a unit build, its stream named by the slot's record."""
     mod = None
     if plan.row:
         lfo = qvc.Lfo(plan.row)
         lfo.fade = plan.fade
         mod = dict(lfo=lfo, moving=plan.moving, off=plan.off, timing=plan.timing, fade=plan.fade)
-    _, info = qvc.generate(plan.steps, plan.addr, plan.size, prefix, schedule, mod)
+    _, info = qvc.generate(plan.steps, plan.addr, plan.size, prefix, schedule, mod, unit=bool(area))
+    if area:
+        info["area"] = area
     if plan.windows:
-        st = stream_code(plan, info, prefix)
+        st = stream_code(plan, info, prefix, area)
         info["stream"] = st
         if mod:
             mod["publish"] = st["publish"]
@@ -636,15 +686,15 @@ def reference(plan, left, right, narrow=True, every=False):
     return (mv or m).run(left, right)
 
 
-def make_plan(programs, p, lfo_dir=None, lat=LAT, force=()):
+def make_plan(programs, p, lfo_dir=None, lat=LAT, force=(), reserve=0):
     lfo_dir = pathlib.Path(lfo_dir or pathlib.Path.home() / ".cache/modwerk-local/quadraverb/engine/lfo")
     rows = {r["p"]: r for r in json.load(open(programs))}
     row, fade = qvc.load_lfo(lfo_dir / "lfo.json", p)
     if rows[p]["static"]:
-        return Plan(rows[p]["steps"], lat=lat, force=force).build()
+        return Plan(rows[p]["steps"], lat=lat, force=force, reserve=reserve).build()
     if row is None:
         return None
-    return Plan(row["steps"], row, fade, lat=lat, force=force).build()
+    return Plan(row["steps"], row, fade, lat=lat, force=force, reserve=reserve).build()
 
 
 def main(argv):

@@ -1247,6 +1247,11 @@ def forward_branches(lines):
 # the call's r0, n7 and r6 (the dispatcher's block, count and parameter page, given back), the mix's two coefficients and
 # the dry scratch's address (32 Y words after the tables).
 USTATE = dict(clr=0x79, clrp=0x7A, r0=0x7B, n7=0x7C, r6=0x7D, cw=0x7E, cd=0x7F, dry=0x80)
+# An area build (the release package: info["area"], qvs.generate(area=...)): a unit build whose code the base writes into
+# one of the slot's program areas, with the stream from the slot's record. Its own words: the dispatcher's frame flag
+# (a1 at entry), whether the call before ended a frame, and whether the program still waits for a frame's first call
+# after its clear. The program starts at a frame's start, so the stream's frames are whole from the first.
+ASTATE = dict(qf=0x81, ended=0x82, wait=0x83)
 UNIT_SIGNATURE = 0x515702   # bump with any change to the unit build's state layout
 CLEAR_WORDS = 1024          # ring words a unit build clears a call (Midiverb clears 512)
 MIX_SLOT = 5                # MIX on knob F, as Midiverb's
@@ -1277,21 +1282,25 @@ def assemble_text(info, P):
              f"; State, r7+: " + "  ".join(f"{v:02x} {k}" for k, v in S.items()) +
              f"  {COEF_AT:02x}.. the coefficients.",
              "; Y: the ring at the buffer's base, the distance table after it."]
+    area = info.get("area")
+    A = ASTATE
+    sig = area["sig"] if area else UNIT_SIGNATURE if unit else SIGNATURE
     if unit:
-        assert not info.get("stream"), "a unit build carries no stream"
+        assert area or not info.get("stream"), "a unit build carries no stream"
         assert COEF_AT + len(coef) + 1 <= LFO_AT and LFO_AT + 8 <= U["clr"] and max(U.values()) < R7_END
         assert size + L + fade + DRY_WORDS <= FX2_WORDS, "the ring, its tables and the dry scratch fit the FX2 buffer"
         lines += ["; A unit build: " + "  ".join(f"{v:02x} {k}" for k, v in U.items()) +
                   f". The dry scratch after the tables; the ring cleared {CLEAR_WORDS} words a call, the wet silent",
                   "; until it is clear. MIX on knob F. init and a proc that meets another build's state both set up",
-                  f"; through {P}SETUP.", "",
-                  "init:",
-                  "        move    #>$ffffff,m4",
-                  "        move    x:>$213,r4",
-                  "        move    x:(r4),a",
-                  f"        move    a,x:(r7+${S['base']:02x})",
-                  f"        bsr     {P}SETUP",
-                  "        rts"]
+                  f"; through {P}SETUP.", ""]
+        if not area:
+            lines += ["init:",
+                      "        move    #>$ffffff,m4",
+                      "        move    x:>$213,r4",
+                      "        move    x:(r4),a",
+                      f"        move    a,x:(r7+${S['base']:02x})",
+                      f"        bsr     {P}SETUP",
+                      "        rts"]
         setup = [f"{P}SETUP:",
                  "        move    #>$ffffff,m4",
                  f"        move    x:(r7+${S['base']:02x}),a",
@@ -1312,24 +1321,37 @@ def assemble_text(info, P):
                   f"{P}ZRING:",
                   "        nop"]
         setup = lines
-    for k, d in enumerate(dist):     # r4 now points at the table, just after the ring
-        setup += [f"        move    #>${d:06x},x0", "        move    x0,y:(r4)+"]
+    if area:     # an area carries its tables as P words after its code ({P}DATA), copied at its set-up
+        setup += [f"        move    #>{P}DATA,r1", f"        do      #{L},{P}PDST", "        move    p:(r1)+,x0",
+                  "        move    x0,y:(r4)+", f"{P}PDST:"]
+        info["data"] = list(dist) + list(coef)
+    else:
+        for k, d in enumerate(dist):     # r4 now points at the table, just after the ring
+            setup += [f"        move    #>${d:06x},x0", "        move    x0,y:(r4)+"]
     if fade:
         # The pitch crossfade after the distances (from the ROM, so only ever in a generated program)
         assert len(mod["fade"]) == 256
         for v in mod["fade"]:
             setup += [f"        move    {imm(v << 15)},x0", "        move    x0,y:(r4)+"]
     setup += [f"        lua     (r7+${COEF_AT:02x}),r4"]
-    for v in coef:
-        setup += [f"        move    #>${v:06x},x0", "        move    x0,x:(r4)+"]
+    if area:
+        setup += [f"        do      #{len(coef)},{P}PCOF", "        move    p:(r1)+,x0", "        move    x0,x:(r4)+",
+                  f"{P}PCOF:"]
+    else:
+        for v in coef:
+            setup += [f"        move    #>${v:06x},x0", "        move    x0,x:(r4)+"]
     for c in CHAINS:
         setup += [f"        move    #>${info['first'][c]:06x},b", "        add     a,b",
                   f"        move    b,x:(r7+${S['r%d' % c]:02x})",
                   f"        move    #>${info['closure'][c]:06x},x0", f"        move    x0,x:(r7+${S['n%d' % c]:02x})"]
     setup += ["        clr     b",
               *[f"        move    b,x:(r7+${S[k]:02x})" for k in ("a2", "a1", "a0", "b", "x1")],
-              f"        move    #>${UNIT_SIGNATURE if unit else SIGNATURE:06x},x0",
+              f"        move    #>${sig:06x},x0",
               f"        move    x0,x:(r7+${S['sig']:02x})"]
+    if area:     # b is 0 here: the stream's words, and the program waits for a frame's first call
+        setup += (info.get("stream") or {}).get("init", [])
+        setup += ["        move    #>$000001,x0", f"        move    x0,x:(r7+${A['wait']:02x})",
+                  f"        move    b,x:(r7+${A['ended']:02x})"]
     if mod:
         words = lfo_words(mod["lfo"])
         assert COEF_AT + len(coef) + 1 <= LFO_AT and LFO_AT + len(words) <= R7_END, "the r7 block is full"
@@ -1353,10 +1375,11 @@ def assemble_text(info, P):
                   f"        move    n7,x:(r7+${U['n7']:02x})",
                   f"        move    r0,x:(r7+${U['r0']:02x})",
                   "        move    #>$ffffff,m4",
+                  *([f"        move    a1,x:(r7+${A['qf']:02x})"] if area else []),
                   "; State another build left (stock runs init only when a slot's effect id changes): set up afresh,",
                   "; keeping the slot's buffer base.",
                   f"        move    x:(r7+${S['sig']:02x}),a",
-                  f"        move    #>${UNIT_SIGNATURE:06x},x0",
+                  f"        move    #>${sig:06x},x0",
                   "        cmp     x0,a",
                   f"        beq     {P}SIGK",
                   f"        bsr     {P}SETUP",
@@ -1378,6 +1401,22 @@ def assemble_text(info, P):
                   f"        move    x:(r7+${U['clr']:02x}),a",
                   "        tst     a",
                   f"        bne     {P}WIPE",
+                  *([f"; An area's program starts at a frame's first call after its clear: until then the dry.",
+                     f"        move    x:(r7+${A['wait']:02x}),a",
+                     "        tst     a",
+                     f"        beq     {P}WOK",
+                     f"        move    x:(r7+${A['ended']:02x}),a",
+                     "        tst     a",
+                     f"        beq     {P}WDST",
+                     *(["; ... and once the base names both blocks in the slot's record: take() then sees every frame.",
+                        "        move    r7,b", "        lsr     #6,b", "        and     #>$00003c,b", "        add     #>$007fb0,b",
+                        "        move    b1,r1", "        nop", "        move    x:(r1+$1),b", "        tst     b",
+                        f"        beq     {P}WDST", "        move    x:(r1+$2),b", "        tst     b", f"        beq     {P}WDST"]
+                       if info.get("stream") else []),
+                     "        clr     a",
+                     f"        move    a,x:(r7+${A['wait']:02x})",
+                     f"{P}WOK:",
+                     *(info.get("stream") or {}).get("head", [])] if area else []),
                   "; (L + R) / 2 into every left slot, while a and b are free; the dry L and R into the scratch.",
                   f"        move    x:(r7+${U['dry']:02x}),r4",
                   "        move    r0,r1",
@@ -1470,6 +1509,8 @@ def assemble_text(info, P):
                  "        move    a,y:(r4)+",
                  f"{P}WIPL:",
                  f"        move    r4,x:(r7+${U['clrp']:02x})",
+                 *([f"{P}WDST:", f"        move    x:(r7+${A['qf']:02x}),x0",
+                    f"        move    x0,x:(r7+${A['ended']:02x})"] if area else []),
                  f"        move    x:(r7+${U['cd']:02x}),y1",
                  f"        do      n7,>{P}WDRY",
                  "        move    x:(r0),x0",
@@ -1488,7 +1529,7 @@ def assemble_text(info, P):
     body = [f"{P}BODY:"] + [f"        {t}" for t in info["body"]]
     if not mod:
         lines += restore + [f"        do      n7,{P}SMPE"] + body + [f"{P}SMPE:"] + save + tail
-        return "\n".join(lines)
+        return "\n".join(lines + ([f"{P}DATA:"] if area else []))
     M = MSTATE
     INT, FRAC = mod["timing"][0], mod["timing"][1]
     nseg = 16 // INT + 2          # segments a call of up to 16 samples can need: ticks come INT or more apart
@@ -1527,7 +1568,7 @@ def assemble_text(info, P):
             *restore,
             f"        do      x0,{P}SMPE"]
     lines += forward_branches(seg) + body + [f"{P}SMPE:"] + save + [f"{P}SKIP:", "        nop", f"{P}OUTE:"] + tail
-    return "\n".join(lines)
+    return "\n".join(lines + ([f"{P}DATA:"] if area else []))
 
 
 def price(body, reps=3):

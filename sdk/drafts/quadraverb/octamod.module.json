@@ -76,6 +76,7 @@
     "limitations": [
       "Needs the Modwerk base's program areas and stream channel (loader ABI 9, the package requires `programs`), so it is USB-only. They are in the base 0.8.3 draft, on development twins only so far.",
       "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer for its short delay lines, and keeps its long ones in the ColdFire's memory, which the base moves to and from the DSP every 16 samples.",
+      "One instance a DSP core at most: its two program areas take up to 2,196 of the about 4,700 words a core has for effect code, beside a Part's stock effects. The ColdFire's ring pool holds one plate, or two chambers, or a chamber and a room; a slot without room stays dry.",
       "Each pick writes the program's code into one of two areas the base holds for the slot, so a pick is silent for a moment while the code and the new reverb's memory start; the other area keeps the program before.",
       "Unlike the original: 44.1 kHz instead of about 42 kHz (reverb times, delays and sweeps about 5 % shorter and faster), a mono input from the average of left and right, 24-bit words in the DSP and 16 bits where a word crosses to the ColdFire. Not compared with a real Quadraverb.",
       "The gated reverbs (3, 23-27) are not in this release: their gate needs a signal detector the original has in hardware.",
@@ -87,12 +88,12 @@
     "recorded": "2026-11-26",
     "storage": {
       "label": "DSP program / state",
-      "display": "two areas of about 600-850 words a slot / 132-word state",
+      "display": "two areas of 849-1,098 words a slot / 132-word state",
       "value": null,
       "unit": "see display",
       "method": "static",
-      "conditions": "Model, not built yet: two program areas a slot on its core (program_words), the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and 4-160 KB of ColdFire memory an instance for the long delay lines. See ENGINE.md.",
-      "source": "ENGINE.md"
+      "conditions": "Two program areas a slot on its core (program_words 1,098), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 77,960 bytes of code and data plus a 136 KiB ring pool in bss. See TESTING.md.",
+      "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP cycles",
@@ -115,7 +116,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not built yet as 0.1.0-experimental. In dsp_host the compiled engine runs 89 of the 90 factory programs bit-exact against the integer model with the stream modelled, all 22 of this release among them; the development builds of programs 5, 40 and 56 were priced on an MKII. Not heard on a unit.",
+    "summary": "Built on the developer's computer (27 Nov 2026), not run on a unit or heard. In dsp_host the release's shell and areas run all 22 programs bit-exact against the integer model with the stream as the ColdFire half sends it; the ColdFire half matches its model on the host. The development builds of programs 5, 40 and 56 were priced on an MKII.",
     "hardwareStatus": "untested",
     "evidenceRevision": "cab0eb2039203a17f43b8ec3c599a212f7b84f59",
     "gates": [

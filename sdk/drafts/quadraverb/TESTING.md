@@ -5,11 +5,32 @@ runs stay apart from hardware ones.
 
 ## 0.1.0-experimental
 
-Not built and not tested yet (26 November 2026). The release package (PROG over the 22 reverbs in `manifest.py`
-REVERBS, MIX, the program areas and the stream channel) has no generator yet: what exists is the engine for one
-program at a time, proved in `dsp_host` ([Bit-exact in dsp_host](#bit-exact-in-dsp_host-26-november-2026)), and the
-development builds below, which run one program each without the base's program areas or stream. Nothing of 0.1.0 has
-run on a unit, in the emulator, or been heard.
+Built on the developer's computer and held to the models; not run on a unit or in an emulator, not heard
+(27 November 2026). How it works: [ENGINE.md, The release package](ENGINE.md#the-release-package-27-november-2026).
+
+Build, from the owner's ROM (everything written goes to `gen/` or `~/.cache`, outside Git). The package needs the
+`ot_dsp_effects` table and the `programs` feature of the base side branch `base/octatrack-program-areas`, so its last
+two steps run in a checkout of that branch with this folder copied in, untracked:
+
+```sh
+E=~/.cache/modwerk-local/quadraverb/engine                    # programs.json and lfo-all/ (FIRMWARE.md, ENGINE.md)
+python3 -B engine/qvarea.py areas $E/programs.json $E/lfo-all     # gen/areas.json: the 22 areas
+python3 -B engine/qvcf.py gen $E/programs.json $E/lfo-all --areas gen/areas.json   # gen/qv_tables.h
+python3 -B engine/qvcf.py asm                                     # gen/qv_runtime.s
+npm run module:dev -- quadraverb --build-only --out qv-raw.mwrm --slots fx2 --cycles 330 --cycles-kind modeled \
+  --state 132 --buffer 15870
+python3 -B sdk/runtime/loader/abi9.py qv-raw.mwrm --requires programs -o quadraverb-0.1.0.mwrm
+```
+
+The build of 27 November 2026: `quadraverb-0.1.0.mwrm`, 77,960 bytes (code and data, 139,264 of bss), SHA-256
+`35faa1b5d34e958cecf243aff412fb8a3f7cdb9001326de4b48af8b334538943`; 25 DSP words of shell; areas of 849-1,098 words;
+declared 330 modeled cycles (the stall model's 207-316 with the stream, plus the area's own work; not traced in the area
+form). In `~/.cache/modwerk-local/quadraverb/pkg/`.
+
+Checked on the host: `engine/verify_area.py` (each of the 22 programs, the gates in its docstring) and
+`engine/test_qv_runtime.py` (the ColdFire half against qvs.ColdFire, 12 cases). Not checked anywhere: the frame
+interrupt's cost of `fill()` and `take()`, the base writing and switching a real area, the arena's room beside a Part's
+stock effects, the sound.
 
 ## Bit-exact in dsp_host (26 November 2026)
 
@@ -42,6 +63,12 @@ was not confirmed (Upload acknowledgement timed out)", and the inventory stayed 
 from boot, so the base's busy-unit guard says CPU FULL (agent board, 21 November). Why the acknowledgement does not
 come is not known; the emulator is shared tooling, so it was not changed here. The release build's captures wait for
 either a fixed emulator or the unit.
+
+A fresh emulator built from the pinned upstream source (`~/.cache/modwerk-local/emu-fresh/adapted/ot_emu`, 26 November
+2026) takes the upload on twin2: `qv-dev-5.mwrm` was accepted and listed as handle 10, "Quadraverb DEV". But it shows
+no DSP passes on any twin, with the same flags (`--dsp`, no package): the main 0.8.2 twin (base 46c30886), twin4
+(base fecd8a64) and twin2 (base 906c5b59) all read `T1-4 0/0 T5-8 0/0`, CPU 1000. So the zero is the fresh emulator's,
+not twin2's. The older adapted emulator runs core 0 on twin2 (`T5-8 963/966`) and never core 1 (`T1-4 0/0`).
 
 ## Development builds
 

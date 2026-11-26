@@ -496,6 +496,39 @@ model (MIX values, splits, a dirty Y, two instances, a stale state, the guard). 
 than the prototype: 214.7 (221.6 dearest) for 5 STEREO FLANGE, 240.6 for 40 and 56. The builds, figures and the unit
 procedure: [TESTING.md](TESTING.md).
 
+## The release package (27 November 2026)
+
+What 0.1.0-experimental ships, built and held to the models in `dsp_host` and on the host; nothing of it has run on a
+unit. ROM-derived parts are made into `gen/` (ignored by Git) from the owner's ROM.
+
+- **The shell** (`shell.asm`, written by `engine/qvarea.py shell`, no Alesis program in it): the package's DSP code.
+  init keeps the slot's buffer base and clears the signature; proc reads word 0 of the slot's record,
+  X:$7fb0 + 4 ((r7 >> 8) & 15), and runs the area it names with `jsr`, or leaves the block dry while it is 0.
+- **An area** (`qvs.generate(plan, area=...)`, qvc ASTATE): the unit build with the stream, run from wherever the base
+  writes it. Its own signature (`$51A000 | index`) makes the first call after a switch set itself up afresh; it clears
+  its ring over calls (the dry at its mix meanwhile) and starts at the first call that begins a frame once the base has
+  named both blocks in the record. Its tables are P words after its code, copied at set-up (`move p:(r1)+,x0`), so an
+  area is 849-1,098 words. `qvarea.py areas` assembles each at two origins: the words that move by the distance
+  (9-10 a program: DO ends, jumps, the tables' address) are what `code()` relocates.
+- **The stream from the record:** each frame the area takes this frame's bank from its parameter page (r6 & $ffe000) and
+  the blocks' offsets from words 1 and 2 of the record; while a word is 0 that block is skipped. The out-block starts
+  with the program's tag (`$5100 | index`) and K, its frame number since it started (modulo $8000); the copy in waits
+  until the program has sent 3 frames (the model's in-blocks are all zero until then). The plans are made at the base's
+  latency, 3 frames, with the area's 32 dry words reserved.
+- **The ColdFire half** (`runtime/qv_runtime.c`, `runtime.json`, tables from `engine/qvcf.py gen`): the
+  `ot_dsp_effects` record. `program()` reads PROG from the track's frame record; `code()` relocates the area; `take()`
+  learns the program and its frame base from the tag and K and keeps each streamed line's ring; `fill()` composes the
+  in-block as `qvs.ColdFire` does. Rings come from a 136 KiB pool in bss (the dearest program's): two chambers fit side
+  by side, 80 or 81 only alone; a slot with no room stays silent and is counted.
+- **The base:** take() runs from the frame after the out-block is named, before the in-block is (side branch
+  `base/octatrack-program-areas` 5ecfbd2f4), so an area that waits for both words has every frame taken.
+
+**Checked:** `engine/verify_area.py` runs the shell with each of the 22 areas placed where it was not assembled,
+relocated as `code()` relocates it, its blocks from the record in alternating banks, the in-blocks the runtime sends:
+bit for bit against qvs.SplitEngine and qvs.ColdFire at MIX 127, 64 and 0, trig splits at frames 1, 5, 7 and 13, a dirty
+Y, and two instances. `engine/test_qv_runtime.py` holds the C runtime to qvs.ColdFire on all 22 programs in the base's
+call order, a switch, a resync, a full pool, bad tags and the K wrap, and `code()` to the real areas.
+
 ## Not settled
 
 - **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (FIRMWARE.md, "The gate").
