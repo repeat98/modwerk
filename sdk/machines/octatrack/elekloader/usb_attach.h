@@ -29,8 +29,9 @@
 struct usb_attach { uint16_t detached, off; uint8_t tries, fresh; };
 enum usb_attach_action { USB_ATTACH_NONE, USB_ATTACH_DROP, USB_ATTACH_OFFER };
 
-/* One UI tick: DROP takes the pull-up off now, OFFER puts it back. `addr` is DEVICEADDR.USBADR, 0 until a host
- * has addressed the unit. */
+/* One UI tick: DROP takes the pull-up off now, OFFER puts it back. `addr` is nonzero once a host has enumerated the
+ * unit: on a base with USB MIDI, configured it since the last bus reset (ep0.c enumerated(), usbmidi_up), since a Mac
+ * that failed part way left it addressed and never configured; else DEVICEADDR.USBADR, 0 until a host addressed it. */
 static inline enum usb_attach_action usb_attach_tick(struct usb_attach *s, uint32_t usbcmd, uint32_t portsc, uint32_t otgsc, unsigned addr, int busy)
 {
     if (s->off) { /* the offer waits for a link someone took meanwhile: its pull-up must come back */
