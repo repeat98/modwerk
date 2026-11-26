@@ -172,9 +172,6 @@ static struct hold holds[KINDS] = {
 #define LOOK_TICKS 10
 // A SCENE hold shows the scene's locks this many ticks in (about 0.2 s), so a tap does not flash them.
 #define SHOW_TICKS 4
-// REC, STOP or PLAY this many ticks into a SCENE hold (0.1 to 0.15 s, a tick being 50 ms) copy,
-// paste or clear; sooner, on a page, they stay the transport's. In scene edit they act at once.
-#define TRANSPORT_TICKS 3
 static unsigned ticks;              // ev_tick's count
 
 static void *views;
@@ -196,7 +193,6 @@ static int lk_locking[2];           // a knob, pad or transport key ended the ho
 QMA_UI static void scene_apply_forget(void);
 extern void *qperf_locker(int index);
 extern int qperf_is_locker(unsigned long object);
-extern void qperf_hold_start(void);
 extern void qperf_action(int key, int index);
 extern int qperf_kit_read(int track, int param);
 extern void qperf_kit_write(int track, int param, int value);
@@ -979,10 +975,6 @@ QMA_UI static int lock_press(int k, unsigned flags)
     holds[k].held = 1;
     holds[k].turned = 0;
     holds[k].since = ticks;
-    if (k == PRF)
-        qperf_hold_start();
-    else
-        scene_apply_forget();           // a SCENE + YES undo lasts one hold
     return 0;
 }
 
@@ -1023,13 +1015,20 @@ QMA_UI static int lock_knob(int k)
     return 0;
 }
 
-// What a SCENE + YES applied, so a second YES in the same hold puts it back.
+// What a SCENE + YES applied, so a second YES puts it back, until a lock edit, a copy,
+// paste or clear, or another kit forgets it (improved_modulation_kit_changed).
 static struct {
     int scene, count, valid;
     struct { unsigned char track, param; short lock; int old, now, expect; } e[SCENE_LOCKS];
 } scene_applied;
 
 QMA_UI static void scene_apply_forget(void)
+{
+    scene_applied.valid = 0;
+}
+
+// From qperf.c's kit gate: stock changed the whole kit.
+void improved_modulation_kit_changed(void)
 {
     scene_applied.valid = 0;
 }
@@ -1095,12 +1094,12 @@ QMA_UI static void scene_apply(void)
         show("NOTHING TO APPLY");
 }
 
-// REC, STOP, PLAY or YES pressed during a hold (in its edit screen at once; on a page
-// after TRANSPORT_TICKS, or after a knob or pad, so SCENE or PERF rolled into PLAY still
-// starts the sequencer). SCENE: copy, paste or clear the scene the locks go to with stock's
+// REC, STOP, PLAY or YES pressed during a hold, at once (the musician's choice for 0.6.0:
+// SCENE or PERF rolled into PLAY acts on the scene or performance and does not start the
+// sequencer). SCENE: copy, paste or clear the scene the locks go to with stock's
 // own routines and words, as scene edit's FUNC + REC, STOP and PLAY do (a second STOP or
 // PLAY undoes), and YES applies it. PERF: QPER's actions on the performance it edits
-// (YES applies, a second YES undoes; PLAY clears; RECORD copies; STOP pastes). It ends the
+// (YES applies, a second YES undoes, also in a later hold until something else changes it; PLAY clears; RECORD copies; STOP pastes). It ends the
 // hold as a knob does. The key's release is the module's too (transport_taken).
 static unsigned transport_taken;
 #define TRANSPORT_BIT(key) ((key) == KEY_YES ? 8u : 1u << ((key) - KEY_REC))
@@ -1113,8 +1112,6 @@ QMA_UI static int lock_transport(int k, int key)
     static char text[16] = "COPY SCENE ";
     if (!lock_screen(k) || ANY_TRIG_HELD() || ANY_PAD_HELD())
         return 0;
-    if (!lk_locking[LK(k)] && !edit_free(k) && ticks - holds[k].since < TRANSPORT_TICKS)
-        return 0;                       // rolled into PLAY on a page: the transport's, as on stock
     lock_touched(k);
     transport_taken |= TRANSPORT_BIT(key);
     redraw = 1;
@@ -1151,10 +1148,10 @@ QMA_UI static int lock_transport(int k, int key)
 
 // A pad pressed during a hold, before stock sees it. It ends the hold as a knob does, so
 // a hold can pick tracks and lock them. On the pages and in the other pad modes the pad
-// stays stock's (on the pages it plays and, with AUTO TRK SWITCH on, selects its track). In
-// the hold's own mode (scene mode for SCENE, PERF mode for PERF) stock would engage the
-// pad's scene or performance; the module takes the press, its repeats and its release
-// there and selects the pad's track as the pages' pad does with AUTO TRK SWITCH on:
+// stays stock's (on the pages it plays and, with AUTO TRK SWITCH on, selects its track; in
+// PERF mode it plays its performance, with PERF held too). In scene mode with SCENE held
+// stock would engage the pad's scene; the module takes the press, its repeats and its
+// release there and selects the pad's track as the pages' pad does with AUTO TRK SWITCH on:
 // 0 passes the press on, 1 takes it.
 QMA_UI static int lock_pad(int k, int pad)
 {
@@ -1167,8 +1164,8 @@ QMA_UI static int lock_pad(int k, int pad)
     if (now && now != lock_locker(k))
         return 0;                       // a lock edit of stock's holds the knobs
     lock_touched(k);
-    if (top_view() != (k == SCN ? SCENE_VTABLE : PERF_VTABLE))
-        return 0;
+    if (k != SCN || top_view() != SCENE_VTABLE)
+        return 0;                       // PERF mode's pads stay stock's: they play their performances
     pads_taken |= 1u << pad;
     project = PROJECT();
     selected = selected_track();

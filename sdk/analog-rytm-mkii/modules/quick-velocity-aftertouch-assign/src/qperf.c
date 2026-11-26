@@ -386,9 +386,9 @@ static unsigned target(void *kit)
     return forced >= 0 ? 1u << forced : linked(kit);
 }
 
-// What the last PERF + YES applied, so a second YES in the same PERF hold puts it back:
+// What the last PERF + YES applied, so a second YES puts it back:
 // the kit's values as they were and the locks it removed. Any other QPER action, a lock
-// edit, a new hold or another kit forgets it, as stock's undo for clear and paste does.
+// edit or another kit forgets it, as stock's undo for clear and paste does.
 static struct {
     void *kit;
     int index, count, valid;
@@ -1443,7 +1443,7 @@ QPERF_UI static void apply_perf_rec(void)
         *out = 0;
         show(message);
     } else {
-        show(wrote ? "APPLY QUICK PERF REC" : "NOTHING TO APPLY");
+        show(wrote ? "APPLY PERF/SCENE REC" : "NOTHING TO APPLY");
     }
 }
 
@@ -1457,7 +1457,7 @@ QPERF_UI static void clear_perf_rec(void)
     } else if (hot.perf_rec_used || scene_used) {
         release_driven();
         hot.perf_rec_hidden = 1;
-        show("CLEAR QUICK PERF REC");
+        show("CLEAR PERF/SCENE REC");
     } else {
         show("NOTHING TO CLEAR");
     }
@@ -1569,8 +1569,7 @@ QPERF_UI int qperf_key(void *brain, void *event)
 }
 
 // For the PERF hold (main.c): the locker on the performance it edits (index, or -1 for
-// QPER's link), whether a locker is that one, and YES, PLAY, RECORD or STOP on it. A
-// new hold starts with no undo of an earlier YES.
+// QPER's link), whether a locker is that one, and YES, PLAY, RECORD or STOP on it.
 void *qperf_locker(int index)
 {
     forced = index;
@@ -1580,11 +1579,6 @@ void *qperf_locker(int index)
 int qperf_is_locker(unsigned long object)
 {
     return object == (word_t)&locker;
-}
-
-void qperf_hold_start(void)
-{
-    applied.valid = 0;
 }
 
 void qperf_action(int key, int index)
@@ -1621,10 +1615,12 @@ void qperf_kit_write(int track, int param, int value)
 // A kit can bring other links: its own stay, and the amounts follow them. Acting
 // directly in stock's kit routine and the project event left the kit blank at
 // boot, so they only ask and the tick acts.
+extern void improved_modulation_kit_changed(void);
 void qperf_kit_changed(void)
 {
     kit_changed = 1;
     applied.valid = 0;
+    improved_modulation_kit_changed();
     scene_last_seen = -2;               // another kit's scene is no take
 }
 
