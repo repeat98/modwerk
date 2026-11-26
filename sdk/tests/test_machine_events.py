@@ -58,6 +58,10 @@ class MachineEventTests(unittest.TestCase):
         result = host(self, OT / 'elekloader/test_midi_generators.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_lfo_pmtr_dest_on_the_host(self):
+        result = host(self, OT / 'elekloader/test_lfo_pmtr_dest.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_part_menu_on_the_host(self):
         # ot_part_menu (part_menu.c): the Part Edit window's two columns, stock's with no contribution.
         result = host(self, OT / 'elekloader/test_part_menu.c')
@@ -127,12 +131,14 @@ class MachineEventTests(unittest.TestCase):
         if not gcc:
             self.skipTest('no ColdFire compiler')
         with tempfile.TemporaryDirectory() as temp:
-            for source in (OT / 'elekloader/machine_registry.c', ADAPTERS / 'machine_contributors.c',
-                           ADAPTERS / 'machine_admission_runtime.c'):
+            for source in (OT / 'elekloader/machine_registry.c', OT / 'elekloader/lfo_pmtr_dest.c',
+                           ADAPTERS / 'machine_contributors.c', ADAPTERS / 'machine_admission_runtime.c'):
                 subprocess.run([gcc, '-mcpu=5475', '-msoft-float', '-O2', '-std=c99', '-ffreestanding', '-fno-builtin', '-Wall', '-Wextra',
                             '-Werror', '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u', *INCLUDES, '-c',
                             source, '-o', temp + '/' + source.stem + '.o'], check=True, capture_output=True)
             subprocess.run(['m68k-elf-as', '-mcpu=5475', OT / 'elekloader/machine_registry.s', '-o', temp + '/s.o'],
+                           check=True, capture_output=True)
+            subprocess.run(['m68k-elf-as', '-mcpu=5475', OT / 'elekloader/lfo_pmtr_dest.s', '-o', temp + '/ls.o'],
                            check=True, capture_output=True)
 
     def test_assignment_counter_is_defined_once_with_or_without_the_controller_board(self):

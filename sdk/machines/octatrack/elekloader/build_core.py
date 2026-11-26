@@ -1736,7 +1736,7 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'usb_attach.h', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
+             'midi_generators.s', 'sample_memory.c', 'lfo_pmtr_dest.c', 'lfo_pmtr_dest.s') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
     if args.site_events and args.dsp_loader:  # PROJ > MODWERK > SETTINGS (events.json ot_settings; status.c's page)
@@ -1755,7 +1755,7 @@ def main():
         sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
         import resident_engines as dev_engines
         (source / 'dev.c').write_text(dev_engines.dev((source / 'dev.c').read_text()))
-    if args.site_events:  # the tables' records (struct modwerk_machine, struct modwerk_sequencer_rows)
+    if args.site_events:  # the tables' records (struct modwerk_machine, struct modwerk_sequencer_rows, ot_lfo_pmtr_dest)
         shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_events.h', source / 'modwerk_events.h')
     # The startup (boot_anim.c) draws the art the shared startup sources describe, with this base's version.
     spec = importlib.util.spec_from_file_location('modwerk_base_art', APP / 'sdk/runtime/startup/base_art.py')
@@ -2206,7 +2206,8 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_RESIDENT_ON_DEMAND')
     if args.site_events:  # the base owns these stock sites; packages subscribe (sdk/machines/octatrack/EVENTS.md)
         recipe['cflags'].append('-DMODWERK_RUNTIME_EVENTS')
-        recipe['sources'] += ['runtime_events.s', 'machine_registry.s', 'midi_generators.s']
+        # .c files (machine_registry.c, midi_generators.c, lfo_pmtr_dest.c) are already pulled in by the *.c glob above.
+        recipe['sources'] += ['runtime_events.s', 'machine_registry.s', 'midi_generators.s', 'lfo_pmtr_dest.s']
         for addr, n, guard, label in EVENTS.base_sites():
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != guard:
@@ -2217,8 +2218,9 @@ modwerk_retained_end:
             if sha(stock) != guard:
                 raise ValueError('The frame interrupt at %#x is not stock; review the frame guard.' % addr)
             recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
-        # The tables' sites: the machine registry's and the SEQUENCER rows' (machine_registry.c/.s). 'own' sites keep
-        # their stock bytes; the registry rewrites their immediates while the table changes.
+        # The tables' sites: machine registry, SEQUENCER rows, MIDI generators, LFO PMTR
+        # (machine_registry / midi_generators / lfo_pmtr_dest). 'own' sites keep their stock bytes;
+        # readers rewrite them while the table changes.
         for s in EVENTS.owned_sites():
             if s['table']=='ot_sample_editor_actions' and not args.sample_editor:
                 continue  # knowing the staged registry entry does not enable its stock sites

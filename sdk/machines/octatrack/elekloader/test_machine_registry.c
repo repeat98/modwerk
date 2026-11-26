@@ -63,6 +63,7 @@ static void *host_stock(uint32_t a)
 
 void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
+void modwerk_lfo_pmtr_tables_changed(void) {} /* lfo_pmtr_dest covered by test_lfo_pmtr_dest.c */
 static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime/loader/tests/events_test.c; modelled below */
 static int project_loading; /* fxmap.c's: a project load runs */
 int modwerk_fxmap_loading(void);

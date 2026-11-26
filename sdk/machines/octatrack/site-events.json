@@ -336,6 +336,13 @@
    "index": 62,
    "event": "ev_frame_deadline",
    "kind": "raise"
+  },
+  {
+   "index": 63,
+   "event": "ot_lfo_pmtr_dest",
+   "kind": "table",
+   "room": 16,
+   "record": 12
   }
  ]
 }

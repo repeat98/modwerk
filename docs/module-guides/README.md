@@ -125,7 +125,7 @@ Shared behaviour on the Octatrack follows Elekloader's hook bus ([ADAPTING.md](h
 | Call hook | Runs every handler at its stock site, lowest `order` first, then stock. A handler's result passes, takes or drops the call, as the hook's contract says. | `subscribe`: `event`, `fn` (a C function) and `order` | `ev_play_increment`: Repitch changes a track's playback increment |
 | Raised hook | Has no stock site. A module asks it, and the base runs every handler and returns their answers OR'd. | To ask it: `raise`, and a zero word `raise_<hook>` in initialized data, which the loader points at the base's entry at install. To answer it: `subscribe`, as for a call hook | `ev_mute_keep`: Mute Modes asks which tracks another module still reads while they are muted |
 | Take hook | Gives its site to one subscriber: the first record, in `order`, whose `claims` is 0 or accepts the call. Its `entry` runs with every register as at the site, replays the stock instructions and returns to stock itself. | `subscribe`, with `fn` naming a `struct modwerk_take` {claims, entry} | `ev_octave_key`: POLY8, FM Synth and Scale Quantizer each claim their own tracks |
-| Table | Has no site. Modules contribute fixed-size records, and base code reads them in `order`. | `contribute`: `to`, `data` (the record's symbol) and `order` | `ot_machines`: each track machine's chooser row, page and renderer; `ot_midi_generators`: each MIDI generator's list row and pages |
+| Table | Has no site. Modules contribute fixed-size records, and base code reads them in `order`. | `contribute`: `to`, `data` (the record's symbol) and `order` | `ot_machines`: each track machine's chooser row, page and renderer; `ot_midi_generators`: each MIDI generator's list row and pages; `ot_lfo_pmtr_dest`: audio LFO SETUP destinations past stock 0–29 ([OCTATRACK_LFO_PMTR_EXTENSION.md](../OCTATRACK_LFO_PMTR_EXTENSION.md)) |
 
 A `runtime.json` needs `schema` and at least one subscription or contribution. The other keys are optional:
 
@@ -186,6 +186,7 @@ The more of these the base owns, the more modules combine. Propose each hook on 
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
 | Part Edit window (FUNC+PART) rows | Base table `ot_part_menu`: a parent row and its actions, in two columns |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
+| Audio LFO SETUP destinations past stock 0–29 | Base table `ot_lfo_pmtr_dest` ([OCTATRACK_LFO_PMTR_EXTENSION.md](../OCTATRACK_LFO_PMTR_EXTENSION.md)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
 | Module settings | Base table `ot_settings`: a choice for the whole instrument, kept through a power cycle (PROJ > MODWERK > SETTINGS). A store for other per-module state: not built |

@@ -564,6 +564,8 @@ static const Part *frame_part;      /* the current Part this frame, 0 without a 
 static uint32_t frame_seen;         /* bit t: looked[t] was checked this frame; bit 8: frame_part was read */
 
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
+void modwerk_lfo_pmtr_tables_changed(void); /* lfo_pmtr_dest.c: ot_lfo_pmtr_dest count / cache */
+
 void modwerk_machine_tables_changed(void)
 {
 #ifdef MODWERK_USB_FUNCTIONS
@@ -587,6 +589,7 @@ void modwerk_machine_tables_changed(void)
     }
     for (unsigned k = 5; k < ROWS; ++k) mw_src_names[k] = (const char *)(uintptr_t)U32(0x400a78c8u + 4), mw_pb_table[k] = FLEX_PAGE;
     counts(n, sequencer());
+    modwerk_lfo_pmtr_tables_changed();
     asleep_refresh();
 }
 
