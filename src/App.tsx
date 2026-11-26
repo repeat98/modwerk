@@ -44,7 +44,7 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, 
 import type { ChangeEvent, ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, MODULES, type ModuleCategory } from './catalog/modules'
-import { AVAILABLE_MODULES, availableModules, isModuleAvailable, isModulePaused, moduleAvailabilityError } from './catalog/availability'
+import { AVAILABLE_MODULES, availableModules, isModuleAvailable, isModuleListedPaused, isModulePaused, listedModules, moduleAvailabilityError, withPausedBlocks } from './catalog/availability'
 import { readCatalogBrowse, saveCatalogBrowse, type CatalogBrowse } from './catalog/catalog-browse'
 import { DSP_LOADER } from './engine/protocol'
 import { issueRepository, setWorkspaceReportContext } from './community/report-context'
@@ -177,9 +177,9 @@ export default function App() {
   const mobileWorkspace = useMobileWorkspace()
   const presence = useMembersOnline(), online = presence?.online ?? null
   const { session, loading: sessionLoading, developer, catalog } = useCommunity()
-  const betaAccess = hasBetaAccess(session), accessibleModules = availableModules(betaAccess), betaUi = hasBetaUi(session)
+  const betaAccess = hasBetaAccess(session), accessibleModules = listedModules(betaAccess), betaUi = hasBetaUi(session)
   const detailModule = moduleRoute.startsWith('module/') ? accessibleModules.find((module) => module.id === moduleRoute.slice(7)) : undefined
-  const pausedModule = MODULES.find(module => isModulePaused(module.id) && !isModuleAvailable(module.id, betaAccess) && (moduleRoute === 'module/' + module.id || moduleRoute === 'community-module/' + module.id))
+  const pausedModule = MODULES.find(module => isModulePaused(module.id) && !isModuleAvailable(module.id, betaAccess) && !isModuleListedPaused(module.id, betaAccess) && (moduleRoute === 'module/' + module.id || moduleRoute === 'community-module/' + module.id))
   const configuration = route === 'configuration'
   const communityModule = moduleRoute.startsWith('community-module/') ? catalog.find(item => item.module_id === moduleRoute.slice(17) && isModuleAvailable(item.module_id, betaAccess)) : undefined
   const adminRoute = isAdminRoute(route)
@@ -408,7 +408,7 @@ export default function App() {
     }
   }, [overviewRoute, projectsRoute, faqRoute, adminRoute, route,detailModule,digiMod,zoomEffect,forumRoute,accountRoute,betaInvitationRoute,developerRoute,developer?.user,allRoute,machineView,currentDevice.name,w,hubRoute,zoomHubName])
   const availabilityError = moduleAvailabilityError(selectedIds, betaAccess)
-  const { blocks: addBlockMap } = withSetLimit<{ blocks: Record<string, AddBlock> }>({ blocks: {} }, selectedIds)
+  const addBlockMap = withPausedBlocks(withSetLimit<{ blocks: Record<string, AddBlock> }>({ blocks: {} }, selectedIds).blocks, betaAccess)
   const showSelection = !mobileWorkspace && (
     (onLibrary && (allMachines || currentDevice.id === 'octatrack' || isDigiDevice(currentDevice.id)))
     || !!(detailModule || digiMod)
