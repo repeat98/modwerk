@@ -208,3 +208,37 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
 - Release 0.8.2 rebuilt: base `a991caf0e7b55b31…` (was `1306e125`); browser = native `.bin` `247a1173db25f62f…`
   (832,704 bytes). Base-bound packages relinked with unchanged bytes.
 - Not run: FX1; SRC, AMP and LFO pages of module machines; RINGMOD SC's KEY on a unit.
+
+## 26 November 2026: a retriggered recorder's bank no longer blocks syncs (#2211)
+
+- **Why:** a tester's syncs were refused as `unsafe` at `enter` ("Stop playback or finish recording") on a stopped
+  unit until a power cycle, in a session where they had recorded into Flex buffers with track recorders.
+- **Cause:** stock keeps two state rows per track recorder (`0x80004f1e + 84 × (track + 8 × bank)`, 0 idle, 1 pending,
+  2 recording) and selects the bank each track records into with bit t of `0x80004f18`. A recording started again
+  while it records moves to the other bank; STOP clears only that one, and the bank it left keeps its 2 until the
+  track records again. `modwerk_machine_stopped()` read any nonzero row as recording, so the base stayed "not
+  stopped", and `boot.c` did not press STOP either.
+- **Change:** `modwerk_machine_recorder_busy()` (`runtime.c`) reads the row each track records into, and its other row
+  only for a state other than idle or that retained 2. `modwerk_machine_busy()` names the reason and the track; the
+  self-test reply carries it in the refusal word's top byte (`ep0.c`), and the site records it on an unsafe
+  `sync_failed` (`busy`) and names the recorder's track in its notice.
+- **Tests:** `test_runtime.c` replays the emulator's row sequence (`sdk/drafts/beat-slicer/boot_recorder.py`);
+  `octatrack-link.test.ts` and `octatrack-diagnostics-fields.test.ts` for `busy`.
+- **On the owner's MKII (26 November 2026):** development twin `c6e64b77…` of this branch (beta flags without controller
+  rows, `--dev`), RAM-booted over the flashed 0.8.1. T1's recorder started with T1 + REC AB (key 0x2b), readings of the
+  bank word and T1's two rows (bytes 0-3, the state at +2):
+
+  | Step | `0x80004f18` | T1 bank A | T1 bank B | Result |
+  | --- | --- | --- | --- | --- |
+  | STOP | 1 | `00000000` | `00000000` | |
+  | T1 + REC AB | 0 | `00000201` | `00000000` | recording in A |
+  | T1 + REC AB again | 1 | `00000201` | `00000201` | moved to B, A keeps 2 |
+  | STOP, and 10 s later | 1 | `00000201` | `00000000` | **A's 2 retained** |
+  | try a module, not accepted | | | | admitted, trial ran, rolled back; `busy` 0 |
+  | T1 + REC AB (live recording) | 0 | `00000201` | `00000000` | `busy` 1 (track 1's recorder); **enter: unsafe** |
+  | STOP | 0 | `00000000` | `00000000` | `busy` 0 |
+
+  The retained 2 is the state that the old test read as recording until a power cycle; the twin admits the change
+  with it, and still refuses while T1 really records. Nothing was saved or kept.
+- Not run: the same steps on a twin with the old test (the unit had none booted; the flashed 0.8.1 takes no USB keys);
+  the release base, which still needs Analog BD's recipe recaptured once the 0.8.2 fixes are folded.
