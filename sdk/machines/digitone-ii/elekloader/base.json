@@ -170,5 +170,80 @@
       "requires",
       "conflicts"
     ]
+  },
+  "dev": {
+    "about": "The development link (base/link.c, link.s): diagnostics over USB MIDI SysEx in the Analog Rytm MKII link's wire format (ident, the link's counters; screen, the frame on the screen in eight parts of 128 bytes copied when the first is asked for; no request names an address), and while SETTINGS > REMOTE CTRL is on (at every boot) panel keys and encoder turns, posted on the UI queue as the panel's. Its receive site observes stock's SysEx router at 0x4012197a, where core-dn2 0.3's ev_sysex sits; replies go through stock's sysex_send on USB from ev_tick. is_key_held (0x4011fac4) also sees the keys the link holds. The diagnostics log (base/diag.c, the Octatrack's layout), read through the link's diag and log, in parts the unit chooses. Development bases only.",
+    "sources": [
+      "../base/link.c",
+      "../base/link.s",
+      "../base/diag.c"
+    ],
+    "sites": [
+      {
+        "addr": "0x4012197a",
+        "len": 6,
+        "stockSha256": "d8acd0e6e84b3d17d530cf3e5621bc1d0a1e5062f8c0a62a79113c0d9548fc33",
+        "op": "jsr",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x4011fac4",
+        "len": 6,
+        "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
+        "op": "jmp",
+        "target": "mw_link_held"
+      }
+    ],
+    "cflags": [
+      "-DSYSEX_SEND_AT=0x401236d2",
+      "-DUSB_SYSEX_STATE_AT=0x445090ac",
+      "-DFRAME_POINTERS_AT=0x402a10c8",
+      "-DUI_QUEUE_AT=0x4013747a",
+      "-DQUEUE_POST_AT=0x40001896",
+      "-DKEY_INDEX_AT=0x401f3d10",
+      "-DKEY_BITS_AT=0x445a2e30",
+      "-DFRAME_HZ_MEASURED=1500",
+      "-DUPLOAD_AT=0x4038bec0"
+    ],
+    "defsym": {
+      "SYSEX_TABLE": "0x40207f9e"
+    },
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_link_key",
+        "order": 1
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_link_enc",
+        "order": 1
+      },
+      {
+        "event": "ev_settings",
+        "fn": "mw_link_settings",
+        "order": 50
+      },
+      {
+        "event": "ev_frame_params",
+        "fn": "mw_diag_frame",
+        "order": 250
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_diag_tick",
+        "order": 245
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_diag_key",
+        "order": 2
+      }
+    ]
   }
 }
