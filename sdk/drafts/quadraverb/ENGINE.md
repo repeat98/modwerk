@@ -200,7 +200,7 @@ Each passes every gate in `verify.py`:
 emulator plus the assumed 3-cycle interrupt response; about 531 µs for the Leslies). The original's DSP runs at about
 42 kHz (the firmware's own delay conversion), so it sees a tick every 10.73 of its samples (22.3 for the Leslies). The
 engine has two ways to place them at 44.1 kHz:
-- **Samples a tick as on the original** (chosen): a tick every 10.73 samples. Each program plays sample for sample as
+- **Samples a tick as on the original** (the owner's choice, 26 November 2026): a tick every 10.73 samples. Each program plays sample for sample as
   on the original, so its sweeps run about 5 % faster in seconds, like every delay and reverb time.
 - **Ticks a second as on the original** (`--realtime`): a tick every 11.26 samples. The sweeps' periods in seconds
   match the original, but their depth in samples does not shrink with them.
