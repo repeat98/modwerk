@@ -138,7 +138,7 @@ class MachineBases(unittest.TestCase):
             self.assertEqual(machine_base.held_ranges(sites), ranges)
             cc = shutil.which("cc")
             if not cc:
-                return
+                self.skipTest("no host C compiler: the ranges were checked, patchable was not run")
             probes = [(int(site["addr"], 16), site["len"]) for site in sites]
             probes = [(a, n, 0) for a, n in probes] + [(a + n - 1, 4, 0) for a, n in probes] + [(a - 2, 4, 0) for a, n in probes]
             free = [(end + 0x10, 6) for end, start in zip([r[1] for r in ranges], [r[0] for r in ranges[1:]]) if start - end >= 0x20]

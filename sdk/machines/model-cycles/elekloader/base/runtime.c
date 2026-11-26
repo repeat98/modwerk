@@ -170,7 +170,7 @@ void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct run
 #ifdef MODWERK_HOST
 #if __has_include("held-sites.h")
 #include "held-sites.h"
-#else
+#else                               /* a stand-in for host builds without a staged header: not a real site */
 #define MW_HELD_SITES 1u
 static const uint32_t mw_held_sites[MW_HELD_SITES][2] = {{0x40000400u, 0x40000406u}};
 #endif
