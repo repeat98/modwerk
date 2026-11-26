@@ -7,7 +7,7 @@
       "Lock rhythms for page-1 parameters, and a Harmony page for PTCH and NOTE: scale, root, phrase and jump; voices and chords on MIDI tracks.",
       "[YES] writes sample trigs, note trigs and parameter locks into the pattern; [FUNC] + [BANK] clears them.",
       "Settings are saved per project in seq.work, the same file octabam's SEQ writes.",
-      "Modwerk close path: TRACK+PAGE release closes without stock PAGE; stale layer unlink and LREBUILD after LPOP; kthunk wrappers on layer handlers; ev_in_use covers the window, main layer, CLEAR cancel layer, and ARE YOU SURE? dialog."
+      "Closing SEQ after using CUE clears stale references to SEQ from the stock key and encoder cache so Modwerk can unload it."
     ]
   }
 ]

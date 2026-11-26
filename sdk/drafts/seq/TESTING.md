@@ -2,9 +2,40 @@
 
 Version **0.1.0-experimental** (draft `sdk/drafts/seq`). Results are separated by where they ran.
 
+## CUE and trial rollback (fix36)
+
+Package SHA-256 `5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771`.
+Development twin `4c7eb79b`. After closing SEQ following CUE, the draft
+clears remaining SEQ pointers in the stock dispatch cache after the layer
+is popped and the cache rebuilt. The cleanup saves its registers in correctly
+sized frames. The host verifier passed all four checks.
+
+The emulator passed a removal trial after CUE then NO, after tapping CUE
+before pressing T2/T3 and closing with TRACK+PAGE, and after holding CUE
+through T2/T3 and closing with TRACK+PAGE. The loader reported an empty
+slot during each removal trial. On the MKII in A03, the tap sequence
+left SEQ installed after timed Undo and an explicit recovery attempt, both
+with `needs-recovery`. This sequence can open the rhythm confirmation on a
+track with existing trigs. The run did not capture the screen immediately
+after CUE, so it did not establish which UI state blocked Undo. The trial
+was never accepted. A power cycle returned the flashed base with no live
+modules.
+
+Two fresh timed trials on the same MKII then passed. Both ended at the
+development twin's original active identity with an empty live inventory.
+The loader reported zero saved modules before and after the trials.
+
+| Keys after opening SEQ on T1 | LCD and rollback |
+| --- | --- |
+| Hold CUE, press and release T2 and T3, release CUE, then close with TRACK+PAGE | Stock page after the close. Timed Undo passed at generation 2. |
+| Tap CUE on the track with existing trigs, then press NO twice | CUE opened ARE YOU SURE?. The first NO returned to SEQ. The second NO returned to the stock page. Timed Undo passed at generation 4. |
+
+These MKII trials exercised timed Undo. The standalone `remove` command
+after an accepted installation was exercised in the emulator.
+
 ### Emulator rollback after use (26 Nov 2026, draft `fix22`, package `25f5d04f…`)
 
-Twin `4c7eb79b`, `ot_emu` without `--dsp` (with `--dsp`, USB key sequences often hit the 21 s bench limit). Build matches listed close hygiene: **unlink + LREBUILD only after LPOP** (not scrub in KEYFN; scrub that cleared whole KEY_CACHE rows wedged the emu). **ef_page** close returns with `bra 8f` (no `PAGE_GO`). **kthunks**, **ev_in_use**, **ef_unlink_queue** (Modwerk).
+Twin `4c7eb79b`, `ot_emu` without `--dsp`. With `--dsp`, USB key sequences often hit the 21 s bench limit.
 
 | Case | Result |
 | --- | --- |
@@ -39,7 +70,7 @@ Package SHA-256 `05120b20ec4f52f321cebd71babf4b536d928bc3a6ba8d10fdadff08248070a
 After the same chord on the panel (not the automated `remove` rows), the
 author reported SEQ open/close and stock page behaviour acceptable for this
 build. Automated trial removal after the CUE chord is still open (blocks marking ready;
-retest on unit when scheduling allows).
+retest the standalone `remove` command on the unit with fix36).
 
 ## Host (26 Nov 2026, branch `module/seq`)
 

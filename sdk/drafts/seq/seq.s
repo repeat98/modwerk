@@ -383,6 +383,7 @@ op_go:
         clrl    ef_from_cue
         clrl    ef_cue_chord
         clrl    ef_cue_snap
+        clrl    ef_cue_used
         clrl    ef_cursor
         clrl    ef_pat_off              | scroll unused (4×16 shows all)
         bsr.w   ef_mkwin
@@ -1086,17 +1087,30 @@ close_nosoft:
         | WDESTROY may re-enter → close_orphan LPOPs once (layer_on).
 close_orphan:
         tstl    ef_layer_on
-        beq.s   9f
+        beq.s   co_done
         clrl    ef_layer_on
         pea     EF_LAYER
         jsr     LPOP
         addql   #4,%sp
         | Rollback: only after our layer actually came off the stack (same guard
-        | as stock). Unlink stale next links; scrub dispatch (not LREBUILD).
+        | as stock). Unlink stale links, rebuild the cache, then clear our stale
+        | dispatch roots left by CUE without changing any other module's row.
         lea     EF_LAYER,%a1
         bsr.w   ef_unlink_stale
         jsr     LREBUILD
+co_done:
+        bsr.w   ef_close_scrub
 9:      rts
+
+| After any close following CUE, clear unheld cache roots left by its key map.
+ef_close_scrub:
+        tstl    ef_cue_used
+        beq.s   ecs9
+        bsr.w   ef_scrub_handlers
+        bsr.w   ef_scrub_klayer
+        bsr.w   ef_scrub_enc
+        clrl    ef_cue_used
+ecs9:   rts
 
 | A layer stock pushed above one of ours (the TRACK hold under which
 | TRACK+PAGE opened SEQ, the clear list) keeps its next link at ours after
@@ -1176,11 +1190,108 @@ ue_add:
         addql   #1,%d3
 9:      rts
 
+| After LPOP and LREBUILD, press/release handler words (not layer links at +12)
+| can still name this image and refuse trial removal (machine_ui_lifetime).
+ef_scrub_handlers:
+        lea     -20(%sp),%sp
+        movem.l %d2-%d3/%a0-%a2,(%sp)
+        lea     seq_image_lo,%a1
+        lea     seq_image_hi,%a2
+        movea.l #KEY_CACHE,%a0
+        moveq   #64,%d2
+1:      movel   16(%a0),%d3              | skip row while key held (PANEL.md)
+        tstl    %d3
+        bne.s   2f
+        movel   (%a0),%d0
+        bsr.w   sc_own
+        beq.s   sh4_check
+        clrl    (%a0)
+sh4_check:
+        movel   4(%a0),%d0
+        bsr.w   sc_own
+        beq.s   sh8_check
+        clrl    4(%a0)
+sh8_check:
+        movel   8(%a0),%d0
+        bsr.w   sc_own
+        beq.s   2f
+        clrl    8(%a0)
+2:      lea     24(%a0),%a0
+        subql   #1,%d2
+        bne.s   1b
+        movem.l (%sp),%d2-%d3/%a0-%a2
+        lea     20(%sp),%sp
+        rts
+
+| Per-key layer link at +12 (machine_ui_lifetime enqueues these).
+ef_scrub_klayer:
+        lea     -16(%sp),%sp
+        movem.l %d2/%a0-%a2,(%sp)
+        lea     seq_image_lo,%a1
+        lea     seq_image_hi,%a2
+        movea.l #KEY_CACHE,%a0
+        moveq   #64,%d2
+1:      movel   12(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   skl
+        lea     24(%a0),%a0
+        subql   #1,%d2
+        bne.s   1b
+        bra.s   9f
+skl:    clrl    12(%a0)
+        lea     24(%a0),%a0
+        subql   #1,%d2
+        bne.s   1b
+9:      movem.l (%sp),%d2/%a0-%a2
+        lea     16(%sp),%sp
+        rts
+
+| Encoder dispatch rows after the 64 key rows (8 × 20 bytes).
+ef_scrub_enc:
+        lea     -16(%sp),%sp
+        movem.l %d2/%a0-%a2,(%sp)
+        lea     seq_image_lo,%a1
+        lea     seq_image_hi,%a2
+        lea     KEY_CACHE+1536,%a0
+        moveq   #8,%d2
+1:      movel   (%a0),%d0
+        bsr.w   sc_own
+        beq.s   se4_check
+        clrl    (%a0)
+se4_check:
+        movel   4(%a0),%d0
+        bsr.w   sc_own
+        beq.s   se8_check
+        clrl    4(%a0)
+se8_check:
+        movel   8(%a0),%d0
+        bsr.w   sc_own
+        beq.s   se12_check
+        clrl    8(%a0)
+se12_check:
+        movel   12(%a0),%d0
+        bsr.w   sc_own
+        beq.s   se16_check
+        clrl    12(%a0)
+se16_check:
+        movel   16(%a0),%d0
+        bsr.w   sc_own
+        beq.s   2f
+        clrl    16(%a0)
+2:      lea     20(%a0),%a0
+        subql   #1,%d2
+        bne.s   1b
+        movem.l (%sp),%d2/%a0-%a2
+        lea     16(%sp),%sp
+        rts
+
 | Stock's ui_lifetime walk flags any even word in KEY_CACHE..+1696 inside our
 | image. LREBUILD follows layer defs; dispatch can still leave handler words
 | (TRACK/CUE press). Zero each key or encoder row that still names us.
+| Full encoder/key sweep: kept for experiments; close uses ef_scrub_handlers only.
 ef_scrub_cache:
-        lea     -20(%sp),%sp
+        lea     -24(%sp),%sp
         movem.l %d2-%d4/%a0-%a2,(%sp)
         lea     seq_image_lo,%a1
         lea     seq_image_hi,%a2
@@ -1215,7 +1326,7 @@ sc_eclr:
         cmpl    %d0,%d4
         blt.s   3b
         movem.l (%sp),%d2-%d4/%a0-%a2
-        lea     20(%sp),%sp
+        lea     24(%sp),%sp
         rts
 sc_own:
         movel   %a1,%d1
@@ -1389,6 +1500,7 @@ cue_rel_done:
 cue_down:
         clrl    ef_cue_chord
         moveq   #1,%d0
+        movel   %d0,ef_cue_used
         moveb   %d0,CUE_HELD            | same byte stock CUE press writes
         movel   MUTE_CUE,%d0
         swap    %d0
@@ -6711,6 +6823,7 @@ spr_done:
         .globl  ef_midi_plk_mem, ef_midi_lane_mem
         .globl  ef_plk_mem, ef_lane_mem, ef_lane, ef_ppulses, ef_prot
         .globl  ef_ask, ef_unlocked, ef_from_cue, ef_cue_chord, ef_cue_snap, ef_free
+        .globl  ef_cue_used
 ef_win:     .long 0
 ef_page_no: .long 0                    | 0=RHYTHM, 1=PITCH
 ef_tone_scale: .long 0
@@ -6751,6 +6864,7 @@ ef_rng_state: .long 0                   | LCG; 0 -> seed from tempo/clock
 ef_free:    .long 0                     | nonzero: draw/write ef_mask + ROT
 ef_from_cue: .long 0                    | 1: free/pmask from CUE (bake may use)
 ef_cue_chord: .long 0                   | 1: layer saw CUE+TRACK (no random)
+ef_cue_used: .long 0                    | 1: CUE pressed since open; scrub after close
 ef_cue_snap: .long 0                    | cue-byte snapshot at CUE press
 ef_mask:    .space 8                    | TRIG free pattern bits 0..63
 ef_pmask:   .space 8                    | PLOCK free pattern bits 0..63

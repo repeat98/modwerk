@@ -14,7 +14,7 @@ run_case() {
   export MODWERK_SHARE_SOCKET="$dir/share.sock"
   export MODWERK_DEV_SOCKET="$dir/dev.sock"
   echo "=== $name ==="
-  npm run -s device:emulator -- --image "$IMG" --emulator "$EMU" --dir "$dir" --dsp --settle 25 -- bash -c "
+  npm run -s device:emulator -- --image "$IMG" --emulator "$EMU" --dir "$dir" --settle 25 -- bash -c "
     set -e
     SOCK='$dir/share.sock'
     DEV='$dir/dev.sock'
