@@ -1,0 +1,8 @@
+{
+ "schema": 1,
+ "subscribe": [
+  {"event": "ev_banks_load", "fn": "pm_ev_banks_load", "order": 50},
+  {"event": "ev_project_reloaded", "fn": "pm_ev_project_reloaded", "order": 50},
+  {"event": "ev_project_new", "fn": "pm_ev_project_new", "order": 50}
+ ]
+}

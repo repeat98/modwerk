@@ -1,0 +1,1 @@
+Sync: after a sync, the result lists USB Audio and any module marked High or Heavy CPU and says they are for the studio, not for live, since they can drop out or crackle when a pattern gets busy. Before a gig, switch them off in PROJECT › MODWERK › MODULES on the Octatrack or sync a set without them.

@@ -441,6 +441,13 @@ int main(void)
     CHECK(isrs == 1u);
     modwerk_usb_function_frame(), modwerk_usb_function_frame();  /* the frame interrupt's block */
     CHECK(frames == 2u && isrs == 1u && !locked);
+    /* What the host streams, from the function's endpoint as the function enables it (status.c's CPU booking). */
+    { uint32_t ctrl = UF_REG(CTRL3);
+      CHECK(status(1) == 1u);
+      UF_REG(CTRL3) = 0x00080008u; CHECK(modwerk_usb_function_streams() == 0u);   /* typed, not enabled: no stream */
+      UF_REG(CTRL3) = 0x00880008u; CHECK(modwerk_usb_function_streams() == 1u);   /* to the host */
+      UF_REG(CTRL3) = 0x00880088u; CHECK(modwerk_usb_function_streams() == 3u);   /* and from it */
+      UF_REG(CTRL3) = ctrl; }
     /* A format selected on the panel changes both descriptors and the producer
      * only while detached. A class-only host can finish this reconnect. */
     static uint8_t choices[2][BLOCK];

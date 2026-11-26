@@ -249,7 +249,9 @@ export interface OctatrackDiagnostic {
   step?: DiagnosticSyncStep
   reconnect?: typeof TRIAL_RECONNECT_FAILURES[number]
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
-   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+   * received, refusals, bus resets, data stages primed, completed and abandoned; from 26 November 2026 a seventh entry,
+   * the last completed data stage's descriptor status byte (0x40 halted, 0x20 data buffer error, 0x08 transaction error),
+   * as it stands after the sync: it belongs to this sync only when the completed count rose. */
   usb?: number[]
   /** Offset into the staged package (CHUNK only). Remaining bytes refer to the entire EP0 OUT frame. */
   upload?: { command: StagingCommand; chunkOffset?: number; remainingBytes?: number }

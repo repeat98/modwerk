@@ -63,3 +63,46 @@ it('saves the fingerprint of a successfully processed empty review', async () =>
   await import('./act.mjs')
   expect(bot).toHaveBeenCalledWith('/state', 'PUT', { fingerprint: 'a'.repeat(64) })
 })
+
+it('holds back a merge from the light lane, drops a waiting ask that closed, and saves what the pass saw', async () => {
+  writeFileSync(join(dir, 'proposals.json'), JSON.stringify({ actions: [{ kind: 'merge', number: 5, head: 'a1', summary: 'Merge', lane: 'light' }], items: { p5: 'abc' } }))
+  const waitingAsk = { id: 'a'.repeat(16), status: 'pending', target: 7, payload: { kind: 'merge', pin: { head: 'h1' } } }
+  bot.mockImplementation(async path => path === '/actions/recent?hours=1' ? { actions: [waitingAsk] } : path === '/todos' ? { todos: [] } : path === '/actions/due' ? { actions: [] } : {})
+  await import('./act.mjs')
+  expect(bot).not.toHaveBeenCalledWith('/actions', 'POST', expect.anything())
+  // The mocked GitHub knows no open #7.
+  expect(bot).toHaveBeenCalledWith('/actions/' + waitingAsk.id + '/expire', 'POST', { result: 'it was closed in the meantime' })
+  expect(bot).toHaveBeenCalledWith('/state', 'PUT', { fingerprint: 'a'.repeat(64), items: '{"p5":"abc"}' })
+})
+
+it('tells the owner at once when a source is down, and retires the to-do when it is back', async () => {
+  writeFileSync(join(dir, 'proposals.json'), '{"actions":[]}')
+  let todos = []
+  bot.mockImplementation(async (path, method, body) => {
+    if (path === '/todos' && method === 'POST') todos = body.todos
+    return path === '/todos' ? { todos } : path === '/actions/due' ? { actions: [] } : {}
+  })
+  vi.stubEnv('BOT_DOWN', 'Discord')
+  await import('./act.mjs')
+  expect(todos).toMatchObject([{ urgent: true, note: 'Maintenance bot: Discord could not be read; the rest of the pass ran' }])
+  const [alert] = todos
+  vi.stubEnv('BOT_DOWN', '')
+  vi.resetModules()
+  await import('./act.mjs')
+  expect(bot).toHaveBeenCalledWith('/todos/' + alert.id + '/status', 'POST', { status: 'dropped' })
+})
+
+it('adds what each lane read to this week’s count, beside last week’s', async () => {
+  writeFileSync(join(dir, 'proposals.json'), JSON.stringify({ actions: [], usage: { hard: { tokens: 400, out: 9 }, light: { tokens: 100, out: 1 } } }))
+  let usage = JSON.stringify({ week: '2000-01-03', hard: { runs: 2, tokens: 50, out: 5 } })
+  bot.mockImplementation(async (path, method, body) => {
+    if (path === '/state' && method === 'PUT' && body.usage) usage = body.usage
+    return path === '/state' ? { usage } : path === '/todos' ? { todos: [] } : path === '/actions/due' ? { actions: [] } : {}
+  })
+  await import('./act.mjs')
+  const first = JSON.parse(usage)
+  expect(first).toMatchObject({ hard: { runs: 1, tokens: 400, out: 9 }, light: { runs: 1, tokens: 100, out: 1 }, last: { hard: { runs: 2, tokens: 50, out: 5 } } })
+  vi.resetModules()
+  await import('./act.mjs')
+  expect(JSON.parse(usage)).toMatchObject({ week: first.week, hard: { runs: 2, tokens: 800 }, last: { hard: { runs: 2 } } })
+})

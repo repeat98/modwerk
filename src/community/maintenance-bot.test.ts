@@ -114,6 +114,27 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/actions/due')).json()).actions).toEqual([])
   })
 
+  it('keeps the owner’s reply to an action as a lesson, lists and forgets it, and ignores anyone else', async () => {
+    const { bot, hook, sent } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'window', { kind: 'shout_reply', summary: 'Shoutbox: Tell a member NRPN is not a module yet', windowHours: 1 })] })
+    const message = sent.find(item => item.method === 'sendMessage')!, id = 901
+    expect(message.body.text).toContain('Shoutbox: Tell a member NRPN')
+    const say = (text: string, chat = Number(CHAT), reply?: number) => hook({ message: { text, chat: { id: chat }, ...(reply ? { reply_to_message: { message_id: reply } } : {}) } })
+    await say('feature requests go to the forum, never answer them in the shoutbox', 1, id)
+    expect((await (await bot('/lessons')).json()).lessons).toEqual([])
+    await say('  feature requests go to the forum,\n never answer them in the shoutbox ', Number(CHAT), id)
+    expect((await (await bot('/lessons')).json()).lessons).toEqual([{ kind: 'shout_reply', summary: 'Shoutbox: Tell a member NRPN is not a module yet', why: 'feature requests go to the forum, never answer them in the shoutbox' }])
+    await say('/lessons')
+    expect(sent.at(-1)!.body.text).toBe('1. feature requests go to the forum, never answer them in the shoutbox\n   on: Shoutbox: Tell a member NRPN is not a module yet\n/forget <number> removes one.')
+    await say('not one of yours', Number(CHAT), 5)
+    expect(sent.at(-1)!.body.text).toContain('Reply to one of my action messages')
+    await say('/forget 1')
+    expect((await (await bot('/lessons')).json()).lessons).toEqual([])
+    // The weekly usage record travels in the state like the fingerprint.
+    await bot('/state', 'PUT', { usage: '{"week":"2026-11-23"}' })
+    expect((await (await bot('/state')).json()).usage).toBe('{"week":"2026-11-23"}')
+  })
+
   it('pauses and resumes from Telegram', async () => {
     const { bot, hook, sent } = await fixture()
     await bot('/actions', 'POST', { actions: [action('e'.repeat(16), 'notify')] })
@@ -169,6 +190,33 @@ describe('maintenance bot ledger', () => {
     // A finished to-do stays finished when the bot proposes the same work again.
     await bot('/todos', 'POST', { todos: [todo] })
     expect((await (await bot('/todos')).json()).todos.map((row: { id: string }) => row.id)).toEqual(['8'.repeat(16)])
+  })
+
+  it('shares to-dos about an issue or pull request as wanted tasks anyone can take, and keeps the others private', async () => {
+    const { bot, db } = await fixture()
+    const tasks = () => db.prepare("SELECT topic_key,body,priority,ended_reason FROM agent_messages WHERE user_id='tars' AND kind='wanted' AND topic_kind='issue' ORDER BY topic_key").all() as { topic_key: string; body: string; priority: string; ended_reason: string | null }[]
+    const todo = (id: string, target: number, command: string, note: string, urgent = false) => ({ id: id.repeat(16), target, command, note, urgent })
+    await bot('/todos', 'POST', { todos: [
+      todo('1', 1680, '/modwerk-fix-issue 1680', 'Bar LED never green on MKII over USB; only ever run on an MKI', true),
+      todo('2', 1763, '/modwerk-review-prs 1763', 'Needs an emulator run of the link'),
+      todo('3', 0, '/modwerk-discord', 'a tester asks about fader CPU spikes'),
+      todo('4', 1900, '/modwerk-fix-issue 1900', 'see src/engine/assets/x for the table'),
+    ] })
+    expect(await (await bot('/todos/share', 'POST')).json()).toEqual({ shared: 2 })
+    await bot('/todos/share', 'POST')
+    // Once each. The Discord one and the one the board's text rules refuse stay in the owner's list.
+    expect(tasks()).toEqual([
+      { topic_key: '1680', body: 'Bar LED never green on MKII over USB. only ever run on an MKI. To do it: /modwerk-fix-issue 1680.', priority: 'high', ended_reason: null },
+      { topic_key: '1763', body: 'Needs an emulator run of the link. To do it: /modwerk-review-prs 1763.', priority: 'normal', ended_reason: null },
+    ])
+    // A task whose pull request merged finishes its to-do; a to-do that is settled ends its task.
+    db.prepare("UPDATE agent_messages SET ended_at='2026-11-27T10:00:00.000Z',ended_reason='merged' WHERE topic_key='1680'").run()
+    db.prepare("UPDATE maintenance_bot_todos SET status='dropped' WHERE target=1763").run()
+    await bot('/todos/share', 'POST')
+    expect(db.prepare("SELECT status FROM maintenance_bot_todos WHERE target=1680").get()).toEqual({ status: 'done' })
+    expect(tasks().map(task => task.ended_reason)).toEqual(['merged', 'administrator'])
+    await bot('/todos/share', 'POST')
+    expect(tasks().length).toBe(2)
   })
 
   it('answers, closes and releases on the agent board as the owner, through the board’s own rules', async () => {
@@ -312,6 +360,24 @@ describe('maintenance bot ledger', () => {
     for (let i=0;i<2;i++) expect(await (await bot('/merge/reviewed','POST',body)).json()).toEqual({merged:true,sha:merged})
     expect(github).toHaveBeenCalledTimes(3)
     expect(db.prepare("SELECT status,result,payload_json FROM maintenance_bot_actions WHERE kind='review_merge'").get()).toMatchObject({ status:'done',result:merged,payload_json:JSON.stringify(body) })
+  })
+
+  it('drops a waiting action that can no longer happen, starts a waiting ask the policy now runs at once, and buzzes only for asks', async () => {
+    const { bot, sent, db } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'ask'), action('b'.repeat(16), 'window', { windowHours: 1 }), action('c'.repeat(16), 'ask', { kind: 'approve_run' })] })
+    expect(sent.filter(item => item.method === 'sendMessage').map(item => item.body.disable_notification)).toEqual([false, true, false])
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/expire', 'POST', { result: 'it was closed in the meantime' })).status).toBe(200)
+    expect(sent.at(-1)).toMatchObject({ method: 'editMessageText', body: { text: '➖ Dropped: #7 Merge the thing (it was closed in the meantime)' } })
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/expire', 'POST', { result: 'again' })).status).toBe(409)
+    // The same proposal, now a notice: the waiting ask runs. A stopped one stays stopped.
+    await bot('/actions', 'POST', { actions: [action('c'.repeat(16), 'notify', { kind: 'approve_run' })] })
+    expect((await (await bot('/actions/due')).json()).actions.map((row: { id: string }) => row.id)).toEqual(['c'.repeat(16)])
+    db.prepare("UPDATE maintenance_bot_actions SET status='vetoed' WHERE id=?").run('c'.repeat(16))
+    await bot('/actions', 'POST', { actions: [action('c'.repeat(16), 'notify', { kind: 'approve_run' })] })
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+    // The map of what the last pass saw travels with the fingerprint.
+    await bot('/state', 'PUT', { items: '{"p7":"abc"}' })
+    expect((await (await bot('/state')).json()).items).toBe('{"p7":"abc"}')
   })
 
   it('keeps the fingerprint and splits long reports', async () => {
