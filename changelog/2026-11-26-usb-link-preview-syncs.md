@@ -1,0 +1,1 @@
+Development: the USB link preview (?preview=usb-link) syncs a set again. Its pretend Octatrack now answers as the published base does (loader ABI 10, whole-set syncs), so the Sync dialog no longer asks for a base update before every sync that adds modules.
