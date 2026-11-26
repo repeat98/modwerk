@@ -45,6 +45,15 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
 
 Four instances on one core take about half of it in the emulator (1,582 of 3,120 static), which leaves the other half to that core's four FX1 slots and its stock effects. On the unit the base admits by the measured frame and DSP cost, not by this figure: three instances on core 1 beside the stock effects peaked at 88.4 % of the core, and it refused a fourth.
 
+### perf:audit, 0.2.0 (`npm run perf:audit -- check sdk/octatrack/modules/midiverb/evidence/performance.json --stamp`, 26 Nov 2026, emulator figures)
+
+| Check | Result |
+| --- | --- |
+| record | dsp record for midiverb@0.2.0-experimental |
+| cycles | 4 x 325.1 = 1300.4 of 3120 per sample per core (42%), measured 330.4 per instance |
+| stock benchmark | 330.4 vs DARK REV 242.38 (1.36x); the dearest stock effect is 330.94 |
+| stress | 4 per core, eight tracks, 3 LFOs and 12 locked slots, 2 s, no clobber, no hang |
+
 ## Stock flows
 
 Not tested.
