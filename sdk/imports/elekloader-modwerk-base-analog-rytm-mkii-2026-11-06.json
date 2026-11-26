@@ -14,7 +14,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "0000000000000000000000000000000000000000",
+        "commit": "b805d79faa1fa8e4ba0705404c94a73e03099a16",
         "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-1f06d2b4.elemod"
       }
     },
@@ -28,7 +28,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "0000000000000000000000000000000000000000",
+        "commit": "b805d79faa1fa8e4ba0705404c94a73e03099a16",
         "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-c88a39b4.elemod"
       }
     },
@@ -42,7 +42,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "0000000000000000000000000000000000000000",
+        "commit": "b805d79faa1fa8e4ba0705404c94a73e03099a16",
         "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-0999d0db.elemod"
       }
     }
