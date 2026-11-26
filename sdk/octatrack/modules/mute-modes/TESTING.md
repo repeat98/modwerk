@@ -1,6 +1,47 @@
 # Mute Modes measurements
 
-Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1, 0.2.2 and 0.2.3 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0 to 0.2.4 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+
+## 0.2.4: Mute Modes rests while MUTE MODE is OT (25 and 26 November 2026)
+
+- **The change.** `mm_in_use` answers the base's `ev_in_use`, which the base asks once a UI tick (`runtime.json`, order 50). While GATE is 0 (MUTE MODE OT, the default) it answers 0, after doing `pre`'s OT path itself (one `clr.w` of UNHELD and SHADOW), so a track still muted when MUTE MODE leaves OT is held as before (`p1_key` / `p1_hold`) when the module wakes at the next tick. OTFX, OTFX-T, DT-T and any unknown value answer 1, as `pre` treats them. `runtime.json` lists five detours as `"rests"` (`0x40004dc6`, `0x40006844`, `0x4000f4dc`, `0x4000d498`, `0x40004c72`): while the module answers 0 the base skips its handlers and puts stock's bytes back under them. `fresh_bind` (`0x40006820`) is not one, as `ev_voice_bind` replaces it, and the PERSONALIZE table pointer and count sites never rest, so MUTE MODE's row stays and can always be switched back. At most 5 instructions a UI tick. 0.2.3 cost about a point of the frame interrupt at rest, among the five modules that still did.
+- **Source.** `patch_softmute.s` and `runtime.json` change; `patch_mutemode.s` and `manifest.py` do not. They are byte for byte `modwerk-modules/mute-modes/` at `72d115f01299ce518dc4ada580b1adde96813e89`, the head of the owner's pull request Zac-Kyoti/octatrack-kyoti-fw#5 (branch `mute-modes-0.2.4-rest` of repeat98/octatrack-kyoti-fw). That pull request is **not merged**. The owner waived the author's upstream merge for this version on 26 November 2026, so `sdk/imports/mute-modes-72d115f.json` pins the pull request's head, not the author's main.
+- **Native units unchanged.** The new code assembles only under `MODWERK_EVENTS`, which the native build never defines. Assembled from 0.2.3's and 0.2.4's `patch_softmute.s` with `m68k-elf-as -mcpu=5475` (an empty `remix.inc`), the plain unit (996 bytes) and the SC_KEY unit (1,106 bytes) disassemble identically, relocations included. The events build grows from 1,148 to 1,172 bytes. So `evidence/probes.json`, `evidence/source-identity.json` and the ot_emu load and stress record (`evidence/performance.json`, measured 19 November 2026 on 0.2.3's native image) describe 0.2.4's native code as well. The record is carried to this version unstamped, and the owner's approval binds it with the source.
+- **Package.** `7542f10c56b431761bdd9b4f44a7a3ccb6d4851f31e2c4bb519281dd5d0b6b8c` (3,026 bytes). It is rebuilt with `scripts/build-modules-isolated.sh` from this branch and imported. It is the package the 0.8.2 base admits as its third reviewed Mute Modes table owner, beside 0.2.2 and 0.2.3, with declaration `64253fe3…` (tables at 1,412, 1,480 and 1,548, `module-adapters/table-owners/mute-modes/0.2.4/`). Earlier bases have no table-owner admission for a package with resting sites, so 0.2.4 needs base 0.8.2 or newer.
+
+### Owner's measurements (MKII, 25 November 2026)
+
+Octatrack MKII, OS 1.40C, the owner's unit. A development twin of base 0.8.1 (`eb667962` with `--dev`, identity `493c9cc5dbcb6351…`) was booted from RAM. It admits Mute Modes 0.2.2, 0.2.3 and this package `7542f10c` as table owners. Every trial rolled back, and nothing was flashed.
+
+- **At rest** (`npm run device:price`, the project as the twin booted it, pattern C04 playing, MUTE MODE OT, three readings of 8 s each state), against the same scene without the module:
+
+  | Package | Frame interrupt at rest | CPU meter at rest |
+  |---|---|---|
+  | 0.2.3 (`d460c7e2`) | +0.9 (32.2 → 33.1 %) | +0.9 |
+  | 0.2.4 (`7542f10c`) | +0.0 (32.2 → 32.2 %) | +0.2 |
+
+  No render was skipped. `evidence/cpu-price.json` is that run's 0.2.4 result. The tool's own price writer (`writePrice`, as `--write` would have done) wrote it from the run's saved output, so `resources.cpuPrice` is now 0. In OTFX, OTFX-T and DT-T the module is awake and costs what 0.2.3 did: +1.7 on the author's MKI, nothing muted (0.2.3 below).
+- **Wake and rest.** The same twin and package, on a trial, with C04 playing. T1 was muted with [FUNC] + [T1], then MUTE MODE was changed in PERSONALIZE by keys over USB. The rest site `0x40004dc6` was read 300 ms after each change. Stock's bytes there mean the module is resting; its jump means it is awake.
+
+  | MUTE MODE | GATE | Rest site | T1 |
+  |---|---|---|---|
+  | OT (start) | 0 | stock's bytes: resting | muted |
+  | OTFX | 3 | jump: awake | still muted |
+  | OTFX-T | 1 | jump: awake | still muted |
+  | DT-T | 2 | jump: awake | still muted |
+  | OT again | 0 | stock's bytes: resting again | muted |
+
+  There were no stalls, errors or crashes (the base's counters did not change), and the trial rolled back cleanly.
+- **UI tick.** On a development twin of base 0.8.2 with the UI-tick caching (`cd450fed…`), `profile:3` (stopped) with the package on a trial: the module UI ticks took 117.8 µs, against 116.4 and 115.5 µs with no module before and after, about +1.8 µs (0.2.3: 119.3 µs).
+
+### Not run
+
+- **A listen.** Nobody has listened that a muted track stays silent right after a mode change. "Still muted" above is the mute word, not the sound. There is no per-track level reading over USB, so this needs an ear on the unit. `mm_in_use`'s OT clear is what keeps it working, as in 0.2.2's OT-exit hold (`pre`'s own clear, which the author's MKI passed on 3 November).
+- **The test procedure on the release package with released base 0.8.2** (`device:qualify`), a power cycle, removal, and the release cost procedure on this version.
+- **An MKI**, a muted SIDE-CHAIN key track, and a machine that asks `ev_trig_muted` while the module wakes.
+- **Static cycle count of `mm_in_use`.** It is five instructions on the UI tick and none in the frame interrupt, but no static count was made.
+
+The owner approved the release without these (`sdk/approvals/mute-modes-build-approval.json`). The screens are unchanged, so 0.2.3's five LCD captures stay.
 
 ## 0.2.3: Mute Modes answers `ev_trig_muted` (16 November 2026)
 
