@@ -102,6 +102,15 @@ static uint32_t recent_mean(void)
  * played, kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
 static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the longest as it last stood playing; the newest */
 static uint32_t frame_longest(void);
+/* A USB stream (#2251): while a computer records from the unit or plays into it, the USB interrupt runs inside the
+ * frame interrupt's renders and stretches every frame (owner's MKII, a 0.8.3 twin, USB Audio 0.4.1, 26 November 2026:
+ * the frame interrupt's mean 24.5 to 43.1 % on an empty pattern with 16 channels, 37.6 to 61.9 % with UNGEMACH
+ * trigging on T1, whose render grew to 73.8 % of a frame and was dropped once in 6 s; 37.4 to 53.8 % with 2). A
+ * computer opens or closes its stream whenever it likes, so what the reserve predicts is stretched by the stream that
+ * runs now (stream_factor, per mille, 1000 with none), and the figures kept from a play are kept as they would be
+ * without the stream they were played with: a stream that has ended gives its room back at once. */
+static uint32_t stream_factor(void);
+static uint32_t scaled(uint32_t v, uint32_t g) { return v * g / 1000u; } /* per mille: no overflow below 4,000 % */
 /* Module picks and removals since the frame readings last held them (machine_registry.c, the effect check below), per
  * mille of a frame: a pick made stopped is judged with every one before it, and a machine swapped out and back stopped
  * by what it adds, once. Eight readings played after the last change, the share holds them all; until then the kept
@@ -150,9 +159,10 @@ static void cpu_note_played(void)
     } else {
         unsigned now = modwerk_machine_pattern();
         if (now != reading_pattern) play_readings = 0, reading_pattern = now, played_since = 0; /* four seconds of this pattern first */
-        if (frame_newest > played_since) played_since = frame_newest;
+        uint32_t g = stream_factor();
+        if (frame_newest * 1000u / g > played_since) played_since = frame_newest * 1000u / g;
         if (++adjust_readings >= 8u) frame_adjust = 0;
-        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_pattern = now, note_stock();
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest() * 1000u / g, played_pattern = now, note_stock();
     }
     if (booked != booked_seen) booked_moved = 0;
     booked_seen = booked;
@@ -203,6 +213,8 @@ static uint32_t measured_load(uint32_t gone) /* `gone`: what a pick's predecesso
     int32_t adjust = frame_adjust - (int32_t)gone, kept = (int32_t)(elsewhere ? 0u : frame_played) + adjust, now;
     if (reading_pattern == modwerk_machine_pattern() && (int32_t)played_since - (int32_t)gone > kept)
         kept = (int32_t)played_since - (int32_t)gone;              /* played with the picks since: higher, so honest */
+    int32_t g = (int32_t)stream_factor();                          /* kept without a stream: stretched by the one now */
+    kept = kept * g / 1000, adjust = adjust * g / 1000, gone = gone * (uint32_t)g / 1000u;
     if (modwerk_machine_stopped()) now = (int32_t)frame_newest + (adjust > 0 ? adjust : 0);
     else now = (int32_t)frame_longest() - (int32_t)gone; /* playing, the last four seconds hold what leaves */
     int32_t most = kept > now ? kept : now;
@@ -562,6 +574,32 @@ static uint32_t tuned(uint32_t id, uint32_t compiled)
     uint32_t value, unused;
     return modwerk_status_module_cost(id, &value, &unused) ? value : compiled;
 }
+/* What an open stream adds to the frame interrupt's work, per mille of it: to a computer, and with the computer also
+ * playing into the unit (INPUTS). On the owner's MKII a 16-channel stream stretched a playing Part's frames 1.19 to 1.23
+ * times on one boot and 1.63 to 1.76 times on another (2 channels: 1.43); playing into the unit added nothing measurable
+ * on top. Both are the 1.65 a Part dropped renders at. The set's `stock` carries newer ones.
+ * shortcut: one figure for every stream; by channel count, or measured live as the stream opens, once picks made beside
+ * a light stereo stream are refused for it. */
+#define STREAM_ID 0xffffffe0u
+#define STREAM_DUPLEX_ID 0xffffffe1u
+#ifndef MW_STREAM
+#define MW_STREAM 650u
+#endif
+#ifndef MW_STREAM_DUPLEX
+#define MW_STREAM_DUPLEX 650u
+#endif
+#ifdef MODWERK_HOST
+unsigned modwerk_test_streams;
+static unsigned modwerk_usb_function_streams(void) { return modwerk_test_streams; }
+#else
+__attribute__((weak)) unsigned modwerk_usb_function_streams(void) { return 0; } /* usb_function.c, when the base has it */
+#endif
+static uint32_t stream_factor(void)
+{
+    unsigned streams = modwerk_usb_function_streams();
+    if (!streams) return 1000u;
+    return 1000u + (streams & 2u ? tuned(STREAM_DUPLEX_ID, MW_STREAM_DUPLEX) : tuned(STREAM_ID, MW_STREAM));
+}
 static uint32_t frame_line(void)
 {
     uint32_t line = tuned(FRAME_LINE_ID, 0u); /* a line of 0 would refuse every pick */
@@ -653,7 +691,7 @@ unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], cons
 volatile uint32_t mw_frame_hushes; /* for diagnostics: each pattern that began with modules gone (diag.c's `brake`, flagged) */
 fx_set modwerk_machine_deadline_effects(void); /* machine_registry.c: effects that can bypass dry (ev_frame_deadline's rest) */
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
-static unsigned hush_notice_left, hush_playing, hush_count;
+static unsigned hush_notice_left, hush_playing, hush_count, hush_usb; /* hush_usb: without the USB stream nothing would go */
 static char hush_names[2][17];
 static void hush_name(unsigned n, const char *name)
 {
@@ -685,8 +723,10 @@ static unsigned hush_pick(unsigned p, unsigned most, unsigned tracks, unsigned i
         fc[j] += c;
     }
     unsigned hushed = 0, count = 0;
+    uint32_t g = stream_factor();
+    if (named) hush_usb = g > 1000u && scaled(load, g) > HUSH_CEILING && load <= HUSH_CEILING;
     for (unsigned i = 0; i < 8u; ++i) fx->w[i % MODWERK_FX_WORDS] = 0;
-    while (load > HUSH_CEILING) {
+    while (scaled(load, g) > HUSH_CEILING) {
         unsigned best = 16u, machine = 0; uint32_t most_cost = 0;
         for (unsigned k = 0; k < nm; ++k) if (mc[k] > most_cost) most_cost = mc[k], best = k, machine = 1;
         if (!machine) for (unsigned k = 0; k < nf; ++k) if (fc[k] > most_cost) most_cost = fc[k], best = k;
@@ -725,7 +765,7 @@ uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
 }
 uint32_t modwerk_status_frame_load(void)
 {
-    uint32_t measured = measured_load(0), stock = reserved(8u, 16u, 0);
+    uint32_t measured = measured_load(0), stock = scaled(reserved(8u, 16u, 0), stream_factor());
     return measured > stock ? measured : stock;
 }
 /* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
@@ -1469,7 +1509,7 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
  * the DSP; a CPU row, solid what the unit takes now and shaded what the pick adds, both of what fits (`whole`), its
  * figure the now, never past 100 %; for a module only on the ColdFire, what makes room, or PART IS BUSY (`busy`) when
  * the Part's own sound is why. `used`, `add`, `whole` in the same unit; `dsp` the pick's DSP cycles, 0 none. */
-enum { WHY_CHANGE, WHY_PART, WHY_UNUSED }; /* CPU FULL's last line (`busy`) */
+enum { WHY_CHANGE, WHY_PART, WHY_UNUSED, WHY_USB }; /* CPU FULL's last line (`busy`) */
 static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t whole, unsigned busy, uint32_t dsp)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
@@ -1589,23 +1629,25 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     /* A further instance on a track that trigs brings its own trig starts: about 2.5 % over its each (a second Amiga on
      * C03 added 4.3, 5.7 and 7.4 against its each of 4, twins 27, 30 and 29). */
     if (machine && further && slot < 8u && modwerk_machine_trigging() >> slot & 1u) add += MEASURED_SAMPLE;
-    uint32_t measured = measured_load(gone) + add, line = frame_line();
+    uint32_t g = stream_factor(), stretched = scaled(add, g); /* what it takes beside a USB stream that runs now */
+    uint32_t measured = measured_load(gone) + stretched, line = frame_line();
     /* A machine's first instance on a track that plays a sample takes that render's place in the measured frame too:
      * 2.5 %, measured (twin 27, C03's T1: Amiga added 24.1 against its curve's 26.6 on an empty track), a further one
      * nothing (the second added 4.3 against its each of 4; a machine's own trig starts cost about the sample's). The
      * reserve's 7 % is the stacked ladder's, measured there. shortcut: one figure for every machine. */
-    if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > MEASURED_SAMPLE ? measured - MEASURED_SAMPLE : 0u;
+    if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > scaled(MEASURED_SAMPLE, g) ? measured - scaled(MEASURED_SAMPLE, g) : 0u;
     uint32_t sample, base = reserved(machine ? slot : 8u, machine ? 16u : slot, &sample);
     uint32_t net = !machine || further ? add : add > sample ? add - sample : 0u; /* a first machine in a sample's place */
-    uint32_t stock = base + net, load = measured > stock ? measured : stock;
+    uint32_t stock = scaled(base + net, g), load = measured > stock ? measured : stock;
     if (load < line) return 0;
-    uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
+    uint32_t before = load > stretched ? load - stretched : 0u, rest = modwerk_machine_rest_booked();
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u), ++mw_cpu_track_refusals[slot & 7u];
-    uint32_t reserve = stock_reserve(0), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
-    /* Why, in the box: modules installed and used nowhere, when their cost at rest is more than the pick's and what
-     * leaves no room; the Part's own sound; else the Part's modules, one of which to change. */
-    unsigned why = rest > add && load - rest < line ? WHY_UNUSED : before > reserve + modules ? WHY_PART : WHY_CHANGE;
-    cpu_refusal_box(slot, machine, label, before, add, line, why, dsp);
+    /* Why, in the box: a USB stream the pick would fit without; modules installed and used nowhere, when their cost at
+     * rest is more than the pick's and what leaves no room; the Part's own sound; else the Part's modules, one of which
+     * to change. */
+    unsigned why = g > 1000u && load * 1000u / g < line ? WHY_USB : rest > add && load - scaled(rest, g) < line ? WHY_UNUSED :
+                   before > scaled(base, g) ? WHY_PART : WHY_CHANGE;
+    cpu_refusal_box(slot, machine, label, before, stretched, line, why, dsp);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1695,7 +1737,8 @@ static void refused_box(unsigned char *frame)
         if (refused_dsp_add) /* as DSP FULL draws its DSP row */
             label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, refused_dsp + refused_dsp_add, refused_dsp_add), percent(89u, 34u, refused_dsp + refused_dsp_add);
         label(23u, y, "CPU"), share_bar(frame, 45u, y, 40, 6, cpu + part, part), percent(89u, y, cpu);
-        if (!refused_dsp_add) label(23u, 42u, refused_busy == WHY_UNUSED ? "UNUSED MODULES" : refused_busy == WHY_PART ? "PART IS BUSY" : "CHANGE ONE FIRST");
+        if (!refused_dsp_add) label(23u, 42u, refused_busy == WHY_USB ? "USB AUDIO STREAM" : refused_busy == WHY_UNUSED ? "UNUSED MODULES" :
+                                              refused_busy == WHY_PART ? "PART IS BUSY" : "CHANGE ONE FIRST");
         return;
     }
     const int32_t add = (int32_t)refused[4];
@@ -1869,7 +1912,7 @@ static void status_draw(unsigned char *frame)
         fill(frame, 13u, 18u, 114u, 45u, 0);
         outline(frame, 13u, 18u, 114u, 45u);
         static char more[17];
-        centred(23u, "PATTERN IS BUSY");
+        centred(23u, hush_usb ? "USB AUDIO STREAM" : "PATTERN IS BUSY");
         centred(34u, hush_names[0]);
         if (hush_count > 2u) {
             unsigned n = hush_count - 1u, i = 0;

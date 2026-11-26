@@ -30,4 +30,6 @@ void modwerk_usb_function_frame(void);
  * control endpoint; [5]-[7] 0. */
 #define MODWERK_USB_FUNCTION_STATUS_BYTES 8u
 unsigned modwerk_usb_function_status(uint8_t *out);
+/* What the host streams now: bit 0 to it (EP3 IN), bit 1 from it (EP3 OUT); status.c books it (#2251). */
+unsigned modwerk_usb_function_streams(void);
 #endif

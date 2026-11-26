@@ -449,6 +449,15 @@ void modwerk_usb_function_frame(void)
     (void)uf_raise(MODWERK_EV_USB_FRAME);
 }
 
+/* What the host streams on the function's endpoint now, for status.c's CPU booking (#2251): bit 0 to the host (EP3 IN),
+ * bit 1 from it (EP3 OUT). A function enables its endpoint while the host has its stream open (USB Audio: alternate
+ * setting 1, a DAW or macOS using the unit) and disables it when the host closes it. */
+unsigned modwerk_usb_function_streams(void)
+{
+    uint32_t ctrl = row_record && live_serial ? UF_REG(UF_CTRL3) : 0u;
+    return (ctrl & 0x00800000u ? 1u : 0u) | (ctrl & 0x80u ? 2u : 0u);
+}
+
 unsigned modwerk_usb_function_status(uint8_t *out)
 {
     out[0] = state == UF_SETTLED && dirty ? UF_WAIT : state;
