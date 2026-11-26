@@ -6,8 +6,11 @@
 import { createHash } from 'node:crypto'
 
 export const OWNER = 'repeat98'
-/** Hours an action waits for the owner's Stop before it runs. The owner's own pull request merges after `ownMerge`. */
-export const WINDOW_HOURS = { merge: 12, ownMerge: 1, decision: 24, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
+/**
+ * Hours an action waits for the owner's Stop before it runs. Someone who asked for help hears back within the hour
+ * (owner, 26 November 2026); the owner's own pull request merges after `ownMerge`.
+ */
+export const WINDOW_HOURS = { merge: 12, ownMerge: 1, decision: 24, close: 12, comment: 1, review: 1, board_reply: 1, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
 const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release', 'discord_reply', 'forum_reply', 'shout_reply', 'approve_run'])
 const LABELS = /^(bug|documentation|duplicate|enhancement|question|invalid|wontfix|configuration|accessibility|good first issue|help wanted|needs-work|needs-info|priority:P[123]|module:[a-z0-9-]+)$/
 /**
