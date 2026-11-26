@@ -126,7 +126,7 @@ it('names what failed, and each one\'s first error, in the last lines of the run
   // On GitHub Actions each failure is an error annotation, which the pull request's checks page shows.
   expect(check('sdk:check', false, [], { GITHUB_ACTIONS: 'true' }).stdout.trim().split('\n').slice(-2))
     .toEqual(['Failed: sdk:check', '::error title=sdk:check failed::SDK checks FAILED: test_base_bound.py'])
-})
+}, 20_000) // Six runs of the runner: over the default 5 s on a busy computer.
 
 it('stops in its first stage on a ColdFire compiler without its binutils, before the suites that sdk:check runs after', () => {
   const shims = mkdtempSync(join(tmpdir(), 'octamod-check-shims.'))
