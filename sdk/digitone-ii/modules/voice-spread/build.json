@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c",
+    "src/spread.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Wextra",
+    "-Werror"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_personalize",
+      "fn": "voice_spread_personalize",
+      "order": 50
+    },
+    {
+      "event": "ev_frame_params",
+      "fn": "voice_spread_frame",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_projdata",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:voice_spread_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "projdata:VSPR"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.12": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

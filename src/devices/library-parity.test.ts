@@ -109,11 +109,12 @@ describe('All machines library parity', () => {
     expect(html).toContain(count('—', 'downloads'))
     expect(html).not.toContain(count('0', 'downloads'))
     expect(html).toContain('Popularity counts are currently unavailable.')
-    expect(html.match(/aria-label="Build firmware for/g)).toHaveLength(5)
+    expect(html.match(/aria-label="Build firmware for/g)).toHaveLength(6)
     expect(html).toContain('href="#digitakt/configuration"')
     expect(html).toContain('href="#digitakt-ii/configuration"')
     expect(html).toContain('href="#digitone/configuration"')
     expect(html).toContain('href="#analog-rytm-mkii/configuration"')
+    expect(html).toContain('href="#digitone-ii/configuration"')
   })
 
   it('applies type and alphabetical sorting to the Digi groups', () => {

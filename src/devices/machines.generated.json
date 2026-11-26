@@ -369,14 +369,14 @@
     "order": 50,
     "name": "Digitone II",
     "family": "elektron",
-    "status": "research",
-    "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and modified builds boot on units: core-dn2 0.3's six UI events ran on a unit, and stock 1.12 restores it.",
+    "status": "preview",
+    "summary": "Experimental OS 1.12 support on the Modwerk Digitone II base (core 1.1). Voice Spread is the first module. Downloads stay disabled.",
     "steps": {
       "format": "done",
       "rebuild": "done",
       "boot": "done",
-      "core": "started",
-      "mods": "open"
+      "core": "done",
+      "mods": "done"
     },
     "stack": {
       "base": "started",

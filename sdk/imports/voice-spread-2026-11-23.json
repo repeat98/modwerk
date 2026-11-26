@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "digitone-ii/voice-spread",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-23",
+  "changes": [
+    "First release for Digitone II OS 1.12: two rows at the end of SETTINGS > PERSONALIZE spread the voices of a chord across the stereo field (VOICE SPREAD) and their filter frequencies a little apart (FILTER SPREAD)."
+  ],
+  "runtimeSourceSha256": "b163786f8922a5eee7616979f823b6c2de76a3ebe3510969b5d1c91e4977bb2f",
+  "packages": [
+    {
+      "os": "1.12",
+      "path": "sdk/imports/packages/voice-spread/voice-spread-0.1.0-experimental-os1.12.elemod",
+      "sha256": "9ce8ff19564deedd1531f60a3b4d2be3f898aab0a8e243db1d6aa20a3a17f0f5"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitone-ii/modules/voice-spread/TESTING.md",
+  "requires": []
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "First release for Digitone II OS 1.12.",
+      "VOICE SPREAD (SETTINGS > PERSONALIZE) spreads the voices of a chord across the stereo field.",
+      "FILTER SPREAD moves each voice's filter frequency a little apart.",
+      "Saved with the project; OFF restores the stock sound at once."
+    ]
+  }
+]
