@@ -52,6 +52,19 @@ extern volatile uint8_t modwerk_test_running[16];
 #define DTCN3 modwerk_test_timer
 extern uint32_t modwerk_test_modules[16]; /* the installed module ids, 0 past the end */
 static unsigned installed(uint32_t *ids, unsigned most) { unsigned n = 0; for (unsigned i = 0; i < 16u && n < most; ++i) if (modwerk_test_modules[i]) ids[n++] = modwerk_test_modules[i]; return n; }
+/* The battery copy of the current bank and stock's checks of it (test_diag.c models them). */
+extern uint8_t modwerk_test_cs1_parts[8][16], modwerk_test_cs1_patterns[16][16], modwerk_test_ui[0x16], modwerk_test_ui_saved[0x16];
+int32_t modwerk_test_settings_check(unsigned which);
+int32_t modwerk_test_validate(uint8_t *record);
+int32_t modwerk_test_stock_restore(void);
+#define SETTINGS_CHECK(i) modwerk_test_settings_check(i)
+#define CS1_PART(p, working) (modwerk_test_cs1_parts[2u * (p) + (working)])
+#define CS1_PATTERN(k) (modwerk_test_cs1_patterns[k])
+#define VALIDATE_PART(at) modwerk_test_validate(at)
+#define VALIDATE_PATTERN(at) modwerk_test_validate(at)
+#define STOCK_RESTORE() modwerk_test_stock_restore()
+#define UI_STATE modwerk_test_ui
+#define UI_SAVED modwerk_test_ui_saved
 #else
 /* Battery RAM nothing else uses: stock references nothing in 0x100f859c-0x100fff00, PLAY MODES and PLOCKS end at
  * 0x100f8f06 and fxmap.c's map starts at 0x100fe000. */
@@ -76,6 +89,22 @@ static unsigned installed(uint32_t *ids, unsigned most)
     for (unsigned i = 0; i < got; ++i) ids[i] = (uint32_t)list[8u + 24u * i] << 24 | (uint32_t)list[9u + 24u * i] << 16 | (uint32_t)list[10u + 24u * i] << 8 | list[11u + 24u * i];
     return got;
 }
+/* The power-up's battery restore (0x40025770) and what it runs, in its order: three checks of the project's settings
+ * and arrangements in battery RAM, the Part validator (0x40002318, the base's mw_validate) on each saved Part and its
+ * working copy, and the pattern validator on each of the bank's 16 patterns. Each fixes in place and returns how many
+ * values it fixed. The UI state (current track, bank, Part, pattern) is main's copy of 0x100b14cc, taken before. */
+static int32_t settings_check(unsigned i)
+{
+    return i == 0 ? ((int32_t (*)(void))0x4000fda8u)() : i == 1 ? ((int32_t (*)(void))0x4000fec8u)() : ((int32_t (*)(void))0x4001065cu)();
+}
+#define SETTINGS_CHECK(i) settings_check(i)
+#define CS1_PART(p, working) ((uint8_t *)(uintptr_t)(((working) ? 0x100a4eceu : 0x100ab196u) + 0x18b2u * (p)))
+#define CS1_PATTERN(k) ((uint8_t *)(uintptr_t)(0x1001614eu + 0x8ed8u * (k)))
+#define VALIDATE_PART(at) (((int32_t (*)(uint8_t *))0x40002318u)(at))
+#define VALIDATE_PATTERN(at) (((int32_t (*)(uint8_t *))0x4009a670u)(at))
+#define STOCK_RESTORE() (((int32_t (*)(void))0x40025770u)())
+#define UI_STATE ((volatile uint8_t *)0x80000000u)
+#define UI_SAVED ((const volatile uint8_t *)0x100b14ccu)
 #endif
 
 #define FREEZE_FRAMES 13781u /* five seconds of frames (44,100 / 16 a second): longer than a project load */
@@ -139,6 +168,38 @@ static void add_freeze(volatile struct diag_log *l)
     for (unsigned i = sizeof r->seq; i < sizeof *r; ++i) ((volatile uint8_t *)r)[i] = from[i];
     push(l, r);
 }
+/* The power-up's battery restore of the current bank (status.s mw_boot_restore, in place of main's init call of stock's
+ * 0x40025770 at 0x4001fb78, before any tick). Stock refuses the whole bank when any of its checks has a single value to
+ * fix: the bank is then never copied in nor applied, every Part and pattern of it reads as stock's empty defaults, and
+ * the next background save writes that empty bank over its working file on the card, while the project's saved copy
+ * still holds the song (OCTATRACK_HARDWARE_TRAPS.md, "The boot validates the bank before any module is back"). Testers
+ * lost their song that way at every start after a save (25 November 2026, #2201): a value stock's checks fix, kept in
+ * the saved copy, came back with each RELOAD. Here every check runs first, in stock's order, and fixes what it finds,
+ * as a file load of the same bank would (the same validators, keeping their fixes); then stock's restore finds nothing
+ * to refuse and puts the bank back. Only a battery copy with more than RESTORE_TRUSTED fixes, more like one the battery
+ * lost than one value out of range, is refused as stock refuses it. diag.h's RESTORE records what was fixed. */
+#define RESTORE_TRUSTED 64u
+static struct { uint32_t fixes, settings, parts, patterns, first; int32_t result; } restore; /* .bss, cleared at boot */
+static uint32_t fixed(int32_t n) { return n > 0 ? (uint32_t)n : 0; }
+static uint16_t sixteen(uint32_t n) { return (uint16_t)(n < 65535u ? n : 65535u); }
+int32_t modwerk_boot_restore(void)
+{
+    uint32_t settings = 0, parts = 0, patterns = 0, first = 0, n;
+    for (unsigned i = 0; i < 3u; ++i)
+        if ((n = fixed(SETTINGS_CHECK(i)))) { settings += n; if (!first) first = i + 1u; }
+    for (unsigned p = 0; p < 4u; ++p) /* stock's order: each saved Part, then its working copy */
+        for (unsigned working = 0; working < 2u; ++working)
+            if ((n = fixed(VALIDATE_PART(CS1_PART(p, working))))) { parts += n; if (!first) first = 0x100u + 2u * p + working; }
+    for (unsigned k = 0; k < 16u; ++k)
+        if ((n = fixed(VALIDATE_PATTERN(CS1_PATTERN(k))))) { patterns += n; if (!first) first = 0x200u + k; }
+    uint32_t fixes = settings + parts + patterns;
+    if (settings) /* main took the UI state before the checks ran: take it again, fixed, as the restore reads the bank there */
+        for (unsigned i = 0; i < 0x16u; ++i) UI_STATE[i] = UI_SAVED[i];
+    int32_t result = fixes > RESTORE_TRUSTED ? -1 : STOCK_RESTORE();
+    restore.fixes = fixes, restore.settings = settings, restore.parts = parts, restore.patterns = patterns, restore.first = first;
+    restore.result = result;
+    return result;
+}
 static void start(volatile struct diag_log *l)
 {
     uint32_t crashes = CRASH[0] == 0x4d574352u ? CRASH[1] : 0, stalls = STALL[0] == 0x4d575354u ? STALL[1] : 0;
@@ -155,6 +216,14 @@ static void start(volatile struct diag_log *l)
     if (crashes != l->crash_seen) add(l, DIAG_CRASH, CRASH[3], 0);
     if (stalls != l->stall_seen) add(l, DIAG_STALL, STALL[2], 0);
     l->crash_seen = crashes, l->stall_seen = stalls;
+    if (restore.fixes || restore.result) { /* the power-up's restore had something to fix (diag.h RESTORE) */
+        volatile struct diag_incident *r = slot(l);
+        bare(r, DIAG_RESTORE);
+        r->boot = l->boot, r->second = 0, r->a = restore.fixes;
+        r->cpu = sixteen(restore.settings), r->dsp0 = sixteen(restore.parts), r->dsp1 = sixteen(restore.patterns);
+        r->screen = restore.first, r->tempo24 = (uint32_t)restore.result;
+        push(l, r);
+    }
 }
 
 #ifdef MODWERK_DEV

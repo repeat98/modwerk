@@ -2,7 +2,14 @@
 | The ColdFire's idle time (status.c): main runs the init list, then spins at 0x4001fc9c for good, and that
 | spin is the idle task (Octabam's KERNEL.md: the lowest priority, run when nothing else wants the CPU).
         .text
-        .global mw_idle, mw_ts_gate, mw_delay_idle, mw_delay_read0, mw_delay_read, mw_rec_update
+        .global mw_idle, mw_ts_gate, mw_delay_idle, mw_delay_read0, mw_delay_read, mw_rec_update, mw_boot_restore
+
+| 0x4001fb78, main's init: the power-up's battery restore of the current bank (diag.c modwerk_boot_restore, which
+| calls stock's 0x40025770 itself). Displaced: jsr 0x40025770; stock goes on to 0x4001fb7e (bra 0x4001fb9e) whatever
+| it returns. A C call keeps d2-d7/a2-a6, as stock's own routine does.
+mw_boot_restore:
+        jsr     modwerk_boot_restore
+        jmp     0x4001fb7e
 
 | 0x4001fc96, main's last init call. Displaced: jsr 0x40098a2c; this spin never returns to stock's (0x4001fc9c,
 | left in place: ot_emu parks main there again after a bench call, its detoured-park convention).
