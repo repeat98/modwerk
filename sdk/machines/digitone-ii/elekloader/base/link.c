@@ -188,7 +188,7 @@ static uint8_t held_bits[KEY_IDS / 8 + 1];
 #define HELD(k) (held_bits[(k) >> 3] >> ((k) & 7) & 1)
 #define HOLD(k, on) (held_bits[(k) >> 3] = (uint8_t)((held_bits[(k) >> 3] & ~(1 << ((k) & 7))) | (!!(on) << ((k) & 7))))
 
-struct pend { uint8_t kind, id; int8_t value; };
+struct pend { uint8_t kind, id; int8_t value; uint8_t answer; };   // answer: ramboot's own YES, for the prompt
 static struct pend pend[PENDING];
 static uint32_t pend_head, pend_tail, pend_seen;
 static int pend_age;
@@ -217,7 +217,7 @@ int mw_link_held(int key)               // stock's is_key_held, and the link's h
     return panel_down(key);
 }
 
-static int post(int kind, int id, int value)
+static int post_as(int kind, int id, int value, int answer)
 {
     int32_t *m;
     if (pend_head - pend_tail >= PENDING)
@@ -227,11 +227,16 @@ static int post(int kind, int id, int value)
     m[1] = id;
     m[2] = kind == MSG_KEY ? value : (int32_t)((uint32_t)(uint8_t)value << 24);
     m[3] = 0;                           // the event's time
-    pend[pend_head % PENDING] = (struct pend){ (uint8_t)kind, (uint8_t)id, (int8_t)(kind == MSG_KEY ? value & 1 : value) };
+    pend[pend_head % PENDING] = (struct pend){ (uint8_t)kind, (uint8_t)id, (int8_t)(kind == MSG_KEY ? value & 1 : value), (uint8_t)answer };
     pend_head++;
     QUEUE_POST(UI_QUEUE(), m);
     posted_count++;
     return 1;
+}
+
+static int post(int kind, int id, int value)
+{
+    return post_as(kind, id, value, 0);
 }
 
 static int release_all(void)            // -> 1 when any key was held; one the queue cannot take now stays due
@@ -318,7 +323,7 @@ static void held_back(void)
     refused_count++;
 }
 
-static int ours(int kind, int id, int value)    // the next event the link posted? pops it if so
+static int ours(int kind, int id, int value)    // the next event the link posted? pops it if so: 2 for ramboot's YES
 {
     struct pend *p;
     if (pend_head == pend_tail)
@@ -327,7 +332,7 @@ static int ours(int kind, int id, int value)    // the next event the link poste
     if (p->kind != kind || p->id != (uint8_t)id || (kind == MSG_KEY && (value & 1) != p->value))
         return 0;
     pend_tail++;
-    return 1;
+    return p->answer ? 2 : 1;
 }
 
 static int person_at_panel(void)        // a person pressed or turned something in the last HUMAN_TICKS ticks
@@ -357,13 +362,13 @@ int mw_link_key(void *brain, char *event)
     int32_t key = *(int32_t *)(event + 12), flags = *(int32_t *)(event + 16);
     int replay = key == last_key && ticks == last_tick, person;
     (void)brain;
-    int mine = (uint32_t)key < KEY_IDS && ours(MSG_KEY, key, flags);
+    int mine = (uint32_t)key < KEY_IDS ? ours(MSG_KEY, key, flags) : 0;    // 2: ramboot's own YES
     person = (uint32_t)key < KEY_IDS && !mine && (flags & KEY_DOWN) && (!replay || panel_down(key));
     last_key = key;
     last_tick = ticks;
     if (mine) {                         // nothing the link queued reaches UPGRADE OS NOW?, a press or a release: stock
-        if (!flash_waits())             // takes the release of a YES it saw go down as the answer (on a unit, 26 Nov)
-            return 0;
+        if (!flash_waits() || mine == 2)    // takes the release of a YES it saw go down as the answer (on a unit, 26
+            return 0;                   // Nov); only ramboot's own YES, sent for the upload it checked, answers
         held_back();
         return 1;
     }
@@ -517,8 +522,8 @@ static void COLD act(const uint8_t *m, int len)
             mw_link_ramboot_due = 1;
             ramboot_ticks = 0;
             MARK[1] = DIAG_STAGE | 1;
-            post(MSG_KEY, KEY_YES, KEY_DOWN);
-            post(MSG_KEY, KEY_YES, KEY_RELEASE);
+            post_as(MSG_KEY, KEY_YES, KEY_DOWN, 1);
+            post_as(MSG_KEY, KEY_YES, KEY_RELEASE, 1);
         }
         if (status != ST_OK)
             refused_count++;

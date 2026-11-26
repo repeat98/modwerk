@@ -379,6 +379,9 @@ int main(void)
         args[2] = 256;
         upload_words[8] = 256;
         CHECK(request4(CMD_RAMBOOT, args) == ST_OK && presses_of(PANEL_YES) == yes + 1 && mw_link_ramboot_due == 1);
+        CHECK(ui_sees_key(PANEL_YES, KEY_DOWN) == 0);     // ramboot's own YES answers the prompt: stock gets both
+        CHECK(ui_sees_key(PANEL_YES, KEY_RELEASE) == 0);
+        CHECK(pend_head == pend_tail);
         upload[0] = 0;
     }
 #endif
