@@ -1,6 +1,6 @@
 # Quadraverb reverbs (draft)
 
-Status: research, 26 November 2026. A model of the DSP plays every factory program except the gated ones on the developer's computer; the memory plan is decided. Nothing here runs on an Octatrack yet.
+Status: research, 26 November 2026. A model of the DSP plays every factory program except the gated ones on the developer's computer; the memory plan is decided; every sweep, pitch shift and Leslie is read as parameters and matches the firmware exactly, and the gate's algorithm is read (its signal detector is hardware). Nothing here runs on an Octatrack yet.
 
 The goal is an FX2 effect that plays the Alesis Quadraverb's reverbs (plate, room, chamber, hall, reverse, gated) the way Midiverb I/II plays the Midiverb's programs: the original programs on a model of the original DSP. The owner's decisions (25 November 2026):
 
@@ -23,6 +23,7 @@ node tools/qv.check.mjs <rom>                   # the DSP model against the know
 node tools/dump.mjs <rom> 10 15 17              # SMALL ROOM, Concert Hall 1, SML VOCALPLATE side by side
 node tools/dump.mjs <rom> --sweep 10            # which record bytes change which DSP steps
 node tools/dis8051.mjs <rom> 61f 40             # disassemble 8051 code (any 8051 image)
+node tools/qvlfo.mjs <rom> [program ...]        # sweeps, pitch, Leslie, gate as parameters, checked against the firmware
 node tools/mv2lfo.mjs <midiverb2-rom>           # the Midiverb II's chorus/flange LFOs, run from its firmware
 ```
 
@@ -86,19 +87,72 @@ All stay finite, decay, and have left and right at the same level and uncorrelat
 
 ## Modulation
 
-The firmware rewrites parts of the running program, about 3,000 times a second per step (every 14 samples or so). 81 of the 90 factory programs are modulated:
+Read from the disassembly and checked by `tools/qvlfo.mjs`, which rebuilds every moving step from a few parameters and compares the result with the firmware's DSP program, byte for byte, after every update. **Fit: all 81 modulated programs match exactly over 10 s** (about 39,600 ticks each; 19,000 for the Leslies and VERB SHIFTER, whose ticks are longer). Facts are what the code does; what is assumed is marked.
+
+**What paces the updates.**
+- Fact: timer 0 runs in 16-bit mode and its vector (0x000b) reloads it to 0xff06, 250 machine cycles before the next overflow. Each interrupt runs one handler, chosen per configuration through internal RAM 0x60/0x61, unless the main loop has set bit 2ah.0 while it rewrites the program. Call one handler run a *tick*. Before the handler, the interrupt writes 1 to bytes 0x17f and 0x180; the main loop does the same after its own rewrites, so it looks like a "program changed" strobe (not tested).
+- Fact: on the emulator a tick is 252.4 machine cycles. The Leslie and VERB SHIFTER handlers reload the timer at their end (0xff80, 0xff64), so their ticks are about 528 and 508 cycles.
+- Fact: the crystal is 12 MHz, 1 µs a machine cycle: MIDI's 31,250 baud needs it with the firmware's timer 1 setting (mode 2, reload 0xff, SMOD 0; PCON stays 0 in all 90 recalls).
+- Assumed: 3 more cycles a tick for the 8051's interrupt response, which the emulator does not count: 255 µs a tick (3.92 kHz), 531 µs for the Leslie.
+- Assumed: the DSP runs at 42 samples a millisecond (the firmware's own delay conversion) on a clock not locked to the 8051's. That gives 10.7 samples a tick. Nothing in the firmware ties the two clocks together.
+- Open: the pitch programs' detune parameter maps one to one onto the pitch rate (record byte 0x21 = 99 + detune; rate = −detune/256 sample a tick). With the time base above, "DETUNE +12" is +7.5 cents. If the unit is meant to be cents, the time base is off by 1.6.
+
+**The kinds** (`node tools/qvlfo.mjs <rom>` prints every program's parameters):
 
 | Kind | Programs | What moves |
 | --- | --- | --- |
-| Swept tap | every reverb (one pair), chorus, flange and echo programs (two pairs, left and right) | an interpolated read: two steps at addresses a and a + 1 with coefficients 1 − f and f, f in 1/256 |
-| Pitch shift | 7, 37, 51, 59, 60, 70, 86 | two taps sawing across a 256-sample window, crossfaded by steps 0x16 and 0x1a |
-| Leslie | 8, 38, 39, 67, 82 | two swept pairs, and the gains at steps 0x0f, 0x11, 0x17 and 0x19 |
-| Gate | 3, 23, 26 (silent on the model) | driven at run time (0x6ff4-0x70bd); not read yet |
-| Other | 73 VERB SHIFTER | several steps, rarely |
+| Reverb sweep, one pair | 1-3, 10-13, 15-27, 52, 53, 66, 78-81 | an interpolated delay read |
+| Stereo sweep, two pairs | 0, 4, 28, 29, 32-36, 44, 46-50, 54, 55, 57, 58, 61-65, 68, 69, 71, 72, 74, 75, 83-85, 87-89 (steps 13/14 and 17/18); 5, 9, 30, 31, 45 (steps 28/29 and 2c/2d) | left and right reads, 180° apart |
+| Pitch shift | 7, 37, 51, 59, 60, 70, 86 | two taps sawing across a 256-sample window, and their crossfade |
+| Leslie | 8, 38, 39, 67, 82 | two rotors: a swept pair and two gains each |
+| Coefficient sweep | 73 VERB SHIFTER | eight coefficients |
+| Gate | 3, 23-29, 73, 86, 87 | output tap gains, from the main loop (below) |
 
-The static ones: the four delays (40-43), PINGPONG DELAY, SKANK GUITAR, the VELOCITY ECHOs and MEDIUM HALL.
+Static: 6, 14 (MEDIUM HALL), 40-43, 56, 76, 77.
 
-Sweeps measured on the emulator (6 s runs): STEREO CHORUS moves 356 samples over 4.1 s as a triangle, STEREO FLANGE 198 samples over 3.9 s, the reverbs 262 samples over 2.45 s, close to a sine. So a sweep is a few numbers (range, period, waveform, phase), which the DSP can generate itself, as Air Chorus and Vibrato do, instead of the ColdFire streaming updates.
+**The sweep** (handlers 0x0e04 for the reverbs, 0x0bb0 and 0x0a3e for the stereo pairs; the same arithmetic):
+- A 16-bit phase P moves by the rate r (8 bits, 16-87 in the factory programs) every tick. It turns at both ends with exact reflection, and a flag H flips at the top. P and H together make one cycle of four sweeps, 4 × 65536 / r ticks: 0.77-4.19 s with the assumed time base.
+- The shape X is 0xffff − P (triangle) or 0xffff − P²/65536 (parabolic: arcs of 1 − p², within 6 % of depth of a sine). The firmware squares P in 8-bit pieces; `qvlfo.mjs` has the exact rounding.
+- Displacement = X × depth / 65536 samples (depth 21-254), positive while H is 0. Over a cycle it goes +depth, 0, −depth, 0.
+- A pair is two steps reading centre ± n and ± (n + 1), with weights (255 − f)/256 and f/256 in the coefficients' high byte, f the 8-bit fraction. The low three coefficient bits stay as built.
+- In the stereo layouts, the second pair sits 0x200 (512 samples) above the first and moves the opposite way.
+- Record bytes: 0x1c bit 0 is the waveform (1 = triangle), 0x1d the speed, 0x1e the depth. The firmware maps them through its own curves: rate from speed, depth from depth scaled by a curve of speed. Both can take a MIDI modulation offset (0x7c25 and 0x7c9c add it and clamp). The centre comes from the reverb type, or 0x1900 (0x0200 in configuration 3) for the stereo pairs, plus depth and a delay setting in some programs.
+- Fact: a recall does not reset the phase. It runs on from the program before. 28, 29, 31, 32 and 88 restart it at a signal onset instead (P = 0, rising, H set), from the same detector as the gate.
+
+**Pitch shift** (handler 0x0d22):
+- A 16-bit saw P advances by a signed rate every tick (−15 to +15 in the factory programs; negative raises the pitch).
+- Tap A reads 0x1800 + P/256 (steps 0x14 and 0x15, one sample apart, fraction P & 0xff at step 0x16). Tap B reads half a window away (steps 0x18/0x19, fraction at 0x1a). Steps 0x16 and 0x1a hold the fractions, not the crossfade.
+- Steps 0x1b and 0x1c crossfade the taps by a curve of the distance from mid-window, in 128 steps. The curve is a quarter sine within 2/255 (the tool reads the exact one from the ROM).
+- Quirk: tap A's second read leaves the window at P/256 = 0xfe and 0xff (0x19ff and 0x1800, where 0x18ff and 0x1900 would follow); tap B's is right. Both happen at the window's edge, where the crossfade should have faded that tap out (not checked).
+- Pitch ratio = 1 − rate / (256 × samples a tick).
+
+**Leslie** (handler 0x0660):
+- Two rotors: drum (steps 0x0b/0x0c around 0x1900, gains at 0x0f and 0x11) and horn (0x13/0x14 around 0x1b00, gains at 0x17 and 0x19).
+- Each rotor is a 16-bit triangle with a 16-bit rate, reflected as 0xffff − P at both ends, a flag H flipped at the top and B at the bottom. It sweeps its pair as above (parabolic).
+- Its gains are 127 − AM, plus (255 − P/256)/2 while H is 0, then ± P/256 × AM/256, opposite at the two steps, the sign by B. AM is an edit-buffer byte (0x8662: 16-33 in the factory programs).
+- Every 256 ticks each rate moves a fixed step toward the selected speed's target and stops there. The depth follows the rate through a short curve, 32 samples at rest falling to 16 at fast.
+- Periods with the assumed time base: drum 1.58 s slow and 0.25 s fast, horn 1.31 s and 0.14 s. 38 and 82 are set to fast, 8, 39 and 67 to slow.
+- The speed (stop, slow, fast) is two bits the main loop sets, 2ch.0 and 2ah.4; the names say aftertouch, pitch bend and sustain pedal switch it. Not traced.
+
+**VERB SHIFTER** (handler 0x96ee):
+- A 16-bit triangle, the rate (43) added twice a tick, reflected to −P at both ends, a flag flipped at the bottom; one cycle is 1,524 ticks (0.78 s, assumed).
+- P/256 picks a value from one of two 256-entry curves, one for each half of the cycle (read from the ROM).
+- The value, scaled by depth, moves four coefficient pairs (steps 13/15, 16/17, 18/19, 1a/1b) around fixed centres. The two steps of a pair get the same magnitude with opposite signs. On the second curve the offset changes sign where P/256 passes 0x99.
+
+## The gate
+
+The gate is the main loop's work, not the interrupt's: every 16 ticks (4.04 ms) it reads a one-bit signal detector and rewrites the output taps' gains. It is on in 11 factory programs (record byte 0x3e). Read from the disassembly (0x9fef-0xa0f2, settings from 0x6de7-0x6e5d) and from driving the pin in the emulator.
+
+- **The input.** Pin P3.2 of the 8051 (INT0, used as a plain input). The interrupt samples it every tick and counts the ticks it reads high in internal RAM 0x52. A routine at 0x02c2 zeroes the count every 16 ticks; it also pulses bits 5 and 6 of the latch at 0x0600, which may reset a detector in the hardware (not known).
+- **Polarity, inferred:** low means signal. The gate opens only on a window in which the pin read low on all 16 ticks, so the detector must hold its output across the waveform's zero crossings (a peak hold or an envelope).
+- **Open.** On a window with no high reading, the gate jumps to its open level at once and arms the hold.
+- **Hold.** Every window with fewer than 6 high readings re-arms the hold. Then the hold counts down one window for each window with 6 or more. At zero, the release starts.
+- **Release.** Each window, level = level × (2 × decay + 57)/256, down to the closed level; a level below it jumps to it.
+- **Settings.** Open level from record byte 0x4a; closed level from record byte 0x41, scaled by the open level; hold = record byte 0x3f + 1 windows; decay = record byte 0x40. They are written into the coefficient high byte of two runs of steps (for GATED REVERB, 10 steps from 0x46 and 10 from 0x52). `qvlfo.mjs` prints them for each program.
+- **Why 3, 23 and 26 are silent.** The emulator reads every port pin as 1, which is "no signal" here, so the gate closes, and those three close to 0. The others close to a level above 0 and stay audible. With P3.2 held low, all of them stay open.
+- **Quirk.** A recall writes the open level into the taps but does not set the gate's own level variable (0x83a0). So whether a freshly recalled gate closes without a signal depends on the program before.
+- **What the module needs.** A signal-present bit every tick from the input, which no emulator supplies. The firmware sets no threshold: during a gated program it writes nothing but the tap gains and the latch. So the detector, its threshold and its time constant are in the hardware (or the DSP chip; the firmware cannot tell). The module can compute the bit on the DSP from an envelope of the input; its threshold and time constant will be assumptions, labelled as such. The same bit restarts the triggered sweeps (28, 29, 31, 32, 88): after a window of 6 or more high readings, the next window with none.
+- Not followed: pin P3.3, counted the same way in 0x75; the gate does not read it.
 
 ## Memory
 
@@ -117,7 +171,7 @@ For scale, stock DELAY moves about 100 words a frame for each of the eight track
 
 Read from QV 1.07 (usemapped image) and the emulator's runs.
 
-**Controller memory map (external data space).** DSP program RAM 0x0000-0x017f, a DSP control register at 0x0180 (the timer interrupt writes it), the HD44780 display at 0x0200 (command) and 0x0201 (data), LED latches at 0x0400, 0x0600 and 0x0800, battery RAM at 0x8000-0xffff. User programs are 128-byte records at 0xce00 + 128 n; the edit buffer is at 0x8300 with the name at +0x6a. Factory programs are at ROM 0xd2fe + 128 n.
+**Controller memory map (external data space).** DSP program RAM 0x0000-0x017f, a DSP control register at 0x0180 (1 is written there and to 0x017f after every update), the HD44780 display at 0x0200 (command) and 0x0201 (data), LED latches at 0x0400, 0x0600 and 0x0800, battery RAM at 0x8000-0xffff. User programs are 128-byte records at 0xce00 + 128 n; the edit buffer is at 0x8300 with the name at +0x6a. Factory programs are at ROM 0xd2fe + 128 n.
 
 **Configurations.** Five base programs: a pointer table at ROM 0x8efa, programs at 0x8f04 + 0x180 n, loaded by 0x8edd. Blocks laid over them use the byte 0x22 for "leave unchanged". RAM 0x8392 holds the configuration and 0x8332 the reverb type (0 plate, 1 room, 2 chamber, 3 hall, 4 reverse). The record's byte 0x32 uses other numbers: 0-3 among the reverbs, 3 for the delays.
 
@@ -141,7 +195,7 @@ Read from QV 1.07 (usemapped image) and the emulator's runs.
 | 35/36 | an interpolated, LFO-swept delay read, rewritten by the timer interrupt (0x0e60-0x0f27) |
 | 4b-5b | seven output taps per side |
 
-Gate types are written by 0x6ff4-0x70bd.
+The gate's settings are written by 0x6de7-0x6e5d, the gate itself runs from the main loop at 0x9fef (see The gate).
 
 **Record bytes (configuration 4, from the sweep):**
 
@@ -163,8 +217,8 @@ In the graphic-EQ configuration, bytes 0x01-0x0b are the eleven band gains: 14 i
 ## Next steps
 
 1. **The base stream channel** (owner's decision, 26 November 2026): probe A first (extra host-port blocks to DSP core 0, timed, with a checker), then reads, core 1 and an SDRAM echo, on a branch of the cumulative base draft (#2079). Plan in [RESEARCH-2026-11-26.md](RESEARCH-2026-11-26.md).
-2. **The sweeps as parameters.** For each program, record range, period, waveform and phase of every swept pair from the emulator (as `tools/` did for the Midiverb II), and check a parametric reconstruction against the trace within a sample. Pitch shift and Leslie need their own forms.
-3. **The gate.** The gated programs (3, 23, 26) stay silent: the firmware drives the gate at run time (0x6ff4-0x70bd).
+2. **The sweeps on the DSP.** The parameters are read (Modulation) and the reconstruction matches the firmware exactly. Next: generate them per sample on the DSP, with the phase advancing r / (65536 × samples a tick) a sample, and pick the samples-a-tick figure (10.7 assumed); settle the pitch unit question first. The Leslie's speed switching needs its MIDI sources traced (bits 2ch.0 and 2ah.4).
+3. **The gate's detector.** The algorithm is read (The gate). Missing: the detector itself, which is hardware. Choose an envelope, threshold and time constant for the module's own detector, label them as assumptions, and drive P3.2 from it in the emulator to render the gated programs.
 4. **The engine.** Midiverb's pattern (a DSP interpreter fed by a stream of program words), with the sweeps generated on the DSP and the long lines through the stream channel. Half rate first: DSP time at full rate is unlikely to fit 414 executed instructions.
 5. **Word width and saturation.** Unknown. Whatever is chosen is an assumption and is labelled as one.
 6. **Listen.** Render the programs and judge them by ear; compare with published recordings of the Quadraverb where they exist, labelled as such.
