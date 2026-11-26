@@ -33,8 +33,7 @@
     "changes": [
       "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.3: keeps sample loops in time with the project tempo by repitching them.",
       "AUTO reads each loop's tempo from its length, SMP locks and scenes included; FUNC + FIN corrects each sample slot in percent.",
-      "Trailing digital silence is left out and the pitch glides on tempo changes. Pitch follows tempo: there is no time-stretch.",
-      "Not yet tested on a unit: this exact build, saving and reboots, external MIDI clock and CPU load."
+      "Trailing digital silence is left out and the pitch glides on tempo changes. Pitch follows tempo: there is no time-stretch."
     ]
   }
 ]

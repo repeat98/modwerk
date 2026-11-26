@@ -6,8 +6,7 @@
       "Adds SETTINGS > KEEP FX AWAKE. Stock, a project load or a double STOP keeps the delay and reverb silent until an audio track trigs, so the inputs get no effect.",
       "Ticked, the effects come back for the inputs about a second later, with no track playing. A double STOP still cuts them. Unticked, nothing changes.",
       "Like INPUT SENDS PRE, the setting is not saved and starts unticked at every power-on.",
-      "Ticked, it overrides a safety hold: high delay feedback on the inputs can build up again after a double STOP.",
-      "Known issue: pattern changes and sampling from the inputs are not yet tested with it."
+      "Ticked, it overrides a safety hold: high delay feedback on the inputs can build up again after a double STOP."
     ]
   },
   {

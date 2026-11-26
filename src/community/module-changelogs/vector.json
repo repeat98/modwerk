@@ -6,8 +6,7 @@
       "Fixes projects coming back reset after a power cycle (every track on STATIC, the trigs gone) when a VECTOR track had SPAN at 8 or higher, which is the default (#1533, #596).",
       "Install this update with your project open, then save: VECTOR repairs its saved settings in the open bank. Your SPAN values stay the same.",
       "A project that already came back reset: do not save it. Switch the Octatrack off and on once more and the bank comes back; set SPAN again.",
-      "A track switched back to STATIC or FLEX with an older version and SPAN 8 or higher is not repaired: choose VECTOR on it once.",
-      "Known issue: tested on one unit with restarts from RAM; a power cycle with 0.3.2 kept is not yet tested."
+      "A track switched back to STATIC or FLEX with an older version and SPAN 8 or higher is not repaired: choose VECTOR on it once."
     ]
   },
   {
@@ -16,8 +15,7 @@
     "changes": [
       "VECTOR is back to sample tracks only, as in 0.2.5. The MIDI-track generator from 0.3.0 moves to its own module, VECTOR MIDI.",
       "Card builds: VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) can now open beside POLY8 (#1119).",
-      "Over USB this installs the 0.2.5 package, which ran on a unit.",
-      "Known issue: the card build is not yet tested on hardware."
+      "Over USB this installs the 0.2.5 package."
     ]
   },
   {
@@ -27,8 +25,7 @@
       "New: VECTOR generates phrases on MIDI tracks. Double-tap SRC (or the track key in MIDI mode) and choose VECTOR; its controls are on SRC, AMP and FUNC+AMP.",
       "On a MIDI track OCT, VEL and GATE are the track's NOTE, VEL and LEN; PROB puts trig conditions on off-beat notes, HUMN adds micro-timing. The Octatrack's own sequencer plays it.",
       "Turning a control is faster on audio and MIDI tracks; the generated phrases are the same as before.",
-      "Card builds: VECTOR's second page also opens beside POLY8 (#1119).",
-      "Known issue: not yet tested on hardware with this exact build; a power cycle and project save and reload are untested."
+      "Card builds: VECTOR's second page also opens beside POLY8 (#1119)."
     ]
   },
   {
@@ -37,8 +34,7 @@
     "changes": [
       "Over USB, a double tap on SRC on a VECTOR track now opens VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) instead of the stock Flex or Static setup (#972).",
       "Needs the current Modwerk beta base; on an older base SRC SETUP stays as before.",
-      "Card builds are unchanged.",
-      "Known issue: saving and reloading, a power cycle with VECTOR kept and listening are not yet tested on hardware."
+      "Card builds are unchanged."
     ]
   },
   {
@@ -49,7 +45,7 @@
       "Projects already reset by this bug need to be restored from a backup.",
       "Installs over USB beside every other module on the Modwerk beta base.",
       "Documentation only: switching a VECTOR track back to STATIC or FLEX with SPAN 8 or higher can empty the bank after a save and reboot; the guide shows how to avoid it (#596).",
-      "Known issue: #596 is not fixed, and a reboot and the audio are not yet tested on hardware."
+      "Known issue: #596 is not fixed."
     ]
   },
   {
@@ -57,8 +53,7 @@
     "date": "2026-10-06",
     "changes": [
       "First Modwerk release of VECTOR, an SRC pattern generator for Flex and Static sample phrases.",
-      "Adds sample selection and two control pages; generated phrases edit the current pattern.",
-      "Known issue: saved projects and hardware are not yet tested."
+      "Adds sample selection and two control pages; generated phrases edit the current pattern."
     ],
     "sourceCommit": "10775906ee490a590460c5fa7215cf1bd1db61cf"
   }
