@@ -17,8 +17,9 @@
 // It needs a development twin of the base (the guard request) behind `npm run device -- serve --share
 // /tmp/modwerk-share.sock`, and the scene is the caller's: select the pattern, leave the transport stopped, and say in
 // the record which (--scene). The unit takes a module only while stopped, so each reading is STOP, PLAY, the reading, STOP, and a
-// reading during which `state` says stopped is refused and ends the run. The curve does not start when the module at rest plus
-// its booked first instance (frame-costs.json) reaches CURVE_ROOM on --measure-pattern: pick a pattern with room.
+// reading during which `state` says stopped is refused and ends the run. Read it on the medium pattern even when the module takes
+// it past CURVE_ROOM: curveFit charges a further instance as the first past it, and a lighter pattern reads a machine low
+// (owner, 26 November 2026). Such a release needs the owner's release-cost waiver (curveProblem).
 // The unit judges picks, and hushes machines while it plays, by the cost table the last v2 set sent, kept through rollbacks
 // and power cycles. So a curve installs its module as a one-package set with this checkout's table, the module's `each`
 // booked at 0 (measuringCosts): a booked guess must not refuse or hush the further instances the curve is there to read
@@ -36,7 +37,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from '
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, relative, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, CURVE_ROOM, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
+import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveFit, curveProblem } from './module-cpu-price.mjs'
 import { takeUnitTurn } from './unit-queue.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
@@ -83,14 +84,6 @@ export const notPlaying = reply => /^\s*stopped\b/.test(reply)
 export const allowanceOf = reply => { const m = /allowance (\d+) %/.exec(reply); return m ? Number(m[1]) : undefined }
 /** A reading taken while the transport stood: it is refused, never priced. */
 export class NotPlayed extends Error {}
-/** Why the curve cannot start, or null: stock and the module at rest (`atRest`, % of a frame on the measure pattern) plus its
- *  booked first instance leave no room under CURVE_ROOM, so the first reading would be the overload (FM Synth 0.1.5 at 107.9 %
- *  on Dev17 C04, 81 % stock alone). Unbooked (a new module): null, the first reading decides. */
-export function curveRoom({ atRest, booked, pattern }) {
-  if (typeof booked !== 'number' || typeof atRest !== 'number') return null
-  return atRest + booked < CURVE_ROOM ? null : `no room on pattern ${pattern}: it reads ${atRest} % with the module at rest, and its booked first instance ` +
-    `${booked} would take it to ${tenth(atRest + booked)} %, past ${CURVE_ROOM} %. Pick a pattern with room with --measure-pattern (fewer sample tracks)`
-}
 /** The table a curve installs its module with: `list` (frame-costs.json) with `id`'s `each` at 0, so admission and the
  *  base's hush charge a further instance nothing while the curve reads what it costs, and its `first` and `rest` as booked.
  *  The run's --limit and its stop at a dropped render guard the unit, as for any reading. Null when `id` is not booked:
@@ -135,15 +128,7 @@ export function restCost(before, atRest) {
   const rest = Math.round(((atRest?.frameMax ?? 0) - (before?.frameMax ?? 0)) * 10) / 10
   return rest >= REST_NOISE ? rest : 0
 }
-/** The next-instance cost from a curve: `adds` is what the longest frame gained with 1, 2, 3… instances. `each` is the
- * steepest step from the third instance on (a lone second step can be steep while later ones are cheap: Tape Echo 9.2,
- * 16.7, 16.8, 20.5 on a busy Part), `first` the least that, with `each` after it, covers every measured point. */
-export function curveFit(adds) {
-  const c = adds.map(value => Math.max(0, value)), steps = c.slice(2).map((value, i) => value - c[i + 1])
-  const each = Math.max(0, steps.length ? Math.max(...steps) : c.length > 1 ? c[1] - c[0] : c[0] ?? 0)
-  const first = Math.max(each, ...c.map((value, n) => value - n * each))
-  return { first: tenth(first), each: tenth(each) }
-}
+export { curveFit }
 /** Stock's own room from three longest-frame readings: the reserve is the busy pattern with every delay awake, and one track's
  *  share is what eight playing tracks add over the empty pattern, divided by eight (a machine is charged net of it). */
 export const stockFit = ({ empty, quiet, awake }) => ({ reserve: tenth(Math.max(quiet, awake)), trackStock: tenth(Math.max(0, quiet - empty) / 8) })
@@ -217,10 +202,8 @@ if (import.meta.filename === process.argv[1]) {
   if (args['write-costs'] && !args.curve && !args.stock) throw new Error('--write-costs writes a curve (--curve T1,T3,T6,T7) or the stock reserve (--stock)')
   // --write with --curve also writes each effect's or machine's curve: its evidence/frame-cost.json and its frame-costs.json line.
   const catalogue = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
-  // What admission charges a module's first instance now (frame-costs.json): the curve needs that much room to be read.
+  // What admission charges now (frame-costs.json): a curve installs its module with it (measuringCosts).
   const costList = existsSync(resolve(root, FRAME_COSTS_PATH)) ? JSON.parse(readFileSync(resolve(root, FRAME_COSTS_PATH), 'utf8')) : null
-  const booked = costList?.costs ?? {}
-  const bookedFirst = id => booked[id]?.first
   // An ID is a catalogue row; a path to a .mwrm is that file, for a build that is not published yet. In the order given.
   const files = positionals.filter(name => name.endsWith('.mwrm')), ids = positionals.filter(name => !name.endsWith('.mwrm'))
   const unknown = ids.filter(id => !catalogue.some(row => row.id === id)).concat(files.filter(file => !existsSync(file)))
@@ -289,16 +272,14 @@ if (import.meta.filename === process.argv[1]) {
     const name = (fxNames.get(row.id) ?? row.name).replaceAll(' ', '_'), was = {}, points = [result.atRest.frameMax], placed = [], notes = []
     if (fx) for (const track of tracks) { was[track] = (await slotNames(track))[Number(fx)]; if (!was[track]) return { error: 'could not read what ' + track + ' FX' + fx + ' runs' } }
     let skipped = result.atRest.skipped // the guard's count runs since boot: a reading skipped only when it grew
-    const noRoom = curveRoom({ atRest: result.atRest.frameMax, booked: bookedFirst(row.id), pattern: args['measure-pattern'] })
-    if (noRoom) notes.push(noRoom)
     let notPlayed
     // A machine's further instances are judged by the Part's CPU allowance too, by the price its descriptor carries (Grain 0.1.3:
     // 35 a track against 45, owner 26 November 2026), whatever the table books: the curve's picks run at 400 % (eight tracks at 50; --limit and the stop at a dropped render
     // still guard the unit), and the
     // allowance it had is back before the admission runs, which judge as a player's pick is judged.
-    const allowed = machine && !noRoom ? allowanceOf(await send('cpu')) : undefined
+    const allowed = machine ? allowanceOf(await send('cpu')) : undefined
     if (allowed !== undefined) { await send('cpu:400'); notes.push(`the Part's CPU allowance at 400 % for the curve's picks, back to ${allowed} % for the admission runs`) }
-    for (const track of noRoom ? [] : tracks) {
+    for (const track of tracks) {
       // Stopped, admission judges a pick by what the unit last played: play the empty pattern first, so it has room.
       await send(`PATTERN+TRIG${args['pick-pattern']} w600 PLAY w5000 STOP w600`)
       const before = await refusals()
@@ -355,7 +336,7 @@ if (import.meta.filename === process.argv[1]) {
     }
     await send(`PATTERN+TRIG${args['measure-pattern']} w600`)
     const adds = points.slice(1).map(point => tenth(point - points[0]))
-    return { tracks: placed, points, adds, ...curveFit(adds), notes, admission, ...(notPlayed ? { notPlayed } : {}), ...(noRoom ? { noRoom } : {}) }
+    return { tracks: placed, points, adds, ...curveFit(adds, points[0]), notes, admission, ...(notPlayed ? { notPlayed } : {}) }
   }
   // --stock: what stock alone needs, so module admission leaves it room (owner, 22 November 2026) and a base that makes stock
   // cheaper gives modules more by itself: the longest frame on the empty pattern, on the busy one (eight tracks playing samples,

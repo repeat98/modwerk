@@ -2,21 +2,21 @@
   "module": "ungemach",
   "version": "0.1.0-experimental",
   "base": "4c7eb79b (development twin of the beta base, built with --dev from module/ungemach d0dc7166)",
-  "scene": "A scratch project, bank A, Part 1 saved. Picks on the empty pattern A02. The curve was read on A03 (only T1, a trig on every step, no sample): on the medium pattern A01 (T1-T7 with trigs on steps 1/5/9/13, samples on T2 and T3) the first instance read 102.2 % of a frame (+23.5 over 78.7), the overload rather than the module. The medium admission run is from that A01 run. One instance only: UNGEMACH admits one track a Part. Author's Octatrack MKI, OS 1.40C, release package a8bcdca3.",
+  "scene": "A scratch project, bank A, Part 1 saved. Picks on the empty pattern A02. The curve was read on the medium pattern A01 (T1-T7 with trigs on steps 1/5/9/13, samples on T2 and T3, stock alone 78.7 %). One instance only: UNGEMACH admits one track a Part. Author's Octatrack MKI, OS 1.40C, release package a8bcdca3.",
   "seconds": 8,
-  "measuredAt": "2026-11-24T13:33:27.951Z",
+  "measuredAt": "2026-11-24T13:31:06.173Z",
   "tracks": [
     "T1"
   ],
   "rest": 0,
-  "first": 14.6,
-  "each": 14.6,
+  "first": 23.5,
+  "each": 23.5,
   "points": [
-    63.1,
-    77.7
+    78.7,
+    102.2
   ],
   "adds": [
-    14.6
+    23.5
   ],
   "admission": [
     {
@@ -43,6 +43,6 @@
     }
   ],
   "notes": [
-    "Medium run on A01 (2026-11-24T13:31:06.173Z): points [78.7, 102.2], adds [23.5]."
+    "Booked from the medium run (owner, 26 November 2026). It was first booked from A03 (only T1 playing, stock alone 63.1 %): points [63.1, 77.7], +14.6, measured 2026-11-24T13:33:27.951Z. A lighter pattern reads a heavy machine low, and testers saw about 24 % beside one sample track. Its first instance passes 100 % on the medium pattern, so the release carries the owner's release-cost waiver (sdk/approvals/ungemach-build-approval.json)."
   ]
 }

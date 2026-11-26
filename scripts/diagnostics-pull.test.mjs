@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { describe, expect, it } from 'vitest'
-import { members, pullAll, reportsByMember, summary, unitLines, when } from './diagnostics-pull.mjs'
+import { members, pullAll, reportsByMember, shedLines, summary, unitLines, when } from './diagnostics-pull.mjs'
 
 const entry = (n, username = 'tester', data = { event: 'health', phase: 'ready' }) =>
   ({ eventId: 'e' + n, username, createdAt: new Date(Date.UTC(2026, 9, 15, 0, 0, n)).toISOString(), data })
@@ -230,6 +230,19 @@ describe('diagnostics pull', () => {
     expect(text).toContain("  restarts 3 (the unit's earlier log, from base aaaaaaaa, starts 1-4)\n  restarts 1 (the unit's log, from base bbbbbbbb, starts 1-2)")
     expect(text).toContain('  unit: #4 start 3 +4m0s hot (10 half-seconds at 90 %+), cpu 92.0%')
     expect(text).toContain('machines ' + Array(24).fill(0).join(' ') + ' (an earlier log, base aaaaaaaa)\n  unit: #2 start 1 +2m0s base bbbbbbbb\n')
+  })
+  it('puts each machine\'s skipped renders beside what admission books for it, most first', () => {
+    const machines = Array(24).fill(0); machines.splice(0, 3, 1, 0x46, 0x4d); machines.splice(6, 3, 1, 0x46, 0x4d); machines.splice(15, 3, 1, 0x55, 0x47) // T1, T3 FM, T6 UG
+    const at = (seq, boot, kind, a) => ({ seq, boot, second: seq, kind, a, cpu: 800, dsp1to4: 0, dsp5to8: 0, machines, fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing: true })
+    const member = (...records) => ({ incidents: new Map(records.map(r => ['0/' + r.seq, { ...r, epoch: 0 }])) })
+    const found = new Map([
+      ['a', member(at(1, 1, 'shed', (0b101 << 24 | 40) >>> 0), at(2, 1, 'shed', (0b101 << 24 | 900) >>> 0), at(3, 2, 'shed', 1 << 24 | 50))], // FM on T1 and T3 shed; a second start, T1 only
+      ['b', member(at(1, 1, 'shed', (1 << 29 | 7) >>> 0))], // only T6 (UG) shed
+      ['repeat98', member(at(1, 1, 'shed', (0b101 << 24 | 99999) >>> 0))]])
+    const lines = shedLines(found, { synth: { first: 31.3, each: 26.9 } }, new Map([['FM', 'synth'], ['UG', 'ungemach']]))
+    expect(lines).toEqual([
+      '  synth (FM): 1 unit, 2 starts, 950 renders skipped, 1 of those starts with two or more of its tracks; booked first 31.3, each 26.9',
+      '  ungemach (UG): 1 unit, 1 start, 7 renders skipped; not booked'])
   })
   it('names the machines a CPU record refused this time, and keeps an older base’s record as it was', () => {
     const machines = Array(24).fill(0); machines.splice(6, 3, 1, 0x46, 0x4d); machines.splice(15, 3, 0, 0x47, 0x52) // T3 FM, T6 GR

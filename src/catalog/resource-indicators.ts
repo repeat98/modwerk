@@ -1,6 +1,6 @@
 import type { ModuleDocument } from './module-contract'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
-import { measuredActiveCpu, measuredDspLoad, measuredModulePool, measuredTrackedMemory, verifiedNoModuleDspCode } from './octatrack-resource-measurements'
+import { measuredActiveCpu, measuredDspLoad, measuredFrameCost, measuredModulePool, measuredTrackedMemory, verifiedNoModuleDspCode } from './octatrack-resource-measurements'
 import { requireModuleResourceImpact } from './resource-impact'
 
 const packagesById = new Map(packageManifest.packages.map(entry => [entry.id, entry]))
@@ -54,7 +54,25 @@ export function moduleResourceIndicators(document: ModuleDocument) {
     ? document.tests.qualification?.cycles.find(record => record.processor === 'coldfire' && record.method === 'hardware' && record.unit === 'cycles/block')
     : undefined
   const levels = { minimal: { score: 1, label: 'Minimal' }, low: { score: 2, label: 'Low' }, moderate: { score: 3, label: 'Moderate' }, high: { score: 4, label: 'High' } }
+  // A machine shows what the base charges its pick, the figure admission refuses by (owner, 26 November 2026: the card's
+  // descriptor price, FM Synth's 4 % a playing track, was not what a track of it costs a Part).
+  const booked = document.category === 'machines' ? measuredFrameCost(document) : undefined
   return (['cpu', 'dsp', 'memory'] as const).map(id => {
+    if (id === 'cpu' && booked) {
+      const value = booked.first + '%'
+      return {
+        id, label: 'CPU', ariaLabel: 'CPU cost', value, score: booked.first, maximum: 100, fill: booked.first,
+        status: 'Measured · first track',
+        valueText: value + ' of an audio frame for its first track on a Part and ' + booked.each + '% for each further one: what the base charges when you pick it',
+        description: 'The longest audio frame\'s rise with one, two and more tracks of it on a medium pattern, measured on hardware: ' + booked.measured,
+        source: booked.source,
+        sourceInModwerk: true,
+        benchmark: activeCpu ? {
+          value: activeCpu.delta + '% of a frame added with ' + activeCpu.workload,
+          basis: 'Active hardware measurement', source: activeCpu.source,
+        } : undefined,
+      }
+    }
     if (id === 'cpu' && price) {
       const perTrack = price.measure === 'machine-render'
       const value = price.value + '%'

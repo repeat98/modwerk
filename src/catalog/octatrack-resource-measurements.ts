@@ -6,6 +6,7 @@ import modulePoolEvidence from '../../docs/verification/2026-11-21-octatrack-mod
 import playModesApproval from '../../sdk/approvals/playmodes-build-approval.json'
 import stemRecApproval from '../../sdk/approvals/stem-rec-build-approval.json'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
+import frameCosts from '../../sdk/machines/octatrack/frame-costs.json'
 
 type AllocationReading = { modulePoolBytes: number; dspProgramWordsT1to4: number; dspProgramWordsT5to8: number }
 type LoadReading = { skipped: number; dsp1to4: number; dsp5to8: number; allocation?: Partial<AllocationReading> }
@@ -133,18 +134,18 @@ export function measuredActiveCpu(document: ModuleDocument) {
   }
 }
 
-/** The module's instance curve (evidence/frame-cost.json, device:price --curve), when it was measured on this version
- * and the frame still had room with the first copy: past 100 % the guard drops renders, so the reading is the
- * overload, not the module's cost (FM Synth 0.1.5's first pick read 107.9 %, #2030). */
+/** What the base charges a pick of the module (frame-costs.json, generated from its instance curve: `first` for its first
+ * track or slot on a Part, `each` for every further one), the figure a musician pays, whatever its first reading was: a
+ * reading past 100 % charges a further instance as the first (owner, 26 November 2026). `source` is the module's own
+ * curve record when it holds this version, else the base's table. */
 export function measuredFrameCost(document: ModuleDocument) {
-  const source = 'sdk/octatrack/modules/' + document.id + '/evidence/frame-cost.json'
-  const record = frameCostRecords['../../' + source]
-  const { first, each, points } = record ?? {}
-  const firstReading = points?.[1]
-  if (record?.module !== document.id || record.version !== document.version || !record.base || !record.scene
-    || typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)
-    || typeof firstReading !== 'number' || !(firstReading < 100)) return
-  return { first, each, base: record.base, scene: record.scene, source }
+  const cost = (frameCosts.costs as Record<string, { first?: number; each?: number; measured?: string }>)[document.id]
+  const { first, each } = cost ?? {}
+  if (typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)) return
+  const record = 'sdk/octatrack/modules/' + document.id + '/evidence/frame-cost.json'
+  const own = frameCostRecords['../../' + record]
+  const source = own?.module === document.id && own.version === document.version ? record : 'sdk/machines/octatrack/frame-costs-base.json'
+  return { first, each, measured: cost?.measured ?? '', source }
 }
 
 export function measuredStackedCpuLimit(document: ModuleDocument) {
