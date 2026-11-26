@@ -1,0 +1,55 @@
+{
+  "module": "euclid",
+  "version": "0.1.6-experimental",
+  "base": "46c30886 (base 0.8.2 development twin of main 48f4a9b9c)",
+  "scene": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02 (one trig, on T7), readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples; rebuilt in the working copy on 26 Nov, not saved) at 126 BPM; owner's MKII, OS 1.40C",
+  "seconds": 8,
+  "measuredAt": "2026-11-26T20:57:38.612Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "rest": 0,
+  "first": 4.2,
+  "each": 0.5,
+  "points": [
+    82.1,
+    84.8,
+    86.8,
+    87.3,
+    87.8
+  ],
+  "adds": [
+    2.7,
+    4.7,
+    5.2,
+    5.7
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 56.2,
+      "frame": 31.1,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 85.1,
+      "frame": 39.8,
+      "dropped": 0,
+      "stalls": 0
+    }
+  ],
+  "notes": []
+}

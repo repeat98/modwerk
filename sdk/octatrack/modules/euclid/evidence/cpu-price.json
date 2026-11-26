@@ -1,98 +1,161 @@
 {
   "module": "euclid",
   "version": "0.1.6-experimental",
-  "base": "cd450fed (development twin of base 0.8.2 fad2c729's source: the beta flags, --dev, controller rows; owner's MKII, OS 1.40C)",
-  "scene": "LIVE/Dev17, C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (Grain's and FM Synth's curve scene); picks on empty C02",
+  "base": "46c30886 (base 0.8.2 development twin of main 48f4a9b9c)",
+  "scene": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02 (one trig, on T7), readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples; rebuilt in the working copy on 26 Nov, not saved) at 126 BPM; owner's MKII, OS 1.40C",
   "inputs": {
     "transport": "playing"
   },
   "seconds": 8,
   "readings": 3,
-  "measuredAt": "2026-11-25T14:26:25.482Z",
+  "measuredAt": "2026-11-26T20:57:38.612Z",
   "result": {
     "id": "euclid",
     "version": "0.1.6-experimental",
     "packageSha256": "27263940b8322448b69e13dc1d11108c6b909f9ba2b2c33bb96824e44093adf6",
     "before": {
-      "frame": 32.5,
-      "frameMax": 82.3,
-      "frames": 67255,
+      "frame": 35.6,
+      "frameMax": 80.5,
+      "frames": 67336,
       "skipped": 0,
-      "cpu": 52.1,
-      "dsp1to4": 33.7,
-      "dsp5to8": 41.8,
-      "dsp1to4Peak": 35.8,
-      "dsp5to8Peak": 42.9,
+      "cpu": 51.1,
+      "dsp1to4": 34.7,
+      "dsp5to8": 45.1,
+      "dsp1to4Peak": 41.6,
+      "dsp5to8Peak": 56.1,
       "readings": 3,
       "spread": {
-        "frame": 0.1,
+        "frame": 0,
         "cpu": 0.7,
-        "dsp1to4": 0.4,
-        "dsp5to8": 0,
-        "frameMax": 1.1,
-        "dsp1to4Peak": 0.2,
-        "dsp5to8Peak": 0.9
+        "dsp1to4": 2.5,
+        "dsp5to8": 2.3,
+        "frameMax": 1.8,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 10.4
+      },
+      "allocation": {
+        "modulePoolBytes": 0,
+        "dspProgramWordsT1to4": 441,
+        "dspProgramWordsT5to8": 441
       }
     },
     "atRest": {
-      "frame": 32.6,
-      "frameMax": 81,
-      "frames": 67189,
+      "frame": 37.3,
+      "frameMax": 82.1,
+      "frames": 67634,
       "skipped": 0,
-      "cpu": 52.2,
-      "dsp1to4": 33.9,
-      "dsp5to8": 41.8,
-      "dsp1to4Peak": 35.8,
-      "dsp5to8Peak": 42.7,
+      "cpu": 52.4,
+      "dsp1to4": 39.4,
+      "dsp5to8": 41.2,
+      "dsp1to4Peak": 41.4,
+      "dsp5to8Peak": 45.7,
       "readings": 3,
       "spread": {
-        "frame": 0.1,
-        "cpu": 0.7,
-        "dsp1to4": 0.1,
-        "dsp5to8": 0,
-        "frameMax": 0.5,
-        "dsp1to4Peak": 0.1,
-        "dsp5to8Peak": 0.7
+        "frame": 0,
+        "cpu": 0.1,
+        "dsp1to4": 2.3,
+        "dsp5to8": 5,
+        "frameMax": 1,
+        "dsp1to4Peak": 0.6,
+        "dsp5to8Peak": 0.1
+      },
+      "allocation": {
+        "modulePoolBytes": 10480,
+        "dspProgramWordsT1to4": 441,
+        "dspProgramWordsT5to8": 441
       }
     },
     "atRestAdds": {
-      "frame": 0.1,
-      "cpu": 0.1,
-      "dsp1to4": 0.2,
-      "dsp5to8": 0,
-      "dsp1to4Peak": 0,
-      "dsp5to8Peak": -0.2
+      "frame": 1.7,
+      "cpu": 1.3,
+      "dsp1to4": 4.7,
+      "dsp5to8": -3.9,
+      "dsp1to4Peak": -0.2,
+      "dsp5to8Peak": -10.4
     },
     "inUse": {
-      "frame": 36.2,
-      "frameMax": 85.1,
-      "frames": 67187,
+      "frame": 39.8,
+      "frameMax": 85.4,
+      "frames": 67601,
       "skipped": 0,
-      "cpu": 55.4,
-      "dsp1to4": 36.8,
-      "dsp5to8": 41.8,
-      "dsp1to4Peak": 41.7,
-      "dsp5to8Peak": 42.9,
+      "cpu": 55.3,
+      "dsp1to4": 40.1,
+      "dsp5to8": 46.5,
+      "dsp1to4Peak": 47.8,
+      "dsp5to8Peak": 46.4,
       "readings": 3,
       "spread": {
         "frame": 0.1,
-        "cpu": 0.1,
-        "dsp1to4": 4.9,
-        "dsp5to8": 0,
-        "frameMax": 0.4,
+        "cpu": 1.3,
+        "dsp1to4": 2.4,
+        "dsp5to8": 5.7,
+        "frameMax": 0.7,
         "dsp1to4Peak": 1,
-        "dsp5to8Peak": 0.9
+        "dsp5to8Peak": 0.7
+      },
+      "allocation": {
+        "modulePoolBytes": 10480,
+        "dspProgramWordsT1to4": 826,
+        "dspProgramWordsT5to8": 441
       }
     },
     "inUseAdds": {
-      "frame": 3.7,
-      "cpu": 3.3,
-      "dsp1to4": 3.1,
-      "dsp5to8": 0,
-      "dsp1to4Peak": 5.9,
-      "dsp5to8Peak": 0
+      "frame": 4.2,
+      "cpu": 4.2,
+      "dsp1to4": 5.4,
+      "dsp5to8": 1.4,
+      "dsp1to4Peak": 6.2,
+      "dsp5to8Peak": -9.7
     },
     "inUseOn": "T1 FX2",
+    "curve": {
+      "tracks": [
+        "T1",
+        "T3",
+        "T6",
+        "T7"
+      ],
+      "points": [
+        82.1,
+        84.8,
+        86.8,
+        87.3,
+        87.8
+      ],
+      "adds": [
+        2.7,
+        4.7,
+        5.2,
+        5.7
+      ],
+      "first": 4.2,
+      "each": 0.5,
+      "notes": [],
+      "admission": [
+        {
+          "pattern": "empty",
+          "number": 2,
+          "track": "T1",
+          "seconds": 8,
+          "admitted": true,
+          "frameMax": 56.2,
+          "frame": 31.1,
+          "dropped": 0,
+          "stalls": 0
+        },
+        {
+          "pattern": "medium",
+          "number": 4,
+          "track": "T1",
+          "seconds": 8,
+          "admitted": true,
+          "frameMax": 85.1,
+          "frame": 39.8,
+          "dropped": 0,
+          "stalls": 0
+        }
+      ]
+    },
     "rolledBack": true
   }
 }

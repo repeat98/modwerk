@@ -426,7 +426,7 @@
     "sdk/octabam/modules/euclid/control.h": "3b46d1ec81f83942c0303bbb146cbd3509cabd7e030c4ed1d6ff7304181bb7b2",
     "sdk/octabam/modules/euclid/hooks.s": "597006c7fd73fc9956170f284deb47a2ddd13c8f20e7a9669ef51fa469f767d1",
     "sdk/octabam/modules/euclid/manifest.py": "e43eac70260eda028417be31773b2cd3abf4bf60698ca5968704de3774d1f31a",
-    "sdk/octabam/modules/euclid/octamod.module.json": "d8c15436b290ca1514546a65b39d9c3c9f2232ea82c422f0ce1e17664c2f97f1",
+    "sdk/octabam/modules/euclid/octamod.module.json": "7282ac1610416d07bc43780bfaf1f27beb00aef78b93568bb9444f4064880f60",
     "sdk/octabam/modules/euclid/runtime.json": "7618d1cb98bfc286334d7ded737783ba3a042f3c3c3243cdf34a0f1b992f9a6e",
     "sdk/octabam/modules/euclid/control.c": "bb49a94ac7d63eb9d33258c995026d6ad8ac1843dbe8be1c2f944a6a38bd8333",
     "sdk/octabam/modules/euclid/generate_control.py": "64e711025c513d5c3c933dbecf73a95e1193bb9a7ab31a11ad28906246dbf6fd",
@@ -503,7 +503,10 @@
     "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
     "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5",
     "sdk/octabam/modules/euclid/test_filter_type_history.py": "a68e3604eafb60c95b5e4e7b9858fe3461eddc32209a3e36de2b46f52ad9fa8d",
-    "sdk/octabam/modules/euclid/evidence/cpu-price.json": "d8056d77fadae9bd2155098306cdd70acdc917e08de0067885b19e44580c91e0"
+    "sdk/octabam/modules/euclid/evidence/cpu-price.json": "f2250c09b06236cb0d026dc6a2ed9ba8caa64266d26c9fadf6477dc2b2e38604",
+    "sdk/octabam/modules/euclid/evidence/frame-cost.json": "40fea551cb43725c4848e14d51d6bf77d1fe090aa77689eb4ddcb72461a4223d",
+    "sdk/octabam/modules/euclid/evidence/performance.json": "48696b4bd822f4c836e64009831009ca9322f7a9db249f1ff69aca7b21147b80",
+    "sdk/octabam/modules/euclid/perf.py": "76ec33a896ebef4152acf0455333cbc06e3338fb848f22cb0977f61d51487bf0"
    },
    "copies": [
     {

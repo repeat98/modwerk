@@ -383,12 +383,12 @@
       }
     },
     "cpuPrice": {
-      "value": 3.7,
+      "value": 4.2,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-25",
-      "conditions": "LIVE/Dev17, C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (Grain's and FM Synth's curve scene); picks on empty C02; base cd450fed (development twin of base 0.8.2 fad2c729's source: the beta flags, --dev, controller rows; owner's MKII, OS 1.40C); 3 readings of 8 s a state. Frame interrupt 32.5 % before, 32.6 % installed and used nowhere, 36.2 % on T1 FX2; CPU meter 52.1 % before, 52.2 % at rest, 55.4 % in use.",
+      "date": "2026-11-26",
+      "conditions": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02 (one trig, on T7), readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples; rebuilt in the working copy on 26 Nov, not saved) at 126 BPM; owner's MKII, OS 1.40C; base 46c30886 (base 0.8.2 development twin of main 48f4a9b9c); 3 readings of 8 s a state. Frame interrupt 35.6 % before, 37.3 % installed and used nowhere, 39.8 % on T1 FX2; CPU meter 51.1 % before, 52.4 % at rest, 55.3 % in use.",
       "source": "evidence/cpu-price.json"
     }
   },
