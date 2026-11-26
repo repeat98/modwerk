@@ -337,9 +337,11 @@ static int transfer_key(int code, int pressed)
     return 1;
 }
 #define YES 0x31
-/* Our rows close PROJ's menu on the next tick, as its NO does (stock's FUN_40064bc0, Octabam's MAINMENU.md; not from
- * the row's own dispatch): a menu left open under the dialog kept its input layer, and YES in an FX chooser then
- * reached our row again (owner, 11 October 2026). */
+/* A page opened from PROJ > MODWERK is a level of that menu: the menu stays open under it, so NO and the arrows go back
+ * to the menu with its cursor on the row that opened the page (a tester, 25 November 2026: NO closed the whole menu).
+ * YES on a page that closes, and SELF TEST as it starts, close PROJ's menu on the next tick, as its NO does (stock's
+ * FUN_40064bc0, Octabam's MAINMENU.md; not from the row's own dispatch). A YES in an FX chooser once reached our row
+ * with the menu closed (owner, 11 October 2026): the rows act only while it is open (menu_open below). */
 #ifdef MODWERK_HOST
 void modwerk_test_close_menu(void);
 #define CLOSE_MENU modwerk_test_close_menu
@@ -368,10 +370,10 @@ static unsigned missing_top, modules_top;
 static int missing_asked; /* MISSING opened from the menu: it stays open with nothing missing */
 /* Opened from the menu, the page says for two seconds how to open it in one gesture (owner, 15 October 2026). */
 static uint32_t tip_until;
-void modwerk_load_menu(int unused) { (void)unused; if (menu_open()) open = SHOWN, close_menu = 1, tip_until = ticks + 120u; }
-void modwerk_modules_menu(int unused) { (void)unused; if (menu_open()) open = MODULE_LOAD, modules_top = 0, close_menu = 1; }
+void modwerk_load_menu(int unused) { (void)unused; if (menu_open()) open = SHOWN, tip_until = ticks + 120u; }
+void modwerk_modules_menu(int unused) { (void)unused; if (menu_open()) open = MODULE_LOAD, modules_top = 0; }
 static void missing_locate(void);
-void modwerk_missing_menu(int unused) { (void)unused; if (menu_open()) open = MISSING, missing_top = 0, missing_asked = 1, close_menu = 1, missing_locate(); }
+void modwerk_missing_menu(int unused) { (void)unused; if (menu_open()) open = MISSING, missing_top = 0, missing_asked = 1, missing_locate(); }
 /* SELF TEST (dsp.c's self-test): its page shows at once, the test starting if it can. */
 static int test_started;
 void modwerk_test_menu(int unused)
@@ -386,6 +388,8 @@ void modwerk_test_menu(int unused)
  * module is missing). UP and DOWN scroll, YES or NO closes it; it closes itself once nothing is missing. */
 #define UP 0x33
 #define DOWN 0x20
+#define LEFT 0x34
+#define RIGHT 0x21
 #define ROWS 4u
 #define MISSING_ROWS 2u /* the missing page: two lines a module, its name and where the project names it */
 int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track); /* fxmap.c */
@@ -962,7 +966,6 @@ void modwerk_settings_menu(int unused)
     open = SETTINGS;
     setting_module = (struct settings_cursor){0, 0};
     choosing_setting = 0;
-    close_menu = 1;
 }
 static void settings_key(int code)
 {
@@ -1002,7 +1005,7 @@ void modwerk_switches_menu(int unused)
 {
     (void)unused;
     if (!menu_open()) return;
-    open = SWITCHES, switch_cursor = switch_top = 0, switch_said = 0, close_menu = 1;
+    open = SWITCHES, switch_cursor = switch_top = 0, switch_said = 0;
     switches_read();
 }
 volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last key or knob: dsp.c's compaction waits for quiet */
@@ -1070,7 +1073,14 @@ int modwerk_status_key(int code, int pressed)
         taken = code;
         return 1;
     }
-    int closes = code == NO || code == YES; /* the popup after a pick: YES only closes it (owner, 14 October 2026) */
+    /* The popup after a pick: YES only closes it, NO goes on to stock as every other key (owner, 14 October 2026), so
+     * one NO leaves FX SETUP as after a stock effect's pick; taken, it left the knobs on SETUP (Midiverb, 25 Nov 2026). */
+    /* Over PROJ's menu (a page opened from MODWERK, or the status over it): NO and an arrow close the page back to the
+     * menu, the cursor on the row that opened it; YES closes the menu too, as before; any other key or knob closes the
+     * page and goes on to the menu as to stock's, so PROJ closes it (a tester and the owner, 25 November 2026). */
+    int menu = menu_open(), arrow = code == UP || code == DOWN || code == LEFT || code == RIGHT;
+    int closes = code == YES || (code == NO && open != MEMORY) || (arrow && menu);
+    if (code == YES && menu) close_menu = 1;
     open = CLOSED, on_said = 0; /* a refusal MISSING said is not said again when it next opens */
     if (!closes) return 0; /* any other key closes the page and goes on to stock */
     taken = code;
@@ -1481,6 +1491,7 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
+extern volatile uint8_t mw_cpu_track_refusals[8]; /* machine_registry.c: each track's refusals, for diag.c's CPU record */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
  * less `each`, in the wake field), as the site measured it
@@ -1550,6 +1561,12 @@ int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
     *use = costs_copy.entry[i][1] >> 16, *wake = costs_copy.entry[i][1] & 0xffffu;
     return 1;
 }
+/* The cost table as last checked, for what is kept from it (machine_registry.c's rest booking): another table, or
+ * none, reads another key. */
+uint32_t modwerk_status_costs_key(void)
+{
+    return costs_valid() ? (costs_copy.sum ^ costs_copy.count * 2654435761u) | 1u : 0u;
+}
 /* What the module adds installed on no track or slot, per mille; 0 when the table does not list it. */
 uint32_t modwerk_status_module_rest(uint32_t module)
 {
@@ -1583,7 +1600,7 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     uint32_t stock = base + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
     uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
-    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u), ++mw_cpu_track_refusals[slot & 7u];
     uint32_t reserve = stock_reserve(0), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
     /* Why, in the box: modules installed and used nowhere, when their cost at rest is more than the pick's and what
      * leaves no room; the Part's own sound; else the Part's modules, one of which to change. */

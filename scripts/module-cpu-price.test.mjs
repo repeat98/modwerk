@@ -48,6 +48,13 @@ describe('every Octatrack module names its CPU price', () => {
     expect(machineDescriptors({ root: repo, id: 'euclid', glue })).toEqual([])
   }, 20_000)
 
+  it('reads a draft machine from sdk/drafts until it is listed', () => {
+    const files = Object.fromEntries(Object.entries(machineFolder('\n    .reserved = {7},')).map(([path, text]) => [path.replace('sdk/octatrack/modules/', 'sdk/drafts/'), text]))
+    expect(machineDescriptors({ root: fixture(files), id: 'wave', glue: {} })).toMatchObject([{ symbol: 'wave', price: 7 }])
+    // Once listed, the module's own folder wins over a draft left behind.
+    expect(machineDescriptors({ root: fixture({ ...files, ...machineFolder('\n    .reserved = {9},') }), id: 'wave', glue: {} })).toMatchObject([{ symbol: 'wave', price: 9 }])
+  })
+
   it('refuses a module that names no price and says how to measure it', () => {
     const root = fixture(machineFolder(''))
     const machine = cpuPriceStatus({ root, document: module('wave', 'Track machine'), pending: new Map(), glue: {} })

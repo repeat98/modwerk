@@ -97,7 +97,9 @@ export class VendorTransportError extends Error {
   }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
-export interface Ep0Diagnostics { counts: number[]; supportsRemaining: boolean; remainingBytes?: number }
+/** `token`: the status byte of the last completed data stage's descriptor (ep0.c `last_token`: 0x40 halted, 0x20 data
+ * buffer error, 0x08 transaction error). Not a count, so it is never diffed. */
+export interface Ep0Diagnostics { counts: number[]; token: number; supportsRemaining: boolean; remainingBytes?: number }
 
 export interface VendorIdentity {
   canSubmit: boolean; base: string; model: string
@@ -117,13 +119,21 @@ export interface SelftestRecord { state: number; failed: number; modules: number
   /** The module behind the first failure: its runtime id (0 none) and its name as the chooser shows it ('' none). */
   culprit: number; culpritName: string
   /** The loader's last refusal (sdk/runtime/loader/loader.h runtime_refusal), why a "rejected" was rejected. */
-  refusal: number }
+  refusal: number
+  /** With refusal 7 (in use), the effect slot that runs the module (selftest.h): 1-8 FX1 of T1-T8, 9-16 FX2, 0 unknown
+   * (bases before 0.8.2 too). */
+  inUseSlot?: number
+  /** Now: why a change may not begin, the reason an `unsafe` names (runtime.h MACHINE_BUSY_*: 1 a track's recorder
+   * records, 2 its other recorder row is pending or unknown, 3 the transport runs, 4 a track runs, 5 the loader's journal
+   * is busy), the track (0-15) in the high nibble; 0 none, and on bases before 0.8.2. */
+  busy?: number }
 export function parseSelftest(view: DataView): SelftestRecord {
   if (view.byteLength !== SELFTEST_BYTES) throw new VendorTransportError('The self-test record has the wrong length.')
   const u = (i: number) => view.getUint32(4 * i)
   return { state: u(0), failed: u(2), modules: u(3), dsp: u(4), intact: u(5), ran: u(6),
     peaks: { tracks1to4: u(7), tracks5to8: u(8), cpu: u(9) }, done: u(10), total: u(11), frameGap: u(14), saved: u(15), savedCount: u(16), live: u(17),
-    culprit: u(18), culpritName: String.fromCharCode(...new Uint8Array(view.buffer, view.byteOffset + 76, 16)).replace(/\0.*$/s, '').trim(), refusal: u(23) }
+    culprit: u(18), culpritName: String.fromCharCode(...new Uint8Array(view.buffer, view.byteOffset + 76, 16)).replace(/\0.*$/s, '').trim(), refusal: u(23) & 0xffff, inUseSlot: u(23) >>> 16 & 0xff,
+    busy: u(23) >>> 24 }
 }
 /** A module the unit's project names that is not installed: its effect handle, parameter layout, module id (the
  * first four bytes of the SHA-256 of its catalogue id, hex) and name. */
@@ -408,7 +418,7 @@ export class UsbVendorTransport implements UploadTransport {
     const counts = [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
     const supportsRemaining = !!(view.getUint8(5) & 1)
     const remaining = length === 70 && supportsRemaining ? view.getUint16(68) : undefined
-    return { counts, supportsRemaining, remainingBytes: remaining !== undefined && remaining <= UPLOAD_MAX_FRAME ? remaining : undefined }
+    return { counts, token: view.getUint32(8 + 4 * 9) & 0xff, supportsRemaining, remainingBytes: remaining !== undefined && remaining <= UPLOAD_MAX_FRAME ? remaining : undefined }
   }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()

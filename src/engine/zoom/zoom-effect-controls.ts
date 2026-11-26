@@ -1,6 +1,7 @@
 import { effectInfo } from './zoom-protocol'
 
-export type ZoomParameter = { name: string; max: number }
+/** `default`: the value a patch starts at when this effect is put in a slot. */
+export type ZoomParameter = { name: string; max: number; default: number }
 export type ZoomEffectControls = { name: string; parameters: ZoomParameter[] }
 
 // SonicStomp descriptor layout documented by Roman Rusinov's MIT extractor.
@@ -36,7 +37,7 @@ function readDescriptor(data: DataView, start: number): ZoomEffectControls | und
       if (!label || max !== 0xffffffff) return undefined
       name = label
     } else if (index > 1 && label && max !== 0xffffffff) {
-      parameters.push({ name: label, max })
+      parameters.push({ name: label, max, default: Math.min(data.getUint32(offset + 0x10, true), max) })
     }
     if (data.getUint32(offset + 0x2c, true) & 4) return name ? { name, parameters } : undefined
   }

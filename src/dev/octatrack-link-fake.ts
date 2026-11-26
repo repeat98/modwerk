@@ -10,6 +10,7 @@ import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
 import { publishedBinding as baseBinding } from '../engine/elekloader/octatrack-publication.ts'
+import { runtimeId } from '../engine/elekloader/module-set.ts'
 
 /** The published base, so the pretend unit is a tester who is up to date (older bases are told to update). */
 export const FAKE_BASE: string = baseBinding.identity
@@ -59,9 +60,17 @@ export interface FakeUnit {
   screen?: () => Promise<DataView>
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
+  /** With refusal 7, the effect slot that runs the module, as base 0.8.2 reports it (1-8 FX1 of T1-T8, 9-16 FX2). */
+  inUseSlot?: number
+  /** What its record says keeps a change from beginning (runtime.h MACHINE_BUSY_*, the track above), as base 0.8.2
+   * reports it beside an `unsafe` (set `playing` too). */
+  busy?: number
   /** This start's restore has not run: the base rejects every change with no loader refusal, its record's `saved` 0
    * (modset.c modwerk_modset_check_set). */
   restoring?: boolean
+  /** The last Keep's card write failed and is retried: the base rejects every change with no loader refusal, its
+   * record's `saved` 8 (modset.c modwerk_modset_check_set). */
+  saveFailed?: boolean
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
    * the base then drops the staged package. */
   publishRefusal?: number
@@ -112,9 +121,9 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
       async controlTransferOut() { return { status: 'stall', bytesWritten: 0 } },
       async controlTransferIn(setup: { request: number; value: number }) {
         if (setup.request === 3) return { status: 'ok', data: new DataView(identityBytes(unit.base).buffer) }
-        if (setup.request === 29) { // CAPABILITIES, MWCP v1: loader ABI 8, the feature bits, 24 sites, 8 copies
-          const caps = new DataView(new ArrayBuffer(12)); caps.setUint32(0, 0x4d574350); caps.setUint8(4, 1); caps.setUint8(5, 8)
-          caps.setUint16(6, 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0) | (unit.screen ? 8192 : 0)); caps.setUint16(8, 24); caps.setUint16(10, 8)
+        if (setup.request === 29) { // CAPABILITIES, MWCP v1 as the published base answers (loader.c, ep0.c): ABI 10, its feature bits, 128 sites and copies
+          const caps = new DataView(new ArrayBuffer(12)); caps.setUint32(0, 0x4d574350); caps.setUint8(4, 1); caps.setUint8(5, 10)
+          caps.setUint16(6, 7 | 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0) | 1024 | 2048 | 4096 | (unit.screen ? 8192 : 0)); caps.setUint16(8, 128); caps.setUint16(10, 128)
           return { status: 'ok', data: caps }
         }
         if (setup.request === 7 && unit.screen) return { status: 'ok', data: await unit.screen() }
@@ -138,7 +147,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         if (setup.request === 39 && unit.slots) return { status: 'ok', data: new DataView(unit.slots.slice().buffer) }
         if (setup.request === 4 && unit.ep0) {
           const diag = new DataView(new ArrayBuffer(68)); diag.setUint32(0, 0x4d575544); diag.setUint8(4, 3)
-          ;[3, 4, 5, 6, 7, 14].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i]))
+          ;[3, 4, 5, 6, 7, 14, 9].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i] ?? 0))
           return { status: 'ok', data: diag }
         }
         if (setup.request === 27) { // INVENTORY, 13 a page from wValue: no DSP code, no name
@@ -154,7 +163,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
         }
-        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
+        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring || unit.saveFailed || unit.busy !== undefined ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back
           const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)), count = unit.installed.moduleIds.length
           ;[[0, 2], [3, count], [7, 410], [8, 655], [9, 470], [14, 47900], [15, 7], [16, count], [17, count]].forEach(([at, value]) => record.setUint32(4 * at, value))
@@ -162,7 +171,8 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         }
         if (setup.request !== 21 || refusal === undefined) return { status: 'stall' }
         const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)) // the base's record, idle, with its last refusal
-        record.setUint32(92, refusal)
+        record.setUint32(92, (refusal | (unit.inUseSlot ?? 0) << 16 | (unit.busy ?? 0) << 24) >>> 0)
+        if (unit.saveFailed) record.setUint32(60, 8) // saved: the last write failed
         return { status: 'ok', data: record }
       },
     }
@@ -206,7 +216,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       get status() { return status }, connectionTrusted: true,
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
-        if (unit.refusal || unit.restoring) return step('normal', 'rejected')
+        if (unit.refusal || unit.restoring || unit.saveFailed) return step('normal', 'rejected')
         if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
@@ -323,6 +333,7 @@ export function previewKit() {
   const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
   unit.installed = { moduleIds: params.get('inventory') === 'empty' ? [] : ['everb', 'airwindows-chorus', 'poly8'], removedStockFx: [] }
   unit.status = params.get('status') !== 'old'
+  unit.moduleSets = true // the published base syncs a whole set at once; without it a set adding two modules asks for a base update
   if (params.get('preview') === 'screen') unit.screen = sampleScreens()
   // &base=older: a unit on an older base, so the base dialog offers the update over USB; &slots=one|two: what the
   // base's SLOTS says (one copy: Send, Restart, Save; two slots: Send, Save, Restart), absent for a base before them.
@@ -342,9 +353,21 @@ export function previewKit() {
     link: new OctatrackLink(unit.usb, fakeSession(unit, 60)),
     // A pretend load and inventory, so the whole flow can be clicked through.
     prepareUpdate: async (target: InventoryTarget) => {
-      await wait(400); unit.pending = { moduleIds: target.moduleIds, removedStockFx: target.removedStockFx ?? [] }
-      // Each load stages different bytes, so the unit's active digest (and the inventory read after Keep) changes.
-      return { name: target.name, changes: [{ module: target.name, data: new TextEncoder().encode(JSON.stringify(unit.pending).padEnd(160 * 1024)) }] }
+      await wait(400)
+      const before = unit.installed.moduleIds
+      unit.pending = { moduleIds: target.moduleIds, removedStockFx: target.removedStockFx ?? [] }
+      // One pretend package per module that comes or goes, as the base takes a whole set: an MWRM header with an image
+      // size (none for a removal) and the module's runtime id. Each load stages different bytes, so the unit's active
+      // digest (and the inventory read after Keep) changes.
+      const changed = [...target.moduleIds.filter(id => !before.includes(id)), ...before.filter(id => !target.moduleIds.includes(id))]
+      const ids = changed.length ? changed : target.moduleIds.slice(0, 1), text = new TextEncoder().encode(JSON.stringify(unit.pending))
+      return { name: target.name, changes: ids.map(id => {
+        const data = new Uint8Array(32 + Math.ceil(160 * 1024 / ids.length / 4) * 4), view = new DataView(data.buffer)
+        view.setUint32(0, 0x4d57524d); view.setUint16(4, 4); view.setUint32(28, Number.parseInt(runtimeId(id), 16))
+        if (target.moduleIds.includes(id)) view.setUint32(8, data.length - 32)
+        data.set(text.subarray(0, data.length - 32), 32)
+        return { module: id, data }
+      }) }
     },
     readInventory: async () => { await wait(150); return structuredClone(unit.installed) },
   }

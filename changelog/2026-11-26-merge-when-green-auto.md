@@ -1,0 +1,1 @@
+Development: the maintenance guide tells an agent that is asked to merge a pull request once it is green to turn on GitHub's auto-merge (`gh pr merge <n> --squash --auto`) instead of watching the checks. The merge then happens when the required checks pass, whether or not the session is still open.

@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "usb-audio-out-tracks-main-cue",
+  "version": "0.4.1-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "Not measured in cycles, waived by the owner for 0.4.1 (sdk/approvals, chip-worst-case-cycles) as for 0.3.0 and 0.4.0. The package's work runs in the frame interrupt on every frame while a host streams: the output stream's fill and the input receiver (usbaudio_in.s through usb_audio_input.py's seams: retire completed packets, build the 16-frame block for DSP core 0). New in 0.4.1 is only the drift trim (usb_audio_input_trim.c), estimated from the compiled code at about 25 instructions a block without a trim and about 4,500 for a four-channel trim block, at most one in 64 blocks; not timed on the chip. No static bound of the whole receive path was counted. The load below is the measured whole cost."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "The owner's Octatrack MKII, base 0.8.1 e11525835106 RAM-booted from its release image, empty set, transport stopped (a release base answers no PLAY key and no stats or guard request), 25 November 2026, agent-run, nothing kept. Figures are the base's own 5-minute load windows (diag.c, read with device.mjs diaglog): CPU meter mean/peak, both DSP meters mean/peak, frameGap (the longest time between two audio frames) and tickGap (the longest run of frames without a UI tick). Baseline: base alone, window minutes 5-10 after boot. Module: release package 6d7bf894 with the install preset Main + INPUTS ABCD (5a16b47e), a 780 s RAM trial, Windows 11 playing a -30 dBFS tone on four channels into INPUTS and recording the Octatrack's two-channel output at the same time for 600 s (uao-duplex.py, WASAPI shared); window minutes 15-20, entirely inside the duplex stream. Baseline: CPU 43.8 % mean, 44.1 % peak; DSP T1-4 32.9/33.9 %, T5-8 41.9/43 %; frameGap 427 us; tickGap 47 frames. With 0.4.1 in duplex: CPU 62.7 % mean, 87.9 % peak; DSP T1-4 33.6/34.8 %, T5-8 42.7/99.4 %; frameGap 403 us; tickGap 2,780 frames (about 1.0 s without a UI tick, no freeze incident logged; cause not isolated). The window that held the trial's start read CPU 52.5/86.9 %, T5-8 peak 99.3 %, tickGap 2,440. So streaming both ways costs about 19 points of the CPU meter with nothing playing. That is past the audit's default of 10 points of idle time, and these are CPU-meter means, not a cfmeter capture of the longest frame interrupt, so the fields stay empty for the owner to judge. Not separated: how much is the output stream and how much the input; 0.4.0 was not measured the same way. Not measured with a pattern playing."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "A 600 s duplex run, not a MIDI flood (the fields stay empty: the flood does not apply and the owner waived current-build hardware evidence for 0.4.1): 600 s, hangs 0, dropped 0. The owner's Octatrack MKII, base 0.8.1 e11525835106 RAM-booted from its release image, empty set, transport stopped (a release base answers no PLAY key and no stats or guard request), 25 November 2026, agent-run, nothing kept. Figures are the base's own 5-minute load windows (diag.c, read with device.mjs diaglog): CPU meter mean/peak, both DSP meters mean/peak, frameGap (the longest time between two audio frames) and tickGap (the longest run of frames without a UI tick). Baseline: base alone, window minutes 5-10 after boot. Module: release package 6d7bf894 with the install preset Main + INPUTS ABCD (5a16b47e), a 780 s RAM trial, Windows 11 playing a -30 dBFS tone on four channels into INPUTS and recording the Octatrack's two-channel output at the same time for 600 s (uao-duplex.py, WASAPI shared); window minutes 15-20, entirely inside the duplex stream. No MIDI flood: the package has no MIDI path of its own. Dropped: the input receiver's counters (vendor request 0x56, every 5 s, 123 reads): 26,462,590 frames received in 2,400,235 packets, no underrun, overrun, bad packet, error or reprime; 1,511 frames absorbed for drift (57 ppm), none repeated; fill 98-132 frames while the tone ran. Windows reported no stream status flag in either direction (26,463,528 frames played, 27,124,146 recorded). The unit logged no skipped render and no late frame entry. Hangs: the trial's verdict logged no crash, stall, freeze or skipped track; after the Undo the unit came back on USB."
+  }
+}

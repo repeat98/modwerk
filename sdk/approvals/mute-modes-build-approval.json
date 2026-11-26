@@ -1,13 +1,15 @@
 {
   "kind": "owner-approved-update",
   "id": "mute-modes",
-  "version": "0.2.2-experimental",
+  "version": "0.2.4-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-04",
+  "approvedOn": "2026-11-26",
   "waived": [
-    "current-build-hardware"
+    "current-build-hardware",
+    "release-documentation"
   ],
-  "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
-  "ownerStatement": "Approved by repeat98 on 4 Nov 2026: release Mute Modes 0.2.2-experimental as an owner-reviewed update, without the frame-interrupt load capture and the flood stress run. No owner unit run of this version was done.",
-  "reason": "The 0.2.2 source moves SHADOW out of stock SRAM into mm_softmute and adds KEYHOLD and the OT-exit hold. The native probe (4,353,132 cases) puts the frame hook's worst bound at 3,440 cycles (SC_KEY, OTFX; 3,344 in 0.2.1) and the plain one at 2,176 (2,032), at most 16,624 per block against a 95,778 budget; the per-trig paths are unchanged. The author reported his MKI runs on native card images: MW_MMOH1 (Sidechain Compressor + Mute Modes, MAIN d8267756…, from a2d9882b) on 3 Nov 2026, MW_MMKH1 (before the OT-exit hold) on 3 Nov and MW_MM022 (this module alone, before KEYHOLD) on 27 Oct. The USB package d8b871e3… was not run on a unit, nor was any MKII. Only the missing stock benchmark (frame-interrupt load) and stress rows are waived, for this exact version and source; every other qualification stays required."
+  "sourceSha256": "e547021885f8ff950aa3dae0c30b2c51e70e408ee17237d7892a905163f28031",
+  "ownerStatement": "Release Mute Modes 0.2.4-experimental. I waive Zac's upstream merge: import my unmerged pull request Zac-Kyoti/octatrack-kyoti-fw#5 at its head 72d115f01. I also waive the hardware qualification of this exact build and fresh UI captures for this version; keep 0.2.3's captures.",
+  "reason": "0.2.4 rests while MUTE MODE is OT, the default: mm_in_use answers ev_in_use, and the base puts stock's bytes back under five of its detours. Its source is the head of the owner's own pull request to the author's repository, Zac-Kyoti/octatrack-kyoti-fw#5 (72d115f01 on repeat98/octatrack-kyoti-fw, branch mute-modes-0.2.4-rest), still unmerged; it is imported under the owner's waiver of the author's merge (sdk/imports/mute-modes-72d115f.json). Measured on the owner's MKII on a development twin of base 0.8.1 (493c9cc5) that admits package 7542f10c as table owner, 25 November 2026, trials rolled back: at rest +0.0 points of the frame interrupt (0.2.3: +0.9), CPU meter +0.2 (evidence/cpu-price.json); every MUTE MODE switch to OTFX, OTFX-T and DT-T woke it, with T1 still muted in the mute word, and it rested again on OT, with no stall, error or crash. On a development twin of base 0.8.2 with the UI-tick caching (cd450fed) it added about 1.8 us of module UI ticks. Not run: the exact release package on a unit running released base 0.8.2 (device:qualify, a power cycle, removal), and the listen that a muted track stays silent right after a mode change; nor an MKI. The native units are unchanged (the new code is under MODWERK_EVENTS only), so the native probe and the ot_emu load and stress record of 0.2.3 describe this version's native code; no static cycle count of mm_in_use was made (five instructions on the UI tick). It needs base 0.8.2, which admits a table owner with resting sites. Its screens are 0.2.3's, so 0.2.3's five captures stay.",
+  "retainedUiVersion": "0.2.3-experimental"
 }

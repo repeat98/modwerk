@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { CURRENT_PATCH, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, editCurrentPatch, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canFlashBase, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity, type ZoomCurrentPatch, type ZoomPatchChange } from './zoom-protocol'
+import { CURRENT_PATCH, PATCH_COMMANDS, PATCH_PROGRAMS, canEditPatches, liveSlots, ZOOM_DEVICE_IDS, ZOOM_FILE_WRITE_REQUIREMENT, editCurrentPatch, isCurrentPatchReply, parseCurrentPatch, EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canFlashBase, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity, type ZoomCurrentPatch, type ZoomPatchChange } from './zoom-protocol'
 import { zoomEffectControls, type ZoomEffectControls } from './zoom-effect-controls'
 import { storedZip } from './zip'
 
@@ -23,6 +23,8 @@ export type ZoomLinkState = {
   readonly notice?: { tone: 'error' | 'info'; text: string }
   /** While reading: what, and how far. */
   readonly progress?: { label: string; done: number; total: number }
+  /** The program (0-49) the pedal plays, once a program change has said so (one turned on the pedal, or one this page sent). */
+  readonly program?: number
 }
 
 /** The parts of Web MIDI the link uses (MIDIAccess in a browser, a fake in tests). */
@@ -56,6 +58,8 @@ export class ZoomLink {
   private readonly controls = new Map<string, { size: number; controls?: ZoomEffectControls }>()
   /** A reply timed out: one may still arrive, so the next operation first waits for the line to go quiet. */
   private stale = false
+  private programByte = false
+  private editModeAt = -Infinity
   private readonly requestAccess: (() => Promise<MidiAccessLike>) | null
   private readonly timeout: number
   private readonly retry: number
@@ -133,7 +137,10 @@ export class ZoomLink {
   private receive(data: number[]) {
     for (const b of data) {
       if (b >= 0xf8) continue
-      if (b === 0xf0) { this.sysex = [b]; continue }
+      if (b === 0xf0) { this.sysex = [b]; this.programByte = false; continue }
+      // A program change from the pedal (turned on it, or the echo of one sent): which patch it plays now.
+      if (b >= 0xc0 && b <= 0xcf && !this.sysex) { this.programByte = true; continue }
+      if (this.programByte) { this.programByte = false; if (b <= 0x7f && this.state.status !== 'idle') this.set({ ...this.state, program: b }); continue }
       if (!this.sysex) continue
       if (b === 0xf7) { const m = [...this.sysex, b]; this.sysex = null; this.dispatch(m); continue }
       if (b <= 0x7f) this.sysex.push(b)
@@ -227,11 +234,11 @@ export class ZoomLink {
       // Closing the tab mid-write can leave the effect list deleted: the browser asks first.
       if (status === 'writing') globalThis.addEventListener?.('beforeunload', stay)
       this.operationConnection = connection
-      this.set({ status, identity, connection, progress: { label, done: 0, total: 0 } })
+      this.set({ status, identity, connection, program: this.state.program, progress: { label, done: 0, total: 0 } })
       try { await this.drain(); return await work() } finally {
         globalThis.removeEventListener?.('beforeunload', stay)
         this.operationConnection = undefined
-        if (this.state.connection === connection && this.getState().status === status) this.set({ status: 'ready', identity, connection })
+        if (this.state.connection === connection && this.getState().status === status) this.set({ status: 'ready', identity: this.state.identity, connection, program: this.state.program })
       }
     }))
     this.op = run.catch(() => undefined)
@@ -338,6 +345,10 @@ export class ZoomLink {
   }, 'writing')
   // A new file that didn't make it into the effect list goes again, so a retry installs it afresh. Best effort.
   private async dropNew(file: string) { try { await this.drain(); await this.remove(file) } catch { /* the next install of it names it in the list */ } }
+  private refusePatchWrites() {
+    const identity = this.state.identity
+    if (!canEditPatches(identity)) throw new Error('Patch changes require the MS-70CDR with Zoom 2.10, MIDISTOMP 2.0.1 or 2.0.4 and later, or development build D004.' + (identity ? ' Connected firmware is ' + (identity.firmware || 'unknown') + ' on ' + identity.model + '.' : ''))
+  }
   private refuseWrites() {
     const identity = this.state.identity
     if (!canWriteFiles(identity)) throw new Error(ZOOM_FILE_WRITE_REQUIREMENT + (identity ? ' Connected firmware is ' + (identity.firmware || 'unknown') + ' on ' + identity.model + '.' : ''))
@@ -437,11 +448,14 @@ export class ZoomLink {
   /** Read only the current edit buffer, without enabling editor mode or sending a patch change. */
   readonly currentPatch = () => this.exclusive('Reading the active patch', async () => (await this.readPatch()).patch)
 
-  private async readPatch() {
+  private refusePatchReads() {
     const identity = this.state.identity
     if (identity?.deviceId !== ZOOM_DEVICE_IDS['zoom-ms-70cdr'] || isUpdateMode(identity)) {
       throw new Error('Connect the original MS-70CDR in normal mode to read its patch.')
     }
+  }
+  private async readPatch() {
+    this.refusePatchReads()
     const reply = await this.ask([CURRENT_PATCH.request])
     if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
     const patch = reply && parseCurrentPatch(reply)
@@ -464,24 +478,22 @@ export class ZoomLink {
       // A duplicated ID is ambiguous. Never show its parameters as the other effect's.
       effects.set(key, effects.has(key) ? undefined : { file: { ...file, inEffectList: true, effect } })
     }
-    for (const entry of effects.values()) {
-      if (!entry) continue
-      const { name, size } = entry.file, key = name.toUpperCase()
-      const cached = this.controls.get(key)
-      if (cached?.size === size) entry.controls = cached.controls
-      else {
-        const bytes = await this.read(name)
-        if (bytes.length !== size) throw new Error('The pedal returned an incomplete read of ' + name + '.')
-        entry.controls = zoomEffectControls(bytes)
-        this.controls.set(key, { size, controls: entry.controls })
-      }
-    }
+    for (const entry of effects.values()) if (entry) entry.controls = await this.fileControls(entry.file)
     return effects
   })
+  private async fileControls({ name, size }: ZoomFile) {
+    const key = name.toUpperCase(), cached = this.controls.get(key)
+    if (cached?.size === size) return cached.controls
+    const bytes = await this.read(name)
+    if (bytes.length !== size) throw new Error('The pedal returned an incomplete read of ' + name + '.')
+    const controls = zoomEffectControls(bytes)
+    this.controls.set(key, { size, controls })
+    return controls
+  }
 
   /** Update the active buffer only. A patch changed on the pedal must be read again before applying. */
   readonly applyPatchChanges = (expected: ZoomCurrentPatch, changes: readonly ZoomPatchChange[]) => this.exclusive('Applying patch controls', async () => {
-    this.refuseWrites()
+    this.refusePatchWrites()
     const { patch, reply } = await this.readPatch()
     if (JSON.stringify(patch) !== JSON.stringify(expected)) throw new Error('The patch changed on the pedal. Refresh it before applying edits.')
     if (!changes.length) return patch
@@ -498,6 +510,120 @@ export class ZoomLink {
     }
     return applied
   }, 'writing')
+
+  // ---- Beyond the edit buffer: the fifty programs, Save, live knobs and changing a slot's effect.
+  private patchSysex(body: number[]) { this.send(zoomSysex(this.state.identity!.deviceId, body)) }
+  private editMode() { this.patchSysex([CURRENT_PATCH.edit]); this.editModeAt = now() }
+  /** A program change: the pedal loads that patch into the edit buffer and plays it. */
+  private goTo(program: number) {
+    const t = Math.max(now(), this.nextSend)
+    this.output?.send([0xc0, program & 0x7f], t)
+    this.nextSend = t + 3
+    this.set({ ...this.state, program })
+  }
+  /** The edit buffer as the pedal sends it, or null when no reply came; a late reply is drained so it can't answer the next request. */
+  private async tryPatch() {
+    const reply = await this.ask([CURRENT_PATCH.request])
+    if (!reply) await this.drain()
+    return reply && parseCurrentPatch(reply) ? reply : null
+  }
+  private checkProgram(program: number) {
+    if (!Number.isInteger(program) || program < 0 || program >= PATCH_PROGRAMS) throw new Error('The MS-70CDR has patches 1 to ' + PATCH_PROGRAMS + '.')
+  }
+  /** How many slots take a live knob message on this pedal (liveSlots). */
+  readonly liveSlots = () => liveSlots(this.state.identity?.firmware)
+  /**
+   * Every stored patch. The pedal has no command for that, so it goes to each program in turn and plays it (turn the
+   * amp down). Then it goes back to the program it was on (the one a program change said, else the one whose patch
+   * matches the edit buffer) and writes the edit buffer back, so changes not saved are kept. When neither says it (no
+   * program change seen, and the buffer was changed), the buffer is written back on the last program read and
+   * `program` is undefined: the page asks where to save. `onEach` sees each patch as it comes.
+   */
+  readonly readPatches = (onEach?: (program: number, patch: ZoomCurrentPatch | null) => void) => this.exclusive('Reading the patches', async () => {
+    // Going through the fifty can end by writing the edit buffer back (below), so it is gated like every patch write.
+    this.refusePatchWrites()
+    const { reply: buffer } = await this.readPatch(), from = this.state.program, dumps: (number[] | null)[] = []
+    const read = async (program: number, settle: number) => {
+      this.goTo(program)
+      await sleep(settle)
+      dumps[program] = await this.tryPatch()
+      onEach?.(program, dumps[program] && parseCurrentPatch(dumps[program]!)!)
+    }
+    for (let program = 0; program < PATCH_PROGRAMS; program++) {
+      this.progress('Reading the patches', program + 1, PATCH_PROGRAMS)
+      await read(program, 45)
+    }
+    if (!dumps.some(Boolean)) throw new Error('The pedal sent none of its patches.')
+    for (let program = 0; program < PATCH_PROGRAMS; program++) if (!dumps[program]) await read(program, 90)
+    const same = (dump: number[] | null) => !!dump && dump.every((b, i) => b === buffer[i])
+    const back = from ?? dumps.findIndex(same)
+    if (back >= 0) {
+      this.goTo(back)
+      await sleep(60)
+    }
+    if (!same(dumps[back >= 0 ? back : PATCH_PROGRAMS - 1])) {
+      this.editMode()
+      await sleep(20)
+      this.send(buffer)
+      await sleep(160)
+    }
+    // goTo noted each program read; the last isn't where the buffer came from, so the program is unknown again.
+    if (back < 0) this.set({ ...this.state, program: undefined })
+    return { patches: dumps.map(dump => dump && parseCurrentPatch(dump)!), program: back >= 0 ? back : undefined }
+  })
+  /** Go to a program and read its patch. */
+  readonly openPatch = (program: number) => this.exclusive('Opening patch ' + (program + 1), async () => {
+    this.refusePatchReads()
+    this.checkProgram(program)
+    this.goTo(program)
+    await sleep(60)
+    return (await this.readPatch()).patch
+  })
+  /** Store the edit buffer, as the pedal has it now, into `program` (a flash write: the pedal goes quiet for about two
+   * seconds), then go to that program and check it reads back the same from flash. */
+  readonly savePatch = (program: number) => this.exclusive('Saving patch ' + (program + 1), async () => {
+    this.refusePatchWrites()
+    this.checkProgram(program)
+    const { patch, reply } = await this.readPatch()
+    if (this.state.program !== program) {
+      this.goTo(program)
+      await sleep(60)
+    }
+    this.editMode()
+    await sleep(20)
+    this.send(reply)
+    await sleep(160)
+    this.patchSysex(PATCH_COMMANDS.store(program))
+    await sleep(600)
+    this.goTo(program)
+    await sleep(120)
+    let back = await this.tryPatch()
+    for (let i = 0; !back && i < 3; i++) { await sleep(700); back = await this.tryPatch() }
+    if (!back) throw new Error('Saved, but the pedal was too busy to send the patch back. Open patch ' + (program + 1) + ' to check it.')
+    const saved = parseCurrentPatch(back)!
+    if (JSON.stringify(saved) !== JSON.stringify(patch)) throw new Error('Patch ' + (program + 1) + ' reads back different from what was saved. Open it to see what the pedal kept.')
+    return saved
+  }, 'writing')
+  /** Turn one knob live (31), as the pedal's own knobs do: only in the slots that take it (liveSlots), and only while
+   * nothing else is talking to the pedal. False when it wasn't sent: then stage it for Apply. */
+  readonly liveKnob = (slot: number, parameter: number, value: number) => {
+    if (this.state.status !== 'ready' || !this.output || !canEditPatches(this.state.identity) || slot >= this.liveSlots()) return false
+    if (now() - this.editModeAt > 1000) this.editMode()
+    this.patchSysex(PATCH_COMMANDS.knob(slot, parameter, value))
+    return true
+  }
+  /** What a slot can hold: the effect files the effect list names, with their groups. Reads only the list. */
+  readonly effectChoices = () => this.exclusive('Reading the effect list', async () => {
+    this.refusePatchReads()
+    return listRecords(await this.effectList()).filter(r => /\.zdl$/i.test(r.name)).map(({ gid, name }) => ({ gid, name }))
+  })
+  /** One effect file's header and controls, to put it in a slot. */
+  readonly slotEffect = (file: ZoomFile) => this.exclusive('Reading ' + file.name, async () => {
+    this.refusePatchReads()
+    const effect = await this.head(file)
+    if (!effect) throw new Error(file.name + ' has no effect header, so it can’t go in a slot.')
+    return { file: { ...file, inEffectList: true, effect }, controls: await this.fileControls(file) } satisfies ZoomPatchEffect
+  })
 
   /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {
@@ -571,3 +697,4 @@ async function midiAllowed() {
     return status?.state === 'granted'
   } catch { return false }
 }
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

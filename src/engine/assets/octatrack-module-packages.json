@@ -301,18 +301,16 @@
       "octabam": true,
       "standalone": true,
       "abi": 8,
-      "features": 3,
-      "sites": 35,
-      "copies": 5,
+      "features": 131,
+      "sites": 36,
+      "copies": 6,
       "fills": 0,
-      "version": "0.1.1-experimental",
+      "version": "0.2.1-experimental",
       "name": "Play Modes",
       "module": "be4ff75a",
-      "bytes": 14846,
-      "sha256": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced",
-      "path": "octatrack-modules/playmodes/0.1.1-experimental.mwrm",
-      "lagsBehind": "0.2.0-experimental",
-      "lagReason": "0.2.0 needs a new reviewed standalone recipe and hardware results or an owner decision (#764)"
+      "bytes": 16478,
+      "sha256": "5656b2cdafd2e17ee57b6400bf98e098926c0d0a167427d1cd34e816a6fdaa22",
+      "path": "octatrack-modules/playmodes/0.2.1-experimental.mwrm"
     },
     {
       "id": "mute-modes",
@@ -322,12 +320,12 @@
       "sites": 14,
       "copies": 9,
       "fills": 0,
-      "version": "0.2.3-experimental",
+      "version": "0.2.4-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2922,
-      "sha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
-      "path": "octatrack-modules/mute-modes/0.2.3-experimental.mwrm"
+      "bytes": 3026,
+      "sha256": "7542f10c56b431761bdd9b4f44a7a3ccb6d4851f31e2c4bb519281dd5d0b6b8c",
+      "path": "octatrack-modules/mute-modes/0.2.4-experimental.mwrm"
     },
     {
       "id": "sidechain-compressor",
@@ -341,9 +339,9 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "cbd0fa736250c328efdfaa0f015217a42e124cb8f73c4718f5d90f4b2977319c",
+      "sha256": "f403fd92a5211f59002e3391f81f5a4750441fd168485fea538bbeae45ad77e3",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "output-matrix",
@@ -357,9 +355,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "0b9bf60368dd2cb538970de6ea58334bb001f63d1e3eaea9bec3256bb0894372",
+      "sha256": "0c9e62f2e8a38f6a083dd72a7015b9a9efccb92d9899af115949c16048fdce94",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "cc-map",
@@ -375,7 +373,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -451,9 +449,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
+      "sha256": "6b56878207e4ca0333684cde89b8e4762a0fe29a38e31cf6e735b79d46b1b5e6",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "analog-bassdrum",
@@ -467,9 +465,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930",
+      "sha256": "2ce9f2f53081821c088972044538c8a5dbcb1b08e53823cc065df82b47e9cbca",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -594,6 +592,36 @@
       "sha256": "c3a97ecc50c92b305a45fcd6cf75d3f48a194538891c5398eedfa5f3aad39df5"
     },
     {
+      "id": "ungemach",
+      "sources": [
+        "sdk/octabam/modules/ungemach/machine.c",
+        "sdk/octabam/modules/ungemach/engine.c"
+      ],
+      "subscribe": [
+        "ev_play_increment:ungemach_play_increment:25",
+        "ot_machines:ungemach_machine:60"
+      ],
+      "partSignature": {
+        "sig": "UG",
+        "lo": 1,
+        "hi": 1,
+        "flags": [
+          "SETUP_ALL"
+        ]
+      },
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/ungemach/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "ungemach",
+      "module": "ee55bea9",
+      "bytes": 90492,
+      "sha256": "37d7a278b8391e9307111a97745c444ca081528aebfc3f2bcf8ac7ff2012cbdd"
+    },
+    {
       "id": "track-solo",
       "octabam": true,
       "unitName": "Track Solo",
@@ -647,7 +675,7 @@
       "id": "midi-scenes",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.3.0-experimental",
+      "version": "0.3.1-experimental",
       "abi": 8,
       "features": 129,
       "sites": 33,
@@ -655,9 +683,9 @@
       "fills": 0,
       "name": "MIDI Scenes",
       "module": "21a6ffd7",
-      "bytes": 8560,
-      "sha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
-      "path": "octatrack-modules/midi-scenes/0.3.0-experimental.mwrm"
+      "bytes": 9864,
+      "sha256": "17f934ffa1110dc6d3a9f20caea3cee456234dd6b4b8124382673f1248b08563",
+      "path": "octatrack-modules/midi-scenes/0.3.1-experimental.mwrm"
     },
     {
       "id": "kits",
@@ -838,6 +866,20 @@
   "usbAudio": {
     "configurable": {
       "name": "USB Audio",
+      "version": "0.4.1-experimental",
+      "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.1-experimental.mwrm",
+      "bytes": 20824,
+      "sha256": "6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502",
+      "abi": 8,
+      "features": 131,
+      "sites": 3,
+      "copies": 4,
+      "fills": 0,
+      "installPresets": true,
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
+    },
+    "configurable-0.4": {
+      "name": "USB Audio",
       "version": "0.4.0-experimental",
       "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.0-experimental.mwrm",
       "bytes": 19948,
@@ -848,7 +890,7 @@
       "copies": 4,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "a991caf0e7b55b31c83fe113e5566312568fce3ef01ff541d2c06c635dd2bb1a"
     },
     "configurable-0.3": {
       "name": "USB Audio",
@@ -862,7 +904,7 @@
       "copies": 3,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "ada74e3d084c9f9943855d9da4a6a14819e9f734dd79de8227706f4aef413ecf"
     }
   }
 }

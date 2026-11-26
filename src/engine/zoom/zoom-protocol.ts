@@ -54,10 +54,37 @@ export const isCurrentPatchReply = (m: number[], deviceId: number) =>
 
 export type ZoomPatchSlot = { index: number; gid: number; fxid: number; enabled: boolean; values: number[] }
 export type ZoomCurrentPatch = { name: string; slots: ZoomPatchSlot[] }
-export type ZoomPatchChange = { slot: number; parameter: number; value: number } | { slot: number; enabled: boolean }
+/** A staged edit: one knob, a slot on or off, the patch's name, or a slot's effect (`gid`/`fxid` 0 empties it) with
+ * its knobs' starting values. */
+export type ZoomPatchChange = { slot: number; parameter: number; value: number } | { slot: number; enabled: boolean } | { name: string } |
+  { slot: number; gid: number; fxid: number; values: readonly number[] }
+
+/** The MS-70CDR keeps 50 patches; a program change (C0 <program>) loads one into the edit buffer. */
+export const PATCH_PROGRAMS = 50
+export const PATCH_NAME_LENGTH = 10
+export const PATCH_SLOTS = 6
+/** Patch commands beyond the edit buffer, as the ZoomMultistompZDL patch editor sends them (MIT): store the edit
+ * buffer into a program (a flash write), and turn one knob live (field 2-10 are the nine parameters, 14 bits). */
+export const PATCH_COMMANDS = {
+  store: (program: number) => [0x32, 0x01, 0x00, 0x00, program & 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00],
+  knob: (slot: number, parameter: number, value: number) => [0x31, slot, parameter + 2, value & 0x7f, (value >> 7) & 0x7f],
+}
+/** How many slots take a live knob message (31): the first three on Zoom's firmware, all six from MIDISTOMP 2.0.4
+ * (identity `M204`, matujuice/zoom-ms-midistomp#77). The other slots take Apply. */
+export function liveSlots(firmware: string | undefined) {
+  const tag = /^M(\d{3})$/.exec((firmware ?? '').trim())
+  return tag && +tag[1] >= 204 ? PATCH_SLOTS : 3
+}
+/** Where patches may be changed: where effect files may be written (canWriteFiles), and MIDISTOMP 2.0.4 or later,
+ * whose live knobs reach every slot. */
+export const canEditPatches = (identity?: ZoomIdentity) => canWriteFiles(identity) ||
+  (identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && liveSlots(identity.firmware) === PATCH_SLOTS)
+/** A name the pedal can show: printable 7-bit characters, at most ten. */
+export const cleanPatchName = (name: string) => name.replace(/[^\x20-\x7e]/g, '').slice(0, PATCH_NAME_LENGTH).trimEnd()
 
 // Unpacking the SysEx collectors leaves the same little-endian bit fields in each 18-byte slot.
 const PATCH_CONTROLS = [[29, 12], [42, 11], [55, 11], [68, 8], [76, 8], [84, 8], [92, 8], [100, 9], [128, 8]]
+const PATCH_NAME_AT = 111, PATCH_COUNT_AT = 109
 
 export function zoomPatchParameterMax(slot: number, parameter: number): number {
   // The high bit of the ninth knob in slot 5 is unverified. Preserve it.
@@ -65,26 +92,45 @@ export function zoomPatchParameterMax(slot: number, parameter: number): number {
   return (1 << width) - 1
 }
 
-/** Overlay changed fields on a fresh reply, preserving the name, IDs and unmodelled bytes. */
+/** Overlay changed fields on a fresh reply, preserving the IDs, the name and unmodelled bytes unless changed. Effect
+ * changes go first (they decide which slots exist and set their knobs), then knobs and on/off on top. */
 export function editCurrentPatch(message: number[], changes: readonly ZoomPatchChange[]): number[] {
   const patch = parseCurrentPatch(message)
   if (!patch) throw new Error('The pedal did not return its active patch.')
-  const raw = unpack7(message.slice(5, -1))
-  for (const change of changes) {
-    if (!patch.slots.some(slot => slot.index === change.slot)) throw new Error('The effect slot is no longer in the active patch.')
-    const parameter = 'parameter' in change ? PATCH_CONTROLS[change.parameter] : undefined
-    const value = 'value' in change ? change.value : Number(change.enabled)
-    const max = 'parameter' in change ? zoomPatchParameterMax(change.slot, change.parameter) : 1
-    if (('parameter' in change && !parameter) || !Number.isInteger(value) || value < 0 || value > max) {
-      throw new Error('The parameter value does not fit this patch slot.')
-    }
-    const bit = parameter?.[0] ?? 0
-    const at = change.slot * 18 + (bit >> 3), shift = bit & 7, mask = max << shift
+  const raw = unpack7(message.slice(5, -1)), slots = new Set(patch.slots.map(slot => slot.index))
+  const write = (slot: number, bit: number, max: number, value: number) => {
+    if (!Number.isInteger(value) || value < 0 || value > max) throw new Error('The parameter value does not fit this patch slot.')
+    const at = slot * 18 + (bit >> 3), shift = bit & 7, mask = max << shift
     const current = raw[at] | raw[at + 1] << 8 | raw[at + 2] << 16
     const updated = (current & ~mask) | (value << shift)
     raw[at] = updated & 255
     raw[at + 1] = (updated >> 8) & 255
     raw[at + 2] = (updated >> 16) & 255
+  }
+  for (const change of [...changes.filter(c => 'gid' in c), ...changes.filter(c => !('gid' in c))]) {
+    if ('name' in change) {
+      const name = cleanPatchName(change.name).padEnd(PATCH_NAME_LENGTH)
+      for (let i = 0; i < PATCH_NAME_LENGTH; i++) raw[PATCH_NAME_AT + i] = name.charCodeAt(i)
+      continue
+    }
+    if (!Number.isInteger(change.slot) || change.slot < 0 || change.slot >= PATCH_SLOTS) throw new Error('There is no such slot in a patch.')
+    if ('gid' in change) {
+      const used = !!(change.gid || change.fxid)
+      write(change.slot, 25, 15, change.gid)
+      write(change.slot, 1, 1023, change.fxid)
+      write(change.slot, 0, 1, Number(used))
+      PATCH_CONTROLS.forEach(([bit], parameter) => write(change.slot, bit, zoomPatchParameterMax(change.slot, parameter), used ? change.values[parameter] ?? 0 : 0))
+      // The slot count only grows, to cover a slot given an effect: lowering it would drop the slots past it.
+      const count = (raw[PATCH_COUNT_AT] >> 2) & 7
+      if (used && change.slot >= count) raw[PATCH_COUNT_AT] = (raw[PATCH_COUNT_AT] & ~0x1c) | ((change.slot + 1) << 2)
+      if (used) slots.add(change.slot)
+      else slots.delete(change.slot)
+      continue
+    }
+    if (!slots.has(change.slot)) throw new Error('The effect slot is no longer in the active patch.')
+    if ('parameter' in change && !PATCH_CONTROLS[change.parameter]) throw new Error('The parameter value does not fit this patch slot.')
+    if ('parameter' in change) write(change.slot, PATCH_CONTROLS[change.parameter][0], zoomPatchParameterMax(change.slot, change.parameter), change.value)
+    else write(change.slot, 0, 1, Number(change.enabled))
   }
   return [...message.slice(0, 5), ...pack7(raw), 0xf7]
 }

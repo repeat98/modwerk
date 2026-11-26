@@ -90,7 +90,7 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late'] as const
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
@@ -100,8 +100,9 @@ export interface DeviceCrash { count: number; vector: number; pc: number; sr: nu
  * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
  * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none.
  * `packets`: each core's last loader packet header, eight 16-bit words (the record's tx[2][8]); sites before
- * 16 November 2026 sent none. */
-export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][] }
+ * 16 November 2026 sent none. `host`: the host port's status (the record's isr[2]): the selected core's ISR when the
+ * stall was found, and core 1's as dsp_core1.s last read it; sites before 27 November 2026 sent none. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][]; host?: number[] }
 const FRAME_US = 363, LATE_WINDOW = [110, 190] as const, LATE_TAIL = 6
 /** How late each of a stall's frames began against the DSP's frame grid, in µs: the lateness before it plus its gap
  * less one frame, never under 0. Past a whole frame (or within 20 µs of one) the DSP has skipped that frame, and a gap
@@ -118,7 +119,7 @@ export function stallLateness(frames: number[]): number[] {
 /** A stall in a line: its frames (the last gaps, the longest with the run before it, and whether one of the last frames
  * began in the late entry's window, docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame), then each core's
  * last packet and whether a publication was under way (describeStallPackets). '' when the record holds none of these. */
-export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report'>): string {
+export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report' | 'host'>): string {
   return [frames?.length ? stallFrames(frames) : '', describeStallPackets(stall)].filter(Boolean).join('; ')
 }
 function stallFrames(frames: number[]): string {
@@ -152,11 +153,19 @@ export function describeStallPacket(header: number[]): string {
 /** Each core's last packet, and whether the loader's manager was publishing (a pick, a Part change or an install) when
  * the stall was found: the report's `manager` word, phase in its low byte (0 idle). The watchdog finds a stall only
  * while a job waits (OCTATRACK_HARDWARE_TRAPS.md), so a publication may have begun after the frames stopped. */
-export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report'> | undefined): string {
+export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report' | 'host'> | undefined): string {
   const lines = (stall?.packets ?? []).map((header, core) => `core ${core} last packet: ${describeStallPacket(header)}`)
-  const manager = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report?.[DSP_REPORT_NAMES.indexOf('manager')] : undefined
-  const phase = (manager ?? 0) & 0xff
+  const report = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report : undefined, word = (name: string) => report?.[DSP_REPORT_NAMES.indexOf(name)]
+  const manager = word('manager'), phase = (manager ?? 0) & 0xff
   if (manager !== undefined) lines.push(phase ? `a pick, Part change or install under way when it was found (manager phase ${phase}${MANAGER_PHASES[phase] ? ', ' + MANAGER_PHASES[phase] : ''})` : 'no pick, Part change or install under way when it was found')
+  // A job still waiting (status 0) whose core's header carries no magic was queued but never sent (transfer.c sends a
+  // queued job at the next frame): the frames had stopped before it, so it found the stall and did not cause it.
+  const unsent = [0, 1].filter(core => word(core ? 'job1' : 'job0') === 0 && stall?.packets?.[core]?.length && stall.packets[core][0] !== PACKET_MAGIC)
+  if (unsent.length) lines.push(`the waiting job on core ${unsent.join(' and ')} was never sent: the frames had stopped before it`)
+  // dsp.c's HOST_ISR: bit 0 RXDF (the core holds a word the ColdFire never took, so it waits at P:$97), bit 1 TXDE.
+  const isr = stall?.host?.[0], select = (word('eportPinFlagSelect') ?? 0) & 0xff
+  if (isr !== undefined) lines.push(`core ${select} host port: ${isr & 1 ? 'a word waiting for the ColdFire (RXDF), so the core waits at P:$97 for it' : 'no word waiting for the ColdFire, so the core was not waiting on the host'}` +
+    (isr & 2 ? '' : ", and it had not taken the ColdFire's last word (TXDE clear)"))
   return lines.join('; ')
 }
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
@@ -228,6 +237,11 @@ export interface OctatrackDiagnostic {
   error?: typeof DIAGNOSTIC_ERRORS[number]
   result?: typeof DIAGNOSTIC_RESULTS[number]
   refusal?: number
+  /** A `sync_failed` the base refused as `unsafe`: what kept the change from beginning, as the base's self-test record
+   * said right after (runtime.h MACHINE_BUSY_*: 1 a track's recorder records, 2 its other recorder row is pending or
+   * unknown, 3 the transport runs, 4 a track runs, 5 the loader's journal is busy), the track (0-15) in the high
+   * nibble; 0 nothing any more, or a base before 0.8.2. */
+  busy?: number
   reading?: DiagnosticReading
   /** On `health` after a start that loaded only part of the card's set (`reading.saved` 6 or 10): each module that start
    * left out (the base's RESTORE request), by catalogue id or `other`, with the loader's refusal (256 the boot guard) and
@@ -244,7 +258,9 @@ export interface OctatrackDiagnostic {
   step?: DiagnosticSyncStep
   reconnect?: typeof TRIAL_RECONNECT_FAILURES[number]
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
-   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+   * received, refusals, bus resets, data stages primed, completed and abandoned; from 26 November 2026 a seventh entry,
+   * the last completed data stage's descriptor status byte (0x40 halted, 0x20 data buffer error, 0x08 transaction error),
+   * as it stands after the sync: it belongs to this sync only when the completed count rose. */
   usb?: number[]
   /** Offset into the staged package (CHUNK only). Remaining bytes refer to the entire EP0 OUT frame. */
   upload?: { command: StagingCommand; chunkOffset?: number; remainingBytes?: number }
@@ -260,3 +276,18 @@ export interface OctatrackDiagnostic {
 export const DIAGNOSTICS_GUEST = 'guest'
 export interface DiagnosticConsent { accountId: string; enabled: boolean; version: string; changedAt: string | null; expiresAt: string | null }
 export interface DiagnosticEntry { eventId: string; createdAt: string; data: OctatrackDiagnostic; username?: string }
+
+/** The stock tasks by TCB (octabam's STEM_REC.md task census, OS 1.40C): entry and priority, higher runs first. */
+const TASKS = new Map<number, string>([[0x46c7bed8, 'UI task 0x40061a94, priority 1'], [0x460ddde4, 'engine task 0x4008445c (card jobs), priority 1'],
+  [0x46105508, 'task 0x40098a5c, priority 1'], [0x460e0e38, 'task 0x4009203c, priority 2'], [0x460fab80, 'task 0x40091d18, priority 2'],
+  [0x460ffd44, 'task 0x400921c4, priority 2'], [0x460d59d4, 'housekeeping task 0x40056c40, priority 3'],
+  [0x460d4f80, 'key-repeat task 0x4005593c, priority 4'], [0x460bcc2c, 'USB task 0x4001ee30, priority 5'], [0x46c7fb0c, 'task 0x40005540, priority 6']])
+/** A FREEZE_PC record (diag.h, bases from 0.8.2), right after the FREEZE it belongs to: where the processor was at 5, 6,
+ * 7 and 8 s of that freeze, as the audio frame's eDMA interrupt found it. `level` is the interrupted priority level
+ * (above 0: an interrupt handler), `task` the kernel's current task. A sample after the tick moved again is left out. */
+export function freezeSamples(r: DeviceIncident): { pc: number; sr: number; level: number; tcb: number; task: string }[] {
+  const long = (i: number) => (r.machines[i] << 24 | r.machines[i + 1] << 16 | r.machines[i + 2] << 8 | r.machines[i + 3]) >>> 0
+  const pcs = [r.a, r.screen, r.tempo24, long(16)], srs = [r.cpu, r.dsp5to8, r.dsp1to4, r.machines[20] << 8 | r.machines[21]]
+  return pcs.map((pc, i) => ({ pc, sr: srs[i], level: srs[i] >> 8 & 7, tcb: long(4 * i), task: TASKS.get(long(4 * i)) ?? 'TCB 0x' + long(4 * i).toString(16) }))
+    .filter(s => s.pc || s.sr || s.tcb)
+}

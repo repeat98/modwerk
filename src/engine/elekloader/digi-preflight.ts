@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Preflight: a second, independent check of a built OS file before the page offers it, with Modwerk's own reader and
 // stock-write checker rather than the builder that made it. It re-reads the owner's stock file and the build and refuses
-// unless every section but the main OS is byte for byte stock, the container fits the flash, and every changed byte of
+// unless non-main sections are byte for byte stock or match a guarded SHARC plan, the container fits the flash, and every changed byte of
 // the main OS lies inside a site that one of the build's own mod files declares and guards, with only the mods' code
 // and data appended, and no mod file refers to the raw block write to the +Drive. It reads the two files and the mod
 // files; nothing runs and nothing is sent anywhere. The builder's own verification (framing, checksums, the seal, the
 // in-place depack) still runs first; this adds what it does not.
 import { ELE3_DEVICES, mainImage, readEle3Syx, type Ele3Device, type ElemodMachine } from '../elektron/ele3.ts'
 import { LINK_DEVICES, parseElemod, type ParsedMod } from '../elektron/elemod.ts'
+import { unpackDt2SharcSection, verifyDt2RenderSection, type Dt2RenderPlan } from '../elektron/dt2-sharc.ts'
 import { sha256Hex } from '../elektron/hash.ts'
 import { StockWriteError, checkStockWrites, type DeclaredSite, type StockMap } from '../elektron/stock-writes.ts'
 import { TRAILER } from '../../../vendor/elekloader/kit/src/store.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog.ts'
 import { BUILDER_CATALOG } from './machine-build.ts'
-
 /** Machines whose builds pass the preflight before the page offers them. */
 export const PREFLIGHT_MACHINES: readonly ElemodMachine[] = ['digitakt-ii']
 
@@ -96,8 +96,27 @@ export async function preflightBuiltFile(machine: ElemodMachine, stock: Blob, en
   const built = files.find(file => /\.syx$/i.test(file.name))
   if (!built) throw new PreflightError(['the build has no .syx file to check'])
   const names = enabled.map(path => path.split('/').pop()!)
-  const mods = parseBuildMods(await Promise.all(names.map(async name => ({ name, bytes: await load(name) }))))
-  return preflightBuild(machine, new Uint8Array(await stock.arrayBuffer()), new Uint8Array(built.data), mods)
+  const modFiles = await Promise.all(names.map(async name => ({ name, bytes: await load(name) })))
+  const mods = parseBuildMods(modFiles)
+  const original = new Uint8Array(await stock.arrayBuffer())
+  const output = new Uint8Array(built.data)
+  if (machine === 'digitakt-ii') {
+    // Machine modules carry sound-chip parts the kit does not build: add them with the base's, checked against that plan.
+    const { composeDt2MachineBuild } = await import('./dt2-render-build.ts')
+    const documents = modFiles.map(file => ({ name: file.name, document: JSON.parse(new TextDecoder().decode(file.bytes)) as unknown }))
+    let composed: Awaited<ReturnType<typeof composeDt2MachineBuild>>
+    try {
+      composed = await composeDt2MachineBuild(original, output, mods, documents)
+    } catch (error) {
+      if (error instanceof PreflightError) throw error
+      throw new PreflightError([error instanceof Error ? error.message : String(error)])
+    }
+    if (composed) {
+      built.data = composed.output.slice().buffer
+      return composed.facts
+    }
+  }
+  return preflightBuild(machine, original, output, mods)
 }
 
 /** Parses the build's mod files (JSON .elemod documents) with Modwerk's own parser. */
@@ -106,16 +125,25 @@ export function parseBuildMods(files: readonly { name: string; bytes: Uint8Array
 }
 
 /** Refuses (PreflightError) unless `builtSyx` is `stockSyx` changed only where `mods` say; returns the facts to show. */
-export async function preflightBuild(machine: ElemodMachine, stockSyx: Uint8Array, builtSyx: Uint8Array, mods: readonly ParsedMod[], device: Ele3Device = ELE3_DEVICES[machine]): Promise<PreflightFacts> {
+export async function preflightBuild(machine: ElemodMachine, stockSyx: Uint8Array, builtSyx: Uint8Array, mods: readonly ParsedMod[], device: Ele3Device = ELE3_DEVICES[machine], renderPlan?: Dt2RenderPlan): Promise<PreflightFacts> {
   const problems: string[] = []
   const stock = readEle3Syx(stockSyx), built = readEle3Syx(builtSyx)
   if (built.deviceId !== stock.deviceId || stock.deviceId !== device.sysexId) problems.push('the files are not both for this machine')
   if (built.table.map(s => s.id + ':' + s.destination).join() !== stock.table.map(s => s.id + ':' + s.destination).join()) problems.push('the sections or their destinations differ from stock')
   for (let i = 0; i < HEADER; i++) if (built.header[i] !== stock.header[i] && !(i >= VERSION_FIELD[0] && i < VERSION_FIELD[1])) { problems.push('the container header differs from stock outside the version field'); break }
+  if (renderPlan && machine !== 'digitakt-ii') problems.push('this machine does not support the SHARC render plan')
+  if (renderPlan && (!stock.stored.has(7) || !built.stored.has(7))) problems.push('the build has no SHARC section')
   const unchangedSections: number[] = []
   for (const [id, bytes] of stock.stored) {
     if (id === device.mainSection) continue
-    if (built.stored.has(id) && equal(built.stored.get(id)!, bytes)) unchangedSections.push(id)
+    const output = built.stored.get(id)
+    if (id === 7 && renderPlan && machine === 'digitakt-ii') {
+      try {
+        await verifyDt2RenderSection(unpackDt2SharcSection(bytes), unpackDt2SharcSection(output), renderPlan)
+      } catch (error) {
+        problems.push(error instanceof Error ? error.message : String(error))
+      }
+    } else if (output && equal(output, bytes)) unchangedSections.push(id)
     else problems.push('section ' + id + ' is not byte for byte stock')
   }
   const flashEnd = device.flashAt + built.total

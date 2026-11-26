@@ -1,0 +1,1 @@
+Tests: the loader test that refuses an undeclared subscriber now clears every subscription word of its fixture package, not only the first, so a module update that subscribes to more site events (Repitch 0.2.2's in-use event) no longer breaks it.

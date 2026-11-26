@@ -4,6 +4,8 @@ name: Maintenance bot
 # Reviews pull requests and issues every 30 minutes and reports to the owner on Telegram each morning
 # (docs/MAINTENANCE_BOT.md). The model runs read-only in `propose` and only writes proposals; `act` runs trusted
 # main with write access and no model, and the policy in scripts/maintenance-bot/policy.mjs decides each one.
+# Work is routed by hardness (scripts/maintenance-bot/lanes.mjs): pull requests that changed go to the stronger
+# model, everything else to the lighter one, and a lane with no work starts no model.
 # It stays off until the owner runs `npm run maintenance-bot:setup`, which sets the key and the Claude token.
 # The Worker starts it (dispatchMaintenance in server/maintenance-bot.ts): a pass at :05 and :35, the daily run at
 # 07:00 UTC. GitHub's own schedule runs hours late in this repository, so there is none here.
@@ -39,6 +41,7 @@ jobs:
     outputs:
       ran: ${{ steps.model.outcome == 'success' }}
       fingerprint: ${{ steps.snapshot.outputs.fingerprint }}
+      down: ${{ steps.snapshot.outputs.down }}
     steps:
       # Trusted main only. Pull request code is read through the API and never checked out or run.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,26 +71,44 @@ jobs:
             sleep 15
           done
           exit 1
+      # The hard lane reads each pull request's whole source, not only its diff: the head commit as plain files
+      # under bot/pr/<number>. Nothing in them is installed, built or run, and the model can only read.
+      - if: steps.snapshot.outputs.hard != ''
+        env:
+          HARD: ${{ steps.snapshot.outputs.hard }}
+        run: |
+          for number in $HARD; do
+            case "$number" in *[!0-9]*) continue ;; esac
+            git fetch --quiet --depth=1 origin "pull/$number/head:refs/bot/pr-$number" && git worktree add --quiet --detach "bot/pr/$number" "refs/bot/pr-$number" || echo "The source of #$number could not be fetched; its review reads the diff."
+          done
       # The model gets a read-only token and read-only commands and writes nothing. Its proposals come back as
       # schema-checked structured output: asked to write a file, it skipped the file in about a third of runs.
+      # One run per lane that has work: the snapshot wrote bot/light.json and bot/hard.json only for those.
       - id: model
         if: steps.snapshot.outputs.run == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          MODEL: ${{ env.BOT_MODE == 'daily' && (vars.MAINTENANCE_BOT_DAILY_MODEL || 'claude-opus-5-5') || (vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5') }}
+          LIGHT_MODEL: ${{ vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5' }}
+          HARD_MODEL: ${{ vars.MAINTENANCE_BOT_HARD_MODEL || 'claude-opus-5-5' }}
         run: |
-          claude -p "$(cat scripts/maintenance-bot/prompt.md)" --model "$MODEL" --max-turns 120 --output-format json \
-            --json-schema '{"type":"object","required":["actions","todos","drop"],"properties":{"actions":{"type":"array","items":{"type":"object"}},"todos":{"type":"array","items":{"type":"object"}},"drop":{"type":"array","items":{"type":"string"}}}}' \
-            --allowedTools 'Read' 'Grep' 'Glob' \
-              'Bash(gh pr view:*)' 'Bash(gh pr list:*)' 'Bash(gh pr diff:*)' 'Bash(gh pr checks:*)' \
-              'Bash(gh issue view:*)' 'Bash(gh issue list:*)' 'Bash(gh run list:*)' 'Bash(gh run view:*)' \
-              'Bash(git log:*)' 'Bash(git show:*)' 'Bash(git diff:*)' \
-            --disallowedTools 'WebFetch' 'WebSearch' 'Bash(gh api:*)' 'Bash(curl:*)' 'Bash(wget:*)' > "$RUNNER_TEMP/model.json" || true
-          # The repository is public, and so are this log and its artifacts. Discord messages, diagnostics and draft
-          # replies stay out of both: the log gets how the run ended and its token counts, never its text, and the
-          # proposals travel encrypted with the bot key.
-          node scripts/maintenance-bot/model-status.mjs "$RUNNER_TEMP/model.json" bot/proposals.json
+          for lane in light hard; do
+            [ -f "bot/$lane.json" ] || continue
+            if [ "$lane" = hard ]; then model="$HARD_MODEL"; turns=120; else model="$LIGHT_MODEL"; turns=60; fi
+            claude -p "$(cat scripts/maintenance-bot/prompt.md)
+          Your lane this run: $lane. Your context file: bot/$lane.json." --model "$model" --max-turns "$turns" --output-format json \
+              --json-schema '{"type":"object","required":["actions","todos","drop"],"properties":{"actions":{"type":"array","items":{"type":"object"}},"todos":{"type":"array","items":{"type":"object"}},"drop":{"type":"array","items":{"type":"string"}}}}' \
+              --allowedTools 'Read' 'Grep' 'Glob' \
+                'Bash(gh pr view:*)' 'Bash(gh pr list:*)' 'Bash(gh pr diff:*)' 'Bash(gh pr checks:*)' \
+                'Bash(gh issue view:*)' 'Bash(gh issue list:*)' 'Bash(gh run list:*)' 'Bash(gh run view:*)' \
+                'Bash(git log:*)' 'Bash(git show:*)' 'Bash(git diff:*)' \
+              --disallowedTools 'WebFetch' 'WebSearch' 'Bash(gh api:*)' 'Bash(curl:*)' 'Bash(wget:*)' > "$RUNNER_TEMP/$lane.json" || true
+            # The repository is public, and so are this log and its artifacts. Discord messages, diagnostics and
+            # draft replies stay out of both: the log gets how each run ended and its token counts, never its
+            # text, and the proposals travel encrypted with the bot key. A lane that fails fails the step, so
+            # nothing is filed and the next pass reviews the same work again.
+            node scripts/maintenance-bot/model-status.mjs "$RUNNER_TEMP/$lane.json" bot/proposals.json "$lane"
+          done
       - if: steps.model.outcome == 'success'
         env:
           MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}
@@ -135,6 +156,9 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_OWNER_ID: ${{ vars.DISCORD_OWNER_ID }}
           BOT_FINGERPRINT: ${{ needs.propose.outputs.ran == 'true' && needs.propose.outputs.fingerprint || '' }}
+          # The bot's own health, for the owner's urgent to-do: a source that was down, a review that failed.
+          BOT_DOWN: ${{ needs.propose.outputs.down }}
+          PROPOSE_RESULT: ${{ needs.propose.result }}
 
   eval-pilot:
     if: vars.MAINTENANCE_BOT_ENABLED == 'true'

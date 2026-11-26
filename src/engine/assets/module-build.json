@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "5f7179395e54526259c9b02b87173379e461b2f0",
+  "sourceCommit": "59dbdd93838be7caf4ce5cfe19456cb15294ed71",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "9d1579472df3ef359fcab7fbc90046438afe16775c9764baf35d0539d94ca278",
+  "sourceTreeSha256": "fc5ef0c3e2604b09d14f85e49ed7d78b9f53012c570515d68308b8f31b030a8d",
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -21,15 +21,15 @@
     "mackity": "0.1.0-experimental",
     "midiverb": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.4.0-experimental",
+    "usb-audio-out-tracks-main-cue": "0.4.1-experimental",
     "quantizer": "0.1.5-experimental",
     "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
-    "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.3-experimental",
+    "playmodes": "0.2.1-experimental",
+    "mute-modes": "0.2.4-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -79,8 +79,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1362015,
-      "sha256": "dbb595126e31e62a2238ad268f2c5727b893dfed3cb0da9c77034f833e7bb90c"
+      "bytes": 1362663,
+      "sha256": "7a986a72a9ccf71b5fbbf96e19c6acaf0d2364758ffe4112532e27f35df88ea5"
     },
     "utility-packages.json": {
       "bytes": 11735,
@@ -88,7 +88,7 @@
     },
     "usb-audio-packages.json": {
       "bytes": 736377,
-      "sha256": "98ddd32032e4ae8270a538d46a50f7a039b938dc96763ccedb769c20821968d6"
+      "sha256": "24621e44588acdf9b762dcbda4758f81022caf1b77b780884005dfc324a8b9c1"
     }
   },
   "approval": null,

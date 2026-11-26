@@ -352,6 +352,11 @@ filter never comes back to exact zero after a send, so this drops a residue belo
 bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
 `0x4000361a`) restarts the count. A pick is still judged as if the quiet delays could wake (the stock reserve's margin in `status.c` holds them), since a scene that opens the sends takes the whole saving back from the next frame: the skip buys margin, never admission. The A/B harness and the unit figures are in `delay-harness/`.
 
+`status.s` also replaces stock's recorder control-record update (`mw_rec_update`, `0x4000432c`), which a recording
+track runs about 1.5 times a frame: it writes the two CS1 fields it reads (`[r+300]`, `[r+308]`) only when their value
+changes, and reads them under stock's own interrupt mask, so CS1, the 44-byte records and the registers end as stock
+leaves them (Bryan T's idea). The A/B harness is in `rec-harness/`.
+
 `machine_registry.c` rests the module of a machine no track of the project uses (the loader asks it through
 `modwerk_machine_in_use`, events.json's judged `ot_machines`): its handlers leave the hooks that rest and its detours
 marked `rests` hold stock's bytes, so an installed machine nobody plays costs the frame interrupt nothing of its own.
@@ -382,7 +387,12 @@ it is named first: the current bank, then the others, a working Part before a sa
 its slots show NONE's page renamed MISSING, `MISS` in the footer; since 0.7.3 also each machine the project uses that
 no installed machine serves, from `machine_registry.c`'s machine map: a Part names a machine only by its signature, so
 the map keeps each one's module and name, in battery RAM at `0x100ffd40` and in project.work as `#MODWERK_MC=` lines
-beside the effects' `#MODWERK_FX=`; its track then says `MISSING POLY8` or `POLY8 IS OFF`) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
+beside the effects' `#MODWERK_FX=`; its track then says `MISSING POLY8` or `POLY8 IS OFF`) and SELF TEST. SYSTEM stays stock.
+Each page is a level of the menu, as stock's are (base 0.8.2; before, a row closed the menu and NO left it): the menu
+stays open under the page, so NO, and LEFT or RIGHT (on STATUS, which has no list, any arrow), close the page back to
+the MODWERK list with the cursor on the row that opened it. YES on a page that closes closes the menu with it, as before.
+Any other key or knob closes the page and goes on to the menu as to stock's, so PROJ closes the menu. SELF TEST still
+closes the menu as it starts (it plays the pattern), and its NO stops the test. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
 of a 72,520-cycle frame; recalibrate with `build_core.py --dsp-burn 1000` (core 0) or `-1000` (core 1).
 
 

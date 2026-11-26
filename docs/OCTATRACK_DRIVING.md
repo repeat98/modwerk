@@ -137,6 +137,11 @@ it with `Get-CimInstance Win32_Process`; `wmic` is gone). `boot` and `try` on Wi
 2026 or later: older ones send 4,148-byte frames, which WinUSB refuses
 ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)).
 
+**On Windows without WSL**, give the session and its share port numbers, since Windows has no Unix sockets:
+`MODWERK_DEV_SOCKET=47812 node scripts/device.mjs serve --socket 47811 --share 47813`. With the same
+`MODWERK_DEV_SOCKET`, `device-send.py`, `device:qualify`, `device:test` and `octatrack-measure.py` reach it over TCP;
+`device:price` takes `--socket 47812 --share 47813` and `device:test` `--share 47813`.
+
 ## Send steps
 
 ```sh
@@ -269,7 +274,9 @@ not isolated: verify each held-row transition and stock modifier release, and st
 - **Modwerk's pages.** PROJ's fifth category, MODWERK (from S55, 12 October 2026), lists STATUS (the status dialog,
   also CUE+PROJ from anywhere), MODULE COST, MISSING, SELF TEST and, on a base with it, MODULES (every installed
   module, ON or OFF: UP and DOWN move, YES switches the one under the cursor at once, stopped, and the last line says
-  why when it can't); NO closes each. On a development base with SETTINGS, open it, then choose a module such as USB AUDIO.
+  why when it can't). Each page is a level of the menu (base 0.8.2): NO, and LEFT or RIGHT (on STATUS any arrow),
+  closes it back to the MODWERK list with the cursor on its row; PROJ closes the menu as stock's does. Before 0.8.2 NO
+  closed the whole menu. On a development base with SETTINGS, open it, then choose a module such as USB AUDIO.
   UP and DOWN highlight its options, YES applies the highlighted one, and NO returns to the module list. The PROJ menu keeps its cursor from
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >
   MODWERK and MODWERK TEST.
