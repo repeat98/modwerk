@@ -139,7 +139,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.7.0-experimental",
-    "sourceSha256": null,
+    "sourceSha256": "4c625df64dd8df4ffa74596d1c38d51056c9c6cd7c334c5b181a639ae1f9d72a",
     "reports": [
       "TESTING.md"
     ],
