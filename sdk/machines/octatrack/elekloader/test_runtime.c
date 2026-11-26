@@ -101,6 +101,53 @@ int main(void)
       CHECK(!modwerk_machine_transport_stopped(1u, tracks) && !modwerk_machine_transport_stopped(3u, tracks));
       tracks[15] = 3u;
       CHECK(!modwerk_machine_transport_stopped(0u, tracks)); }
+    /* The recorders as stock left them in the emulator (sdk/drafts/beat-slicer/boot_recorder.py, normal panel keys):
+     * REC on track 4 writes 1 then 2 into its bank B row and selects bank B; REC again while it records (a retrigger)
+     * writes 1 then 2 into bank A and selects it; STOP clears bank A alone, and bank B keeps its 2 with nothing
+     * recorded behind it until the track records again. Reading every nonzero row as recording kept that unit busy
+     * (refusing every sync as "Stop playback or finish recording") until a power cycle (#2211). */
+    { static uint8_t rows[84u * 16u]; uint8_t tracks[16] = {0};
+      enum { T = 3u };
+      uint32_t banks = 0;
+#define BUSY() modwerk_machine_busy_reason(rows + 2u, banks, 0u, tracks)
+#define ROW(bank) rows[2u + 84u * (T + 8u * (bank))]
+      CHECK(BUSY() == 0 && modwerk_machine_recorder_busy(rows + 2u, banks) == 0);
+      ROW(1) = 1u; /* the start pending in bank B before its bank is selected */
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDER | T << 4));
+      banks |= 1u << T;
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDING | T << 4));
+      ROW(1) = 2u; /* recording */
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDING | T << 4));
+      banks &= ~(1u << T), ROW(0) = 1u; /* retriggered: pending in bank A */
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDING | T << 4));
+      ROW(0) = 2u; /* [2, 2] while the new recording runs */
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDING | T << 4));
+      ROW(0) = 0u; /* STOP: bank B keeps the 2 it had */
+      CHECK(BUSY() == 0 && modwerk_machine_recorder_busy(rows + 2u, banks) == 0);
+      { unsigned any = 0; for (unsigned i = 0; i < 16u; ++i) any |= rows[2u + 84u * i]; CHECK(any); } /* the old test's "recording" */
+      CHECK(modwerk_machine_busy_reason(rows + 2u, banks, 1u, tracks) == MACHINE_BUSY_TRANSPORT); /* still a playing unit */
+      tracks[9] = 1u;
+      CHECK(BUSY() == (MACHINE_BUSY_TRACK | 9u << 4));
+      tracks[9] = 2u;
+      CHECK(BUSY() == 0);
+      ROW(1) = 3u; /* a value never seen in the row it left: cautious */
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDER | T << 4));
+      ROW(1) = 0u;
+      /* The next recording on that track starts in the row the retrigger left, and its STOP leaves both rows idle. */
+      banks |= 1u << T, ROW(1) = 2u;
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDING | T << 4));
+      ROW(1) = 0u;
+      CHECK(BUSY() == 0);
+      /* Track 8 records into bank B: its row is the last of all sixteen, and a recorder comes before the transport. */
+      banks = 1u << 7, rows[2u + 84u * 15u] = 2u;
+      CHECK(modwerk_machine_busy_reason(rows + 2u, banks, 1u, tracks) == (MACHINE_BUSY_RECORDING | 7u << 4));
+      banks = 0;
+      CHECK(BUSY() == 0);
+      rows[2u + 84u * 7u] = 1u;
+      CHECK(BUSY() == (MACHINE_BUSY_RECORDING | 7u << 4));
+#undef BUSY
+#undef ROW
+    }
     /* Activation only while nothing plays or records; stock code only, below the bootloader copy. */
     modwerk_test_stopped = 0;
     CHECK(!modwerk_runtime_backend.enter(0));

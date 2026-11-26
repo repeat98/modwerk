@@ -56,7 +56,7 @@ describe('regular-member collector consent and account boundaries', () => {
     expect(body).toEqual({ version, data: { id: expect.any(String), ...failure(), client: diagnosticClient() } })
     window.dispatchEvent(new ErrorEvent('error', { message: 'PRIVATE filename.bin https://private.test' })); await flush()
     const browser = JSON.parse(String(mocked.fetch.mock.calls[1][1].body))
-    expect(browser).toEqual({ version, data: { id: expect.any(String), event: 'browser_error', phase: 'browser', area: expect.any(String), kind: 'OtherError', client: diagnosticClient() } })
+    expect(browser).toEqual({ version, data: { id: expect.any(String), event: 'browser_error', phase: 'browser', area: expect.any(String), kind: 'NoErrorObject', client: diagnosticClient() } })
     expect(JSON.stringify(mocked.fetch.mock.calls)).not.toContain('PRIVATE')
   })
   it('removes browser/build collection immediately on withdrawal and does not replay failures after re-enable', async () => {

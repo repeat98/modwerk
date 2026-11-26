@@ -85,8 +85,21 @@ int mw_project_fx_wait(const uint8_t ids[16])
     return 0;
 }
 
+/* The board found no room for Sidechain's engines when a track of the bank took COMPRESSOR (controller_board.c): the
+ * same notice, else COMPRESSOR shows its stock page with no word why (#2189). Kept until it shows or Sidechain starts. */
+static unsigned refused;
+void mw_project_sidechain_refused(void) { refused = 1; }
+
 int mw_project_sidechain_notice(void)
 {
+    if (refused) {
+        if (mw_engines_admitted[SIDECHAIN] != 1u + MW_ENGINE_MEMORY) refused = 0; /* room after all */
+        else if (!hold && !modwerk_fxmap_loading() && (modwerk_controller_held() & MW_DSP_SIDECHAIN) &&
+                 modwerk_dsp_bank_names(24u)) {
+            refused = notice = 0;
+            return 1;
+        }
+    }
     if (!notice || hold || modwerk_fxmap_loading() || project != modwerk_project_loaded) return 0;
     if (!(modwerk_controller_held() & MW_DSP_SIDECHAIN) || !modwerk_dsp_bank_names(24u) ||
         mw_engines_admitted[SIDECHAIN] != 1u + MW_ENGINE_MEMORY) return 0;

@@ -1,0 +1,421 @@
+{
+  "schemaVersion": 2,
+  "id": "midiverb",
+  "key": "MIDIVERB",
+  "name": "Midiverb I/II",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "Alesis and Keith Barr: the Midiverb (1986), Midiverb II and Midifex, and every program this module plays, read from their ROMs",
+      "Eric Brombaugh (emeb/MIDIVerb_RE, MIT): the reverse engineering of the Midiverb's DSP, its schematic, microcode and semantics, which the program model follows",
+      "thement (thement/midiverb_emulator, GPL-3.0): the decompiled Midiverb, Midiverb II and Midifex programs and the ROM layout the extractor reads"
+    ],
+    "contributors": [
+      {
+        "github": "thement",
+        "name": "thement"
+      }
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "1986 DIGITAL REVERB",
+    "family": "Reverb",
+    "summary": "All 174 programs of the Alesis Midiverb, Midiverb II and Midifex (59, 56 and 59), run at their original arithmetic.",
+    "overview": "Each program is the original unit's, played step for step: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding, at half rate like the original. 174 programs in three banks; the name of each shows while you turn.",
+    "highlights": [
+      "174 original programs: 59 Midiverb, 56 Midiverb II, 59 Midifex",
+      "The original's grain: 12-bit input, 16-bit memory, its own rounding",
+      "Program and bank names in a message box as you turn",
+      "STOP, STOP, STOP cuts the tail; MIX 0 is exact dry"
+    ],
+    "usage": [
+      "Choose MIDIVRB I/II in FX2 SETUP: hold FUNC, press FX2, turn LEVEL to it and press YES, then press FX2 for the main page.",
+      "PROG (A) picks the program in the bank, BANK (D) switches between Midiverb, Midiverb II and Midifex; the message box names each.",
+      "LEVL (B) drives the 12-bit input: unity at 32, 64 is +6 dB. MIX (F): 0 dry, 127 wet only.",
+      "A new program starts from silence in under a tenth of a second; STOP, STOP, STOP cuts the tail until the track's next trig."
+    ]
+  },
+  "controls": [
+    {
+      "name": "PROG",
+      "default": 0,
+      "count": 59,
+      "doc": "the bank's program; its name shows in a message box while it turns",
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59"
+      ]
+    },
+    {
+      "name": "LEVL",
+      "default": 64,
+      "count": 128,
+      "doc": "input level into the 12-bit converter: unity at 32, 64 is +6 dB",
+      "labels": null
+    },
+    {
+      "name": "BANK",
+      "default": 0,
+      "count": 3,
+      "doc": "Midiverb, Midiverb II or Midifex programs",
+      "labels": [
+        "MV1",
+        "MV2",
+        "FEX"
+      ]
+    },
+    {
+      "name": "MIX",
+      "default": 40,
+      "count": 128,
+      "doc": "dry/wet; 0 is exact dry, 127 wet only",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer and leaves the last 514 to Sidechain Compressor's key window on T3 and T7.",
+      "Patches one stock site of its own (0x4000d568), where each frame's parameters are final; Euclid's patch six bytes before returns into it, so both install together.",
+      "Up to 398 executed DSP instructions a sample in the emulator (declared 398), about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more, and the Midiverb II's chorus and flange programs, are not in this release.",
+      "Unlike the original: 22.05 kHz instead of about 23.4 kHz (reverb times and delays about 6 % longer), no model of its analog filters and noise, some long delays up to 4.5 % shorter, and a mono input from the average of left and right.",
+      "On base 0.8.1, the first NO after picking it on FX2 SETUP only closes the memory box: press FX2 for its page instead. Base 0.8.2 fixes it.",
+      "With Scale Quantizer or FM Synth installed, the program and bank names do not show and, on base 0.8.1, slow PROG and BANK turns after a pick need an FX2 re-entry: their adapters take the knob store first."
+    ],
+    "effectId": 10
+  },
+  "resources": {
+    "recorded": "2026-11-25",
+    "storage": {
+      "label": "DSP program / state",
+      "display": "645 words / 32-word state",
+      "value": null,
+      "unit": "see display",
+      "method": "static",
+      "conditions": "The USB package: 645 program words on each DSP core it runs on (one copy a core, however many of its tracks run it), 32 words of state per instance, the first 15,870 words of the track's own 16K FX2 buffer in Y memory (the last 514 stay Sidechain Compressor's key window on T3 and T7), and 49,188 bytes of ColdFire code and data holding the 174 programs, their names and the stream; no bss.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "DSP instruction peak",
+      "display": "397 instructions/sample per instance",
+      "value": null,
+      "unit": "see display",
+      "method": "emulator",
+      "conditions": "perf:audit record: worst 397.1 executed instructions a sample (static floor 395.5), against DARK REV 242.38 and 330.94 for the dearest stock effect. Executed instructions, not chip cycles. On the unit the DSP load of T1-T4 rose 17.8 points with it on T1 FX2.",
+      "source": "evidence/performance.json"
+    },
+    "cpuPrice": {
+      "value": 1.1,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-25",
+      "conditions": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C; base 0.8.1 (development twin 4c7eb79b of eb667962), MKII; 3 readings of 8 s a state. Frame interrupt 34.9 % before, 35.7 % installed and used nowhere, 36 % on T1 FX2; CPU meter 57 % before, 57.8 % at rest, 54.8 % in use.",
+      "source": "evidence/cpu-price.json"
+    },
+    "impact": {
+      "conditions": "One instance at the dearest program in the DSP emulator; on the owner's MKII (development twin 4c7eb79b of base 0.8.1) the frame-interrupt price and the instance curve on Dev17 bank C (picks on the empty C02, readings on C04, trigs on steps 1/5/9/13 of T1-T4, T6 and T7).",
+      "cpu": {
+        "level": "low",
+        "basis": "measured-comparison",
+        "rationale": "On the unit the frame interrupt rose 1.1 points with it on T1 FX2 and 0.8 installed and used nowhere; the instance curve read first 0.5, each 0.",
+        "source": "evidence/cpu-price.json"
+      },
+      "dsp": {
+        "level": "high",
+        "basis": "measured-comparison",
+        "rationale": "397.1 executed instructions a sample worst case, 1.64 times DARK REV (242.38) and 1.20 times the dearest stock effect (330.94); on the unit one instance took about 17.8 points of a DSP core.",
+        "source": "evidence/performance.json"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "One instance takes its track's whole FX2 buffer (15,870 words), 32 state words, and 645 program words a core; the ColdFire half holds the programs (49,188 bytes).",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "npm run test:procedure on the owner's MKII (2026-11-25, base 0.8.1 twin): every unit step passed; perf:audit worst 397.1 instructions a sample, the stress run four a core with no clobber; the owner tried it and approved it.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "461f05d21983d1bc436dbeb6b79c0e9feb5cdc51",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "efd3414d7a49dd2ec2b822e21ee073d47ca268c6f68bf01871dc18e1407eb4bd",
+      "cycles": [
+        {
+          "processor": "dsp",
+          "worstCase": 398,
+          "maxConfiguration": 1592,
+          "maxInstances": 8,
+          "budget": 3120,
+          "unit": "cycles/sample",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Every one of the 174 programs streamed by its index at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7, in dsp_host: the worst block 397.1 executed instructions a sample (Midiverb #16), which includes the per-call stream loader and the ring clear; 395.6 while it fades out into another program during a split. static.py's count of the sample loop alone, every conditional add taken: 395.5. Declared 398.",
+            "parameterModulation": "stress.py: three LFOs an instance (LEVL sine, MIX triangle, slot E square) and all twelve slots new every sixteenth; LFOs, locks, scenes and CC reach the engine only as the slot values in its parameter block, which the engine reads each call. Program and bank changes arrive as the ColdFire half's stream and are rendered in every case.",
+            "modeSwitching": "A program change fades the wet out over 16 calls, clears the ring 512 words a call and loads the next program from its stream; STOP's tail kill silences the reverb and clears the ring. verify.py checks both bit for bit; stress.py switches programs every sixteenth and holds the tail kill twice. Part changes reach it as new slot values and a new program on the stream.",
+            "maxLoad": "Four instances a core, eight on both: 4 x 398 = 1,592 of the 3,120 a core can spend a sample. stress.py runs four a core on eight tracks at stock's own FX2 buffers; on the unit the base admitted three on core 1 (peak 88.4 % with the stock effects) and two on core 0.",
+            "inputConditions": "Full-scale noise bursts (0.98) and silence on the left, tones on the right, in stress.py; verify.py adds bursts of 0.45 and 0.3 with silence before and after. The input passes the original's 12-bit converter (LEVL 127 is about +12 dB), so it clips there as the original did."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "DSP program, the package's effect on each core it runs on",
+            "space": "dsp-p",
+            "words": 645,
+            "wordBits": 24,
+            "bytes": 1935,
+            "scope": "shared"
+          },
+          {
+            "name": "DSP state per instance, the package's state words",
+            "space": "dsp-x",
+            "words": 32,
+            "wordBits": 24,
+            "bytes": 96,
+            "scope": "instance"
+          },
+          {
+            "name": "ColdFire code and data of the USB package",
+            "space": "cpu-ram",
+            "words": 49188,
+            "wordBits": 8,
+            "bytes": 49188,
+            "scope": "shared"
+          },
+          {
+            "name": "FX2 delay buffer: the first 15,870 words of the track's own 16K (the ring and the program area)",
+            "space": "dsp-y",
+            "words": 15870,
+            "wordBits": 24,
+            "bytes": 47610,
+            "scope": "instance"
+          }
+        ],
+        "perInstanceBytes": 47706,
+        "sharedBytes": 51123,
+        "maxInstances": 8,
+        "totalBytes": 432771,
+        "conditions": "From the USB package's header, plus the FX2 buffer it reads: stock's own 16K Y buffer for the slot (Y:$4000 and $8000, and $30000/$34000 on core 0, $38000/$3c000 on core 1, as stock's allocator gives them), of which it uses 15,870 words. No stock block is reused beyond that buffer; no scratch outside its state and buffer (dsp_host's guard counted no stray write).",
+        "report": "TESTING.md"
+      },
+      "imageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-25",
+        "tester": "repeat98",
+        "sourceRevision": "461f05d21983d1bc436dbeb6b79c0e9feb5cdc51",
+        "imageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
+        "summary": "On the owner's Octatrack MKII (OS 1.40C, development twin 4c7eb79b of base 0.8.1), 25 November 2026: npm run test:procedure ran on this source's package and passed the software checks, the DSP cost model, the scripted unit pass (picks on T1 and T5, five instances at once, peaks 88.4 % and 78.6 % of the cores), the soak and the cost on the unit (1.1 % of a frame, curve first 0.5, each 0). By hand: every screen by the README's steps (the captures in media/), a 10 s USB recording of MAIN with it on T2 (no dropout), slow PROG and BANK turns right after a pick. The owner tried it and approved it for release.",
+        "limitations": [
+          "Not run: an emulator rehearsal; it beside the other modules of a large set on a unit (modules:compat checks the declarations).",
+          "Not run: a Keep and a power cycle with it kept; project save and reload were not checked by the agent.",
+          "The owner's own hands-on test was reported as a whole, not item by item.",
+          "MKI not tested."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Load a drum loop on track 1, press FX2, then FUNC + FX2, scroll to MIDIVRB I/II with LEVEL, press YES, then FX2: the page shows PROG, LEVL, BANK and MIX.",
+            "Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs, or FEX for the Midifex's.",
+            "Turn F (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back."
+          ]
+        },
+        "screenshots": [
+          "media/midiverb-chooser.png",
+          "media/midiverb-page.png",
+          "media/midiverb-prog.png",
+          "media/midiverb-bank.png",
+          "media/midiverb-mix.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Midiverb's own code and documentation are MIT (LICENSE). The Alesis Midiverb, Midiverb II and Midifex programs in stream.h, stream.s and programs.json are read from the original ROMs by generate.mjs and are not MIT; the repository owner allowed their inclusion on 25 November 2026. No Elektron firmware, routines or tables are included."
+  },
+  "media": [
+    {
+      "path": "media/midiverb-chooser.png",
+      "captureType": "hardware",
+      "caption": "Select an audio track, hold FUNC and press FX2. Turn LEVEL down the list to MIDIVRB I/II and press YES to put it on FX2.",
+      "alt": "Octatrack FX2 SETUP: the effect list from COMPRESSOR to MIDIVRB I/II, the cursor on MIDIVRB I/II.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP (effect chooser)",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+      }
+    },
+    {
+      "path": "media/midiverb-page.png",
+      "captureType": "hardware",
+      "caption": "Press FX2 for its page: PROG (A) picks the program, LEVL (B) drives the input, BANK (D) switches between Midiverb, Midiverb II and Midifex, MIX (F) sets dry and wet.",
+      "alt": "Octatrack FX2 page of Midiverb I/II: knobs PROG, LEVL, BANK and MIX.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+      }
+    },
+    {
+      "path": "media/midiverb-prog.png",
+      "captureType": "hardware",
+      "caption": "Turn PROG: a message box names each program as you go, here .25 MEDIUM BRIGHT. Try the long halls near the end of the Midiverb bank, or the gated and reverse programs.",
+      "alt": "The FX2 page with a message box reading .25 MEDIUM BRIGHT.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+      }
+    },
+    {
+      "path": "media/midiverb-bank.png",
+      "captureType": "hardware",
+      "caption": "Turn BANK to MV2 for the Midiverb II's programs or FEX for the Midifex's; the message box names the bank.",
+      "alt": "The FX2 page with a message box reading MIDIVERB II; the BANK dial shows MV2.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+      }
+    },
+    {
+      "path": "media/midiverb-mix.png",
+      "captureType": "hardware",
+      "caption": "Turn MIX up to hear more of the reverb: 0 is exactly dry, 127 wet only. STOP, STOP, STOP cuts the tail.",
+      "alt": "The FX2 page with MIX at 80.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+      }
+    }
+  ],
+  "access": {
+    "location": "Audio track FX2 SETUP: MIDIVRB I/II in the effect chooser.",
+    "steps": [
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press FX2 to open FX2 SETUP.",
+      "Turn LEVEL to MIDIVRB I/II and press YES to assign it.",
+      "Press FX2 for the main page: PROG, LEVL, BANK and MIX."
+    ],
+    "screenshots": [
+      "media/midiverb-chooser.png",
+      "media/midiverb-page.png",
+      "media/midiverb-prog.png",
+      "media/midiverb-bank.png",
+      "media/midiverb-mix.png"
+    ]
+  }
+}

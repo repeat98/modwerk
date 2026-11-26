@@ -49,6 +49,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md): what fails on a real unit: the base, the USB link, RAM boot, the DSP loader.
 - [OCTATRACK_TWO_SLOT_BASE.md](OCTATRACK_TWO_SLOT_BASE.md): base updates a power cut can't brick: two slots, a boot stub, the update on the unit's screen.
 - [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md): working a unit over USB from an agent.
+- [UNIT_QUEUE.md](UNIT_QUEUE.md): how sessions on one computer take turns on its unit (`npm run unit`): waiting, holding, keeping the turn between runs, priority.
 - [FRONTEND_MCP.md](FRONTEND_MCP.md): the developer MCP for the site and a connected unit.
 - [OCTATRACK_MODULE_EDGE_CASES.md](OCTATRACK_MODULE_EDGE_CASES.md): what can go wrong across projects, Parts and power cycles.
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
@@ -69,6 +70,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [LXR_02.md](LXR_02.md): the Erica Synths LXR-02, in research.
 - [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md) and [ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md): proposals for Zoom MultiStomp pedals and their effect files.
 - [ZOOM_ZD2.md](ZOOM_ZD2.md): the Zoom G1 FOUR and its ZD2 effects, in research.
+- [ZOOM_PATCH_PROTOCOL.md](ZOOM_PATCH_PROTOCOL.md): the Zoom MS-200D+ and G5n patch SysEx protocol, in research; not the ZD2 container.
 - [MACHINE_IMAGES.md](MACHINE_IMAGES.md): where each machine photo comes from, and its terms.
 
 ## Site and backend
@@ -90,6 +92,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SOCIAL-PREVIEW.md](SOCIAL-PREVIEW.md): sharing preview artwork.
 - [COMMUNITY_OPERATIONS.md](COMMUNITY_OPERATIONS.md): running the community: registrations, moderation, [email sendouts](COMMUNITY_OPERATIONS.md#preparing-an-email-sendout).
 - [DOMAIN_AND_MAIL.md](DOMAIN_AND_MAIL.md): the modwerk.app domain, hosting and mail setup.
+- [KOFI_WEBHOOK.md](KOFI_WEBHOOK.md): the Ko-fi webhook that fills the support dialogs' cost bar, and its setup.
 - [PLATFORM_LICENSING.md](PLATFORM_LICENSING.md): the backend's and frontend's licences.
 - [LEGAL_COMPLIANCE.md](LEGAL_COMPLIANCE.md): German and EU compliance preparation.
 

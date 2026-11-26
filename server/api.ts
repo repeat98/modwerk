@@ -17,6 +17,7 @@ import { communityModule, moduleThreadId } from '../src/community/modules'
 import { ensureDiscussionThread, ensureModuleThreadsOnce } from './module-threads'
 import { validateDigiIssueContext } from '../src/community/digi-issue-context'
 import { recordAnonymousCount, recordUsage, recordModuleDownload, usageStatistics } from './usage'
+import { kofiCoverage, kofiWebhook } from './kofi'
 import { sharedModuleStatistics } from './module-statistics'
 import { worksReportCount } from './hardware-reports'
 import { workingReportRoute } from './working-reports'
@@ -60,6 +61,11 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
       return response(await handleGithubWebhook(request,env,env.DB,await boundedBody(request,1024*1024)))
     }
+    // Ko-fi posts payments server-to-server without an Origin; its verification token authenticates them.
+    if (path === '/api/kofi/webhook' && request.method === 'POST') {
+      if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
+      return await kofiWebhook(request,env,env.DB)
+    }
     // The Pages job authenticates server-to-server with GitHub OIDC after its approved deployment.
     if (path === '/api/module-releases/sync') {
       if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
@@ -95,6 +101,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/usage/events' && request.method === 'POST') return await recordUsage(request,env,db)
     if (path === '/api/usage/module-downloads' && request.method === 'POST') return await recordModuleDownload(request,env,db)
     if (path === '/api/usage/count' && request.method === 'POST') return await recordAnonymousCount(request,env,db)
+    if (path === '/api/support/coverage' && request.method === 'GET') return await kofiCoverage(env,db)
     if (path === '/api/catalog' && request.method === 'GET') return response((await db.prepare("SELECT s.module_id,s.title,s.repository_url,s.description,s.usage,s.resource_notes,s.test_report_url,s.reviewed_at,strftime('%Y-%m-%dT%H:%M:%SZ',s.reviewed_at) AS updated_at,(SELECT strftime('%Y-%m-%dT%H:%M:%SZ', MIN(first.reviewed_at)) FROM submissions first WHERE first.module_id=s.module_id AND first.status='approved') AS added_at,u.github_login AS author FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id ORDER BY s.reviewed_at DESC").all()).results)
     if(path==='/api/community/summary'&&request.method==='GET')return response(await sharedModuleStatistics(db,url.searchParams.get('fresh')==='1'&&await throttle(db,'summary-fresh:'+(request.headers.get('CF-Connecting-IP')??'local'),30).then(()=>true,()=>false))) // past the limit, the shared answer
     if(path==='/api/community/online'&&request.method==='GET')return response(await membersOnline(db))

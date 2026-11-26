@@ -1,0 +1,1 @@
+Development: `npm run pr:ready -- --base-branch base/<machine>-next` checks a pull request that targets a machine's next-base branch against that branch. Without it `pr:ready` always fetched, merged and compared `main`, so a branch cut from `base/analog-rytm-mkii-next` took three of `main`'s commits in and was refused as changing the base, although every check passed (#2188).

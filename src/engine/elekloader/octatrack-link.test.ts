@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, inUseSlotHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, VendorTransportError, parseBaseSlots } from './upload-usb'
 
@@ -59,6 +59,12 @@ describe('finding the unit', () => {
   it('names the computer, not only another tab, when Windows can’t claim the unit', () => {
     expect(linkBusy('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the latest base from the card once')
     expect(linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).not.toContain('card')
+  })
+  it('names the Octatrack itself first when a claim fails: starting, or stuck after a save (#2212)', () => {
+    const mac = linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')
+    expect(mac.startsWith('Your Octatrack isn’t answering this page.')).toBe(true)
+    expect(mac).toContain('wait until its screen responds')
+    expect(mac).toContain('another tab or browser')
   })
   it('reports a browser without WebUSB instead of offering a dead button', () => {
     expect(new OctatrackLink(undefined).getState().status).toBe('unsupported')
@@ -208,6 +214,18 @@ describe('sending a module', () => {
     const { unit, link } = await linked()
     unit.playing = true; await link.update('PREVIEW VOL', one)
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback or finish recording on the Octatrack to continue.' } })
+  })
+  it('says and records what kept an unsafe sync from beginning, as base 0.8.2 reports it (#2211)', async () => {
+    for (const [busy, text] of [[0x31, /^Track 4’s recorder is still recording\. Let it finish or press STOP/], [0x72, /^Track 8’s recorder/],
+      [3, /^Stop playback or finish recording/], [0x94, /^Stop playback or finish recording/], [5, /still finishing its last change/],
+      [0, /^Stop playback or finish recording/]] as const) {
+      const { unit, link } = await linked(), failures: unknown[] = []
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ result: event.result, busy: event.busy, refusal: event.refusal }) })
+      unit.playing = true; unit.busy = busy
+      await link.update('PREVIEW VOL', one)
+      expect(link.getState().notice).toMatchObject({ tone: 'error', text: expect.stringMatching(text) })
+      expect(failures).toEqual([{ result: 'unsafe', busy, refusal: undefined }])
+    }
   })
   it('installs an update without running a self-test', async () => {
     const { link } = await linked(), seen: string[] = []
@@ -413,6 +431,15 @@ describe('sending a module', () => {
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
+  })
+  it('names the track and effect slot that runs a module in use, when the base says which', async () => {
+    const { unit, link } = await linked()
+    unit.refusal = 7
+    unit.inUseSlot = 14 // T6's FX2
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes.* Track 6 runs it as its FX2 effect in the current Part\.$/)
+    expect(link.getState().notice?.text).not.toContain('Look for')
+    expect(inUseSlotHint(3, ['Tape Echo', 'Tape Echo'])).toBe(' Track 3 runs Tape Echo as its FX1 effect in the current Part.')
   })
   it('says the saved modules are still loading when a sync comes before this start’s restore', async () => {
     const { unit, link } = await linked()
@@ -883,7 +910,7 @@ describe('loading a module set', () => {
     link.start(); await settle(); await settle(); unit.modules = ['0000000a']
     await link.update('Live', set)
     expect(stages).toBe(1); expect(unit.kept).toEqual([]); expect(unit.modules).toEqual(['0000000a'])
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'There isn’t enough module memory left on the Octatrack. Remove a module, then try again.' } })
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'There isn’t enough module memory left on the Octatrack in one piece: modules taken out since it started can leave gaps. Restart the Octatrack, then sync again. If it is refused again, remove a module.' } })
   })
   it('does not need the website to retain packages for Undo', async () => {
     const { unit, link } = await linked('base', true); unit.modules = ['0000000a']

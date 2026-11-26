@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 2,
+  "id": "ungemach",
+  "key": "UNGEMACH",
+  "name": "Ungemach",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "GnocchiBalboa",
+    "credits": [
+      "GnocchiBalboa"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Drone",
+    "family": "Synth track machine",
+    "summary": "A dissonant, living drone for dark textures and atmospheres. Turn up PNCH and shorten HOLD and REL to turn it into a hard techno stab machine.",
+    "overview": "UNGEMACH is a track machine that makes its own sound on the ColdFire instead of playing a sample. Sixteen detuned voices in three groups, an octave sub and a dark noise run through a resonant low-pass and a saturation. PTCH sets the root, DISS moves the second and third groups from unison through ever wider dissonant chords to a scream, WAVE crossfades through 32 original waveforms from dull to shrill, TONE opens the filter and DIRT adds resonance, drive and a phase push that roughens the voices. RATE lets pitch, filter and level drift on their own, slowly or fast, or pulse in time with the sequencer. On SRC SETUP, SPRD sets the stereo width and PNCH gives every trig a punch that opens the filter and lifts the level for a few dozen milliseconds. The track's AMP envelope, LFOs, locks, scenes and effects act on it as on a sample.",
+    "highlights": [
+      "Sixteen voices in three detuned groups, an octave sub and noise, in stereo.",
+      "DISS: from unison through quarter tones, tritones and ninths to a scream; the chord's pitch rises with the knob and every step glides.",
+      "WAVE: 32 original waveforms ordered from dull to shrill, crossfaded and gliding.",
+      "RATE: free drift of pitch, filter and level from 0.02 to 2 Hz, or a pulse synced to the track from 16 steps to 2.",
+      "PNCH: a punch on every trig, 35 to 55 ms long, that opens the filter, adds dirt and lifts the level.",
+      "All six SRC knobs take parameter locks, LFOs and scenes; an LFO on DIRT in a trig mode makes hits."
+    ],
+    "usage": [
+      "Choose UNGEMACH in a track's machine list, put a trig on step 1 and set the AMP envelope's HOLD high: the drone sounds.",
+      "Turn DISS for the chord, WAVE for the colour and TONE and DIRT for brightness and grit; RATE above 63 pulses with the pattern.",
+      "Set PNCH on SRC SETUP and add trigs for a punch on each, or put an LFO on DIRT in a trig mode for hits."
+    ]
+  },
+  "controls": [
+    {
+      "name": "PTCH",
+      "default": 28,
+      "count": 121,
+      "doc": "The drone's root, in half semitones: 0 is 27.5 Hz, 24 (the default) 55 Hz, 120 880 Hz (stored as 4 to 124 like stock's PTCH). Locks, LFOs and slides move it smoothly. SRC knob A.",
+      "labels": null
+    },
+    {
+      "name": "DISS",
+      "default": 40,
+      "count": 128,
+      "doc": "The chord: where the second and third voice groups sit against the root. 0 is unison; from there quarter tones, semitones, tritones, sevenths and ninths, octave and fifth near 71-76, and the scream at 121-127. The chord's pitch rises with the knob, and each step glides in about 90 ms. SRC knob B.",
+      "labels": null
+    },
+    {
+      "name": "TONE",
+      "default": 80,
+      "count": 128,
+      "doc": "The low-pass filter's cutoff: dark at 0, open at 127. SRC knob C.",
+      "labels": null
+    },
+    {
+      "name": "WAVE",
+      "default": 24,
+      "count": 128,
+      "doc": "The voices' waveform: 32 original waveforms from dull (0) to shrill (127), crossfaded; a turn glides, half the range in about 0.7 s. SRC knob D.",
+      "labels": null
+    },
+    {
+      "name": "RATE",
+      "default": 20,
+      "count": 128,
+      "doc": "How the drone moves. 0-63: pitch, filter and level drift on their own, from 0.02 Hz at 0 to 2 Hz at 63; the filter moves by up to a quarter of TONE's travel. 64-127: a pulse in time with the track, S16, S8, S6, S4, S3 or S2 steps a cycle, that opens the filter by 25 % of TONE's travel at 64, rising to 35 % from 74. SRC knob E.",
+      "labels": null
+    },
+    {
+      "name": "DIRT",
+      "default": 12,
+      "count": 128,
+      "doc": "Resonance, saturation and a phase push between the voices: clean and round at 0, rough and screaming at 127. Locks and LFOs reach it; an LFO in a trig mode makes hits. SRC knob F.",
+      "labels": null
+    },
+    {
+      "name": "SPRD",
+      "default": 2,
+      "count": 4,
+      "doc": "The stereo width: MONO, NARW, WIDE (the default) or FULL. SRC SETUP knob E.",
+      "labels": [
+        "MONO",
+        "NARW",
+        "WIDE",
+        "FULL"
+      ]
+    },
+    {
+      "name": "PNCH",
+      "default": 0,
+      "count": 128,
+      "doc": "A punch on every trig: it opens the filter, adds dirt and lifts the level, then falls away in 35 ms (low values) to 55 ms (127). 0 is off. SRC SETUP knob F.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Tested by the author on an Octatrack MKI, with the Modwerk USB base 0.7.10 and a development twin of the beta base; not tested on an MKII.",
+      "One UNGEMACH track per Part: choosing it for a second track is refused, and that track stays what it was.",
+      "It renders on the ColdFire: about 37-60 microseconds of the 363-microsecond frame in a busy live set. With a full pattern the base can skip a few of its frames a second; the author heard no dropouts.",
+      "SPRD and PNCH sit on SRC SETUP, which locks, LFOs and scenes do not reach. SRC SETUP A to D are empty.",
+      "Not yet tested: MIDI, scenes and recording on an UNGEMACH track."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "2026-11-22",
+    "storage": {
+      "label": "Module image and memory",
+      "display": "89,772 bytes of code and data and 460 bytes of BSS",
+      "value": 90232,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "The release package built by sdk/runtime/loader/build.py from this source: 89,772 bytes of code and data (most of it the 32 waveforms at six band limits) and 460 bytes of BSS. Stack use and stock calls are not counted.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, in the frame interrupt",
+      "display": "37-60 microseconds a frame in a busy live set (mean over each second)",
+      "value": 15840,
+      "unit": "cycles/render",
+      "method": "hardware",
+      "conditions": "Author's Octatrack MKI, OS 1.40C, Modwerk USB base 0.7.10 (6070a4e4), the author's full live-set pattern with seven Flex tracks. A diagnostic build of the same engine timed the whole callback with the 132 MHz DTCN3 timer, as the base's guard does, and reported the mean a frame each second: 37-43 microseconds for long stretches and 49-60 for others, with the same settings (22 November 2026). The value is the highest mean, 60 microseconds, in core cycles (twice the timer's ticks). The longest single frame was not recorded.",
+      "source": "TESTING.md"
+    },
+    "cpuPrice": {
+      "value": 15,
+      "unit": "percent-of-frame",
+      "measure": "machine-render",
+      "tool": "npm run device -- do (guard)",
+      "date": "2026-11-24",
+      "conditions": "Author's Octatrack MKI, OS 1.40C, a development twin (4c7eb79b) of the beta base, release package a8bcdca3. A scratch pattern with only T1 playing, a trig on every step and no sample, default UNGEMACH settings: T1 on UNGEMACH read 43.9 % of a frame in the frame interrupt, the same track on FLEX 29.8 % (two 6-second windows each, no skipped frames), so 14.1 points, rounded up. UNGEMACH renders while the sequencer runs whether or not its track trigs: the same pattern without trigs read 43.5-43.6 %.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One UNGEMACH track (a Part takes one) at its defaults, playing beside seven busy Flex tracks with LFOs and scenes: the track renders on the ColdFire in every frame interrupt while the sequencer runs, whether or not it trigs.",
+      "cpu": {
+        "level": "moderate",
+        "basis": "measured-comparison",
+        "rationale": "Measured on the author's MKI (24 November 2026, a development twin of the beta base, package a8bcdca3): T1 on UNGEMACH read 43.9 % of a frame in the frame interrupt against 29.8 % on FLEX, 14.1 points, so its price is 15. On a medium pattern its first instance raised the longest frame by 23.5 points to 102.2 %; in the author's live set the base skipped up to 15 frames a second at times, with no dropouts heard. A Part admits one UNGEMACH track.",
+        "source": "evidence/cpu-price.json"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs: the rendered samples go to stock's Flex path, whose filter and effects run as stock.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "89,772 bytes of ColdFire code and tables (most of it 32 waveforms at six band limits) and 460 bytes of BSS in DRAM, from the package; no heap.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Author's MKI, Modwerk USB base 0.7.10, kept with diagnostic builds of this engine (22 November 2026): it played in the author's full live set for about ten minutes per session while every control was turned, with 0-15 skipped frames a second at times and no dropouts heard. Host tests under UBSan and ASan pass (levels, DC, clipping, DISS glide, PNCH, synced RATE). The release package (24 November 2026, development twin 4c7eb79b): CPU price 14.1 points (15 %), first instance 14.6 % of a frame, admitted alone on an empty and a medium pattern with no dropped render, and device:qualify passed, Part and bank changes included. Kept, it survived a power cycle with the saved project; with the module removed the project loaded with that track on FLEX and a missing-module message. Not run: any MKII.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "7a221383e24528f4ff4d2ae7b4c46bbc29984de4",
+    "gates": [
+      "modules/ungemach/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: play an UNGEMACH drone",
+        "steps": [
+          "Double-tap a track key, move to UNGEMACH in the machine list and press YES.",
+          "Put a trig on the track, set the AMP envelope's HOLD high and press PLAY: the drone sounds. On the SRC page, turn DISS slowly from 0 up: the chord widens and rises. Turn WAVE for the colour and TONE and DIRT for brightness and grit.",
+          "Press SRC again for SRC SETUP and turn PNCH up: each trig now punches. Set RATE above 63 for a pulse in time with the track. Press STOP to stop, or double-tap the track key and choose FLEX to leave the machine."
+        ]
+      },
+      "screenshots": [
+        "media/ot-machine-list.png",
+        "media/ot-src.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original work by GnocchiBalboa under MIT. No Elektron firmware, extracted routines, tables, samples or graphics; the page copies stock's FLEX record at run time on the user's unit and never ships it."
+  },
+  "media": [
+    {
+      "path": "media/ot-machine-list.png",
+      "credit": "GnocchiBalboa; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "captureType": "hardware",
+      "caption": "Select an audio track, hold FUNC and press SRC: PLAYBACK SETUP opens with the machine list. Go DOWN to UNGEMACH and press YES. The right side shows its two setup knobs: SPRD (stereo width) and PNCH (a punch on every trig).",
+      "alt": "PLAYBACK SETUP with the machine list FLEX, THRU, NEIGHBOR, PICKUP and UNGEMACH selected, and the SPRD and PNCH knobs on the right.",
+      "otUi": {
+        "page": "SRC SETUP (PLAYBACK SETUP) machine list",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The author's Octatrack MKI, OS 1.40C, a development twin (4c7eb79b) of the beta base RAM-booted over USB, UNGEMACH 0.1.0-experimental (package 37d7a278) in a trial, track 1 on UNGEMACH at its Part defaults, stopped transport. The LCD read over USB (png), actual pixels scaled 3x. UI capture only."
+      }
+    },
+    {
+      "path": "media/ot-src.png",
+      "credit": "GnocchiBalboa; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "captureType": "hardware",
+      "caption": "Press SRC for the main page. DISS widens the chord from unison to a scream, WAVE goes from dull to shrill, RATE drifts freely up to 63 and pulses with the track from 64. Put a trig on the track, set the AMP HOLD high and press PLAY; try DISS 40 and RATE 16 for a slowly moving dark chord.",
+      "alt": "The SRC page of track 1 with PTCH, DISS and TONE on the top row and WAVE, RATE and DIRT below; the footer reads SRC UNGEMACH.",
+      "otUi": {
+        "page": "SRC main page",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "The author's Octatrack MKI, OS 1.40C, a development twin (4c7eb79b) of the beta base RAM-booted over USB, UNGEMACH 0.1.0-experimental (package 37d7a278) in a trial, track 1 on UNGEMACH at its Part defaults, stopped transport. The LCD read over USB (png), actual pixels scaled 3x. UI capture only."
+      }
+    }
+  ],
+  "access": {
+    "location": "Audio track: FUNC + SRC (PLAYBACK SETUP) → UNGEMACH in the machine list.",
+    "steps": [
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press SRC to open PLAYBACK SETUP. Go DOWN to UNGEMACH and press YES; the right side shows SPRD and PNCH.",
+      "Press SRC for PTCH, DISS, TONE, WAVE, RATE and DIRT. Put a trig on the track, set the AMP envelope's HOLD high and press PLAY: the drone sounds."
+    ],
+    "screenshots": [
+      "media/ot-machine-list.png",
+      "media/ot-src.png"
+    ]
+  }
+}

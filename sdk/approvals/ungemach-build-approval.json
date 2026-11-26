@@ -1,0 +1,15 @@
+{
+  "kind": "owner-approved-update",
+  "id": "ungemach",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-26",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles",
+    "complete-memory-bounds"
+  ],
+  "sourceSha256": "0f67fc0d4454e843fc50f75286357f7b608de5836c06295f42c1053ad380c236",
+  "ownerStatement": "Approve UNGEMACH 0.1.0-experimental, its first release, for this exact source, on the author's MKI measurements.",
+  "reason": "UNGEMACH 0.1.0 (#2081, #2191) is GnocchiBalboa's ColdFire drone machine, one track a Part. On the author's MKI (OS 1.40C) the release package of this source was priced, curved and qualified on a development twin of the beta base (4c7eb79b, 24 November 2026): 43.9 % of a frame in the frame interrupt against 29.8 % on FLEX, so a price of 15; first instance +14.6 on a pattern with room, admitted on the empty and the medium pattern with no render dropped and no stall; device:qualify passed with T2-T8 refused as intended. The package with that price (37d7a278) was kept, power-cycled and reloaded on the flashed base 0.7.10, and a project opened without the module plays its track as FLEX. Earlier diagnostic builds of the same engine played in the author's full live set for about ten minutes a session with every control turned and no dropouts heard. Not run: this release on base 0.8.1 or an MKII, MIDI, scenes and recording on an UNGEMACH track; no static worst-case cycle bound or complete memory bound exists."
+}

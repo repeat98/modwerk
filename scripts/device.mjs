@@ -52,12 +52,13 @@ import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
-import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
+import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, freezeSamples, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
 import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
-import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
+import { chooserIndex } from './chooser-name.mjs'
+import { crashNames, keepSymbols, namesFor, withName } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
@@ -321,8 +322,11 @@ async function partMenu(steps) {
 async function pick(track, slot, wanted) {
   const tables = await effectTables(), ids = tables.ids[slot - 1], rows = tables.rows[slot - 1]
   let id = typeof wanted === 'number' ? wanted : -1 // a number: that effect id, through its chooser row (pickid)
-  for (let i = 0; i < tables.count && id < 0; i++)
-    if (ids[i] && Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '').toLowerCase() === wanted.toLowerCase()) id = i
+  if (id < 0) { // a name: the chooser's own, or shortened there to its 12 letters (chooser-name.mjs)
+    const names = []
+    for (let i = 0; i < tables.count; i++) names.push(ids[i] ? Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '') : null)
+    id = chooserIndex(names, wanted)
+  }
   if (id < 0 || id >= tables.count || (typeof wanted === 'number' && !rows[id])) throw new Error('No ' + wanted + ' in the FX' + slot + ' chooser.')
   // NO first: right after a pick on another track the next FUNC+FX can be lost, and the LEVEL turn below then changes that
   // track's level in the Part instead of scrolling (owner's MKII, 20 October 2026)
@@ -524,7 +528,9 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       if (!log) console.log('diaglog: no log yet')
       else {
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
-        for (const r of log.incidents) console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
+        for (const r of log.incidents) if (r.kind === 'freeze_pc') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s freeze_pc: ` +
+          freezeSamples(r).map(s => `0x${s.pc.toString(16)}${withName(namesFor(identity.base), s.pc)} level ${s.level} in ${s.task}`).join('; '))
+        else console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
           `${r.playing ? 'playing' : 'stopped'} tempo ${(r.tempo24 / 24).toFixed(1)} screen 0x${r.screen.toString(16)} keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(',')} ` +
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +

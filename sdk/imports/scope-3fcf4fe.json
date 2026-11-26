@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/drafts/scope",
+  "modules": [
+    "scope"
+  ],
+  "author": {
+    "github": "ilia-murzinov",
+    "mergeCommits": [
+      "45554ff6b93a83e4dbe7e15447d1dcb789bfd236",
+      "d2be325f"
+    ]
+  },
+  "files": [
+    {
+      "path": "unit.s",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "modules/scope/scope.s",
+      "sourceBytes": 31677,
+      "sourceGitBlob": "5d5b423dc093cc17dd053211ce514af0bcd36724",
+      "sourceSha256": "e4f38f1ea963e332ff05a92c4fb977955bd232c4dfb376980ce7f7400141142c",
+      "vendoredSha256": "e4f38f1ea963e332ff05a92c4fb977955bd232c4dfb376980ce7f7400141142c",
+      "note": "Imported unchanged as unit.s"
+    },
+    {
+      "path": "upstream/modules/scope/scope.s",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "modules/scope/scope.s",
+      "sourceBytes": 31677,
+      "sourceGitBlob": "5d5b423dc093cc17dd053211ce514af0bcd36724",
+      "sourceSha256": "e4f38f1ea963e332ff05a92c4fb977955bd232c4dfb376980ce7f7400141142c",
+      "vendoredSha256": "e4f38f1ea963e332ff05a92c4fb977955bd232c4dfb376980ce7f7400141142c",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "upstream/modules/scope/manifest.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "modules/scope/manifest.py",
+      "sourceBytes": 1667,
+      "sourceSha256": "21381c3282c95765f3c55f6ac557794a29f5169360ba8dbef10233598f660aca",
+      "vendoredSha256": "21381c3282c95765f3c55f6ac557794a29f5169360ba8dbef10233598f660aca",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "upstream/modules/scope/README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "modules/scope/README.md",
+      "sourceBytes": 2815,
+      "sourceSha256": "be32106595541937019fb6328a77dc16483194c872c8d9f68d4b17393e3e40b6",
+      "vendoredSha256": "be32106595541937019fb6328a77dc16483194c872c8d9f68d4b17393e3e40b6",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "note": "octabam's MIT licence (Sam Banks), kept with upstream/ for its maintainers' edits"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "modules/scope/manifest.py",
+      "sourceBytes": 1667,
+      "sourceSha256": "21381c3282c95765f3c55f6ac557794a29f5169360ba8dbef10233598f660aca",
+      "vendoredSha256": "5646ec75fa02e39408e43e1cc3bbec65fb1af60504a36c9d0c2d65df80094210",
+      "transforms": [
+        "Detour expect bytes -> Modwerk stock_guard SHA-256 (same three sites as Tuner).",
+        "Linked path modules/scope/scope.s -> unit.s beside this manifest.",
+        "Proof path -> Proof.UNTESTED for the Modwerk draft; octabam hardware stays in TESTING.md.",
+        "Category.UTILITIES (octabam) -> Category.MACHINES (Modwerk schema).",
+        "Gate path modules/scope/verify.py: the ot_emu check of DOWN+TEMPO, the stock TEMPO path and the quiet closed state.",
+        "Docstring notes the Tuner site clash and the needed base hook."
+      ]
+    }
+  ],
+  "notes": [
+    "Standalone SCOPE (no requires TUNER). Coexistence with catalog Tuner needs a Modwerk base hook for 0x40059ef0 / 0x4000d99a / 0x40056c72; until then octamod lists conflicts:[tuner]."
+  ]
+}

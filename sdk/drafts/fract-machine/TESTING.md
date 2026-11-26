@@ -1,6 +1,18 @@
 # FRACT testing
 
-## Current candidate — 10 November 2026
+## Current preparation — 25 November 2026
+
+Unlisted `0.1.3-experimental` is prepared from released main/base 0.8.1.
+Normal package SHA-256 `c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`,
+base identity `eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0`.
+Controls now use the shared page descriptor; SRNG is a binary switch. The
+normal package passes original-OS reconstruction and both strict stock scans.
+Current hardware tests have not run. The dated preparation record includes current
+emulator MAIN/SRNG captures; prior build results
+below remain attributed to their original package/base. Performance fields stay
+null. See [current preparation](release/README.md) for the remaining procedure.
+
+## Historical 0.1.2 candidate — 10 November 2026
 
 Unlisted `0.1.2-experimental`, SHA-256 `6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874`, required base `72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`.
 The merged SDK builder now follows committed base exports. Only the old runtime

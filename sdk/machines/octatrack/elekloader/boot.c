@@ -46,11 +46,10 @@ void modwerk_boot_reset(void) { ++modwerk_test_resets; }
 #else
 static void *uncached(void *p) { return (void *)((uintptr_t)p + 0x08000000u); }
 static uint32_t nor_version(void) { return *(volatile uint16_t *)0x3ffcu; }
-/* runtime.c's stopped check, recorder half: two 84-byte state rows per track. */
+/* runtime.c's stopped check, recorder half: the row each track records into, and its other row past a retrigger's 2. */
 int modwerk_boot_recording(void)
 {
-    for (unsigned i = 0; i < 16; ++i) if (*(volatile uint8_t *)(0x80004f1eu + i * 84u)) return 1;
-    return 0;
+    return modwerk_machine_recorder_busy((const volatile uint8_t *)0x80004f1eu, *(volatile uint32_t *)0x80004f18u) != 0;
 }
 /* A key as the panel sends it: a row report {0x20 | row, the row's keys
  * held} through the panel's own byte ringer (0x40092254, UART1's receive
