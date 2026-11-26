@@ -12,6 +12,13 @@ type BaseRelease = {
 const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelease[]]> = {
   octatrack: [
     {
+      version: '0.8.2', title: 'Recording costs less CPU', note: '2026-11-23-octatrack-recorder-cs1-skip',
+      changes: [
+        { area: 'Recording', detail: 'Tracks that record cost less CPU: the recorder leaves out two memory writes that would store what is already there.' },
+        { area: 'Sync', detail: 'When a track runs a module that a sync changes, the site names that track and its FX slot.', note: '2026-11-24-octatrack-in-use-track' },
+      ],
+    },
+    {
       version: '0.8.1', title: 'Lower overhead for module sets', note: '2026-11-23-octatrack-idle-module-cost', noteLabel: 'CPU release note',
       changes: [
         { area: 'CPU', detail: 'The base now caches the module-cost table. With playback stopped and 16 installed but unused modules on an Octatrack MKII, the CPU meter fell from about 46% to 41%. The base’s own work per UI tick fell from 1,412 to 247 µs.' },

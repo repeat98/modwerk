@@ -268,6 +268,7 @@ int main(void)
     /* A track running it, or the manager mid-transaction, keeps it: removal and replacement wait. */
     modwerk_test_live_fx[13] = 26;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_IN_USE && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_IN_USE);
+    CHECK(in_use_slot == 14u); /* T6's FX2 runs it: the record names that slot (selftest.h; test_selftest.c reads it) */
     /* An Undo puts it back as it was (beta finding 66): the track goes dry (NONE) and the removal is admitted. */
     modwerk_test_live_fx[5] = 26, restoring = 1;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK && !modwerk_test_live_fx[13] && !modwerk_test_live_fx[5]);
