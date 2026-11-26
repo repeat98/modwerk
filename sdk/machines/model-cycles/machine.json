@@ -4,15 +4,44 @@
   "order": 150,
   "name": "Model:Cycles",
   "status": "research",
-  "summary": "Six-track FM groovebox. Its OS file is documented and rebuilt byte for byte, and modified builds boot on units. No shared core yet.",
+  "summary": "Six-track FM groovebox. Its OS file is rebuilt byte for byte and modified builds boot on units. A Modwerk base from core-mc 0.3's source, with a key-LED hook, runs on a unit; no modules yet.",
+  "firmware": {
+    "releases": [
+      {
+        "version": "1.13",
+        "files": [
+          {
+            "name": "model-cycles_OS1.13.syx",
+            "sha256": "44fe586269631a0ca7da25a3383fc6733c314809505fc3cc52f1e0ed9800640c"
+          }
+        ]
+      }
+    ],
+    "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. The site builds Modwerk's Model:Cycles base from that file as a local preview; beta testers can download it and send it over USB, everyone else once it is reviewed.",
+    "recovery": "Hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock .syx to MIDI IN, the 3.5 mm TRS jack (a DIN interface through a TRS-to-DIN adapter); recovery mode does not use USB."
+  },
   "steps": {
     "format": "done",
     "rebuild": "done",
     "boot": "done",
-    "core": "open",
+    "core": "started",
     "mods": "open"
   },
+  "stack": {
+    "base": "started",
+    "link": "started",
+    "flash": "started",
+    "loader": "started",
+    "status": "started",
+    "diagnostics": "started",
+    "tools": "started"
+  },
   "research": [
+    {
+      "label": "elekloader core-mc",
+      "url": "https://github.com/elekloader/elekloader/tree/v0.11.0/mods/core-mc",
+      "note": "drumkilla's Model:Cycles core on irpina's hook bus: boot copier, UI hooks, firmware locations and ev_boot (0.3, Elekloader v0.11.0). The Modwerk base starts from its source."
+    },
     {
       "label": "elektron-firmware-tool",
       "url": "https://github.com/mischa85/elektron-firmware-tool",
@@ -34,6 +63,31 @@
       "note": "Byte-level tweaks for Model:Cycles and Model:Samples OS 1.13, each listing the original and the new bytes."
     }
   ],
+  "sdk": {
+    "platform": "elemod",
+    "modules": "sdk/model-cycles/modules",
+    "catalog": null,
+    "guide": "sdk/machines/model-cycles/README.md",
+    "core": {
+      "version": "0.3",
+      "path": "sdk/model-cycles/core-profile"
+    },
+    "toolchain": "m68k-elf GCC and binutils and the pinned Elekloader kit; firmware builds start from the owner's exact OS 1.13 .syx.",
+    "budgets": [
+      {
+        "name": "Shared mod memory",
+        "unit": "bytes",
+        "value": 262144,
+        "note": "Model:Cycles DDR region 0x47E00000–0x47E40000, shared by core and linked mods."
+      },
+      {
+        "name": "Core image",
+        "unit": "bytes",
+        "value": 154010,
+        "note": "Pinned Modwerk base: 38214 bytes .run plus 115796 bytes .bss (and 76 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
+      }
+    ]
+  },
   "art": {
     "body": "model",
     "encoders": 0,

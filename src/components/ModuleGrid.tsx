@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
 import { unitState, type Inventory, type UnitState } from '../config/inventory'
 import { atLimit, canAdd, LIMIT_REACHED, overLimitMessage } from '../catalog/set-limit'
+import { PAUSED_MODULE_NOTICES } from '../catalog/availability'
 import { Icon } from './Icon'
 import { ModulePreview } from './ModulePreview'
 
@@ -19,6 +20,7 @@ const octatrackModule = (id: string): GridModule | undefined => { const module =
  * the next sync adds and what it removes (Keep adds it back); without, just the set. A tile opens the module dialog,
  * or the module's page when `module` gives one (the Zoom pedal's effects). An Octatrack set (`machine`) shows the
  * module limit (set-limit.ts): over it, its count and what to remove; full, Keep and Add say why they add nothing.
+ * A paused module that stays listed (PAUSED_MODULE_NOTICES) can leave but not be kept: its Keep says why.
  */
 export function ModuleGrid({ ids, inventory, describe, onOpen, onRemove, onKeep, onSaveUnit, module: find = octatrackModule, add = { href: '#library', label: 'Add modules' }, machine = 'octatrack' }: { ids: string[]; inventory?: Inventory; describe: (id: string) => string; onOpen?: (id: string) => void; onRemove: (id: string) => void; onKeep: (id: string) => void; onSaveUnit?: () => void; module?: (id: string) => GridModule | undefined; add?: { href: string; label: string }; machine?: string }) {
   // On the unit and not in the set, running or switched off there (PROJECT > MODWERK > MODULES): the next sync removes them.
@@ -41,7 +43,8 @@ export function ModuleGrid({ ids, inventory, describe, onOpen, onRemove, onKeep,
           {module?.href ? <a className="module-tile-open" href={module.href}>{face}</a> : <button type="button" className="module-tile-open" aria-haspopup="dialog" disabled={!module} onClick={() => onOpen?.(id)}>{face}</button>}
           <div className="module-tile-controls">
             {state && <StateChip state={state}>{chip[state]}</StateChip>}
-            {state === 'leaving' ? module && (canAdd(ids, id, machine) ? <button type="button" className="module-tile-action text-button" aria-label={'Keep ' + name} onClick={() => onKeep(id)}>Keep</button>
+            {state === 'leaving' ? module && (machine === 'octatrack' && PAUSED_MODULE_NOTICES[id] ? <button type="button" className="module-tile-action text-button" disabled aria-label={'Keep ' + name + ': ' + PAUSED_MODULE_NOTICES[id].detail} title={PAUSED_MODULE_NOTICES[id].detail}>Keep</button>
+              : canAdd(ids, id, machine) ? <button type="button" className="module-tile-action text-button" aria-label={'Keep ' + name} onClick={() => onKeep(id)}>Keep</button>
               : <button type="button" className="module-tile-action text-button" disabled aria-label={'Keep ' + name + ': ' + LIMIT_REACHED} title={LIMIT_REACHED}>Keep</button>)
               : <button type="button" className="module-tile-action icon-button" aria-label={'Remove ' + name} onClick={() => onRemove(id)}><Icon name="close" size={15} /></button>}
           </div>

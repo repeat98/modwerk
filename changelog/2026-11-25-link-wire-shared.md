@@ -1,0 +1,1 @@
+The Digitone II and the Model:Cycles share one client for the link's SysEx wire (`link-wire.ts`): header, requests, replies and the 7-bit numbers and blocks. Each keeps its own commands and status wording, and "no answer" names no machine.

@@ -89,7 +89,7 @@ describe('module qualification hard gates',()=>{
       // Generated web documents include display-only baseline resource estimates.
       // Qualify the source manifest, as publication validation does.
       const source = parseModuleDocument(JSON.parse(readFileSync(resolve(folder, 'octamod.module.json'), 'utf8')))
-      expect(await requireFolderQualification(folder, source, frozen)).toBe(unchanged ? 'retained' : source.tests.retainedEvidence ? 'retained-evidence' : ['miniverb', 'synth', 'usb-audio-out-tracks-main-cue', 'euclid', 'recorder-loop-fix', 'analog-bassdrum', 'airwindows-chorus', 'poly8', 'quantizer', 'everb', 'repitch', 'playmodes', 'tapeecho', 'amiga', 'temp-save', 'midi-scenes', 'kits', 'grain', 'syntiz'].includes(module.id) ? 'owner-approved-update' : 'qualified')
+      expect(await requireFolderQualification(folder, source, frozen)).toBe(unchanged ? 'retained' : source.tests.retainedEvidence ? 'retained-evidence' : ['miniverb', 'synth', 'usb-audio-out-tracks-main-cue', 'euclid', 'recorder-loop-fix', 'analog-bassdrum', 'airwindows-chorus', 'poly8', 'quantizer', 'everb', 'repitch', 'playmodes', 'tapeecho', 'amiga', 'temp-save', 'midi-scenes', 'kits', 'grain', 'syntiz', 'ungemach'].includes(module.id) ? 'owner-approved-update' : 'qualified')
     })
   }
   it('binds an owner-approved update to its exact version and native source, never to verified hardware',async()=>{
@@ -97,7 +97,9 @@ describe('module qualification hard gates',()=>{
     try {
       mkdirSync(resolve(root,'sdk','approvals'),{recursive:true}); mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'raise AssertionError("never execute module source")\n')
-      const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octatrack/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
+      const published=parseModuleDocument(JSON.parse(readFileSync('sdk/octatrack/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
+      // at the version its OT UI captures document, so the fixture stays publishable when an update keeps earlier captures
+      const document={...published,version:published.media.find(item=>item.otUi)?.otUi?.moduleVersion??published.version}
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.'}
       const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=(doc=document)=>requireFolderQualification(folder,doc,new Map(),new Map(),{root})

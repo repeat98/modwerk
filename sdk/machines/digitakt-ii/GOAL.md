@@ -19,7 +19,7 @@ This is the Octatrack's stack on the Digitakt II ([machine recipe](../../../docs
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
 | MCP device tools | Not started | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
 | Machine page | Status only. The Octatrack's unit pages (status, module sets, guided sync) are not built yet | [`OctatrackHub.tsx`](../../../src/components/OctatrackHub.tsx) is the model |
-| Modules | Track Names is in the library. Downloads stay off until the owner turns them on | [modules](../../digitakt-ii/modules/), open pull requests, the board |
+| Modules | Track Names, Mute Latch, Chord Arp and Euclidean Scale are in the library. Downloads stay off until the owner turns them on | [modules](../../digitakt-ii/modules/), open pull requests, the board |
 
 When a piece moves, update this table, the [recipe's table](../../../docs/MACHINE_RECIPE.md#where-each-machine-stands) and `machine.json`'s `stack` in the same pull request.
 
@@ -57,7 +57,6 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 
 ## Open questions
 
-- **Kit data that changes alone.** Does OS 1.17 save a kit when only a module's block changed? The test steps are in the [machine guide](README.md#core-hooks), and any unit owner can run them.
 - **More units.** The pinned base has run on one unit so far.
 - **A SHARC assembler.** No Modwerk build writes SHARC code yet. The first one to do so brings its toolchain, pinned through `npm run upstream:tools`, and a build check for the rules above.
 

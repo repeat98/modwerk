@@ -8,6 +8,8 @@ import type { InventoryTarget } from '../config/inventory'
 import { comesWithBase } from '../config/usb-audio'
 import { Icon } from './Icon'
 import { trackModuleDownloads } from '../community/usage'
+import { noteSupportInstall } from '../community/support-prompt'
+import { SupportLine } from './SupportDialog'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { installedOnOctatrack } from '../community/installed-follow-up'
 import { save } from './OctatrackBackups'
@@ -51,7 +53,7 @@ function CardSetDialog({ name, written, error, notice, onDownload, onInstall, on
     try {
       if (retained && retained.name.toUpperCase() !== CARD_RECOVERY_FILE) throw new Error('Choose ' + CARD_RECOVERY_FILE + ' from the top folder of this card.')
       const file = retained ? forCardImport(written.file, new Uint8Array(await retained.arrayBuffer())) : written.file
-      save(file, CARD_SET_FILE); setSaved(true); onDownload(written.ids)
+      save(file, CARD_SET_FILE); setSaved(true); onDownload(written.ids); noteSupportInstall()
     } catch (failure) { setProblem(failure instanceof Error ? failure.message : 'Couldn’t prepare the card file.') }
     finally { setReading(false) }
   }
@@ -75,7 +77,8 @@ function CardSetDialog({ name, written, error, notice, onDownload, onInstall, on
         <li><span aria-hidden="true">1</span><div><strong>Copy the file to the card</strong><p>Top folder, replacing the one there, named exactly {CARD_SET_FILE}: if your browser added a number to the name, take it out. Card reader or USB DISK MODE.</p></div></li>
         <li><span aria-hidden="true">2</span><div><strong>Switch the Octatrack off and on</strong><p>It reads the file when it starts.</p></div></li>
         <li><span aria-hidden="true">3</span><div><strong>Play</strong><p>{name ? <>It starts with the modules of <b>{name}</b>.</> : 'It starts with your modules.'}</p></div></li>
-      </ol> : <fieldset disabled={reading}>
+      </ol> : null}
+      {saved ? <SupportLine /> : <fieldset disabled={reading}>
         <legend>Check the top folder of your card</legend>
         <p>If it contains <b>{CARD_RECOVERY_FILE}</b>, choose that file here. The download will load ahead of it, and the original stays on the card for recovery.</p>
         <label>Choose {CARD_RECOVERY_FILE} <input type="file" accept=".set" onChange={event => { const file = event.target.files?.[0]; if (file) void download(file) }} /></label>

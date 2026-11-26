@@ -13,7 +13,8 @@
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
 //       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back);
-//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial
+//       --split runs a set the module pool or a DSP window cannot hold (RUNTIME_MEMORY) in halves, each its own trial;
+//       --costs FILE sends that frame cost table (frame-costs.json's shape) instead of this checkout's; the unit keeps it either way
 //   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
@@ -51,16 +52,17 @@ import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
-import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
+import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, freezeSamples, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
 import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
-import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
+import { chooserIndex } from './chooser-name.mjs'
+import { crashNames, keepSymbols, namesFor, withName } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
-import { stageRefusal } from './octatrack-step-base.mjs'
+import { bootOverPendingUpdate, stageRefusal } from './octatrack-step-base.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -68,11 +70,13 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
   split: { type: 'boolean', default: false },
+  costs: { type: 'string' }, // set: the frame cost table to send, in frame-costs.json's shape (device:price's measuring table)
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
+  'spend-tries': { type: 'boolean', default: false }, // boot: even over a base update not yet confirmed (bootOverPendingUpdate)
 } })
 const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
 
@@ -81,7 +85,7 @@ const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
   screen [--png FILE] [--scale 1-4]
   try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
   recover | lifecycle
-  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  boot BUILD_DIR [--chunk 1-4096] [--spend-tries] | flash BUILD_DIR
   key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
   mem ADDR LENGTH | probe 0|1 | meter 0|1
 
@@ -318,8 +322,11 @@ async function partMenu(steps) {
 async function pick(track, slot, wanted) {
   const tables = await effectTables(), ids = tables.ids[slot - 1], rows = tables.rows[slot - 1]
   let id = typeof wanted === 'number' ? wanted : -1 // a number: that effect id, through its chooser row (pickid)
-  for (let i = 0; i < tables.count && id < 0; i++)
-    if (ids[i] && Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '').toLowerCase() === wanted.toLowerCase()) id = i
+  if (id < 0) { // a name: the chooser's own, or shortened there to its 12 letters (chooser-name.mjs)
+    const names = []
+    for (let i = 0; i < tables.count; i++) names.push(ids[i] ? Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '') : null)
+    id = chooserIndex(names, wanted)
+  }
   if (id < 0 || id >= tables.count || (typeof wanted === 'number' && !rows[id])) throw new Error('No ' + wanted + ' in the FX' + slot + ' chooser.')
   // NO first: right after a pick on another track the next FUNC+FX can be lost, and the LEVEL turn below then changes that
   // track's level in the Part instead of scrolling (owner's MKII, 20 October 2026)
@@ -521,7 +528,9 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       if (!log) console.log('diaglog: no log yet')
       else {
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
-        for (const r of log.incidents) console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
+        for (const r of log.incidents) if (r.kind === 'freeze_pc') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s freeze_pc: ` +
+          freezeSamples(r).map(s => `0x${s.pc.toString(16)}${withName(namesFor(identity.base), s.pc)} level ${s.level} in ${s.task}`).join('; '))
+        else console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
           `${r.playing ? 'playing' : 'stopped'} tempo ${(r.tempo24 / 24).toFixed(1)} screen 0x${r.screen.toString(16)} keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(',')} ` +
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +
@@ -788,7 +797,10 @@ if (command === 'serve') {
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
     // The unit refuses the set's identity while an install is open, which read as "busy" (22 November 2026: a killed `set` left its trial)
     if (session.status.phase !== 'normal') throw new Error(`The unit is in ${state(session.status)}: an install or trial is still open. If nothing else is running one, npm run device -- recover rolls it back.`)
-    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+    // A v2 set's table is kept in battery RAM whether or not the set is kept (loader.c): this checkout's, or --costs.
+    const own = values.costs ? JSON.parse(readFileSync(values.costs, 'utf8')) : undefined
+    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? (own ? frameCostTable(own.costs, own.stock ?? null) : frameCostTable()) : undefined
+    if (own && !costs) throw new Error('--costs: this base keeps no frame cost table (no frame costs capability), so it would not be sent.')
     const offer = async packages => {
       const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
       console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
@@ -837,6 +849,15 @@ if (command === 'serve') {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
+    // A base update flashed and not yet confirmed loses one of its starts to each restart, a RAM boot's too (20 November 2026)
+    const slotsNow = () => transport.slots().catch(() => undefined)
+    let pending = values.emulator || values['spend-tries'] ? undefined : bootOverPendingUpdate(await slotsNow())
+    if (pending?.wait) {
+      console.log('waiting up to 20 s for the base update the unit runs to confirm itself…')
+      for (let second = 0; second < 20 && pending?.wait; second++) { await wait(1000); pending = bootOverPendingUpdate(await slotsNow()) }
+    }
+    if (pending?.refusal) throw new Error(pending.refusal)
+    if (pending?.warning) console.log(pending.warning)
     const arm = async (s, base, flashed = false) => {
       const tooBig = stageRefusal(join(file, 'MAIN.raw'), image.length, s.status.capacity, flashed)
       if (tooBig) throw new Error(tooBig)

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "First release: 174 programs of the Alesis Midiverb, Midiverb II and Midifex on FX2, played at the originals' own arithmetic.",
+      "PROG picks the program and BANK the unit; a message box names each as you turn. STOP, STOP, STOP cuts the tail.",
+      "Known issue: on base 0.8.1 the first NO after picking it only closes the memory box; press FX2 for its page instead.",
+      "Known issue: the Midiverb II's chorus and flange programs, and 31 programs that need more DSP time, are not in this release."
+    ]
+  }
+]

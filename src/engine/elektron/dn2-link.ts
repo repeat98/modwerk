@@ -4,15 +4,16 @@
 // the reads the page and the diagnostics need: the link's identity, memory, the screen and the diagnostics log, which
 // is the Octatrack's layout and reads with parseDeviceLog. No keys, turns or RAM boot from here. The one command
 // that changes the unit is `upload`, which carries the runtime loader's upload controller (uploadTransport): modules
-// load to RAM for a trial, and a power cycle ends them (sdk/machines/digitone-ii/LOADER.md).
+// load to RAM for a trial, and a power cycle ends them (sdk/machines/digitone-ii/LOADER.md). The wire itself, shared
+// with the Model:Cycles, is link-wire.ts; this file keeps the Digitone II's commands and status wording.
 // Transport-free (LinkLine): the page gives it Web MIDI, a test a simulated unit.
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log.ts'
 import type { UploadTransport } from '../elekloader/upload-session.ts'
 import { UPLOAD_RESPONSE } from '../elekloader/upload-wire.ts'
+import { askLink, get32, LinkError, linkFrame, pack7, u32, unpack7, type LinkLine } from './link-wire.ts'
 
-/** F0 7D 'M' 'W' 'L' version: the link's header, a request's and a reply's. */
-export const LINK_HEADER = [0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1] as const
+export { get32, LINK_HEADER, LinkError, pack7, parseLinkReply, u32, unpack7, type LinkLine } from './link-wire.ts'
 export const LINK_COMMANDS = { ident: 0x01, mem: 0x21, diag: 0x22, upload: 0x30 } as const
 export type LinkCommand = keyof typeof LINK_COMMANDS
 export const LINK_STATUS: Readonly<Record<number, string>> = {
@@ -23,66 +24,13 @@ export const MEM_MAX = 128
 /** Stock keeps two frame pointers side by side (OS 1.12): the frame on the screen is the second's. 128x64, 1 bit. */
 export const FRAME_POINTERS = 0x402a10c8, FRAME_BYTES = 1024
 
-/** SysEx in and out: whole messages, F0 to F7. next() waits up to `ms` and gives null when none came. */
-export type LinkLine = { send(data: Uint8Array): void; next(ms: number): Promise<Uint8Array | null> }
-export class LinkError extends Error {
-  readonly status?: number
-  constructor(message: string, status?: number) { super(message); this.status = status }
-}
-
-/** A u32 as five 7-bit bytes, least significant first. */
-export function u32(value: number): number[] {
-  return Array.from({ length: 5 }, (_, i) => Math.floor(value / 2 ** (7 * i)) & 0x7f)
-}
-export function get32(bytes: Uint8Array, at: number): number {
-  return (bytes[at] | bytes[at + 1] << 7 | bytes[at + 2] << 14 | bytes[at + 3] << 21) + (bytes[at + 4] & 0x0f) * 2 ** 28
-}
-/** The link's byte blocks: groups of up to seven, each led by a byte holding their top bits (the first's in bit 6). */
-export function unpack7(bytes: Uint8Array): Uint8Array {
-  const out: number[] = []
-  for (let i = 0; i < bytes.length; i += 8) {
-    const top = bytes[i]
-    bytes.subarray(i + 1, i + 8).forEach((byte, k) => out.push(byte | (top & 0x40 >> k ? 0x80 : 0)))
-  }
-  return Uint8Array.from(out)
-}
-
-/** link.c's byte blocks from bytes: groups of up to seven, each led by a byte holding their top bits. */
-export function pack7(data: Uint8Array): number[] {
-  const out: number[] = []
-  for (let i = 0; i < data.length; i += 7) {
-    const chunk = data.subarray(i, i + 7)
-    out.push(chunk.reduce((top, b, k) => top | (b & 0x80 ? 0x40 >> k : 0), 0), ...Array.from(chunk, b => b & 0x7f))
-  }
-  return out
-}
-
 export function linkRequest(seq: number, command: LinkCommand, ...values: number[]): Uint8Array {
-  return linkRequestWith(seq, command, values, [])
+  return linkFrame(seq, LINK_COMMANDS[command], values.flatMap(u32))
 }
-function linkRequestWith(seq: number, command: LinkCommand, values: number[], raw: number[]): Uint8Array {
-  return Uint8Array.from([...LINK_HEADER, seq & 0x7f, LINK_COMMANDS[command], ...values.flatMap(u32), ...raw, 0xf7])
-}
-/** A reply's sequence, command, status and payload; null for anything that is not one. */
-export function parseLinkReply(message: Uint8Array): { seq: number; command: number; status: number; payload: Uint8Array } | null {
-  if (message.length < LINK_HEADER.length + 4 || message.at(-1) !== 0xf7 || LINK_HEADER.some((b, i) => message[i] !== b) || !(message[7] & 0x40)) return null
-  return { seq: message[6], command: message[7] & 0x3f, status: message[8], payload: message.subarray(9, -1) }
-}
-
-let nextSeq = 0
-/** One request and its reply; throws a LinkError on a refusal or no answer. */
+/** One request and its reply (link-wire's askLink with the Digitone II's commands and status wording); throws a
+ * LinkError on a refusal or no answer. */
 export async function ask(line: LinkLine, command: LinkCommand, values: number[] = [], timeoutMs = 2000, raw: number[] = []): Promise<Uint8Array> {
-  const seq = nextSeq = (nextSeq + 1) & 0x7f
-  line.send(linkRequestWith(seq, command, values, raw))
-  for (const end = Date.now() + timeoutMs; Date.now() < end;) {
-    const message = await line.next(Math.max(1, end - Date.now()))
-    if (!message) break
-    const reply = parseLinkReply(message)
-    if (!reply || reply.seq !== seq || reply.command !== LINK_COMMANDS[command]) continue
-    if (reply.status) throw new LinkError(`${command}: ${LINK_STATUS[reply.status] ?? 'status ' + reply.status}`, reply.status)
-    return reply.payload
-  }
-  throw new LinkError(`${command}: no answer. Is a development base with the link on the unit?`)
+  return askLink(line, LINK_COMMANDS[command], [...values.flatMap(u32), ...raw], { timeoutMs, label: command, status: LINK_STATUS })
 }
 
 export type LinkIdent = { version: number; received: number; dropped: number; ticks: number; armed?: boolean; person?: boolean; bootStatus?: number }
