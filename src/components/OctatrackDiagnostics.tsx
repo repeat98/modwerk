@@ -28,7 +28,7 @@ export function OctatrackDiagnosticsSettings({username}: {username?: string | nu
   async function share() { if (await changeDiagnosticSharing(true)) count('shared') }
   return <section className="octatrack-diagnostics" aria-label="Diagnostics">
     <h3>Diagnostics</h3>
-    <p>{state.enabled ? 'You’re helping me find browser, build and Octatrack sync problems.' : 'Help me find browser, build and Octatrack sync problems by sharing private technical reports.'}</p>
+    <p>{state.enabled ? 'You’re helping me find browser, build, Octatrack sync and Analog Rytm problems.' : 'Help me find browser, build, Octatrack sync and Analog Rytm problems by sharing private technical reports.'}</p>
     {state.enabled && username && <p className="link-hint">They reach me as @{username}. {/^member_[a-z0-9]+$/i.test(username)
       ? <>That name was made up by the site: <a href="#account">choose your own</a>, ideally your Discord name, so I can match your messages to them.</>
       : 'Use the same name on Discord, so I can match your messages to them.'}</p>}

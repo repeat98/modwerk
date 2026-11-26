@@ -235,6 +235,15 @@ export function members(events) {
     }
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
+    // Another machine's log (`machine`: the Analog Rytm MKII's, from 25 November 2026) is kept apart, once per record:
+    // the Octatrack's bases, keys, restarts and freeze readings don't apply to it (machineLines).
+    if (data.machine) {
+      const unit = (member.machines ??= {})[data.machine] ??= { loads: new Map(), incidents: new Map() }
+      if (data.set) unit.set = data.set
+      for (const kind of ['incidents', 'loads']) for (const r of data.log?.[kind] ?? []) unit[kind].set(JSON.stringify([r.seq, r.boot, r.kind, r.second ?? r.minute, r.a, r.cpu]), r)
+      found.set(username, member)
+      continue
+    }
     // The unit's log arrives in pieces and can arrive twice: keep each record once, by its log and seq. A base that
     // brings a new log restarts it at start 1, seq 1 (diag.c), and the site uploads each log in rising seqs, so a
     // piece holding a seq this log has with other content, or a new one below its highest, is the next log's.
@@ -272,6 +281,21 @@ export function reportsByMember(issues) {
     if (name) found.set(name, [...found.get(name) ?? [], issue])
   }
   return found
+}
+
+/** Another machine's log (members' `machines`), in its own units: on the Analog Rytm MKII (diag.h) a freeze's `a` counts
+ * audio blocks of 32 frames at 48 kHz, a hot spell's the half-second looks, BASE's the set identity; its log starts again
+ * at every boot. */
+const MACHINE_NAMES = { 'analog-rytm-mkii': 'Analog Rytm MKII' }
+export function machineLines(member) {
+  return Object.entries(member.machines ?? {}).flatMap(([machine, unit]) => {
+    const loads = [...unit.loads.values()], incidents = [...unit.incidents.values()].filter(r => r.kind !== 'start').sort((a, b) => a.seq - b.seq)
+    const rytmIncident = r => `${r.kind}` + (r.kind === 'freeze' ? ` ${(r.a * 32 / 48000).toFixed(1)} s` : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'base' ? ` set ${r.a.toString(16).padStart(8, '0')}` : '')
+      + (r.kind === 'base' ? '' : `, cpu ${percent(r.cpu)}, ${r.playing ? 'playing' : 'stopped'}, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}`)
+    return [`  ${MACHINE_NAMES[machine] ?? machine}'s log` + (unit.set ? ` (set ${unit.set.crc.toString(16).padStart(8, '0')}, ${unit.set.bytes} bytes)` : '')
+      + (loads.length ? `: ${loads.length} five-minute records, CPU peak ${percent(Math.max(...loads.map(r => r.cpu[1])))}, mean ${percent(loads.reduce((sum, r) => sum + r.cpu[0], 0) / loads.length)}` : ': no load records'),
+      ...incidents.slice(-12).map(r => `  ${machine}: #${r.seq} +${Math.floor(r.second / 60)}m${r.second % 60}s ` + rytmIncident(r))]
+  })
 }
 
 /** Restarts as the unit's own log counts them: each start after the first it still holds, per log. */
@@ -324,6 +348,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
         ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
         ...[describeStallFrames(member.stall.frames, member.stall)].filter(Boolean).map(line => '    ' + line)] : [],
       ...unitLines([...member.incidents?.values() ?? []], names),
+      ...machineLines(member),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',

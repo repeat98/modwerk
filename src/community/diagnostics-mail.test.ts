@@ -130,9 +130,9 @@ describe('diagnostics emails', () => {
   it('keeps taking reports and choices from a page still open on the previous consent text', async () => {
     const { call, member } = await fixture()
     const sharer = await member('sharerone', { share: false })
-    const saved = await call('/octatrack/diagnostics/consent', 'PUT', { enabled: true, version: '2026-11-11.1' }, sharer.session)
+    const saved = await call('/octatrack/diagnostics/consent', 'PUT', { enabled: true, version: '2026-11-19.1' }, sharer.session)
     expect(saved.status).toBe(200)
-    expect(await saved.json()).toMatchObject({ enabled: true, version: '2026-11-11.1' })
+    expect(await saved.json()).toMatchObject({ enabled: true, version: '2026-11-19.1' })
     expect((await call('/octatrack/diagnostics/consent', 'PUT', { enabled: true, version: '2026-10-01.1' }, sharer.session)).status).toBe(400)
   })
 })

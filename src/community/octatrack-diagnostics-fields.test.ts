@@ -82,7 +82,7 @@ describe('browser family and pre-link failures in opted-in reports', () => {
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({ n: 0 })
   })
   it('keeps an earlier consent sharing, the newer fields included, and records its text with each report', async () => {
-    expect(version).toBe('2026-11-19.1')
+    expect(version).toBe('2026-11-25.1')
     const { db, call, token, consent, send } = await fixture(), earlier = '2026-10-15.1', changedAt = new Date(Date.now() - 86400000).toISOString()
     db.prepare('INSERT INTO octatrack_diagnostic_consent(user_id,enabled,version,changed_at) VALUES(?,?,?,?)').run('member', 1, earlier, changedAt)
     db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) VALUES(?,?,?,?,?)').run('member', 'old', earlier, JSON.stringify({ id: 'old', event: 'connected', phase: 'ready' }), changedAt)
@@ -118,4 +118,21 @@ describe('the machine of an elekloader build failure', () => {
     for (const machine of DIAGNOSTIC_ELEKLOADER_MACHINES)
       expect(validateDiagnostic({ id: crypto.randomUUID(), event: 'build_failed', phase: 'preparing', buildKind: elekloaderBuildKind(machine), error: 'build' })).toBeTruthy()
   })
+})
+
+it('takes an Analog Rytm MKII’s own log with its set identity, and nothing of the Octatrack’s with it', async () => {
+  const { db, consent, send } = await fixture()
+  expect((await consent()).status).toBe(200)
+  const load = { seq: 3, boot: 1, minute: 5, cpu: [585, 636], dsp1to4: [0, 0], dsp5to8: [0, 0], samples: 600, playing: 0, frameGap: 0, tickGap: 76 }
+  const freeze = { seq: 4, boot: 1, second: 90, kind: 'freeze', a: 9000, cpu: 585, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0), fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false }
+  const rytm = { event: 'device_log', phase: 'ready', machine: 'analog-rytm-mkii', set: { crc: 0xf92cbc54, bytes: 237004 } }
+  expect((await send({ id: id(), ...rytm, log: { loads: [load], incidents: [freeze] } })).status).toBe(200)
+  expect(JSON.parse((db.prepare('SELECT data_json FROM octatrack_diagnostic_events').get() as { data_json: string }).data_json)).toMatchObject({ machine: 'analog-rytm-mkii', set: { crc: 0xf92cbc54, bytes: 237004 } })
+  expect(validateDiagnostic({ id: id(), event: 'device_log', phase: 'ready', machine: 'analog-rytm-mkii', log: { loads: [load], incidents: [] } }).machine).toBe('analog-rytm-mkii')
+  for (const bad of [{ machine: 'octatrack' }, { machine: 'digitakt' }, { base: 'a'.repeat(64) }, { active: 'a'.repeat(64) }, { phase: 'sending' },
+    { set: { crc: 1 } }, { set: { crc: -1, bytes: 1 } }, { set: { crc: 1, bytes: 1, label: 'x' } }, { client }])
+    expect(() => validateDiagnostic({ id: id(), ...rytm, ...bad, log: { loads: [load], incidents: [] } })).toThrow()
+  // Only a log names a machine, and only a log that names one carries a set.
+  expect(() => validateDiagnostic({ id: id(), event: 'connected', phase: 'ready', machine: 'analog-rytm-mkii' })).toThrow()
+  expect(() => validateDiagnostic({ id: id(), event: 'device_log', phase: 'ready', set: { crc: 1, bytes: 1 }, log: { loads: [load], incidents: [] } })).toThrow()
 })

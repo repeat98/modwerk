@@ -5,11 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { pack7 } from '../engine/elektron/dn2-link'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/elektron/os-upgrade-midi'
-import { ModelCyclesUnit, RytmUnit } from './ModelCyclesUnit'
+import { ElektronUnit, ModelCyclesUnit, RYTM_UNIT, RytmUnit } from './ModelCyclesUnit'
+import type { DeviceLog } from '../engine/elekloader/device-log'
+// The diagnostics collector (octatrack-diagnostics.ts): whether the member shares, and what the page hands it.
+const diagnostics = vi.hoisted(() => ({ sharing: false, on: { enabled: true }, off: { enabled: false }, report: vi.fn(async () => {}) }))
+vi.mock('../community/octatrack-diagnostics', () => ({ deviceLogWanted: () => diagnostics.sharing, reportDeviceLog: diagnostics.report,
+  diagnosticPreference: () => diagnostics.sharing ? diagnostics.on : diagnostics.off, subscribeDiagnosticPreference: () => () => {} }))
 
 let container: HTMLDivElement, root: ReturnType<typeof createRoot>
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  diagnostics.sharing = false; diagnostics.report.mockClear()
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
 })
 afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.unstubAllGlobals() })
@@ -98,3 +104,30 @@ describe('the Analog Rytm MKII page', () => {
     expect(text()).toContain('No Analog Rytm over USB')
   })
 })
+describe('the Analog Rytm MKII page and diagnostics', () => {
+  const log: DeviceLog = { version: 2, nonce: 7, boot: 1, seq: 3, stallSeen: 0, loads: [], incidents: [] }
+  const renderWith = (access: MidiAccessLike, read: () => Promise<{ log: DeviceLog | undefined }>) => act(() => root.render(createElement(ElektronUnit,
+    { device: DEVICES_BY_ID['analog-rytm-mkii'], request: async () => access, kind: { ...RYTM_UNIT, log: { machine: 'analog-rytm-mkii' as const, read } } })))
+  const rytm = () => unit({ 0x01: RYTM_IDENT, 0x33: [...MODS], 0x23: [586, 656, 742, 10, 9000].flatMap(put32) }, 'Elektron Analog Rytm MKII')
+  it('hands its log, with the set, to a member who shares, once in ten minutes', async () => {
+    diagnostics.sharing = true
+    const read = vi.fn(async () => ({ log }))
+    await renderWith(rytm(), read)
+    await connect(); await settle()
+    expect(text()).toContain('Its own log (load, overloads, freezes) goes with your diagnostics')
+    expect(read).toHaveBeenCalledTimes(1)
+    expect(diagnostics.report).toHaveBeenCalledWith('analog-rytm-mkii', log, { crc: 0x5b81f884, bytes: 204316 })
+    await settle(2100)
+    expect(read).toHaveBeenCalledTimes(1)
+  })
+  it('reads no log without sharing, and says where to turn it on', async () => {
+    const read = vi.fn(async () => ({ log }))
+    await renderWith(rytm(), read)
+    await connect(); await settle()
+    expect(text()).toContain('Its own log stays on the unit.')
+    expect(container.querySelector('a[href="#account/security"]')?.textContent).toBe('Share diagnostics')
+    expect(read).not.toHaveBeenCalled()
+    expect(diagnostics.report).not.toHaveBeenCalled()
+  })
+})
+
