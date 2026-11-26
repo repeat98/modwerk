@@ -9,7 +9,7 @@
     "current-build-hardware",
     "release-documentation"
   ],
-  "sourceSha256": "76a220f9ecb0c87e7423bd66b760592b4f19bc28a304fcaf45e8b2e4596db6b8",
+  "sourceSha256": "e725e5481d29e0844e9aca13c1b73b1af0c564a25ea8ad31805e03be65773687",
   "ownerStatement": "Release MIDI Scenes 0.3.1-experimental. I waive the static cycle bound, the hardware qualification of this exact build and fresh UI captures for this version; keep 0.3.0's captures.",
   "reason": "0.3.1 keeps lock tables for 24 Parts instead of 64, so it takes 126,768 bytes of the 768 KiB module pool instead of about 272 KB, and a typical beta set plus a new effect fits again (#2202). On the owner's MKII (development twin 8fd6d456 from RAM, 26 November 2026, trials rolled back) the scene A/B locks, clearing, the crossfader morph, the battery copy over a reinstall and 16 locks on all 8 tracks worked; the frame interrupt read 28.5 % with no module, 28.6 % installed without locks and 28.5 % with 16 locks and the crossfader sweeping, and device:price read +0 points at rest (TESTING.md, evidence/cpu-price.json). No static cycle count was made, CC output was not measured at a MIDI port, the owner's power-cycle check was not run, and device:qualify did not run on the exact release package and base. Its screens are those of 0.3.0 apart from the new message at the 24-Part cap, so 0.3.0's two captures stay.",
   "retainedUiVersion": "0.3.0-experimental"
