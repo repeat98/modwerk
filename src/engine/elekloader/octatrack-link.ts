@@ -174,11 +174,15 @@ export function inUseHint(modules: readonly string[]) {
   return ` Look for ${new Intl.ListFormat('en', { type: 'disjunction' }).format(shown)} on the tracks.`
 }
 /** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
- * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
- * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
- * and only a base with a new USB revision makes Windows set it up again (usb_base.py device()), so that one comes from the card. */
+ * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). It is also the
+ * unit itself: a claim fails for a few seconds while the Octatrack starts, and for as long as its UI is stuck (25 Nov 2026,
+ * one tab on macOS: every claim failure came at a start or after the UI stopped following SAVE PROJECT, issue #2212), so
+ * the text names the unit first. On Windows it can also be the computer: an interface it set up without the base's
+ * interface GUID never claims (the same NetworkError), and only a base with a new USB revision makes Windows set it up
+ * again (usb_base.py device()), so that one comes from the card. */
 export function linkBusy(agent = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
-  return 'Modwerk is open in another tab or browser, or another app is using your Octatrack. Close it, and this page connects by itself.' +
+  return 'Your Octatrack isn’t answering this page. If it is starting or saving a project, wait until its screen responds. ' +
+    'Otherwise Modwerk is open in another tab or browser, or another app is using it: close it. This page connects by itself.' +
     (/Windows/.test(agent) ? ' If nothing else is open, install the latest base from the card once, and this computer connects from then on.' : '')
 }
 export const LINK_BUSY = linkBusy()
