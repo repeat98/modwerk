@@ -150,6 +150,14 @@ describe('the Zoom link', () => {
       expect(link.liveKnob(0, 0, 5)).toBe(false)
       expect(pedal.sent.some(m => m[0] === 0xc0 || [0x31, 0x32, 0x50].includes(m[4]))).toBe(false)
     })
+    it('reads no patches, and writes none back, on a firmware where patches aren’t changed', async () => {
+      const pedal = fakeZoomPedal({ patches: fifty(), firmware: 'D005' }), link = await connected(pedal)
+      pedal.patch!.splice(0, 146, ...edited)
+      const before = pedal.sent.length
+      await expect(link.readPatches()).rejects.toThrow('Patch changes require')
+      expect(pedal.sent.slice(before)).toEqual([])
+      expect(parseCurrentPatch(pedal.patch!)?.name).toBe('Edited')
+    })
     it('turns knobs live in the first three slots on Zoom’s firmware, in all six from MIDISTOMP 2.0.4', async () => {
       const zoom = fakeZoomPedal({ patches: fifty() }), link = await connected(zoom)
       expect([link.liveKnob(0, 0, 300), link.liveKnob(2, 8, 5), link.liveKnob(3, 0, 1)]).toEqual([true, true, false])

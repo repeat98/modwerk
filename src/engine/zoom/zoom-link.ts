@@ -540,6 +540,8 @@ export class ZoomLink {
    * `program` is undefined: the page asks where to save. `onEach` sees each patch as it comes.
    */
   readonly readPatches = (onEach?: (program: number, patch: ZoomCurrentPatch | null) => void) => this.exclusive('Reading the patches', async () => {
+    // Going through the fifty can end by writing the edit buffer back (below), so it is gated like every patch write.
+    this.refusePatchWrites()
     const { reply: buffer } = await this.readPatch(), from = this.state.program, dumps: (number[] | null)[] = []
     const read = async (program: number, settle: number) => {
       this.goTo(program)

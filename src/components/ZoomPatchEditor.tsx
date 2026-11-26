@@ -305,7 +305,7 @@ export function ZoomPatchEditor({ link, files, listed, busy, writable, confirmMo
     <section className="zoom-patch-programs" aria-label="Patches on the pedal">
       <div className="zoom-patch-head">
         <h3>Patches on the pedal</h3>
-        <button type="button" className="button button-quiet" disabled={busy || !!working || !read} onClick={readAll}>{working === 'Reading the patches…' ? 'Reading…' : names ? 'Read all 50 again' : 'Read all 50'}</button>
+        <button type="button" className="button button-quiet" disabled={editingDisabled || !read} onClick={readAll}>{working === 'Reading the patches…' ? 'Reading…' : names ? 'Read all 50 again' : 'Read all 50'}</button>
       </div>
       {names ? <ol className="zoom-patch-list">{names.map((name, at) => <li key={at}>
         <button type="button" aria-current={program === at || undefined} disabled={busy || !!working} onClick={() => openAt(at)}><span>{at + 1}</span>{name ?? <em>not read</em>}</button>
