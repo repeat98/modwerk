@@ -2,6 +2,30 @@
 
 Grain 0.1.3-experimental · by A Force Truly Evil.
 
+## 0.1.3-experimental: its instance curve and its price read again on a unit, 26 November 2026
+
+Laslo (lasl00), owner's request on the agent board (thread 3ae6f861) under his 22 November optimization waiver. Package
+`07b6e497…` (the published 0.1.3), no code or package change. MKII, OS 1.40C, development twin `46c30886` of base 0.8.2
+(main `5e4ce63b1`, the beta flags without controller rows plus `--dev`), RAM-booted; project CPUCURVE3/4 at 120 BPM,
+Part 1, every curve track's Flex slot holding a generated 2 s 16-bit stereo loop. Every run a rolled-back trial.
+
+- **Instance curve** (`evidence/frame-cost.json`): `device:price --write --curve T1,T3,T6 --measure-pattern 4
+  --admission-pattern 1 --limit 100` on A04 (T1 on steps 1/9, T3 3/11, T6 5/13, never two trigs on one step, 47.5 %
+  stock alone). Longest frame 54.7 at rest, then 80.8, 92.9 and 102.6 with Grain on one, two and three tracks:
+  `first` 28.5, `each` 9.7, `rest` 0 (was 33.3 and 33.3, read at 114.4 %, the overload). Nothing skipped. The second
+  and further picks ran with the Part's CPU allowance raised to 400 % (the descriptor's 35 against 45 refuses a second
+  Grain whatever the table books) and the allowance back at 45 % for the admission runs: alone on the empty pattern
+  admitted, longest frame 51.3 %, nothing dropped; on the medium A01 (74.3 % stock alone) refused, judged by the first
+  instance booked at 33.3 before this curve lands. A fourth instance on T7, in a run before, read 105.1 % with renders
+  skipped. Earlier readings of the first instance, on base 0.8 and 0.8.1 twins: 26.3 to 27.7.
+- **Price, the mean cost** (MODULE_PERFORMANCE.md): Grain on T1, `PLAY w2500 guard w6000 guard STOP`, the second line's
+  frame-interrupt share, A05 (T1 on every step) against A02 (no trigs). With SIZE, DENS and SPRY at 127 and PAN 127:
+  57.2 against 28.1 % in every pair (RAND, three pairs; SYNC, two), so 29.1 points, a price of 30 rounded up. With the
+  default sound: 49.4 against 28.1 %, 21.3 points, not every voice. The descriptor still carries 35 (`reserved[0]`):
+  changing it changes the package, so it waits for the owner's call on a 0.1.4. At 30 a Part's allowance of 45 still
+  holds one Grain track.
+- **Not run:** by ear; the 24-bit stereo and the MKI.
+
 ## 0.1.3-experimental: trig keys, CHROMATIC keys and MIDI notes play grains, in tune, 23 November 2026
 
 The package is `07b6e497b3513a7d9b1d32c278e26c0385d068e5d4a5dc2e1d96be04d916d865` (30,424 bytes), rebuilt with
