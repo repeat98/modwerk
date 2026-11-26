@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
+  "version": "0.6.0-experimental",
+  "date": "2026-11-26",
+  "changes": [
+    "Hold PERF and turn a knob to lock QPER's linked performance; YES, PLAY, RECORD and STOP apply, clear, copy and paste it.",
+    "QPER keeps only its link (QPER + a pad); its other gestures are stock's again.",
+    "Hold CHRO and turn a knob to link aftertouch; SAMPLER is stock's again.",
+    "SCENE + YES writes the scene into the kit; YES again undoes. With SCENE or PERF held, PLAY no longer starts the sequencer.",
+    "LIVE RECORDING keeps scene changes too: RECORD + YES writes them as locks, RECORD + NO clears them."
+  ],
+  "runtimeSourceSha256": "4cce5c5192233aa9556f51902c8439667454f2d46f924009f5b76bcc401a278f",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.6.0-experimental-os1.74.elemod",
+      "sha256": "71dd56dcf943bad8132e37d01664110db9947db8e19b2504334a24b16d3cbf3d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
+  "requires": []
+}
