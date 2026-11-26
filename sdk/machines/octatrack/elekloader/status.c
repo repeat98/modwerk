@@ -337,9 +337,11 @@ static int transfer_key(int code, int pressed)
     return 1;
 }
 #define YES 0x31
-/* Our rows close PROJ's menu on the next tick, as its NO does (stock's FUN_40064bc0, Octabam's MAINMENU.md; not from
- * the row's own dispatch): a menu left open under the dialog kept its input layer, and YES in an FX chooser then
- * reached our row again (owner, 11 October 2026). */
+/* A page opened from PROJ > MODWERK is a level of that menu: the menu stays open under it, so NO and the arrows go back
+ * to the menu with its cursor on the row that opened the page (a tester, 25 November 2026: NO closed the whole menu).
+ * YES on a page that closes, and SELF TEST as it starts, close PROJ's menu on the next tick, as its NO does (stock's
+ * FUN_40064bc0, Octabam's MAINMENU.md; not from the row's own dispatch). A YES in an FX chooser once reached our row
+ * with the menu closed (owner, 11 October 2026): the rows act only while it is open (menu_open below). */
 #ifdef MODWERK_HOST
 void modwerk_test_close_menu(void);
 #define CLOSE_MENU modwerk_test_close_menu
@@ -368,10 +370,10 @@ static unsigned missing_top, modules_top;
 static int missing_asked; /* MISSING opened from the menu: it stays open with nothing missing */
 /* Opened from the menu, the page says for two seconds how to open it in one gesture (owner, 15 October 2026). */
 static uint32_t tip_until;
-void modwerk_load_menu(int unused) { (void)unused; if (menu_open()) open = SHOWN, close_menu = 1, tip_until = ticks + 120u; }
-void modwerk_modules_menu(int unused) { (void)unused; if (menu_open()) open = MODULE_LOAD, modules_top = 0, close_menu = 1; }
+void modwerk_load_menu(int unused) { (void)unused; if (menu_open()) open = SHOWN, tip_until = ticks + 120u; }
+void modwerk_modules_menu(int unused) { (void)unused; if (menu_open()) open = MODULE_LOAD, modules_top = 0; }
 static void missing_locate(void);
-void modwerk_missing_menu(int unused) { (void)unused; if (menu_open()) open = MISSING, missing_top = 0, missing_asked = 1, close_menu = 1, missing_locate(); }
+void modwerk_missing_menu(int unused) { (void)unused; if (menu_open()) open = MISSING, missing_top = 0, missing_asked = 1, missing_locate(); }
 /* SELF TEST (dsp.c's self-test): its page shows at once, the test starting if it can. */
 static int test_started;
 void modwerk_test_menu(int unused)
@@ -386,6 +388,8 @@ void modwerk_test_menu(int unused)
  * module is missing). UP and DOWN scroll, YES or NO closes it; it closes itself once nothing is missing. */
 #define UP 0x33
 #define DOWN 0x20
+#define LEFT 0x34
+#define RIGHT 0x21
 #define ROWS 4u
 #define MISSING_ROWS 2u /* the missing page: two lines a module, its name and where the project names it */
 int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track); /* fxmap.c */
@@ -962,7 +966,6 @@ void modwerk_settings_menu(int unused)
     open = SETTINGS;
     setting_module = (struct settings_cursor){0, 0};
     choosing_setting = 0;
-    close_menu = 1;
 }
 static void settings_key(int code)
 {
@@ -1002,7 +1005,7 @@ void modwerk_switches_menu(int unused)
 {
     (void)unused;
     if (!menu_open()) return;
-    open = SWITCHES, switch_cursor = switch_top = 0, switch_said = 0, close_menu = 1;
+    open = SWITCHES, switch_cursor = switch_top = 0, switch_said = 0;
     switches_read();
 }
 volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last key or knob: dsp.c's compaction waits for quiet */
@@ -1072,7 +1075,12 @@ int modwerk_status_key(int code, int pressed)
     }
     /* The popup after a pick: YES only closes it, NO goes on to stock as every other key (owner, 14 October 2026), so
      * one NO leaves FX SETUP as after a stock effect's pick; taken, it left the knobs on SETUP (Midiverb, 25 Nov 2026). */
-    int closes = code == YES || (code == NO && open != MEMORY);
+    /* Over PROJ's menu (a page opened from MODWERK, or the status over it): NO and an arrow close the page back to the
+     * menu, the cursor on the row that opened it; YES closes the menu too, as before; any other key or knob closes the
+     * page and goes on to the menu as to stock's, so PROJ closes it (a tester and the owner, 25 November 2026). */
+    int menu = menu_open(), arrow = code == UP || code == DOWN || code == LEFT || code == RIGHT;
+    int closes = code == YES || (code == NO && open != MEMORY) || (arrow && menu);
+    if (code == YES && menu) close_menu = 1;
     open = CLOSED, on_said = 0; /* a refusal MISSING said is not said again when it next opens */
     if (!closes) return 0; /* any other key closes the page and goes on to stock */
     taken = code;
