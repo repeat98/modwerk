@@ -60,7 +60,7 @@ import { useFirstBaseInstall } from './hooks/useBaseInstallPrompt'
 import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctatrackLink'
 import { recordLoad } from './hooks/useOctatrackLoad'
 import { baseGuideToReopen, forgetBaseGuideReopen, pendingBaseInstall } from './config/octatrack-progress'
-import { coreBuildPreviewOpen, digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
+import { coreBuildPreviewOpen, digiDownloadsEnabled, digiDownloadsOpen, isCoreBuildPreview } from './engine/elekloader/protocol'
 import { comesWithBase, USB_AUDIO_PACKAGED, USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
@@ -602,7 +602,7 @@ export default function App() {
                 <Icon name="arrow" size={14} />
               </a> : isZoomSetDevice(currentDevice.id) ? <a className="sidebar-build" href={configurationHref}>
                 <Icon name="sliders" size={16} /><span className="sidebar-build-copy"><strong>Open pedal set</strong><small>Review the effects selected for your {currentDevice.name}.</small></span><Icon name="arrow" size={14} />
-              </a> : machineCanConfigure ? <a className="sidebar-build" href={configurationHref}><span className="status-dot preview" /><span className="sidebar-build-copy"><strong>{machineBuildPreview ? 'Core build preview' : 'Build in your browser'}</strong><small>{digiDownloadsEnabled(currentDevice.id) ? <>Check, build and download {currentDevice.name} firmware locally.</> : <>Check and build {currentDevice.name} firmware. Downloads remain disabled pending review.</>}</small></span><Icon name="arrow" size={14} /></a> : <a className="sidebar-build" href={issueRepository() + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><span className="status-dot" /><span className="sidebar-build-copy"><strong>No mods yet</strong><small>Help start the first {currentDevice.name} mod.</small></span><Icon name="arrow" size={14} /></a>}
+              </a> : machineCanConfigure ? <a className="sidebar-build" href={configurationHref}><span className="status-dot preview" /><span className="sidebar-build-copy"><strong>{machineBuildPreview ? 'Core build preview' : 'Build in your browser'}</strong><small>{digiDownloadsOpen(currentDevice.id, betaUi) ? <>Check, build and download {currentDevice.name} firmware locally.</> : <>Check and build {currentDevice.name} firmware. Downloads remain disabled pending review.</>}</small></span><Icon name="arrow" size={14} /></a> : <a className="sidebar-build" href={issueRepository() + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><span className="status-dot" /><span className="sidebar-build-copy"><strong>No mods yet</strong><small>Help start the first {currentDevice.name} mod.</small></span><Icon name="arrow" size={14} /></a>}
             </section>
             {DEVELOP_HIGHLIGHT && <DevelopCard current={route.startsWith('submit')} />}
             <details className="sidebar-resources" ref={resourcesRef} open>
