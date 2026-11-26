@@ -34,6 +34,7 @@
     "base": "started",
     "link": "started",
     "flash": "started",
+    "loader": "started",
     "diagnostics": "started",
     "tools": "started"
   },

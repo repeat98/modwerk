@@ -20,8 +20,9 @@ with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analo
 
 ## Every base, and development bases
 
-Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`.
-They read and change nothing else: no host can press a key, read memory outside the log or
+Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`,
+and takes runtime modules on trial (`up_part`, `up_run`, `mods`: [Loading modules](#loading-modules)).
+Beyond that it reads and changes nothing: no host can press a key, read memory outside the log or
 confirm an upgrade on a release base, which answers every other request `bad request`. On the
 send-bus variant they cost 3,396 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
 it the log (voices the same; plain 3,348 and 6,848), and one site each in stock's SysEx router and
@@ -129,6 +130,41 @@ the CPU mark), the UI's stalls from DMA timer 0 measured against it, so no timer
 USB only: the router hook drops link messages from DIN. A key or turn the link posted that never
 reaches `ev_key`/`ev_enc` within about a second is given up, so one lost message cannot make every
 later one count as a person's.
+
+## Loading modules
+
+Every base carries the Octatrack's runtime loader ([`sdk/runtime/loader`](../../runtime/loader/README.md)) and
+upload controller ([`sdk/runtime/upload`](../../runtime/upload/README.md), wire version 1), shared as on the
+Model:Cycles, with the Rytm's glue in [`runtime.c`](elekloader/base/runtime.c) and the Model:Cycles' link transport
+unchanged in [`modules.c`](elekloader/base/modules.c): `up_part` writes up to 96 bytes of an upload frame, `up_run`
+runs it on the UI task, `mods` lists the pool and the live modules. A trial loads a module to RAM; Keep keeps it until
+the next power cycle (nothing is saved); Undo, or ten seconds without a link request in any phase but the normal one,
+puts the previous set back; a power cycle always restores the flashed set. The loader refuses while a pattern plays
+(`unsafe`). A package up to 32 KiB goes in 2 KiB CHUNK frames; the pool holds 64 KiB of modules, 16 at most.
+
+```
+python3 -B sdk/runtime/loader/build.py sdk/machines/analog-rytm-mkii/elekloader/examples/hello.c -o hello.mwrm
+rytm_link.py try hello.mwrm --seconds 20 [--keep]
+rytm_link.py mods
+rytm_link.py keep | undo
+rytm_link.py remove NAME --seconds 5 [--keep]
+```
+
+The developer MCP's `device_review`, `device_trial`, `device_keep` and `device_undo` do the same with
+`--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analog-rytm-mkii-over-its-link)). A module's
+handlers run on the UI task: `module_draw` gets the core's bitmap (stock's fillrect, `FILLRECT_AT`), `module_key` the
+panel's key code and whether it went down, `module_enc` the knob (0-7 A-H, 8 LEVEL) and its count. Key codes and
+addresses are OS 1.74's.
+
+What the glue rests on (read from OS 1.74; `runtime.c`'s header has the addresses): the kernel is the Octatrack's and
+the Model:Cycles' design (the switch saves d0-a7 at TCB + 0x0c, one ready list a priority), with sixteen tasks created
+with constant arguments, two of them a factory test console's behind a boot flag; caches as theirs (CACR
+`0xa50ce100`, data ACR0 `0x4007e020`), so DDR's mirror at +0x0800_0000 is uncached; the audio interrupt at level 5,
+so the loader's level-4 lock leaves it running; sites only in stock code below its `.data` image (`0x402ce000`).
+
+**Cost.** About 32 KB of `.run` and 108 KB of the shared mod area in every base, 96 KB of it the pool and the upload
+staging. Nothing in the audio interrupt; the four UI hooks return after one test while no module is live, and the
+tick counts the live modules once (16 reads, about 20 times a second).
 
 ## Where it runs (OS 1.74)
 

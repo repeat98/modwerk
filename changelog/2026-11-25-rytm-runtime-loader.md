@@ -1,0 +1,1 @@
+Analog Rytm MKII base: every variant carries the Octatrack's runtime loader over the USB link, as the Model:Cycles' does, so a module loads to RAM on trial and is kept or undone without a reflash (`rytm_link.py try`, `keep`, `undo`, and the developer MCP's trial tools); a power cycle restores the flashed set. It costs nothing in the audio interrupt.

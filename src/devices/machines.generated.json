@@ -592,7 +592,7 @@
       "base": "started",
       "link": "started",
       "flash": "started",
-      "loader": "open",
+      "loader": "started",
       "status": "open",
       "diagnostics": "started",
       "tools": "started"
