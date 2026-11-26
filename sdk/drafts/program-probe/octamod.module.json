@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 2,
+  "id": "program-probe",
+  "key": "PROGPROBE",
+  "name": "Program Probe",
+  "version": "0.0.1-dev",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "repeat98: a development fixture of the Octatrack base's program areas"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "DEV FIXTURE",
+    "family": "Utility",
+    "summary": "Development fixture for the base's program areas: knob A picks one of eight programs whose DSP cost tells which one runs. Never published.",
+    "overview": "Each program is a DO loop the base writes into the area its slot does not run and then names in the slot's record between two frames. The audio passes untouched.",
+    "highlights": [
+      "Eight programs, 100 + 500 x program DSP cycles a call",
+      "The DSP meter of the slot's core tells which program runs"
+    ],
+    "usage": [
+      "Try it on a development twin of the base's cumulative draft (README.md), pick PROG PROBE on an audio track's FX2, turn A."
+    ]
+  },
+  "controls": [
+    {
+      "name": "PROG",
+      "default": 0,
+      "count": 128,
+      "doc": "the program: knob / 16, 0 to 7",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Development fixture, never published: it needs a base with program areas (the 0.8.3 cumulative draft's development twins)."
+    ],
+    "effectId": 10
+  },
+  "tests": {
+    "report": "README.md",
+    "summary": "sdk/tests/test_dsp_programs.py: the base's areas and the contract's proc. Unit runs in the base's cumulative pull request.",
+    "hardwareStatus": "untested",
+    "gates": []
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "declaration": "Modwerk's own code. No Elektron firmware, routines or tables are included."
+  },
+  "media": [],
+  "access": {
+    "location": "Audio track FX2 SETUP: PROG PROBE in the effect chooser.",
+    "steps": [
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press FX2 to open FX2 SETUP.",
+      "Turn LEVEL to PROG PROBE and press YES.",
+      "Press FX2 for the main page: PROG on knob A."
+    ],
+    "screenshots": []
+  }
+}
