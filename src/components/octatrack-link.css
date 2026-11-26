@@ -467,6 +467,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-change.is-on { background: none; }
 .load-blocked { margin: 14px 0 0; padding: 12px 14px; border: 1px solid #6b5a33; border-radius: 10px; background: #2f2a20; color: #f0dcae; font-size: 13px; line-height: 1.55; }
 .load-blocked p { margin: 0; }
+.load-studio-only > div > strong { display: block; margin-bottom: 8px; }
+.load-studio-only p strong { color: var(--text); font-weight: 600; }
+.load-studio-only ul { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 8px; padding: 0; list-style: none; }
+.load-studio-only li { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 500; }
+.load-studio-only p { margin: 0; }
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }
 .load-blocked .text-button { color: #f4c978; font-size: 13px; }
 .load-dialog .progress-row { margin: 16px 0 12px; }

@@ -6,8 +6,11 @@
 import { createHash } from 'node:crypto'
 
 export const OWNER = 'repeat98'
-/** Hours an action waits for the owner's Stop before it runs. */
-export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
+/**
+ * Hours an action waits for the owner's Stop before it runs. Someone who asked for help hears back within the hour
+ * (owner, 26 November 2026); the owner's own pull request merges after `ownMerge`.
+ */
+export const WINDOW_HOURS = { merge: 12, ownMerge: 1, decision: 24, close: 12, comment: 1, review: 1, board_reply: 1, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
 const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release', 'discord_reply', 'forum_reply', 'shout_reply', 'approve_run'])
 const LABELS = /^(bug|documentation|duplicate|enhancement|question|invalid|wontfix|configuration|accessibility|good first issue|help wanted|needs-work|needs-info|priority:P[123]|module:[a-z0-9-]+)$/
 /**
@@ -21,6 +24,19 @@ const SENSITIVE = [
   /^public\/_headers$/, /^vite\.config\.ts$/, /^MODDING_GUIDELINES\.md$/, /^AGENTS\.md$/, /^\.claude\//, /^\.agents\//,
   /^sdk\/(?!octatrack\/modules\/|drafts\/|[a-z0-9-]+\/modules\/)/,
 ]
+/** Documentation under sdk/ cannot change what runs; an AGENTS.md there steers agents and stays protected. */
+const isSdkDoc = file => /^sdk\/.*\.md$/.test(file) && !/(^|\/)AGENTS\.md$/.test(file)
+/** What a pull request's checks run from. A first-time contributor's checks start by themselves unless the diff touches these. */
+const CI_PATHS = [/^\.github\//, /^scripts\//, /^package(-lock)?\.json$/, /^\.npmrc$/, /^(vite|vitest|eslint)\.config\.[a-z]+$/, /^tsconfig[^/]*\.json$/]
+/** A recommended answer that waives a rule is never posted without the owner's Approve, whatever the model marked. */
+const WAIVES = /\b(waiv\w*|exception\w*|exempt\w*)\b/i
+/**
+ * A base for any device merges only after its review, never on a timer and whoever opened it (owner, 26 November
+ * 2026): a pull request from or into a `base/…` branch, or one that changes a base's built files. A base's
+ * sources are under sdk/ outside the module folders, which SENSITIVE already covers.
+ */
+const BASE_BRANCH = /^base\//
+const BASE_FILES = [/^public\/(?:base|[a-z0-9-]+-base-packages)\//, /^src\/engine\/assets\/[a-z0-9-]+-base[^/]*$/]
 /** Paths whose merge publishes modules on the site: a release the owner approves every time. */
 const PUBLISHES = [/\/modules\//, /^sdk\/imports\//, /^sdk\/catalog\.json$/, /^src\/catalog\//, /^src\/community\/module-changelogs\//]
 const LINK = /https?:\/\/[^\s)>\]]+/g
@@ -40,6 +56,8 @@ export function checkText(body, author) {
   return ''
 }
 
+const waives = proposal => proposal.exception === true || WAIVES.test([proposal.summary, proposal.reason, proposal.body].join(' '))
+
 /**
  * Decides one proposal against the target's live state. `target` is what the executor read from GitHub:
  * { number, isPull, author, state, draft, head, comments, files, firstTime, checksGreen }.
@@ -55,7 +73,7 @@ export function classify(proposal, target, existingLabels = new Set()) {
   // Every action pins the state it was proposed against; the executor drops it if the target moved on.
   const pin = { head: target.head ?? '', comments: target.comments }
   const base = { summary: (kind === 'forum_reply' ? 'Forum: ' : kind === 'shout_reply' ? 'Shoutbox: ' : chat ? 'Discord: ' : board ? 'Board: ' : '#' + target.number + ' ') + summary, reason }
-  const sensitive = (target.files ?? []).filter(file => SENSITIVE.some(pattern => pattern.test(file)))
+  const sensitive = (target.files ?? []).filter(file => !isSdkDoc(file) && SENSITIVE.some(pattern => pattern.test(file)))
   switch (kind) {
     case 'label': {
       const add = [...new Set(proposal.add ?? [])].map(String), remove = [...new Set(proposal.remove ?? [])].map(String)
@@ -68,25 +86,29 @@ export function classify(proposal, target, existingLabels = new Set()) {
       if (kind === 'review' && !target.isPull) return { reject: 'only a pull request takes a review' }
       const problem = checkText(proposal.body, target.author)
       if (problem) return { reject: 'the reply was held back because ' + problem }
-      // Asking a reporter for missing details is routine; an answer only the owner can give (an OK, an exception,
-      // a waiver) is the bot's recommendation and waits for the owner's Approve; every other reply waits for a Stop.
+      // Asking a reporter for missing details is routine. An answer only the owner can give (an OK for a port, a
+      // shared hook) is the bot's recommendation: it waits a day for a Stop, and for the owner's Approve when it
+      // grants an exception to a rule or touches the unit's safety. Every other reply waits for a Stop.
       const asks = kind === 'comment' && !target.isPull && proposal.intent === 'ask_details', decision = kind === 'comment' && proposal.intent === 'decision'
       const event = kind === 'review' ? (proposal.event === 'REQUEST_CHANGES' ? 'REQUEST_CHANGES' : 'COMMENT') : undefined
       const payload = { kind, number: target.number, body: proposal.body.trim(), event, pin }
-      const tier = asks ? 'notify' : decision ? 'ask' : 'window'
-      return { ...base, tier, windowHours: tier === 'window' ? WINDOW_HOURS[kind] : 0, id: actionId(kind, target.number, pin.comments, pin.head, decision ? 'decision' : ''), payload }
+      const tier = asks ? 'notify' : decision && waives(proposal) ? 'ask' : 'window'
+      return { ...base, tier, windowHours: tier === 'window' ? WINDOW_HOURS[decision ? 'decision' : kind] : 0, id: actionId(kind, target.number, pin.comments, pin.head, decision ? 'decision' : ''), payload }
     }
     case 'merge': {
       if (!target.isPull) return { reject: 'only a pull request merges' }
       if (target.draft) return { reject: 'it is a draft' }
       if (!target.checksGreen) return { reject: 'its checks are not green' }
       if (proposal.head !== target.head) return { reject: 'it was reviewed at another commit' }
-      // A merge runs in the owner's name (the site only publishes owner merges), so a release always asks the owner.
+      // A merge runs in the owner's name (the site only publishes owner merges), so someone else's release always
+      // asks the owner. The owner marked their own pull request ready, so it merges after a short window.
+      const own = target.author === OWNER
       const publishes = (target.files ?? []).some(file => PUBLISHES.some(pattern => pattern.test(file)))
-      const why = publishes ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
+      const isBase = BASE_BRANCH.test(target.baseRef ?? '') || BASE_BRANCH.test(target.headRef ?? '') || (target.files ?? []).some(file => BASE_FILES.some(pattern => pattern.test(file)))
+      const why = isBase ? 'a base merges only after its review' : publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
       const method = (target.files ?? []).some(file => file.startsWith('src/catalog/') || /\/modules\//.test(file)) ? 'merge' : 'squash'
       const payload = { kind, number: target.number, head: target.head, method, pin }
-      return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS.merge, id: actionId(kind, target.number, target.head), payload }
+      return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS[own ? 'ownMerge' : 'merge'], id: actionId(kind, target.number, target.head), payload }
     }
     case 'close': case 'decline': {
       const comment = String(proposal.body ?? '').trim()
@@ -109,10 +131,10 @@ export function classify(proposal, target, existingLabels = new Set()) {
       }
       const problem = String(proposal.body ?? '').length > 500 ? 'it is over the board’s 500 characters' : checkText(proposal.body, target.author)
       if (problem) return { reject: 'the board reply was held back because ' + problem }
-      // An agent that asked TARS gets TARS's answer at once; an answer in the owner's name waits for a Stop, and
-      // one only the owner can give (an OK, an exception) waits for the owner's Approve.
-      const asTars = target.to === 'tars', tier = asTars ? 'notify' : proposal.intent === 'decision' ? 'ask' : 'window'
-      return { ...base, tier, windowHours: tier === 'window' ? WINDOW_HOURS.board_reply : 0, id: actionId(kind, target.id, target.replies, tier === 'ask' ? 'decision' : ''), payload: { kind, thread: target.id, body: proposal.body.trim(), as: asTars ? 'tars' : 'owner', pin: pinned } }
+      // An agent that asked TARS gets TARS's answer at once; an answer in the owner's name waits for a Stop (a day
+      // when only the owner can give it), and one that grants an exception waits for the owner's Approve.
+      const decision = proposal.intent === 'decision', asTars = target.to === 'tars', tier = asTars ? 'notify' : decision && waives(proposal) ? 'ask' : 'window'
+      return { ...base, tier, windowHours: tier === 'window' ? WINDOW_HOURS[decision ? 'decision' : 'board_reply'] : 0, id: actionId(kind, target.id, target.replies, decision && !asTars ? 'decision' : ''), payload: { kind, thread: target.id, body: proposal.body.trim(), as: asTars ? 'tars' : 'owner', pin: pinned } }
     }
     // TARS on Discord (docs/DISCORD_BOT.md, docs/DISCORD_VOICE.md): one reply to a message nobody answered, never a ping.
     case 'discord_reply': {
@@ -132,12 +154,15 @@ export function classify(proposal, target, existingLabels = new Set()) {
       const payload = kind === 'forum_reply' ? { kind, thread: target.id, after: target.lastPost, body, pin: {} } : { kind, shout: target.id, body, pin: {} }
       return { ...base, tier: 'window', windowHours: WINDOW_HOURS[kind], id: actionId(kind, target.id, target.lastPost ?? ''), payload }
     }
-    // A first-time contributor's checks wait for a maintainer to start them; they run that pull request's code, so
-    // starting them is always the owner's tap. The executor approves only runs at the pinned head.
-    case 'approve_run':
+    // A first-time contributor's checks wait for a maintainer to start them. A fork's run gets no secrets and a
+    // read-only token, so they start at once; a diff that changes what the checks run from is the owner's tap.
+    // The executor approves only runs at the pinned head.
+    case 'approve_run': {
       if (!target.isPull) return { reject: 'only a pull request has runs to approve' }
       if (!target.waitingRuns) return { reject: 'no run waits for approval' }
-      return { ...base, tier: 'ask', windowHours: 0, id: actionId(kind, target.number, target.head), payload: { kind, number: target.number, pin } }
+      const ci = (target.files ?? []).filter(file => CI_PATHS.some(pattern => pattern.test(file)))
+      return { ...base, reason: [reason, ci.length && 'Asking because it changes what the checks run from (' + ci[0] + ').'].filter(Boolean).join('\n'), tier: ci.length ? 'ask' : 'notify', windowHours: 0, id: actionId(kind, target.number, target.head), payload: { kind, number: target.number, pin } }
+    }
     case 'board_release':
       if (target.kind !== 'claim') return { reject: 'that is not a board claim' }
       // Taking a claim from its holder is always the owner's call.
