@@ -29,4 +29,8 @@ describe('the Model:Cycles core build preview', () => {
     expect(page(emptySession)).not.toContain('#model-cycles/configuration')
     expect(page(tester)).toContain('#model-cycles/configuration')
   })
+  it('shows the Status page button to a beta tester, not to a visitor', () => {
+    expect(page(emptySession)).not.toContain('#model-cycles/unit')
+    expect(page(tester)).toContain('#model-cycles/unit')
+  })
 })

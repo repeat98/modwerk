@@ -154,6 +154,9 @@ export function parseDeviceRoute(route: string): DeviceRoute | undefined {
   return undefined
 }
 
+/** The Model:Cycles' own page (ModelCyclesUnit.tsx), beside its machine page. */
+export const MC_UNIT_ROUTE = 'model-cycles/unit'
+
 export function deviceHref(id: string, path = '') {
   if (id === 'octatrack') return '#' + (path || 'library')
   if (id === ALL_MACHINES) return '#all'
