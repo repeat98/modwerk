@@ -59,10 +59,37 @@ Not run: saving and reloading `seq.work` (needs a project save on the
 author's project), MKI paths, KITS and Track Solo beside SEQ, audio
 recording over USB.
 
-Open: find what blocks the removal after SEQ has been used (its event
-subscriptions put the base's dispatch under the loader's paused-task check;
-its window, key layer and toasts are the other candidates). Reproduce in the
-emulator before the next unit run.
+## Emulator: rollback after use (26 Nov 2026)
+
+The unit's failed rollback reproduced in the emulator (`ot_emu` on the
+twin base, the build of 6d814d4d). The base refuses removal while its UI
+walk finds a word pointing into SEQ. Two causes, both fixed in 924a6e6a:
+
+- A stock layer pushed above one of SEQ's (the **`[TRACK]`** hold, the
+  CLEAR list's cancel) keeps its next link at SEQ's layer after stock pops
+  it, and `LPOP`'s cache refill follows that link.
+- Upstream's **`[CUE]`** release handler overwrites `%d2`, where stock's key
+  dispatch (`0x40031734`) keeps the key number. Stock then cleared the
+  wrong key's held flag, and **`[CUE]`** stayed routed to SEQ.
+
+Each case runs a fresh emulator, installs SEQ as a trial, sends the keys
+and rolls back. These results come from the emulator, not the unit. The
+**`[CUE]`** case and the CLEAR cancel failed on the two builds before
+924a6e6a, each on one of the causes above.
+
+| Keys after **`[TRACK 1]`** + **`[PAGE]`** | 924a6e6a |
+| --- | --- |
+| **`[NO]`** | pass |
+| **`[TRACK 1]`** + **`[PAGE]`** | pass |
+| **`[FUNC]`** + **`[BANK]`**, **`[NO]`**, **`[NO]`** | pass |
+| encoders, **`[YES]`**, **`[NO]`** at the dialog, **`[NO]`** | pass |
+| **`[CUE]`**, **`[NO]`** | pass |
+| **`[CUE]`**, **`[MIDI]`**, **`[TRACK 3]`**, **`[NO]`** | pass |
+| the by-hand flow above | pass |
+| bare **`[PAGE]`** twice (SEQ never opens) | pass |
+
+Next: rerun the procedure and the by-hand checks on the unit with this
+build.
 
 ## On the unit: still to check
 

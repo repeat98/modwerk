@@ -91,7 +91,7 @@ files, and saved with the project.
 
 A port of the author's octabam module (`modules/seq` at `076e2d3c`, the
 `seq.s` of the OCTABAM 83 image he confirmed on his MKII on 25 Nov 2026), kept
-byte for byte under `upstream/`. `seq.s` here differs in four ways:
+byte for byte under `upstream/`. `seq.s` here differs in five ways:
 
 1. **No STORE.** The project events come from the base's hooks
    (`runtime.json`): `ev_banks_loaded`, `ev_bank_loaded`, `ev_project_new`,
@@ -109,6 +109,13 @@ byte for byte under `upstream/`. `seq.s` here differs in four ways:
    TRIG EDIT (`0x4007c0d0`) and the MKI FUNC+BANK key-table entry
    (`0x400bf4a4`). The MKI entry falls back to its stock handler, which
    KITS detours, so the two install together.
+5. **Closing leaves no pointer into SEQ**, so the base can remove it. A
+   layer stock pushed above one of SEQ's keeps a link to it after stock
+   pops it; SEQ points such links past its layer and has stock refill the
+   key cache. SEQ's key and encoder handlers are called through thunks
+   that keep `%d2`-`%d7` and `%a2`-`%a6`: upstream's **`[CUE]`** release
+   overwrote the key number stock's dispatch keeps in `%d2`, which left
+   **`[CUE]`** routed to SEQ after it closed.
 
 SEQ opens its own window, so its package needs a base with loader
 capability 1024 (`docs/OCTATRACK_API.md`, Pages and controls).
