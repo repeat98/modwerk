@@ -85,7 +85,6 @@
     "ui:live recording of performance moves",
     "ui:PERF + knob on the sound pages and the FX track",
     "ui:PERF hold opens performance edit on the release",
-    "ui:PERF + pad in PERF mode selects the track",
     "ui:PERF + YES, PLAY, RECORD, STOP act on the linked performance"
   ],
   "requires": [],

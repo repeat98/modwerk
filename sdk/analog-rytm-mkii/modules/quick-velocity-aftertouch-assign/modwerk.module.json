@@ -20,7 +20,7 @@
     "label": "IMPROVED MODULATION",
     "family": "Performance",
     "summary": "Hold FIX, CHRO or LFO and turn a knob to link it to velocity, aftertouch or the LFO; hold SCENE or PERF and turn to lock it in a scene or performance; record performance moves and scene changes.",
-    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold CHRO and turn to link it to aftertouch instead. While FIX, CHRO or LFO is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod. Hold SCENE and turn a knob: the parameter is locked in the active scene, as scene edit does with the scene's pad held, without leaving the page. Hold QPER and turn a knob: it edits that parameter's offset in the performance linked to QPER, and the knob inverts and shows it as it does for a held performance pad. QPER + PLAY clears it and PLAY again undoes that. QPER + RECORD and STOP copy and paste it. QPER + YES writes what you hear into the kit and removes those locks. In LIVE RECORDING the pads, the QPER knob and MIDI performance moves are kept in a quick perf rec that loops with the pattern; RECORD + YES writes it into the pattern as locks, RECORD + NO clears it. (QPER Live Rec, a module of its own up to 0.3.0, is part of it since 0.5.0.)",
+    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold CHRO and turn to link it to aftertouch instead. While FIX, CHRO or LFO is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod. Hold SCENE and turn a knob: the parameter is locked in the active scene, as scene edit does with the scene's pad held, without leaving the page. QPER + a pad links one performance. Hold PERF and turn a knob: it edits that parameter's offset in the linked performance, and the knob inverts and shows it as it does for a held performance pad. PERF + PLAY clears it and PLAY again undoes that. PERF + RECORD and STOP copy and paste it. PERF + YES writes what you hear into the kit and removes those locks; SCENE + YES does the same for a scene. In LIVE RECORDING the pads, the QPER knob, MIDI performance moves and scene changes are kept in a take that loops with the pattern; RECORD + YES writes it into the pattern as locks, RECORD + NO clears it. (QPER Live Rec, a module of its own up to 0.3.0, is part of it since 0.5.0.)",
     "highlights": [
       "Velocity, aftertouch or the LFO to any parameter in one gesture",
       "Stays on the page you are playing",
@@ -83,8 +83,8 @@
       "A pad pressed with QPER held leaves one link, unlike stock. A kit with several keeps them until then, and shows MORE THAN ONE LINKED.",
       "The gestures work on the sound pages and in PERF, SCNE, MUTE and CHRO, not in menus.",
       "Until the QPER knob moves after power on, PERF + YES uses the amounts stock holds.",
-      "Replaces stock's PERF + PLAY once a PERF hold is under way (a fast roll still starts the sequencer); QPER + PLAY is stock's again.",
-      "Recorded performance moves live in RAM until QPER + YES writes them: a pattern change, project load or power off drops them.",
+      "With SCENE or PERF held, PLAY, RECORD, STOP and YES act at once and the transport does nothing: SCENE or PERF rolled into PLAY clears the scene or performance (PLAY again undoes). QPER + PLAY is stock's again.",
+      "Recorded performance moves live in RAM until RECORD + YES writes them: a pattern change, project load or power off drops them.",
       "The move lane holds 64 steps; a track at its own speed gets no locks from it."
     ]
   },
@@ -118,7 +118,6 @@
       "ui:live recording of performance moves",
       "ui:PERF + knob on the sound pages and the FX track",
       "ui:PERF hold opens performance edit on the release",
-      "ui:PERF + pad in PERF mode selects the track",
       "ui:PERF + YES, PLAY, RECORD, STOP act on the linked performance"
     ]
   },
@@ -319,8 +318,8 @@
     {
       "path": "media/apply-quick-perf-rec.png",
       "kind": "screenshot",
-      "caption": "Main screen after RECORD + YES: the APPLY QUICK PERF REC message.",
-      "alt": "Main screen of kit K001 RYTMLINJE with an APPLY QUICK PERF REC message box over the parameter page.",
+      "caption": "Main screen after RECORD + YES: the APPLY PERF/SCENE REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with an APPLY PERF/SCENE REC message box over the parameter page.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -335,8 +334,8 @@
     {
       "path": "media/clear-quick-perf-rec.png",
       "kind": "screenshot",
-      "caption": "Main screen after RECORD + NO: the CLEAR QUICK PERF REC message.",
-      "alt": "Main screen of kit K001 RYTMLINJE with a CLEAR QUICK PERF REC message box over the parameter page.",
+      "caption": "Main screen after RECORD + NO: the CLEAR PERF/SCENE REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with a CLEAR PERF/SCENE REC message box over the parameter page.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",

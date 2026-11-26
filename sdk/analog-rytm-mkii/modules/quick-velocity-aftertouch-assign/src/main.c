@@ -17,8 +17,9 @@
 //                           mode too, with AUTO TRK SWITCH on).
 //   SCENE + REC/STOP/PLAY   copies, pastes, clears the scene; SCENE + YES writes it
 //                           into the kit (YES again undoes).
-//   PERF + knob, pad, keys  the same for the performance QPER links (in
-//                           performance edit, the one it shows), through qperf.c.
+//   PERF + knob, keys       the same for the performance QPER links (in
+//                           performance edit, the one it shows), through qperf.c;
+//                           a pad on the pages picks its track, in PERF mode it plays.
 //
 // While a key is held, stock draws every knob already linked with its
 // amount, as it does for a held performance or scene pad. The module puts its
@@ -193,6 +194,7 @@ static int lk_locking[2];           // a knob, pad or transport key ended the ho
 QMA_UI static void scene_apply_forget(void);
 extern void *qperf_locker(int index);
 extern int qperf_is_locker(unsigned long object);
+extern int qperf_record_held(void);
 extern void qperf_action(int key, int index);
 extern int qperf_kit_read(int track, int param);
 extern void qperf_kit_write(int track, int param, int value);
@@ -968,8 +970,8 @@ static int chro_swallowed;          // that press was held back and its release 
 QMA_UI static int lock_press(int k, unsigned flags)
 {
     if (IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_YES) || IS_KEY_HELD(KEY_NO) || !lock_screen(k)
-        || ANY_TRIG_HELD() || ANY_PAD_HELD() || GET_LOCKER(PARAM_UI()))
-        return 0;
+        || ANY_TRIG_HELD() || ANY_PAD_HELD() || GET_LOCKER(PARAM_UI()) || qperf_record_held())
+        return 0;                       // RECORD held: RECORD + YES and NO are the quick perf rec's
     lk_flags[LK(k)] = flags;
     lk_ours[LK(k)] = 1;
     holds[k].held = 1;
@@ -1034,7 +1036,7 @@ void improved_modulation_kit_changed(void)
 }
 
 // SCENE + YES: each lock of the scene the locks go to becomes the kit's value and the
-// lock goes, as QPER + YES does for a performance; a second YES in the same hold undoes.
+// lock goes, as PERF + YES does for a performance; a second YES undoes (scene_applied above).
 QMA_UI static void scene_apply(void)
 {
     typedef unsigned char *(*table_t)(word_t);
@@ -1044,14 +1046,23 @@ QMA_UI static void scene_apply(void)
     scene_refresh();
     scenes = scene_locker.scenes;
     scene = scene_locker.scene;
+    // A lock made since on one of these (in stock's scene edit, say) is the newer wish: then
+    // this YES applies afresh.
+    for (i = 0; scene_applied.valid && i < scene_applied.count; i++)
+        if (((int (*)(void *, int, int))SCENE_GET_AT)(&scene_locker, scene_applied.e[i].track,
+                                                      scene_applied.e[i].param) >= 0)
+            scene_applied.valid = 0;
     if (scene_applied.valid && scene_applied.scene == scene) {
         scene_applied.valid = 0;
         for (i = 0; i < scene_applied.count; i++) {
             int track = scene_applied.e[i].track, param = scene_applied.e[i].param;
             int cur = qperf_kit_read(track, param);
+            // The lock first: with all 48 in use it does not go back, and then the value stays.
+            if (((int (*)(void *, int, int, int))SCENE_SET_AT)(&scene_locker, track, param,
+                                                               scene_applied.e[i].lock) == -1)
+                continue;
             if (cur == scene_applied.e[i].now || cur == scene_applied.e[i].expect)
                 qperf_kit_write(track, param, scene_applied.e[i].old);     // unless changed since
-            ((int (*)(void *, int, int, int))SCENE_SET_AT)(&scene_locker, track, param, scene_applied.e[i].lock);
         }
         show("UNDO APPLY");
         return;

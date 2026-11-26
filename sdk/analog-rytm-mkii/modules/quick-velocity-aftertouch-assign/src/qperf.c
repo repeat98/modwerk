@@ -598,10 +598,24 @@ static void link_moved(unsigned mask)
 QPERF_UI static int undo_apply(void *kit, unsigned mask)
 {
     void *perf = (void *)KIT_PERF(kit);
-    int i;
+    int i, j_free;
+    const unsigned char *t = lock_table(perf);
     if (!applied.valid || applied.kit != kit || mask != 1u << applied.index)
         return 0;
     applied.valid = 0;
+    // A lock made since on one of these (stock's performance edit, say) is the newer wish:
+    // then this YES applies afresh. So is a table with no room to put them back.
+    for (i = 0; i < SLOTS; i++) {
+        int j;
+        for (j = 0; j < applied.count; j++)
+            if (t[SLOT_BYTES * i + 2] == applied.e[j].track && t[SLOT_BYTES * i + 3] == applied.e[j].param
+                && t[SLOT_BYTES * i + 4] == applied.index)
+                return 0;
+    }
+    for (i = 0, j_free = 0; i < SLOTS; i++)
+        j_free += t[SLOT_BYTES * i + 2] > TRACK_NONE;
+    if (j_free < applied.count)
+        return 0;
     for (i = 0; i < applied.count; i++) {
         int track = applied.e[i].track, param = applied.e[i].param, id;
         void *set = (void *)KIT_PARAM_SET(kit, track);
@@ -1424,7 +1438,7 @@ QPERF_UI static void apply_perf_rec(void)
         if (active >= 0 && (scenes >> active & 1)) {
             ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
             scene_engaged_by_us = -1;   // the lane's own change, not a hand's
-            scene_engaged_ticks = 2;
+            scene_engaged_ticks = 3;
         }
     }
     wipe();
@@ -1576,6 +1590,12 @@ void *qperf_locker(int index)
     return &locker;
 }
 
+// RECORD is down (from its own events): RECORD + YES and NO are the quick perf rec's.
+int qperf_record_held(void)
+{
+    return record_held;
+}
+
 int qperf_is_locker(unsigned long object)
 {
     return object == (word_t)&locker;
@@ -1674,10 +1694,14 @@ QPERF_UI static void scene_lane_record(int from, int to, int scene)
 QPERF_UI static void scene_lane_tick(void)
 {
     void *kit = active_kit();
-    int active, pos, from, i, steps, engaged = 0, wrapped;
+    int active, pos, from, i, steps, wrapped;
     if (!hot.ready)
         return;
     scene_lane_sync();
+    if (scene_engaged_ticks && !--scene_engaged_ticks)
+        scene_engaged_by_us = -2;       // the guard covers the lane's own change landing, then a hand may pick it
+    if (scene_last_seen == -2)
+        scene_armed = 0;                // another kit or pattern: its scene is no take
     steps = perf_rec_steps(live_pattern_data());
     active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);
     if (steps != scene_loop && !hot.perf_rec_hidden) {
@@ -1702,7 +1726,7 @@ QPERF_UI static void scene_lane_tick(void)
     // step ahead: a step back from that is standing still, not the loop coming round.
     if (from >= 0 && pos < from && from - pos < POINTS)
         pos = from;
-    wrapped = from < 0 ? pos < POINTS : pos < from;
+    wrapped = from < 0 ? pos < POINTS : pos < from && from < steps * POINTS;
     // The lane's period follows a shorter loop once a whole pass has played at it, as the
     // performance lanes' does.
     if (steps != scene_pass_steps || hot.perf_rec_hidden) {
@@ -1728,6 +1752,8 @@ QPERF_UI static void scene_lane_tick(void)
         }
         if (!scene_used || scene_period < scene_loop)
             scene_period = scene_loop = steps;
+        if (scene_armed && from >= 0)   // a second change in one take: the stretch since the last
+            scene_lane_record(from + 1, (pos >= from ? pos : steps * POINTS) - 1, scene_last_seen);   // tick played the old scene
         scene_armed = 1;                // the musician changed the scene: record from here
         from = -1;                      // from this tick's place, not the last one's
     }
@@ -1749,12 +1775,9 @@ QPERF_UI static void scene_lane_tick(void)
         if (scene_rec[pos] != was && scene_rec[pos] != active + 1) {
             ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, scene_rec[pos] - 1, 1);
             scene_engaged_by_us = active = scene_rec[pos] - 1;
-            scene_engaged_ticks = 2;
-            engaged = 1;
+            scene_engaged_ticks = 3;    // counted down from the next tick's top
         }
     }
-    if (!engaged && scene_engaged_ticks && !--scene_engaged_ticks)
-        scene_engaged_by_us = -2;       // the guard covers the engage landing, then a hand may pick it
     scene_last_pos = pos;
     scene_last_seen = active;
 }
