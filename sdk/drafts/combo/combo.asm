@@ -24,7 +24,11 @@
 ;   CAB  x:(r6+4): 0 OFF, 1 1X10, 2 1X12, 3 2X12, 4 4X12 (above 4 is 4X12)
 ;   LEV  x:(r6+5): (k/64)^2, 64 is 0 dB. OUT is stored as COMP/2 x (k/128)^2 x VC
 ;   VOIC x:(r6+$c), SETUP page slot 6: 0 CLEAN, 1 BRIT, 2 HGAIN, 3 SOLID (above 3 is SOLID)
-; GAIN, BASS, MID, TREB and OUT glide per sample (1/64 a sample) and snap
+;   TGHT x:(r6+$c) bits 8-15, slot 7: the pre high-pass x (t+16)/80, 64 the voice's own
+;   PRES x:(r6+$d), slot 8, MIC bits 8-15, slot 9: each cab's biquad 2 and 3 move
+;        k/128 of the way to their PRES 127 / MIC 127 versions (tables.py cab_row)
+;   MIX  x:(r6+$e), slot 10: dry to wet, 127 all wet; it glides like OUT ($3a/$3b)
+; GAIN, BASS, MID, TREB, OUT and MIX glide per sample (1/64 a sample) and snap
 ; onto their target at the start of a call once within 64 LSB. The first
 ; call after init starts on the knobs. CAB and VOIC switch at the start of a call.
 ;
@@ -37,7 +41,7 @@
 ;     +18..+1f up all-passes a0 a2 a1 a3 (x1, y1 each)
 ;     +20..+27 down all-passes a0 a2 a1 a3   +28/+29/+2a scratch
 ;   $30/$31 GAIN target/run   $32/$33 BASS   $34/$35 MID   $36/$37 TREB
-;   $38/$39 OUT target/run    $3f seeded
+;   $38/$39 OUT target/run    $3a/$3b MIX target/run    $3f seeded
 ;   $40..$44 the voice's pre low-pass, $45..$53 the CAB row (b0 b1 b2 -a1 -a2, halved)
 ;   $54..$5a the voice's KHP CA CB BIAS FB KL KT
 ; Nothing above $5f is touched.
@@ -71,7 +75,7 @@ proc:
         asl     #4,a,a
         move    a1,n1
         move    (r1)+n1
-; The voice's pre low-pass to $40..$44, CAB's row (table word 64 + 15 CAB) to $45..$53,
+; The voice's pre low-pass to $40..$44, CAB's rows (table word 64 + 25 CAB) to $45..$53,
 ; then the voice's KHP CA CB BIAS FB KL KT to $54..$5a.
         move    #>$40,n4
         move    r7,r4
@@ -88,23 +92,73 @@ cmb_pre:
         cmp     x0,a
         tgt     x0,a
         tfr     a,b
-        asl     #4,a,a
-        sub     b,a
+        asl     #3,a,a
+        add     a,b
+        asl     #1,a,a
+        add     b,a
         move    #>64,x0
         add     x0,a
         move    r2,r3
         move    a1,n3
         move    (r3)+n3
-        do      #15,>cmb_cab
+        do      #5,>cmb_cab
         move    p:(r3)+,x0
         move    x0,x:(r4)+
 cmb_cab:
+        nop
+; Biquad 2 = its words + PRES/128 x the step to PRES 127 (5 words on), x:(r6+$d) knob field.
+        move    #>5,n3
+        move    x:(r6+$d),a
+        and     #>$7f0000,a
+        move    a1,y1
+        do      #5,>cmb_bqtwo
+        move    p:(r3+n3),x0
+        mpy     x0,y1,a
+        move    p:(r3)+,x0
+        add     x0,a
+        move    a,x:(r4)+
+cmb_bqtwo:
+        nop
+        move    (r3)+n3
+; Biquad 3 = its words + MIC/128 x the step to MIC 127, x:(r6+$d) companion field (bits 8-15).
+        move    x:(r6+$d),a
+        and     #>$007f00,a
+        asl     #8,a,a
+        move    a1,y1
+        do      #5,>cmb_bqthree
+        move    p:(r3+n3),x0
+        mpy     x0,y1,a
+        move    p:(r3)+,x0
+        add     x0,a
+        move    a,x:(r4)+
+cmb_bqthree:
         nop
         do      #7,>cmb_voice
         move    p:(r1)+,x0
         move    x0,x:(r4)+
 cmb_voice:
         nop
+; TGHT, x:(r6+$c) companion field: KHP x (t+16)/80 = KHP x ((t+16)/256 x 0.8) x 4; 64 is the voice's own.
+        move    x:(r6+$c),a
+        and     #>$007f00,a
+        asl     #7,a,a
+        move    #>$080000,x0
+        add     x0,a
+        move    a1,x0
+        move    #>$666666,y1
+        mpy     x0,y1,a
+        move    a,x0
+        move    x:(r7+$54),y1
+        mpy     x0,y1,a
+        asl     #2,a,a
+        move    a,x:(r7+$54)
+; MIX, x:(r6+$e): k/128 + k/16384, so 127 leaves the dry 1/16384.
+        move    x:(r6+$e),a
+        and     #>$7f0000,a
+        tfr     a,b
+        asr     #7,b,b
+        add     b,a
+        move    a1,x:(r7+$3a)
 ; GAIN: u = kn/2 + 1/16 = (k+16)/256; u^2 = G/256 (the voice's drive is in its pre low-pass).
         move    x:(r6+$0),a
         and     #>$7fffff,a
@@ -115,12 +169,12 @@ cmb_voice:
         move    x0,y1
         mpy     x0,y1,a
         move    a,x:(r7+$30)
-; OUT: COMP/2 (table word 139 + GAIN's whole step) x (k/128)^2 x the voice's VC.
+; OUT: COMP/2 (table word 189 + GAIN's whole step) x (k/128)^2 x the voice's VC.
         move    r2,r3
         move    x:(r6+$0),a
         and     #>$7f0000,a
         asr     #16,a,a
-        move    #>139,x0
+        move    #>189,x0
         add     x0,a
         move    a1,n3
         move    (r3)+n3
@@ -160,7 +214,7 @@ cmb_voice:
         tst     a
         bne     cmb_seeded
         lua     (r7+$30),r4
-        do      #5,>cmb_seedcopy
+        do      #6,>cmb_seedcopy
         move    x:(r4)+,x0
         move    x0,x:(r4)+
 cmb_seedcopy:
@@ -170,7 +224,7 @@ cmb_seedcopy:
 cmb_seeded:
 ; A glide within 64 LSB of its target snaps onto it.
         lua     (r7+$30),r4
-        do      #5,>cmb_snap
+        do      #6,>cmb_snap
         move    x:(r4)+,y0
         move    x:(r4),x0
         move    y0,a
@@ -214,10 +268,33 @@ cmb_snap:
         asr     #6,a,a
         add     x0,a
         move    a1,x:(r7+$39)
+        move    x:(r7+$3a),a
+        move    x:(r7+$3b),x0
+        sub     x0,a
+        asr     #6,a,a
+        add     x0,a
+        move    a1,x:(r7+$3b)
         move    r7,r5
         bsr     cmb_chan
-        move    a,x:(r0)+
-        move    a,x:(r0)+
+; MIX: each side = 2 (d/2 + MIX (h - d/2)), h the wet halved.
+        move    a,x1
+        move    x:(r7+$3b),y1
+        move    x:(r0),b
+        asr     #1,b,b
+        move    x1,a
+        sub     b,a
+        move    a,x0
+        mac     x0,y1,b
+        asl     #1,b,b
+        move    b,x:(r0)+
+        move    x:(r0),b
+        asr     #1,b,b
+        move    x1,a
+        sub     b,a
+        move    a,x0
+        mac     x0,y1,b
+        asl     #1,b,b
+        move    b,x:(r0)+
 cmb_frameend:
         nop
         rts
@@ -542,6 +619,6 @@ cmb_chan:
         move    x1,a
         move    b1,y0
         sub     y0,a
-; Back to full scale.
-        asl     #2,a,a
+; Back to half of full scale (MIX doubles it).
+        asl     #1,a,a
         rts

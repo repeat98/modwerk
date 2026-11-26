@@ -6,7 +6,8 @@ high-pass and a 7 kHz band-limit, then at 2x (halfband.py) GAIN into a soft
 curve flat at full scale, a level that follows GAIN, a three-band tone stack
 (BASS, MID, TREB, flat at 64), one of four speaker cabinets or OFF (CAB, from
 the P table in tables.py), a DC blocker and LEV, to both sides. VOIC (SETUP page,
-slot 6) picks one of four amp voices from the same table. verify.py holds the assembly
+slot 6) picks one of four amp voices from the same table; TGHT, PRES, MIC and MIX
+(slots 7 to 10) move the low cut, the cabinet's presence and mic, and the dry mix. verify.py holds the assembly
 to reference.py's model bit for bit. Hardware operation is untested.
 
 The FX2 id: the card's 32 ids are all taken (docs/OCTATRACK_MORE_EFFECT_IDS.md),
@@ -54,7 +55,15 @@ MODULE = Module(
               doc="Output level (LEV/64)^2: silence at 0, 0 dB at 64, +12 dB at 127"),
         Param(b"VOIC", 1, 4, active=True, formatter=S, labels=_T["VOICE_NAMES"],
               doc="Amp voice: CLEAN, BRIT (chiming crunch), HGAIN (tight high gain) or SOLID (flat, hard clip)"),
-        BLANK, BLANK, BLANK, BLANK, BLANK,
+        Param(b"TGHT", 64, 128, active=True, formatter=B,
+              doc="Tightness: the low cut before the drive, looser below 0, the voice's own at 0, tighter above"),
+        Param(b"PRES", 0, 128, active=True, formatter=P,
+              doc="Presence: the cabinet's 4-5 kHz bump, up to about +6 dB; with CAB OFF a peak at 3.5 kHz"),
+        Param(b"MIC", 0, 128, active=True, formatter=P,
+              doc="Mic position: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB"),
+        Param(b"MIX", 127, 128, active=True, formatter=P,
+              doc="Dry to amp: 0 the dry track in stereo, 127 all amp; between, parallel drive"),
+        BLANK,
     ),
 
     dsp=DspSection(
@@ -73,5 +82,6 @@ MODULE = Module(
     gates=(Gate("modules/combo/verify.py", remix_arg=False),),
     # The sample loop's work is the same at every setting; the top of every
     # knob keeps the limit and the curve busy.
-    dear={"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2},
+    dear={"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2,
+          "TGHT": 127, "PRES": 127, "MIC": 127, "MIX": 64},
 )

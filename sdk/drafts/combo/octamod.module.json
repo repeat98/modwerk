@@ -16,14 +16,15 @@
     "label": "AMP + CAB",
     "family": "Saturation",
     "summary": "An amp and speaker cabinet for any track: drive, a three-band tone stack and four cabinets.",
-    "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BRIT, HGAIN or SOLID. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, a DC blocker and LEV, to both outputs. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
+    "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BRIT, HGAIN or SOLID. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, with PRES and a MIC position, a DC blocker and LEV, and MIX blends it with the dry track. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
     "highlights": [
       "Four amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BRIT (chiming crunch with even harmonics), HGAIN (tight lows, mids forward, the most drive) and SOLID (flat, clean, hard clip at the top)",
       "GAIN from clean to fully driven at about the same volume, in every voice",
-      "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off"
+      "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off",
+      "A SETUP page with TGHT (the low cut before the drive), PRES, MIC (the mic on or off the speaker's axis) and MIX (dry to amp, for parallel drive)"
     ],
     "usage": [
-      "Pick COMBO in a track's FX1 or FX2 list, choose a voice with VOIC on its SETUP page, start with GAIN around 40, then turn CAB to taste."
+      "Pick COMBO in a track's FX1 or FX2 list, choose a voice with VOIC on its SETUP page, start with GAIN around 40, then turn CAB to taste; PRES, MIC and MIX on the SETUP page finish the sound."
     ]
   },
   "controls": [
@@ -86,6 +87,34 @@
         "HGAIN",
         "SOLID"
       ]
+    },
+    {
+      "name": "TGHT",
+      "default": 64,
+      "count": 128,
+      "doc": "Tightness: the low cut before the drive, looser below 0, the voice's own at 0, tighter above",
+      "labels": null
+    },
+    {
+      "name": "PRES",
+      "default": 0,
+      "count": 128,
+      "doc": "Presence: the cabinet's 4-5 kHz bump, up to about +6 dB; with CAB OFF a peak at 3.5 kHz",
+      "labels": null
+    },
+    {
+      "name": "MIC",
+      "default": 0,
+      "count": 128,
+      "doc": "Mic position: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "Dry to amp: 0 the dry track in stereo, 127 all amp; between, parallel drive",
+      "labels": null
     }
   ],
   "compatibility": {
@@ -94,8 +123,8 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Experimental draft: rendered bit for bit against its model in dsp_host and installed in the emulator; the build before VOIC passed device:test on a unit.",
-      "Mono, like a guitar amp: stereo input comes out in mono on both sides.",
+      "Experimental draft: rendered bit for bit against its model in dsp_host and installed in the emulator; the build before page 2 passed device:test on a unit.",
+      "Mono, like a guitar amp: at MIX 127 stereo input comes out in mono on both sides; below 127 the dry stereo comes back.",
       "No free effect id is left for card builds (docs/OCTATRACK_MORE_EFFECT_IDS.md); over USB the base assigns the live id.",
       "CAB and VOIC switch their filters at once, so turning them while audio plays can click.",
       "At high GAIN with loud, bright input some aliasing remains, even at 2x, most in HGAIN (TESTING.md, Sound quality)."
@@ -134,7 +163,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence and a silent tail in every voice, 342.4 instructions a sample. Emulator: installs, draws both pages, trial without fault. fx:audit per voice: no DC, digital silence after input; aliasing best in CLEAN, worst in HGAIN at high GAIN. Unit (0.1.0 before VOIC): device:test passed, CPU price measured; VOIC not yet run on a unit.",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 369.1 instructions a sample. Emulator: installs, draws both pages, trial without fault. fx:audit per voice: no DC, digital silence after input; aliasing best in CLEAN, worst in HGAIN at high GAIN. Unit (0.1.0 before page 2): device:test passed, CPU price measured; page 2 not yet run on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

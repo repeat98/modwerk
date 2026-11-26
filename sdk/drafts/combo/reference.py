@@ -12,7 +12,9 @@ import tables as T
 
 FS = T.FS
 Q = T.Q
-KNOB_DEFAULTS = {"GAIN": 40, "BASS": 64, "MID": 64, "TREB": 64, "CAB": 2, "LEV": 64, "VOIC": 1}
+KNOB_DEFAULTS = {"GAIN": 40, "BASS": 64, "MID": 64, "TREB": 64, "CAB": 2, "LEV": 64,
+                 "VOIC": 1, "TGHT": 64, "PRES": 0, "MIC": 0, "MIX": 127}
+PAGE1 = ("GAIN", "BASS", "MID", "TREB", "CAB", "LEV")
 KNOBS = tuple(KNOB_DEFAULTS)
 
 
@@ -25,9 +27,13 @@ def float_combo(left, right, knobs):
     """The chain on floats in [-1, 1) for fixed knobs: one mono amp, 2x oversampled; returns two float lists."""
     kv = {**KNOB_DEFAULTS, **knobs}
     vo = T.VOICES[min(kv["VOIC"], 3)]
-    hp, lk, tk, dc = T.one_pole(vo["hp"]), T.one_pole(vo["split"][0]), T.one_pole(vo["split"][1]), T.one_pole(10.0)
+    hp = T.one_pole(vo["hp"]) * (kv["TGHT"] + 16) / 80
+    lk, tk, dc = T.one_pole(vo["split"][0]), T.one_pole(vo["split"][1]), T.one_pole(10.0)
     pre = T.lowpass(*vo["lp"])
-    cab = T.cab_biquads(min(kv["CAB"], 4))
+    ci = min(kv["CAB"], 4)
+    b1, b2, b3 = T.cab_biquads(ci)
+    cab = (b1, T.interp(b2, T.cab_presence(ci), kv["PRES"]), T.interp(b3, T.cab_offaxis(ci), kv["MIC"]))
+    mix = (kv["MIX"] * 65536 + kv["MIX"] * 512) / Q
     g = gain_g(kv["GAIN"]) * vo["drive"]
     wb, wm, wt = vo["weights"]
     gb, gm, gt = wb * kv["BASS"] / 64.0, wm * kv["MID"] / 64.0, wt * kv["TREB"] / 64.0
@@ -53,7 +59,7 @@ def float_combo(left, right, knobs):
     sh = sl = st = sd = 0.0
     sp = [0.0] * 4
     sc = [[0.0] * 4 for _ in range(3)]
-    y = []
+    y, yr = [], []
     for xl, xr in zip(left, right):
         x = (xl + xr) / 2
         sh += hp * (x - sh)
@@ -65,8 +71,10 @@ def float_combo(left, right, knobs):
         for c_, s_ in zip(cab, sc):
             v = bq(c_, s_, v)
         sd += dc * (v - sd)
-        y.append(max(-1.0, min(1.0, v - sd)))
-    return y, list(y)
+        w = v - sd
+        y.append(max(-1.0, min(1.0, xl + mix * (w - xl))))
+        yr.append(max(-1.0, min(1.0, xr + mix * (w - xr))))
+    return y, yr
 
 
 # ---- the fixed-point model ---------------------------------------------------
@@ -133,9 +141,20 @@ class Model:
         x = self.x
         vr = VROWS[min((w[6] & 0x7f0000) >> 16, 3)]
         idx = min((w[4] & 0x7f0000) >> 16, 4)
+        row = ROWS[idx]
+        tp, tm = w[7] & 0x7f0000, (w[7] & 0x7f00) << 8          # PRES, MIC as k/128
         x[0x40:0x45] = list(vr[0:5])
-        x[0x45:0x54] = list(ROWS[idx])
+        x[0x45:0x4a] = list(row[0:5])
+        x[0x4a:0x4f] = [lim(w56(mac(0, s24(d), tp) + ld(s24(c)))) for c, d in zip(row[5:10], row[10:15])]
+        x[0x4f:0x54] = [lim(w56(mac(0, s24(d), tm) + ld(s24(c)))) for c, d in zip(row[15:20], row[20:25])]
         x[0x54:0x5b] = list(vr[5:12])
+        # TGHT: KHP x (t+16)/80, as KHP x ((t+16)/256 x 0.8) x 4
+        u = ((w[6] & 0x7f00) << 7) + 0x080000
+        f = lim(mac(0, u, 0x666666))
+        x[0x54] = lim(w56(mac(0, f, x[0x54]) << 2))
+        # MIX: k/128 + k/16384, so 127 is all but the last 1/16384 wet
+        k = w[8] & 0x7f0000
+        x[0x3a] = k + (k >> 7)
         vc, wb, wm, wt = vr[12:16]
         kn = w[0] & 0x7fffff
         u = hi(w56((ld(kn) >> 1) + ld(0x080000)))
@@ -151,18 +170,24 @@ class Model:
         x = self.x
         self.knobs(words)
         if x[0x3f] == 0:
-            for t in range(0x30, 0x3a, 2):
+            for t in range(0x30, 0x3c, 2):
                 x[t + 1] = x[t]
             x[0x3f] = 1
-        for t in range(0x30, 0x3a, 2):
+        for t in range(0x30, 0x3c, 2):
             if abs(ld(x[t]) - ld(x[t + 1])) < ld(64):
                 x[t + 1] = x[t]
         out = []
         for left, right in frames:
-            for t in range(0x30, 0x3a, 2):
+            for t in range(0x30, 0x3c, 2):
                 x[t + 1] = hi(((ld(x[t]) - ld(x[t + 1])) >> 6) + ld(x[t + 1]))
-            y = lim(self.amp(left, right))
-            out.append((y, y))
+            h = lim(self.amp(left, right))            # the wet, halved
+            pair = []
+            for d in (left, right):                   # out = 2 (d/2 + MIX (h - d/2))
+                b = ld(d) >> 1
+                e = lim(w56(ld(h) - b))
+                b = mac(b, e, x[0x3b])
+                pair.append(lim(w56(b << 1)))
+            out.append(tuple(pair))
         return out
 
     def allpass(self, st, v, coef):
@@ -224,15 +249,16 @@ class Model:
             a = biquad_fx(v, st, x[0x45 + 5 * j:0x4a + 5 * j])
             v = lim(a)
             s[sb:sb + 4] = st
-        # DC blocker, then back to full scale
+        # DC blocker, then back to half of full scale
         b = one_pole(s, 0x16, v, T.KDC)
         x[0:0x18] = s
-        return w56((ld(v) - ld(hi(b))) << 2)
+        return w56((ld(v) - ld(hi(b))) << 1)
 
 
 def knob_words(k, pwords=None):
     pw = pwords or {}
-    return [(k[n] << 16) | pw.get(i, 0) for i, n in enumerate(KNOBS)]   # the 7th is x:(r6+$c), VOIC
+    words = [(k[n] << 16) | pw.get(i, 0) for i, n in enumerate(PAGE1)]
+    return words + [(k["VOIC"] << 16) | (k["TGHT"] << 8), (k["PRES"] << 16) | (k["MIC"] << 8), k["MIX"] << 16]
 
 
 def render(left, right, knob_rows, frames=16, split=0, pwords=None):

@@ -1,12 +1,12 @@
 # Combo
 
-Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before VOIC ran on a unit.
+Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before page 2 ran on a unit.
 
 ## Overview
 
-COMBO puts a track through an amp and a speaker cabinet. VOIC picks one of four amp voices, GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
+COMBO puts a track through an amp and a speaker cabinet, miked. VOIC picks one of four amp voices, GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
 
-Signal chain: `(L + R)/2 -> the voice's high-pass and band-limit -> [2x: GAIN -> the voice's curve] -> level (1/√GAIN × LEV) -> BASS/MID/TREB at the voice's splits -> CAB -> 10 Hz DC blocker -> L and R`.
+Signal chain: `(L + R)/2 -> the voice's high-pass (TGHT) and band-limit -> [2x: GAIN -> the voice's curve] -> level (1/√GAIN × LEV) -> BASS/MID/TREB at the voice's splits -> CAB (with PRES and MIC) -> 10 Hz DC blocker -> MIX with the dry L and R`.
 
 - Each voice (VOIC) sets what reaches the drive (its low cut, and a band-limit whose resonance puts a bump where the voice bites), how hard GAIN drives, the curve's shape and its asymmetry, and the tone stack's splits and centre. They are styles of amp in Modwerk's own design, not models of any product.
 - The band-limit keeps the curve's harmonics from aliasing as much.
@@ -33,23 +33,28 @@ SETUP page (hold FUNC and press FX1 or FX2; turn A):
 | Knob | Values | Default | What it does |
 | --- | --- | --- | --- |
 | VOIC | CLEAN, BRIT, HGAIN, SOLID | BRIT | The amp voice. CLEAN: bright, scooped mids, breaks up late. BRIT: chiming upper mids, an early soft break-up with even harmonics. HGAIN: tight lows, mids forward, the most drive. SOLID: flat and clean, clipping hard only at the top; put CHORUS on the other FX slot for a wide clean sound. |
+| TGHT | -64 to +63 | 0 | Tightness: the low cut before the drive. 0 is the voice's own (40 to 180 Hz), -64 a fifth of it (loose, boomy drive), +63 about 1.8 times it (tight, for fast palm-muted parts). |
+| PRES | 0 to 127 | 0 | Presence: raises the cabinet's upper-mid bump to about +6 dB around 4 to 5 kHz. With CAB OFF it is a peak of up to +6 dB at 3.5 kHz. |
+| MIC | 0 to 127 | 0 | Mic position on the speaker: 0 on the cone's axis (the brightest), 127 off axis, its top rolled off an octave lower. Does nothing with CAB OFF. |
+| MIX | 0 to 127 | 127 | Dry to amp. 127 is all amp, 0 the track untouched and in stereo; between, the dry and the driven sound together (parallel drive, good on bass and drums). |
 
 The voices sit within about 1 dB of each other at GAIN 40 on a clean guitar DI, so switching them changes the character, not the volume.
 
-GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking them or modulating them with an LFO does not click. CAB and VOIC switch at once.
+GAIN, BASS, MID, TREB, LEV and MIX glide (about 1.5 ms), so turning them, locking them or modulating them with an LFO does not click. TGHT, PRES and MIC move in 16-sample steps. CAB and VOIC switch at once.
 
 ## Usage
 
 1. Install COMBO on a unit running the Modwerk USB base (`npm run module:dev -- combo` for a trial in RAM).
 2. Select an audio track, hold FUNC and press FX1 (or FX2), turn LEVEL to COMBO and press YES.
-3. Press FX1 (or FX2) for its knobs. Hold FUNC and press FX1 for its SETUP page, where A turns VOIC.
+3. Press FX1 (or FX2) for its knobs. Hold FUNC and press FX1 for its SETUP page: A turns VOIC, B TGHT, C PRES, D MIC and E MIX.
 
 ## Quick tutorial
 
 1. Put a drum loop, a synth line or a guitar on a track and pick COMBO on its FX1. At the defaults you hear BRIT's light crunch through a 1X12 cabinet.
 2. Hold FUNC, press FX1 and turn A through CLEAN, HGAIN and SOLID to hear the four voices.
 3. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy.
-4. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
+4. On the SETUP page turn D (MIC) up to move the mic off axis, and E (MIX) to about 60 to blend the dry track back in.
+5. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
 
 ## Compatibility and limitations
 
@@ -57,12 +62,13 @@ GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking the
 - It takes no key gesture and no stock screen, and patches no stock code: it is one entry in the base's FX list.
 - Card builds refuse it beside Analog BD, as they refuse every effect not on Analog BD's reviewed list.
 - CAB and VOIC switch their filters at once, so turning them while audio plays can click.
-- Mono: a stereo sample (a stereo chorus, a wide pad) comes out in mono, as it would from a guitar amp. Put a stereo effect on the other FX slot after it for width.
+- Mono: a stereo sample (a stereo chorus, a wide pad) comes out in mono at MIX 127, as it would from a guitar amp. Put a stereo effect on the other FX slot after it for width; below 127 MIX brings back the dry stereo.
+- At a MIX between, the amp's filters shift its phase against the dry sound, which colours the blend like a real parallel chain.
 - At high GAIN with loud, bright input some aliasing remains (2x oversampling halves the problem, not all of it), most in HGAIN: see TESTING.md, Sound quality. Lowering TREB or GAIN reduces it.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence in every voice, and measures 342.4 instructions a sample (stock SPRING REV: about 314). It installs and draws both pages in the emulator. The build before VOIC passed device:test on a unit; VOIC has not run on one yet.
+See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence in every voice, and measures 369.1 instructions a sample (stock SPRING REV: about 314). It installs and draws both pages in the emulator. The build before page 2 passed device:test on a unit; page 2 has not run on one yet.
 
 ## Authorship and licences
 

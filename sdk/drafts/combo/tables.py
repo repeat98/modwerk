@@ -9,13 +9,14 @@ voicing is taken from any product.
         words times the voice's drive x 2), then KHP, CA, CB, BIAS, FB, KL,
         KT (copied to X each call), then VC, WB, WM, WT (read by the knob
         code). See VOICES below.
-  CAB   5 rows x 15 words from word 64: one row per CAB setting (OFF, 1X10, 1X12, 2X12,
+  CAB   5 rows x 25 words from word 64 (biquad 1; biquad 2 and its step to PRES 127;
+        biquad 3 and its step to MIC 127; see cab_row): one row per CAB setting (OFF, 1X10, 1X12, 2X12,
         4X12), three biquads per row, each as b0, b1, b2, -a1, -a2, halved,
         in Q23. A cabinet is a resonant high-pass (the low thump), a
         resonant low-pass (the speaker's upper-mid bump and roll-off) and a
         second low-pass that steepens the top. OFF is three unit
         passthroughs, so CAB OFF is exact.
-  COMP  128 words from word 139: the level after the curve at each GAIN
+  COMP  128 words from word 189: the level after the curve at each GAIN
         step, 1/sqrt(G) halved, so turning GAIN up adds drive, not volume.
 
 Per voice (VOICES): the pre high-pass one-pole (KHP) and the pre low-pass
@@ -101,7 +102,55 @@ def cab_biquads(i):
     return (highpass(hf, hq), lowpass(lf, lq), lowpass(l2f, l2q))
 
 
-CAB_ROWS = tuple(tuple(w for bq in cab_biquads(i) for w in halved(bq)) for i in range(len(CAB_NAMES)))
+def peaking(fc, q, db):
+    w = 2 * math.pi * fc / FS
+    al = math.sin(w) / (2 * q)
+    g = 10 ** (db / 40)
+    a0 = 1 + al / g
+    return ((1 + al * g) / a0, -2 * math.cos(w) / a0, (1 - al * g) / a0, -2 * math.cos(w) / a0, (1 - al / g) / a0)
+
+
+def cab_presence(i):
+    """The cabinet's second biquad at PRES 127: its resonant low-pass a quarter higher and 1.6 times as sharp, a
+    presence bump; with CAB OFF, a +6 dB peak at 3.5 kHz."""
+    d = CAB_DESIGN[i]
+    if d is None:
+        return peaking(3500.0, 0.9, 6.0)
+    lf, lq = d[1]
+    return lowpass(lf * 1.25, lq * 1.6)
+
+
+def cab_offaxis(i):
+    """The cabinet's third biquad at MIC 127: the mic off the cone's axis, its top rolled off an octave lower."""
+    d = CAB_DESIGN[i]
+    if d is None:
+        return PASS
+    l2f, l2q = d[2]
+    return lowpass(l2f * 0.45, l2q)
+
+
+def interp_words(c0, c1):
+    """halved(c0) and the step to halved(c1), scaled by 128/127 so a knob at 127 lands on c1:
+    combo.asm forms each word as c0 + k/128 x step."""
+    h0, h1 = halved(c0), halved(c1)
+    return h0, tuple(q23((b - a) / Q * 128 / 127) for a, b in zip(h0, h1))
+
+
+def interp(c0, c1, k):
+    """The float coefficients at knob k, as the assembly forms them."""
+    h0, st = interp_words(c0, c1)
+    return tuple(2 * (a / Q + k / 128 * d / Q) * (1 if j < 3 else -1) for j, (a, d) in enumerate(zip(h0, st)))
+
+
+def cab_row(i):
+    b1, b2, b3 = cab_biquads(i)
+    p0, pd = interp_words(b2, cab_presence(i))
+    m0, md = interp_words(b3, cab_offaxis(i))
+    return halved(b1) + p0 + pd + m0 + md
+
+
+CAB_ROW = 25
+CAB_ROWS = tuple(cab_row(i) for i in range(len(CAB_NAMES)))
 
 
 def gain_g(k):
@@ -158,7 +207,7 @@ def voice_words(v):
 # drives the curve harder without getting louder, and the cabinet keeps its headroom.
 VOICE_ROWS = tuple(voice_words(v) for v in VOICES)
 CAB_AT = VOICE_ROW * len(VOICES)
-COMP_AT = CAB_AT + len(CAB_ROWS) * 15
+COMP_AT = CAB_AT + len(CAB_ROWS) * CAB_ROW
 COMP = tuple(q23(0.5 / math.sqrt(gain_g(k))) for k in range(128))
 
 
@@ -168,7 +217,7 @@ KDC = q23(one_pole(10.0))
 HALFBAND = tuple(q23(a) for a in halfband.coefficients(4, 0.06))
 TABLE = tuple(w & 0xffffff for w in tuple(w for row in VOICE_ROWS for w in row)
               + tuple(w for row in CAB_ROWS for w in row) + COMP)
-assert CAB_AT == 64 and COMP_AT == 139 and len(TABLE) == 267
+assert CAB_AT == 64 and COMP_AT == 189 and len(TABLE) == 317
 
 CONSTANTS = {"KDC": KDC, **{f"HB{i}": a for i, a in enumerate(HALFBAND)}}
 

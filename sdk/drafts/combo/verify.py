@@ -104,7 +104,7 @@ def write_mem(blob, path):
 
 
 def knob_row(k):
-    return [k[n] for n in R.KNOBS] + [0] * 5
+    return [k[n] for n in R.KNOBS] + [0]
 
 
 def full(rows):
@@ -243,18 +243,29 @@ def main():
                  50: {"VOIC": 9}, 70: {"VOIC": 0, "CAB": 0}}
         (got,), _, _ = run(work, mem, syms, [(nl, nr, vrows)], tag="vauto")
         same("2 VOIC automation, a stored VOIC above 3 plays SOLID", got, nl, nr, vrows)
+        for k in ({"TGHT": 0}, {"TGHT": 127, "VOIC": 2}, {"PRES": 127, "CAB": 1}, {"PRES": 127, "CAB": 0},
+                  {"MIC": 127, "CAB": 4}, {"MIC": 64, "PRES": 64, "CAB": 3}, {"MIX": 0}, {"MIX": 64, "GAIN": 110}):
+            (got,), _, _ = run(work, mem, syms, [(t, nl, {0: k})], tag="p2")
+            same(f"2 page 2: {k}", got, t, nl, {0: k})
+        prows = {0: {}, 8: {"PRES": 127, "MIC": 30}, 16: {"TGHT": 0, "MIX": 0}, 24: {"MIX": 127, "TGHT": 127},
+                 33: {"MIC": 127, "PRES": 0, "MIX": 40}, 50: dict(R.KNOB_DEFAULTS)}
+        (got,), _, _ = run(work, mem, syms, [(nl, nr, prows)], extra=("-split", "5"), tag="pauto")
+        same("2 page 2 automation with a trig split every block", got, nl, nr, prows, split=5)
+        (got,), _, _ = run(work, mem, syms, [(nl, nr, {0: {"MIX": 0}})], tag="dry")
+        gate("2 MIX 0 is the dry signal, bit for bit", s24(got[0][:n]) == nl and s24(got[1][:n]) == nr)
 
         # 3. silence
         z = [0] * n
         for k in ({}, DEAR, {"GAIN": 0, "LEV": 0, "CAB": 0}, {"BASS": 0, "MID": 0, "TREB": 0},
-                  *({"VOIC": v, "GAIN": 127} for v in range(4))):
+                  *({"VOIC": v, "GAIN": 127} for v in range(4)),
+                  {"PRES": 127, "MIC": 127, "TGHT": 127, "MIX": 64}):
             (got,), _, _ = run(work, mem, syms, [(z, z, {0: k})], tag="zero")
             gate(f"3 silence in, silence out at {k or 'the defaults'}", not any(s24(got[0]) + s24(got[1])))
 
         m3 = 44100 * 3
         burst = noise(4410, 0.5, 3) + [0] * (m3 - 4410)
         for vi in range(4):
-            k = {**DEAR, "VOIC": vi}
+            k = {**DEAR, "VOIC": vi, "PRES": 127, "MIC": 64, "MIX": 90}
             (got,), _, _ = run(work, mem, syms, [(burst, burst, {0: k})], tag="tail")
             gate(f"3 a burst's tail at the dearest setting, VOIC {T.VOICE_NAMES[vi]}, ends in exact silence",
                  not any(s24(got[0][-44100:]) + s24(got[1][-44100:])))
@@ -269,6 +280,11 @@ def main():
             tail = slice(m // 2, m)
             d = 20 * math.log10(rms(s24(got[0])[tail]) / Q / rms(fl[tail]))
             gate(f"4 VOIC {vn}: the render matches the float design at 1 kHz", abs(d) < 0.5, f"({d:+.2f} dB)")
+        for knobs in ({"CAB": 2, "PRES": 127, "MIC": 64, "TGHT": 0}, {"CAB": 4, "MIC": 127, "TGHT": 127, "MIX": 64}):
+            (got,), _, _ = run(work, mem, syms, [(k1, k1, {0: knobs})], tag="float")
+            fl, _ = R.float_combo([s / Q for s in k1], [s / Q for s in k1], knobs)
+            d = 20 * math.log10(rms(s24(got[0])[tail]) / Q / rms(fl[tail]))
+            gate(f"4 {knobs}: the render matches the float design at 1 kHz", abs(d) < 0.5, f"({d:+.2f} dB)")
 
         # 5. cost
         print(f"[INFO] cycle meter: {meter_def} a sample at the defaults, {meter_hot} at the dearest setting")
