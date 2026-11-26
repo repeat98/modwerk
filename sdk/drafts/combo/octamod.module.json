@@ -166,13 +166,13 @@
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
       "date": "2026-11-26",
-      "conditions": "fresh project, bank A pattern 01 Part 1, no samples or trigs, transport started by the tool; base 5d2fe44d; 3 readings of 8 s a state. Frame interrupt 23.7 % before, 23.7 % installed and used nowhere, 23.7 % on T1 FX2; CPU meter 35.8 % before, 35.8 % at rest, 36.4 % in use.",
+      "conditions": "the developer's saved Part, bank and pattern as left, transport started by the tool; base 5d2fe44d; 3 readings of 8 s a state. Frame interrupt 23.7 % before, 23.7 % installed and used nowhere, 23.7 % on T1 FX2; CPU meter 35.7 % before, 35.8 % at rest, 35.9 % in use.",
       "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), DIST's ring on FX1 and FX2 slots inside its own buffer (dsp_host's guard), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 309.7 instructions a sample (392.6 before the optimisation, the same sound bit for bit). Emulator: installs, draws both pages, trial without fault. fx:audit: no DC, digital silence after input; aliasing best in CLEAN, worst in ROCK at high GAIN. Unit (0.1.0 before page 2): device:test passed, CPU price measured; page 2 not yet run on a unit.",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), DIST's ring on FX1 and FX2 slots inside its own buffer (dsp_host's guard), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 337.7 instructions a sample, the same sound bit for bit as every earlier build of page 2. Emulator: installs, draws both pages, trial without fault. fx:audit: no DC, digital silence after input; aliasing best in CLEAN, worst in ROCK at high GAIN. Unit (this build, 26 November 2026): device:test passed with seven at once, CPU price measured, page 2 checked by hand; listening not yet.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

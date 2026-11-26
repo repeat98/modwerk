@@ -11,6 +11,7 @@ What was run, on which build, and what it showed. "Not tested" means exactly tha
 - **This build:** the rest of page 2 the developer asked for: TGHT (slot 7, the voice's pre high-pass times (t+16)/80), PRES (slot 8) and MIC (slot 9), which move each cabinet's second and third biquads toward a presence and an off-axis version (the coefficients interpolated once a call; the stable region is convex, so every step between two stable filters is stable, checked on every cabinet), and MIX (slot 10, dry to wet, gliding). 369.1 instructions a sample, about 1.18 times SPRING REV; MIX takes 21 of the 27 added, the rest run once a call. The cabinet row grew to 25 words; the first build still stepped CAB rows by 15, which the bit-exact gate caught. Commit 8a97a9c58.
 - **This build:** the developer asked for the voices named in Ableton's generic style and for the mic split in two, as Ableton's Cabinet does (near on axis, near off axis, far). BRIT is now BOOST and HGAIN ROCK (the same sound), and a fifth voice, BASS, is new; MIC is now AXIS (slot 9), DIST (slot 10) is new and MIX moves to slot 11. DIST reads four early reflections (6 to 18 ms, two a side, opposite signs) from a 1,024-word modulo ring at the slot's allocator base + $400, so COMBO now reads the allocator (`Claims(stock_instance_buffer=True, buffer_words=2048)`); the reflections stay silent until the ring has been written once. 392.6 instructions a sample, about 1.25 times SPRING REV. Two bugs the gates caught on the way: the table offsets of CAB and COMP were not moved for the fifth voice (a new gate checks them against tables.py), and verify.py's allocator table sat one word off (X:$256 instead of dsp_host's X:$255), so every instance read the next one's base until it was fixed. Commit cdb8e1cbf.
 - **This build (optimised):** the same arithmetic in fewer instructions, so reference.py did not change and every render is the same bit for bit. The 40 constants the sample loop reads (the pre filters', the half-band's, the curves', the tone splits', the cabinet's, KDC) now sit in a Y block at the slot's base + $100, in the order they are read, so each product reads its state from X and its coefficient from Y in one instruction; the state is walked with r3, the glides are pipelined two at a time. 392.6 to 309.7 instructions a sample, counted per section: the eight all-passes with their scratch moves 88 to 65, the four biquads 80 to 52, the glides 38 to 28, the two curves 48 to 40, the tone stack 36 to 29, the high-pass 19 to 14, the DC blocker 13 to 8.
+- **This build (coefficients in private memory):** on the unit the optimised build failed device:test: with seven COMBOs at once core 0 (T5-T8) peaked at 995 per mille, over the 900 limit, while the build before page 2 peaked at 764 on the same Part. One FX2 instance on core 0 gets its buffer in the shared window, where the 40 coefficient reads a sample cost about twice as much. The block moved into the instance's own X state ($4e..$75, 118 state words of the base's 132); each coefficient is now read by its own X move, 28 of them one instruction more. 309.7 to 337.7 instructions a sample, the same sound bit for bit; only DIST's ring stays in the buffer (five accesses a sample). On the unit it passed (below).
 
 ## Render gate (dsp_host, 26 November 2026, this build)
 
@@ -21,7 +22,7 @@ What was run, on which build, and what it showed. "Not tested" means exactly tha
 - DIST's ring: an FX1 instance (allocator entry 0, Y:$1000) and two FX2 instances (Y:$4000, Y:$8000) render bit for bit, and dsp_host's guard sees every write inside the slot's own buffer, inside its first 2,048 words (a 1,024-word window, tried by hand, flags the ring, so the guard does look).
 - Silence in gives exact silence out at nine settings (each voice at GAIN 127 among them, and page 2 turned up), and a burst at the dearest setting, PRES 127, AXIS 64, DIST 127, MIX 90, ends in exact silence in every voice.
 - The render matches the float design (reference.float_combo, the same mono 2x chain) at 1 kHz within 0.00 dB in every voice at CAB OFF, and with PRES, AXIS, TGHT, MIX and DIST turned.
-- 309.7 instructions a sample, the same at every setting and voice. The sample loop reads the Y block exactly once through (40 reads, a gate).
+- 337.7 instructions a sample, the same at every setting and voice. The sample loop reads the coefficient block in X exactly once through (40 reads, a gate) and reads nothing from the buffer but DIST's ring.
 
 Traps hit and fixed on the way: `lua (r7+$40)` assembled as `(r7-$40)` (lua offsets reach ±63); the label `cmb_seed` prefixed `cmb_seeded` and sent a branch astray; the cabinet's resonant high-pass froze a truncated offset in its dead band (−35.7 dBFS of DC after the input stopped), which the DC blocker and the tail gate now cover.
 
@@ -120,6 +121,25 @@ The package (393 executed cycles declared, 100 state words, 1,018 DSP words, rea
 
 The package (310 executed cycles declared, 100 state words) was accepted, with no crash, stall, freeze or skipped track (~/.cache/modwerk-emu/ui-10). Not known until a unit runs it: the instruction count is a floor on the chip's cycles, and an FX2 slot in the shared window (Y:$30000 up) may cost more per Y access than core-private memory; the CPU price on a unit will say.
 
+## On the unit (26 November 2026, page 2)
+
+The developer's Octatrack over USB, its flashed base `eb667962`; the development twin `5d2fe44d` RAM-booted, nothing written to the flash or the card. The developer's own saved Part (Part 3), transport stopped at the start. Three packages from the same twin, in this order:
+
+| Package | Source | SHA-256 | device:test, seven COMBOs at once (T1-4 / T5-8 peak, per mille) |
+| --- | --- | --- | --- |
+| 310 cycles, coefficients in the buffer | 28859f5ce | `4e386e50…` | 742 / **995**: failed, over the 900 limit |
+| 332 cycles, page 1 only (comparison) | 4ae76341a | `2c0e88f0…` | 801 / 764: passed |
+| 393 cycles, before the first optimisation (comparison; five admitted) | cdb8e1cbf | — | 763 / 702: passed |
+| **338 cycles, coefficients in X (this build)** | this commit | `72afc4e5bd8a7f92459b9f524fffdfebbe4e6281d618df7f9c60581650a2b207` | **767 / 740: passed** |
+
+**Stage 1, the agent, this build (hardware evidence for what it measured, not for the sound or a power cycle):**
+- `npm run device:test`: passed. Self-test passed (longest frame 423 us); COMBO alone on FX2 of T1 peaked at 443 per mille, of T5 at 523, each admitted in 114 ms; seven at once while the pattern played, the eighth refused for CPU; 12 of 12 Part switches; the inventory ended as it began.
+- `npm run device:price -- --write`: in use DSP +10.7 % on its core (peak +10.8), CPU +0.2, frame +0; at rest +0 (evidence/cpu-price.json).
+- By hand, in a 10-minute trial over USB: COMBO is the last row of T1's FX1 list; FUNC + FX1 shows the SETUP page with VOIC, TGHT, PRES, AXIS, DIST and MIX; VOIC steps through CLEAN to BASS (several encoder steps a voice, like a stock switch), TGHT showed +20, DIST 60, MIX 64. T1's FX1 was put back to FILTER, and the trial rolled back with no crash, stall, freeze or skipped track. Screens in ~/.cache/modwerk-emu/unit/shots2 (not committed).
+- Not run on the unit: the soak, MAIN and CUE recorded over USB, parameter locks, LFOs, scenes, PRES and AXIS turned, the frame-cost curve, and the release run (`device:qualify`, which Keeps).
+
+**Stage 2, the developer:** not yet.
+
 ## On the unit (25 November 2026, build 4ae76341a, before VOIC)
 
 The developer's Octatrack over USB, its flashed base `eb667962` with 12 modules kept; the development twin `5d2fe44d` (base 0.3.1-modwerk-dev.1, built from main at the draft's commit) RAM-booted for the run, nothing written to the flash or the card. Package `combo.mwrm`, source 4ae76341a, SHA-256 `2c0e88f0ba9d21ec89141b1c72e139b171928c1f33d1e3b6eb48a543cf13b39b`, declared 332 executed cycles and 96 state words.
@@ -141,4 +161,4 @@ Not tested.
 
 ## Performance
 
-309.7 instructions a sample in dsp_host, about 0.99 times stock SPRING REV's 314 (docs/OCTATRACK_ELEKLOADER_MIGRATION.md); 392.6 before the optimisation. The base charges 310 executed cycles about 543 of an effect's 726 chip cycles until a hardware figure replaces the 7/4. The unit's CPU price (resources.cpuPrice) was measured on the build before VOIC. Not yet measured: the static floor (cycle_count.py), evidence/performance.json, the stress run and the CPU price on a unit.
+337.7 instructions a sample in dsp_host, about 1.08 times stock SPRING REV's 314 (docs/OCTATRACK_ELEKLOADER_MIGRATION.md); 392.6 before the first optimisation, 309.7 with the coefficients in the buffer (refused on the unit, above). The base charges 338 executed cycles about 592 of an effect's 726 chip cycles until a hardware figure replaces the 7/4. The unit's CPU price (resources.cpuPrice) is measured on this build: DSP +10.7 % in use (evidence/cpu-price.json). Not yet measured: the static floor (cycle_count.py), evidence/performance.json, the stress run.

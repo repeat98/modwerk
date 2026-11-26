@@ -192,12 +192,12 @@ def main():
              f"({len(products)} in the disassembly, {wanted} in the source)")
         gate("1 no rep, no mpysu/macsu", not any(re.search(r"\brep\b|mpysu|macsu", l) for l in dis))
         offsets = [int(m, 16) for m in re.findall(r"\(r7\+\$([0-9a-f]+)\)", src)]
-        gate("1 state inside X:(r7+$00..$63), the block init clears", max(offsets) <= 0x63,
+        gate("1 state inside X:(r7+$00..$75), the block init clears", max(offsets) <= 0x75,
              f"(highest $%02x)" % max(offsets))
         chan = src[src.index("cmb_chan:"):]
-        reads = len(re.findall(r"y:\(r4\)\+,y[01]", chan))
-        gate("1 the sample loop reads the Y coefficient block once through (40 words at base + $100)",
-             reads == 40 and "do      #100," in src and "move    #>$100,x0" in src, f"({reads} reads)")
+        reads = len(re.findall(r"x:\(r4\)\+,y[01]", chan))
+        gate("1 the sample loop reads the coefficient block once through (40 words at X:(r7+$4e), core-private)",
+             reads == 40 and "do      #118," in src and "y:(r4)" not in chan, f"({reads} reads)")
         # the GAIN product before the limit: q (limited at full scale by the pre low-pass's and the
         # all-passes' stores) x G/256 x 2^9 must stay inside the accumulator's +-256
         worst = (143 / 256) ** 2 * (1 << T.VG_SHIFT)
