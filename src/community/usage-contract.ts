@@ -6,7 +6,7 @@ export type UsageEvent = typeof USAGE_EVENTS[number]
 export const ANNOUNCEMENT_COUNTS = { announcement_shown: 'shown', announcement_opened: 'opened', announcement_dismissed: 'dismissed' } as const
 export type AnnouncementCountEvent = keyof typeof ANNOUNCEMENT_COUNTS
 /** Machines that build firmware here. Builds, failed builds and download requests may name one; nothing else does. */
-export const USAGE_DEVICES = ['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'model-cycles'] as const
+export const USAGE_DEVICES = ['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'digitone-ii', 'model-cycles'] as const
 export type UsageDevice = typeof USAGE_DEVICES[number]
 export const DEVICE_EVENTS: readonly UsageEvent[] = ['build_succeeded', 'build_failed', 'firmware_download_requested']
 export type DiscordInviteCounts = { discord_member_shown: number; discord_member_joins: number; discord_member_dismissals: number; discord_visitor_shown: number; discord_visitor_signups: number; discord_visitor_joins: number; discord_visitor_dismissals: number; discord_welcome_joins: number }

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-digitone-ii-2026-11-19",
+  "cores": [
+    {
+      "file": "modwerk-base-digitone-ii-7a60d82e.elemod",
+      "sha256": "7a60d82ebdf30d9e6013f6ab391d4666ea92b6d4a7c7d11f679ad8c958b4bf99",
+      "id": "core",
+      "version": "1.1",
+      "device": "digitone-mk2",
+      "os": "1.12",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "56305feb18be2f52c5d2107993c518a923259ecb",
+        "path": "sdk/imports/packages/modwerk-base-digitone-ii/modwerk-base-digitone-ii-7a60d82e.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

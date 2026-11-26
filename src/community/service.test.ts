@@ -35,6 +35,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0009_module_downloads.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0042_usage_breakdowns.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0083_usage_machine_coverage.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0102_usage_digitone_ii.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0104_usage_model_cycles.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0051_support_and_hourly_usage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0052_module_first_download.sql',import.meta.url),'utf8'))
@@ -831,16 +832,16 @@ describe('usage breakdowns: failed builds, machines and weekly module trends',()
   const {call,db,admin}=await fixture(),failed={...usageEvent('build_failed'),device:'digitakt'}
   expect((await call('/usage/events','POST',failed)).status).toBe(200)
   expect((await call('/usage/events','POST',failed)).status).toBe(200) // A repeated event ID adds nothing, here either.
-  for(const [event,device] of [['build_succeeded','digitakt'],['build_succeeded','octatrack'],['firmware_download_requested','digitone']])expect((await call('/usage/events','POST',{...usageEvent(event),device})).status).toBe(200)
+  for(const [event,device] of [['build_succeeded','digitakt'],['build_succeeded','octatrack'],['firmware_download_requested','digitone'],['build_succeeded','digitone-ii']])expect((await call('/usage/events','POST',{...usageEvent(event),device})).status).toBe(200)
   expect((await call('/usage/events','POST',usageEvent('build_succeeded'))).status).toBe(200) // Older pages send no machine.
   // A machine only on builds and downloads, from the closed supported list.
   for(const body of [{...usageEvent(),device:'octatrack'},{...usageEvent('build_succeeded'),device:'syntakt'},{...usageEvent('build_succeeded'),device:1}])expect((await call('/usage/events','POST',body)).status).toBe(400)
   const today=new Date().toISOString().slice(0,10)
-  expect(db.prepare('SELECT builds,builds_failed,downloads FROM usage_daily WHERE day=?').get(today)).toEqual({builds:3,builds_failed:1,downloads:1})
+  expect(db.prepare('SELECT builds,builds_failed,downloads FROM usage_daily WHERE day=?').get(today)).toEqual({builds:4,builds_failed:1,downloads:1})
   const result=await (await call('/admin/statistics?days=7','GET',undefined,'',undefined,admin)).json()
-  expect(result.rows[0]).toMatchObject({builds:3,builds_failed:1,downloads:1})
+  expect(result.rows[0]).toMatchObject({builds:4,builds_failed:1,downloads:1})
   expect(result.breakdownsStarted).toMatch(/^\d{4}-\d{2}-\d{2}T/)
-  expect(result.devices).toEqual([{device:'octatrack',builds:1,builds_failed:0,downloads:0},{device:'digitakt',builds:1,builds_failed:1,downloads:0},{device:'digitone',builds:0,builds_failed:0,downloads:1},{device:'digitakt-ii',builds:0,builds_failed:0,downloads:0},{device:'analog-rytm-mkii',builds:0,builds_failed:0,downloads:0},{device:'model-cycles',builds:0,builds_failed:0,downloads:0}])
+  expect(result.devices).toEqual([{device:'octatrack',builds:1,builds_failed:0,downloads:0},{device:'digitakt',builds:1,builds_failed:1,downloads:0},{device:'digitone',builds:0,builds_failed:0,downloads:1},{device:'digitakt-ii',builds:0,builds_failed:0,downloads:0},{device:'analog-rytm-mkii',builds:0,builds_failed:0,downloads:0},{device:'digitone-ii',builds:1,builds_failed:0,downloads:0},{device:'model-cycles',builds:0,builds_failed:0,downloads:0}])
   expect(JSON.stringify(db.prepare('SELECT * FROM usage_device_daily').all())).not.toContain(failed.visitor)
  })
  it('accepts a machine on identifier-free counts and keeps daily module counts for weekly trends',async()=>{

@@ -136,12 +136,14 @@ type AllMachinesLibraryProps = {
 // One mounted library keeps its machine picker, heading and controls in place while the collection changes.
 // On phones the machine picker sits in the category row and the results bar renders into resultsSlot, beneath it.
 type MachineLibraryProps = AllMachinesLibraryProps & {
+  /** Beta users also see the core build previews that are beta only (protocol.ts). */
+  betaUi?: boolean;
   device?: DeviceProfile; children?: ReactNode; categoryNav?: ReactNode; onClearSearch?: () => void; onClearQuery?: () => void
   phone?: boolean; resultsSlot?: HTMLElement | null; octatrackCatalogue?: readonly FirmwareModule[]
   buildHref?: string; buildLabel?: string; buildText?: string
 }
 
-export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, categoryNav, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel, buildText }: MachineLibraryProps) {
+export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, categoryNav, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel, buildText, betaUi = false }: MachineLibraryProps) {
   const w = useSetWords()
   const heading = useRef<HTMLHeadingElement>(null)
   const term = query.toLowerCase().trim()
@@ -218,7 +220,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
       {device && <div className="library-note"><span className="status-dot" /><p>{device.id === 'octatrack' ? 'This catalog follows an experimental build. Review each module before preparing a ' + w.set + '.' : 'Built from each author’s pinned public release, with credit and licence.'}</p></div>}
       {device && device.id !== 'octatrack' && <StackLadder device={device} />}
       {!device && <section className="machine-section"><div className="library-subheading"><span>No mods yet</span><span className="subtle">Help open the next machine</span></div><div className="machine-chips">{DEVICES.filter(machine => machine.status === 'research' || machine.status === 'open').map(machine => <a key={machine.id} href={deviceHref(machine.id)} className={'machine-chip is-' + machine.status}>{machine.name}{machine.variants && <small> {machine.variants.join(' · ')}</small>}</a>)}</div></section>}
-    </> : device && <EmptyMachine device={device} embedded />}
+    </> : device && <EmptyMachine device={device} embedded betaUi={betaUi} />}
     {!phone && projectLink}
   </div></DownloadPeriodContext.Provider>
 }
@@ -301,10 +303,10 @@ function StackLadder({ device }: { device: DeviceProfile }) {
 }
 
 // Machines without mods: the library page becomes an invitation to open the first one.
-export function EmptyMachine({ device, machinePicker, embedded = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean }) {
-  const repository = issueRepository(), mobile = useMobileWorkspace()
+export function EmptyMachine({ device, machinePicker, embedded = false, betaUi = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean; betaUi?: boolean }) {
+  const repository = issueRepository(), mobile = useMobileWorkspace(), community = useCommunity()
   const page = FAMILY_PAGE[device.family], ready = readyForMods(device), steps = deviceSteps(device)
-  const preview = coreBuildPreviewOpen(device.id, hasBetaUi(useCommunity().session)) && !!device.sdk
+  const preview = coreBuildPreviewOpen(device.id, betaUi || hasBetaUi(community.session)) && !!device.sdk
   return (
     <div className="device-page">
       {machinePicker && <div className="discovery-tools">{machinePicker}</div>}

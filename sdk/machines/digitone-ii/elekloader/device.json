@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "The Digitone II device Modwerk's builder carries, because the pinned Elekloader kit has none (owner, 19 November 2026): npm run machine:base registers it with the kit's Python SDK, and the site's builder with the browser kit (src/engine/elekloader/carried-devices.ts). The Digitakt II's platform with its own SysEx id, release and seal seed, the 256 KB DDR area and no SRAM code area (SRAM is not qualified on this OS): docs/DIGITONE_II_OS_RESEARCH.md. Numbers given as hex are strings.",
+  "about": "The Digitone II device Modwerk's builder carries, because the pinned Elekloader kit has none (owner, 19 November 2026): npm run machine:base registers it with the kit's Python SDK, and the site's builder with the browser kit (src/engine/elekloader/carried-devices.ts). The Digitakt II's platform with its own SysEx id, release and seal seed, the 256 KB DDR area and no SRAM code area (SRAM is not qualified on this OS): docs/DIGITONE_II_OS_RESEARCH.md. update_max is the most an OS upgrade may hold once decoded (its 8-byte preamble and the container): the unit refused images of about 2.15 MB at 99 % and took ones of about 1.92 MB (docs/verification/2026-11-19-digitone-ii-base-on-a-unit.md), and Elekloader 0.11 caps it at 0x200000. Numbers given as hex are strings.",
   "device": {
     "key": "digitone-mk2",
     "name": "Digitone II",
@@ -18,18 +18,40 @@
     "stage": "0x40400000",
     "flash_at": "0x80000",
     "flash_limit": "0x380000",
+    "update_max": "0x200000",
     "trailer": "hmac",
-    "hmac_key_from": [2, "Multiplier"],
+    "hmac_key_from": [
+      2,
+      "Multiplier"
+    ],
     "isa": "coldfire",
     "areas": {
-      "ddr": ["0x47f00000", "0x47f40000"]
+      "ddr": [
+        "0x47f00000",
+        "0x47f40000"
+      ]
     },
-    "ddr": ["0x47f00000", "0x47f40000"],
+    "ddr": [
+      "0x47f00000",
+      "0x47f40000"
+    ],
     "recovery": "hold FUNC while powering on for the STARTUP menu, press TRIG 4 (OS UPGRADE), then send the stock .syx over MIDI (not USB)",
     "toolchain": {
       "prefix": "m68k-elf-",
-      "asflags": ["-mcpu=54455"],
-      "cflags": ["-mcpu=54455", "-O2", "-ffreestanding", "-fno-builtin", "-nostdlib", "-fno-pic", "-fno-pie", "-fomit-frame-pointer", "-Wall"]
+      "asflags": [
+        "-mcpu=54455"
+      ],
+      "cflags": [
+        "-mcpu=54455",
+        "-O2",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-nostdlib",
+        "-fno-pic",
+        "-fno-pie",
+        "-fomit-frame-pointer",
+        "-Wall"
+      ]
     }
   }
 }
