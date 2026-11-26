@@ -279,6 +279,7 @@ same as a comment on PR #2203. Per build:
 
 | Build | Picked and heard? | What it sounded like (against the list above) | Clicks, noise, DC | `device:price`: DSP T1-4 mean / peak, in use vs before (points) | Second instance (T5) | Verdict / diaglog |
 | --- | --- | --- | --- | --- | --- | --- |
+| quadraverb-0.1.0 (`35faa1b5…`) on twin5 (`7520dee5…`): PROG 20, 10, 15, 19 or 66; T5, then T1 | | | | | | |
 | QV DEV 40 | | | | | | |
 | QV DEV 5 | | | | | | |
 | QV DEV 56 | | | | | | |

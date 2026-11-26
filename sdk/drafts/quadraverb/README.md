@@ -37,6 +37,7 @@ Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as a
 - DSP time: 207-316 chip cycles a sample an instance by the stall model in the DSP emulator, under the base's admission limit; not measured on a unit. Most programs move more data a frame than the stream channel has carried on a unit so far (160 halfwords each way, reads alone 256): 5 of the 22 stay within 160, the rooms and halls need 208-247 in, the plates up to 352 in and 144 out.
 - Not like the original: 44.1 kHz instead of about 42 kHz, so reverb times, delays and sweeps are about 5 % shorter and faster; the input is the average of left and right; words are 24 bits in the DSP and 16 bits where they cross to the ColdFire. Nothing records the original's own width.
 - The gated reverbs (03 and 23-27) are not in this release: their gate needs a signal detector the original has in hardware.
+- Known issue: a new program cuts the reverb's tail at once (no fade yet), which may click.
 - Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer; no Alesis program is in this repository.
 
 ## Tests and measurements
