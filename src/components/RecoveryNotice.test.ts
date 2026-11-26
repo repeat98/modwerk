@@ -24,7 +24,7 @@ it('links every machine to a FAQ answer that exists on that machine’s FAQ, ope
 })
 
 it('sends each machine to its own recovery answer, in a new tab', async () => {
-  for (const [machine, href] of [['octatrack', '#faq/recover'], ['digitakt', '#faq/digi-recovery'], ['digitone', '#faq/digi-recovery']] as const) {
+  for (const [machine, href] of [['octatrack', '#faq/recover'], ['digitakt', '#faq/digi-recovery'], ['digitone', '#faq/digi-recovery'], ['model-cycles', '#faq/cycles-recovery']] as const) {
     await notice(machine)
     expect(link()?.getAttribute('href'), machine).toBe(href)
     expect(link()?.getAttribute('target')).toBe('_blank')

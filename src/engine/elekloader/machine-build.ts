@@ -6,6 +6,7 @@ import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
 import DN2_BASE from '../../../sdk/machines/digitone-ii/base-binding.json' with { type: 'json' }
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
+import CYCLES_BASE from '../../../sdk/machines/model-cycles/base-binding.json' with { type: 'json' }
 import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
 import RYTM_VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json' with { type: 'json' }
 import {
@@ -19,7 +20,7 @@ import { carryDevices } from './carried-devices'
 
 export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 export type { Builder }
-export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2', 'digitone-ii': 'digitone-mk2' } as const
+export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2', 'digitone-ii': 'digitone-mk2', 'model-cycles': 'model-cycles' } as const
 export type ElekloaderMachine = keyof typeof MACHINE_DEVICE
 carryDevices()
 export const BUILDER_CATALOG: Catalog = parseCatalog(CATALOG_JSON)
@@ -47,6 +48,11 @@ const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string
   'analog-rytm-mkii': {
     variants: RYTM_BASE.variants,
     variant: moduleIds => rytmVariant(moduleIds, Object.values(RYTM_FX_IDS.ids), RYTM_VOICE_MODULES.ids),
+  },
+  // The Model:Cycles base from core-mc 0.3's source, with ev_key_leds (sdk/machines/model-cycles/elekloader/README.md).
+  'model-cycles': {
+    variants: { base: CYCLES_BASE.identity },
+    variant: () => 'base',
   },
 }
 /** The Rytm base variant a selection needs. A send effect contributes to the send-bus variant's FX list, and a digital

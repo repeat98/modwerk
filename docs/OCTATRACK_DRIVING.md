@@ -15,9 +15,9 @@ On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` l
 ## The rules
 
 - Never SAVE, SAVE ALL or SYNC TO CARD the owner's project, unless the owner asks to recover something.
-- Do not change the owner's Parts. Test on a bank whose working Part equals its saved Part (bank B in
-  LIVE/Dev12: every Part FILTER/DELAY). Check that with `mem` (below) first, and put it back with `reload`
-  afterwards; then both copies must equal the saved copy read before (`scripts/octatrack-preflight.py` checks it).
+- Do not change the owner's Parts. Test on [a test bank](TEST_PROCEDURE.md#a-test-bank), first checking that its working
+  Part equals its saved one (`mem` below, or `scripts/octatrack-preflight.py`); `reload` it afterwards, then both
+  copies must equal the saved copy read before.
 - Read the state before you change it, and after you put it back.
 - RELOAD needs a Part that was saved at least once. On one that never was, it shows SAVE PART FIRST! and
   changes nothing, even when its working and saved copies matched before the test. Picking the original effects
@@ -78,39 +78,9 @@ before reporting success.
 
 ## Taking turns on the unit
 
-Every agent session and terminal of one user on one computer shares the one unit on its USB. Since 20 November 2026 the
-device commands take turns on it by themselves (`scripts/unit-queue.mjs`), so nobody asks whether it is free:
-
-- **These wait in line,** in the order they came, and go ahead by themselves when their turn comes: `npm run device:test`,
-  `device:qualify` and `device:price` (the whole run is one turn), `scripts/octatrack-bootsoak.mjs` (the whole batch),
-  the `npm run device` commands that drive (`try`, `set`, `remove`, `recover`, `lifecycle`, `boot`, `flash`, `status`,
-  `key`, `enc`, `fader`, `probe`, `meter`, and `do` with any step but the reads below), `scripts/device-send.py` lines
-  that drive, and the frontend MCP's `device_trial` until its Keep or Undo. A waiting command prints who has the unit and
-  its place in line; run it in the background. The commands a turn starts (the trial `device:test` runs) are inside it.
-- **Reads go beside another session's turn:** `screen`, `ui`, `state`, `mem`, `stats`, `loader`, `report`, `missing`, and
-  `do` or `device-send.py` lines made only of `ui`, `screen`, `png:`, `mem:`, `state`, `stats`, `report`, `loader`,
-  `missing`, `inventory`, `crash`, `stall`, `diaglog`, `saved`, `memory`, `dspmap` and at most a second of `w`. `status`
-  is not a read: its HELLO moves on the upload session another process may be in (below, one uploader owner). Nor are
-  `guard`, `cpu` and `gap`, which restart another run's measurement window. The MCP takes the turn for the moment it
-  opens its link, since an opening link rolls back a transaction it finds left open; reads through an open link need none.
-- **`serve` takes no turn:** it is the shared link. Its sender gates a line (`device-send.py`); a client that writes to
-  its socket by other means is not queued.
-- **By hand:** `npm run unit -- status` shows who has the unit, doing what, since when and until when, and who waits.
-  `npm run unit -- hold --note "…" [--for 30m]` keeps it across several commands, or while the owner plays it: commands
-  from the same checkout go ahead inside the hold, everyone else's wait. `release` gives it back, `hold` again extends
-  it, and `npm run unit -- run --note "…" [--expect 15m] -- COMMAND` puts any other command in a turn.
-- **A holder that is gone or late:** a turn whose processes are gone (a crash, a kill) ends, and the next in line is
-  told to check the unit first: a trial the dead holder started may still run (`do inventory`, then `recover`). A live
-  turn five minutes past its expected end is reported to `status` and to the waiters, never taken over, since that
-  would end its trial; `release --force` is the owner's call for one that is stuck. A hold ten minutes past its time,
-  with nothing of its own running, ends once someone waits.
-- **Emulators need no turn:** `--emulator`, or `MODWERK_UNIT=emulator` for the scripts. The queue lives per user
-  (Linux `~/.local/state/modwerk/unit-queue`, macOS `~/Library/Application Support/modwerk/unit-queue`, Windows
-  `%LOCALAPPDATA%\modwerk\unit-queue`; `MODWERK_UNIT_DIR` moves it), shared by every clone and worktree. Sessions in WSL
-  and on its Windows host keep separate queues.
-- The queue replaces only asking whether the unit is free. What runs on the developer's unit still needs their OK (on
-  the owner's computer it stands, [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md)), and power cycles, flashing and Keeps stay
-  as the rules above say.
+Every session on one computer shares its one unit, and the device commands wait in line for it by themselves
+(`npm run unit -- status`): what waits, what goes beside a turn, holding and keeping the turn across commands, the
+owner's priority and stuck holders are in [UNIT_QUEUE.md](UNIT_QUEUE.md).
 
 ## Start the link
 
@@ -235,7 +205,7 @@ stall. Each CC was checked on its own against the Part's bytes and the screen: l
 - MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
   venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
   networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
-  unit's MIDI port. After a RAM boot it opens the port again on a failed send (a copy before 25 November 2026 must restart).
+  unit's MIDI port. After a RAM boot it reopens the port on a failed send (copies before 25 November 2026 must restart).
 - The project: track channels 1-8, and TRANSP RECV and PROG CH RECV on in PROJECT > MIDI > SYNC. A project with
   them off ignores START and program changes without an error: the summary then shows no pattern changes and the
   stopped CPU. Program changes arrive on the channel PROG CH RECV names; set to CH AUTO, that is MIDI > CHANNELS'
@@ -287,10 +257,10 @@ not isolated: verify each held-row transition and stock modifier release, and st
   stops at RENAME, so UP three times, DOWN, YES (`savepart`: DOWN twice). Do not use SAVE or SAVE ALL on a Part you changed.
   **An MKI has no PART key** (#2099): FUNC + MIDI opens the Part window, an arrow moves its cursor, YES selects;
   FUNC + BANK there opens the menu. Steps choose by the MKII flag (`0x46c8d18c`); `device:emulator -- --mki`. After a RAM boot
-  every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test` and
-  `device:qualify` SAVE the Part once before they change anything, while its working copy equals its saved one: the
-  same bytes, and their closing RELOAD then works. `reload` reports no failure: compare
-  the Part with its saved copy afterwards (SAVE PART FIRST! above).
+  every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test`,
+  `device:qualify` and `test:procedure` (`octatrack-part-state.mjs`) SAVE the Part once before they change anything,
+  while its working copy equals its saved one: the same bytes, and their closing RELOAD then works (`test:procedure`'s
+  also after its soak). `reload` reports no failure: compare the Part with its saved copy afterwards.
 - **Patterns.** PATTERN+TRIG n selects pattern n of this bank. Another bank: BANK, then TRIG b (bank b), then
   TRIG n (pattern n) within four seconds (the manual's "CHOOSE BANK", "CHOOSE PATTERN"). Stopped, it applies
   at once; playing, it waits for the pattern's end.
