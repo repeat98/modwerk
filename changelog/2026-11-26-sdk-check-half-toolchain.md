@@ -1,0 +1,1 @@
+Development: `npm run sdk:check` stops before its first job, with the missing tools and the fix, when `m68k-elf-gcc` is on PATH but part of its binutils (for example `m68k-elf-readelf`) is not. Before, about seven test files failed one by one, minutes into the check, each with a bare "No such file or directory".
