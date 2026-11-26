@@ -216,13 +216,13 @@ In the graphic-EQ configuration, bytes 0x01-0x0b are the eleven band gains: 14 i
 
 ## Next steps
 
-1. **The base stream channel** (owner's decision, 26 November 2026): probe A first (extra host-port blocks to DSP core 0, timed, with a checker), then reads, core 1 and an SDRAM echo, on a branch of the cumulative base draft (#2079). Plan in [RESEARCH-2026-11-26.md](RESEARCH-2026-11-26.md).
+1. **The base stream channel** (owner's decision, 26 November 2026), on a branch of the cumulative base draft (#2079); plan in [RESEARCH-2026-11-26.md](RESEARCH-2026-11-26.md). Probe A (ColdFire to DSP core 0) passed on the owner's MKII on 26 November 2026 at 64, 128 and 160 halfwords a frame, stopped and playing, with a 5-minute soak at 160: every block intact, no stall, 10.7 µs of transfer at 160. Next: reads (probe B, sized for full rate), core 1, an SDRAM echo.
 2. **The sweeps on the DSP.** The parameters are read (Modulation) and the reconstruction matches the firmware exactly. Next: generate them per sample on the DSP, with the phase advancing r / (65536 × samples a tick) a sample, and pick the samples-a-tick figure (10.7 assumed); settle the pitch unit question first. The Leslie's speed switching needs its MIDI sources traced (bits 2ch.0 and 2ah.4).
 3. **The gate's detector.** The algorithm is read (The gate). Missing: the detector itself, which is hardware. Choose an envelope, threshold and time constant for the module's own detector, label them as assumptions, and drive P3.2 from it in the emulator to render the gated programs.
-4. **The engine.** Midiverb's pattern (a DSP interpreter fed by a stream of program words), with the sweeps generated on the DSP and the long lines through the stream channel. Half rate first: DSP time at full rate is unlikely to fit 414 executed instructions.
+4. **The engine** (owner's decisions, 26 November 2026: full rate with the programs untouched, about 400 cycles a sample at most): each program compiled to straight-line DSP code when it is picked, the sweeps rewriting its tables. Design and prices in [ENGINE.md](ENGINE.md). Next: an integer model and one static program bit for bit in `dsp_host`.
 5. **Word width and saturation.** Unknown. Whatever is chosen is an assumption and is labelled as one.
 6. **Listen.** Render the programs and judge them by ear; compare with published recordings of the Quadraverb where they exist, labelled as such.
-7. The module needs an FX2 id: none is left until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md).
+7. An FX2 id: the USB base gives each installed effect module its own of 109 ([docs/OCTATRACK_MORE_EFFECT_IDS.md](../../../docs/OCTATRACK_MORE_EFFECT_IDS.md)), so the module needs no pinned one.
 8. The other ROMs (QV+ 2.03, GT 1.03) need their factory-table and RAM addresses added to `ROMS` in `tools/machine.mjs`; the routines should be the same shape.
 
 ## Authorship
