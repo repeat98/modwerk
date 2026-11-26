@@ -49,17 +49,22 @@ mw_wide_dial:
 | turn; the base names this instead. On a descriptor that is not stock's own (outside the OS image's RAM copy: a page
 | the base or a module built) it stages the turned knob's step and count from that descriptor, as stock's stager
 | would, then goes on into the stepper; on stock's pages it goes straight on, untouched. The routine's MIDI-track
-| branch and turns with a trig held do not reach it.
+| branch and turns with a trig held do not reach it. The page's input layer holds the same staging (22 B a knob: the
+| slot, a 0 byte, then the knob's record), and the panel copies it into the knob's record before each turn, so it is
+| staged there too: restaging only the record cleared the remainder at every detent, and a select moved only on fast
+| turns until the page was entered again (Midiverb's PROG on the owner's MKII, 25 Nov 2026).
         .global mw_knob_step
         .equ    MW_STEPPER, 0x4003240c                  | the default stepper: (slot, detents, value) -> value
         .equ    MW_KNOB_REC, 0x46c7dede                 | 20 B a knob: +8 the step threshold, +16 the count
         .equ    MW_KNOB_RUN, 0x46c7d244                 | 20 B a knob: +0 the running remainder (the stepper's)
         .equ    MW_P_COUNT, 0x9a                        | descriptor: count, 4 B a slot
         .equ    MW_STOCK_END, 0x400de1e0                | the end of the OS image's descriptors (fxpage.c DONOR_HIGH)
+        .equ    MW_LAYER, 0x460d165c                    | the page's input layer: +8 its knob definitions
+        .equ    MW_KNOB_ROUTINE, 0x40055008             | the knob routine a main page's definitions name
 
 mw_knob_step:
         cmpa.l  #MW_STOCK_END,%a3                       | a3: the descriptor the routine resolved
-        bcs.s   2f                                      | stock's own: as stock
+        bcs.w   3f                                      | stock's own: as stock
         move.l  4(%sp),%d0                              | the slot
         lea     (%a3,%d0.l*4),%a0
         move.l  MW_P_COUNT(%a0),%d1                     | its count
@@ -79,9 +84,33 @@ mw_knob_step:
         cmp.l   8(%a0),%d0
         beq.s   2f                                      | staged as stock would: the turn's remainder stays
         move.l  %d0,8(%a0)
-        sub.l   #MW_KNOB_REC-MW_KNOB_RUN,%a0            | a new step: as stock's stager (0x400326d4) does with one,
-        clr.l   (%a0)                                   | clear the knob's running record (+0 the remainder the
-        clr.l   4(%a0)                                  | stepper carries between detents), so a 0..127 knob after
-        clr.l   8(%a0)                                  | a select's step neither jumps nor steps back
-        clr.l   12(%a0)
-2:      jmp     (MW_STEPPER).l
+        move.l  %a0,%a1
+        sub.l   #MW_KNOB_REC-MW_KNOB_RUN,%a1            | a new step: as stock's stager (0x400326d4) does with one,
+        clr.l   (%a1)                                   | clear the knob's running record (+0 the remainder the
+        clr.l   4(%a1)                                  | stepper carries between detents), so a 0..127 knob after
+        clr.l   8(%a1)                                  | a select's step neither jumps nor steps back
+        clr.l   12(%a1)
+2:      move.l  MW_LAYER,%d0                            | the layer's definition of this knob: staged as its record
+        beq.s   3f
+        move.l  %d0,%a1
+        move.l  8(%a1),%d0
+        beq.s   3f
+        move.l  4(%sp),%d1                              | the slot
+        add.l   %d1,%d0
+        add.l   %d1,%d0                                 | + 2 * slot
+        lsl.l   #2,%d1
+        add.l   %d1,%d0                                 | + 6 * slot
+        lsl.l   #2,%d1
+        add.l   %d1,%d0                                 | + 22 * slot
+        move.l  %d0,%a1
+        moveq   #0,%d0
+        move.b  (%a1),%d0
+        move.l  4(%sp),%d1
+        cmp.l   %d1,%d0
+        bne.s   3f                                      | not this knob's definition
+        move.l  2(%a1),%d0
+        cmp.l   #MW_KNOB_ROUTINE,%d0
+        bne.s   3f                                      | another layer's (a held scene's, a window's): left as it is
+        move.l  8(%a0),10(%a1)
+        move.l  16(%a0),18(%a1)
+3:      jmp     (MW_STEPPER).l

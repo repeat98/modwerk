@@ -537,6 +537,10 @@ uint32_t modwerk_ep0_dispatch(void)
         if (SETUP[2]) (void)modwerk_selftest_start();
         modwerk_selftest_refresh();
         for (unsigned i = 0; i < sizeof modwerk_selftest; ++i) out[i] = ((const volatile uint8_t *)&modwerk_selftest)[i];
+        /* The refusal word's top byte (big-endian, so its first): what keeps a change from beginning now (runtime.h
+         * MACHINE_BUSY_*), so a host can say why it was refused as `unsafe`. Until 0.8.2 a stopped unit was refused
+         * until a power cycle and no log could say why (#2211). The loader's refusal and its slot keep the low bytes. */
+        out[__builtin_offsetof(struct selftest, refusal)] = (uint8_t)modwerk_machine_busy();
         modwerk_ep0_reply = out;
         return sizeof modwerk_selftest;
     }

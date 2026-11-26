@@ -10,6 +10,7 @@
   {"from": "0x100f9044", "to": "0x100f91c8", "owner": "base", "what": "setting_presets.h MWP1 stores panel overrides for up to 32 imported module presets"},
   {"from": "0x100f9200", "to": "0x100f970c", "owner": "base", "what": "status.c's 'MWER': what each measured module adds to the frame share in use, on waking and at rest, from the site's last MWMS v2 set (set_package.h)"},
   {"from": "0x100f9710", "to": "0x100f9728", "owner": "base", "what": "diag.c's 'MWLR': the lateness of the last eight frame-interrupt entries before a stall, as the late-entry wait measured them (machine_registry.c)"},
+  {"from": "0x100f9728", "to": "0x100f9758", "owner": "base", "what": "diag.c's 'MWFZ': where the frame interrupt found the processor at 5, 6, 7 and 8 s of a UI freeze (program counter, status register, current task), read as the FREEZE_PC incident"},
   {"from": "0x100f9800", "to": "0x100fbf00", "owner": "midi-scenes", "what": "'SCS2': the current bank's MIDI scene locks, packed (magic, bank, count, sum, project id, then one long a lock)"},
   {"from": "0x100fbf00", "to": "0x100fc000", "owner": "kits", "what": "each of the 256 patterns' Kit, under the sum at 0x100f85a0"},
   {"from": "0x100fc000", "to": "0x100fe000", "owner": "base", "what": "diag.c's log"},

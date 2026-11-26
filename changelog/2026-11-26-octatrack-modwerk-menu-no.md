@@ -1,0 +1,1 @@
+Octatrack base 0.8.2: NO on a page you opened from PROJ > MODWERK (SETTINGS, MODULES, STATUS, MODULE COST, MISSING) now takes you back to the MODWERK menu, with the cursor on the row you opened, instead of closing the whole menu. LEFT and RIGHT do the same (on STATUS every arrow does). PROJ still closes the menu, and YES works as before.
