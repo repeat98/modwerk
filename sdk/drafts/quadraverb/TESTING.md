@@ -32,7 +32,16 @@ signal detector the original has in hardware; its threshold and time constant wo
 ## Captures
 
 None. Captures need the package installed in the emulator, and on the base 0.8.3 twins the emulator does not take an
-upload. See [Captures, 26 November 2026](#captures-26-november-2026) below for the last try.
+upload.
+
+Last try, 26 November 2026, about 23:45: `npm run device:emulator` (the adapted `ot_emu`, `--dsp`) on twin2 (MAIN
+`cc39ed0c…`, the base 0.8.3 draft with program areas and the stream), then `try qv-dev-5.mwrm` (`28817e0e…`). The
+twin booted and its DSP ran (`stats`: T5-8 passes 963 of 966), but the upload's acknowledgement never came: "hello
+was not confirmed (Upload acknowledgement timed out)", and the inventory stayed empty. It failed the same way on every
+0.8.3 twin tried that day. Even with the upload, a pick would be refused: `ot_emu`'s CPU meter reads 1000 per mille
+from boot, so the base's busy-unit guard says CPU FULL (agent board, 21 November). Why the acknowledgement does not
+come is not known; the emulator is shared tooling, so it was not changed here. The release build's captures wait for
+either a fixed emulator or the unit.
 
 ## Development builds
 
