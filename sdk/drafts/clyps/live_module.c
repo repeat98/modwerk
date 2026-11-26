@@ -64,11 +64,34 @@ static int stock_src_available(void)
 static volatile unsigned last_row, pending_row;
 #ifdef CLYPS_PERFORMANCE
 enum panel_view { NATIVE, ROW, CLIP, SETUP };
-static enum panel_view view;
-static unsigned mode, operation, end_of_path;
+static enum panel_view view, last_view = ROW;
+static unsigned mode, operation, end_of_path, lock_note, mem_track;
 #endif
 static unsigned first_row, zoom, editing, draft, missing;
+#ifdef CLYPS_PERFORMANCE
+/* Provenance (D33): one byte per lane, the one-based Row its source came from; 0 is unknown
+ * (home, a Clip launch, or a cell edited after launch). Requested and playing stay distinct and
+ * the stock wrap commits both words with the sources. */
+static volatile uint32_t org_play[2], org_req[2];
+static unsigned origin(const volatile uint32_t *o, unsigned lane)
+{
+    return (o[lane >> 2] >> (8 * (lane & 3))) & 255u;
+}
+static void set_origin(volatile uint32_t *o, unsigned lane, unsigned row)
+{
+    unsigned shift = 8 * (lane & 3);
+    o[lane >> 2] = (o[lane >> 2] & ~(255u << shift)) | (row << shift);
+}
+#define ORIGIN_COMMIT() (org_play[0] = org_req[0], org_play[1] = org_req[1])
+#define ORIGIN_CLEAR() (org_play[0] = org_play[1] = org_req[0] = org_req[1] = 0)
+#else
+#define ORIGIN_COMMIT() ((void)0)
+#define ORIGIN_CLEAR() ((void)0)
+#endif
 static unsigned last_run, last_seen_row, last_seen_pending;
+#ifdef CLYPS_PERFORMANCE
+static unsigned last_live;
+#endif
 static uint32_t last_seen_sources;
 #ifndef CLYPS_HOST_TEST
 static unsigned critical(void)
@@ -152,7 +175,9 @@ void clyps_project_init(void)
     unsigned sr = critical();
 #ifdef CLYPS_PERFORMANCE
     view = NATIVE;
-    mode = operation = end_of_path = 0;
+    mode = operation = end_of_path = lock_note = 0;
+    last_view = ROW;
+    ORIGIN_CLEAR();
 #endif
     playing = requested = 0;
     src_list = src_cursor = 0;
@@ -169,9 +194,11 @@ void clyps_wrap(void)
         return;
     if (valid(refs) && RUNNING && !GRID_REC && !LIVE_REC && !REC_HELD) {
         playing = refs;
+        ORIGIN_COMMIT();
         if (pending_row) last_row = pending_row;
     } else {
         playing = requested = last_row = 0;
+        ORIGIN_CLEAR();
     }
     pending_row = 0;
 }
@@ -186,7 +213,12 @@ void clyps_audio_source(int *pattern, unsigned t, unsigned bank_word)
         *pattern = (int)source;
 }
 
+#ifdef CLYPS_PERFORMANCE
+/* lane TRACKS: every lane comes from `from`; otherwise only that lane does. */
+static void submit_from(unsigned refs, unsigned row, unsigned lane, unsigned from)
+#else
 static void submit(unsigned refs, unsigned row)
+#endif
 {
     refused = !valid(refs) || (refs && (GRID_REC || LIVE_REC || REC_HELD));
     if (refused)
@@ -194,13 +226,21 @@ static void submit(unsigned refs, unsigned row)
     unsigned sr = critical();
     pending_row = row;
     requested = refs;
+#ifdef CLYPS_PERFORMANCE
+    if (lane < TRACKS) set_origin(org_req, lane, from);
+    else org_req[0] = org_req[1] = from * 0x01010101u;
+#endif
     if (!RUNNING) {
         playing = refs;
+        ORIGIN_COMMIT();
         if (row) last_row = row;
         pending_row = 0;
     }
     restore(sr);
 }
+#ifdef CLYPS_PERFORMANCE
+static void submit(unsigned refs, unsigned row) { submit_from(refs, row, TRACKS, row); }
+#endif
 
 #ifndef CLYPS_HOST_TEST
 static void redraw(void)
@@ -213,7 +253,11 @@ static void redraw(void)
 static void submit_lane(unsigned lane, unsigned ref)
 {
     unsigned shift = 4 * lane;
+#ifdef CLYPS_PERFORMANCE
+    submit_from((requested & ~(15u << shift)) | (ref << shift), 0, lane, 0);
+#else
     submit((requested & ~(15u << shift)) | (ref << shift), 0);
+#endif
 }
 
 #ifndef CLYPS_PERFORMANCE
@@ -239,12 +283,18 @@ static void check_src_context(void)
 void module_tick(struct modwerk_runtime_api *api)
 {
 #ifdef CLYPS_PERFORMANCE
+    unsigned seen_track = track;
     performance_context();
+    /* Beat markers and BPM are drawn by CLYPS in Clip: refresh them with the music. */
+    unsigned live = (BYTE(0x800065b5u) >> 2 & 3u) | LONG(0x8000181cu) << 2;
+    if (visible && (track != seen_track || live != last_live)) redraw();
+    last_live = live;
 #else
     check_src_context();
 #endif
     if (!bank_read_active && (playing || requested || pending_row || last_row) && !supported()) {
         playing = requested = last_row = pending_row = 0;
+        ORIGIN_CLEAR();
         refused = 1;
     }
     if (visible && (playing != last_seen_sources || last_row != last_seen_row || pending_row != last_seen_pending || RUNNING != last_run)) {
@@ -267,10 +317,11 @@ void module_draw(unsigned char *frame)
 {
 #ifdef CLYPS_PERFORMANCE
     performance_context();
-    if (visible && frame && !stock_window()) {
-        performance_draw(frame);
-        return;
+    if (frame && !stock_window()) {
+        if (visible) performance_draw(frame);
+        else if (locked) lock_draw(frame);   /* the stock page stays live under the edit lock */
     }
+    return;
 #else
     check_src_context();
 #endif

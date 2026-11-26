@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "The Octatrack's track tab now follows CLYPS: TRACK keys select the same track in both.",
+      "Sound stays playable over CLYPS sources: pages, encoders, Scenes and the crossfader work; trig edits stay locked to protect the home pattern.",
+      "Hold TRACK and press TRIG in Row to launch one cell; ARR returns to the view you left."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-26",
     "changes": [

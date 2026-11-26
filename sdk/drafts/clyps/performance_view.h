@@ -1,29 +1,52 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "native_view.h"
+
+/* SETUP (D33): a native popup over the Panorama, Design System v1 primitives only.
+ * Rows live in RAM: nothing here writes the card. */
+static void setup_draw(unsigned char *f)
+{
+    static const char *const item[3] = {"CAPTURE ROW", "CELL SOURCE", "RESTORE ALL"};
+    panorama_draw(f);
+    ui_fill(f, 14, 7, 100, 44, 0); ui_rect(f, 14, 7, 100, 44);
+    ui_plate(f, 16, 9, 96, 8);
+    char where[8] = {'R', 0, 0, ' ', 'T', (char)('1' + track), 0, 0};
+    ui_two(where + 1, slot + 1); where[3] = ' ';
+    ui_text(f, "SETUP", 18, 10, &UI_K5, 0);
+    ui_text_r(f, where, 109, 10, &UI_K5, 0);
+    unsigned run = RUNNING;
+    for (unsigned i = 0; i < 3; ++i) {
+        int y = 20 + 10 * (int)i, on = i == operation, off = i == RESTORE_HOME && run;
+        char val[4] = {0};
+        if (i == CAPTURE) { val[0] = 'R'; val[1] = 'A'; val[2] = 'M'; }
+        if (i == CELL) { val[0] = 'A'; ui_two(val + 1, draft + 1); }
+        if (i == RESTORE_HOME) { val[0] = 'A'; val[1] = '0'; val[2] = '1'; }
+        if (on && !off) ui_plate(f, 16, y - 1, 96, 9);
+        else if (on) ui_dotted(f, 16, y - 1, 96, 9);
+        ui_text(f, item[i], 19, y + 1, &UI_K5, !(on && !off));
+        if (off) ui_text_r(f, "STOP", 109, y + 1, &UI_K5, 1);
+        else ui_text_r(f, val, 109, y + 1, &UI_K5, !on);
+    }
+    const char *hint = refused ? (operation == RESTORE_HOME ? "STOP FIRST" : "SOURCE NOT GRID") :
+                       missing ? "CAPTURE ROW FIRST" :
+                       operation == CAPTURE ? "YES STORE PLAYING" :
+                       operation == CELL ? "TRIG OR A YES SET" :
+                       run ? "STOP FIRST" : "YES ALL HOME PATH";
+    ui_bar(f, 0, 74, hint, -1, 0, 0);
+}
+
+/* Selective Edit Lock (D33): the stock page stays live. The pattern line says why trig edits are
+ * held, and a refused gesture names the way out in the page bar until the next free control. */
+static void lock_draw(unsigned char *f)
+{
+    ui_plate(f, 10, 49, 31, 7);
+    ui_text(f, "LOCKED", 14, 50, &UI_M3, 0);
+    if (lock_note) ui_bar(f, 10, 78, RUNNING ? "LOCK: ARR>CLYPS" : "LOCK: YES>HOME", -1, 0, 0);
+}
+
 static void performance_draw(unsigned char *frame)
 {
     /* Design System v1 (D31): Panorama Full Grid and Clip View Native Frame. */
-    if (view == ROW) { panorama_draw(frame); return; }
-    if (view == CLIP) { clip_native_draw(frame); return; }
-    for (unsigned i=0; i<1024; ++i) frame[i]=0;
-    if (view == SETUP) {
-        label(frame,0,0,"CLYPS SETUP"); label(frame,55,0,"R"); number(frame,60,0,slot+1);
-        label(frame,80,0,"T"); number(frame,85,0,track+1);
-        label(frame,2,2,"CAPTURE PLAYING TO ROW");
-        label(frame,2,3,"CELL SOURCE"); number(frame,55,3,draft+1);
-        label(frame,2,4,"RESTORE ALL AT STOP");
-        for (unsigned x=0;x<110;++x) frame[x*8+5-operation] ^= 0x7f;
-        label(frame,2,6,refused ? "STOP FIRST OR CHECK GRID" : missing ? "CAPTURE ROW FIRST" : "UP DOWN SELECT  YES CONFIRM");
-        return;
-    }
-    label(frame,0,0,"CLYPS CLIP T"); number(frame,52,0,track+1);
-    unsigned active=source(playing,track), next=source(requested,track);
-    for (unsigned i=0;i<16;++i) {
-        unsigned x=32*(i%4), band=2+i/4;
-        number(frame,x+2,band,i+1);
-        if (active==i) label(frame,x+12,band,"P");
-        if (next==i && next!=active) label(frame,x+19,band,"Q");
-        if (src_cursor==i) for (unsigned dx=0;dx<28;++dx) frame[(x+dx)*8+7-band]^=0x7f;
-    }
-    label(frame,0,7,"TRIG DIRECT   YES FOCUS");
+    if (view == ROW) panorama_draw(frame);
+    else if (view == CLIP) clip_native_draw(frame);
+    else if (view == SETUP) setup_draw(frame);
 }

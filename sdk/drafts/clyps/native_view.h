@@ -129,7 +129,7 @@ static void ui_two(char *s, unsigned n) { s[0] = (char)('0' + n / 10); s[1] = (c
 
 /* ---------------------------------------------------------------- shared reading of the state */
 struct ui_state {
-    uint32_t play, req;
+    uint32_t play, req, op[2], oq[2];         /* op/oq: provenance of playing/requested (D33) */
     unsigned pos, pend, next, run;            /* rows one-based, 0 = none; run: 0 stop, 1 play, 2 pause */
 };
 static struct ui_state ui_snapshot(void)
@@ -137,6 +137,7 @@ static struct ui_state ui_snapshot(void)
     struct ui_state s;
     unsigned sr = critical();
     s.play = playing; s.req = requested; s.pos = last_row; s.pend = pending_row;
+    s.op[0] = org_play[0]; s.op[1] = org_play[1]; s.oq[0] = org_req[0]; s.oq[1] = org_req[1];
     restore(sr);
     s.run = RUNNING;
     if (s.run > 2) s.run = 1;
@@ -145,13 +146,22 @@ static struct ui_state ui_snapshot(void)
         if (defined & (1u << i)) { s.next = i + 1; break; }
     return s;
 }
+static unsigned ui_from(const uint32_t *o, unsigned lane) { return (o[lane >> 2] >> (8 * (lane & 3))) & 255u; }
+/* A lane overrides the path when it does not come from the position Row (by provenance, never by value). */
 static int ui_override(const struct ui_state *s, unsigned lane)
 {
-    return s->pos && source(s->play, lane) != source(rows[s->pos - 1], lane);
+    return s->pos && ui_from(s->op, lane) != s->pos;
 }
 static int ui_changing(const struct ui_state *s, unsigned lane)
 {
     return source(s->req, lane) != source(s->play, lane);
+}
+/* Pending for a lane: its source changes, or a Cell Launch moves its origin to another Row.
+ * Lanes of a pending Row transaction count only when their source changes (Design Lock v1.4). */
+static int ui_moving(const struct ui_state *s, unsigned lane)
+{
+    unsigned oq = ui_from(s->oq, lane);
+    return ui_changing(s, lane) || (oq != ui_from(s->op, lane) && (!oq || oq != s->pend));
 }
 
 /* Bar: CLYPS writes only the page-context part; the stock group stays live. */
@@ -237,33 +247,42 @@ static void panorama_draw(unsigned char *f)
         *dst = (unsigned char)((*dst & 1u) | (src & 0xfeu));
     }
     ui_fill(f, 0, 0, 128, 57, 0);                   /* no F/S tabs: CLYPS owns x 0-127, y 0-56 */
-    char path[8], bpm[4];
-    ui_path(path, &st);
-    unsigned b = TEMPO24 / 24; bpm[0] = (char)('0' + b / 100); bpm[1] = (char)('0' + b / 10 % 10); bpm[2] = (char)('0' + b % 10); bpm[3] = 0;
-    ui_bar(f, 0, 74, b >= 100 ? bpm : bpm + 1, st.run == 1 ? MARK_PLAY5 : st.run == 2 ? MARK_PAUSE5 : MARK_STOP5, path, 0);
-    for (int k = 0; k < UI_ROWS; ++k) ui_hline(f, 15, 6 + 10 * k, 113, 1);
-    for (int i = 0; i <= 8; ++i) ui_vline(f, GX(i), 6, 50, 1);
     unsigned first = first_row > 16 - UI_ROWS ? 16 - UI_ROWS : first_row;
     #define VISIBLE(r) ((r) && (r) - 1 >= first && (r) - 1 < first + UI_ROWS)
+    /* Exceptions (D33): a lane whose playing or pending origin has no visible cell. The header
+     * keeps T1-T8; the exception is its shape, the source of the focused lane is in the bar. */
+    unsigned active = st.play | st.req | st.op[0] | st.op[1] | st.oq[0] | st.oq[1];
+    unsigned play_exc = 0, pend_exc = 0;
+    for (unsigned i = 0; i < 8; ++i) {
+        unsigned op = ui_from(st.op, i), oq = ui_from(st.oq, i);
+        if (active && (!op || !VISIBLE(op))) play_exc |= 1u << i;
+        if (ui_moving(&st, i) && !(oq && VISIBLE(oq))) pend_exc |= 1u << i;
+    }
+    char path[8], bpm[4], detail[5] = {0};
+    ui_path(path, &st);
+    if (pend_exc >> track & 1) { detail[0] = '>'; detail[1] = 'A'; ui_two(detail + 2, source(st.req, track) + 1); }
+    else if (play_exc >> track & 1) { detail[0] = 'A'; ui_two(detail + 1, source(st.play, track) + 1); }
+    unsigned b = TEMPO24 / 24; bpm[0] = (char)('0' + b / 100); bpm[1] = (char)('0' + b / 10 % 10); bpm[2] = (char)('0' + b % 10); bpm[3] = 0;
+    ui_bar(f, 0, 74, b >= 100 ? bpm : bpm + 1, st.run == 1 ? MARK_PLAY5 : st.run == 2 ? MARK_PAUSE5 : MARK_STOP5, path, detail[0] ? detail : 0);
+    for (int k = 0; k < UI_ROWS; ++k) ui_hline(f, 15, 6 + 10 * k, 113, 1);
+    for (int i = 0; i <= 8; ++i) ui_vline(f, GX(i), 6, 50, 1);
     unsigned important = st.pend && !VISIBLE(st.pend) ? st.pend : st.next && !VISIBLE(st.next) ? st.next :
                          st.pos && !VISIBLE(st.pos) ? st.pos : !VISIBLE(slot + 1) ? slot + 1 : 0;
     char two[3];
     if (important) { ui_mark(f, important - 1 > first ? MARK_DOWN : MARK_UP, 2, 2, 1); ui_two(two, important); ui_text(f, two, 8, 1, &UI_M3, 1); }
     else ui_text(f, "R", 6, 1, &UI_K5, 1);
     for (unsigned i = 0; i < 8; ++i) {
-        int x = GX(i) + 1, ovr = ui_override(&st, i);
-        int play_exc = !st.pos || !VISIBLE(st.pos) || ovr;
-        int pend_exc = ui_changing(&st, i) && !(st.pend && VISIBLE(st.pend));
-        if (play_exc) {
-            ui_two(two, source(st.play, i) + 1);
-            if (st.run) { ui_plate(f, x + 1, 0, 11, 6); ui_text(f, two, x + 2, 1, &UI_K5, 0); if (ovr) ui_hline(f, x + 5, 0, 3, 0); }
-            else ui_text(f, two, x + 2, 1, &UI_K5, 1);
-        } else if (pend_exc) {
-            ui_two(two, source(st.req, i) + 1);
-            ui_hline(f, x, 0, 13, 1); ui_vline(f, x, 0, 6, 1); ui_vline(f, x + 12, 0, 6, 1); ui_text(f, two, x + 2, 1, &UI_K5, 1);
+        int x = GX(i) + 1, play = play_exc >> i & 1;
+        char t[3] = {'T', (char)('1' + i), 0};
+        int tx = GX(i) + 4;
+        if (play && st.run) {                                   /* playing from a Row out of view */
+            ui_plate(f, x + 1, 0, 11, 6); ui_text(f, t, tx, 1, &UI_K5, 0);
+            if (!ui_from(st.op, i)) ui_hline(f, x + 5, 0, 3, 0);  /* notch: no Row origin (override) */
         } else {
-            char t[3] = {'T', (char)('1' + i), 0}; ui_text(f, t, GX(i) + 4, 1, &UI_K5, 1);
+            if (play) ui_dotted(f, x + 1, 0, 11, 6);
+            ui_text(f, t, tx, 1, &UI_K5, 1);
         }
+        if (pend_exc >> i & 1) { ui_hline(f, x, 0, 13, 1); ui_vline(f, x, 0, 6, 1); ui_vline(f, x + 12, 0, 6, 1); }
     }
     for (unsigned k = 0; k < UI_ROWS; ++k) {
         unsigned r = first + k + 1, def = !!(defined & (1u << (r - 1)));
@@ -275,8 +294,8 @@ static void panorama_draw(unsigned char *f)
         for (unsigned i = 0; i < 8; ++i) {
             int x = GX(i) + 1;
             unsigned value = source(rows[r - 1], i);
-            int lit = def && r == st.pos && !ui_override(&st, i);       /* only the real origin lights */
-            int pend = st.pend == r && ui_changing(&st, i);
+            int lit = def && ui_from(st.op, i) == r;                    /* only the real origin lights */
+            int pend = ui_from(st.oq, i) == r && ui_moving(&st, i);
             if (lit && st.run && !pend) { ui_plate(f, x + 1, y + 1, 11, 7); ui_two(two, value + 1); ui_text(f, two, x + 2, y + 2, &UI_K5, 0); }
             else {
                 if (pend) ui_rect(f, x, y, 13, 9);
