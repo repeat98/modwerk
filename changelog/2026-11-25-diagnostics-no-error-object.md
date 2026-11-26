@@ -1,0 +1,1 @@
+Shared diagnostics now tell a browser error that comes without an error object (`NoErrorObject`) from one the site's code threw. Errors from browser extensions, scripts from other sites and browser notices arrive without one, and until now they were counted as `OtherError` together with real site errors.

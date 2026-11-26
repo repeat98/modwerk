@@ -14,6 +14,7 @@ export const ownerCredit = (text: string) => text.replace(/Jannik A(?:ss|ß)falg
 export const DISPLAY_AUTHORS: Readonly<Record<string, Required<ModuleContributor>>> = {
   'airwindows-chorus': { github: 'airwindows', name: 'Chris Johnson' },
   mackity: { github: 'airwindows', name: 'Chris Johnson' },
+  midiverb: { github: 'emeb', name: 'Eric Brombaugh' },
 }
 
 export const contributorSearchText = (contributors?: readonly ModuleContributor[]) => contributors?.map(person => person.github + ' ' + (person.name ?? '')).join(' ') ?? ''

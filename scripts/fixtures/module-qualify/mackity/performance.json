@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "module": "mackity",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "617cb4e6beee171d3ba2be4883e9553dfa29aac13739768327a6af6aadfe0974",
+  "kind": "dsp",
+  "cycles": {
+    "unit": "instructions/sample",
+    "static": 251,
+    "measured": 228.2,
+    "instancesPerCore": 4,
+    "method": "static: perf.py, by the rule tools/build/cycle_count.py prices a straight-line loop with (one cycle a word): the per-sample loop's 21 words plus twice the 115-word channel routine it calls, 251 cycles/sample; the routine has no branch and the loop no nested do or rep. The per-call setup (62 words: knob decode, seeding, the glides' snap) runs once a call and is not in this floor; bsr/rts pipeline cost is not modelled. measured: perf.py, executed instructions from dsp_host's meter, one instance on verify.py's synthetic image (no null-stub subtraction), 4,096 blocks of 16 frames of stereo noise each: fixed knobs at the defaults (TRIM 13, PAD 127) and the dearest setting (TRIM 127), and a moving pattern (both knobs swept by triangles and jumped at random every 37 blocks), each unsplit and with a trig split at every position 1-15: 48 cases. Unsplit 225.30 in every case (the sample loop has no conditional branch); worst 228.20 with a split of 1 frame, where the setup runs twice a block. Executed instructions in dsp_host, not chip cycles; no stalls modelled."
+  },
+  "stock": {
+    "comparator": "LO-FI",
+    "comparatorWorst": 290.06,
+    "dearestWorst": 330.94,
+    "baseline": "LOFI2's record (perf.py bench on the original image, the same stock image): LO-FI through fixed, moving and trig-split-1-15 cases, worst 290.06, unsplit 275.44; DJ EQ, the dearest stock effect, 330.94 with splits, 293.38 unsplit, as benchmark_stock_dsp.py's results.json. Not re-run for Mackity; its own cases match those (fixed, moving, a split at every position 1-15).",
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "justification": "LO-FI is the stock effect closest in function (its distortion stage). Mackity's worst, 228.20, is 0.79x LO-FI's 290.06 and 0.69x DJ EQ's 330.94; unsplit 225.30 against 275.44 and 293.38. It does upstream's whole algorithm: two 48-bit one-pole high-passes, two direct-form biquads, the clip and the fifth-order curve, per channel."
+  },
+  "stress": {
+    "instancesPerCore": 4,
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "lockedSlots": 12,
+    "seconds": 2,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "perf.py --stress: stress_project.py needs an Octatrack template project, so the load is driven straight into dsp_host on verify.py's synthetic image with both cores (-memB, -ctxB): eight Mackity instances, four a core, each on its own stem (decaying noise bursts, a full-scale square, a 20 Hz-20 kHz sweep, full-scale noise, impulses, full-scale DC steps, silence, a three-note chord) for 2 s plus a 2 s tail; all twelve parameter words given a new value every block through -paramfile: three LFOs (triangles on TRIM and PAD with a random jump every 37 blocks, a square on slot 2) and random values on slots 3-11. Mackity has two knobs and reads only slots 0 and 1; the other ten change to show that traffic on slots it does not read leaves it alone; trig splits of 1, 3, 7, 8, 12 and 15 frames on six instances; -guard (window 14,336 words an instance) and -dirty 0x5a. Result: host exit 0, no hang; every instance 0 stray write regions and 0 clobbers, guard clean; per-core peak 913.0 and 907.1 executed instructions/sample with four instances each (4 x 228.2). The instance at core 1 position 2 fed silence still put out non-zero samples: the harness writes one word a block into that audio block, as a do-nothing init/proc module in the same layout shows (1,000 non-zero samples in 1,000 blocks), so it is not Mackity's. It exercises the DSP side only: the firmware's LFO and lock delivery, Part switches and the ColdFire side are not in it."
+  }
+}

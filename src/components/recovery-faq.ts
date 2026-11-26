@@ -11,4 +11,5 @@ export const RECOVERY_FAQ: Record<RecoveryMachine, string> = {
   digitone: 'digi-recovery',
   'analog-rytm-mkii': 'digi-recovery',
   'digitone-ii': 'digi-recovery',
+  'model-cycles': 'cycles-recovery',
 }

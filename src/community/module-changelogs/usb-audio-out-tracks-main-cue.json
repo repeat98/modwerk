@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.4.1-experimental",
+    "date": "2026-11-24",
+    "changes": [
+      "INPUTS for Windows: with AB, CD or ABCD on, Windows stopped the Octatrack's audio device with Code 10. The computer now sends its audio at its own clock, the USB timing Windows supports.",
+      "Tested on Windows 11 with AB and ABCD; not yet confirmed on a Windows 10 computer or on macOS.",
+      "The Octatrack evens out the small speed difference between the computer's clock and its own, one sample at a time and smoothed over a third of a millisecond, so the inputs never run dry or overflow.",
+      "INPUTS OFF and every output layout work as before. An Octatrack running 0.4.0 gets this version with its next sync."
+    ]
+  },
+  {
     "version": "0.4.0-experimental",
     "date": "2026-11-23",
     "changes": [

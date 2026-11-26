@@ -1,0 +1,1 @@
+Docs: four lessons from Midiverb I/II's first release. Forcing stock's switch past five positions crashes the unit. Stock's FX2 buffer map is given for multi-instance stress runs. A first release runs the test procedure as a draft. And a new effect's USB packages are built without `--stock`.

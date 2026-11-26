@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "core-mc-v0.3",
+  "about": "Modwerk site-owned package imported from elekloader/elekloader release v0.11.0: the Model:Cycles core for OS 1.13 by drumkilla, with the firmware locations (0.2) and ev_boot (0.3), built from mods/core-mc at f20ffda. Kit 0.7.0's web catalog does not list it. It is the release the Model:Cycles base started from (sdk/machines/model-cycles/elekloader/base.json, reference).",
+  "cores": [
+    {
+      "file": "core-mc-0.3.elemod",
+      "sha256": "e214e171a8bfd13f67ceaac66ff3ce3b899372722fdc582274c43a6db74065c0",
+      "id": "core",
+      "version": "0.3",
+      "device": "model-cycles",
+      "os": "1.13",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "elekloader/elekloader",
+        "tag": "v0.11.0"
+      }
+    }
+  ],
+  "mods": []
+}
