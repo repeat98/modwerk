@@ -1554,11 +1554,27 @@ QPERF_UI static void lengthen(void *trk, char *locks, int length, int steps)
 static struct {
     int active, i, wrote, steps;
     int pending, pending_pos, at_wrap;  // waiting for the loop's start; the try made there
+    int late;                           // it has waited a loop already: no second wait
+    int aborted, kit_was;               // ended early; a kit change already pending at the start
+    unsigned sum;                       // the lock tables as the write began
     unsigned tracks, skipped, scenes, longer;
     int length[FX_TRACK + 1], from[FX_TRACK + 1];   // each track's steps for the write, and before it
     char *data;                         // the pattern's lock matrix
     word_t pattern, steps_pattern;
 } apply_job;
+
+// The performance and scene lock tables' fingerprint: a job that runs over several ticks
+// ends early if a lock is edited meanwhile (its rows and room were worked out at the start).
+QPERF_UI static unsigned tables_sum(const unsigned char *table, const unsigned char *st)
+{
+    unsigned sum = 0;
+    int i;
+    for (i = 0; i < SLOTS * SLOT_BYTES; i++)
+        sum = sum * 31u + table[i];
+    for (i = 0; i < SCENE_SLOTS * SLOT_BYTES; i++)
+        sum = sum * 31u + st[i];
+    return sum;
+}
 
 QPERF_UI static void apply_job_end(void)
 {
@@ -1566,8 +1582,9 @@ QPERF_UI static void apply_job_end(void)
     unsigned skipped = apply_job.skipped, scenes = apply_job.scenes;
     int track;
     apply_job.active = 0;
+    apply_job.late = 0;
     release_driven();
-    if (scenes) {                       // the steps now hold the take's scenes: one still engaged
+    if (scenes && !apply_job.aborted) { // the steps now hold the take's scenes: one still engaged
         int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);   // would lock every step over them
         if (active >= 0 && (scenes >> active & 1)) {
             ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
@@ -1577,7 +1594,9 @@ QPERF_UI static void apply_job_end(void)
     }
     wipe();
     hot.perf_rec_busy = 0;
-    if (skipped) {
+    if (apply_job.aborted) {            // another kit or pattern, or a lock edited meanwhile
+        show(apply_job.wrote ? "APPLY CUT SHORT" : "NOTHING TO APPLY");
+    } else if (skipped) {
         // Moves written where they fit: say how many tracks could not take them.
         const char *tail;
         char *out = message;
@@ -1603,18 +1622,37 @@ QPERF_UI static void apply_job_step(void)
     const unsigned char *table = lock_table((void *)KIT_PERF(kit));
     const unsigned char *st = scene_table(kit);
     int track;
-    if (kit_changed || PATTERN_OF(PROJECT_SINGLETON()) != apply_job.pattern
-        || live_pattern_data() != apply_job.steps_pattern)
-        apply_job.i = SLOTS + SCENE_SLOTS, apply_job.longer = 0;
+    if ((kit_changed && !apply_job.kit_was) || PATTERN_OF(PROJECT_SINGLETON()) != apply_job.pattern
+        || live_pattern_data() != apply_job.steps_pattern || tables_sum(table, st) != apply_job.sum) {
+        apply_job.i = SLOTS + SCENE_SLOTS;
+        apply_job.longer = 0;
+        apply_job.aborted = 1;
+    }
     apply_cost = 0;
-    // The tracks to lengthen first, a few a go: a row is written at its track's new length.
-    for (track = 0; track <= FX_TRACK && apply_cost < APPLY_BUDGET; track++)
-        if (apply_job.longer >> track & 1) {
-            lengthen((void *)PATTERN_TRACK(apply_job.pattern, track), apply_job.data,
-                     apply_job.from[track], apply_job.steps);
-            apply_job.longer &= ~(1u << track);
-            apply_cost += LENGTHEN_COST;
+    // The tracks to lengthen first, the shortest first, a few a go: a row is written at its
+    // track's new length. Playing, a track stays on the pattern's steps only if it is
+    // lengthened while the loop is still within the track's own length: past that the job
+    // waits for the next loop start, once.
+    for (;;) {
+        int best = -1;
+        for (track = 0; track <= FX_TRACK; track++)
+            if ((apply_job.longer >> track & 1) && (best < 0 || apply_job.from[track] < apply_job.from[best]))
+                best = track;
+        if (best < 0 || apply_cost >= APPLY_BUDGET)
+            break;
+        if (playing() && !apply_job.late && position() / POINTS >= apply_job.from[best]) {
+            apply_job.active = 0;
+            apply_job.late = 1;
+            apply_job.pending = 1;
+            apply_job.pending_pos = position();
+            hot.perf_rec_busy = 0;
+            return;
         }
+        lengthen((void *)PATTERN_TRACK(apply_job.pattern, best), apply_job.data,
+                 apply_job.from[best], apply_job.steps);
+        apply_job.longer &= ~(1u << best);
+        apply_cost += LENGTHEN_COST;
+    }
     if (apply_job.longer)
         return;
     while (apply_job.i < SLOTS + SCENE_SLOTS && apply_cost < APPLY_BUDGET) {
@@ -1711,6 +1749,7 @@ QPERF_UI static void apply_perf_rec(void)
     // the transport restarts. So with a track to lengthen the write waits for the loop to
     // come round (the tick); the take keeps playing until then.
     if (longer && playing() && !apply_job.at_wrap) {
+        apply_job.late = 0;
         apply_job.pending = 1;
         apply_job.pending_pos = position();
         show("APPLY AT LOOP START");
@@ -1733,7 +1772,11 @@ QPERF_UI static void apply_perf_rec(void)
     apply_job.steps_pattern = steps_pattern;
     for (track = 0; track <= FX_TRACK; track++)
         apply_job.length[track] = length[track];
+    apply_job.sum = tables_sum(table, st);
+    apply_job.kit_was = kit_changed;
+    apply_job.aborted = 0;
     apply_job.active = 1;
+    release_driven();                   // the amounts at rest: written steps hold the moves now
     apply_job_step();                   // all of it now, unless the budget stops it for the tick
 }
 
@@ -2120,7 +2163,9 @@ QPERF_UI void qperf_tick(void *ctrl)
     else {
         if (apply_job.pending) {
             int pos = position();
-            if (!playing() || pos < apply_job.pending_pos) {    // stopped, or the loop came round
+            // Stopped, or the loop came round: a whole step back at least, since the tick's
+            // read of the position can be cut and come out up to a step ahead.
+            if (!playing() || apply_job.pending_pos - pos >= POINTS) {
                 apply_job.pending = 0;
                 apply_job.at_wrap = 1;
                 scene_lane_sync();
@@ -2129,7 +2174,7 @@ QPERF_UI void qperf_tick(void *ctrl)
                 if (!apply_job.active)
                     hot.perf_rec_busy = 0;
                 apply_job.at_wrap = 0;
-            } else
+            } else if (pos > apply_job.pending_pos)
                 apply_job.pending_pos = pos;
         }
         if (!apply_job.active)
