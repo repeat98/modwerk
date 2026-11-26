@@ -1069,6 +1069,7 @@ QMA_UI static void scene_apply(void)
     }
     t = ((table_t)vcall(scenes, SCENES_TABLE))(scenes);
     scene_applied.count = 0;
+    scene_applied.valid = 0;            // an apply that finds nothing leaves no undo behind
     for (i = 0; i < SCENE_LOCKS; i++, t += 5) {
         int track = t[2], param = t[3], lock = (short)(t[0] << 8 | t[1]), old;
         if (track > FX_TRACK || (signed char)t[4] != scene)
