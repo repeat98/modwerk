@@ -1,0 +1,1 @@
+Digitakt II, for module developers: a conditional return in sound-chip code (`IF cond RTS`) now works when its condition fails. Modwerk's assembler wrote it in a form the chip only handled when it returned, so code that ran past it froze the unit (Morpha's FOLD warp, on a unit). It now writes the plain form; unconditional returns behave as before. Checked in the emulator.

@@ -111,6 +111,18 @@ describe('module contract v3', () => {
     const derive = { kind: 'fast_audio', note: 'Synthetic', release: '1.54', releases: ['1.53'], block: ['0x40001000', '0x40001008'], sram: ['0x80003360', '0x80008000'], callSites: [] }
     expect(() => parseElemodBuild({ ...build, derive }, document)).toThrow('supported releases including the base')
   })
+
+  it('takes a machine module\'s sound-chip player for the machine types it claims', () => {
+    const base = parse(template())
+    const document = { ...base, platform: { ...base.platform, claims: ['machine:7'] } } as typeof base
+    const build = { ...JSON.parse(readFileSync(resolve('sdk/templates/elemod/build.json'), 'utf8').replace('__RELEASE__', '1.54')), claims: ['machine:7'] }
+    const sharc = { source: 'src/player.sharc', players: [{ type: 7, entry: 'grain_player' }] }
+    expect(parseElemodBuild({ ...build, sharc }, document).sharc).toEqual(sharc)
+    expect(parseElemodBuild(build, document).sharc).toBeUndefined()
+    expect(() => parseElemodBuild({ ...build, sharc: { ...sharc, players: [{ type: 8, entry: 'grain_player' }] } }, document)).toThrow('machine:8')
+    expect(() => parseElemodBuild({ ...build, sharc: { ...sharc, players: [{ type: 3, entry: 'grain_player' }] } }, document)).toThrow('7 to 10')
+    expect(() => parseElemodBuild({ ...build, sharc: { ...sharc, source: 'src/player.s' } }, document)).toThrow('.sharc source')
+  })
 })
 
 describe('module contract v3, zdl (Zoom effect files)', () => {
