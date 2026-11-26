@@ -47,3 +47,7 @@ All of this stays on the developer's computer; the original 1.40C never enters t
 - **Sidechain Compressor** needs the firmware's track-level bus for its key.
 - **Digitakt and Digitone modules** have no audio-capable emulator in the SDK.
 - Modules that act only on MIDI, scenes or settings have no sound of their own.
+
+## Videos
+
+A module's own YouTube video, published by its author or with the author's agreement, is listed in `src/catalog/module-videos.ts`: the video ID, its title, its channel and optionally one screen capture from the module's `media`. It never goes in the manifest, so adding one rebuilds no package. The video's card opens the Overview tab, and a "Watch the video" link in the header leads to it. The card is drawn from the module's cover art and that capture, and YouTube loads only when someone presses play.
