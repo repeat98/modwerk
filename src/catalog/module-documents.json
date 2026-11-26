@@ -7,7 +7,7 @@
       "id": "miniverb",
       "key": "MINIVERB",
       "name": "Mini Verb",
-      "version": "0.2.3-experimental",
+      "version": "0.2.4-experimental",
       "category": "effects",
       "access": {
         "location": "Audio track FX2 SETUP: Mini Verb in the effect chooser.",
@@ -164,7 +164,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.2.3 output is bit-identical to published 0.2.2 under moving controls, every trigger split and hot input on both DSP cores; its ring wraps at 15,870 words, so it never writes the slot's last 514 words (Sidechain Compressor's key window on T3 and T7): guarded renders show no write past the ring, and the same guard catches 0.2.2. 76 current-source native DSP checks passed. Native/browser parity, isolated packages, hardware and the original THRU noise are not yet verified for this source; see TESTING.md.",
+        "summary": "0.2.4 output is bit-identical to 0.2.3 under the widened identity gate (56 settings: both slots, both payloads, 16-sample blocks, 2 s, ramp, stereo, split, instance state after every block) and to published 0.2.2 in verify.py's 76 checks; it costs about 14 % fewer modeled DSP cycles. An automated unit run on an MKII (device:test with a 120 s soak, device:price) passed; listening, Keep and power cycle are not yet verified for this source; see TESTING.md.",
         "hardwareStatus": "untested",
         "evidenceRevision": "89d189e53192c76d8d3c5e26495578f61316fdf4",
         "gates": [
