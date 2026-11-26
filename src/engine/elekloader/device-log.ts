@@ -41,12 +41,12 @@ function crash(view: DataView, at: number): DeviceCrash | undefined {
     a: words(view, at + 48, 7), sp: view.getUint32(at + 76), stack: words(view, at + 80, 8), code: words(view, at + 116, 8), memory: words(view, at + 148, 8) }
 }
 /** dsp.c's struct stall: magic, count, reason, ticks, report_words, 96 report words, then each core's last packet header
- * (eight 16-bit words a core), the live FX ids and the host ports' status, which are not read here. */
+ * (eight 16-bit words a core), the live FX ids (not read here) and the host ports' status (two 16-bit words). */
 function stall(view: DataView, at: number): DeviceStall | undefined {
   if (view.getUint32(at) !== 0x4d575354) return undefined
   const n = Math.min(view.getUint32(at + 16), 96), header = (core: number) => Array.from({ length: 8 }, (_, i) => view.getUint16(at + 404 + 16 * core + 2 * i))
   return { count: view.getUint32(at + 4), reason: view.getUint32(at + 8), ticks: view.getUint32(at + 12), report: words(view, at + 20, n),
-    ...frames(view, at + STALL_BYTES, view.getUint32(at + 4)), packets: [header(0), header(1)] }
+    ...frames(view, at + STALL_BYTES, view.getUint32(at + 4)), packets: [header(0), header(1)], host: [view.getUint16(at + 452), view.getUint16(at + 454)] }
 }
 /** The trace kept with stall record `count`, in µs, without the frames never written (a stall soon after the start). */
 function frames(view: DataView, at: number, count: number): { frames?: number[] } {
