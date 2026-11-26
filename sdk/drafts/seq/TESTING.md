@@ -30,8 +30,13 @@ The loader reported zero saved modules before and after the trials.
 | Hold CUE, press and release T2 and T3, release CUE, then close with TRACK+PAGE | Stock page after the close. Timed Undo passed at generation 2. |
 | Tap CUE on the track with existing trigs, then press NO twice | CUE opened ARE YOU SURE?. The first NO returned to SEQ. The second NO returned to the stock page. Timed Undo passed at generation 4. |
 
-These MKII trials exercised timed Undo. The standalone `remove` command
-after an accepted installation was exercised in the emulator.
+On 27 Nov, standalone `remove` also passed on the MKII with the same
+package and development twin. The accepted installation showed one live
+and one saved module. Holding CUE through T2/T3 and closing with
+TRACK+PAGE returned the LCD to the stock page. `remove --accept` then ran
+with an empty slot and zero loader refusals, and finished at generation 2
+with zero live and zero saved modules. The trial log reported no crash,
+stall, freeze or skipped track.
 
 ### Emulator rollback after use (26 Nov 2026, draft `fix22`, package `25f5d04f…`)
 
@@ -69,8 +74,7 @@ Package SHA-256 `05120b20ec4f52f321cebd71babf4b536d928bc3a6ba8d10fdadff08248070a
 
 After the same chord on the panel (not the automated `remove` rows), the
 author reported SEQ open/close and stock page behaviour acceptable for this
-build. Automated trial removal after the CUE chord is still open (blocks marking ready;
-retest the standalone `remove` command on the unit with fix36).
+build. The fix36 tests above supersede the removal failures on fix22.
 
 ## Host (26 Nov 2026, branch `module/seq`)
 
