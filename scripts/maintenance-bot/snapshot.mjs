@@ -106,7 +106,7 @@ if (run) {
   writeFileSync(join(dir, 'proposals.json'), JSON.stringify({ actions: [], todos: [], drop: [], items: work.items }))
 }
 const output = process.env.GITHUB_OUTPUT
-if (output) appendFileSync(output, 'run=' + run + '\nfingerprint=' + fingerprint + '\ndown=' + [...new Set(down)].join(', ') + '\n')
+if (output) appendFileSync(output, 'run=' + run + '\nfingerprint=' + fingerprint + '\ndown=' + [...new Set(down)].join(', ') + '\nhard=' + (run ? work.hard.join(' ') : '') + '\n')
 const count = work.light ? work.light.issues.length + work.light.pullRequests.length + work.light.board.length + work.light.discord.length + work.light.forum.length + Number(work.light.shoutbox) : 0
 console.log((state.paused ? 'Paused. ' : '') + prs.length + ' open pull requests, ' + issues.length + ' open issues, ' + threads.length + ' board threads, ' + claims.length + ' claims, ' + rooms.length + ' Discord rooms; '
   + (run ? 'hard lane: ' + work.hard.length + ' pull request(s), light lane: ' + count + ' item(s).' : first && !daily ? 'first pass: recorded what is open.' : 'nothing changed, the model is skipped.'))

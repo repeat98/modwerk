@@ -71,6 +71,16 @@ jobs:
             sleep 15
           done
           exit 1
+      # The hard lane reads each pull request's whole source, not only its diff: the head commit as plain files
+      # under bot/pr/<number>. Nothing in them is installed, built or run, and the model can only read.
+      - if: steps.snapshot.outputs.hard != ''
+        env:
+          HARD: ${{ steps.snapshot.outputs.hard }}
+        run: |
+          for number in $HARD; do
+            case "$number" in *[!0-9]*) continue ;; esac
+            git fetch --quiet --depth=1 origin "pull/$number/head:refs/bot/pr-$number" && git worktree add --quiet --detach "bot/pr/$number" "refs/bot/pr-$number" || echo "The source of #$number could not be fetched; its review reads the diff."
+          done
       # The model gets a read-only token and read-only commands and writes nothing. Its proposals come back as
       # schema-checked structured output: asked to write a file, it skipped the file in about a third of runs.
       # One run per lane that has work: the snapshot wrote bot/light.json and bot/hard.json only for those.

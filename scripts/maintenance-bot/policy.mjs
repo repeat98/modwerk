@@ -27,6 +27,13 @@ const isSdkDoc = file => /^sdk\/.*\.md$/.test(file) && !/(^|\/)AGENTS\.md$/.test
 const CI_PATHS = [/^\.github\//, /^scripts\//, /^package(-lock)?\.json$/, /^\.npmrc$/, /^(vite|vitest|eslint)\.config\.[a-z]+$/, /^tsconfig[^/]*\.json$/]
 /** A recommended answer that waives a rule is never posted without the owner's Approve, whatever the model marked. */
 const WAIVES = /\b(waiv\w*|exception\w*|exempt\w*)\b/i
+/**
+ * A base for any device merges only after its review, never on a timer and whoever opened it (owner, 26 November
+ * 2026): a pull request from or into a `base/…` branch, or one that changes a base's built files. A base's
+ * sources are under sdk/ outside the module folders, which SENSITIVE already covers.
+ */
+const BASE_BRANCH = /^base\//
+const BASE_FILES = [/^public\/(?:base|[a-z0-9-]+-base-packages)\//, /^src\/engine\/assets\/[a-z0-9-]+-base[^/]*$/]
 /** Paths whose merge publishes modules on the site: a release the owner approves every time. */
 const PUBLISHES = [/\/modules\//, /^sdk\/imports\//, /^sdk\/catalog\.json$/, /^src\/catalog\//, /^src\/community\/module-changelogs\//]
 const LINK = /https?:\/\/[^\s)>\]]+/g
@@ -94,7 +101,8 @@ export function classify(proposal, target, existingLabels = new Set()) {
       // asks the owner. The owner marked their own pull request ready, so it merges after a short window.
       const own = target.author === OWNER
       const publishes = (target.files ?? []).some(file => PUBLISHES.some(pattern => pattern.test(file)))
-      const why = publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
+      const base = BASE_BRANCH.test(target.baseRef ?? '') || BASE_BRANCH.test(target.headRef ?? '') || (target.files ?? []).some(file => BASE_FILES.some(pattern => pattern.test(file)))
+      const why = base ? 'a base merges only after its review' : publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
       const method = (target.files ?? []).some(file => file.startsWith('src/catalog/') || /\/modules\//.test(file)) ? 'merge' : 'squash'
       const payload = { kind, number: target.number, head: target.head, method, pin }
       return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS[own ? 'ownMerge' : 'merge'], id: actionId(kind, target.number, target.head), payload }

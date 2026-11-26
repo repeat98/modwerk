@@ -22,7 +22,7 @@ const read = name => JSON.parse(readFileSync(join(dir, name), 'utf8'))
 beforeEach(() => {
   vi.resetModules(); saved = undefined
   dir = mkdtempSync(join(tmpdir(), 'modwerk-snapshot-'))
-  vi.stubEnv('BOT_DIR', dir); vi.stubEnv('BOT_MODE', 'pass'); vi.stubEnv('DISCORD_GUILD_ID', '1'.repeat(18))
+  vi.stubEnv('BOT_DIR', dir); vi.stubEnv('BOT_MODE', 'pass'); vi.stubEnv('DISCORD_GUILD_ID', '1'.repeat(18)); vi.stubEnv('GITHUB_OUTPUT', join(dir, 'output'))
   chat.mockReset().mockRejectedValue(new Error('Discord GET /guilds/' + '1'.repeat(18) + '/channels HTTP 401'))
 })
 afterEach(() => { vi.unstubAllEnvs(); rmSync(dir, { recursive: true, force: true }) })
@@ -44,4 +44,6 @@ it('still reviews pull requests and issues when Discord refuses the sign-in, eac
   // The room Discord could not list keeps its signature, so its messages are still new when Discord is back.
   expect(read('proposals.json')).toMatchObject({ actions: [], items: { d77: 'kept' } })
   expect(saved).toBeUndefined()
+  // The workflow fetches the source of exactly these pull requests for the hard lane.
+  expect(readFileSync(join(dir, 'output'), 'utf8')).toMatch(/^run=true\n.*\ndown=Discord\nhard=5\n$/s)
 })

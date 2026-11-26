@@ -22,6 +22,14 @@ describe('maintenance bot policy', () => {
     for (const file of ['.github/workflows/x.yml', 'scripts/maintenance-bot/policy.mjs', 'migrations/0099_x.sql', 'package-lock.json', 'server/auth.ts', 'sdk/machines/octatrack/base-binding.json', 'sdk/octabam/AGENTS.md']) {
       expect([file, classify(merge(), own({ files: [file] })).tier]).toEqual([file, 'ask'])
     }
+    // A base for any device never merges on a timer: by its branch, into its branch, or by its built files.
+    for (const extra of [{ headRef: 'base/octatrack-next', baseRef: 'main' }, { headRef: 'machine/digitone-ii-link', baseRef: 'base/digitone-ii-next' }, { files: ['public/base/octatrack.json'] }, { files: ['src/engine/assets/octatrack-base.elemod'] }, { headRef: 'docs/x', baseRef: 'base/syntakt-next', files: ['sdk/machines/syntakt/GOAL.md'] }]) {
+      for (const author of ['repeat98', 'alice']) {
+        const decision = classify(merge(), pull({ author, files: ['docs/x.md'], ...extra }))
+        expect([extra, author, decision.tier]).toEqual([extra, author, 'ask'])
+        expect(decision.reason).toContain('Asking because a base merges only after its review.')
+      }
+    }
     // Documentation under sdk/ cannot change what runs.
     expect(classify(merge(), own({ files: ['sdk/machines/digitone-ii/GOAL.md'] })).tier).toBe('window')
     expect(classify(merge(), pull({ files: ['sdk/machines/analog-rytm-mkii/README.md'] }))).toMatchObject({ tier: 'window', windowHours: 12 })
