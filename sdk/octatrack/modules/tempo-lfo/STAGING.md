@@ -22,7 +22,7 @@ Until that Base PR merges (and lea lands with FM Synth migrate), Tempo cannot sh
 
 ### 2. `resources.cpuPrice` via Undo-only `npm run device:price`
 
-Same gate as Seq Pos (MOP-249). mop255 cfmeter is **not** a price. **No USB this turn** — cannot measure.
+**Done** 2026-11-26 DESKTOP: value **0** (% of frame; at rest frame +0, cpu +0) on mwrm `654530b1…` / 852 B. mop255 cfmeter is not a price. See `evidence/cpu-price.json`.
 
 ### 3. USB `.mwrm`
 
@@ -41,7 +41,7 @@ Offline rebuild against Base draft index **63** staged:
 - [x] Honesty: no forged `cpuPrice`
 - [x] Base draft prepared separately (index 63; PR held)
 - [x] USB `.mwrm` row (upstream rebuild vs Base draft — needs `device:price`)
-- [ ] Measured `resources.cpuPrice`
+- [x] Measured `resources.cpuPrice` = **0** (Undo-only `device:price` 2026-11-26; `evidence/cpu-price.json`; honest at-rest +0)
 - [ ] Upstream listing PR
 
 ## Resume order

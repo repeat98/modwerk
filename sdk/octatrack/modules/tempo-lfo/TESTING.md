@@ -160,11 +160,10 @@ Evidence:
 
 Tip-docs only. **No USB. No Accept.** Intended mirror of Micro Timing
 [#2193](https://github.com/repeat98/modwerk/pull/2193) to `repeat98/modwerk`
-**not opened**: upstream tip requires `resources.cpuPrice` with
-`tool` starting `npm run device:price`. Fork pin has none. mop255 cfmeter
-load (287.8/287.8) is **not** a price — do not relabel. Same gate as
-Seq Pos MOP-249. Base draft `cursor/ot-lfo-pmtr-dest-base-a318` @ `9cd7428c4`
-(index **63**; lea deferred) is on the fork; PR held for Jon.
+`resources.cpuPrice` **measured** Undo-only 2026-11-26: value **0** on
+shipped `654530b1…` / 852 B (`evidence/cpu-price.json`). mop255 cfmeter
+is **not** a price. Base PR [#2261](https://github.com/repeat98/modwerk/pull/2261)
+open (index **63**; lea deferred); do not merge Base here.
 
 **Shipped vs Keep package:** hardware/qual cites bind Keep tip
 `643b46c3…` / 724 B (fork base index 31). Staged upstream USB package is
@@ -179,7 +178,8 @@ tip-matched image and rebind `imageSha256`. See
 | Fork pin / Keep / qual / cycles | **PASS** (cite mop253–257; Keep `643b46c3…`) |
 | Staged upstream `.mwrm` | `654530b1…` / 852 B — **not** covered by Keep |
 | Base `ot_lfo_pmtr_dest` on upstream | **Draft** on fork (PR held); not on `main` |
-| Upstream listing PR | **Blocked** — no forged `cpuPrice`; price + qualify on shipped |
+| `resources.cpuPrice` | **0** — Undo-only `device:price` 2026-11-26 on `654530b1…` (`evidence/cpu-price.json`) |
+| Upstream listing PR | **Ready to open** (Keep cites remain fork tip; shipped digest priced) |
 | Accept invent | none |
 
 Evidence:

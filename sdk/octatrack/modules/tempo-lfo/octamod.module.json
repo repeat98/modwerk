@@ -16,10 +16,10 @@
     "label": "TEMPO",
     "family": "Sequencer",
     "summary": "Maps project/global tempo to a new LFO PMTR destination, TEMPO, so LFOs can address BPM.",
-    "overview": "Tempo LFO exposes the stock project tempo (BPM × 24 at 0x8000181c, 30–300 BPM) as LFO SETUP PMTR = TEMPO (index 39). Any audio-track LFO can then modulate global tempo with stock depth, waves, locks and scenes. The TEMPO key / LEVEL tempo edit remains the base editor; when an LFO writes TEMPO, the module publishes the mapped BPM into the same project word REPITCH and the frame builder already follow. Index 39 follows the coordinated map 30 PROB … 38 TSTR / 39 TEMPO. This tip does not own track speed (TSPD exists) and does not claim SPOS or Play Modes remapper sites.",
+    "overview": "Tempo LFO exposes the stock project tempo (BPM \u00d7 24 at 0x8000181c, 30\u2013300 BPM) as LFO SETUP PMTR = TEMPO (index 39). Any audio-track LFO can then modulate global tempo with stock depth, waves, locks and scenes. The TEMPO key / LEVEL tempo edit remains the base editor; when an LFO writes TEMPO, the module publishes the mapped BPM into the same project word REPITCH and the frame builder already follow. Index 39 follows the coordinated map 30 PROB \u2026 38 TSTR / 39 TEMPO. This tip does not own track speed (TSPD exists) and does not claim SPOS or Play Modes remapper sites.",
     "highlights": [
       "LFO SETUP: PMTR = TEMPO (index 39)",
-      "Publishes into stock PROJECT_BPM24 (30–300 BPM)",
+      "Publishes into stock PROJECT_BPM24 (30\u2013300 BPM)",
       "Base edit stays the TEMPO key / LEVEL tempo",
       "Does not own TSPD or SPOS / Play Modes remappers"
     ],
@@ -29,7 +29,7 @@
     ]
   },
   "access": {
-    "location": "TEMPO key for the base; LFO SETUP → PMTR = TEMPO for modulation",
+    "location": "TEMPO key for the base; LFO SETUP \u2192 PMTR = TEMPO for modulation",
     "steps": [
       "Select an audio track with a clear rhythm.",
       "Hold the TEMPO key and set a known BPM (for example 120).",
@@ -46,7 +46,7 @@
       "name": "TEMPO",
       "default": 42,
       "count": 128,
-      "doc": "Project/global tempo published for LFO PMTR TEMPO. High byte 0–127 maps onto 30–300 BPM (stock PROJECT_BPM24). Base edited with the TEMPO key; LFO writes the live shadow word.",
+      "doc": "Project/global tempo published for LFO PMTR TEMPO. High byte 0\u2013127 maps onto 30\u2013300 BPM (stock PROJECT_BPM24). Base edited with the TEMPO key; LFO writes the live shadow word.",
       "labels": null
     }
   ],
@@ -58,12 +58,12 @@
     "uiClaims": [],
     "limitations": [
       "USB packages contribute ot_lfo_pmtr_dest (TEMPO index 39) and drop base-owned count/formatter/beq/lea alone-sink sites. Peer LFO drafts stay listed in conflicts until modules:compat proves coexistence. See docs/OCTATRACK_LFO_PMTR_EXTENSION.md.",
-      "First Modwerk catalog release (MOP-257): tests.qualification placed under Jon owner review (G); sdk/catalog.json pin authorized. Cite Keep mop253/254 package 643b46c3…; measured 624 mop255; qual tip mop256.",
+      "First Modwerk catalog release (MOP-257): tests.qualification placed under Jon owner review (G); sdk/catalog.json pin authorized. Cite Keep mop253/254 package 643b46c3\u2026; measured 624 mop255; qual tip mop256.",
       "Audio tracks only; MIDI tracks and MIDI LFOs unwired in 0.1.0.",
       "Publishes global PROJECT_BPM24; last writing track wins. Does not own per-track scale/speed (use TSPD).",
       "Does not claim ev_audio_step / Play Modes / SPOS remapper sites.",
-      "Flash/code package totals unmeasured on tip (authored .bss 24 B tip-wired). Emulator instruction counts ≠ chip wall-clock.",
-      "Upstream first-release staging (MOP-273): Base draft cursor/ot-lfo-pmtr-dest-base-a318 @9cd7428c4 (index 63; lea deferred; PR held). USB .mwrm rebuilt offline 654530b1…/852 B against that draft (not Keep 643b46c3…). resources.cpuPrice via npm run device:price not yet measured — do not invent.",
+      "Flash/code package totals unmeasured on tip (authored .bss 24 B tip-wired). Emulator instruction counts \u2260 chip wall-clock.",
+      "Upstream first-release staging (MOP-273): Base PR #2261 (index 63; lea deferred). USB .mwrm 654530b1\u2026/852 B. resources.cpuPrice = 0 via Undo-only npm run device:price 2026-11-26 (evidence/cpu-price.json); honest at-rest +0 \u2014 do not invent a different price.",
       "Peer LFO / sequencer modules (including seq-pos) stay conflict-listed until they are listed on upstream and modules:compat proves coexistence; conflicts array left empty while those ids are absent from sdk/octatrack/modules (modules:generate refuses unknown conflict ids)."
     ]
   },
@@ -84,7 +84,7 @@
       "value": 624,
       "unit": "cycles/event",
       "method": "emulator",
-      "conditions": "Static + measured 39 authored ×16 V4 = 624 (mop213/mop255). Budget 4790 peer cite. Emulator ≠ chip.",
+      "conditions": "Static + measured 39 authored \u00d716 V4 = 624 (mop213/mop255). Budget 4790 peer cite. Emulator \u2260 chip.",
       "source": "evidence/performance.json"
     },
     "impact": {
@@ -120,7 +120,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "mop252 audible Undo PASS; mop253 Keep Accept PASS; mop254 reboot PASS; mop255 measured 624 + load/stress; mop256 A–G honesty; mop257 tests.qualification placed (Jon owner-review G) + fork catalog pin. Upstream listing PR blocked on measured cpuPrice (device:price) + shipped USB .mwrm (MOP-273). No Accept invent.",
+    "summary": "mop252 audible Undo PASS; mop253 Keep Accept PASS; mop254 reboot PASS; mop255 measured 624 + load/stress; mop256 A\u2013G honesty; mop257 tests.qualification placed (Jon owner-review G) + fork catalog pin. Upstream listing: cpuPrice 0 measured Undo-only device:price 2026-11-26 on mwrm 654530b1\u2026 (MOP-273). No Accept invent.",
     "hardwareStatus": "reported",
     "evidenceRevision": "2423e32b3cb6c8823f5caeb1864ecb9a04f4bd74",
     "gates": [
@@ -140,11 +140,11 @@
           "unit": "cycles/event",
           "method": "emulator",
           "conditions": {
-            "parameterExtremes": "High byte 0 / 64 / 127 on tm_bpm_w[0]; out-of-range after_store pointer (tm_bpm_w-2) early exit. MOP-255 ot_emu PC-watch: high0/64/127 authored 39 → 624 cycles (matches static); OOR authored 9 → 144. PROJECT_BPM24 clamps cited from map only.",
-            "parameterModulation": "LFO DEP / WAVE / MULT / TRIG into TEMPO; p-locks and scenes that move DEP; MIDI CC unused this place — justified unused.",
+            "parameterExtremes": "High byte 0 / 64 / 127 on tm_bpm_w[0]; out-of-range after_store pointer (tm_bpm_w-2) early exit. MOP-255 ot_emu PC-watch: high0/64/127 authored 39 \u2192 624 cycles (matches static); OOR authored 9 \u2192 144. PROJECT_BPM24 clamps cited from map only.",
+            "parameterModulation": "LFO DEP / WAVE / MULT / TRIG into TEMPO; p-locks and scenes that move DEP; MIDI CC unused this place \u2014 justified unused.",
             "modeSwitching": "Undo leave [] (mop252); Keep Accept + reboot (mop253/254). Part / PMTR away / DEP=0 cited as prior smoke, not separate qual stress.",
-            "maxLoad": "Emulator flood ~3000 three-byte/s + clock 240 BPM; mop255 stress 62 s REACHED (170887 frames; hangs 0; dropped 0; no Part callAsMain). cfmeter load stock/module longest 287.8/287.8 µs under matched flood (TEMPO store-driven; no measurable frame-ISR delta).",
-            "inputConditions": "ot_emu card-backed project; DRAM trampoline into tm_on_store; mop252 audible WAV A/B onset Δ +764. Emulator instruction counts ≠ chip wall-clock. Budget 4790 = 10% of 362.8 µs frame @ 132 MHz (peer cite; owner-reviewed at place)."
+            "maxLoad": "Emulator flood ~3000 three-byte/s + clock 240 BPM; mop255 stress 62 s REACHED (170887 frames; hangs 0; dropped 0; no Part callAsMain). cfmeter load stock/module longest 287.8/287.8 \u00b5s under matched flood (TEMPO store-driven; no measurable frame-ISR delta).",
+            "inputConditions": "ot_emu card-backed project; DRAM trampoline into tm_on_store; mop252 audible WAV A/B onset \u0394 +764. Emulator instruction counts \u2260 chip wall-clock. Budget 4790 = 10% of 362.8 \u00b5s frame @ 132 MHz (peer cite; owner-reviewed at place)."
           },
           "report": "TESTING.md"
         }
@@ -164,7 +164,7 @@
         "sharedBytes": 24,
         "maxInstances": 1,
         "totalBytes": 24,
-        "conditions": "Authored .bss 16+8=24 bytes from unit.s — source-visible (MOP-257 place). Keep USB package 643b46c3… / 724 B cited as package identity only — flash/code size remains unmeasured on tip (no flash region tip-wired). No DSP.",
+        "conditions": "Authored .bss 16+8=24 bytes from unit.s \u2014 source-visible (MOP-257 place). Keep USB package 643b46c3\u2026 / 724 B cited as package identity only \u2014 flash/code size remains unmeasured on tip (no flash region tip-wired). No DSP.",
         "report": "TESTING.md"
       },
       "hardware": {
@@ -175,11 +175,11 @@
         "tester": "jonathanwardle1992-beep",
         "sourceRevision": "2423e32b3cb6c8823f5caeb1864ecb9a04f4bd74",
         "imageSha256": "643b46c3e1b694b4c8d290d240762a1f415005e059f986a3ba790be8326c893c",
-        "summary": "Owner-authorized tip placement (MOP-257 / Jon owner-review G) after mop256 honesty. Cite mop205 USB smoke SETUP TEMPO + words/BPM24; mop252 Keep-safe Undo audibleProven (onset Δ +764; Undo []); mop253 Keep Accept on tip24 package 643b46c3… (724 B; self-test PASS; companions preserved); mop254 reboot persistence PASS; mop255 ot_emu measured 624 (= static) + cfmeter load 287.8/287.8 + stress 62 s REACHED. Memory tip-wired authored .bss 24 B; flash unmeasured. Catalog PINNED (MOP-257; authorized with place).",
+        "summary": "Owner-authorized tip placement (MOP-257 / Jon owner-review G) after mop256 honesty. Cite mop205 USB smoke SETUP TEMPO + words/BPM24; mop252 Keep-safe Undo audibleProven (onset \u0394 +764; Undo []); mop253 Keep Accept on tip24 package 643b46c3\u2026 (724 B; self-test PASS; companions preserved); mop254 reboot persistence PASS; mop255 ot_emu measured 624 (= static) + cfmeter load 287.8/287.8 + stress 62 s REACHED. Memory tip-wired authored .bss 24 B; flash unmeasured. Catalog PINNED (MOP-257; authorized with place).",
         "limitations": [
-          "imageSha256 binds the Keep USB tip package digest 643b46c3… (mop205/253), not the private mop255 ot_emu bus image (private; not in-repo).",
-          "Memory tip-wires source-visible .bss 24 B only; linked-image flash/code byte map was not measured on tip — package file 724 B is identity, not a region account.",
-          "Budget 4790 is owner-reviewed peer 10% frame envelope (362.8 µs @ 132 MHz); measured 624 sits under it. Emulator instruction counts are not chip wall-clock.",
+          "imageSha256 binds the Keep USB tip package digest 643b46c3\u2026 (mop205/253), not the private mop255 ot_emu bus image (private; not in-repo).",
+          "Memory tip-wires source-visible .bss 24 B only; linked-image flash/code byte map was not measured on tip \u2014 package file 724 B is identity, not a region account.",
+          "Budget 4790 is owner-reviewed peer 10% frame envelope (362.8 \u00b5s @ 132 MHz); measured 624 sits under it. Emulator instruction counts are not chip wall-clock.",
           "mop255 stress/load are emulator-only; eight-track hardware stress with three LFOs on TEMPO was not a separate qual stress pass.",
           "SETUP LCD glyph OCR for the TEMPO label remains Open (panel PNGs retained; not OCR Proven).",
           "First catalog release (MOP-257) after mop256 honesty + Jon place/pin auth; no Accept invent this tip."
@@ -224,7 +224,7 @@
         "firmware": "1.40C",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "643b46c3e1b694b4c8d290d240762a1f415005e059f986a3ba790be8326c893c",
-        "setup": "Hardware USB tip package 643b46c3…; SETUP PMTR TEMPO (index 39); monochrome LCD capture mop205 03-setup-pmtr-tempo.png. Not OCR Proven."
+        "setup": "Hardware USB tip package 643b46c3\u2026; SETUP PMTR TEMPO (index 39); monochrome LCD capture mop205 03-setup-pmtr-tempo.png. Not OCR Proven."
       }
     },
     {
@@ -241,7 +241,7 @@
         "firmware": "1.40C",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "643b46c3e1b694b4c8d290d240762a1f415005e059f986a3ba790be8326c893c",
-        "setup": "Hardware USB tip twin mid-trial mop252 05-pmtr-B-tempo.png; audibleProven onset Δ +764; Undo []."
+        "setup": "Hardware USB tip twin mid-trial mop252 05-pmtr-B-tempo.png; audibleProven onset \u0394 +764; Undo []."
       }
     },
     {
