@@ -34,9 +34,9 @@
     "base": "started",
     "link": "started",
     "flash": "started",
-    "loader": "started",
+    "loader": "done",
     "diagnostics": "started",
-    "tools": "started"
+    "tools": "done"
   },
   "research": [
     {

@@ -346,7 +346,9 @@ Model:Cycles; the Rytm's `cpu` is the audio block's share of its period, its
 `device_keep` and `device_undo` load a runtime package on it as on the
 Model:Cycles: the same link commands and runtime loader
 ([LINK.md](../sdk/machines/analog-rytm-mkii/LINK.md#loading-modules)); a base from
-before the loader refuses the review (`hello was not confirmed`). Tests run against a fake unit (`scripts/rytm-device.test.mjs`). On a unit (Nathaniel Pavel's MKII, 25
+before the loader refuses the review (`hello was not confirmed`). On a unit (25 November 2026, the release base
+SR09 from RAM): review, trial, Undo and Keep of `hello.mwrm`, the trial held by the pings
+([record](verification/2026-11-25-rytm-runtime-loader.md)). Tests run against a fake unit (`scripts/rytm-device.test.mjs`). On a unit (Nathaniel Pavel's MKII, 25
 November 2026): on SR01 (a development base with the link change, RAM-booted) `device_status` gave the set identity
 and named SR01's `.syx` in `--elektron-images`, `device_load` 58.5 %, `device_log` START and BASE, and
 `device_review` said the Rytm has no loader; on an image from before the change, the identity with no set and load
