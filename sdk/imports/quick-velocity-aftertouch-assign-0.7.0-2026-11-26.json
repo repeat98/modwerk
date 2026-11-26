@@ -9,7 +9,7 @@
     "Hold LFO and press PLAY, RECORD or STOP on any page to clear, copy or paste the LFO page.",
     "Recorded scene changes go to the nearest step when LIVE RECORDING is quantized; performance moves stay as played."
   ],
-  "runtimeSourceSha256": "9ce44a272d2a1e5666bb0f014ade4067b02f35b43da452baeb4b7cf24dc12e87",
+  "runtimeSourceSha256": "13ce31fd4c45fec2385d2200d07fd524e49366e82dc7b39ee869ac6accbe7304",
   "packages": [
     {
       "os": "1.74",
