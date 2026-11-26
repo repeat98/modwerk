@@ -16,14 +16,14 @@
     "label": "AMP + CAB",
     "family": "Saturation",
     "summary": "An amp and speaker cabinet for any track: drive, a three-band tone stack and four cabinets.",
-    "overview": "Like a guitar amp it is mono: both sides are summed, run through a 90 Hz high-pass and a 7 kHz band-limit, then at twice the sample rate into GAIN and a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. A tone stack splits the sound at 300 Hz and 2.2 kHz (BASS, MID and TREB set each band, flat at the centre), then one of four speaker cabinets or none, a DC blocker and LEV, to both outputs. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
+    "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BRIT, HGAIN or SOLID. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, a DC blocker and LEV, to both outputs. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
     "highlights": [
-      "GAIN from clean to fully driven at about the same volume, with a curve that rounds off instead of hard clipping",
-      "BASS, MID and TREB each cut to silence or boost up to +6 dB, and are exactly flat at the centre",
+      "Four amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BRIT (chiming crunch with even harmonics), HGAIN (tight lows, mids forward, the most drive) and SOLID (flat, clean, hard clip at the top)",
+      "GAIN from clean to fully driven at about the same volume, in every voice",
       "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off"
     ],
     "usage": [
-      "Pick COMBO in a track's FX1 or FX2 list, start with GAIN around 40, then turn CAB to taste."
+      "Pick COMBO in a track's FX1 or FX2 list, choose a voice with VOIC on its SETUP page, start with GAIN around 40, then turn CAB to taste."
     ]
   },
   "controls": [
@@ -38,21 +38,21 @@
       "name": "BASS",
       "default": 64,
       "count": 128,
-      "doc": "Lows below 300 Hz: cut to silence at -64, flat at 0, +6 dB at +63",
+      "doc": "Lows below the voice's low split (250 to 400 Hz): cut to silence at -64, flat at 0, +6 dB at +63",
       "labels": null
     },
     {
       "name": "MID",
       "default": 64,
       "count": 128,
-      "doc": "Mids, 300 Hz to 2.2 kHz: cut to silence at -64, flat at 0, +6 dB at +63",
+      "doc": "Mids between the voice's two splits: the same range",
       "labels": null
     },
     {
       "name": "TREB",
       "default": 64,
       "count": 128,
-      "doc": "Highs above 2.2 kHz: cut to silence at -64, flat at 0, +6 dB at +63",
+      "doc": "Highs above the voice's high split (1.6 to 3 kHz): the same range",
       "labels": null
     },
     {
@@ -74,6 +74,18 @@
       "count": 128,
       "doc": "Output level (LEV/64)^2: silence at 0, 0 dB at 64, +12 dB at 127",
       "labels": null
+    },
+    {
+      "name": "VOIC",
+      "default": 1,
+      "count": 4,
+      "doc": "Amp voice: CLEAN, BRIT (chiming crunch), HGAIN (tight high gain) or SOLID (flat, hard clip)",
+      "labels": [
+        "CLEAN",
+        "BRIT",
+        "HGAIN",
+        "SOLID"
+      ]
     }
   ],
   "compatibility": {
@@ -82,11 +94,11 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Experimental draft: rendered bit for bit against its model in dsp_host and installed in the emulator; not yet run on a unit.",
+      "Experimental draft: rendered bit for bit against its model in dsp_host and installed in the emulator; the build before VOIC passed device:test on a unit.",
       "Mono, like a guitar amp: stereo input comes out in mono on both sides.",
       "No free effect id is left for card builds (docs/OCTATRACK_MORE_EFFECT_IDS.md); over USB the base assigns the live id.",
-      "CAB switches its filters at once, so turning it while audio plays can click.",
-      "At high GAIN with loud, bright input some aliasing remains, even at 2x (TESTING.md, Sound quality)."
+      "CAB and VOIC switch their filters at once, so turning them while audio plays can click.",
+      "At high GAIN with loud, bright input some aliasing remains, even at 2x, most in HGAIN (TESTING.md, Sound quality)."
     ],
     "effectId": 10
   },
@@ -122,7 +134,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence and a silent tail, 331.8 instructions a sample. Emulator: installs, draws its page, trial without fault. fx:audit: no DC, no clipping, every knob changes the sound, digital silence after input; aliasing passes at moderate levels, fails loud and bright at high drive. Hardware, stress and CPU price not yet run.",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence and a silent tail in every voice, 342.4 instructions a sample. Emulator: installs, draws both pages, trial without fault. fx:audit per voice: no DC, digital silence after input; aliasing best in CLEAN, worst in HGAIN at high GAIN. Unit (0.1.0 before VOIC): device:test passed, CPU price measured; VOIC not yet run on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

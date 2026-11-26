@@ -1,22 +1,23 @@
 # Combo
 
-Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host, not yet run on a unit.
+Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before VOIC ran on a unit.
 
 ## Overview
 
-COMBO puts a track through an amp and a speaker cabinet. GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
+COMBO puts a track through an amp and a speaker cabinet. VOIC picks one of four amp voices, GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
 
-Signal chain: `(L + R)/2 -> 90 Hz high-pass -> 7 kHz band-limit -> [2x: GAIN -> soft curve] -> level (1/√GAIN × LEV) -> BASS/MID/TREB -> CAB -> 10 Hz DC blocker -> L and R`.
+Signal chain: `(L + R)/2 -> the voice's high-pass and band-limit -> [2x: GAIN -> the voice's curve] -> level (1/√GAIN × LEV) -> BASS/MID/TREB at the voice's splits -> CAB -> 10 Hz DC blocker -> L and R`.
 
-- The high-pass keeps the lowest lows from muddying the drive; the band-limit keeps the curve's harmonics from aliasing as much.
-- The curve is 0.75c - 0.25c³ on the gained signal, limited at full scale, so it flattens smoothly instead of clipping hard. It runs at twice the sample rate (a polyphase half-band filter up and down, halfband.py), which keeps most of the harmonics it makes from folding back as tones that do not follow the note.
+- Each voice (VOIC) sets what reaches the drive (its low cut, and a band-limit whose resonance puts a bump where the voice bites), how hard GAIN drives, the curve's shape and its asymmetry, and the tone stack's splits and centre. They are styles of amp in Modwerk's own design, not models of any product.
+- The band-limit keeps the curve's harmonics from aliasing as much.
+- The curve is 0.75c - 0.25c³ on the gained signal, limited at full scale, so it flattens smoothly instead of clipping hard (SOLID: 0.9c - 0.1c³, which clips harder at the top). BRIT and HGAIN shift it off centre, which adds even harmonics; the shift is taken off again, so silence stays silence. It runs at twice the sample rate (a polyphase half-band filter up and down, halfband.py), which keeps most of the harmonics it makes from folding back as tones that do not follow the note.
 - After the curve the level comes down by the square root of GAIN's boost, so turning GAIN up adds drive, not volume: on a clean guitar DI the output stays within about 8 dB from GAIN 0 to 127. This also leaves the cabinet room, so nothing clips at LEV 64.
-- The tone stack splits the sound at 300 Hz and 2.2 kHz. With BASS, MID and TREB at their centre it is exactly flat.
+- The tone stack splits the sound in three bands at the voice's two splits. With BASS, MID and TREB at their centre each voice has its own curve (CLEAN scoops the mids, HGAIN pushes them, SOLID is nearly flat).
 - Each cabinet is a resonant high-pass (its low thump), a resonant low-pass (its upper-mid bump and roll-off) and a second low-pass that steepens the top. They are Modwerk's own designs from textbook filter formulas, not impulse responses or models of any product.
 
 ## Controls
 
-FX page (FX1 or FX2):
+FX page (press FX1 or FX2):
 
 | Knob | Range | Default | What it does |
 | --- | --- | --- | --- |
@@ -27,36 +28,45 @@ FX page (FX1 or FX2):
 | CAB | OFF, 1X10, 1X12, 2X12, 4X12 | 1X12 | The speaker cabinet. 1X10 is the smallest and brightest at the top, 4X12 has the most low thump and the darkest top. OFF leaves the amp's own sound. |
 | LEV | 0 to 127 | 64 | Output level, (LEV/64)²: silence at 0, 0 dB at 64, +12 dB at 127. |
 
-GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking them or modulating them with an LFO does not click. CAB switches at once.
+SETUP page (hold FUNC and press FX1 or FX2; turn A):
+
+| Knob | Values | Default | What it does |
+| --- | --- | --- | --- |
+| VOIC | CLEAN, BRIT, HGAIN, SOLID | BRIT | The amp voice. CLEAN: bright, scooped mids, breaks up late. BRIT: chiming upper mids, an early soft break-up with even harmonics. HGAIN: tight lows, mids forward, the most drive. SOLID: flat and clean, clipping hard only at the top; put CHORUS on the other FX slot for a wide clean sound. |
+
+The voices sit within about 1 dB of each other at GAIN 40 on a clean guitar DI, so switching them changes the character, not the volume.
+
+GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking them or modulating them with an LFO does not click. CAB and VOIC switch at once.
 
 ## Usage
 
 1. Install COMBO on a unit running the Modwerk USB base (`npm run module:dev -- combo` for a trial in RAM).
 2. Select an audio track, hold FUNC and press FX1 (or FX2), turn LEVEL to COMBO and press YES.
-3. Press FX1 (or FX2) for its knobs. Its SETUP page (FUNC + FX1) is empty for now.
+3. Press FX1 (or FX2) for its knobs. Hold FUNC and press FX1 for its SETUP page, where A turns VOIC.
 
 ## Quick tutorial
 
-1. Put a drum loop or a synth line on a track and pick COMBO on its FX1. At the defaults you hear a light crunch through a 1X12 cabinet.
-2. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy.
-3. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
+1. Put a drum loop, a synth line or a guitar on a track and pick COMBO on its FX1. At the defaults you hear BRIT's light crunch through a 1X12 cabinet.
+2. Hold FUNC, press FX1 and turn A through CLEAN, HGAIN and SOLID to hear the four voices.
+3. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy.
+4. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
 
 ## Compatibility and limitations
 
 - No free effect id is left for card builds: stock and the listed modules hold every id the card's tables have (docs/OCTATRACK_MORE_EFFECT_IDS.md). Over USB the base gives each installed effect its own id, so COMBO runs as a USB package only for now.
 - It takes no key gesture and no stock screen, and patches no stock code: it is one entry in the base's FX list.
 - Card builds refuse it beside Analog BD, as they refuse every effect not on Analog BD's reviewed list.
-- CAB switches its filters at once, so turning it while audio plays can click.
+- CAB and VOIC switch their filters at once, so turning them while audio plays can click.
 - Mono: a stereo sample (a stereo chorus, a wide pad) comes out in mono, as it would from a guitar amp. Put a stereo effect on the other FX slot after it for width.
-- At high GAIN with loud, bright input some aliasing remains (2x oversampling halves the problem, not all of it): see TESTING.md, Sound quality. Lowering TREB or GAIN reduces it.
+- At high GAIN with loud, bright input some aliasing remains (2x oversampling halves the problem, not all of it), most in HGAIN: see TESTING.md, Sound quality. Lowering TREB or GAIN reduces it.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence, and measures 331.8 instructions a sample (stock SPRING REV: about 314). It installs and draws its page in the emulator. Nothing has run on a unit yet.
+See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence in every voice, and measures 342.4 instructions a sample (stock SPRING REV: about 314). It installs and draws both pages in the emulator. The build before VOIC passed device:test on a unit; VOIC has not run on one yet.
 
 ## Authorship and licences
 
-Original code and filter design by @sebasprosala-sys, under the MIT licence in LICENSE. The filters use Robert Bristow-Johnson's Audio EQ Cookbook formulas, and the oversampler Valenzuela and Constantinides' published polyphase half-band design, written here from the formulas. No impulse response, curve or voicing is taken from any product, and nothing comes from Elektron's firmware.
+Original code and filter design by @sebasprosala-sys, under the MIT licence in LICENSE. The filters use Robert Bristow-Johnson's Audio EQ Cookbook formulas, and the oversampler Valenzuela and Constantinides' published polyphase half-band design, written here from the formulas. The four voices are general styles of amp built from these formulas; no impulse response, curve, circuit or voicing is taken from any product, and nothing comes from Elektron's firmware.
 
 ## Screens and audio
 

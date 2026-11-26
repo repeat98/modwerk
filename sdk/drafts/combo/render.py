@@ -3,7 +3,8 @@
 
     python3 render.py IN.wav OUT.wav [GAIN=90 CAB=4 ...]
     python3 render.py --dir IN_DIR OUT_DIR [KNOB=VALUE ...]   (every .wav, names kept)
-    python3 render.py --raw IN.raw OUT.raw [KNOB=VALUE ...]   (fx:audit's mono int32 .raw)
+    python3 render.py --raw IN.raw OUT.raw [KNOB=VALUE ...]   (fx:audit's .raw: int32 words holding 24-bit
+                                                            values, mono in, interleaved L R out)
 
 The same code and memory image as verify.py's gate, so a render is the DSP,
 bit for bit; not the unit's mixer, AMP page or outputs. A WAV is read as
@@ -80,9 +81,9 @@ def main():
         V.write_mem(blob, mem)
         if mode == "--raw":
             data = src.read_bytes()
-            mono = [v >> 8 for v in struct.unpack(f"<{len(data) // 4}i", data)]
+            mono = list(struct.unpack(f"<{len(data) // 4}i", data))      # 24-bit values in int32 words
             l, r = render(work, mem, syms, mono, mono, k)
-            dst.write_bytes(struct.pack(f"<{2 * len(l)}i", *[s << 8 for p in zip(l, r) for s in p]))
+            dst.write_bytes(struct.pack(f"<{2 * len(l)}i", *[s for p in zip(l, r) for s in p]))
             print(f"{src.name} -> {dst} {k}")
             return
         pairs = [(src, dst)] if mode is None else [(f, dst / f.name) for f in sorted(src.glob("*.wav"))]

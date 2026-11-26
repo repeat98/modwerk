@@ -2,41 +2,44 @@
 ;
 ; A buffer-free stereo insert for FX1 or FX2: no allocator, no bus role,
 ; no absolute Y. One amp, like a guitar amp: both sides get its output.
-;   the mono sum (L + R)/2, pre high-pass one-pole (90 Hz), pre low-pass
-;   biquad (7 kHz, Q 0.707), then at twice the rate (a polyphase half-band,
-;   halfband.py, up and down): GAIN (+0 to +38 dB), hard limit at full
-;   scale, the curve 0.75c - 0.25c^3 (flat at the limit, so its slope is
-;   continuous); then one gain OUT = COMP x LEV (COMP = 1/sqrt(G): more
-;   GAIN, not more volume; everything after the curve is linear, so LEV
-;   applies here), BASS/MID/TREB as gains of three bands split at 300 Hz and
-;   2.2 kHz (all at 64 is exactly flat), CAB (three biquads), a 10 Hz DC
-;   blocker (the cabinet's resonant high-pass can freeze a truncated offset).
+;   the mono sum (L + R)/2, the voice's pre high-pass one-pole (KHP) and pre
+;   low-pass biquad (its b words carry the voice's drive x 2, so q is limited
+;   at full scale there), then at twice the rate (a polyphase half-band,
+;   halfband.py, up and down): GAIN, plus the voice's BIAS, limited at full
+;   scale, the voice's curve CA c - CB c^3 less FB (its value at BIAS, so
+;   silence stays silence); then one gain OUT = COMP x LEV x VC (COMP =
+;   1/sqrt(G): more GAIN, not more volume), BASS/MID/TREB as gains of three
+;   bands split at the voice's KL and KT, times its weights, CAB (three
+;   biquads), a 10 Hz DC blocker.
 ;
 ; Fixed point. Everything after the input runs at quarter scale (x/4). The
-; one-pole states are 48 bits. The 7 kHz biquad's and the cabinet's
-; coefficients come from the P table (tables.py) into X:$40..$53 each call.
+; one-pole states are 48 bits. Each call copies the voice's pre low-pass and
+; CAB's row to X:$40..$53 and the voice's KHP CA CB BIAS FB KL KT to $54..$5a
+; from the P table (tables.py).
 ;
-; Knobs (page 1, value<<16 with an LFO's fraction bits in 8-15):
+; Knobs (value<<16 with an LFO's fraction bits in 8-15):
 ;   GAIN x:(r6+0): G = ((k+16)/16)^2, stored as G/256 = ((k+16)/256)^2
-;   BASS x:(r6+1), MID x:(r6+2), TREB x:(r6+3): band gain k/64, stored k/128
+;   BASS x:(r6+1), MID x:(r6+2), TREB x:(r6+3): band gain k/64 x the voice's
+;        weight, stored k/128 x w/2
 ;   CAB  x:(r6+4): 0 OFF, 1 1X10, 2 1X12, 3 2X12, 4 4X12 (above 4 is 4X12)
-;   LEV  x:(r6+5): (k/64)^2, 64 is 0 dB. OUT is stored as COMP/2 x (k/128)^2
-;        = COMP x LEV / 8 (COMP/2 from the table by GAIN's whole step).
+;   LEV  x:(r6+5): (k/64)^2, 64 is 0 dB. OUT is stored as COMP/2 x (k/128)^2 x VC
+;   VOIC x:(r6+$c), SETUP page slot 6: 0 CLEAN, 1 BRIT, 2 HGAIN, 3 SOLID (above 3 is SOLID)
 ; GAIN, BASS, MID, TREB and OUT glide per sample (1/64 a sample) and snap
 ; onto their target at the start of a call once within 64 LSB. The first
-; call after init starts on the knobs. CAB switches at the start of a call.
+; call after init starts on the knobs. CAB and VOIC switch at the start of a call.
 ;
 ; State (X, offsets from r7; init clears $00..$5f):
 ;   the amp's block at $00 (r5 = r7 in cmb_chan):
 ;     +0/+1 pre high-pass hi/lo      +2..+5 pre low-pass x1 x2 y1 y2
-;     +6/+7 300 Hz split hi/lo       +8/+9 2.2 kHz split hi/lo
+;     +6/+7 low split hi/lo          +8/+9 high split hi/lo
 ;     +a..+d cab biquad 1            +e..+11 cab biquad 2
 ;     +12..+15 cab biquad 3          +16/+17 DC blocker hi/lo
 ;     +18..+1f up all-passes a0 a2 a1 a3 (x1, y1 each)
 ;     +20..+27 down all-passes a0 a2 a1 a3   +28/+29/+2a scratch
 ;   $30/$31 GAIN target/run   $32/$33 BASS   $34/$35 MID   $36/$37 TREB
 ;   $38/$39 OUT target/run    $3f seeded
-;   $40..$44 the 7 kHz biquad, $45..$53 the CAB row (b0 b1 b2 -a1 -a2, halved)
+;   $40..$44 the voice's pre low-pass, $45..$53 the CAB row (b0 b1 b2 -a1 -a2, halved)
+;   $54..$5a the voice's KHP CA CB BIAS FB KL KT
 ; Nothing above $5f is touched.
 ; Every product is the signed mpy/mac x0,y1 form.
 ; CYCLES_FORWARD_BRANCHES
@@ -51,55 +54,30 @@ cmb_zero:
         rts
 
 proc:
+        move    #>$ffffff,m1
         move    #>$ffffff,m2
         move    #>$ffffff,m3
         move    #>$ffffff,m4
         move    #>$ffffff,m5
-; GAIN: u = kn/2 + 1/16 = (k+16)/256; u^2 = G/256.
-        move    x:(r6+$0),a
-        and     #>$7fffff,a
-        asr     #1,a,a
-        move    #>$080000,x0
-        add     x0,a
-        move    a1,x0
-        move    x0,y1
-        mpy     x0,y1,a
-        move    a,x:(r7+$30)
-; BASS, MID, TREB: k/128.
-        move    x:(r6+$1),a
-        and     #>$7fffff,a
-        move    a1,x:(r7+$32)
-        move    x:(r6+$2),a
-        and     #>$7fffff,a
-        move    a1,x:(r7+$34)
-        move    x:(r6+$3),a
-        and     #>$7fffff,a
-        move    a1,x:(r7+$36)
-; OUT: COMP/2 (table word 80 + GAIN's whole step) x (k/128)^2.
+; VOIC x:(r6+$c): r1 = its row (16 words a voice, tables.py VOICES); above 3 is SOLID.
         move    #>$fab1e0,r2
-        move    r2,r3
-        move    x:(r6+$0),a
+        move    r2,r1
+        move    x:(r6+$c),a
         and     #>$7f0000,a
         asr     #16,a,a
-        move    #>80,x0
-        add     x0,a
-        move    a1,n3
-        move    (r3)+n3
-        move    x:(r6+$5),a
-        and     #>$7fffff,a
-        move    a1,x0
-        move    x0,y1
-        mpy     x0,y1,a
-        move    a,x0
-        move    p:(r3),y1
-        mpy     x0,y1,a
-        move    a,x:(r7+$38)
-; The 7 kHz biquad (table words 0..4), then CAB's row (5 + 15 CAB).
+        move    #>3,x0
+        cmp     x0,a
+        tgt     x0,a
+        asl     #4,a,a
+        move    a1,n1
+        move    (r1)+n1
+; The voice's pre low-pass to $40..$44, CAB's row (table word 64 + 15 CAB) to $45..$53,
+; then the voice's KHP CA CB BIAS FB KL KT to $54..$5a.
         move    #>$40,n4
         move    r7,r4
         move    (r4)+n4
         do      #5,>cmb_pre
-        move    p:(r2)+,x0
+        move    p:(r1)+,x0
         move    x0,x:(r4)+
 cmb_pre:
         nop
@@ -112,13 +90,71 @@ cmb_pre:
         tfr     a,b
         asl     #4,a,a
         sub     b,a
-        move    a1,n2
-        move    (r2)+n2
+        move    #>64,x0
+        add     x0,a
+        move    r2,r3
+        move    a1,n3
+        move    (r3)+n3
         do      #15,>cmb_cab
-        move    p:(r2)+,x0
+        move    p:(r3)+,x0
         move    x0,x:(r4)+
 cmb_cab:
         nop
+        do      #7,>cmb_voice
+        move    p:(r1)+,x0
+        move    x0,x:(r4)+
+cmb_voice:
+        nop
+; GAIN: u = kn/2 + 1/16 = (k+16)/256; u^2 = G/256 (the voice's drive is in its pre low-pass).
+        move    x:(r6+$0),a
+        and     #>$7fffff,a
+        asr     #1,a,a
+        move    #>$080000,x0
+        add     x0,a
+        move    a1,x0
+        move    x0,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$30)
+; OUT: COMP/2 (table word 139 + GAIN's whole step) x (k/128)^2 x the voice's VC.
+        move    r2,r3
+        move    x:(r6+$0),a
+        and     #>$7f0000,a
+        asr     #16,a,a
+        move    #>139,x0
+        add     x0,a
+        move    a1,n3
+        move    (r3)+n3
+        move    x:(r6+$5),a
+        and     #>$7fffff,a
+        move    a1,x0
+        move    x0,y1
+        mpy     x0,y1,a
+        move    a,x0
+        move    p:(r3),y1
+        mpy     x0,y1,a
+        move    a,x0
+        move    p:(r1)+,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$38)
+; BASS, MID, TREB: k/128 times the voice's weights WB, WM, WT (w/2).
+        move    x:(r6+$1),a
+        and     #>$7fffff,a
+        move    a1,x0
+        move    p:(r1)+,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$32)
+        move    x:(r6+$2),a
+        and     #>$7fffff,a
+        move    a1,x0
+        move    p:(r1)+,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$34)
+        move    x:(r6+$3),a
+        and     #>$7fffff,a
+        move    a1,x0
+        move    p:(r1)+,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$36)
 ; The first call after init starts on the knobs.
         move    x:(r7+$3f),a
         tst     a
@@ -192,7 +228,7 @@ cmb_chan:
         move    #>$40,n4
         move    r7,r4
         move    (r4)+n4
-; Pre high-pass: s += KHP (h - s), y = h - s, h = (L + R)/8, the mono sum at quarter scale.
+; Pre high-pass (the voice's KHP): s += KHP (h - s), y = h - s, h = (L + R)/8, the mono sum at quarter scale.
         move    x:(r0),a
         move    x:(r0+1),b
         add     b,a
@@ -204,7 +240,7 @@ cmb_chan:
         move    x:(r5+$0),y0
         sub     y0,a
         move    a,x0
-        move    #>$01a17f,y1
+        move    x:(r5+$54),y1
         mac     x0,y1,b
         move    b1,x:(r5+$0)
         move    b0,x:(r5+$1)
@@ -283,12 +319,14 @@ cmb_chan:
         move    x1,x:(r5+$1e)
         move    a,x1
         move    x1,x:(r5+$1f)
-; The amp on the second sample: GAIN and the limit (q * G/256 * 1024 = x * G, limited at full scale),
-; then the curve at quarter scale of half: 0.1875 c - 0.0625 c^3. Out in x1.
+; The amp on the second sample: GAIN and the limit (q x drive x 2 * G/256 * 512, plus BIAS, limited at full scale),
+; then the voice's curve at quarter scale, CA c - CB c^3 - FB. Out in x1.
         move    x1,x0
         move    x:(r7+$31),y1
         mpy     x0,y1,a
-        asl     #10,a,a
+        asl     #9,a,a
+        move    x:(r5+$57),x0
+        add     x0,a
         move    a,x0
         move    x0,x1
         move    x0,y1
@@ -297,21 +335,25 @@ cmb_chan:
         move    x1,y1
         mpy     x0,y1,a
         move    a,x0
-        move    #>$080000,y1
+        move    x:(r5+$56),y1
         mpy     x0,y1,b
         move    x1,x0
-        move    #>$180000,y1
+        move    x:(r5+$55),y1
         mpy     x0,y1,a
         sub     b,a
+        move    x:(r5+$58),x0
+        sub     x0,a
         move    a,x1
         move    x1,x:(r5+$29)
         move    x:(r5+$28),x1
-; The amp on the first sample: GAIN and the limit (q * G/256 * 1024 = x * G, limited at full scale),
-; then the curve at quarter scale of half: 0.1875 c - 0.0625 c^3. Out in x1.
+; The amp on the first sample: GAIN and the limit (q x drive x 2 * G/256 * 512, plus BIAS, limited at full scale),
+; then the voice's curve at quarter scale, CA c - CB c^3 - FB. Out in x1.
         move    x1,x0
         move    x:(r7+$31),y1
         mpy     x0,y1,a
-        asl     #10,a,a
+        asl     #9,a,a
+        move    x:(r5+$57),x0
+        add     x0,a
         move    a,x0
         move    x0,x1
         move    x0,y1
@@ -320,12 +362,14 @@ cmb_chan:
         move    x1,y1
         mpy     x0,y1,a
         move    a,x0
-        move    #>$080000,y1
+        move    x:(r5+$56),y1
         mpy     x0,y1,b
         move    x1,x0
-        move    #>$180000,y1
+        move    x:(r5+$55),y1
         mpy     x0,y1,a
         sub     b,a
+        move    x:(r5+$58),x0
+        sub     x0,a
         move    a,x1
 ; Down: path 1 takes the first sample, path 0 the second; p = (path 0 + path 1)/2.
 ; down, path 1, a1
@@ -378,20 +422,20 @@ cmb_chan:
         move    x:(r5+$28),b
         add     b,a
         asr     #1,a,a
-; OUT: p * COMP x LEV / 8 * 8.
+; OUT: p * COMP x LEV x VC / 8 * 16 (VC 1/2 is unity).
         move    a,x0
         move    x:(r7+$39),y1
         mpy     x0,y1,a
-        asl     #3,a,a
+        asl     #4,a,a
         move    a,x1
-; Tone stack: L = LP(300 Hz), T = LP(2.2 kHz); M = T - L, H = p - T.
+; Tone stack: L = LP(KL), T = LP(KT), the voice's splits; M = T - L, H = p - T; weights w/2, so << 2.
         move    x:(r5+$6),b
         move    x:(r5+$7),b0
         move    x1,a
         move    x:(r5+$6),y0
         sub     y0,a
         move    a,x0
-        move    #>$055b15,y1
+        move    x:(r5+$59),y1
         mac     x0,y1,b
         move    b1,x:(r5+$6)
         move    b0,x:(r5+$7)
@@ -401,7 +445,7 @@ cmb_chan:
         move    x:(r5+$8),y0
         sub     y0,a
         move    a,x0
-        move    #>$22711c,y1
+        move    x:(r5+$5a),y1
         mac     x0,y1,b
         move    b1,x:(r5+$8)
         move    b0,x:(r5+$9)
@@ -419,7 +463,7 @@ cmb_chan:
         move    b,x0
         move    x:(r7+$37),y1
         mac     x0,y1,a
-        asl     #1,a,a
+        asl     #2,a,a
         move    a,x1
 ; Cabinet biquad 1: direct form 1, halved coefficients from r4.
         lua     (r5+$a),r3

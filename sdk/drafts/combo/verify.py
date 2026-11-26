@@ -104,7 +104,7 @@ def write_mem(blob, path):
 
 
 def knob_row(k):
-    return [k[n] for n in R.KNOBS] + [0] * 6
+    return [k[n] for n in R.KNOBS] + [0] * 5
 
 
 def full(rows):
@@ -169,7 +169,7 @@ def rms(v):
     return math.sqrt(sum(s * s for s in v) / len(v)) or 1e-30
 
 
-DEAR = {"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127}
+DEAR = {"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2}
 
 
 def main():
@@ -192,9 +192,15 @@ def main():
         gate("1 no rep, no mpysu/macsu", not any(re.search(r"\brep\b|mpysu|macsu", l) for l in dis))
         offsets = [int(m, 16) for m in re.findall(r"\(r7\+\$([0-9a-f]+)\)", src)]
         gate("1 state inside X:(r7+$00..$5f)", max(offsets) <= 0x5f, f"(highest $%02x)" % max(offsets))
-        copy_end = 0x40 + 5 + 15
+        copy_end = 0x40 + 5 + 15 + 7
         gate("1 the coefficient copy ends inside the state init clears",
-             "move    #>$40,n4" in src and "do      #96," in src and copy_end <= 0x60, f"(ends at ${copy_end - 1:02x})")
+             "move    #>$40,n4" in src and "do      #96," in src and "do      #7," in src and copy_end <= 0x60,
+             f"(ends at ${copy_end - 1:02x})")
+        # the GAIN product before the limit: q (limited at full scale by the pre low-pass's and the
+        # all-passes' stores) x G/256 x 2^9 must stay inside the accumulator's +-256
+        worst = (143 / 256) ** 2 * (1 << T.VG_SHIFT)
+        gate("1 the GAIN product cannot overflow the accumulator",
+             worst < 240 and "asl     #9,a,a" in src, f"(worst {worst:.0f} of 256)")
         imms = {int(m, 16) for m in re.findall(r"#>\$([0-9a-f]{6})", src)}
         missing = [k for k, v in T.CONSTANTS.items() if (v & 0xffffff) not in imms]
         gate("1 the assembly carries tables.py's constants", not missing, f"missing {missing}" if missing else "")
@@ -229,28 +235,40 @@ def main():
                    tag="two")[0]
         same("2 two instances: the first", a, nl, nr, {})
         same("2 two instances: the second", b, t, t, {0: {"GAIN": 110, "CAB": 1, "TREB": 20}})
+        for vi, vn in enumerate(T.VOICE_NAMES):
+            k = {"VOIC": vi, "GAIN": 100, "BASS": 90, "MID": 30, "TREB": 100}
+            (got,), _, _ = run(work, mem, syms, [(t, nl, {0: k})], tag=f"voice{vi}")
+            same(f"2 VOIC {vn}, a loud tone", got, t, nl, {0: k})
+        vrows = {0: {"VOIC": 0}, 12: {"VOIC": 2, "GAIN": 127}, 25: {"VOIC": 3}, 37: {"VOIC": 1, "GAIN": 0},
+                 50: {"VOIC": 9}, 70: {"VOIC": 0, "CAB": 0}}
+        (got,), _, _ = run(work, mem, syms, [(nl, nr, vrows)], tag="vauto")
+        same("2 VOIC automation, a stored VOIC above 3 plays SOLID", got, nl, nr, vrows)
 
         # 3. silence
         z = [0] * n
-        for k in ({}, DEAR, {"GAIN": 0, "LEV": 0, "CAB": 0}, {"BASS": 0, "MID": 0, "TREB": 0}):
+        for k in ({}, DEAR, {"GAIN": 0, "LEV": 0, "CAB": 0}, {"BASS": 0, "MID": 0, "TREB": 0},
+                  *({"VOIC": v, "GAIN": 127} for v in range(4))):
             (got,), _, _ = run(work, mem, syms, [(z, z, {0: k})], tag="zero")
             gate(f"3 silence in, silence out at {k or 'the defaults'}", not any(s24(got[0]) + s24(got[1])))
 
         m3 = 44100 * 3
         burst = noise(4410, 0.5, 3) + [0] * (m3 - 4410)
-        (got,), _, _ = run(work, mem, syms, [(burst, burst, {0: DEAR})], tag="tail")
-        gate("3 a burst's tail at the dearest setting ends in exact silence",
-             not any(s24(got[0][-44100:]) + s24(got[1][-44100:])))
+        for vi in range(4):
+            k = {**DEAR, "VOIC": vi}
+            (got,), _, _ = run(work, mem, syms, [(burst, burst, {0: k})], tag="tail")
+            gate(f"3 a burst's tail at the dearest setting, VOIC {T.VOICE_NAMES[vi]}, ends in exact silence",
+                 not any(s24(got[0][-44100:]) + s24(got[1][-44100:])))
 
         # 4. the float design
         m = 16 * 600
         k1 = tone(1000, 0.25, m)
-        knobs = {"CAB": 0, "GAIN": 40}
-        (got,), _, _ = run(work, mem, syms, [(k1, k1, {0: knobs})], tag="float")
-        fl, _ = R.float_combo([s / Q for s in k1], [s / Q for s in k1], knobs)
-        tail = slice(m // 2, m)
-        d = 20 * math.log10(rms(s24(got[0])[tail]) / Q / rms(fl[tail]))
-        gate("4 the render matches the float design at 1 kHz", abs(d) < 0.5, f"({d:+.2f} dB)")
+        for vi, vn in enumerate(T.VOICE_NAMES):
+            knobs = {"CAB": 0, "GAIN": 40, "VOIC": vi}
+            (got,), _, _ = run(work, mem, syms, [(k1, k1, {0: knobs})], tag="float")
+            fl, _ = R.float_combo([s / Q for s in k1], [s / Q for s in k1], knobs)
+            tail = slice(m // 2, m)
+            d = 20 * math.log10(rms(s24(got[0])[tail]) / Q / rms(fl[tail]))
+            gate(f"4 VOIC {vn}: the render matches the float design at 1 kHz", abs(d) < 0.5, f"({d:+.2f} dB)")
 
         # 5. cost
         print(f"[INFO] cycle meter: {meter_def} a sample at the defaults, {meter_hot} at the dearest setting")

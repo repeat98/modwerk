@@ -5,7 +5,8 @@ role, no absolute Y), mono like a guitar amp: (L + R)/2 through a 90 Hz
 high-pass and a 7 kHz band-limit, then at 2x (halfband.py) GAIN into a soft
 curve flat at full scale, a level that follows GAIN, a three-band tone stack
 (BASS, MID, TREB, flat at 64), one of four speaker cabinets or OFF (CAB, from
-the P table in tables.py), a DC blocker and LEV, to both sides. verify.py holds the assembly
+the P table in tables.py), a DC blocker and LEV, to both sides. VOIC (SETUP page,
+slot 6) picks one of four amp voices from the same table. verify.py holds the assembly
 to reference.py's model bit for bit. Hardware operation is untested.
 
 The FX2 id: the card's 32 ids are all taken (docs/OCTATRACK_MORE_EFFECT_IDS.md),
@@ -42,16 +43,18 @@ MODULE = Module(
         Param(b"GAIN", 40, 128, active=True, formatter=P,
               doc="Drive into the amp: +0 dB at 0, +22 dB at 40, +38 dB at 127"),
         Param(b"BASS", 64, 128, active=True, formatter=B,
-              doc="Lows below 300 Hz: cut to silence at -64, flat at 0, +6 dB at +63"),
+              doc="Lows below the voice's low split (250 to 400 Hz): cut to silence at -64, flat at 0, +6 dB at +63"),
         Param(b"MID", 64, 128, active=True, formatter=B,
-              doc="Mids, 300 Hz to 2.2 kHz: cut to silence at -64, flat at 0, +6 dB at +63"),
+              doc="Mids between the voice's two splits: the same range"),
         Param(b"TREB", 64, 128, active=True, formatter=B,
-              doc="Highs above 2.2 kHz: cut to silence at -64, flat at 0, +6 dB at +63"),
+              doc="Highs above the voice's high split (1.6 to 3 kHz): the same range"),
         Param(b"CAB", 2, 5, active=True, formatter=S, labels=_T["CAB_NAMES"],
               doc="Speaker cabinet: OFF, one 10-inch, one 12-inch, two 12-inch or four 12-inch"),
         Param(b"LEV", 64, 128, active=True, formatter=P,
               doc="Output level (LEV/64)^2: silence at 0, 0 dB at 64, +12 dB at 127"),
-        BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,
+        Param(b"VOIC", 1, 4, active=True, formatter=S, labels=_T["VOICE_NAMES"],
+              doc="Amp voice: CLEAN, BRIT (chiming crunch), HGAIN (tight high gain) or SOLID (flat, hard clip)"),
+        BLANK, BLANK, BLANK, BLANK, BLANK,
     ),
 
     dsp=DspSection(
@@ -70,5 +73,5 @@ MODULE = Module(
     gates=(Gate("modules/combo/verify.py", remix_arg=False),),
     # The sample loop's work is the same at every setting; the top of every
     # knob keeps the limit and the curve busy.
-    dear={"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127},
+    dear={"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2},
 )

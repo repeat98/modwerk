@@ -12,7 +12,7 @@ import tables as T
 
 FS = T.FS
 Q = T.Q
-KNOB_DEFAULTS = {"GAIN": 40, "BASS": 64, "MID": 64, "TREB": 64, "CAB": 2, "LEV": 64}
+KNOB_DEFAULTS = {"GAIN": 40, "BASS": 64, "MID": 64, "TREB": 64, "CAB": 2, "LEV": 64, "VOIC": 1}
 KNOBS = tuple(KNOB_DEFAULTS)
 
 
@@ -24,12 +24,16 @@ gain_g = T.gain_g
 def float_combo(left, right, knobs):
     """The chain on floats in [-1, 1) for fixed knobs: one mono amp, 2x oversampled; returns two float lists."""
     kv = {**KNOB_DEFAULTS, **knobs}
-    hp, lk, tk, dc = T.one_pole(90.0), T.one_pole(300.0), T.one_pole(2200.0), T.one_pole(10.0)
-    pre = T.lowpass(7000.0, 0.7071)
+    vo = T.VOICES[min(kv["VOIC"], 3)]
+    hp, lk, tk, dc = T.one_pole(vo["hp"]), T.one_pole(vo["split"][0]), T.one_pole(vo["split"][1]), T.one_pole(10.0)
+    pre = T.lowpass(*vo["lp"])
     cab = T.cab_biquads(min(kv["CAB"], 4))
-    g = gain_g(kv["GAIN"])
-    gb, gm, gt = kv["BASS"] / 64.0, kv["MID"] / 64.0, kv["TREB"] / 64.0
-    lev = (kv["LEV"] / 64.0) ** 2
+    g = gain_g(kv["GAIN"]) * vo["drive"]
+    wb, wm, wt = vo["weights"]
+    gb, gm, gt = wb * kv["BASS"] / 64.0, wm * kv["MID"] / 64.0, wt * kv["TREB"] / 64.0
+    ca, cb = vo["curve"]
+    bias = vo["bias"]
+    lev = (kv["LEV"] / 64.0) ** 2 * vo["trim"] * 0.5 / (ca - cb) / math.sqrt(vo["drive"])
     hb = halfband.coefficients(4, 0.06)
     up, down = halfband.Up(hb), halfband.Down(hb)
 
@@ -39,9 +43,12 @@ def float_combo(left, right, knobs):
         s[:] = [x, s[0], y, s[2]]
         return y
 
+    def curve(c):
+        return ca * c - cb * c ** 3
+
     def drive(v):
-        c = max(-1.0, min(1.0, v * g))
-        return 0.75 * c - 0.25 * c ** 3
+        c = max(-1.0, min(1.0, v * g + bias))
+        return curve(c) - curve(bias)
 
     sh = sl = st = sd = 0.0
     sp = [0.0] * 4
@@ -51,7 +58,7 @@ def float_combo(left, right, knobs):
         x = (xl + xr) / 2
         sh += hp * (x - sh)
         first, second = up(bq(pre, sp, x - sh))
-        p = down(drive(first), drive(second)) / math.sqrt(g) * lev
+        p = down(drive(first), drive(second)) / math.sqrt(gain_g(kv["GAIN"])) * lev
         sl += lk * (p - sl)
         st += tk * (p - st)
         v = gb * sl + gm * (st - sl) + gt * (p - st)
@@ -112,8 +119,8 @@ def one_pole(s, i, inp, k):
     return b
 
 
-PRE = T.PRE
 ROWS = T.CAB_ROWS
+VROWS = T.VOICE_ROWS
 
 
 class Model:
@@ -124,18 +131,21 @@ class Model:
 
     def knobs(self, w):
         x = self.x
+        vr = VROWS[min((w[6] & 0x7f0000) >> 16, 3)]
+        idx = min((w[4] & 0x7f0000) >> 16, 4)
+        x[0x40:0x45] = list(vr[0:5])
+        x[0x45:0x54] = list(ROWS[idx])
+        x[0x54:0x5b] = list(vr[5:12])
+        vc, wb, wm, wt = vr[12:16]
         kn = w[0] & 0x7fffff
         u = hi(w56((ld(kn) >> 1) + ld(0x080000)))
         x[0x30] = lim(mac(0, u, u))
-        x[0x32] = hi(ld(w[1] & 0x7fffff))
-        x[0x34] = hi(ld(w[2] & 0x7fffff))
-        x[0x36] = hi(ld(w[3] & 0x7fffff))
         ln = w[5] & 0x7fffff
         lv = lim(mac(0, ln, ln))
-        x[0x38] = lim(mac(0, lv, T.COMP[(w[0] & 0x7f0000) >> 16]))
-        idx = min((w[4] & 0x7f0000) >> 16, 4)
-        x[0x40:0x45] = list(PRE)
-        x[0x45:0x54] = list(ROWS[idx])
+        x[0x38] = lim(mac(0, lim(mac(0, lv, T.COMP[(w[0] & 0x7f0000) >> 16])), vc))
+        x[0x32] = lim(mac(0, hi(ld(w[1] & 0x7fffff)), wb))
+        x[0x34] = lim(mac(0, hi(ld(w[2] & 0x7fffff)), wm))
+        x[0x36] = lim(mac(0, hi(ld(w[3] & 0x7fffff)), wt))
 
     def call(self, frames, words):
         x = self.x
@@ -164,20 +174,22 @@ class Model:
 
     def drive(self, q):
         x = self.x
-        c = lim(w56(mac(0, q, x[0x31]) << 10))
+        a = w56(mac(0, q, x[0x31]) << T.VG_SHIFT)
+        c = lim(w56(a + ld(x[0x57])))
         c2 = lim(mac(0, c, c))
         c3 = lim(mac(0, c2, c))
-        bb = mac(0, c3, T.CB)
-        return lim(mac(0, c, T.CA) - bb)
+        bb = mac(0, c3, x[0x56])
+        a = w56(mac(0, c, x[0x55]) - bb)
+        return lim(w56(a - ld(x[0x58])))
 
     def amp(self, left, right):
         x = self.x
         s = x[0:0x18]
         # the mono sum, pre high-pass
         h = hi(w56(ld(left) + ld(right)) >> 3)
-        b = one_pole(s, 0, h, T.KHP)
+        b = one_pole(s, 0, h, x[0x54])
         y = lim(ld(h) - ld(hi(b)))
-        # pre low-pass
+        # pre low-pass, with the voice's drive (limited at full scale)
         st = s[2:6]
         a = biquad_fx(y, st, x[0x40:0x45])
         s[2:6] = st
@@ -195,17 +207,17 @@ class Model:
         a = (ld(t0) + ld(t1)) >> 1
         s = x[0:0x18]
         # OUT = COMP x LEV
-        p = lim(w56(mac(0, lim(a), x[0x39]) << 3))
+        p = lim(w56(mac(0, lim(a), x[0x39]) << 4))
         # tone stack
-        one_pole(s, 6, p, T.KL)
-        one_pole(s, 8, p, T.KT)
+        one_pole(s, 6, p, x[0x59])
+        one_pole(s, 8, p, x[0x5a])
         L, Tt = s[6], s[8]
         a = mac(0, L, x[0x33])
         m = lim(ld(Tt) - ld(L))
         a = mac(a, m, x[0x35])
         hh = lim(ld(p) - ld(Tt))
         a = mac(a, hh, x[0x37])
-        v = lim(w56(a << 1))
+        v = lim(w56(a << 2))
         # cabinet
         for j, sb in enumerate((0x0a, 0x0e, 0x12)):
             st = s[sb:sb + 4]
@@ -220,7 +232,7 @@ class Model:
 
 def knob_words(k, pwords=None):
     pw = pwords or {}
-    return [(k[n] << 16) | pw.get(i, 0) for i, n in enumerate(KNOBS)]
+    return [(k[n] << 16) | pw.get(i, 0) for i, n in enumerate(KNOBS)]   # the 7th is x:(r6+$c), VOIC
 
 
 def render(left, right, knob_rows, frames=16, split=0, pwords=None):
