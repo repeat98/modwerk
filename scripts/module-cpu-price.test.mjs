@@ -268,11 +268,6 @@ describe('a release of an effect or a machine carries its instance curve', () =>
     // a release dated before the rule keeps its curve, and says what it lacks
     expect(status([81, 107.9], undefined, FRAME_COST_FROM)).toMatchObject({ state: 'ok', detail: expect.stringContaining('reported, not refused') })
     expect(curveProblem({ points: [79, 92], admission: [run('empty'), run('medium')] })).toBeNull()
-    // read on a pattern lighter than the medium one (UNGEMACH 0.1.0 on A03: stock alone 63.1 %, +14.6; on A01 78.7 %, +23.5)
-    expect(curveProblem({ points: [63.1, 77.7], admission: [run('empty'), run('medium')] })).toMatch(/stock alone took 63.1 %.*medium pattern/)
-    expect(status([63.1, 77.7], [run('empty'), run('medium')])).toMatchObject({ state: 'fail', detail: expect.stringContaining('read where stock alone took') })
-    // too heavy for the medium pattern: never "pick a pattern with room", but cheaper or the owner's waiver
-    expect(curveProblem({ module: 'echo', points: [81, 107.9], admission: [run('empty'), run('medium')] })).toMatch(/too heavy for a medium project.*release-cost.*echo-build-approval/)
   })
 
   it('lets the owner\'s approval of this exact version waive the release cost, and nothing else', () => {

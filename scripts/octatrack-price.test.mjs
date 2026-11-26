@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -156,6 +156,15 @@ it('refuses a reading the transport did not play, from the session\'s state repl
   expect(notPlaying('playing \n')).toBe(false)
   expect(notPlaying('playing recording\n')).toBe(false)
   expect(notPlaying('error: no answer\n')).toBe(false) // an unknown reply is not counted as stopped
+})
+
+it('stops the curve before it starts when the booked first instance leaves no room on the measure pattern', () => {
+  // FM Synth 0.1.5 on Dev17 C04 (81 % stock alone, booked 31.3): read at 107.9 %, the overload and not its cost.
+  expect(curveRoom({ atRest: 81, booked: 31.3, pattern: '1' })).toMatch(/no room on pattern 1: .*112.3 %, past 100 %.*--measure-pattern/)
+  // The same machine on a pattern with room (stock alone 65 %): the curve runs.
+  expect(curveRoom({ atRest: 65, booked: 31.3, pattern: '3' })).toBeNull()
+  // A module nothing books yet: its first reading decides (curveProblem judges it).
+  expect(curveRoom({ atRest: 95, booked: undefined, pattern: '1' })).toBeNull()
 })
 
 it('reads a curve with the module\'s each booked at 0 and every other figure as booked', () => {

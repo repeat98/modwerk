@@ -135,17 +135,18 @@ export function measuredActiveCpu(document: ModuleDocument) {
 }
 
 /** What the base charges a pick of the module (frame-costs.json, generated from its instance curve: `first` for its first
- * track or slot on a Part, `each` for every further one), the figure a musician pays, whatever its first reading was: a
- * reading past 100 % charges a further instance as the first (owner, 26 November 2026). `source` is the module's own
- * curve record when it holds this version, else the base's table. */
+ * track or slot on a Part, `each` for every further one), the figure a musician pays, whatever its first reading was
+ * (owner, 26 November 2026). Only when it was read on this version: the module's own curve record, or the base's entry
+ * naming the version (a base-bound module's is the base's, whatever its version). */
 export function measuredFrameCost(document: ModuleDocument) {
   const cost = (frameCosts.costs as Record<string, { first?: number; each?: number; measured?: string }>)[document.id]
-  const { first, each } = cost ?? {}
+  const { first, each, measured = '' } = cost ?? {}
   if (typeof first !== 'number' || typeof each !== 'number' || !(first >= each && each >= 0 && first <= 100)) return
   const record = 'sdk/octatrack/modules/' + document.id + '/evidence/frame-cost.json'
   const own = frameCostRecords['../../' + record]
-  const source = own?.module === document.id && own.version === document.version ? record : 'sdk/machines/octatrack/frame-costs-base.json'
-  return { first, each, measured: cost?.measured ?? '', source }
+  if (own ? own.module !== document.id || own.version !== document.version
+    : !measured.includes(document.id + ' ' + document.version) && !(resourcePackage(document.id) as { requiredBase?: unknown } | undefined)?.requiredBase) return
+  return { first, each, measured, source: own ? record : 'sdk/machines/octatrack/frame-costs-base.json' }
 }
 
 export function measuredStackedCpuLimit(document: ModuleDocument) {

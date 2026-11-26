@@ -229,7 +229,10 @@ export function shedLines(found, costs = {}, sigs = new Map(), owner = OWNER) {
       }
       for (const [sig, n] of most) {
         const row = rows.get(sig) ?? rows.set(sig, { units: new Set(), starts: 0, skipped: 0, several: 0 }).get(sig)
-        row.units.add(name), row.starts++, row.skipped += skipped, row.several += n > 1 ? 1 : 0
+        row.units.add(name)
+        row.starts++
+        row.skipped += skipped
+        if (n > 1) row.several++
       }
     }
   }

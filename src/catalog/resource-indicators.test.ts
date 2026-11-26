@@ -129,17 +129,21 @@ describe('module resource gauges', () => {
   it('shows a machine by what the base charges its pick, with the measured active CPU load beside it', () => {
     const analog = MODULE_DOCUMENTS.find(module => module.id === 'analog-bassdrum')!
     for (const [id, first, active] of [
-      ['amiga', '26.6%', '7.4%'], ['analog-bassdrum', '24.4%', '10.1%'], ['poly8', '51%', '41.9%'],
-      ['vector', '0.2%', '0.6%'],
+      ['amiga', '26.6%', '7.4%'], ['analog-bassdrum', '24.4%', '10.1%'], ['vector', '0.2%', '0.6%'],
     ]) {
       const document = MODULE_DOCUMENTS.find(module => module.id === id)!
       const [cpu] = moduleResourceIndicators(document)
       expect(cpu, id).toMatchObject({ value: first, status: 'Measured · first track' })
       expect(cpu.benchmark?.value, id).toContain(active.slice(0, -1) + '% of a frame added with')
     }
+    // POLY8's booked curve was read on 0.3.4, not the published 0.3.3: its active load, as before
+    const [poly8] = moduleResourceIndicators(MODULE_DOCUMENTS.find(module => module.id === 'poly8')!)
+    expect(poly8).toMatchObject({ value: '41.9%', status: 'Measured · in use' })
     expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
-    // the active reading is bound to its version; the booked cost is the base's for the module, whatever version it runs
+    // the active reading is bound to its version; a base-bound module's booked cost is the base's, whatever version it runs
     expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0]).toMatchObject({ value: '24.4%', benchmark: undefined })
+    const amiga = MODULE_DOCUMENTS.find(module => module.id === 'amiga')!
+    expect(moduleResourceIndicators({ ...amiga, version: '99.0.0' })[0].status).not.toBe('Measured · first track')
   })
 
   it('binds zero direct DSP cycles to the audited packages and preserves active DSP paths', () => {
