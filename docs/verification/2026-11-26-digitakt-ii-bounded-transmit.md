@@ -108,31 +108,44 @@ ownership from completion alone or free a pre-reset descriptor afterwards.
    specification into a base-owned DMA buffer. Acquire stock's MIDI mutex
    (`0x47db406c`) with the bounded native try-acquire `0x40001680`; if busy,
    return without sending. Refuse while the native USB parser or transmitter is
-   mid-SysEx. Under one critical
-   section that excludes reset and competing allocation, validate a non-null,
+   mid-SysEx. Admit only to an **idle endpoint**, not an existing transfer queue:
+   require software head and tail zero, hardware PRIME/STAT clear and no active
+   queue-head overlay. Under one critical section that excludes reset and
+   competing allocation, validate a non-null,
    aligned, in-pool free head and next pointer, with the head's active bit clear **before** calling
    `0x40005764`. That condition prevents entry into its active-bit loop.
    Allocate through stock, never unlink a descriptor ourselves. Initialize only
    the loaned descriptor and submit one terminal transfer through stock's
-   endpoint API; do not call its serializer or waiting allocator. Negative submit
-   returns ownership through stock's cancellation helper. Release the native
-   mutex normally. Every refused attempt is bounded and may drop its reply.
+   endpoint API; do not call its serializer or waiting allocator. These guards
+   select the submit helper's empty-queue path, avoiding its 1,000-attempt loop.
+   An unexpected submit result quarantines ownership until it is resolved; do
+   not assume it is safe to free a possibly queued descriptor. Release the native
+   mutex outside the explicit transmit critical section. Busy attempts may drop
+   the reply. This is a conditional source path, not measured native behavior.
 4. **Lifetime:** at most one descriptor loan and one immutable DMA reply buffer.
-   Normal completion/cancellation publishes availability using an epoch cookie;
-   it never waits or runs a loader. A second guarded lifecycle shim is necessary
+   **Correction to the first candidate:** native submit overwrites descriptor
+   `+0x30` with the buffer pointer; completion receives a byte count and that
+   pointer, not a caller-supplied epoch cookie. Do not put epoch metadata there.
+   Completion never waits or runs a loader, and cannot by itself prove that a
+   later callback belongs to the post-reset transaction. A second guarded
+   lifecycle shim is necessary
    for reset. Candidate `0x40006e4c` needs **ten** whole instruction bytes (the
    four-byte call plus following six-byte instruction), not a six-byte overwrite
    of half an instruction. Replay stock, advance the epoch, discard old requests
    and forget the old loan only after native DMA quiescence/pool reconstruction.
-   UI service cannot run until the reset ISR has finished clearing queue heads.
-   Verify profile-switch drains and reconnect as well as bus reset.
+   The reset ISR must finish clearing queue heads before UI service can resume.
+   A captured callback in another native context is a separate CPU-lifetime
+   concern: do not reuse the same buffer merely because hardware is quiescent.
+   Verify profile-switch drains and all callback contexts as well as bus reset.
+   Until that serialization/barrier is established, quarantine is the safe
+   stopping state; it is not completed reconnect support.
 
 This is a conditional reuse path, **not** a proven safe native driver API.
 The adapter would add two guarded stock sites plus the existing tick subscription,
 one loan from the shared pool and its own buffer/state. No new USB interface,
 endpoint, descriptor template, ring, persistent storage, SHARC allocation or
 runtime pool is justified for this milestone. Base `.bss` owns the buffer, using
-the verified uncached/DMA alias and placement that stays within one 4 KiB page;
+a proven uncached/DMA mapping and placement that stays within one 4 KiB page;
 do not choose a fixed cave or assume the normal cached pointer is DMA-safe.
 The [NXP data-structure note](https://www.nxp.com/docs/en/application-note/AN3631.pdf)
 documents the page constraint and active status; packetization comes from
@@ -188,3 +201,96 @@ The new synthetic-container regression verifies that a matching hash does not
 clear a partial instruction. All 28 affected Vitest cases passed (preflight,
 ColdFire classifier, shared link wire and ELE3); ESLint and `git diff --check`
 passed. This validates the offline checks, not the proposed transmit adapter.
+
+## Focused closure: lifetime, reset, duration and identity
+
+This follow-up preserves both `9f551e4ff` and `404568bac` unchanged. Ownership
+remains unanswered on the existing board thread. No native adapter, shared wire
+change or DN2 implementation has been made. The independent contribution is the
+offline preflight and this stock-free evidence, for review against main.
+
+### DMA lifetime and reset ownership
+
+| Event | Observed order | Reuse rule |
+| --- | --- | --- |
+| Normal completion | ISR saves length, buffer pointer and callback; calls native descriptor release; advances queue; calls completion | Callback must not dereference the released descriptor. The payload remains immutable until retirement is established |
+| Unqueued cancellation helper | `0x40005878` calls error callback **before** clearing active and releasing descriptor | A callback alone does not establish that cancellation has finished; do not generalize its order from normal completion |
+| Endpoint drain | `0x400059aa` saves arguments, clears active, releases descriptor, calls success/error callback, then clears software heads | Idle admission must inspect queue heads too; callback return is not the end of the whole drain |
+| Bus reset | Native reset waits for hardware quiescence, rebuilds pools, then clears heads; ordinary completion callbacks are not walked | Drop old loans without freeing them into the rebuilt pool. Do not reuse payload storage until CPU callbacks are also retired |
+
+The hardware and CPU lifetimes are distinct. A phase/epoch counter is useful for
+discarding requests, but a late callback carrying only a reused buffer address
+cannot identify its old epoch. The earlier free-form cookie assumption is
+withdrawn. Resolve callback serialization with the owner of the shared native
+link; no new closure framework, extra task or unbounded buffer queue is proposed.
+If serialization cannot be proved, disable/reject further sends after reset
+rather than describe recovery as safe. That limitation prevents a full M1 GO.
+
+Stock boot sets ACR0 to `0x4007e020` at `0x4000055e..0x40000564`; stock USB DMA
+uses buffers in the `0x4f...` view. This supports the existing uncached-alias
+direction. It does **not** prove a new buffer in Modwerk's allocation is coherent
+through both aliases on DT2. Verify its final address, single-page containment,
+cache/alias access discipline and DMA backing before native use. A successful
+transfer or host timeout alone is not a lifetime test.
+
+### Idle-only critical section: a smaller bound
+
+For USB MIDI IN, native logical endpoint index 5 maps to queue head
+`0x800000c0`, software head/tail at `0x800000f0`/`0x800000f4`, and hardware mask
+`0x00020000`. These mappings were read from stock's endpoint tables. Under the
+same interrupt exclusion as admission and submission:
+
+- Require both software pointers zero; PRIME (`0xfc0b01b0`) and STAT
+  (`0xfc0b01b8`) clear for that mask; overlay active clear; endpoint enabled and
+  software flush bit 5 clear. Never reserve by a check made before the lock.
+- Pre-check the free head and its active bit before the try allocator. The
+  accepted path has **23 native instructions** with no repeated instruction.
+- Submit exactly one terminal descriptor with a completion callback to the
+  empty endpoint. The accepted path has **46 native instructions**, no repeated
+  instruction and no visit to `0x40005b6c..0x40005bb4`. It bypasses both existing
+  head cleanup and the append/tripwire path. Busy endpoints are refused.
+
+These are classifier-assisted, condition-selected CFG counts, not execution or
+cycle measurements. The 69-instruction sum excludes the adapter's guards,
+descriptor initialization, call instructions, try-lock/unlock and cache/bus
+latency. Packetization and identity hashing must remain outside this critical
+section. Leave descriptor headroom for stock; taking the last free descriptor
+is not cleared by this investigation, and one spare is not a proved stock budget.
+
+Thus the *USB-wait dependency* can be removed from the proposed accepted path.
+The *worst-case duration in microseconds* is still unestablished: no adapter has
+been linked, and no DT2 timing measurement is authorized/performed. Do not turn
+69 instructions into an estimated audio-safety result. A future native run must
+measure the complete accepted/refused path and the existing unlock section,
+including cache misses and audio/Overbridge contention, against DT2's deadline.
+
+### Identity compatibility checked without a new protocol
+
+Snapshot: main `10905d879` and DN2 runtime head
+`cfc60fb5d207762fb1c1727f08042e4e411f9f3d`. The shared wire/identity source files
+used in the local checks are unchanged from the preflight branch's main base.
+Main does not yet contain DN2's `layout_digest`/`write_identity`; they remain in
+that open stack and must be reused when landed, not reimplemented here.
+
+An isolated host probe executed those **existing two functions**, extracted
+from that exact head, with synthetic staged sources and a DT2 OS 1.17 recipe.
+Two fresh stages with identical inputs produced the same 32-byte digest; changing
+one recipe defsym changed it. No compiler or firmware build was involved.
+
+That digest was then passed through the existing host implementations:
+
+- MWL `pack7`/`unpack7` preserved all 32 bytes.
+- The existing 72-byte MWUI parser accepted the same digest at offset 16 with
+  model `digitakt-ii` and `canSubmit=false`.
+- A genuine-format synthetic MWUR HELLO decoded the same digest at offset 48;
+  MWUP BEGIN encoded those exact bytes at offset 48. A mismatching base was
+  rejected. The fixture had a nonzero session and staging capacity; neither is
+  advertised as an implemented DT2 capability.
+
+This establishes **digest/data-schema compatibility**, not a new diagnostic
+wire command. Current DN2 `ident` returns counters/status, not the build digest;
+the current shared MWL envelope leaves command payloads machine-specific. MWUI's
+72 bytes are an existing reusable payload shape, but no MWL carrier for them has
+been agreed. Do not append them to `ident`, allocate an opcode, duplicate the
+builder or fabricate upload capacity while coordination is pending. Full M1
+build-identity discovery therefore remains an explicit integration gate.
