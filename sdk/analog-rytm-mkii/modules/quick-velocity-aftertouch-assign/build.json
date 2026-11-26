@@ -85,7 +85,10 @@
     "ui:live recording of performance moves",
     "ui:PERF + knob on the sound pages and the FX track",
     "ui:PERF hold opens performance edit on the release",
-    "ui:PERF + YES, PLAY, RECORD, STOP act on the linked performance"
+    "ui:PERF + YES, PLAY, RECORD, STOP act on the linked performance",
+    "ui:FIX + PLAY clears the sound's velocity links",
+    "ui:CHRO + PLAY clears the sound's aftertouch links",
+    "ui:LFO + REC, STOP, PLAY copy, paste, clear the LFO page"
   ],
   "requires": [],
   "derive": null,

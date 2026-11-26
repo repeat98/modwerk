@@ -451,10 +451,21 @@ QMA_UI static void not_a_destination(int kind)
 // the parameter's own resolution; 0 only makes sure it has a slot. A fine knob
 // such as TUN turns in fractions, so a change is at least one step, and a fast
 // turn as many as the parameter would move. A popup says why when it cannot.
+// What FIX + PLAY or CHRO + PLAY cleared, so PLAY again puts it back: the amounts of the
+// sound's four slots. A link edit, another clear or another kit forgets it.
+#define MOD_SLOTS 4
+static struct {
+    int kind, track, valid;
+    word_t set;
+    short amount[MOD_SLOTS];
+    short dest[MOD_SLOTS];
+} mods_cleared;
+
 QMA_UI static void nudge(int kind, int track, int logical, int change)
 {
     int index = row_word(logical, ROW_INDEX), slot, amount, steps;   // the byte stock stores
     word_t set = slots_of(track, kind);
+    mods_cleared.valid = 0;
     if (SET_COUNT(set) <= 0)
         return;                         // no slots on this sound
     slot = find_slot(set, index);
@@ -550,19 +561,24 @@ QMA_UI static void *lfo_accumulator(void)
 // (32 + page) * 8, 0x400cbbd6), is on the view stack. There the LFO key stays
 // stock's, so holding it shows the page's values as holding any page key does,
 // and its taps step to a module's page behind it.
+QMA_UI static char *page_holder(void)
+{
+    char *sentinel = (char *)views + MANAGER_LIST, *node;
+    for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
+         node = *(char **)(node + NODE_PREV))
+        if (**(word_t **)(node + NODE_VIEW) == HOLDER_VTABLE)
+            return *(char **)(node + NODE_VIEW);    // the top-most, as lfo_accumulator takes it
+    return 0;
+}
+
 QMA_UI static int lfo_page_shown(void)
 {
-    char *sentinel, *node, *holder = 0;
+    char *sentinel, *node, *holder;
     word_t lfo, fx_lfo;
     if (!page_shown())
         return 0;
     sentinel = (char *)views + MANAGER_LIST;
-    for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
-         node = *(char **)(node + NODE_PREV))
-        if (**(word_t **)(node + NODE_VIEW) == HOLDER_VTABLE) {
-            holder = *(char **)(node + NODE_VIEW);
-            break;                      // the top-most, as lfo_accumulator takes it
-        }
+    holder = page_holder();
     if (!holder)
         return 0;
     lfo = *(word_t *)(holder + HOLDER_LFO_VIEW);
@@ -752,6 +768,7 @@ QMA_UI static void locker_clear(void *self, int track, int param)
     }
     set = slots_of(track, kind);
     slot = slot_of(set, param);
+    mods_cleared.valid = 0;
     if (slot >= 0)
         SET_WRITE_AMOUNT(set, slot, 0);
 }
@@ -1033,6 +1050,7 @@ QMA_UI static void scene_apply_forget(void)
 void improved_modulation_kit_changed(void)
 {
     scene_applied.valid = 0;
+    mods_cleared.valid = 0;
 }
 
 // SCENE + YES: each lock of the scene the locks go to becomes the kit's value and the
@@ -1169,6 +1187,102 @@ QMA_UI static int lock_transport(int k, int key)
     return 1;
 }
 
+// FIX + PLAY, CHRO + PLAY: every velocity or aftertouch link of the selected sound goes to
+// 0, as a knob's press does for one; PLAY again in a hold on the same sound puts the
+// amounts back where the slot still has its destination and is still at 0.
+QMA_UI static void mods_clear(int kind)
+{
+    int track = selected_track(), n, i, any = 0;
+    word_t set = slots_of(track, kind);
+    n = SET_COUNT(set);
+    if (n > MOD_SLOTS)
+        n = MOD_SLOTS;
+    if (mods_cleared.valid && mods_cleared.kind == kind && mods_cleared.track == track
+        && mods_cleared.set == set) {
+        mods_cleared.valid = 0;
+        for (i = 0; i < n; i++)
+            if (mods_cleared.amount[i] && SET_DEST(set, i) == mods_cleared.dest[i]
+                && SET_AMOUNT(set, i) == 0)
+                SET_WRITE_AMOUNT(set, i, mods_cleared.amount[i]);
+        show("UNDO CLEAR");
+        return;
+    }
+    mods_cleared.valid = 0;
+    for (i = 0; i < MOD_SLOTS; i++) {
+        int dest = i < n ? SET_DEST(set, i) : 0;
+        mods_cleared.dest[i] = (short)dest;
+        mods_cleared.amount[i] = (short)(dest > 0 ? SET_AMOUNT(set, i) : 0);
+        any |= mods_cleared.amount[i] != 0;
+    }
+    if (!any) {
+        show("NOTHING TO CLEAR");
+        return;
+    }
+    for (i = 0; i < n; i++)
+        if (mods_cleared.amount[i])
+            SET_WRITE_AMOUNT(set, i, 0);
+    mods_cleared.kind = kind;
+    mods_cleared.track = track;
+    mods_cleared.set = set;
+    mods_cleared.valid = 1;
+    show(kind == VEL ? "CLEAR VELOCITY MODS" : "CLEAR AFTERTOUCH MODS");
+}
+
+// The LFO page's copy, paste or clear, as stock's page view runs them for its own page key
+// + REC, STOP, PLAY (ar2-1.74.h), with stock's messages: that view is not on screen here,
+// so its own methods would act without a message.
+QMA_UI static int lfo_page_key(word_t view, int key)
+{
+    typedef unsigned char (*op2_t)(word_t, int);
+    typedef unsigned char (*op3_t)(word_t, int, int);
+    int page = ((int (*)(word_t))vcall(view, PAGE_NUMBER))(view);
+    word_t store = *(word_t *)(view + PAGE_STORE);
+    if (!store)
+        return 0;
+    if (key == KEY_REC) {
+        if (((op2_t)PAGE_COPY_AT)(store, page))
+            show("COPY PAGE LFO");
+    } else if (((op3_t)PAGE_UNDO_AT)(store, page, key == KEY_STOP ? PAGE_UNDO_PASTE : PAGE_UNDO_CLEAR))
+        show(key == KEY_STOP ? "UNDO PASTE" : "UNDO CLEAR");
+    else if (key == KEY_STOP) {
+        if (((op3_t)PAGE_PASTE_AT)(store, page, 1))
+            show("PASTE PAGE LFO");
+    } else if (((op3_t)PAGE_CLEAR_AT)(store, page, 1))
+        show("CLEAR PAGE LFO");
+    return 1;
+}
+
+// REC, STOP or PLAY during a FIX, CHRO or LFO hold. LFO: on its own page stock copies,
+// pastes and clears the page (the LFO key is stock's there); held from another page the
+// key is the module's, so the module does the same for the LFO page (lfo_page_key). FIX
+// and CHRO: PLAY clears the sound's links; REC and STOP stay stock's. 0 passes the key
+// on, 1 takes it.
+QMA_UI static int mod_transport(int k, int key)
+{
+    if (!page_shown() || ANY_TRIG_HELD() || ANY_PAD_HELD() || IS_KEY_HELD(KEY_FUNC))
+        return 0;
+    if (k == LFO) {
+        char *holder = page_holder();
+        word_t view;
+        if (!holder)
+            return 0;
+        view = *(word_t *)(holder + (selected_track() == FX_TRACK ? HOLDER_FX_LFO_VIEW
+                                                                   : HOLDER_LFO_VIEW));
+        if (!view)
+            return 0;
+        if (!lfo_page_key(view, key))
+            return 0;
+        dep_drop();
+    } else if (key != KEY_PLAY || !kind_track(k, selected_track()))
+        return 0;                       // REC and STOP stay stock's; no links on the FX track
+    else
+        mods_clear(k);
+    holds[k].turned = 1;                // no tap on the release: the page, the mode stay
+    transport_taken |= TRANSPORT_BIT(key);
+    redraw = 1;
+    return 1;
+}
+
 // A pad pressed during a hold, before stock sees it. It ends the hold as a knob does, so
 // a hold can pick tracks and lock them. On the pages and in the other pad modes the pad
 // stays stock's (on the pages it plays and, with AUTO TRK SWITCH on, selects its track; in
@@ -1263,6 +1377,9 @@ QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
             }
             if (down && !(flags & REPEAT) && LOCK_HOLD(held_kind()))
                 return lock_transport(held_kind(), key);
+            if (down && !(flags & REPEAT) && key != KEY_YES && held_kind() != NONE
+                && mod_transport(held_kind(), key))
+                return 1;
         }
         if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST) {
             unsigned bit = 1u << (key - KEY_PAD_FIRST);

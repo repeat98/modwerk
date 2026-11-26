@@ -2,6 +2,64 @@
 
 The module was called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.4.0; since 0.5.0 it holds QPER Live Rec (`qperf`), whose own records follow at the end. The records keep the names they were written with.
 
+## 0.7.0: several QPER links, FIX, CHRO and LFO + PLAY, quantized scene changes (25 and 26 Nov 2026)
+
+QPER + a pad links and unlinks again (any number), and the PERF hold acts on every linked performance: a knob locks all, PLAY clears all, STOP pastes onto all, YES applies their sum, each with one undo. FIX + PLAY and CHRO + PLAY set the sound's velocity or aftertouch links to 0, PLAY again undoes. LFO + RECORD, STOP, PLAY held from another page copy, paste and clear the LFO page with stock's page routines. Scene changes recorded in LIVE RECORDING follow its quantize switch.
+
+rytm-emu (2ac0f1f, ramboot build), Q701 to Q708 on the plain base 1c14b6b0; not hardware evidence. The default kit links performances 1 and 10 and a new project has LIVE REC quantized:
+
+| Check | Result |
+| --- | --- |
+| On the LFO page (stock's key), LFO + PLAY | CLEAR PAGE LFO; PLAY again in the hold: CLEAR PAGE LFO again, no undo |
+| On the SYNTH page with 0.6.0 (Q610), LFO + PLAY | the sequencer starts, nothing clears |
+| LFO linked to DEC from the SYNTH page; LFO + PLAY | CLEAR PAGE LFO, the box gone, the LFO page then shows DST with no destination; the page stays, the sequencer stopped |
+| LFO + RECORD, then PLAY, then STOP | COPY PAGE LFO, CLEAR PAGE LFO (box gone), PASTE PAGE LFO (box back at +1.03) |
+| FIX + DEC linked at +3; FIX + PLAY; PLAY again | CLEAR VELOCITY MODS, the box at 0; UNDO CLEAR, the box at +3 |
+| FIX + PLAY with every amount at 0 | NOTHING TO CLEAR |
+| QPER + SD (1, 2 and 10 linked); PERF + SWT | one box at +5; with performance 1 unlinked the box is still there |
+| The same; PERF + PLAY; PLAY again | CLEAR PERFORMANCES; UNDO CLEAR, the box back |
+| The same, amount set; PERF + YES; YES again; then a plain PERF hold | PERFORMANCES APPLIED; UNDO APPLY; performance edit's screen byte-identical to never applying (LOCKS: 14) |
+| 2 and 10 linked; PERF + RECORD, PLAY, STOP; STOP again | COPY PERFORMANCE 2, CLEAR PERFORMANCES, PASTE PERFORMANCES (box back); UNDO PASTE (cleared again) |
+| 1, 2 and 10 linked; copy performance 1 (14 locks), PLAY, STOP | LOCK MEM FULL!, everything as the clear left it (three copies do not fit the 48 slots) |
+| Nothing copied; PERF + STOP with several linked | NOTHING TO PASTE |
+| One linked (10 unlinked first): PERF + knob, YES and its undo in a new hold, PLAY and its undo | PERFORMANCE 1 APPLIED, UNDO APPLY, CLEAR PERFORMANCE, UNDO CLEAR, as 0.6.0 |
+| A scene change at six offsets around a step boundary, quantized and unquantized, RECORD + YES, the first step with the scene's locks | unquantized: the step the change fell in; quantized: that step when it came in its first part, the next one after that |
+| 0.6.0's ten scene checks (apply, undo in a new hold, relock, empty apply, RECORD held, one and two changes in a take) | byte-identical to Q610's screens |
+
+Rig cases, rytm-emu, the development base 25f2c915: 32 of 33 on R705 and R706; the one failure is the private case for the old SAMPLER hold, as on 0.6.0. The unit cases below ran on R706 in rytm-emu first.
+
+Screenshots: Q713's captures. Nine earlier files are byte-identical to 0.6.0's (perf-lock.png with a plan that no longer presses QPER + BD); `fix-clear.png` and `lfo-page-clear.png` are new, and `apply-quick-perf-rec.png` now shows APPLY AT LOOP START. Memory: Q713 leaves 83,328 bytes of the shared mod area (the base alone 118,836), so the module takes 35,508.
+
+Two independent code reviews, both before the unit run. The first found LFO + STOP passing the clear's kind to stock's page undo (so it undid a clear and never undid a paste), the several-performance undo running over a lock made since by a pad, a paste onto several with no room check that left stock's own undo armed, FIX and CHRO + PLAY reaching track 12's slots with the FX track selected, two linked performances' offsets clamped one by one where the engine sums them, and a pending quantized start ignored by two fills; fixed in Q706. The second found the fixes sound and two faults in the new paste (a full-table message with nothing pasted, and a paste cut short evenly on every performance going unseen) and a weak fingerprint for the undo; fixed in Q707, whose paste path has had no further review. Q708 is Q707's source with this version's records; the RECORD + YES rewrite and its reviews follow below.
+
+On the author's unit, 25 Nov 2026, R707 (image CRC `8b6c1d98`) RAM-booted over the flashed FXCJ, scratch project, track 9 (CH) selected, by the test rig:
+
+- PERF + RECORD: COPY PERFORMANCE 1 (performance 1 linked).
+- FIX + D, then FIX + PLAY: CLEAR VELOCITY MODS; PLAY again: UNDO CLEAR. The sequencer stayed stopped.
+- CHRO + D: AFTERTOUCH MODS FULL (the sound's four slots were in use). CHRO + PLAY: CLEAR AFTERTOUCH MODS; PLAY again: UNDO CLEAR; CHRO + D then AFTERTOUCH MODS FULL again, so the four amounts were back.
+- LFO + D from the SYNTH page: DEC's box. LFO + PLAY: CLEAR PAGE LFO, the box gone, the SYNTH page and the stopped sequencer as they were; PLAY again: CLEAR PAGE LFO again.
+- LFO + RECORD: COPY PAGE LFO (the box at +0.12); PLAY: CLEAR PAGE LFO, the box gone once the message closed; STOP: PASTE PAGE LFO, the box back at +0.12. A second STOP pasted again (PASTE PAGE LFO), no undo.
+- QPER + SD (1 and 2 linked), PERF + D: DEC's box. With 1 unlinked the box stayed and PERF + RECORD said COPY PERFORMANCE 2; with only 1 linked the box stayed and it said COPY PERFORMANCE 1: both took the lock.
+- 1 and 2 linked, amount by MIDI CC 35: PERF + PLAY: CLEAR PERFORMANCES; PLAY again: UNDO CLEAR; YES: PERFORMANCES APPLIED; YES again: UNDO APPLY.
+- Scene mode: SCENE + A locked TUN in scene 9. RECORD + PLAY: LIVE REC: QUANTIZED. Scene 2 then scene 9 engaged, RECORD + YES: APPLY PERF/SCENE REC; RECORD + NO: NOTHING TO CLEAR.
+- SCENE + knob, SCENE + YES and YES again in the same and in a new hold: SCENE 9 APPLIED, UNDO APPLY, as on 0.6.0.
+
+Not tested: 0.7.0 by hand or by ear; this package's own image on a unit; on the unit, which step a quantized scene change lands on, a paste onto several performances, a full lock table, and a pad's lock made between a clear and its undo (rytm-emu and code review); FIX and CHRO + PLAY's undo after a sound load; the FX track's LFO page keys.
+
+### RECORD + YES after the take has looped (found 25 Nov 2026, in 0.6.0 too)
+
+The author's hand test of R707 found the pattern sounding different after RECORD + YES on a scene take. An automated by-ear case (the same hits on the recording pass, the playback pass and after YES, each hit's level and spectrum measured from the rig's audio windows) then showed in rytm-emu that RECORD + YES pressed after the take's first pass left the screen and keys dead while the sequencer played on, on Q610 (0.6.0) as on Q708; pressed during the first pass it worked, which every earlier check had done. The CPU sat in its idle loop: the UI task was waiting. Six debug builds placed it: returning before the writes, after the dry run or after the lengthening kept the UI alive, returning after the lock writes did not, skipping only the scene disengage did not, and writing only steps below 40 did. So it was the number of stock writer calls in one key event: about 1,200 lock writes and 230 new lock trigs for the default kit's scene of 21 locks over 64 steps (stock sends a notice for each, and a lock trig is nine flag writes), where about 900 lock writes mid-pass went through. Why stock's UI task waits there was not traced.
+
+The fix, Q709 to Q713: lock values go straight into the pattern's lock matrix, as stock's writer stores them (0x400ac6dc: a word at 5674 a track, 88 a step, 2 a word; stock's own recount of the step, 0x400ac646), and stock's writer is called once a row for the fine flag and the notice; stock's notices are counted against a budget a go (a lock trig nine, a lengthened track 258) and a take past it goes on in the next UI ticks; lengthening tracks moved inside that budget. With a track to lengthen while the pattern plays, the write waits for the loop's start (APPLY AT LOOP START), since a track lengthened mid-loop kept its step and its locks then sat that far off the pattern until the transport restarted (measured in rytm-emu: 16 steps off for a 16-step track under a 64-step loop). An audit of every other loop of stock calls in the module found lengthening as the one other risk; scene and performance applies, their undos, clears, paste, link moves and the mod clears stay within about 100 notices.
+
+rytm-emu, Q713 and R713: RECORD + YES after a full loop, playing: APPLY AT LOOP START, then at the loop's start 1 TRACK LEFT OUT (the write's own message for the default pattern) and the FILTER key opens its page; stopped: the message at once and the keys alive; during the first pass: APPLY AT LOOP START. The by-ear case with sequenced trigs: after YES the hits before the change point sound as the kit and those after it as the scene, as on the pass that was recorded, on the pattern's steps (the first hit after the loop's start still has the scene, engaged until the write ends). With notes played by MIDI instead of trigs every hit after YES sounds as the kit: locks shape sequenced trigs only. Rig cases: 42 of 43 on R711 (the 33 of before and the ten unit cases), the same expected failure.
+
+Reviews: an independent review of the rewrite checked the direct write against stock's writer in the disassembly (offsets, width, bounds, fine flag, count, notice) and found it the same, and found five faults in the job around it (a cut position read taken for a loop start, tracks lengthened outside the steps where they stay aligned, a lock edit during a write that runs over ticks, an early end that disengaged a scene and reported success, amounts left driven while steps were written); fixed in R712. A review of those fixes found them sound and four more faults at the job's edges (a pending kit change remembered for the whole job, a wait left set after a write was called off, no margin at the edge of the lengthening window, an early end that left the take's scene engaged); fixed in Q713, which has had no further review.
+
+On the author's unit, 25 Nov 2026, R712 (image CRC `40dcc7a2`) RAM-booted over the flashed FXCJ, scratch project. By the test rig: a scene take looped once, then RECORD + YES while playing: APPLY PERF/SCENE REC at once and the unit responsive (STOP, SCENE, RECORD answered); the ten cases of the list above again, all with the same messages. By hand, reported by the author: RECORD + YES on a looped scene take and the other 0.7.0 gestures "all seemed good"; a second RECORD + YES says NOTHING TO APPLY, which is as designed (no undo yet). On R707 earlier the author had tested several links with PERF + knob by ear, PERF + YES and its undo, FIX + PLAY and its undo, and LFO + PLAY from the SYNTH page, all as described.
+
+Not tested: R713's last fixes on a unit (R712 ran there); a take heavy enough to run over several ticks on a unit; the wait for the loop's start on a unit (its scratch pattern had no shorter track); the stall itself on a unit (its scene had few locks, and 0.6.0's code did not stall there after a loop).
+
 ## 0.6.0: PERF and CHRO holds, SCENE + YES, scene changes in the quick perf rec (25 and 26 Nov 2026)
 
 The PERF hold takes the gestures QPER held (QPER keeps its link), CHRO holds the aftertouch assign (SAMPLER is stock's again), SCENE + YES writes a scene into the kit, and the quick perf rec keeps scene changes. The undo of an apply now also accepts the value it expected to write, so it does not depend on when stock's setter lands.

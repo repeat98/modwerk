@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.7.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "QPER links any number of performances again. Hold PERF: a knob, PLAY, STOP and YES act on all linked ones at once.",
+      "Hold FIX or CHRO and press PLAY to set all the sound's velocity or aftertouch links to 0; PLAY again undoes.",
+      "Hold LFO and press PLAY, RECORD or STOP on any page to clear, copy or paste the LFO page.",
+      "Recorded scene changes go to the nearest step when LIVE RECORDING is quantized; performance moves stay as played.",
+      "RECORD + YES no longer stalls on a take with many scene locks, and waits for the loop start when it must lengthen a track while playing."
+    ]
+  },
+  {
     "version": "0.6.0-experimental",
     "date": "2026-11-26",
     "changes": [

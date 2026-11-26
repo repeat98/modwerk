@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
+  "version": "0.7.0-experimental",
+  "date": "2026-11-26",
+  "changes": [
+    "QPER links any number of performances again. Hold PERF: a knob, PLAY, STOP and YES act on all linked ones at once.",
+    "Hold FIX or CHRO and press PLAY to set all the sound's velocity or aftertouch links to 0; PLAY again undoes.",
+    "Hold LFO and press PLAY, RECORD or STOP on any page to clear, copy or paste the LFO page.",
+    "Recorded scene changes go to the nearest step when LIVE RECORDING is quantized; performance moves stay as played.",
+    "RECORD + YES no longer stalls on a take with many scene locks, and waits for the loop start when it must lengthen a track while playing."
+  ],
+  "runtimeSourceSha256": "be1b9b8865a1ccb0b1165930807115b38f69dff5b91419cddfb5f16ac8c6e8fb",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.7.0-experimental-os1.74.elemod",
+      "sha256": "528ff5fbc1e8be529f0afa5f694ca554994f20875895437b3ddc09625734e61c"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
+  "requires": []
+}
