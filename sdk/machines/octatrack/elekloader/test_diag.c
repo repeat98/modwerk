@@ -2,7 +2,8 @@
  * Host check of diag.c: a new log ignores earlier crashes, each start is counted and reports what crashed or stalled
  * since; five minutes of meters make one load record; the CPU at 90 % for a second makes one HOT incident with the
  * unit's context, at most one in ten minutes; five seconds without a UI tick while frames run make a FREEZE, added
- * with its length once the tick moves again, or with length 0 at the next start; the frame guard's skips make one
+ * with its length once the tick moves again, or with length 0 at the next start, each followed by a FREEZE_PC with
+ * what the frame interrupt interrupted at 5, 6, 7 and 8 s of it; the frame guard's skips make one
  * SHED, at most one in ten minutes; a boot's first USB re-offer makes one USB incident; LOG pages are 244 bytes. */
 #include "diag.c"
 #include <stdio.h>
@@ -12,6 +13,9 @@ static unsigned failures;
 volatile struct diag_log modwerk_test_log;
 volatile struct diag_trace modwerk_test_trace;
 volatile struct diag_lates modwerk_test_lates;
+volatile struct diag_freeze_pc modwerk_test_freeze_pc;
+volatile uint16_t modwerk_test_interrupted[4];
+volatile uint32_t modwerk_test_tcb;
 volatile uint16_t mw_late_ring[8];
 volatile uint32_t mw_late_count;
 volatile uint32_t mw_frame_last; /* machine_registry.c */
@@ -24,7 +28,39 @@ volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
 volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes, mw_late_over; /* the frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
+volatile uint8_t mw_cpu_track_refusals[8];
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
+
+/* The battery copy of the current bank: a record's byte above 15 is a value stock's checks fix (to 15, one each); the
+ * first settings check does the same for the saved UI state's bank byte. The restore refuses while any is left. */
+uint8_t modwerk_test_cs1_parts[8][16], modwerk_test_cs1_patterns[16][16], modwerk_test_ui[0x16], modwerk_test_ui_saved[0x16];
+static unsigned restores, restored_bank;
+int32_t modwerk_test_settings_check(unsigned which)
+{
+    if (which || modwerk_test_ui_saved[2] <= 15u) return 0;
+    modwerk_test_ui_saved[2] = 15u;
+    return 1;
+}
+int32_t modwerk_test_validate(uint8_t *record)
+{
+    int32_t fixes = 0;
+    for (unsigned i = 0; i < 16u; ++i) if (record[i] > 15u) record[i] = 15u, ++fixes;
+    return fixes;
+}
+static int clean(void)
+{
+    for (unsigned r = 0; r < 8u; ++r) for (unsigned i = 0; i < 16u; ++i) if (modwerk_test_cs1_parts[r][i] > 15u) return 0;
+    for (unsigned r = 0; r < 16u; ++r) for (unsigned i = 0; i < 16u; ++i) if (modwerk_test_cs1_patterns[r][i] > 15u) return 0;
+    return modwerk_test_ui_saved[2] <= 15u;
+}
+int32_t modwerk_test_stock_restore(void)
+{
+    ++restores;
+    if (!clean()) return -1;
+    restored_bank = modwerk_test_ui[2]; /* stock puts the bank back where main's copy of the UI state says */
+    return 0;
+}
+static void power_up(void) { for (unsigned i = 0; i < sizeof restore; ++i) ((uint8_t *)&restore)[i] = 0; restores = 0, restored_bank = 99u; }
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
@@ -157,33 +193,60 @@ int main(void)
     tick();
     CHECK(LOG->incidents == before + 8u);
 
-    /* The CPU budget refused a machine on T4: one incident with the track and the count. */
+    /* The CPU budget refused a machine on T4: one incident with the track, the tracks since the last one and the count. */
     before = LOG->incidents;
-    mw_cpu_refusals = 2u, mw_cpu_refusal_tracks = 1u << 3;
+    mw_cpu_refusals = 2u, mw_cpu_refusal_tracks = 1u << 3, mw_cpu_track_refusals[3] = 2u;
     tick();
-    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 2u));
+    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 0x08u << 16 | 2u));
     tick();
     CHECK(LOG->incidents == before + 1u);
+    /* Ten minutes on (HOT_GAP), one on T6: the record names T6 alone as its own, T4 and T6 since the start. */
+    mw_cpu_refusals = 3u, mw_cpu_refusal_tracks |= 1u << 5, ++mw_cpu_track_refusals[5], cpu_at = 0;
+    tick();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_CPU && last()->a == (0x28u << 24 | 0x20u << 16 | 3u));
 
-    /* The UI stands still for six seconds while frames run, then moves again. */
+    /* The UI stands still for six seconds while frames run, then moves again. The frame interrupt interrupted a task
+     * (level 0) at 0x40015520 each time (channel 1's vector): one FREEZE_PC sample at 5 s; the tick moved before the one at 6 s. */
     modwerk_status[0] = 100u;
+    modwerk_test_interrupted[0] = 0x4000u | 0x49u << 2, modwerk_test_interrupted[1] = 0x2000u;
+    modwerk_test_interrupted[2] = 0x4001u, modwerk_test_interrupted[3] = 0x5520u, modwerk_test_tcb = 0x46c7bed8u;
     before = LOG->incidents;
     for (unsigned f = 0; f < FREEZE_FRAMES + 2756u; ++f) modwerk_diag_frame();
     CHECK(LOG->freeze_state == 1u && LOG->freeze.kind == DIAG_FREEZE && LOG->freeze.boot == 4u && LOG->freeze.fx[0] == 33u);
-    CHECK(LOG->incidents == before);
+    CHECK(LOG->incidents == before && FREEZE_PC->magic == DIAG_FREEZE_PC_MAGIC && FREEZE_PC->boot == 4u && FREEZE_PC->pc[1] == 0u);
     tick(), modwerk_diag_frame(); /* the UI moves; the next frame sees it */
     CHECK(LOG->freeze_state == 2u && LOG->incidents == before);
     tick();
-    CHECK(LOG->freeze_state == 0u && LOG->incidents == before + 1u && last()->kind == DIAG_FREEZE && last()->a == FREEZE_FRAMES + 2755u); /* the first frame only saw the tick move */
-    CHECK(last()->seq == LOG->seq && last()->boot == 4u);
+    CHECK(LOG->freeze_state == 0u && LOG->incidents == before + 2u);
+    volatile struct diag_incident *frozen = &LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS];
+    CHECK(frozen->kind == DIAG_FREEZE && frozen->a == FREEZE_FRAMES + 2755u); /* the first frame only saw the tick move */
+    CHECK(last()->kind == DIAG_FREEZE_PC && last()->seq == LOG->seq && last()->boot == 4u && last()->second == frozen->second);
+    CHECK(last()->a == 0x40015520u && last()->cpu == 0x2000u && last()->screen == 0u && last()->tempo24 == 0u && last()->dsp0 == 0u);
+    CHECK(last()->machine[0] == 0x46u && last()->machine[3] == 0xd8u && last()->machine[4] == 0u && last()->keys[0] == 0xffu);
+    CHECK(FREEZE_PC->magic == 0u);
 
-    /* Frozen until a power cycle: the next start adds it with length 0, under the session it happened in. */
-    for (unsigned f = 0; f <= FREEZE_FRAMES; ++f) modwerk_diag_frame();
+    /* Frozen until a power cycle, inside an interrupt handler at level 3 for the last two samples: the next start adds the
+     * freeze with length 0 and its four samples, under the session it happened in. */
+    for (unsigned f = 0; f <= FREEZE_FRAMES + 2756u; ++f) modwerk_diag_frame();
+    modwerk_test_interrupted[1] = 0x2300u, modwerk_test_interrupted[3] = 0x5526u, modwerk_test_tcb = 0x460ddde4u;
+    for (unsigned f = 0; f < 2u * 2756u; ++f) modwerk_diag_frame();
     CHECK(LOG->freeze_state == 1u);
     restart();
     CHECK(LOG->boot == 5u && LOG->freeze_state == 0u);
-    CHECK(LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].kind == DIAG_FREEZE && LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].a == 0u);
-    CHECK(LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].boot == 4u && LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].kind == DIAG_START && last()->kind == DIAG_BASE && last()->boot == 5u);
+    CHECK(LOG->incident[(LOG->incidents - 4u) % DIAG_INCIDENTS].kind == DIAG_FREEZE && LOG->incident[(LOG->incidents - 4u) % DIAG_INCIDENTS].a == 0u);
+    frozen = &LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS];
+    CHECK(frozen->kind == DIAG_FREEZE_PC && frozen->boot == 4u && frozen->a == 0x40015520u && frozen->screen == 0x40015520u && frozen->tempo24 == 0x40015526u);
+    CHECK(frozen->cpu == 0x2000u && frozen->dsp0 == 0x2000u && frozen->dsp1 == 0x2300u && frozen->machine[11] == 0xe4u && frozen->machine[15] == 0xe4u);
+    CHECK(frozen->machine[16] == 0x40u && frozen->machine[19] == 0x26u && frozen->machine[20] == 0x23u && frozen->machine[21] == 0u);
+    CHECK(LOG->incident[(LOG->incidents - 4u) % DIAG_INCIDENTS].boot == 4u && LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].kind == DIAG_START && last()->kind == DIAG_BASE && last()->boot == 5u);
+
+    /* A frame that is not the frame transfer's (the DSP frame's vector, never seen): its program counter is all ones. */
+    modwerk_test_interrupted[0] = 0x4000u | 0x41u << 2;
+    tick(), modwerk_diag_frame(); /* the tick moves: a new count */
+    for (unsigned f = 0; f < FREEZE_FRAMES; ++f) modwerk_diag_frame();
+    tick(), modwerk_diag_frame(), tick();
+    CHECK(last()->kind == DIAG_FREEZE_PC && last()->a == 0xffffffffu && last()->boot == 5u);
+    modwerk_test_interrupted[0] = 0x4000u | 0x48u << 2;
 
     /* Frames before the first tick of a start belong to nobody. */
     started = 0;
@@ -234,7 +297,39 @@ int main(void)
     const volatile uint8_t *tb = (const volatile uint8_t *)TRACE;
     CHECK(end == trace_at + DIAG_TRACE_BYTES && modwerk_diag_read(page, trace_at / DIAG_PAGE) == DIAG_PAGE && page[trace_at % DIAG_PAGE] == tb[0] && page[trace_at % DIAG_PAGE + 3u] == tb[3]);
 
+    /* The power-up's battery restore (#2201). A clean battery copy: stock's restore runs once and nothing is logged. */
+    restart(); /* the stall above, seen at a start */
+    power_up();
+    modwerk_test_ui[2] = modwerk_test_ui_saved[2] = 3u;
+    before = LOG->incidents;
+    CHECK(modwerk_boot_restore() == 0 && restores == 1u && restored_bank == 3u);
+    restart();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_BASE); /* START and BASE only */
+    /* One value out of range in Part 2's working copy (stock alone would refuse the whole bank and start it empty): it
+     * is fixed as a file load fixes it, the bank comes back, and RESTORE names the record. */
+    power_up();
+    modwerk_test_cs1_parts[2u * 1u + 1u][5] = 40u;
+    CHECK(modwerk_boot_restore() == 0 && restores == 1u && restored_bank == 3u && modwerk_test_cs1_parts[3][5] == 15u);
+    before = LOG->incidents;
+    restart();
+    CHECK(LOG->incidents == before + 3u && last()->kind == DIAG_RESTORE && last()->a == 1u && last()->second == 0u);
+    CHECK(last()->cpu == 0u && last()->dsp0 == 1u && last()->dsp1 == 0u && last()->screen == 0x103u && last()->tempo24 == 0u);
+    /* A pattern and the saved UI state's bank: main took the UI state before the checks, so it is taken again, fixed,
+     * before stock restores the bank there. */
+    power_up();
+    modwerk_test_cs1_patterns[9][0] = 200u, modwerk_test_ui_saved[2] = 0xeeu, modwerk_test_ui[2] = 0xeeu;
+    CHECK(modwerk_boot_restore() == 0 && restores == 1u && modwerk_test_ui[2] == 15u && restored_bank == 15u);
+    restart();
+    CHECK(last()->kind == DIAG_RESTORE && last()->a == 2u && last()->cpu == 1u && last()->dsp1 == 1u && last()->screen == 1u);
+    /* More fixes than a battery copy that kept its contents needs: refused as stock refuses it, and logged. */
+    power_up();
+    for (unsigned r = 0; r < 8u; ++r) for (unsigned i = 0; i < 9u; ++i) modwerk_test_cs1_parts[r][i] = 0xffu;
+    CHECK(modwerk_boot_restore() == -1 && restores == 0u);
+    restart();
+    CHECK(last()->kind == DIAG_RESTORE && last()->a == 72u && last()->dsp0 == 72u && last()->screen == 0x100u && last()->tempo24 == 0xffffffffu);
+    power_up();
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
-    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages and the frames before a stall passed");
+    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall and the power-up's restore passed");
     return failures != 0;
 }

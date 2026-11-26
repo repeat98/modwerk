@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT
  * UNGEMACH as a track machine: one row of the base's machine chooser (the ot_machines table), its page and its render.
- * The page, the render glue and the sequencer clock are VA CLAP's (sdk/drafts/va-clap/machine.c),
+ * The page, the render glue and the sequencer clock follow the author's VA CLAP draft (not published),
  * which reads stock RAM and ROM the way SYNTIZ, Analog BD and FM Synth do.
  *
  * Not PROTECT: every byte UNGEMACH keeps is a valid FLEX value (PTCH in 4..124, B-F 0..127; on SRC SETUP SPRD has the
@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include "engine.h"
 #include "tables.h"
-#include "../../machines/octatrack/include/modwerk_events.h"
+#include "../../../machines/octatrack/include/modwerk_events.h"
 
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 /* state the render reads every call goes into initialized data, not bss: the loader reaches a package's bss through
@@ -192,7 +192,7 @@ static uint16_t sync_phase(unsigned track, unsigned rate, const Grid *g, uint32_
  * 30 (to 63), timed as the base's guard times the callback (DTCN3, 132 MHz); 22-25 the frames not rendered against the
  * timer's count (the guard's skips, to 15); then the last settings, coarse: 17-21 PTCH's byte / 4, 13-16 DISS / 8,
  * 9-12 WAVE / 8, 5-8 RATE / 8, 2-4 PNCH / 16; bit 1 the sequencer plays; bit 0 PTCH, DISS or WAVE moved. */
-#include "../../runtime/loader/modwerk_module.h"
+#include "../../../runtime/loader/modwerk_module.h"
 #define DIAG_TIMER (*(volatile uint32_t *)0xfc07c00cu)   /* 132 MHz */
 static volatile uint32_t diag_ticks UG_DATA, diag_value UG_DATA, diag_t_last UG_DATA;
 static volatile uint32_t diag_acc UG_DATA, diag_sum UG_DATA, diag_frames UG_DATA, diag_key UG_DATA, diag_snap UG_DATA;

@@ -2,7 +2,14 @@
 | The ColdFire's idle time (status.c): main runs the init list, then spins at 0x4001fc9c for good, and that
 | spin is the idle task (Octabam's KERNEL.md: the lowest priority, run when nothing else wants the CPU).
         .text
-        .global mw_idle, mw_ts_gate, mw_delay_idle, mw_delay_read0, mw_delay_read
+        .global mw_idle, mw_ts_gate, mw_delay_idle, mw_delay_read0, mw_delay_read, mw_rec_update, mw_boot_restore
+
+| 0x4001fb78, main's init: the power-up's battery restore of the current bank (diag.c modwerk_boot_restore, which
+| calls stock's 0x40025770 itself). Displaced: jsr 0x40025770; stock goes on to 0x4001fb7e (bra 0x4001fb9e) whatever
+| it returns. A C call keeps d2-d7/a2-a6, as stock's own routine does.
+mw_boot_restore:
+        jsr     modwerk_boot_restore
+        jmp     0x4001fb7e
 
 | 0x4001fc96, main's last init call. Displaced: jsr 0x40098a2c; this spin never returns to stock's (0x4001fc9c,
 | left in place: ot_emu parks main there again after a bench call, its detoured-park convention).
@@ -203,3 +210,90 @@ modwerk_stock_4000362a_6:
         subq.l  #1,%d6
         bne.s   3b
         jmp     0x400037e0                      | past stock's ring write, to its loop's tail
+
+| 0x4000432c, the recorder's control-record update, called by the record write path about 1.5 times a recording
+| track a frame (and by the arm task with interrupts off). It keeps the clamped length in the track's 44-byte record,
+| then, for a length and with its flag clear, reads [r+300] and [r+308] of the track's record in CS1
+| (0x100d38f0 + 1096 × id) and writes six fields. CS1 takes about half a microsecond an access on a MKII, and in
+| steady recording [r+300] and [r+308] already hold the values the routine computes. This is stock's routine with
+| the same arithmetic and every other write, but those two are stored only when they change: compared with the values
+| it has just read, which it reads under stock's own interrupt mask (stock reads them just before), so what CS1 holds
+| afterwards is what stock leaves, whatever interrupts. The scratch registers end as stock leaves them too.
+| Idea and measurements: Bryan T (the stock routine cost 48 µs a frame at seven recording tracks on his MKII).
+mw_rec_update:
+        lea     -20(%sp),%sp
+        movem.l %d2-%d5/%a2,(%sp)
+        move.l  24(%sp),%d1                     | the recorder id
+        movea.l 28(%sp),%a1                     | the length: 1-63 and negative become 64
+        tst.l   %a1
+        beq.s   1f
+        moveq   #64,%d0
+        cmp.l   %a1,%d0
+        ble.s   1f
+        movea.w #64,%a1
+1:      moveq   #44,%d0
+        muls.l  %d1,%d0
+        lea     0x46c938c4,%a0
+        move.l  %a1,16(%a0,%d0.l)
+        tst.l   32(%sp)
+        bne.w   9f
+        tst.l   %a1
+        beq.w   9f
+        move.l  #1096,%d0
+        muls.l  %d1,%d0
+        movea.l %d0,%a0
+        adda.l  #0x100d38f0,%a0
+        move.l  %a1,%d2
+        bge.s   2f
+        clr.l   %d2
+2:      move.w  %sr,%d4
+        move.w  #0x2700,%sr
+        move.l  300(%a0),%d5                    | what [r+300] holds
+        move.l  %d5,%d1
+        move.l  %d1,%d0
+        not.l   %d0
+        add.l   %d0,%d0
+        subx.l  %d0,%d0
+        and.l   %d0,%d1
+        move.l  %d2,%d3
+        cmp.l   %d2,%d1
+        bge.s   3f
+        move.l  %d1,%d3
+3:      move.l  %d3,%d1
+        cmpa.l  %d3,%a1
+        ble.s   4f
+        move.l  %a1,%d1
+4:      cmp.l   %d1,%d2
+        bge.s   5f
+        move.l  %d2,%d1
+5:      movea.l 308(%a0),%a2                    | what [r+308] holds
+        movea.l %a2,%a1
+        move.l  %d3,%d0
+        cmpa.l  %d3,%a1
+        ble.s   6f
+        move.l  %a1,%d0
+6:      movea.l %d1,%a1
+        cmp.l   %d1,%d0
+        bge.s   7f
+        movea.l %d0,%a1
+7:      cmp.l   %d5,%d3
+        beq.s   8f
+        move.l  %d3,300(%a0)
+8:      move.l  %d1,304(%a0)
+        cmpa.l  %a2,%a1
+        beq.s   8f
+        move.l  %a1,308(%a0)
+8:      move.w  %d4,%sr
+        clr.b   %d1
+        move.b  %d1,296(%a0)
+        move.w  %sr,%d0
+        move.w  #0x2700,%sr
+        lea     0x8000181c,%a1
+        move.l  (%a1),276(%a0)
+        move.l  0x80001820,%d1
+        neg.l   %d1
+        move.l  %d1,280(%a0)
+        move.w  %d0,%sr
+9:      movem.l (%sp),%d2-%d5/%a2
+        lea     20(%sp),%sp
+        rts

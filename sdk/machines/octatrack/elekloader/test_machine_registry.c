@@ -74,6 +74,7 @@ fx_set modwerk_fxmap_used(void);
 fx_set modwerk_fxmap_used(void) { fx_set s = {{0}}; for (unsigned id = 0; id < 32u; ++id) if (project_fx >> id & 1u) s = fx_with(s, id); return s; }
 int modwerk_fxmap_handle(uint32_t module);
 int modwerk_fxmap_handle(uint32_t module) { return module >= 700u && module < 732u ? (int)(module - 700u) : -1; }
+uint32_t modwerk_fxmap_generation(void) { return 1; } /* fxmap.c's: the handle map never changes here */
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
@@ -187,6 +188,7 @@ static int costs_listed;
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 { if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
 uint32_t modwerk_status_module_rest(uint32_t module) { return costs_listed && module == 'L' ? 15u : 0u; } /* 1.5 % at rest */
+uint32_t modwerk_status_costs_key(void) { return costs_listed ? 2u : 1u; } /* status.c's: another table, another key */
 static uint32_t test_hush; /* status.c's predicted brake */
 uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
 { fx[0] = fx[1] = (fx_set){{0}}; id[0] = (uint16_t)(test_hush >> 24), id[1] = 0xffffu; return test_hush; }
@@ -665,17 +667,42 @@ static void check_busiest_step(void)
     playing[6] = playing[8] = 40u;                                                               /* no pattern: the safe side */
     CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == 8u && tracks[0] == 8u);
     for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;
+    /* The counts from each mask byte read once equal a step-by-step count (the earlier code's), on random patterns with
+     * every density, the first and last step of each half included. */
+    playing[5] = playing[7] = 2u, playing[6] = 0, playing[8] = 0;
+    uint32_t seed = 0x2468aceu;
+    for (unsigned run = 0; run < 2000u; ++run) {
+        unsigned density = run % 9u;
+        for (unsigned t = 0; t < 8u; ++t)
+            for (unsigned b = 0; b < 8u; ++b) {
+                uint8_t v = 0;
+                for (unsigned bit = 0; bit < 8u; ++bit) seed = seed * 1103515245u + 12345u, v |= (uint8_t)(((seed >> 16) % 8u < density) << bit);
+                base[PATTERN_TRACK * t + b] = v;
+            }
+        unsigned want_top = 0, want_any = 0;
+        for (unsigned s = 0; s < 64u; ++s) {
+            unsigned n = 0;
+            for (unsigned t = 0; t < 8u; ++t) { unsigned on = base[PATTERN_TRACK * t + 7u - s / 8u] >> (s % 8u) & 1u; n += on, want_any |= on << t; }
+            if (n > want_top) want_top = n;
+        }
+        unsigned want_tracks = 0;
+        for (; want_any; want_any &= want_any - 1u) ++want_tracks;
+        CHECK(modwerk_machine_pattern_trigs(most, tracks, id) == 1u && most[0] == want_top && tracks[0] == want_tracks);
+    }
+    for (unsigned t = 0; t < 8u; ++t) for (unsigned b = 0; b < 8u; ++b) base[PATTERN_TRACK * t + b] = 0;
     memset(playing, 0, sizeof playing);
 }
 /* The reserve books each installed module's cost at rest, whether or not a track or slot uses it. */
 static void check_rest_booked(void)
 {
     CHECK(!modwerk_machine_rest_booked());
-    engine_installed = 1, engine_module.id = 'L';
+    engine_installed = 1, engine_module.id = 'L', owner_epoch += 2u; /* an install moves the owner epoch */
     CHECK(!modwerk_machine_rest_booked());                 /* not in the table: nothing */
-    costs_listed = 1;
+    costs_listed = 1;                                      /* another cost table: booked again */
     CHECK(modwerk_machine_rest_booked() == 15u);
-    costs_listed = 0, engine_installed = 0, engine_module.id = 0;
+    CHECK(modwerk_machine_rest_booked() == 15u);           /* kept */
+    costs_listed = 0, engine_installed = 0, engine_module.id = 0, owner_epoch += 2u;
+    CHECK(!modwerk_machine_rest_booked());
 }
 static void check_brake(void)
 {

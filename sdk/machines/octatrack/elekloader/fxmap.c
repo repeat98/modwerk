@@ -50,6 +50,8 @@ int (*modwerk_test_write)(uint32_t file, const void *data, unsigned length);
 unsigned modwerk_test_bank_now;
 #define BANK_NOW() modwerk_test_bank_now
 #define WRITE modwerk_test_write
+uint32_t modwerk_test_now; /* DTIM3's count, as the host test moves it */
+#define NOW() modwerk_test_now
 #else
 /* Battery RAM nothing else uses: stock references nothing in 0x100f859c-0x100fff00 (Octabam's
  * STEP_LOCKS.md), PLAY MODES and PLOCKS P2 hold 0x100f8600-0x100f8f06. */
@@ -57,6 +59,7 @@ unsigned modwerk_test_bank_now;
 /* It ends below crash.c's record at 0x100ff800 (128 ids: 3,084 bytes). */
 typedef char map_fits[sizeof(struct fx_map) <= 0x1800u ? 1 : -1];
 #define RUNNING(i) (((const volatile uint8_t *)0x80000ec4u)[i]) /* what each track runs: FX1 T1-T8, then FX2 */
+#define NOW() (*(const volatile uint32_t *)0xfc07c00cu) /* DTIM3's free-running count, 132 MHz */
 /* All 16 banks stay in RAM; each holds four working Parts and four saved ones (dsp.c's PART). */
 #define PART_FX(bank, part, i) (((const volatile uint8_t *)(0x400e21e0u + (bank) * 0x9b340u + \
     ((part) < 4 ? 0x8ed80u : 0x9504au - 4u * 6322u) + (part) * 6322u))[i])
@@ -65,6 +68,7 @@ typedef char map_fits[sizeof(struct fx_map) <= 0x1800u ? 1 : -1];
 #define BANK_NOW() ((*(volatile const uint32_t *)0x46c82456u - 0x400e21e0u) / 0x9b340u)
 #endif
 
+static int handles_kept; /* modwerk_fxmap_handle's cache stands (below); every write to an entry ends it */
 static uint32_t checksum_of(unsigned words) /* the map's first `words` words */
 {
     const volatile uint32_t *w = (const volatile uint32_t *)MAP;
@@ -82,6 +86,7 @@ static int widened(void)
 {
     if (MODWERK_FX_IDS == 32u || MAP->magic != 0x4d574658u || ((const volatile uint32_t *)MAP)[OLD_WORDS] != checksum_of(OLD_WORDS))
         return 0;
+    handles_kept = 0;
     for (unsigned k = 32; k < MODWERK_FX_IDS; ++k) {
         volatile struct fx_entry *e = &MAP->e[k];
         e->module = 0, e->layout = 0, e->spare = 0;
@@ -103,15 +108,23 @@ static void seeded(void)
     MAP->magic = MAGIC, MAP->generation = 1, MAP->sum = checksum();
 }
 /* The whole check (the map's 3 KB in battery RAM, uncached: about 420 µs on the unit, 2.5 % of the CPU when it ran on
- * every tick, 20 October 2026) once in 60 calls; between, the magic and the generation word, which every writer here
- * changes when it seals the map, so a change by this base is seen at once and damage within a second. */
-static uint32_t checked_generation, checked_at, checks;
+ * every tick, 20 October 2026) once a second; between, the magic and the generation word, which every writer here
+ * changes when it seals the map, so a change by this base is seen at once and damage within a second. Once in 60
+ * calls, as it was, ran it more often the more effects were installed: each UI tick asks the map for every installed
+ * effect module (machine_registry.c's rest judge), so a big set paid 420 µs every few ticks at rest (an emulated 0.8.1
+ * twin, 25 November 2026: one effect installed added 1,900 instructions a tick, peaks 7,300). 3,600 calls stay a
+ * backstop, should the timer stand still. */
+#define CHECK_EVERY 132000000u /* DTIM3 counts: a second */
+static uint32_t checked_generation, checked_at, checked_calls, checks;
+static int checked;
 static int valid(void)
 {
+    uint32_t now = NOW();
     ++checks;
-    if (checked_at && checks - checked_at < 60u && MAP->magic == MAGIC && MAP->generation == checked_generation) return 1;
+    if (checked && now - checked_at < CHECK_EVERY && checks - checked_calls < 3600u && MAP->magic == MAGIC &&
+        MAP->generation == checked_generation) return 1;
     if (!((MAP->magic == MAGIC && MAP->sum == checksum()) || widened())) seeded();
-    checked_at = checks, checked_generation = MAP->generation;
+    checked = 1, checked_at = now, checked_calls = checks, checked_generation = MAP->generation;
     return 1;
 }
 static void seal(void)
@@ -122,6 +135,7 @@ static void seal(void)
 }
 static void put(volatile struct fx_entry *e, uint32_t module, unsigned layout, const char *name)
 {
+    handles_kept = 0;
     e->module = module, e->layout = (uint16_t)layout, e->spare = 0;
     unsigned i = 0;
     for (; name && i < 15u && name[i]; ++i) e->name[i] = name[i];
@@ -166,12 +180,21 @@ uint32_t modwerk_fxmap_generation(void) { return valid() ? MAP->generation : 0; 
 #endif
 /* The module the map names at handle `id`, 0 none. */
 uint32_t modwerk_fxmap_module(unsigned id) { return id < MODWERK_FX_IDS && valid() ? MAP->e[id].module : 0; }
-/* The handle the map gives `module`, -1 none. */
+/* The handle the map gives `module`, -1 none. Each UI tick asks it for every installed effect module, and each entry is
+ * a slow read of battery RAM, so the answers are kept for the map's generation (the one valid() checked) until an entry
+ * is written (put, widened: a project load rewrites entries before it seals the map). */
+static struct { uint32_t module; int handle; } handle_kept[MODWERK_FX_IDS];
+static unsigned handles_n;
+static uint32_t handles_generation;
 int modwerk_fxmap_handle(uint32_t module)
 {
     if (!module || !valid()) return -1;
-    for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) if (fx_in(modwerk_fx_modules, k) && MAP->e[k].module == module) return (int)k;
-    return -1;
+    if (!handles_kept || handles_generation != checked_generation) handles_kept = 1, handles_n = 0, handles_generation = checked_generation;
+    for (unsigned i = 0; i < handles_n; ++i) if (handle_kept[i].module == module) return handle_kept[i].handle;
+    int handle = -1;
+    for (unsigned k = 0; k < MODWERK_FX_IDS && handle < 0; ++k) if (fx_in(modwerk_fx_modules, k) && MAP->e[k].module == module) handle = (int)k;
+    if (handles_n < MODWERK_FX_IDS) handle_kept[handles_n].module = module, handle_kept[handles_n++].handle = handle;
+    return handle;
 }
 /* The name the map records at `id`, else today's catalogue name for it (no project loaded under this
  * base yet), NUL-ended in `out` (16 bytes); "" none. */
