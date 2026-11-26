@@ -12,7 +12,7 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
@@ -60,6 +60,11 @@ struct diag_load {
  * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes
  * used and the largest free run, in 16-byte units) and `dsp1` the loader's check that refused it (runtime_check: 1 the
  * pool, 2 claims, 3 metadata, 4 the DSP's limits); all three 0 on bases before 0.7.10.
+ * RESTORE (bases from 0.8.2, right after the START it belongs to) the values stock's checks had to fix in the
+ * battery copy of the current bank at power-up (diag.c modwerk_boot_restore), with `cpu` those in the project's
+ * settings and arrangements, `dsp0` in the bank's Parts, `dsp1` in its patterns, `screen` the first record that
+ * needed one (1-3 the settings checks, 0x100 + 2 x Part for a saved Part and + 1 for its working copy, 0x200 +
+ * pattern) and `tempo24` the restore's result (0 restored with the fixes, 0xffffffff refused: too many to trust).
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */
@@ -96,6 +101,8 @@ int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers pres
 void modwerk_diag_frame(void);                         /* dl_frame, in the frame interrupt */
 unsigned modwerk_diag_read(uint8_t *out, unsigned page); /* ep0.c LOG: DIAG_PAGE bytes of the log, then the records */
 void modwerk_diag_set(void);                           /* modset.c: the installed set changed (restore, Keep) */
+int32_t modwerk_boot_restore(void);                    /* status.s mw_boot_restore: the power-up's battery restore of
+                                                       * the current bank (stock 0x40025770), in main's init */
 void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* modset.c,
                                                        * before a restore's set record: its first refused package's module and the
                                                        * loader's refusal (screen, tempo24), the module pool when it was refused:

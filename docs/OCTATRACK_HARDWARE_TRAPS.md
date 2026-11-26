@@ -583,7 +583,19 @@ RAM-boot with the module set up in a scratch bank. A refused restore has written
 into the battery copy, so the next boot restores the bank with them
 changed (Sidechain's KFLT 64 became 1). To recover a bank lost this way, do not
 save or edit: power-cycle once more, or PROJECT > RELOAD the last save from the
-card.
+card. A RELOAD brings the offending value back when the save holds it, so the
+next power-up refuses the bank again: a tester's project came up empty at every
+start after a save (25 November 2026, #2201; the restore's checks also cover
+the project settings, the arrangements, both copies of each Part and the 16
+patterns). From base 0.8.2 the base runs those checks itself first, in stock's
+order, keeping their fixes as a bank file load does, and stock's restore then
+takes the bank (`diag.c` `modwerk_boot_restore`, site `0x4001fb78`). Only a
+copy with more than 64 fixes, more like a lost battery than one stray value, is
+still refused. Each start that fixed anything logs a RESTORE incident naming the
+first record and the count, so the value behind it can be found. Reproduce it in
+ot_emu: one byte poked out of range into the battery copy's working Part 1
+(`0x100a4ece + 16`), a power cycle (`--cs1-in`, `--no-post`), and the current
+bank comes back as stock's defaults on a base without the fix.
 
 **Stock redraws a page only on its own events.** A module that patches how stock
 draws a page shows only at the next key that redraws it. On the Output Matrix

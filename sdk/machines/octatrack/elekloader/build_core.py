@@ -209,6 +209,9 @@ DYNLOAD_HOOKS = (
     # Modwerk's: main's idle spin counts the ColdFire's idle time (status.s, status.c). Its last init call only:
     # stock's spin stays, where ot_emu parks main again after a bench call.
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
+    # Modwerk's: main's init call of the power-up's battery restore (jsr 0x40025770): the bank comes back with what
+    # stock's checks fix, as a file load of it would, instead of being refused whole (diag.c modwerk_boot_restore, #2201).
+    (0x4001fb78, 6, '86a7b4d8a1b4360fc43dc5b4ccf3a2b44b0cfcc5a40bd598e7972de366e8c2f7', 'mw_boot_restore'),
     # Modwerk's: the time-stretch helper task skips a track whose TSTR is OFF (status.s).
     (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'),
     # Modwerk's: the delay routine leaves out the ring transfers, the filter and the mix of a track whose ring and

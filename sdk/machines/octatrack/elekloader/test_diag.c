@@ -27,6 +27,37 @@ volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU bud
 volatile uint8_t mw_cpu_track_refusals[8];
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
 
+/* The battery copy of the current bank: a record's byte above 15 is a value stock's checks fix (to 15, one each); the
+ * first settings check does the same for the saved UI state's bank byte. The restore refuses while any is left. */
+uint8_t modwerk_test_cs1_parts[8][16], modwerk_test_cs1_patterns[16][16], modwerk_test_ui[0x16], modwerk_test_ui_saved[0x16];
+static unsigned restores, restored_bank;
+int32_t modwerk_test_settings_check(unsigned which)
+{
+    if (which || modwerk_test_ui_saved[2] <= 15u) return 0;
+    modwerk_test_ui_saved[2] = 15u;
+    return 1;
+}
+int32_t modwerk_test_validate(uint8_t *record)
+{
+    int32_t fixes = 0;
+    for (unsigned i = 0; i < 16u; ++i) if (record[i] > 15u) record[i] = 15u, ++fixes;
+    return fixes;
+}
+static int clean(void)
+{
+    for (unsigned r = 0; r < 8u; ++r) for (unsigned i = 0; i < 16u; ++i) if (modwerk_test_cs1_parts[r][i] > 15u) return 0;
+    for (unsigned r = 0; r < 16u; ++r) for (unsigned i = 0; i < 16u; ++i) if (modwerk_test_cs1_patterns[r][i] > 15u) return 0;
+    return modwerk_test_ui_saved[2] <= 15u;
+}
+int32_t modwerk_test_stock_restore(void)
+{
+    ++restores;
+    if (!clean()) return -1;
+    restored_bank = modwerk_test_ui[2]; /* stock puts the bank back where main's copy of the UI state says */
+    return 0;
+}
+static void power_up(void) { for (unsigned i = 0; i < sizeof restore; ++i) ((uint8_t *)&restore)[i] = 0; restores = 0, restored_bank = 99u; }
+
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
 /* One UI tick, as the base runs it: runtime.c's count, then the subscribers. */
@@ -239,7 +270,39 @@ int main(void)
     const volatile uint8_t *tb = (const volatile uint8_t *)TRACE;
     CHECK(end == trace_at + DIAG_TRACE_BYTES && modwerk_diag_read(page, trace_at / DIAG_PAGE) == DIAG_PAGE && page[trace_at % DIAG_PAGE] == tb[0] && page[trace_at % DIAG_PAGE + 3u] == tb[3]);
 
+    /* The power-up's battery restore (#2201). A clean battery copy: stock's restore runs once and nothing is logged. */
+    restart(); /* the stall above, seen at a start */
+    power_up();
+    modwerk_test_ui[2] = modwerk_test_ui_saved[2] = 3u;
+    before = LOG->incidents;
+    CHECK(modwerk_boot_restore() == 0 && restores == 1u && restored_bank == 3u);
+    restart();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_BASE); /* START and BASE only */
+    /* One value out of range in Part 2's working copy (stock alone would refuse the whole bank and start it empty): it
+     * is fixed as a file load fixes it, the bank comes back, and RESTORE names the record. */
+    power_up();
+    modwerk_test_cs1_parts[2u * 1u + 1u][5] = 40u;
+    CHECK(modwerk_boot_restore() == 0 && restores == 1u && restored_bank == 3u && modwerk_test_cs1_parts[3][5] == 15u);
+    before = LOG->incidents;
+    restart();
+    CHECK(LOG->incidents == before + 3u && last()->kind == DIAG_RESTORE && last()->a == 1u && last()->second == 0u);
+    CHECK(last()->cpu == 0u && last()->dsp0 == 1u && last()->dsp1 == 0u && last()->screen == 0x103u && last()->tempo24 == 0u);
+    /* A pattern and the saved UI state's bank: main took the UI state before the checks, so it is taken again, fixed,
+     * before stock restores the bank there. */
+    power_up();
+    modwerk_test_cs1_patterns[9][0] = 200u, modwerk_test_ui_saved[2] = 0xeeu, modwerk_test_ui[2] = 0xeeu;
+    CHECK(modwerk_boot_restore() == 0 && restores == 1u && modwerk_test_ui[2] == 15u && restored_bank == 15u);
+    restart();
+    CHECK(last()->kind == DIAG_RESTORE && last()->a == 2u && last()->cpu == 1u && last()->dsp1 == 1u && last()->screen == 1u);
+    /* More fixes than a battery copy that kept its contents needs: refused as stock refuses it, and logged. */
+    power_up();
+    for (unsigned r = 0; r < 8u; ++r) for (unsigned i = 0; i < 9u; ++i) modwerk_test_cs1_parts[r][i] = 0xffu;
+    CHECK(modwerk_boot_restore() == -1 && restores == 0u);
+    restart();
+    CHECK(last()->kind == DIAG_RESTORE && last()->a == 72u && last()->dsp0 == 72u && last()->screen == 0x100u && last()->tempo24 == 0xffffffffu);
+    power_up();
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
-    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages and the frames before a stall passed");
+    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall and the power-up's restore passed");
     return failures != 0;
 }
