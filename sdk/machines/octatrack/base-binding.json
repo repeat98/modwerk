@@ -1,13 +1,13 @@
 {
  "schema": 1,
- "identity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+ "identity": "dbe84522c4aed7764a42d57d1e2e5b4f72cfc58b8484f224051f19ed689bef3a",
  "arena": 1089791456,
- "pool": 1087907888,
+ "pool": 1087908400,
  "symbols": {
   "modwerk_controller_write_begin": 1084872784,
   "modwerk_controller_write_end": 1084872812,
-  "modwerk_cue_cfg_clamp": 1085149376,
-  "modwerk_raise_ev_mute_keep": 1085152324
+  "modwerk_cue_cfg_clamp": 1085150440,
+  "modwerk_raise_ev_mute_keep": 1085153388
  },
  "controllers": {
   "sidechain-compressor": "032e621c426f69008dc48a17319fa2bf20d03f342ff2c408dff809cc74bf8b05",
@@ -15,6 +15,6 @@
   "analog-bassdrum": "24601ad33556d7e3b1d1aaa700914ff45c610654986cd4e126c131d8d2bde108"
  },
  "variants": {
-  "off": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
+  "off": "dbe84522c4aed7764a42d57d1e2e5b4f72cfc58b8484f224051f19ed689bef3a"
  }
 }

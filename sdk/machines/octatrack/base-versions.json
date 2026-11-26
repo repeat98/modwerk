@@ -162,6 +162,12 @@
    "identities": [
     "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
    ]
+  },
+  {
+   "version": "0.8.3",
+   "identities": [
+    "dbe84522c4aed7764a42d57d1e2e5b4f72cfc58b8484f224051f19ed689bef3a"
+   ]
   }
  ]
 }
