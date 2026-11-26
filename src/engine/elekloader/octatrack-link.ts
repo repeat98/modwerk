@@ -913,7 +913,8 @@ export class OctatrackLink {
     const failed = this.step === 'stage' && (error instanceof UploadUnconfirmedError || error instanceof UploadDeviceError) ? error.upload : undefined
     const sequence = usb?.supportsRemaining ? failed?.sequence : undefined
     const after = usb && error instanceof UploadUnconfirmedError ? await this.syncUsbCounters(this.abort?.signal, sequence).catch(() => undefined) : undefined
-    const counts = after && usb ? after.counts.map((count, i) => (count - usb.counts[i]) >>> 0) : undefined
+    // The six counters over the sync, then the last descriptor's status byte as it stands (#1596: a short stage or an error).
+    const counts = after && usb ? [...after.counts.map((count, i) => (count - usb.counts[i]) >>> 0), after.token] : undefined
     const remaining = counts && counts[2] === 0 && counts[3] > 0 ? after?.remainingBytes : undefined
     if (connection !== this.connection) return
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
