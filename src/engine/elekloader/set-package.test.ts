@@ -78,6 +78,9 @@ describe('one module-set offer', () => {
     expect(frameCostTable({ tapeecho: { first: 13, each: 3.7 } }, null)).toEqual([{ module: 0x9f482bb9, use: 37, wake: 93, rest: 0 }]) // build.py's id, per mille
     expect(frameCostTable({ tapeecho: { first: 13, each: 3.7, rest: 2.5 } }, null)[0].rest).toBe(25) // installed and unused
     expect(frameCostTable({ x: { first: 1, each: 2 } }, null)[0].wake).toBe(0) // never below each
+    // a machine's measured whole-track price, for the Part budget: under its id with the top bit flipped, ids ascending
+    expect(frameCostTable({ tapeecho: { first: 13, each: 3.7, price: 16.5 } }, null)).toEqual([
+      { module: 0x1f482bb9, use: 165, wake: 0, rest: 0 }, { module: 0x9f482bb9, use: 37, wake: 93, rest: 0 }])
     const shipped = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
     const echo = shipped.costs.tapeecho
     expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: Math.round(echo.each * 10), wake: Math.round(echo.first * 10) - Math.round(echo.each * 10), rest: Math.round((echo.rest ?? 0) * 10) })
@@ -96,7 +99,8 @@ describe('one module-set offer', () => {
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0, rest: 0 }])).not.toThrow() // measured free
     const record = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
-    for (const [id, cost] of Object.entries(record.costs) as [string, { first: number; each: number; rest?: number; measured: string }][]) {
+    for (const [id, cost] of Object.entries(record.costs) as [string, { first: number; each: number; rest?: number; price?: number; measured: string }][]) {
+      expect(cost.price === undefined || (cost.price > 0 && cost.price <= 100), id).toBe(true)
       expect(existsSync(new URL(`../../../sdk/octatrack/modules/${id}/octamod.module.json`, import.meta.url)), id).toBe(true)
       expect(cost.measured.length, id).toBeGreaterThan(10)
       expect(cost.each >= 0 && cost.first >= cost.each && cost.first <= 100 && (cost.rest ?? 0) >= 0 && (cost.rest ?? 0) <= 100, id).toBe(true)
