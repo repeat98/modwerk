@@ -172,7 +172,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), DIST's ring on FX1 and FX2 slots inside its own buffer (dsp_host's guard), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 392.6 instructions a sample. Emulator: installs, draws both pages, trial without fault. fx:audit: no DC, digital silence after input; aliasing best in CLEAN, worst in ROCK at high GAIN. Unit (0.1.0 before page 2): device:test passed, CPU price measured; page 2 not yet run on a unit.",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), DIST's ring on FX1 and FX2 slots inside its own buffer (dsp_host's guard), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 309.7 instructions a sample (392.6 before the optimisation, the same sound bit for bit). Emulator: installs, draws both pages, trial without fault. fx:audit: no DC, digital silence after input; aliasing best in CLEAN, worst in ROCK at high GAIN. Unit (0.1.0 before page 2): device:test passed, CPU price measured; page 2 not yet run on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

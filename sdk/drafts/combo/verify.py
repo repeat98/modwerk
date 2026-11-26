@@ -194,10 +194,10 @@ def main():
         offsets = [int(m, 16) for m in re.findall(r"\(r7\+\$([0-9a-f]+)\)", src)]
         gate("1 state inside X:(r7+$00..$63), the block init clears", max(offsets) <= 0x63,
              f"(highest $%02x)" % max(offsets))
-        copy_end = 0x40 + 5 + 15 + 7
-        gate("1 the coefficient copy ends inside the state init clears",
-             "move    #>$40,n4" in src and "do      #100," in src and "do      #7," in src and copy_end <= 0x64,
-             f"(ends at ${copy_end - 1:02x})")
+        chan = src[src.index("cmb_chan:"):]
+        reads = len(re.findall(r"y:\(r4\)\+,y[01]", chan))
+        gate("1 the sample loop reads the Y coefficient block once through (40 words at base + $100)",
+             reads == 40 and "do      #100," in src and "move    #>$100,x0" in src, f"({reads} reads)")
         # the GAIN product before the limit: q (limited at full scale by the pre low-pass's and the
         # all-passes' stores) x G/256 x 2^9 must stay inside the accumulator's +-256
         worst = (143 / 256) ** 2 * (1 << T.VG_SHIFT)

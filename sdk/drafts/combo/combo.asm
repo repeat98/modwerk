@@ -47,7 +47,11 @@
 ;   $40..$44 the voice's pre low-pass, $45..$53 the CAB row (b0 b1 b2 -a1 -a2, halved)
 ;   $54..$5a the voice's KHP CA CB BIAS FB KL KT
 ;   $5b ring pointer (Y)   $5c samples until the ring is full   $5d..$60 reflection gains L1 L2 R1 R2
-; Nothing above $63 is touched (init clears $00..$63). Y: base + $400..$7ff of this slot's buffer.
+; $61 the Y coefficient block's address (base + $100)
+; Nothing above $63 is touched (init clears $00..$63). Y: this slot's buffer, base + $100..$127 the
+; coefficient block (YC 0..39, in the order the sample loop reads them: KHP, the pre low-pass, the up
+; all-passes, two curves' BIAS CB CA FB, the down all-passes, KL, KT, the cabinet, KDC) and
+; base + $400..$7ff DIST's ring.
 ; Every product is the signed mpy/mac x0,y1 form.
 ; CYCLES_FORWARD_BRANCHES
 init:
@@ -63,11 +67,42 @@ cmb_zero:
         move    x:>$213,r4
         move    #>$ffffff,m4
         move    x:(r4),a
-        move    #>$400,x0
+        move    #>$100,x0
+        add     x0,a
+        move    a1,x:(r7+$61)
+        add     x0,a
+        add     x0,a
         add     x0,a
         move    a1,x:(r7+$5b)
         move    #>1024,x0
         move    x0,x:(r7+$5c)
+; The Y coefficient block at base + $100: 40 words in the order the sample loop reads them (YC 0..39).
+; init writes the fixed ones, the half-band's (6..9, 18..21) and KDC (39); each call writes the rest.
+        move    x:(r7+$61),r4
+        move    #>6,n4
+        move    (r4)+n4
+        move    #>$0df730,x0
+        move    x0,y:(r4)+
+        move    #>$5115c8,x0
+        move    x0,y:(r4)+
+        move    #>$2e49fa,x0
+        move    x0,y:(r4)+
+        move    #>$705011,x0
+        move    x0,y:(r4)+
+        move    #>8,n4
+        move    (r4)+n4
+        move    #>$2e49fa,x0
+        move    x0,y:(r4)+
+        move    #>$705011,x0
+        move    x0,y:(r4)+
+        move    #>$0df730,x0
+        move    x0,y:(r4)+
+        move    #>$5115c8,x0
+        move    x0,y:(r4)+
+        move    #>17,n4
+        move    (r4)+n4
+        move    #>$002ea7,x0
+        move    x0,y:(r4)
         rts
 
 proc:
@@ -88,14 +123,13 @@ proc:
         asl     #4,a,a
         move    a1,n1
         move    (r1)+n1
-; The voice's pre low-pass to $40..$44, CAB's rows (table word 80 + 25 CAB) to $45..$53,
-; then the voice's KHP CA CB BIAS FB KL KT to $54..$5a.
-        move    #>$40,n4
-        move    r7,r4
-        move    (r4)+n4
+; The voice's pre low-pass to YC 1..5, CAB's rows (table word 80 + 25 CAB) to YC 24..38,
+; then the voice's KHP CA CB BIAS FB KL KT to X $54..$5a (TGHT scales KHP there), then into the block.
+        move    x:(r7+$61),r4
+        move    (r4)+
         do      #5,>cmb_pre
         move    p:(r1)+,x0
-        move    x0,x:(r4)+
+        move    x0,y:(r4)+
 cmb_pre:
         nop
         move    x:(r6+$4),a
@@ -114,9 +148,11 @@ cmb_pre:
         move    r2,r3
         move    a1,n3
         move    (r3)+n3
+        move    #>18,n4
+        move    (r4)+n4
         do      #5,>cmb_cab
         move    p:(r3)+,x0
-        move    x0,x:(r4)+
+        move    x0,y:(r4)+
 cmb_cab:
         nop
 ; Biquad 2 = its words + PRES/128 x the step to PRES 127 (5 words on), x:(r6+$d) knob field.
@@ -129,7 +165,7 @@ cmb_cab:
         mpy     x0,y1,a
         move    p:(r3)+,x0
         add     x0,a
-        move    a,x:(r4)+
+        move    a,y:(r4)+
 cmb_bqtwo:
         nop
         move    (r3)+n3
@@ -143,12 +179,15 @@ cmb_bqtwo:
         mpy     x0,y1,a
         move    p:(r3)+,x0
         add     x0,a
-        move    a,x:(r4)+
+        move    a,y:(r4)+
 cmb_bqthree:
         nop
+        move    #>$54,n5
+        move    r7,r5
+        move    (r5)+n5
         do      #7,>cmb_voice
         move    p:(r1)+,x0
-        move    x0,x:(r4)+
+        move    x0,x:(r5)+
 cmb_voice:
         nop
 ; TGHT, x:(r6+$c) companion field: KHP x (t+16)/80 = KHP x ((t+16)/256 x 0.8) x 4; 64 is the voice's own.
@@ -165,6 +204,28 @@ cmb_voice:
         mpy     x0,y1,a
         asl     #2,a,a
         move    a,x:(r7+$54)
+; KHP to YC 0, BIAS CB CA FB to YC 10..13 and 14..17 (one set per curve), KL KT to YC 22, 23.
+        move    x:(r7+$61),r4
+        move    a,y:(r4)
+        move    #>10,n4
+        move    (r4)+n4
+        do      #2,>cmb_curve
+        move    x:(r7+$57),x0
+        move    x0,y:(r4)+
+        move    x:(r7+$56),x0
+        move    x0,y:(r4)+
+        move    x:(r7+$55),x0
+        move    x0,y:(r4)+
+        move    x:(r7+$58),x0
+        move    x0,y:(r4)+
+cmb_curve:
+        nop
+        move    #>4,n4
+        move    (r4)+n4
+        move    x:(r7+$59),x0
+        move    x0,y:(r4)+
+        move    x:(r7+$5a),x0
+        move    x0,y:(r4)
 ; MIX, x:(r6+$e) companion field (bits 8-15): k/128 + k/16384, so 127 leaves the dry 1/16384.
         move    x:(r6+$e),a
         and     #>$007f00,a
@@ -289,43 +350,36 @@ cmb_snap:
         nop
         move    x:(r7+$5b),r1
         move    #>$3ff,m1
+        move    #>$fffffd,n2
+        move    #>2,n3
         do      n7,>cmb_frameend
-        move    x:(r7+$30),a
-        move    x:(r7+$31),x0
-        sub     x0,a
+; The glides, two at a time: each run += (target - run)/64, stored three words behind r2.
+        lua     (r7+$30),r2
+        move    x:(r2)+,a
+        move    x:(r2)+,x0
+        sub     x0,a            x:(r2)+,b
         asr     #6,a,a
-        add     x0,a
-        move    a1,x:(r7+$31)
-        move    x:(r7+$32),a
-        move    x:(r7+$33),x0
-        sub     x0,a
+        add     x0,a            x:(r2)+,y0
+        sub     y0,b            a1,x:(r2+n2)
+        asr     #6,b,b
+        add     y0,b            x:(r2)+,a
+        move    x:(r2)+,x0
+        sub     x0,a            b1,x:(r2+n2)
         asr     #6,a,a
-        add     x0,a
-        move    a1,x:(r7+$33)
-        move    x:(r7+$34),a
-        move    x:(r7+$35),x0
-        sub     x0,a
+        add     x0,a            x:(r2)+,b
+        move    x:(r2)+,y0
+        sub     y0,b            a1,x:(r2+n2)
+        asr     #6,b,b
+        add     y0,b            x:(r2)+,a
+        move    x:(r2)+,x0
+        sub     x0,a            b1,x:(r2+n2)
         asr     #6,a,a
-        add     x0,a
-        move    a1,x:(r7+$35)
-        move    x:(r7+$36),a
-        move    x:(r7+$37),x0
-        sub     x0,a
-        asr     #6,a,a
-        add     x0,a
-        move    a1,x:(r7+$37)
-        move    x:(r7+$38),a
-        move    x:(r7+$39),x0
-        sub     x0,a
-        asr     #6,a,a
-        add     x0,a
-        move    a1,x:(r7+$39)
-        move    x:(r7+$3a),a
-        move    x:(r7+$3b),x0
-        sub     x0,a
-        asr     #6,a,a
-        add     x0,a
-        move    a1,x:(r7+$3b)
+        add     x0,a            x:(r2)+,b
+        move    x:(r2)+,y0
+        sub     y0,b            a1,x:(r2+n2)
+        asr     #6,b,b
+        add     y0,b
+        move    b1,x:(r7+$3b)
         move    r7,r5
         bsr     cmb_chan
 ; DIST: the wet into the ring, then each side's two reflections (r1 runs modulo $400).
@@ -378,199 +432,158 @@ cmb_frameend:
 ; The amp: in x:(r0) and x:(r0+1), state block at r5; out in a, which the
 ; caller stores to both sides (its store limits it to full scale).
 cmb_chan:
-        move    #>$40,n4
-        move    r7,r4
-        move    (r4)+n4
-; Pre high-pass (the voice's KHP): s += KHP (h - s), y = h - s, h = (L + R)/8, the mono sum at quarter scale.
+        move    x:(r7+$61),r4
+        move    r7,r3
+; Pre high-pass (the voice's KHP, YC 0): s += KHP (h - s), y = h - s, h = (L + R)/8, the mono sum at
+; quarter scale. r3 walks the state ($0 on), r4 the Y block; each product reads both in one move.
         move    x:(r0),a
         move    x:(r0+1),b
         add     b,a
         asr     #3,a,a
         move    a1,x1
-        move    x:(r5+$0),b
-        move    x:(r5+$1),b0
-        move    x1,a
-        move    x:(r5+$0),y0
-        sub     y0,a
+        tfr     x1,a            x:(r3)+,b       y:(r4)+,y1
+        sub     b,a             x:(r3)-,b0
         move    a,x0
-        move    x:(r5+$54),y1
         mac     x0,y1,b
-        move    b1,x:(r5+$0)
-        move    b0,x:(r5+$1)
-        move    x1,a
-        move    b1,y0
-        sub     y0,a
+        tfr     x1,a            b1,x:(r3)+
+        move    b0,x:(r3)+
+        move    b1,b
+        sub     b,a
         move    a,x1
-; Pre low-pass: direct form 1, halved coefficients from r4.
-        lua     (r5+$2),r3
+; Pre low-pass: direct form 1, halved coefficients (YC 1..5), state $2..$5.
         move    x1,x0
-        move    x:(r4)+,y1
-        mpy     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a
-        asl     #1,a,a
-        move    x:(r5+$2),y0
-        move    y0,x:(r5+$3)
-        move    x1,x:(r5+$2)
-        move    x:(r5+$4),y0
-        move    y0,x:(r5+$5)
+        move    y:(r4)+,y1
+        mpy     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-n3,y0
+        asl     a               x:(r3),b
+        move    x1,x:(r3)+
+        move    b,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$4)
+        move    x1,x:(r3)+
+        move    y0,x:(r3)+
 ; 2x oversampling: a polyphase half-band (halfband.py), path 0 the even
 ; coefficients, path 1 the odd ones. Up: both paths take q; path 0 gives the
-; first sample at 2x, path 1 the second.
+; first sample at 2x, path 1 the second. All-pass state [x1, y1] from $18.
         move    x1,x:(r5+$2a)
+        lua     (r5+$18),r3
 ; up, path 0, a0
-        move    x1,b
-        move    x:(r5+$19),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$18),a
-        move    #>$0df730,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$18)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$19)
+        move    x1,x:(r3)+
 ; up, path 0, a2
-        move    x1,b
-        move    x:(r5+$1b),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$1a),a
-        move    #>$5115c8,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$1a)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$1b)
+        move    x1,x:(r3)+
         move    x1,x:(r5+$28)
         move    x:(r5+$2a),x1
 ; up, path 1, a1
-        move    x1,b
-        move    x:(r5+$1d),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$1c),a
-        move    #>$2e49fa,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$1c)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$1d)
+        move    x1,x:(r3)+
 ; up, path 1, a3
-        move    x1,b
-        move    x:(r5+$1f),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$1e),a
-        move    #>$705011,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$1e)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$1f)
-; The amp on the second sample: GAIN and the limit (q x drive x 2 * G/256 * 512, plus BIAS, limited at full scale),
+        move    x1,x:(r3)+
+; The amp on the second sample: GAIN (q x drive x 2 x G/256 x 512) plus BIAS, limited at full scale,
 ; then the voice's curve at quarter scale, CA c - CB c^3 - FB. Out in x1.
         move    x1,x0
         move    x:(r7+$31),y1
-        mpy     x0,y1,a
+        mpy     x0,y1,a         y:(r4)+,y0
         asl     #9,a,a
-        move    x:(r5+$57),x0
-        add     x0,a
+        add     y0,a
         move    a,x0
         move    x0,x1
         move    x0,y1
         mpy     x0,y1,a
         move    a,x0
         move    x1,y1
-        mpy     x0,y1,a
+        mpy     x0,y1,a         y:(r4)+,y1
         move    a,x0
-        move    x:(r5+$56),y1
-        mpy     x0,y1,b
+        mpy     x0,y1,b         y:(r4)+,y1
         move    x1,x0
-        move    x:(r5+$55),y1
-        mpy     x0,y1,a
+        mpy     x0,y1,a         y:(r4)+,y0
         sub     b,a
-        move    x:(r5+$58),x0
-        sub     x0,a
+        sub     y0,a
         move    a,x1
         move    x1,x:(r5+$29)
         move    x:(r5+$28),x1
-; The amp on the first sample: GAIN and the limit (q x drive x 2 * G/256 * 512, plus BIAS, limited at full scale),
+; The amp on the first sample: GAIN (q x drive x 2 x G/256 x 512) plus BIAS, limited at full scale,
 ; then the voice's curve at quarter scale, CA c - CB c^3 - FB. Out in x1.
         move    x1,x0
         move    x:(r7+$31),y1
-        mpy     x0,y1,a
+        mpy     x0,y1,a         y:(r4)+,y0
         asl     #9,a,a
-        move    x:(r5+$57),x0
-        add     x0,a
+        add     y0,a
         move    a,x0
         move    x0,x1
         move    x0,y1
         mpy     x0,y1,a
         move    a,x0
         move    x1,y1
-        mpy     x0,y1,a
+        mpy     x0,y1,a         y:(r4)+,y1
         move    a,x0
-        move    x:(r5+$56),y1
-        mpy     x0,y1,b
+        mpy     x0,y1,b         y:(r4)+,y1
         move    x1,x0
-        move    x:(r5+$55),y1
-        mpy     x0,y1,a
+        mpy     x0,y1,a         y:(r4)+,y0
         sub     b,a
-        move    x:(r5+$58),x0
-        sub     x0,a
+        sub     y0,a
         move    a,x1
 ; Down: path 1 takes the first sample, path 0 the second; p = (path 0 + path 1)/2.
+        lua     (r5+$24),r3
 ; down, path 1, a1
-        move    x1,b
-        move    x:(r5+$25),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$24),a
-        move    #>$2e49fa,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$24)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$25)
+        move    x1,x:(r3)+
 ; down, path 1, a3
-        move    x1,b
-        move    x:(r5+$27),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$26),a
-        move    #>$705011,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$26)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$27)
+        move    x1,x:(r3)+
         move    x1,x:(r5+$28)
         move    x:(r5+$29),x1
+        lua     (r5+$20),r3
 ; down, path 0, a0
-        move    x1,b
-        move    x:(r5+$21),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$20),a
-        move    #>$0df730,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$20)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$21)
+        move    x1,x:(r3)+
 ; down, path 0, a2
-        move    x1,b
-        move    x:(r5+$23),y0
+        tfr     x1,b            x:(r3)+,a       y:(r4)+,y1
+        move    x:(r3)-,y0
         sub     y0,b
         move    b,x0
-        move    x:(r5+$22),a
-        move    #>$5115c8,y1
-        mac     x0,y1,a
-        move    x1,x:(r5+$22)
+        mac     x0,y1,a         x1,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$23)
+        move    x1,x:(r3)+
         move    x1,a
         move    x:(r5+$28),b
         add     b,a
@@ -581,27 +594,21 @@ cmb_chan:
         mpy     x0,y1,a
         asl     #4,a,a
         move    a,x1
-; Tone stack: L = LP(KL), T = LP(KT), the voice's splits; M = T - L, H = p - T; weights w/2, so << 2.
-        move    x:(r5+$6),b
-        move    x:(r5+$7),b0
-        move    x1,a
-        move    x:(r5+$6),y0
-        sub     y0,a
+; Tone stack: L = LP(KL), T = LP(KT), the voice's splits (YC 22, 23; state $6..$9); M = T - L,
+; H = p - T; weights w/2, so << 2.
+        lua     (r5+$6),r3
+        tfr     x1,a            x:(r3)+,b       y:(r4)+,y1
+        sub     b,a             x:(r3)-,b0
         move    a,x0
-        move    x:(r5+$59),y1
         mac     x0,y1,b
-        move    b1,x:(r5+$6)
-        move    b0,x:(r5+$7)
-        move    x:(r5+$8),b
-        move    x:(r5+$9),b0
-        move    x1,a
-        move    x:(r5+$8),y0
-        sub     y0,a
+        move    b1,x:(r3)+
+        move    b0,x:(r3)+
+        tfr     x1,a            x:(r3)+,b       y:(r4)+,y1
+        sub     b,a             x:(r3)-,b0
         move    a,x0
-        move    x:(r5+$5a),y1
         mac     x0,y1,b
-        move    b1,x:(r5+$8)
-        move    b0,x:(r5+$9)
+        move    b1,x:(r3)+
+        move    b0,x:(r3)+
         move    x:(r5+$6),x0
         move    x:(r7+$33),y1
         mpy     x0,y1,a
@@ -618,83 +625,55 @@ cmb_chan:
         mac     x0,y1,a
         asl     #2,a,a
         move    a,x1
-; Cabinet biquad 1: direct form 1, halved coefficients from r4.
-        lua     (r5+$a),r3
+; The cabinet: three biquads, halved coefficients (YC 24..38), state $a..$15.
         move    x1,x0
-        move    x:(r4)+,y1
-        mpy     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a
-        asl     #1,a,a
-        move    x:(r5+$a),y0
-        move    y0,x:(r5+$b)
-        move    x1,x:(r5+$a)
-        move    x:(r5+$c),y0
-        move    y0,x:(r5+$d)
+        move    y:(r4)+,y1
+        mpy     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-n3,y0
+        asl     a               x:(r3),b
+        move    x1,x:(r3)+
+        move    b,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$c)
-; Cabinet biquad 2: direct form 1, halved coefficients from r4.
-        lua     (r5+$e),r3
+        move    x1,x:(r3)+
+        move    y0,x:(r3)+
         move    x1,x0
-        move    x:(r4)+,y1
-        mpy     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a
-        asl     #1,a,a
-        move    x:(r5+$e),y0
-        move    y0,x:(r5+$f)
-        move    x1,x:(r5+$e)
-        move    x:(r5+$10),y0
-        move    y0,x:(r5+$11)
+        move    y:(r4)+,y1
+        mpy     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-n3,y0
+        asl     a               x:(r3),b
+        move    x1,x:(r3)+
+        move    b,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$10)
-; Cabinet biquad 3: direct form 1, halved coefficients from r4.
-        lua     (r5+$12),r3
+        move    x1,x:(r3)+
+        move    y0,x:(r3)+
         move    x1,x0
-        move    x:(r4)+,y1
-        mpy     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a         x:(r3)+,x0
-        move    x:(r4)+,y1
-        mac     x0,y1,a
-        asl     #1,a,a
-        move    x:(r5+$12),y0
-        move    y0,x:(r5+$13)
-        move    x1,x:(r5+$12)
-        move    x:(r5+$14),y0
-        move    y0,x:(r5+$15)
+        move    y:(r4)+,y1
+        mpy     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)+,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-,x0      y:(r4)+,y1
+        mac     x0,y1,a         x:(r3)-n3,y0
+        asl     a               x:(r3),b
+        move    x1,x:(r3)+
+        move    b,x:(r3)+
         move    a,x1
-        move    x1,x:(r5+$14)
-; DC blocker after the cabinet: s += KDC (u - s), y = u - s (48-bit state).
-        move    x:(r5+$16),b
-        move    x:(r5+$17),b0
-        move    x1,a
-        move    x:(r5+$16),y0
-        sub     y0,a
+        move    x1,x:(r3)+
+        move    y0,x:(r3)+
+; DC blocker after the cabinet (KDC, YC 39): s += KDC (u - s), y = u - s (48-bit state).
+        tfr     x1,a            x:(r3)+,b       y:(r4)+,y1
+        sub     b,a             x:(r3)-,b0
         move    a,x0
-        move    #>$002ea7,y1
         mac     x0,y1,b
-        move    b1,x:(r5+$16)
-        move    b0,x:(r5+$17)
-        move    x1,a
-        move    b1,y0
-        sub     y0,a
+        tfr     x1,a            b1,x:(r3)+
+        move    b0,x:(r3)+
+        move    b1,b
+        sub     b,a
 ; Back to half of full scale (MIX doubles it).
         asl     #1,a,a
         rts

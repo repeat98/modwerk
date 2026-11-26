@@ -70,7 +70,7 @@ GAIN, BASS, MID, TREB, LEV and MIX glide (about 1.5 ms), so turning them, lockin
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence in every voice, and measures 392.6 instructions a sample (stock SPRING REV: about 314). It installs and draws both pages in the emulator. The build before page 2 passed device:test on a unit; page 2 has not run on one yet.
+See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence in every voice, and measures 309.7 instructions a sample (stock SPRING REV: about 314). It installs and draws both pages in the emulator. The build before page 2 passed device:test on a unit; page 2 has not run on one yet.
 
 ## Authorship and licences
 
