@@ -1,14 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+#include "native_view.h"
 static void performance_draw(unsigned char *frame)
 {
-    if (view == ROW) {
-        session_draw(frame);
-        if (end_of_path) {
-            for (unsigned x = 87; x < 128; ++x) frame[x*8+7] = 0;
-            label(frame,87,0,"END");
-        }
-        return;
-    }
+    /* Design System v1 (D31): Panorama Full Grid and Clip View Native Frame. */
+    if (view == ROW) { panorama_draw(frame); return; }
+    if (view == CLIP) { clip_native_draw(frame); return; }
     for (unsigned i=0; i<1024; ++i) frame[i]=0;
     if (view == SETUP) {
         label(frame,0,0,"CLYPS SETUP"); label(frame,55,0,"R"); number(frame,60,0,slot+1);

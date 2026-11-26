@@ -88,8 +88,13 @@ static void restore(unsigned sr)
 static void focus_row(unsigned r)
 {
     slot = r;
+#ifdef CLYPS_PERFORMANCE
+    enum { WINDOW = 5 };            /* Panorama Full Grid shows five rows (D31) */
+#else
+    enum { WINDOW = 4 };
+#endif
     if (r < first_row) first_row = r;
-    if (r >= first_row+4) first_row = r-3;
+    if (r >= first_row+WINDOW) first_row = r-(WINDOW-1);
 }
 
 /* Physical row state also covers a modifier held before the module loaded. */

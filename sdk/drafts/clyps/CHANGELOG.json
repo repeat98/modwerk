@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Row is now a full grid: eight tracks, five rows, playing cells filled, waiting cells outlined, the cursor shown as open corners.",
+      "Clip keeps the Octatrack's own frame: track tabs, Scene A/B and crossfader stay visible beside the tempo, transport and focused source.",
+      "Pause now shows as pause instead of play."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-25",
     "changes": [
