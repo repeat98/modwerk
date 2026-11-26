@@ -28,7 +28,7 @@ __attribute__((constructor)) static void start_off_the_4gb_line(int argc, char *
     if ((uint32_t)(uintptr_t)pool <= UINT32_MAX - RUNTIME_POOL_BYTES) return;
     if (argc > 0 && restarts < 8) {
         char next[12];
-        sprintf(next, "%d", restarts + 1);
+        snprintf(next, sizeof next, "%d", restarts + 1);
         setenv("MODWERK_HOST_RESTARTS", next, 1);
         execv(argv[0], argv);
     }

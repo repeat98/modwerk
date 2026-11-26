@@ -1,5 +1,5 @@
 import { spawnSync, execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { expect, it } from 'vitest'
@@ -22,7 +22,17 @@ function writeRunner(folder: string) {
 }
 
 // The runner looks for the ColdFire tools on PATH; these tests run it as on a computer that has none, whatever this one has.
-const PATH = (process.env.PATH ?? '').split(delimiter).filter(dir => dir && !existsSync(join(dir, 'm68k-elf-gcc')) && !existsSync(join(dir, 'm68k-elf-gcc.exe'))).join(delimiter)
+// Homebrew keeps them in the folder that also holds the Python the runner requires, so that one command stays reachable.
+const hasCompiler = (dir: string) => existsSync(join(dir, 'm68k-elf-gcc')) || existsSync(join(dir, 'm68k-elf-gcc.exe'))
+const folders = (process.env.PATH ?? '').split(delimiter).filter(Boolean)
+const python = folders.find(dir => existsSync(join(dir, 'python3')))
+const reachable = folders.filter(dir => !hasCompiler(dir))
+if (python && hasCompiler(python) && process.platform !== 'win32') {
+  const shim = mkdtempSync(join(tmpdir(), 'octamod-check-python.'))
+  symlinkSync(join(python, 'python3'), join(shim, 'python3'))
+  reachable.unshift(shim)
+}
+const PATH = reachable.join(delimiter)
 
 function check(failure = '', buildOnly = false, args: string[] = [], env: Record<string, string> = {}) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
