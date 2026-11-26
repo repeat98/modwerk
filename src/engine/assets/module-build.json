@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "c9fc7fe67b38358fe3eed71b21e97eedec18fe59",
+  "sourceCommit": "59dbdd93838be7caf4ce5cfe19456cb15294ed71",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "c24f79022dd41917e2d97a78961967d337e0624fe67e1522f61d41ac2e9acda4",
+  "sourceTreeSha256": "fc5ef0c3e2604b09d14f85e49ed7d78b9f53012c570515d68308b8f31b030a8d",
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
     "euclid": "0.1.5-experimental",
-    "repitch": "0.2.2-experimental",
+    "repitch": "0.2.1-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.3-experimental",
     "everb": "0.1.2-experimental",
@@ -29,7 +29,7 @@
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
     "playmodes": "0.2.1-experimental",
-    "mute-modes": "0.2.3-experimental",
+    "mute-modes": "0.2.4-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -60,7 +60,7 @@
     },
     "rom-packages.json": {
       "bytes": 28500,
-      "sha256": "392446c2a784a3d5cd0589c6ca65bc5685da621877187638feec6f30c4964a69"
+      "sha256": "68d9f0e5f388910e20cd00f5b00cbc1eb606258921d90d4a0d87dab934f835cb"
     },
     "bootstrap-package.json": {
       "bytes": 2607,
@@ -80,7 +80,7 @@
     },
     "requested-packages.json": {
       "bytes": 1362663,
-      "sha256": "8ca89c5f6a4e28a4abbf85c185e5eb67565f08eab70568b7a231708806e37da5"
+      "sha256": "7a986a72a9ccf71b5fbbf96e19c6acaf0d2364758ffe4112532e27f35df88ea5"
     },
     "utility-packages.json": {
       "bytes": 11735,
