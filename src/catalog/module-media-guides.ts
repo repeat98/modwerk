@@ -27,7 +27,7 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
     ],
   },
   miniverb: {
-    version: '0.2.3-experimental',
+    version: '0.2.4-experimental',
     screenshots: [
       {
         path: 'media/ot-location.png',
