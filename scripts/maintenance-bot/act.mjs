@@ -10,7 +10,7 @@ import { HARD_ONLY } from './lanes.mjs'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
 import { MARKER, approveRun, boardGet, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { pilotReport } from './eval-pilot.mjs'
-import { dailyReport } from './report.mjs'
+import { dailyReport, weeklyRetro } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
 const { api } = github(), bot = ledger(), chat = discord()
@@ -126,6 +126,7 @@ for (const todo of (await bot('/todos')).todos) {
   const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1], run = todo.command.match(/^gh run view (\d+) --log-failed$/)?.[1]
   let settled = false
   if (todo.note.startsWith(SICK)) settled = !sick.some(item => item.id === todo.id)
+  else if (todo.note.startsWith('Bot retro: ')) settled = todo.id !== actionId('todo', 0, 'bot retro', week)
   else if (todo.command.startsWith('npm run board -- followups ')) settled = !!pendingDrafts && !pendingDrafts.some(draft => draft.id === todo.id)
   else if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
   else if (run) { const workflow = (await api('/actions/runs/' + run).catch(() => null))?.workflow_id; settled = !!workflow && latest.get(workflow)?.conclusion === 'success' }
@@ -260,11 +261,31 @@ if (rejected.length) console.log(rejected.length + ' held back by the policy.')
 // It saves the map of what this pass saw with it, so the next pass reviews only what changed since (lanes.mjs).
 if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT, ...(proposals.items && typeof proposals.items === 'object' ? { items: JSON.stringify(proposals.items) } : {}) })
 
+// What each lane read this week, kept beside last week's, so the bot can say what it costs (weeklyRetro).
+let usage = {}
+try { usage = JSON.parse(state.usage || '{}') } catch { /* an unreadable record starts a new one */ }
+if (usage.week !== week) usage = { week, last: usage.week ? { hard: usage.hard, light: usage.light } : usage.last }
+if (hasReview && !reviewError && proposals.usage && typeof proposals.usage === 'object') {
+  for (const lane of ['hard', 'light']) {
+    const cost = proposals.usage[lane]
+    if (cost) usage[lane] = { runs: (usage[lane]?.runs ?? 0) + 1, tokens: (usage[lane]?.tokens ?? 0) + Number(cost.tokens || 0), out: (usage[lane]?.out ?? 0) + Number(cost.out || 0) }
+  }
+  await bot('/state', 'PUT', { usage: JSON.stringify(usage) }).catch(() => undefined)
+}
+
 // 4. The daily report: a few lines; each action already has its own message with buttons.
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
   const broken = !hasReview || !!reviewError
   const progress = state.pilotReported ? '' : '\n' + pilotReport((await bot('/eval-pilot')).records)
-  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + progress + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+  // Mondays: the bot looks at its own week. A kind of action that keeps being stopped or failing becomes a to-do
+  // for a desktop session to propose the change; the bot never edits its own rules.
+  let retro = ''
+  if (new Date().getUTCDay() === 1) {
+    const look = weeklyRetro((await bot('/actions/recent?hours=168')).actions ?? [], usage.last ?? {})
+    retro = '\n' + look.line
+    if (look.flags.length) await bot('/todos', 'POST', { todos: [{ id: actionId('todo', 0, 'bot retro', week), target: 0, command: '/modwerk-todo retro', note: ('Bot retro: ' + look.flags.join(', ')).slice(0, 200), urgent: false }] })
+  }
+  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + retro + progress + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }
 if (reviewError) throw new Error(reviewError)

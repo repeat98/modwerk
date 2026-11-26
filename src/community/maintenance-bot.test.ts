@@ -114,6 +114,27 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/actions/due')).json()).actions).toEqual([])
   })
 
+  it('keeps the owner’s reply to an action as a lesson, lists and forgets it, and ignores anyone else', async () => {
+    const { bot, hook, sent } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'window', { kind: 'shout_reply', summary: 'Shoutbox: Tell a member NRPN is not a module yet', windowHours: 1 })] })
+    const message = sent.find(item => item.method === 'sendMessage')!, id = 901
+    expect(message.body.text).toContain('Shoutbox: Tell a member NRPN')
+    const say = (text: string, chat = Number(CHAT), reply?: number) => hook({ message: { text, chat: { id: chat }, ...(reply ? { reply_to_message: { message_id: reply } } : {}) } })
+    await say('feature requests go to the forum, never answer them in the shoutbox', 1, id)
+    expect((await (await bot('/lessons')).json()).lessons).toEqual([])
+    await say('  feature requests go to the forum,\n never answer them in the shoutbox ', Number(CHAT), id)
+    expect((await (await bot('/lessons')).json()).lessons).toEqual([{ kind: 'shout_reply', summary: 'Shoutbox: Tell a member NRPN is not a module yet', why: 'feature requests go to the forum, never answer them in the shoutbox' }])
+    await say('/lessons')
+    expect(sent.at(-1)!.body.text).toBe('1. feature requests go to the forum, never answer them in the shoutbox\n   on: Shoutbox: Tell a member NRPN is not a module yet\n/forget <number> removes one.')
+    await say('not one of yours', Number(CHAT), 5)
+    expect(sent.at(-1)!.body.text).toContain('Reply to one of my action messages')
+    await say('/forget 1')
+    expect((await (await bot('/lessons')).json()).lessons).toEqual([])
+    // The weekly usage record travels in the state like the fingerprint.
+    await bot('/state', 'PUT', { usage: '{"week":"2026-11-23"}' })
+    expect((await (await bot('/state')).json()).usage).toBe('{"week":"2026-11-23"}')
+  })
+
   it('pauses and resumes from Telegram', async () => {
     const { bot, hook, sent } = await fixture()
     await bot('/actions', 'POST', { actions: [action('e'.repeat(16), 'notify')] })

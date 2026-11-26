@@ -2,6 +2,34 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // The maintenance bot's morning report (docs/MAINTENANCE_BOT.md). The owner reads it on a phone, so it counts
 // rather than lists, names only failures, and points at /modwerk-todo for the work at the computer.
+const WEEK = 7 * 86400, LABELS = { discord_reply: 'Discord replies', forum_reply: 'forum replies', shout_reply: 'shoutbox replies', board_reply: 'board replies', comment: 'replies', review: 'reviews', merge: 'merges', close: 'closures', approve_run: 'check starts', label: 'labels' }
+const short = count => count >= 1e6 ? (count / 1e6).toFixed(1) + 'M' : Math.round(count / 1e3) + 'k'
+/**
+ * The bot's weekly look at itself (docs/MAINTENANCE_BOT.md, "How it improves"): one line of numbers for Monday's
+ * report, and `flags` for each kind of action the owner stopped, or that failed, three times or more. A flag
+ * becomes a to-do for a desktop session, which proposes the change to the prompt or the policy; the bot never
+ * edits its own rules. `usage` is last week's count of what each lane read.
+ */
+export function weeklyRetro(actions, usage = {}, date = new Date()) {
+  const since = date.getTime() / 1000 - WEEK, week = actions.filter(a => a.created_at >= since)
+  const count = status => week.filter(a => a.status === status).length
+  const stale = actions.filter(a => a.status === 'pending' && a.tier === 'ask' && date.getTime() / 1000 - a.created_at > 2 * 86400).length
+  const flags = []
+  for (const kind of new Set(week.map(a => a.kind))) {
+    const of = week.filter(a => a.kind === kind), decided = of.filter(a => ['done', 'vetoed', 'failed'].includes(a.status)).length, name = LABELS[kind] ?? kind
+    for (const [status, word] of [['vetoed', 'stopped'], ['failed', 'failed']]) {
+      const hit = of.filter(a => a.status === status)
+      if (hit.length >= 3) flags.push(hit.length + ' of ' + decided + ' ' + name + ' ' + word)
+    }
+  }
+  const lane = (name, label) => usage[name]?.runs ? label + ' ' + short(usage[name].tokens) + ' tokens in ' + usage[name].runs + ' runs' : ''
+  const tokens = [lane('hard', 'reviews'), lane('light', 'the rest')].filter(Boolean).join(', ')
+  return {
+    flags,
+    line: 'Last 7 days: ' + count('done') + ' done, ' + count('vetoed') + ' stopped, ' + count('failed') + ' failed, ' + count('expired') + ' dropped' + (stale ? ', ' + stale + ' waiting for you over 2 days' : '') + '.' + (tokens ? ' Read: ' + tokens + '.' : ''),
+  }
+}
+
 const NOUNS = { label: ['label', 'labels'], comment: ['reply', 'replies'], review: ['review', 'reviews'], merge: ['merge', 'merges'], close: ['closure', 'closures'], approve_run: ['started check', 'started checks'] }
 export function dailyReport(actions, todos = [], date = new Date()) {
   const count = (status, tier) => actions.filter(a => a.status === status && (!tier || a.tier === tier)).length

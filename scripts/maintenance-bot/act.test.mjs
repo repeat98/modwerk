@@ -91,3 +91,18 @@ it('tells the owner at once when a source is down, and retires the to-do when it
   await import('./act.mjs')
   expect(bot).toHaveBeenCalledWith('/todos/' + alert.id + '/status', 'POST', { status: 'dropped' })
 })
+
+it('adds what each lane read to this week’s count, beside last week’s', async () => {
+  writeFileSync(join(dir, 'proposals.json'), JSON.stringify({ actions: [], usage: { hard: { tokens: 400, out: 9 }, light: { tokens: 100, out: 1 } } }))
+  let usage = JSON.stringify({ week: '2000-01-03', hard: { runs: 2, tokens: 50, out: 5 } })
+  bot.mockImplementation(async (path, method, body) => {
+    if (path === '/state' && method === 'PUT' && body.usage) usage = body.usage
+    return path === '/state' ? { usage } : path === '/todos' ? { todos: [] } : path === '/actions/due' ? { actions: [] } : {}
+  })
+  await import('./act.mjs')
+  const first = JSON.parse(usage)
+  expect(first).toMatchObject({ hard: { runs: 1, tokens: 400, out: 9 }, light: { runs: 1, tokens: 100, out: 1 }, last: { hard: { runs: 2, tokens: 50, out: 5 } } })
+  vi.resetModules()
+  await import('./act.mjs')
+  expect(JSON.parse(usage)).toMatchObject({ week: first.week, hard: { runs: 2, tokens: 800 }, last: { hard: { runs: 2 } } })
+})

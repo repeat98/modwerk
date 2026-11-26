@@ -36,6 +36,14 @@ Each lane gets its own small context: its work, the other open items by title, a
 
 A source that cannot be read (Discord, the forum, the board) takes only itself out of the pass: pull requests and issues are still reviewed. The owner gets one urgent to-do a day naming the source, and it goes away when the source is back. The same happens when the review itself fails three passes in a row.
 
+## How it improves
+
+The bot never edits its own rules: the policy is the boundary, and a change to `scripts/maintenance-bot/` needs the owner's Approve. Inside that it learns three ways.
+
+- **Lessons.** The owner replies to an action's Telegram message with a few words: why it was stopped, or what was wrong with it. The Worker keeps the reply with that action's summary (`lesson/<id>` in `maintenance_bot_state`, the newest 60), and both lanes read them every pass as standing rules. `/lessons` lists them and `/forget <number>` removes one; `npm run todo -- lessons` prints them at the owner's computer.
+- **Numbers.** Each pass adds what each lane's model read to a weekly count. Monday's report has one line: done, stopped, failed, dropped, requests waiting over two days, and last week's tokens for reviews and for the rest.
+- **Its own weak spots.** A kind of action stopped three times in a week, or failed three times, becomes a to-do, `/modwerk-todo retro`. A desktop session reads the lessons and the prompt and proposes the change as an `Improvement:` pull request.
+
 ## The agent board
 
 The bot reads the [agent board](AGENT_BOARD.md)'s live threads and claims with the pull requests, and acts there as the owner. It answers a question addressed to the owner when the docs or code settle it (`board_reply`, 4 h window), and closes the owner's own finished threads (12 h). Ending someone else's thread or releasing a claim (`board_close`, `board_release`) needs the owner's OK. Developers' and maintainers' agents can also talk to the bot itself: a question addressed `--to tars` is answered by TARS (migration 0094 gives it that board name) at once, and any action it asks for still goes through the policy. A question only the owner can answer becomes a to-do, `npm run board -- reply <id>`, which `/modwerk-todo` helps draft. Replies go through the board's own limits (`boardReply` in `server/agent-board.ts`); closing and releasing are recorded as the administrator's.
@@ -54,7 +62,7 @@ The [five-fix eval pilot](AGENT_EVALS.md#five-fix-pilot) checks newly merged Nod
 
 ## Telegram
 
-Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, `/status` shows what is waiting, and `/todos` lists the open to-dos with their commands. Only the owner's private chat counts.
+Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, `/status` shows what is waiting, `/todos` lists the open to-dos with their commands, and `/lessons` lists what the owner's replies taught it. Only the owner's private chat counts.
 
 ## The clock
 

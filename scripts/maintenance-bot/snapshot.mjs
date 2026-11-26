@@ -78,7 +78,9 @@ if (run) {
   // A lane sees the ledger for its own work, and every answer the owner stopped or approved: the precedents.
   const ledgerFor = (numbers, ids) => recent.actions.filter(({ target, payload, status, tier, decided_at }) => numbers.has(target) || [payload?.thread, payload?.claim, payload?.channel, payload?.shout].some(id => ids.has(id)) || status === 'vetoed' || (tier === 'ask' && decided_at))
     .map(({ payload, ...action }) => ({ ...action, body: payload?.body?.slice(0, 400), thread: payload?.thread, claim: payload?.claim, message: payload?.message, shout: payload?.shout }))
-  const base = { mode: daily ? 'daily' : 'pass', now: new Date().toISOString(), down }
+  // What the owner's replies taught the bot (docs/MAINTENANCE_BOT.md, "How it improves"): standing rules for both lanes.
+  const { lessons } = await bot('/lessons').catch(() => ({ lessons: [] }))
+  const base = { mode: daily ? 'daily' : 'pass', now: new Date().toISOString(), down, lessons }
   if (work.hard.length) {
     const mine = new Set(work.hard)
     writeFileSync(join(dir, 'hard.json'), JSON.stringify({ ...base, lane: 'hard', work: { pullRequests: work.hard },
