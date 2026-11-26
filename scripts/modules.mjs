@@ -8,7 +8,7 @@ import { parseModuleDocument, requireModuleUiForPublication } from '../src/catal
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { isDocumentationPath, manifestBuildFields } from './module-source.mjs'
 import { resolveModuleFile as file } from '../src/catalog/module-folder.ts'
-import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWaivers, qualificationReports, requireFolderQualification, evidenceOnBaseProblem, testingVersionProblem } from './module-qualification.mjs'
+import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWaivers, qualificationReports, requireFolderQualification, evidenceOnBaseProblem, testingVersionProblem, procedureRecordProblem } from './module-qualification.mjs'
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from '../src/catalog/resource-impact.ts'
 import { USB_WAIVERS_PATH, parseUsbPackageWaivers } from './retained-evidence.mjs'
 import { requireKnownConflicts } from './conflict-ids.mjs'
@@ -91,5 +91,7 @@ if(write){await mkdir(dirname(target),{recursive:true});await writeFile(target,g
 const machineModules=await generateMachineModules({root,write,baseCommit})
 requireDistinctThumbnails(root)
 unlistedPackages(root)
-if(baseCommit){const problem=evidenceOnBaseProblem({root,base:baseCommit})??testingVersionProblem({root,base:baseCommit});if(problem)throw new Error(problem)}
+if(baseCommit){const problem=evidenceOnBaseProblem({root,base:baseCommit})??testingVersionProblem({root,base:baseCommit});if(problem)throw new Error(problem)
+  // A draft is still in test (docs/DEVELOPER_WORKFLOW.md): the procedure's record may come later, so it is a warning there.
+  const record=procedureRecordProblem({root,base:baseCommit});if(record&&process.env.MODWERK_EVIDENCE_PENDING!=='1')throw new Error(record);if(record)console.warn((process.env.GITHUB_ACTIONS?'::warning title=Release evidence still to come::':'Release evidence still to come (draft): ')+record)}
 console.log('Validated '+documents.size+' Octatrack module folders and '+machineModules+' elemod module folders; '+selected.length+' version-pinned catalog entries; all CPU/DSP/memory gauges populated; every CPU price named or pending; two exact owner-waived utility versions retain untested hardware/unmeasured timing; worst-case cycles, exact memory, hardware test evidence and complete documentation/tutorial/screenshots required for new modules and runtime/resource changes; editorial updates may retain evidence from approved, byte-identical runtime inputs'+(baseCommit?'; version bumps and OT UI publication evidence checked against '+baseCommit:'.'))
