@@ -296,9 +296,10 @@ $78). Free: from the coefficients' end to $70, and $79-$83 at least.
 **Assumed:** the time base (above); the start state, which is the firmware's when the program is the first recalled
 after power-up (a recall does not reset the phase: it runs on from the program before); the Leslie's default speed.
 
-**Left out:** the gated programs (3, 23-29, 73, 86, 87) and the sweeps a signal onset restarts (28, 29, 31, 32, 88).
-Both need the signal detector. Also left out: VERB SHIFTER (73, gated), the Leslie's speed switching, and the MIDI
-modulation offsets on rate and depth.
+**Left out:** the gate itself (3, 23-29, 73, 86, 87) and the onset restart (28, 29, 31, 32, 88). Both need the signal
+detector; their open, free-running form runs ([the stream](#the-sdram-stream-26-november-2026)). Also left out: VERB
+SHIFTER (73, gated: its coefficient sweep reads two 256-entry curves from the ROM, and the engine has no tick for that
+kind yet), the Leslie's speed switching, and the MIDI modulation offsets on rate and depth.
 
 **Cheaper ticks.** A sweep's tick costs about 154 cycles (19 of them stalls), a Leslie's about 367 (36). Most of it is
 two-word instructions: long immediates and displaced moves. Not optimised yet: the sweeps' distances could be written
@@ -328,6 +329,16 @@ forced out (`--force 34`; the split itself keeps every moving read local). The 7
 the pitch shifts, which found a bug in the earlier prototype: two labels of the pitch tick, `qvTQ` and `qvTQF`, where
 dsp_asm put the first's address into the second, so the tick went astray when the phase reached $FE. Both gates now
 refuse a label inside another.
+
+**The gated and onset programs, gate held open (26 November 2026).** `extract_lfo.mjs --signal` runs the firmware with
+the gate's detector reading "signal" all the time (pin P3.2 held low). Then every gate stays at its open level and no
+onset restarts a sweep, so each of those programs is a plain sweep or pitch shift, and its firmware program after every
+tick still matches the reconstruction. All 13 that leaves pass the same gates: 3 GATED REVERB, 23-27, 28 and 29
+FLANGE/GATE, 32 TWITCH FLANGER, 86-88 through `verify_stream.py`, and 31 TRIGGER FLANGE, which needs no stream (ring
+468 words), through `verify.py`. They stream 48-352 halfwords in and 32-144 out a frame. This proves the code of their
+open form only: the gate's own work (a window every 16 ticks, hold and release) and the onset restart are not in the
+engine, and the detector they need is hardware (README, "The gate"). Their cycles have not been traced. So 89 of the
+90 programs run bit-exact, 13 of them as their open form; 73 VERB SHIFTER is the one left (below).
 
 **The split** (`qvs.Plan`). A read at delay D (from `qvc.analyse`) can take its word from SDRAM when D is at least 16 ×
 LAT, the channel's round trip in samples. A greedy pass streams the reads that free the most ring words per transferred

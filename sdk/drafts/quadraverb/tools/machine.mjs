@@ -16,7 +16,9 @@ export const ROMS = {
 };
 
 export class Board {
-  constructor(romPath) {
+  // signal: the gate's detector reads "signal" all the time (pin P3.2 held low; README, "The gate"). Without it every
+  // pin reads 1, "no signal".
+  constructor(romPath, { signal = false } = {}) {
     this.rom = new Uint8Array(readFileSync(romPath));
     const md5 = createHash('md5').update(this.rom).digest('hex');
     this.known = ROMS[md5];
@@ -29,7 +31,7 @@ export class Board {
     this.cpu = new I8051(this.rom, {
       xread: (a) => this.xread(a),
       xwrite: (a, v) => this.xwrite(a, v),
-      pin: () => 0xff,
+      pin: (port) => (signal && port === 0xb0 ? 0xfb : 0xff),
     });
   }
 
