@@ -116,13 +116,22 @@
         "rationale": "One DRAM unit with stereo rings and draw state; creates the DRAM platform reserve when alone.",
         "source": "unit.s"
       }
+    },
+    "cpuPrice": {
+      "value": 0.2,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-26",
+      "conditions": "author's project, pattern A02, playing; base twin 4c7eb79b, MKII; 3 readings of 8 s a state. Frame interrupt 68.4 % before, 68.6 % installed and used nowhere; CPU meter 92.2 % before, 93.3 % at rest.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
     "summary": "Reported by hand on one MKII over USB, 26 Nov 2026: package 48522941… on release base 0.8.1, alone. A RAM trial and a Keep with clean verdicts; TEMPO alone stays stock, DOWN then TEMPO opens OSC, XY and ALL, and TEMPO, YES and NO close it. The base refused removal while the window was open and removed it cleanly once closed. verify.py passes 14 checks under ot_emu. Not timed, soaked or priced; test:procedure not run.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "02e03d4a3eb1aa8a96e92745d89f2386102cb39c",
+    "evidenceRevision": "6e8f9fb4ecadff9cddbf529743000c0cb8a076c2",
     "gates": [
       "modules/scope/verify.py"
     ]

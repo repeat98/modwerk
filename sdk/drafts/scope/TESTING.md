@@ -5,9 +5,11 @@ Draft Modwerk port of octabam `modules/scope` at
 
 ## 0.1.0-experimental
 
-**Hardware status: reported by hand on one MKII over USB, 26 November 2026.**
-Source: branch `feature/scope-draft` at `02e03d4a` (`unit.s` unchanged since
-the import). Package built with `npm run module:dev -- scope --build-only`:
+**Hardware status: reported by hand on one MKII over USB, 26 November 2026,
+and steps 6 to 10 of the test procedure on a development twin.**
+Source: branch `feature/scope-draft` at `6e8f9fb4`, the rebased import
+commit; the package was built before the rebase from a draft folder
+identical to it (`unit.s` unchanged since the import). Package built with `npm run module:dev -- scope --build-only`:
 SHA-256 `48522941a043dad83d0ebfcb26e4b68734ddc439b16d443e5f87eecb6cf63b57`,
 module `5f161c91`, 37,584 bytes of code and data, 0 of bss, 195 relocations,
 three hashed stock-code sites. Unit: ilia-murzinov's MKII, flashed with the
@@ -25,11 +27,35 @@ no other module installed, so SCOPE was the only DRAM module.
 | Removal while open | `npm run device -- remove FILE --accept` with the window open | refused by the base (loader refusal 11, `RUNTIME_UI_OPEN`); SCOPE stayed installed and running |
 | Removal after closing | the same, window closed | accepted; verdict clean; the unit back on the base with no module |
 | Undo while open | not run | not run |
-| `npm run test:procedure -- scope` | not run | not run: steps 6 to 10 need a shared unit session, step 5 a development twin |
 
 The trial's single refusal counter (`refusals 1`) was set at submission and
-did not move during the trial. Nothing was timed, recorded or soaked; the
-CPU price is not measured.
+did not move during the trial.
+
+### Test procedure
+
+`npm run test:procedure -- scope --package <the package above>` stops at
+step 1: `module:doctor --draft scope` is red on cross-compatibility (the
+three Tuner sites, until the base hook). Steps 6 to 10 were then run one by
+one with the commands its plan prints, same package, on a development twin
+RAM-booted from 1.40C (`build_core.py … --dev`, base `4c7eb79b844c8139…`),
+the author's project on pattern A02 (A01 showed CPU FULL on the twin), USB MIDI through `octatrack-midi-bridge.py`.
+
+| Step | Result |
+| --- | --- |
+| 6. Read the unit | pass: no module installed; every Part of bank 1 clean (working = saved) |
+| 7. Scripted unit pass (`device:test`) | pass: self-test passed, module 1/1 intact, longest frame 375 µs, inventory unchanged, no failures |
+| 8. Soak (`octatrack-soak.mjs`, 120 s, inside a RAM trial) | pass: 2,400 operations at 19.7/s, health reply median 12 ms (p95 12, most 27), CPU at most 44.2 % |
+| 9. Cost on the unit (`device:price`) | 0.2 % of a frame at rest (frame interrupt 68.4 % before, 68.6 % installed and closed; CPU meter 92.2 % before, 93.3 % at rest), pattern A02 playing; `evidence/cpu-price.json`. The open window was not priced. |
+| 10. Put back | pass: no module left; Part 1 on A02 reloaded, working = saved |
+
+The soak's trial process was killed by the shell that started it before its
+verdict; `npm run device -- recover` rolled the trial back. The unit's log
+for the twin's first five minutes (boot, step 7 and the soak together)
+holds one load record (boot 2, minute 5) with a CPU peak of 100 % and a
+UI-tick gap of 2,989 frames, about 1.1 s; which of the three caused it is
+not known. The
+unit then went back to pattern A01 and the flashed base by a RAM boot of
+its image.
 
 ## Emulator (`verify.py`)
 
