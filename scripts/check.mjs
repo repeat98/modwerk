@@ -10,6 +10,7 @@ import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
 import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
+import { m68kToolchainProblem } from './m68k-preflight.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 import { localPythonProblem, moduleScopeProblems } from './pr-ready.mjs'
 
@@ -155,6 +156,12 @@ let passed = await run('prepare')
 if (!buildOnly && !suiteOnly && passed && (plan.metadata || plan.native)) {
   const python = localPythonProblem(root)
   if (python) { problem('Python', python); passed = false }
+}
+// sdk:check stops on a compiler without its binutils (scripts/m68k-preflight.mjs), but here it runs last, after the whole test
+// suite: say so in the first seconds instead. CI's parts leave it to sdk:check itself.
+if (!buildOnly && !part && !documentationOnly && passed && plan.sdk) {
+  const toolchain = m68kToolchainProblem()
+  if (toolchain) { problem('ColdFire toolchain', toolchain); passed = false }
 }
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
 if (!buildOnly && !suiteOnly && passed) {
