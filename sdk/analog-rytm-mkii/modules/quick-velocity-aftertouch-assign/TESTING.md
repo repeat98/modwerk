@@ -2,15 +2,59 @@
 
 The module was called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.4.0; since 0.5.0 it holds QPER Live Rec (`qperf`), whose own records follow at the end. The records keep the names they were written with.
 
+## 0.6.0: PERF and CHRO holds, SCENE + YES, scene changes in the quick perf rec (25 and 26 Nov 2026)
+
+The PERF hold takes the gestures QPER held (QPER keeps its link), CHRO holds the aftertouch assign (SAMPLER is stock's again), SCENE + YES writes a scene into the kit, and the quick perf rec keeps scene changes. The undo of an apply now also accepts the value it expected to write, so it does not depend on when stock's setter lands.
+
+rytm-emu (2ac0f1f, ramboot build), Q602 to Q610 on the plain base 1c14b6b0, against stock QS00 where stock does something; not hardware evidence:
+
+| Check | Stock | 0.6.0 |
+| --- | --- | --- |
+| CHRO held, DEC turned on AMP | a plain edit | DEC's box at +11, as SAMPLER's hold gave |
+| SAMPLER held, DEC turned | | a plain edit: stock's again |
+| CHRO tapped, then SD | chromatic mode: SD plays a note, the track stays BD | the same (rig case look-chro-150) |
+| CHRO held 0.8 s, then SD | | no toggle: SD selects its track (look-chro-800) |
+| PERF held, nothing | performance edit opens 0.2 s in | performance edit opens on the release (PERF: 1, LOCKS: 13) |
+| QPER + BD (link), PERF held, B turned | | SWT's box at +5 |
+| ...PLAY | | CLEAR PERFORMANCE |
+| ...YES (amount poked to half), YES again | | PERFORMANCE 1 APPLIED; UNDO APPLY, the box back |
+| QPER held, B turned | a plain edit | a plain edit: stock's again |
+| SCENE held, YES | | SCENE 1 APPLIED, the boxes gone; DEC then reads the lock's value (23 after one click, kit 98 before) |
+| ...YES again in the same hold | | UNDO APPLY, the boxes back |
+| ...YES in a new hold | | no undo: nothing left to apply |
+| Scene mode, LIVE RECORDING, BD pad (scene 1), RECORD + YES | | the take applies (1 TRACK LEFT OUT, as a performance 1 take through this pattern also says); a trig held inside the recorded stretch shows DEC 22, MOD 6, LEV 127 as locks, a trig before it none |
+| The same with no scene change | | NOTHING TO APPLY |
+| Scene engaged while stopped, then LIVE RECORDING | | NOTHING TO APPLY: no take from a change made while stopped |
+| Scene 2 recorded, LIVE RECORDING off, scene 2 disengaged by hand, a pass later | | scene 2 engaged again by the lane (scene edit shows SCENE: 2; before the pass came round, SCENE: 1) |
+| Scene 2 engaged in LIVE RECORDING, RECORD + YES | | scene 2 is disengaged by the apply (scene edit shows SCENE: 1, none active), so its locks play only on the steps that got them |
+
+The nine gesture screens are byte-identical between Q602 and Q604 (before and after the review fixes). Screenshots: Q610's captures (byte-identical to Q608's); seven earlier files are byte-identical with the new plans (CHRO for SAMPLER, PERF for QPER's knob), the two quick perf rec captures show the new messages, `perf-lock.png` is new. Memory: Q610 leaves 87,728 bytes of the shared mod area (the base alone 118,836), so the module takes 31,108.
+
+Rig cases, rytm-emu, R605 (`9a2af68e…`) and R606 (`002b19ad…`), the development base 25f2c915: 32 of 33 pass. The one failure is the private case look-sampler-800, which tested the old SAMPLER hold: SAMPLER now opens the recorder as stock does. The two new CHRO look cases pass.
+
+An independent code review of 0.6.0 found five faults in SCENE + YES and the scene lane (an undo that outlived its hold, a scene the lane had engaged that a hand could not record again, a take armed by a change made while stopped, no new scene take after RECORD + NO, a scenes-only take not following a longer loop) and smaller ones (the first change after a gap not played back, a quick CHRO tap losing its toggle, recording running on after LIVE RECORDING went off, the audio block and the UI tick both writing the lane). All are fixed in Q604/Q605: the lane now lives in the UI tick alone. A second review of those fixes found RECORD + YES leaving the take's scene engaged, the tick recording one point where it had passed several, a cut position read ending a take early, the lane's period not following a shorter loop, and a pending wipe ignored by RECORD + YES; fixed in Q606, where the seven lane checks above give the same screens as on Q604. A third review, after the hand test's changes, found a take recorded from another kit's scene at the loop's wrap, a gap at a second change in one take, an undo that could replace a lock made since, and three smaller faults; fixed in Q608. A fourth review of Q608's fixes found them sound and one fault beside them: SCENE + YES on a scene with no locks (NOTHING TO APPLY) left the undo of a scene applied before armed but emptied, so YES on that scene showed UNDO APPLY and brought nothing back. Fixed in Q609 with one line (an apply that finds nothing leaves no undo, as PERF + YES already did): in rytm-emu, scene 1 applied, YES on the empty scene 2, YES on scene 1 again shows UNDO APPLY on Q608 and NOTHING TO APPLY on Q609; the ten checks of the next paragraph and the ten screenshots are byte-identical between Q608 and Q609. A fifth review, of both apply and undo paths, found the bounds and pointers sound and two gaps: a project load did not forget the undos, and a scene undo with the 48-lock table filled since put back what fitted and said UNDO APPLY. Fixed in Q610: the project event forgets both undos, and a scene undo with no room for every lock applies afresh, as PERF + YES already did (a slot is free when its track byte is above 12, read from stock's finder at 0x400b8558). A sixth review found nothing in those two fixes. The eleven checks and ten screenshots are byte-identical between Q609 and Q610; the two new paths themselves have no emulator plan (code review only).
+
+After the hand test (below), Q607 and Q608, rytm-emu: SCENE + YES and SCENE + PLAY 0.05 s into a hold act at once (SCENE 1 APPLIED, CLEAR SCENE); a second SCENE + YES in a new hold shows UNDO APPLY, and so does PERF + YES; after the apply, DEC locked again and SCENE + YES pressed applies afresh (SCENE 1 APPLIED, no undo); RECORD held, SCENE touched, YES leaves the scene alone (20 locks still); a take with scene 2 then scene 1 writes no locks on a step in scene 2's stretch and scene 1's on a step in its own; RECORD + YES and NO show APPLY PERF/SCENE REC and CLEAR PERF/SCENE REC. Rig cases: 32 of 33 on R608 (`5686e0f6…`) on R609 (`d2c5ff83…`) and on R610 (`4e8da936…`), the same expected failure.
+
+On the author's unit, 25 Nov 2026, each image RAM-booted over the flashed FXCJ, scratch project:
+
+- The test rig, R606 (image CRC `2d8393fe`): PERF + B drew SWT's box at +4 on the linked performance, PLAY showed CLEAR PERFORMANCE and PLAY again UNDO CLEAR; CHRO + DEC on AMP drew DEC's box and left DEC at INF; SCENE + YES showed SCENE 10 APPLIED and YES again UNDO APPLY with the box back; QPER + B was a plain edit; SCENE + knob and SCENE + pad + knob as on 0.5.0.
+- By hand, reported by the author, R606: CHRO's assign and tap passed; SAMPLER opened the recorder at once, as stock; QPER + pad moved the link; SCENE + YES applied. PERF + YES said NOTHING TO APPLY (the QPER knob had not moved since the restart, so its amount was 0). In PERF mode PERF + pad played the pad, which the author then chose to keep. A second SCENE + YES after letting go said NOTHING TO APPLY, and the keys needed the hold to be under way: both changed in R607 at the author's request, with the messages.
+- The test rig, R607 (`8594ba68`) and R608 (`be8b1c96`): SCENE + YES pressed at once showed SCENE n APPLIED, and YES in a new hold UNDO APPLY with the boxes back; PERF + YES with the amount set by MIDI CC 35 showed PERFORMANCE 1 APPLIED and YES in a new hold UNDO APPLY; in scene mode with LIVE RECORDING on, scene 2 then scene 9 engaged, RECORD + YES showed APPLY PERF/SCENE REC and RECORD + NO then NOTHING TO CLEAR (a take with scene 2 alone, which has no locks there, gave NOTHING TO APPLY).
+
+- The test rig, R610 (`474a8330`, the final source): the six cases above again, with the same screens' messages (SCENE 1 APPLIED and UNDO APPLY in the same and a new hold, PERFORMANCE 1 APPLIED and UNDO APPLY, APPLY PERF/SCENE REC, NOTHING TO CLEAR), and a seventh: scene 9 applied (SCENE 9 APPLIED), SCENE + YES on scene 2, which has no locks (NOTHING TO APPLY), then on scene 9 again: NOTHING TO APPLY, no false UNDO APPLY.
+
+Not tested: this package's own image on a unit; a project load after an apply, and an undo with the lock table full (code review only); scene playback from the take and the written locks by ear on the unit; a scene take across a loop length change; scene changes by MIDI; R607's and R608's changes by hand.
+
 ## 0.5.0: QPER Live Rec folded in (25 Nov 2026)
 
-QPER Live Rec 0.3.0's source moved in unchanged as `src/qperf.c` (only its header's name changed), with its hooks, three stock sites and claims; its tick still runs before this module's own, as when the two were separate (core-ar2 orders equal orders by module id). Since then: a second QPER + YES in the same hold undoes the apply, and SCENE + REC, STOP and PLAY act at once in scene edit and after 3 ticks (0.1 to 0.15 s) on a page; see QF03, QF04 below.
+QPER Live Rec 0.3.0's source moved in unchanged as `src/qperf.c` (only its header's name changed), with its hooks, three stock sites and claims; its tick still runs before this module's own, as when the two were separate (the linker orders equal orders by module id). Since then: a second QPER + YES in the same hold undoes the apply, and SCENE + REC, STOP and PLAY act at once in scene edit and after 3 ticks (0.1 to 0.15 s) on a page; see QF03, QF04 below.
 
 rytm-emu (revision 2ac0f1f, ramboot build of `dtboot`), not hardware evidence:
 
 | Check | Result |
 | --- | --- |
-| QB01 (the published Improved Mod Assign 0.4.0 and QPER Live Rec 0.3.0 packages linked side by side, plain base 1c14b6b0) against QF01 and QF02 (this folder, the same base) | 14 screens byte-identical: the seven FIX/SAMPLER/LFO/SCENE captures, SCENE + REC, QPER held with a knob, QPER + YES, QPER + PLAY, and the two quick perf rec captures (cold boot, LIVE RECORDING, RECORD + YES and RECORD + NO) |
+| QB01 (the published Improved Mod Assign 0.4.0 and QPER Live Rec 0.3.0 packages linked side by side, plain base 1c14b6b0) against QF01 and QF02 (this folder, the same base) | 13 screens byte-identical: the seven FIX/SAMPLER/LFO/SCENE captures, SCENE + REC, QPER held with a knob, QPER + YES, QPER + PLAY, and the two quick perf rec captures (cold boot, LIVE RECORDING, RECORD + YES and RECORD + NO) |
 | Free shared mod RAM | QB01 and QF02 both 94,136 bytes; the base alone 118,836, so the fold itself takes 24,700; QF04 (with the undo record) 93,084, so the module takes 25,752 |
 | The screenshots | QF02's nine captures are byte-identical to the committed files (QM46 and QX07) |
 | Rig cases (31, the SCENE and earlier cases) | pass on QS11 and QS12 (the development base 25f2c915 with the link) |

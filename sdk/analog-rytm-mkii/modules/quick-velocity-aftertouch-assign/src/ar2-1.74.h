@@ -97,6 +97,10 @@
 #define SCENE_UNDO_AT 0x400b8d68         // (scenes, scene, kind): `UNDO PASTE` / `UNDO CLEAR`
 #define SCENE_PASTE_AT 0x400b8f16        // (scenes, scene, 1): `PASTE SCENE`
 #define SCENE_CLEAR_ALL_AT 0x400b8c80    // (scenes, scene, 1): `CLEAR SCENE`
+// The kit's Scenes object's slot + 40 answers its lock table: 48 entries of 5 bytes (s16 value,
+// u8 track, u8 parameter index, s8 scene); an empty entry has track 0xff (0x400b8986, 0x400b875c).
+#define SCENES_TABLE 40
+#define SCENE_LOCKS 48
 
 // Ends a held key for the rest of its hold, as stock does when its hold opens a
 // screen (0x40071ed0, 15 stock callers): its release is dropped (0x418d1320), its
@@ -164,7 +168,7 @@
 #define SCENE_VTABLE 0x401e305c          // SceneSelectView: its key handler (0x400d1798) takes
                                          // every pad, engaging or disengaging a scene
 #define SCENE_EDIT_VTABLE 0x401e2ee8     // SceneEditView: what the SCNE key opens
-#define SCENE_EDIT_PADS 188             // SceneEditView + 188: the scene pads held (a mask; 0x400d1378)
-#define SCENE_EDIT_SCENE 192            // SceneEditView + 192: the scene it edits, 0..11 (set by its pads)
+#define SCENE_EDIT_PADS 188             // SceneEditView and PerformanceEditView + 188: the pads held (a mask; 0x400d1378, 0x400cf676)
+#define SCENE_EDIT_SCENE 192            // SceneEditView and PerformanceEditView + 192: the one they edit, 0..11
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394
