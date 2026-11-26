@@ -293,7 +293,7 @@ int main(void)
     CHECK(request(CMD_ENC, 1, 1) == ST_FLASH);
     CHECK(request(CMD_RELEASE_ALL, 0, 0) == ST_OK);    // letting go stays allowed
     CHECK(releases_of(9) == 1);
-    CHECK(ui_sees_key(9, KEY_RELEASE) == 0);           // stock's loop takes the release
+    CHECK(ui_sees_key(9, KEY_RELEASE) == 1);           // taken: stock would answer the prompt with it
     upload[0] = 0;
     CHECK(request(CMD_KEY, 10, KEY_DOWN) == ST_OK);
     CHECK(ui_sees_key(10, KEY_DOWN) == 0);
@@ -302,7 +302,8 @@ int main(void)
 
     // The upload completes while a press and a turn the link posted are still in stock's queue: they were accepted
     // before the prompt, so the request's check cannot stop them. At dispatch the link takes them before stock sees
-    // them; a release the link posted still reaches stock, and a person's YES and NO always do.
+    // them, a release the link posted too (stock takes a YES key-up as the answer), and a person's YES and NO always
+    // reach stock.
     for (i = 0; i <= HUMAN_TICKS; i++)
         mw_link_tick();                                // past the person's interval
     {
@@ -317,7 +318,8 @@ int main(void)
         CHECK(refused_count == refused + 2);
         CHECK(pend_head == pend_tail);                 // both popped: the next event is not mistaken for the link's
         CHECK(request(CMD_RELEASE_ALL, 0, 0) == ST_OK);
-        CHECK(ui_sees_key(PANEL_YES, KEY_RELEASE) == 0); // the link's release passes
+        CHECK(ui_sees_key(PANEL_YES, KEY_RELEASE) == 1); // the link's release is taken too
+        CHECK(refused_count == refused + 3);
         CHECK(!mw_link_held(PANEL_YES));
         CHECK(ui_sees_key(PANEL_YES, KEY_DOWN) == 0);    // a person's YES: stock gets it
         CHECK(ui_sees_key(PANEL_YES, KEY_RELEASE) == 0);

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Digitone II's diagnostics log: the Octatrack's (sdk/machines/octatrack/elekloader/diag.c), in its layout
 // (diag.h, an exact copy of its header, so one layout serves both and the site reads either with device-log.ts), with what
-// this unit offers. Development bases only, read over the link: `diag` gives the log's address and size, the host
-// reads it with `mem`.
+// this unit offers. Development bases only, read over the link: `diag` gives the log's size, and `log OFF` sends its
+// bytes in parts of 128 from where this file keeps it; no request names an address (link.c, LINK.md).
 //
 // What differs from the Octatrack's, and why:
 // - The log is in the base's .bss, not battery RAM (none is known on this unit): it starts empty at every start, so
