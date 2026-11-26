@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "First Modwerk catalog release: LFO SETUP gains PMTR destination TEMPO (index 39). Stock LFOs can modulate project/global tempo (PROJECT_BPM24, 30\u2013300 BPM); the TEMPO key remains the base editor. ColdFire only \u2014 no DSP slot.",
+      "Publication cites Keep Accept + reboot persistence on tip package 643b46c3\u2026 (MOP-253/254), ot_emu measured 624 cycles/event matching static with matched load/stress (MOP-255), and owner-reviewed tests.qualification place with budget 4790 and authored .bss 24 bytes (MOP-257).",
+      "Limitations remain honest: flash/code size unmeasured on tip; emulator instruction counts are not chip wall-clock; last writing track wins on global tempo; peer LFO drafts stay conflict-listed until modules:compat; SETUP TEMPO OCR not Proven. Upstream listing also requires measured resources.cpuPrice via npm run device:price (not yet written)."
+    ]
+  }
+]
