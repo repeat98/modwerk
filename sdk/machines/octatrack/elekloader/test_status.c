@@ -81,11 +81,13 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
     out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)(listed + listed_machines);
     return 4u + 24u * (listed + listed_machines);
 }
-/* fxmap.c's lookup: handle 20 in bank C's saved Part 2 on T5, the others in bank A's working Part 1 on T2. */
-int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
+/* fxmap.c's lookup: handle 20 first in bank C's saved Part 2 on FX2 of T5 and in two more places, 21 only in bank B's
+ * working Part 4 on FX1 of T4 (the twelve slots past the first), the others in bank A's working Part 1 on FX1 of T2. */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *slot, unsigned *places)
 {
-    if (id == 20u) { *bank = 2, *part = 1, *track = 4; return 2; }
-    *bank = 0, *part = 0, *track = 1;
+    if (id == 20u) { *bank = 2, *part = 1, *slot = 12, *places = 3; return 2; }
+    if (id == 21u) { *bank = 1, *part = 3, *slot = 3, *places = 13; return 1; }
+    *bank = 0, *part = 0, *slot = 1, *places = id < 20u + listed;
     return id < 20u + listed ? 1 : 0;
 }
 void modwerk_fxpage_missing(void) {}
@@ -369,10 +371,11 @@ int main(void)
     /* Each module's second line: where the project names it. */
     char where[32];
     CHECK(missing_at[0][0] == 2 && missing_at[1][0] == 1 && missing_at[4][0] == 1); /* looked up while it shows */
-    missing_where(where, missing_at[0], 0); CHECK(!strcmp(where, "BANK C SAVED PART 2 T5"));
-    missing_where(where, missing_at[0], 1); CHECK(!strcmp(where, "C SAVED PART 2 T5"));
-    missing_where(where, missing_at[1], 0); CHECK(!strcmp(where, "BANK A PART 1 T2"));
-    static const uint8_t nowhere[4];
+    missing_where(where, missing_at[0], 0); CHECK(!strcmp(where, "BANK C SAVED PART 2 T5 FX2 +2")); /* the slot, the others */
+    missing_where(where, missing_at[0], 1); CHECK(!strcmp(where, "C SAVED PART 2 T5 FX2 +2"));
+    missing_where(where, missing_at[1], 0); CHECK(!strcmp(where, "BANK B PART 4 T4 FX1 +12"));
+    missing_where(where, missing_at[2], 0); CHECK(!strcmp(where, "BANK A PART 1 T2 FX1"));        /* named once */
+    static const uint8_t nowhere[6];
     missing_where(where, nowhere, 0); CHECK(!where[0]);                /* named nowhere any more: an empty line */
     CHECK(!modwerk_status_key(STOP, 1) && !modwerk_status_key(STOP, 0) && open == MISSING); /* STOP reaches stock, it stays */
     CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0));

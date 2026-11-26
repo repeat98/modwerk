@@ -404,10 +404,12 @@ void modwerk_test_menu(int unused)
 #define RIGHT 0x21
 #define ROWS 4u
 #define MISSING_ROWS 2u /* the missing page: two lines a module, its name and where the project names it */
-int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track); /* fxmap.c */
-/* Where the project names a missing module, as `at` holds it (fxmap.c's first find: kind, bank, Part, track):
- * "BANK A PART 1 T2", with SAVED before PART when only a Part's saved copy names it (a RELOAD brings it back).
- * `brief` leaves out "BANK " for a line that would not fit. */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *slot, unsigned *places); /* fxmap.c */
+static char *number(char *s, uint32_t v);
+/* Where the project names a missing module, as `at` holds it (fxmap.c's first find: kind, bank, Part, track, then an
+ * effect's slot, 1 FX1 or 2 FX2, and how many more places name it): "BANK A PART 1 T2 FX1 +2", with SAVED before
+ * PART when only a Part's saved copy names it (a RELOAD brings it back). `brief` leaves out "BANK " for a line that
+ * would not fit. */
 static void missing_where(char *out, const uint8_t *at, int brief)
 {
     char *s = out;
@@ -416,8 +418,19 @@ static void missing_where(char *out, const uint8_t *at, int brief)
         *s++ = (char)('A' + at[1]);
         for (const char *t = at[0] == 2 ? " SAVED PART " : " PART "; *t; ) *s++ = *t++;
         *s++ = (char)('1' + at[2]), *s++ = ' ', *s++ = 'T', *s++ = (char)('1' + at[3]);
+        if (at[4]) *s++ = ' ', *s++ = 'F', *s++ = 'X', *s++ = (char)('0' + at[4]);
+        if (at[5]) *s++ = ' ', *s++ = '+', s = number(s, at[5]);
     }
     *s = 0;
+}
+/* fxmap.c's find as missing_where reads it: the slot, and the places past the first (at most 255). */
+static uint8_t fx_where(unsigned id, uint8_t *at)
+{
+    unsigned bank = 0, part = 0, slot = 0, places = 0;
+    at[0] = (uint8_t)modwerk_fxmap_where(id, &bank, &part, &slot, &places);
+    at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)(slot & 7u), at[4] = (uint8_t)(at[0] ? 1u + slot / 8u : 0u);
+    at[5] = (uint8_t)(places > 256u ? 255u : places ? places - 1u : 0u);
+    return at[0];
 }
 unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most);
 int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
@@ -437,7 +450,7 @@ __attribute__((weak)) int modwerk_machine_where_module(uint32_t module, unsigned
 static uint8_t missing[4 + 24 * MODWERK_MISSING_MAX];
 /* Where each listed module is named, refreshed with the list while the page shows: a lookup reads every bank's Parts,
  * too slow for each drawing (the open page already costs about 0.8 ms a composition, OCTATRACK_HARDWARE_TRAPS.md). */
-static uint8_t missing_at[MODWERK_MISSING_MAX][4];
+static uint8_t missing_at[MODWERK_MISSING_MAX][6];
 static fx_set missing_told, missing_last; /* the handles the page told about; the list at the last check */
 static uint32_t machines_told, machines_last; /* the same for the machines, by their map entry */
 /* Listed modules switched off on MODULES (modset.c's shelf): named by the project, not gone. They never open the page
@@ -477,9 +490,10 @@ static void missing_locate(void)
 {
     for (unsigned i = 0; i < missing[3]; ++i) {
         unsigned bank = 0, part = 0, track = 0, k;
-        missing_at[i][0] = (uint8_t)(listed_machine(i, &k) ? modwerk_machine_where(k, &bank, &part, &track)
-                                                           : modwerk_fxmap_where(missing[4 + 24 * i], &bank, &part, &track));
+        if (!listed_machine(i, &k)) { fx_where(missing[4 + 24 * i], missing_at[i]); continue; }
+        missing_at[i][0] = (uint8_t)modwerk_machine_where(k, &bank, &part, &track);
         missing_at[i][1] = (uint8_t)bank, missing_at[i][2] = (uint8_t)part, missing_at[i][3] = (uint8_t)track;
+        missing_at[i][4] = missing_at[i][5] = 0; /* a machine sits on the track itself */
     }
 }
 static void missing_check(void)
@@ -945,11 +959,9 @@ static const char *still_used(uint32_t id)
         uint32_t module = 0;
         uint16_t layout;
         char name[16];
-        unsigned bank = 0, part = 0, track = 0;
-        if (!fx_in(used, k) || !modwerk_fxmap_describe(k, &module, &layout, name) || module != id) continue;
-        uint8_t at[4] = {(uint8_t)modwerk_fxmap_where(k, &bank, &part, &track), 0, 0, 0};
-        if (!at[0]) continue;
-        at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)track;
+        uint8_t at[6];
+        if (!fx_in(used, k) || !modwerk_fxmap_describe(k, &module, &layout, name) || module != id || !fx_where(k, at)) continue;
+        at[4] = at[5] = 0; /* the line as it was: a longer one falls back to USED IN ANOTHER PART */
         char *s = text;
         for (const char *t = "USED IN "; *t; ) *s++ = *t++;
         missing_where(s, at, 1);
@@ -958,7 +970,7 @@ static const char *still_used(uint32_t id)
     /* A machine: the project's machine map knows where (machine_registry.c); a Part of this bank naming it refuses the
      * switch, so this is another bank's. */
     unsigned bank = 0, part = 0, track = 0;
-    uint8_t at[4] = {(uint8_t)modwerk_machine_where_module(id, &bank, &part, &track), 0, 0, 0};
+    uint8_t at[6] = {(uint8_t)modwerk_machine_where_module(id, &bank, &part, &track), 0, 0, 0, 0, 0};
     if (!at[0]) return 0;
     at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)track;
     char *s = used_text;
@@ -1326,9 +1338,11 @@ static void missing_page(unsigned char *frame)
             *s = 0;
             label(X0 + 6u, Y0 + 14u + 18u * i, marked);
         } else label(X0 + 6u, Y0 + 14u + 18u * i, name[0] ? name : "UNNAMED MODULE");
+        unsigned x = X0 + 10u;
         missing_where(where, missing_at[missing_top + i], 0);
-        if (TEXT_WIDTH(FONT, -1, where) > (int)(X1 - 14u - (X0 + 10u))) missing_where(where, missing_at[missing_top + i], 1);
-        label(X0 + 10u, Y0 + 22u + 18u * i, where);
+        if (TEXT_WIDTH(FONT, -1, where) > (int)(X1 - 14u - x)) missing_where(where, missing_at[missing_top + i], 1);
+        if (TEXT_WIDTH(FONT, -1, where) > (int)(X1 - 14u - x)) x = X0 + 6u; /* "B SAVED PART 4 T4 FX2 +1": the indent's room */
+        label(x, Y0 + 22u + 18u * i, where);
     }
     if (missing_top) arrow(frame, X1 - 10u, Y0 + 14u, 1);
     if (missing_top + MISSING_ROWS < n) arrow(frame, X1 - 10u, Y0 + 14u + 9u * (ROWS - 1u) + 3u, 0);
