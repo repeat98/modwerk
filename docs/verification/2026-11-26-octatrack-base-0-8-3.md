@@ -1,8 +1,9 @@
-# Octatrack base 0.8.3: four fixes on top of 0.8.2, 26 November 2026
+# Octatrack base 0.8.3: five fixes on top of 0.8.2, 26 November 2026
 
 Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus four changes, each its author's commit:
 the frame interrupt's Part read from SRAM (#2174, Laslo), a Keep that never loses to an unreadable saved-set file
-(#2109), module knob names that follow the drawn track (#2228, #2042), and a USB Audio stream in the CPU limit (#2251).
+(#2109), module knob names that follow the drawn track (#2228, #2042), a USB Audio stream in the CPU limit (#2251), and
+an attach watchdog that re-offers a unit a host addressed but never configured.
 Base builds: see the end.
 
 ## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
@@ -144,10 +145,27 @@ store+0x2fe+30·track+6·fx.
   figure stays under the brake's 122 %) and can drop that machine's renders once the stream opens, as on the MKI. The
   stream's own cost is the bigger lever (USB Audio).
 
+## 26 November 2026: the attach watchdog waits for a configured unit
+
+- **Seen:** on the owner's MKII, four times that day, the unit ran on with USB dead until a power cycle: after a RAM
+  boot (another session's twin `46c30886`, boot 1121, ran 26 min off USB), a RAM boot right after USB Audio trials
+  (twin `65f8604c`, boot 1123), a USB Audio layout change MAIN to TRACKS, and a USB Audio 0.3.0 install (boot 1125). The
+  battery-RAM log shows each boot running on and no `usb` incident: the watchdog (#1985) never re-offered the unit.
+- **Why:** it took any address (DEVICEADDR.USBADR, with a bus reset seen) for enumerated. A host that addressed the unit
+  and then failed (macOS dropped the device: it vanished from the USB tree) left it addressed, so it was never offered
+  again.
+- **Change:** `ep0.c` `enumerated()`: on a base with USB functions, USB MIDI's `usbmidi_up` (set at SET_CONFIGURATION,
+  cleared at a bus reset and the session's end) instead of the address. `usb_attach.h` is unchanged (its host test holds).
+- **Emulator** (`ot_emu` adapted build, twin `764b6e71`, a scripted host): addressed and never configured, the unit was
+  re-offered within 8 s; configured, no re-offer in 15 s. The old rule re-offered a configured unit there too, since the
+  emulator keeps DEVICEADDR at 0, so the emulator cannot show the old rule's gap; the unit run below can.
+- **Pending on the unit:** a twin with this change, no `usb` incident in normal use over USB Audio installs and layout
+  changes, and whether a drop now heals by itself.
+
 ## Builds and pending
 
-- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `71ecb7a1e7d8d831…`,
-  browser = native `.bin` `27472da4c5a3eeca…` (835,864 bytes; 835,848 of 851,712 container bytes). Every change inside a declared site; the bootloader copy
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `c7478e593d347461…`,
+  browser = native `.bin` `5361c502ea850b3e…` (836,272 bytes). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
   with their bytes unchanged. Not yet booted on a unit.
 - Pending for #2251 on a unit: the release image, an MKI, 20 channels, and why the stretch differed between boots.
