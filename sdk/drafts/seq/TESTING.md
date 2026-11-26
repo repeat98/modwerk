@@ -15,7 +15,30 @@ Twin `4c7eb79b`, `ot_emu` without `--dsp` (with `--dsp`, USB key sequences often
 
 `scripts/seq-emu-rollback.sh` (26 Nov, `PKG=/tmp/seq-fix22.mwrm`): **4/4 passed**, exit 0 (~11 min, no `--dsp`).
 
-**Not hardware proof.** MKII still needs the user's chord recipe once this package is built for the unit.
+## On the unit: close and trial removal (26 Nov 2026, fix22)
+
+Author's MKII, OS 1.40C. Flashed base `eb667962` (USB keys need a development
+image; trial upload there still reports slot running with loader refusals).
+**RAM-booted development twin** `4c7eb79b`, stopped, author's project.
+Package SHA-256 `05120b20ec4f52f321cebd71babf4b536d928bc3a6ba8d10fdadff08248070a9`
+(branch `module/seq`, draft `seq.s` with unlink + selective scrub after LPOP,
+`ef_page` close without `PAGE_GO`, `ev_in_use`, kthunks). Keys over USB
+(`device-send` / `device.mjs key`).
+
+| Scenario | Result |
+| --- | --- |
+| `try` 60 s, `--accept` | pass: verdict clean, generation 1, package active |
+| **`[TRACK 1]`** hold, **`[PAGE]`** release (open) | pass: USB sequence completes |
+| **`[CUE]`** press/release, **`[TRACK 2]`**, **`[TRACK 3]`**, release, **`[TRACK 1]`** + **`[PAGE]`** close | pass: sequence completes; status stays normal; no trial fault in the run |
+| **`remove`** right after the CUE chord | **fail:** loader refusal 11 `RUNTIME_UI_OPEN` |
+| **`[NO]`** then **`remove`** after the CUE chord | **fail:** same `RUNTIME_UI_OPEN` |
+| Open via **`[TRACK 1]`**+**`[PAGE]`**, close via **`[PAGE]`**, **`[NO]`**, **`remove`** | pass: `rolled back`, generation 3 |
+| health during accepted trial | no new crash/stall in trial verdict for these runs |
+| `diaglog` | one crash record still listed (vector 14, PC `0x400005a6`); not tied to a step above |
+
+After the same chord on the panel (not the automated `remove` rows), the
+author reported SEQ open/close and stock page behaviour acceptable for this
+build. Automated trial removal after the CUE chord is still open.
 
 ## Host (26 Nov 2026, branch `module/seq`)
 
@@ -102,9 +125,6 @@ handlers ran through the thunks.
 | **`[CUE]`**, **`[MIDI]`**, **`[TRACK 3]`**, **`[NO]`** | pass |
 | the by-hand flow above | pass |
 | bare **`[PAGE]`** twice (SEQ never opens) | pass |
-
-Next: rerun the procedure and the by-hand checks on the unit with this
-build.
 
 ## On the unit: still to check
 
