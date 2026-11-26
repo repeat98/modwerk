@@ -21,8 +21,8 @@ export type UnitStatus = {
 /** A machine the page reads over its link: the model name its USB MIDI port carries, its reader, its route, and how
  * its audio note reads. */
 export type UnitKind = { port: string; route: string; read: (access: MidiAccessLike) => Promise<UnitStatus | null>; audio: string }
-export const MC_UNIT: UnitKind = { port: 'Model:Cycles', route: MC_UNIT_ROUTE, read: access => readMcStatus(access), audio: 'the six tracks’ sound' }
-export const RYTM_UNIT: UnitKind = { port: RYTM_PORT, route: RYTM_UNIT_ROUTE, read: access => readRytmStatus(access), audio: 'the voices, the sample playback and the FX' }
+export const MC_UNIT: UnitKind = { port: 'Model:Cycles', route: MC_UNIT_ROUTE, read: access => readMcStatus(access), audio: 'the six tracks’ sound takes' }
+export const RYTM_UNIT: UnitKind = { port: RYTM_PORT, route: RYTM_UNIT_ROUTE, read: access => readRytmStatus(access), audio: 'the voices, the sample playback and the FX take' }
 
 const INTERVAL = 2000, HISTORY = 150
 const SERIES: { key: 'audio' | 'block'; title: string; className: string }[] = [{ key: 'audio', title: 'Audio', className: 'load-core1' }, { key: 'block', title: 'Busiest block', className: 'load-cpu' }]
@@ -93,7 +93,7 @@ export function ElektronUnit({ device, header, request = browserMidi(), kind }: 
 
   if (mobile) return <div className="configuration-page">
     {header}
-    <div className="page-heading"><div><h1>Your {device.name}</h1><p>Connecting a {device.name} needs Chrome or Edge on a computer.</p></div></div>
+    <div className="page-heading"><div><h1>Your {device.name}</h1><p>Connecting your {device.name} needs Chrome or Edge on a computer.</p></div></div>
     <a className="button button-quiet" href={deviceHref(device.id)}>Open {device.name} page <Icon name="arrow" size={15} /></a>
   </div>
   return <div className="configuration-page octatrack-hub">
@@ -122,7 +122,7 @@ export function ElektronUnit({ device, header, request = browserMidi(), kind }: 
           <Meter area="hub-cell-dsp1" title="Busiest block · now" value={latest?.block} note="The dearest audio block of that half second" />
           <Meter area="hub-cell-dsp2" title="Busiest block · since switched on" value={ready ? tenths(load?.peakPercent) : null} note={load ? count(load.windows, 'window', 'windows') + ' measured' : undefined} />
           <LoadChart points={points} now={now} series={SERIES} onClear={clear} off={off}
-            note={latest ? 'Every two seconds while this page is open. Audio is the share of the CPU ' + kind.audio + ' takes; the rest runs the screen and the sequencer.' : 'Waiting for the next reading.'} />
+            note={latest ? 'Every two seconds while this page is open. Audio is the share of the CPU ' + kind.audio + '; the rest runs the screen and the sequencer.' : 'Waiting for the next reading.'} />
           <section className="hub-cell hub-cell-health" aria-labelledby="mc-base-cell">
             <h3 id="mc-base-cell">Base</h3>
             {!ready || !identity ? offCell : <>

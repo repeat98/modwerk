@@ -593,7 +593,7 @@
       "link": "started",
       "flash": "started",
       "loader": "done",
-      "status": "open",
+      "status": "started",
       "diagnostics": "started",
       "tools": "done"
     },

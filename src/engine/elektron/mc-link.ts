@@ -215,7 +215,7 @@ export async function mcModules(call: McCall): Promise<McModules | null> {
     if (!p) return null
     const bytes = unpack7(p), view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
     if (bytes.length < 20 || String.fromCharCode(...bytes.subarray(16, 19)) !== 'MWI' || bytes.length < 20 + 24 * bytes[19])
-      throw new Error('The Model:Cycles sent a malformed module list.')
+      throw new Error('The unit sent a malformed module list.')
     const why = view.getUint32(8)
     Object.assign(out, { free: view.getUint32(0), largest: view.getUint32(4), refusal: REFUSALS[why] ?? 'refusal ' + why, active: view.getUint32(12) })
     for (let i = 0; i < bytes[19]; i++) {
