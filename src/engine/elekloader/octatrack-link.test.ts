@@ -883,7 +883,7 @@ describe('loading a module set', () => {
     link.start(); await settle(); await settle(); unit.modules = ['0000000a']
     await link.update('Live', set)
     expect(stages).toBe(1); expect(unit.kept).toEqual([]); expect(unit.modules).toEqual(['0000000a'])
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'There isn’t enough module memory left on the Octatrack. Remove a module, then try again.' } })
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'There isn’t enough module memory left on the Octatrack in one piece: modules taken out since it started can leave gaps. Restart the Octatrack, then sync again. If it is refused again, remove a module.' } })
   })
   it('does not need the website to retain packages for Undo', async () => {
     const { unit, link } = await linked('base', true); unit.modules = ['0000000a']
