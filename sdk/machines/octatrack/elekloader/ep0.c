@@ -652,6 +652,17 @@ int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open 
 /* usb_attach.h: how often the unit offered itself again because the host never enumerated it, and OTGSC (high half)
  * and PORTSC1 (low half) the last time; diag.c logs each. */
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;
+/* What counts as enumerated for the watchdog: the host configured the unit since the last bus reset (USB MIDI's
+ * usbmidi_up: set at SET_CONFIGURATION, cleared at a bus reset and the session's end), not just addressed it. A Mac that
+ * failed an enumeration after addressing the unit left it addressed and never configured: the address passed for
+ * enumerated, no re-offer came, and the unit stayed off USB until a power cycle (owner's MKII, 26 November 2026: after
+ * a RAM boot, a USB Audio install and a layout change, four times, the unit running on with no `usb` incident logged). */
+#ifdef MODWERK_USB_FUNCTIONS
+extern volatile uint8_t usbmidi_up;
+static unsigned enumerated(void) { return usbmidi_up; }
+#else
+static unsigned enumerated(void) { return DEVICEADDR >> 25; }
+#endif
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
 void modwerk_ep0_tick(void)
@@ -689,7 +700,7 @@ static void ep0_tick(void)
 #endif
         uint32_t lock = modwerk_machine_lock(); /* the controller's registers with the USB interrupt held off */
         uint32_t portsc = PORTSC1, otgsc = OTGSC;
-        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, DEVICEADDR >> 25, busy);
+        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, enumerated(), busy);
         if (act == USB_ATTACH_DROP) {
             USBCMD = USBCMD & ~USB_ATTACH_RS;
             mw_usb_reoffer_regs = (otgsc & 0xffffu) << 16 | (portsc & 0xffffu), mw_usb_reoffers = mw_usb_reoffers + 1u;
