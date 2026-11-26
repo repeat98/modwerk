@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 import { ELE3_DEVICES, mainImage, readEle3Syx } from '../src/engine/elektron/ele3.ts'
+import { wholeInstructions } from '../src/engine/elektron/coldfire-isa.ts'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const MACHINE = 'sdk/machines/digitakt-ii'
@@ -108,6 +109,10 @@ export function inspectStock(raw, bindings) {
   const guards = bindings.guards.map(guard => {
     requireThat(hash(span(image, Number(bindings.mainLoad), Number(guard.address), guard.length)) === guard.sha256,
       `${guard.name}: stock guard mismatch`)
+    if (guard.purpose === 'patch-candidate') {
+      const boundary = wholeInstructions(image, Number(bindings.mainLoad), Number(guard.address), guard.length)
+      requireThat(boundary.ok, `${guard.name}: ${boundary.note}`)
+    }
     return { name: guard.name, address: guard.address, length: guard.length, sha256: guard.sha256 }
   })
   return { stockSha256: bindings.stockSha256, mainSha256: bindings.mainSha256,

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Synthetic USB standard descriptors only. No stock firmware is a test fixture.
+// Synthetic USB descriptors, container and CPU instructions. No stock firmware is a test fixture.
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { encodeSyx } from '../src/engine/elektron/sysex.ts'
 import { inspectBase, inspectConfiguration, inspectProfile, inspectStock } from './dt2-link-preflight.mjs'
 
 const config = (interfaces, count) => Uint8Array.from([9, 2, 0, 0, count, 1, 0, 0x80, 50, ...interfaces.flat()])
@@ -84,6 +86,31 @@ describe('DT2 profile pointer and endpoint ownership checks', () => {
 })
 
 describe('DT2 base and provenance preflight', () => {
+  it('rejects a hash-matched hook span that cuts an instruction', () => {
+    // Invented NOP; MOVE.L #0x11223344,D0; RTS. Neither code nor container comes from stock.
+    const image = Uint8Array.of(0x4e, 0x71, 0x20, 0x3c, 0x11, 0x22, 0x33, 0x44, 0x4e, 0x75)
+    const container = new Uint8Array(0x30 + image.length), cv = new DataView(container.buffer)
+    container.set([0x45, 0x4c, 0x45, 0x33])
+    container.set(new TextEncoder().encode('1.17'), 0x14)
+    cv.setUint32(0x1c, 1)
+    cv.setUint32(0x20, 3)
+    cv.setUint32(0x24, 0x30)
+    cv.setUint32(0x28, image.length)
+    cv.setUint32(0x2c, 0x40000400)
+    container.set(image, 0x30)
+    const stream = new Uint8Array(8 + container.length)
+    new DataView(stream.buffer).setUint32(0, container.length)
+    stream.set(container, 8)
+    const framing = Uint8Array.of(0xf0, 0, 0x20, 0x3c, 0x14, 0, 0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0xf7)
+    const raw = encodeSyx(stream, 0x14, framing, framing)
+    const sha = bytes => createHash('sha256').update(bytes).digest('hex')
+    const pins = { stockSha256: sha(raw), mainSha256: sha(image), mainLength: image.length,
+      mainLoad: '0x40000400', profiles: [], guards: [] }
+    const guarded = length => ({ ...pins, guards: [{ name: 'invented site', purpose: 'patch-candidate',
+      address: pins.mainLoad, length, sha256: sha(image.subarray(0, length)) }] })
+    expect(() => inspectStock(raw, guarded(8))).not.toThrow()
+    expect(() => inspectStock(raw, guarded(6))).toThrow('ends mid-instruction')
+  })
   it('refuses a different stock file before parsing or decompressing it', () => {
     const bindings = JSON.parse(readFileSync(new URL('../sdk/machines/digitakt-ii/usb-link-bindings.json', import.meta.url)))
     expect(() => inspectStock(new Uint8Array([1, 2, 3]), bindings)).toThrow('SHA-256 mismatch')

@@ -18,9 +18,17 @@
   "guards": [
     {
       "name": "SysEx router candidate",
+      "purpose": "patch-candidate",
       "address": "0x4011ffda",
       "length": 8,
       "sha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0"
+    },
+    {
+      "name": "SysEx table-load candidate for the DN2-style shim",
+      "purpose": "patch-candidate",
+      "address": "0x40120006",
+      "length": 6,
+      "sha256": "95b3c22a63466192adcc9f707d7200e3f702dc72faf5a9334605545dbdfc1109"
     },
     {
       "name": "Stock SysEx sender entry",
@@ -33,6 +41,37 @@
       "address": "0x40004734",
       "length": 128,
       "sha256": "cee6988062fe5113499ba3dbe3e4bde874539d72944c27d0100afe3b62e63d64"
+    },
+    {
+      "name": "Native mutex try-acquire",
+      "address": "0x40001680",
+      "length": 30,
+      "sha256": "367369a69fd16990533d1dd04138b26229cc0100b8e32ab498ba10f025fbc552"
+    },
+    {
+      "name": "Descriptor try allocator with an active-bit wait",
+      "address": "0x40005764",
+      "length": 84,
+      "sha256": "4c1eacc369a4bd0cb3a30c0abcbe9d650bde024057ad34afc654f6361f80ab66"
+    },
+    {
+      "name": "Blocking descriptor allocator",
+      "address": "0x400057b8",
+      "length": 82,
+      "sha256": "0dfbbf9bb7eb36739dbe4b72bc2b800da6fa3384140d649420ed75a01b622ba1"
+    },
+    {
+      "name": "Native endpoint submission",
+      "address": "0x40005a86",
+      "length": 348,
+      "sha256": "f2cfb9a7eb73ff496151f990daf87e2222d5088381e88c1e759407be189b90d0"
+    },
+    {
+      "name": "USB reset pool-call and following instruction candidate",
+      "purpose": "patch-candidate",
+      "address": "0x40006e4c",
+      "length": 10,
+      "sha256": "192c948ab771e5657b82d9fc64ab9759af15226d706051ee8346a7f8f895bba2"
     }
   ]
 }

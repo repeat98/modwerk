@@ -57,6 +57,11 @@ ownership and transmit bound have been raised on the board with its holder.
 
 ## What must be settled before a native port
 
+The [26 November bounded-transmit investigation](../../../docs/verification/2026-11-26-digitakt-ii-bounded-transmit.md)
+traces the additional descriptor-allocation wait, the conditional try-allocate
+path and reset ownership. It identifies a DN2-shaped router site and a guarded
+native integration candidate; neither is implemented or hardware-qualified.
+
 - **Shared ownership:** the DN2 link task held by prodbysmolec explicitly includes
   sharing with DT2. Coordinate the DT2 adapter boundary there. Claptom's Mixer,
   machine and sequencer work stays on the DT2 cumulative base draft #1999.
