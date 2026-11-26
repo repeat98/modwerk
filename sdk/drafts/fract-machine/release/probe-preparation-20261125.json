@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "kind": "PRIVATE_MEASUREMENT_ONLY",
+  "normalPackageSha256": "c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29",
+  "baseIdentity": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
+  "probeSourceSha256": "76628903f9d5403011a554b9b49d9e65bf1f5c90bcb8187130244d1bb514e8c5",
+  "layoutToolSha256": "65a88bddf0dc2d2e7bd3f95fa18e0a473e80337810052eafc1dd1a3fe0c6d86a",
+  "readOnlyBaseAddresses": {
+    "FRAMES": 1088689330,
+    "IDLE": 1089591652,
+    "FRAME_MAX": 1088689342,
+    "SHARE": 1085180478,
+    "SHEDS": 1088689326
+  },
+  "hardware": "NOT_RUN",
+  "deviceOpened": false,
+  "guardDisabled": false,
+  "limits": "Probe is a different package. Original units retain their instruction bytes, but the wrapper adds timer/call overhead. Base frame peak is since boot, not a reset window; guard share is whole-ISR, not free FRACT headroom.",
+  "probePackageSha256": "e3b3ce215d5e426e8829b5d37c33695903c86e20761dab46776ba4bf92aa1469",
+  "normalStockVerification": "PASS",
+  "probeStockVerification": "PASS",
+  "originalExecutableUnitsUnchanged": 11,
+  "nativeAndIsolatedProbeBytesMatch": true,
+  "isolatedSourceRevision": "68ee14153ef0a8a313324d433b8d67d3ff410aa4"
+}
