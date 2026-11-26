@@ -38,7 +38,8 @@ Package SHA-256 `05120b20ec4f52f321cebd71babf4b536d928bc3a6ba8d10fdadff08248070a
 
 After the same chord on the panel (not the automated `remove` rows), the
 author reported SEQ open/close and stock page behaviour acceptable for this
-build. Automated trial removal after the CUE chord is still open.
+build. Automated trial removal after the CUE chord is still open (blocks marking ready;
+retest on unit when scheduling allows).
 
 ## Host (26 Nov 2026, branch `module/seq`)
 

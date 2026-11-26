@@ -6476,13 +6476,18 @@ smr_rts:
         moveq   #0,%d0
         rts
 
-| ev_in_use (UI tick): in use while the window, a layer or ARE YOU SURE? is up.
+| ev_in_use (UI tick): in use while the window, a layer, CLEAR cancel layer or
+| ARE YOU SURE? is up (matches loader RUNTIME_UI_OPEN expectations).
 seq_in_use:
         tstl    ef_win
         bne.s   siu_busy
         tstl    ef_layer_on
         bne.s   siu_busy
         tstl    ef_ask
+        bne.s   siu_busy
+        tstl    ef_dlg_guard
+        bne.s   siu_busy
+        tstl    ef_cl_nolayer
         bne.s   siu_busy
         moveq   #0,%d0
         rts
