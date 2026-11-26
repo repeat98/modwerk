@@ -1,5 +1,26 @@
 # Proposed Digitakt II sequencer note hook
 
+## Mixer page registration
+
+The draft Mixer API accepts up to four extension descriptors after COMP.
+The linker orders pointers in `core_mixer_pages` and appends a null pointer.
+The base assigns page IDs 33 through 36 in that order. Incomplete entries are
+skipped and the five stock Mixer pages retain their order. The guarded base
+recipe owns page counting, page list selection, descriptor lookup and draw
+dispatch. A local diagnostic built with GCC 13.1 linked with Elekloader. In
+Digikit, the base-only capture matched stock pixel for pixel on the first
+three Mixer pages. A separate fixture module contributed one descriptor and
+drew its own page immediately after COMP.
+
+With GCC 16.2.0 and binutils 2.47, the tested base package SHA-256 was
+`b6ee556855a209907a27d917f51b8324fd3158e2ade304fc4b2c6aa25104ef54`.
+Claptom-music reported that the combined OS 1.17 image
+`9d3eea5ddf1e6bd0d93629c1f6bfa5221165977114119e3ae403fe5c4f88c435`
+passed COMP → SC → ENV navigation, selected-track AUDIO ducking, GRID
+without a source, and stock COMP dry/wet with SIDECHAIN off on their unit.
+
+The [hardware record](../../../../../docs/verification/2026-11-14-digitakt-ii-render-probe.md#reported-hardware-result) also covers the rebuilt base after #1571, including the project reload and power-cycle checks.
+
 ## Playback grid prototype
 
 `ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.
@@ -76,4 +97,4 @@ Two isolated pinned builds produced base SHA-256 `c4992eba731456afa6254e28a3f51e
 
 On 2026-11-08, Claptom-music reported that the combined K117 image `185fc6dbb84bb99f5477d22cead24ff7fc3e7f2e60c703168b83a207bf24bcf3` booted on their Digitakt II and restored the saved SCF switch and reroll melody after a scratch-project reload. Create New was verified in digikit.
 
-Two isolated builds with GCC 16.2.0 and binutils 2.47 reproduced [the same base package](../../base-binding.json). The base kept the preceding package's sites and interface entries and linked with both released Perform modules, separately and together. In digikit `d6de4d0`, the exact build incremented the generation once on saved-project reload and once on **Create New**. Save and cancelled load kept the same generation. The base linked with Euclidean Scale reached ColdFire and SHARC ready after 7,750 DSP frames with no missing blocks or halt. Physical-unit verification is pending.
+Two isolated builds with GCC 16.2.0 and binutils 2.47 reproduced [the same base package](../../base-binding.json). The base kept the preceding package's sites and interface entries and linked with both released Perform modules, separately and together. In digikit `d6de4d0`, the exact build incremented the generation once on saved-project reload and once on **Create New**. Save and cancelled load kept the same generation. The base linked with Euclidean Scale reached ColdFire and SHARC ready after 7,750 DSP frames with no missing blocks or halt. The results on a unit, with the exact base and image hashes, are in the [guarded render record](../../../../../docs/verification/2026-11-14-digitakt-ii-render-probe.md).
