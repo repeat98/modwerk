@@ -92,7 +92,9 @@ export function parseMcLoad(payload: Uint8Array): McLoad {
   return { windowPercent: windows ? avg / 10 : null, windowPeakPercent: windows ? wmax / 10 : null, peakPercent: peak / 10, windows, blocks }
 }
 
-export type McCall = (cmd: number, body?: number[]) => Promise<Uint8Array | null>
+/** A request over one line; `setOf`, when the machine's identity is not the Model:Cycles' layout, reads the set
+ * identity from its `ident` payload (the Analog Rytm MKII's, rytm-link.ts). */
+export type McCall = ((cmd: number, body?: number[]) => Promise<Uint8Array | null>) & { setOf?: (ident: Uint8Array) => { crc: number; bytes: number } | null }
 /** Requests to the connected Model:Cycles over one line: each gives its reply's payload, or null without a reply; the
  * whole is null without a unit. */
 export async function withMc<T>(access: MidiAccessLike, timeoutMs: number, work: (call: McCall) => Promise<T | null>): Promise<T | null> {
@@ -230,7 +232,7 @@ export async function mcModules(call: McCall): Promise<McModules | null> {
 export async function mcUploadSession(call: McCall, timeoutMs = 20000): Promise<UploadSession | null> {
   const payload = await call(IDENT)
   if (!payload) return null
-  const set = parseMcIdent(payload).set
+  const set = call.setOf ? call.setOf(payload) : parseMcIdent(payload).set
   if (!set) throw new Error('This base reports no set identity: build a newer one.')
   return UploadSession.connect(mcUploadTransport(call), mcUploadBase(set.crc), { timeoutMs })
 }

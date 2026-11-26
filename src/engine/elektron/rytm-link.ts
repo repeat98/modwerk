@@ -6,7 +6,7 @@
 // keeps the Rytm's identity layout, port name and set identity.
 import { type DeviceLog } from '../elekloader/device-log'
 import { get32, linkExchange, parseLinkReply } from './link-wire'
-import { parseMcLoad, readLinkLog, type McCall, type McLoad } from './mc-link'
+import { McRefused, parseMcLoad, readLinkLog, withMc, type McCall, type McLoad } from './mc-link'
 import { ELE3_DEVICES, mainImage, readEle3Syx } from './ele3'
 import { findUnit, midiLine, type MidiAccessLike } from './os-upgrade-midi'
 
@@ -41,12 +41,11 @@ export type RytmIdentity = {
   set: { crc: number; bytes: number } | null
 }
 
-/** A refusal by the unit's link, with its status byte. */
-export class RytmRefused extends Error {
-  readonly status: number
+/** A refusal by the unit's link, with its status byte: a McRefused, so code that handles the Model:Cycles' handles it. */
+export class RytmRefused extends McRefused {
   constructor(status: number) {
-    super('The Analog Rytm link refused: ' + (STATUS[status] ?? 'status ' + status) + '.')
-    this.status = status
+    super(status)
+    this.message = 'The Analog Rytm link refused: ' + (STATUS[status] ?? 'status ' + status) + '.'
   }
 }
 
@@ -80,7 +79,19 @@ export async function withRytm<T>(access: MidiAccessLike, timeoutMs: number, wor
     if (reply?.status) throw new RytmRefused(reply.status)
     return reply ? reply.payload : null
   }
+  call.setOf = ident => parseRytmIdent(ident).set
   try { return await work(call) } finally { line.close() }
+}
+
+/** The connected Model:Cycles or Analog Rytm MKII, whichever answers to its port name (the Model:Cycles first): the
+ * same link and runtime loader on both, so the upload, trial and module-list code runs over either. null without one. */
+export async function withElektron<T>(access: MidiAccessLike, timeoutMs: number, work: (call: McCall) => Promise<T | null>): Promise<{ machine: 'model-cycles' | 'analog-rytm-mkii'; out: T } | null> {
+  if (findUnit(access, 'Model:Cycles')) {
+    const out = await withMc(access, timeoutMs, work)
+    return out === null ? null : { machine: 'model-cycles', out }
+  }
+  const out = await withRytm(access, timeoutMs, work)
+  return out === null ? null : { machine: 'analog-rytm-mkii', out }
 }
 
 /** Ask the connected Rytm for its identity; null when no unit or no reply (a base without the link, or a stock OS). */
