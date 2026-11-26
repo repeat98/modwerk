@@ -34,7 +34,7 @@ SRC SETUP (knobs E and F; A to D are empty):
 
 UNGEMACH is reached through the track's machine list. It needs no sample. A good start for a dark drone under a kick: PTCH 24 (A1), DISS 40, TONE 70, WAVE 24, RATE 20, DIRT 12, the AMP envelope's HOLD high, and a trig on step 1. Turn DISS above 100 for a screaming, rising chord, and set RATE above 63 for a pulse with the pattern. For hits, set PNCH and add trigs, or put an LFO on DIRT in a trig mode.
 
-## Quick tutorial
+## Quick tutorial: play an UNGEMACH drone
 
 1. Double-tap a track key, move to UNGEMACH in the machine list and press YES.
 2. Put a trig on the track, set the AMP envelope's HOLD high and press PLAY: the drone sounds. On the SRC page, turn DISS slowly from 0 up: the chord widens and rises. Turn WAVE for the colour and TONE and DIRT for brightness and grit.
@@ -42,12 +42,13 @@ UNGEMACH is reached through the track's machine list. It needs no sample. A good
 
 ## Compatibility and limitations
 
-- Experimental draft. The author tested it on an Octatrack MKI with OS 1.40C and the Modwerk USB base 0.7.10. It has not been tested on an MKII.
+- The author tested it on an Octatrack MKI with OS 1.40C, the Modwerk USB base 0.7.10 and a development twin of the beta base. It has not been tested on an MKII.
 - One UNGEMACH track per Part: the base refuses it for a second track, and that track stays what it was.
 - It renders on the ColdFire, in the frame interrupt: about 37-60 microseconds of the 363-microsecond frame in the author's busy live set. With a full pattern the base's frame guard skipped some of its frames: none in most seconds, up to a few dozen a second at busy moments (under 2 % of frames). The author heard no dropouts. Several UNGEMACH-like machines at once would not fit.
 - SPRD and PNCH sit on SRC SETUP, which locks, LFOs and scenes do not reach.
-- Every byte UNGEMACH keeps in the Part is a valid FLEX value. What a project opened without the module plays has not been tested.
-- Not yet tested: Part and bank changes with UNGEMACH tracks, a power cycle after a Keep, the module's own CPU price, and `device:qualify`.
+- Every byte UNGEMACH keeps in the Part is a valid FLEX value: a project opened without the module shows that UNGEMACH is missing and plays the track as FLEX.
+- Not yet tested: MIDI, scenes and recording on an UNGEMACH track.
+
 
 ## Tests and measurements
 
@@ -59,4 +60,8 @@ Original work by GnocchiBalboa under the MIT licence ([LICENSE](LICENSE)). The e
 
 ## Screens and audio
 
-No screenshots yet: they will be captured in the headless emulator before the module is listed. No audio preview.
+![The machine list with UNGEMACH beside the stock machines](media/ot-machine-list.png)
+
+![The SRC page of an UNGEMACH track](media/ot-src.png)
+
+Captures of the author's MKI LCD over USB ([media rights](media/LICENSE.md)). No audio preview.
