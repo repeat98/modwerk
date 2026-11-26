@@ -1,10 +1,11 @@
 """COMBO -- an amp and speaker cabinet in one insert. Original Modwerk design.
 
-A buffer-free stereo insert for FX1 or FX2 of any track (no allocator, no
-bus role, no absolute Y). Per channel: a 90 Hz high-pass and a 7 kHz
-band-limit into GAIN, a soft curve flat at full scale, a three-band tone
-stack (BASS, MID, TREB, flat at 64), one of four speaker cabinets or OFF
-(CAB, from the P table in tables.py) and LEV. verify.py holds the assembly
+A buffer-free insert for FX1 or FX2 of any track (no allocator, no bus
+role, no absolute Y), mono like a guitar amp: (L + R)/2 through a 90 Hz
+high-pass and a 7 kHz band-limit, then at 2x (halfband.py) GAIN into a soft
+curve flat at full scale, a level that follows GAIN, a three-band tone stack
+(BASS, MID, TREB, flat at 64), one of four speaker cabinets or OFF (CAB, from
+the P table in tables.py), a DC blocker and LEV, to both sides. verify.py holds the assembly
 to reference.py's model bit for bit. Hardware operation is untested.
 
 The FX2 id: the card's 32 ids are all taken (docs/OCTATRACK_MORE_EFFECT_IDS.md),

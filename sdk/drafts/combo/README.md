@@ -4,12 +4,12 @@ Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for
 
 ## Overview
 
-COMBO puts a track through an amp and a speaker cabinet. GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track, in stereo: both channels run the same amp with their own state.
+COMBO puts a track through an amp and a speaker cabinet. GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
 
-Signal chain, per channel: `in -> 90 Hz high-pass -> 7 kHz band-limit -> GAIN -> soft curve -> level (1/√GAIN × LEV) -> BASS/MID/TREB -> CAB -> 10 Hz DC blocker -> out`.
+Signal chain: `(L + R)/2 -> 90 Hz high-pass -> 7 kHz band-limit -> [2x: GAIN -> soft curve] -> level (1/√GAIN × LEV) -> BASS/MID/TREB -> CAB -> 10 Hz DC blocker -> L and R`.
 
 - The high-pass keeps the lowest lows from muddying the drive; the band-limit keeps the curve's harmonics from aliasing as much.
-- The curve is 0.75c - 0.25c³ on the gained signal, limited at full scale, so it flattens smoothly instead of clipping hard.
+- The curve is 0.75c - 0.25c³ on the gained signal, limited at full scale, so it flattens smoothly instead of clipping hard. It runs at twice the sample rate (a polyphase half-band filter up and down, halfband.py), which keeps most of the harmonics it makes from folding back as tones that do not follow the note.
 - After the curve the level comes down by the square root of GAIN's boost, so turning GAIN up adds drive, not volume: on a clean guitar DI the output stays within about 8 dB from GAIN 0 to 127. This also leaves the cabinet room, so nothing clips at LEV 64.
 - The tone stack splits the sound at 300 Hz and 2.2 kHz. With BASS, MID and TREB at their centre it is exactly flat.
 - Each cabinet is a resonant high-pass (its low thump), a resonant low-pass (its upper-mid bump and roll-off) and a second low-pass that steepens the top. They are Modwerk's own designs from textbook filter formulas, not impulse responses or models of any product.
@@ -47,15 +47,16 @@ GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking the
 - It takes no key gesture and no stock screen, and patches no stock code: it is one entry in the base's FX list.
 - Card builds refuse it beside Analog BD, as they refuse every effect not on Analog BD's reviewed list.
 - CAB switches its filters at once, so turning it while audio plays can click.
-- At high GAIN with loud, bright input it aliases (harsh tones that do not follow the note): see TESTING.md, Sound quality. Lowering TREB or GAIN reduces it.
+- Mono: a stereo sample (a stereo chorus, a wide pad) comes out in mono, as it would from a guitar amp. Put a stereo effect on the other FX slot after it for width.
+- At high GAIN with loud, bright input some aliasing remains (2x oversampling halves the problem, not all of it): see TESTING.md, Sound quality. Lowering TREB or GAIN reduces it.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence, and measures 394.8 instructions a sample (stock SPRING REV: about 314). It installs and draws its page in the emulator. Nothing has run on a unit yet.
+See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence, and measures 331.8 instructions a sample (stock SPRING REV: about 314). It installs and draws its page in the emulator. Nothing has run on a unit yet.
 
 ## Authorship and licences
 
-Original code and filter design by @sebasprosala-sys, under the MIT licence in LICENSE. The filters use Robert Bristow-Johnson's Audio EQ Cookbook formulas. No impulse response, curve or voicing is taken from any product, and nothing comes from Elektron's firmware.
+Original code and filter design by @sebasprosala-sys, under the MIT licence in LICENSE. The filters use Robert Bristow-Johnson's Audio EQ Cookbook formulas, and the oversampler Valenzuela and Constantinides' published polyphase half-band design, written here from the formulas. No impulse response, curve or voicing is taken from any product, and nothing comes from Elektron's firmware.
 
 ## Screens and audio
 

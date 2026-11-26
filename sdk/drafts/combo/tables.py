@@ -24,6 +24,11 @@ The fixed filters (combo.asm immediates):
         resonant high-pass can freeze a truncated offset in its dead band
 """
 import math
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import halfband  # noqa: E402
 
 FS = 44100.0
 Q = 1 << 23
@@ -107,11 +112,15 @@ KHP = q23(one_pole(90.0))
 KL = q23(one_pole(300.0))
 KT = q23(one_pole(2200.0))
 KDC = q23(one_pole(10.0))
+# The 2x oversampler: four all-pass coefficients, a transition band of 0.06 of the 2x rate (pass-band to
+# 16.8 kHz, stop-band -57 dB; halfband.py). Even ones on path 0, odd ones on path 1.
+HALFBAND = tuple(q23(a) for a in halfband.coefficients(4, 0.06))
 PRE = halved(lowpass(7000.0, 0.7071))
 TABLE = tuple(w & 0xffffff for w in PRE + tuple(w for row in CAB_ROWS for w in row) + COMP)
 CA, CB = q23(0.1875), q23(0.0625)      # the curve: 0.1875 c - 0.0625 c^3 (quarter scale of 0.75c - 0.25c^3)
 
-CONSTANTS = {"KHP": KHP, "KL": KL, "KT": KT, "KDC": KDC, "CA": CA, "CB": CB}
+CONSTANTS = {"KHP": KHP, "KL": KL, "KT": KT, "KDC": KDC, "CA": CA, "CB": CB,
+             **{f"HB{i}": a for i, a in enumerate(HALFBAND)}}
 
 
 def response(coeffs, f):

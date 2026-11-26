@@ -7,6 +7,7 @@ are tables.py's; verify.py checks that the assembly carries them.
 """
 import math
 
+import halfband
 import tables as T
 
 FS = T.FS
@@ -21,14 +22,16 @@ gain_g = T.gain_g
 
 
 def float_combo(left, right, knobs):
-    """The chain on floats in [-1, 1) for fixed knobs; returns two float lists."""
+    """The chain on floats in [-1, 1) for fixed knobs: one mono amp, 2x oversampled; returns two float lists."""
     kv = {**KNOB_DEFAULTS, **knobs}
-    hp, lpk, lk, tk = T.one_pole(90.0), None, T.one_pole(300.0), T.one_pole(2200.0)
+    hp, lk, tk, dc = T.one_pole(90.0), T.one_pole(300.0), T.one_pole(2200.0), T.one_pole(10.0)
     pre = T.lowpass(7000.0, 0.7071)
     cab = T.cab_biquads(min(kv["CAB"], 4))
     g = gain_g(kv["GAIN"])
     gb, gm, gt = kv["BASS"] / 64.0, kv["MID"] / 64.0, kv["TREB"] / 64.0
     lev = (kv["LEV"] / 64.0) ** 2
+    hb = halfband.coefficients(4, 0.06)
+    up, down = halfband.Up(hb), halfband.Down(hb)
 
     def bq(c, s, x):
         b0, b1, b2, a1, a2 = c
@@ -36,25 +39,27 @@ def float_combo(left, right, knobs):
         s[:] = [x, s[0], y, s[2]]
         return y
 
-    out = []
-    for ch in (left, right):
-        sh = sl = st = 0.0
-        sp = [0.0] * 4
-        sc = [[0.0] * 4 for _ in range(3)]
-        y = []
-        for x in ch:
-            sh += hp * (x - sh)
-            v = bq(pre, sp, x - sh)
-            c = max(-1.0, min(1.0, v * g))
-            p = (0.75 * c - 0.25 * c ** 3) / math.sqrt(g) * lev
-            sl += lk * (p - sl)
-            st += tk * (p - st)
-            v = gb * sl + gm * (st - sl) + gt * (p - st)
-            for c_, s_ in zip(cab, sc):
-                v = bq(c_, s_, v)
-            y.append(max(-1.0, min(1.0, v)))
-        out.append(y)
-    return out
+    def drive(v):
+        c = max(-1.0, min(1.0, v * g))
+        return 0.75 * c - 0.25 * c ** 3
+
+    sh = sl = st = sd = 0.0
+    sp = [0.0] * 4
+    sc = [[0.0] * 4 for _ in range(3)]
+    y = []
+    for xl, xr in zip(left, right):
+        x = (xl + xr) / 2
+        sh += hp * (x - sh)
+        first, second = up(bq(pre, sp, x - sh))
+        p = down(drive(first), drive(second)) / math.sqrt(g) * lev
+        sl += lk * (p - sl)
+        st += tk * (p - st)
+        v = gb * sl + gm * (st - sl) + gt * (p - st)
+        for c_, s_ in zip(cab, sc):
+            v = bq(c_, s_, v)
+        sd += dc * (v - sd)
+        y.append(max(-1.0, min(1.0, v - sd)))
+    return y, list(y)
 
 
 # ---- the fixed-point model ---------------------------------------------------
@@ -146,30 +151,51 @@ class Model:
         for left, right in frames:
             for t in range(0x30, 0x3a, 2):
                 x[t + 1] = hi(((ld(x[t]) - ld(x[t + 1])) >> 6) + ld(x[t + 1]))
-            out.append((lim(self.channel(0x00, left)), lim(self.channel(0x18, right))))
+            y = lim(self.amp(left, right))
+            out.append((y, y))
         return out
 
-    def channel(self, base, sample):
+    def allpass(self, st, v, coef):
         x = self.x
-        s = x[base:base + 0x18]
-        # pre high-pass
-        h = hi(ld(sample) >> 2)
+        d = lim(ld(v) - ld(x[st + 1]))
+        y = lim(mac(ld(x[st]), d, coef))
+        x[st], x[st + 1] = v, y
+        return y
+
+    def drive(self, q):
+        x = self.x
+        c = lim(w56(mac(0, q, x[0x31]) << 10))
+        c2 = lim(mac(0, c, c))
+        c3 = lim(mac(0, c2, c))
+        bb = mac(0, c3, T.CB)
+        return lim(mac(0, c, T.CA) - bb)
+
+    def amp(self, left, right):
+        x = self.x
+        s = x[0:0x18]
+        # the mono sum, pre high-pass
+        h = hi(w56(ld(left) + ld(right)) >> 3)
         b = one_pole(s, 0, h, T.KHP)
         y = lim(ld(h) - ld(hi(b)))
         # pre low-pass
         st = s[2:6]
         a = biquad_fx(y, st, x[0x40:0x45])
         s[2:6] = st
-        # gain and the limit
+        x[0:0x18] = s
         q = lim(a)
-        c = lim(w56(mac(0, q, x[0x31]) << 10))
-        # the curve
-        c2 = lim(mac(0, c, c))
-        c3 = lim(mac(0, c2, c))
-        bb = mac(0, c3, T.CB)
-        p = lim(mac(0, c, T.CA) - bb)
+        # 2x: up, the amp on both samples, down
+        hb, ap = T.HALFBAND, self.allpass
+        first = ap(0x1a, ap(0x18, q, hb[0]), hb[2])
+        second = ap(0x1e, ap(0x1c, q, hb[1]), hb[3])
+        ps = self.drive(second)
+        pf = self.drive(first)
+        t1 = ap(0x26, ap(0x24, pf, hb[1]), hb[3])
+        t0 = ap(0x22, ap(0x20, ps, hb[0]), hb[2])
+        x[0x28], x[0x29], x[0x2a] = t1, ps, q
+        a = (ld(t0) + ld(t1)) >> 1
+        s = x[0:0x18]
         # OUT = COMP x LEV
-        p = lim(w56(mac(0, p, x[0x39]) << 3))
+        p = lim(w56(mac(0, lim(a), x[0x39]) << 3))
         # tone stack
         one_pole(s, 6, p, T.KL)
         one_pole(s, 8, p, T.KT)
@@ -188,7 +214,7 @@ class Model:
             s[sb:sb + 4] = st
         # DC blocker, then back to full scale
         b = one_pole(s, 0x16, v, T.KDC)
-        x[base:base + 0x18] = s
+        x[0:0x18] = s
         return w56((ld(v) - ld(hi(b))) << 2)
 
 
