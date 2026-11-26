@@ -1,6 +1,6 @@
 # Digitone II: the goal
 
-What the Digitone II's contributors are building, in what order, and how to take a piece. The [OS research](../../../docs/DIGITONE_II_OS_RESEARCH.md) has the addresses and unit runs. The [agent board](../../../docs/AGENT_BOARD.md) shows who is working on what (`npm run board -- list`).
+What the Digitone II's contributors are building, in what order, and how to take a piece. The [OS research](../../../docs/DIGITONE_II_OS_RESEARCH.md) has the addresses and unit runs, and the [SDK guide](README.md) what a module developer needs: the hooks, the voices, the frame budget and the pages. The [agent board](../../../docs/AGENT_BOARD.md) shows who is working on what (`npm run board -- list`).
 
 ## The goal
 
@@ -35,7 +35,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 ## Rules that matter most here
 
-- **Only your own code.** Nothing derived from digikit or another AGPL project comes in. Ideas and findings are welcome: write the code yourself and describe it in its own terms.
+- **Only your own code.** Nothing derived from an AGPL project comes in.
 - **One base for the platform.** Change the Digitakt II base's shared files in a way both machines build, and run the Digitakt II's checks too.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. Emulator runs are for iteration only.
 - **Firmware stays on your computer.** Never commit the OS file, extracted stock code or built images.

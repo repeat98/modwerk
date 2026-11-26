@@ -3627,6 +3627,1026 @@
           "value": ""
         }
       ]
+    },
+    {
+      "id": "resonator",
+      "key": "RESONATOR",
+      "author": "repeat98",
+      "fxId": 7,
+      "donorAddress": 1074616560,
+      "donorSha256": "3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f",
+      "fx2Slot": 1074618360,
+      "slotSha256": "79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a",
+      "sourceSha256": "1182c72f37f16f85e5111fea45cfe6c65894f47a390e1ed2eaa7c9898d55c4f6",
+      "integers": [
+        {
+          "offset": 3,
+          "width": 1,
+          "value": 7
+        },
+        {
+          "offset": 94,
+          "width": 1,
+          "value": 57
+        },
+        {
+          "offset": 95,
+          "width": 1,
+          "value": 4
+        },
+        {
+          "offset": 96,
+          "width": 1,
+          "value": 64
+        },
+        {
+          "offset": 97,
+          "width": 1,
+          "value": 64
+        },
+        {
+          "offset": 98,
+          "width": 1,
+          "value": 32
+        },
+        {
+          "offset": 99,
+          "width": 1,
+          "value": 64
+        },
+        {
+          "offset": 100,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 101,
+          "width": 1,
+          "value": 1
+        },
+        {
+          "offset": 102,
+          "width": 1,
+          "value": 2
+        },
+        {
+          "offset": 103,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 202,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 250,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 206,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 254,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 210,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 258,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 214,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 262,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 218,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 266,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 222,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 270,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 226,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 274,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 230,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 278,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 234,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 282,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 238,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 286,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 242,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 290,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 246,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 294,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 206,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 254,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 302,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 226,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 274,
+          "width": 4,
+          "value": 1074033236
+        },
+        {
+          "offset": 322,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 230,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 278,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 326,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 234,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 282,
+          "width": 4,
+          "value": 1074033236
+        },
+        {
+          "offset": 330,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 238,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 286,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 334,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 214,
+          "width": 4,
+          "value": 1073989536
+        },
+        {
+          "offset": 262,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 310,
+          "width": 4,
+          "value": 1073948900
+        },
+        {
+          "offset": 154,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 106,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 158,
+          "width": 4,
+          "value": 14
+        },
+        {
+          "offset": 110,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 162,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 114,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 166,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 118,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 170,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 122,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 174,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 126,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 178,
+          "width": 4,
+          "value": 2
+        },
+        {
+          "offset": 130,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 182,
+          "width": 4,
+          "value": 7
+        },
+        {
+          "offset": 134,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 186,
+          "width": 4,
+          "value": 4
+        },
+        {
+          "offset": 138,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 190,
+          "width": 4,
+          "value": 121
+        },
+        {
+          "offset": 142,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 398,
+          "width": 4,
+          "value": 286331153
+        },
+        {
+          "offset": 394,
+          "width": 4,
+          "value": 17
+        }
+      ],
+      "strings": [
+        {
+          "offset": 4,
+          "width": 5,
+          "value": "RESO"
+        },
+        {
+          "offset": 9,
+          "width": 13,
+          "value": "Resonator"
+        },
+        {
+          "offset": 22,
+          "width": 6,
+          "value": "PTCH"
+        },
+        {
+          "offset": 28,
+          "width": 6,
+          "value": "CHRD"
+        },
+        {
+          "offset": 34,
+          "width": 6,
+          "value": "DCAY"
+        },
+        {
+          "offset": 40,
+          "width": 6,
+          "value": "TONE"
+        },
+        {
+          "offset": 46,
+          "width": 6,
+          "value": "GAIN"
+        },
+        {
+          "offset": 52,
+          "width": 6,
+          "value": "MIX"
+        },
+        {
+          "offset": 58,
+          "width": 6,
+          "value": "COLUN"
+        },
+        {
+          "offset": 64,
+          "width": 6,
+          "value": "TYPE"
+        },
+        {
+          "offset": 70,
+          "width": 6,
+          "value": "VOIC"
+        },
+        {
+          "offset": 76,
+          "width": 6,
+          "value": "SCALE"
+        }
+      ]
+    },
+    {
+      "id": "mackity",
+      "key": "MACKITY",
+      "author": "repeat98",
+      "fxId": 26,
+      "donorAddress": 1074616560,
+      "donorSha256": "3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f",
+      "fx2Slot": 1074618436,
+      "slotSha256": "79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a",
+      "sourceSha256": "bb144034f1d9ecce3d832e1cfd7d097402de1e6a8367a61cd0e9b34831bf5728",
+      "integers": [
+        {
+          "offset": 3,
+          "width": 1,
+          "value": 26
+        },
+        {
+          "offset": 94,
+          "width": 1,
+          "value": 13
+        },
+        {
+          "offset": 95,
+          "width": 1,
+          "value": 127
+        },
+        {
+          "offset": 96,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 97,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 98,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 99,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 100,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 101,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 102,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 103,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 104,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 105,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 202,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 250,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 206,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 254,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 154,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 106,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 158,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 110,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 162,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 114,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 166,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 118,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 170,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 122,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 174,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 126,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 178,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 130,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 182,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 134,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 186,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 138,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 190,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 142,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 194,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 146,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 198,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 150,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 398,
+          "width": 4,
+          "value": 17
+        },
+        {
+          "offset": 394,
+          "width": 4,
+          "value": 0
+        }
+      ],
+      "strings": [
+        {
+          "offset": 4,
+          "width": 5,
+          "value": "MACK"
+        },
+        {
+          "offset": 9,
+          "width": 13,
+          "value": "Mackity"
+        },
+        {
+          "offset": 22,
+          "width": 6,
+          "value": "TRIM"
+        },
+        {
+          "offset": 28,
+          "width": 6,
+          "value": "PAD"
+        },
+        {
+          "offset": 34,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 40,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 46,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 52,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 58,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 64,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 70,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 76,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 82,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 88,
+          "width": 6,
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "midiverb",
+      "key": "MIDIVERB",
+      "author": "repeat98",
+      "fxId": 10,
+      "donorAddress": 1074616560,
+      "donorSha256": "3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f",
+      "fx2Slot": 1074618372,
+      "slotSha256": "79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a",
+      "sourceSha256": "08f6849b92607374bf1c6a8a034f5dc355acd80409cfff1550a1242107a9ba04",
+      "integers": [
+        {
+          "offset": 3,
+          "width": 1,
+          "value": 10
+        },
+        {
+          "offset": 94,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 95,
+          "width": 1,
+          "value": 64
+        },
+        {
+          "offset": 97,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 99,
+          "width": 1,
+          "value": 40
+        },
+        {
+          "offset": 202,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 250,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 206,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 254,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 210,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 258,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 214,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 262,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 218,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 266,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 222,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 270,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 226,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 274,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 230,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 278,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 234,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 282,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 238,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 286,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 242,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 290,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 246,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 294,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 202,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 250,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 298,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 214,
+          "width": 4,
+          "value": 1073989400
+        },
+        {
+          "offset": 262,
+          "width": 4,
+          "value": 1074033236
+        },
+        {
+          "offset": 310,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 154,
+          "width": 4,
+          "value": 59
+        },
+        {
+          "offset": 106,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 158,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 110,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 166,
+          "width": 4,
+          "value": 3
+        },
+        {
+          "offset": 118,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 174,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 126,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 398,
+          "width": 4,
+          "value": 1052689
+        },
+        {
+          "offset": 394,
+          "width": 4,
+          "value": 0
+        }
+      ],
+      "strings": [
+        {
+          "offset": 4,
+          "width": 5,
+          "value": "MVRB"
+        },
+        {
+          "offset": 9,
+          "width": 13,
+          "value": "Midivrb I/II"
+        },
+        {
+          "offset": 22,
+          "width": 6,
+          "value": "PROG"
+        },
+        {
+          "offset": 28,
+          "width": 6,
+          "value": "LEVL"
+        },
+        {
+          "offset": 40,
+          "width": 6,
+          "value": "BANK"
+        },
+        {
+          "offset": 52,
+          "width": 6,
+          "value": "MIX"
+        }
+      ]
     }
   ]
 }

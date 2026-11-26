@@ -1,5 +1,25 @@
 [
   {
+    "version": "0.4.1-experimental",
+    "date": "2026-11-24",
+    "changes": [
+      "INPUTS for Windows: with AB, CD or ABCD on, Windows stopped the Octatrack's audio device with Code 10. The computer now sends its audio at its own clock, the USB timing Windows supports.",
+      "Tested on Windows 11 with AB and ABCD; not yet confirmed on a Windows 10 computer or on macOS.",
+      "The Octatrack evens out the small speed difference between the computer's clock and its own, one sample at a time and smoothed over a third of a millisecond, so the inputs never run dry or overflow.",
+      "INPUTS OFF and every output layout work as before. An Octatrack running 0.4.0 gets this version with its next sync."
+    ]
+  },
+  {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Record from your computer into the Octatrack: PROJ > MODWERK > SETTINGS > USB AUDIO > INPUTS sends USB 1/2 to inputs A/B or C/D, or USB 1–4 to all four.",
+      "The Octatrack keeps sending its USB outputs while the inputs are on. INPUTS starts OFF, so nothing changes until you choose it.",
+      "USB input needs a high-speed connection to a computer. Full speed and Outbox 8 stay output only; without a USB stream the inputs read the jacks.",
+      "An Octatrack running USB Audio 0.3.0 gets this version with its next sync. Your layout and Outbox choices stay as they are."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-20",
     "changes": [

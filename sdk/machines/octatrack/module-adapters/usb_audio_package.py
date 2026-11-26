@@ -44,6 +44,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 MODULE = 'usb-audio-out-tracks-main-cue'
+INPUT_TRIM = HERE.parents[2] / 'octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_input_trim.c'  # the input stream's drift trim (usb_audio_configurable.input_trim)
 TITLE = 'USB AUDIO'
 SUPPORTED = ('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS', 'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE',
              'USB AUDIO OUT MAIN', 'USB AUDIO OUT TRACKS POST')
@@ -62,12 +63,13 @@ def once(text, old, new, what):
     return text.replace(old, new)
 
 
-def function_block(functions, usb, descriptors, layout, high_speed, other_speed):
+def function_block(functions, usb, descriptors, layout, high_speed, other_speed, *, audio_input=None):
     """The audio function's descriptors as they follow the base's own in a composed configuration."""
     without = functions.configuration(usb, descriptors, high_speed, other_speed, None)
-    whole = functions.configuration(usb, descriptors, high_speed, other_speed, layout)
+    whole = functions.configuration(usb, descriptors, high_speed, other_speed, layout, audio_input=audio_input)
     block = whole[len(without):]
-    if (whole[9:len(without)] != without[9:] or whole[4] != without[4] + 2
+    interfaces = 3 if high_speed and audio_input else 2
+    if (whole[9:len(without)] != without[9:] or whole[4] != without[4] + interfaces
             or struct.unpack_from('<H', whole, 2)[0] != len(whole) or not block or block[1] != 11 or block[2] != 4):
         raise ValueError('The audio function no longer follows the base\'s own interfaces as one block.')
     return block
@@ -435,7 +437,10 @@ def capture_release(loader, image, protected, sources, stock, upstream):
     return source_runtime.bounded_capture(recipe, image, main, device.main_load, base, loader.site_events())
 
 
-def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None, upstream=None):
+def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None, upstream=None, usb_input=False):
+    if usb_input and layout is not None:
+        raise ValueError('USB audio input requires the configurable audio package.')
+    input_port = load('modwerk_usb_input', HERE / 'usb_audio_input.py') if usb_input else None
     if layout is not None and layout not in SUPPORTED:
         raise ValueError('Not built as a package yet: ' + layout)
     sys.path.insert(0, str(ROOT / 'sdk/runtime/loader'))
@@ -444,8 +449,10 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
     functions = load('modwerk_base_usb_functions', HERE / 'base_usb_functions.py')
     if layout is None:
         configurable = load('modwerk_usb_configurable', HERE / 'usb_audio_configurable.py')
-        descriptors, block_length = configurable.records(ROOT, MODULE, SUPPORTED, functions, usb, function_block, _records)
-        text = configurable.source(ROOT, MODULE, SUPPORTED[0], functions, load, sine_curve, package_hooks) + descriptors
+        descriptors, block_length = configurable.records(ROOT, MODULE, SUPPORTED, functions, usb, function_block, _records,
+                                                         usb_input=input_port)
+        text = configurable.source(ROOT, MODULE, SUPPORTED[0], functions, load, sine_curve, package_hooks,
+                                   usb_input=input_port) + descriptors
     else:
         descriptors = load('modwerk_authored_usb_descriptors', usb.audio_paths(layout)[1])
         blocks = [function_block(functions, usb, descriptors, layout, hs, other)
@@ -460,8 +467,16 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
         objects = [tmp / 'usbaudio.o']
         if layout is None:
             objects.append(tmp / 'settings.o')
+            settings = HERE / 'usb_audio_settings.c'
+            if input_port:
+                candidate = tmp / settings.name
+                candidate.write_text(input_port.settings_source(settings.read_text()))
+                settings = candidate
             subprocess.run([cross + 'gcc', *loader.CFLAGS, '-I', str(HERE.parent / 'include'), '-c',
-                            str(HERE / 'usb_audio_settings.c'), '-o', str(objects[-1])], check=True)
+                            str(settings), '-o', str(objects[-1])], check=True)
+            if input_port:
+                objects.append(tmp / 'trim.o')
+                subprocess.run([cross + 'gcc', *loader.CFLAGS, '-c', str(INPUT_TRIM), '-o', str(objects[-1])], check=True)
         image, symbols, bss, offsets = loader.link_units(objects, cross, 0, tmp, anywhere=True)
     sites = []
     for address, guard, shim in usb.AUDIO_DETOURS:
@@ -476,8 +491,10 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                dict(event='ev_usb_bus_end', fn='mwua_bus_end', order=50), dict(event='ev_usb_control', fn='mwua_control', order=50),
                dict(event='ev_usb_frame', fn='mwua_frame', order=50), dict(event='ot_settings', fn='mwua_setting', order=50)]
     hooks = loader.subscribe([loader.NONE] * len(loader.HANDLERS), entries, symbols)
-    # Inventory kind 7 is the configurable package. Kinds 1-6 identify the older
-    # fixed layouts so the site can still select their exact Undo package.
+    # Inventory kind 9 is the configurable package with USB input on an adaptive
+    # endpoint (0.4.1), 8 the one with an asynchronous input endpoint (0.4.0), 7 the
+    # output-only one (0.3.0). Kinds 1-6 identify the older fixed layouts. The site
+    # picks each one's exact Undo package by its kind.
     copies, fills = [], []
     if release or capture:
         if layout is not None:
@@ -485,6 +502,9 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
         sources = {'generatedAssembly': hashlib.sha256(text.encode()).hexdigest()}
         for path in (HERE / 'usb_audio_settings.c', HERE.parent / 'include/modwerk_events.h'):
             sources[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        if input_port:
+            sources[str(INPUT_TRIM.relative_to(ROOT))] = hashlib.sha256(INPUT_TRIM.read_bytes()).hexdigest()
+            sources['generatedSettings'] =hashlib.sha256(input_port.settings_source((HERE / 'usb_audio_settings.c').read_text()).encode()).hexdigest()
         preset = symbols['mwua_setting'] + 20
         if capture:
             if capture.exists() or not stock or not upstream:
@@ -498,7 +518,8 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                 item['purpose'] = f'Authored {label} + {at - address} in the USB Audio image'
             capture.write_text(json.dumps(recipe, indent=2) + '\n')
         else:
-            recipe = json.loads(RECIPE.read_text())
+            recipe_path = HERE / 'usb-audio-input-reconstruction.json' if input_port else RECIPE
+            recipe = json.loads(recipe_path.read_text())
         authored = image
         recipe_api = load('usb_audio_reconstruction', HERE / 'stock_recipe.py')
         image, copies, fills = recipe_api.apply(image, [*offsets, preset], recipe, sources)
@@ -529,7 +550,7 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                 raise ValueError('The installed image differs from the compiled module.')
     data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8,
                           copies=copies, fills=fills,
-                          layout=7 if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
+                          layout=(9 if input_port else 7) if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
     if release and stock:
         packages = load('usb_audio_package_scan', HERE.parent / 'elekloader/module_packages.py')
         scanner = load('usb_audio_image_scan', HERE.parent / 'elekloader/check_stock_free.py')
@@ -548,10 +569,12 @@ def main():
     parser.add_argument('--cross', default='m68k-elf-')
     parser.add_argument('--stock', type=Path, help='check the three sites\' guards against this OS file')
     parser.add_argument('--upstream', type=Path, help='the Elekloader checkout --stock is read with')
+    parser.add_argument('--usb-input', action='store_true', help='duplex trial package for an input-enabled base')
     parser.add_argument('--release', action='store_true', help='build from the reviewed stock reconstruction recipe')
     parser.add_argument('--capture-recipe', type=Path, help='record hash-only reconstruction data for review')
     args = parser.parse_args()
-    data, facts = build(args.layout, args.cross, release=args.release, capture=args.capture_recipe, stock=args.stock, upstream=args.upstream)
+    data, facts = build(args.layout, args.cross, release=args.release, capture=args.capture_recipe, stock=args.stock, upstream=args.upstream,
+                        usb_input=args.usb_input)
     if args.stock:
         if not args.upstream:
             parser.error('--stock needs --upstream')

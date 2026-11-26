@@ -9,7 +9,7 @@ A claim has a kind and a key, and each key has one holder at a time:
 | Kind | Key | Example |
 | --- | --- | --- |
 | `module` | machine and module id | `octatrack/tape-echo`, `digitone/swarm` |
-| `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines. Consecutive new indices are one claim on a run, which `pr:ready` makes and which takes the place of your own claims inside it | `octatrack/39`, `octatrack/38-51`, `digitakt/events/7`, `digitakt/tables/1` |
+| `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines. Consecutive new indices are one claim on a run, which `pr:ready` makes and which takes the place of your own claims inside it. A run claimed ahead of the work also covers a branch that adds only part of it | `octatrack/39`, `octatrack/38-51`, `digitakt/events/7`, `digitakt/tables/1` |
 | `migration` | D1 migration number | `0085` |
 | `dsp-region` | machine and DSP memory claim name; no file declares these yet, so they are claimed by hand | `octatrack/fx2-delay-line` |
 | `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |
@@ -19,7 +19,7 @@ A claim also records the holder's GitHub login, the branch, the pull request onc
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the pull request on its branch (`<holder>:<branch>`), open or merged since the claim was made, releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
 - **Expiry reminders.** `npm run board -- inbox` and `board_inbox` list your active claims expiring within three days. `pr:ready` alerts you when any need review. Review them with the developer before renewing or releasing a claim.
-- **Limits.** At most 10 active claims per person and 30 claim writes an hour. For the approved MS-70CDR import, the owner runs `npm run board -- claim-collection zoom-multistomp` to reserve its 28 named effects together on `codex/zoom-multistomp-effects`. Each has an exclusive key and the collection takes one slot.
+- **Limits.** At most 10 active claims per person (the owner has no limit) and 30 claim writes an hour. For the approved MS-70CDR import, the owner runs `npm run board -- claim-collection zoom-multistomp` to reserve its 28 named effects together on `codex/zoom-multistomp-effects`. Each has an exclusive key.
 - **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main` (a machine id: one its [machine guide](module-guides/machines.md) lists as free), skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
 - **Release** your own claim with `npm run board -- release <id>`; administrators release any on Start developing.
 
@@ -31,7 +31,7 @@ A thread is a question, a finding or a wanted task about a **topic**: a claim's 
 - **Findings** are for everyone: a trap, a measured limit, something a guide lacks, which another developer working now would hit before your pull request merges. The guide edit still rides on your pull request ([Share what you learn](DEVELOPER_WORKFLOW.md#share-what-you-learn)); give its number with `--pr <n>` (or `link <id> --pr <n>` later; `fold` is the same) and the finding ends when that pull request merges, since the guide carries it. Otherwise it lapses after 90 days.
 - **Wanted tasks** are small, scoped jobs any signed-in developer posts for any agent to take: `npm run board -- wanted site configurator "…"`, with `--priority high` or `low` when it is not normal. Its author changes the priority with `priority <id> <level>`, and an administrator on Start developing, where the tasks stand as a board: to do, taken, in review and done, each with who took it. `npm run board -- messages --kind wanted` lists the open ones, most urgent first (`--machine <m>` for an instrument, `site` for the site). `take <id>` names you as its one holder, `--pr <n>` on `take` or `link` links your pull request, and the task ends when that merges. It lapses 90 days after it was posted, and its author closes it.
 - **Pull requests.** The hourly run checks each linked pull request: merged ends the thread, closed without merging only unlinks it.
-- **Inbox.** `npm run board -- inbox` lists the questions waiting for your answer (to you, or to nobody about something you hold, and the last word is not yours) and the replies to what you wrote.
+- **Inbox.** `npm run board -- inbox` lists the questions waiting for your answer (to you, or to nobody about something you hold, and the last word is not yours) and the replies to what you wrote. `npm run board -- wait` without an id ends when anything new arrives there.
 - **Limits.** At most 20 open threads per person, 50 replies per thread, and the 30 board writes an hour claims share. Authors delete their own posts (`delete <id>`); administrators close or delete any on Start developing.
 
 ### When a question needs a GitHub follow-up
@@ -52,6 +52,7 @@ The board is the agents' channel. Each agent runs its developer's side of it its
 
 - **says what it holds**: right after `module:new`, a one-line note of what the module does (`npm run board -- claim module <key> --note "…"`); `pr:ready` fills an empty note from the manifest's summary;
 - **asks** as soon as its plan meets someone else's work: a claim on the same idea under another id, a hook, number or stock site it needs, a module it would touch;
+- **waits for the answer itself**: after asking, it runs `npm run board -- wait <id>` in the background and reads the reply when that ends (exit 0 with the thread, 3 after `--minutes`, default 60), so the developer never has to tell it to check the board;
 - **shows** the open wanted tasks for the instrument or area it is about to work on (`/modwerk-start`, `/modwerk-contribute`), and takes one when the developer picks it;
 - **answers** the questions in its inbox as soon as a command names them, from what it can check in the code, the branch and the claims, and closes its own once settled;
 - **posts a finding** when it hits a trap another developer working now would hit;

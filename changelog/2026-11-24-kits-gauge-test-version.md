@@ -1,0 +1,1 @@
+Development: the Kits memory gauge test checks the measured sample lease only on the version it was read on (0.1.0), and otherwise that a later version shows no measured figure, so a Kits update no longer fails it.

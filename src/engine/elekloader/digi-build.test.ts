@@ -3,16 +3,18 @@ import { DIGI_MODS } from '../../devices/digi-mods'
 import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
-import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled, isCoreBuildPreview } from './protocol'
+import { DIGI_DOWNLOADS_ENABLED, coreBuildPreviewOpen, digiDownloadsEnabled, isCoreBuildPreview } from './protocol'
 import { baseVariant, rytmVariant } from './machine-build'
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json'
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
 import DN2_BASE from '../../../sdk/machines/digitone-ii/base-binding.json'
+import CYCLES_BASE from '../../../sdk/machines/model-cycles/base-binding.json'
 
 const PLAIN = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.plain.slice(0, 8) + '.elemod'
 const SEND_BUS = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants['send-bus'].slice(0, 8) + '.elemod'
 const VOICES = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.voices.slice(0, 8) + '.elemod'
 const DT2 = 'modwerk-base-digitakt-ii-' + DT2_BASE.identity.slice(0, 8) + '.elemod'
+const CYCLES = 'modwerk-base-model-cycles-' + CYCLES_BASE.identity.slice(0, 8) + '.elemod'
 
 describe('the vendored elekloader catalog', () => {
   it('pins a core for every supported Digitakt and Digitone release', () => {
@@ -39,6 +41,16 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('digitakt-ii', '1.17', []).core?.file).toBe(DT2)
     expect(planBuild('digitakt-ii', '1.16', []).core).toBeUndefined()
     expect(planBuild('digitakt-ii', '1.16', ['perform-direct']).missing).toEqual(['perform-direct'])
+  })
+  it('plans the Model:Cycles core build on the pinned Modwerk base, not core-mc 0.3', () => {
+    expect(planBuild('model-cycles', '1.13', [])).toMatchObject({
+      core: { file: CYCLES, sha256: CYCLES_BASE.identity, id: 'core', version: '0.3', device: 'model-cycles', os: '1.13' },
+      mods: [], missing: [],
+    })
+    expect(baseVariant('model-cycles', [])).toBe('base')
+    // a research preview: the page builds the base alone, and downloads wait for review
+    expect(isCoreBuildPreview('model-cycles')).toBe(true)
+    expect(digiDownloadsEnabled('model-cycles')).toBe(false)
   })
   it('reports modules without a file for the chosen release', () => {
     expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })
@@ -187,6 +199,17 @@ describe('the vendored elekloader catalog', () => {
         { id: 'improved-amp', file: 'improved-amp-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
         { id: 'improved-machine-browser', file: 'improved-machine-browser-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
+  it('plans Improved FLTR beside Filter Hz and Improved AMP from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz', 'improved-amp', 'improved-fltr'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [
+        { id: 'filter-hz', file: 'filter-hz-1.3.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.3.1' },
+        { id: 'improved-amp', file: 'improved-amp-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
+        { id: 'improved-fltr', file: 'improved-fltr-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],
     })
@@ -361,7 +384,7 @@ describe('the vendored elekloader catalog', () => {
     })
   })
   it('keeps download approval specific to each device', () => {
-    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true, 'digitone-ii': false })
+    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true, 'digitone-ii': false, 'model-cycles': false })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
     expect(digiDownloadsEnabled('digitone-ii')).toBe(false)
     expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(true)
@@ -455,8 +478,8 @@ describe('the build log', () => {
 
 describe('the Digitone II core build preview', () => {
   it('is offered to beta users only, and builds on the base that ran on a unit', () => {
-    expect(isCoreBuildPreview('digitone-ii')).toBe(false)
-    expect(isCoreBuildPreview('digitone-ii', true)).toBe(true)
+    expect(coreBuildPreviewOpen('digitone-ii', false)).toBe(false)
+    expect(coreBuildPreviewOpen('digitone-ii', true)).toBe(true)
     expect(planBuild('digitone-ii', '1.12', [])).toMatchObject({ core: { sha256: DN2_BASE.identity } })
   })
 })

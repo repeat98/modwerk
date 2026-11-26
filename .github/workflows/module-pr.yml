@@ -22,13 +22,28 @@ jobs:
     name: scope / ${{ github.event.pull_request.base.sha }} / ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
+      pages-run: ${{ steps.pages.outputs.run }}
       modules: ${{ steps.scope.outputs.modules }}
       windows: ${{ steps.scope.outputs.windows }}
       elemod: ${{ steps.scope.outputs.elemod }}
       parts: ${{ steps.scope.outputs.parts }}
       logger: ${{ steps.scope.outputs.logger }}
     steps:
+      # Read the public deployment record before checking out or running contributor code.
+      # Ordinary PRs can proceed if the API is down. Rollbacks still require a verified record.
+      - id: pages
+        name: Look up the last successful production release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          record=$(gh api 'repos/repeat98/modwerk/actions/workflows/pages.yml/runs?branch=main&status=success&per_page=1' |
+            jq -ce '.workflow_runs[0] | select(. != null) | {repository: {full_name: .repository.full_name}, path, head_branch, conclusion, head_sha}')
+          echo "run=$record" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -71,8 +86,9 @@ jobs:
           restore-keys: check-cache-${{ runner.os }}-
       - name: Require versions, qualification evidence and complete release documentation
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part contract
+          MODWERK_PAGES_RUN: ${{ needs.scope.outputs.pages-run }}
+        # The merge commit's base parent, as scope's: base.sha can be an older main, whose later changes would count as this PR's.
+        run: npm run check -- --base "$(git rev-parse HEAD^1)" --part contract
       # Qualification records, complete docs/tutorials and monochrome screenshots are mandatory.
       # First release: owner reviews actual evidence. Later releases: registered author
       # verifies it and explicitly requests automatic publication within the trusted scope.
@@ -114,9 +130,9 @@ jobs:
             check-cache-${{ runner.os }}-
       - name: Run one suite of the check
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
           PART: ${{ matrix.part }}
-        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part "$PART"
+        # The merge commit's base parent, as scope's: base.sha can be an older main, whose later changes would count as this PR's.
+        run: npm run check -- --base "$(git rev-parse HEAD^1)" --part "$PART"
   module-paths-windows:
     needs: [scope, module-contract]
     if: needs.scope.outputs.windows == 'true'
@@ -134,8 +150,9 @@ jobs:
       - run: npm ci
       - name: Validate module paths against the exact PR base
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: npm run modules:check -- --base "$env:OCTAMOD_PR_BASE"
+          MODWERK_PAGES_RUN: ${{ needs.scope.outputs.pages-run }}
+        # The merge commit's base parent, as scope's: base.sha can be an older main, whose later changes would count as this PR's.
+        run: npm run modules:check -- --base "$(git rev-parse HEAD^1)"
       - name: Check byte-exact source integrity
         run: npm run sdk:check
       - name: Exercise paths and directory junctions on Windows

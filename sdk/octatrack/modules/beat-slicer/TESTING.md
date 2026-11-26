@@ -1,5 +1,63 @@
 # Beat Slicer testing
 
+## 0.1.68-experimental, 20 November 2026 (not yet tested on a unit)
+
+Ported from the private candidate in [sdk/drafts/beat-slicer/zero-cross/](../../../drafts/beat-slicer/zero-cross/README.md) onto Octatrack base 0.8 (0.7.11 while in development), which carries SNAP's `replace_options` and the FUNC+AED cycle (pull request #1165). The module now uses the base's own `modwerk_sample_editor.h` instead of the draft's temporary declaration.
+
+- Host: `test_device_module.py` passes (the controller against the base's sample-editor service with sanitizers, an uncached renderer compared pixel for pixel, and the ColdFire package's action record).
+- Unit, agent's run on the author's MKII, 20 November 2026 (not the author's own test). Base: a development twin of 0.7.11
+  with SNAP (`build_core.py` with the beta flags and `--dev`, source `3055f13f2`), booted from RAM as `54cab594…`; the
+  flashed base `27c9d36f…` stayed in flash. Package `195d2b46…`. Bank H, Part 1, transport stopped. Every install was a
+  timed trial without a Keep, rolled back at the end (inventory empty afterwards). Screens read with `png:` over USB.
+  - `npm run device:test`: self-test passed (1/1 intact, longest frame 382 us), 12 of 12 Part switches, CPU 356 per
+    mille with everything placed and playing, no crash, stall, freeze or skipped track, inventory unchanged.
+  - T1, a Static sample with existing slices: AED > SLICE > YES lists CREATE BEAT GRID directly above stock CREATE
+    SLICE GRID. The popup shows BPM, BEATS and SNAP in the top row, the tempo (115.00), the slice count and REPLACE.
+  - SNAP OFF, 1 beat, 16 slices: YES, then YES at stock REPLACE SLICES? applied the grid at once.
+  - SNAP ON, 4 beats, 4 slices: YES at REPLACE SLICES? showed ALIGNING GRID, still there at 2 s and gone by 6 s, back
+    on the SLICE page. Loader stalls and errors stayed 0, no new crash or stall record.
+  - NO at REPLACE SLICES? with SNAP ON returned to the SLICE page with no ALIGNING GRID and the slice view unchanged.
+  - FUNC+AED: stock CREATE SLICE GRID's chooser, then CREATE BEAT GRID (still SNAP ON, 4 beats: the setting survives
+    reopening), then stock again; NO closed it. With the module removed, FUNC+AED stays on stock's chooser.
+  - The trial ended with the popup open: it closed onto the SLICE page, inventory empty.
+  - With the popup open, the base's tick profile: module UI ticks 35.3 us a tick, the whole chain 152.7 us.
+  - Third trial, pattern playing: a SNAP OFF replace (16 slices) applied at once; a SNAP ON replace (16 slices)
+    showed ALIGNING GRID and was done within 3 s. Frame interrupt at most 38 % of a frame (share 80 %), no frame
+    skipped, loader stalls and errors 0, no new crash or stall record; transport stopped afterwards, rolled back.
+  - Open: the base's CPU budget refusal count (`mw_cpu_refusals`) rose by 3 at each slice replace and FUNC+AED
+    sequence, while stopped and playing, and also with Beat Slicer removed (FUNC+AED on stock's chooser alone), with
+    `cpu` reporting nothing refused afterwards. So not Beat Slicer's; what the base counts there is not established.
+  - Not run: a USB Undo after a Keep, the slice positions read back, MAIN/CUE
+    recordings, MKI, a power cycle. Sound and click-free playback are the author's to judge.
+- The draft's earlier MKII results were on measurement base `20ed7910…` and do not qualify this build.
+- Agent's runs after the author's test, same twin and package:
+  - Undo: a trial through the developer MCP (`device_review`, `device_trial`) ended by an explicit `device_undo`.
+    The active identity went `54cab594` > `ff5e28b7` (the trial) > `54cab594`, no modules: restored. No Keep.
+  - Cost, popup stopped on the SLICE page: `modwerk_cost[22]` (runtime module draw) 198.1 us a UI tick over 695 ticks
+    with the popup open and its settings turned 16 times (0.1.66: 1,058 us), 6.3 us closed; guard's longest frame
+    36.5 % open, 36.2 % closed; CPU meter 401-403 per mille open, 394-396 closed.
+  - Key-press stress: the popup opened (FUNC+AED twice) and closed (NO) 20 times while the pattern played, with
+    STOP, PLAY and a Part change between the two batches of ten; it answered every time, no hang, no new crash or
+    stall, nothing skipped. `npm run perf:audit -- check evidence/performance.json`:
+
+    | Check | Result |
+    |---|---|
+    | record | key-press coldfire record for beat-slicer@0.1.68-experimental |
+    | cycles | worst event 52,298 of 4,330,000 cycles (1 %) |
+    | stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+    | stress | 20 presses of the dearest event while playing, no hang |
+
+  - A first attempt at the stress run turned encoder B inside each cycle. After the Part change the popup was not open
+    for some of them, and on AED's own page encoder B moved T1 to another sample slot (Part 1's working copy:
+    `R1-25-2151` in place of `05_ELoop 3`). Stock behaviour, not the module's; the Part was reloaded (PART 1
+    RELOADED, T1 back on `05_ELoop 3`; working and saved copies had been equal before the run) and the stress run
+    repeated without encoder turns.
+- Author's test (twwwy), reported on 20 November 2026, same twin `54cab594…` and package `195d2b46…`, a 10-minute
+  trial without a Keep, T1 `05_ELoop 3`, as reported:
+  - SNAP ON against OFF: "the pop noticeably decrease a lot" at slice boundaries.
+  - A SNAP ON replace while the pattern played: playback stayed smooth during the operation.
+  - FUNC+AED from the SLICE page: stock chooser, CREATE BEAT GRID, stock, as expected.
+
 ## Release run, 27 October 2026
 
 The published package `6650ef77…` ran on the owner's MKII over USB: on a development twin of the beta base, slicing, re-slicing while playing, both BPM sources, NO, self-test and rollback, plus the draw cost while the popup is open; on the exact beta base `903f8ed6…`, a trial, self-test and rollback. Results and what was not run: [evidence/hardware.md](evidence/hardware.md) and [evidence/performance.json](evidence/performance.json).

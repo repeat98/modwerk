@@ -19,6 +19,12 @@
       "transfer": 1.13
     }
   },
+  "defaults": {
+    "setting": "REV=OFF/def",
+    "instructions": 331.88,
+    "cycles": 603.25,
+    "stalls": 120.81
+  },
   "stock": {
     "comparator": "DARK REV",
     "setting": "defaults/max",
