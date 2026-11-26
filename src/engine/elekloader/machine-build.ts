@@ -15,7 +15,7 @@ import {
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { checkLock, type Lock } from '../../../vendor/elekloader/kit/src/store.ts'
 import type { BuilderResult } from './protocol'
-import { carryDevices } from './carried-devices'
+import { carryDevices } from './carried-devices.ts'
 
 export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 export type { Builder }
