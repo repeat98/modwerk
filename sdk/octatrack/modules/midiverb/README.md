@@ -57,7 +57,7 @@ The extractor, the DSP engine and the ColdFire streaming code are under the MIT 
 
 ## Screens and audio
 
-Real captures of the Octatrack MKII's LCD, read over USB on the release build (media/capture.json).
+Real captures of the Octatrack MKII's LCD, read over USB on the 0.1.0 release build; the PROG message box is 0.2.0's, read from the emulator's LCD (media/capture.json).
 
 ![Octatrack FX2 SETUP: the effect list from COMPRESSOR to MIDIVRB I/II, the cursor on MIDIVRB I/II.](media/midiverb-chooser.png)
 
@@ -67,9 +67,9 @@ Select an audio track, hold FUNC and press FX2. Turn LEVEL down the list to MIDI
 
 Press FX2 for its page: PROG (A) picks the program, LEVL (B) drives the input, BANK (D) switches between Midiverb, Midiverb II and Midifex, MIX (F) sets dry and wet.
 
-![The FX2 page with a message box reading .25 MEDIUM BRIGHT.](media/midiverb-prog.png)
+![The FX2 page with a message box reading 3 .2S MEDIUM BRIGHT.](media/midiverb-prog.png)
 
-Turn PROG: a message box names each program as you go, here .25 MEDIUM BRIGHT. Try the long halls near the end of the Midiverb bank, or the gated and reverse programs.
+Turn PROG: a message box names each program as you go, its number on the original first, here 3 .2S MEDIUM BRIGHT. Try the long halls near the end of the Midiverb bank, the gated and reverse programs, or the Midiverb II's flanges and choruses.
 
 ![The FX2 page with a message box reading MIDIVERB II; the BANK dial shows MV2.](media/midiverb-bank.png)
 

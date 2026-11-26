@@ -39,10 +39,18 @@
   },
   {
    "path": "midiverb-prog.png",
-   "sha256": "5a577335f3a2a668c500a9d62515af982efa609e9c796f0e69d72b11d0160462",
+   "sha256": "54304a9dbac0cab98c4a48f0fceb747d9dec7478963232a7a83e7bb6c905e733",
    "scale": 2,
    "page": "FX2",
-   "state": "Knob A turned: the message box names the program, .25 MEDIUM BRIGHT."
+   "state": "Knob A turned to the third program: the message box reads 3 .2S MEDIUM BRIGHT, its number on the original, then its name.",
+   "capture": "emulator",
+   "moduleVersion": "0.2.0-experimental",
+   "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+   "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+   "packageSha256": "dc15a0060ab3b4acaf8db229984bdf3ce441ca62836890d9074fe0b155decb9b",
+   "sourceRevision": "1d8289c0189a3f20439e634e35629f4c2996a725",
+   "capturedOn": "2026-11-26",
+   "setup": "Emulator capture, not hardware: ot_emu (Modwerk's adapted build of Octabam f7d7290, 26 Nov 2026) running development twin 46c30886 of Modwerk base 0.8.2 (main 48f4a9b9c; imageSha256 is its MAIN image), MKII panel, DSP cores on, a fresh scratch card. The module ran as a USB trial of the package named here (built by npm run module:dev from source 1d8289c01), driven by npm run device:emulator: pick:T2:FX2:DELAY; FUNC+FX2; pick:T2:FX2:MIDIVRB_I/II; FX2; knob A turned eight detents to the third program. The png step's LCD read: 128x64 at integer scale 2 (256x128), two grey levels, not edited."
   },
   {
    "path": "midiverb-bank.png",
