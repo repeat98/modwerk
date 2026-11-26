@@ -6,31 +6,44 @@ WIP branch `cursor/tempo-lfo-publish-a318` off `repeat98/modwerk` `main`.
 
 Mirror: [Micro Timing #2193](https://github.com/repeat98/modwerk/pull/2193).
 
+## Hard prerequisites (upstream)
+
+### 1. Base table `ot_lfo_pmtr_dest` is **absent** on `repeat98/main`
+
+Fork has the LFO PMTR extension table; upstream does not. Package build fails:
+
+`A subscription names an event or table of sdk/machines/octatrack/events.json … ot_lfo_pmtr_dest`
+
+| Fact | Detail |
+| --- | --- |
+| Fork scaffold | commit `141322f42` — Base: scaffold ot_lfo_pmtr_dest |
+| Fork event index | **31** |
+| Upstream index 31 | already **`ot_midi_generators`** (max index **62**) |
+| Port implication | Additive base PR must remap to a free index (≥63) and update generated loader/SDK headers — **not** a blind fork copy; **not** inside the module first-release PR |
+
+Until that base PR merges, Tempo LFO cannot ship as a contribute USB package on upstream.
+
+### 2. `resources.cpuPrice` via Undo-only `npm run device:price`
+
+Same gate as Seq Pos (MOP-249). mop255 cfmeter is **not** a price.
+
+### 3. USB `.mwrm`
+
+Keep tip `643b46c3…` / 724 B. Needs base event + m68k-elf + Elekloader (partially prepared on this host) or Jon private rebuild.
+
 ## Done on this branch
 
 - [x] Module at `sdk/octatrack/modules/tempo-lfo/` (from fork mop257 tip)
 - [x] Catalog pin `{ id: tempo-lfo, version: 0.1.0-experimental }`
 - [x] Community changelog + `changelog/2026-11-26-tempo-lfo-catalog.md`
-- [x] `tests.qualification` retained (Keep/measured cites); `sourceSha256` rehashed for this tree
-- [x] Honesty: no forged `resources.cpuPrice`
+- [x] Qual cites retained; `sourceSha256` rehashed for this tree
+- [x] Honesty: no forged `cpuPrice`
+- [x] Elekloader upstream tools fetched; m68k-linux-gnu symlinked as m68k-elf-* (build blocked on missing base event)
 
-## Still required before PR
+## Resume order
 
-1. **USB `.mwrm`** — Keep tip package `643b46c3…` / 724 B (mop253). Rebuild with
-   `build.py --octabam tempo-lfo --name "Tempo LFO"` (or title-variant match like #2193),
-   place at `public/octatrack-modules/tempo-lfo/0.1.0-experimental.mwrm`, add
-   `octatrack-module-packages.json` usbOnly row. Cloud tip has no stock OS / m68k
-   toolchain — needs self-hosted / Jon private `modwerk-builds`.
-2. **`resources.cpuPrice`** — Undo-only  
-   `npm run device:price -- --write --base <id> --scene <text> tempo-lfo`  
-   (MOP-274 TCP serve tip). Write `evidence/cpu-price.json`. **No Accept.**
-3. **`modules:generate`** + doctor + `modules:check -- --base upstream/main`.
-4. Open owner first-release PR to `repeat98:main`. **Do not merge.**
-
-## Cite-only (already Proven on fork — do not re-invent)
-
-| Gate | Cite |
-| --- | --- |
-| Keep Accept + reboot | mop253 / mop254 — package `643b46c3…` |
-| Measured 624 + load/stress | mop255 |
-| Qual place + fork pin | mop257 / fork #224 |
+1. **Owner/base:** port `ot_lfo_pmtr_dest` onto current upstream (new free index; separate Base PR).
+2. Rebuild USB `.mwrm` against that base; add packages row.
+3. Undo-only `device:price --write` for tempo-lfo (MOP-274 TCP serve).
+4. `modules:generate`; doctor; `modules:check -- --base upstream/main`.
+5. Open owner first-release PR to `repeat98:main`. **Do not merge.**
