@@ -33,7 +33,7 @@ Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as a
 
 - USB only: it needs the Modwerk base's program areas and stream channel (the package requires `programs`, loader ABI 9). They are in the base 0.8.3 draft, on development twins only so far.
 - FX2 only. Each instance uses the first 15,870 words of its track's 16K FX2 buffer for its short delay lines, so it cannot share a core's FX2 memory with Analog BD. Its long lines take 4-160 KB of the ColdFire's memory an instance.
-- DSP time: 207-316 chip cycles a sample an instance by the stall model in the DSP emulator, under the base's admission limit; not measured on a unit. The plates move the most data a frame (352 halfwords in, 144 out), more than the stream channel has carried on a unit so far (160-256).
+- DSP time: 207-316 chip cycles a sample an instance by the stall model in the DSP emulator, under the base's admission limit; not measured on a unit. Most programs move more data a frame than the stream channel has carried on a unit so far (160 halfwords each way, reads alone 256): 5 of the 22 stay within 160, the rooms and halls need 208-247 in, the plates up to 352 in and 144 out.
 - Not like the original: 44.1 kHz instead of about 42 kHz, so reverb times, delays and sweeps are about 5 % shorter and faster; the input is the average of left and right; words are 24 bits in the DSP and 16 bits where they cross to the ColdFire. Nothing records the original's own width.
 - The gated reverbs (03 and 23-27) are not in this release: their gate needs a signal detector the original has in hardware.
 - Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer; no Alesis program is in this repository.
