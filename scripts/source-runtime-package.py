@@ -76,7 +76,11 @@ def declaration(root, filename):
     doc = json.loads(filename.read_text())
     required = {'schema', 'id', 'title', 'layout', 'sources', 'includes', 'defines',
                 'runtime', 'base', 'reconstruction', 'forbiddenPrefixes'}
-    if set(doc) != required or doc['schema'] != 1 or doc['id'] != folder.name:
+    schema = doc.get('schema')
+    if schema == 2:
+        required = required | {'engine'}
+        path_in(folder, doc['engine'])
+    if set(doc) != required or type(schema) is not int or schema not in (1, 2) or doc['id'] != folder.name:
         raise ValueError('Invalid source runtime recipe fields or module identity')
     if not re.fullmatch(r'[a-z][a-z0-9]*(?:-[a-z0-9]+)*', doc['id']):
         raise ValueError('Invalid module id')
@@ -223,6 +227,14 @@ def compile_image(root, filename, cross, work):
              *[root / p for p in SHARED]}
     for include in includes:
         paths.update(include.rglob('*.h'))
+    if doc.get('engine'):
+        engine_api = load('source_runtime_engine', root / 'scripts/source-runtime-engine.py')
+        _, _, _, _, engine_paths = engine_api.declaration(folder, doc['engine'])
+        paths.update(engine_paths)
+        paths.update(root / name for name in (
+            'scripts/source-runtime-engine.py', 'sdk/runtime/loader/abi9.py',
+            'sdk/machines/octatrack/elekloader/dsp_packages.py',
+            'sdk/machines/octatrack/dsp-sites.json'))
     inputs = {(('module/' + str(p.relative_to(folder))) if p.is_relative_to(folder)
                else str(p.relative_to(root))): sha(p) for p in sorted(paths)}
     return doc, folder, pack, image, names, bss, relocs, hooks, inputs, base, binding
@@ -333,6 +345,11 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
         image, copies, fills = validate_copies(pack, recipe_api, image, relocs, recipe, reviewed_sources, base, binding)
         data = pack.package(image, bss, hooks, relocs, name=doc['id'], abi=8, hashed=True,
                             title=doc['title'], layout=doc['layout'], copies=copies, fills=fills)
+        engine_report = None
+        if doc.get('engine'):
+            engine_api = load('source_runtime_engine', root / 'scripts/source-runtime-engine.py')
+            attach, engine_report, _, _, _ = engine_api.assemble(root, folder, doc['engine'], work)
+            data = attach(data)
         if stock:
             if not upstream:
                 raise ValueError('Stock verification needs upstream tools')
@@ -367,6 +384,8 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
                   'baseRunOrigin': binding['runOrigin'], 'baseImports': binding['relocations'],
                   'stockCopies': len(copies), 'stockFills': len(fills), 'sources': inputs,
                   'stockVerification': 'PASS' if stock else 'NOT_RUN', 'hardware': 'NOT_RUN'}
+        if engine_report is not None:
+            report['engine'] = engine_report
         return data, report
 
 

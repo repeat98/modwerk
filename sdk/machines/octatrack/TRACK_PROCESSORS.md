@@ -72,6 +72,19 @@ presets retain their behavior. This keeps project edits out of settings replay.
 
 ## Checks and release requirements
 
+`scripts/source-runtime-package.py` accepts an optional schema-2 `engine`
+recipe. Assembly sources, P-table data and initialized claims belong to that
+module; the shared adapter hashes every declared input, refuses traversal,
+symlinks and undeclared assembler-file reads, checks the exact Base ledger,
+proves relocation against six fresh assemblies and attaches the engine using
+the existing ABI 10 encoder. The entry is word zero and the processor returns.
+Existing schema-1 C-only recipes keep their original path and dependencies.
+
+`test_source_runtime_engine.py` uses an original tiny assembly fixture and the
+actual SDK encoder; it needs no OS, private package or unit. It covers malformed
+inputs, ledger claims, file confinement, placement and stable controller digest
+across DSP-only changes. These checks also cover macOS /var path aliases.
+
 `python3 -B -m unittest discover -s sdk/tests -p test_track_processor.py -v`
 runs native loader/modset, settings/status, controller and DSP admission
 fixtures. The fixtures substitute native calls; they execute no firmware or
@@ -85,7 +98,7 @@ measurements with stock workloads, persistence/normal-set qualification, and
 owner review of the API, resource claim and controller trust policy.
 
 The current trust mechanism pins reviewed controller digests in a Base build.
-Before a public M/S release, the accepted package/build path must allow its
-engine, tables and controller to update without rebuilding the Base. Do not
-publish a CF-only replacement, claim an FX slot is required, or call this a
-publicly installable module until that path is accepted and qualified.
+The adapter prepares the engine-bearing package path; controller updates still
+need the accepted trust/import policy so they can ship without rebuilding the
+Base. Do not publish a CF-only replacement, claim an FX slot is required, or
+call this a publicly installable module until that path is accepted and qualified.
