@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { publishedBinding as baseBinding, publishedManifest as manifest } from './published-octatrack.fixture'
 import pool from '../../../docs/verification/2026-11-21-octatrack-module-pool-allocation.json' with { type: 'json' }
+// Packages released after 21 November are read on a later twin, so they have their own record.
+import laterPool from '../../../docs/verification/2026-11-26-octatrack-module-pool-allocation.json' with { type: 'json' }
 import { ModuleSetError, OCTATRACK_POOL_BYTES, createRuntimeCatalogue, poolExtent } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
@@ -26,10 +28,12 @@ const prepare = (moduleIds: string[], current = empty) =>
 
 describe('a module set and the base’s module pool', () => {
   it('prices a package as the loader takes it, as the unit measured', () => {
-    const measured = pool.measurements.flatMap(reading => {
+    // The 21 November readings are of base 0.7, whose module record its loaderLayout gives; the later ones of this base's.
+    const records = [[pool, pool.loaderLayout.moduleBytes], [laterPool, undefined]] as const
+    const measured = records.flatMap(([record, moduleRecord]) => record.measurements.flatMap(reading => {
       const entry = manifest.packages.find(item => item.sha256 === reading.packageSha256)
-      return entry ? [[entry.id, poolExtent(entry, file(entry.path)), reading.loaderExtentBytes]] : []
-    })
+      return entry ? [[entry.id, poolExtent(entry, file(entry.path), moduleRecord), reading.loaderExtentBytes]] : []
+    }))
     expect(measured.length).toBeGreaterThanOrEqual(10)
     for (const [id, computed, read] of measured) expect([id, computed]).toEqual([id, read])
   })

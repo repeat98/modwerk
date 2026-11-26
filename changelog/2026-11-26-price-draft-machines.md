@@ -1,0 +1,1 @@
+Octatrack tools: `device:price --curve` measures a machine that is still a draft in `sdk/drafts/<id>`. It looked only in `sdk/octatrack/modules`, so a draft machine read as "not an effect or a machine: no curve" until it was copied there by hand.

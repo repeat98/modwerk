@@ -123,9 +123,11 @@ export function cReserved0(folder, symbol) {
 }
 
 /** Every machine descriptor the module contributes to ot_machines, from its runtime*.json, its machine port and its USB package row,
- *  with the reserved[0] each carries: [{ symbol, where, price } | { symbol, problem, fix }]. [] for a module that is not a machine. */
+ *  with the reserved[0] each carries: [{ symbol, where, price } | { symbol, problem, fix }]. [] for a module that is not a machine.
+ *  A draft (sdk/drafts/<id>, not yet listed) is read from there, so device:price can measure its curve before the release. */
 export function machineDescriptors({ root, id, glue = null }) {
-  const folder = resolve(root, 'sdk/octatrack/modules', id), symbols = new Map()
+  const listed = resolve(root, 'sdk/octatrack/modules', id), draft = resolve(root, 'sdk/drafts', id)
+  const folder = existsSync(listed) || !existsSync(draft) ? listed : draft, symbols = new Map()
   for (const name of existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : []) {
     for (const item of readJson(join(folder, name))?.contribute ?? []) if (item.to === 'ot_machines') symbols.set(item.data, 'c')
   }
