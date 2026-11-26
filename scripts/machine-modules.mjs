@@ -53,7 +53,7 @@ export function unlistedPackages(root){
  if(!existsSync(rows))return // a repository without USB packages, such as a minimal test fixture
  const manifest=JSON.parse(readFileSync(rows,'utf8'))
  walk(manifest.packages)
- for(const key of ['configurable', 'configurable-0.3', ...USB_AUDIO_LAYOUTS.map(layout=>layout.id)]){
+ for(const key of ['configurable', 'configurable-0.4', 'configurable-0.3', ...USB_AUDIO_LAYOUTS.map(layout=>layout.id)]){
   const path=manifest.usbAudio?.[key]?.path
   if(typeof path==='string' && path.endsWith('.mwrm'))named.add(path)
  }
