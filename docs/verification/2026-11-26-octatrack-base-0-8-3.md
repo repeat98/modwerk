@@ -144,6 +144,15 @@ store+0x2fe+30·track+6·fx.
 - **Known limit:** a light Part with one heavy machine picked before the stream starts is not paused (its stretched
   figure stays under the brake's 122 %) and can drop that machine's renders once the stream opens, as on the MKI. The
   stream's own cost is the bigger lever (USB Audio).
+- **By width (later the same night):** USB Audio 0.4.2's cost cut (#2288) brought a Main + Cue recording to about 1.26
+  times the frame interrupt, while 16 channels stretched it about 1.86 times in a heavy scene (twin `764b6e71`): one
+  figure for every stream over-books the one and under-books the other. `usb_function.c` now reads the active
+  high-speed profile's EP3 IN packet as it composes the configuration (4 bytes and 12 frames a channel), and
+  `status.c` looks up the set's figure for that width (up to 2, 4, 8, 16 and 20 channels, pseudo ids
+  `0xffffffe2`-`6`, sent from `frame-costs-base.json`'s `stock.streamByWidth`), else the single one as before. No
+  per-width figures are in the stock yet: their measurement (each width at rest and recording, for the live USB Audio
+  version) moved to the next unit turn when the unit went off USB, so the booking is unchanged until then. Host:
+  `test_status.c` (a width's figure, the fallback), `test_usb_function.c` (the packet read), `set-package.test.ts`.
 
 ## 26 November 2026: the attach watchdog waits for a configured unit
 
@@ -174,11 +183,12 @@ store+0x2fe+30·track+6·fx.
 
 ## Builds and pending
 
-- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `c7478e593d347461…`,
-  browser = native `.bin` `5361c502ea850b3e…` (836,272 bytes). Every change inside a declared site; the bootloader copy
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `1fa425c300a92033…`,
+  browser = native `.bin` `7ae7e6f6af9df790…` (836,464 bytes; 15,264 container bytes free). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
   with their bytes unchanged. Not yet booted on a unit.
-- Pending for #2251 on a unit: the release image, an MKI, 20 channels, and why the stretch differed between boots.
+- Pending for #2251 on a unit: the per-width figures, the release image, an MKI, and why the stretch differed between
+  boots.
 - Pending on a unit: Euclid on two tracks (one AMP, one LP), switching between their main and FX1/FX2 SETUP pages,
   each showing its own names, with the UI and frame cost of the three hooks; a Keep, then two power cycles; the frame
   interrupt A/B on the release image.
