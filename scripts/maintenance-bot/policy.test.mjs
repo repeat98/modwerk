@@ -52,6 +52,18 @@ describe('maintenance bot policy', () => {
     expect(classify(merge(), pull({ state: 'closed' })).reject).toBeTruthy()
   })
 
+  it('gives every action it accepts a summary the ledger takes', () => {
+    // A merge once lost its summary to a shadowed name, and the Worker refused the whole pass (26 November 2026).
+    const thread = { kind: 'thread', id: 't1', number: 0, author: 'alice', to: 'repeat98', replies: 0, state: 'open' }
+    const proposals = [[merge(), pull()], [merge(), pull({ headRef: 'base/octatrack-next' })], [{ kind: 'label', number: 9, add: ['bug'] }, issue()], [{ kind: 'comment', number: 9, body: 'Hi' }, issue()],
+      [{ kind: 'review', number: 5, body: 'Hi' }, pull()], [{ kind: 'close', number: 9, body: 'Done.' }, issue()], [{ kind: 'approve_run', number: 5 }, pull({ waitingRuns: 1 })],
+      [{ kind: 'board_reply', thread: 't1', body: 'Hi' }, thread], [{ kind: 'board_close', thread: 't1' }, thread], [{ kind: 'board_release', claim: 'c1' }, { kind: 'claim', id: 'c1', state: 'open' }]]
+    for (const [proposal, target] of proposals) {
+      const decision = classify({ summary: 'Do it', ...proposal }, target, new Set(['bug']))
+      expect([proposal.kind, typeof decision.summary, decision.summary.length > 0 && decision.summary.length <= 300]).toEqual([proposal.kind, 'string', true])
+    }
+  })
+
   it('refuses any kind it does not know', () => {
     for (const kind of ['push', 'release', 'deploy', 'delete_branch', 'approve', undefined]) expect(classify({ kind, number: 5, summary: 'x' }, pull()).reject).toBeTruthy()
   })

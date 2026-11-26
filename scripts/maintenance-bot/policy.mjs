@@ -101,8 +101,8 @@ export function classify(proposal, target, existingLabels = new Set()) {
       // asks the owner. The owner marked their own pull request ready, so it merges after a short window.
       const own = target.author === OWNER
       const publishes = (target.files ?? []).some(file => PUBLISHES.some(pattern => pattern.test(file)))
-      const base = BASE_BRANCH.test(target.baseRef ?? '') || BASE_BRANCH.test(target.headRef ?? '') || (target.files ?? []).some(file => BASE_FILES.some(pattern => pattern.test(file)))
-      const why = base ? 'a base merges only after its review' : publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
+      const isBase = BASE_BRANCH.test(target.baseRef ?? '') || BASE_BRANCH.test(target.headRef ?? '') || (target.files ?? []).some(file => BASE_FILES.some(pattern => pattern.test(file)))
+      const why = isBase ? 'a base merges only after its review' : publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
       const method = (target.files ?? []).some(file => file.startsWith('src/catalog/') || /\/modules\//.test(file)) ? 'merge' : 'squash'
       const payload = { kind, number: target.number, head: target.head, method, pin }
       return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS[own ? 'ownMerge' : 'merge'], id: actionId(kind, target.number, target.head), payload }
