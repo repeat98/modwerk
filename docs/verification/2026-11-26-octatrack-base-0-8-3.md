@@ -110,7 +110,10 @@ store+0x2fe+30·track+6·fx.
 
 ## Builds and pending
 
-- Base 0.8.3 builds: to be filled in after the regeneration.
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `a7771b082b3a0750…`,
+  browser = native `.bin` `cc0519b85418b0d4…` (835,484 bytes). Every change inside a declared site; the bootloader copy
+  identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
+  with their bytes unchanged. Not yet booted on a unit.
 - Pending on a unit: Euclid on two tracks (one AMP, one LP), switching between their main and FX1/FX2 SETUP pages,
   each showing its own names, with the UI and frame cost of the three hooks; a Keep, then two power cycles; the frame
   interrupt A/B on the release image.
