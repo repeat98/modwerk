@@ -36,11 +36,11 @@ describe('USB Audio as a module package', () => {
     for (const layout of ['tracks', 'master', 'main-cue'] as const) {
       const result = await catalogue.prepare(set(layout), empty, fetched, capable)
       expect(result.changes[0].data).toEqual(data('configurable'))
-      expect(catalogue.review(set(layout), on(8), capable).needsSync).toBe(false)
+      expect(catalogue.review(set(layout), on(9), capable).needsSync).toBe(false)
     }
     const migration = await catalogue.prepare(set('main'), on(5), fetched, capable)
     expect(migration.changes[0]).toMatchObject({ data: data('configurable'), undo: data('main'), reconnects: true })
-    const removal = await catalogue.prepare(set(), on(8), fetched, capable)
+    const removal = await catalogue.prepare(set(), on(9), fetched, capable)
     expect(removal.changes[0].undo).toEqual(data('configurable'))
   })
   it('replaces the output-only 0.3.0 package on the unit, with that package as the Undo', async () => {
@@ -50,6 +50,14 @@ describe('USB Audio as a module package', () => {
     const update = await catalogue.prepare(set('main'), on(7), fetched, capable)
     expect(update.changes).toEqual([{ module: 'USB Audio', data: data('configurable'), undo: data('configurable-0.3'), replaces: true, reconnects: true }])
     expect((await catalogue.prepare(set(), on(7), fetched, capable)).changes[0].undo).toEqual(data('configurable-0.3'))
+  })
+  it('replaces 0.4.0, whose input endpoint Windows refuses, with that package as the Undo', async () => {
+    const { catalogue, fetched, data, on } = audioCatalogue(['configurable-0.3', 'configurable-0.4', 'configurable'])
+    expect([on(7), on(8), on(9)].map(inventory => inventory.usbAudioLayout)).toEqual(['configurable-0.3', 'configurable-0.4', 'configurable'])
+    expect(catalogue.review(set('main'), on(8), capable)).toMatchObject({ needsSync: true, updates: [USB_AUDIO_MODULE], problem: undefined })
+    const update = await catalogue.prepare(set('main'), on(8), fetched, capable)
+    expect(update.changes).toEqual([{ module: 'USB Audio', data: data('configurable'), undo: data('configurable-0.4'), replaces: true, reconnects: true }])
+    expect((await catalogue.prepare(set(), on(8), fetched, capable)).changes[0].undo).toEqual(data('configurable-0.4'))
   })
   it('numbers each layout by its source define plus one', () => {
     expect(['tracks-main-cue', 'tracks', 'master', 'main-cue', 'main', 'tracks-post'].map(layout => usbAudioLayoutNumber(layout as UsbAudioLayout))).toEqual([1, 2, 3, 4, 5, 6])

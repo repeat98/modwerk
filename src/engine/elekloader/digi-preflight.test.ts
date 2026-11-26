@@ -18,8 +18,11 @@ const filler = (length: number, seed: number) => Uint8Array.from({ length }, (_,
 const stockMain = Uint8Array.from({ length: 4096 }, (_, i) => i < 0x400 ? (i % 2 ? 0x71 : 0x4e) : (i * 5 + (i >> 5)) & 0xff)
 const framing = (count: number) => Uint8Array.from([0xf0, 0x00, 0x20, 0x3c, 0x14, 0x00, 0x7d, 0x00, 0x10, 0x01, 0x02, 0x03, (count >> 14) & 0x7f, (count >> 7) & 0x7f, count & 0x7f, 0xf7])
 
-function syx(main: Uint8Array, { section4 = filler(300, 7), version = 'TEST' } = {}) {
+function syx(main: Uint8Array, { section4 = filler(300, 7), section7, version = 'TEST' }: {
+  section4?: Uint8Array; section7?: Uint8Array; version?: string
+} = {}) {
   const sections = [{ id: 2, data: filler(64, 3) }, { id: 3, data: packSection(main) }, { id: 4, data: section4 }]
+  if (section7) sections.push({ id: 7, data: section7 })
   const dataStart = 0x20 + sections.length * 16 + 16
   const head = new Uint8Array(dataStart), view = new DataView(head.buffer)
   head.set([0x45, 0x4c, 0x45, 0x33]); head.set(Array.from(version, c => c.charCodeAt(0)), 0x14)
@@ -76,6 +79,23 @@ describe('Digitakt II build preflight', () => {
   it('refuses a site whose guard does not match the stock bytes', async () => {
     const wrong = mod({ sites: [{ ...site(0x40000500, 6), stockSha256: '0'.repeat(64) }] })
     expect(await problems(preflightBuild('digitakt-ii', stock, syx(main([[0x40000500, JMP]])), [wrong]))).toEqual(['core 1.1 site 0x40000500: the stock bytes are not the ones it expects'])
+  })
+
+  it('requires a requested SHARC render plan even if the stored section was left unchanged', async () => {
+    const image = syx(stockMain, { section7: packSection(filler(128, 3)) })
+    const plan = { renderInstruction: new Uint8Array(6), allocations: [{ address: 0x2001ab80, bytes: new Uint8Array(4) }] }
+    const device = ELE3_DEVICES['digitakt-ii']
+    await expect(preflightBuild('digitakt-ii', image, image, [mod()], device))
+      .resolves.toMatchObject({ unchangedSections: [2, 4, 7] })
+    expect(await problems(preflightBuild('digitakt-ii', image, image, [mod()], device, plan)))
+      .toEqual(['Unsupported Digitakt II SHARC image'])
+  })
+
+  it('refuses a changed SHARC section when no render plan was requested', async () => {
+    const original = syx(stockMain, { section7: packSection(filler(128, 3)) })
+    const altered = syx(stockMain, { section7: packSection(filler(128, 7)) })
+    expect(await problems(preflightBuild('digitakt-ii', original, altered, [mod()])))
+      .toEqual(['section 7 is not byte for byte stock'])
   })
 
   it('refuses more appended bytes than the mods can account for, and a container past the flash limit', async () => {

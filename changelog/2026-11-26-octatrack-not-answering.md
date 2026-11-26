@@ -1,0 +1,1 @@
+Your Octatrack: when the site can’t reach the unit, it now says first that the Octatrack itself may still be starting or saving a project, and to wait until its screen responds, before naming Modwerk in another tab, browser or app.

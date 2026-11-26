@@ -1,114 +1,68 @@
 {
   "module": "playmodes",
-  "version": "0.2.0-experimental",
-  "base": "8850f5399c453b9c (development twin, ef6099b0a)",
-  "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7. Private runtime package built from the listed Play Modes 0.2.0 source",
+  "version": "0.2.1-experimental",
+  "base": "3704e55778f82f9b (development base running on the owner's MKII, 26 Nov 2026)",
+  "scene": "Octatrack MKII (owner's development unit), project LIVE/Dev17, pattern A01, Part 1, every Play Modes pattern NORMAL, the transport stopped then playing. USB package playmodes 0.2.1-experimental (5656b2cd) from this branch",
+  "inputs": {
+    "transport": "playing"
+  },
   "seconds": 8,
-  "measuredAt": "2026-11-21T07:53:40.719Z",
+  "readings": 3,
+  "measuredAt": "2026-11-26T09:47:10.272Z",
   "result": {
     "id": "playmodes",
-    "version": "file",
-    "packageSha256": "feae7bf8d603cce28d2299f9f5ec946354d761f2cf5647a6006a1a59bcbcd289",
+    "version": "0.2.1-experimental",
+    "packageSha256": "5656b2cdafd2e17ee57b6400bf98e098926c0d0a167427d1cd34e816a6fdaa22",
     "before": {
-      "frame": 32.6,
-      "frameMax": 70.3,
-      "frames": 22494,
+      "frame": 43.3,
+      "frameMax": 80.7,
+      "frames": 67286,
       "skipped": 0,
-      "cpu": 45.6,
-      "dsp1to4": 46,
-      "dsp5to8": 41.2,
-      "allocation": {
-        "modulePoolBytes": 4544,
-        "dspProgramWordsT1to4": 1504,
-        "dspProgramWordsT5to8": 702
+      "cpu": 62.6,
+      "dsp1to4": 23.6,
+      "dsp5to8": 43.2,
+      "dsp1to4Peak": 25.6,
+      "dsp5to8Peak": 45.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 2.1,
+        "dsp1to4": 1.1,
+        "dsp5to8": 0.2,
+        "frameMax": 1.1,
+        "dsp1to4Peak": 0.2,
+        "dsp5to8Peak": 1.8
       }
     },
     "atRest": {
-      "frame": 32.7,
-      "frameMax": 71.4,
-      "frames": 22291,
+      "frame": 43.3,
+      "frameMax": 83.1,
+      "frames": 67272,
       "skipped": 0,
-      "cpu": 45.2,
-      "dsp1to4": 45.9,
+      "cpu": 63,
+      "dsp1to4": 24,
       "dsp5to8": 41,
-      "allocation": {
-        "modulePoolBytes": 17168,
-        "dspProgramWordsT1to4": 1504,
-        "dspProgramWordsT5to8": 702
+      "dsp1to4Peak": 25.4,
+      "dsp5to8Peak": 44.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.9,
+        "dsp1to4": 0.6,
+        "dsp5to8": 6.1,
+        "frameMax": 3.8,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
       }
     },
     "atRestAdds": {
-      "frame": 0.1,
-      "cpu": -0.4,
-      "dsp1to4": -0.1,
-      "dsp5to8": -0.2
+      "frame": 0,
+      "cpu": 0.4,
+      "dsp1to4": 0.4,
+      "dsp5to8": -2.2,
+      "dsp1to4Peak": -0.2,
+      "dsp5to8Peak": -0.9
     },
-    "rolledBack": true,
-    "repetitions": [
-      {
-        "measuredAt": "2026-11-21T07:53:40.719Z",
-        "before": {
-          "frame": 32.6,
-          "frameMax": 70.3,
-          "frames": 22494,
-          "skipped": 0,
-          "cpu": 45.6,
-          "dsp1to4": 46,
-          "dsp5to8": 41.2,
-          "allocation": {
-            "modulePoolBytes": 4544,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        },
-        "atRest": {
-          "frame": 32.7,
-          "frameMax": 71.4,
-          "frames": 22291,
-          "skipped": 0,
-          "cpu": 45.2,
-          "dsp1to4": 45.9,
-          "dsp5to8": 41,
-          "allocation": {
-            "modulePoolBytes": 17168,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        }
-      },
-      {
-        "measuredAt": "2026-11-21T07:54:11.521Z",
-        "before": {
-          "frame": 32.7,
-          "frameMax": 70.3,
-          "frames": 22330,
-          "skipped": 0,
-          "cpu": 45.5,
-          "dsp1to4": 46.3,
-          "dsp5to8": 41,
-          "allocation": {
-            "modulePoolBytes": 17168,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        },
-        "atRest": {
-          "frame": 32.7,
-          "frameMax": 72,
-          "frames": 22405,
-          "skipped": 0,
-          "cpu": 45.5,
-          "dsp1to4": 45.7,
-          "dsp5to8": 41.1,
-          "allocation": {
-            "modulePoolBytes": 17168,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        }
-      }
-    ],
-    "releaseSourceVersion": "0.2.0-experimental",
-    "releaseSourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727"
+    "rolledBack": true
   }
 }

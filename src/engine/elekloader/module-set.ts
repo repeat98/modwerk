@@ -43,10 +43,10 @@ export interface RuntimePackageManifest {
   usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
-export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 9 : kind === 'configurable-0.4' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
 const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
 const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
-for (const kind of ['configurable', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
+for (const kind of ['configurable', 'configurable-0.4', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
@@ -467,6 +467,18 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       if (total > OCTATRACK_POOL_BYTES) {
         const largest = priced.sort((a, b) => b.bytes - a.bytes).slice(0, 3).map(item => `${item.name} (${kB(item.bytes)} kB)`)
         throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. Take out ${kB(total - OCTATRACK_POOL_BYTES)} kB or more. The largest here are ${list(largest)}.`)
+      }
+      // A sync is one transaction: the loader places every new package while the modules it takes out or replaces still
+      // run, and frees them only once the whole set is in, so a refused set rolls back (loader.c set_prepare_context,
+      // set_end). The pool holds both at once. A module switched off on the unit waits on the shelf, not in the pool.
+      const live = (step: Step) => step.group ? !!current.runtimeGroups?.some(item => item.id === step.id) : current.moduleIds.includes(step.id)
+      const leaving = steps.flatMap(step => step.undo && live(step) ? [{ name: step.name, bytes: extents.get(step.undo)!, removed: !step.add }] : [])
+      const peak = total + leaving.reduce((sum, item) => sum + item.bytes, 0)
+      if (peak > OCTATRACK_POOL_BYTES) {
+        const removed = leaving.filter(item => item.removed).map(item => item.name)
+        const adding = steps.filter(step => step.add && !(step.undo && live(step))).map(step => step.name)
+        throw new ModuleSetError(`The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs ${kB(peak)} kB of module memory at once, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. ` +
+          (removed.length && adding.length ? `First sync with ${list(removed)} taken out and ${list(adding)} left out, then add ${list(adding)} and sync again.` : `Take out ${kB(peak - OCTATRACK_POOL_BYTES)} kB or more.`))
       }
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.

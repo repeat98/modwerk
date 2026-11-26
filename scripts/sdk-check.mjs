@@ -9,6 +9,7 @@ import { resolve, dirname } from 'node:path'
 import { takeSlot, workersFor } from './machine-slots.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { asanToolchain } from './asan-preflight.mjs'
+import { m68kToolchainProblem } from './m68k-preflight.mjs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 // octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
 mirrorOctatrackModules(root)
@@ -40,6 +41,9 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 // Alone it takes a slot (scripts/machine-slots.mjs); inside npm run check, which holds one, it takes none. Then up to four
 // jobs, fewer when free memory is short: a test that starts a compiler or an emulator needs about a gigabyte.
 await takeSlot('npm run sdk:check')
+// Before any job: a compiler without its binutils would fail every ColdFire test, one file at a time (scripts/m68k-preflight.mjs).
+const m68k = m68kToolchainProblem()
+if (m68k) { console.error('SDK checks FAILED before any job: ' + m68k); process.exit(1) }
 // Before any job: on macOS, tools whose AddressSanitizer programs hang would keep this from ever finishing (scripts/asan-preflight.mjs).
 let toolchain
 try { toolchain = asanToolchain() } catch (error) { console.error('SDK checks FAILED before any job: ' + error.message); process.exit(1) }

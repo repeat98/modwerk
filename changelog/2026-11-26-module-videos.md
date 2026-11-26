@@ -1,0 +1,1 @@
+Grain's page now shows A Force Truly Evil's video at the top of its Overview, with a "Watch the video" link under the Add button. The card is drawn from Grain's own art, and nothing loads from YouTube until you press play.

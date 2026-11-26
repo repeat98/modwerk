@@ -1,4 +1,4 @@
-import { AVAILABLE_MODULES, isModulePaused } from '../src/catalog/availability.ts'
+import { AVAILABLE_MODULES, isModulePaused, PAUSED_MODULE_NOTICES } from '../src/catalog/availability.ts'
 import { MODULE_DOCUMENTS_BY_ID } from '../src/catalog/documents.ts'
 import { getModuleSource, type FirmwareModule } from '../src/catalog/modules.ts'
 import { modulePath } from '../src/catalog/module-links.ts'
@@ -27,11 +27,11 @@ export function projectsContent(appUrl: URL) {
     + filterProjects('').map(item => `<article><h2>${link(item.repository, item.name)}</h2>${paragraph(item.author + ' · ' + PROJECT_TYPES[item.type])}${paragraph(item.description)}${paragraph(item.machines.map(id => PROJECT_MACHINES[id]).join(' · '))}</article>`).join('')
 }
 
-type ModuleContent = { name: string; version: string; machine: string; summary: string; overview: string; highlights: string[]; usage: string[]; controls: { name: string; doc: string }[]; releases: string[]; limitations: string[]; tests: string; source: string; paused?: boolean }
+type ModuleContent = { name: string; version: string; machine: string; summary: string; overview: string; highlights: string[]; usage: string[]; controls: { name: string; doc: string }[]; releases: string[]; limitations: string[]; tests: string; source: string; paused?: boolean; pausedNote?: string }
 function moduleContent(module: ModuleContent, appUrl: URL) {
   return link(appUrl.href, 'Module library') + `<h1>${escapeHtml(module.name)} for Elektron ${escapeHtml(module.machine)}</h1>`
     + paragraph(module.summary) + paragraph(`Module version ${module.version}. Base firmware: ${module.releases.join(' / ')}.`)
-    + (module.paused ? paragraph('Temporarily unavailable. This module cannot currently be selected for a firmware build.') : '')
+    + (module.paused ? paragraph(module.pausedNote ?? 'Temporarily unavailable. This module cannot currently be selected for a firmware build.') : '')
     + '<h2>About this module</h2>' + paragraph(module.overview) + list(module.highlights)
     + '<h2>How to use it</h2>' + list(module.usage, true)
     + (module.controls.length ? '<h2>Controls</h2><dl>' + module.controls.map(control => `<dt>${escapeHtml(control.name)}</dt><dd>${escapeHtml(control.doc)}</dd>`).join('') + '</dl>' : '')
@@ -41,7 +41,7 @@ function moduleContent(module: ModuleContent, appUrl: URL) {
 
 export function octatrackContent(module: FirmwareModule, appUrl: URL) {
   const document = MODULE_DOCUMENTS_BY_ID[module.id]
-  return moduleContent({ ...document.presentation, name: module.name, version: module.version, machine: 'Octatrack', controls: document.controls, releases: [document.compatibility.firmware], limitations: document.compatibility.limitations, tests: document.tests.summary, source: getModuleSource(module), paused: isModulePaused(module.id) }, appUrl)
+  return moduleContent({ ...document.presentation, name: module.name, version: module.version, machine: 'Octatrack', controls: document.controls, releases: [document.compatibility.firmware], limitations: document.compatibility.limitations, tests: document.tests.summary, source: getModuleSource(module), paused: isModulePaused(module.id), pausedNote: PAUSED_MODULE_NOTICES[module.id]?.detail }, appUrl)
 }
 
 export function digiContent(mod: DigiMod, appUrl: URL) {

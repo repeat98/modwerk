@@ -12,6 +12,7 @@ import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseModwerkModule, parseElemodBuild } from '../src/catalog/module-contract-v3.ts'
 import { resolveModuleFile } from '../src/catalog/module-folder.ts'
 import { LINK_DEVICES, parseElemod } from '../src/engine/elektron/elemod.ts'
+import { assembleSharc } from '../src/engine/elektron/sharc-asm.ts'
 import { elfToElemod } from './elemod-elf.mjs'
 import { loadElemodDependencies } from './elemod-dependencies.mjs'
 import { validateCompilerFlags } from './elemod-compiler-flags.mjs'
@@ -147,6 +148,17 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       const sites = port.sites
       for (const target of sites.flatMap(site => 'target' in site ? [site.target] : (site.relocs ?? []).map(reloc => reloc.target))) if (!Object.hasOwn(module.symbols, target) && !module.imports.includes(target)) module.imports.push(target)
       module.imports.sort()
+      if (build.sharc) {
+        // A Digitakt II machine module's sound-chip player, assembled from its source; the site composes it into section 7.
+        if (machine.id !== 'digitakt-ii') throw new Error('Only Digitakt II modules carry a sound-chip player: ' + document.id)
+        const program = assembleSharc(await readFile(await resolveModuleFile(folder, build.sharc.source), 'utf8'))
+        const players = build.sharc.players.map(player => {
+          const entry = program.symbols.get(player.entry)
+          if (entry === undefined) throw new Error(document.id + ': no label ' + player.entry + ' in ' + build.sharc.source)
+          return { type: player.type, entry }
+        })
+        module.build = { ...module.build, dt2_sharc: { version: 2, allocations: program.blocks.map(block => ({ address: block.address, data: Buffer.from(block.bytes).toString('base64'), code: block.code })), players } }
+      }
       parseElemod(module)
       const plan = { schemaVersion: 1, machine: machine.id, id: document.id, version: document.version, release, module, sites, derive: build.derive,
         provenance: { sourceCommit, sourceTreeSha256, sources, compiler, cflags: [...cflags, ...extraFlags], generatedSha256: generated.map(sha), elfSha256: sha(await readFile(object)) } }

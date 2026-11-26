@@ -145,6 +145,17 @@ A module that takes a stock key gesture (FUNC + YES, a SCENE chord) decides wher
       known one, a remove meeting a move refused as busy (refusal 5), which the site retries and `device.mjs remove`
       does not. The self-test afterwards: 5/5 modules intact, all ran together, longest frame 426 us, and no hole
       left. Not run: movelisten (needs a recorder on Windows; its E-Verb setup still assumes E-Verb moves).
+    - **Under the engines' words first (#2189, 26 November 2026).** With Sidechain installed but no track on
+      COMPRESSOR, its engine and the key bus (710 words a core on an MKII) are not placed, so big blocks went into the
+      top words they take. Picking COMPRESSOR then needed that code moved below them, and with two big effects on a
+      core (E-Verb @3110 and Resonator @1599 of 4,712 on core 0) no free run held the copy: the claim was refused for
+      memory, Sidechain stayed off and COMPRESSOR showed its stock page, with no message, until an effect came off.
+      Big blocks now go as high as they fit under the soft ceiling first (`modwerk_dsp_soft_ceiling`,
+      resident_engines.c: the capacity less the words held controllers' engines will still claim), and a core that
+      does not fit that way is placed as before, whole. Packing keeps to the same ceiling while all of a core's code
+      is under it. When there is still no room, the refusal shows SIDECHAIN PAUSED / DSP MEMORY. On the unit (dev
+      twins of the 0.8.2 head, 26 November 2026): before, E-Verb @3110, Resonator @1599, claim refused (why 2), stock
+      page; after, E-Verb @2400, Resonator @889, Sidechain ACTIVE at once, KEY page shown.
   - **A RAM boot after heavy churn (S54, 12 October 2026).** After a 60-step movestress (49 picks, 11 refused by the
     ledger, no failure), a RAM boot into the same base restored the card's set by itself (5 modules, the same 25,984
     pool bytes, nothing missing, no loader error or stall). The self-test then passed (5/5 intact, longest frame

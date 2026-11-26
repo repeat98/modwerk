@@ -9,7 +9,8 @@ export type BuilderMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-r
 
 // Digitakt/Digitone mk1 downloads retain their owner-approved parity gate; Analog Rytm MKII (OS 1.74) downloads are owner-approved too.
 // Digitakt II (OS 1.17) builds locally with its library modules, but downloads remain disabled pending qualification/review.
-// Model:Cycles (OS 1.13) builds its Modwerk base locally as a research preview; downloads wait for the owner's review.
+// Model:Cycles (OS 1.13) builds its Modwerk base locally as a research preview; downloads open to beta testers only
+// (DIGI_BETA_DOWNLOADS) until the owner's review releases them.
 export const DIGI_DOWNLOADS_ENABLED: Readonly<Record<BuilderMachine, boolean>> = {
   digitakt: true,
   'digitakt-ii': false,
@@ -20,6 +21,14 @@ export const DIGI_DOWNLOADS_ENABLED: Readonly<Record<BuilderMachine, boolean>> =
 
 export function digiDownloadsEnabled(machine: string): boolean {
   return Object.hasOwn(DIGI_DOWNLOADS_ENABLED, machine) && DIGI_DOWNLOADS_ENABLED[machine as BuilderMachine] === true
+}
+
+// Machines whose downloads, and the page's USB send, are open to beta testers before the owner releases them to
+// everyone (owner, 26 November 2026): more units run the base before its review. Ask digiDownloadsOpen with the
+// session's hasBetaUi.
+export const DIGI_BETA_DOWNLOADS: readonly BuilderMachine[] = ['model-cycles']
+export function digiDownloadsOpen(machine: string, betaUi: boolean): boolean {
+  return digiDownloadsEnabled(machine) || (betaUi && (DIGI_BETA_DOWNLOADS as readonly string[]).includes(machine))
 }
 
 // Research machines whose page offers a local core build before any module is published. Build outcomes count

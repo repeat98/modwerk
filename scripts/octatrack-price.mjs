@@ -79,6 +79,8 @@ export function allocationReading(text) {
 export const pickFailure = reply => /error|refused|not admitted|timed out/i.test(reply) ? reply.trim().split('\n').find(line => /error|refused|not admitted|timed out/i.test(line)).slice(0, 200) : null
 /** The session's `state` reply says the transport is stopped (device.mjs: "stopped" or "playing"). */
 export const notPlaying = reply => /^\s*stopped\b/.test(reply)
+/** The Part's CPU allowance, in percent, from the session's `cpu` reply ("allowance 45 %, booked …"), or undefined. */
+export const allowanceOf = reply => { const m = /allowance (\d+) %/.exec(reply); return m ? Number(m[1]) : undefined }
 /** A reading taken while the transport stood: it is refused, never priced. */
 export class NotPlayed extends Error {}
 /** Why the curve cannot start, or null: stock and the module at rest (`atRest`, % of a frame on the measure pattern) plus its
@@ -290,6 +292,12 @@ if (import.meta.filename === process.argv[1]) {
     const noRoom = curveRoom({ atRest: result.atRest.frameMax, booked: bookedFirst(row.id), pattern: args['measure-pattern'] })
     if (noRoom) notes.push(noRoom)
     let notPlayed
+    // A machine's further instances are judged by the Part's CPU allowance too, by the price its descriptor carries (Grain 0.1.3:
+    // 35 a track against 45, owner 26 November 2026), whatever the table books: the curve's picks run at 400 % (eight tracks at 50; --limit and the stop at a dropped render
+    // still guard the unit), and the
+    // allowance it had is back before the admission runs, which judge as a player's pick is judged.
+    const allowed = machine && !noRoom ? allowanceOf(await send('cpu')) : undefined
+    if (allowed !== undefined) { await send('cpu:400'); notes.push(`the Part's CPU allowance at 400 % for the curve's picks, back to ${allowed} % for the admission runs`) }
     for (const track of noRoom ? [] : tracks) {
       // Stopped, admission judges a pick by what the unit last played: play the empty pattern first, so it has room.
       await send(`PATTERN+TRIG${args['pick-pattern']} w600 PLAY w5000 STOP w600`)
@@ -315,6 +323,7 @@ if (import.meta.filename === process.argv[1]) {
       const back = await send(`pick:${track}:FX${fx}:${was[track].replaceAll(' ', '_')}`)
       if (pickFailure(back)) notes.push('restore ' + track + ': ' + pickFailure(back))
     }
+    if (allowed !== undefined) await send('cpu:' + allowed)
     // The admission run (owner, 23 November 2026: a refused pick, a silent module, a stall and a crash all cost the player): the
     // module alone on the first track, picked stopped after the pattern has played, as a player would, on the empty pattern and
     // on the medium one; an admitted pick then plays a reading. modules:check holds a release to both, with nothing dropped.

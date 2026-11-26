@@ -27,7 +27,7 @@ When you load an existing Modwerk set, its saved destination, layout, track tap 
 
 ### Play audio from the computer into the Octatrack
 
-This works on macOS but not yet on Windows: keep INPUTS OFF there. If Windows shows an error for the Octatrack after a change of INPUTS, set INPUTS to OFF, unplug the Octatrack and restart Windows; if the error stays, show hidden devices in Device Manager and uninstall the Octatrack entries.
+This ran on macOS with 0.4.0. Windows needs 0.4.1, which runs on Windows 11; Windows 10 and macOS have not been tried with 0.4.1 yet. If Windows shows an error for the Octatrack after a change of INPUTS, set INPUTS to OFF, unplug the Octatrack and restart Windows; if the error stays, show hidden devices in Device Manager and uninstall the Octatrack entries.
 
 1. Load the USB Audio module and connect the Octatrack to a computer with a high-speed USB port. Open PROJ > MODWERK > SETTINGS > USB AUDIO and select COMPUTER under SEND TO.
 2. Under INPUTS choose AB. The USB device reconnects once and now also shows two output channels to the computer.
@@ -48,7 +48,7 @@ USB Audio 0.4.0-experimental requires Modwerk’s Octatrack base 0.8.1, which ca
 - Built for Octatrack OS 1.40C. Multichannel recording and every USB input need a high-speed USB connection to a computer. At full speed and with OUTBOX 8 the module sends only; when no USB stream arrives, the inputs read their jacks.
 - A change of INPUTS or of the channel count reconnects the USB device. Stop recording in your DAW first.
 - The DRAM platform reserves about 10 MB of sample memory. A project that filled Flex and recorder memory can show OUT OF MEMORY. Shorten its recorder reservation or use a Static machine for long samples. [Memory guidance](https://github.com/repeat98/modwerk/issues/433).
-- The physical Outbox 8, Windows and Linux hosts and the Octatrack MKI remain untested on this release candidate. USB input ran on an MKII with macOS.
+- The physical Outbox 8, Linux hosts and the Octatrack MKI remain untested on this release candidate. USB input ran on an MKII with macOS (0.4.0) and, in 0.4.1, with Windows 11 (INPUTS AB). Windows 10 is untested.
 
 ## Tests and measurements
 
