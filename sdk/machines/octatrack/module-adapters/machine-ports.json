@@ -855,7 +855,7 @@
   },
   "cx-osc": {
    "sources": {
-    "sdk/octabam/modules/cx-osc/manifest.py": "9896e2d569782a87ddb61ee24ba3ea6e247d34dd842f0f1d6cd7630047630de7",
+    "sdk/octabam/modules/cx-osc/manifest.py": "9766316a871895e060a81a92491d33dd46c0e9d980c56f3828ca0efe7e870e3f",
     "sdk/octabam/modules/cx-osc/standalone/machine.s": "9b15fdef4dc24041b55592d06c32dc32ff005b441348056c16021018c7091423",
     "sdk/octabam/modules/cx-osc/standalone/poly.s": "8ef712b2cc3008b2a7002f83d675fc1979f8119b7d0d42e3d5d9054a0262c93e",
     "sdk/octabam/modules/cx-osc/upstream/cxosc/page.s": "f84e1e141d1fe9155e1b270795462618ded88660feab2b0a0e52120ea8c11332",
