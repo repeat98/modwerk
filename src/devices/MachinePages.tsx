@@ -304,9 +304,9 @@ function StackLadder({ device }: { device: DeviceProfile }) {
 
 // Machines without mods: the library page becomes an invitation to open the first one.
 export function EmptyMachine({ device, machinePicker, embedded = false, betaUi = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean; betaUi?: boolean }) {
-  const repository = issueRepository(), mobile = useMobileWorkspace()
+  const repository = issueRepository(), mobile = useMobileWorkspace(), community = useCommunity()
   const page = FAMILY_PAGE[device.family], ready = readyForMods(device), steps = deviceSteps(device)
-  const preview = coreBuildPreviewOpen(device.id, betaUi || hasBetaUi(useCommunity().session)) && !!device.sdk
+  const preview = coreBuildPreviewOpen(device.id, betaUi || hasBetaUi(community.session)) && !!device.sdk
   return (
     <div className="device-page">
       {machinePicker && <div className="discovery-tools">{machinePicker}</div>}
