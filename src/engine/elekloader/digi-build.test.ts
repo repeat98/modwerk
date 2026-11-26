@@ -152,7 +152,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['quick-velocity-aftertouch-assign', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7.1' },
       mods: [
-        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.6.3-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.3-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
@@ -164,7 +164,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7.1' },
       mods: [
         { id: 'quick-fill-trig-condition', file: 'quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
-        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.9.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.9.0-experimental' },
       ],
       missing: [],
@@ -219,7 +219,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7.1' },
       mods: [
         { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
-        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],
