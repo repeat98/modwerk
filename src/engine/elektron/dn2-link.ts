@@ -7,7 +7,6 @@
 // load to RAM for a trial, and a power cycle ends them (sdk/machines/digitone-ii/LOADER.md). The wire itself, shared
 // with the Model:Cycles, is link-wire.ts; this file keeps the Digitone II's commands and status wording.
 // Transport-free (LinkLine): the page gives it Web MIDI, a test a simulated unit.
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log.ts'
 import type { UploadTransport } from '../elekloader/upload-session.ts'
 import { UPLOAD_RESPONSE } from '../elekloader/upload-wire.ts'
@@ -99,9 +98,6 @@ export async function readLog(line: LinkLine, turn: LinkTurn = ownTurn): Promise
   throw new LinkError(`log: it changed during each of ${LOG_TRIES} reads (a record was written)`)
 }
 
-/** The development base's identity for the upload controller (link.c upload_start): the SHA-256 of this text. */
-export const UPLOAD_BASE_TEXT = 'Modwerk Digitone II OS 1.12 development base, link upload v1'
-export const UPLOAD_BASE = sha(new TextEncoder().encode(UPLOAD_BASE_TEXT))
 /** The longest wait for one controller frame's reply: a commit admits and switches on the unit. */
 export const UPLOAD_REPLY_MS = 10000
 /** The upload controller (sdk/runtime/upload) over the link's upload command: one frame out, its 144-byte response

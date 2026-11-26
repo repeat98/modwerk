@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession } from '../elekloader/upload-session'
 import { UploadCommand, UploadPhase, UploadResult } from '../elekloader/upload-wire'
-import { frameRows, get32, ident, LINK_HEADER, linkRequest, LinkError, pack7 as linkPack7, parseLinkReply, readLog, screen, u32, unpack7, uploadTransport, UPLOAD_BASE, UPLOAD_BASE_TEXT, type LinkLine, LINK_COMMANDS } from './dn2-link'
+import { frameRows, get32, ident, LINK_HEADER, linkRequest, LinkError, pack7 as linkPack7, parseLinkReply, readLog, screen, u32, unpack7, uploadTransport, type LinkLine, LINK_COMMANDS } from './dn2-link'
 
 // What link.c packs: groups of seven, each led by a byte holding their top bits.
 function pack7(data: Uint8Array): number[] {
@@ -127,17 +127,21 @@ describe('the Digitone II link from the site', () => {
   })
 })
 
+/** The base this test's unit names in HELLO: its own value, so nothing here binds an offer to a fixed string (a
+ * development base names its build's digest). */
+const TEST_BASE = sha(new TextEncoder().encode('a Digitone II base in dn2-link.test.ts'))
+
 /** A unit whose link carries upload frames (link.c's upload command) to a controller as far as a trial reaches it
  * (sdk/runtime/upload/upload.c): hello, enter, begin, chunk, verify, commit, leave. */
 function uploadUnit() {
   const names = Object.fromEntries(Object.entries(UploadCommand).map(([name, code]) => [code, name]))
-  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: UPLOAD_BASE, digest: '', frames: 0, longest: 0 }
+  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: TEST_BASE, digest: '', frames: 0, longest: 0 }
   const respond = (command: number, transaction: number, result = 'ok') => {
     const out = new Uint8Array(144), view = new DataView(out.buffer)
     view.setUint32(0, 0x4d575552); view.setUint16(4, 1); view.setUint16(6, command); view.setUint32(8, transaction); view.setUint32(12, 128)
     ;[UploadResult.indexOf(result as never), UploadPhase.indexOf(state.phase as never), 1, state.generation, state.last, state.current, state.received, 262144]
       .forEach((value, i) => view.setUint32(16 + 4 * i, value))
-    out.set(Buffer.from(UPLOAD_BASE, 'hex'), 48); out.set(new Uint8Array(32).fill(0x53), 80); out.set(Buffer.from(state.active, 'hex'), 112)
+    out.set(Buffer.from(TEST_BASE, 'hex'), 48); out.set(new Uint8Array(32).fill(0x53), 80); out.set(Buffer.from(state.active, 'hex'), 112)
     return out
   }
   const controller = (frame: Uint8Array) => {
@@ -168,15 +172,9 @@ function uploadUnit() {
 }
 
 describe('the runtime loader over the Digitone II link', () => {
-  it('names the development base by the SHA-256 of link.c\'s text', () => {
-    // link.c (sdk/machines/digitone-ii, base/digitone-ii-next) hashes this text in upload_start.
-    expect(UPLOAD_BASE_TEXT).toBe('Modwerk Digitone II OS 1.12 development base, link upload v1')
-    expect(UPLOAD_BASE).toBe(sha(new TextEncoder().encode(UPLOAD_BASE_TEXT)))
-  })
-
   it('stages a package, publishes it and opens a trial through UploadSession', async () => {
-    const unit = uploadUnit(), data = new Uint8Array(10000).map((_, i) => i * 7), pkg = { base: UPLOAD_BASE, data, sha256: sha(data) }
-    const session = await UploadSession.connect(uploadTransport(unit.line), UPLOAD_BASE)
+    const unit = uploadUnit(), data = new Uint8Array(10000).map((_, i) => i * 7), pkg = { base: TEST_BASE, data, sha256: sha(data) }
+    const session = await UploadSession.connect(uploadTransport(unit.line), TEST_BASE)
     await session.stage(pkg)
     expect(unit.state.received).toBe(data.length)
     expect(await session.activate()).toMatchObject({ result: 'ok', phase: 'pending', active: pkg.sha256 })
