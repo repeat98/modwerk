@@ -3,7 +3,7 @@
   "id": "midiverb",
   "key": "MIDIVERB",
   "name": "Midiverb I/II",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",

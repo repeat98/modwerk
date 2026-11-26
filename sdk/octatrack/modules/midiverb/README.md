@@ -1,6 +1,6 @@
 # Midiverb I/II
 
-Version 0.1.0-experimental · the Alesis Midiverb (Keith Barr), from Eric Brombaugh's and thement's reverse engineering · an FX2 effect for the Octatrack MKI and MKII on the Modwerk base.
+Version 0.2.0-experimental · the Alesis Midiverb (Keith Barr), from Eric Brombaugh's and thement's reverse engineering · an FX2 effect for the Octatrack MKI and MKII on the Modwerk base.
 
 ## Overview
 
