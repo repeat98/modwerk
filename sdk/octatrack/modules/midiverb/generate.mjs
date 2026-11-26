@@ -236,15 +236,9 @@ export function encode(ops) {
 }
 
 // Every program the stream carries: each bank in chart order, less Midiverb II's Defeat (0) and its 20 chorus and
-// flange programs (50-69, which patch their own code from an LFO: not handled yet), less the 31 programs that cost
-// more than 400 executed instructions a sample on the engine with direct dispatch (dsp_host, 25 Nov 2026: each
-// streamed by its index at LEVL 127 and MIX 127, the worst of unsplit and split at frames 1 and 7). The base lets one
-// instance declare at most 414; these cost 401 to 558.
-export const OVER_BUDGET = {
-  MV1: [9, 10, 11, 13],
-  FEX: [12, 23, 34, 35],
-  MV2: [1, 2, 3, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 27, 30, 31, 32, 33, 34],
-};
+// flange programs (50-69, which patch their own code from an LFO: not handled yet). Since the read-ladder engine
+// (26 Nov 2026) every other program fits; the dearest, Midiverb II #10, takes 316.5 executed instructions a sample
+// (static.py).
 export const BANKS = ['MV1', 'MV2', 'FEX'];
 const FIRST = { MV1: 1, MV2: 0, FEX: 1 };
 export function streamed(programs) {
@@ -252,7 +246,6 @@ export function streamed(programs) {
   for (const bank of BANKS) programs[bank].forEach((steps, i) => {
     const number = i + FIRST[bank];
     if (bank === 'MV2' && (number === 0 || (number >= 50 && number <= 69))) return;
-    if (OVER_BUDGET[bank].includes(number)) return;
     out.push({ bank, number, steps });
   });
   return out;

@@ -7,8 +7,11 @@ the ring cleared meanwhile) and runs each program as generate.mjs's DSP form def
 input, LEVL, output interpolation and MIX in the DSP's integer arithmetic. generate.mjs proves the programs against
 the original machine; this proves the engine against them.
 """
+import itertools
 import json
 import pathlib
+import struct
+import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -91,8 +94,8 @@ def stream(plan, calls, kills=()):
     return out
 
 
-def model(chunks, left, right, knobs, block=16):
-    """What the engine outputs for one instance, a call a block (no splits)."""
+def model(chunks, left, right, knobs, lengths=None):
+    """What the engine outputs for one instance: lengths, the frames of each call (default 16 a call)."""
     lev, mix = knobs[1] << 16, knobs[5] << 16
     mix = 0x7FFFFF if mix == 0x7F0000 else mix
     s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0, fade=0, kill=False)
@@ -101,7 +104,9 @@ def model(chunks, left, right, knobs, block=16):
     wet_mix = step = 0
     y_prev, y_cur, out_run = [0, 0], [0, 0], [0, 0]
     out_l, out_r = list(left), list(right)
-    for call, start in enumerate(range(0, len(left), block)):
+    lengths = lengths or [16] * ((len(left) + 15) // 16)
+    starts = [0, *itertools.accumulate(lengths)]
+    for call, (start, block) in enumerate(zip(starts, lengths)):
         c, d, e = chunks[call]
         k, g, A, B = c >> 16, (c >> 8) & 0xFF, (d >> 8) & 0xFFFF, (e >> 8) & 0xFFFF
         if k == 0xFF:                               # the tail kill: silent, the ring cleared once
@@ -217,6 +222,95 @@ def run(words, ring, p, w_in, out):
             acc = 0
 
 
+def render(asm, work, plan, left, right, knobs, kills=(), split=None):
+    """One instance in dsp_host (split: frames before each block's trig split) and the model's output for it."""
+    blocks = (len(left) + 15) // 16
+    lengths = [16] * blocks if split is None else [split, 16 - split] * blocks
+    chunks = stream(plan, len(lengths), kills)
+    image = G.write_image(asm.words, work / "m.mem", org=asm.org,
+                          extra=[(G.P, STREAM_AT, [w for t in chunks for w in t])])
+    # One instance a run: the synthetic image hands every instance the same allocator buffer.
+    r = G.run(asm, [G.Instance(left, right, knobs=knobs)], image=image, split=split)
+    return tuple(r.outputs[0]), model(chunks, left, right, knobs, lengths), r.meter
+
+
+def silent(left, right, knobs):
+    """The output with the reverb silent: the dry at its mix."""
+    mix = knobs[5] << 16
+    return ([mixed(v, 0, mix, 0) for v in left], [mixed(v, 0, mix, 0) for v in right])
+
+
+def first_difference(got, want):
+    return next((i for i in range(len(got[0])) if (got[0][i], got[1][i]) != (want[0][i], want[1][i])), None)
+
+
+def every_program(asm, work, left, right):
+    """--all: every program in programs.json streamed from the start at LEVL 127 and MIX 127, unsplit and split at
+    frames 1 and 7, bit for bit against the model; dsp_host's meter for each (its worst block)."""
+    knobs, ok, worst, failed = (0, 127, 0, 0, 0, 127), True, (0, None), []
+    for g, q in enumerate(PROGRAMS):
+        for split in (None, 1, 7):
+            got, want, m = render(asm, work, [(0, g)], left, right, knobs, split=split)
+            diff = first_difference(got, want)
+            worst = max(worst, (m, f"{q['bank']} #{q['number']}"))
+            if diff is not None or got == silent(left, right, knobs):
+                failed.append(f"{q['bank']} #{q['number']} split {split}: " + ("silent" if diff is None else f"frame {diff}"))
+    ok = not failed
+    print(("[PASS]" if ok else "[FAIL]") + f" every program ({len(PROGRAMS)}), unsplit and split at 1 and 7: "
+          + (f"bit-exact; the dearest {worst[1]} at {worst[0]} executed instructions a sample" if ok else "; ".join(failed[:8])))
+    return ok
+
+
+def cycles(asm, work, which):
+    """--cycles: sdk/cycle-scan's model (DSP56300 manual cycles and pipeline stalls) of one steady 16-frame call of
+    each program in `which` (indices; LEVL 127, MIX 127), traced by a dsp_host built with -steptrace (ILSCAN_HOST,
+    sdk/cycle-scan/build-tools.sh). A model, not a measurement: the unit stays the judge."""
+    root = next(up for up in HERE.parents if (up / "sdk/cycle-scan/interlock_scan.py").exists())
+    sys.path.insert(0, str(root / "sdk/cycle-scan"))
+    import interlock_scan as IL  # noqa: E402
+    IL.DIS = G.tool("dsp_disasm")
+    host = IL.HOST
+    if not host.exists():
+        sys.exit("--cycles needs a dsp_host with -steptrace: set ILSCAN_HOST (sdk/cycle-scan/build-tools.sh)")
+    blocks, n = 400, 400 * 16
+    sig = G.noise(n, 0.3, 11)
+    rows = []
+    for g in which:
+        chunks = stream([(0, g)], blocks)
+        image = G.write_image(asm.words, work / "c.mem", org=asm.org,
+                              extra=[(G.P, STREAM_AT, [w for t in chunks for w in t])])
+        (work / "c.in").write_bytes(struct.pack(f"<{2 * n}i", *[v for x in sig for v in (x, x)]))
+        cmd = [str(host), "-mem", str(image), "-init", f"{asm.syms['init']:x}", "-proc", f"{asm.syms['proc']:x}",
+               "-ctx", "40,41,42", "-frames", "16", "-blocks", str(blocks), "-inst", "1", "-stereo",
+               "-params", "0,127,0,0,0,127,0,0,0,0,0,0", "-in", str(work / "c.in"), "-out", str(work / "c.out"),
+               "-diff", str(blocks), "-trace", "400000", "-trackinst", "0", "-steptrace"]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        calls, cur = [], None
+        for line in r.stdout.splitlines():
+            m = IL.TRACE.match(line)
+            if m:
+                if int(m.group(1)) == 0:
+                    cur = []
+                    calls.append(cur)
+                cur.append(int(m.group(2), 16))
+        if r.returncode or not calls:
+            sys.exit(f"dsp_host failed or traced nothing: {r.stdout[-400:]}{r.stderr[-400:]}")
+        pcs, pmem = calls[-1], IL.load_p(image)
+        ins = IL.decode(pmem, pcs, min(pcs))
+        seq = []
+        for k, pc in enumerate(pcs):
+            i = IL.Ins(pc, *ins[pc])
+            if i.cond and k + 1 < len(pcs):
+                i.taken = pcs[k + 1] != pc + i.nwords
+            seq.append(i)
+        total, stalls, _ = IL.analyze(seq)
+        q = PROGRAMS[g]
+        rows.append((total / 16, len(pcs) / 16, f"{q['bank']} #{q['number']}"))
+        print(f"  {q['bank']} #{q['number']}: {total / 16:.1f} cycles a sample ({len(pcs) / 16:.1f} instructions, "
+              f"stalls {sum(stalls.values()) / 16:.1f})")
+    return rows
+
+
 def main():
     G.require_tools()
     tmp = G.workdir("midiverb-gate-")
@@ -247,21 +341,22 @@ def main():
     ]
     meter = 0
     for name, plan, left_in, right_in, knobs, *kills in cases:
-        chunks = stream(plan, blocks, kills[0] if kills else ())
-        image = G.write_image(asm.words, work / "m.mem", org=asm.org,
-                              extra=[(G.P, STREAM_AT, [w for t in chunks for w in t])])
-        # One instance a run: the synthetic image hands every instance the same allocator buffer.
-        r = G.run(asm, [G.Instance(left_in, right_in, knobs=knobs)], image=image)
-        meter = max(meter, r.meter)
-        got_l, got_r = r.outputs[0]
-        want_l, want_r = model(chunks, left_in, right_in, knobs)
-        diff = next((i for i in range(n) if (got_l[i], got_r[i]) != (want_l[i], want_r[i])), None)
-        quiet = (got_l, got_r) == tuple(map(list, zip(*[(mixed(l, 0, knobs[5] << 16, 0), mixed(r, 0, knobs[5] << 16, 0))
-                                                         for l, r in zip(left_in, right_in)])))
+        got, want, m = render(asm, work, plan, left_in, right_in, knobs, kills[0] if kills else ())
+        meter = max(meter, m)
+        diff = first_difference(got, want)
+        quiet = got == silent(left_in, right_in, knobs)
         good = diff is None and (quiet if "silent" in name else not quiet)
         ok &= good
-        where = "" if diff is None else f", first difference at frame {diff}: got {got_l[diff], got_r[diff]} want {want_l[diff], want_r[diff]}"
+        where = "" if diff is None else f", first difference at frame {diff}: got {got[0][diff], got[1][diff]} want {want[0][diff], want[1][diff]}"
         print(("[PASS]" if good else "[FAIL]") + f" {name}: bit-exact{' and silent' if quiet else ''}{where}")
+    if "--all" in sys.argv:
+        ok &= every_program(asm, work, sig, right)
+    if "--cycles" in sys.argv:
+        names = [a for a in sys.argv[sys.argv.index("--cycles") + 1:] if not a.startswith("--")]
+        which = [g for g, q in enumerate(PROGRAMS) if not names or f"{q['bank']}{q['number']}" in names]
+        rows = sorted(cycles(asm, work, which))
+        print(f"cycles: the dearest {rows[-1][2]}, {rows[-1][0]:.1f} modelled chip cycles a sample; "
+              f"the median of {len(rows)}, {rows[len(rows) // 2][0]:.1f}")
     print(f"meter: {meter} executed instructions a sample, the dearest case (the driver's few included)")
     sys.exit(0 if ok else 1)
 
