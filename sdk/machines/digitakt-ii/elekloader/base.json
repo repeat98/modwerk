@@ -52,6 +52,7 @@
       "../modwerk/machines-entry.s",
       "../modwerk/voices.c",
       "../modwerk/voices-entry.s",
+      "../modwerk/voices-record-entry.s",
       "../modwerk/fw-bindings.s"
     ],
     "subscribe": [
@@ -113,6 +114,13 @@
         "stockSha256": "03aea46edf4951a496a72ca6cad701db0693d269aca529ebc661a3dbc8fcce0c",
         "op": "jsr",
         "target": "core_voice_event_entry"
+      },
+      {
+        "addr": "0x40048fb2",
+        "len": 6,
+        "stockSha256": "ed5086557423e0a010a460981e782edce14c7e9c57265e741ebacc985a1d8aa3",
+        "op": "jsr",
+        "target": "core_voice_record_entry"
       },
       {
         "addr": "0x40066df2",
