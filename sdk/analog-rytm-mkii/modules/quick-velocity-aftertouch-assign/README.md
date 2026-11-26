@@ -63,7 +63,7 @@ The quick perf rec, in any recording mode:
 
 | Gesture | What it does | Message |
 | --- | --- | --- |
-| RECORD + YES | Applies the quick perf rec to the pattern as trigless parameter locks, one per step, performance moves and scene changes, and empties it. | APPLY PERF/SCENE REC, NOTHING TO APPLY |
+| RECORD + YES | Applies the quick perf rec to the pattern as trigless parameter locks, one per step, performance moves and scene changes, and empties it. It writes at once; when a track has to be lengthened while the pattern plays, it writes when the loop next starts, so the locks land on the pattern's steps (RECORD + NO before then calls it off). There is no undo: reload the pattern to go back. | APPLY PERF/SCENE REC, APPLY AT LOOP START, APPLY CUT SHORT, NOTHING TO APPLY |
 | RECORD + NO | Empties the quick perf rec. NO again brings it back. | CLEAR PERF/SCENE REC, UNDO CLEAR |
 
 FUNC + QPER (mute) and FUNC + PERF are stock's. PLAY, RECORD, STOP and YES act the moment they are pressed with PERF held, so PERF rolled into PLAY clears the performance and does not start the sequencer (PLAY again undoes). A key or turn with nothing linked shows NO PERFORMANCE LINKED, and with no room LOCK MEM FULL!. Stock draws every message.
@@ -101,6 +101,8 @@ Stock's LIVE RECORDING records knob turns but no performance moves or scene chan
 - **Tracks shorter than the take.** With a length per track, the Rytm restarts every track when the master length comes round, so a 16- or 24-step track under a 32-step master already repeats its steps until the master restarts it. RECORD + YES makes such a track as long as the take and fills the new steps with that repetition, so it plays exactly as before, then writes the moves on every step. Conditions that count loops are rewritten so each copy plays on the same passes: a 1:2 copied twice becomes no condition on the first copy and no trig on the second, and 1ST stays only on the first copy. This changes the track's length in the pattern: reload the pattern to get the old one back.
 - **When a track is left out.** A track at another speed than the pattern, in Euclidean mode, or with a track-wide condition that counts loops keeps its length and gets no locks. So does one whose length does not divide 64 when the master length is INF or over 64, since the Rytm does not restart it every 64 steps then. RECORD + YES then shows how many tracks were left out (n TRACKS LEFT OUT). The take is emptied all the same, so a left-out track's moves are dropped, while the tracks that fit keep theirs as locks.
 - **72 lock rows a pattern.** Stock keeps one row for each locked parameter of each track, two for a fine one, and uses 71. If the moves need more, RECORD + YES shows LOCK MEM FULL! and writes nothing.
+- **Only sequenced trigs take the written locks.** Locks shape what the sequencer plays. Notes you play on the pads or by MIDI over the pattern sound as the kit does once RECORD + YES has disengaged the take's scene, so they differ from the take's playback, where the scene was engaged for everything.
+- **A write that is cut short.** RECORD + YES writes straight into the pattern's lock data, a row at a time, and only a take that needs hundreds of new lock trigs runs on over a few ticks. If a lock is edited or the kit or pattern changes in that moment, it stops and says APPLY CUT SHORT: the rows already written stay.
 - **The recording mode stays.** With no recording mode on, stock switches GRID RECORDING at RECORD's press; RECORD + YES and RECORD + NO switch it back, as stock's RECORD + PLAY does, so the RECORD light may flick.
 
 ### Things to know
@@ -168,7 +170,7 @@ rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined im
 
 On the author's Analog Rytm MKII: builds QP01 to QC13 for the QPER controls and QT01 to QT08 (with a debug trace over USB MIDI) for the quick perf rec, QPERF alone, and rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)).
 
-Memory (0.7.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 33,928 bytes of the shared mod area, about 23,000 of them the performance and scene locks' code and the quick perf rec (6,912 of those the quick perf rec's performance lanes: 12 performances, 64 steps, 8 points a step, and 576 its scene lane). Load: FIX, CHRO, LFO, SCENE and PERF are UI only, as is the scene lane (once a UI tick), on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
+Memory (0.7.0, Modwerk's linker on the plain base 1c14b6b0, base alone against base with the module): 35,508 bytes of the shared mod area, about 24,500 of them the performance and scene locks' code and the quick perf rec (6,912 of those the quick perf rec's performance lanes: 12 performances, 64 steps, 8 points a step, and 576 its scene lane). Load: FIX, CHRO, LFO, SCENE and PERF are UI only, as is the scene lane (once a UI tick), on key events, knob turns and ticks; the quick perf rec's record and playback run once per audio block (`ev_render_out`): about 0.5 % of the block idle, measured on a unit for QPER Live Rec 0.2.2.
 
 ## Authorship and licences
 
@@ -176,7 +178,7 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build Q708, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build Q713, the module's own image on the plain base ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with CHRO held: DEC +11](media/chro-amp.png)
 
@@ -188,4 +190,4 @@ Screenshots are rytm-emu captures of build Q708, the module's own image on the p
 
 ![CLEAR VELOCITY MODS after FIX + PLAY](media/fix-clear.png) ![CLEAR PAGE LFO after LFO + PLAY on the SYNTH page](media/lfo-page-clear.png)
 
-![APPLY PERF/SCENE REC after RECORD + YES](media/apply-quick-perf-rec.png) ![CLEAR PERF/SCENE REC after RECORD + NO](media/clear-quick-perf-rec.png)
+![APPLY AT LOOP START after RECORD + YES while the pattern plays](media/apply-quick-perf-rec.png) ![CLEAR PERF/SCENE REC after RECORD + NO](media/clear-quick-perf-rec.png)

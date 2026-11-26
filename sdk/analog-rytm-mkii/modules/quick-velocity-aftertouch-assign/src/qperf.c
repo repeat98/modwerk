@@ -1556,6 +1556,7 @@ static struct {
     int pending, pending_pos, at_wrap;  // waiting for the loop's start; the try made there
     int late;                           // it has waited a loop already: no second wait
     int aborted, kit_was;               // ended early; a kit change already pending at the start
+    int kit_abort;                      // ended early by another kit: its scenes are not ours to touch
     unsigned sum;                       // the lock tables as the write began
     unsigned tracks, skipped, scenes, longer;
     int length[FX_TRACK + 1], from[FX_TRACK + 1];   // each track's steps for the write, and before it
@@ -1584,7 +1585,7 @@ QPERF_UI static void apply_job_end(void)
     apply_job.active = 0;
     apply_job.late = 0;
     release_driven();
-    if (scenes && !apply_job.aborted) { // the steps now hold the take's scenes: one still engaged
+    if (scenes && !apply_job.kit_abort) {   // the steps now hold the take's scenes: one still engaged
         int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);   // would lock every step over them
         if (active >= 0 && (scenes >> active & 1)) {
             ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
@@ -1595,7 +1596,7 @@ QPERF_UI static void apply_job_end(void)
     wipe();
     hot.perf_rec_busy = 0;
     if (apply_job.aborted) {            // another kit or pattern, or a lock edited meanwhile
-        show(apply_job.wrote ? "APPLY CUT SHORT" : "NOTHING TO APPLY");
+        show("APPLY CUT SHORT");
     } else if (skipped) {
         // Moves written where they fit: say how many tracks could not take them.
         const char *tail;
@@ -1624,6 +1625,7 @@ QPERF_UI static void apply_job_step(void)
     int track;
     if ((kit_changed && !apply_job.kit_was) || PATTERN_OF(PROJECT_SINGLETON()) != apply_job.pattern
         || live_pattern_data() != apply_job.steps_pattern || tables_sum(table, st) != apply_job.sum) {
+        apply_job.kit_abort = kit_changed && !apply_job.kit_was;
         apply_job.i = SLOTS + SCENE_SLOTS;
         apply_job.longer = 0;
         apply_job.aborted = 1;
@@ -1640,7 +1642,8 @@ QPERF_UI static void apply_job_step(void)
                 best = track;
         if (best < 0 || apply_cost >= APPLY_BUDGET)
             break;
-        if (playing() && !apply_job.late && position() / POINTS >= apply_job.from[best]) {
+        // (a step of margin: the track's own counter runs a step ahead)
+        if (playing() && !apply_job.late && position() / POINTS + 1 >= apply_job.from[best]) {
             apply_job.active = 0;
             apply_job.late = 1;
             apply_job.pending = 1;
@@ -1680,6 +1683,8 @@ QPERF_UI static void apply_perf_rec(void)
     const unsigned char *st = scene_table(kit);
     unsigned tracks = 0, longer = 0, skipped = 0, scenes = lane_scenes();
     int i, need = 0, steps, track, length[FX_TRACK + 1];
+    if (!apply_job.at_wrap)
+        apply_job.late = 0;             // a wait left over from a write called off
     if ((!hot.perf_rec_used && !scenes) || hot.perf_rec_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
@@ -1774,7 +1779,7 @@ QPERF_UI static void apply_perf_rec(void)
         apply_job.length[track] = length[track];
     apply_job.sum = tables_sum(table, st);
     apply_job.kit_was = kit_changed;
-    apply_job.aborted = 0;
+    apply_job.aborted = apply_job.kit_abort = 0;
     apply_job.active = 1;
     release_driven();                   // the amounts at rest: written steps hold the moves now
     apply_job_step();                   // all of it now, unless the budget stops it for the tick
@@ -2183,6 +2188,7 @@ QPERF_UI void qperf_tick(void *ctrl)
     if (hot.ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
+        apply_job.kit_was = 0;          // a later change is a job's to see
         mask = linked(active_kit());
         if (mask != known)
             link_moved(mask);
