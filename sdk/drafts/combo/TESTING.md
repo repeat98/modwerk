@@ -121,7 +121,7 @@ The package (393 executed cycles declared, 100 state words, 1,018 DSP words, rea
 
 The package (310 executed cycles declared, 100 state words) was accepted, with no crash, stall, freeze or skipped track (~/.cache/modwerk-emu/ui-10). Not known until a unit runs it: the instruction count is a floor on the chip's cycles, and an FX2 slot in the shared window (Y:$30000 up) may cost more per Y access than core-private memory; the CPU price on a unit will say.
 
-## On the unit (26 November 2026, page 2)
+## On the unit (26 November 2026, 0.1.0-experimental with page 2)
 
 The developer's Octatrack over USB, its flashed base `eb667962`; the development twin `5d2fe44d` RAM-booted, nothing written to the flash or the card. The developer's own saved Part (Part 3), transport stopped at the start. Three packages from the same twin, in this order:
 
