@@ -853,6 +853,17 @@ int main(void)
         modwerk_machine_frame_costs(t, 2);                                           /* the set's: 1.1 and 1.2 times */
         CHECK(stream_factor() == 1200u && (modwerk_test_streams = 1u, stream_factor() == 1100u));
         memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs); }
+      /* by width, from the active profile's EP3 IN packet (4 bytes, 12 frames a channel): a figure for the width when
+       * the set has one, else the set's single one */
+      { uint8_t t[24] = {0xff, 0xff, 0xff, 0xe0, 0, 100u, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xe3, 1, 4u, 0, 0, 0, 0, 0, 0};
+        modwerk_machine_frame_costs(t, 2);                                           /* 1.1, and 1.26 up to 4 channels */
+        modwerk_test_streams = 1u, modwerk_test_stream_bytes = 192u;                 /* Main + Cue */
+        CHECK(stream_factor() == 1260u);
+        modwerk_test_stream_bytes = 768u;                                            /* 16 channels: none for it */
+        CHECK(stream_factor() == 1100u);
+        modwerk_test_stream_bytes = 0;                                               /* no EP3 IN in the profile */
+        CHECK(stream_factor() == 1100u);
+        memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs); }
       CHECK(modwerk_status_pick_busy(12, 0, "Echo", 200u, 0, 0) && refused_busy == WHY_USB && refused[4] == 330u); /* 80 % stretched: 132 */
       CHECK(strstr(shows(), "ECHO NEEDS +30%|CPU|90%|USB AUDIO STREAM|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();

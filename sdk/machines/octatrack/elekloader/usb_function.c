@@ -110,6 +110,7 @@ static volatile uint8_t dirty;
 static uint32_t serials, live_serial;   /* live: the function the slots describe */
 static volatile uint8_t state, reconnects;
 static uint8_t forced, live_profile, panel_reconnect, retried;
+static uint16_t live_in_packet; /* the active high-speed profile's EP3 IN wMaxPacketSize, 0 without one */
 static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
 static volatile uint16_t timer, frames_to_attach;
 static uint8_t off_ticks;
@@ -289,6 +290,14 @@ static void uf_input_priority(int enabled)
 }
 #endif
 
+/* EP3 IN's wMaxPacketSize in a profile's descriptors, 0 without it: what status.c books a stream's width by. */
+static unsigned uf_in_packet(const uint8_t *d, unsigned length)
+{
+    for (unsigned i = 0; i + 6u < length && d[i]; i += d[i])
+        if (d[i + 1] == 5u && d[i + 2] == 0x83u) return (d[i + 4] | (unsigned)d[i + 5] << 8) & 0x7ffu;
+    return 0;
+}
+
 /* The USB interrupt held off and the unit off the bus. Through the uncached alias: the controller reads memory. */
 static void uf_compose(void)
 {
@@ -317,6 +326,7 @@ static void uf_compose(void)
         if (k == 0u) modwerk_cfg_len_fs = total;
         if (k == 1u) {
             modwerk_cfg_len_hs = total;
+            live_in_packet = (uint16_t)uf_in_packet(from, length);
 #ifdef MODWERK_USB_INPUT
             uf_input_priority(f && f->abi == MODWERK_USB_SPEED_PROFILES_ABI &&
                               f->bytes == UF_INPUT_RECORD && interfaces == 3u);
@@ -457,6 +467,7 @@ unsigned modwerk_usb_function_streams(void)
     uint32_t ctrl = row_record && live_serial ? UF_REG(UF_CTRL3) : 0u;
     return (ctrl & 0x00800000u ? 1u : 0u) | (ctrl & 0x80u ? 2u : 0u);
 }
+unsigned modwerk_usb_function_stream_bytes(void) { return row_record && live_serial ? live_in_packet : 0u; }
 
 unsigned modwerk_usb_function_status(uint8_t *out)
 {

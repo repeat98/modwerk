@@ -32,4 +32,6 @@ void modwerk_usb_function_frame(void);
 unsigned modwerk_usb_function_status(uint8_t *out);
 /* What the host streams now: bit 0 to it (EP3 IN), bit 1 from it (EP3 OUT); status.c books it (#2251). */
 unsigned modwerk_usb_function_streams(void);
+/* The active high-speed profile's EP3 IN packet in bytes (4 a channel, 12 frames), 0 without one: the stream's width. */
+unsigned modwerk_usb_function_stream_bytes(void);
 #endif
