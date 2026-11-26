@@ -1,0 +1,146 @@
+{
+  "module": "midiverb",
+  "version": "0.1.0-experimental",
+  "base": "base 0.8.1 (development twin 4c7eb79b of eb667962), MKII",
+  "scene": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-25T20:05:27.813Z",
+  "result": {
+    "id": "midiverb",
+    "version": "file",
+    "packageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
+    "before": {
+      "frame": 34.9,
+      "frameMax": 81.9,
+      "frames": 67235,
+      "skipped": 0,
+      "cpu": 57,
+      "dsp1to4": 33.5,
+      "dsp5to8": 43.7,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 44.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.5,
+        "dsp1to4": 0.4,
+        "dsp5to8": 0,
+        "frameMax": 2,
+        "dsp1to4Peak": 0.2,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRest": {
+      "frame": 35.7,
+      "frameMax": 82.3,
+      "frames": 67278,
+      "skipped": 0,
+      "cpu": 57.8,
+      "dsp1to4": 34,
+      "dsp5to8": 43.7,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 44.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.4,
+        "dsp1to4": 1,
+        "dsp5to8": 0,
+        "frameMax": 1.1,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRestAdds": {
+      "frame": 0.8,
+      "cpu": 0.8,
+      "dsp1to4": 0.5,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 0
+    },
+    "inUse": {
+      "frame": 36,
+      "frameMax": 84.1,
+      "frames": 67249,
+      "skipped": 0,
+      "cpu": 54.8,
+      "dsp1to4": 51.3,
+      "dsp5to8": 43.7,
+      "dsp1to4Peak": 53.3,
+      "dsp5to8Peak": 44.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.2,
+        "dsp1to4": 0.5,
+        "dsp5to8": 0,
+        "frameMax": 2.5,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "inUseAdds": {
+      "frame": 1.1,
+      "cpu": -2.2,
+      "dsp1to4": 17.8,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 17.5,
+      "dsp5to8Peak": 0
+    },
+    "inUseOn": "T1 FX2",
+    "curve": {
+      "tracks": [
+        "T1",
+        "T3",
+        "T6",
+        "T7"
+      ],
+      "points": [
+        82.3,
+        81.6,
+        82.8,
+        82.8,
+        81.4
+      ],
+      "adds": [
+        -0.7,
+        0.5,
+        0.5,
+        -0.9
+      ],
+      "first": 0.5,
+      "each": 0,
+      "notes": [],
+      "admission": [
+        {
+          "pattern": "empty",
+          "number": 2,
+          "track": "T1",
+          "seconds": 8,
+          "admitted": true,
+          "frameMax": 38,
+          "frame": 28.2,
+          "dropped": 0,
+          "stalls": 0
+        },
+        {
+          "pattern": "medium",
+          "number": 4,
+          "track": "T1",
+          "seconds": 8,
+          "admitted": true,
+          "frameMax": 81.5,
+          "frame": 36,
+          "dropped": 0,
+          "stalls": 0
+        }
+      ]
+    },
+    "rolledBack": true
+  }
+}

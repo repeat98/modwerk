@@ -1,0 +1,1 @@
+Development: `npm run module:list` lists an Octatrack hybrid FX2 effect (DSP code with ColdFire code beside it, as BBD, Tape Echo and Midiverb) as it lists a DSP effect: catalogue entry, `ORDER`, descriptor guard and package row (marked `octabam`). Before, it refused one, and the listing had to be done by hand.

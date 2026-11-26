@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "device": "model-cycles",
+  "os": "1.13",
+  "about": "The stock sites the Modwerk Model:Cycles base owns as hooks, in the Octatrack registry's format (sdk/machines/octatrack/events.json). The base is core-mc 0.3's source, whose core.s and boot.s dispatch hooks 0-4 at the sites below, and Modwerk's key-leds.s, which dispatches hook 5. A call hook has no fixed room: the linker puts every subscriber in its table. Modules subscribe in build.json and never patch these sites. Addresses, lengths and SHA-256 guards only, no stock bytes. Adding a hook is one reviewed entry at the end; released indices are never renumbered.",
+  "events": [
+    {
+      "event": "ev_tick",
+      "index": 0,
+      "kind": "call",
+      "site": "0x400075f0",
+      "length": 6,
+      "guard": "905f211dc8443c388043cf38112866e76f0b2c25d4cab9c01b93cb427e43713a",
+      "prototype": "void f(void *ctrl)",
+      "when": "the UI compose check, about 30 times a second, before stock's own check",
+      "context": "UI task, about 30 times a second: no audio-rate work; call firmware only from the UI routines core.h names",
+      "contract": "Set *((unsigned char *)ctrl + 0x20) = 1 to ask for a redraw. Not a clock: timing follows the instrument's transport.",
+      "order": "lower first, then module id; 10-90 as Elekloader's mods use them",
+      "subscribers": []
+    },
+    {
+      "event": "ev_draw",
+      "index": 1,
+      "kind": "call",
+      "site": "0x4000765c",
+      "length": 6,
+      "guard": "51f1819c6c3a0c516407638048ba448ed727f193756e252f5b573605a285fc63",
+      "prototype": "void f(void *bmp, void *ctrl)",
+      "when": "after the OS has composed the 128x64 frame",
+      "context": "UI task, about 30 times a second: no audio-rate work; call firmware only from the UI routines core.h names",
+      "contract": "Draw over the frame with fw_fill and fw_text; y = 0 is the bottom row. Stock's outputs are kept.",
+      "order": "lower first, then module id; a later handler draws over an earlier one",
+      "subscribers": []
+    },
+    {
+      "event": "ev_key",
+      "index": 2,
+      "kind": "call",
+      "site": "0x4000817a",
+      "length": 6,
+      "guard": "b1f232778dac92307182d0f8b57841c85d248d460700f04c5c3b5b55fbe9e314",
+      "prototype": "int f(void *brain, void *ev)",
+      "when": "each key event, before stock's key dispatch",
+      "context": "UI task, about 30 times a second: no audio-rate work; call firmware only from the UI routines core.h names",
+      "contract": "Return nonzero to take the event: no later handler and not stock sees it. ev+12 is the key id, ev+16 its flags. Declare every gesture a handler takes in the module's claims.",
+      "order": "lower first, then module id; the first nonzero result ends the dispatch",
+      "subscribers": []
+    },
+    {
+      "event": "ev_enc",
+      "index": 3,
+      "kind": "call",
+      "site": "0x400081ce",
+      "length": 6,
+      "guard": "2e675b2b0cf71462c7a39e74041eb2d05b3e06035d762e50e83baa9c332ca844",
+      "prototype": "int f(void *brain, void *ev)",
+      "when": "each knob turn, before stock's encoder dispatch",
+      "context": "UI task, about 30 times a second: no audio-rate work; call firmware only from the UI routines core.h names",
+      "contract": "Return nonzero to take the turn: no later handler and not stock sees it. ev+12 is the knob, ev+16 the delta.",
+      "order": "lower first, then module id; the first nonzero result ends the dispatch",
+      "subscribers": []
+    },
+    {
+      "event": "ev_boot",
+      "index": 4,
+      "kind": "call",
+      "site": "0x4000052c",
+      "length": 8,
+      "guard": "5880e46db520311a258ed2b990a1fa89bd4e7a65c18d550c30e88fa9c81ecd11",
+      "prototype": "void f(void)",
+      "when": "once at boot, after the mods' RAM image is copied, their .bss cleared and the instruction and branch caches invalidated, before the OS starts",
+      "context": "supervisor mode, interrupts off, data cache off: no firmware routine may be called, and only the mods' own RAM is written",
+      "contract": "Fill tables the OS reads while it starts. The OS clears its own .bss right after.",
+      "order": "lower first, then module id",
+      "subscribers": []
+    },
+    {
+      "event": "ev_key_leds",
+      "index": 5,
+      "kind": "call",
+      "site": "0x40006a6e",
+      "length": 6,
+      "guard": "9f48a2517e97304835d43b3bed1fea7eb50c134ed6b74c21e3bd9776e84aa3e8",
+      "prototype": "void f(void *mgr)",
+      "when": "every key-LED frame, after the frame clears the LEDs and before the stock views set theirs",
+      "context": "UI task, while the view controller's byte +0x21 is set: short, no blocking firmware call",
+      "contract": "Set an LED with fw_led_set(mgr, led, state): state 2 lights it, 1 turns it off; TRIG n is LED n. The first setter of an LED wins, so a handler's LED stays over the stock views'. A module whose LEDs change asks for a frame by setting *((unsigned char *)ctrl + 0x21) = 1 in its ev_tick handler.",
+      "order": "lower first, then module id; 10-90 as Elekloader's mods use them",
+      "subscribers": []
+    }
+  ]
+}

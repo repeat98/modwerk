@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "machine": "model-cycles",
+  "interface": "0.3",
+  "status": "Modwerk's Model:Cycles base for OS 1.13: the pinned core-mc 0.3 source and Modwerk's ev_key_leds, selected by the SHA-256 in sdk/machines/model-cycles/base-binding.json. In development.",
+  "events": [
+    {
+      "name": "ev_tick",
+      "when": "the UI compose check, about 30 times a second, before stock's own check",
+      "handler": "void f(void *ctrl); Set *((unsigned char *)ctrl + 0x20) = 1 to ask for a redraw. Not a clock: timing follows the instrument's transport."
+    },
+    {
+      "name": "ev_draw",
+      "when": "after the OS has composed the 128x64 frame",
+      "handler": "void f(void *bmp, void *ctrl); Draw over the frame with fw_fill and fw_text; y = 0 is the bottom row. Stock's outputs are kept."
+    },
+    {
+      "name": "ev_key",
+      "when": "each key event, before stock's key dispatch",
+      "handler": "int f(void *brain, void *ev); Return nonzero to take the event: no later handler and not stock sees it. ev+12 is the key id, ev+16 its flags. Declare every gesture a handler takes in the module's claims."
+    },
+    {
+      "name": "ev_enc",
+      "when": "each knob turn, before stock's encoder dispatch",
+      "handler": "int f(void *brain, void *ev); Return nonzero to take the turn: no later handler and not stock sees it. ev+12 is the knob, ev+16 the delta."
+    },
+    {
+      "name": "ev_boot",
+      "when": "once at boot, after the mods' RAM image is copied, their .bss cleared and the instruction and branch caches invalidated, before the OS starts",
+      "handler": "void f(void); Fill tables the OS reads while it starts. The OS clears its own .bss right after.",
+      "since": "0.3"
+    },
+    {
+      "name": "ev_key_leds",
+      "when": "every key-LED frame, after the frame clears the LEDs and before the stock views set theirs",
+      "handler": "void f(void *mgr); Set an LED with fw_led_set(mgr, led, state): 2 lights it, 1 turns it off; TRIG n is LED n; the first setter wins. A module whose LEDs change sets *((unsigned char *)ctrl + 0x21) = 1 in its ev_tick handler to ask for a frame.",
+      "since": "0.3"
+    }
+  ],
+  "tables": [],
+  "exports": [
+    {
+      "name": "fw_project",
+      "since": "0.2",
+      "prototype": "extern uint32_t fw_project(void);",
+      "purpose": "the Project singleton, or 0"
+    },
+    {
+      "name": "fw_project_tracks",
+      "since": "0.2",
+      "prototype": "extern uint32_t fw_project_tracks(uint32_t project);",
+      "purpose": "its track selection (project + 48)"
+    },
+    {
+      "name": "fw_selection_active",
+      "since": "0.2",
+      "prototype": "extern int32_t fw_selection_active(uint32_t selection);",
+      "purpose": "the active track, 0-5"
+    },
+    {
+      "name": "fw_ui_states",
+      "since": "0.2",
+      "prototype": "extern uint32_t fw_ui_states(void);",
+      "purpose": "the UIStates singleton"
+    },
+    {
+      "name": "fw_value_shown",
+      "since": "0.2",
+      "prototype": "extern int8_t fw_value_shown(uint32_t ui_states);",
+      "purpose": "nonzero: a parameter's value is on screen"
+    },
+    {
+      "name": "fw_trig_held",
+      "since": "0.2",
+      "prototype": "extern int8_t fw_trig_held(uint32_t ui_states);",
+      "purpose": "nonzero: a trig is held, knobs edit its locks"
+    },
+    {
+      "name": "fw_key_held",
+      "since": "0.2",
+      "prototype": "extern int32_t fw_key_held(int32_t code);",
+      "purpose": "nonzero while the key is held"
+    },
+    {
+      "name": "fw_kits",
+      "since": "0.2",
+      "prototype": "extern uint8_t fw_kits[];",
+      "purpose": "the 96 patterns' kits"
+    },
+    {
+      "name": "fw_play_kit",
+      "since": "0.2",
+      "prototype": "extern uint8_t *volatile fw_play_kit;",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_fill",
+      "since": "0.2",
+      "prototype": "extern void fw_fill(void *bmp, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t colour, int32_t step);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_text",
+      "since": "0.2",
+      "prototype": "extern void fw_text(void *bmp, const void *font, int32_t x, int32_t y, int32_t flags, const char *fmt, ...);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_font_make",
+      "since": "0.2",
+      "prototype": "extern void fw_font_make(void *font, const void *glyphs);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_font_drop",
+      "since": "0.2",
+      "prototype": "extern void fw_font_drop(void *font);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_font_small",
+      "since": "0.2",
+      "prototype": "extern const char fw_font_small[];",
+      "purpose": "glyphs, 5 x 9 pixels"
+    },
+    {
+      "name": "fw_font_medium",
+      "since": "0.2",
+      "prototype": "extern const char fw_font_medium[];",
+      "purpose": "glyphs, 7 x 9 pixels"
+    },
+    {
+      "name": "fw_view_redraw",
+      "since": "0.2",
+      "prototype": "extern void fw_view_redraw(void *view);",
+      "purpose": "the screen draws the view again"
+    },
+    {
+      "name": "fw_fs_mounted",
+      "since": "0.2",
+      "prototype": "extern volatile uint32_t fw_fs_mounted;",
+      "purpose": "nonzero once the file system is mounted"
+    },
+    {
+      "name": "fw_fs_lock_word",
+      "since": "0.2",
+      "prototype": "extern uint32_t fw_fs_lock_word[];",
+      "purpose": "the lock; [0] is the task that holds it"
+    },
+    {
+      "name": "fw_running_task",
+      "since": "0.2",
+      "prototype": "extern void *volatile fw_running_task;",
+      "purpose": "the running task"
+    },
+    {
+      "name": "fw_fs_lock",
+      "since": "0.2",
+      "prototype": "extern void fw_fs_lock(uint32_t *lock);",
+      "purpose": "fw_fs_lock(fw_fs_lock_word)"
+    },
+    {
+      "name": "fw_fs_unlock",
+      "since": "0.2",
+      "prototype": "extern void fw_fs_unlock(uint32_t *lock);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_fs_entry",
+      "since": "0.2",
+      "prototype": "extern int32_t fw_fs_entry(uint32_t inode, uint32_t *h);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_fs_read",
+      "since": "0.2",
+      "prototype": "extern int32_t fw_fs_read(void *buf, uint32_t len, uint32_t *fh);",
+      "purpose": "see model-cycles/core.h"
+    },
+    {
+      "name": "fw_fs_find_id",
+      "since": "0.2",
+      "prototype": "extern int32_t fw_fs_find_id(uint32_t id);",
+      "purpose": "the index of id's pair in fw_fs_ids, or -1"
+    },
+    {
+      "name": "fw_fs_ids",
+      "since": "0.2",
+      "prototype": "extern const volatile uint32_t fw_fs_ids[];",
+      "purpose": "the files by id: {id, inode} pairs, by id"
+    },
+    {
+      "name": "fw_led_set",
+      "since": "0.3",
+      "prototype": "extern void fw_led_set(void *mgr, int32_t led, int32_t state);",
+      "purpose": "set a key LED in an ev_key_leds handler: state 2 on, 1 off; the first setter wins (Modwerk's mc/core.h)"
+    }
+  ],
+  "claims": [],
+  "memory": {
+    "area": "0x47e00000-0x47e40000",
+    "note": "DMA timer 0 stays as the stock OS has it (NO_DTIM0): a mod cannot use it as a time base."
+  }
+}
