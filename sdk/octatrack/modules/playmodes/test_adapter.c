@@ -32,6 +32,10 @@ void pm_project_begin(unsigned storing);
 unsigned pm_project_line(const char *line, unsigned parse_only);
 void pm_pattern_copy(uint32_t dst, uint32_t src, uint32_t n);
 void pm_pattern_clear(uint32_t address);
+void pm_ev_banks_load(void);
+unsigned pm_ev_project_reloaded(void);
+void pm_ev_project_new(void);
+uint8_t pm_loading;
 unsigned pm_trig_key(unsigned track, unsigned key, unsigned event, unsigned free);
 
 /* Three regions: the bank blobs, the sequencer globals, the frame clock. */
@@ -393,6 +397,58 @@ int main(void) {
         memset(pm_table, 0, sizeof pm_table); pm_ready = 0; pm_cur = 0;
         pm_seq_step(0, 0);
         CHECK(pm_table[1][0] == 0 && pm_table[0][0] == PM_REVERSE, "the clear reaches battery RAM");
+        set_playing(0, 0);
+        pm_project_begin(1);
+    }
+
+    /* PROJECT > NEW (#810): the base's ev_project_new empties the table, but
+     * CHANGE and RELOAD raise it too, after ev_banks_load (CHANGE) or
+     * ev_project_reloaded (RELOAD); those keep the loaded project's modes,
+     * whichever side of the new-project step their project.work pass falls. */
+    {
+        set_transport(1);
+        set_playing(0, 0);                 /* A01, NORMAL scale mode */
+        pm_project_begin(1);
+        pm_restart = 1;
+        key(0, +1);                        /* A01: ALL REVERSED */
+        pm_seq_step(0, 0);
+        CHECK(pm_state.settings.global == PM_REVERSE, "A01 REVERSED before NEW");
+        pm_ev_project_new();               /* PROJECT > NEW */
+        CHECK(pm_table[0][0] == 0 && pm_cur == 0 && pm_restart == 1, "NEW: A01 back to NORMAL");
+        CHECK(nv[4] == 0, "NEW reaches battery RAM");
+        pm_seq_step(0, 0);
+        CHECK(pm_state.settings.global == 0, "NEW: the playing pattern plays NORMAL");
+        CHECK(pm_seq_step(0, 1) == 1, "NEW: no reversed step left");
+        memset(pm_table, 0, sizeof pm_table); pm_ready = 0; pm_cur = 0;
+        pm_seq_step(0, 0);
+        CHECK(pm_table[0][0] == 0, "NEW survives a power cycle");
+
+        /* CHANGE, its project.work read before the new-project step. */
+        pm_ev_banks_load();
+        pm_project_begin(0);
+        pm_project_begin(1);
+        pm_project_line("#PLAY_MODES=C05:01234012340123401", 0);
+        pm_ev_project_new();
+        CHECK(pm_table[36][1] == 1 && pm_table[36][4] == 4, "CHANGE keeps the loaded modes");
+        CHECK(pm_loading == 0, "the load's mark is used once");
+        /* CHANGE, its project.work read after the new-project step. */
+        pm_ev_banks_load();
+        pm_ev_project_new();
+        pm_project_begin(1);
+        pm_project_line("#PLAY_MODES=B02:2", 0);
+        CHECK(pm_table[17][0] == 2 && pm_table[36][1] == 0, "CHANGE after the step: the new project's modes");
+        /* RELOAD without ev_banks_load, and with it. */
+        pm_ev_project_reloaded();
+        pm_ev_project_new();
+        CHECK(pm_table[17][0] == 2, "RELOAD keeps the modes");
+        pm_ev_project_reloaded();
+        pm_ev_banks_load();
+        pm_ev_project_new();
+        CHECK(pm_table[17][0] == 2, "RELOAD with ev_banks_load keeps the modes");
+        /* A NEW after those loads still empties. */
+        pm_ev_project_new();
+        CHECK(pm_table[17][0] == 0, "NEW after a RELOAD empties the table");
+        pm_restart = 1;
         set_playing(0, 0);
         pm_project_begin(1);
     }
