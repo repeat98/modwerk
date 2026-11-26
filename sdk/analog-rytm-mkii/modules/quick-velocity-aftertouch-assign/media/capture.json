@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.6.0-experimental",
+  "moduleVersion": "0.7.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-26T01:00:00Z",
-  "imageSha256": "96423950d2b8c44cd4771fff95eb72d5215733bfa5aedf454e49de896b732e70",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.6.0-experimental, materialised against stock OS 1.74, --version Q610",
+  "capturedAt": "2026-11-26T04:00:00Z",
+  "imageSha256": "18669022f43b45b2b9fa14d3c6675e2b28b9a8eb9b2f15cdcb1461535bee9531",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.7.0-experimental, materialised against stock OS 1.74, --version Q708",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot Q610 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first eight captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. perf-lock.png is new and the two quick perf rec captures show the new messages (APPLY and CLEAR PERF/SCENE REC); the other seven are byte-identical to 0.5.0's files (chro-amp.png to sampler-amp.png, the hold now on CHRO).",
+  "conditions": "SETUP: boot Q708 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first ten captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. The default kit links performances 1 and 10, so perf-lock.png's plan no longer presses QPER + BD (which now unlinks performance 1); its lock goes into both. fix-clear.png and lfo-page-clear.png are new in 0.7.0; the other ten are byte-identical to 0.6.0's files.",
   "captures": [
     {
       "path": "media/fix-filter.png",
@@ -60,8 +60,20 @@
     {
       "path": "media/perf-lock.png",
       "frame": "end.png",
-      "plan": "--press QPER@8020000000:200000000 --press BD@8060000000:12000000 --press PERF@8320000000:600000000 --nudge 1:1@8440000000x6/30000000",
+      "plan": "--press PERF@8320000000:600000000 --nudge 1:1@8440000000x6/30000000",
       "sha256": "318bd83018c22fd945acad75682ab10e4727c9a8a768334cd7e178cb5c9f8b20"
+    },
+    {
+      "path": "media/fix-clear.png",
+      "frame": "end.png",
+      "plan": "--press FIX@8100000000:400000000 --nudge 3:1@8200000000x4/30000000 --press FIX@8800000000:400000000 --press PLAY@9000000000:12000000",
+      "sha256": "4c6950c7bc359205b9b28d0bf9827df166f200d6d6c7df08269d045c222f4adc"
+    },
+    {
+      "path": "media/lfo-page-clear.png",
+      "frame": "end.png",
+      "plan": "--press LFO@8050000000:300000000 --nudge 3:1@8150000000x4/30000000 --press LFO@8500000000:400000000 --press PLAY@8700000000:12000000",
+      "sha256": "30c07513f5aed255e8fa14a1172f7835e6a720a6441c9c593113be004b66b31f"
     },
     {
       "path": "media/apply-quick-perf-rec.png",

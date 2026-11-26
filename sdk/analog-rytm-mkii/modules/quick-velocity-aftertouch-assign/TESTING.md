@@ -2,6 +2,50 @@
 
 The module was called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.4.0; since 0.5.0 it holds QPER Live Rec (`qperf`), whose own records follow at the end. The records keep the names they were written with.
 
+## 0.7.0: several QPER links, FIX, CHRO and LFO + PLAY, quantized scene changes (25 and 26 Nov 2026)
+
+QPER + a pad links and unlinks again (any number), and the PERF hold acts on every linked performance: a knob locks all, PLAY clears all, STOP pastes onto all, YES applies their sum, each with one undo. FIX + PLAY and CHRO + PLAY set the sound's velocity or aftertouch links to 0, PLAY again undoes. LFO + RECORD, STOP, PLAY held from another page copy, paste and clear the LFO page with stock's page routines. Scene changes recorded in LIVE RECORDING follow its quantize switch.
+
+rytm-emu (2ac0f1f, ramboot build), Q701 to Q708 on the plain base 1c14b6b0; not hardware evidence. The default kit links performances 1 and 10 and a new project has LIVE REC quantized:
+
+| Check | Result |
+| --- | --- |
+| On the LFO page (stock's key), LFO + PLAY | CLEAR PAGE LFO; PLAY again in the hold: CLEAR PAGE LFO again, no undo |
+| On the SYNTH page with 0.6.0 (Q610), LFO + PLAY | the sequencer starts, nothing clears |
+| LFO linked to DEC from the SYNTH page; LFO + PLAY | CLEAR PAGE LFO, the box gone, the LFO page then shows DST with no destination; the page stays, the sequencer stopped |
+| LFO + RECORD, then PLAY, then STOP | COPY PAGE LFO, CLEAR PAGE LFO (box gone), PASTE PAGE LFO (box back at +1.03) |
+| FIX + DEC linked at +3; FIX + PLAY; PLAY again | CLEAR VELOCITY MODS, the box at 0; UNDO CLEAR, the box at +3 |
+| FIX + PLAY with every amount at 0 | NOTHING TO CLEAR |
+| QPER + SD (1, 2 and 10 linked); PERF + SWT | one box at +5; with performance 1 unlinked the box is still there |
+| The same; PERF + PLAY; PLAY again | CLEAR PERFORMANCES; UNDO CLEAR, the box back |
+| The same, amount set; PERF + YES; YES again; then a plain PERF hold | PERFORMANCES APPLIED; UNDO APPLY; performance edit's screen byte-identical to never applying (LOCKS: 14) |
+| 2 and 10 linked; PERF + RECORD, PLAY, STOP; STOP again | COPY PERFORMANCE 2, CLEAR PERFORMANCES, PASTE PERFORMANCES (box back); UNDO PASTE (cleared again) |
+| 1, 2 and 10 linked; copy performance 1 (14 locks), PLAY, STOP | LOCK MEM FULL!, everything as the clear left it (three copies do not fit the 48 slots) |
+| Nothing copied; PERF + STOP with several linked | NOTHING TO PASTE |
+| One linked (10 unlinked first): PERF + knob, YES and its undo in a new hold, PLAY and its undo | PERFORMANCE 1 APPLIED, UNDO APPLY, CLEAR PERFORMANCE, UNDO CLEAR, as 0.6.0 |
+| A scene change at six offsets around a step boundary, quantized and unquantized, RECORD + YES, the first step with the scene's locks | unquantized: the step the change fell in; quantized: that step when it came in its first part, the next one after that |
+| 0.6.0's ten scene checks (apply, undo in a new hold, relock, empty apply, RECORD held, one and two changes in a take) | byte-identical to Q610's screens |
+
+Rig cases, rytm-emu, the development base 25f2c915: 32 of 33 on R705 and R706; the one failure is the private case for the old SAMPLER hold, as on 0.6.0. The unit cases below ran on R706 in rytm-emu first.
+
+Screenshots: Q708's captures. The ten earlier files are byte-identical to 0.6.0's (perf-lock.png with a plan that no longer presses QPER + BD); `fix-clear.png` and `lfo-page-clear.png` are new. Memory: Q708 leaves 84,908 bytes of the shared mod area (the base alone 118,836), so the module takes 33,928.
+
+Two independent code reviews, both before the unit run. The first found LFO + STOP passing the clear's kind to stock's page undo (so it undid a clear and never undid a paste), the several-performance undo running over a lock made since by a pad, a paste onto several with no room check that left stock's own undo armed, FIX and CHRO + PLAY reaching track 12's slots with the FX track selected, two linked performances' offsets clamped one by one where the engine sums them, and a pending quantized start ignored by two fills; fixed in Q706. The second found the fixes sound and two faults in the new paste (a full-table message with nothing pasted, and a paste cut short evenly on every performance going unseen) and a weak fingerprint for the undo; fixed in Q707, whose paste path has had no further review. Q708 is Q707's source with this version's records.
+
+On the author's unit, 25 Nov 2026, R707 (image CRC `8b6c1d98`) RAM-booted over the flashed FXCJ, scratch project, track 9 (CH) selected, by the test rig:
+
+- PERF + RECORD: COPY PERFORMANCE 1 (performance 1 linked).
+- FIX + D, then FIX + PLAY: CLEAR VELOCITY MODS; PLAY again: UNDO CLEAR. The sequencer stayed stopped.
+- CHRO + D: AFTERTOUCH MODS FULL (the sound's four slots were in use). CHRO + PLAY: CLEAR AFTERTOUCH MODS; PLAY again: UNDO CLEAR; CHRO + D then AFTERTOUCH MODS FULL again, so the four amounts were back.
+- LFO + D from the SYNTH page: DEC's box. LFO + PLAY: CLEAR PAGE LFO, the box gone, the SYNTH page and the stopped sequencer as they were; PLAY again: CLEAR PAGE LFO again.
+- LFO + RECORD: COPY PAGE LFO (the box at +0.12); PLAY: CLEAR PAGE LFO, the box gone once the message closed; STOP: PASTE PAGE LFO, the box back at +0.12. A second STOP pasted again (PASTE PAGE LFO), no undo.
+- QPER + SD (1 and 2 linked), PERF + D: DEC's box. With 1 unlinked the box stayed and PERF + RECORD said COPY PERFORMANCE 2; with only 1 linked the box stayed and it said COPY PERFORMANCE 1: both took the lock.
+- 1 and 2 linked, amount by MIDI CC 35: PERF + PLAY: CLEAR PERFORMANCES; PLAY again: UNDO CLEAR; YES: PERFORMANCES APPLIED; YES again: UNDO APPLY.
+- Scene mode: SCENE + A locked TUN in scene 9. RECORD + PLAY: LIVE REC: QUANTIZED. Scene 2 then scene 9 engaged, RECORD + YES: APPLY PERF/SCENE REC; RECORD + NO: NOTHING TO CLEAR.
+- SCENE + knob, SCENE + YES and YES again in the same and in a new hold: SCENE 9 APPLIED, UNDO APPLY, as on 0.6.0.
+
+Not tested: 0.7.0 by hand or by ear; this package's own image on a unit; on the unit, which step a quantized scene change lands on, a paste onto several performances, a full lock table, and a pad's lock made between a clear and its undo (rytm-emu and code review); FIX and CHRO + PLAY's undo after a sound load; the FX track's LFO page keys.
+
 ## 0.6.0: PERF and CHRO holds, SCENE + YES, scene changes in the quick perf rec (25 and 26 Nov 2026)
 
 The PERF hold takes the gestures QPER held (QPER keeps its link), CHRO holds the aftertouch assign (SAMPLER is stock's again), SCENE + YES writes a scene into the kit, and the quick perf rec keeps scene changes. The undo of an apply now also accepts the value it expected to write, so it does not depend on when stock's setter lands.
