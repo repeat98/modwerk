@@ -97,7 +97,9 @@ export class VendorTransportError extends Error {
   }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
-export interface Ep0Diagnostics { counts: number[]; supportsRemaining: boolean; remainingBytes?: number }
+/** `token`: the status byte of the last completed data stage's descriptor (ep0.c `last_token`: 0x40 halted, 0x20 data
+ * buffer error, 0x08 transaction error). Not a count, so it is never diffed. */
+export interface Ep0Diagnostics { counts: number[]; token: number; supportsRemaining: boolean; remainingBytes?: number }
 
 export interface VendorIdentity {
   canSubmit: boolean; base: string; model: string
@@ -416,7 +418,7 @@ export class UsbVendorTransport implements UploadTransport {
     const counts = [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
     const supportsRemaining = !!(view.getUint8(5) & 1)
     const remaining = length === 70 && supportsRemaining ? view.getUint16(68) : undefined
-    return { counts, supportsRemaining, remainingBytes: remaining !== undefined && remaining <= UPLOAD_MAX_FRAME ? remaining : undefined }
+    return { counts, token: view.getUint32(8 + 4 * 9) & 0xff, supportsRemaining, remainingBytes: remaining !== undefined && remaining <= UPLOAD_MAX_FRAME ? remaining : undefined }
   }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()

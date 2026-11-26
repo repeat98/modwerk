@@ -124,11 +124,19 @@ def testing_entry(result, day, title='Qualification run', command='device:qualif
 def log(*a): print(*a, file=sys.stderr, flush=True)
 
 
+def session_socket(path):
+    """The session's socket: a port number is TCP on this computer (Windows Python has no AF_UNIX), anything else a Unix socket."""
+    return socket.socket(socket.AF_INET) if path.isdigit() else socket.socket(socket.AF_UNIX)
+
+
+def session_address(path): return ('127.0.0.1', int(path)) if path.isdigit() else path
+
+
 def send(sequence):
     log('>', sequence)
-    s = socket.socket(socket.AF_UNIX)
+    s = session_socket(SOCKET)
     s.settimeout(40)  # the session answers within 20 s; never wait for ever
-    s.connect(SOCKET)
+    s.connect(session_address(SOCKET))
     s.sendall((sequence + '\n').encode())
     reply = s.makefile().read()
     if 'error:' in reply: raise RuntimeError(sequence + ': ' + reply.strip())

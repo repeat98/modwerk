@@ -100,6 +100,9 @@ it('checks real PR publication changes without executing module source', async (
     expect(run('--write').stderr).toContain('release requires populated CPU, DSP core and memory gauges')
     const withImpact={...qualified,resources:{...qualified.resources,impact:resourceImpactFixture()}}
     put(resolve(folder,'octamod.module.json'),JSON.stringify(withImpact))
+    // Every new version carries the test procedure's record (scripts/module-qualification.mjs, procedureRecordProblem).
+    expect(run('--base','HEAD','--write').stderr).toContain('has no record of `npm run test:procedure -- '+document.id+'` for 0.1.1')
+    put(resolve(folder,'TESTING.md'),'Fixture document for 0.1.1: `npm run test:procedure -- '+document.id+'`\n')
     expect(run('--base','HEAD','--write').status).toBe(0)
     // Updating executable source invalidates the tested-source identity.
     put(resolve(folder,'manifest.py'),'raise AssertionError("changed module must never execute")')
