@@ -79,9 +79,10 @@ export const DIAGNOSTIC_USB_EVENTS = ['connected', 'disconnected', 'sync_started
 /** The part of the site a browser error happened on, from the page's route: a fixed name, never the address. */
 export const DIAGNOSTIC_SITE_AREAS = ['library', 'configuration', 'octatrack', 'module', 'forum', 'account', 'admin', 'other'] as const
 /** An error's type, by its standard name, or one of the USB link's own two (a reply that timed out, a submission the
- * unit dropped or refused); anything else is OtherError. Never its message. */
+ * unit dropped or refused); NoErrorObject when a browser error comes without one (a cross-origin or extension script,
+ * a browser notice); anything else is OtherError. Never its message. */
 export const DIAGNOSTIC_ERROR_KINDS = ['TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'AbortError', 'NetworkError', 'NotFoundError',
-  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'TimeoutError', 'VendorTransportError', 'OtherError'] as const
+  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'TimeoutError', 'VendorTransportError', 'NoErrorObject', 'OtherError'] as const
 export type DiagnosticSiteArea = typeof DIAGNOSTIC_SITE_AREAS[number]
 export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 /** `load` and `unresponsive`: the connected unit's meters over the last minutes, per mille, as [mean, peak]; a meter

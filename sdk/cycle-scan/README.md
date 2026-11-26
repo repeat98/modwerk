@@ -84,45 +84,56 @@ It is a model, not a measurement: the unit stays the judge ([MODULE_PERFORMANCE.
 ```bash
 node scripts/cycle-scan.mjs unit              # anywhere: each record against its module's in-use reading; a report, it fails nothing
 node scripts/cycle-scan.mjs unit --markdown   # the table below
+node scripts/cycle-scan.mjs unit --write      # writes it here; `check` fails when the committed table differs
 ```
 
 Each module's `evidence/cpu-price.json` holds a reading `npm run device:price` took on an MKII: the DSP load meter of the
 slot's core with the effect picked on that slot in place of NONE, against the same scene without it (`inUseAdds`; T1-T4
-are core 1's meter, T5-T8 core 0's). A fresh pick starts from the effect's defaults, so the report compares it with the
-scan's run at the defaults. **Scale:** one point of the meter is 45.32 cycles a sample. `status.c`'s `busy()` gives per
-mille of `FRAME_CYCLES`, 72,520 (4,532 cycles a sample, the board's clock, as `CYCLE_SCAN.md`'s "% of a frame" uses, times
-16 samples a frame), from idle passes whose cycles were calibrated on the unit with `--dsp-burn` (11 October 2026,
-`idle_cycles` there). A module whose package requires a base DSP feature with a hardware charge in
-`sdk/machines/octatrack/dsp-sites.json` (the key bus: 51) has it added to the model, since that work runs outside the
-effect's proc and so outside the scan.
+are core 1's meter, T5-T8 core 0's). A fresh pick starts from the effect's defaults, so the report compares the reading's
+mean with the scan's run at the defaults, and its peak (the core's busiest block, which `device:price` keeps from
+24 November 2026) with the dearest run, which bounds every setting. **Scale:** one point of the meter is 45.32 cycles a
+sample. `status.c`'s `busy()` gives per mille of `FRAME_CYCLES`, 72,520 (4,532 cycles a sample, the board's clock, as
+`CYCLE_SCAN.md`'s "% of a frame" uses, times 16 samples a frame), from idle passes whose cycles were calibrated on the
+unit with `--dsp-burn` (11 October 2026, `idle_cycles` there). A module whose package requires a base DSP feature with a
+`hardware` charge in `sdk/machines/octatrack/dsp-sites.json` (the key bus) has it added to the model, since that work runs
+outside the effect's proc and so outside the scan.
+
+**Only like cases are compared.** A reading and a model are paired when they cover the same package of the record's
+version, the same setting, the transport playing, the same key-bus input for a module that reads the key bus (the scan's
+`dsp_host` feeds it silence; a reading names its own in `inputs.keyBus`, `live` or `silent`), and, where a base charge is added,
+a reading taken on a base that charge was timed on (the identities its evidence names). Any other pair prints "not
+comparable" with the reason and no ratio: re-measure on that case rather than read the gap as a model error.
 
 The readings, 18 November 2026, on development twins of base 0.7.8 (Sidechain Compressor's on another twin, `8850f539`),
 one 8-second reading each; modules with no DSP code moved the same meters by -0.6 to +0.6 points (±27 cycles) in the same
 runs, once 2.9. Records scanned 23 November 2026:
 
-| Module | Unit, in use (points = cycles a sample) | Defaults run | Model at defaults (+ base features) | Model, dearest | Unit ÷ model | Verdict |
-|---|---|---|---|---|---|---|
-| airwindows-chorus 0.1.3 | – | defaults/def | 602 | 649 | – | no in-use reading on the unit |
-| bbd 0.1.2 | 10.8 = 489 (T1 FX2) | STGS=1024/def | 469 | 528 | 1.04 | within 10 % |
-| euclid 0.1.5 | 5.5 = 249 (T1 FX2) | RATE=1/16/def | 232 | 232 | 1.07 | within 10 % |
-| everb 0.1.2 | 13.3 = 603 (T1 FX2) | REV=OFF/def | 603 | 665 | 1.00 | within 10 % |
-| lofi2 0.1.1 | 10.3 = 467 (T1 FX2) | RING/def | 425 | 654 | 1.10 | within 10 % |
-| miniverb 0.2.3 | 14.1 = 639 (T1 FX2) | RATE=1.01/def | 641 | 699 | 1.00 | within 10 % |
-| ring-sc 0.2.1 | 7.5 = 340 (T1 FX2) | DUCK/def | 5 + 51 keybus | 122 | 6.04 | **outlier** |
-| sidechain-compressor 0.2.2 | 5.5 = 249 (T5 FX1) | MON=OFF/def | 107 | 107 | 2.34 | **outlier** |
-| tapehead 0.1.2 | 9.3 = 421 (T1 FX2) | COLOR=NORM/def | 425 | 426 | 0.99 | within 10 % |
-| vibrato 0.1.0 | – | SHP=SINE/def | 204 | 207 | – | no in-use reading on the unit |
+<!-- generated: node scripts/cycle-scan.mjs unit --write (cycle-scan check fails when it differs) -->
+| Module | Unit, in use (points = cycles a sample) | Unit, peak | Defaults run | Model at defaults (+ base features) | Model, dearest (+ base features) | Unit ÷ model | Peak ÷ dearest | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| airwindows-chorus 0.1.3 | – | – | defaults/def | 602 | 649 | – | – | no in-use reading on the unit |
+| bbd 0.1.2 | 10.8 = 489 (T1 FX2) | – | STGS=1024/def | 469 | 528 | 1.04 | – | within 10 % |
+| euclid 0.1.5 | 5.5 = 249 (T1 FX2) | – | RATE=1/16/def | 232 | 232 | 1.07 | – | within 10 % |
+| everb 0.1.2 | 13.3 = 603 (T1 FX2) | – | REV=OFF/def | 603 | 665 | 1.00 | – | within 10 % |
+| lofi2 0.1.1 | 10.3 = 467 (T1 FX2) | – | RING/def | 425 | 654 | 1.10 | – | within 10 % |
+| miniverb 0.2.3 | 14.1 = 639 (T1 FX2) | – | RATE=1.01/def | 641 | 699 | 1.00 | – | within 10 % |
+| ring-sc 0.2.1 | 7.5 = 340 (T1 FX2) | – | DUCK/def | 5 + 43 keybus | 122 + 43 keybus | – | – | not comparable: the reading does not say what its key bus carried, the scan's was silent; the unit read on d3d71297, the keybus charge (43) was timed on 856cbbcf |
+| sidechain-compressor 0.2.2 | 5.5 = 249 (T5 FX1) | – | MON=OFF/def | 107 | 107 | – | – | not comparable: the unit measured package 9f22861f, not the published 0.2.2-experimental (cbd0fa73); the reading does not say what its key bus carried, the scan's was silent |
+| tapehead 0.1.2 | 9.3 = 421 (T1 FX2) | – | COLOR=NORM/def | 425 | 426 | 0.99 | – | within 10 % |
+| vibrato 0.1.0 | – | – | SHP=SINE/def | 204 | 207 | – | – | no in-use reading on the unit |
+<!-- end of the generated table -->
 
 - **Effects whose work is all in their proc:** the model at the defaults is 1 % above to 10 % below the unit (mean 3 %
   below), for six modules. LOFI2 (9.95 %) is the widest, and EUCLID's 7 % is within the meter's noise at its size.
   Upstream found its model 3.0 % *above* its own meter (`CYCLE_SCAN.md` section 1): the two meters differ, and Modwerk's
-  reads 7 to 19 % above octabam's slot costs for the same DSP code (LOFI2, BBD, EUCLID).
-- **Key-bus effects cost far more on the unit than the scan sees.** RINGMOD SC at its defaults runs 2.5 instructions a
-  sample in the scan (`dsp_host` feeds no key bus, so its key path may stay idle), yet the unit read 340 cycles on core 1,
-  where its key-bus tap is charged 51; core 0 read +0.9 points (41). Even its dearest run plus the tap (173) leaves half
-  of it unexplained. Sidechain Compressor read 249 on its own core against 107 modelled, and +6.3 points (285) on the
-  other core, where it has no instance: its detector and the key-bus tap are base-resident code on both cores
-  (`dsp-sites.json`'s `sidechain` and `keybus`), outside the proc. Whether the key path, the tap (timed on 23 October on
-  the older 41-instruction tap) or something else costs the rest needs a unit run.
+  reads 7 to 19 % above octabam's slot costs for the same DSP code (LOFI2, BBD, EUCLID). None of these readings kept a
+  peak, so nothing is compared with the dearest run yet.
+- **The key-bus effects are not comparable yet.** RINGMOD SC at its defaults runs 2.5 instructions a sample in the scan,
+  whose key bus is silent, while the unit's kick on T1 fed it: the unit read 340 cycles on core 1 and +0.9 points (41) on
+  core 0. Its reading was also taken on 0.7.8's 41-instruction tap, before the one-pass tap the charge (43) was timed on.
+  Sidechain Compressor read 249 on its own core and +6.3 points (285) on the other, where it has no instance: its detector
+  and the key-bus tap are base-resident code on both cores (`dsp-sites.json`'s `sidechain` and `keybus`), outside the
+  proc, and the build it was read on is not the published package. To compare them: read both on the current base with
+  what the key bus carried recorded, and scan their key path with the key bus fed.
 - **No reading to compare:** VIBRATO and Air Chorus (`airwindows-chorus`) have no `cpu-price.json` in-use reading yet;
   Output Matrix has no scan record (its mix is base-resident code too).

@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {
+      "event": "ev_play_increment",
+      "fn": "ungemach_play_increment",
+      "order": 25
+    }
+  ],
+  "contribute": [
+    {
+      "to": "ot_machines",
+      "data": "ungemach_machine",
+      "order": 60
+    }
+  ]
+}

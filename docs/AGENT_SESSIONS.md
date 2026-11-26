@@ -4,9 +4,9 @@ Since 19 November 2026. Developers build with coding agents on their own compute
 
 ## Review the session first
 
-Since 20 November 2026. Before the final message of a session that did real work (about half an hour or 40 tool calls, not a short question), the agent looks back at it once. `pr:ready` prints the reminder.
+Since 20 November 2026. Before the final message of a session that did real work (about half an hour or 40 tool calls, not a short question), the agent looks back at it once with `/modwerk-post-eval`. `pr:ready` prints the reminder.
 
-1. **Measure.** `npm run session -- review` reads this session's transcript and prints the wall time per tool, the slowest calls, the failed calls, what ran three times or more, and how long questions waited for the developer. Nothing is sent. A transcript holds no processor time, so wall time is the measure, and it includes waiting for a permission prompt.
+1. **Measure.** `npm run session -- review` reads this session's transcript and prints the wall time per tool, the slowest calls, the failed calls, what ran three times or more, how long questions waited for the developer, the times the developer stopped the agent or refused a call, the prompts that read like a correction or frustration (pasted text left out), and the development processes that used the most processor time on this computer. Nothing is sent. A transcript holds no processor time, so wall time is the measure for calls, and it includes waiting for a permission prompt.
 2. **Add what the figures cannot show:** where you guessed and were wrong, which guide, check or error message sent you the wrong way or said nothing, and what the developer had to correct or say twice.
 3. **Tell the developer at most three findings**, a line each: what cost time, why, and the fix. When nothing would spare a later session time, say so in a line and stop.
 
@@ -25,6 +25,8 @@ When a task is done (`npm run pr:ready` says Ready, or the developer stops) and 
 - **ask** (the default): ask, and share only on a yes. Write the developer's answer and the agent's own short account of what got in the way as the note: `npm run session -- share --note "…"`.
 - **always**: the developer said to share every session. Share it and say so in a line.
 - **never**: the developer said not to be asked. Don't offer it.
+
+A session that goes on after it was shared is shared again with `--new`: what the developer's earlier shares of it already hold stays out, so the owner gets only the rest, without working out `--skip` by hand.
 
 When the developer answers "always" or "never", save it with `npm run session -- prefer always|never` (in `~/.config/modwerk/session-sharing.json`). Never share without a yes or a standing "always". Ask once per session, never twice.
 

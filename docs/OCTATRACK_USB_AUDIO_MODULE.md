@@ -128,9 +128,29 @@ browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-
 **PROJ → MODWERK → SETTINGS → USB AUDIO → INPUTS** offers OFF, AB, CD
 and ABCD for a computer host. OFF is the default. AB and CD use the same
 stereo USB format and select where channels 1/2 arrive. ABCD assigns host
-channels 1–4 to the four inputs. The input stream and its implicit feedback
-are available at high speed. Full speed and Outbox keep their output layouts.
+channels 1–4 to the four inputs. The input stream is available at high
+speed. Full speed and Outbox keep their output layouts.
 When a block is unavailable, the affected inputs read from the jacks.
+
+### The input stream's clock (USB Audio 0.4.1)
+
+The controller has four endpoint pairs: EP0 control, EP1 mass storage, EP2 MIDI, EP3 audio. No IN endpoint is
+left for explicit feedback, and mass storage stays (owner, 24 November 2026). Up to 0.4.0, EP3 OUT was
+asynchronous and EP3 IN was marked as its implicit feedback. Windows' `usbaudio2` supports neither an asynchronous
+OUT without an explicit feedback endpoint nor implicit feedback
+([Microsoft](https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/usb-2-0-audio-drivers)). Windows 10
+refused the audio function with Code 10 when INPUTS was on (reported 24 November 2026).
+
+From 0.4.1, EP3 OUT is **adaptive** (`bmAttributes` 0x09) and EP3 IN is a plain asynchronous data endpoint (0x05),
+as it is with INPUTS OFF. The host sends the nominal rate on its own clock: Linux's `snd-usb-audio` does so for an
+adaptive sink and uses no implicit feedback for it. Apple's
+[TN3190](https://developer.apple.com/documentation/technotes/tn3190-usb-audio-device-design-considerations) defines
+an adaptive endpoint as one that adapts to the host's rate and singles out only adaptive IN; macOS has not run 0.4.1. The unit absorbs the difference to its crystal in `usb_audio_input_trim.c`. Once a
+block, before the block goes to the DSP, it averages the ring's fill over about 1.5 s. It holds that average within
+2 frames of the fill seen over the first 1.5 s after the cushion filled. Past that band, one block reads 17 ring frames (or 15) for its 16,
+interpolated across the block with a four-point Catmull-Rom curve, and the reader moves one frame. Trims are at least 64 blocks (23 ms) apart.
+Every other block is copied bit for bit. On the owner's MKII with Windows 11 (24 and 25 November 2026) the host ran 56 to 58 ppm fast, about 2.5 trims a second. Each trim is a
+pitch change of 1/16 for 0.36 ms. Vendor request 0x56 reports the trims as a sixteenth long, absorbed << 16 | repeated.
 
 Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA
 scheduler sends a staged input block to core 0 before an FX loader packet
@@ -140,10 +160,10 @@ leaves the analog input intact. The base gives USB priority on the crossbar
 while a duplex configuration is selected and restores its previous values
 when that configuration leaves.
 
-USB Audio 0.4.0-experimental publishes this duplex package (`scripts/octatrack-usb-audio-release.py`).
-It reports inventory kind 8. The output-only 0.3.0 package reports kind 7 and stays published as
-`configurable-0.3` in the package manifest, so the site replaces it on the next sync and uses its
-exact bytes for Undo. `npm run octatrack:base -- --beta --stock OS.bin --out DIR` still writes the same
+USB Audio 0.4.1-experimental publishes this duplex package (`scripts/octatrack-usb-audio-release.py`).
+It reports inventory kind 9. The 0.4.0 package (kind 8, `configurable-0.4`) and the output-only 0.3.0
+package (kind 7, `configurable-0.3`) stay published in the package manifest, so the site replaces them on
+the next sync and uses their exact bytes for Undo. `npm run octatrack:base -- --beta --stock OS.bin --out DIR` still writes the same
 package as `usb-audio-input.mwrm`. For panel automation, build a development twin with the same USB and DSP flags plus `--dev`.
 Use the existing
 [USB tools](../sdk/machines/octatrack/hw/README.md) to capture counters,

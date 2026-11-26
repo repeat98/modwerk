@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "version": "0.4.0-experimental",
+  "version": "0.4.1-experimental",
   "nativeManifest": "manifest.py",
   "media": [
     {
@@ -57,7 +57,7 @@
     {
       "path": "media/ot-inputs.png",
       "captureType": "emulator",
-      "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks.",
+      "caption": "With SEND TO on COMPUTER, open INPUTS. AB or CD plays USB 1/2 from the computer into inputs A/B or C/D; ABCD plays USB 1–4 into all four. OFF keeps the jacks. INPUTS ran on macOS with 0.4.0 and runs on Windows 11 with 0.4.1.",
       "alt": "INPUTS lists OFF, AB, CD and ABCD with OFF selected and YES SELECT.",
       "credit": "Modwerk, Octatrack MKII emulator capture",
       "license": "LicenseRef-OT-UI-Documentation",

@@ -17,6 +17,7 @@ OT = ROOT / 'sdk/machines/octatrack'
 sys.path.insert(0, str(OT / 'module-adapters'))
 sys.path.insert(0, str(OT))
 import base_usb_functions as functions  # noqa: E402
+import usb_audio_configurable  # noqa: E402
 import events  # noqa: E402
 from host_flags import SANITIZE  # noqa: E402
 
@@ -104,8 +105,22 @@ class UsbFunction(unittest.TestCase):
                         rows = list(functions.records(high))
                         self.assertEqual({r[2] for r in rows if r[1] == 4}, set(range(7)))
                         endpoints = {r[2]: r for r in rows if r[1] == 5}
+                        # The imported layouts declare the input stream asynchronous with EP3 IN as its
+                        # implicit feedback, as upstream does.
                         self.assertEqual(endpoints[0x03], bytes((7, 5, 3, 5, 48 * channels, 0, 2)))
                         self.assertEqual(endpoints[0x83][3], 0x25)
+                        # USB Audio's package (0.4.1) makes the input stream adaptive and the output
+                        # stream a plain asynchronous data endpoint: Windows' usbaudio2 supports no
+                        # implicit feedback and no asynchronous OUT without an explicit feedback
+                        # endpoint, and none is free.
+                        packaged = usb_audio_configurable.adaptive_input(high)
+                        endpoints = {r[2]: r for r in functions.records(packaged) if r[1] == 5}
+                        self.assertEqual(endpoints[0x03], bytes((7, 5, 3, 9, 48 * channels, 0, 2)))
+                        self.assertEqual(endpoints[0x83][3], 0x05)
+                        output_only = functions.configuration(base, duplex_descriptors, True, other, layout)
+                        self.assertEqual(endpoints[0x83], next(r for r in functions.records(output_only)
+                                                               if r[1] == 5 and r[2] == 0x83))
+                        self.assertEqual(usb_audio_configurable.adaptive_input(full), full)
 
     def test_slots_hold_each_configuration_and_the_clamps_read_the_live_length(self):
         plain = functions.assembly(base, descriptors)

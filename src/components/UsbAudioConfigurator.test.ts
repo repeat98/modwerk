@@ -23,7 +23,7 @@ describe('USB Audio setup before adding', () => {
   it('offers configuration instead of quick-add from the library and comparison', () => {
     const action = publishedUsbAudioPackage ? 'Add USB Audio to configuration' : 'Configure USB Audio'
     expect(card()).toContain(`aria-label="${action}"`)
-    const comparison = render(createElement(ModuleComparison, { ids: [USB_AUDIO_MODULE], selected: [], digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggle: noop, onToggleDigi: noop, onClose: noop }))
+    const comparison = render(createElement(ModuleComparison, { ids: [USB_AUDIO_MODULE], selected: [], digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [], 'model-cycles': [] }, onToggle: noop, onToggleDigi: noop, onClose: noop }))
     expect(comparison).toContain(publishedUsbAudioPackage ? '>Add USB Audio</button>' : '>Configure USB Audio</button>')
   })
   it('offers the published install action and the controls for that release', () => {
@@ -32,6 +32,7 @@ describe('USB Audio setup before adding', () => {
     if (publishedUsbAudioPackage) {
       expect(hero).toContain('Add to configuration</button>')
       expect(html).toContain('PROJ → MODWERK → SETTINGS → USB AUDIO')
+      expect(hero).toContain('runs on Windows 11 with 0.4.1, which Windows needs')
       expect(setup).toBeUndefined()
     } else {
       expect(hero).toContain('Configure USB Audio</button>')

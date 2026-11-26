@@ -1,0 +1,1 @@
+The Model:Cycles' `build_sites.py --sites` lets a C runtime module patch stock code at declared sites, carrying only the stock bytes' SHA-256, around the runtime loader's unchanged `build.py`; `mc_link.py` gains `remove`.
