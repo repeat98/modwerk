@@ -17,7 +17,7 @@ import sys
 import tempfile
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]   # sdk/drafts/ungemach; parents[3] once listed under sdk/octatrack/modules
+ROOT = HERE.parents[3]   # sdk/octatrack/modules/ungemach
 FLAGS = ['-std=c99', '-O1', '-g', '-fsanitize=undefined,address', '-fno-sanitize-recover=all']
 
 cc = shutil.which('cc')

@@ -23,6 +23,7 @@ extern volatile uint32_t dl_frames;
 void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
 extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
+extern volatile uint8_t mw_cpu_track_refusals[8];                 /* ... per track, so a record names its own */
 extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
 extern volatile uint32_t mw_frame_hushes;                         /* status.c: patterns begun with them silenced */
 extern volatile uint32_t mw_frame_skips;                          /* ... and the late entries held, each a DSP frame skipped */
@@ -40,6 +41,12 @@ extern volatile struct diag_trace modwerk_test_trace;
 #define TRACE (&modwerk_test_trace)
 extern volatile struct diag_lates modwerk_test_lates;
 #define LATES (&modwerk_test_lates)
+extern volatile struct diag_freeze_pc modwerk_test_freeze_pc;
+#define FREEZE_PC (&modwerk_test_freeze_pc)
+extern volatile uint16_t modwerk_test_interrupted[4]; /* the frame interrupt's exception frame: format and vector, SR, PC */
+#define INTERRUPTED modwerk_test_interrupted
+extern volatile uint32_t modwerk_test_tcb;
+#define CURRENT_TCB modwerk_test_tcb
 extern volatile uint8_t modwerk_test_running[16];
 #define LOG (&modwerk_test_log)
 #define CRASH modwerk_test_crash
@@ -51,6 +58,19 @@ extern volatile uint8_t modwerk_test_running[16];
 #define DTCN3 modwerk_test_timer
 extern uint32_t modwerk_test_modules[16]; /* the installed module ids, 0 past the end */
 static unsigned installed(uint32_t *ids, unsigned most) { unsigned n = 0; for (unsigned i = 0; i < 16u && n < most; ++i) if (modwerk_test_modules[i]) ids[n++] = modwerk_test_modules[i]; return n; }
+/* The battery copy of the current bank and stock's checks of it (test_diag.c models them). */
+extern uint8_t modwerk_test_cs1_parts[8][16], modwerk_test_cs1_patterns[16][16], modwerk_test_ui[0x16], modwerk_test_ui_saved[0x16];
+int32_t modwerk_test_settings_check(unsigned which);
+int32_t modwerk_test_validate(uint8_t *record);
+int32_t modwerk_test_stock_restore(void);
+#define SETTINGS_CHECK(i) modwerk_test_settings_check(i)
+#define CS1_PART(p, working) (modwerk_test_cs1_parts[2u * (p) + (working)])
+#define CS1_PATTERN(k) (modwerk_test_cs1_patterns[k])
+#define VALIDATE_PART(at) modwerk_test_validate(at)
+#define VALIDATE_PATTERN(at) modwerk_test_validate(at)
+#define STOCK_RESTORE() modwerk_test_stock_restore()
+#define UI_STATE modwerk_test_ui
+#define UI_SAVED modwerk_test_ui_saved
 #else
 /* Battery RAM nothing else uses: stock references nothing in 0x100f859c-0x100fff00, PLAY MODES and PLOCKS end at
  * 0x100f8f06 and fxmap.c's map starts at 0x100fe000. */
@@ -62,6 +82,15 @@ typedef char diag_fits_battery_ram[0x100fc000u + sizeof(struct diag_log) <= 0x10
 typedef char diag_trace_fits_battery_ram[0x100ffb30u + sizeof(struct diag_trace) <= 0x100fff00u ? 1 : -1];
 #define LATES ((volatile struct diag_lates *)0x100f9710u) /* after status.c's MWER (battery-ram.json) */
 typedef char diag_lates_fit[sizeof(struct diag_lates) == 24u ? 1 : -1];
+#define FREEZE_PC ((volatile struct diag_freeze_pc *)0x100f9728u) /* after MWLR (battery-ram.json) */
+typedef char diag_freeze_pc_fits[sizeof(struct diag_freeze_pc) == 48u ? 1 : -1];
+/* The exception frame of the interrupt modwerk_diag_frame runs in: the eDMA frame transfer's (level 6, stock's handler
+ * 0x40004840 saves 16 bytes, then its step 7 is dsp_hooks.s's dl_state7, which saves 44 and keeps the stack pointer in
+ * modwerk_diag_frame_sp before it calls dl_frame: build_core.py's DSP_EDITS), so the frame (format and vector, SR, PC)
+ * is 60 bytes above it. */
+volatile uint32_t modwerk_diag_frame_sp;
+#define INTERRUPTED ((const volatile uint16_t *)(uintptr_t)(modwerk_diag_frame_sp + 60u))
+#define CURRENT_TCB (*(volatile uint32_t *)0x800068fcu) /* the kernel's current task (octabam's KERNEL.md) */
 #define PLAYING (*(volatile uint32_t *)0x800065b8u == 1u) /* dsp.c's PLAYING */
 #define TEMPO24 (*(volatile uint32_t *)0x80001814u)        /* the tempo times 24, as Recorder Loop Fix reads it */
 #define SCREEN (*(volatile uint32_t *)0x460d165cu)         /* stock's list of input layers, the top one (status.c) */
@@ -75,6 +104,22 @@ static unsigned installed(uint32_t *ids, unsigned most)
     for (unsigned i = 0; i < got; ++i) ids[i] = (uint32_t)list[8u + 24u * i] << 24 | (uint32_t)list[9u + 24u * i] << 16 | (uint32_t)list[10u + 24u * i] << 8 | list[11u + 24u * i];
     return got;
 }
+/* The power-up's battery restore (0x40025770) and what it runs, in its order: three checks of the project's settings
+ * and arrangements in battery RAM, the Part validator (0x40002318, the base's mw_validate) on each saved Part and its
+ * working copy, and the pattern validator on each of the bank's 16 patterns. Each fixes in place and returns how many
+ * values it fixed. The UI state (current track, bank, Part, pattern) is main's copy of 0x100b14cc, taken before. */
+static int32_t settings_check(unsigned i)
+{
+    return i == 0 ? ((int32_t (*)(void))0x4000fda8u)() : i == 1 ? ((int32_t (*)(void))0x4000fec8u)() : ((int32_t (*)(void))0x4001065cu)();
+}
+#define SETTINGS_CHECK(i) settings_check(i)
+#define CS1_PART(p, working) ((uint8_t *)(uintptr_t)(((working) ? 0x100a4eceu : 0x100ab196u) + 0x18b2u * (p)))
+#define CS1_PATTERN(k) ((uint8_t *)(uintptr_t)(0x1001614eu + 0x8ed8u * (k)))
+#define VALIDATE_PART(at) (((int32_t (*)(uint8_t *))0x40002318u)(at))
+#define VALIDATE_PATTERN(at) (((int32_t (*)(uint8_t *))0x4009a670u)(at))
+#define STOCK_RESTORE() (((int32_t (*)(void))0x40025770u)())
+#define UI_STATE ((volatile uint8_t *)0x80000000u)
+#define UI_SAVED ((const volatile uint8_t *)0x100b14ccu)
 #endif
 
 #define FREEZE_FRAMES 13781u /* five seconds of frames (44,100 / 16 a second): longer than a project load */
@@ -82,6 +127,9 @@ static unsigned installed(uint32_t *ids, unsigned most)
 #define HOT 900u             /* per mille */
 #define HOT_GAP 36000u       /* ticks between two HOT incidents: ten minutes, so they leave room for the rest */
 #define SETTLED 3600u        /* no HOT in the first minute: the project load at the start runs the CPU near 95 % */
+#define SAMPLE_FRAMES 2756u  /* a second of frames: FREEZE_PC's samples, one at 5, 6, 7 and 8 s of a freeze */
+/* The eDMA frame transfer's vectors, channels 0, 1 and 7 (KERNEL.md), the one handler modwerk_diag_frame runs in. */
+#define FRAME_VECTOR(v) ((v) == 0x48u || (v) == 0x49u || (v) == 0x4fu)
 
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
@@ -138,6 +186,54 @@ static void add_freeze(volatile struct diag_log *l)
     for (unsigned i = sizeof r->seq; i < sizeof *r; ++i) ((volatile uint8_t *)r)[i] = from[i];
     push(l, r);
 }
+/* Right after its FREEZE: where the frame interrupt found the processor during it (diag.h's FREEZE_PC). */
+static void add_freeze_pc(volatile struct diag_log *l)
+{
+    volatile struct diag_freeze_pc *z = FREEZE_PC;
+    if (z->magic != DIAG_FREEZE_PC_MAGIC || z->boot != l->freeze.boot) return;
+    z->magic = 0;
+    volatile struct diag_incident *r = slot(l);
+    bare(r, DIAG_FREEZE_PC);
+    r->boot = z->boot, r->second = l->freeze.second, r->a = z->pc[0], r->screen = z->pc[1], r->tempo24 = z->pc[2];
+    r->cpu = z->sr[0], r->dsp0 = z->sr[1], r->dsp1 = z->sr[2];
+    volatile uint8_t *b = r->machine;
+    for (unsigned i = 0; i < 16u; ++i) b[i] = (uint8_t)(z->tcb[i / 4u] >> (24u - 8u * (i % 4u)));
+    for (unsigned i = 0; i < 4u; ++i) b[16u + i] = (uint8_t)(z->pc[3] >> (24u - 8u * i));
+    b[20] = (uint8_t)(z->sr[3] >> 8), b[21] = (uint8_t)z->sr[3];
+    push(l, r);
+}
+/* The power-up's battery restore of the current bank (status.s mw_boot_restore, in place of main's init call of stock's
+ * 0x40025770 at 0x4001fb78, before any tick). Stock refuses the whole bank when any of its checks has a single value to
+ * fix: the bank is then never copied in nor applied, every Part and pattern of it reads as stock's empty defaults, and
+ * the next background save writes that empty bank over its working file on the card, while the project's saved copy
+ * still holds the song (OCTATRACK_HARDWARE_TRAPS.md, "The boot validates the bank before any module is back"). Testers
+ * lost their song that way at every start after a save (25 November 2026, #2201): a value stock's checks fix, kept in
+ * the saved copy, came back with each RELOAD. Here every check runs first, in stock's order, and fixes what it finds,
+ * as a file load of the same bank would (the same validators, keeping their fixes); then stock's restore finds nothing
+ * to refuse and puts the bank back. Only a battery copy with more than RESTORE_TRUSTED fixes, more like one the battery
+ * lost than one value out of range, is refused as stock refuses it. diag.h's RESTORE records what was fixed. */
+#define RESTORE_TRUSTED 64u
+static struct { uint32_t fixes, settings, parts, patterns, first; int32_t result; } restore; /* .bss, cleared at boot */
+static uint32_t fixed(int32_t n) { return n > 0 ? (uint32_t)n : 0; }
+static uint16_t sixteen(uint32_t n) { return (uint16_t)(n < 65535u ? n : 65535u); }
+int32_t modwerk_boot_restore(void)
+{
+    uint32_t settings = 0, parts = 0, patterns = 0, first = 0, n;
+    for (unsigned i = 0; i < 3u; ++i)
+        if ((n = fixed(SETTINGS_CHECK(i)))) { settings += n; if (!first) first = i + 1u; }
+    for (unsigned p = 0; p < 4u; ++p) /* stock's order: each saved Part, then its working copy */
+        for (unsigned working = 0; working < 2u; ++working)
+            if ((n = fixed(VALIDATE_PART(CS1_PART(p, working))))) { parts += n; if (!first) first = 0x100u + 2u * p + working; }
+    for (unsigned k = 0; k < 16u; ++k)
+        if ((n = fixed(VALIDATE_PATTERN(CS1_PATTERN(k))))) { patterns += n; if (!first) first = 0x200u + k; }
+    uint32_t fixes = settings + parts + patterns;
+    if (settings) /* main took the UI state before the checks ran: take it again, fixed, as the restore reads the bank there */
+        for (unsigned i = 0; i < 0x16u; ++i) UI_STATE[i] = UI_SAVED[i];
+    int32_t result = fixes > RESTORE_TRUSTED ? -1 : STOCK_RESTORE();
+    restore.fixes = fixes, restore.settings = settings, restore.parts = parts, restore.patterns = patterns, restore.first = first;
+    restore.result = result;
+    return result;
+}
 static void start(volatile struct diag_log *l)
 {
     uint32_t crashes = CRASH[0] == 0x4d574352u ? CRASH[1] : 0, stalls = STALL[0] == 0x4d575354u ? STALL[1] : 0;
@@ -147,13 +243,21 @@ static void start(volatile struct diag_log *l)
         l->crash_seen = crashes, l->stall_seen = stalls;
         l->version = DIAG_VERSION, l->magic = DIAG_MAGIC;
     }
-    if (l->freeze_state) add_freeze(l), l->freeze_state = 0; /* the last session froze; a = 0 if it never came back */
+    if (l->freeze_state) add_freeze(l), add_freeze_pc(l), l->freeze_state = 0; /* the last session froze; a = 0 if it never came back */
     l->boot = l->boot + 1u;
     add(l, DIAG_START, crashes << 16 | (stalls & 0xffffu), 1);
     add(l, DIAG_BASE, (uint32_t)modwerk_base_digest[0] << 24 | (uint32_t)modwerk_base_digest[1] << 16 | (uint32_t)modwerk_base_digest[2] << 8 | modwerk_base_digest[3], 0);
     if (crashes != l->crash_seen) add(l, DIAG_CRASH, CRASH[3], 0);
     if (stalls != l->stall_seen) add(l, DIAG_STALL, STALL[2], 0);
     l->crash_seen = crashes, l->stall_seen = stalls;
+    if (restore.fixes || restore.result) { /* the power-up's restore had something to fix (diag.h RESTORE) */
+        volatile struct diag_incident *r = slot(l);
+        bare(r, DIAG_RESTORE);
+        r->boot = l->boot, r->second = 0, r->a = restore.fixes;
+        r->cpu = sixteen(restore.settings), r->dsp0 = sixteen(restore.parts), r->dsp1 = sixteen(restore.patterns);
+        r->screen = restore.first, r->tempo24 = (uint32_t)restore.result;
+        push(l, r);
+    }
 }
 
 #ifdef MODWERK_DEV
@@ -222,13 +326,20 @@ static void diag_tick(void)
     ticks = ticks + 1u;
     uint32_t stalled = stall_count(); /* a stall record since the last tick: keep the frames before it */
     if (stalled != stalls) { if (stalled) keep_trace(stalled); stalls = stalled; }
-    if (l->freeze_state == 2u) add_freeze(l), l->freeze_state = 0;
+    if (l->freeze_state == 2u) add_freeze(l), add_freeze_pc(l), l->freeze_state = 0;
     uint32_t skipped = mw_frame_sheds; /* the frame guard skipped a render: at most one incident in HOT_GAP */
     if (skipped != sheds && (!shed_at || ticks - shed_at >= HOT_GAP))
         add(l, DIAG_SHED, (mw_frame_shed_tracks & 0xffu) << 24 | (skipped & 0xffffffu), 1), shed_at = ticks, sheds = skipped;
     uint32_t refusals = mw_cpu_refusals; /* the CPU budget refused a machine: the tracks and the count, as the skips */
-    if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP))
-        add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | (refusals & 0xffffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+    if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP)) {
+        /* Which tracks since the last CPU record, so the record's `machine` says whose price it was: their counters
+         * moved. Written only by machine_registry.c's cpu_refuse and status.c's frame admission, never here, so the tick
+         * that charges may be another task's. */
+        static uint8_t seen[8];
+        uint32_t recent = 0;
+        for (unsigned t = 0; t < 8u; ++t) if (mw_cpu_track_refusals[t] != seen[t]) seen[t] = mw_cpu_track_refusals[t], recent |= 1u << t;
+        add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | recent << 16 | (refusals < 0xffffu ? refusals : 0xffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+    }
     uint32_t braked = mw_frame_brakes; /* the brake caught the frame interrupt falling behind: each time, with the tracks shed */
     if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
     uint32_t hushed = mw_frame_hushes; /* a pattern predicted past the ceiling began with them silenced: flagged, once in HOT_GAP */
@@ -299,8 +410,24 @@ int modwerk_diag_key(int code, int pressed)
     return 0;
 }
 
+/* At 5, 6, 7 and 8 s of a freeze (sample k): what the frame transfer's interrupt interrupted, and the current task. */
+static void freeze_pc(volatile struct diag_log *l, unsigned k)
+{
+    volatile struct diag_freeze_pc *z = FREEZE_PC;
+    if (!k) {
+        z->magic = 0, z->boot = l->boot;
+        for (unsigned i = 0; i < DIAG_FREEZE_PC_SAMPLES; ++i) z->pc[i] = 0, z->tcb[i] = 0, z->sr[i] = 0;
+    }
+    const volatile uint16_t *x = INTERRUPTED;
+    uint32_t format = x[0];
+    z->sr[k] = x[1];
+    z->pc[k] = FRAME_VECTOR(format >> 2 & 0xffu) ? (uint32_t)x[2] << 16 | x[3] : 0xffffffffu;
+    z->tcb[k] = CURRENT_TCB;
+    if (!k) z->magic = DIAG_FREEZE_PC_MAGIC;
+}
+
 /* In the frame interrupt (level 5): a few compares a frame, and once a freeze the context, well under the 200 µs
- * the frame interrupt may be held (OCTATRACK_HARDWARE_TRAPS.md). It writes only the freeze slot. */
+ * the frame interrupt may be held (OCTATRACK_HARDWARE_TRAPS.md). It writes only the freeze slot and FREEZE_PC. */
 void modwerk_diag_frame(void)
 {
     static uint32_t seen, still, last;
@@ -324,6 +451,8 @@ void modwerk_diag_frame(void)
         r->seq = 0, r->boot = l->boot, r->second = ticks / 60u, r->a = 0;
         l->freeze_state = 1u;
     }
+    if (l->freeze_state == 1u && still >= FREEZE_FRAMES && (still - FREEZE_FRAMES) % SAMPLE_FRAMES == 0u
+        && (still - FREEZE_FRAMES) / SAMPLE_FRAMES < DIAG_FREEZE_PC_SAMPLES) freeze_pc(l, (still - FREEZE_FRAMES) / SAMPLE_FRAMES);
 }
 
 /* The log, then crash.c's and dsp.c's records and the trace (diag.h), then zeros. */

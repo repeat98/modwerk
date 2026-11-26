@@ -103,6 +103,9 @@ int mw_project_fx_move(struct dl_allocator *allocator, const uint8_t ids[16], ui
 int mw_project_sidechain_used(unsigned compressor);
 int mw_project_fx_wait(const uint8_t ids[16]); /* negative: draining, positive: plan the slots now */
 int mw_project_sidechain_notice(void);         /* consume one confirmed pause */
+void mw_project_sidechain_refused(void);       /* the board: no room for Sidechain's engines where the bank uses it */
+/* The FX allocator's soft ceiling on core c: `capacity` less the top words held controllers' engines will still claim. */
+unsigned modwerk_dsp_soft_ceiling(unsigned c, unsigned capacity);
 /* Unplace and free every engine no held slot names: only when its feature is known dormant on that core (`mask`,
  * bit c of `known`), the core is free (`busy`) and the sequencer is quiet. */
 void mw_engines_collect(unsigned held, const uint8_t mask[2], unsigned known, const uint8_t busy[2]);

@@ -6,7 +6,7 @@ Everything here was observed by the author (GnocchiBalboa) and the coding agent 
 
 This version's source (commit 8a5d506a, `module/ungemach`) is the engine of the diagnostic build v68d with the measurement code compiled out; its output renders identically to v68 (see Host tests). On the author's live-set MKI, v68d was kept, played and measured (Performance below), and its sound accepted.
 
-On 24 November 2026 the release package of this source, `a8bcdca3`, was priced and qualified on the same MKI (CPU price and Qualification below). The package now carries that price in its descriptor (`reserved[0]` = 15), which is the only byte that differs: `37d7a278`. That package went through the persistence checks the same day (Persistence below).
+On 24 November 2026 the release package of this source, `a8bcdca3`, was priced and qualified on the same MKI (CPU price and Qualification below). The package now carries that price in its descriptor (`reserved[0]` = 15), which is the only byte that differs: `37d7a278`. That package went through the persistence checks the same day (Persistence below). Moved out of `sdk/drafts/` for the release (25 November 2026), with only include paths and a comment changed, the source still builds `37d7a278` byte for byte.
 
 ## Persistence
 

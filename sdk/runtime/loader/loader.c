@@ -853,11 +853,15 @@ static int __attribute__((used)) rest_poll_context(const struct runtime_context 
     uint32_t epoch = owner_epoch, want[REST_WORDS], any = 0, differs = 0;
     for (unsigned w = 0; w < REST_WORDS; ++w) any |= asks[w], want[w] = 0;
     if (!any || (epoch & 1u)) return 0; /* resting positions are asking ones: nothing asks, nothing rests */
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
-        const struct runtime_module *m = asks[i / 32u] >> (i % 32u) & 1u ? live[i] : 0;
-        uintptr_t f = m ? m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] : 0;
-        if (f ? !RUNTIME_ASK_IN_USE(f) : judged(m) && !RUNTIME_MACHINE_IN_USE(m)) want[i / 32u] |= 1u << (i % 32u);
-    }
+    /* Only the asking positions (each UI tick: stepping through all of them for one asking module cost 1,300
+     * instructions, an emulated 0.8.2 twin with one effect installed, 25 November 2026). */
+    for (unsigned w = 0; w < REST_WORDS; ++w)
+        for (uint32_t bits = asks[w], i = w * 32u; bits; bits >>= 1, ++i) {
+            if (!(bits & 1u)) continue;
+            const struct runtime_module *m = live[i];
+            uintptr_t f = m ? m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] : 0;
+            if (f ? !RUNTIME_ASK_IN_USE(f) : judged(m) && !RUNTIME_MACHINE_IN_USE(m)) want[w] |= 1u << (i % 32u);
+        }
     for (unsigned w = 0; w < REST_WORDS; ++w) differs |= want[w] ^ resting[w];
     if (!differs) return 0;
     uint32_t lock = modwerk_machine_lock();
