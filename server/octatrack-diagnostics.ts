@@ -75,7 +75,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
   const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect','machine','set'])
     // Another machine's log names it, carries its set identity instead of the Octatrack's hashes, and nothing else.
-    && (!('machine' in value) || value.event === 'device_log' && value.phase === 'ready' && DIAGNOSTIC_LOG_MACHINES.some(machine => machine === value.machine) && !('base' in value) && !('active' in value))
+    && (!('machine' in value) || value.event === 'device_log' && value.phase === 'ready' && DIAGNOSTIC_LOG_MACHINES.some(machine => machine === value.machine) && ['base','active','error','result','refusal'].every(key => !(key in value)))
     && (!('set' in value) || 'machine' in value && object(value.set) && exactly(value.set, 'bytes,crc') && uint(value.set.crc) && uint(value.set.bytes))
     && (!('restore' in value) || value.event === 'health' && 'reading' in value && restoreList(value.restore))
     && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')

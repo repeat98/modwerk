@@ -6,7 +6,7 @@
  * 2026-11-19.1 says reports may lead to a personal email about a problem they show and its fix (server/diagnostics-mail.ts);
  * the owner chose to let it cover everyone already sharing (19 Nov 2026).
  * 2026-11-25.1 adds an Analog Rytm MKII's own log, read on its page (`machine`, `set`); it covers everyone already
- * sharing, as 2026-11-19.1 did (Nathaniel Pavel, maintainer, 25 Nov 2026).
+ * sharing, as 2026-11-19.1 did (Nathaniel Pavel, maintainer, 25 Nov 2026; for the owner to confirm before base-next ships).
  * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
  * never a reason to ask members again. */
 export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-25.1'

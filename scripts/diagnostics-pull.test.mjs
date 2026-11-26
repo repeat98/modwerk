@@ -46,12 +46,13 @@ describe('diagnostics pull', () => {
     const load = { seq: 3, boot: 1, minute: 5, cpu: [585, 636], dsp1to4: [0, 0], dsp5to8: [0, 0], samples: 600, playing: 0, frameGap: 0, tickGap: 76 }
     const record = (seq, kind, a) => ({ seq, boot: 1, second: 90, kind, a, cpu: 585, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0), fx: Array(16).fill(0), keys: [...Array(15).fill(255), 0x31], screen: 0, tempo24: 0, playing: false })
     const rytm = { event: 'device_log', phase: 'ready', machine: 'analog-rytm-mkii', set: { crc: 0xf92cbc54, bytes: 237004 } }
-    const events = [entry(1, 'rytmer', { ...rytm, log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }),
-      entry(2, 'rytmer', { ...rytm, log: { loads: [load], incidents: [] } })] // sent twice: kept once
+    const events = [entry(1, 'rytmer', { ...rytm, id: 'a', log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }),
+      entry(2, 'rytmer', { ...rytm, id: 'a', log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }), // sent twice: kept once
+      entry(3, 'rytmer', { ...rytm, id: 'b', log: { loads: [load], incidents: [] } })] // the same record from the next boot: its own
     const member = members(events).get('rytmer')
     expect(member.incidents).toBeUndefined()
     const text = summary({ events, counts: [] })
-    expect(text).toContain("  Analog Rytm MKII's log (set f92cbc54, 237004 bytes): 1 five-minute records, CPU peak 63.6%, mean 58.5%")
+    expect(text).toContain("  Analog Rytm MKII's log (set f92cbc54, 237004 bytes): 2 five-minute records, CPU peak 63.6%, mean 58.5%")
     expect(text).toContain('  analog-rytm-mkii: #2 +1m30s base set f92cbc54')
     expect(text).toContain('  analog-rytm-mkii: #4 +1m30s freeze 5.0 s, cpu 58.5%, stopped, keys 31')
     expect(text).not.toContain('unit: ')

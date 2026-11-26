@@ -118,7 +118,11 @@ describe('the Analog Rytm MKII page and diagnostics', () => {
     expect(read).toHaveBeenCalledTimes(1)
     expect(diagnostics.report).toHaveBeenCalledWith('analog-rytm-mkii', log, { crc: 0x5b81f884, bytes: 204316 })
     await settle(2100)
-    expect(read).toHaveBeenCalledTimes(1)
+    expect(read).toHaveBeenCalledTimes(1) // not at the next reading
+    const now = Date.now(), clock = vi.spyOn(Date, 'now').mockReturnValue(now + 600_000)
+    await settle(2100)
+    clock.mockRestore()
+    expect(read).toHaveBeenCalledTimes(2) // ten minutes on
   })
   it('reads no log without sharing, and says where to turn it on', async () => {
     const read = vi.fn(async () => ({ log }))

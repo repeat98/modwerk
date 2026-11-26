@@ -240,7 +240,9 @@ export function members(events) {
     if (data.machine) {
       const unit = (member.machines ??= {})[data.machine] ??= { loads: new Map(), incidents: new Map() }
       if (data.set) unit.set = data.set
-      for (const kind of ['incidents', 'loads']) for (const r of data.log?.[kind] ?? []) unit[kind].set(JSON.stringify([r.seq, r.boot, r.kind, r.second ?? r.minute, r.a, r.cpu]), r)
+      // Its log starts again at every boot (start 1, seq 1), so a record is told apart by the report it came in: a
+      // group sent twice keeps its id (derived from the log's nonce and seqs in the browser), another boot's never has it.
+      for (const kind of ['incidents', 'loads']) for (const r of data.log?.[kind] ?? []) unit[kind].set(data.id + '/' + r.seq, { ...r, at: createdAt })
       found.set(username, member)
       continue
     }
@@ -289,7 +291,7 @@ export function reportsByMember(issues) {
 const MACHINE_NAMES = { 'analog-rytm-mkii': 'Analog Rytm MKII' }
 export function machineLines(member) {
   return Object.entries(member.machines ?? {}).flatMap(([machine, unit]) => {
-    const loads = [...unit.loads.values()], incidents = [...unit.incidents.values()].filter(r => r.kind !== 'start').sort((a, b) => a.seq - b.seq)
+    const loads = [...unit.loads.values()], incidents = [...unit.incidents.values()].filter(r => r.kind !== 'start').sort((a, b) => a.at.localeCompare(b.at) || a.seq - b.seq)
     const rytmIncident = r => `${r.kind}` + (r.kind === 'freeze' ? ` ${(r.a * 32 / 48000).toFixed(1)} s` : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'base' ? ` set ${r.a.toString(16).padStart(8, '0')}` : '')
       + (r.kind === 'base' ? '' : `, cpu ${percent(r.cpu)}, ${r.playing ? 'playing' : 'stopped'}, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}`)
     return [`  ${MACHINE_NAMES[machine] ?? machine}'s log` + (unit.set ? ` (set ${unit.set.crc.toString(16).padStart(8, '0')}, ${unit.set.bytes} bytes)` : '')
