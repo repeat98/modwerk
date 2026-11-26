@@ -114,6 +114,21 @@ describe('module doctor', () => {
     } finally { rmSync(draft, { recursive: true, force: true }); rmSync(clone, { recursive: true, force: true }) }
     expect(existsSync(join(root, 'sdk/octatrack/modules', id))).toBe(false)
   }, moduleCheckTimeout + 30_000)
+  // npm run lint's rules on the module's own scripts, before anything is measured or stamped on them.
+  it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('lints a draft\'s own scripts', () => {
+    const id = 'zz-lint-' + process.pid, draft = join(root, 'sdk/drafts', id)
+    try {
+      const made = spawnSync(process.execPath, ['scripts/scaffold-module.mjs', id, '--kind', 'coldfire', '--author', 'example-author'], { cwd: root, encoding: 'utf8', env: { ...process.env, MODWERK_BOARD: 'off' } })
+      expect(made.status, made.stderr).toBe(0)
+      writeFileSync(join(draft, 'tool.mjs'), "import process from 'node:process'\nprocess.stdout.write(String(1))\n")
+      expect(doctor('--draft', id).stdout).toMatch(/✓ lint +1 script pass/)
+      writeFileSync(join(draft, 'tool.mjs'), 'console.log(process.argv)\n')
+      const result = doctor('--draft', id).stdout
+      expect(result).toMatch(/✗ lint +2 errors, first: tool\.mjs:1 'console' is not defined/)
+      expect(result).toContain('npx eslint sdk/drafts/' + id)
+    } finally { rmSync(draft, { recursive: true, force: true }) }
+    expect(existsSync(join(root, 'sdk/octatrack/modules', id))).toBe(false)
+  }, 2 * moduleCheckTimeout)
   // Two tiers: a draft is judged on what trying and sharing it needs; what listing it needs reads as still to do until --release.
   it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('judges a draft as experimental, and as a release with --release', () => {
     const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octatrack/modules', name)))

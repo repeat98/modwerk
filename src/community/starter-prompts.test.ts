@@ -210,6 +210,14 @@ describe('starter prompts', () => {
     expect(zd2).not.toContain('docs/ZDL_MODULE_CONTRACT.md')
     expect(zd2).not.toContain('MIDISTOMP (MIT)')
     expect(zd2).toContain('no stock Zoom code')
+    expect(zd2).toContain('which runs on this pedal')
+    // The clean-room route is shown on the G1 FOUR only; the other ZD2 pedals say it is unproven there.
+    for (const id of ['zoom-ms-200d-plus', 'zoom-g5n'] as const) {
+      const other = starterPrompt(id, startersFor(id)[0])
+      expect(other).toContain('unproven on this pedal')
+      expect(other).not.toContain('which runs on this pedal')
+      expect(starterReading(id, startersFor(id)[0])).toContain('docs/ZOOM_PATCH_PROTOCOL.md')
+    }
     expect(readFileSync('docs/ZOOM_ZD2.md', 'utf8')).toContain('## Next steps')
     expect(starterPrompt('lxr-02', startersFor('lxr-02')[0])).not.toContain('Ziddle')
   })

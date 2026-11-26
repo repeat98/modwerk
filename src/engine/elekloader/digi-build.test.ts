@@ -3,7 +3,7 @@ import { DIGI_MODS } from '../../devices/digi-mods'
 import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
-import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled, isCoreBuildPreview } from './protocol'
+import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled, digiDownloadsOpen, isCoreBuildPreview } from './protocol'
 import { baseVariant, rytmVariant } from './machine-build'
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json'
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
@@ -47,9 +47,15 @@ describe('the vendored elekloader catalog', () => {
       mods: [], missing: [],
     })
     expect(baseVariant('model-cycles', [])).toBe('base')
-    // a research preview: the page builds the base alone, and downloads wait for review
+    // a research preview: the page builds the base alone; beta testers download it, everyone else waits for review
     expect(isCoreBuildPreview('model-cycles')).toBe(true)
     expect(digiDownloadsEnabled('model-cycles')).toBe(false)
+    expect(digiDownloadsOpen('model-cycles', true)).toBe(true)
+    expect(digiDownloadsOpen('model-cycles', false)).toBe(false)
+    // the beta list opens nothing else, and a released machine stays open without the beta
+    expect(digiDownloadsOpen('digitakt-ii', true)).toBe(false)
+    expect(digiDownloadsOpen('digitakt', false)).toBe(true)
+    expect(digiDownloadsOpen('constructor', true)).toBe(false)
   })
   it('reports modules without a file for the chosen release', () => {
     expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })

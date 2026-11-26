@@ -76,6 +76,35 @@ int modwerk_machine_transport_stopped(uint32_t word, const volatile uint8_t *tra
     for (unsigned i = 0; i < 16u; ++i) if (tracks[i] != 0u && tracks[i] != 2u) return 0;
     return 1;
 }
+/* Stock's track recorders keep two 84-byte state rows per track (bank A rows 0-7, bank B rows 8-15; the state byte,
+ * 0x80004f1e onwards, 0 idle, 1 pending, 2 recording), and bit t of 0x80004f18 selects the bank track t records into
+ * now. A recorder started again while it records switches to its other bank, and STOP clears only that one: the bank
+ * it left keeps its 2 until the track records again, with no recording behind it (stock in the emulator,
+ * sdk/drafts/beat-slicer/boot_recorder.py: no PCM or map store follows; the sample editor and Amiga read the rows this
+ * way). Reading every row as "nonzero records" left a unit that had once retriggered a recorder refusing every sync
+ * with "Stop playback or finish recording" while it was stopped, until a power cycle (#2211). So a track records
+ * while the row it records into is not idle, or its other row holds anything but idle or that retained 2 (a start
+ * still pending, or a value never seen). The reason, with the track (0-7) in the high nibble; 0 none. */
+unsigned modwerk_machine_recorder_busy(const volatile uint8_t *rows, uint32_t banks)
+{
+    for (unsigned t = 0; t < 8u; ++t) {
+        unsigned selected = banks >> t & 1u;
+        uint8_t active = rows[84u * (t + 8u * selected)], other = rows[84u * (t + 8u * (1u - selected))];
+        if (active) return MACHINE_BUSY_RECORDING | t << 4;
+        if (other != 0u && other != 2u) return MACHINE_BUSY_RECORDER | t << 4;
+    }
+    return 0;
+}
+/* Why the unit is not stopped (0: it is): a recorder (above), the transport long, or the track byte (high nibble 0-15)
+ * that is neither rewound nor paused. */
+unsigned modwerk_machine_busy_reason(const volatile uint8_t *rows, uint32_t banks, uint32_t word, const volatile uint8_t *tracks)
+{
+    unsigned recorder = modwerk_machine_recorder_busy(rows, banks);
+    if (recorder) return recorder;
+    if (word != 0u && word != 2u) return MACHINE_BUSY_TRANSPORT;
+    for (unsigned i = 0; i < 16u; ++i) if (tracks[i] != 0u && tracks[i] != 2u) return MACHINE_BUSY_TRACK | i << 4;
+    return 0;
+}
 
 /* Code/data references may retain either alias of the same physical DRAM. */
 uint32_t modwerk_machine_reference(uint32_t value)
@@ -86,6 +115,7 @@ uint32_t modwerk_machine_reference(uint32_t value)
 #ifdef MODWERK_HOST
 int modwerk_test_stopped = 1;
 int modwerk_machine_stopped(void) { return modwerk_test_stopped; }
+unsigned modwerk_machine_busy(void) { return modwerk_test_stopped ? 0u : (unsigned)MACHINE_BUSY_TRANSPORT; }
 int modwerk_test_usb_disk;
 int modwerk_machine_usb_disk(void) { return modwerk_test_usb_disk; }
 void *modwerk_machine_uncached(void *p) { return p; }
@@ -102,12 +132,15 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max, const s
 #define U8(a) (*(volatile uint8_t *)(a))
 #define U32(a) (*(volatile uint32_t *)(a))
 /* The logger's flush check (sdk/runtime/logging/stock_140c.c), minus its card and engine-task conditions: no recorder
- * active, and the transport and every track stopped, rewound or paused (the logger itself still waits for a rewind). */
-int modwerk_machine_stopped(void)
+ * recording, and the transport and every track stopped, rewound or paused (the logger itself still waits for a rewind). */
+static unsigned machine_busy(void)
 {
-    for (unsigned i = 0; i < 16; ++i) if (U8(0x80004f1eu + i * 84u)) return 0;
-    return modwerk_machine_transport_stopped(U32(0x800065b8u), (const volatile uint8_t *)0x80006500u);
+    return modwerk_machine_busy_reason((const volatile uint8_t *)0x80004f1eu, U32(0x80004f18u), U32(0x800065b8u),
+                                       (const volatile uint8_t *)0x80006500u);
 }
+int modwerk_machine_stopped(void) { return !machine_busy(); }
+int modwerk_runtime_volatile_busy(void); /* loader.c */
+unsigned modwerk_machine_busy(void) { return modwerk_runtime_volatile_busy() ? MACHINE_BUSY_JOURNAL : machine_busy(); }
 /* Stock's USB DISK MODE is open (its flag, 1 while it is): stock holds the DSP frames still there and starts them
  * again with the project it loads on the way out. dsp.c's stall watchdog stays out: its recovery, run inside the
  * mode, left the frames stopped after it until a power cycle (finding 72; an MKII, 10 November 2026). */

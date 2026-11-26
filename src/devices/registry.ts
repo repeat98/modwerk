@@ -69,7 +69,7 @@ export function deviceSteps(device: Pick<DeviceProfile, 'family'>) {
 
 // The Zoom pedals that load ZD2 effects (docs/ZOOM_ZD2.md). Every other Zoom pedal is of the ZDL family
 // (docs/ZOOM_MULTISTOMP.md), whose pedal page, link, base and proposed module contract do not apply to these.
-const ZD2_PEDALS: readonly string[] = ['zoom-g1-four']
+const ZD2_PEDALS: readonly string[] = ['zoom-g1-four', 'zoom-ms-200d-plus', 'zoom-g5n']
 export const isZd2Pedal = (device: Pick<DeviceProfile, 'id' | 'family'>) => device.family === 'zoom' && ZD2_PEDALS.includes(device.id)
 
 // Where a machine is ready for its first module: the core on Elektron machines; on Zoom pedals a loading effect, on

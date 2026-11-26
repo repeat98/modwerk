@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "kind": "EMULATOR_UI_ONLY",
+  "moduleVersion": "0.1.3-experimental",
+  "nativeSourceRevision": "4ed908fa76a5fa93cc2f053242af4e39d80c0ccf",
+  "baseIdentity": "4c7eb79b844c81391f62c5ce99250101a711506ba982ece678122dd66838885f",
+  "packageSha256": "e6dc7f57abdfb35cfec4955673ec1f8828eb10557fc332f818820357ca8dddb8",
+  "firmwareImageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+  "emulatorSha256": "b76fe7c3360be26128e40dd268123db8aa11964241fbc8457fce0e7188881466",
+  "nativeUpstreamRevision": "bc1445238541e120fbb0ad72e90c89caf97f4d24",
+  "frames": [
+    {
+      "path": "media/qualification-20261125-full.png",
+      "sha256": "bcc8ea89f8c829ba62c339118380f429fb42ca3bf70a5a2929bbad45597cbfd4",
+      "width": 256,
+      "height": 128
+    },
+    {
+      "path": "media/qualification-20261125-local.png",
+      "sha256": "14eaf8eeab21852b027e7b59dd775948d78c333b57f9bee9ea26a09b09438887",
+      "width": 256,
+      "height": 128
+    },
+    {
+      "path": "media/qualification-20261125-main.png",
+      "sha256": "e427e035ed8108bb416d4ab8134bcac3b0fb4cb64804cb50f1debba89ef9f2d3",
+      "width": 256,
+      "height": 128
+    }
+  ],
+  "observations": [
+    "FRACT selectable on T1; six MAIN controls visible.",
+    "SETUP PAN knob retained; encoder C toggles the binary SRNG between LOCAL and FULL.",
+    "No sample loaded: playback, sound and DSP/timing qualification not established."
+  ],
+  "hardware": "NOT_RUN",
+  "keep": false,
+  "writesToPhysicalDevice": false
+}

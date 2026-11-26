@@ -9,7 +9,9 @@ import { noteSupportInstall } from '../community/support-prompt'
 import { SupportLine } from './SupportDialog'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
-import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
+import { digiDownloadsOpen } from '../engine/elekloader/protocol'
+import { hasBetaUi } from '../community/beta-access'
+import { useCommunity } from '../community/context'
 import { FIRMWARE_SHARING_NOTICE, FLASHING_RISKS } from '../firmware-notices'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { RecoveryNotice } from './RecoveryNotice'
@@ -19,8 +21,6 @@ import type { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { Icon } from './Icon'
 import { BuildProgressIndicator } from './BuildProgressIndicator'
 import { useSetWords } from '../community/beta-ui'
-import { hasBetaUi } from '../community/beta-access'
-import { useCommunity } from '../community/context'
 import { usbSendPort } from '../engine/elektron/usb-upgrade'
 import { ElektronSendDialog } from './ElektronSendDialog'
 
@@ -33,7 +33,8 @@ const kib = (bytes: number) => (bytes / 1024).toFixed(0) + ' KB'
 
 export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport, exported, canExport, results }: { device: { id: DigiMod['device']; name: string; firmware?: { recovery: string } }; firmware: ReturnType<typeof useDigiFirmware>; moduleIds: readonly string[]; storage?: BuildStorage; onExport: () => void; exported: boolean; canExport: boolean; results: HTMLElement | null }) {
   const w = useSetWords()
-  const downloadsEnabled = digiDownloadsEnabled(device.id)
+  // Released machines for everyone; a beta-download machine (the Model:Cycles) for beta testers only.
+  const downloadsEnabled = digiDownloadsOpen(device.id, hasBetaUi(useCommunity().session))
   const ready = firmware.state === 'ready' && !!firmware.file, release = ready ? firmware.firmware?.release : undefined
   const plan = release ? planBuild(device.id, release, moduleIds) : undefined
   const missing = plan?.missing.map(id => DIGI_MODS.find(mod => mod.device === device.id && mod.id === id)?.title ?? id) ?? []

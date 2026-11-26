@@ -2914,6 +2914,51 @@ pm_project_line:
 	jra .L514
 	.size	pm_project_line, .-pm_project_line
 	.align	2
+	.globl	pm_ev_banks_load
+	.type	pm_ev_banks_load, @function
+pm_ev_banks_load:
+	moveq #1,%d0
+	move.b %d0,pm_loading
+	rts
+	.size	pm_ev_banks_load, .-pm_ev_banks_load
+	.align	2
+	.globl	pm_ev_project_reloaded
+	.type	pm_ev_project_reloaded, @function
+pm_ev_project_reloaded:
+	moveq #1,%d0
+	move.b %d0,pm_loading
+	clr.l %d0
+	rts
+	.size	pm_ev_project_reloaded, .-pm_ev_project_reloaded
+	.align	2
+	.globl	pm_ev_project_new
+	.type	pm_ev_project_new, @function
+pm_ev_project_new:
+	tst.b pm_loading.l
+	jeq .L543
+	clr.b %d0
+	move.b %d0,pm_loading
+	rts
+.L543:
+	jsr pm_ensure
+	move.l #pm_table+17,%d0
+.L545:
+	move.l %d0,%a0
+	lea (-17,%a0),%a0
+.L546:
+	clr.b (%a0)+
+	cmp.l %a0,%d0
+	jne .L546
+	move.l %a0,%d0
+	add.l #17,%d0
+	cmp.l #pm_table+4352,%a0
+	jne .L545
+	clr.w %d0
+	mov3q.l #1,pm_restart
+	move.w %d0,pm_cur
+	jra pm_nv_store
+	.size	pm_ev_project_new, .-pm_ev_project_new
+	.align	2
 	.globl	pm_pattern_copy
 	.type	pm_pattern_copy, @function
 pm_pattern_copy:
@@ -2921,12 +2966,12 @@ pm_pattern_copy:
 	subq.l #8,%sp
 	move.l %d2,-(%sp)
 	cmp.l 24(%sp),%d0
-	jeq .L560
-.L538:
+	jeq .L574
+.L552:
 	move.l (%sp)+,%d2
 	addq.l #8,%sp
 	rts
-.L560:
+.L574:
 	jsr pm_ensure
 	move.l 20(%sp),-(%sp)
 	lea pattern_row,%a1
@@ -2935,35 +2980,35 @@ pm_pattern_copy:
 	addq.l #4,%sp
 	move.l 8(%sp),%a1
 	tst.l %d0
-	jeq .L538
+	jeq .L552
 	move.l 16(%sp),-(%sp)
 	move.l %d0,8(%sp)
 	jsr (%a1)
 	addq.l #4,%sp
 	move.l 4(%sp),%a0
 	tst.l %d0
-	jeq .L538
+	jeq .L552
 	cmp.l %a0,%d0
-	jeq .L538
+	jeq .L552
 	move.w pm_cur,%d1
-	jeq .L540
+	jeq .L554
 	subq.l #1,%d1
 	mulu.w #17,%d1
 	add.l #pm_table,%d1
 	cmp.l %a0,%d1
-	jeq .L561
-.L540:
+	jeq .L575
+.L554:
 	move.l %a0,%d1
 	move.l %d0,%a1
 	add.l #17,%d1
-.L541:
+.L555:
 	move.b (%a0)+,(%a1)+
 	cmp.l %a0,%d1
-	jne .L541
+	jne .L555
 	cmp.l #pm_clip,%d0
-	jeq .L538
+	jeq .L552
 	cmp.l #pm_undo,%d0
-	jeq .L538
+	jeq .L552
 	moveq #17,%d2
 	sub.l #pm_table,%d0
 	divu.l %d2,%d0
@@ -2975,7 +3020,7 @@ pm_pattern_copy:
 	move.w %d0,pm_cur
 	addq.l #8,%sp
 	rts
-.L561:
+.L575:
 	move.l %d0,8(%sp)
 	move.l %a0,4(%sp)
 	jsr pm_store_current
@@ -2984,7 +3029,7 @@ pm_pattern_copy:
 	move.l 8(%sp),%d0
 	add.l #17,%d1
 	move.l %d0,%a1
-	jra .L541
+	jra .L555
 	.size	pm_pattern_copy, .-pm_pattern_copy
 	.align	2
 	.globl	pm_pattern_clear
@@ -2996,18 +3041,18 @@ pm_pattern_clear:
 	jsr pattern_row
 	addq.l #4,%sp
 	tst.l %d0
-	jeq .L562
+	jeq .L576
 	cmp.l #pm_clip,%d0
-	jeq .L562
+	jeq .L576
 	cmp.l #pm_undo,%d0
-	jeq .L562
+	jeq .L576
 	move.l %d0,%d1
 	move.l %d0,%a0
 	add.l #17,%d1
-.L564:
+.L578:
 	clr.b (%a0)+
 	cmp.l %a0,%d1
-	jne .L564
+	jne .L578
 	sub.l #pm_table,%d0
 	moveq #17,%d2
 	divu.l %d2,%d0
@@ -3016,7 +3061,7 @@ pm_pattern_clear:
 	clr.w %d0
 	addq.l #4,%sp
 	move.w %d0,pm_cur
-.L562:
+.L576:
 	move.l (%sp)+,%d2
 	rts
 	.size	pm_pattern_clear, .-pm_pattern_clear
@@ -3468,7 +3513,7 @@ pm_clear_pattern:
         .global pm_state, pm_ready, pm_last_transport, pm_last_bank
         .global pm_last_pattern, pm_toast, pm_held_track, pm_restart, pm_line
         .global pm_table, pm_cur, pm_clip, pm_undo, pm_comp
-        .global pm_held, pm_rep_last, pm_rep_page
+        .global pm_held, pm_rep_last, pm_rep_page, pm_loading
 pm_state:
         .zero   224
 pm_ready:
@@ -3489,6 +3534,8 @@ pm_line:
         .zero   40                      | a project line: 12 + 4 + 17 + CR LF + NUL
 pm_cur:
         .short  0                       | the row in pm_state.settings + 1, 0 = none
+pm_loading:
+        .byte   0                       | 1 = a CHANGE or RELOAD is under way (adapter.c, #810)
         .balign 4
 pm_table:
         .zero   4352                    | 256 patterns x 17 modes (bank * 16 + pattern)

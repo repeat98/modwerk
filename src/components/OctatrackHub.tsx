@@ -135,7 +135,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     }
     : status === 'connecting' ? { title: 'Connecting to your Octatrack…' }
     : busy ? { title: 'Sync in progress', detail: 'Finish the sync before opening the screen preview.' }
-    : status === 'busy' ? { title: 'Octatrack is in use', detail: LINK_BUSY, action }
+    : status === 'busy' ? { title: 'Octatrack isn’t answering', detail: LINK_BUSY, action }
     : { title: 'Connect your Octatrack', detail: state.notice?.text ?? 'Use a USB data cable to mirror its display here.', action }
   const panel = (name: HubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : UNIT_VIEWS.find(item => item.view === name)!.title}>{content}</section>
   // Without USB here, the set still reaches an Octatrack on the base as the module file on the card (Setup).

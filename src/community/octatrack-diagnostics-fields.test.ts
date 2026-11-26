@@ -37,6 +37,13 @@ it('stores only bounded technical fields for a failed staging command', async ()
     expect(() => validateDiagnostic({...event, ...bad, upload})).toThrow()
 })
 
+it('takes what kept an unsafe sync from beginning only beside that refusal, as one byte', () => {
+  const event = {id: id(), event: 'sync_failed', phase: 'sending', step: 'stage', error: 'device', result: 'unsafe', upload: {command: 'enter'}}
+  for (const busy of [0, 0x31, 0xff]) expect(validateDiagnostic({...event, busy}).busy).toBe(busy)
+  for (const bad of [{busy: 256}, {busy: -1}, {busy: 0.5}, {busy: '0x31'}, {busy: 3, result: 'rejected'}, {busy: 3, error: 'transport', result: undefined},
+    {busy: 3, event: 'kept'}]) expect(() => validateDiagnostic({...event, ...bad}), JSON.stringify(bad)).toThrow()
+})
+
 it('takes the modules a start left out only on a health reading, by catalogue id or "other", with numeric codes', () => {
   const reading = { state: 0, failed: 0, modules: 0, dsp: 0, intact: 0, ran: 0, cpu: 0, tracks1to4: 0, tracks5to8: 0, frameGap: 0, saved: 10, savedCount: 3, live: 1, culprit: 0, refusal: 0 }
   const health = { id: id(), event: 'health', phase: 'ready', reading }, restore = [{ id: MODULES[0].id, refusal: 256, check: 0 }, { id: 'other', refusal: 2, check: 1 }]

@@ -1,9 +1,42 @@
 import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { fetchOwnerApproval, releaseIdentity } from '../src/release/approval.ts'
 import { ACTIONS_BOT_ID, authorRequestedRelease } from '../src/release/author-updates.ts'
 import { inspectAuthorUpdate } from './author-update-git.mjs'
 import { githubApi, pages, authorChecks } from './author-release-api.mjs'
+
+// A maintainer the owner listed may merge into main and publish (owner, 26 November 2026). The list and the gate stay
+// the owner's: a maintainer's merge that changes them is not approved, so no one can list themselves.
+export const MAINTAINERS_FILE = 'sdk/approvals/release-maintainers.json'
+const GATE_PATHS = /^(?:sdk\/approvals\/|scripts\/(?:release-approval|verify-merge-approval|author-release-api|author-update-git)\.mjs$|src\/release\/|\.github\/workflows\/pages\.yml$)/
+
+/** The owner's listed maintainers, from the release's own checkout: id -> login. */
+export function readMaintainers(root) {
+  let value
+  try { value = JSON.parse(readFileSync(join(root, MAINTAINERS_FILE), 'utf8')) } catch (error) { if (error.code === 'ENOENT') return new Map(); throw error }
+  if (value?.schemaVersion !== 1 || !Array.isArray(value.maintainers)) throw new Error('Invalid ' + MAINTAINERS_FILE)
+  const result = new Map()
+  for (const entry of value.maintainers) {
+    if (!Number.isSafeInteger(entry?.id) || entry.id < 1 || typeof entry.login !== 'string' || entry.approvedBy !== 'repeat98' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(entry.approvedOn ?? '') || typeof entry.ownerStatement !== 'string' || !entry.ownerStatement.trim()) throw new Error('Invalid maintainer in ' + MAINTAINERS_FILE)
+    result.set(entry.id, entry.login)
+  }
+  return result
+}
+
+/** A pull request a listed maintainer merged into main as exactly this commit, or null. `changed` is what the commit
+ * changes on main; one that touches the list or the gate needs the owner's merge. */
+export function maintainerApproval({ repository, commit, pr, merges, changed, maintainers, ownerId }) {
+  const merger = pr?.merged_by
+  if (pr?.merged !== true || pr.state !== 'closed' || pr.base?.ref !== 'main' || pr.base.repo?.full_name !== repository) return null
+  if (!merger || maintainers.get(merger.id) !== merger.login) return null
+  if (merges.length !== 1 || merges[0].commit_id !== commit || merges[0].actor?.id !== merger.id || pr.merge_commit_sha && pr.merge_commit_sha !== commit) return null
+  if (changed.some(path => GATE_PATHS.test(path))) return null
+  return { kind: 'github-pr-merge', repository, sourceCommit: commit, baseRef: 'main', pullRequest: pr.number, mergedBy: merger.login,
+    mergedById: merger.id, moduleApproverId: ownerId, mergedAt: pr.merged_at, authorization: 'maintainer' }
+}
 
 /** Re-fetch GitHub evidence independently of compiler output and the merge job. */
 export async function fetchReleaseApproval(repository, commit, ownerId, token = '', attempts = 7, retryMs = 15000, options = {}) {
@@ -24,9 +57,15 @@ export async function fetchReleaseApproval(repository, commit, ownerId, token = 
       return approval
     }
     catch (error) { if (!error.message.startsWith('No owner-merged PR')) throw error }
-    const pulls = await pages(api, '/commits/' + commit + '/pulls')
+    const pulls = await pages(api, '/commits/' + commit + '/pulls'), maintainers = readMaintainers(root)
     for (const item of pulls) {
       const pr = await api('/pulls/' + item.number)
+      if (maintainers.has(pr.merged_by?.id)) {
+        const merges = (await pages(api, '/issues/' + pr.number + '/events')).filter(event => event.event === 'merged')
+        const changed = git('diff', '--name-only', commit + '^1', commit).split('\n').filter(Boolean)
+        const approval = maintainerApproval({ repository, commit, pr, merges, changed, maintainers, ownerId })
+        if (approval) return approval
+      }
       if (pr.merged !== true || pr.state !== 'closed' || pr.base?.ref !== 'main' || pr.base.repo.full_name !== repository || pr.merged_by?.id !== ACTIONS_BOT_ID || pr.merged_by.login !== 'github-actions[bot]' || !authorRequestedRelease(pr.body)) continue
       const events = await pages(api, '/issues/' + pr.number + '/events'), merges = events.filter(event => event.event === 'merged')
       if (merges.length !== 1 || merges[0].commit_id !== commit || merges[0].actor?.id !== ACTIONS_BOT_ID || pr.merge_commit_sha && pr.merge_commit_sha !== commit) continue
@@ -40,7 +79,7 @@ export async function fetchReleaseApproval(repository, commit, ownerId, token = 
     }
     if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, retryMs))
   }
-  throw new Error('No owner or authorized module-author PR approves this exact main commit; keep the previous publication.')
+  throw new Error('No owner, listed maintainer or authorized module-author PR approves this exact main commit; keep the previous publication.')
 }
 
 /** A release publishes every main commit since the last one, so each needs its own approval, unless a later commit in

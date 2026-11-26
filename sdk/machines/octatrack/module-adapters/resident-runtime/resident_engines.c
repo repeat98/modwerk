@@ -138,6 +138,30 @@ static void free_span(unsigned c, unsigned k)
     shrink(c);
 }
 
+/* The FX allocator's soft ceiling on core c (build_core.py's allocator edit, #2189): `capacity` less the top words the
+ * engines of installed controllers would still claim there (parked, or never placed: Sidechain until a track uses
+ * COMPRESSOR, with its key bus). Big FX code goes under it when it fits, so the claim later finds those words free
+ * instead of code that must move below it first, which with two big effects on a core often had nowhere to go: the
+ * claim was refused for memory and COMPRESSOR stayed stock. Only for the live capacity: a claim's dry run lowers it
+ * to the region's bottom and gets it whole. */
+/* controller_board.c's; a harness without the board holds nothing */
+__attribute__((weak)) unsigned modwerk_controller_held(void) { return 0; }
+unsigned modwerk_dsp_soft_ceiling(unsigned c, unsigned capacity)
+{
+    if (c > 1u || shut(c) || capacity != arena(c) - dl_engine_reserved(c)) return capacity;
+    unsigned held = MW_DSP_IMPLIED(modwerk_controller_held()), add = 0;
+    struct spans s;
+    spans_of(c, &s);
+    for (unsigned k = 0; k < MW_ENGINE_FEATURES; ++k) {
+        unsigned n = unit_of(c, k)->count;
+        if (!(held >> k & 1u) || !runs(c, k) || !n || s.at[k] >= 0) continue;
+        if (!add_span(c, &s, k, n)) return capacity;
+        add = 1;
+    }
+    unsigned reserve = add ? reserve_of(c, &s) : 0u, reserved = dl_engine_reserved(c);
+    return reserve > reserved && reserve - reserved < capacity ? capacity - (reserve - reserved) : capacity;
+}
+
 void mw_engines_poll(void)
 {
     for (unsigned c = 0; c < 2u; ++c) {

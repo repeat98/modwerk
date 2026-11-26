@@ -12,7 +12,7 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13, DIAG_FREEZE_PC = 14 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
@@ -31,6 +31,15 @@ struct diag_trace { uint32_t magic, count; uint16_t frame[DIAG_TRACE_FRAMES][2];
  * Read from battery RAM; LOG does not page it. */
 #define DIAG_LATES_MAGIC 0x4d574c52u
 struct diag_lates { uint32_t magic, count; uint16_t late[8]; };
+/* Where the processor was while the UI tick stood still ("MWFZ", 0x100f9728, bases from 0.8.2): at 5, 6, 7 and 8
+ * seconds of a freeze, what the audio frame's eDMA interrupt (level 6, where modwerk_diag_frame runs) interrupted:
+ * the program counter and status register of its exception frame, and the kernel's current task (its TCB,
+ * 0x800068fc). An interrupted level (SR bits 8-10) above 0 is an interrupt handler that never returns (5: the DSP
+ * frame's or the card's); at level 0 the PC is the task that runs (a loop in it, or the idle loop when the UI task
+ * waits). `pc` 0xffffffff: the frame was not that interrupt's (never seen). Read from battery RAM at the next start or once the tick moves again, as the FREEZE_PC incident (below). */
+#define DIAG_FREEZE_PC_MAGIC 0x4d57465au
+#define DIAG_FREEZE_PC_SAMPLES 4u
+struct diag_freeze_pc { uint32_t magic, boot, pc[DIAG_FREEZE_PC_SAMPLES], tcb[DIAG_FREEZE_PC_SAMPLES]; uint16_t sr[DIAG_FREEZE_PC_SAMPLES]; };
 typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1 : -1];
 
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the
@@ -46,7 +55,10 @@ struct diag_load {
  * half-seconds at 90 % or more, FREEZE the frames the UI stood still (0: it never came back before a restart),
  * CRASH the program counter, STALL the stall's reason, BASE the first four bytes of the base's identity (right after
  * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
- * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), USB the controller when the unit
+ * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), CPU the CPU budget's refusals
+ * since the start in the low 16 bits (65,535 at most), the tracks refused since the last CPU record in bits 16-23 (so
+ * `machine` names whose price it was) and every track refused since the start in the top byte (bases before 0.8.2: a
+ * 24-bit count and no recent tracks), USB the controller when the unit
  * offered itself again because the host never enumerated it (usb_attach.h: OTGSC in the high half, PORTSC1 in the low),
  * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, in the low
  * 24 bits, and in the top byte how many entries since boot came later than the wait can hold (190 µs or more, 255 at
@@ -57,6 +69,15 @@ struct diag_load {
  * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes
  * used and the largest free run, in 16-byte units) and `dsp1` the loader's check that refused it (runtime_check: 1 the
  * pool, 2 claims, 3 metadata, 4 the DSP's limits); all three 0 on bases before 0.7.10.
+ * RESTORE (bases from 0.8.2, right after the START it belongs to) the values stock's checks had to fix in the
+ * battery copy of the current bank at power-up (diag.c modwerk_boot_restore), with `cpu` those in the project's
+ * settings and arrangements, `dsp0` in the bank's Parts, `dsp1` in its patterns, `screen` the first record that
+ * needed one (1-3 the settings checks, 0x100 + 2 x Part for a saved Part and + 1 for its working copy, 0x200 +
+ * pattern) and `tempo24` the restore's result (0 restored with the fixes, 0xffffffff refused: too many to trust).
+ * FREEZE_PC (bases from 0.8.2, right after the FREEZE it belongs to, with its boot and second) where the processor
+ * was during that freeze (struct diag_freeze_pc): `a`, `screen`, `tempo24` the program counter at 5, 6 and 7 s,
+ * `cpu`, `dsp0`, `dsp1` the status register then; `machine` the four current TCBs (big-endian, 16 bytes), then the
+ * program counter at 8 s and its status register; 0 where the tick moved again before that sample.
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */
@@ -93,6 +114,8 @@ int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers pres
 void modwerk_diag_frame(void);                         /* dl_frame, in the frame interrupt */
 unsigned modwerk_diag_read(uint8_t *out, unsigned page); /* ep0.c LOG: DIAG_PAGE bytes of the log, then the records */
 void modwerk_diag_set(void);                           /* modset.c: the installed set changed (restore, Keep) */
+int32_t modwerk_boot_restore(void);                    /* status.s mw_boot_restore: the power-up's battery restore of
+                                                       * the current bank (stock 0x40025770), in main's init */
 void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* modset.c,
                                                        * before a restore's set record: its first refused package's module and the
                                                        * loader's refusal (screen, tempo24), the module pool when it was refused:

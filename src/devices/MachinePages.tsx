@@ -42,7 +42,7 @@ import { ModuleAuthors } from '../components/ModuleAuthors'
 import { digiMatchesQuery, octatrackMatchesQuery } from '../catalog/module-search'
 import { useModuleAudioPreviews } from '../components/audio-preview-context'
 import { ModuleAudioCardCover } from '../components/ModuleAudioPreview'
-import { useBetaUi, useSetWords } from '../community/beta-ui'
+import { useSetWords } from '../community/beta-ui'
 import { DEVELOP_PITCH, UNLOCK_NOTE, developHref } from '../overview/overview'
 
 type DigiDevice = DeviceProfile & { id: DigiMod['device'] }
@@ -294,7 +294,7 @@ function Hero({ device, children, embedded = false }: { device: DeviceProfile; c
 // The machines whose unit page reads them over a Modwerk base's link (ModelCyclesUnit.tsx): linked from the ladder, beta.
 const UNIT_ROUTES: Partial<Record<string, string>> = { 'model-cycles': MC_UNIT_ROUTE, 'analog-rytm-mkii': RYTM_UNIT_ROUTE }
 function StackLadder({ device }: { device: DeviceProfile }) {
-  const betaUi = useBetaUi(), unitRoute = betaUi ? UNIT_ROUTES[device.id] : undefined
+  const betaUi = hasBetaUi(useCommunity().session), unitRoute = betaUi ? UNIT_ROUTES[device.id] : undefined // as EmptyMachine's
   const zoom = device.id === 'zoom-ms-70cdr'
   const guide = zoom ? 'ZOOM_MULTISTOMP.md#ms-70cdr-stack-progress' : 'MACHINE_RECIPE.md'
   return <section className="configuration-section" aria-labelledby="stack-title">
@@ -305,9 +305,10 @@ function StackLadder({ device }: { device: DeviceProfile }) {
 
 // Machines without mods: the library page becomes an invitation to open the first one.
 export function EmptyMachine({ device, machinePicker, embedded = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean }) {
-  const repository = issueRepository(), mobile = useMobileWorkspace(), betaUi = useBetaUi()
+  // hasBetaUi, not useBetaUi: that context is the Octatrack base path's, open to everyone since its release.
+  const repository = issueRepository(), mobile = useMobileWorkspace(), betaUi = hasBetaUi(useCommunity().session)
   const page = FAMILY_PAGE[device.family], ready = readyForMods(device), steps = deviceSteps(device)
-  const preview = coreBuildPreviewOpen(device.id, hasBetaUi(useCommunity().session)) && !!device.sdk
+  const preview = coreBuildPreviewOpen(device.id, betaUi) && !!device.sdk
   return (
     <div className="device-page">
       {machinePicker && <div className="discovery-tools">{machinePicker}</div>}
