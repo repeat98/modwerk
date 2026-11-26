@@ -568,7 +568,11 @@ DSP_EDITS = {
     'allocator.c': (('#include "allocator.h"\n', '#include "allocator.h"\nuint32_t modwerk_dsp_source_charge(unsigned);\n'
                      '/* dsp.c\'s; harnesses without it charge each slot its own effect */\n'
                      '__attribute__((weak)) unsigned modwerk_dsp_slot_floors(const uint8_t ids[16],uint32_t least[16])\n'
-                     '{ (void)ids; for(unsigned i=0;i<16;++i) least[i]=0; return 0; }\n'),
+                     '{ (void)ids; for(unsigned i=0;i<16;++i) least[i]=0; return 0; }\n'
+                     '/* resident_engines.c\'s: `capacity` less the top words that engines of installed controllers will claim and\n'
+                     ' * have not yet (#2189); harnesses and bases without them keep the whole capacity */\n'
+                     '__attribute__((weak)) unsigned modwerk_dsp_soft_ceiling(unsigned c,unsigned capacity) { (void)c; return capacity; }\n'
+                     'static unsigned soft_off; /* place() takes the whole capacity at once: the soft ceiling made the core not fit */\n'),
                     ('    if(!token || token==a->token) return DL_ALLOC_STALE;\n',
                      '    if(!token || token==a->token) return DL_ALLOC_STALE;\n'
                      '    uint32_t least[16]; unsigned crowded=modwerk_dsp_slot_floors(ids,least); /* 1 + a core a raised floor overfills */\n'
@@ -597,21 +601,44 @@ DSP_EDITS = {
                      '        if(p==DL_NONE || a->catalog[p].resident || a->target[c][p].present) continue;'),
                     # A big package (a quarter of the arena or more) goes as high as it fits, the rest as low: a hole
                     # left under a big one could never close once the core's free words are fewer than its own (dsp.c's
-                    # compaction moves code by copying it whole).
+                    # compaction moves code by copying it whole). It tries under the soft ceiling first: the top words
+                    # an installed controller's engines (Sidechain and its key bus) take once a track uses it. Big code
+                    # in those words has to move below them first, and with two big effects on a core there was often
+                    # no room to copy it to, so COMPRESSOR stayed stock (#2189). Where it does not fit there, as before.
                     ('        uint32_t base=0,align=pkg->alignment;\n        for(;;) {',
                      '        uint32_t base=0,align=pkg->alignment;\n'
                      '        if(pkg->words*4u>=a->capacity[c]) {\n'
                      '            if(pkg->words>a->capacity[c]) return DL_ALLOC_MEMORY;\n'
-                     '            for(base=(a->capacity[c]-pkg->words)&~(align-1);;) {\n'
-                     '                unsigned moved=0;\n'
-                     '                for(unsigned j=0;j<n && !moved;++j)\n'
-                     '                    if(base<(uint32_t)used[j].offset+used[j].words && base+pkg->words>used[j].offset) {\n'
-                     '                        if(used[j].offset<pkg->words) return DL_ALLOC_MEMORY;\n'
-                     '                        base=(used[j].offset-pkg->words)&~(align-1); moved=1;\n'
-                     '                    }\n'
-                     '                if(!moved) break;\n'
+                     '            unsigned ceiling=soft_off ? a->capacity[c] : modwerk_dsp_soft_ceiling(c,a->capacity[c]),fits=0;\n'
+                     '            if(ceiling>a->capacity[c] || ceiling<pkg->words) ceiling=a->capacity[c];\n'
+                     '            for(;;) {\n'
+                     '                for(base=(ceiling-pkg->words)&~(align-1),fits=1;;) {\n'
+                     '                    unsigned moved=0;\n'
+                     '                    for(unsigned j=0;j<n && !moved && fits;++j)\n'
+                     '                        if(base<(uint32_t)used[j].offset+used[j].words && base+pkg->words>used[j].offset) {\n'
+                     '                            if(used[j].offset<pkg->words) fits=0;\n'
+                     '                            else base=(used[j].offset-pkg->words)&~(align-1), moved=1;\n'
+                     '                        }\n'
+                     '                    if(!moved) break;\n'
+                     '                }\n'
+                     '                if(fits || ceiling==a->capacity[c]) break;\n'
+                     '                ceiling=a->capacity[c];\n'
                      '            }\n'
+                     '            if(!fits) return DL_ALLOC_MEMORY;\n'
                      '        } else for(;;) {'),
+                    # A core placed under the soft ceiling that does not fit so is placed again as before, whole: the
+                    # ceiling never costs a selection the plain placement admits (#2189).
+                    ('int dl_allocator_prepare(struct dl_allocator *a,const uint8_t ids[16],uint32_t token) {',
+                     'static int place_core(struct dl_allocator *a,unsigned c,const uint8_t *ids,unsigned preserve) {\n'
+                     '    int r=place(a,c,ids,preserve);\n'
+                     '    if(r<0) { soft_off=1; r=place(a,c,ids,preserve); soft_off=0; }\n'
+                     '    return r;\n'
+                     '}\n'
+                     'int dl_allocator_prepare(struct dl_allocator *a,const uint8_t ids[16],uint32_t token) {'),
+                    ('    for(unsigned c=0;c<2;++c) if(place(a,c,ids,0)<0) return DL_ALLOC_MEMORY;\n'
+                     '    for(unsigned c=0;c<2;++c) if(place(a,c,ids,1)<0) return DL_ALLOC_TRANSITION;\n',
+                     '    for(unsigned c=0;c<2;++c) if(place_core(a,c,ids,0)<0) return DL_ALLOC_MEMORY;\n'
+                     '    for(unsigned c=0;c<2;++c) if(place_core(a,c,ids,1)<0) return DL_ALLOC_TRANSITION;\n'),
                     # Compaction without a gap (owner, 11 October 2026): one live package gets a new copy at `offset`,
                     # uploaded and bound while the old one runs, then the old is freed; never over live code.
                     ('int dl_allocator_cancel(struct dl_allocator *a,uint32_t token) {',
