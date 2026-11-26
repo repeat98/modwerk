@@ -384,11 +384,6 @@
         "event": "ev_key",
         "fn": "mw_diag_key",
         "order": 0
-      },
-      {
-        "event": "ev_render_out",
-        "fn": "mw_load_out",
-        "order": 101
       }
     ],
     "collections": {
