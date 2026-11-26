@@ -21,4 +21,6 @@ What is unresolved.
 
 How a reader reproduces the measurements, in order. `tools/verify/verify_character.py`
 is the pattern: predict the arithmetic exactly, drive both signs, refuse to
-run if the id it resolves is the fallback rather than the effect.
+run if the id it resolves is the fallback rather than the effect. A render gate
+in dsp_host imports `sdk/octatrack/tools/dsp_gate.py` rather than copying
+another module's harness; `sdk/templates/dsp-port/verify.py` shows how.
