@@ -30,8 +30,13 @@ int modwerk_dsp_moves_idle(void);                                       /* dsp.c
 struct mw_engine mw_engines[2][MW_ENGINE_FEATURES];
 volatile uint32_t mw_engines_jobs, mw_engines_placed_count, mw_engines_unplaced_count, mw_engines_refused;
 volatile uint8_t mw_engines_wait[2][MW_ENGINE_FEATURES], mw_engines_admitted[MW_ENGINE_FEATURES];
-/* ABI 9 (loader.h): a package may require the key bus; the board holds it for them (controller_board.c). */
+/* ABI 9 (loader.h): a package may require the key bus, which the board holds for them (controller_board.c), and program
+ * areas (dsp_programs.c). */
+#ifdef MODWERK_RUNTIME_EVENTS
+unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_PROGRAMS; }
+#else
 unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }
+#endif
 #ifdef MODWERK_DEV
 struct mw_engines_view mw_engines_view = {.magic = {'M', 'W', 'E', 'V'}}; /* initialized: in .data, inside the dev MEM window */
 #endif
@@ -81,12 +86,17 @@ void mw_engines_package(unsigned feature, uint32_t generation, const struct mw_e
     packaged[0][k] = units[0], packaged[1][k] = units[1], packaged_generation[k] = generation;
 }
 
-/* Each engine's span on a core: its offset (-1: none) and words. */
-struct spans { int at[MW_ENGINE_FEATURES]; unsigned words[MW_ENGINE_FEATURES]; };
+/* Program areas (dsp_programs.c) share the region: each core's held spans, count 0 free. */
+static struct { uint16_t offset, count; } areas[2][MW_AREA_SPANS];
+#define MW_SPANS (MW_ENGINE_FEATURES + MW_AREA_SPANS)
+/* Each engine's span on a core, then each program area's: its offset (-1: none) and words. */
+struct spans { int at[MW_SPANS]; unsigned words[MW_SPANS]; };
 static void spans_of(unsigned c, struct spans *s)
 {
     for (unsigned k = 0; k < MW_ENGINE_FEATURES; ++k)
         s->at[k] = mw_engines[c][k].state == MW_ENGINE_FREE ? -1 : (int)mw_engines[c][k].offset, s->words[k] = mw_engines[c][k].count;
+    for (unsigned k = 0; k < MW_AREA_SPANS; ++k)
+        s->at[MW_ENGINE_FEATURES + k] = areas[c][k].count ? (int)areas[c][k].offset : -1, s->words[MW_ENGINE_FEATURES + k] = areas[c][k].count;
 }
 /* The highest offset in core c's arena where n words meet no span but `skip`'s (top-down first fit, holes reused).
  * -1: no room. */
@@ -97,7 +107,7 @@ static int spot(unsigned c, unsigned n, const struct spans *s, unsigned skip)
     int at = (int)(top - n);
     for (unsigned moved = 1; moved;) {
         moved = 0;
-        for (unsigned k = 0; k < MW_ENGINE_FEATURES; ++k) {
+        for (unsigned k = 0; k < MW_SPANS; ++k) {
             if (k == skip || s->at[k] < 0) continue;
             int end = s->at[k] + (int)s->words[k];
             if (at < end && at + (int)n > s->at[k]) {
@@ -121,7 +131,7 @@ static int add_span(unsigned c, struct spans *s, unsigned k, unsigned n)
 static unsigned reserve_of(unsigned c, const struct spans *s)
 {
     unsigned low = arena(c);
-    for (unsigned k = 0; k < MW_ENGINE_FEATURES; ++k) if (s->at[k] >= 0 && (unsigned)s->at[k] < low) low = (unsigned)s->at[k];
+    for (unsigned k = 0; k < MW_SPANS; ++k) if (s->at[k] >= 0 && (unsigned)s->at[k] < low) low = (unsigned)s->at[k];
     return arena(c) - low;
 }
 /* A span left the region: give the FX allocator back everything below the lowest engine still there. */
@@ -136,6 +146,40 @@ static void free_span(unsigned c, unsigned k)
 {
     mw_engines[c][k].state = MW_ENGINE_FREE, mw_engines[c][k].generation = 0, mw_engines[c][k].count = 0;
     shrink(c);
+}
+
+/* A program area claims as an engine does (mw_engines_place): free words only while playing, live FX code moved or
+ * retired only when quiet and settled, nothing while a pattern change is queued; a claim that had to wait for the stop
+ * is not planned again on every tick while playing. */
+static unsigned area_deferred[2] = {~0u, ~0u};
+int mw_engines_area_claim(unsigned c, unsigned n, unsigned *offset)
+{
+    unsigned k = 0;
+    if (c > 1u || !n || !offset) return -1;
+    while (k < MW_AREA_SPANS && areas[c][k].count) ++k;
+    struct spans s;
+    spans_of(c, &s);
+    int at = k < MW_AREA_SPANS ? spot(c, n, &s, MW_SPANS) : -1;
+    if (at < 0) return -1;
+    s.at[MW_ENGINE_FEATURES + k] = at, s.words[MW_ENGINE_FEATURES + k] = n;
+    unsigned need = reserve_of(c, &s);
+    if (need > dl_engine_reserved(c) && QUEUED()) return 0;
+    if (!QUIET() && need >= area_deferred[c]) return 0;
+    int claim = dl_engine_claim(c, need, QUIET() && SETTLED() ? 2 : 1);
+    area_deferred[c] = claim == 0 && dl_engine_why[c] == 7u && !QUIET() ? need : ~0u;
+    if (claim <= 0) return claim;
+    areas[c][k].offset = (uint16_t)at, areas[c][k].count = (uint16_t)n;
+    *offset = (unsigned)at;
+    return 1;
+}
+void mw_engines_area_free(unsigned c, unsigned offset)
+{
+    for (unsigned k = 0; c < 2u && k < MW_AREA_SPANS; ++k)
+        if (areas[c][k].count && areas[c][k].offset == offset) {
+            areas[c][k].count = 0;
+            shrink(c);
+            return;
+        }
 }
 
 /* The FX allocator's soft ceiling on core c (build_core.py's allocator edit, #2189): `capacity` less the top words the

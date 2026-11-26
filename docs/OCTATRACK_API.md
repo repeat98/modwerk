@@ -57,7 +57,7 @@ The base owns every stock site that more than one module needs and shares it as 
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
 - **Projects, banks and Parts as stock saves and loads them:** `ev_banks_load`/`ev_banks_loaded`, `ev_bank_load`/`ev_bank_loaded`, `ev_project_new`, `ev_bank_write`/`ev_bank_written`, `ev_project_store`/`ev_project_stored`, `ev_project_reload`/`ev_project_reloaded`, `ev_part_saved`, `ev_part_clear`. Each `…ed` hook runs when stock's routine returns. With `ev_modules_ready` (the installed modules changed and the card is free), they let a module keep its own file beside the project, read and written from the engine task, the only one that may use the card.
-- **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`, `ot_settings` (rows in PROJ > MODWERK > SETTINGS), `ot_part_menu` (rows in the Part Edit window), `ot_sample_memory`, `ot_usb_functions`.
+- **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`, `ot_settings` (rows in PROJ > MODWERK > SETTINGS), `ot_part_menu` (rows in the Part Edit window), `ot_sample_memory`, `ot_usb_functions`, `ot_dsp_effects` (an effect's program areas, below).
 
 ```json
 { "schema": 1, "subscribe": [{ "event": "ev_play_increment", "fn": "repitch_play_increment", "order": 50 }] }
@@ -76,6 +76,28 @@ C modules include [modwerk_events.h](../sdk/machines/octatrack/include/modwerk_e
 **Raising a hook.** Declare `"raise": ["ev_mute_keep"]` and define a zero word `raise_ev_mute_keep` in initialized data. The loader points it at the base's entry when the module is installed, and the module calls through it. Mute Modes does this in assembly.
 
 **When no hook fits.** A site only your module needs, your module patches and declares in the manifest. When a second module needs the same site, or one another module or the base already patches, [propose a hook](module-guides/README.md#propose-a-hook): one entry at the end of [events.json](../sdk/machines/octatrack/events.json), reviewed by the owner. `npm run modules:compat` refuses two modules that patch the same bytes, and it names the hook to use instead.
+
+## Program areas
+
+Planned for base 0.8.3 (its cumulative draft; development twins only so far). An FX effect whose DSP code changes with its program (a program knob over many algorithms, as the Quadraverb's) contributes one `struct modwerk_dsp_effect` to `ot_dsp_effects` and requires the base feature `programs` (loader ABI 9, `abi9.py --requires programs`). For each slot that runs its effect the base keeps two areas of `program_words` P words on that slot's core, asks `program(slot)` every UI tick, and for a program the slot does not run yet asks `code(slot, program, at, out)` for its final words at P address `at`, writes them into the area the slot does not run while it plays, then names that area in the slot's record between two frames. The effect's proc reads its record at every call and jumps there; the area returns with `rts` and names no address outside itself:
+
+```
+        move    r7,a            ; the slot's record: X:$7fb0 + 4 * ((r7 >> 8) & 15), word 0
+        lsr     #6,a
+        and     #>$3c,a
+        add     #>$7fb0,a
+        move    a1,r1
+        nop
+        move    x:(r1),a
+        tst     a
+        beq     dry             ; 0: no program yet
+        move    a1,r1
+        nop
+        jsr     (r1)
+dry:
+```
+
+A switch is a write of the code (24 words a frame) and one frame; going back to the program before is the switch alone. The frame the record changes is the switch: fade, clear or restart there as the effect needs. While playing the areas come from free words only. [HOOKS.md](../sdk/machines/octatrack/HOOKS.md) has the record and its contract; `sdk/drafts/program-probe` is a working example.
 
 ## Keeping state
 

@@ -353,4 +353,16 @@ typedef void modwerk_ev_audio_frame_prepare(void);
 #define MODWERK_EV_FRAME_DEADLINE 62
 typedef unsigned modwerk_ev_frame_deadline(uint32_t deadline, unsigned rest);
 
+/* ot_dsp_effects (table, contribute {"to": "ot_dsp_effects", "order", "data"}): an FX effect runs code that changes when its program changes (a program knob): for each slot whose live effect is the contributing module's, the base reads its record every UI tick, writes the program's code into P while the effect plays and switches the slot to it between two frames. The UI task under the base's stable lock: program and code are short and never block; they read the frame records or the Part, never write them. Contribute one struct modwerk_dsp_effect from a module whose DSP package requires the base's program areas (loader ABI 9, requires programs). For each FX slot (0-7 FX1 of T1-T8, 8-15 FX2) whose live effect id is this module's, the base claims two areas of program_words P words on the slot's core (while playing from free words only; with no room the slot's record stays 0) and asks program(slot) every tick. When it answers a program the slot does not run, the base asks code(slot, program, at, out) for that program's words at P address at, every word final (24 bits, nothing relocated), writes them into the area the slot does not run, and then puts at into word 0 of the slot's record between two frames. The DSP code reads that word at every call, X:$7fb0 + 4 * ((r7 >> 8) & 15) on its core (0: none yet, stay dry), and jumps there with jsr; the area returns with rts and names no P address outside itself, since the effect's own code may move. code returns the words it wrote, 1 to program_words; 0 keeps what the slot runs. An area keeps the program it holds, so going back to the program before costs no write. One switch at a time on a core, each a write of the code (a packet of 24 words a frame) and one frame for the switch. A slot that leaves the effect gets 0 in its record before its areas go back. The DSP code fades, clears or restarts at a switch as it needs: the frame its record changes is the switch. */
+#define MODWERK_OT_DSP_EFFECTS 63
+struct modwerk_dsp_effect {
+    uint32_t abi;                       /* MODWERK_DSP_EFFECT_ABI */
+    uint32_t program_words;             /* the P words of each of its program areas, 1-2048: the most one program's code takes */
+    int32_t (*program)(unsigned slot);  /* the program slot runs from now: 0-0x7fffff, or -1 none yet */
+    uint32_t (*code)(unsigned slot, int32_t program, uint32_t at, uint32_t *out); /* that program's words for P address at */
+    uint32_t reserved[4];               /* 0 */
+};
+#define MODWERK_DSP_EFFECT_ABI 1u
+#define MODWERK_DSP_SLOT_RECORDS 0x7fb0u    /* X, on the slot's core: 4 words at + 4 * ((r7 >> 8) & 15); word 0 the P address of the area the slot runs, 0 none */
+
 #endif

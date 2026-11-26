@@ -386,13 +386,20 @@ def manager(text):
 
 def transport(text):
     """The generated transfer.c, after resident_driver.transport."""
-    return _change(text, '    if(op==10u && (id&~(c ? 13u:15u) || init&~(c ? 13u:15u) || proc)) return 0;',
+    text = _change(text, '    if(op==10u && (id&~(c ? 13u:15u) || init&~(c ? 13u:15u) || proc)) return 0;',
                    '    if(op==10u && (proc>=0x2000u || (!proc && (id&~(c ? 13u:15u) || init&~(c ? 13u:15u))))) return 0;\n'
                    '    /* PLACE (word 7 the engine\'s words, 1..0x1fff): one on-demand feature this core carries; offset 0\n'
                    '     * unplaces, else a table offset inside the arena (the receiver bounds the engine\'s end by its\n'
                    '     * permanent block). */\n'
                    '    if(op==10u && proc && ((id!=1u && id!=2u && id!=4u && id!=8u) || id&~(c ? 13u:15u) ||\n'
                    '       (init && (init<DL_CODE_START || init>=dl_pool_words[c])))) return 0;', 'transport PLACE')
+    # Op 12 (the receiver's slot record word, dsp_programs.c): word 4 the record word 0-63, word 5 the value's low 16 bits,
+    # word 7 its high 8.
+    text = _change(text, ' && op!=DL_PEEK && op!=10u)) return 0;\n',
+                   ' && op!=DL_PEEK && op!=10u && op!=12u)) return 0;\n'
+                   '    if(op==12u && (id>63u || init>0xffffu || proc>0xffu)) return 0;\n', 'transport slot record')
+    return _change(text, 'opcode==DL_SUM || opcode==10u) {', 'opcode==DL_SUM || opcode==10u || opcode==12u) {',
+                   'transport slot record packet')
 
 
 def status(text):

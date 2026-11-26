@@ -1966,7 +1966,7 @@ def main():
             dsp_sites += resident_boot_prepared['sites']
         if args.resident_on_demand:
             (source / 'resident-engines-data.c').write_text(resident_engines.data_c(resident_bundles))
-            for name in ('resident_engines.c', 'resident_engines.h', 'project_fx.c'):
+            for name in ('resident_engines.c', 'resident_engines.h', 'project_fx.c', 'dsp_programs.c'):
                 shutil.copyfile(resident_source.RUNTIME / name, source / name)
         chooser_sites, chooser_lists = loader_dsp.choosers(image, FX_IDS)
         at, guard, stepper = KNOB_STEP
@@ -2066,7 +2066,7 @@ def main():
     if args.resident_on_demand:
         for p in (APP / 'sdk/machines/octatrack/module-adapters/resident_engines.py',
                   resident_source.RUNTIME / 'resident_engines.c', resident_source.RUNTIME / 'resident_engines.h',
-                  resident_source.RUNTIME / 'project_fx.c'):
+                  resident_source.RUNTIME / 'project_fx.c', resident_source.RUNTIME / 'dsp_programs.c'):
             inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_stock_hooks:
         for name in CONTROLLER_POLICY_SOURCES:
@@ -2354,6 +2354,8 @@ modwerk_retained_end:
         recipe['subscribe'].append(dict(event='ev_tick', fn='dl_ui', order=93))
         if args.resident_stock_hooks:  # controller_board.c: activation and retirement of trusted controllers
             recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_controller_tick', order=95))
+        if args.resident_on_demand:  # dsp_programs.c: the program areas of effects that contribute to ot_dsp_effects
+            recipe['subscribe'].append(dict(event='ev_tick', fn='mw_programs_tick', order=98))
         # The status modal (status.c): CUE + PROJ before stock and the modules see it, drawn under the dev capture.
         recipe['subscribe'] += [dict(event='ev_key', fn='modwerk_status_key', order=89),
                                 dict(event='ev_enc', fn='modwerk_status_enc', order=89),
