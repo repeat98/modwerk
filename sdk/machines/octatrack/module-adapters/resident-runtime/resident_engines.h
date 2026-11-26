@@ -110,7 +110,7 @@ void mw_engines_area_free(unsigned core, unsigned offset);
 /* The UI tick of the program areas (dsp_programs.c), and its counts (diagnostics, never an ABI): programs written,
  * switches made, refusals (no room, no code), jobs refused or lost. */
 void mw_programs_tick(void);
-extern volatile uint32_t mw_programs_written, mw_programs_switched, mw_programs_refused, mw_programs_failed;
+extern volatile uint32_t mw_programs_written, mw_programs_switched, mw_programs_refused, mw_programs_failed, mw_programs_streams;
 /* The unit may give an unused engine back (the board parks its controller): stopped, no pattern change queued, two
  * seconds after the last key or knob and no pick waiting, as an evacuation waits. */
 int mw_engines_settled(void);

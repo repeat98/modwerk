@@ -32,10 +32,14 @@ FIXTURE = r'''
 #include "transfer.h"
 #include "loader.h"
 #include "modwerk_events.h"
+#include "stream_channel.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr, "mode %d line %d: %s\n", mode, __LINE__, #c); exit(1); } } while (0)
 #define POOL 2000u
 #define ARENA (POOL - DL_CODE_START)
 #define EFFECT 40u
+#define STREAMED 41u  /* the stream's effect: programs and a stream, as the Quadraverb's */
+#define SIN 40u
+#define SOUT 24u
 #define WORDS 64u
 static int mode;
 
@@ -102,16 +106,33 @@ static uint32_t test_code(unsigned slot, int32_t p, uint32_t at, uint32_t *out)
     for (uint32_t i = 0; i < n; ++i) out[i] = word_of(p, at, i) | (i & 1u ? 0x5a000000u : 0u); /* junk above 24 bits */
     return n;
 }
-static const struct modwerk_dsp_effect effect = {MODWERK_DSP_EFFECT_ABI, WORDS, test_program, test_code, {0}};
+static const struct modwerk_dsp_effect effect = {MODWERK_DSP_EFFECT_ABI, WORDS, test_program, test_code, 0, 0, 0, 0, 0};
+/* The stream's effect: fill writes (slot << 12) ^ 7f ^ i, the DSP checks it in frame f and writes (slot << 12) ^ 5f ^ i
+ * ^ $8000, which take checks: in order, every frame from the first, nothing torn. */
+static uint16_t in_word(unsigned slot, uint32_t f, unsigned i) { return (uint16_t)(slot << 12 ^ f * 7u ^ i); }
+static uint16_t out_word(unsigned slot, uint32_t f, unsigned i) { return (uint16_t)(slot << 12 ^ f * 5u ^ i ^ 0x8000u); }
+static int32_t last_taken[16];
+static unsigned takes[16], fills, outs_checked[16], ins_checked[16];
+static void test_fill(unsigned slot, uint32_t f, volatile uint16_t *in) { ++fills; for (unsigned i = 0; i < SIN; ++i) in[i] = in_word(slot, f, i); }
+static void test_take(unsigned slot, uint32_t f, const volatile uint16_t *out)
+{
+    CHECK(last_taken[slot] < 0 || (uint32_t)last_taken[slot] + 1u == f);
+    for (unsigned i = 0; i < SOUT; ++i) CHECK(out[i] == out_word(slot, f, i));
+    last_taken[slot] = (int32_t)f, ++takes[slot];
+}
+static const struct modwerk_dsp_effect streamed = {MODWERK_DSP_EFFECT_ABI, WORDS, test_program, test_code, SIN, SOUT, test_fill, test_take, 0};
+static int streamed_listed = 1;
+int mw_stream_test_contributed(const void *r) { return r == &streamed && streamed_listed; }
+uint32_t mw_stream_test_clock(void) { return 0; }
 static uintptr_t volatile row[9];
 uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS] = {[MODWERK_OT_DSP_EFFECTS - RUNTIME_EVENTS] = row};
 int modwerk_runtime_owner_at(uintptr_t at, struct runtime_owner *o)
 {
-    if (at != (uintptr_t)&effect) return 0;
-    memset(o, 0, sizeof *o), o->module = 0x51564b31u;
+    if (at != (uintptr_t)&effect && at != (uintptr_t)&streamed) return 0;
+    memset(o, 0, sizeof *o), o->module = at == (uintptr_t)&effect ? 0x51564b31u : 0x51564b32u;
     return 1;
 }
-int modwerk_dsp_catalogue_handle(uint32_t module) { return module == 0x51564b31u ? (int)EFFECT : -1; }
+int modwerk_dsp_catalogue_handle(uint32_t module) { return module == 0x51564b31u ? (int)EFFECT : module == 0x51564b32u ? (int)STREAMED : -1; }
 
 /* The loader's channel: one job a core; a WRITE lands 24 words a frame, op 12 in one. */
 static uint32_t P[2][0x2000], X[2][MW_SLOT_RECORD_WORDS];
@@ -127,7 +148,7 @@ int dl_upload_start(unsigned c, const struct dl_upload *u)
 }
 int dl_command_start(unsigned c, unsigned op, unsigned id, unsigned init, unsigned proc)
 {
-    CHECK(c < 2u && op == 12u && id < MW_SLOT_RECORD_WORDS && id % 4u == 0 && init <= 0xffffu && proc <= 0xffu);
+    CHECK(c < 2u && op == 12u && id < MW_SLOT_RECORD_WORDS && id % 4u < 3u && init <= 0xffffu && proc <= 0xffu);
     if (job[c].state || refuse_starts) return 0;
     job[c].state = 1, job[c].op = op, job[c].id = id, job[c].init = init, job[c].proc = proc, ++starts[c];
     return 1;
@@ -159,14 +180,14 @@ static void frame(void)
                 P[c][at + i] = job[c].u.words[job[c].done + i];
             }
             if ((job[c].done += n) == job[c].u.count) job[c].state = 3, ++writes;
-        } else X[c][job[c].id] = job[c].proc << 16 | job[c].init, job[c].state = 3, ++switches;
+        } else X[c][job[c].id] = job[c].proc << 16 | job[c].init, job[c].state = 3, switches += job[c].id % 4u == 0;
     }
     /* The DSP: each slot of the effect runs nothing, or a whole program written for the address its record names. */
     for (unsigned s = 0; s < 16u; ++s) {
         unsigned c = core_of(s);
         uint32_t at = X[c][record_of(s)];
         runs[s] = -1;
-        if (!at || mw_programs_test_live[s] != EFFECT) continue;
+        if (!at || (mw_programs_test_live[s] != EFFECT && mw_programs_test_live[s] != STREAMED)) continue;
         int32_t found = -1;
         for (int32_t p = 0; p < 64 && found < 0; ++p) {
             int whole = 1;
@@ -175,6 +196,46 @@ static void frame(void)
         }
         CHECK(found >= 0);
         runs[s] = found;
+    }
+}
+/* Core 0's host banks (the stream's in- and out-regions), and the chain around a DSP frame k: state 0 reads what frame
+ * k - 1 wrote, state 7 sends what frame k + 1 reads, then the check; the DSP's frame k runs after the receiver. */
+static uint16_t bank[2][0x2000];
+static uint32_t k_now;
+static void chain(void)
+{
+    uint32_t k = mw_stream_frame();
+    CHECK(k == k_now);
+    if (mw_stream_read() == 1u) {
+        extern volatile uint16_t mw_stream_read_count;
+        for (unsigned i = 0; i <= mw_stream_read_count; ++i) mw_stream_rx[i] = bank[(k - 1u) & 1u][MW_STREAM_OUT_REGION + i];
+        CHECK(mw_stream_read() == 2u);
+    }
+    unsigned loops = mw_stream_block();
+    for (unsigned i = 0; i < 32u * loops; ++i) bank[(k + 1u) & 1u][MW_STREAM_IN_REGION + i] = mw_stream_tx[i];
+    if (loops) mw_stream_complete();
+    mw_stream_account();
+    mw_stream_check();
+}
+static void dsp_stream(uint32_t k)
+{
+    for (unsigned s = 0; s < 16u; ++s) {
+        unsigned c = core_of(s);
+        uint32_t in = X[c][record_of(s) + 1u], out = X[c][record_of(s) + 2u];
+        if (mw_programs_test_live[s] != STREAMED || !(in | out)) continue;
+        CHECK(c == 0);
+        if (!in || !out) continue; /* named out first, in last; cleared in first: live only with both */
+        CHECK(in >= MW_STREAM_IN_REGION && out >= MW_STREAM_OUT_REGION);
+        for (unsigned i = 0; i < SIN; ++i) CHECK(bank[k & 1u][in + i] == in_word(s, k, i)); /* named only once filled */
+        for (unsigned i = 0; i < SOUT; ++i) bank[k & 1u][out + i] = out_word(s, k, i);
+        ++ins_checked[s], ++outs_checked[s];
+    }
+}
+static void run_streamed(unsigned ticks, unsigned frames)
+{
+    for (unsigned t = 0; t < ticks; ++t) {
+        mw_programs_tick();
+        for (unsigned f = 0; f < frames; ++f) { chain(); frame(); dsp_stream(k_now); ++k_now; }
     }
 }
 static void run(unsigned ticks, unsigned frames)
@@ -189,9 +250,10 @@ static void pick(unsigned s, unsigned id, int32_t p) { mw_programs_test_live[s] 
 int main(int argc, char **argv)
 {
     mode = argc > 1 ? atoi(argv[1]) : 0;
-    row[0] = (uintptr_t)&effect;
-    for (unsigned s = 0; s < 16u; ++s) want[s] = -1;
-    unsigned t5 = 12u, t6 = 13u, t1 = 8u, t2 = 9u; /* FX2 of T5, T6 (core 0), T1, T2 (core 1) */
+    row[0] = (uintptr_t)&effect, row[1] = (uintptr_t)&streamed;
+    for (unsigned s = 0; s < 16u; ++s) want[s] = -1, last_taken[s] = -1;
+    unsigned t5 = 12u, t6 = 13u, t7 = 14u, t1 = 8u, t2 = 9u; /* FX2 of T5, T6, T7 (core 0), T1, T2 (core 1) */
+    uint32_t t5_in = 0;
     switch (mode) {
     case 0: /* one instance: its first program, a change, back again with no write; then it leaves */
         pick(t5, EFFECT, 3);
@@ -276,13 +338,37 @@ int main(int argc, char **argv)
         pick(1u, EFFECT, 11), pick(7u, EFFECT, 12), run(10, 46);
         CHECK(runs[1] == 11 && runs[7] == 12 && X[1][4u * 4u] && X[0][4u * 10u]);
         break;
+    case 9: /* the stream: T5 and T6 (core 0) stream and switch programs; T1 (core 1) gets no lane, its record stays 0 */
+        pick(t5, STREAMED, 3), pick(t6, STREAMED, 4), pick(t1, STREAMED, 5);
+        run_streamed(10, 46);
+        CHECK(runs[t5] == 3 && runs[t6] == 4 && runs[t1] == 5 && mw_programs_streams == 2);
+        CHECK(ins_checked[t5] > 200 && takes[t5] > 200 && takes[t6] > 50 && !ins_checked[t1] && !takes[t1]);
+        CHECK(X[1][record_of(t1) + 1u] == 0 && X[1][record_of(t1) + 2u] == 0 && mw_programs_refused >= 1);
+        CHECK(X[0][record_of(t5) + 1u] != X[0][record_of(t6) + 1u] && X[0][record_of(t5) + 2u] != X[0][record_of(t6) + 2u]);
+        want[t5] = 6, run_streamed(6, 46);
+        CHECK(runs[t5] == 6 && takes[t5] > 500);
+        /* T5 leaves: in, then out, back to 0 before its lane closes; T6 runs on and T5's blocks go back */
+        t5_in = X[0][record_of(t5) + 1u];
+        pick(t5, 0, -1), run_streamed(6, 46);
+        CHECK(X[0][record_of(t5) + 1u] == 0 && X[0][record_of(t5) + 2u] == 0 && takes[t6] > 500);
+        pick(t7, STREAMED, 7), run_streamed(10, 46);                         /* T7 takes the room T5 had */
+        CHECK(runs[t7] == 7 && takes[t7] > 200 && X[0][record_of(t7) + 1u] == t5_in);
+        break;
+    case 10: /* the module goes: its fills and takes stop at once (the frame path reads the table), then its records */
+        pick(t5, STREAMED, 3), run_streamed(10, 46);
+        CHECK(takes[t5] > 200);
+        streamed_listed = 0, row[1] = 0, mw_programs_test_live[t5] = 0; /* the loader takes its code and the slot's id together */
+        t5_in = takes[t5];
+        run_streamed(6, 46);
+        CHECK(takes[t5] == t5_in && X[0][record_of(t5) + 1u] == 0 && X[0][record_of(t5) + 2u] == 0);
+        break;
     default: return 2;
     }
     return 0;
 }
 '''
 
-MODES = 9
+MODES = 11
 
 
 def build(work):
@@ -291,10 +377,11 @@ def build(work):
     (work / 'fixture.c').write_text(FIXTURE)
     out = work / 'programs'
     flags = ['-std=c11', '-Wall', '-Wextra', '-Werror', *SANITIZE, '-DMW_ENGINES_TEST', '-DMW_PROGRAMS_TEST',
-             '-DMODWERK_RUNTIME_EVENTS', '-DMODWERK_FX_IDS=64', '-I' + str(work), '-I' + str(RUNTIME),
+             '-DMODWERK_RUNTIME_EVENTS', '-DMODWERK_FX_IDS=64', '-DMW_STREAM_TEST', '-I' + str(work), '-I' + str(RUNTIME),
+             '-I' + str(ADAPTER),
              '-I' + str(ROOT / 'sdk/machines/octatrack/elekloader'), '-I' + str(ROOT / 'sdk/machines/octatrack/include'),
              '-I' + str(ROOT / 'sdk/runtime/loader'), '-I' + str(ROOT / 'sdk/runtime/upload')]
-    sources = [work / 'fixture.c', RUNTIME / 'dsp_programs.c', RUNTIME / 'resident_engines.c']
+    sources = [work / 'fixture.c', RUNTIME / 'dsp_programs.c', RUNTIME / 'resident_engines.c', ADAPTER / 'stream_channel.c']
     return out, subprocess.run(['cc', *flags, *map(str, sources), '-o', str(out)], capture_output=True, text=True)
 
 
@@ -328,6 +415,7 @@ CONTRACT = """proc:
 pcdry:
         rts
 """ % 0x7fb0
+PROBE = ROOT / 'sdk/drafts/program-probe/probe.asm'  # the fixture's proc: records, a program area and the stream's echo
 AREA = """        move    #>$%x,x0
         move    x0,x:>$7000
         rts
@@ -402,6 +490,23 @@ class DspProgramsReceiver(unittest.TestCase):
                 self.assertEqual(out[9], 'D x %d 0' % 0x7000)                # position 2 had none: dry
                 self.assertEqual(out[10], 'A 1')
                 self.assertEqual(out[12], 'D x %d %d' % (0x7000, 0x123456))  # ... until its record named one
+                # The stream's words: the probe fixture's proc echoes its in-block into its out-block at (r6 & $ffe000)
+                # + each offset, in either bank, and touches neither with a word unset.
+                probe, plabels2 = cls.packages.assemble(PROBE.read_text(), 0x1780, str(work))
+                entry = plabels2['proc']
+                rec = 0x7fb0 + 4 * 5
+                steps = ['P %d %d' % (0x1780 + i, w) for i, w in enumerate(probe)] + ['FILL x 0 32768 5']
+                for r6, bank in ((0x2280, 0x2000), (0x4500, 0x4000)):
+                    steps += ['X %d 0' % rec, 'X %d %d' % (rec + 1, 0x1be0), 'X %d %d' % (rec + 2, 0x1840),
+                              'X %d %d' % (bank + 0x1be0, 0xab1234), 'X %d %d' % (bank + 0x1be1, 0xcd5678),
+                              'R r 7 %d' % 0x6500, 'R r 6 %d' % r6, 'GO %d 1000 %d' % (entry, 0x1780),
+                              'DUMP x %d %d' % (bank + 0x1840, bank + 0x1842)]
+                steps += ['X %d 0' % (rec + 1), 'X %d 7' % (0x4000 + 0x1840), 'R r 7 %d' % 0x6500, 'R r 6 %d' % 0x4500,
+                          'GO %d 1000 %d' % (entry, 0x1780), 'DUMP x %d %d' % (0x4000 + 0x1840, 0x4000 + 0x1841)]
+                echo = run(steps)
+                self.assertEqual(echo[1], 'D x %d %d %d' % (0x2000 + 0x1840, 0xab1234, 0xcd5678))
+                self.assertEqual(echo[3], 'D x %d %d %d' % (0x4000 + 0x1840, 0xab1234, 0xcd5678))
+                self.assertEqual(echo[5], 'D x %d 7' % (0x4000 + 0x1840))  # in-block unnamed: no echo
 
 
 if __name__ == '__main__':

@@ -374,5 +374,35 @@ int main(void) {{
         self.assertNotIn('mw_stream_dma_failed', dsp)
 
 
+    def test_channel_scheduler(self):
+        """--stream-channel: A's send at the wide in-region with the lanes' minor loops, B's read at the out-region with
+        stream_channel.c's count and minor loops, no frame-head code, both recoveries."""
+        core = stream_probe.build_core_module()
+        args = SimpleNamespace(stream_probe=0, stream_read=0, stream_channel=True, resident_on_demand=True)
+        stream_probe.check_args(args)
+        hooks = stream_probe.scheduler(self.hooks(core), args)
+        send = hooks[hooks.index('dl_send_stream:'):hooks.index('dl_write:')]
+        for line in ('move.w #0x7be0,%d1', 'move.l #mw_stream_tx+UNCACHED,%d1', 'moveq #64,%d1', 'lsl.l #5,%d1'):
+            self.assertIn(line, send)
+        read = hooks[hooks.index('mw_stream_state0:'):hooks.index('mw_stream_stock0:')]
+        order = ['jsr mw_stream_read', 'move.b %d1,0xfc04401c', 'clr.b 0xfc0a400c', 'move.w %d1,0x20000000',
+                 'move.w %d1,0xfc04503e', 'move.w #0x7840,%d1', 'move.w mw_stream_read_count,%d1', 'move.w #0x89,%d1',
+                 'move.l %d1,0xfc045030', 'moveq #32,%d1', 'move.l %d1,0xfc045028', 'move.w mw_stream_read_iter,%d1',
+                 'move.w %d1,0xfc045034', 'move.w %d1,0xfc04503c', 'move.b %d1,0xfc04401e', 'jmp DONE']
+        at = [read.index(line) for line in order]
+        self.assertEqual(at, sorted(at))
+        self.assertEqual(hooks.count('mw_stream_state0:'), 1)
+        complete = hooks[hooks.index('dl_complete:'):]
+        self.assertLess(complete.index('move.b %d1,0xfc04801d'), complete.index('jsr mw_stream_check'))
+        dsp = stream_probe.dsp_c((SDK / 'elekloader/dsp.c').read_text(), args)
+        self.assertIn('mw_stream_read_failed();', dsp)
+        self.assertIn('mw_stream_dma_failed', dsp)
+        self.assertNotIn('mw_stream_dsp_wanted', dsp)  # probe A's snapshot reads are not the channel's
+        self.assertIs(stream_probe.place_receiver(args, lambda end: end, None, 'A', 0x1234, None), 0x1234)
+        self.assertEqual(stream_probe.cflags(args), ['-DMODWERK_STREAM_CHANNEL'])
+        with self.assertRaises(ValueError):
+            stream_probe.check_args(SimpleNamespace(stream_probe=64, stream_read=0, stream_channel=True, resident_on_demand=True))
+
+
 if __name__ == '__main__':
     unittest.main()
