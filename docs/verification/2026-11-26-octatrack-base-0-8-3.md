@@ -1,0 +1,116 @@
+# Octatrack base 0.8.3: three fixes on top of 0.8.2, 26 November 2026
+
+Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus three changes, each its author's commit:
+the frame interrupt's Part read from SRAM (#2174, Laslo), a Keep that never loses to an unreadable saved-set file
+(#2109), and module knob names that follow the drawn track (#2228, #2042). Base builds: see the end.
+
+## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
+
+- **Why:** the frame interrupt calls `0x400068e4` twice a track, 16 times a frame (`0x4000d340`, `0x4000d36c`), and it
+  begins with `mvzb 0x100b14cf,%d0`, the current Part from CS1. Stock keeps the same byte in on-chip SRAM at `0x80000003`
+  and writes both wherever it writes either: SRAM, then CS1 in the next instruction (`0x40062142`/`8`, `0x400621e2`/`8`,
+  `0x40087ea6`/`ac`); the boot (`0x4001fa76`) and the reset (`0x40025aaa`) set CS1 and memcpy copies it to SRAM
+  (`0x400208ae`). The pairs are not masked, so in the one instruction between them stock's other 94 readers of
+  `0x80000003` already see a new Part and this one sees it a frame later: with the change it sees it with them.
+- **Change:** `build_core.py` `PART_READ`: the six bytes at `0x400068f0` become `mvzb 0x80000003,%d0` (`op: bytes`, guard
+  on the stock instruction): the same flags, one CS1 read fewer per call. The ISR's other read (`0x4000d212`) is a rare
+  branch and stays.
+- **Found with** `ot_emu` (stock 1.40C, project CPUCURVE: Part 1, 120 BPM, A01 a trig every four steps on T1-T4, T6, T7
+  with T2 and T4 playing a 2 s loop, Dev17 C04 style) and a local counter of data accesses outside cached SDRAM by PC
+  (not in this tree): over 11,025 frames A01 made 28.1 CS1 accesses a frame, 16.0 of them this read, besides 12 of the
+  renderer's per-voice CS1 record. Most of the 9,000 accesses outside SDRAM go to SRAM, which is as cheap as a cache hit.
+- **Emulator A/B:** development twins of this source without (`f8c3f344…`, MAIN `7a306ec6…`) and with the change
+  (`30592832…`, MAIN `ceb6f9a2…`), the beta flags without controller rows plus `--dev`, the same 11,025 frames of A01:
+  the same instructions over the frames (350,396,946); all 353,406 writes to the DSP host port equal (address, value,
+  PC); SRAM and `0x46c80000..0x46cbffff` equal; CS1 equal but the eight bytes of the base identity. CS1 accesses 46.3 →
+  30.3 a frame. At `0x400068f0` the two bytes were equal at all 176,400 calls, also on a project saved on Part 3 (the
+  load writes 2 through the `0x40087ea6` pair). Not checked in the emulator: a Part switch while playing.
+- **On Laslo's MKII** (OS 1.40C, the flashed base 0.8 `e1152583`, RAM boots of the two twins A, B, A; CPUCURVE3 on the
+  card; `guard` 8 s readings):
+
+  | Frame interrupt mean (longest frame) | A | B | A again |
+  | --- | --- | --- | --- |
+  | A01, six tracks trigging, two samples (6 readings) | 37.0-37.1 % (77.6-79.8) | 36.0 % (76.4-79.1) | 37.0-37.1 % (76.9-80.3) |
+  | A03, four trigging, no sample (3) | 29.8 % (63.3-63.7) | 28.8 % (62.3-62.5) | 29.8 % (62.9-64.6) |
+  | A02, empty, playing (2) | 29.8 % (40.2-40.7) | 28.8 % (39.3) | 29.8 % (40.2-40.6) |
+  | stopped (2) | 29.8 % (40.1-40.3) | 28.7 % (39.1-39.3) | 29.7-29.8 % (40.1-40.4) |
+
+  One point of the frame interrupt in every state (about 3.6 µs, 0.23 µs a CS1 byte read); the longest frame about a
+  point lower where the pattern does not set it. Nothing skipped. CPU meter: 49.4-50.2 → 48.3-49.1 % on A01.
+- Built on 0.8.2 (#2174's own twins): base `880c0a34538757dd…`; browser = native `.bin` `a4ecb83fcea5f609…`
+  (832,628 bytes). Base-bound packages relinked.
+- **Part switches while playing** (twin B, A01 playing, Laslo at the unit through the PART menu): Parts 1, 2, 3, 2, 1,
+  2, 3, 4, 1 over about two minutes, the current Part read from SRAM every 4 s. Nothing skipped, no stall, no error in
+  1,003,642 frames; back on Part 1 the frame interrupt read 36.0 % again (the longest frame up to 87.3 % in the readings
+  that held a Part load). By ear: Part 1's sound came back cleanly each time (Parts 2-4 of the project hold no sample).
+- Not run: the release image on a unit.
+- **The boot clamp** (asked on #2174, read from stock 1.40C). Stock copies the 22 settings bytes from CS1 `0x100b14cc`
+  to SRAM `0x80000000` at `0x4001fb4c` and only then calls the battery restore `0x40025770` (at `0x4001fb78`), whose
+  first call, `0x4000fda8`, clamps a CS1 Part above 3 to 3 in CS1 alone. On stock a damaged Part above 3 would stay in
+  SRAM, where stock's own SRAM readers already see it. Since 0.8.2 (#2223) `mw_boot_restore` takes that call, runs the
+  checks first and, when a settings value was fixed, copies the 22 bytes into SRAM again before stock's restore (`diag.c`
+  `modwerk_boot_restore`, also when the bank is refused for more than `RESTORE_TRUSTED` fixes). So on this base the SRAM
+  Part is at most 3 when the restore returns. The restore runs from main's init, before the interrupt setup that follows
+  it (`0x4001fc02` on). The interrupt's other Part read, `0x4000d212`, still on CS1, does the same lookup (Part × 0x18b2
+  + bank base `0x46c82456` + track, the mode byte at +585122 compared with 4): with a bad Part either site would read a
+  byte past the four Parts inside the bank's SDRAM, a read and no fault. Outside the one-instruction window both sites
+  read the same value.
+
+## 24 November 2026: a saved-set file the start could not read (#2109)
+
+`modset.c` told a missing `MODWERK0.SET`/`MODWERK1.SET` from one it failed to read only by accident: `load()` returned 0
+for both. With neither file whole, the restore zeroed the header, generation included, and said NONE_SAVED when both
+failed to open or read; the next Keep sealed generation 1 into the other file, and a file that failed to read at that
+start and read again later, holding a higher generation, won over the Keep at the next start.
+
+- `load()` now returns absent (stock's open -12, no such file, or -10, an empty one: the logger's reading in
+  `stock_140c.c`), read in full but no set, or unreadable (any other open failure, or any read failing). A header that
+  is not whole is never trusted for its generation, since a write cut short inside it mixes new bytes with old.
+- An unreadable file gives DAMAGED (5) instead of NONE_SAVED. With no whole set the next save goes first to the
+  unreadable file, and every file the start could not read gets the set too before the save counts as saved (`pending`
+  stays set and the second write follows at once). If the read-back fails, the save is SAVE_FAILED and retried.
+- A newer file that read whole and then failed the restore's second read leaves nothing running, DAMAGED, and an empty
+  `set[]` with its generation (it used to keep the other file's bytes).
+
+Host tests (no firmware): `test_modset_card.c` (new; modset.c's own sector store and load) cuts the power before every
+stock file call of a save, 328 cuts over eleven installs, removals and switches, with a file's length landing per sector
+and only at close, and runs nine read-error cases; `test_modset.c` adds three on its pretend card. On `f99c1d523`'s
+modset.c 13 and 6 checks fail (NONE_SAVED where DAMAGED belongs, the Keep losing at the next start); the power-cut sweep
+passes there too. With the change all pass, with the elekloader `test_recipe.py` (41), `test_sets.c`, and the
+`sdk/tests` saved-set, card guard, card shelf, volatile service, journal, loader, resident engine board and base-bound
+suites.
+
+- Built on 0.8.2 at the time (pinned m68k toolchain): base `39f56803c52277b1…` (was `c5791ec9`); browser = native `.bin`
+  `5205b4afbcd20e66…` (831,672 bytes); MAIN 1,348,231 bytes (`d67ce1b5f1ab09bf…`); container 831,656 of 851,712, 20,056
+  free (+188 bytes on `c5791ec9`). Base-bound packages relinked.
+- Not run on a unit: the read failures cannot be made on hardware. Pending on a flashed 0.8.3: a kept set restored across
+  power cycles; a Keep then two power cycles; a card with neither file starting as "Nothing saved" (2), not 5, which
+  checks stock's -12 in this path; PROJ held at power-on, a Keep, a power cycle.
+
+## 26 November 2026: module knob names follow the drawn track (#2228, #2042)
+
+A select that renames its neighbours (Euclid's TYPE: FREQ RES DEPTH, or LEVEL -- AMT for AMP) writes the names into its
+module's FX page. The USB base keeps one page per effect id (`pages[id]`, `fxpage.c`), shared by every track running the
+module, and the panel ran the renaming formatter only when it drew that select, so the names one track's TYPE set showed
+on every other track's main page. The sound was never affected. `modwerk_fxpage_names(page, track, part, fx)` runs a
+module page's renaming formatters with the drawn track's own stored values, from three hooks in `fxpage.s` right before
+the names are drawn: `mw_names_main` (0x4004e4d2), `mw_names_fx1_setup` (0x40037b8c), `mw_names_fx2_setup` (0x400377f0),
+each in `DYNLOAD_HOOKS` with a SHA-256 guard. Stored values: main at store+0x126+24·track+6·fx, SETUP at
+store+0x2fe+30·track+6·fx.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Two tracks, different TYPE, main page | each track must show its own names | host test | pass; unit not run |
+| FX1 vs FX2 slot of one track | the stored-value offset differs by slot | host test | pass |
+| Stock effect on the page | the hook runs before every main and SETUP draw | host test | pass |
+| No project loaded, page dropped | the store or page can be missing | host test | pass |
+| Vector's hook at 0x4004e4c6 | patches sit close in the same drawer | build overlap and return-target checks | pass |
+| LFO destination lists | they show these names too | not changed | known gap: the last-drawn track's names |
+| UI and frame cost of three more hooks | they run on every draw of those pages | not run | needs the unit |
+
+## Builds and pending
+
+- Base 0.8.3 builds: to be filled in after the regeneration.
+- Pending on a unit: Euclid on two tracks (one AMP, one LP), switching between their main and FX1/FX2 SETUP pages,
+  each showing its own names, with the UI and frame cost of the three hooks; a Keep, then two power cycles; the frame
+  interrupt A/B on the release image.
