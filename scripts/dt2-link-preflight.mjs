@@ -129,6 +129,15 @@ function repositoryReader(root, ref) {
   return { identity: 'working tree (includes uncommitted recipe changes)', read: path => readFileSync(resolve(root, path)) }
 }
 
+export function selectCoreCopy(copies = []) {
+  const destinations = new Set()
+  for (const copy of copies) {
+    requireThat(!destinations.has(copy.path), `Duplicate base copy destination: ${copy.path}`)
+    destinations.add(copy.path)
+  }
+  return copies.find(copy => copy.path === 'core-dt2/mod.json')
+}
+
 export function main(argv = process.argv.slice(2), root = ROOT) {
   const { values } = parseArgs({ args: argv, options: { stock: { type: 'string' }, 'base-ref': { type: 'string' }, help: { type: 'boolean' } } })
   if (values.help) {
@@ -142,7 +151,7 @@ export function main(argv = process.argv.slice(2), root = ROOT) {
   const config = JSON.parse(source.read(`${MACHINE}/elekloader/base.json`))
   const original = source.read(`${MACHINE}/elekloader/core-dt2/mod.json`)
   let core = JSON.parse(original)
-  const copy = config.copies?.find(c => c.path === 'core-dt2/mod.json')
+  const copy = selectCoreCopy(config.copies)
   if (copy) {
     requireThat(copy.from === 'core-dt2/mod.json' && hash(original) === copy.sha256, 'Base copy provenance guard mismatch')
     core = JSON.parse(source.read(`${MACHINE}/elekloader/copies/core-dt2/mod.json`))

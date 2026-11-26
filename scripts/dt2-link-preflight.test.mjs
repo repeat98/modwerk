@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { encodeSyx } from '../src/engine/elektron/sysex.ts'
-import { inspectBase, inspectConfiguration, inspectProfile, inspectStock } from './dt2-link-preflight.mjs'
+import { inspectBase, inspectConfiguration, inspectProfile, inspectStock, selectCoreCopy } from './dt2-link-preflight.mjs'
 
 const config = (interfaces, count) => Uint8Array.from([9, 2, 0, 0, count, 1, 0, 0x80, 50, ...interfaces.flat()])
 const iface = (number, alternate, endpoints, cls = 1, sub = 3) => [9, 4, number, alternate, endpoints, cls, sub, 0, 0]
@@ -86,6 +86,16 @@ describe('DT2 profile pointer and endpoint ownership checks', () => {
 })
 
 describe('DT2 base and provenance preflight', () => {
+  it('refuses ambiguous copy destinations instead of trusting the first core copy', () => {
+    const first = { path: 'core-dt2/mod.json', from: 'core-dt2/mod.json', sha256: 'first' }
+    const later = { ...first, from: 'other/mod.json', sha256: 'later' }
+    expect(selectCoreCopy()).toBeUndefined()
+    expect(selectCoreCopy([{ path: 'base/link.c' }, first])).toBe(first)
+    expect(() => selectCoreCopy([first, later])).toThrow('Duplicate base copy destination: core-dt2/mod.json')
+    expect(() => selectCoreCopy([later, first])).toThrow('Duplicate base copy destination: core-dt2/mod.json')
+    expect(() => selectCoreCopy([first, { path: 'base/link.c' }, { path: 'base/link.c' }]))
+      .toThrow('Duplicate base copy destination: base/link.c')
+  })
   it('rejects a hash-matched hook span that cuts an instruction', () => {
     // Invented NOP; MOVE.L #0x11223344,D0; RTS. Neither code nor container comes from stock.
     const image = Uint8Array.of(0x4e, 0x71, 0x20, 0x3c, 0x11, 0x22, 0x33, 0x44, 0x4e, 0x75)

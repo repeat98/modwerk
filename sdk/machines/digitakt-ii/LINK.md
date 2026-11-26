@@ -30,6 +30,8 @@ union including optional additions, not a replacement for the builder's variant
 selection or all-site preimage checks. The default reads working-tree recipes;
 `--base-ref` reads a single resolved local commit, including its provenance-guarded
 core recipe copy. Fetch the cumulative branch first when checking current work.
+Duplicate copy destinations are refused: the builder stages copies in order,
+so an ambiguous recipe must not be audited by choosing its first core match.
 
 Exit 0 means **offline binding checks passed**. Exit 1 means a mismatch or
 unsupported recipe needs investigation. JSON output contains addresses, hashes,
