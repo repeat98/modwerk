@@ -47,6 +47,8 @@ The four voices (this build), the DI, output RMS in dBFS at four GAIN settings, 
 
 Ten renders for listening, both files in each voice (CLEAN GAIN 20 1X12, BRIT GAIN 40 and 85 2X12, HGAIN GAIN 100 4X12, SOLID GAIN 30 2X12), stay on the developer's computer.
 
+The developer listened to the ten renders (26 November 2026, as reported): "They sound good." No voice to adjust. Not reported on: each knob in each voice, clicks when VOIC switches.
+
 ## Sound quality (npm run fx:audit, dsp_host renders, this build)
 
 DC is below −132 dBFS on every tone, nothing reaches the rails, and after the input stops the output is digital silence. Sums to mono: the two sides are identical. Every knob's two ends, and every pair of cabinets, differ on noise (`compare`: no pair "same").
