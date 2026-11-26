@@ -52,13 +52,25 @@ describe('maintenance bot policy', () => {
     expect(classify(merge(), pull({ state: 'closed' })).reject).toBeTruthy()
   })
 
+  it('gives every action it accepts a summary the ledger takes', () => {
+    // A merge once lost its summary to a shadowed name, and the Worker refused the whole pass (26 November 2026).
+    const thread = { kind: 'thread', id: 't1', number: 0, author: 'alice', to: 'repeat98', replies: 0, state: 'open' }
+    const proposals = [[merge(), pull()], [merge(), pull({ headRef: 'base/octatrack-next' })], [{ kind: 'label', number: 9, add: ['bug'] }, issue()], [{ kind: 'comment', number: 9, body: 'Hi' }, issue()],
+      [{ kind: 'review', number: 5, body: 'Hi' }, pull()], [{ kind: 'close', number: 9, body: 'Done.' }, issue()], [{ kind: 'approve_run', number: 5 }, pull({ waitingRuns: 1 })],
+      [{ kind: 'board_reply', thread: 't1', body: 'Hi' }, thread], [{ kind: 'board_close', thread: 't1' }, thread], [{ kind: 'board_release', claim: 'c1' }, { kind: 'claim', id: 'c1', state: 'open' }]]
+    for (const [proposal, target] of proposals) {
+      const decision = classify({ summary: 'Do it', ...proposal }, target, new Set(['bug']))
+      expect([proposal.kind, typeof decision.summary, decision.summary.length > 0 && decision.summary.length <= 300]).toEqual([proposal.kind, 'string', true])
+    }
+  })
+
   it('refuses any kind it does not know', () => {
     for (const kind of ['push', 'release', 'deploy', 'delete_branch', 'approve', undefined]) expect(classify({ kind, number: 5, summary: 'x' }, pull()).reject).toBeTruthy()
   })
 
   it('posts a request for details at once, other replies after a window, and turning down a pull request only with the owner’s OK', () => {
     expect(classify({ kind: 'comment', number: 9, intent: 'ask_details', body: 'Which OS version?', summary: 'Ask' }, issue()).tier).toBe('notify')
-    expect(classify({ kind: 'comment', number: 9, body: 'Fixed in 0.4.', summary: 'Answer' }, issue())).toMatchObject({ tier: 'window', windowHours: 4 })
+    expect(classify({ kind: 'comment', number: 9, body: 'Fixed in 0.4.', summary: 'Answer' }, issue())).toMatchObject({ tier: 'window', windowHours: 1 })
     expect(classify({ kind: 'review', number: 5, event: 'REQUEST_CHANGES', body: 'Add a changelog entry.', summary: 'Review' }, pull())).toMatchObject({ tier: 'window', payload: { event: 'REQUEST_CHANGES' } })
     expect(classify({ kind: 'close', number: 9, body: 'Fixed and live.', summary: 'Close' }, issue())).toMatchObject({ tier: 'window', payload: { stateReason: 'completed' } })
     expect(classify({ kind: 'decline', number: 5, body: 'One effect per module.', summary: 'Decline' }, pull()).tier).toBe('ask')
@@ -90,7 +102,7 @@ describe('maintenance bot policy', () => {
   it('answers board questions after a window, and asks before ending someone else’s thread or claim', () => {
     const thread = (extra = {}) => ({ kind: 'thread', id: 't1', number: 0, author: 'alice', replies: 1, state: 'open', ...extra })
     const reply = classify({ kind: 'board_reply', thread: 't1', body: 'See docs/AGENT_BOARD.md#claims.', summary: 'Answer alice' }, thread())
-    expect(reply).toMatchObject({ tier: 'window', windowHours: 4, summary: 'Board: Answer alice', payload: { thread: 't1', pin: { replies: 1 } } })
+    expect(reply).toMatchObject({ tier: 'window', windowHours: 1, summary: 'Board: Answer alice', payload: { thread: 't1', pin: { replies: 1 } } })
     expect(classify({ kind: 'board_reply', thread: 't1', body: 'x'.repeat(501), summary: 'Long' }, thread()).reject).toContain('500')
     expect(classify({ kind: 'board_reply', thread: 't1', body: 'Hi', summary: 'Late' }, thread({ state: 'closed' })).reject).toBeTruthy()
     expect(classify({ kind: 'board_close', thread: 't1', summary: 'Close' }, thread()).tier).toBe('ask')

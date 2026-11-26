@@ -13,8 +13,10 @@ if not os.environ.get('MODWERK_UNIT_TURN') and os.environ.get('MODWERK_UNIT') no
     here = os.path.abspath(__file__)
     os.execv(node, [node, os.path.join(os.path.dirname(here), 'unit-queue.mjs'), 'run', '--note', ('device-send ' + line)[:120],
                     '--expect', '2m', '--steps', line, '--', sys.executable, '-B', here] + sys.argv[1:])
-s = socket.socket(socket.AF_UNIX)
-s.connect(os.environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock'))
+path = os.environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock')
+# A port number is TCP on this computer (Windows Python has no AF_UNIX), anything else a Unix socket.
+s = socket.socket(socket.AF_INET) if path.isdigit() else socket.socket(socket.AF_UNIX)
+s.connect(('127.0.0.1', int(path)) if path.isdigit() else path)
 s.sendall((line + '\n').encode())
 reply = s.makefile().read()
 if not reply:

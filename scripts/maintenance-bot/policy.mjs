@@ -6,8 +6,11 @@
 import { createHash } from 'node:crypto'
 
 export const OWNER = 'repeat98'
-/** Hours an action waits for the owner's Stop before it runs. The owner's own pull request merges after `ownMerge`. */
-export const WINDOW_HOURS = { merge: 12, ownMerge: 1, decision: 24, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
+/**
+ * Hours an action waits for the owner's Stop before it runs. Someone who asked for help hears back within the hour
+ * (owner, 26 November 2026); the owner's own pull request merges after `ownMerge`.
+ */
+export const WINDOW_HOURS = { merge: 12, ownMerge: 1, decision: 24, close: 12, comment: 1, review: 1, board_reply: 1, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
 const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release', 'discord_reply', 'forum_reply', 'shout_reply', 'approve_run'])
 const LABELS = /^(bug|documentation|duplicate|enhancement|question|invalid|wontfix|configuration|accessibility|good first issue|help wanted|needs-work|needs-info|priority:P[123]|module:[a-z0-9-]+)$/
 /**
@@ -101,8 +104,8 @@ export function classify(proposal, target, existingLabels = new Set()) {
       // asks the owner. The owner marked their own pull request ready, so it merges after a short window.
       const own = target.author === OWNER
       const publishes = (target.files ?? []).some(file => PUBLISHES.some(pattern => pattern.test(file)))
-      const base = BASE_BRANCH.test(target.baseRef ?? '') || BASE_BRANCH.test(target.headRef ?? '') || (target.files ?? []).some(file => BASE_FILES.some(pattern => pattern.test(file)))
-      const why = base ? 'a base merges only after its review' : publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
+      const isBase = BASE_BRANCH.test(target.baseRef ?? '') || BASE_BRANCH.test(target.headRef ?? '') || (target.files ?? []).some(file => BASE_FILES.some(pattern => pattern.test(file)))
+      const why = isBase ? 'a base merges only after its review' : publishes && !own ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
       const method = (target.files ?? []).some(file => file.startsWith('src/catalog/') || /\/modules\//.test(file)) ? 'merge' : 'squash'
       const payload = { kind, number: target.number, head: target.head, method, pin }
       return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS[own ? 'ownMerge' : 'merge'], id: actionId(kind, target.number, target.head), payload }

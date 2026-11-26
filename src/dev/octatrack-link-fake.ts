@@ -10,6 +10,7 @@ import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
 import { publishedBinding as baseBinding } from '../engine/elekloader/octatrack-publication.ts'
+import { runtimeId } from '../engine/elekloader/module-set.ts'
 
 /** The published base, so the pretend unit is a tester who is up to date (older bases are told to update). */
 export const FAKE_BASE: string = baseBinding.identity
@@ -120,9 +121,9 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
       async controlTransferOut() { return { status: 'stall', bytesWritten: 0 } },
       async controlTransferIn(setup: { request: number; value: number }) {
         if (setup.request === 3) return { status: 'ok', data: new DataView(identityBytes(unit.base).buffer) }
-        if (setup.request === 29) { // CAPABILITIES, MWCP v1: loader ABI 8, the feature bits, 24 sites, 8 copies
-          const caps = new DataView(new ArrayBuffer(12)); caps.setUint32(0, 0x4d574350); caps.setUint8(4, 1); caps.setUint8(5, 8)
-          caps.setUint16(6, 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0) | (unit.screen ? 8192 : 0)); caps.setUint16(8, 24); caps.setUint16(10, 8)
+        if (setup.request === 29) { // CAPABILITIES, MWCP v1 as the published base answers (loader.c, ep0.c): ABI 10, its feature bits, 128 sites and copies
+          const caps = new DataView(new ArrayBuffer(12)); caps.setUint32(0, 0x4d574350); caps.setUint8(4, 1); caps.setUint8(5, 10)
+          caps.setUint16(6, 7 | 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0) | 1024 | 2048 | 4096 | (unit.screen ? 8192 : 0)); caps.setUint16(8, 128); caps.setUint16(10, 128)
           return { status: 'ok', data: caps }
         }
         if (setup.request === 7 && unit.screen) return { status: 'ok', data: await unit.screen() }
@@ -332,6 +333,7 @@ export function previewKit() {
   const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
   unit.installed = { moduleIds: params.get('inventory') === 'empty' ? [] : ['everb', 'airwindows-chorus', 'poly8'], removedStockFx: [] }
   unit.status = params.get('status') !== 'old'
+  unit.moduleSets = true // the published base syncs a whole set at once; without it a set adding two modules asks for a base update
   if (params.get('preview') === 'screen') unit.screen = sampleScreens()
   // &base=older: a unit on an older base, so the base dialog offers the update over USB; &slots=one|two: what the
   // base's SLOTS says (one copy: Send, Restart, Save; two slots: Send, Save, Restart), absent for a base before them.
@@ -351,9 +353,21 @@ export function previewKit() {
     link: new OctatrackLink(unit.usb, fakeSession(unit, 60)),
     // A pretend load and inventory, so the whole flow can be clicked through.
     prepareUpdate: async (target: InventoryTarget) => {
-      await wait(400); unit.pending = { moduleIds: target.moduleIds, removedStockFx: target.removedStockFx ?? [] }
-      // Each load stages different bytes, so the unit's active digest (and the inventory read after Keep) changes.
-      return { name: target.name, changes: [{ module: target.name, data: new TextEncoder().encode(JSON.stringify(unit.pending).padEnd(160 * 1024)) }] }
+      await wait(400)
+      const before = unit.installed.moduleIds
+      unit.pending = { moduleIds: target.moduleIds, removedStockFx: target.removedStockFx ?? [] }
+      // One pretend package per module that comes or goes, as the base takes a whole set: an MWRM header with an image
+      // size (none for a removal) and the module's runtime id. Each load stages different bytes, so the unit's active
+      // digest (and the inventory read after Keep) changes.
+      const changed = [...target.moduleIds.filter(id => !before.includes(id)), ...before.filter(id => !target.moduleIds.includes(id))]
+      const ids = changed.length ? changed : target.moduleIds.slice(0, 1), text = new TextEncoder().encode(JSON.stringify(unit.pending))
+      return { name: target.name, changes: ids.map(id => {
+        const data = new Uint8Array(32 + Math.ceil(160 * 1024 / ids.length / 4) * 4), view = new DataView(data.buffer)
+        view.setUint32(0, 0x4d57524d); view.setUint16(4, 4); view.setUint32(28, Number.parseInt(runtimeId(id), 16))
+        if (target.moduleIds.includes(id)) view.setUint32(8, data.length - 32)
+        data.set(text.subarray(0, data.length - 32), 32)
+        return { module: id, data }
+      }) }
     },
     readInventory: async () => { await wait(150); return structuredClone(unit.installed) },
   }
