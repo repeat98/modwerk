@@ -3,6 +3,18 @@
 Draft Modwerk port of octabam `modules/scope` at
 `3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
 
+## 0.2.0-experimental
+
+**Hardware status: not run.** Built with `npm run module:dev -- scope --build-only`
+on 26 November 2026: SHA-256 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`,
+module `5f161c91`, 37,704 bytes, 198 relocations, **three hooks, zero stock
+sites** (`runtime.json`: `module_key`, `module_tick`, `ev_usb_frame`).
+
+`module:doctor --draft scope` is green on cross-compatibility with Tuner.
+`verify.py` still targets an octabam bus image with detours; it skips when
+the image has no patch at `0x40059ef0`. Emulator or unit trial of the `.mwrm`
+on a development twin is still open.
+
 ## 0.1.0-experimental
 
 **Hardware status: reported by hand on one MKII over USB, 26 November 2026,
@@ -90,7 +102,7 @@ SCOPE_PROJECT=<project folder> python3 modules/scope/verify.py   # from that oct
 
 ```sh
 npm run module:doctor -- --draft scope    # experimental lines green but cross-compatibility
-npm run modules:compat -- --with scope    # three clashes with Tuner (same detour sites)
+npm run modules:compat -- --with scope    # 0.2.0: no Tuner clash; 0.1.0 had three site clashes
 ```
 
 ## Octabam evidence (not Modwerk USB)
