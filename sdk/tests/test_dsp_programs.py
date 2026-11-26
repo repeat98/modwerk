@@ -198,21 +198,32 @@ static void frame(void)
         runs[s] = found;
     }
 }
-/* Core 0's host banks (the stream's in- and out-regions), and the chain around a DSP frame k: state 0 reads what frame
- * k - 1 wrote, state 7 sends what frame k + 1 reads, then the check; the DSP's frame k runs after the receiver. */
-static uint16_t bank[2][0x2000];
+/* Each core's host banks (the stream's in- and out-regions), and the chain around a DSP frame k: state 0 reads what
+ * core 0 wrote in frame k - 1, state 1 what core 1 did, state 3 sends what core 1 reads in frame k + 1, state 7 what
+ * core 0 does, then the check; the DSPs' frame k runs after the receiver. */
+static uint16_t bank[2][2][0x2000];
 static uint32_t k_now;
+static int chain_down; /* dsp.c's recovery gave the chain up */
 static void chain(void)
 {
+    extern volatile uint16_t mw_stream_read_count, mw_stream_read_count1;
     uint32_t k = mw_stream_frame();
     CHECK(k == k_now);
     if (mw_stream_read() == 1u) {
-        extern volatile uint16_t mw_stream_read_count;
-        for (unsigned i = 0; i <= mw_stream_read_count; ++i) mw_stream_rx[i] = bank[(k - 1u) & 1u][MW_STREAM_OUT_REGION + i];
+        for (unsigned i = 0; i <= mw_stream_read_count; ++i) mw_stream_rx[i] = bank[0][(k - 1u) & 1u][MW_STREAM_OUT_REGION + i];
         CHECK(mw_stream_read() == 2u);
     }
-    unsigned loops = mw_stream_block();
-    for (unsigned i = 0; i < 32u * loops; ++i) bank[(k + 1u) & 1u][MW_STREAM_IN_REGION + i] = mw_stream_tx[i];
+    if (mw_stream_read1() == 1u) {
+        for (unsigned i = 0; i <= mw_stream_read_count1; ++i) mw_stream_rx1[i] = bank[1][(k - 1u) & 1u][MW_STREAM_OUT_REGION + i];
+        CHECK(mw_stream_read1() == 2u);
+    }
+    unsigned loops = mw_stream_block1();
+    CHECK(32u * loops <= MW_STREAM_IN1_WORDS);
+    for (unsigned i = 0; i < 32u * loops; ++i) bank[1][(k + 1u) & 1u][MW_STREAM_IN_REGION + i] = mw_stream_tx1[i];
+    if (loops) mw_stream_complete1();
+    loops = mw_stream_block();
+    CHECK(32u * loops <= MW_STREAM_IN_WORDS);
+    for (unsigned i = 0; i < 32u * loops; ++i) bank[0][(k + 1u) & 1u][MW_STREAM_IN_REGION + i] = mw_stream_tx[i];
     if (loops) mw_stream_complete();
     mw_stream_account();
     mw_stream_check();
@@ -223,11 +234,12 @@ static void dsp_stream(uint32_t k)
         unsigned c = core_of(s);
         uint32_t in = X[c][record_of(s) + 1u], out = X[c][record_of(s) + 2u];
         if (mw_programs_test_live[s] != STREAMED || !(in | out)) continue;
-        CHECK(c == 0);
         if (!in || !out) continue; /* named out first, in last; cleared in first: live only with both */
         CHECK(in >= MW_STREAM_IN_REGION && out >= MW_STREAM_OUT_REGION);
-        for (unsigned i = 0; i < SIN; ++i) CHECK(bank[k & 1u][in + i] == in_word(s, k, i)); /* named only once filled */
-        for (unsigned i = 0; i < SOUT; ++i) bank[k & 1u][out + i] = out_word(s, k, i);
+        CHECK(in + SIN <= MW_STREAM_IN_REGION + (c ? MW_STREAM_IN1_WORDS : MW_STREAM_IN_WORDS));
+        if (chain_down) continue;
+        for (unsigned i = 0; i < SIN; ++i) CHECK(bank[c][k & 1u][in + i] == in_word(s, k, i)); /* named only once filled */
+        for (unsigned i = 0; i < SOUT; ++i) bank[c][k & 1u][out + i] = out_word(s, k, i);
         ++ins_checked[s], ++outs_checked[s];
     }
 }
@@ -338,12 +350,12 @@ int main(int argc, char **argv)
         pick(1u, EFFECT, 11), pick(7u, EFFECT, 12), run(10, 46);
         CHECK(runs[1] == 11 && runs[7] == 12 && X[1][4u * 4u] && X[0][4u * 10u]);
         break;
-    case 9: /* the stream: T5 and T6 (core 0) stream and switch programs; T1 (core 1) gets no lane, its record stays 0 */
+    case 9: /* the stream: T5 and T6 (core 0) and T1 (core 1) stream and switch programs, each core in its own regions */
         pick(t5, STREAMED, 3), pick(t6, STREAMED, 4), pick(t1, STREAMED, 5);
         run_streamed(10, 46);
-        CHECK(runs[t5] == 3 && runs[t6] == 4 && runs[t1] == 5 && mw_programs_streams == 2);
-        CHECK(ins_checked[t5] > 200 && takes[t5] > 200 && takes[t6] > 50 && !ins_checked[t1] && !takes[t1]);
-        CHECK(X[1][record_of(t1) + 1u] == 0 && X[1][record_of(t1) + 2u] == 0 && mw_programs_refused >= 1);
+        CHECK(runs[t5] == 3 && runs[t6] == 4 && runs[t1] == 5 && mw_programs_streams == 3);
+        CHECK(ins_checked[t5] > 200 && takes[t5] > 200 && takes[t6] > 50 && ins_checked[t1] > 50 && takes[t1] > 50);
+        CHECK(X[1][record_of(t1) + 1u] == MW_STREAM_IN_REGION && X[1][record_of(t1) + 2u] == MW_STREAM_OUT_REGION);
         CHECK(X[0][record_of(t5) + 1u] != X[0][record_of(t6) + 1u] && X[0][record_of(t5) + 2u] != X[0][record_of(t6) + 2u]);
         want[t5] = 6, run_streamed(6, 46);
         CHECK(runs[t5] == 6 && takes[t5] > 500);
@@ -362,13 +374,27 @@ int main(int argc, char **argv)
         run_streamed(6, 46);
         CHECK(takes[t5] == t5_in && X[0][record_of(t5) + 1u] == 0 && X[0][record_of(t5) + 2u] == 0);
         break;
+    case 11: /* core 1 alone: T1, T2 and T3's FX1 apart in its regions; T1 leaves, T4 takes its room; then the chain
+              * is given up (dsp.c's recovery): no fill or take after it */
+        pick(t1, STREAMED, 1), pick(t2, STREAMED, 2), pick(2u, STREAMED, 3), run_streamed(20, 46); /* one core's job: one after another */
+        CHECK(takes[t1] > 100 && takes[t2] > 100 && takes[2] > 100 && mw_programs_streams == 3);
+        CHECK(X[1][record_of(t1) + 1u] != X[1][record_of(t2) + 1u] && X[1][record_of(t2) + 1u] != X[1][record_of(2u) + 1u]);
+        t5_in = X[1][record_of(t1) + 1u];
+        pick(t1, 0, -1), run_streamed(6, 46);
+        CHECK(X[1][record_of(t1) + 1u] == 0 && X[1][record_of(t1) + 2u] == 0);
+        pick(11u, STREAMED, 4), run_streamed(10, 46);                       /* T4's FX2 */
+        CHECK(takes[11] > 100 && X[1][record_of(11u) + 1u] == t5_in);
+        mw_stream_read_failed(), mw_stream_dma_failed(), chain_down = 1;
+        t5_in = takes[t2] + takes[11], run_streamed(4, 46);
+        CHECK(takes[t2] + takes[11] == t5_in && !mw_stream_read() && !mw_stream_read1() && !mw_stream_block1() && !mw_stream_block());
+        break;
     default: return 2;
     }
     return 0;
 }
 '''
 
-MODES = 11
+MODES = 12
 
 
 def build(work):
@@ -415,7 +441,49 @@ CONTRACT = """proc:
 pcdry:
         rts
 """ % 0x7fb0
-PROBE = ROOT / 'sdk/drafts/program-probe/probe.asm'  # the fixture's proc: records, a program area and the stream's echo
+# A proc that runs its record's area and echoes its in-block's two halfwords into its out-block, both at (r6 & $ffe000)
+# + the record's offsets (words 1 and 2), and touches neither while a word is 0.
+ECHO = """init:
+        rts
+proc:
+        move    r7,a
+        lsr     #6,a
+        and     #>$3c,a
+        add     #>$7fb0,a
+        move    a1,r1
+        nop
+        move    x:(r1),a
+        tst     a
+        beq     ppdry
+        move    a1,r2
+        nop
+        jsr     (r2)
+ppdry:
+        move    x:(r1+1),a
+        tst     a
+        beq     ppdone
+        move    x:(r1+2),b
+        tst     b
+        beq     ppdone
+        move    r6,x0
+        move    #>$ffe000,x1
+        move    x0,a1
+        and     x1,a
+        move    a1,x0
+        move    x:(r1+1),a
+        add     x0,a
+        move    a1,r2
+        move    x:(r1+2),b
+        add     x0,b
+        move    b1,r3
+        nop
+        move    x:(r2)+,x1
+        move    x1,x:(r3)+
+        move    x:(r2),x1
+        move    x1,x:(r3)
+ppdone:
+        rts
+"""
 AREA = """        move    #>$%x,x0
         move    x0,x:>$7000
         rts
@@ -490,9 +558,9 @@ class DspProgramsReceiver(unittest.TestCase):
                 self.assertEqual(out[9], 'D x %d 0' % 0x7000)                # position 2 had none: dry
                 self.assertEqual(out[10], 'A 1')
                 self.assertEqual(out[12], 'D x %d %d' % (0x7000, 0x123456))  # ... until its record named one
-                # The stream's words: the probe fixture's proc echoes its in-block into its out-block at (r6 & $ffe000)
+                # The stream's words: ECHO's proc echoes its in-block into its out-block at (r6 & $ffe000)
                 # + each offset, in either bank, and touches neither with a word unset.
-                probe, plabels2 = cls.packages.assemble(PROBE.read_text(), 0x1780, str(work))
+                probe, plabels2 = cls.packages.assemble(ECHO, 0x1780, str(work))
                 entry = plabels2['proc']
                 rec = 0x7fb0 + 4 * 5
                 steps = ['P %d %d' % (0x1780 + i, w) for i, w in enumerate(probe)] + ['FILL x 0 32768 5']

@@ -1,9 +1,0 @@
-{
-  "schema": 1,
-  "contribute": [
-    {"to": "ot_dsp_effects", "order": 50, "data": "pp_effect"}
-  ],
-  "subscribe": [
-    {"event": "module_tick", "fn": "pp_tick"}
-  ]
-}
