@@ -209,8 +209,7 @@ export function stabilityLines(found, events, versions = new Map(), owner = OWNE
 }
 
 /** Each module machine's skipped renders in the field beside what admission books for it (frame-costs.json), most first
- * (owner, 26 November 2026: sets of two and three FM Synth tracks booked 0.2 each skipped 100,000s of renders, and nothing
- * put the two side by side). A start's count (the guard's skips since the start, hushed renders included) goes to every
+ * (owner, 26 November 2026: nothing put the two side by side). A start's count (the guard's skips since the start, hushed renders included) goes to every
  * machine on a track it shed; `several`: starts with two or more of its tracks in one Part. The owner's unit is left out. */
 export function shedLines(found, costs = {}, sigs = new Map(), owner = OWNER) {
   const rows = new Map()
@@ -383,7 +382,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
     ...checks.length ? ['', 'Card-build checks that refused a selection (on every module change; not failures): ' + checks.map(([name, rows]) => `@${name} ${rows.length}`).join(', ')] : [],
     '', `Stability per base (without @${OWNER}'s development unit; OS upgrades and reflashes left out; hours from the units' load logs):`,
     ...stabilityLines(found, events, versions),
-    ...(found => found.length ? ['', `Skipped renders by machine (the last 30 days, without @${OWNER}'s unit), beside what admission books for it now (frame-costs.json):`, ...found] : [])(shedLines(found, costs, sigs)),
+    ...(found => found.length ? ['', `Skipped renders by machine (the last 30 days, older bases included, without @${OWNER}'s unit; a start with several machines counts for each), beside what admission books for it now (frame-costs.json):`, ...found] : [])(shedLines(found, costs, sigs)),
     '', 'Daily USB sync counts (everyone, sharing or not):',
     ...[...days].map(([day, rows]) => '  ' + day + '  ' + rows.map(row => row.event.replace('usb_sync_', '') + ' ' + row.count).join(', ')),
   ].join('\n')

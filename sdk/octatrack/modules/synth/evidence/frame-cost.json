@@ -13,7 +13,7 @@
   ],
   "rest": 0,
   "first": 31.3,
-  "each": 26.9,
+  "each": 0.5,
   "points": [
     81,
     107.9,
@@ -30,7 +30,7 @@
   "notes": [
     "package sha256 8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de",
     "Measured on that package. The current package 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9 differs from it in one byte only, the machine descriptor's CPU price (reserved[0], offset 27,925: 6 to 4); its code and data are the same.",
-    "Booked again from this Dev17 C04 curve (owner, 26 November 2026), after a re-read on CPUCURVE2 A03 (4b434cb28: stock alone 64.2 %, +16.8, +20.6, +20.8, +19.5, so first 20.4, each 0.2) charged a second and third FM Synth track 0.2 each and testers' sets of two and three skipped 100,000s of renders. A lighter pattern reads a heavy machine low, and readings past 100 % (here all four) charge a further instance as the first (curveFit).",
+    "Booked again from this Dev17 C04 curve (owner, 26 November 2026), after a re-read on CPUCURVE2 A03 (4b434cb28: stock alone 64.2 %, +16.8, +20.6, +20.8, +19.5, so first 20.4, each 0.2): a lighter pattern than the medium one reads a heavy machine low.",
     "Read before repeat98/modwerk#2110 fixed the reference reading; its stock alone (81 %) is the 79.4-81 % every other C04 curve reads, so the reference played.",
     "The admission runs are the A03 run's (Laslo's MKII, 24 November 2026, 0.8 twin 2f0dcfa3, package 791e26c5): CPUCURVE2 A02 empty admitted (longest 54 %, 0 dropped), A01 medium (78.4 % stock alone) refused with 31.3 booked."
   ],

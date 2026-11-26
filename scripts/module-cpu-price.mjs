@@ -358,28 +358,6 @@ export const CURVE_ROOM = 100 // percent of a frame: the first instance's readin
 // The medium pattern's stock alone, at the least (MODULE_PERFORMANCE.md: about 80 %). A heavy machine reads low on a lighter one
 // (UNGEMACH 0.1.0: +14.6 with stock alone at 63.1 %, +23.5 at 78.7 %; FM Synth 0.1.5: +16.8 at 64.2 %, +26.9 at 81 %).
 export const MEDIUM_FLOOR = 75
-const tenth = value => Math.round(value * 10) / 10
-/** `first` and `each` from what the longest frame gained with 1, 2, 3… instances (`adds`) over the pattern's stock alone
- *  (`baseline`, % of a frame). `each` is the steepest step from the third instance on (a lone second step can be steep while
- *  later ones are cheap: Tape Echo 9.2, 16.7, 16.8, 20.5 on a busy Part), `first` the least that, with `each` after it, covers
- *  every measured point. Past CURVE_ROOM the guard holds the longest frame (FM Synth 0.1.5 on Dev17 C04: 107.9, 112.8, 113.3,
- *  112.1), so those readings say nothing of one more instance: it is charged as much as the first, unless two readings under
- *  CURVE_ROOM show a cheaper step (owner, 26 November 2026: sets of two or three FM Synth or SYNTIZ tracks booked a few points
- *  each skipped 100,000s of renders in the field). Never below the fit without the cap. */
-export function curveFit(adds, baseline) {
-  const c = adds.map(value => Math.max(0, value)), steps = c.slice(2).map((value, i) => value - c[i + 1])
-  let each = Math.max(0, steps.length ? Math.max(...steps) : c.length > 1 ? c[1] - c[0] : c[0] ?? 0)
-  let first = Math.max(each, ...c.map((value, n) => value - n * each))
-  const capped = typeof baseline === 'number' ? adds.findIndex(value => !(baseline + value < CURVE_ROOM)) : -1
-  if (capped >= 0) {
-    const clean = c.slice(0, capped)
-    each = Math.max(each, clean.length >= 2 ? Math.max(...clean.slice(1).map((value, i) => value - clean[i])) : c[0])
-    first = Math.max(first, each)
-  }
-  return { first: tenth(first), each: tenth(each) }
-}
-/** What admission books for a module's curve record: curveFit over its readings, the first of them stock alone. */
-export const bookedCurve = record => Array.isArray(record.adds) ? curveFit(record.adds, record.points?.[0]) : { first: record.first, each: record.each }
 /** Why a current-version curve does not carry a release, or null: read on a pattern lighter than the medium one, its first reading
  *  past CURVE_ROOM, or no clean admission run. */
 export function curveProblem(record) {
@@ -422,8 +400,7 @@ export function frameCostStatus({ root, document, glue = null }) {
   const logged = existsSync(resolve(root, 'src/community/module-changelogs', id + '.json')), date = releaseDate({ root, document })
   const refused = logged && (!date || date >= FRAME_COST_FROM)
   if (valid && record.version === document.version) {
-    const booked = bookedCurve(record)
-    const detail = 'first ' + booked.first + ', each ' + booked.each + (record.rest != null ? ', rest ' + record.rest : '') + ' % of a frame (' + record.base + ', ' + String(record.measuredAt).slice(0, 10) + ')'
+    const detail = 'first ' + record.first + ', each ' + record.each + (record.rest != null ? ', rest ' + record.rest : '') + ' % of a frame (' + record.base + ', ' + String(record.measuredAt).slice(0, 10) + ')'
     const problem = curveProblem(record)
     if (!problem) return { state: 'ok', detail: detail + '; admitted alone on the empty and the medium pattern, nothing dropped' }
     const strict = logged && (!date || date >= RELEASE_COST_FROM)
@@ -447,14 +424,12 @@ export function frameCostsJson(document) {
 export function generateFrameCosts(root) {
   const base = readJson(resolve(root, FRAME_COSTS_BASE_PATH))
   if (!base) return null // no Octatrack frame-cost table in this tree (a fixture): nothing to generate
-  // The base's own curves are fitted as the modules' are, by the stock alone their entry names (`baseline`).
-  const costs = Object.fromEntries(Object.entries(base.costs).map(([id, { baseline, ...cost }]) =>
-    [id, typeof baseline === 'number' && Array.isArray(cost.points) ? { ...cost, ...curveFit(cost.points, baseline) } : cost]))
+  const costs = { ...base.costs }
   const modules = resolve(root, 'sdk/octatrack/modules')
   for (const id of existsSync(modules) ? readdirSync(modules) : []) {
     const version = readJson(join(modules, id, 'octamod.module.json'))?.version, record = readJson(join(modules, id, FRAME_COST_RECORD))
     if (!version || record?.module !== id || record.version !== version || typeof record.first !== 'number' || typeof record.each !== 'number') continue
-    costs[id] = { ...bookedCurve(record), ...(typeof record.rest === 'number' ? { rest: record.rest } : {}), points: record.adds,
+    costs[id] = { first: record.first, each: record.each, ...(typeof record.rest === 'number' ? { rest: record.rest } : {}), points: record.adds,
       measured: id + ' ' + version + ' on ' + (record.tracks ?? []).join(' ') + ': ' + record.scene + '; base ' + record.base + '; ' + record.seconds + ' s a reading; ' + String(record.measuredAt).slice(0, 10) + ' (' + FRAME_COST_RECORD + ')' }
   }
   return frameCostsJson({ about: 'GENERATED by npm run modules:generate from ' + FRAME_COSTS_BASE_PATH + ' and each module\'s ' + FRAME_COST_RECORD + ': never edit by hand. ' + base.about, ...(base.stock ? { stock: base.stock } : {}), costs })

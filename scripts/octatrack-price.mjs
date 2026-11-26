@@ -18,8 +18,8 @@
 // /tmp/modwerk-share.sock`, and the scene is the caller's: select the pattern, leave the transport stopped, and say in
 // the record which (--scene). The unit takes a module only while stopped, so each reading is STOP, PLAY, the reading, STOP, and a
 // reading during which `state` says stopped is refused and ends the run. Read it on the medium pattern even when the module takes
-// it past CURVE_ROOM: curveFit charges a further instance as the first past it, and a lighter pattern reads a machine low
-// (owner, 26 November 2026). Such a release needs the owner's release-cost waiver (curveProblem).
+// it past CURVE_ROOM: a lighter pattern reads a machine low (owner, 26 November 2026), and such a release needs the owner's
+// release-cost waiver (curveProblem).
 // The unit judges picks, and hushes machines while it plays, by the cost table the last v2 set sent, kept through rollbacks
 // and power cycles. So a curve installs its module as a one-package set with this checkout's table, the module's `each`
 // booked at 0 (measuringCosts): a booked guess must not refuse or hush the further instances the curve is there to read
@@ -37,7 +37,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from '
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, relative, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveFit, curveProblem } from './module-cpu-price.mjs'
+import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, FRAME_COSTS_BASE_PATH, FRAME_COSTS_PATH, FRAME_COST_RECORD, frameCostsJson, generateFrameCosts, machineDescriptors, manifestJson, measuredPrice, curveProblem } from './module-cpu-price.mjs'
 import { takeUnitTurn } from './unit-queue.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
@@ -128,7 +128,15 @@ export function restCost(before, atRest) {
   const rest = Math.round(((atRest?.frameMax ?? 0) - (before?.frameMax ?? 0)) * 10) / 10
   return rest >= REST_NOISE ? rest : 0
 }
-export { curveFit }
+/** The next-instance cost from a curve: `adds` is what the longest frame gained with 1, 2, 3… instances. `each` is the
+ * steepest step from the third instance on (a lone second step can be steep while later ones are cheap: Tape Echo 9.2,
+ * 16.7, 16.8, 20.5 on a busy Part), `first` the least that, with `each` after it, covers every measured point. */
+export function curveFit(adds) {
+  const c = adds.map(value => Math.max(0, value)), steps = c.slice(2).map((value, i) => value - c[i + 1])
+  const each = Math.max(0, steps.length ? Math.max(...steps) : c.length > 1 ? c[1] - c[0] : c[0] ?? 0)
+  const first = Math.max(each, ...c.map((value, n) => value - n * each))
+  return { first: tenth(first), each: tenth(each) }
+}
 /** Stock's own room from three longest-frame readings: the reserve is the busy pattern with every delay awake, and one track's
  *  share is what eight playing tracks add over the empty pattern, divided by eight (a machine is charged net of it). */
 export const stockFit = ({ empty, quiet, awake }) => ({ reserve: tenth(Math.max(quiet, awake)), trackStock: tenth(Math.max(0, quiet - empty) / 8) })
@@ -336,7 +344,7 @@ if (import.meta.filename === process.argv[1]) {
     }
     await send(`PATTERN+TRIG${args['measure-pattern']} w600`)
     const adds = points.slice(1).map(point => tenth(point - points[0]))
-    return { tracks: placed, points, adds, ...curveFit(adds, points[0]), notes, admission, ...(notPlayed ? { notPlayed } : {}) }
+    return { tracks: placed, points, adds, ...curveFit(adds), notes, admission, ...(notPlayed ? { notPlayed } : {}) }
   }
   // --stock: what stock alone needs, so module admission leaves it room (owner, 22 November 2026) and a base that makes stock
   // cheaper gives modules more by itself: the longest frame on the empty pattern, on the busy one (eight tracks playing samples,

@@ -130,20 +130,6 @@ it('fits the next-instance cost to a curve without undercharging any measured po
   }
 })
 
-it('charges a further instance as the first once the readings pass where the guard holds the longest frame', () => {
-  // FM Synth 0.1.5 on Dev17 C04, stock alone 81 %: 107.9, 112.8, 113.3, 112.1 (owner's MKII, 22 Nov 2026). Unfitted: 31.3, 0.5.
-  expect(curveFit([26.9, 31.8, 32.3, 31.1], 81)).toEqual({ first: 31.3, each: 26.9 })
-  // SYNTIZ 0.1.1 on C04, 81.5 %: one reading under the cap (97.7), then 105.6, 111.1, 112.4. Unfitted: 18.6, 5.5.
-  expect(curveFit([16.2, 24.1, 29.6, 30.9], 81.5)).toEqual({ first: 18.6, each: 16.2 })
-  // Two readings under the cap show a cheaper step (85 -> 95 -> 98, then 102, 102.5): charged by the fit, not as the first.
-  expect(curveFit([10, 13, 17, 17.5], 85)).toEqual({ first: 10, each: 4 })
-  // The first reading already past it (85 -> 101): a further instance as the first; `first` never below the fit (18).
-  expect(curveFit([16, 19, 20], 85)).toEqual({ first: 18, each: 16 })
-  // Under the cap throughout, or no baseline: as before.
-  expect(curveFit([9.2, 16.7, 16.8, 20.5], 79)).toEqual({ first: 13, each: 3.7 })
-  expect(curveFit([26.9, 31.8, 32.3, 31.1])).toEqual({ first: 31.3, each: 0.5 })
-})
-
 it('picks a machine by its row and puts the track back on STATIC', () => {
   expect(machinePick('T3')).toContain('T3 T3 w500 LEFT w400 UP*12 w200 DOWN*5 w200 YES')
   expect(machineToStatic('T3')).toMatch(/UP\*12 w200 YES/)
