@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 2,
+  "id": "cx-osc",
+  "key": "CX OSC",
+  "name": "Cx Osc",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "source": {
+    "repository": "https://github.com/sambanks/octabam",
+    "revision": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
+    "path": "modules/cxosc"
+  },
+  "author": {
+    "github": "ilia-murzinov",
+    "credits": [
+      "ilia-murzinov: CX panel, morph, Modwerk port and machine registration",
+      "Tim Hastie (@timhastie): two-operator FM SYNTH engine lineage (octatrick-modules), MIT",
+      "Sam Banks (@sambanks): octabam cxosc module and host verify_cxosc, MIT"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Complex oscillator",
+    "family": "Synth machines",
+    "summary": "Buchla-style FM complex oscillator: wavefolder, CAR/MOD morph, SYMM skew and modulator feedback on a mono FLEX track.",
+    "overview": "CX OSC is a sixth machine-list row on FLEX tracks (Part signature CX,1). PLAYBACK sets pitch, ratio, index, fine tuning, fold amount and the folder input mix. SRC SETUP adds carrier and modulator morphs, index decay, fold symmetry, feedback and PWM skew. One CX OSC track per Part. Stock LFO page; no VOIC/CHRD. Declared conflict with FM Synth: do not install both.",
+    "highlights": [
+      "Sixth machine-list row: CX OSC on FLEX, signature CX,1, mono render.",
+      "Sine wavefolder on PLAYBACK FOLD and MIX; CAR/MOD sine→saw→square morph on SRC SETUP.",
+      "DEC index envelope with HOLD at 127; SYMM bipolar fold skew; FDBK on SRC SETUP E.",
+      "FUNC snaps on PTCH and RATO; LFO PMTR lists CAR, MOD, SYMM, FDBK and PWM (30–34)."
+    ],
+    "usage": [
+      "Remove FM Synth from the module set if it is installed. Sync or trial CX OSC alone.",
+      "On a FLEX audio track: FUNC+SRC, or SELECT MACHINE TYPE, pick CX OSC (YES). Part signature reads CX.",
+      "PLAYBACK: PTCH, RATO, INDX, FINE, FOLD, MIX. SRC SETUP (FUNC+PLAYBACK): CAR, MOD, DEC, SYMM, FDBK, PWM.",
+      "Trig the track, tweak knobs, save the Part. Only one CX OSC track per Part is allowed."
+    ]
+  },
+  "access": {
+    "location": "FLEX audio track → FUNC+SRC or machine list → CX OSC.",
+    "steps": [
+      "Remove FM Synth from the module set if it is installed.",
+      "FUNC+SRC on a FLEX track (or the machine list) → CX OSC → YES.",
+      "PLAYBACK and SRC SETUP pages as on octabam CX OSC; LFO page is stock."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "PTCH",
+      "default": 64,
+      "count": 128,
+      "doc": "PLAYBACK A: semitones, raw 64 = 0; FUNC snaps octave steps.",
+      "labels": null
+    },
+    {
+      "name": "RATO",
+      "default": 12,
+      "count": 128,
+      "doc": "PLAYBACK B: mod∶carrier ratio; FUNC snaps the classic table.",
+      "labels": null
+    },
+    {
+      "name": "INDX",
+      "default": 0,
+      "count": 128,
+      "doc": "PLAYBACK C: FM index depth.",
+      "labels": null
+    },
+    {
+      "name": "FINE",
+      "default": 64,
+      "count": 128,
+      "doc": "PLAYBACK D: cents, raw 64 = 0.",
+      "labels": null
+    },
+    {
+      "name": "FOLD",
+      "default": 0,
+      "count": 128,
+      "doc": "PLAYBACK E: wavefolder amount after the MIX point.",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 0,
+      "count": 128,
+      "doc": "PLAYBACK F: folder input crossfade carrier vs mod morph.",
+      "labels": null
+    },
+    {
+      "name": "FDBK",
+      "default": 0,
+      "count": 128,
+      "doc": "SRC SETUP E: modulator feedback (requires SETUP_ALL machine flag on Modwerk).",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Track machine",
+    "conflicts": [
+      "synth"
+    ],
+    "uiClaims": [],
+    "limitations": [
+      "Experimental draft: USB trials on the author's MKII only; not a catalogue release.",
+      "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface; compatibility.json group-owns the shared sites.",
+      "MIDI chromatic drawer, legato, multi-track stress, Part save/load persistence and power-cycle retention are not fully qualified.",
+      "CPU/frame cost not measured on hardware; host gate checks registration, import pins and package build."
+    ]
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Package",
+      "display": "~30 KiB code and data (module:dev --build-only)",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Package size noted in TESTING.md; not a hardware storage claim.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire render",
+      "display": "Not measured on hardware",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "octabam verify_cxosc Unicorn estimate only; no MKII frame-cost audit yet.",
+      "source": "upstream/cxosc/README.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Author MKII USB (Nov 2026): trial, accept, CX OSC select/play, SETUP_ALL/FDBK; host gate test_cx_osc_port.py. Stock-flow matrix, perf audit and full qualification still open.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
+    "gates": [
+      "test_cx_osc_port.py: import pins, runtime contribute, SETUP_ALL flags, compat relation, package build",
+      "USB trial: accept without boot crash, CX OSC selectable, SRC SETUP FDBK encoder E"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Modwerk packaging MIT. Tim Hastie engine MIT (LICENSE-TIM). Upstream octabam cxosc module MIT."
+  },
+  "media": []
+}

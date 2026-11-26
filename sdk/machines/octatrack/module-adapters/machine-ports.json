@@ -852,6 +852,16 @@
     "modwerk_controller_write_end"
    ],
    "why": "Every Analog BD chooser, page and renderer seam is the base registry's. Since 0.1.6 it has no engine list (TYPE on SRC SETUP picks 808/909): without a pool it is a LIST machine: the base opens the track's window on the machine list, as for PICKUP, so the double tap shows the list at once. Its package links the analog-bd lane's controller (analog_bd_runtime.port: no writes to stock's descriptor row 5; analog_bd_write_lease.port: render only under the board's write lease, else the stock silent source), whose two lease functions are the exact base's exports. ab_type and ab_engine_right are not descriptor fields: both assume chooser row 5, and the registry's signature lookup and RIGHT dispatch do the same with the machine's actual row."
+  },
+  "cx-osc": {
+   "sources": {
+    "sdk/octabam/modules/cx-osc/manifest.py": "9896e2d569782a87ddb61ee24ba3ea6e247d34dd842f0f1d6cd7630047630de7",
+    "sdk/octabam/modules/cx-osc/standalone/machine.s": "9b15fdef4dc24041b55592d06c32dc32ff005b441348056c16021018c7091423",
+    "sdk/octabam/modules/cx-osc/standalone/poly.s": "8ef712b2cc3008b2a7002f83d675fc1979f8119b7d0d42e3d5d9054a0262c93e",
+    "sdk/octabam/modules/cx-osc/upstream/cxosc/page.s": "f84e1e141d1fe9155e1b270795462618ded88660feab2b0a0e52120ea8c11332",
+    "sdk/octabam/modules/cx-osc/cx_registration.s": "a59e2d0e534990d93f3e7cfcbcc0e9bfa8c76c42ceff0292b7d5eb9877f58f4b"
+   },
+   "why": "CX OSC registers cx_machine through runtime.json contribute; machine-list detours in standalone/machine.s drop at package build. Engine frame-builder hooks stay detoured until base take events exist; shared sites with FM Synth are group-owned in compatibility.json and the configurator refuses both."
   }
  }
 }

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "CX OSC: Buchla-style complex oscillator on FLEX (signature CX,1). PLAYBACK PTCH RATO INDX FINE FOLD MIX; SRC SETUP CAR/MOD morph, DEC, SYMM, FDBK, PWM.",
+      "Registers on ot_machines with native START, sy_render, SETUP_ALL for SRC SETUP encoder E (FDBK), and cx_ui_tick instead of stock fm_tick.",
+      "Port of octabam modules/cxosc @ 256bcf4b. Declared conflict with FM Synth; shared engine hook sites listed in compatibility.json until base take events migrate them.",
+      "Host gate test_cx_osc_port.py; USB trials on the author's MKII recorded in TESTING.md."
+    ]
+  }
+]
