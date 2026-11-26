@@ -13,7 +13,10 @@
 // Left out: the gated programs and the ones a signal onset restarts (both need a signal detector). With --signal the
 // detector reads signal all the time (P3.2 held low): each gate stays open and no onset comes, so those programs run
 // as their open, free-running form and are extracted too (VERB SHIFTER's coefficient sweep still is not).
+import { Buffer } from 'node:buffer';
+import console from 'node:console';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import process from 'node:process';
 import { gzipSync } from 'node:zlib';
 import { Board, DSP_BYTES } from '../tools/machine.mjs';
 import { analyse, romCurves, LESLIE_SPEEDS, ASSUMED_RESPONSE } from '../tools/qvlfo.mjs';

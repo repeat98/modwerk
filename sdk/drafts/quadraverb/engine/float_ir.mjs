@@ -2,6 +2,7 @@
 // the input is a JSON list of samples (fractions of full scale), the output {left, right} the same length.
 //   node float_ir.mjs <programs.json> <program> <input.json> <out.json>
 import { readFileSync, writeFileSync } from 'node:fs';
+import process from 'node:process';
 import { QV } from '../tools/qv.mjs';
 
 const [PROGS, P, IN, OUT] = process.argv.slice(2);

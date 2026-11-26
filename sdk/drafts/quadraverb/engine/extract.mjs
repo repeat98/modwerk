@@ -3,7 +3,9 @@
 // pitch shift or Leslie moves its addresses or coefficients).
 //   node extract.mjs <rom> <out.json>
 // The output is derived from the ROM: keep it outside the repository (~/.cache/modwerk-local/quadraverb/engine/).
+import console from 'node:console';
 import { writeFileSync } from 'node:fs';
+import process from 'node:process';
 import { Board } from '../tools/machine.mjs';
 
 const [ROM, OUT] = process.argv.slice(2);

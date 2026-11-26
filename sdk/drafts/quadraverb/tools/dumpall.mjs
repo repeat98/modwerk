@@ -1,4 +1,6 @@
+import console from 'node:console';
 import { writeFileSync } from 'node:fs';
+import process from 'node:process';
 // Every factory program's 96 steps as JSON, for qvc_price.py.  node dumpall.mjs <rom> <out.json>
 import { Board } from './machine.mjs';
 import { decode } from './qv.mjs';
