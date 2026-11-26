@@ -446,6 +446,16 @@ HOLMES' Plate. Its error hardly changes between noise at 0.1 and 0.3, so it does
 the floor's downward bias, which the tanks' filters and feedback gather (not analysed further). Noise at 0.3 gives
 the same picture (`widths.py` prints it). Neither is a claim about the original's width.
 
+## The development build (26 November 2026)
+
+`qvc.generate(unit=True)` wraps the prototype's code in what a unit needs and `dsp_host` does not model: the ring
+cleared 1,024 words a call with the wet silent until it is clear, init and a stale state set up through one
+subroutine, MIX on knob F (exact at 0 and 127), and the dispatcher's r6 and n7 given back (`qvc.USTATE`). `engine/qvunit.py`
+writes one program's engine and builds its package; `engine/verify_unit.py` holds the generated file to the integer
+model (MIX values, splits, a dirty Y, two instances, a stale state, the guard). It costs about 15 cycles a sample more
+than the prototype: 214.7 (221.6 dearest) for 5 STEREO FLANGE, 240.6 for 40 and 56. The builds, figures and the unit
+procedure: [TESTING.md](TESTING.md).
+
 ## Not settled
 
 - **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (README, "The gate").

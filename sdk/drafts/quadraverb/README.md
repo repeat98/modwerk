@@ -2,6 +2,8 @@
 
 Status: research, 26 November 2026. A model of the DSP plays every factory program except the gated ones on the developer's computer; the memory plan is decided; every sweep, pitch shift and Leslie is read as parameters and matches the firmware exactly, and the gate's algorithm is read (its signal detector is hardware). An engine prototype runs every program except the gated ones bit for bit in `dsp_host`, in the FX2 buffer at full rate, with the SDRAM stream's ColdFire side modelled ([ENGINE.md](ENGINE.md)). Nothing here runs on an Octatrack yet.
 
+**Development build (26 November 2026).** This folder is also a draft module, `quadraverb`, for measurement only: `engine/qvunit.py` compiles one factory program (5 STEREO FLANGE, 40 167 ms DELAY or 56 SKANK GUITAR) into a package named QV DEV <program>, with MIX on knob F and nothing else, to measure the compiled engine's DSP cost on a unit and listen to it. It is never published, and the generated engine stays outside Git (`gen/` is ignored). How to build, check and try it: [TESTING.md](TESTING.md).
+
 The goal is an FX2 effect that plays the Alesis Quadraverb's reverbs (plate, room, chamber, hall, reverse, gated) the way Midiverb I/II plays the Midiverb's programs: the original programs on a model of the original DSP. The owner's decisions (25 November 2026):
 
 - **Reverbs only** as the first module, one effect.
