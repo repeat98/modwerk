@@ -592,10 +592,10 @@
       "base": "started",
       "link": "started",
       "flash": "started",
-      "loader": "started",
+      "loader": "done",
       "status": "open",
       "diagnostics": "started",
-      "tools": "started"
+      "tools": "done"
     },
     "art": {
       "body": "wide",
