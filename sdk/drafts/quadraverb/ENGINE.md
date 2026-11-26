@@ -67,16 +67,44 @@ a halfword out, two in; the long static run in a DO loop).
 
 ## What it needs from the base
 
-- **A program's code changes at a pick.** The base must write it into the module's arena while the effect plays:
-  two code areas per instance, written while the other runs, switched at a frame boundary. The base's WRITE path
-  already places engine code into unused arena words while playing (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md);
-  switching a running slot's code is new.
+- **A program's code changes at a pick: built** (base 0.8.3 draft, branch `base/octatrack-program-areas`, development
+  twins only, not on a unit yet; [on the base](#on-the-base-program-areas-and-an-fx2-id-26-november-2026)).
 - **The SDRAM stream**: per instance and frame, a median of 96 and at most 352 halfwords to the DSP, 64 and at most 144
   from it, at a fixed latency ([what the base must provide](#what-the-base-must-provide)). On the owner's MKII (26
   November 2026) probe A (to core 0) passed at 64-160 halfwords, probe B (from core 0) at 64-256, and both together at
   160 each through a 5-minute soak: 160-256 each way per core is proven, and the frame interrupt, not memory or DMA,
   limits it. That budget is per core, shared by every instance on it: one instance fits 160 each way in 59 of the 76
   programs, 256 in 68; the 8 plates need 336-352 in.
+
+## On the base: program areas and an FX2 id (26 November 2026)
+
+**Program areas** (docs/OCTATRACK_API.md, "Program areas"): the package requires `programs`, its ColdFire half gives
+`ot_dsp_effects` a record (`program_words`, `program(slot)`, `code(slot, program, at, out)`), and proc jumps to the area
+its slot record names, `X:$7fb0 + 4 * ((r7 >> 8) & 15)`, word 0. The base holds two areas a slot in its core's arena,
+writes the next program into the idle one while the other plays and switches between two frames; a program held in
+the idle area switches with no write. So an area holds a program's own code with every address final for `at`; the
+I/O pass, MIX, the clear and the state set-up stay in the package. The tables cannot stay immediates in init (the
+prototype's 338-514 init words, about 3 a table word): an area carries them as P data that one shared routine copies
+to X and Y at the switch, or the stream brings them. Measured on the prototype's generated code (`qvs.generate`, the
+static programs and 5): proc 282-421 words, 67-74 coefficients and 77-82 distances, so an area of about 430-570
+words; the moving programs add their tick (and the pitch shifts their 256-word fade, unless the stream brings it), so
+`program_words` of about 600-850 for the dearest. Two areas a slot is 1,200-1,700 words of an arena of about 4,700 a
+core (twin `8feb3f71`: 4,673 and 4,839, before stock effects and the resident engines): one instance a core beside a
+Part's stock effects, two where they leave room; a slot with no room stays dry (its record 0).
+
+**Cycles:** admission takes one instance up to 726 chip cycles; a modeled price is charged at 7/4 (at most 414
+declared), a hardware one as measured. Every program's proc, 207-310 cycles a sample on average and 316 in the dearest
+block with the stream, fits either way; a hardware price (the MKII matched the model within a meter step) lets two
+dear instances share a core.
+
+**Its FX2 id:** the base needs nothing. Over USB it gives each installed module its own handle of 128 at install
+(dsp.c `choose`: the package's id if free, else the first free; id 32 ran on the MKII, docs/OCTATRACK_MORE_EFFECT_IDS.md
+S63); the package's id is only its preferred one. Midiverb took the last of 0x04-0x1f in the *tools*: the octabam
+registry refuses two modules on one `fx2_id`, `module-list.mjs` refuses one outside 0x04-0x1f, the builder's
+`dsp_section` one at 32 or more, and the catalogue (`module-contract-v3.ts`) a shipped id twice. Those are card-build
+rules (a card image pins ids into stock's 32-entry tables), and a package that requires `programs` is USB-only, as a
+key-bus reader is. The fix is tooling, not base: let a USB-only effect share a preferred id, or take one of 0x20-0x7f,
+in those four checks.
 
 ## The first bit-exact prototype (26 November 2026)
 
