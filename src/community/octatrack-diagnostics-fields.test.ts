@@ -137,7 +137,7 @@ it('takes an Analog Rytm MKII’s own log with its set identity, and nothing of 
   expect(JSON.parse((db.prepare('SELECT data_json FROM octatrack_diagnostic_events').get() as { data_json: string }).data_json)).toMatchObject({ machine: 'analog-rytm-mkii', set: { crc: 0xf92cbc54, bytes: 237004 } })
   expect(validateDiagnostic({ id: id(), event: 'device_log', phase: 'ready', machine: 'analog-rytm-mkii', log: { loads: [load], incidents: [] } }).machine).toBe('analog-rytm-mkii')
   for (const bad of [{ machine: 'octatrack' }, { machine: 'digitakt' }, { base: 'a'.repeat(64) }, { active: 'a'.repeat(64) }, { phase: 'sending' },
-    { set: { crc: 1 } }, { set: { crc: -1, bytes: 1 } }, { set: { crc: 1, bytes: 1, label: 'x' } }, { error: 'device' }, { refusal: 1 }, { result: 'ok' }])
+    { set: { crc: 1 } }, { set: { crc: -1, bytes: 1 } }, { set: { crc: 1, bytes: 1, label: 'x' } }, { error: 'device' }, { refusal: 1 }, { result: 'ok' }, { busy: 1 }])
     expect(() => validateDiagnostic({ id: id(), ...rytm, ...bad, log: { loads: [load], incidents: [] } })).toThrow()
   // Only a log names a machine, and only a log that names one carries a set.
   expect(() => validateDiagnostic({ id: id(), event: 'connected', phase: 'ready', machine: 'analog-rytm-mkii' })).toThrow()
