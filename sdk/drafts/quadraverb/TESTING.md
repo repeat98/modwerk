@@ -22,15 +22,41 @@ npm run module:dev -- quadraverb --build-only --out qv-raw.mwrm --slots fx2 --cy
 python3 -B sdk/runtime/loader/abi9.py qv-raw.mwrm --requires programs -o quadraverb-0.1.0.mwrm
 ```
 
-The build of 27 November 2026: `quadraverb-0.1.0.mwrm`, 77,960 bytes (code and data, 139,264 of bss), SHA-256
-`35faa1b5d34e958cecf243aff412fb8a3f7cdb9001326de4b48af8b334538943`; 25 DSP words of shell; areas of 849-1,098 words;
-declared 330 modeled cycles (the stall model's 207-316 with the stream, plus the area's own work; not traced in the area
-form). In `~/.cache/modwerk-local/quadraverb/pkg/`.
+The build of 27 November 2026, with the fade: `quadraverb-0.1.0.mwrm`, 82,668 bytes (code and data, 139,264 of bss),
+SHA-256 `110a31f8ee388893a48dd2cb0bf7f8f7aece185b9c5943b7d8fd2c4953660af4`; 25 DSP words of shell; areas of 919-1,168
+words; declared 355 modeled cycles, from the traces below (the base charges 7/4 of it, 621 of the 726 one instance may
+take). In `~/.cache/modwerk-local/quadraverb/pkg/`; the build before the fade (`35faa1b5…`, declared 330, which four
+programs' traces passed: up to 341.6) is kept beside it as `quadraverb-0.1.0-before-fade.mwrm`.
+
+**Cycles, traced** (`engine/verify_area.py --cycles <dsp_host with -steptrace>`; all 22 in evidence/performance.json,
+`programs`): chip cycles a sample by interlock_scan's model, the shell and the area, one instance, every place a tick can
+fall in a block. The dearest: 53 BALLAD SNARE 2, 332.9 on average and 341.6 in the dearest block, 353.1 while it fades;
+the cheapest, 14 MEDIUM HALL, 272.1. Executed instructions a sample at most: 317.4 (53, fading). All under what the
+base admits for one instance.
 
 Checked on the host: `engine/verify_area.py` (each of the 22 programs, the gates in its docstring) and
 `engine/test_qv_runtime.py` (the ColdFire half against qvs.ColdFire, 12 cases). Not checked anywhere: the frame
 interrupt's cost of `fill()` and `take()`, the base writing and switching a real area, the arena's room beside a Part's
 stock effects, the sound.
+
+### The fade at a pick (27 November 2026)
+
+**What the original does** (QV 1.07 in the emulator, recalling 15 Concert Hall 1 over 10 SMALL ROOM; not checked on a
+real unit): the firmware rewrites the DSP program over about 65 ms. About 10 ms in, 84 of the 96 coefficients are 0, so
+the old program's output stops at once, a cut and not a fade. It never clears the delay memory, so the new program then
+starts on what the old one left there.
+
+**What this does:** when PROG leaves the value it had when the program started, the wet ramps down to 0 over 256 samples
+(16 calls, Midiverb's length), by 1/256 of full a sample. If PROG comes back before the base switches, the wet ramps
+back up. The base then writes the new program into the slot's other area and switches to it; the new program clears its
+ring (the dry at its MIX meanwhile) and starts from silence. So the old tail fades out instead of being cut, and it does
+not run on into the new program. The original's carry-over cannot be reproduced here: two programs' memories are laid
+out differently (each program's lines are relocated, some streamed).
+
+**Checked:** `engine/verify_area.py` on each of the 22 programs. PROG leaves 40 frames after the start, comes back 10
+frames later and leaves again; the output is bit-exact against the model of the ramp, and the wet is 0 once the ramp
+ends. Traced (evidence/performance.json): the test of PROG adds about 2 cycles a sample to every call; a call that
+fades costs about 11.5 more (the dearest program, 53, 341.6 while it plays, 353.1 while it fades).
 
 ## Bit-exact in dsp_host (26 November 2026)
 
@@ -52,8 +78,11 @@ signal detector the original has in hardware; its threshold and time constant wo
 
 ## Captures
 
-None. Captures need the package installed in the emulator, and on the base 0.8.3 twins the emulator does not take an
-upload.
+Four, from the emulator (27 November 2026; media/capture.json has the hashes and the steps): the fresh `ot_emu` on
+twin5 (`7520dee5…`) with `quadraverb-0.1.0.mwrm` (`35faa1b5…`) installed by the session's `try`, then T5, FUNC+FX2, LEVEL
+to QUADRAVERB, YES, FX2, A and F turned; each the emulated LCD read by the session's `png` step. That emulator runs no
+DSP, so its CPU meter reads full: `guard:1000 cpu:100` came first, and nothing was heard. They show the chooser entry,
+the page and the knob values, nothing of the programs. Earlier tries, for the record:
 
 Last try, 26 November 2026, about 23:45: `npm run device:emulator` (the adapted `ot_emu`, `--dsp`) on twin2 (MAIN
 `cc39ed0c…`, the base 0.8.3 draft with program areas and the stream), then `try qv-dev-5.mwrm` (`28817e0e…`). The

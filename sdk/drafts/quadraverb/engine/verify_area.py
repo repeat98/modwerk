@@ -2,7 +2,7 @@
 """The release package's DSP side in dsp_host: the shell (../shell.asm) runs a program's area, relocated as
 qv_runtime.c's code() relocates it, with the stream named by the slot's record; bit for bit against the models.
 
-  python3 -B verify_area.py <programs.json> <lfo_dir> <index> [--samples N]
+  python3 -B verify_area.py <programs.json> <lfo_dir> <index> [--samples N] [--cycles DSP_HOST_WITH_STEPTRACE [--only]]
 
 index: the program's place in manifest.REVERBS (what PROG stores). The test's proc is a stand-in for the base:
 - the slot's record at X:$7fb0 + 4 ((r7 >> 8) & 15) names the area (placed at AT, not where it was assembled) and the
@@ -14,6 +14,11 @@ index: the program's place in manifest.REVERBS (what PROG stores). The test's pr
 The program starts at the first call that begins a frame after its clear (qvc ASTATE); until then the output is the dry
 at its mix. From there the model is qvs.SplitEngine (LAT 3) on the samples from that frame on, and the out-blocks are
 [tag, K, the model's out-block].
+
+--cycles: the area's chip cycles a sample by interlock_scan's model on the traced call, the shell's instructions
+included and the stand-in's left out: the last call of runs ending 2 to 33 frames after the program starts (every
+place a tick can fall in a block; 64 for a program that never moves), each run bit-exact against the model too.
+--only skips the other gates.
 
 Gates: the relocation equals an assembly at AT; labels, traps, operands as written; bit-exact audio and out-blocks with
 one instance (MIX 127, 64 and 0), trig splits at frames 1, 5, 7 and 13, a dirty Y, and two instances on separate
@@ -66,6 +71,8 @@ proc:
         move    b1,r1
         move    x:(r6+5),x0
         move    x0,x:(r1+5)
+        move    x:(r6+0),x0
+        move    x0,x:(r1+0)
         move    r1,{H(11)}
         tst     a
         bne     qwXA
@@ -181,6 +188,52 @@ def expected(plan, left, right, mix, f0, tag):
     return (ol, orr), [[tag, k & 0x7FFF] + ob for k, ob in enumerate(outs)], outs
 
 
+def price(asm, ar, at, stdout):
+    """Cycles and executed instructions a sample of the last traced call: the shell and the area, not the stand-in."""
+    import interlock_scan as IS
+    calls, cur = [], None
+    for line in stdout.splitlines():
+        m = IS.TRACE.match(line)
+        if not m:
+            continue
+        if int(m.group(1)) == 0:
+            cur = []
+            calls.append(cur)
+        cur.append(int(m.group(2), 16))
+    stand_in = range(asm.syms["proc"], asm.syms["init"])
+    pcs = [pc for pc in calls[-1] if pc not in stand_in]
+    P = {asm.org + i: w for i, w in enumerate(asm.words)}
+    P.update({at + i: w for i, w in enumerate(qvarea.relocate(ar, at))})
+    ins = IS.decode(P, pcs, min(pcs))
+    seq = []
+    for k, pc in enumerate(pcs):
+        i = IS.Ins(pc, *ins[pc])
+        if i.cond and k + 1 < len(pcs):
+            i.taken = pcs[k + 1] != pc + i.nwords
+        seq.append(i)
+    total, _, _ = IS.analyze(seq)
+    return total / N, len(pcs) / N
+
+
+def faded(audio_wet, left, right, mix, f0, away):
+    """The output with the area's fade (qvc FADE_FULL): audio_wet the model's wet from sample 0 (0 before f0); away(f) is
+    whether PROG has left its start value in frame f. Each unsplit call ramps the wet by FADE_STEP a sample toward 0 while
+    away, back toward FADE_FULL otherwise, clamped; a call at FADE_FULL that is not away leaves the wet as it is."""
+    wl, wr = audio_wet
+    g, ol, orr = qvc.FADE_FULL, [], []
+    for f in range(len(left) // N):
+        ramp = f >= f0 and (away(f) or g != qvc.FADE_FULL)
+        d = -qvc.FADE_STEP if away(f) else qvc.FADE_STEP
+        for i in range(N * f, N * f + N):
+            a, b = wl[i], wr[i]
+            if ramp:
+                a, b = (a * g) >> 23, (b * g) >> 23
+                g = max(0, g + d) if d < 0 else min(qvc.FADE_FULL, g + d)
+            ol.append(qvc.mix_out(a, left[i], mix))
+            orr.append(qvc.mix_out(b, right[i], mix))
+    return ol, orr
+
+
 def main(argv):
     programs, lfo_dir, index = argv[0], argv[1], int(argv[2])
     plan = qvcf.plans(programs, lfo_dir)[index]
@@ -193,7 +246,8 @@ def main(argv):
     win, wout = max(plan.in_words, 1), plan.out_words + 2   # this program's blocks: the base moves more, the area reads these
     print(f"area: {len(ar['words'])} words, {len(ar['relocs'])} relocated; ring {plan.size}, in {plan.in_words}, out "
           f"{plan.out_words}; blocks {win} in, {wout} out")
-    for at in AT:
+    only = "--only" in argv
+    for at in AT[:1] if only else AT:
         direct = G.assemble(text, work, org=at, name=f"qd{at:x}").words + [v & 0xFFFFFF for v in info["data"]]
         gates(f"relocation: code() at ${at:x} == the area assembled there", qvarea.relocate(ar, at) == direct)
     bad = V.labels_unique(text)
@@ -259,6 +313,60 @@ def main(argv):
 
     sigs = V.signals(n)
     left, right = sigs[0][1], sigs[0][2]
+    if "--cycles" in argv:
+        import os
+        host = argv[argv.index("--cycles") + 1]
+        os.environ.setdefault("OCTABAM_ROOT", str(V.ROOT / "sdk/octabam"))
+        sys.path.insert(0, str(V.ROOT / "sdk/cycle-scan"))
+        import interlock_scan as IS
+        IS.DIS = G.tool("dsp_disasm")
+        f0 = start_frame(plan.size, calls(n))
+        audio, _, raw_outs = expected(plan, left, right, 127, f0, tag)
+        rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 7)
+        knobs = [0] * 12
+        knobs[qvc.MIX_SLOT] = 127
+        old = os.environ.get("DSP_HOST")
+        os.environ["DSP_HOST"] = host
+        got = []
+        try:
+            for b in ([64] if not plan.row else range(2, 34)):
+                m = N * (f0 + b)
+                r, _ = run([G.Instance(left[:m], right[:m], knobs=knobs)], [rows], "trace",
+                           extra=("-trace", "400000", "-trackinst", "0", "-steptrace", "-diff", str(f0 + b)))
+                gates.same(f"bit-exact under the tracing host, {b} frames of the program", r.outputs[0],
+                           tuple(v[:m] for v in audio))
+                got.append(price(asm, ar, AT[0], r.stdout))
+        finally:
+            if old is None:
+                del os.environ["DSP_HOST"]
+            else:
+                os.environ["DSP_HOST"] = old
+        # calls that fade: PROG leaves one frame after the program starts, so the next 16 calls ramp
+        wet = expected(plan, left, right, 127, f0, tag)[0]
+        fade_want = faded(wet, left, right, 127, f0, lambda f: f >= f0 + 1)
+        kn = lambda prog: [prog, 0, 0, 0, 0, 127] + [0] * 6
+        fading = []
+        os.environ["DSP_HOST"] = host
+        try:
+            for b in range(2, 18):
+                m = N * (f0 + b)
+                r, _ = run([G.Instance(left[:m], right[:m], rows={0: kn(index), f0 + 1: kn(index + 1)})], [rows], "trace",
+                           extra=("-trace", "400000", "-trackinst", "0", "-steptrace", "-diff", str(f0 + b)))
+                gates.same(f"bit-exact under the tracing host while fading, {b} frames", r.outputs[0],
+                           tuple(v[:m] for v in fade_want))
+                fading.append(price(asm, ar, AT[0], r.stdout))
+        finally:
+            if old is None:
+                del os.environ["DSP_HOST"]
+            else:
+                os.environ["DSP_HOST"] = old
+        cyc = [c for c, _ in got]
+        print(f"CYCLES index {index} program {p}: {sum(cyc) / len(cyc):.1f} on average, {max(cyc):.1f} in the dearest "
+              f"block, executed {max(e for _, e in got):.1f} at most; while fading {max(c for c, _ in fading):.1f} cycles, "
+              f"executed {max(e for _, e in fading):.1f}; area {len(ar['words'])} words")
+        if only:
+            gates.finish()
+            return
     for label, l_, r_, mix, split in (("noise, MIX 127", left, right, 127, None),
                                       ("impulse, MIX 127", sigs[1][1], sigs[1][2], 127, None),
                                       ("noise, MIX 64", left, right, 64, None),
@@ -271,6 +379,24 @@ def main(argv):
         knobs[qvc.MIX_SLOT] = mix
         r, caps = run([G.Instance(l_, r_, knobs=knobs, split=split)], [rows], "c" + "".join(c for c in label if c.isalnum()))
         check(label, r, caps, 0, audio, outs, f0)
+    # The fade: PROG leaves the program 40 frames after it starts and comes back 10 frames later, then leaves for good.
+    f0 = start_frame(plan.size, calls(n))
+    _, outs, raw_outs = expected(plan, left, right, 127, f0, tag)
+    wet = expected(plan, left, right, 127, f0, tag)[0]
+    pa, pb = (f0 + 40, f0 + 50), f0 + 80
+    away = lambda f: pa[0] <= f < pa[1] or f >= pb
+    knobs = lambda prog, mix=127: [prog, 0, 0, 0, 0, mix] + [0] * 6
+    want = faded(wet, left, right, 127, f0, away)
+    rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 8)
+    r, caps = run([G.Instance(left, right, rows={0: knobs(index), pa[0]: knobs(index + 1), pa[1]: knobs(index),
+                                                pb: knobs(index + 1)})], [rows], "fade")
+    check("PROG leaves, returns and leaves: the wet fades over 256 samples each way", r, caps, 0, want, outs, f0)
+    s0 = N * pb
+    tail = [abs(v) for v in r.outputs[0][0][s0 + 256:s0 + 512]]
+    gates("faded: the wet is 0 once the fade ends (the output is the dry alone at MIX 127, so 0)",
+          max(tail, default=0) == 0, f"largest {max(tail, default=0)}")
+    cut = abs(wet[0][s0])
+    print(f"       a cut would drop the wet by {cut} in one sample here; the fade moves its gain 1/256 of full a sample")
     f0 = start_frame(plan.size, calls(n))
     audio, outs, raw_outs = expected(plan, left, right, 127, f0, tag)
     rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 8)

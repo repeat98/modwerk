@@ -18,7 +18,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 DRAFT = HERE.parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(DRAFT))
-sys.path.insert(0, str(DRAFT.parents[1] / "octabam" / "tools"))  # remix, for manifest.py
+sys.path.insert(0, str(next(up for up in HERE.parents if (up / "package.json").exists()) / "sdk/octabam/tools"))  # remix, for manifest.py
 import qvc  # noqa: E402
 import qvs  # noqa: E402
 from manifest import REVERBS  # noqa: E402

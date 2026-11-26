@@ -401,9 +401,9 @@ def stream_code(plan, info, P="qv", area=None):
     if area:
         assert not mw, "an area build streams static windows only so far"
     taken = (*qvc.USTATE.values(), *qvc.ASTATE.values()) if area else ()
-    words = r7_free(info, 4 + len(mw) * (L + 1) + (2 if area else 0), taken)
+    words = r7_free(info, 4 + len(mw) * (L + 1) + (4 if area else 0), taken)
     FLAG, LAST, MBIN, MBOUT = words[:4]
-    K, Q = words[-2:] if area else (None, None)
+    K, Q, FG, PV = words[-4:] if area else (None, None, None, None)
     Uw = [words[4 + j * (L + 1)] for j in range(len(mw))]
     Fw = [[words[4 + j * (L + 1) + 1 + i] for i in range(L)] for j in range(len(mw))]
     S, first4 = plan.size, info["first"][4]
@@ -520,7 +520,7 @@ def stream_code(plan, info, P="qv", area=None):
                      "        cmp     x0,b", f"        bge     {P}KQOK", "        add     #1,b", f"        move    b1,{x7(Q)}",
                      f"{P}KQOK:"]
         tail += [f"{P}KOUT:"]
-    return dict(init=init, head=head, tail=tail, words=dict(FLAG=FLAG, LAST=LAST, MBIN=MBIN, MBOUT=MBOUT, K=K, Q=Q),
+    return dict(init=init, head=head, tail=tail, words=dict(FLAG=FLAG, LAST=LAST, MBIN=MBIN, MBOUT=MBOUT, K=K, Q=Q, FG=FG, PV=PV),
                 publish={x.rep: Uw[j] for j, x in enumerate(mw)})
 
 

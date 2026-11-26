@@ -76,7 +76,7 @@
     "limitations": [
       "Needs the Modwerk base's program areas and stream channel (loader ABI 9, the package requires `programs`), so it is USB-only. They are in the base 0.8.3 draft, on development twins only so far.",
       "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer for its short delay lines, and keeps its long ones in the ColdFire's memory, which the base moves to and from the DSP every 16 samples.",
-      "One instance a DSP core at most: its two program areas take up to 2,196 of the about 4,700 words a core has for effect code, beside a Part's stock effects. The ColdFire's ring pool holds one plate, or two chambers, or a chamber and a room; a slot without room stays dry.",
+      "One instance a DSP core at most: its two program areas take up to 2,336 of the about 4,700 words a core has for effect code, beside a Part's stock effects. The ColdFire's ring pool holds one plate, or two chambers, or a chamber and a room; a slot without room stays dry.",
       "Each pick writes the program's code into one of two areas the base holds for the slot, so a pick is silent for a moment while the code and the new reverb's memory start; the other area keeps the program before.",
       "Unlike the original: 44.1 kHz instead of about 42 kHz (reverb times, delays and sweeps about 5 % shorter and faster), a mono input from the average of left and right, 24-bit words in the DSP and 16 bits where a word crosses to the ColdFire. Not compared with a real Quadraverb.",
       "The gated reverbs (3, 23-27) are not in this release: their gate needs a signal detector the original has in hardware.",
@@ -88,21 +88,21 @@
     "recorded": "2026-11-26",
     "storage": {
       "label": "DSP program / state",
-      "display": "two areas of 849-1,098 words a slot / 132-word state",
+      "display": "two areas of 919-1,168 words a slot / 132-word state",
       "value": null,
       "unit": "see display",
       "method": "static",
-      "conditions": "Two program areas a slot on its core (program_words 1,098), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 77,960 bytes of code and data plus a 136 KiB ring pool in bss. See TESTING.md.",
+      "conditions": "Two program areas a slot on its core (program_words 1,168), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 82,668 bytes of code and data plus a 136 KiB ring pool in bss. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP cycles",
-      "display": "about 207-316 cycles/sample per instance (model)",
+      "display": "272-342 cycles/sample per instance, 353 while fading (model)",
       "value": null,
       "unit": "see display",
       "method": "emulator",
-      "conditions": "interlock_scan's stall model on the traced proc in dsp_host, one instance, 16-frame blocks, the stream's copies included: 207-310 on average across the streamed programs, 316 in the dearest block (53 BALLAD SNARE 2). A model, not a measurement on a unit.",
-      "source": "ENGINE.md"
+      "conditions": "interlock_scan's stall model on step traces in dsp_host of the release form, all 22 programs, one instance, every place a tick can fall in a 16-sample block (engine/verify_area.py --cycles): the dearest, program 53, 341.6 in its dearest block and 353.1 while a pick fades it; declared 355 modeled. A model, not a measurement on a unit.",
+      "source": "evidence/performance.json"
     },
     "cpuPrice": {
       "value": 15,
@@ -130,7 +130,76 @@
     "file": "LICENSE",
     "declaration": "The module's own code and documentation are MIT (LICENSE). The Alesis Quadraverb programs are not in this repository: the build compiles them from the owner's own ROM image into gen/ (ignored by Git) and ~/.cache, and the packages built from them stay on the developer's computer until the owner allows their inclusion. No Elektron firmware, routines or tables are included."
   },
-  "media": [],
+  "media": [
+    {
+      "path": "media/quadraverb-chooser.png",
+      "captureType": "emulator",
+      "caption": "Select an audio track, hold FUNC and press FX2. Turn LEVEL down the list to QUADRAVERB and press YES to put it on FX2.",
+      "alt": "Octatrack FX2 SETUP: the effect list from COMPRESSOR to QUADRAVERB, the cursor on QUADRAVERB.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP (effect chooser)",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7520dee59c33b4050aedce5e0ed06e12cd9911b90b678d3040c520a19073dad5",
+        "setup": "Emulator captures, not hardware ones. ot_emu built from the pinned upstream source (emulatorSha256), MKII panel, run by npm run device:emulator with --dsp on development twin 7520dee5 of the base 0.8.3 side branch (base/octatrack-program-areas 5ecfbd2f4; imageSha256 is its MAIN image). The package named here, built from the source revision named here with the owner's ROM on his computer, was installed with the session's try. This emulator runs no DSP passes, so nothing was heard and the pick shows only the pages; the frame guard's share was set to 100 % and the CPU allowance to 100 % first (guard:1000 cpu:100), as the emulator's CPU meter reads full. Each picture is the emulated LCD read by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Panel steps: T5; FUNC+FX2; LEVEL to QUADRAVERB; YES; FX2; then A and F turned."
+      }
+    },
+    {
+      "path": "media/quadraverb-page.png",
+      "captureType": "emulator",
+      "caption": "Press FX2 for its page: PROG (A) picks the program, MIX (F) sets dry and wet.",
+      "alt": "Octatrack FX2 page of Quadraverb: knobs PROG and MIX.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7520dee59c33b4050aedce5e0ed06e12cd9911b90b678d3040c520a19073dad5",
+        "setup": "Emulator captures, not hardware ones. ot_emu built from the pinned upstream source (emulatorSha256), MKII panel, run by npm run device:emulator with --dsp on development twin 7520dee5 of the base 0.8.3 side branch (base/octatrack-program-areas 5ecfbd2f4; imageSha256 is its MAIN image). The package named here, built from the source revision named here with the owner's ROM on his computer, was installed with the session's try. This emulator runs no DSP passes, so nothing was heard and the pick shows only the pages; the frame guard's share was set to 100 % and the CPU allowance to 100 % first (guard:1000 cpu:100), as the emulator's CPU meter reads full. Each picture is the emulated LCD read by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Panel steps: T5; FUNC+FX2; LEVEL to QUADRAVERB; YES; FX2; then A and F turned."
+      }
+    },
+    {
+      "path": "media/quadraverb-prog.png",
+      "captureType": "emulator",
+      "caption": "Turn PROG: the dial shows the program by its number on the original Quadraverb, here 10, SMALL ROOM.",
+      "alt": "The FX2 page with PROG showing 10.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7520dee59c33b4050aedce5e0ed06e12cd9911b90b678d3040c520a19073dad5",
+        "setup": "Emulator captures, not hardware ones. ot_emu built from the pinned upstream source (emulatorSha256), MKII panel, run by npm run device:emulator with --dsp on development twin 7520dee5 of the base 0.8.3 side branch (base/octatrack-program-areas 5ecfbd2f4; imageSha256 is its MAIN image). The package named here, built from the source revision named here with the owner's ROM on his computer, was installed with the session's try. This emulator runs no DSP passes, so nothing was heard and the pick shows only the pages; the frame guard's share was set to 100 % and the CPU allowance to 100 % first (guard:1000 cpu:100), as the emulator's CPU meter reads full. Each picture is the emulated LCD read by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Panel steps: T5; FUNC+FX2; LEVEL to QUADRAVERB; YES; FX2; then A and F turned."
+      }
+    },
+    {
+      "path": "media/quadraverb-mix.png",
+      "captureType": "emulator",
+      "caption": "Turn MIX up to hear more of the reverb: 0 is exactly dry, 127 wet only.",
+      "alt": "The FX2 page with MIX at 70.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7520dee59c33b4050aedce5e0ed06e12cd9911b90b678d3040c520a19073dad5",
+        "setup": "Emulator captures, not hardware ones. ot_emu built from the pinned upstream source (emulatorSha256), MKII panel, run by npm run device:emulator with --dsp on development twin 7520dee5 of the base 0.8.3 side branch (base/octatrack-program-areas 5ecfbd2f4; imageSha256 is its MAIN image). The package named here, built from the source revision named here with the owner's ROM on his computer, was installed with the session's try. This emulator runs no DSP passes, so nothing was heard and the pick shows only the pages; the frame guard's share was set to 100 % and the CPU allowance to 100 % first (guard:1000 cpu:100), as the emulator's CPU meter reads full. Each picture is the emulated LCD read by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Panel steps: T5; FUNC+FX2; LEVEL to QUADRAVERB; YES; FX2; then A and F turned."
+      }
+    }
+  ],
   "access": {
     "location": "Audio track FX2 SETUP: QUADRAVERB in the effect chooser.",
     "steps": [
@@ -139,6 +208,11 @@
       "Turn LEVEL to QUADRAVERB and press YES.",
       "Press FX2 for the main page: PROG on knob A, MIX on knob F."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/quadraverb-chooser.png",
+      "media/quadraverb-page.png",
+      "media/quadraverb-prog.png",
+      "media/quadraverb-mix.png"
+    ]
   }
 }

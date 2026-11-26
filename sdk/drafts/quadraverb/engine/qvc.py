@@ -1252,6 +1252,10 @@ USTATE = dict(clr=0x79, clrp=0x7A, r0=0x7B, n7=0x7C, r6=0x7D, cw=0x7E, cd=0x7F, 
 # (a1 at entry), whether the call before ended a frame, and whether the program still waits for a frame's first call
 # after its clear. The program starts at a frame's start, so the stream's frames are whole from the first.
 ASTATE = dict(qf=0x81, ended=0x82, wait=0x83)
+# The fade at a pick (area): once PROG leaves the value it had when the program started, the wet ramps from FADE_FULL to 0
+# by FADE_STEP a sample (256 samples, Midiverb's 16 calls); back again if PROG returns. A gain of FADE_FULL is no ramp:
+# the mix takes the wet as it is.
+FADE_FULL, FADE_STEP = 0x7FFF00, 0x7FFF
 UNIT_SIGNATURE = 0x515702   # bump with any change to the unit build's state layout
 CLEAR_WORDS = 1024          # ring words a unit build clears a call (Midiverb clears 512)
 MIX_SLOT = 5                # MIX on knob F, as Midiverb's
@@ -1349,6 +1353,9 @@ def assemble_text(info, P):
               f"        move    #>${sig:06x},x0",
               f"        move    x0,x:(r7+${S['sig']:02x})"]
     if area:     # b is 0 here: the stream's words, and the program waits for a frame's first call
+        sw = (info.get("stream") or {}).get("words", {})
+        setup += [f"        move    x:(r6+$0),b", "        and     #>$7f0000,b", f"        move    b1,x:(r7+${sw['PV']:02x})",
+                  f"        move    {imm(FADE_FULL)},x0", f"        move    x0,x:(r7+${sw['FG']:02x})", "        clr     b"]
         setup += (info.get("stream") or {}).get("init", [])
         setup += ["        move    #>$000001,x0", f"        move    x0,x:(r7+${A['wait']:02x})",
                   f"        move    b,x:(r7+${A['ended']:02x})"]
@@ -1475,6 +1482,22 @@ def assemble_text(info, P):
             "        move    #>$ffffff,m4",
             "        move    #>$ffffff,m5",
             "        move    #>$ffffff,m6"]
+    if area:
+        sw = stream["words"]
+        x7 = lambda k: f"x:(r7+${k:02x})"
+        ramp = lambda clamp, lbl: [f"        move    {x7(U['r0'])},r1", f"        move    {x7(U['n7'])},n7",
+                                   f"        do      n7,{lbl}", "        move    b1,y1", "        move    x:(r1),x0",
+                                   "        mpy     x0,y1,a", "        move    a,x:(r1)+", "        move    x:(r1),x0",
+                                   "        mpy     x0,y1,a", "        add     x1,b", "        cmp     y0,b",
+                                   f"        {clamp}     y0,b", "        move    a,x:(r1)+", f"{lbl}:"]
+        tail += ["; The fade (qvc FADE_FULL): PROG left the value it had at the start, the wet ramps down; back, it ramps up.",
+                 f"        move    {x7(U['r6'])},r1", "        nop", "        move    x:(r1+$0),b", "        and     #>$7f0000,b",
+                 f"        move    {x7(sw['PV'])},x0", "        cmp     x0,b", f"        move    {x7(sw['FG'])},b",
+                 f"        bne     {P}FOUT", f"        move    {imm(FADE_FULL)},y0", "        cmp     y0,b",
+                 f"        beq     {P}FEND", f"        move    {imm(FADE_STEP)},x1",
+                 *ramp("tgt", f"{P}FINL"), f"        bra     {P}FSTO", f"{P}FOUT:",
+                 f"        move    {imm(-FADE_STEP)},x1", "        move    #>$000000,y0",
+                 *ramp("tlt", f"{P}FOTL"), f"{P}FSTO:", f"        move    b1,{x7(sw['FG'])}", f"{P}FEND:"]
     if unit:
         tail += ["; out = (wet m + dry (128 - m)) / 128, exactly: m = 128 is the wet alone, 0 the dry alone.",
                  f"        move    x:(r7+${U['r0']:02x}),r0",

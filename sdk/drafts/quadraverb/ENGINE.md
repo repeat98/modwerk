@@ -508,7 +508,8 @@ unit. ROM-derived parts are made into `gen/` (ignored by Git) from the owner's R
   writes it. Its own signature (`$51A000 | index`) makes the first call after a switch set itself up afresh; it clears
   its ring over calls (the dry at its mix meanwhile) and starts at the first call that begins a frame once the base has
   named both blocks in the record. Its tables are P words after its code, copied at set-up (`move p:(r1)+,x0`), so an
-  area is 849-1,098 words. `qvarea.py areas` assembles each at two origins: the words that move by the distance
+  area is 919-1,168 words. When PROG leaves the value it started with, its wet ramps to 0 over 256 samples (back if PROG
+  returns), so a pick fades the old program out before the base switches. `qvarea.py areas` assembles each at two origins: the words that move by the distance
   (9-10 a program: DO ends, jumps, the tables' address) are what `code()` relocates.
 - **The stream from the record:** each frame the area takes this frame's bank from its parameter page (r6 & $ffe000) and
   the blocks' offsets from words 1 and 2 of the record; while a word is 0 that block is skipped. The out-block starts
