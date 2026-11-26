@@ -1,0 +1,1 @@
+Octatrack tools: on Windows, `device-send.py`, `device:qualify`, `device:test` and `octatrack-measure.py` reach the device session on a port number (`MODWERK_DEV_SOCKET=47812`) over TCP. Windows Python has no Unix sockets, so they stopped with "no attribute 'AF_UNIX'" before.

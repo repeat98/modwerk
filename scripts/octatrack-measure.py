@@ -18,9 +18,17 @@ PASS = {0: 20.00, 1: 14.48}  # cycles an idle pass (status.c idle_cycles)
 STAT = re.compile(r'stats cpu (\d+) T1-4 (\d+)/(\d+) T5-8 (\d+)/(\d+) passes ([\d.]+) ([\d.]+)')
 
 
+def session_socket(path):
+    """The session's socket: a port number is TCP on this computer (Windows Python has no AF_UNIX), anything else a Unix socket."""
+    return socket.socket(socket.AF_INET) if path.isdigit() else socket.socket(socket.AF_UNIX)
+
+
+def session_address(path): return ('127.0.0.1', int(path)) if path.isdigit() else path
+
+
 def send(sequence, quiet=False):
     if not quiet: print('>', sequence[:100], file=sys.stderr, flush=True)
-    s = socket.socket(socket.AF_UNIX); s.settimeout(120); s.connect(SOCKET)
+    s = session_socket(SOCKET); s.settimeout(120); s.connect(session_address(SOCKET))
     s.sendall((sequence + '\n').encode())
     reply = s.makefile().read()
     if 'error:' in reply: raise RuntimeError(sequence + ': ' + reply.strip())
