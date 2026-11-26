@@ -7,6 +7,7 @@ import { baseLayout, layoutName, type BaseLayout } from '../engine/elekloader/ba
 import { comesWithBase, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
+import { moduleCaution } from '../catalog/module-cautions'
 import { isModuleAvailable } from '../catalog/availability'
 import { usbLagNote } from '../catalog/usb-only'
 import { limitedCount, overLimitMessage, SET_MODULE_LIMIT } from '../catalog/set-limit'
@@ -18,6 +19,7 @@ import { SupportLine } from './SupportDialog'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { installedOnOctatrack } from '../community/installed-follow-up'
 import { StateChip } from './ModuleGrid'
+import { CautionBadge } from './ModuleCard'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
 import { ProgressBar } from './BaseDialogFrame'
@@ -142,6 +144,9 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
   // while a track uses one (refusal 7), the most common failed sync in November 2026, so it is said before, not after.
   const leaving = [...changes?.remove ?? [], ...updates]
   const failed = step === 'done' && !!(error || notice?.tone === 'error')
+  // Modules flagged High or Heavy CPU (module-cautions.ts) and USB Audio (owner, 26 November 2026) are for the studio, not
+  // for live: said after every sync that leaves one on the unit.
+  const studioOnly = set.moduleIds.filter(id => id === USB_AUDIO_MODULE || moduleCaution(id))
   /** After a failed sync, back to the review with the same set: the link has undone what it could and said what is left
    * (octatrack-link.ts failed), and the review reads the unit again. */
   function reviewAgain() { setStarted(false); setError(''); keeping.current = false; logged.current = false }
@@ -181,7 +186,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
       </div>}
       {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
       {error && <p className="file-error" role="alert">{error}</p>}
-    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{failed && <SupportActions link={link} what="Sync to Octatrack" error={error || notice?.text} />}{followNotice && <p className="link-hint" role="status">{followNotice}</p>}{!failed && notice?.tone === 'success' && <SupportLine />}</>
+    </> : step === 'done' ? <><p className={'base-install-intro ' + (failed ? 'file-error' : studioOnly.length ? '' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{failed && <SupportActions link={link} what="Sync to Octatrack" error={error || notice?.text} />}{!failed && studioOnly.length > 0 && <div className="module-caution load-studio-only" role="note"><Icon name="warn" size={18} /><div><strong>Studio only, not for live</strong><ul>{studioOnly.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}<CautionBadge id={id} /></li>)}</ul><p>{studioOnly.length === 1 ? 'It puts' : 'They put'} a heavy load on the Octatrack and can drop out or crackle when a pattern gets busy. Before you play live, switch {studioOnly.length === 1 ? 'it' : 'them'} off on the Octatrack in <strong>PROJECT › MODWERK › MODULES</strong>, or sync a set without {studioOnly.length === 1 ? 'it' : 'them'}.</p></div></div>}{followNotice && <p className="link-hint" role="status">{followNotice}</p>}{!failed && notice?.tone === 'success' && <SupportLine />}</>
     : <>
       {(step === 'loading' || step === 'trial') && <ProgressBar value={step === 'loading' && !preparing && progress < 1 ? progress : undefined} label="Syncing" percent />}
       <p className="base-install-intro" role="status">{state.reconnecting ? 'Your Octatrack is reconnecting on USB with its new audio setup…' : step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')
