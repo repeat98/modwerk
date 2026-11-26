@@ -1,4 +1,5 @@
 import { DEVICE_INCIDENTS, type DeviceCrash, type DeviceIncident, type DeviceLoad, type DeviceStall } from '../../community/octatrack-diagnostics-contract.ts'
+export { freezeSamples } from '../../community/octatrack-diagnostics-contract.ts'
 
 /** The unit's diagnostics log (sdk/machines/octatrack/elekloader/diag.h), as the ColdFire stores it: big-endian. */
 export const DEVICE_LOG_REQUEST = 37
@@ -65,6 +66,7 @@ function incident(view: DataView, at: number): DeviceIncident | undefined {
 }
 /** The written records, oldest first; undefined for anything but a version 1 or 2 log. A record still being written
  * has seq 0 and is left out. A version 2 log carries the crash and stall records when their magic is there. */
+
 export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
   if (data.byteLength < 8) return undefined
   const head = new DataView(data.buffer, data.byteOffset, 8), version = head.getUint32(4)

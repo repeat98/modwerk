@@ -13,6 +13,7 @@ from machine_layout import _envelope, _integer, _json, _sha, SHA, participants
 
 CAPACITY, HEADER, RECORD = 24, 16, 60
 BYTES = HEADER + CAPACITY * RECORD
+REST_FLAG = 0x80  # loader.h RUNTIME_SITE_RESTS: bit 7 of a site's length byte (build.py REST_FLAG)
 SCHEMA = 'modwerk-table-layout-v1'
 PARTICIPANT_SCHEMA = 'modwerk-table-layout-v2'
 ANALOG_BD_SCHEMA = 'modwerk-table-layout-v3'
@@ -60,6 +61,24 @@ def _hookless(package):
     return package[:20] + bytes(4) + package[24:76] + package[76 + 4 * hooks:]
 
 
+def _restless(package):
+    """A table owner that subscribes ev_in_use may mark its own detours as resting (runtime.json "rests"): bit 7 of
+    each such site's length byte. machine_layout's unchanged envelope reads the same package with that bit clear;
+    validate() itself refuses it on the table pointer and count sites, which must hold while the module rests."""
+    if not isinstance(package, bytes) or len(package) < 76:
+        return package
+    out = bytearray(package)
+    image_size = struct.unpack_from('>I', package, 8)[0]
+    relocations, hooks, sites = struct.unpack_from('>III', package, 16)
+    at = 76 + 4 * hooks + image_size + 4 * relocations
+    for _ in range(sites):
+        if at + 40 > len(package):
+            raise ValueError('A table owner site exceeds its package.')
+        out[at + 4] &= ~REST_FLAG & 0xff
+        at += 40 + out[at + 4] + 2 * package[at + 7]
+    return bytes(out)
+
+
 def validate(package, declaration, recipe, *, reviewed_sha256, source_root):
     if (not isinstance(reviewed_sha256, str) or not SHA.fullmatch(reviewed_sha256) or
             not isinstance(declaration, bytes) or _sha(declaration) != reviewed_sha256):
@@ -75,7 +94,7 @@ def validate(package, declaration, recipe, *, reviewed_sha256, source_root):
     if not all(_integer(doc[key], 1, 65535) for key in ('stateLayoutRevision', 'parameterLayoutRevision')):
         raise ValueError('Explicit positive state/parameter revisions are required.')
     group = isinstance(package, bytes) and len(package) >= 8 and package[7] == 4
-    image, mask, parameters, module = _envelope(_hookless(package) if not group else package, group=group)
+    image, mask, parameters, module = _envelope(_restless(_hookless(package)) if not group else package, group=group)
     family, count, insert, added, identity, roots, refs, count_at, count_code = SHAPES[doc['family']]
     analog_bd = doc.get('schema') == ANALOG_BD_SCHEMA and isinstance(doc.get('participants'), list) and 'analog-bassdrum' in doc['participants']
     optional = participants(mask, doc['participants'], analog_bd=analog_bd) if explicit and group else False
@@ -114,9 +133,12 @@ def validate(package, declaration, recipe, *, reviewed_sha256, source_root):
     at = 76 + 4 * struct.unpack_from('>I', package, 20)[0] + len(image)  # past any hook words (_hookless checked them)
     relocations = struct.unpack_from('>%dI' % relocation_count, package, at)
     at += 4 * relocation_count
-    sites = {}
+    sites, resting = {}, set()
     for _ in range(site_count):
         address, n, keep, checked, r = struct.unpack_from('>IBBBB', package, at)
+        if n & REST_FLAG and not group:
+            resting.add(address)
+            n &= ~REST_FLAG & 0xff
         code = package[at + 40:at + 40 + n]
         local = struct.unpack_from('>%dH' % r, package, at + 40 + n)
         sites[address] = (code, keep, checked, local, package[at + 8:at + 40])
@@ -148,6 +170,8 @@ def validate(package, declaration, recipe, *, reviewed_sha256, source_root):
             if sites.get(reference) != expected: raise ValueError('A table pointer site or original-stock guard changed.')
     if count_at not in sites or sites[count_at][:4] != (count_code, 0, len(count_code), ()):
         raise ValueError('The reviewed table count patch changed.')
+    if resting & ({count_at} | {reference for table in refs for reference in table}):
+        raise ValueError('A table pointer or count site cannot rest with its module.')
     return ReviewedTableLayout(family, module, doc['stateLayoutRevision'], parameters, doc['packageSha256'], tuple(offsets))
 
 

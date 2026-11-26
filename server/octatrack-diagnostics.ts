@@ -73,7 +73,7 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','busy','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect'])
     && (!('restore' in value) || value.event === 'health' && 'reading' in value && restoreList(value.restore))
     && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
     && (value.error === 'disconnected'
@@ -103,6 +103,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
         && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
+        && (!('busy' in value) || value.event === 'sync_failed' && value.error === 'device' && value.result === 'unsafe' && upTo(value.busy, 0xff))
         && (!('usb' in value) || value.event === 'sync_failed' && value.error === 'transport' && Array.isArray(value.usb) && value.usb.length === 6 && value.usb.every(uint))
         && (!('upload' in value) || value.event === 'sync_failed' && value.step === 'stage' && (value.error === 'transport' || value.error === 'device') && stagingUpload(value.upload))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
