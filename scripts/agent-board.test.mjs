@@ -249,3 +249,33 @@ describe('pr:ready and the board', () => {
     expect(readiness({ board: result })).toMatchObject({ ok: true, notes: expect.arrayContaining([expect.stringContaining('claims not checked')]) })
   })
 })
+
+describe('npm run board -- wait', () => {
+  const thread = (replies, extra = {}) => ({ id: 't1', author: 'asker', replies: replies.map(([id, author]) => ({ id, author })), ...extra })
+  const clock = () => { let t = 0; return { now: () => t, sleep: async ms => { t += ms } } }
+
+  it('ends when someone else has the newest word, not on the waiting developer\'s own reply', async () => {
+    const reads = [[thread([])], [thread([['r1', 'asker']])], [thread([['r1', 'asker'], ['r2', 'owner']])]]
+    const changed = await board.waitForReply({ read: async () => reads.shift() ?? [], me: 'asker', ...clock() })
+    expect(changed.map(item => item.replies.at(-1).id)).toEqual(['r2'])
+  })
+
+  it('ends on a thread new to the inbox or one that ended, and reads again after the board was briefly away', async () => {
+    let n = 0
+    const read = async () => {
+      n++
+      if (n === 2) throw new board.BoardUnavailable('deploying')
+      return n < 3 ? [thread([])] : [thread([]), { id: 't2', author: 'reviewer', replies: [] }]
+    }
+    expect((await board.waitForReply({ read, me: 'asker', ...clock() })).map(item => item.id)).toEqual(['t2'])
+    const ends = [[thread([['r1', 'asker']])], [thread([['r1', 'asker']], { endedAt: '2026-11-25T10:00:00Z' })]]
+    expect((await board.waitForReply({ read: async () => ends.shift(), me: 'asker', ...clock() })).map(item => item.id)).toEqual(['t1'])
+  })
+
+  it('gives up at the deadline', async () => {
+    const reads = []
+    const result = await board.waitForReply({ read: async () => { reads.push(1); return [thread([])] }, me: 'asker', minutes: 3, ...clock() })
+    expect(result).toBeNull()
+    expect(reads.length).toBe(4)
+  })
+})

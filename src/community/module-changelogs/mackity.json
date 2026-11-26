@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "First release: Chris Johnson's Airwindows Mackity, a Mackie-style desk input stage, on FX1 or FX2 of any track.",
+      "TRIM drives the desk from silence through 0 dB at 13 to +39.6 dB into its clip; PAD sets the output level.",
+      "Upstream's algorithm is unchanged; Modwerk ported it to the Octatrack's DSP.",
+      "Known issue: not yet tested on a unit."
+    ]
+  }
+]

@@ -1,0 +1,210 @@
+{
+ "procedure": 1,
+ "command": "npm run test:procedure -- mackity --package /tmp/mackity-q/mackity.mwrm --share /tmp/mackity-q/share.sock --dev-socket /tmp/mackity-q/dev.sock --out /tmp/mackity-q/proc --soak-seconds 120 --pick-pattern 2 --measure-pattern 4 --scene 'bank C of the project on the owner'\\''s development unit, Part 1 reloaded in RAM, pattern 2 (empty) to pick, pattern 4 (trigs every four steps on T1-T4, T6, T7) to measure, transport stopped'",
+ "date": "2026-11-25",
+ "started": "2026-11-25T09:16:02.394Z",
+ "finished": "2026-11-25T09:24:29.384Z",
+ "seconds": 507,
+ "target": {
+  "kind": "module",
+  "id": "mackity",
+  "version": "0.1.0-experimental",
+  "machine": "octatrack",
+  "draft": true
+ },
+ "build": {
+  "revision": "ccbb96b6c06ae074159be45d66f69812d450793f",
+  "dirty": false,
+  "package": {
+   "path": "/tmp/mackity-q/mackity.mwrm",
+   "sha256": "5a58d4cc9ce2e5c2878ddafab9fa4437d4ded051066e1d0788307693330b39ac"
+  }
+ },
+ "unit": {
+  "available": true,
+  "share": "/tmp/mackity-q/share.sock",
+  "target": "unit"
+ },
+ "steps": [
+  {
+   "id": "software",
+   "title": "Software checks",
+   "layer": "host",
+   "unit": false,
+   "status": "passed",
+   "commands": [
+    "npm run module:doctor -- --draft mackity"
+   ],
+   "seconds": 9.9,
+   "log": "logs/01-software.log"
+  },
+  {
+   "id": "compat",
+   "title": "Beside every other module",
+   "layer": "contract",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "a draft is judged beside every other module by module:doctor --draft (its compatibility line, step 1)"
+  },
+  {
+   "id": "build",
+   "title": "Name the build",
+   "layer": "host",
+   "unit": false,
+   "status": "passed",
+   "commands": [],
+   "seconds": 0,
+   "log": "logs/03-build.log"
+  },
+  {
+   "id": "cost-model",
+   "title": "DSP cost model",
+   "layer": "contract",
+   "unit": false,
+   "status": "passed",
+   "commands": [
+    "node scripts/cycle-scan.mjs check"
+   ],
+   "seconds": 0.2,
+   "log": "logs/04-cost-model.log"
+  },
+  {
+   "id": "emulator",
+   "title": "Emulator rehearsal",
+   "layer": "emulator",
+   "unit": false,
+   "status": "not run",
+   "commands": [],
+   "seconds": 0,
+   "reason": "no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)"
+  },
+  {
+   "id": "unit-read",
+   "title": "Read the unit",
+   "layer": "target",
+   "unit": true,
+   "status": "passed",
+   "commands": [
+    "node scripts/device.mjs status --socket /tmp/mackity-q/share.sock",
+    "node scripts/device.mjs do inventory --socket /tmp/mackity-q/share.sock"
+   ],
+   "seconds": 0.3,
+   "log": "logs/06-unit-read.log"
+  },
+  {
+   "id": "unit-pass",
+   "title": "Scripted unit pass",
+   "layer": "target",
+   "unit": true,
+   "status": "passed",
+   "commands": [
+    "npm run device:test -- --share /tmp/mackity-q/share.sock --testing-entry /tmp/mackity-q/proc/device-test.md /tmp/mackity-q/mackity.mwrm"
+   ],
+   "seconds": 111.2,
+   "log": "logs/07-unit-pass.log"
+  },
+  {
+   "id": "soak",
+   "title": "Soak",
+   "layer": "target",
+   "unit": true,
+   "status": "passed",
+   "commands": [
+    "node scripts/device.mjs try /tmp/mackity-q/mackity.mwrm --seconds 420 --socket /tmp/mackity-q/share.sock",
+    "node scripts/octatrack-soak.mjs --seconds 120 --log /tmp/mackity-q/proc/soak.json"
+   ],
+   "seconds": 122.8,
+   "log": "logs/08-soak.log"
+  },
+  {
+   "id": "cost-unit",
+   "title": "Cost on the unit",
+   "layer": "unit",
+   "unit": true,
+   "status": "passed",
+   "commands": [
+    "npm run device:price -- --share /tmp/mackity-q/share.sock --out /tmp/mackity-q/proc/price.json --scene 'bank C of the project on the owner'\\''s development unit, Part 1 reloaded in RAM, pattern 2 (empty) to pick, pattern 4 (trigs every four steps on T1-T4, T6, T7) to measure, transport stopped' --curve T1,T3,T6,T7 --pick-pattern 2 --measure-pattern 4 /tmp/mackity-q/mackity.mwrm"
+   ],
+   "seconds": 261.8,
+   "log": "logs/09-cost-unit.log"
+  },
+  {
+   "id": "restore",
+   "title": "Put back",
+   "layer": "target",
+   "unit": true,
+   "status": "passed",
+   "commands": [
+    "node scripts/device.mjs do inventory --socket /tmp/mackity-q/share.sock"
+   ],
+   "seconds": 0.3,
+   "log": "logs/10-restore.log"
+  },
+  {
+   "id": "by-hand",
+   "title": "Agent by hand",
+   "layer": "target",
+   "unit": false,
+   "status": "to do",
+   "commands": [],
+   "seconds": 0,
+   "todo": [
+    "every control and screen by the README's button steps, a png: screenshot of each, compared with the README and its UI claims",
+    "MAIN and CUE recorded over USB (rec) with a sustained sound, checked for dropouts (runs of exact zeros, a block played twice)"
+   ]
+  },
+  {
+   "id": "developer",
+   "title": "Submitter's own stage",
+   "layer": "unit",
+   "unit": false,
+   "status": "to do",
+   "commands": [],
+   "seconds": 0,
+   "todo": [
+    "how it sounds and plays, and timing by ear",
+    "MIDI, scenes and recording with it",
+    "it beside the other modules installed on their unit",
+    "two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md)",
+    "Part reload, project save and reload, and a power cycle with it saved: what survives (the Keep and the power cycle are theirs)"
+   ]
+  }
+ ],
+ "edgeCases": {
+  "suggested": [
+   {
+    "touches": "an effect slot",
+    "ask": "FX1 and FX2, both DSP cores, eight instances at once; one edited while another plays",
+    "see": "MODULE_QUALIFICATION.md#essential-persistence-and-instance-checks--8-october-2026"
+   },
+   {
+    "touches": "memory",
+    "ask": "the module pool nearly full; a delay buffer next to it; the largest set it can join",
+    "see": "OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code"
+   },
+   {
+    "touches": "persistence",
+    "ask": "saved in a Part, then a Part reload, a project reload and a power cycle; removed while a saved Part still names it",
+    "see": "OCTATRACK_MODULE_EDGE_CASES.md#copying-and-saving"
+   },
+   {
+    "touches": "DSP code",
+    "ask": "DSP FULL; both cores; the receiver window; pipeline stalls the instruction count hides",
+    "see": "OCTATRACK_HARDWARE_TRAPS.md#coldfire-and-dsp-load"
+   }
+  ],
+  "cases": []
+ },
+ "developer": {
+  "status": "to do",
+  "items": [
+   "how it sounds and plays, and timing by ear",
+   "MIDI, scenes and recording with it",
+   "it beside the other modules installed on their unit",
+   "two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md)",
+   "Part reload, project save and reload, and a power cycle with it saved: what survives (the Keep and the power cycle are theirs)"
+  ]
+ }
+}

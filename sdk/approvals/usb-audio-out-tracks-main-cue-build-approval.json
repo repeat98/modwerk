@@ -1,15 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "usb-audio-out-tracks-main-cue",
-  "version": "0.4.0-experimental",
-  "sourceSha256": "ef05f5f2f91a1402ccbdfaf80468b02677699b52c8c4796b8690a7f00f23858b",
+  "version": "0.4.1-experimental",
+  "sourceSha256": "23b2b6897b7b3bbccabb742bd54de6c8a42ee7c7789b607cdd1d0463b3cda8b6",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-23",
+  "approvedOn": "2026-11-25",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
-    "complete-memory-bounds"
+    "complete-memory-bounds",
+    "release-documentation"
   ],
-  "ownerStatement": "\"ok make sure to finish it please, I approve the release the machine is ready to use\", then \"Let's just release it, it's been well tested in the other repos it's fine\" (23 November 2026): USB Audio 0.4.0-experimental with USB input, without a unit run of this exact package, with the same two resource exceptions as 0.3.0.",
-  "reason": "The package code is byte-identical to 0cb56b0c, which ran on an Octatrack MKII on 21 November 2026 (all four INPUTS modes and 17 min 34 s of duplex audio on a 0.7.13 draft base); only its inventory kind (offset 66) differs. The owner waived a run of this exact package on base 0.8.1. Worst-case ColdFire cycles and the complete memory bound including stack and DMA remain unmeasured, as for 0.3.0. Package SHA-256 7c144b24ffebfd651db2eefc7dbd364ac7e1750ad5d90358460ca01c543f13f9."
+  "retainedUiVersion": "0.4.0-experimental",
+  "ownerStatement": "\"I approve 0.4.1\" (25 November 2026), after the Windows 11 unit records of 24 and 25 November, and, asked the same day how to document its unchanged Octatrack pages, \"Keep 0.4.0's\": USB Audio 0.4.1-experimental with the adaptive input endpoint, without the full test procedure on this exact build, with the same two resource exceptions as 0.3.0 and 0.4.0, and with 0.4.0's OT UI captures (its SETTINGS, USB AUDIO and INPUTS pages are unchanged).",
+  "reason": "With INPUTS on, 0.4.0 declared EP3 OUT asynchronous with implicit feedback, which Windows' usbaudio2 does not support (Code 10, reported on Windows 10 and reproduced on Windows 11 on 25 November). 0.4.1 declares it adaptive and absorbs the drift on the unit. On the owner's Octatrack MKII, base 0.8.1 e11525835106, Windows 11: INPUTS AB played 240 s (58.1 ppm absorbed) and INPUTS ABCD 60 s (56.4 ppm absorbed), no underrun; four Undos, three reconnected and one (24 November, kept set loaded) left USB until a power cycle. Not run: the soak, the price and frame cost, Keep and a power cycle, INPUTS CD, Windows 10, macOS, Linux. Worst-case ColdFire cycles and the complete memory bound including stack and DMA remain unmeasured, as for 0.3.0 and 0.4.0. Package SHA-256 6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502."
 }

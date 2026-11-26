@@ -86,9 +86,9 @@ jobs:
           restore-keys: check-cache-${{ runner.os }}-
       - name: Require versions, qualification evidence and complete release documentation
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
           MODWERK_PAGES_RUN: ${{ needs.scope.outputs.pages-run }}
-        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part contract
+        # The merge commit's base parent, as scope's: base.sha can be an older main, whose later changes would count as this PR's.
+        run: npm run check -- --base "$(git rev-parse HEAD^1)" --part contract
       # Qualification records, complete docs/tutorials and monochrome screenshots are mandatory.
       # First release: owner reviews actual evidence. Later releases: registered author
       # verifies it and explicitly requests automatic publication within the trusted scope.
@@ -130,9 +130,9 @@ jobs:
             check-cache-${{ runner.os }}-
       - name: Run one suite of the check
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
           PART: ${{ matrix.part }}
-        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part "$PART"
+        # The merge commit's base parent, as scope's: base.sha can be an older main, whose later changes would count as this PR's.
+        run: npm run check -- --base "$(git rev-parse HEAD^1)" --part "$PART"
   module-paths-windows:
     needs: [scope, module-contract]
     if: needs.scope.outputs.windows == 'true'
@@ -150,9 +150,9 @@ jobs:
       - run: npm ci
       - name: Validate module paths against the exact PR base
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
           MODWERK_PAGES_RUN: ${{ needs.scope.outputs.pages-run }}
-        run: npm run modules:check -- --base "$env:OCTAMOD_PR_BASE"
+        # The merge commit's base parent, as scope's: base.sha can be an older main, whose later changes would count as this PR's.
+        run: npm run modules:check -- --base "$(git rev-parse HEAD^1)"
       - name: Check byte-exact source integrity
         run: npm run sdk:check
       - name: Exercise paths and directory junctions on Windows

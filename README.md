@@ -9,6 +9,7 @@
   <p>Independent and unofficial. Not affiliated with, endorsed by or supported by Elektron.</p>
   <p>
     <a href="#get-started">Get started</a> ·
+    <a href="https://modwerk.app/submit/?utm_source=github-readme">Make your own mod</a> ·
     <a href="sdk/README.md">SDK guide</a> ·
     <a href="docs/ADD_A_MODULE.md">Add or port a module</a> ·
     <a href="CONTRIBUTING.md">Contribute</a>

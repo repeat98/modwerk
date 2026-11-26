@@ -730,6 +730,25 @@
       "sha256": "16600fb3681f45e8c2708f4f69da1befe24df696b5e0c4f868bd0eb891eb0fb5"
     },
     {
+      "id": "mackity",
+      "slots": "both",
+      "cycles": 226,
+      "cyclesKind": "executed",
+      "state": 32,
+      "buffer": 0,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/mackity/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Mackity",
+      "module": "f265b22c",
+      "bytes": 1376,
+      "sha256": "5a58d4cc9ce2e5c2878ddafab9fa4437d4ded051066e1d0788307693330b39ac"
+    },
+    {
       "id": "butter-fingers",
       "octabam": true,
       "unitName": "Butter Fingers",
@@ -794,10 +813,44 @@
       "module": "008010d8",
       "bytes": 7894,
       "sha256": "84a8ba8ac39f74aaa8cd842f3179a1f8b0d38a24ffb32b56765daeb417c4ac47"
+    },
+    {
+      "id": "midiverb",
+      "slots": "fx2",
+      "cycles": 398,
+      "cyclesKind": "executed",
+      "state": 32,
+      "buffer": 15870,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/midiverb/0.1.0-experimental.mwrm",
+      "octabam": true,
+      "abi": 8,
+      "features": 129,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "Midiverb I/II",
+      "module": "e7e04dd9",
+      "bytes": 52126,
+      "sha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968"
     }
   ],
   "usbAudio": {
     "configurable": {
+      "name": "USB Audio",
+      "version": "0.4.1-experimental",
+      "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.1-experimental.mwrm",
+      "bytes": 20824,
+      "sha256": "6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502",
+      "abi": 8,
+      "features": 131,
+      "sites": 3,
+      "copies": 4,
+      "fills": 0,
+      "installPresets": true,
+      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+    },
+    "configurable-0.4": {
       "name": "USB Audio",
       "version": "0.4.0-experimental",
       "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.0-experimental.mwrm",

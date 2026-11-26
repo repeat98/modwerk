@@ -35,7 +35,11 @@ Node must resolve to version 24. No HTTP listener, browser extension, cloud MCP
 endpoint or administrator key is installed. The transport implements the
 [MCP stdio protocol](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports).
 
-The frontend is imported through an in-memory Vite bundle. Route
+The frontend is imported through an in-memory Vite bundle. Before each site or
+device tool call the server compares the files that bundle and the package
+manifest were built from, and rebuilds them when a branch switch or a base
+regeneration changed one, so the new base is known without reconnecting (/mcp).
+An open trial keeps its bundle until Keep or Undo. Route
 `console.error`, `warn`, `info` and `debug` through `formatMcpLog(...args)` and
 keep protocol output on stdout. Sanitizing only exceptions leaves warnings
 able to print large data-URL stacks; bounded messages must omit stacks,
@@ -276,6 +280,55 @@ the pedal's own file operations, which the Octatrack's tools have no
 counterpart for; once a Zoom base loads modules over USB, that goes behind
 `device_review`, `device_trial`, Keep and Undo, as the
 [recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
+
+### A Model:Cycles over its link
+
+```sh
+node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-midi [--elektron-images DIR] [--allow-device-writes]
+```
+
+With `--elektron-midi` alone, `device_status` asks a Model:Cycles running a
+Modwerk base (release or development) for its link identity over USB MIDI
+([LINK.md](../sdk/machines/model-cycles/LINK.md)): link version, port, arm,
+counters, the RAM boot's result and the set identity the base took at boot.
+`build` names the `.syx` in `--elektron-images` (a private folder of your own
+builds, never committed) whose set identity matches, or is `null`.
+`device_load` reads the audio's share of the CPU from the base's load probe
+(the link's `load`): `windowPercent` over the last half second (`null` until
+the first one has ended), `windowPeakPercent` for its dearest codec block,
+`peakPercent` since boot, and the windows and blocks counted. An older
+development base without the probe reports unsupported. `device_log` reads the base's
+diagnostics log (the link's `diag`, then `log`, which reads nothing outside
+the log, in every base), which is the Octatrack's
+layout and reads with the same parser: `boot`, `seq`, the five-minute
+`loads` and the `incidents`, without the nonce. The Model:Cycles fills
+`cpu` with the audio's share and leaves the DSP fields at 0 (LINK.md). An
+older development base without the log or `log` reports unsupported. `device_status` also
+gives `loader`: the module pool's free bytes, the last refusal and the live
+modules, or `unsupported` from a base without the loader.
+
+The runtime loader takes one change a trial (LINK.md, "Loading modules"):
+`device_review({"moduleIds":["NAME.mwrm"]})` names a runtime package in
+`--elektron-images` (built with `sdk/runtime/loader/build.py`), or
+`remove:NAME` the module built as NAME; it returns a 60-second plan with the
+package's SHA-256 and changes nothing. `device_trial` (with
+`--allow-device-writes`) loads it to RAM on trial, holds the unit's turn and
+sends a request every three seconds, since the unit undoes a trial by itself
+after ten quiet seconds; `device_keep` keeps it until the next power cycle,
+`device_undo` puts the previous set back and checks it is the one reviewed.
+While a pattern plays the unit refuses both (`unsafe`): the trial and its
+pings stay, so stop playback and call the tool again. A ping that fails shows
+as `state.trial.pingError` in `device_status`, and `state.status` turns
+`trial-lost` once no ping has reached the unit for ten seconds. When the unit no
+longer has the trial (its loader in the normal phase, or in the ready phase
+after an ACCEPT or ROLLBACK whose answer was lost, which the MCP then leaves),
+its active set tells what happened: the reviewed set means the trial was undone
+(`trial-lost`), another set means a Keep went through (`trial-kept`). A later
+`device_keep` or `device_undo` reports the same, as done when it matches. A remote session or a rebuilt site bundle waits for
+the trial's end. Closing the MCP during a trial undoes it ten seconds later. Nothing is
+saved: there are no saved sets. Close Elektron Transfer first. Tests run
+against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the
+base's own transport, controller and loader compiled for the computer.
 
 ## A member's unit through a remote session
 

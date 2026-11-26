@@ -1,10 +1,11 @@
 {
   "schema": 1,
-  "imageSha256": "fab994fe1d2bdcd9b52fb0b23ba028a3764e2a3d5f9e6e544148dc33ce1a4a5b",
+  "imageSha256": "da4232d6f7424d2a293f498912993349c8154d94af08b70f2bd9258c1f5e1778",
   "sources": {
-    "generatedAssembly": "8c89bd681576cc2d859490e7a7d6406db7d575290b987dc94e743b29fbf561b3",
+    "generatedAssembly": "c6edc38d00dbaf7d4abdec7b84b25e0cef1d9a1771c95178046ce84385e850a7",
     "sdk/machines/octatrack/module-adapters/usb_audio_settings.c": "7dc0405687c8a49571e933fb0cda3b5813a509b0ff3236be87bc3f3105739c0a",
     "sdk/machines/octatrack/include/modwerk_events.h": "42415791ac6cbc294c2353f36a7914278453b10e8998ac406b0980bc9ae2d0cd",
+    "sdk/octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_input_trim.c": "6b128ab96ae73b136afb9ccf3acfb4e9d21168b5452e5f835b7588f80364cba0",
     "generatedSettings": "abed17ba83426f98b274830ab472ccd81e5ecbfc7e607016df954dc364216de1"
   },
   "copies": [

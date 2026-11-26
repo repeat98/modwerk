@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { acquire, describe as describeQueue, HOLD_GRACE, judge, parseDuration, processEntry, readTurn, sequenceDrives, UnitBusyError, unitDirectory, waiting, windowsLaunch } from './unit-queue.mjs'
+import { acquire, describe as describeQueue, HOLD_GRACE, judge, parseDuration, priorityRequest, processEntry, readTurn, sequenceDrives, UnitBusyError, unitDirectory, waiting, windowsLaunch } from './unit-queue.mjs'
 
 const script = fileURLToPath(new URL('./unit-queue.mjs', import.meta.url))
 const goneProcess = () => Number(spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))'], { encoding: 'utf8' }).stdout)
@@ -31,7 +31,7 @@ beforeEach(() => {
   directory = mkdtempSync(join(tmpdir(), 'unit-queue-'))
   places = mkdtempSync(join(tmpdir(), 'unit-places-'))
   env = { ...process.env, MODWERK_UNIT_DIR: directory }
-  for (const name of ['MODWERK_UNIT_TURN', 'MODWERK_UNIT', 'MODWERK_UNIT_WHO']) delete env[name]
+  for (const name of ['MODWERK_UNIT_TURN', 'MODWERK_UNIT', 'MODWERK_UNIT_WHO', 'MODWERK_UNIT_KEEP']) delete env[name]
 })
 afterEach(() => { rmSync(directory, { recursive: true, force: true }); rmSync(places, { recursive: true, force: true }) })
 
@@ -225,6 +225,105 @@ describe('the unit queue', () => {
       expect(forced.out).toMatch(/^Ended first \(main\) turn/)
       expect(readTurn(directory)).toBe(null)
     } finally { rmSync(top, { recursive: true, force: true }) }
+  })
+
+  it('keeps a run\'s turn for its checkout after the command ends (--keep, MODWERK_UNIT_KEEP), until release or its time', async () => {
+    // 25 November 2026: other sessions took the unit in the seconds between a release's procedure run and its rerun, twice.
+    const kept = cli(['run', '--keep', '10m', '--note', 'test:procedure', '--', process.execPath, '-e', 'console.log(process.env.MODWERK_UNIT_TURN)'])
+    expect(await kept.done).toBe(0)
+    const id = kept.out.trim()
+    expect(kept.err).toMatch(/The turn stays this checkout's until \d\d:\d\d \(--keep 10 min\)/)
+    expect(readTurn(directory).holder).toMatchObject({ id, kind: 'hold', kept: true, note: 'test:procedure' })
+    expect(readTurn(directory).holder.until).toBeGreaterThan(Date.now() + 9 * MINUTE)
+    expect(describeQueue(directory).text).toMatch(/kept for this checkout's next command until \d\d:\d\d/)
+
+    // Another checkout waits; this checkout's next command (the rerun) goes ahead inside the kept turn and can extend it.
+    const other = cli(['run', '--wait', '1s', '--', process.execPath, '-e', ''], { cwd: place('b') })
+    expect(await other.done).toBe(3)
+    expect(other.err).toMatch(/Waiting for the unit: a has it \(test:procedure\) .*kept for its next command until/)
+    const rerun = cli(['run', '--', process.execPath, '-e', 'console.log(process.env.MODWERK_UNIT_TURN)'], { extra: { MODWERK_UNIT_KEEP: '30m' } })
+    expect(await rerun.done).toBe(0)
+    expect(rerun.out.trim()).toBe(id)
+    expect(readTurn(directory).holder.until).toBeGreaterThan(Date.now() + 29 * MINUTE)
+    expect(await cli(['release']).done).toBe(0)
+    expect(readTurn(directory)).toBe(null)
+
+    // A device command (takeUnitTurn) keeps its turn the same way under MODWERK_UNIT_KEEP.
+    const device = spawn(process.execPath, ['--input-type=module', '-e', `import { takeUnitTurn } from ${JSON.stringify(new URL('./unit-queue.mjs', import.meta.url).href)}; await takeUnitTurn({ note: 'device try' })`],
+      { cwd: place('c'), env: { ...env, MODWERK_UNIT_KEEP: '5m' } })
+    expect(await new Promise(done => device.once('close', done))).toBe(0)
+    expect(readTurn(directory).holder).toMatchObject({ kind: 'hold', kept: true, note: 'device try', who: 'c' })
+    expect(await cli(['release'], { cwd: place('c') }).done).toBe(0)
+
+    // A kept turn has no grace: past its time, with nothing of its own running, the next in line takes over at once.
+    mkdirSync(join(directory, 'turn'))
+    writeFileSync(join(directory, 'turn', 'holder.json'), JSON.stringify({ id: 'k', kind: 'hold', kept: true, ...processEntry(goneProcess()), who: 'finished release', note: 'test:procedure', checkout: '/elsewhere', since: Date.now() - 20 * MINUTE, until: Date.now() - 1000 }))
+    const said = []
+    ;(await acquire({ directory, cwd: place('b'), env: {}, poll: 20, log: line => said.push(line) })).release()
+    expect(said.join('\n')).toMatch(/finished release's kept turn on the unit ran out \d+ s ago with nothing of its own running\. Taking over\./)
+  })
+
+  it('puts a priority waiter first, tells those it overtakes, and asks the holder to give the unit back at a safe point', async () => {
+    const marker = join(places, 'go'), log = join(places, 'order.log')
+    const note = name => [process.execPath, '-e', `require('fs').appendFileSync(${JSON.stringify(log)}, '${name} ')`]
+    const holder = cli(['run', '--note', 'pricing run', '--', process.execPath, '-e',
+      `const fs = require('fs'); const t = setInterval(() => { if (fs.existsSync(${JSON.stringify(marker)})) clearInterval(t) }, 20)`], { cwd: place('pricing') })
+    await until(() => readTurn(directory)?.holder?.child)
+    const early = cli(['run', '--note', 'device:test other', '--', ...note('early')], { cwd: place('early') })
+    await until(() => waiting(directory).length === 1)
+    const reason = 'owner: release Mackity before the pricing run'
+    const release = cli(['run', '--priority', reason, '--note', 'test:procedure mackity', '--', ...note('release')], { cwd: place('release') })
+    await until(() => waiting(directory).length === 2)
+    expect(waiting(directory).map(entry => entry.who)).toEqual(['release', 'early'])
+    expect(priorityRequest(directory)).toMatchObject({ who: 'release', priority: reason })
+    await until(() => early.err.includes('ahead of you with priority'))
+    expect(early.err).toContain(`release waits ahead of you with priority, the owner's call: ${reason}. You are number 2 in line.`)
+    await until(() => release.err.includes('You wait first in line with priority'))
+
+    // The holder sees it in status, in --json and in its command's output; nothing ends its turn.
+    const status = cli(['status'])
+    await status.done
+    expect(status.out).toContain(`ASKED TO GIVE IT BACK: release waits first in line with priority (${reason})`)
+    expect(status.out).toMatch(/ {2}1\. release: test:procedure mackity, waiting .*, first by priority: owner: release Mackity/)
+    const json = cli(['status', '--json'])
+    await json.done
+    expect(JSON.parse(json.out).priority).toMatchObject({ who: 'release', priority: reason })
+    await until(() => holder.err.includes('The unit is asked for'))
+    expect(readTurn(directory).holder.note).toBe('pricing run')
+    writeFileSync(marker, '')
+    expect(await Promise.all([holder.done, release.done, early.done])).toEqual([0, 0, 0])
+    expect(readFileSync(log, 'utf8')).toBe('release early ')
+    expect(await cli(['run', '--priority', ' ', '--', process.execPath, '-e', '']).done).toBe(2)
+  })
+
+  it('lets a kept turn give way to a priority waiter, and keeps no turn while one waits', async () => {
+    expect(await cli(['run', '--keep', '20m', '--', process.execPath, '-e', '']).done).toBe(0)
+    await expect(acquire({ directory, cwd: place('b'), env: {}, ...quiet, waitMs: 200 })).rejects.toThrow(UnitBusyError) // a plain waiter waits
+    const said = []
+    ;(await acquire({ directory, cwd: place('c'), priority: 'owner: release first', env: {}, poll: 20, log: line => said.push(line) })).release()
+    expect(said.join('\n')).toMatch(/a's kept turn gives way to your priority: nothing of its own runs\. Taking over\./)
+
+    // A priority waiter first in line (a ticket of this live process): the kept checkout's next command waits in line
+    // instead of going ahead inside its kept turn.
+    const ticket = join(directory, `wait-0000000000001-${process.pid}-0.json`)
+    const priority = JSON.stringify({ ...processEntry(process.pid), who: 'owner session', priority: 'release', since: Date.now() })
+    expect(await cli(['run', '--keep', '20m', '--', process.execPath, '-e', '']).done).toBe(0)
+    writeFileSync(ticket, priority)
+    expect(judge(readTurn(directory), Date.now(), waiting(directory))).toMatchObject({ yields: true, expired: true })
+    const next = cli(['run', '--wait', '1s', '--', process.execPath, '-e', ''])
+    expect(await next.done).toBe(3)
+    rmSync(ticket)
+    expect(await cli(['release']).done).toBe(0)
+
+    // A run that ends while a priority waiter is first gives the turn back instead of keeping it.
+    const marker = join(places, 'go')
+    const running = cli(['run', '--keep', '20m', '--', process.execPath, '-e', `const fs = require('fs'); const t = setInterval(() => { if (fs.existsSync(${JSON.stringify(marker)})) clearInterval(t) }, 20)`])
+    await until(() => readTurn(directory)?.holder?.child)
+    writeFileSync(ticket, priority)
+    writeFileSync(marker, '')
+    expect(await running.done).toBe(0)
+    expect(running.err).toContain('Not kept: owner session waits first in line with priority (release), so the unit is theirs now.')
+    expect(readTurn(directory)).toBe(null)
   })
 
   it('lets reads and emulators go beside a turn, and passes the turn to the commands a holder starts', async () => {

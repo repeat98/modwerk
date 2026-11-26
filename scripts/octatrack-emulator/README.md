@@ -23,3 +23,7 @@ c++ -std=c++17 scripts/octatrack-emulator/test-idle-range.cpp -o /private/tmp/my
 Use the resulting `ot_emu` with `scripts/verify-octatrack-dsp-loader.mjs`'s `sites` scenario. That scenario verifies the kernel task gate, installed site bytes and relocations, the first code bytes and declared stock copies, then restoration of every site's original bytes after removal. It does not establish audio, task timing, hardware safety, physical reboot persistence or qualification of a new base. Those remain owner review and hardware gates.
 
 For a private TEMPLATE card fixture, `run-sites.sh EMULATOR BUILD NEW-OUT CARD PACKAGE [PACKAGE...]` runs sequential install/remove checks in one boot and removes its temporary card and socket. Run it under the shared lock from the repository root with Node 24. Packages and images containing stock data must stay outside Git; the legacy ABI 6 regression is private.
+
+## For the test procedure
+
+Step 5 of `npm run test:procedure` starts its own session with this build ([TEST_PROCEDURE.md](../../docs/TEST_PROCEDURE.md)). Build it once: `npm run upstream:tools`, `make setup && make emu-cf` in `~/.cache/modwerk-upstream/octabam`, then `build.py` as above into a new folder outside Git. Then set `MODWERK_OT_EMU` to its `ot_emu` and `MODWERK_OT_TWIN` to a development twin's build folder ([OCTATRACK_DRIVING.md](../../docs/OCTATRACK_DRIVING.md)) in your shell profile.

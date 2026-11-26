@@ -58,6 +58,149 @@ class MachineBases(unittest.TestCase):
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
         self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
+    def test_model_cycles_base_source_is_core_mc_0_3_unchanged(self):
+        record = json.loads((APP / "sdk/imports/core-mc-source-f20ffda.json").read_text())
+        self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
+        for item in record["files"]:
+            self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
+        imported = {item["to"] for item in record["files"]}
+        folder = APP / "sdk/machines/model-cycles/elekloader/core-mc"
+        mod = json.loads((folder / "mod.json").read_text())
+        for source in mod["sources"]:
+            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
+        self.assertIn("sdk/machines/model-cycles/include/model-cycles/core.h", imported)
+        # The three sources the release was built from, by its own build record.
+        release = json.loads((APP / "vendor/elekloader/catalog/core-mc-0.3.elemod").read_text())
+        hashes = {pathlib.Path(item["from"]).name: item["sha256"] for item in record["files"]}
+        self.assertEqual({name: hashes[name] for name in release["build"]["sources"]}, release["build"]["sources"])
+
+    def test_model_cycles_hooks_are_the_sites_the_base_builds(self):
+        # events.json is the registry: hooks 0-4 are core-mc's own sites, unchanged, and every later one is a site
+        # base.json adds. Each hook's guard is the SHA-256 of the stock bytes its site replaces, and the base declares
+        # its collection; the core contract lists the same hooks.
+        events = json.loads((APP / "sdk/machines/model-cycles/events.json").read_text())["events"]
+        mod = json.loads((APP / "sdk/machines/model-cycles/elekloader/core-mc/mod.json").read_text())
+        add = json.loads((APP / "sdk/machines/model-cycles/elekloader/base.json").read_text())["add"]
+        guards = {site["addr"]: (len(bytes.fromhex(site["stock"])), hashlib.sha256(bytes.fromhex(site["stock"])).hexdigest())
+                  for site in mod["sites"]}
+        added = {site["addr"]: (site["len"], site["stockSha256"]) for site in add["sites"]}
+        self.assertEqual([event["index"] for event in events], list(range(len(events))))
+        self.assertEqual([event["event"] for event in events[:5]], list(mod["collections"]))
+        collections = dict(mod["collections"], **add["collections"])
+        for event in events:
+            site = guards if event["index"] < 5 else added
+            self.assertIn(event["site"], site, event["event"])
+            self.assertEqual((event["length"], event["guard"]), site[event["site"]], event["event"])
+            self.assertIn(event["event"], collections)
+            self.assertNotIn("room", event, "a call hook's table takes every subscriber")
+        # A collection's number is the entry size in bytes (a handler's address), as in the release.
+        self.assertEqual(set(collections.values()), {4})
+        interface = json.loads((APP / "sdk/model-cycles/core-profile/interface.json").read_text())
+        self.assertEqual([entry["name"] for entry in interface["events"]], [event["event"] for event in events])
+
+    def test_model_cycles_diagnostics_log_is_the_octatrack_layout(self):
+        """The site reads the Model:Cycles log with the Octatrack's parser, so its numbers and structs are the
+        Octatrack's word for word (base/diag.h)."""
+        def layout(path):
+            text = path.read_text()
+            parts = [re.search(r"#define %s .*" % name, text).group(0) for name in ("DIAG_MAGIC", "DIAG_VERSION", "DIAG_LOADS", "DIAG_INCIDENTS")]
+            parts.append(re.search(r"enum diag_kind \{[^}]*\};", text).group(0))
+            parts += [re.search(r"struct %s \{.*?\n\};" % name, text, re.S).group(0) for name in ("diag_load", "diag_incident", "diag_log")]
+            return [re.sub(r"\s*/\*.*?\*/", "", part) for part in parts]
+        cycles = layout(APP / "sdk/machines/model-cycles/elekloader/base/diag.h")
+        self.assertEqual(cycles, layout(APP / "sdk/machines/octatrack/elekloader/diag.h"))
+
+    def test_model_cycles_diagnostics_log_on_the_host(self):
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/model-cycles/elekloader/base"
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST", "-I", here,
+                            here / "diag.c", here / "test_diag.c", "-o", temp + "/t"], check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_model_cycles_link_on_the_host(self):
+        """A development base's link on the host: RAMBOOT keeps an accepted request's numbers for the copy, and a reply
+        goes out whole under stock's USB lock, never while another sender's SysEx is open."""
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/model-cycles/elekloader/base"
+        stock = ["-D%s=0" % name for name in ("UI_QUEUE_PTR_AT", "QUEUE_POST_AT", "KEY_INDEX_AT", "KEY_BITS_AT")]
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST",
+                            "-DMODWERK_DEV", *stock, "-I", here, here / "link.c", here / "test_link.c", "-o",
+                            temp + "/t"], check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_model_cycles_loader_transport_on_the_host(self):
+        """mc_link.py's framing through modules.c's parts into the upload controller and the loader: a module goes on
+        trial, and ten quiet seconds of UI ticks put the previous set back."""
+        import importlib.util, shutil, struct, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        spec = importlib.util.spec_from_file_location("mc_link", APP / "sdk/machines/model-cycles/tools/mc_link.py")
+        mc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mc)
+        here, loader, upload = (APP / "sdk/machines/model-cycles/elekloader/base", APP / "sdk/runtime/loader",
+                                APP / "sdk/runtime/upload")
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-DMODWERK_HOST", "-DRUNTIME_MODULES=16u",
+                            "-DRUNTIME_POOL_BYTES=65536u", "-I", loader, "-I", upload, here / "test_modules.c",
+                            here / "modules.c", here / "runtime.c", loader / "loader.c", upload / "upload.c",
+                            upload / "wire.c", upload / "sha256.c", "-o", temp + "/t"], check=True, capture_output=True)
+            unit = subprocess.Popen([temp + "/t"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+
+            def ask(line):
+                unit.stdin.write(line + "\n")
+                unit.stdin.flush()
+                return unit.stdout.readline().strip()
+
+            class Host(mc.Link):
+                def __init__(self):
+                    pass
+
+                def call(self, cmd, body, timeout=5):
+                    if cmd == mc.UP_PART:
+                        return (0 if int(ask("P %d %s" % (mc.get32(body[:5]), bytes(body[5:]).hex()))) else 4), []
+                    answer = ask("R %d" % mc.get32(body[:5]))
+                    return (0, mc.pack(bytes.fromhex(answer))) if answer else (4, [])
+            try:
+                host = Host()
+                r = host.frame("hello", 0, bytes(32))
+                self.assertEqual(r["base"], hashlib.sha256(bytes.fromhex("12345678")).digest())
+                session, t = r["session"], r["last"] + 1
+                # ABI 4: a tick hook that returns at once, 4 bytes of image, a 3,000-byte tail of zero bss
+                pkg = b"MWRM" + struct.pack(">HHIIIIII", 4, 0, 4, 3000, 0, 1, 0, 0x2CF24DBA) + struct.pack(">I", 0)
+                pkg += bytes.fromhex("4e754e71")
+                host.must("enter", 0, session)
+                host.must("begin", t, session, r["base"] + hashlib.sha256(pkg).digest() + struct.pack(">II", r["generation"], len(pkg)))
+                host.must("chunk", t, session, struct.pack(">I", 0) + pkg)
+                self.assertEqual(host.must("verify", t, session)["received"], len(pkg))
+                host.must("commit", t, session)
+                self.assertEqual(mc.PHASES[host.must("leave", t, session)["phase"]], "trial")
+                self.assertEqual(ask("T %d" % 299), "0")
+                self.assertEqual(ask("T 1"), "1")              # the host fell quiet: the set goes back
+                self.assertEqual(mc.PHASES[host.frame("hello", 0, bytes(32))["phase"]], "normal")
+                # a frame of several parts with bytes over 0x7f arrives whole: the hash checks out, the loader refuses
+                junk = bytes((i * 37 + (i >> 8)) & 0xFF for i in range(5000))
+                r = host.frame("hello", 0, bytes(32))
+                t = r["last"] + 1
+                host.must("enter", 0, session)
+                host.must("begin", t, session, r["base"] + hashlib.sha256(junk).digest() + struct.pack(">II", r["generation"], len(junk)))
+                for at in range(0, len(junk), mc.CHUNK):
+                    host.must("chunk", t, session, struct.pack(">I", at) + junk[at:at + mc.CHUNK])
+                self.assertEqual(mc.RESULTS[host.frame("verify", t, session)["result"]], "rejected")
+            finally:
+                unit.stdin.close()
+                unit.wait()
+
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
         mod = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json").read_text())
@@ -279,18 +422,42 @@ class MachineBases(unittest.TestCase):
         self.assertEqual([s for s in bus["sources"] if s in voices["sources"]], voices["sources"])
         self.assertEqual([s for s in bus["subscribe"] if s in voices["subscribe"]], voices["subscribe"])
 
+    def test_shared_sources_are_staged_with_the_part_that_names_them(self):
+        # sdk/runtime/ sources: common's and add's in every base that takes them (the Model:Cycles' release base
+        # needs loader.c, upload.c, wire.c and sha256.c), dev's in development bases only
+        checked = 0
+        for machine, config in bases():
+            for name, add, leave in machine_base.variants(config):
+                for dev in ((False, True) if "dev" in config else (False,)):
+                    staged = {"common": True, "add": add, "dev": dev}
+                    shared = [(pathlib.Path(f).name, folder, staged[part]) for part in staged
+                              for folder, files in config.get(part, {}).get("shared", {}).items() for f in files]
+                    if not shared:
+                        continue
+                    with tempfile.TemporaryDirectory() as work:
+                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
+                        self.assertNotIn("shared", json.loads((core / "mod.json").read_text()))
+                        for file, folder, expected in shared:
+                            self.assertEqual((pathlib.Path(work) / "mods" / folder / file).is_file(), expected,
+                                             (machine, name, dev, file))
+                            checked += expected
+        self.assertGreater(checked, 0)
+
     def test_development_bases_stage_dev_on_every_variant_and_releases_never_carry_it(self):
         for machine, config in bases():
             if "dev" not in config:
                 continue
             for name, add, leave in machine_base.variants(config):
                 for dev in (False, True):
+                    shared = {pathlib.Path(f).name for part in ("common", "add", "dev")
+                              for files in config.get(part, {}).get("shared", {}).values() for f in files}
                     with tempfile.TemporaryDirectory() as work:
                         core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
                         mod = json.loads((core / "mod.json").read_text())
                     for source in config["dev"]["sources"]:
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
-                        self.assertTrue((APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
+                        self.assertTrue(pathlib.Path(source).name in shared or
+                                        (APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
 
     def test_dev_sites_take_no_bytes_a_release_site_or_the_core_takes(self):
         for machine, config in bases():
