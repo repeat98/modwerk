@@ -414,6 +414,9 @@ line's skip included. Every program stays under 400: 207-310 on average, 316 in 
 
 ### Word width: the input to the owner's decision
 
+**Decided (owner, 26 November 2026):** 24-bit words in the DSP ring, floored to 16 bits only where a word crosses
+SDRAM. It is an assumption, labelled as one: nothing records the original's width.
+
 `widths.py`, 2 s of the integer model on the original's addresses, against all words at 24 bits: "stream" floors the
 words that cross SDRAM (what the engine runs), "all 16" floors every store. The largest difference / its RMS, in dB
 below full scale, beside the 24-bit output's peak:
@@ -445,10 +448,5 @@ the same picture (`widths.py` prints it). Neither is a claim about the original'
 
 ## Not settled
 
-- **Word width and saturation.** The engine keeps 24-bit words in the DSP ring and floors a word to 16 bits where it
-  crosses SDRAM. Whether to store every word as 16 bits instead, for one behaviour throughout, is the owner's open
-  decision; the numbers are in [Word width](#word-width-the-input-to-the-owners-decision). Either way it is an
-  assumption, labelled as one: nothing records the original's width. SKANK GUITAR's resonant filters amplify
-  truncation (above): with 16-bit words the integer model departs from the float model by -46 dBFS on quiet noise.
 - **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (README, "The gate").
 - **The stream's base side**: the channel's latency, mailboxes and core 1 ([what the base must provide](#what-the-base-must-provide)).
