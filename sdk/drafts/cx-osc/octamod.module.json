@@ -106,7 +106,7 @@
     ],
     "uiClaims": [],
     "limitations": [
-      "Experimental draft: USB trials on the author's MKII only; not a catalogue release.",
+      "First experimental catalogue release; USB on the author's MKII only.",
       "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface; compatibility.json group-owns the shared sites.",
       "MIDI chromatic drawer, legato, multi-track stress, Part save/load persistence and power-cycle retention are not fully qualified.",
       "CPU/frame cost not measured on hardware; host gate checks registration, import pins and package build."
@@ -131,6 +131,27 @@
       "method": "unmeasured",
       "conditions": "octabam verify_cxosc Unicorn estimate only; no MKII frame-cost audit yet.",
       "source": "upstream/cxosc/README.md"
+    },
+    "impact": {
+      "conditions": "One CX OSC track per Part, mono FLEX voice; FM engine hooks shared with FM Synth.",
+      "cpu": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "Per-sample two-operator FM, morph tables and wavefolder work on ColdFire like FM Synth.",
+        "source": "upstream/cxosc/poly.s"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No new DSP effect slot; audio passes through stock FLEX source and AMP.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "Runtime detours for page and engine hooks plus a ~30 KiB USB package; exact SDRAM bounds not audited.",
+        "source": "TESTING.md"
+      }
     }
   },
   "tests": {

@@ -1,4 +1,4 @@
-# Cx Osc testing
+# Cx Osc testing — 0.1.0-experimental
 
 Record what you ran, on which build and which unit, and what you saw. "Not tested" is a valid answer; never write a result you did not observe, and keep emulator runs apart from hardware ones.
 
