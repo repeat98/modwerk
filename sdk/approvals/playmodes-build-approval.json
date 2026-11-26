@@ -1,13 +1,15 @@
 {
   "kind": "owner-approved-update",
   "id": "playmodes",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-19",
-  "ownerStatement": "I approve Play Modes 0.2.0-experimental for release without hardware testing.",
-  "reason": "Owner approves the exact 0.2.0-experimental source from #706 (STEP REPEAT by pgstath, imported from pgstath/Octaplay 73d5f89) for release without hardware testing. 0.2.0 has not been played on a unit: STEP REPEAT, the six earlier modes on this build, reboot and Part/project persistence, track isolation and on-device performance remain unverified. Emulator captures, cycles and memory evidence come from #706.",
+  "approvedOn": "2026-11-26",
+  "ownerStatement": "I approve Play Modes 0.2.1-experimental for release (fixes #764 and #810 through the issue-fix flow).",
+  "reason": "Owner-requested fix of #764 (no USB package for 0.2.0) and #810 (modes leaking into a new project): Play Modes clears its table on ev_project_new only for PROJECT > NEW, not after CHANGE or RELOAD, and ships its first 0.2.x USB package. RAM trials on the owner's MKII (development base 3704e557) showed NEW clearing all 256 patterns to NORMAL, RELOAD restoring the saved modes and CHANGE loading the other project's modes, with no faults and 0 CPU points. Not run on a unit: a power cycle, an MKI, Keep, and STEP REPEAT by ear, so full current-build hardware qualification is waived. The 0.2.0 UI captures are retained: this change adds no page or control. This binds only this exact version and native source; hardware is not claimed verified.",
   "waived": [
-    "current-build-hardware"
+    "current-build-hardware",
+    "release-documentation"
   ],
-  "sourceSha256": "da8e028b4c6b9cc881fd0c4cc3533e2c5207d59d4fda6aebaf29e22d591a423d"
+  "sourceSha256": "49a874ddc6cf2c9b4abb480e475ad53a5dce5ddbc22dbc2007f093e698a6baba",
+  "retainedUiVersion": "0.2.0-experimental"
 }

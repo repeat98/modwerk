@@ -30,12 +30,20 @@ export function ledger() {
 }
 
 const GREEN = new Set(['success', 'neutral', 'skipped'])
-/** Green means at least one check ran on this commit and every one finished without failing. */
+let required
+/** The checks main's rules require before a merge. GitHub refuses a merge while one has not reported ("is expected"). */
+export const requiredChecks = api => required ??= api('/rules/branches/main').then(rules => rules.flatMap(rule => rule.type === 'required_status_checks' ? rule.parameters.required_status_checks.map(check => check.context) : []), () => [])
+/**
+ * Green means every check on this commit finished without failing, and every required one has reported. When a
+ * required one has not, the commit is `incomplete`: its checks are about to start, wait for a maintainer, or
+ * cannot run because the pull request conflicts.
+ */
 export async function checkSummary(api, sha) {
   const runs = (await api('/commits/' + sha + '/check-runs?per_page=100')).check_runs ?? []
   if (!runs.length) return 'none'
   if (runs.some(run => run.status !== 'completed')) return 'pending'
-  return runs.every(run => GREEN.has(run.conclusion)) ? 'green' : 'red'
+  if (!runs.every(run => GREEN.has(run.conclusion))) return 'red'
+  return (await requiredChecks(api)).every(name => runs.some(run => run.name === name)) ? 'green' : 'incomplete'
 }
 
 /** The live state the policy decides against. */
@@ -46,7 +54,8 @@ export async function readTarget(api, number) {
   const pull = await api('/pulls/' + number)
   const files = await pages(api, '/pulls/' + number + '/files')
   const waitingRuns = ((await api('/actions/runs?status=action_required&head_sha=' + pull.head.sha + '&per_page=30')).workflow_runs ?? []).length
-  return { ...target, waitingRuns, draft: !!pull.draft, head: pull.head.sha, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checksGreen: (await checkSummary(api, pull.head.sha)) === 'green' }
+  const checks = await checkSummary(api, pull.head.sha)
+  return { ...target, waitingRuns, draft: !!pull.draft, head: pull.head.sha, baseRef: pull.base.ref, headRef: pull.head.ref, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checks, checksGreen: checks === 'green' }
 }
 
 /** The agent board's public reads (threads and claims need no sign-in). */

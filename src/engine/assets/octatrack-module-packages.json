@@ -301,18 +301,16 @@
       "octabam": true,
       "standalone": true,
       "abi": 8,
-      "features": 3,
-      "sites": 35,
-      "copies": 5,
+      "features": 131,
+      "sites": 36,
+      "copies": 6,
       "fills": 0,
-      "version": "0.1.1-experimental",
+      "version": "0.2.1-experimental",
       "name": "Play Modes",
       "module": "be4ff75a",
-      "bytes": 14846,
-      "sha256": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced",
-      "path": "octatrack-modules/playmodes/0.1.1-experimental.mwrm",
-      "lagsBehind": "0.2.0-experimental",
-      "lagReason": "0.2.0 needs a new reviewed standalone recipe and hardware results or an owner decision (#764)"
+      "bytes": 16478,
+      "sha256": "5656b2cdafd2e17ee57b6400bf98e098926c0d0a167427d1cd34e816a6fdaa22",
+      "path": "octatrack-modules/playmodes/0.2.1-experimental.mwrm"
     },
     {
       "id": "mute-modes",
@@ -322,12 +320,12 @@
       "sites": 14,
       "copies": 9,
       "fills": 0,
-      "version": "0.2.3-experimental",
+      "version": "0.2.4-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2922,
-      "sha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
-      "path": "octatrack-modules/mute-modes/0.2.3-experimental.mwrm"
+      "bytes": 3026,
+      "sha256": "7542f10c56b431761bdd9b4f44a7a3ccb6d4851f31e2c4bb519281dd5d0b6b8c",
+      "path": "octatrack-modules/mute-modes/0.2.4-experimental.mwrm"
     },
     {
       "id": "sidechain-compressor",

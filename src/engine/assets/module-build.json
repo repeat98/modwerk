@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "18e2b8601e49ed08dffc431f26d9e6598e42817a",
+  "sourceCommit": "59dbdd93838be7caf4ce5cfe19456cb15294ed71",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "8e46091fcc45a837f0bca85c47907cfcd11d4458f6743e08588d14061242c7e5",
+  "sourceTreeSha256": "fc5ef0c3e2604b09d14f85e49ed7d78b9f53012c570515d68308b8f31b030a8d",
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -28,8 +28,8 @@
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
-    "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.3-experimental",
+    "playmodes": "0.2.1-experimental",
+    "mute-modes": "0.2.4-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -79,8 +79,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1362015,
-      "sha256": "94b6d880cba5c6f26c5728c77ea50b2d74d23b0bdb37de6e8ca8f0e55a726711"
+      "bytes": 1362663,
+      "sha256": "7a986a72a9ccf71b5fbbf96e19c6acaf0d2364758ffe4112532e27f35df88ea5"
     },
     "utility-packages.json": {
       "bytes": 11735,
