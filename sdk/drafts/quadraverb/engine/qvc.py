@@ -92,6 +92,9 @@ class Machine:
     def __init__(self, steps, size, addr, frac=23):
         self.steps, self.size, self.addr = steps, size, addr
         self.frac = frac             # 23: the DSP's words. More only to measure what truncation costs (check_model)
+        # The word-width rule of the stream (qvs.py, ENGINE.md "Word width"): a read in `narrow` takes its word with
+        # the low 8 bits cleared (floored to 16 bits, as the word crossed SDRAM); `narrow_all` floors every store.
+        self.narrow, self.narrow_all = set(), False
         self.mem = [0] * size
         self.p = 0
         self.A = 0
@@ -113,12 +116,16 @@ class Machine:
             if o["write"]:
                 aw = lim(A, f)
                 word = x if i == IN_STEP else aw
+                if self.narrow_all:
+                    word = (word >> 8) << 8
                 if cell is not None:
                     self.mem[cell] = word
                 add = [0, 0 if o["latch"] else A, self.B << up, self.M << up][o["sel"]]
                 self.A = wrap56(product(aw, s["c"], o["neg"], f) + add, acc_bits)
             else:
                 word = 0 if cell is None else self.mem[cell]
+                if i in self.narrow:
+                    word = (word >> 8) << 8
                 if i == LEFT_STEP:
                     left = word
                 elif i == RIGHT_STEP:
@@ -1206,6 +1213,9 @@ def tick_lines(info, P):
         e(f"        move    a1,y:(r3+${d['slot']:02x})")
         if d["first_reg"]:
             e(f"        move    a1,{d['first_reg']}")
+    # The stream (qvs.py): a moving window's read publishes its relocated address in an r7 word.
+    for k, word in mod.get("publish", {}).items():
+        e(f"        move    {regs[k]},x:(r7+${word:02x})")
     return forward_branches(out)
 
 
@@ -1272,8 +1282,10 @@ def assemble_text(info, P):
                   f"        move    b,x:(r7+${MSTATE['frac']:02x})"]
         for j, (_, v) in enumerate(words):
             lines += [f"        move    {imm(v)},x0", f"        move    x0,x:(r7+${LFO_AT + j:02x})"]
+    stream = info.get("stream") or {}
+    lines += stream.get("init", [])
     lines += ["        rts", "",
-              "proc:",
+              "proc:", *stream.get("head", []),
               "; (L + R) / 2 into every left slot, while a and b are free.",
               "        move    r0,r1",
               "        move    #>$2,n1",
@@ -1311,6 +1323,7 @@ def assemble_text(info, P):
             f"        move    x1,x:(r7+${S['x1']:02x})"]
     tail = [*[f"        move    r{c},x:(r7+${S['r%d' % c]:02x})" for c in CHAINS],
             *[f"        move    n{c},x:(r7+${S['n%d' % c]:02x})" for c in CHAINS],
+            *stream.get("tail", []),
             "        move    #>$ffffff,m4",
             "        move    #>$ffffff,m5",
             "        move    #>$ffffff,m6",
