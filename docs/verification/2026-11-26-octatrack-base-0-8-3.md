@@ -168,8 +168,9 @@ store+0x2fe+30·track+6·fx.
   a cold start after a power cycle, Windows.
 - **A different loss, open:** the same night another session's three DSP stall runs (twin `764b6e71` and a 0.8.2 twin)
   each lost USB at the rollback that removed USB Audio after a stream; `npm run device -- recover` finished each without
-  a power cycle. Both bases, so not this rule. In the twelve rollbacks above, the Mac's stream had closed before the
-  removal and USB stayed up: removal under an open stream is the lead, not yet separated on the unit.
+  a power cycle. Both bases, so not this rule. The stream had closed 1-1.5 minutes before each removal; those
+  rollbacks removed sets of 18-19 packages with USB Audio among them, while the twelve above removed USB Audio alone and
+  kept USB: removal within a large set is the lead, not yet separated on the unit.
 
 ## Builds and pending
 
