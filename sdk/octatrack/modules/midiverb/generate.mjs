@@ -72,6 +72,125 @@ export function rawMachine(steps, size = DRAM, addrOf = null) {
   };
 }
 
+// The Midiverb II's chorus and flange programs (50-69). Its 8031 controller patches the running program from two
+// LFOs, once a pass of its main loop (assumed one pass every 8 samples, the cadence thement's emulator uses; what
+// paces the loop on the hardware is not read). Read from the firmware's disassembly (26 Nov 2026):
+//   0x302 dispatches program p to the update routine named at 0x32a + 2(p - 50) and, on the first pass after a
+//   program change, to the setup routine at 0x352 + 2(p - 50) instead (it sets rates, centre and the store op;
+//   it does not patch). Updates: triangles 0x6df (ceiling 0x3fff), 0x75f (0x7fff), 0x7df (0xffff), entered at
+//   0x6ca, 0x74a, 0x7ca by the triggered flanges (50, 53, 57), whose trigger input (0x60f) is never modelled here;
+//   magic-circle sines 0x848 (clamp 0x7f), 0x929 (0x3f), 0xa0a (0x1f, the multiplier and output taken 2 bits over).
+//   Then the patch at 0x61f writes program bytes 05/06 and 59-5e (LFO 1), 5f/60 and b3-b8 (LFO 2) from the
+//   16-row table at 0x1b00, its row the LFO's fraction >> 4: step 3's address step becomes row - w and step 47's
+//   row + w (w the LFO's integer part, centre * 256 + int), steps 45 and 46 the row's, steps 4 and 49 load, steps
+//   48 and 93 store with the program's op. LFO 2 does the same at steps 48, 90-92 with the row's second half.
+// Internal RAM, as the firmware names it: LFO 1 fraction 0x56, integer 0x57, centre 0x58, rate 0x66; LFO 2 0x53,
+// 0x54, 0x55, 0x65; store op 0x52; triangle directions 0x20 bits 5 and 6; sine state 0x4e/0x4f (x) 0x50/0x51 (y)
+// for LFO 1, 0x4a/0x4b and 0x4c/0x4d for LFO 2. A program starts from that RAM cleared but for its setup (the
+// firmware keeps what the last program left; this module starts every program alike).
+const LFO_ROM = { update: 0x32a, setup: 0x352, table: 0x1b00 };
+const LFO_ROUTINE = {
+  0x6ca: { kind: 'tri', ceiling: 0x3fff, trigger: true }, 0x6df: { kind: 'tri', ceiling: 0x3fff },
+  0x74a: { kind: 'tri', ceiling: 0x7fff, trigger: true }, 0x75f: { kind: 'tri', ceiling: 0x7fff },
+  0x7ca: { kind: 'tri', ceiling: 0xffff, trigger: true }, 0x7df: { kind: 'tri', ceiling: 0xffff },
+  0x848: { kind: 'sine', clamp: 0x7f, shift: 0 }, 0x929: { kind: 'sine', clamp: 0x3f, shift: 0 },
+  0xa0a: { kind: 'sine', clamp: 0x1f, shift: 2 },
+};
+export const LFO_PROGRAMS = { first: 50, last: 69 };
+export const isLfo = (bank, number) => bank === 'MV2' && number >= LFO_PROGRAMS.first && number <= LFO_PROGRAMS.last;
+
+// Every program's LFO, from the ROM: its update routine and what its setup routine writes (MOV direct,#imm and
+// LJMPs, followed to the main loop at 0x17c).
+export function readLfo(path) {
+  const rom = readFileSync(path);
+  const word = (a) => (rom[a] << 8) | rom[a + 1];
+  const table = Uint8Array.from(rom.subarray(LFO_ROM.table, LFO_ROM.table + 256));
+  const out = {};
+  for (let p = LFO_PROGRAMS.first; p <= LFO_PROGRAMS.last; p++) {
+    const routine = LFO_ROUTINE[word(LFO_ROM.update + 2 * (p - LFO_PROGRAMS.first))];
+    if (!routine) throw new Error(`Midiverb II ${p}: an LFO routine this generator does not know`);
+    const ram = new Uint8Array(128);
+    for (let a = word(LFO_ROM.setup + 2 * (p - LFO_PROGRAMS.first)), n = 0; a !== 0x17c; n++) {
+      if (n > 16) throw new Error(`Midiverb II ${p}: setup does not return to the main loop`);
+      if (rom[a] === 0x75) { ram[rom[a + 1]] = rom[a + 2]; a += 3; }
+      else if (rom[a] === 0x02) a = word(a + 1);
+      else throw new Error(`Midiverb II ${p}: setup at 0x${a.toString(16)} is not MOV direct,#imm / LJMP`);
+    }
+    out[p] = { ...routine, ram, table, page: Uint8Array.from(rom.subarray(0x1c00 + 256 * p, 0x1c00 + 256 * (p + 1))) };
+  }
+  return out;
+}
+
+// The 8031's signed 8x8 multiply (0x0b5b): the high byte of a * r, a negative a complemented before and after.
+const mul8 = (a, r) => (a & 0x80 ? ~(((~a & 0xff) * r) >> 8) & 0xff : (a * r) >> 8);
+const sext8 = (b) => (b << 24) >> 24;
+
+// One pass of the firmware's update routine on its internal RAM.
+export function lfoStep(lfo, ram) {
+  const L = [[0x56, 0x57, 0x66, 5, 0x4e, 0x50], [0x53, 0x54, 0x65, 6, 0x4a, 0x4c]];
+  for (const [frac, int, rate, bit, x, y] of L) {
+    const r = ram[rate];
+    if (lfo.kind === 'tri') {
+      let u = (ram[int] << 8) | ram[frac];
+      if (ram[0x20] >> bit & 1) {
+        u += r;
+        if (u > lfo.ceiling) { u = lfo.ceiling; ram[0x20] &= ~(1 << bit); }
+      } else {
+        u -= r;
+        if (u < 0) { u = 0; ram[0x20] |= 1 << bit; }
+      }
+      ram[frac] = u & 0xff; ram[int] = u >> 8;
+      continue;
+    }
+    const get = (a) => (ram[a + 1] << 8) | ram[a];
+    const put = (a, v) => {
+      v &= 0xffff;
+      if (v >> 8 === lfo.clamp) v = ((lfo.clamp - 1) << 8) | 0xff;
+      else if (v >> 8 === (~lfo.clamp & 0xff)) v = ((~lfo.clamp + 1) & 0xff) << 8;
+      ram[a] = v & 0xff; ram[a + 1] = v >> 8;
+    };
+    const top = (v) => ((v << lfo.shift) >> 8) & 0xff; // the byte the multiply takes
+    put(y, get(y) + sext8(mul8(top(get(x)), r)));
+    put(x, get(x) + sext8(~mul8(top(get(y)), r) & 0xff));
+    const v = i16(get(x)) >> lfo.shift;
+    ram[frac] = v & 0xff; ram[int] = ((v >> 8) & 0xff) ^ 0x80;
+  }
+}
+
+// The patch routine (0x61f) on the 256 program bytes.
+export function lfoPatch(lfo, ram, bytes) {
+  const put = (row, frac, int, centre, b) => {
+    const R = lfo.table.subarray(ram[frac] & 0xf0);
+    let v = R[row] - ram[int]; bytes[b[0]] = v & 0xff;
+    bytes[b[1]] = ((R[row + 1] - ram[centre] - (v < 0 ? 1 : 0)) & 0x3f) | 0x40;
+    for (let i = 0; i < 4; i++) bytes[b[2] + i] = R[row + 2 + i];
+    v = R[row + 6] + ram[int]; bytes[b[3]] = v & 0xff;
+    bytes[b[4]] = ((R[row + 7] + ram[centre] + (v > 0xff ? 1 : 0)) & 0x3f) | ram[0x52];
+  };
+  put(0, 0x56, 0x57, 0x58, [0x05, 0x06, 0x59, 0x5d, 0x5e]);
+  put(8, 0x53, 0x54, 0x55, [0x5f, 0x60, 0xb3, 0xb7, 0xb8]);
+  return bytes;
+}
+
+export const LFO_EVERY = 8; // samples between two LFO updates (assumed: the original's cadence is not read)
+
+// The original machine with its controller: the program's bytes patched once every LFO_EVERY samples, the first
+// time before the first sample, then decoded and run as rawMachine runs a fixed program.
+export function lfoMachine(lfo) {
+  const ram = Uint8Array.from(lfo.ram), bytes = Uint8Array.from(lfo.page);
+  const steps = decode(bytes, 1);
+  const run = rawMachine(steps);
+  let n = 0;
+  return (input) => {
+    if (n++ % LFO_EVERY === 0) {
+      lfoStep(lfo, ram);
+      lfoPatch(lfo, ram, bytes);
+      decode(bytes, 1).forEach((s, pc) => { steps[pc] = s; });
+    }
+    return run(input);
+  };
+}
+
 // Delay-line form: every DRAM access becomes (line, delay). A line is one writing
 // step; a read takes the most recent write to its address. Returns the step
 // positions, the per-sample pointer step and each step's line and delay.
