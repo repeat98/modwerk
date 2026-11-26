@@ -1,0 +1,1 @@
+Octatrack: when the Octatrack couldn't save a kept change to its card, the site no longer tells you to load it again, which the Octatrack refuses until that save lands. A sync in the meantime now says the last change isn't on the card yet, instead of "can't run this module file", and both messages say what to do if it never saves.
