@@ -59,23 +59,25 @@ describe('a module set and the base’s module pool', () => {
   })
 
   // A tester's unit on 25 Nov 2026 (base 0.8.1): seventeen modules, then two small ones out and Midiverb I/II in, in one
-  // sync. The set after it fits (784 kB); the loader holds the two until Midiverb I/II is in, so the sync needs 795 kB.
-  const kept = ['previewvol', 'sidechain-compressor', 'vector', 'mute-modes', 'direct-jump-kyoti', 'dejavu', 'temp-save', 'slow-lfo',
-    'track-solo', 'midi-scenes', 'kits', USB_AUDIO_MODULE, 'recorder-loop-fix', 'syntiz', 'tapeecho']
-  const onUnit = { ...empty, moduleIds: [...kept, 'miniverb', 'lofi2'], usbAudioLayout: 'configurable' as const }
+  // sync. The set after it fit; the loader holds the modules it takes out until the new ones are in, so the sync did not.
+  // Here with grown packages, so no published module's size decides it: two on the unit fit (each under half the pool),
+  // and so do the two after the sync, but all three at once do not.
+  const [stays, goes, comes] = large, name = (id: string) => grown.get(id)!.entry.name
+  const onUnit = { ...empty, moduleIds: [stays, goes] }
   it('counts the modules a sync takes out while it puts new ones in', async () => {
-    const error = await prepare([...kept, 'midiverb'], onUnit).catch(caught => caught)
+    const error = await prepare([stays, comes], onUnit).catch(caught => caught)
     expect(error).toBeInstanceOf(ModuleSetError)
-    expect(error.message).toMatch(/^The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs 795 kB of module memory at once, and the Octatrack has 787 kB\. First sync with Mini Verb and LOFI2 taken out and Midiverb I\/II left out, then add Midiverb I\/II and sync again\.$/)
+    expect(error.message).toMatch(/^The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs \d+ kB of module memory at once, and the Octatrack has 787 kB\./)
+    expect(error.message).toContain('First sync with ' + name(goes) + ' taken out and ' + name(comes) + ' left out, then add ' + name(comes) + ' and sync again.')
   })
 
   it('takes the same modules out alone, then adds the new one', async () => {
-    expect((await prepare(kept, onUnit)).changes).toHaveLength(2)
-    expect((await prepare([...kept, 'midiverb'], { ...onUnit, moduleIds: kept })).changes).toHaveLength(1)
+    expect((await prepare([stays], onUnit)).changes).toHaveLength(1)
+    expect((await prepare([stays, comes], { ...onUnit, moduleIds: [stays] })).changes).toHaveLength(1)
   })
 
   it('does not count a module switched off on the unit', async () => {
-    const off = { ...onUnit, moduleIds: kept, offIds: ['miniverb', 'lofi2'] }
-    expect((await prepare([...kept, 'midiverb'], off)).changes.map(change => change.module)).toContain('Midiverb I/II')
+    const off = { ...onUnit, moduleIds: [stays], offIds: [goes] }
+    expect((await prepare([stays, comes], off)).changes.map(change => change.module)).toContain(name(comes))
   })
 })
