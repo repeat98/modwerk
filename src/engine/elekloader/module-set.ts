@@ -54,6 +54,10 @@ export class BaseUpdateRequired extends ModuleSetError {
 export class KeyBusBaseRequired extends BaseUpdateRequired {
   constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
 }
+/** An effect whose program changes its DSP code, on a base that may not have program areas: the same guided update. */
+export class ProgramAreasBaseRequired extends BaseUpdateRequired {
+  constructor(module: string) { super(`${module} needs a newer Modwerk base. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
+}
 /** USB Audio is part of the base: its layout sets the USB descriptors, so another layout is another base, sent over
  * USB like any base update (base-variants.ts). The set's modules stay; nothing is synced until it runs. */
 export class BaseLayoutRequired extends BaseUpdateRequired {
@@ -118,6 +122,10 @@ const HEADERS: Record<number, number> = { 6: 68, 7: 72, 8: 76, 9: 80, 10: 80 }
  * not say so, and the capability record has no bit for it, so the site offers a reader only to the bases it knows have
  * the bus (KEY_BUS_BASES); the loader would refuse it elsewhere with a bare RUNTIME_CONFLICT. */
 export const BASE_DSP_FEATURES: number = dspSites.features.find(feature => feature.name === 'keybus')?.bit ?? 0
+/** Program areas (resident_engines.h MW_DSP_PROGRAMS, events.json ot_dsp_effects): an effect whose DSP code changes with
+ * its program. A base feature with no ledger region, so its bit is abi9.py's UNLEDGERED, not dsp-sites.json's. The bases
+ * that have them are this branch's published base in each layout, built as the key bus's are (KEY_BUS_BASES). */
+export const PROGRAM_AREAS = 0x100
 /** The bases with the key bus: the published one in each of its USB Audio layouts, built with the beta flags
  * (scripts/octatrack-base.mjs, --resident-on-demand); the layouts differ only in their USB descriptors. */
 export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identity,
@@ -136,7 +144,7 @@ function requirements(entry: RuntimePackage, group = false) {
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
       !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
-      !bounded(requires, 65535) || !bounded(claims, DSP_CLAIMS) || (abi < 9 && (requires || claims)) || (requires & ~BASE_DSP_FEATURES) ||
+      !bounded(requires, 65535) || !bounded(claims, DSP_CLAIMS) || (abi < 9 && (requires || claims)) || (requires & ~(BASE_DSP_FEATURES | PROGRAM_AREAS)) ||
       !bounded(entries, HOOK_ENTRIES) || (entries && (abi < 10 || entry.requiredBase === undefined)) ||
       (group && abi !== 8) || (entry.requiredBase !== undefined && (typeof entry.requiredBase !== 'string' || !/^[0-9a-f]{64}$/.test(entry.requiredBase))) ||
       (abi >= 7 && [entry.features, entry.sites, entry.copies, ...(abi >= 8 ? [entry.fills] : []), ...(abi >= 9 ? [entry.requires, entry.claims] : []),
@@ -400,6 +408,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       if ((!capabilities && (abi > 6 || features)) || capabilities && (abi > capabilities.abi || (features & capabilities.features) !== features || sites > capabilities.maxSites || copies > capabilities.maxCopies))
         throw new BaseUpdateRequired()
       if ((requires & BASE_DSP_FEATURES) && !(base && KEY_BUS_BASES.includes(base))) throw new KeyBusBaseRequired(step.name)
+      if ((requires & PROGRAM_AREAS) && !(base && KEY_BUS_BASES.includes(base))) throw new ProgramAreasBaseRequired(step.name)
     }
     if (steps.length > 1 && !(capabilities && capabilities.features & RuntimeFeature.moduleSets)) throw new BaseUpdateRequired()
   }

@@ -7,7 +7,7 @@ import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with {
 import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, poolExtent, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, PROGRAM_AREAS, ProgramAreasBaseRequired, createRuntimeCatalogue, poolExtent, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -213,7 +213,12 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     expect(BASE_DSP_FEATURES).toBe(8)
     // The Octatrack's on-demand base provides exactly that (resident_engines.c); the loader refuses any other bit.
     const engines = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c', import.meta.url), 'utf8')
-    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }')
+    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_PROGRAMS; }')
+    // Program areas have no ledger region: their bit is the one abi9.py and the base's header give them.
+    const abi9 = readFileSync(new URL('../../../sdk/runtime/loader/abi9.py', import.meta.url), 'utf8')
+    expect(Number(/UNLEDGERED = \{'programs': (0x[0-9a-f]+)\}/.exec(abi9)?.[1])).toBe(PROGRAM_AREAS)
+    const header = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h', import.meta.url), 'utf8')
+    expect(Number(/#define MW_DSP_PROGRAMS (0x[0-9a-f]+)u/.exec(header)?.[1])).toBe(PROGRAM_AREAS)
     expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.h', import.meta.url), 'utf8')).toMatch(/#define RUNTIME_ABI 10u?\b/)
   })
   it('syncs a reader to a base whose loader reports ABI 9, with its forward and Undo packages checked', async () => {
@@ -256,6 +261,17 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     for (const fields of [{ requires: undefined }, { claims: undefined }, { requires: 16 }, { requires: BASE_DSP_FEATURES | 1 }, { claims: 17 }, { claims: -1 },
       { abi: 8, requires: BASE_DSP_FEATURES, claims: 0 }, { abi: 8, requires: 0, claims: 1 }, { abi: 10 }])
       expect(() => reader(undefined, fields)).toThrow('inconsistent')
+  })
+  it('offers an effect that requires program areas only to a base known to have them', async () => {
+    const data = abi9(published, PROGRAM_AREAS, []), fetched = vi.fn(async () => data)
+    const catalogue = createRuntimeCatalogue({ packages: [{ ...effect, abi: 9, requires: PROGRAM_AREAS, claims: 0, bytes: data.length, sha256: sha(data) }] })
+    for (const base of KEY_BUS_BASES) await expect(catalogue.prepare(target, empty, fetched, keybus, base)).resolves.toBeDefined()
+    for (const base of [undefined, 'b'.repeat(64)]) {
+      const problem = catalogue.review(target, empty, keybus, base).problem
+      expect(problem).toBeInstanceOf(ProgramAreasBaseRequired)
+      expect(problem).toBeInstanceOf(BaseUpdateRequired)
+    }
+    expect(() => createRuntimeCatalogue({ packages: [{ ...effect, abi: 9, requires: PROGRAM_AREAS | 0x200, claims: 0, bytes: data.length, sha256: sha(data) }] })).toThrow('inconsistent')
   })
   it('checks the header and every claim as the loader does before anything is sent', async () => {
     const refused = async (data: ReturnType<typeof abi9>, fields: Record<string, unknown> = {}) => {

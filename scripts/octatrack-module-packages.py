@@ -13,6 +13,7 @@ import tempfile
 from pathlib import Path
 
 APP = Path(__file__).resolve().parents[1]
+PROGRAM_AREAS = 0x100  # sdk/runtime/loader/abi9.py UNLEDGERED['programs'], module-set.ts PROGRAM_AREAS
 
 
 def preparing_ports():
@@ -158,18 +159,18 @@ def keep_published(builder, action):
 
 
 def only_key_bus(capabilities):
-    """An ABI 9 package may require only the key bus: the one base feature the site accepts in a manifest
-    (src/engine/elekloader/module-set.ts, BASE_DSP_FEATURES), so a package needing any other bit would make the whole
-    published list inconsistent there and stop every USB sync. Checked here, not in the builder, whose source is a
-    base input."""
+    """An ABI 9 package may require only the key bus and program areas: the base features the site accepts in a
+    manifest (src/engine/elekloader/module-set.ts, BASE_DSP_FEATURES and PROGRAM_AREAS), so a package needing any other
+    bit would make the whole published list inconsistent there and stop every USB sync. Checked here, not in the
+    builder, whose source is a base input."""
     def checked(data):
         found = capabilities(data)
         if not found.get('requires'):
             return found
         registry = json.loads((APP / 'sdk/machines/octatrack/dsp-sites.json').read_text())
-        keybus = next(f['bit'] for f in registry['features'] if f['name'] == 'keybus')
-        if found['requires'] & ~keybus:
-            raise ValueError('A published package may require only the key bus (requires %#x).' % found['requires'])
+        allowed = next(f['bit'] for f in registry['features'] if f['name'] == 'keybus') | PROGRAM_AREAS
+        if found['requires'] & ~allowed:
+            raise ValueError('A published package may require only the key bus and program areas (requires %#x).' % found['requires'])
         return found
     return checked
 
