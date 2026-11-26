@@ -180,6 +180,9 @@ store+0x2fe+30·track+6·fx.
   a power cycle. Both bases, so not this rule. The stream had closed 1-1.5 minutes before each removal; those
   rollbacks removed sets of 18-19 packages with USB Audio among them, while the twelve above removed USB Audio alone and
   kept USB: removal within a large set is the lead, not yet separated on the unit.
+- **And a boot loss after it:** right after one of those rollbacks (finished by `recover`), a RAM boot from the 0.8.2
+  twin to `764b6e71` ended "boot failed (exit 1)", and the unit stayed off USB until the owner's power cycle: the
+  trap `docs/OCTATRACK_DRIVING.md` already names (a RAM boot after a recovery fails, #1386), not this rule.
 
 ## Builds and pending
 
