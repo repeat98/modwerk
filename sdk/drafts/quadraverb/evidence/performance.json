@@ -2,6 +2,7 @@
   "schema": 1,
   "module": "quadraverb",
   "version": "0.1.0-experimental",
+  "sourceSha256": "fcb46c588bc0977191e9fb11e889237ac147603df48761ad63ace4aa193407a7",
   "kind": "dsp",
   "cycles": {
     "unit": "instructions/sample",
@@ -19,16 +20,16 @@
     "justification": "The Quadraverb runs the original's 96-step programs step for step at full rate, with their LFO sweeps and the copies of its long delay lines to and from the ColdFire, so it costs more than DARK REV. Its dearest program is still cheaper than DJ EQ, the dearest stock effect, and one instance a core is all the program areas allow."
   },
   "stress": {
-    "instancesPerCore": null,
+    "instancesPerCore": 1,
     "tracks": 8,
-    "lfosPerTrack": null,
-    "lockedSlots": null,
-    "seconds": null,
-    "guard": null,
-    "dirty": null,
-    "clobbers": null,
-    "hangs": null,
-    "method": "Not run yet: the stress harness has no stand-in for the base's program areas and stream. verify_area.py covers two instances on separate buffers, a dirty Y, trig splits and PROG moving (a fade out, back and out), bit-exact; nothing with eight tracks or LFOs on every knob."
+    "lfosPerTrack": 3,
+    "lockedSlots": 12,
+    "seconds": 2,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "engine/stress_area.py: eight tracks, four a core, 2.0 s in dsp_host -guard 0x3dfe -guard-shared -dirty 0x5a, with stock's FX2 buffer table (Y:$4000, $8000 and the shared window's two entries a core). What the Quadraverb allows: one program a core, so T1 (core 1) and T5 (core 0) run programs and the other six tracks have the effect with no area named (dry, as the base's refusal leaves a slot). Each running track walks through all 22 programs, the dearest plates first, one every sixteenth at 120 BPM: PROG moves (the area fades), then a stand-in for the base names the next program's area in the slot's record 60 blocks later, and that area sets itself up, clears and starts. Three LFOs a track (slot D sine, MIX triangle, slot E square), all twelve slots a new value each sixteenth, trig splits on six tracks, random halfwords in every in-block. No hang, 0 clobbers, both running tracks sound, and each track's output equals its output beside seven silent tracks. dsp_host's meters include the stand-in's block copies, so they are not the module's cost. The base's own stream counts (lost, refused) belong to the ColdFire's channel, which dsp_host does not run: read them on the unit (mem:0x40aed874:24 on twin5)."
   },
   "programs": [
     {
@@ -37,7 +38,7 @@
       "cyclesAverage": 299.3,
       "cyclesDearestBlock": 307.4,
       "executedDearest": 271.6,
-      "cyclesFading": 319.0,
+      "cyclesFading": 319,
       "executedFading": 281.8,
       "areaWords": 1076
     },
@@ -104,7 +105,7 @@
     {
       "index": 7,
       "program": 15,
-      "cyclesAverage": 299.0,
+      "cyclesAverage": 299,
       "cyclesDearestBlock": 307.1,
       "executedDearest": 271.6,
       "cyclesFading": 318.7,

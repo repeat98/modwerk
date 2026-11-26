@@ -58,6 +58,23 @@ frames later and leaves again; the output is bit-exact against the model of the 
 ends. Traced (evidence/performance.json): the test of PROG adds about 2 cycles a sample to every call; a call that
 fades costs about 11.5 more (the dearest program, 53, 341.6 while it plays, 353.1 while it fades).
 
+### Stress (27 November 2026)
+
+`python3 -B engine/stress_area.py <programs.json> <lfo_dir>`: eight tracks, four a core, 2.0 s in dsp_host with the guard
+and a dirty memory. T1 and T5 run programs, walking through all 22 (the dearest plates first) one every sixteenth at 120
+BPM with a fade and a switch each time; the other six have the effect with no area. Three LFOs a track, all twelve slots
+moving, trig splits on six tracks (the docstring has the rest). The record, `npm run perf:audit -- check
+evidence/performance.json --stamp`:
+
+| Check | Result |
+| --- | --- |
+| cycles | 1 x 317.4 = 317.4 of 3120 per sample per core (10 %), measured 317.4 per instance |
+| stock benchmark | 317.4 vs DARK REV 242.38 (1.31x); the dearest stock effect is 330.94 |
+| stress | 1 per core, eight tracks, 3 LFOs and 12 locked slots, 2 s, no clobber, no hang |
+
+The stream's own counts on the ColdFire side (lost, refused) are not in this run: dsp_host has no channel. Read them on
+the unit.
+
 ## Bit-exact in dsp_host (26 November 2026)
 
 Every program is compiled by the engine's generator and run in `dsp_host` against the integer model
