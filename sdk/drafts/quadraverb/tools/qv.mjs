@@ -4,7 +4,9 @@
 // A step is { a: delay address, k: coefficient 0 .. 2047/2048, op: 5 bits }.
 //   bit 4  negate the product        bit 3  write (else read)
 //   bit 2  latch                     bits 1-0  select
-// Read:  A = s*k*mem + add; add by select: 00 0 | 01 A | 10 A | 11 A + M (A alone when bit 2 is set)
+// Read:  A = s*k*mem + add; add by select: 00 0 | 01 A | 10 B | 11 M, but A for 10 and 11 when bit 2
+//        is set. (A is 0 at every unlatched 10/11 read in the factory programs, so "B" and "A + B"
+//        cannot be told apart from them.)
 // Write: mem = A, then A = s*k*A + add; add by select: 00 0 | 01 A (0 when bit 2 is set) | 10 B | 11 M
 // Latch: a read latches the memory word, a write the accumulator from before the step, into M
 //        when bit 0 is set and into B when it is clear. Adds see the register's old value.
@@ -44,7 +46,7 @@ export class QV {
       word = this.mem[cell];
       if (i === 0) this.left = word;
       else if (i === 0x5f) this.right = word;
-      this.A = s * word + (sel === 0 ? 0 : sel < 3 || latch ? A : A + this.M);
+      this.A = s * word + (sel === 0 ? 0 : sel === 1 || latch ? A : sel === 2 ? this.B : this.M);
     }
     if (latch) {
       if (op & 1) this.M = word;

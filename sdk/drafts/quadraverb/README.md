@@ -43,7 +43,7 @@ node tools/dump.mjs <rom> --sweep 10            # which record bytes change whic
 | 2 | latch |
 | 1-0 | select: what is added to the product |
 
-- **Read:** A = ±K·mem + add. By select: 00 nothing, 01 A, 10 A, 11 A + M. With bit 2 set, select 11 adds A alone.
+- **Read:** A = ±K·mem + add. By select: 00 nothing, 01 A, 10 B, 11 M. With bit 2 set, selects 10 and 11 add A instead. (A is 0 at every unlatched 10 and 11 read in the factory programs, so "B" and "A + B" cannot be told apart.)
 - **Write:** mem = A, then A = ±K·A + add. So a write scales the accumulator, as the Wavefront AL3201's `WZP` does. By select: 00 nothing, 01 A (nothing when bit 2 is set), 10 B, 11 M.
 - **Latch (bit 2):** a read latches the memory word, a write the accumulator from before the step. The target is M when bit 0 is set, B when it is clear. An add in the same step sees the register's old value.
 
@@ -57,8 +57,9 @@ How each part was settled:
 | 10110 / 01010, 10111 / 01011 | Allpass pairs. The read at the tail keeps A (the input), subtracts g·tail and latches the tail. The write at the head stores that and adds g·A to the latched tail. SMALL ROOM's seven-stage diffuser comes out flat within 0.001 dB. Plates use the M form. |
 | 01101 | The 3-band input EQ: it is exactly flat at its default settings only if 01101 adds nothing. |
 | 00011, 00100 | The delay programs' output: the dry level, latched in M by 01101, is added to both outputs by 00011. |
+| 00010 | STEREO SPREAD1 and STEREO PITCH feed their right-hand delay line from B with it; if it kept A instead, that line would only ever hold zeros. |
 | 11100, 01111 | Damping filters, DC blockers and the tank's entry in the reverbs; consistent, but not tested on their own. |
-| 00110, 00111, 01110, 11010, 11101 | Not tested yet (chorus, flange, pitch, Leslie). They follow the rules above in the model. |
+| 00110, 00111, 01110, 11010, 11101 | Not tested on their own. Every factory program that uses them (chorus, flange, pitch, Leslie) runs finite on the model, with left and right within 3 dB. |
 
 **Sample rate.** The firmware converts milliseconds at 42 samples each: 167, 250, 500 and 1500 ms delays sit 7015, 10501, 21001 and 63001 steps apart. So it runs at about 42 kHz.
 
@@ -80,6 +81,26 @@ How each part was settled:
 | 66 HOLMES' Plate | 2.69 s | 0.082 |
 
 All stay finite, decay, and have left and right at the same level and uncorrelated. Nobody has compared them with a real unit.
+
+## Modulation
+
+The firmware rewrites parts of the running program, about 3,000 times a second per step (every 14 samples or so). 81 of the 90 factory programs are modulated:
+
+| Kind | Programs | What moves |
+| --- | --- | --- |
+| Swept tap | every reverb (one pair), chorus, flange and echo programs (two pairs, left and right) | an interpolated read: two steps at addresses a and a + 1 with coefficients 1 − f and f, f in 1/256 |
+| Pitch shift | 7, 37, 51, 59, 60, 70, 86 | two taps sawing across a 256-sample window, crossfaded by steps 0x16 and 0x1a |
+| Leslie | 8, 38, 39, 67, 82 | two swept pairs, and the gains at steps 0x0f, 0x11, 0x17 and 0x19 |
+| Gate | 3, 23, 26 (silent on the model) | driven at run time (0x6ff4-0x70bd); not read yet |
+| Other | 73 VERB SHIFTER | several steps, rarely |
+
+The static ones: the four delays (40-43), PINGPONG DELAY, SKANK GUITAR, the VELOCITY ECHOs and MEDIUM HALL.
+
+Sweeps measured on the emulator (6 s runs): STEREO CHORUS moves 356 samples over 4.1 s as a triangle, STEREO FLANGE 198 samples over 3.9 s, the reverbs 262 samples over 2.45 s, close to a sine. So a sweep is a few numbers (range, period, waveform, phase), which the DSP can generate itself, as Air Chorus and Vibrato do, instead of the ColdFire streaming updates.
+
+## Memory
+
+Midiverb's relocation (`generate.mjs`: every read becomes a delay line and a delay, dead reads dropped, lines packed head to tail) applied to all 90 programs, with each sweep's full range: they need 0.5K-63K words at 42 kHz. One FX2 instance gets at most 15,870 words (16,384 if it gives up block 3; `elekloader/dsp.c`). At half rate, 29 programs fit untouched. With the longest line shortened by up to 15 %, about 18 more. The plates and gated programs need about 24K, the 1.5 s delays 31.5K.
 
 ## The firmware
 
