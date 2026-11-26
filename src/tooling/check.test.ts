@@ -1,7 +1,7 @@
 import { spawnSync, execFileSync } from 'node:child_process'
-import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { expect, it } from 'vitest'
 
 const runner = new URL('../../scripts/check.mjs', import.meta.url)
@@ -20,6 +20,9 @@ function writeRunner(folder: string) {
   writeFileSync(path, source)
   return path
 }
+
+// The runner looks for the ColdFire tools on PATH; these tests run it as on a computer that has none, whatever this one has.
+const PATH = (process.env.PATH ?? '').split(delimiter).filter(dir => dir && !existsSync(join(dir, 'm68k-elf-gcc')) && !existsSync(join(dir, 'm68k-elf-gcc.exe'))).join(delimiter)
 
 function check(failure = '', buildOnly = false, args: string[] = [], env: Record<string, string> = {}) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
@@ -58,7 +61,7 @@ function check(failure = '', buildOnly = false, args: string[] = [], env: Record
     copyFileSync(new URL('../' + packages, runner), join(folder, packages))
     const result = spawnSync(process.execPath, [entry, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
-      env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0', ...env },
+      env: { ...process.env, PATH, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0', ...env },
     })
     if (result.error) throw result.error
     const calls: string[][] = readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line))
@@ -114,6 +117,21 @@ it('names what failed, and each one\'s first error, in the last lines of the run
   expect(check('sdk:check', false, [], { GITHUB_ACTIONS: 'true' }).stdout.trim().split('\n').slice(-2))
     .toEqual(['Failed: sdk:check', '::error title=sdk:check failed::SDK checks FAILED: test_base_bound.py'])
 })
+
+it('stops in its first stage on a ColdFire compiler without its binutils, before the suites that sdk:check runs after', () => {
+  const shims = mkdtempSync(join(tmpdir(), 'octamod-check-shims.'))
+  try {
+    writeFileSync(join(shims, 'm68k-elf-gcc'), '')
+    const result = check('', false, [], { GITHUB_ACTIONS: '', PATH: shims + delimiter + PATH })
+    expect(result.status).toBe(1)
+    expect(result.scripts).toEqual(['prepare'])
+    expect(result.stderr).toContain('m68k-elf-gcc is on PATH (' + shims + ') but m68k-elf-as')
+    expect(result.stdout.trim().split('\n').at(-2)).toBe('Failed: ColdFire toolchain')
+    // CI's parts and a build run no SDK suite here, so they do not look.
+    expect(check('', false, ['--part', 'contract'], { PATH: shims + delimiter + PATH }).status).toBe(0)
+    expect(check('', true, [], { PATH: shims + delimiter + PATH }).status).toBe(0)
+  } finally { rmSync(shims, { recursive: true, force: true }) }
+}, 20_000)
 
 it.each([['alone', 0], ['again', 1]])('reruns a failed test file alone on one worker and passes only when it passes there (%s)', (mode, status) => {
   const result = check('', false, [], { CHECK_TEST_FLAKY: mode })

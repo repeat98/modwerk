@@ -1,0 +1,1 @@
+Development: `npm run check` and `npm run pr:ready` stop in their first seconds, with the missing tools and the fix, when `m68k-elf-gcc` is on PATH but part of its binutils is not. Before, the stop came from `sdk:check`, which runs after the whole test suite.
