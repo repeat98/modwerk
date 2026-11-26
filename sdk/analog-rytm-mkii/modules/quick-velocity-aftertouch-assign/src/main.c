@@ -458,7 +458,7 @@ static struct {
     int kind, track, valid;
     word_t set;
     short amount[MOD_SLOTS];
-    signed char dest[MOD_SLOTS];
+    short dest[MOD_SLOTS];
 } mods_cleared;
 
 QMA_UI static void nudge(int kind, int track, int logical, int change)
@@ -1210,7 +1210,7 @@ QMA_UI static void mods_clear(int kind)
     mods_cleared.valid = 0;
     for (i = 0; i < MOD_SLOTS; i++) {
         int dest = i < n ? SET_DEST(set, i) : 0;
-        mods_cleared.dest[i] = (signed char)dest;
+        mods_cleared.dest[i] = (short)dest;
         mods_cleared.amount[i] = (short)(dest > 0 ? SET_AMOUNT(set, i) : 0);
         any |= mods_cleared.amount[i] != 0;
     }
@@ -1231,24 +1231,25 @@ QMA_UI static void mods_clear(int kind)
 // The LFO page's copy, paste or clear, as stock's page view runs them for its own page key
 // + REC, STOP, PLAY (ar2-1.74.h), with stock's messages: that view is not on screen here,
 // so its own methods would act without a message.
-QMA_UI static void lfo_page_key(word_t view, int key)
+QMA_UI static int lfo_page_key(word_t view, int key)
 {
     typedef unsigned char (*op2_t)(word_t, int);
     typedef unsigned char (*op3_t)(word_t, int, int);
     int page = ((int (*)(word_t))vcall(view, PAGE_NUMBER))(view);
     word_t store = *(word_t *)(view + PAGE_STORE);
     if (!store)
-        return;
+        return 0;
     if (key == KEY_REC) {
         if (((op2_t)PAGE_COPY_AT)(store, page))
             show("COPY PAGE LFO");
-    } else if (((op3_t)PAGE_UNDO_AT)(store, page, 1))
+    } else if (((op3_t)PAGE_UNDO_AT)(store, page, key == KEY_STOP ? PAGE_UNDO_PASTE : PAGE_UNDO_CLEAR))
         show(key == KEY_STOP ? "UNDO PASTE" : "UNDO CLEAR");
     else if (key == KEY_STOP) {
         if (((op3_t)PAGE_PASTE_AT)(store, page, 1))
             show("PASTE PAGE LFO");
     } else if (((op3_t)PAGE_CLEAR_AT)(store, page, 1))
         show("CLEAR PAGE LFO");
+    return 1;
 }
 
 // REC, STOP or PLAY during a FIX, CHRO or LFO hold. LFO: on its own page stock copies,
@@ -1269,10 +1270,11 @@ QMA_UI static int mod_transport(int k, int key)
                                                                    : HOLDER_LFO_VIEW));
         if (!view)
             return 0;
+        if (!lfo_page_key(view, key))
+            return 0;
         dep_drop();
-        lfo_page_key(view, key);
-    } else if (key != KEY_PLAY)
-        return 0;
+    } else if (key != KEY_PLAY || !kind_track(k, selected_track()))
+        return 0;                       // REC and STOP stay stock's; no links on the FX track
     else
         mods_clear(k);
     holds[k].turned = 1;                // no tap on the release: the page, the mode stay

@@ -156,7 +156,9 @@
 #define PAGE_NUMBER 104                 // method: the page's number
 #define PAGE_STORE 104                  // field: the store the page keys act on
 #define PAGE_COPY_AT 0x400b1480         // (store, page): 1 when copied
-#define PAGE_UNDO_AT 0x400b1588         // (store, page, 1): 1 when it undid a paste or clear
+#define PAGE_UNDO_AT 0x400b1588         // (store, page, kind): 1 when it undid that kind
+#define PAGE_UNDO_CLEAR 1               // as PLAY passes it (0x4003a442)
+#define PAGE_UNDO_PASTE 2               // as STOP passes it (0x4003a32a)
 #define PAGE_PASTE_AT 0x400b364c        // (store, page, 1): 1 when pasted
 #define PAGE_CLEAR_AT 0x400b37ea        // (store, page, 1): 1 when cleared
 #define KNOB_DEP 7

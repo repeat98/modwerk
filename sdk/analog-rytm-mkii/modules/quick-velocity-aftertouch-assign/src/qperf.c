@@ -403,7 +403,7 @@ static struct {
 // locks they had before, so the same key again puts them back. Any other action, a lock
 // edit, a moved link or another kit forgets it.
 static struct {
-    unsigned mask;
+    unsigned mask, after;               // after: linked_sum once the action was done
     int key, count, valid;
     struct { unsigned char track, param, index; short lock; } e[SLOTS];
 } before;
@@ -690,15 +690,38 @@ QPERF_UI static void apply_linked(void *kit)
         applied.e[applied.count].track = track;
         applied.e[applied.count].param = param;
         applied.e[applied.count].lock = lock;
-        applied.e[applied.count].old = param_read(set, id);
         applied.e[applied.count].index = index;
+        applied.e[applied.count].now = value;       // for the sums below
         applied.count++;
-        applied.e[applied.count - 1].expect = clamp_id(id, param_read(set, id) + value);
-        SET_VALUE(set, id, param_read(set, id) + value, track, 1, 1);
-        applied.e[applied.count - 1].now = param_read(set, id);
-        PERF_CLEAR_ONE(perf, index, track, param);
-        changed = 1;
     }
+    // Several linked performances can lock one parameter: what they add goes in as one
+    // sum, written once, so the range clamps it once.
+    for (i = 0; i < applied.count; i++) {
+        int track = applied.e[i].track, param = applied.e[i].param, j, total = 0, base, after, expect, id;
+        void *set = (void *)KIT_PARAM_SET(kit, track);
+        for (j = 0; j < i; j++)
+            if (applied.e[j].track == track && applied.e[j].param == param)
+                break;
+        if (j < i)
+            continue;                   // summed with the first of its parameter
+        for (j = i; j < applied.count; j++)
+            if (applied.e[j].track == track && applied.e[j].param == param)
+                total += applied.e[j].now;
+        id = param_id(set, track, param);
+        base = param_read(set, id);
+        expect = clamp_id(id, base + total);
+        SET_VALUE(set, id, base + total, track, 1, 1);
+        after = param_read(set, id);
+        for (j = i; j < applied.count; j++)
+            if (applied.e[j].track == track && applied.e[j].param == param) {
+                applied.e[j].old = base;
+                applied.e[j].now = after;
+                applied.e[j].expect = expect;
+            }
+    }
+    for (i = 0; i < applied.count; i++)
+        PERF_CLEAR_ONE(perf, applied.e[i].index, applied.e[i].track, applied.e[i].param);
+    changed = applied.count > 0;
     applied.kit = kit;
     applied.mask = mask;
     applied.valid = changed;
@@ -734,22 +757,43 @@ QPERF_UI static void paste_linked(void *perf, int index)
 static int live_rec(void);
 QPERF_UI static void perf_rec_action(int key);
 
+// A fingerprint of the linked performances' locks: an undo only runs while it still is
+// what the action left (stock's own lock edits, a pad's or MIDI's, tell nobody).
+QPERF_UI static unsigned linked_sum(const unsigned char *t, unsigned mask)
+{
+    unsigned sum = 0;
+    int i;
+    for (i = 0; i < SLOTS; i++, t += SLOT_BYTES)
+        if (t[2] <= TRACK_NONE && t[4] < PERFS && (mask >> t[4] & 1))
+            sum += 0x01000193u + (unsigned)(t[0] << 8 | t[1]) * 31u + t[2] * 7919u + t[3] * 131071u
+                + t[4] * 524287u;
+    return sum;
+}
+
+QPERF_UI static void restore_before(void *perf, unsigned mask)
+{
+    int i;
+    for (i = 0; i < PERFS; i++)
+        if (mask >> i & 1)
+            PERF_CLEAR(perf, i);
+    for (i = 0; i < before.count; i++)
+        PERF_SET(perf, before.e[i].index, before.e[i].track, before.e[i].param, before.e[i].lock);
+}
+
 // PLAY or STOP with several linked: all of them cleared, or pasted into, and the same key
-// again puts back the locks they had (stock's undo holds one performance).
+// again puts back the locks they had (stock's undo holds one performance, so the paste
+// leaves stock's alone).
 QPERF_UI static void several_action(void *perf, unsigned mask, int key)
 {
     const unsigned char *t = lock_table(perf);
-    int i, room = 0, changed = 0;
+    int i, room = 0, changed = 0, each = -1, uneven = 0;
     for (i = 0; i < SLOTS; i++)         // free slots, and those the linked ones would free
         room += t[SLOT_BYTES * i + 2] > TRACK_NONE
             || (t[SLOT_BYTES * i + 4] < PERFS && (mask >> t[SLOT_BYTES * i + 4] & 1));
-    if (before.valid && before.mask == mask && before.key == key && room >= before.count) {
+    if (before.valid && before.mask == mask && before.key == key && room >= before.count
+        && linked_sum(t, mask) == before.after) {
         before.valid = 0;
-        for (i = 0; i < PERFS; i++)
-            if (mask >> i & 1)
-                PERF_CLEAR(perf, i);
-        for (i = 0; i < before.count; i++)
-            PERF_SET(perf, before.e[i].index, before.e[i].track, before.e[i].param, before.e[i].lock);
+        restore_before(perf, mask);
         show(key == KEY_PLAY ? "UNDO CLEAR" : "UNDO PASTE");
         return;
     }
@@ -764,6 +808,7 @@ QPERF_UI static void several_action(void *perf, unsigned mask, int key)
         before.e[before.count].lock = (short)(t[0] << 8 | t[1]);
         before.count++;
     }
+    t = lock_table(perf);
     before.mask = mask;
     before.key = key;
     if (key == KEY_PLAY) {
@@ -774,13 +819,31 @@ QPERF_UI static void several_action(void *perf, unsigned mask, int key)
         for (i = 0; i < PERFS; i++)
             if (mask >> i & 1)
                 PERF_CLEAR(perf, i);
+        before.after = linked_sum(t, mask);
         before.valid = 1;
         show("CLEAR PERFORMANCES");
         return;
     }
     for (i = 0; i < PERFS; i++)
         if (mask >> i & 1)
-            changed |= (unsigned char)PERF_PASTE(perf, i, 1) != 0;
+            changed |= (unsigned char)PERF_PASTE(perf, i, 0) != 0;
+    // Each linked one holds the clipboard's locks now, unless the table ran out: then
+    // some hold fewer, and everything goes back as it was.
+    for (i = 0; i < PERFS; i++)
+        if (mask >> i & 1) {
+            int n = 0, k;
+            for (k = 0; k < SLOTS; k++)
+                n += t[SLOT_BYTES * k + 2] <= TRACK_NONE && t[SLOT_BYTES * k + 4] == i;
+            if (each < 0)
+                each = n;
+            uneven |= n != each;
+        }
+    if (uneven) {
+        restore_before(perf, mask);
+        show("LOCK MEM FULL!");
+        return;
+    }
+    before.after = linked_sum(t, mask);
     before.valid = changed;
     show(changed ? "PASTE PERFORMANCES" : "NOTHING TO PASTE");
 }
@@ -1851,8 +1914,12 @@ QPERF_UI static void scene_lane_tick(void)
         }
         if (!scene_used || scene_period < scene_loop)
             scene_period = scene_loop = steps;
-        if (scene_armed && from >= 0)   // a second change in one take: the stretch since the last
-            scene_lane_record(from + 1, (pos >= from ? pos : steps * POINTS) - 1, scene_last_seen);   // tick played the old scene
+        if (scene_armed && from >= 0) { // a second change in one take: the stretch since the last
+            int lo = from + 1;          // tick played the old scene, from its quantized start
+            if (scene_q_until > lo)
+                lo = scene_q_until;
+            scene_lane_record(lo, (pos >= from ? pos : steps * POINTS) - 1, scene_last_seen);
+        }
         scene_armed = 1;                // the musician changed the scene: record from here
         // With LIVE RECORDING quantized the change goes to the nearest step, as stock's
         // notes do: back to the start of the step it fell in, or on to the next one's
@@ -1874,7 +1941,10 @@ QPERF_UI static void scene_lane_tick(void)
     }
     if (scene_armed) {
         if (from >= 0 && pos < from) {  // the loop came round: fill to its end, then the take plays
-            scene_lane_record(from + 1, steps * POINTS - 1, scene_last_seen);
+            int lo = from + 1;
+            if (scene_q_until > lo)
+                lo = scene_q_until;     // not before the quantized start
+            scene_lane_record(lo, steps * POINTS - 1, scene_last_seen);
             scene_armed = 0;
         } else {
             // A tick is 50 ms, several points at a fast tempo: fill what it passed. A jump
