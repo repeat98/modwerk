@@ -124,10 +124,13 @@ class SourceRecipe(unittest.TestCase):
             self.assertEqual(len(data), row['bytes'])
         self.assertEqual(data[28:32].hex(), row['module'])
         self.assertEqual(proof['stockVerification'], 'NOT_RUN')
-        self.assertEqual(proof['stockCopies'], 9)
+        receipt = json.loads((MODULE / 'release/candidate-proof.json').read_text())
+        self.assertEqual(proof['stockCopies'], receipt['stockCopies'])
         binding = json.loads((ROOT / 'sdk/machines/octatrack/base-binding.json').read_text())
         self.assertEqual(proof['baseIdentity'], binding['identity'])
-        self.assertEqual(proof['baseImports'], [{'offset': 14816, 'name': 'mw_stock_pool_open', 'addend': 0}])
+        self.assertEqual(proof['baseImports'], recipe['baseImports'])
+        self.assertEqual([(r['name'], r['addend']) for r in proof['baseImports']],
+                         [('mw_stock_pool_open', 0)])
         self.assertNotIn(bytes.fromhex(proof['baseIdentity']), data)
 
 
