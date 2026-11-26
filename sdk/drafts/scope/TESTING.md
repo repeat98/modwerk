@@ -23,9 +23,10 @@ MIDI and site events, **without** `--packaged-usb-audio`, uses the base shim at
 | `~/modwerk-builds/twin-dev-1014` | `… --packaged-usb-audio --usb-input …` | `4c7eb79b844c8139…` | USB Audio slot; **not** the base shim |
 | `~/modwerk-builds/twin-evusb-frame` | `… --dev --dsp-loader --usb-midi --site-events …` (no packaged USB Audio) | `6fe0262876380656…` | base shim |
 
-Unit: ilia-murzinov's MKII. First automation and the reported DOWN+TEMPO UX
+Unit: ilia-murzinov's MKII. First automation and an earlier DOWN+TEMPO report
 used **twin-dev-1014** (wrong twin for `ev_usb_frame`). After maintainer
-feedback, **twin-evusb-frame** RAM-booted and `device:test` re-ran there.
+feedback, **twin-evusb-frame** RAM-booted, `device:test` re-ran there, and
+DOWN+TEMPO was checked by hand on that twin with Scope kept.
 
 | Case | How run | Result |
 | --- | --- | --- |
@@ -33,7 +34,8 @@ feedback, **twin-evusb-frame** RAM-booted and `device:test` re-ran there.
 | `npm run device:test --soak 120` | twin-dev-1014 | pass (`device-test-soak.md`) — same caveat |
 | `npm run device:test` (default 30 s) | **twin-evusb-frame** (`6fe02628…`); trial rolled back | pass: selftest 2/2, inventory unchanged (`device-test-evusb.md`) |
 | Tuner + Scope one set | on twin-dev-1014 | pass: `selftest` 3/3 intact (Tuner + Scope Keep) |
-| DOWN + TEMPO UX | by hand on twin-dev-1014 | pass (reported) — **ring path not shown**; repeat on twin-evusb-frame when checking the hook |
+| DOWN + TEMPO UX | by hand on **twin-evusb-frame** (`6fe02628…`), Scope kept | pass (reported): TEMPO alone stock; DOWN+TEMPO opens Scope with live trace; closes cleanly |
+| DOWN + TEMPO UX (earlier) | by hand on twin-dev-1014 | pass (reported) — **does not prove `ev_usb_frame`** |
 | `npm run device:price` | twin-dev-1014; trial rolled back | at rest adds −0.1 % frame, +0.1 % CPU (`evidence/cpu-price-0.2.0.json`) |
 | Part put-back | `octatrack-part-state.mjs restore` | not automatic: Part 2 working copy differs from saved after qualify/soak; RELOAD by hand if you need a clean Part |
 | `verify.py` (octabam bus) | local | skip: no `sdk/out/mainos_bus.bin` in this worktree |

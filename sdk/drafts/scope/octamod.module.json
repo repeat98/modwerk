@@ -129,7 +129,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.2.0 package f8a1ffeb… on dev twin 4c7eb79b (26 Nov 2026): device:test and device:test --soak 120 passed; selftest 3/3 with Tuner kept beside Scope; DOWN+TEMPO UX reported by hand. At-rest CPU price ≈0 % delta (cpu-price-0.2.0.json). Release base 0.8.1 and removal-while-open cases reuse 0.1.0 notes until re-run on hooks base.",
+    "summary": "0.2.0 package f8a1ffeb… (26 Nov 2026): device:test (+ soak) on twin-dev-1014; device:test on twin-evusb-frame 6fe02628; DOWN+TEMPO by hand on twin-evusb-frame (live scope). Tuner+Scope selftest 3/3 on 4c7eb79b. CPU price on 4c7eb79b (cpu-price-0.2.0.json). Release base 0.8.1 and removal-while-open still from 0.1.0 until re-run on hooks base.",
     "hardwareStatus": "reported",
     "evidenceRevision": "6e8f9fb4ecadff9cddbf529743000c0cb8a076c2",
     "gates": [
