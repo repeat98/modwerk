@@ -120,6 +120,7 @@
         .set    LPUSH,     0x40031494
         .set    LPOP,      0x4003146c
         .set    KEY_CACHE, 0x46c7d8de   | 64 key records of 24 bytes, layer at +12
+        .set    CACHE_BYTES, 1696       | keys + encoders; matches base ui_lifetime
         .set    LAYER_ROOT, 0x460d165c  | top layer record; next links at +0 and +12
         .set    LREBUILD, 0x4003125c    | refill the key cache from LAYER_ROOT (LPUSH/LPOP end here)
         .set    SCRDIRTY,  0x46c7c72c
@@ -272,6 +273,8 @@
         .set    PART0_OFF, 0x8ed80      | working Part 0 inside a bank
 
         .text
+        .globl  seq_image_lo, seq_image_hi
+seq_image_lo:
         .globl  ef_page, ef_open, ef_close, ef_draw, ef_fill
         .globl  ef_yes, ef_no, ef_level, ef_enc
         .globl  ef_cue, ef_fb_mki, ef_fb_mkii
@@ -279,6 +282,7 @@
         .globl  seq_ev_banks_loaded, seq_ev_bank_loaded, seq_ev_project_new
         .globl  seq_ev_bank_written, seq_ev_project_store, seq_ev_project_stored
         .globl  seq_ev_project_reloaded, seq_ev_modules_ready
+        .globl  seq_in_use
 
 | ---- 0x4004ffc4: PAGE press/release. Track held -> toggle Euclid. --------
 | Displaced prologue: lea -16(sp),sp ; movem.l d2-d4/a2,(sp).
@@ -291,8 +295,9 @@ ef_page:
         cmpl    8(%sp),%d0
         bne.s   8f                      | press only
         tstl    ef_win
-        bne.w   ef_close                | TRACK+PAGE while open: close
-        bra.w   ef_open
+        beq.w   ef_open                 | release, closed: open
+        bsr.w   ef_close                | release, open: close (stock LPOP only)
+        bra.w   8f
 8:      rts
 9:      lea     -16(%sp),%sp            | displaced prologue
         movem.l %d2-%d4/%a2,(%sp)
@@ -1086,6 +1091,8 @@ close_orphan:
         pea     EF_LAYER
         jsr     LPOP
         addql   #4,%sp
+        | Rollback: only after our layer actually came off the stack (same guard
+        | as stock). Unlink stale next links; scrub dispatch (not LREBUILD).
         lea     EF_LAYER,%a1
         bsr.w   ef_unlink_stale
         jsr     LREBUILD
@@ -1101,10 +1108,14 @@ close_orphan:
 | again (LREBUILD) after this.
         .set    UE_MAX, 64
 ef_unlink_stale:
-        lea     -(20+4*UE_MAX)(%sp),%sp
+        tstl    ef_unlink_busy          | WDESTROY can re-enter close_orphan
+        bne.w   9f
+        moveq   #1,%d0
+        movel   %d0,ef_unlink_busy
+        lea     -20(%sp),%sp
         movem.l %d2-%d4/%a3-%a4,(%sp)
         movea.l %a1,%a3
-        lea     20(%sp),%a4             | queue of layer records
+        lea     ef_unlink_queue,%a4     | not on the key stack (64×4 B)
         moveq   #0,%d3                  | queued
         movel   LAYER_ROOT,%d0
         bsr.s   ue_add
@@ -1134,7 +1145,8 @@ ef_unlink_stale:
         addql   #1,%d4
         bra.s   2b
 9:      movem.l (%sp),%d2-%d4/%a3-%a4
-        lea     20+4*UE_MAX(%sp),%sp
+        lea     20(%sp),%sp
+        clrl    ef_unlink_busy
         rts
 
 | d0: a layer record to queue unless null, ours, odd, outside RAM, queued,
@@ -1164,7 +1176,158 @@ ue_add:
         addql   #1,%d3
 9:      rts
 
-
+| Stock's ui_lifetime walk flags any even word in KEY_CACHE..+1696 inside our
+| image. LREBUILD follows layer defs; dispatch can still leave handler words
+| (TRACK/CUE press). Zero each key or encoder row that still names us.
+ef_scrub_cache:
+        lea     -20(%sp),%sp
+        movem.l %d2-%d4/%a0-%a2,(%sp)
+        lea     seq_image_lo,%a1
+        lea     seq_image_hi,%a2
+        movea.l #KEY_CACHE,%a0
+        moveq   #0,%d4
+1:      bsr.w   sc_key_row
+        bne.s   sc_kclr
+        bra.s   2f
+sc_kclr:
+        bsr.w   sc_ck0
+        bsr.w   sc_ck4
+        bsr.w   sc_ck8
+        bsr.w   sc_ck12
+2:      lea     24(%a0),%a0
+        addql   #1,%d4
+        moveq   #64,%d0
+        cmpl    %d0,%d4
+        blt.s   1b
+        moveq   #0,%d4
+3:      bsr.w   sc_enc_row
+        bne.s   sc_eclr
+        bra.s   4f
+sc_eclr:
+        bsr.w   sc_e0
+        bsr.w   sc_e4
+        bsr.w   sc_e8
+        bsr.w   sc_e12
+        bsr.w   sc_e16
+4:      lea     20(%a0),%a0
+        addql   #1,%d4
+        moveq   #8,%d0
+        cmpl    %d0,%d4
+        blt.s   3b
+        movem.l (%sp),%d2-%d4/%a0-%a2
+        lea     20(%sp),%sp
+        rts
+sc_own:
+        movel   %a1,%d1
+        cmpl    %d1,%d0
+        blo.s   sc_onf
+        movel   %a2,%d1
+        cmpl    %d0,%d1
+        bls.s   sc_onf
+        moveq   #1,%d0
+        rts
+sc_onf:
+        moveq   #0,%d0
+        rts
+sc_key_row:
+        movel   (%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   4(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   8(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   12(%a0),%d0
+        bsr.w   sc_own
+9:      rts
+sc_ck0:
+        movel   (%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    (%a0)
+9:      rts
+sc_ck4:
+        movel   4(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    4(%a0)
+9:      rts
+sc_ck8:
+        movel   8(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    8(%a0)
+9:      rts
+sc_ck12:
+        movel   12(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    12(%a0)
+9:      rts
+sc_e0:
+        movel   (%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    (%a0)
+9:      rts
+sc_e4:
+        movel   4(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    4(%a0)
+9:      rts
+sc_e8:
+        movel   8(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    8(%a0)
+9:      rts
+sc_e12:
+        movel   12(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    12(%a0)
+9:      rts
+sc_e16:
+        movel   16(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        beq.s   9f
+        clrl    16(%a0)
+9:      rts
+sc_enc_row:
+        movel   (%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   4(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   8(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   12(%a0),%d0
+        bsr.w   sc_own
+        tstl    %d0
+        bne.s   9f
+        movel   16(%a0),%d0
+        bsr.w   sc_own
+9:      rts
 ef_no:
         moveq   #1,%d0
         cmpl    8(%sp),%d0
@@ -4853,9 +5016,6 @@ ef_cl_nolayer_off:
         pea     EF_CL_NO_LAYER
         jsr     LPOP
         addql   #4,%sp
-        lea     EF_CL_NO_LAYER,%a1
-        bsr.w   ef_unlink_stale
-        jsr     LREBUILD
 ecn_rts: rts
 
 | NO while CLEAR list is up (cancel layer on top of LISTPOP). One press:
@@ -6316,6 +6476,20 @@ smr_rts:
         moveq   #0,%d0
         rts
 
+| ev_in_use (UI tick): in use while the window, a layer or ARE YOU SURE? is up.
+seq_in_use:
+        tstl    ef_win
+        bne.s   siu_busy
+        tstl    ef_layer_on
+        bne.s   siu_busy
+        tstl    ef_ask
+        bne.s   siu_busy
+        moveq   #0,%d0
+        rts
+siu_busy:
+        moveq   #1,%d0
+        rts
+
 | ---- files: a2 = the context (stock file object, then its 4 KB buffer) ----
 | Each call clobbers d0, d1, a0, a1 and keeps everything else.
 
@@ -6627,6 +6801,8 @@ ef_pending_cursor: .long 0
 ef_dlg_guard: .long 0                   | 1: soft-close on class-5 eviction
 ef_need_restore: .long 0                | 1: recreate window after dialog
 ef_layer_on: .long 0                    | 1: EF_LAYER registered (LPOP even if ef_win=0)
+ef_unlink_busy: .long 0
+ef_unlink_queue: .space 256
 ef_cl_nolayer: .long 0                  | 1: EF_CL_NO_LAYER pushed over CLEAR
 ef_cl_sel:  .long 0                     | clear LISTPOP cursor
 ef_nowrite: .long 0                     | refused file: do not overwrite
@@ -6638,3 +6814,6 @@ ef_psrc:    .space 260
 seq_loaded: .long 0                     | 1: seq.work read since this install
 seq_crcready: .long 0
 seq_crctab: .space 256*4
+        .balign 4
+        .globl  seq_image_hi
+seq_image_hi:

@@ -1,6 +1,21 @@
 # SEQ testing
 
-Results are separated by where they ran. Nothing ran in the emulator yet.
+Results are separated by where they ran.
+
+### Emulator rollback after use (26 Nov 2026, draft `fix22`, package `25f5d04f…`)
+
+Twin `4c7eb79b`, `ot_emu` without `--dsp` (with `--dsp`, USB key sequences often hit the 21 s bench limit). Build matches listed close hygiene: **unlink + LREBUILD only after LPOP** (not scrub in KEYFN; scrub that cleared whole KEY_CACHE rows wedged the emu). **ef_page** close returns with `bra 8f` (no `PAGE_GO`). **kthunks**, **ev_in_use**, **ef_unlink_queue** (Modwerk).
+
+| Case | Result |
+| --- | --- |
+| open, **NO**, `remove` | pass |
+| **TRACK+PAGE** toggle close, `remove` | pass (script) |
+| **CUE** + T2/T3 + **TRACK+PAGE** close, `remove` | pass |
+| **CUE** + **NO** | pass |
+
+`scripts/seq-emu-rollback.sh` (26 Nov, `PKG=/tmp/seq-fix22.mwrm`): **4/4 passed**, exit 0 (~11 min, no `--dsp`).
+
+**Not hardware proof.** MKII still needs the user's chord recipe once this package is built for the unit.
 
 ## Host (26 Nov 2026, branch `module/seq`)
 
@@ -73,9 +88,9 @@ walk finds a word pointing into SEQ. Two causes, both fixed in 924a6e6a:
   wrong key's held flag, and **`[CUE]`** stayed routed to SEQ.
 
 Each case runs a fresh emulator, installs SEQ as a trial, sends the keys
-and rolls back. These results come from the emulator, not the unit. The
-**`[CUE]`** case and the CLEAR cancel failed on the two builds before
-924a6e6a, each on one of the causes above.
+and rolls back. These results come from the emulator, not the unit. With the
+layer fix alone, the **`[CUE]`** case still failed; it passed once the
+handlers ran through the thunks.
 
 | Keys after **`[TRACK 1]`** + **`[PAGE]`** | 924a6e6a |
 | --- | --- |
