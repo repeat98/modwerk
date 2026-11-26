@@ -171,6 +171,33 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/todos')).json()).todos.map((row: { id: string }) => row.id)).toEqual(['8'.repeat(16)])
   })
 
+  it('shares to-dos about an issue or pull request as wanted tasks anyone can take, and keeps the others private', async () => {
+    const { bot, db } = await fixture()
+    const tasks = () => db.prepare("SELECT topic_key,body,priority,ended_reason FROM agent_messages WHERE user_id='tars' AND kind='wanted' AND topic_kind='issue' ORDER BY topic_key").all() as { topic_key: string; body: string; priority: string; ended_reason: string | null }[]
+    const todo = (id: string, target: number, command: string, note: string, urgent = false) => ({ id: id.repeat(16), target, command, note, urgent })
+    await bot('/todos', 'POST', { todos: [
+      todo('1', 1680, '/modwerk-fix-issue 1680', 'Bar LED never green on MKII over USB; only ever run on an MKI', true),
+      todo('2', 1763, '/modwerk-review-prs 1763', 'Needs an emulator run of the link'),
+      todo('3', 0, '/modwerk-discord', 'a tester asks about fader CPU spikes'),
+      todo('4', 1900, '/modwerk-fix-issue 1900', 'see src/engine/assets/x for the table'),
+    ] })
+    expect(await (await bot('/todos/share', 'POST')).json()).toEqual({ shared: 2 })
+    await bot('/todos/share', 'POST')
+    // Once each. The Discord one and the one the board's text rules refuse stay in the owner's list.
+    expect(tasks()).toEqual([
+      { topic_key: '1680', body: 'Bar LED never green on MKII over USB. only ever run on an MKI. To do it: /modwerk-fix-issue 1680.', priority: 'high', ended_reason: null },
+      { topic_key: '1763', body: 'Needs an emulator run of the link. To do it: /modwerk-review-prs 1763.', priority: 'normal', ended_reason: null },
+    ])
+    // A task whose pull request merged finishes its to-do; a to-do that is settled ends its task.
+    db.prepare("UPDATE agent_messages SET ended_at='2026-11-27T10:00:00.000Z',ended_reason='merged' WHERE topic_key='1680'").run()
+    db.prepare("UPDATE maintenance_bot_todos SET status='dropped' WHERE target=1763").run()
+    await bot('/todos/share', 'POST')
+    expect(db.prepare("SELECT status FROM maintenance_bot_todos WHERE target=1680").get()).toEqual({ status: 'done' })
+    expect(tasks().map(task => task.ended_reason)).toEqual(['merged', 'administrator'])
+    await bot('/todos/share', 'POST')
+    expect(tasks().length).toBe(2)
+  })
+
   it('answers, closes and releases on the agent board as the owner, through the board’s own rules', async () => {
     const { bot, db } = await fixture()
     const now = new Date().toISOString(), thread = '11111111-1111-4111-8111-111111111111', claim = '22222222-2222-4222-8222-222222222222'

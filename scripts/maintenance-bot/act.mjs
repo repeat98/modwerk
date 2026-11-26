@@ -133,6 +133,9 @@ for (const todo of (await bot('/todos')).todos) {
   if (settled) await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' })
 }
 
+// The shared list: to-dos about a pull request or issue stand on the agent board as wanted tasks anyone can take.
+await bot('/todos/share', 'POST').catch(error => console.log('The to-dos could not be shared on the board (' + error.message + ').'))
+
 if (daily) {
   // Diagnostics members share, counted by failure: a new failure, or one more than twice its usual daily rate.
   const { failures } = await bot('/diagnostics')

@@ -5,7 +5,7 @@ description: The owner's to-do list from the maintenance bot - work only a sessi
 
 # /modwerk-todo [id or #number]
 
-If the developer is not the owner, say that this is the owner's list and offer `/modwerk-start` instead.
+If the developer is not the owner, say that the shared list is the agent board's wanted tasks, show them with `npm run board -- messages --kind wanted`, and take the one they pick with `npm run board -- take <id>`, then run the command its text names. The rest of this skill is the owner's list, which also holds the to-dos that cannot be shared.
 
 The [maintenance bot](../../../docs/MAINTENANCE_BOT.md) adds to-dos; this skill works them off. Keep every reply short: the owner wants as little text as possible.
 
