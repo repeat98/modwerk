@@ -39,13 +39,13 @@ const monthName = (month: string) => { const date = new Date(month + '-01T00:00:
  * tips entered by hand for the same month. */
 export function SupportCosts({ costs = SUPPORT_COSTS, coverage = null }: { costs?: Costs; coverage?: KofiCoverage | null }) {
   if (!(costs.monthly > 0)) return null
-  const split = costs.hosting !== undefined && costs.tokens !== undefined ? ` (hosting ${euro(costs.hosting)} · AI tokens ${euro(costs.tokens)})` : ''
+  const split = costs.hosting !== undefined && costs.tokens !== undefined ? ` (hosting ${euro(costs.hosting)} · tokens ${euro(costs.tokens)})` : ''
   const live = coverage && coverage.euros !== null ? coverage : null
   const month = live?.month ?? costs.month
   const extra = costs.month && costs.month === month && costs.covered !== undefined ? Math.max(0, costs.covered) : 0
   const covered = live ? live.euros! + extra : costs.month && costs.covered !== undefined ? extra : null
   return <figure className="support-costs">
-    <figcaption>Running costs: about <strong>{euro(costs.monthly)} a month</strong> for hosting and AI tokens{split}.</figcaption>
+    <figcaption>Running costs: about <strong>{euro(costs.monthly)} a month</strong> for hosting and tokens{split}.</figcaption>
     {covered !== null && month && <>
       <div className="support-costs-bar" role="img" aria-label={`Ko-fi covered ${euro(covered)} of ${euro(costs.monthly)} in ${monthName(month)}`}><span style={{ width: Math.min(100, Math.round(covered / costs.monthly * 100)) + '%' }} /></div>
       <p>Ko-fi covered {euro(covered)} of {euro(costs.monthly)} in {monthName(month)}</p>
@@ -75,7 +75,7 @@ export function SupportDialog({ url, onClose }: { url: string; onClose: () => vo
       <li><a href="#forum" onClick={onClose}>Share a test or bug report in the forum.</a> Include the machine, OS version and what you heard or saw.</li>
       <li><a href="#submit" onClick={onClose}>Contribute code.</a> The guide covers building a module and submitting your changes for review.</li>
     </ul>
-    <p>I pay for the hosting and the AI tokens Modwerk is built with. If you’d like to help with those costs, Ko-fi tips are welcome. Modwerk is free to use.</p>
+    <p>I pay for the hosting and the tokens Modwerk is built with. If you’d like to help with those costs, Ko-fi tips are welcome. Modwerk is free to use.</p>
     <SupportCosts coverage={coverage} />
     <div className="dialog-actions">
       <button type="button" className="button button-quiet" autoFocus onClick={onClose}>Close</button>
@@ -87,7 +87,7 @@ export function SupportDialog({ url, onClose }: { url: string; onClose: () => vo
 /** One quiet line on the screens that end an install. */
 export function SupportLine({ url = SUPPORT_URL }: { url?: string }) {
   if (!url) return null
-  return <p className="support-line"><span className="support-heart"><Icon name="heart" size={14} /></span><span>Modwerk takes a lot of evenings, and I pay for the hosting and AI tokens myself. <a href={url} target="_blank" rel="noopener noreferrer" aria-label={kofiLabel} onClick={() => { trackUsage('support_link_opened'); countSupportPrompt('line-kofi'); answerSupportPrompt('kofi') }}>Support on Ko-fi<span aria-hidden="true"> ↗</span></a></span></p>
+  return <p className="support-line"><span className="support-heart"><Icon name="heart" size={14} /></span><span>Modwerk takes a lot of evenings, and I pay for the hosting and tokens myself. <a href={url} target="_blank" rel="noopener noreferrer" aria-label={kofiLabel} onClick={() => { trackUsage('support_link_opened'); countSupportPrompt('line-kofi'); answerSupportPrompt('kofi') }}>Support on Ko-fi<span aria-hidden="true"> ↗</span></a></span></p>
 }
 
 const THANKS_TITLE: Record<SupportPromptKind, (count: number) => string> = {
@@ -107,7 +107,7 @@ export function SupportMilestoneDialog({ reason, url, costs, onAnswer }: { reaso
   }, [])
   return <dialog ref={dialog} className="app-dialog support-dialog support-milestone" aria-labelledby="support-milestone-title" aria-describedby="support-milestone-message" onCancel={event => { event.preventDefault(); onAnswer('later', true) }}>
     <h2 id="support-milestone-title"><span className="support-heart"><Icon name="heart" size={20} /></span>{THANKS_TITLE[reason.kind](reason.count)}</h2>
-    <p id="support-milestone-message">Glad it’s useful! Modwerk takes a lot of my evenings, and I pay for the hosting and the AI tokens it’s built with myself. If you’d like to chip in, a coffee on Ko-fi helps keep it running. Everything stays free either way.</p>
+    <p id="support-milestone-message">Glad it’s useful! Modwerk takes a lot of my evenings, and I pay for the hosting and the tokens it’s built with myself. If you’d like to chip in, a coffee on Ko-fi helps keep it running. Everything stays free either way.</p>
     <SupportCosts costs={costs} coverage={coverage} />
     <p className="service-note">Module authors have their own Ko-fi cups on their module pages.</p>
     <div className="dialog-actions">

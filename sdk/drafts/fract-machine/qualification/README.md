@@ -1,20 +1,26 @@
 # Offline measurement preparation
 
-This is an unlisted qualification kit, not a release or a timing result.
-The normal candidate remains package `6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874`
-on base `72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`.
-Its completed functional tests are in [the hardware report](../release/hardware-20261110.md).
-Do not repeat those tests merely because this kit or its documentation changed.
-The remaining hardware work measures load and stress, plus explicitly untested
-stock/companion and active-replacement cases; it is separate from those results.
+Current preparation is `0.1.3-experimental` on released base 0.8.1, identity
+`eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0`.
+The normal package reproduces SHA-256
+`c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`.
+The base prerequisites #1418 and #1165 have merged; final preparation can proceed.
+Hardware timing, stress, rendered controls and lifecycle tests on this named
+build remain open. [Earlier functional evidence](../release/hardware-20261110.md)
+belongs to package6ff/base72 only. Nothing here grants release approval.
 
 ## Private probe build
 
-`build_probe.py` takes a private archive of source commit `c2671568` preserving
+For historical reproduction, `build_probe.py` takes a private archive of source commit `c2671568` preserving
 the named base72 inputs, the author's original 1.40C and reviewed Elekloader
 tools. Run it in the pinned isolated native toolchain, with source, stock and
 upstream mounted read-only, no network, dropped capabilities, and a new private
 output directory. It never opens a device:
+
+Before mounting a source archive read-only, use Node 24 to run `npm run prepare`
+in that archive. This recreates ignored catalogue/changelog metadata needed by
+the site's guarded base linker. Keep the original historical snapshot unchanged;
+prepare a private copy when reproducing an older build.
 
 ```sh
 python3 -B sdk/drafts/fract-machine/qualification/build_probe.py \
@@ -33,6 +39,19 @@ The separate probe reproduces SHA-256
 `6020e04633f670e34123e221b44c38ad7ed3ea873081e35ff9994fb0d0a58cbe`.
 Keep its upload receipt: a diagnostic protocol marker does not prove that hash.
 Neither this probe nor any firmware/built project belongs in Git or a public download.
+
+For a later released base, first reproduce and stock-verify the normal package
+against that source tree with `scripts/source-runtime-package.py`. Pass both
+`--base-identity <full identity>` and `--normal-sha256 <normal package hash>` to
+`build_probe.py`. Without both, its historical base72/package6ff defaults remain.
+The builder checks the named tree and normal bytes before deriving fresh counter
+addresses from that base's symbols. It still requires unchanged original code
+sections and both stock scans; new output gets its own receipt. This prepares
+another named build, without transferring any earlier hardware result to it.
+The addresses are checked against the original-stock linker's actual layout,
+including collection tables and declared BSS alignment. Base counters may have
+two-byte alignment; the wrapper declares that alignment for its volatile longword
+reads ([MCF54455 Reference Manual, table 3-12](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
 
 ## Prepared project cases
 
@@ -74,10 +93,10 @@ STOP, change Part and reload. Do not record actions the operator did not perform
 
 ## Later hardware capture
 
-Follow [repeat98’s 12 November review plan](../release/review-20261112.md):
-final relinking and timing wait for base PR #1418 and then #1165. This pinned
-base72 probe is retained for reproduction; it must be rebuilt and reviewed
-against the final base/package before that run.
+Follow [repeat98’s 12 November review plan](../release/review-20261112.md).
+Both base prerequisites have merged. Rebuild and review the probe against the
+exact current base and normal package, using both explicit identity arguments;
+the historical base72 probe is retained only for reproduction.
 
 No hardware operation is part of offline preparation. At the later session,
 retain the normal package, current confirmed set and recovery receipts. Check

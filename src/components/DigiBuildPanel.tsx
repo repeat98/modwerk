@@ -9,7 +9,9 @@ import { noteSupportInstall } from '../community/support-prompt'
 import { SupportLine } from './SupportDialog'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
-import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
+import { digiDownloadsOpen } from '../engine/elekloader/protocol'
+import { hasBetaUi } from '../community/beta-access'
+import { useCommunity } from '../community/context'
 import { FIRMWARE_SHARING_NOTICE, FLASHING_RISKS } from '../firmware-notices'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { RecoveryNotice } from './RecoveryNotice'
@@ -19,6 +21,8 @@ import type { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { Icon } from './Icon'
 import { BuildProgressIndicator } from './BuildProgressIndicator'
 import { useSetWords } from '../community/beta-ui'
+import { usbUpgradePort } from '../engine/elektron/usb-upgrade'
+import { ElektronSendDialog } from './ElektronSendDialog'
 
 function save(data: BlobPart, name: string, type = 'application/octet-stream') {
   const url = URL.createObjectURL(new Blob([data], { type })), link = document.createElement('a')
@@ -29,13 +33,16 @@ const kib = (bytes: number) => (bytes / 1024).toFixed(0) + ' KB'
 
 export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport, exported, canExport, results }: { device: { id: DigiMod['device']; name: string; firmware?: { recovery: string } }; firmware: ReturnType<typeof useDigiFirmware>; moduleIds: readonly string[]; storage?: BuildStorage; onExport: () => void; exported: boolean; canExport: boolean; results: HTMLElement | null }) {
   const w = useSetWords()
-  const downloadsEnabled = digiDownloadsEnabled(device.id)
+  // Released machines for everyone; a beta-download machine (the Model:Cycles) for beta testers only.
+  const downloadsEnabled = digiDownloadsOpen(device.id, hasBetaUi(useCommunity().session))
   const ready = firmware.state === 'ready' && !!firmware.file, release = ready ? firmware.firmware?.release : undefined
   const plan = release ? planBuild(device.id, release, moduleIds) : undefined
   const missing = plan?.missing.map(id => DIGI_MODS.find(mod => mod.device === device.id && mod.id === id)?.title ?? id) ?? []
   const { state, check, build, cancel } = useDigiBuild(device.id, ready && !missing.length ? firmware.file : undefined, release, moduleIds, storage)
   const [version, setVersion] = useState(''), [accepted, setAccepted] = useState(''), [downloaded, setDownloaded] = useState(''), [recoveryKnown, setRecoveryKnown] = useState('')
   const {followDownloads,followNotice}=useDownloadFollows()
+  // Machines whose stock OS upgrade over USB the page can send (usb-upgrade.ts), behind the same approval as downloads.
+  const usbPort = usbUpgradePort(device.id), [sending, setSending] = useState(false)
   const deviceInfo = 'device' in state ? state.device : undefined, key = 'key' in state ? state.key : ''
   const shown = version || deviceInfo?.default_version || '2.0a', length = deviceInfo?.version_len ?? 4
   const result = state.phase === 'built' && state.result.version === shown ? state.result : undefined
@@ -99,6 +106,8 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
       {result && !downloadsEnabled && <aside className="risk-note" role="note"><strong>Downloads open after review</strong><p>The build ran and verified in this browser. Modwerk will offer {device.name} firmware files once their release is approved. Nothing was uploaded.</p></aside>}
       {result && downloadsEnabled && <section className="configuration-section install-guide" aria-labelledby="digi-install-title"><div className="section-title"><h2 id="digi-install-title">Install on your {device.name}</h2><span className="pill">{result.version}</span></div>
         <ol><li>Connect the {device.name} over USB and open Elektron Transfer.</li><li>Select the unit, connect, and drop the .syx onto Transfer.</li><li>Press YES on the unit and keep it powered until the update finishes.</li></ol>
+        {usbPort && <p className="service-note">Or send it from this page: <button type="button" className="text-button" disabled={!riskAccepted || !knowsRecovery} onClick={() => setSending(true)}>Send over USB<Icon name="arrow" size={14} /></button></p>}
+        {usbPort && sending && <ElektronSendDialog name={device.name} model={usbPort} file={{ name: downloadName, data: result.files[0].data }} recovery={result.recovery || device.firmware?.recovery} onClose={() => setSending(false)} />}
         <p className="service-note">{FLASHING_RISKS} Flash at your own risk. Local checks cannot guarantee hardware safety.</p>
         <p className="service-note">{FIRMWARE_SHARING_NOTICE}</p>
         {downloaded === key && <><p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p><SupportLine /></>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}

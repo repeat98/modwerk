@@ -19,6 +19,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
 import firmware_codec  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[3] / 'runtime'))  # sdk/runtime, for m68k_codegen
+import m68k_codegen  # noqa: E402
 HERE = Path(__file__).resolve().parent
 LINK = '''ENTRY(stub_entry)
 SECTIONS
@@ -58,10 +60,18 @@ def build(upstream, out, cc='m68k-elf-gcc'):
     with tempfile.TemporaryDirectory() as temp:
         script = Path(temp) / 'stub.ld'
         script.write_text(LINK % n['SLOT_STUB_CODE'])
-        subprocess.run([cc, '-mcpu=54455', '-Os', '-std=c99', '-ffreestanding', '-fno-builtin', '-nostdlib', '-fno-pic',
-                        '-fno-common', '-ffunction-sections', '-Wl,--gc-sections', '-Wall', '-Wextra', '-Werror',
-                        '-T', str(script), '-o', str(elf), *(str(HERE / f) for f in ('stub.s', 'stub.c', 'slots.c'))],
-                       check=True)
+        # GCC 16.2's late-combine miscompile, as for every other C the base compiles: the pass off, and each C object
+        # checked before it is linked (sdk/runtime/m68k_codegen.py).
+        objects = []
+        for name in ('stub.s', 'stub.c', 'slots.c'):
+            obj = Path(temp) / (name + '.o')
+            subprocess.run([cc, '-mcpu=54455', '-Os', '-std=c99', '-ffreestanding', '-fno-builtin', '-fno-pic',
+                            '-fno-common', '-ffunction-sections', '-Wall', '-Wextra', '-Werror', *m68k_codegen.FLAGS,
+                            '-c', str(HERE / name), '-o', str(obj)], check=True)
+            objects.append(obj)
+        m68k_codegen.check_mcf54455([o for o in objects if o.name.endswith('.c.o')], cc.replace('gcc', 'objdump'))
+        subprocess.run([cc, '-mcpu=54455', '-nostdlib', '-Wl,--gc-sections', '-T', str(script), '-o', str(elf),
+                        *map(str, objects)], check=True)
         sizes = subprocess.run([cc.replace('gcc', 'size'), '-A', str(elf)], check=True, capture_output=True, text=True).stdout
         if re.search(r'^\.(data|bss)\s+[1-9]', sizes, re.M):
             raise ValueError('The stub runs from NOR before the OS: it may have no .data or .bss.\n' + sizes)

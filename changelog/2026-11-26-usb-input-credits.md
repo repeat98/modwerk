@@ -1,0 +1,1 @@
+Credits: the credits page and USB Audio's module page now credit Bryan Tysinger for the USB audio input receiver and DSP inject (with Sam Banks) and the inject's optimization, beside MAIN/CUE, the latency servo and hardware alignment, with the octabam pull requests and a link to the input source.

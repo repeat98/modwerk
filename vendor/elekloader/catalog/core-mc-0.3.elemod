@@ -1,0 +1,575 @@
+{
+ "elemod": 2,
+ "id": "core",
+ "version": "0.3",
+ "title": "core",
+ "description": "The boot copier and the hook bus for Model:Cycles: every other mod needs it. From 0.2 it also exports the firmware locations mods use (fw_*), and from 0.3 it calls ev_boot once at boot, before the OS starts. On its own it changes nothing the unit does.",
+ "category": "Framework",
+ "author": "drumkilla",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "model-cycles",
+  "product": "Model:Cycles",
+  "os": "1.13",
+  "syx_sha256": "44fe586269631a0ca7da25a3383fc6733c314809505fc3cc52f1e0ed9800640c",
+  "section3_sha256": "cc99d4f0175d34d1e91d046e6ec85a5e8ab58ab9edbb3c24406acd48cb99ee98",
+  "section3_len": 1744192
+ },
+ "sections": {
+  ".boot": {
+   "align": 4,
+   "len": 76,
+   "parts": [
+    [
+     "hex",
+     "41f90000000043f900000000203c0000000022d8538066fa43f900000000203c0000000067064299538066fa4e71203c000cc1004e7b00024e714eb9000000004eb94000045c4ef9400004b2"
+    ]
+   ]
+  },
+  ".run": {
+   "align": 4,
+   "len": 180,
+   "parts": [
+    [
+     "hex",
+     "2f0a45f900000000201a670c2f2f000820404e90588f60f0245f"
+    ],
+    [
+     "stock",
+     "0x400689f0",
+     10
+    ],
+    [
+     "stock",
+     "0x4000d0b8",
+     8
+    ],
+    [
+     "hex",
+     "4eb940076c1a508f2f0a45f900000000201a67102f2f00082f2f001020404e90508f60ec"
+    ],
+    [
+     "stock",
+     "0x40023c38",
+     8
+    ],
+    [
+     "hex",
+     "000000006126245f4a8066064ef9400060fe4e752f0a45f900000000610e245f4a8066064ef9400061584e75201a6712"
+    ],
+    [
+     "stock",
+     "0x40013bb2",
+     8
+    ],
+    [
+     "hex",
+     "20404e90508f4a8067ea4e752f0a45f900000000201a670620404e9060f6245f4e750000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 16
+  }
+ },
+ "symbols": {
+  "FW_FS_IDS": [
+   "abs",
+   1075820708
+  ],
+  "FW_FS_FIND_ID": [
+   "abs",
+   1074256944
+  ],
+  "FW_FS_READ": [
+   "abs",
+   1074248362
+  ],
+  "FW_FS_ENTRY": [
+   "abs",
+   1074257528
+  ],
+  "FW_FS_UNLOCK": [
+   "abs",
+   1073749494
+  ],
+  "FW_FS_LOCK": [
+   "abs",
+   1073749188
+  ],
+  "FW_RUNNING_TASK": [
+   "abs",
+   1110437680
+  ],
+  "FW_FS_LOCK_WORD": [
+   "abs",
+   1090416112
+  ],
+  "FW_FS_MOUNTED": [
+   "abs",
+   1089502452
+  ],
+  "FW_VIEW_REDRAW": [
+   "abs",
+   1074228206
+  ],
+  "FW_FONT_MEDIUM": [
+   "abs",
+   1075057164
+  ],
+  "FW_FONT_SMALL": [
+   "abs",
+   1075055280
+  ],
+  "FW_FONT_DROP": [
+   "abs",
+   1074208896
+  ],
+  "FW_FONT_MAKE": [
+   "abs",
+   1074209376
+  ],
+  "FW_TEXT": [
+   "abs",
+   1074207236
+  ],
+  "FW_FILL": [
+   "abs",
+   1074204870
+  ],
+  "FW_PLAY_KIT": [
+   "abs",
+   2147489764
+  ],
+  "FW_KITS": [
+   "abs",
+   1084005504
+  ],
+  "FW_KEY_HELD": [
+   "abs",
+   1074264820
+  ],
+  "FW_TRIG_HELD": [
+   "abs",
+   1074181942
+  ],
+  "FW_VALUE_SHOWN": [
+   "abs",
+   1074181892
+  ],
+  "FW_UI_STATES": [
+   "abs",
+   1074592168
+  ],
+  "FW_SELECTION_ACTIVE": [
+   "abs",
+   1073816594
+  ],
+  "FW_PROJECT_TRACKS": [
+   "abs",
+   1073802128
+  ],
+  "FW_PROJECT": [
+   "abs",
+   1074591846
+  ],
+  "BOOT_CACR": [
+   "abs",
+   835840
+  ],
+  "BOOT_INIT": [
+   "abs",
+   1
+  ],
+  "VBR_FN2": [
+   "abs",
+   1073743026
+  ],
+  "VBR_FN": [
+   "abs",
+   1073742940
+  ],
+  "NO_DTIM0": [
+   "abs",
+   1
+  ],
+  "ENCDISP": [
+   "abs",
+   1073766744
+  ],
+  "KEYDISP": [
+   "abs",
+   1073766654
+  ],
+  "DRAWALL": [
+   "abs",
+   1074228250
+  ],
+  "dispatch": [
+   ".run",
+   132
+  ],
+  "fw_fill": [
+   "abs",
+   1074204870
+  ],
+  "core_boot_init": [
+   ".run",
+   156
+  ],
+  "core_draw": [
+   ".run",
+   36
+  ],
+  "core_zero": [
+   ".bss",
+   0
+  ],
+  "fw_key_held": [
+   "abs",
+   1074264820
+  ],
+  "fw_selection_active": [
+   "abs",
+   1073816594
+  ],
+  "core_key": [
+   ".run",
+   84
+  ],
+  "fw_trig_held": [
+   "abs",
+   1074181942
+  ],
+  "boot": [
+   ".boot",
+   0
+  ],
+  "fw_running_task": [
+   "abs",
+   1110437680
+  ],
+  "fw_fs_mounted": [
+   "abs",
+   1089502452
+  ],
+  "fw_font_make": [
+   "abs",
+   1074209376
+  ],
+  "fw_fs_unlock": [
+   "abs",
+   1073749494
+  ],
+  "fw_fs_find_id": [
+   "abs",
+   1074256944
+  ],
+  "fw_font_small": [
+   "abs",
+   1075055280
+  ],
+  "core_tick": [
+   ".run",
+   0
+  ],
+  "fw_view_redraw": [
+   "abs",
+   1074228206
+  ],
+  "core_enc": [
+   ".run",
+   108
+  ],
+  "fw_play_kit": [
+   "abs",
+   2147489764
+  ],
+  "fw_fs_lock_word": [
+   "abs",
+   1090416112
+  ],
+  "fw_kits": [
+   "abs",
+   1084005504
+  ],
+  "fw_fs_entry": [
+   "abs",
+   1074257528
+  ],
+  "fw_fs_lock": [
+   "abs",
+   1073749188
+  ],
+  "fw_text": [
+   "abs",
+   1074207236
+  ],
+  "fw_value_shown": [
+   "abs",
+   1074181892
+  ],
+  "fw_font_drop": [
+   "abs",
+   1074208896
+  ],
+  "fw_ui_states": [
+   "abs",
+   1074592168
+  ],
+  "fw_project": [
+   "abs",
+   1074591846
+  ],
+  "fw_project_tracks": [
+   "abs",
+   1073802128
+  ],
+  "fw_fs_read": [
+   "abs",
+   1074248362
+  ],
+  "fw_font_medium": [
+   "abs",
+   1075057164
+  ],
+  "fw_fs_ids": [
+   "abs",
+   1075820708
+  ]
+ },
+ "exports": [
+  "boot",
+  "core_boot_init",
+  "core_draw",
+  "core_enc",
+  "core_key",
+  "core_tick",
+  "core_zero",
+  "fw_fill",
+  "fw_font_drop",
+  "fw_font_make",
+  "fw_font_medium",
+  "fw_font_small",
+  "fw_fs_entry",
+  "fw_fs_find_id",
+  "fw_fs_ids",
+  "fw_fs_lock",
+  "fw_fs_lock_word",
+  "fw_fs_mounted",
+  "fw_fs_read",
+  "fw_fs_unlock",
+  "fw_key_held",
+  "fw_kits",
+  "fw_play_kit",
+  "fw_project",
+  "fw_project_tracks",
+  "fw_running_task",
+  "fw_selection_active",
+  "fw_text",
+  "fw_trig_held",
+  "fw_ui_states",
+  "fw_value_shown",
+  "fw_view_redraw"
+ ],
+ "imports": [
+  "__bss_start",
+  "__bss_words",
+  "__run_load",
+  "__run_start",
+  "__run_words",
+  "ev_boot",
+  "ev_draw",
+  "ev_enc",
+  "ev_key",
+  "ev_tick"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".boot",
+   2,
+   "abs32",
+   "sym:__run_load",
+   0
+  ],
+  [
+   ".boot",
+   8,
+   "abs32",
+   "sym:__run_start",
+   0
+  ],
+  [
+   ".boot",
+   14,
+   "abs32",
+   "sym:__run_words",
+   0
+  ],
+  [
+   ".boot",
+   26,
+   "abs32",
+   "sym:__bss_start",
+   0
+  ],
+  [
+   ".boot",
+   32,
+   "abs32",
+   "sym:__bss_words",
+   0
+  ],
+  [
+   ".boot",
+   60,
+   "abs32",
+   "sec:.run",
+   156
+  ],
+  [
+   ".run",
+   4,
+   "abs32",
+   "sym:ev_tick",
+   0
+  ],
+  [
+   ".run",
+   56,
+   "abs32",
+   "sym:ev_draw",
+   0
+  ],
+  [
+   ".run",
+   88,
+   "abs32",
+   "sym:ev_key",
+   0
+  ],
+  [
+   ".run",
+   112,
+   "abs32",
+   "sym:ev_enc",
+   0
+  ],
+  [
+   ".run",
+   160,
+   "abs32",
+   "sym:ev_boot",
+   0
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4000052c",
+   "len": 8,
+   "stock_sha256": "5880e46db520311a258ed2b990a1fa89bd4e7a65c18d550c30e88fa9c81ecd11",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:boot",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400075f0",
+   "len": 6,
+   "stock_sha256": "905f211dc8443c388043cf38112866e76f0b2c25d4cab9c01b93cb427e43713a",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_tick",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000765c",
+   "len": 6,
+   "stock_sha256": "51f1819c6c3a0c516407638048ba448ed727f193756e252f5b573605a285fc63",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_draw",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000817a",
+   "len": 6,
+   "stock_sha256": "b1f232778dac92307182d0f8b57841c85d248d460700f04c5c3b5b55fbe9e314",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_key",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400081ce",
+   "len": 6,
+   "stock_sha256": "2e675b2b0cf71462c7a39e74041eb2d05b3e06035d762e50e83baa9c332ca844",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_enc",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {
+  "ev_tick": {
+   "entry": 4
+  },
+  "ev_draw": {
+   "entry": 4
+  },
+  "ev_key": {
+   "entry": 4
+  },
+  "ev_enc": {
+   "entry": 4
+  },
+  "ev_boot": {
+   "entry": 4
+  }
+ },
+ "contribute": [],
+ "copied": [],
+ "resources": {},
+ "requires": [],
+ "conflicts": [],
+ "build": {
+  "sources": {
+   "core.s": "dd0074e9b08a254838feae6215404e775ba7ef7aa2afbcce1e5c24794eebddc5",
+   "fw.s": "a63c9626d17acca2a5137f132ca88103293a33196831779320b142781a61710a",
+   "boot.s": "96efcf2a8f7cce3cd9fc3d2722df6a13482a1929710f6017214bf6c1f0f4c603"
+  }
+ },
+ "signature": null
+}

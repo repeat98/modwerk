@@ -16,7 +16,10 @@
 //   npm run test:procedure -- … --share SOCKET          # the unit session (npm run device -- serve --share SOCKET); default
 //                                                       # MODWERK_SHARE_SOCKET or /tmp/modwerk-share.sock. Without one: no unit steps
 //   npm run test:procedure -- … --no-unit               # leave the unit alone even when a session is shared
-//   npm run test:procedure -- … --emulator-socket SOCK  # step 5: an ot_emu USB bench (--usb-host) running a development base
+//   npm run test:procedure -- … --emulator OT_EMU --twin DIR   # step 5 by default: its own ot_emu session on a development twin
+//                                                       # (MODWERK_OT_EMU, MODWERK_OT_TWIN), steps 6, 7 and 10's cases run there
+//                                                       # first; without both it says what is missing. --no-emulator leaves it out
+//   npm run test:procedure -- … --emulator-socket SOCK  # step 5 as one trial on an ot_emu USB bench (--usb-host) you started
 //   npm run test:procedure -- … --target emulator --share SOCK --dev-socket SOCK   # steps 6 to 10 against an emulator session
 //                                                       # (npm run device -- serve --emulator): the same cases, never hardware evidence
 //   npm run test:procedure -- … --out DIR --soak-seconds 120 --scene "A01, Part 1, stopped"
@@ -36,6 +39,7 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
+import { emulatorArgs, sessionEnv, sessionSockets, startSession } from './octatrack-emulator/session.mjs'
 import { bankPrograms } from './octatrack-part-state.mjs'
 
 export const ROOT = resolve(import.meta.dirname, '..')
@@ -109,6 +113,26 @@ export const LAYER = { software: 'host', compat: 'contract', build: 'host', 'cos
   'unit-pass': 'target', soak: 'target', 'cost-unit': 'unit', restore: 'target', 'by-hand': 'target', developer: 'unit' }
 const EMULATOR_FIGURES = 'the emulator\'s load figures are not the unit\'s (DMA is instant, no DSP timing): docs/OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools'
 
+/** Step 5's own emulator session: the adapted ot_emu and a development twin (its build folder or MAIN.raw), from the arguments
+ * or the environment, or what is missing and how to get it. Both stay on the developer's computer, never in Git. */
+export function rehearsal(values, env, exists = existsSync, read = path => readFileSync(path, 'utf8')) {
+  if (values['no-emulator']) return { missing: 'left out with --no-emulator' }
+  const emulator = values.emulator ?? env.MODWERK_OT_EMU, twin = values.twin ?? env.MODWERK_OT_TWIN
+  const image = twin && (twin.endsWith('.raw') ? resolve(twin) : join(resolve(twin), 'MAIN.raw'))
+  const gaps = [
+    !emulator ? 'no adapted ot_emu: build it once (scripts/octatrack-emulator/README.md) and set MODWERK_OT_EMU to it, or pass --emulator OT_EMU'
+      : !exists(resolve(emulator)) ? `no ot_emu at ${emulator} (MODWERK_OT_EMU or --emulator)` : null,
+    !twin ? 'no development twin: build one outside Git (docs/OCTATRACK_DRIVING.md, the first paragraph) and set MODWERK_OT_TWIN to its folder, or pass --twin DIR'
+      : !exists(image) ? `no MAIN.raw at ${image} (MODWERK_OT_TWIN or --twin names a development twin's build folder)` : null,
+  ].filter(Boolean)
+  if (gaps.length) return { missing: gaps.join('; ') }
+  let identity
+  try { identity = JSON.parse(read(join(dirname(image), 'proofs.json'))).configurationHash?.slice(0, 16) } catch { /* a bare MAIN.raw */ }
+  return { emulator: resolve(emulator), image, identity }
+}
+/** Whether a .mwrm carries DSP code (its header's DSP length, as octatrack-qualify.py reads it): ot_emu then needs --dsp. */
+export const packageRunsDsp = bytes => bytes.length >= 36 && bytes.readUInt32BE(32) > 0
+
 const RYTM = 'sdk/machines/analog-rytm-mkii/tools/'
 const py = (...args) => ['python3', '-B', ...args]
 const rytmGap = (ctx, image) => !image ? 'no test image: step 3 named none' : !ctx.cases?.length ? `no cases: write them in ${RYTM}cases/${ctx.id}/ (TEST_RUNNER.md) or pass --cases DIR` : null
@@ -170,11 +194,21 @@ export function plan(step, ctx) {
     case 'cost-model':
       if (!ctx.tools?.cycleScan) return { skip: 'the DSP cycle scan (' + SCAN_TOOL + ') is not in this checkout: merge main' }
       return { commands: [node(SCAN_TOOL, 'check')] }
-    case 'emulator':
+    case 'emulator': {
       if (ctx.target === 'emulator') return { skip: 'steps 6 to 10 run on the emulator (--target emulator)' }
-      if (!ctx.emulatorSocket) return { skip: 'no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)' }
-      return { commands: [module ? node('scripts/device.mjs', 'try', pkg, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)
+      if (ctx.emulatorSocket) return { commands: [module ? node('scripts/device.mjs', 'try', pkg, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)
         : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--split', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true, failOn: REFUSED }
+      const r = ctx.rehearsal
+      if (!r || r.missing) return { skip: 'no emulator session: ' + (r?.missing ?? 'pass --emulator OT_EMU and --twin DIR') }
+      // Its own session (scripts/octatrack-emulator/session.mjs), and in it the unit's cases: read, the scripted pass, put back.
+      const sockets = sessionSockets(r.dir)
+      const emu = { ...ctx, target: 'emulator', share: sockets.share, devSocket: sockets.dev, out: join(ctx.out, 'emulator') }
+      const [read, pass, back] = ['unit-read', 'unit-pass', 'restore'].map(id => plan(STEPS.find(s => s.id === id), emu))
+      const commands = [...read.commands, ...pass.commands, ...back.commands]
+      return { commands, emulator: true, failOn: pass.failOn, same: [read.commands.length - 1, read.commands.length + pass.commands.length + (back.compareAt ?? 0)], env: sessionEnv(sockets),
+        session: { emulator: r.emulator, image: r.image, dir: r.dir, dsp: module ? undefined : true, package: pkg },
+        twin: `the development twin ${r.identity ?? r.image} in ot_emu, not hardware evidence` }
+    }
     case 'unit-read':
       return { commands: [node('scripts/device.mjs', 'status', '--socket', ctx.share), partRead(ctx), node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)], why: NOT_PUT_BACK }
     case 'unit-pass':
@@ -245,16 +279,27 @@ export async function runSteps(ids, ctx, deps, results = []) {
     const started = deps.now()
     const log = join(ctx.out, 'logs', `${String(STEPS.indexOf(step) + 1).padStart(2, '0')}-${step.id}.log`)
     result.log = relative(ctx.out, log)
+    // Step 5's own emulator session: one that does not start leaves the step not run, with why; the change is not at fault.
+    let session, lost
+    if (p.session) {
+      try { session = await deps.session(p.session, log) } catch (error) {
+        result.reason = 'the emulator session did not start: ' + error.message + ' (' + p.twin + ')'
+        result.seconds = Math.round((deps.now() - started) / 100) / 10
+        continue
+      }
+      session.ended?.then(why => { lost = why })
+    }
+    const env = p.env ?? ctx.env
     try {
       let trial
       if (p.trial) {
-        trial = deps.start(p.trial, log, ctx.env)
+        trial = deps.start(p.trial, log, env)
         await trial.waitFor(/^trial:.*running$/m, 60000)
       }
       const outputs = [], codes = []
       let code = 0
       for (const argv of p.commands) {
-        const run = await deps.exec(argv, log, ctx.env)
+        const run = await deps.exec(argv, log, env)
         outputs.push(run.output ?? ''); codes.push(run.code)
         if (run.code !== 0) { code = run.code; result.reason = (p.why && (run.output ?? '').match(p.why)?.[0].slice(0, 400)) || `exit ${run.code}: ${shown(argv)}`; break }
       }
@@ -283,10 +328,19 @@ export async function runSteps(ids, ctx, deps, results = []) {
           code ||= 1
         }
       }
+      if (code === 0 && p.same) {
+        const [first, last] = p.same.map(index => reading(outputs[index]))
+        if (JSON.stringify(first) !== JSON.stringify(last)) { code = 1; result.reason = 'the inventory differs from the one read first: ' + JSON.stringify(first) + ' then ' + JSON.stringify(last) }
+      }
       result.status = code === 0 ? 'passed' : 'failed'
     } catch (error) {
       result.status = 'failed'
       result.reason = error.message
+    }
+    if (session) {
+      await session.stop()
+      if (result.status === 'failed' && lost) result.reason += '; ' + lost
+      result.reason = result.reason ? result.reason + ' (' + p.twin + ')' : p.twin
     }
     result.seconds = Math.round((deps.now() - started) / 100) / 10
   }
@@ -488,6 +542,8 @@ export function context(root, values, positionals, env = process.env) {
   }
   const stamp = new Date().toISOString().slice(0, 10)
   ctx.out = resolve(values.out ?? join(tmpdir(), 'modwerk-procedure', `${ctx.id ?? ctx.machine + '-base'}-${stamp}-${ctx.build.revision.slice(0, 8)}`))
+  // Step 5's session sockets go in a short folder of their own: a Unix socket path is limited to about 104 characters.
+  if (!other(ctx)) ctx.rehearsal = { ...rehearsal(values, env), dir: join(tmpdir(), 'mw-emu-' + process.pid) }
   ctx.unit = values['no-unit'] ? { available: false, reason: 'left alone with --no-unit' }
     : other(ctx) ? (values.link ? { available: true } : { available: false, reason: MACHINE_STEPS[ctx.machine]?.['unit-read'] ? 'no --link: pass it to drive the unit over its development link (a RAM boot restarts it: with its owner\'s OK)' : GAP.unit(ctx.machineName) })
     : /^\d+$/.test(share) || existsSync(share) ? { available: true }
@@ -527,6 +583,14 @@ function realDeps(root) {
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
     exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
+    session: async (spec, log) => {
+      const { package: pkg, ...own } = spec
+      const dsp = own.dsp ?? packageRunsDsp(readFileSync(pkg))
+      mkdirSync(dirname(log), { recursive: true })
+      const line = `ot_emu session: ${shown([own.emulator, ...emulatorArgs({ image: own.image, bench: sessionSockets(own.dir).bench, dsp })])}, then device.mjs serve --emulator\n`
+      appendFileSync(log, '$ ' + line); console.log('\n$ ' + line.trimEnd())
+      return startSession({ ...own, dsp, log: text => { process.stdout.write(text); appendFileSync(log, text) } })
+    },
     // Another session's turn (not a hold of this checkout's): its first line, which the run prints, else null.
     unitBusy: async () => {
       const { checkoutOf, describe } = await import('./unit-queue.mjs'), queue = describe()
@@ -561,13 +625,14 @@ const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, publis
   share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, 'soak-programs': { type: 'string' },
   'soak-pc-channel': { type: 'string' }, 'soak-auto-channel': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' },
   'price-modules': { type: 'string' }, 'price-base': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
-  stock: { type: 'string' }, elemod: { type: 'string' }, label: { type: 'string' }, link: { type: 'boolean' }, cases: { type: 'string' }, emu: { type: 'string' } }
+  stock: { type: 'string' }, elemod: { type: 'string' }, label: { type: 'string' }, link: { type: 'boolean' }, cases: { type: 'string' }, emu: { type: 'string' },
+  emulator: { type: 'string' }, twin: { type: 'string' }, 'no-emulator': { type: 'boolean' } }
 
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
   if (values.help || (!values.base && !positionals.length)) {
     console.log('Usage: npm run test:procedure -- <module id> | FILE.mwrm | --base [machine]  [--plan] [--package FILE] [--published] [--share SOCKET] [--no-unit]\n' +
-      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b] [--price-base TEXT]\n' +
+      '         [--emulator OT_EMU --twin DIR | --no-emulator | --emulator-socket SOCK] [--target unit|emulator] [--dev-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b] [--price-base TEXT]\n' +
       '         another machine: [--stock STOCK.syx --elemod BASE.elemod --label XX01] [--link] [--cases DIR] [--emu DTBOOT]   (docs/TEST_PROCEDURE.md)')
     process.exit(values.help ? 0 : 2)
   }
@@ -584,7 +649,8 @@ async function main() {
     console.log(`The test procedure for ${ctx.kind === 'base' ? 'the ' + (ctx.machineName ?? 'Octatrack') + ' base' : ctx.id + (other(ctx) ? ' (' + ctx.machineName + ')' : '')} (docs/TEST_PROCEDURE.md). Steps 6 to 10 on the ${ctx.target}: ${ctx.unit.available ? (other(ctx) ? 'its development link' : 'a session on ' + ctx.share) : ctx.unit.reason}.`)
     STEPS.forEach((step, index) => {
       const p = plan(step, ctx)
-      const how = p.todo ? 'by hand: ' + p.todo.join('; ') : p.skip ? 'not run: ' + p.skip : step.unit && !ctx.unit.available ? 'not run: ' + ctx.unit.reason : p.inside ? p.note : [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown).join('  then  ') || 'hash ' + (ctx.pkg ?? 'the built package')
+      const how = p.todo ? 'by hand: ' + p.todo.join('; ') : p.skip ? 'not run: ' + p.skip : step.unit && !ctx.unit.available ? 'not run: ' + ctx.unit.reason : p.inside ? p.note
+        : (p.session ? 'its own session (' + p.twin + '): ' : '') + ([...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown).join('  then  ') || 'hash ' + (ctx.pkg ?? 'the built package'))
       console.log(`${String(index + 1).padStart(2)}. ${titleOf(step, ctx)} [${LAYER[step.id] === 'target' ? ctx.target : LAYER[step.id]}]: ${how}`)
     })
     return

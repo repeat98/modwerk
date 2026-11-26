@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "imageSha256": "eeb99e384900b6683fb853557d956161e5d03a467dbe77207624e9914adb6bef",
+  "imageSha256": "d343d813e212ff9d8c4595cac479efb57da0047edd89ce8bd6ef1ff16e828a3f",
   "sources": {
     "module/base_binding.c": "217dc052fbdffd80733c852550596fa6f1207d7921647a25f89077a23f5bbf7e",
     "module/base_binding.h": "ba584ceb7b5616a819db330303fc89228f75254aa9cd2158a77fd550a4a05e61",
@@ -16,7 +16,7 @@
     "module/machine.c": "4877588007cd5f7cda73bcf4d925f03b70379f07b19f3405aca27d6564eff36f",
     "module/machine.h": "5d77969beb3aa41b359facfa9d4e267d3d986f2d306c9264a65b1d2cc98cb854",
     "module/native_source.h": "071d9aee84067d5c165606e555d007c737a8c7aef99811ed3fce926e1ee9f8ab",
-    "module/registration.c": "3f9ffc31540e5a47da3fad1128ec17c28bb9816d930dd6d2062a97f7b558b34f",
+    "module/registration.c": "248393a35a2ae39c3d99cf2b8d337c2883b740378bfd0f7ed083bcb8d9f90e7e",
     "module/render.c": "fa4cff0f3b0aa8df3db966bbb9d777b874e39052c12679a814b11d3968f134ce",
     "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
     "module/runtime-build.json": "28458553c69014d31c67cfae3dfff72d96cd16392db749ad03e80e0e5c6c3b97",
@@ -63,35 +63,35 @@
       "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-      "offset": 14674,
+      "offset": 14830,
       "length": 12,
       "address": 1074093666,
       "sha256": "cd309c74b16baa09c3d70ddd23ce1bd3fec58f9facb94cd9ca93eaeabcab993b",
       "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-      "offset": 14686,
+      "offset": 14842,
       "length": 13,
       "address": 1073821810,
       "sha256": "a517b1ff860128401ddcb25f632699d7ba2288ca974b6dbfa3999254aff49af6",
       "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-      "offset": 16508,
+      "offset": 16664,
       "length": 14,
       "address": 1074362300,
       "sha256": "9e3dd6327de2534128db7663c70f00d765756b788a6ef05047e2857e5963ef78",
       "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-      "offset": 18526,
+      "offset": 18682,
       "length": 12,
       "address": 1074632928,
       "sha256": "46b13fd6f448673e784e0a160137853a497770078ee9f9796b6d893b0d5594bb",
       "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-      "offset": 18538,
+      "offset": 18694,
       "length": 1,
       "address": 1073742859,
       "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
@@ -101,7 +101,7 @@
   "fills": [],
   "baseImports": [
     {
-      "offset": 14660,
+      "offset": 14816,
       "name": "mw_stock_pool_open",
       "addend": 0
     }

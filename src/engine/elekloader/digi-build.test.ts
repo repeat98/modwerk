@@ -3,15 +3,17 @@ import { DIGI_MODS } from '../../devices/digi-mods'
 import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
-import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled } from './protocol'
+import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled, digiDownloadsOpen, isCoreBuildPreview } from './protocol'
 import { baseVariant, rytmVariant } from './machine-build'
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json'
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
+import CYCLES_BASE from '../../../sdk/machines/model-cycles/base-binding.json'
 
 const PLAIN = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.plain.slice(0, 8) + '.elemod'
 const SEND_BUS = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants['send-bus'].slice(0, 8) + '.elemod'
 const VOICES = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.voices.slice(0, 8) + '.elemod'
 const DT2 = 'modwerk-base-digitakt-ii-' + DT2_BASE.identity.slice(0, 8) + '.elemod'
+const CYCLES = 'modwerk-base-model-cycles-' + CYCLES_BASE.identity.slice(0, 8) + '.elemod'
 
 describe('the vendored elekloader catalog', () => {
   it('pins a core for every supported Digitakt and Digitone release', () => {
@@ -38,6 +40,22 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('digitakt-ii', '1.17', []).core?.file).toBe(DT2)
     expect(planBuild('digitakt-ii', '1.16', []).core).toBeUndefined()
     expect(planBuild('digitakt-ii', '1.16', ['perform-direct']).missing).toEqual(['perform-direct'])
+  })
+  it('plans the Model:Cycles core build on the pinned Modwerk base, not core-mc 0.3', () => {
+    expect(planBuild('model-cycles', '1.13', [])).toMatchObject({
+      core: { file: CYCLES, sha256: CYCLES_BASE.identity, id: 'core', version: '0.3', device: 'model-cycles', os: '1.13' },
+      mods: [], missing: [],
+    })
+    expect(baseVariant('model-cycles', [])).toBe('base')
+    // a research preview: the page builds the base alone; beta testers download it, everyone else waits for review
+    expect(isCoreBuildPreview('model-cycles')).toBe(true)
+    expect(digiDownloadsEnabled('model-cycles')).toBe(false)
+    expect(digiDownloadsOpen('model-cycles', true)).toBe(true)
+    expect(digiDownloadsOpen('model-cycles', false)).toBe(false)
+    // the beta list opens nothing else, and a released machine stays open without the beta
+    expect(digiDownloadsOpen('digitakt-ii', true)).toBe(false)
+    expect(digiDownloadsOpen('digitakt', false)).toBe(true)
+    expect(digiDownloadsOpen('constructor', true)).toBe(false)
   })
   it('reports modules without a file for the chosen release', () => {
     expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })
@@ -371,7 +389,7 @@ describe('the vendored elekloader catalog', () => {
     })
   })
   it('keeps download approval specific to each device', () => {
-    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true })
+    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true, 'model-cycles': false })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
     expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(true)
     expect(digiDownloadsEnabled('unknown-device')).toBe(false)

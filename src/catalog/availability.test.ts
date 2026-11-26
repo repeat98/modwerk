@@ -1,6 +1,8 @@
 import { moduleBuildError } from './build-support'
 import { describe, expect, it } from 'vitest'
-import { AVAILABLE_MODULES, availableModules, BETA_MODULE_IDS, PAUSED_MODULE_IDS, isBetaModule, isModuleAvailable, moduleAvailabilityError } from './availability'
+import { AVAILABLE_MODULES, availableModules, BETA_MODULE_IDS, PAUSED_MODULE_IDS, PAUSED_MODULE_NOTICES, isBetaModule, isModuleAvailable, isModuleListedPaused, listedModules, moduleAvailabilityError, pausedBlock, withPausedBlocks } from './availability'
+import { refusesAdd } from './add-blocks'
+import { limitBlock } from './set-limit'
 import { MODULES, REMOVED_MODULE_IDS, resolveSelection } from './modules'
 import { newConfiguration, validateConfiguration } from '../config/workspace'
 
@@ -23,7 +25,7 @@ describe('temporary module availability', () => {
       expect(module.authorUrl).toBe('https://github.com/repeat98')
     }
     for (const id of [...PAUSED_MODULE_IDS, 'unknown']) expect(isModuleAvailable(id)).toBe(false)
-    expect(isModuleAvailable('poly8')).toBe(true) // offered again from 0.3.1 (#646)
+    expect(isModuleAvailable('poly8')).toBe(false) // paused again on 26 November 2026 until it is optimised
   })
   it('keeps every paused module in the catalog', () => {
     expect(resolveSelection(PAUSED_MODULE_IDS)).toHaveLength(PAUSED_MODULE_IDS.length)
@@ -49,7 +51,7 @@ describe('temporary module availability', () => {
       expect(moduleAvailabilityError([id], true)).toContain(name(id))
       expect(moduleAvailabilityError([id, 'airwindows-chorus'], true)).toContain(name(id))
     }
-    expect(moduleAvailabilityError(['poly8'], true)).toBe('')
+    expect(moduleAvailabilityError(['poly8'], true)).toContain('POLY8')
     expect(isModuleAvailable('airwindows-chorus', true)).toBe(true)
     expect(moduleAvailabilityError(['airwindows-chorus'], true)).toBe('')
     expect(moduleBuildError(['airwindows-chorus'])).toBe('')
@@ -66,5 +68,23 @@ describe('temporary module availability', () => {
       expect(PAUSED_MODULE_IDS).not.toContain(id)
       expect(isModuleAvailable(id, true)).toBe(false)
     }
+  })
+  it('lists a paused module with a notice, with its add locked and the notice as the reason', () => {
+    expect(Object.keys(PAUSED_MODULE_NOTICES)).toEqual(['poly8'])
+    for (const id of Object.keys(PAUSED_MODULE_NOTICES)) expect(PAUSED_MODULE_IDS).toContain(id)
+    expect(listedModules().map(module => module.id)).toEqual(MODULES.map(module => module.id).filter(id => isModuleAvailable(id) || id === 'poly8'))
+    expect(listedModules().map(module => module.id)).not.toContain('stem-rec')
+    expect(isModuleListedPaused('poly8')).toBe(true)
+    expect(isModuleListedPaused('stem-rec')).toBe(false)
+    expect(isModuleListedPaused('euclid')).toBe(false)
+    const block = pausedBlock('poly8')!
+    expect(refusesAdd(block)).toBe(true)
+    expect(block).toMatchObject({ kind: 'paused', reason: PAUSED_MODULE_NOTICES.poly8.reason, detail: PAUSED_MODULE_NOTICES.poly8.detail })
+    expect(block.detail).toContain('CPU')
+    expect(pausedBlock('euclid')).toBeUndefined()
+    // The pause outranks the set limit, and leaves every other module's note alone.
+    const blocks = withPausedBlocks({ poly8: limitBlock('poly8'), euclid: limitBlock('euclid') })
+    expect(blocks.poly8.kind).toBe('paused')
+    expect(blocks.euclid.kind).toBe('limit')
   })
 })

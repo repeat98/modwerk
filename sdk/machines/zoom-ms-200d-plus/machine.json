@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "zoom-ms-200d-plus",
+  "order": 310,
+  "name": "MS-200D+",
+  "family": "zoom",
+  "status": "open",
+  "summary": "A ZD2 pedal (stock effects are .ZD2 files); custom effects are not started. Its patch SysEx protocol (PTCF/EDTB) is read, decoded and written on hardware, the write confirmed through a power cycle.",
+  "steps": {
+    "format": "open",
+    "load": "open",
+    "mods": "open"
+  },
+  "stack": {
+    "base": "open",
+    "link": "started",
+    "flash": "open",
+    "loader": "open",
+    "status": "open",
+    "diagnostics": "open",
+    "tools": "open"
+  },
+  "research": [
+    {
+      "label": "thammer/zoom-explorer",
+      "url": "https://github.com/thammer/zoom-explorer",
+      "note": "MIT, by Thomas Hammer. The EDTB chunk's byte-reversed bitstream layout (on/off, 29-bit effect id, per-slot parameters) and its encoder, which this pedal's write path ports from, round-trip verified byte-identical across a full factory patch library before any hardware write."
+    },
+    {
+      "label": "mungewell/zoom-zt2",
+      "url": "https://github.com/mungewell/zoom-zt2",
+      "note": "MIT, by Simon Wood. decode_preset.py's Construct definitions for the PTCF/TXJ1/TXE1 patch container confirm the chunk layout read from this pedal; its SysEx tools are written for other ZD2 pedals and are not yet tried on this one."
+    }
+  ],
+  "art": {
+    "body": "pedal",
+    "encoders": 0,
+    "trigs": 0,
+    "knobs": 3
+  }
+}

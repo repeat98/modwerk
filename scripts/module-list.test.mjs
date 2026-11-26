@@ -182,6 +182,14 @@ describe('module:list', () => {
     expect(() => dspFigures('Not measured.', 'desk')).toThrow(/give --cycles, --cycles-kind, --state/)
   })
 
+  it('lists a hybrid FX2 effect as it lists a DSP effect, its package row marked octabam', async () => {
+    rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ kind: 'HYBRID' })
+    await list().promise
+    expect(read('scripts/build-module-packages.py').split('\n')[0]).toBe("ORDER = ['dark', 'tape', 'desk']")
+    expect(read('scripts/build-module-packages.py')).toContain("descriptor_guards.append(dict(id='desk'")
+    expect(json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === 'desk')).toEqual({ id: 'desk', slots: 'both', cycles: 226,
+      cyclesKind: 'executed', state: 32, buffer: 0, octabam: true, version: '0.1.0-experimental', path: 'octatrack-modules/desk/0.1.0-experimental.mwrm' })
+  })
   const refused = async (pattern, options, ids) => {
     const before = snapshot()
     await expect(list(ids, options).promise).rejects.toThrow(pattern)
@@ -190,7 +198,9 @@ describe('module:list', () => {
   }
   it('refuses a ColdFire module', async () => {
     rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ kind: 'CF_PATCH' })
-    await refused(/CF_PATCH module .*lists DSP effects only/)
+    await refused(/CF_PATCH module .*lists DSP effects and hybrid FX2 effects only/)
+    rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ manifest: MANIFEST('HYBRID').replace(/ {4}menu=MenuEntry\([\s\S]*?\n {4}\),\n/, '') })
+    await refused(/HYBRID module .*with no FX2 MenuEntry/)
   })
   it('refuses a missing draft', () => refused(/No draft named nope under sdk\/drafts/, {}, ['nope']))
   it('refuses a draft of a listed id', async () => {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// List an Octatrack DSP effect: the mechanical steps of moving a draft from sdk/drafts/<id>/ into the library, in one command.
+// List an Octatrack DSP effect, or a hybrid FX2 effect with ColdFire code: the mechanical steps of moving a draft from sdk/drafts/<id>/ into the library, in one command.
 //
 //   npm run module:list -- <id> [<id> ...]   moves each draft to sdk/octatrack/modules/<id>/ and its CHANGELOG.json to
 //                                            src/community/module-changelogs/<id>.json, deletes the scaffold's examples, and
@@ -107,12 +107,16 @@ function stockFacts(t) {
   return { ids: new Set(ids[1].split(',').map(item => item.trim()).filter(Boolean).map(Number)), names }
 }
 
+const freeIds = (stock, rows) => Array.from({ length: 0x1c }, (_, i) => i + 4).filter(i => !stock.ids.has(i) && !rows.some(row => row.fxId === i)).map(i => hex(i, 2))
+/** The FX2 ids in the build's range 0x04-0x1f that neither stock nor a listed module's recorded page guard holds. */
+export function freeFx2Ids(root) { const t = tree(root); return freeIds(stockFacts(t), recordedGuards(t)) }
+
 /** The guard's addresses from the manifest, and its hashes from guards already verified on the same donor and kind of slot. */
 export function deriveGuard(t, id, facts) {
   if (facts.fxId === undefined || facts.donor === undefined) refuse(`${id}: manifest.py's MenuEntry gives no fx2_id or donor_desc as a number; module:list reads both from it.`)
   const stock = stockFacts(t), rows = recordedGuards(t).filter(row => row.id !== id)
   const fxId = facts.fxId, donorAddress = facts.donor + DONOR_GUARD, fx2Slot = FX2_IDS + 4 * fxId
-  const free = Array.from({ length: 0x1c }, (_, i) => i + 4).filter(i => !stock.ids.has(i) && !rows.some(row => row.fxId === i)).map(i => hex(i, 2))
+  const free = freeIds(stock, rows)
   if (fxId < 0x04 || fxId > 0x1f) refuse(`${id}: FX2 id ${hex(fxId, 2)} is outside 0x04-0x1f.`)
   const taken = rows.find(row => row.fxId === fxId)
   if (taken) refuse(`${id}: FX2 id ${hex(fxId, 2)} is already ${taken.id}'s. Pick a free one in manifest.py (${free.join(', ') || 'none is left'}).`)
@@ -197,7 +201,9 @@ function plan(t, id, settings) {
   const folder = hasDraft ? draft : listed, changes = [], notes = []
   if (!t.exists(folder + '/manifest.py') || !t.exists(folder + '/octamod.module.json')) refuse(`${id} is not an Octatrack DSP module: ${folder} needs manifest.py and octamod.module.json.`)
   const facts = manifestFacts(t.text(folder + '/manifest.py')), doc = JSON.parse(t.text(folder + '/octamod.module.json'))
-  if (facts.kind !== 'DSP_EFFECT') refuse(`${id} is a ${facts.kind ?? 'unknown'} module (manifest.py kind=Kind.${facts.kind ?? '?'}); module:list lists DSP effects only. List it by hand: docs/ADD_A_MODULE.md, Octatrack, step 4.`)
+  // A HYBRID effect (a DSP effect with ColdFire code beside it, as BBD, Tape Echo and Midiverb) lists the same way, its row marked octabam.
+  const hybrid = facts.kind === 'HYBRID' && /\bmenu\s*=\s*MenuEntry\(/.test(t.text(folder + '/manifest.py'))
+  if (facts.kind !== 'DSP_EFFECT' && !hybrid) refuse(`${id} is a ${facts.kind ?? 'unknown'} module (manifest.py kind=Kind.${facts.kind ?? '?'}${facts.kind === 'HYBRID' ? ' with no FX2 MenuEntry' : ''}); module:list lists DSP effects and hybrid FX2 effects only. List it by hand: docs/ADD_A_MODULE.md, Octatrack, step 4.`)
   if (doc.id !== id) refuse(`${folder}/octamod.module.json names ${doc.id}, not ${id}.`)
   if (doc.key !== facts.key || doc.author?.github !== facts.author) refuse(`${id}: octamod.module.json's key and author (${doc.key}, ${doc.author?.github}) differ from manifest.py's (${facts.key}, ${facts.author}); the build refuses that.`)
   const version = doc.version
@@ -247,7 +253,7 @@ function plan(t, id, settings) {
   if (!packages.packages.some(row => row.id === id)) {
     const figures = dspFigures(t.exists(folder + '/TESTING.md') ? t.text(folder + '/TESTING.md') : '', id, settings.figures)
     const { from, ...dsp } = figures
-    const row = { id, slots: dsp.slots, cycles: dsp.cycles, cyclesKind: dsp.cyclesKind, state: dsp.state, buffer: dsp.buffer, version, path: `octatrack-modules/${id}/${version}.mwrm` }
+    const row = { id, slots: dsp.slots, cycles: dsp.cycles, cyclesKind: dsp.cyclesKind, state: dsp.state, buffer: dsp.buffer, ...(hybrid ? { octabam: true } : {}), version, path: `octatrack-modules/${id}/${version}.mwrm` }
     const after = packages.packages.findLastIndex(item => order.includes(item.id))
     packages.packages.splice(after < 0 ? packages.packages.length : after + 1, 0, row)
     t.write(PACKAGES, json(packages))

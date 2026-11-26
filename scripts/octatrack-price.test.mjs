@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -179,4 +179,10 @@ it('reads a curve with the module\'s each booked at 0 and every other figure as 
   // Unbooked: the unit charges it by its descriptor, and its table is left alone.
   expect(measuringCosts(list, 'syntiz')).toBeNull()
   expect(measuringCosts(null, 'grain')).toBeNull()
+})
+
+it('reads the Part\'s CPU allowance from the session\'s cpu reply, so a curve can put it back', () => {
+  expect(allowanceOf('allowance 45 %, booked 35 %, refused -\nguarded renders, longest since the last read: T1 53.2\n')).toBe(45)
+  expect(allowanceOf('allowance 400 %, booked 0 %, refused T3\n')).toBe(400)
+  expect(allowanceOf('error: this base does not answer CPU\n')).toBeUndefined() // then the curve leaves the allowance alone
 })

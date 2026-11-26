@@ -31,6 +31,7 @@ import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from 
 import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 import { qualifyProblems } from './module-qualify.mjs'
+import { freeFx2Ids } from './module-list.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -129,6 +130,19 @@ function octatrack(id) {
       'python3 -B ' + (draft ? 'sdk/drafts/' + id + failed[0].file.slice(folder.length) : failed[0].file) + ', and fix what it reports. A test_*.py runs with no arguments and no firmware, unit or emulator; rename a script that needs one (docs/ADD_A_MODULE.md, Host tests)')
     else ok('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ' pass (a test skips what this computer lacks a tool for)')
   } else info('host tests', 'none: a test_*.py in the module folder runs here and in npm run sdk:check')
+  // Its own scripts under npm run lint's rules, here and not first at pr:ready: an edit made after the evidence was stamped moves
+  // the source hashes it names, and the packages' fingerprint with them (25 November 2026: a two-line lint fix cost a rebuild).
+  const scripts = all ? [] : readdirSync(resolve(root, folder), { recursive: true }).filter(path => /\.[cm]?[jt]sx?$/.test(path) && !path.split(/[\\/]/).includes('node_modules'))
+  if (scripts.length) {
+    const lint = spawnSync(process.execPath, ['node_modules/eslint/bin/eslint.js', '--no-cache', '--format', 'json', ...scripts.map(path => folder + '/' + path)], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 })
+    let results = null
+    try { results = JSON.parse(lint.stdout) } catch { /* reported below */ }
+    const shown = draft ? 'sdk/drafts/' + id : folder
+    const errors = (results ?? []).flatMap(file => file.messages.filter(message => message.severity === 2).map(message => file.filePath.slice(resolve(root, folder).length + 1) + ':' + message.line + ' ' + message.message))
+    if (!results) fail('lint', 'eslint did not run: ' + ((lint.stderr || lint.error?.message || '').trim().split('\n').pop() || 'no output'), 'npm ci, then run this again')
+    else if (errors.length) fail('lint', errors.length + ' error' + (errors.length === 1 ? '' : 's') + ', first: ' + errors[0], 'npx eslint ' + shown + ', and fix them before you measure or stamp anything')
+    else ok('lint', scripts.length + ' script' + (scripts.length === 1 ? '' : 's') + ' pass npm run lint\'s rules')
+  }
   // No gate can see how an effect sounds, so this only points at the check and says whether TESTING.md already answers it.
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''
@@ -262,6 +276,7 @@ function octatrack(id) {
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
   const compared = withId.length > 0 || (entry && !paused)
   if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.12+, then npm run modules:compat')
+  else if (clashes.length && clashes[0].text.includes('FX2 id') && !freeFx2Ids(root).length) fail('cross-compatibility', clashes[0].text + ', and no FX2 id is left: stock and the listed modules hold 0x04-0x1f, all the build takes', 'a new effect waits until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md); ask the owner on Discord')
   else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- --with ' + id + ' lists every one')
   else if (!compared) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
   else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat' + (entry && !paused ? '' : ' -- --with ' + id) + ')')
@@ -312,7 +327,7 @@ function machineModule({ id, machine, folder, zdl = false }) {
 // Two tiers. A draft is experimental: to try it on your unit and share it with testers, it needs these lines green (it is what it
 // says it is, it follows the category's rules and DSP traps, it installs beside every other module and the base, and nobody else
 // holds it). Every other line is what listing it needs; for a draft they read as still to do (○) until --release.
-const EXPERIMENTAL = new Set(['category guide', 'category', 'sound quality', 'dsp sources', 'cross-compatibility', 'hook migration', 'ui claims', 'conflicts', 'board claim', 'board messages'])
+const EXPERIMENTAL = new Set(['category guide', 'category', 'sound quality', 'dsp sources', 'lint', 'cross-compatibility', 'hook migration', 'ui claims', 'conflicts', 'board claim', 'board messages'])
 const symbol = { ok: '✓', fail: '✗', info: '·', later: '○' }
 const print = line => {
   console.log('  ' + symbol[line.state] + ' ' + line.name.padEnd(20) + line.detail)

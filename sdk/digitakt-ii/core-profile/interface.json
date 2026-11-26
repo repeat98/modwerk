@@ -72,6 +72,15 @@
       "when": "After the OS constructs a supported audio note, on PLAY and subsequent steps, before the note enters the stock queue.",
       "handler": "int32_t handler(const struct dt2_seq_note_context *context, uint32_t pitch); return a pitch from 0 through 127, or leave the current pitch unchanged with an out-of-range result. The context is read-only.",
       "order": "Four slots, in ascending contribution order. Each callback sees the previous accepted pitch."
+    },
+    {
+      "name": "ev_audio_frame",
+      "since": "1.1",
+      "when": "on the ColdFire audio frame path, immediately before the stock DSP transfer",
+      "handler": "void f(unsigned int data_bytes, const void *data, unsigned int frame_bytes, const void *reply)",
+      "order": "lower subscription order first; linker breaks ties by module ID and contribution order",
+      "room": 4,
+      "purpose": "The arguments are the original stock transfer arguments and are borrowed for this call. A subscriber may update its own preallocated state and its explicitly reserved DSP frame-tail data words only. Preserve stock data, command words and reply storage. Do not allocate, block or retain the pointers."
     }
   ],
   "tables": [
@@ -140,6 +149,20 @@
       "purpose": "Pointers to fixed-size project save/load descriptors.",
       "entry": 4,
       "room": 4
+    },
+    {
+      "name": "core_mixer_pages",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Null-terminated pointers to dt2_mixer_extension descriptors, each holding a native page descriptor and void draw(void *view, void *bitmap). The UI reads the table when constructing the Mixer page list and dispatches draw for the active registered page. Lower contribution order first, ties by module ID and contribution order. The renderer may draw into its own page bitmap and update module-owned state; the view is borrowed and stock navigation and page state are read-only."
+    },
+    {
+      "name": "core_machines",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Null-terminated pointers to struct dt2_machine records (mk2/machines.h): track machines added after the seven stock types, each with its own machine type 7-10 (claimed as machine:<type>, saved with kits), the stock type it stands for, its names and its five knob names on the stand-in's parameters. The base lists them in the machine menu, keeps them through kit load, shows their knob names while a page shows that machine and, when the module's package carries a build.sharc player, sends their voices to it on the sound chip through that type's registry slot; without one they play as the stock type they stand for."
     }
   ],
   "exports": [
@@ -171,6 +194,24 @@
       "since": "1.1",
       "prototype": "uint32_t core_kitdata_room(void)",
       "purpose": "Bytes a kit record holds for the mods' blocks (143)."
+    },
+    {
+      "name": "core_machine_view_track",
+      "since": "1.1",
+      "prototype": "volatile uint32_t core_machine_view_track (mk2/machines.h)",
+      "purpose": "The track (0-15, or DT2_MACHINE_VIEW_NONE) whose voice the machine players on the sound chip post in core_machine_view. A module's page sets it from the UI task while it shows that track; the base sends it with every transfer."
+    },
+    {
+      "name": "core_machine_view",
+      "since": "1.1",
+      "prototype": "volatile uint32_t core_machine_view[DT2_MACHINE_VIEW_WORDS] (mk2/machines.h)",
+      "purpose": "32 words a machine player posted about the view track's voice, as of the last transfer's reply. Read-only. The player's own magic first, then the track the words describe; anything else is the player's. A view naming another track, or another magic, is not this module's."
+    },
+    {
+      "name": "core_machine_sample_views",
+      "since": "1.1",
+      "prototype": "volatile uint32_t core_machine_sample_views (mk2/machines.h)",
+      "purpose": "Counts the SRC page's sample view as it draws: it changes in every frame composed while the second page shows and in no other, so an ev_draw handler that sees it changed since its last call may draw over the sample view of the current track. Read-only."
     },
     {
       "name": "core_store_conflicts",
