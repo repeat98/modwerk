@@ -612,7 +612,16 @@
         ]
       },
       "version": "0.1.0-experimental",
-      "path": "octatrack-modules/ungemach/0.1.0-experimental.mwrm"
+      "path": "octatrack-modules/ungemach/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "ungemach",
+      "module": "ee55bea9",
+      "bytes": 90492,
+      "sha256": "37d7a278b8391e9307111a97745c444ca081528aebfc3f2bcf8ac7ff2012cbdd"
     },
     {
       "id": "track-solo",
