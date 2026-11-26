@@ -155,6 +155,14 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
   hash: 'The module arrived damaged. Nothing changed; send it again.',
   rejected: 'The Octatrack can’t run this module file.',
 }
+/** An `unsafe` refusal in the musician's words, from what the base says kept the change from beginning (the self-test
+ * record's `busy`, runtime.h MACHINE_BUSY_*, base 0.8.2 on): a recorder names its track. */
+export function unsafeText(busy = 0) {
+  const reason = busy & 15
+  if (reason === 1 || reason === 2) return `Track ${(busy >> 4) + 1}’s recorder is still recording. Let it finish or press STOP, then try again.`
+  if (reason === 5) return 'The Octatrack is still finishing its last change. Try again in a few seconds.'
+  return REFUSED.unsafe!
+}
 /** Why the loader rejected a module, read from the base after a "rejected": the musician's text for each of the
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
@@ -898,8 +906,12 @@ export class OctatrackLink {
       try { clean = await this.cleanUp(settled) } catch { clean = false }
     }
     if (connection !== this.connection) return
-    const record = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
-      await this.transport?.selftest(false).catch(() => undefined) : undefined, why = record?.refusal
+    // After `unsafe` the record says what kept the change from beginning (base 0.8.2 on): a stopped unit was refused
+    // until a power cycle with nothing in the log to say why (#2211).
+    const refusedAs = error instanceof UploadDeviceError ? error.status.result : undefined
+    const record = refusedAs && ['rejected', 'backend', 'unsafe'].includes(refusedAs) ?
+      await this.transport?.selftest(false).catch(() => undefined) : undefined
+    const why = refusedAs === 'unsafe' ? undefined : record?.refusal, busy = refusedAs === 'unsafe' ? record?.busy : undefined
     if (connection !== this.connection) return
     const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal;
@@ -911,13 +923,13 @@ export class OctatrackLink {
     const cause = error instanceof UploadUnconfirmedError ? error.cause : error
     const detail = cause instanceof VendorTransportError ? cause.cause ?? cause : cause
     this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' || label === 'transport' ? {kind: diagnosticErrorKind(detail)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
-      ...(counts ? {usb: counts} : {}),
+      ...(busy !== undefined ? {busy} : {}), ...(counts ? {usb: counts} : {}),
       ...(failed && isStagingCommand(failed.command) ? {upload: { command: failed.command,
         ...(failed.chunkOffset !== undefined ? {chunkOffset: failed.chunkOffset} : {}), ...(remaining !== undefined ? {remainingBytes: remaining} : {}) }} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (why === 0 && record?.saved === 0 ? NOT_RESTORED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
+    const text = recovered && clean ? RECOVERED : (refusedAs === 'unsafe' ? unsafeText(busy) : why === 0 && record?.saved === 0 ? NOT_RESTORED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
       (why === RUNTIME_IN_USE ? record?.inUseSlot ? inUseSlotHint(record.inUseSlot, this.replaced) : inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) {
       const notice = { tone: 'error', text } as const

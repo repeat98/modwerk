@@ -36,7 +36,9 @@ struct selftest {
                                      * alone, or the dearest of the batch that overloaded or ran late */
     char culprit_name[16];          /* its name as the chooser shows it, empty when it brings no effect */
     uint32_t refusal;               /* now: the loader's last refusal (loader.h), so a host can say why it refused; with
-                                     * RUNTIME_IN_USE, bits 16-23 the slot that runs it (1-8 FX1 of T1-T8, 9-16 FX2, 0 unknown) */
+                                     * RUNTIME_IN_USE, bits 16-23 the slot that runs it (1-8 FX1 of T1-T8, 9-16 FX2, 0 unknown);
+                                     * in the copy a host reads (ep0.c), bits 24-31 what keeps a change from beginning now
+                                     * (runtime.h MACHINE_BUSY_*, 0 none) */
 };
 typedef char selftest_size[sizeof(struct selftest) == 96u ? 1 : -1]; /* not a whole number of 64-byte EP0 packets */
 extern volatile struct selftest modwerk_selftest;

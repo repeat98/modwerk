@@ -227,6 +227,11 @@ export interface OctatrackDiagnostic {
   error?: typeof DIAGNOSTIC_ERRORS[number]
   result?: typeof DIAGNOSTIC_RESULTS[number]
   refusal?: number
+  /** A `sync_failed` the base refused as `unsafe`: what kept the change from beginning, as the base's self-test record
+   * said right after (runtime.h MACHINE_BUSY_*: 1 a track's recorder records, 2 its other recorder row is pending or
+   * unknown, 3 the transport runs, 4 a track runs, 5 the loader's journal is busy), the track (0-15) in the high
+   * nibble; 0 nothing any more, or a base before 0.8.2. */
+  busy?: number
   reading?: DiagnosticReading
   /** On `health` after a start that loaded only part of the card's set (`reading.saved` 6 or 10): each module that start
    * left out (the base's RESTORE request), by catalogue id or `other`, with the loader's refusal (256 the boot guard) and

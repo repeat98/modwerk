@@ -209,6 +209,18 @@ describe('sending a module', () => {
     unit.playing = true; await link.update('PREVIEW VOL', one)
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback or finish recording on the Octatrack to continue.' } })
   })
+  it('says and records what kept an unsafe sync from beginning, as base 0.8.2 reports it (#2211)', async () => {
+    for (const [busy, text] of [[0x31, /^Track 4’s recorder is still recording\. Let it finish or press STOP/], [0x72, /^Track 8’s recorder/],
+      [3, /^Stop playback or finish recording/], [0x94, /^Stop playback or finish recording/], [5, /still finishing its last change/],
+      [0, /^Stop playback or finish recording/]] as const) {
+      const { unit, link } = await linked(), failures: unknown[] = []
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ result: event.result, busy: event.busy, refusal: event.refusal }) })
+      unit.playing = true; unit.busy = busy
+      await link.update('PREVIEW VOL', one)
+      expect(link.getState().notice).toMatchObject({ tone: 'error', text: expect.stringMatching(text) })
+      expect(failures).toEqual([{ result: 'unsafe', busy, refusal: undefined }])
+    }
+  })
   it('installs an update without running a self-test', async () => {
     const { link } = await linked(), seen: string[] = []
     link.subscribe(() => { seen.push(link.getState().status) })
