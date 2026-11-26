@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "repitch",
+  "version": "0.2.2-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "Not counted in chip cycles: the owner waived chip worst-case cycles for 0.2.2 (sdk/approvals/repitch-build-approval.json, chip-worst-case-cycles), as for 0.2.1. Repitch's frame-interrupt work is its ev_play_increment handler (repitch_play_increment), which sets a REPITCH track's playback increment when the increment builder recomputes; while repitch_in_use answers 0 the base puts stock's bytes back under rate_gate and pitch_gate and the handler leaves the frame. repitch_in_use runs on the UI tick, outside the frame interrupt. In the ColdFire interpreter, on the 0.2.2 build before the 25 November 2026 sweep trim (package c97b00a4), 288 playback-increment cases took at most 28 instructions in the handler, and 3,072 stored Part and track cases with 5,760 sample lookups took at most 489 instructions for the all-active sweep of repitch_in_use. The trimmed sweep (half a Part a tick, at most 6 bank reads) was not counted; five emulator calls of it pass (TESTING.md)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "No cfmeter.py capture under a flood; the owner waived current-build hardware evidence for 0.2.2. Measured instead with npm run device:price on the owner's MKII (OS 1.40C), development twin be86323a of base 0.7.11, 20 November 2026, package c97b00a4 (0.2.2 before the 25 November sweep trim), A01 on Part 4 with seven triggered FLEX tracks, two 8 s windows: the frame interrupt read 51.4 % and 51.4 % with no module, 51.6 % and 51.5 % with Repitch installed and used nowhere (+0.2 and +0.1 points), against +2.2 for the published 0.2.1 on the same base and scene, with zero skipped renders in all five windows. In use, on a development twin (9203cdf6) of base 0.7.14, 22 November 2026, a scene where T5's loop resolves REPITCH: 0.2.1 and 0.2.2 both added +2.7 points (42.1 % against 39.4 %). The trimmed build was not measured on the unit; on 25 November the untrimmed sweep added about 20 us to every UI tick (development twin 493c9cc5 of base 0.8.1, stopped, profile:3), which the trim addresses."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No MIDI flood ran: Repitch has no MIDI path of its own, and the owner waived current-build hardware evidence for 0.2.2. Its stress is playback across Part and project changes, run on the owner's MKII (OS 1.40C, development twin be86323a of base 0.7.11, 21 November 2026, package c97b00a4, 0.2.2 before the sweep trim), every trial rolled back: 12 Part switches and Undo in a RAM trial; T1 and T5 on RPCH together, 5,855 frames with zero skipped renders; T1 switched to OFF left T5 on RPCH; with Repitch, Euclid and Tape Echo installed, Part Reload, project Save and Reload kept every assignment, then playback read 42.0 % over 5,858 frames with zero skipped renders. Not run: a flood, the trimmed build, a power cycle, an MKI."
+  }
+}

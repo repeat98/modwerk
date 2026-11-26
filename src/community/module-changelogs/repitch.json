@@ -1,11 +1,11 @@
 [
   {
     "version": "0.2.2-experimental",
-    "date": "2026-11-20",
+    "date": "2026-11-26",
     "changes": [
       "Costs the Octatrack almost nothing while no track uses REPITCH: it rests until a track does.",
       "Any Part of the project with a track set to REPITCH keeps it awake, so Part and bank changes play as before. A sample whose own TIMESTRETCH is REPITCH, on a TSTR AUTO track, is seen only on the playing Part: brought in by a Part change while playing, its first moments may play at stock speed.",
-      "Not yet checked on a unit."
+      "Known issue: the resting was measured on an MKII on a build just before this one; this exact version has not run on a unit, and nobody has listened to a REPITCH track on it."
     ]
   },
   {
