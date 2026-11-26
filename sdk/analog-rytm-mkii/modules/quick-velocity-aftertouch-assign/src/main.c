@@ -1052,6 +1052,17 @@ QMA_UI static void scene_apply(void)
         if (((int (*)(void *, int, int))SCENE_GET_AT)(&scene_locker, scene_applied.e[i].track,
                                                       scene_applied.e[i].param) >= 0)
             scene_applied.valid = 0;
+    // Stock's table holds 48 locks for all scenes together (a slot is free when its track
+    // byte is above the FX track, 0x400b8558): with no room to put every lock back this
+    // YES applies afresh too, as PERF + YES does, and never undoes in part.
+    if (scene_applied.valid && scene_applied.scene == scene) {
+        int room = 0;
+        t = ((table_t)vcall(scenes, SCENES_TABLE))(scenes);
+        for (i = 0; i < SCENE_LOCKS; i++)
+            room += t[5 * i + 2] > FX_TRACK;
+        if (room < scene_applied.count)
+            scene_applied.valid = 0;
+    }
     if (scene_applied.valid && scene_applied.scene == scene) {
         scene_applied.valid = 0;
         for (i = 0; i < scene_applied.count; i++) {

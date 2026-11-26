@@ -1650,6 +1650,8 @@ QPERF_UI void qperf_project(int how, unsigned dropped)
     (void)dropped;
     hot.ready = 1;
     kit_changed = 1;
+    applied.valid = 0;                  // an undo is the old project's: flags only here,
+    improved_modulation_kit_changed();  // as for kit_changed
     hot.perf_rec_pattern = -2;          // a new project: the next block empties it
 }
 
