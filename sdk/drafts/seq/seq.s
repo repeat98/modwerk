@@ -119,6 +119,9 @@
         .set    SPRINTF,   0x40013a08
         .set    LPUSH,     0x40031494
         .set    LPOP,      0x4003146c
+        .set    KEY_CACHE, 0x46c7d8de   | 64 key records of 24 bytes, layer at +12
+        .set    LAYER_ROOT, 0x460d165c  | top layer record; next links at +0 and +12
+        .set    LREBUILD, 0x4003125c    | refill the key cache from LAYER_ROOT (LPUSH/LPOP end here)
         .set    SCRDIRTY,  0x46c7c72c
         .set    TEMPO24,   0x80001814   | entropy seed (same as RND NAME)
         .set    CLOCKEST,  0x80001818
@@ -1083,6 +1086,82 @@ close_orphan:
         pea     EF_LAYER
         jsr     LPOP
         addql   #4,%sp
+        lea     EF_LAYER,%a1
+        bsr.w   ef_unlink_stale
+        jsr     LREBUILD
+9:      rts
+
+| A layer stock pushed above one of ours (the TRACK hold under which
+| TRACK+PAGE opened SEQ, the clear list) keeps its next link at ours after
+| stock pops it. The base walks the layers from the root and the key cache
+| through both links and refuses to remove SEQ while one names it; point
+| such links at what ours linked to, as an unlink would. a1: our layer, just
+| popped. The walk reads only even addresses in RAM, as the base does.
+| LPOP refilled the key cache through the stale link, so callers refill it
+| again (LREBUILD) after this.
+        .set    UE_MAX, 64
+ef_unlink_stale:
+        lea     -(20+4*UE_MAX)(%sp),%sp
+        movem.l %d2-%d4/%a3-%a4,(%sp)
+        movea.l %a1,%a3
+        lea     20(%sp),%a4             | queue of layer records
+        moveq   #0,%d3                  | queued
+        movel   LAYER_ROOT,%d0
+        bsr.s   ue_add
+        movea.l #KEY_CACHE+12,%a1
+        moveq   #64,%d2
+1:      movel   (%a1),%d0
+        bsr.s   ue_add
+        lea     24(%a1),%a1
+        subql   #1,%d2
+        bne.s   1b
+        moveq   #0,%d4                  | visited
+2:      cmpl    %d3,%d4
+        bge.s   9f
+        movel   (%a4,%d4.l*4),%d0
+        movea.l %d0,%a0
+        cmpa.l  (%a0),%a3
+        bne.s   3f
+        movel   (%a3),(%a0)
+3:      cmpa.l  12(%a0),%a3
+        bne.s   4f
+        movel   12(%a3),12(%a0)
+4:      movel   (%a0),%d0
+        movel   12(%a0),%d2
+        bsr.s   ue_add
+        movel   %d2,%d0
+        bsr.s   ue_add
+        addql   #1,%d4
+        bra.s   2b
+9:      movem.l (%sp),%d2-%d4/%a3-%a4
+        lea     20+4*UE_MAX(%sp),%sp
+        rts
+
+| d0: a layer record to queue unless null, ours, odd, outside RAM, queued,
+| or the queue is full. Uses d1 and a0; keeps a1.
+ue_add:
+        tstl    %d0
+        beq.s   9f
+        cmpa.l  %d0,%a3
+        beq.s   9f
+        btst    #0,%d0
+        bne.s   9f
+        cmpil   #0x40000400,%d0
+        bcs.s   9f
+        cmpil   #0x47f00000-28,%d0
+        bhi.s   9f
+        moveq   #0,%d1
+1:      cmpl    %d3,%d1
+        bge.s   2f
+        cmpl    (%a4,%d1.l*4),%d0
+        beq.s   9f
+        addql   #1,%d1
+        bra.s   1b
+2:      moveq   #UE_MAX,%d1
+        cmpl    %d1,%d3
+        bge.s   9f
+        movel   %d0,(%a4,%d3.l*4)
+        addql   #1,%d3
 9:      rts
 
 
@@ -4774,6 +4853,9 @@ ef_cl_nolayer_off:
         pea     EF_CL_NO_LAYER
         jsr     LPOP
         addql   #4,%sp
+        lea     EF_CL_NO_LAYER,%a1
+        bsr.w   ef_unlink_stale
+        jsr     LREBUILD
 ecn_rts: rts
 
 | NO while CLEAR list is up (cancel layer on top of LISTPOP). One press:
@@ -5217,6 +5299,33 @@ ef_clear_finish:
         rts
 
 | ---- layer --------------------------------------------------------------
+| Stock's key and encoder dispatch keeps the key number in d2 across the
+| handler call and indexes the key cache with it afterwards; the handlers
+| below clobber d2-d7/a2-a6, so the layer tables call them through these.
+        .macro  kthunk name
+\name\()_k:
+        lea     -44(%sp),%sp
+        movem.l %d2-%d7/%a2-%a6,(%sp)
+        movel   56(%sp),-(%sp)
+        movel   56(%sp),-(%sp)
+        movel   56(%sp),-(%sp)
+        bsr.w   \name
+        lea     12(%sp),%sp
+        movem.l (%sp),%d2-%d7/%a2-%a6
+        lea     44(%sp),%sp
+        rts
+        .endm
+        kthunk  ef_yes
+        kthunk  ef_no
+        kthunk  ef_page_left
+        kthunk  ef_page_right
+        kthunk  ef_cue
+        kthunk  ef_midikey
+        kthunk  ef_trkkey
+        kthunk  ef_enc
+        kthunk  ef_level
+        kthunk  ef_cl_cancel
+
         .balign 4
 EF_LAYER:
         .long   0, EF_KEYS, EF_ENCS, 0, 0, -1, -1
@@ -5225,72 +5334,72 @@ EF_KEYS:
         | stock (never closes). Listing PAGE here swallows step banks.
 
         .byte   0x31, 0                 | YES
-        .long   ef_yes, 0, 0, 0, 0
+        .long   ef_yes_k, 0, 0, 0, 0
         .word   0, 0
         .byte   0x32, 0                 | NO
-        .long   ef_no, 0, 0, 0, 0
+        .long   ef_no_k, 0, 0, 0, 0
         .word   0, 0
         | LEFT/RIGHT switch SEQ knob pages. UP/DOWN / PROJ/PART/AED/ARR
         | remain omitted (a -1 row can break stock navigation).
         .byte   0x34, 0                 | LEFT (stock key id used by FUNC+LEFT)
-        .long   ef_page_left, 0, 0, 0, 0
+        .long   ef_page_left_k, 0, 0, 0, 0
         .word   0, 0
         .byte   0x21, 0                 | RIGHT
-        .long   ef_page_right, 0, 0, 0, 0
+        .long   ef_page_right_k, 0, 0, 0, 0
         .word   0, 0
         | Listing with 0 swallows; listing with -1 still stores aux=0
         | and has been seen to break DOWN after Euclid → PROJECT.
         .byte   0x2a, 0                 | CUE: press+release (0 swallows release)
-        .long   ef_cue, ef_cue, 0, 0, 0
+        .long   ef_cue_k, ef_cue_k, 0, 0, 0
         .word   0, 0
         .byte   0x35, 0                 | MIDI: forward through stock / SRC3 KEY
-        .long   ef_midikey, ef_midikey, 0, 0, 0
+        .long   ef_midikey_k, ef_midikey_k, 0, 0, 0
         .word   0, 0
         | BANK (0x2f): omit - FUNC+BANK is Detour / MKI SymbolRef only.
 | T1..T8: press+release both ef_trkkey (stock needs release to clear
 | HELD). On press, retarget SEQ only if UI_WINDOW still ef_win.
         .byte   0x10, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x11, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x12, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x13, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x14, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x15, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x16, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0x17, 0
-        .long   ef_trkkey, ef_trkkey, 0, 0, 0
+        .long   ef_trkkey_k, ef_trkkey_k, 0, 0, 0
         .word   0, 0
         .byte   0xff, 0
         .long   0, 0, 0, 0, 0
         .word   0, 0
 EF_ENCS:
         .byte   0, 0                    | A = PULSE
-        .long   ef_enc, 0, 0, 0, 0
+        .long   ef_enc_k, 0, 0, 0, 0
         .byte   1, 0                    | B = ROT
-        .long   ef_enc, 0, 0, 0, 0
+        .long   ef_enc_k, 0, 0, 0, 0
         .byte   2, 0                    | C = LANE
-        .long   ef_enc, 0, 0, 0, 0
+        .long   ef_enc_k, 0, 0, 0, 0
         .byte   3, 0                    | D = DEST
-        .long   ef_enc, 0, 0, 0, 0
+        .long   ef_enc_k, 0, 0, 0, 0
         .byte   4, 0                    | E = DEPTH
-        .long   ef_enc, 0, 0, 0, 0
+        .long   ef_enc_k, 0, 0, 0, 0
         .byte   5, 0                    | F = empty
-        .long   ef_enc, 0, 0, 0, 0
+        .long   ef_enc_k, 0, 0, 0, 0
         .byte   6, 0                    | LEVEL = noop
-        .long   ef_level, 0, 0, 0, 0
+        .long   ef_level_k, 0, 0, 0, 0
         .byte   0xff, 0
         .long   0, 0, 0, 0, 0
 
@@ -5328,7 +5437,7 @@ EF_CL_NO_LAYER:
         .long   0, EF_CL_NO_KEYS, 0, 0, 0, -1, -1
 EF_CL_NO_KEYS:
         .byte   0x32, 0                 | NO
-        .long   ef_cl_cancel, 0, 0, 0, 0
+        .long   ef_cl_cancel_k, 0, 0, 0, 0
         .word   0, 0
         .byte   0xff, 0
         .long   0, 0, 0, 0, 0
