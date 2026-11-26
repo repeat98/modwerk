@@ -37,7 +37,10 @@ them from the owner's own ROM, then runs [On the unit](#on-the-unit) and records
    generator). The packages land in `~/.cache/modwerk-local/quadraverb/pkg/qv-dev-<p>.mwrm`.
 5. **The 0.8.3 development twin** for `device:price` (and the listening, if the flashed base is older than 0.8.2):
    from a checkout of `base/octatrack-next` (PR #2246), with the owner's stock OS 1.40C and the pinned m68k
-   toolchain on PATH:
+   toolchain on PATH. In that shell too, `ELEKLOADER_DSP_ASM` as in step 1 (the build disassembles with
+   `dsp56kDisassemble` beside it), and a fresh worktree without `npm ci` needs `node scripts/mirror-octatrack-modules.mjs`
+   first (else `FileNotFoundError: 'modules'`). With the `serve` loop running, boot through it:
+   `scripts/device-send.py "boot <twin dir>"`.
 
    ```sh
    python3 -B sdk/machines/octatrack/elekloader/build_core.py --stock <OS1.40C.bin> \
@@ -116,7 +119,37 @@ the frame interrupt's share, and the sound on a unit.
 
 ## On the unit
 
-Not tested. The procedure for the owner and the developer (the agent does not drive the unit for these builds):
+### 26 November 2026, the owner's MKII: price measured, sound not yet heard
+
+Development twin `289c66b9124d9121…` of base 0.8.3 (`base/octatrack-next` `ae45a9724`), RAM-booted; flashed base
+`24e480c4…` with Tape Echo, Euclid and Air Chorus kept (untouched: no Keep, inventory empty after). The three
+packages rebuilt on the owner's computer from the 1.07 ROM: every engine.asm and package SHA-256 equals the table above
+(`28817e0e…`, `63b4b667…`, `3561a4bd…`), all three `verify_unit.py` PASS.
+
+`device:price --memory --readings 2 --seconds 6`. Scene: bank B pattern 1, Part 1 at the stock defaults (FILTER on
+FX1, DELAY on FX2 of every track), no trigs and no samples, transport playing during each reading. The project's own
+pattern had unsaved Part edits, so the run stayed off it; the engine's cost does not depend on its input (straight-line
+code), but the frame and CPU readings are of a pattern that plays nothing. Points are of the DSP meter (45.32 cycles a
+sample each), means of two readings, before vs in use:
+
+| Build | Slot | DSP mean, before → in use (core of the slot) | Peak | Added: points (cycles a sample) | Model (cycles) | DSP words added | Frame, CPU, skipped |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| QV DEV 40 | T1 FX2 | 32.8 → 38.1 | 33.8 → 39.2 | +5.3 (240), peak +5.4 (245) | 240.6 | 874 | 22.6 → 22.6 %, 34.5 → 34.6 %, 0 |
+| QV DEV 5 | T1 FX2 | 32.8 → 37.6 | 33.8 → 38.8 | +4.8 (218), peak +5.0 (227) | 214.7, dearest block 221.6 | 856 | 22.6 → 22.6 %, 34.5 → 34.6 %, 0 |
+| QV DEV 56 | T1 FX2 | 32.8 → 38.1 | 33.9 → 39.3 | +5.3 (240), peak +5.4 (245) | 240.6 | 884 | 22.6 → 22.6 %, 34.4 → 34.4 %, 0 |
+| QV DEV 5 | T5 FX2 (core 1) | 41.9 → 46.5 | 42.0 → 46.8 | +4.6 (208), peak +4.8 (218) | 214.7 | 856 | 22.6 → 22.6 %, 34.6 → 34.5 %, 0 |
+
+- **The model holds on the unit:** every build within 0.1 point (one step of the meter, about 4.5 cycles) of the
+  stall model's figure. Midiverb's ratio (about 10 points) does not apply to this straight-line code, and the 7/4
+  charge (455 cycles) is 1.9 to 2.1 times what one instance costs.
+- **At rest** (installed, used nowhere) each build added nothing: frame, CPU and both DSPs +0.
+- **Clean:** the trials were each rolled back; no loader stall or error, no new crash or stall record (13 and 56
+  before and after, both older), 0 renders skipped, 0 late frame entries during the runs (`late`: the 160 waits the
+  first read showed were logged at the twin's start, before any build was installed).
+- **Not done:** listening (step 1, the owner's), a second instance at once (the T5 row is one instance on the other
+  core), `--curve`, an audio recording, any `fx:audit`. Nothing here says how it sounds.
+
+The procedure for the owner and the developer:
 
 **Base.** Any base with the USB loader from 0.8.1 takes the package (no ColdFire code, no hook, no base-bound part:
 a DSP effect of 856-884 words, 132 state words, a 15,870-word FX2 buffer). Use 0.8.2 or later: on 0.8.1 the first NO
@@ -194,4 +227,4 @@ at 44.1 kHz with 24-bit words; the mix of two words cannot clip.
 
 ## Performance
 
-No `evidence/performance.json`: a development build. The model's figures are above; the unit's come from step 2.
+No `evidence/performance.json`: a development build. The model's figures are above, and the unit's (26 November 2026, [On the unit](#on-the-unit)) match them within a step of the meter.

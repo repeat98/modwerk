@@ -3,8 +3,9 @@
 Status: design, a pricing prototype, and a bit-exact prototype of the generator. With the SDRAM stream every program
 but the gated ones fits the FX2 buffer at full rate, and each runs in `dsp_host` bit for bit against an integer model,
 the stream's ColdFire side modelled ([below](#the-first-bit-exact-prototype-26-november-2026),
-[modulation](#modulation-on-the-dsp-26-november-2026), [the stream](#the-sdram-stream-26-november-2026)). Nothing has
-run on a unit.
+[modulation](#modulation-on-the-dsp-26-november-2026), [the stream](#the-sdram-stream-26-november-2026)). On a unit
+only the three FX2-only development builds have run: priced on an MKII within a step of the meter of the stall model
+([TESTING.md](TESTING.md#on-the-unit)), not yet heard.
 
 ## The owner's decisions (26 November 2026)
 
@@ -410,7 +411,7 @@ line's skip included. Every program stays under 400: 207-310 on average, 316 in 
 - LAT = 4, the in-block's junk bits, the block addresses handed over in r7 words: assumptions, listed above.
 - The words crossing SDRAM are floored to 16 bits, not rounded: rounding (`mpyr`) would need a clamp at +full scale.
 - The copies take 59-194 P words a program (median 126); the copy out could fold into DO loops too.
-- The engine has not run on a unit; the channel ran there only as probes A and B, on core 0, up to 160-256 a frame.
+- The streamed engine has not run on a unit (the FX2-only development builds have, [TESTING.md](TESTING.md#on-the-unit)); the channel ran there only as probes A and B, on core 0, up to 160-256 a frame.
 
 ### Word width: the input to the owner's decision
 
