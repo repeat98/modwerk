@@ -10,6 +10,9 @@ YES, which need GLOBAL > REMOTE CTRL: ON on the unit and stop as soon as someone
     rytm_link.py ident
     rytm_link.py load                           # the audio load: last half second, its dearest block, since boot
     rytm_link.py log [--json FILE] [--raw FILE] # the diagnostics log, the Octatrack's layout
+    rytm_link.py try PACKAGE.mwrm --seconds 20 [--keep]  # a runtime module on trial (every base), then undo or keep
+    rytm_link.py mods | keep | undo             # the module pool and live modules; end a trial
+    rytm_link.py remove NAME --seconds 5 [--keep]        # that module out, on trial
     rytm_link.py screen --png shot.png          # the 128x64 screen; --ascii prints it
     rytm_link.py mem 0x402728bd 8
     rytm_link.py steps 'GLOBAL w300 DOWN*3 YES png:shot.png NO'
@@ -46,7 +49,8 @@ from pathlib import Path
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
 CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'confirm': 0x13, 'ramboot': 0x14,
        'pad': 0x15,
-       'screen': 0x20, 'mem': 0x21, 'diaglog': 0x22, 'load': 0x23, 'log': 0x24}
+       'screen': 0x20, 'mem': 0x21, 'diaglog': 0x22, 'load': 0x23, 'log': 0x24,
+       'up_part': 0x31, 'up_run': 0x32, 'mods': 0x33}
 STATUS = {0: 'ok', 1: 'not armed (GLOBAL > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 KEY_DOWN, KEY_UP, KEY_FUNC = 1, 0x10, 2
@@ -141,6 +145,8 @@ def unpack7(b):
 
 
 def request(seq, name, *values):
+    if name == 'up_part_raw':           # an offset, then bytes already packed 7-bit (loader_frame)
+        return HEADER + bytes([seq & 0x7f, CMD['up_part']]) + u32(values[0]) + values[1] + b'\xF7'
     return HEADER + bytes([seq & 0x7f, CMD[name]]) + b''.join(u32(v) for v in values) + b'\xF7'
 
 
@@ -277,7 +283,7 @@ class Link:
                 self.hear(m)
                 continue
             r = parse(bytes([0xF0]) + bytes(m.data) + b'\xF7')
-            if r and r[0] == self.seq and r[1] == CMD[name]:
+            if r and r[0] == self.seq and r[1] == CMD['up_part' if name == 'up_part_raw' else name]:
                 return r[2], r[3]
         raise TimeoutError('no reply to %s (is the unit on a link base, in USB MIDI or Overbridge mode?)' % name)
 
@@ -635,6 +641,113 @@ def flash(link, path, label, reboot_s=90, ram=False):
         sys.exit('The unit runs %s, not %s.' % (who['label'], label))
 
 
+# ---- the runtime loader over the link (every base; base/modules.c, the Model:Cycles' transport and its mc_link.py) ----
+WIRE = dict(hello=0, enter=1, begin=2, chunk=3, verify=4, commit=5, accept=6, rollback=7, abort=8, leave=9)
+RESULTS = ['ok', 'state', 'unsafe (playing?)', 'identity', 'limit (too large)', 'stale', 'length', 'conflict', 'hash',
+           'rejected', 'backend', 'needs recovery', 'progress']
+PHASES = ['normal', 'ready', 'receiving', 'verified', 'pending', 'trial', 'recovery', 'publishing']
+REFUSALS = ['none', 'malformed', 'memory', 'conflict', 'full', 'busy', 'cycles', 'in use', 'stock bytes differ',
+            'event site', 'feature', 'UI open', 'buffer']
+PART_BYTES, CHUNK = 96, 2048
+
+
+def pack7(data):
+    out = bytearray()
+    for i in range(0, len(data), 7):
+        group = data[i:i + 7]
+        out.append(sum(0x40 >> k for k, b in enumerate(group) if b & 0x80))
+        out += bytes(b & 0x7f for b in group)
+    return bytes(out)
+
+
+def loader_frame(link, command, transaction, session, body=b''):
+    """One upload-controller request in parts (up_part), then up_run; its 144-byte response, decoded."""
+    req = b'MWUP' + struct.pack('>HHII', 1, WIRE[command], transaction, len(body)) + session + body
+    for at in range(0, len(req), PART_BYTES):
+        status, _ = link.call('up_part_raw', at, pack7(req[at:at + PART_BYTES]))
+        if status:
+            raise RuntimeError('unit: %s (a base without the loader?)' % STATUS.get(status, status))
+    status, p = link.call('up_run', len(req), timeout=10)
+    if status:
+        raise RuntimeError('unit: %s, no response to %s' % (STATUS.get(status, status), command))
+    r = unpack7(p)[:144]
+    if r[:4] != b'MWUR':
+        raise RuntimeError('unit: not a controller response')
+    f = struct.unpack('>8I', r[16:48])
+    return dict(result=f[0], phase=f[1], known=f[2], generation=f[3], last=f[4], current=f[5], received=f[6],
+                capacity=f[7], base=r[48:80], session=r[80:112], active=r[112:144])
+
+
+def loader_must(link, command, transaction, session, body=b''):
+    r = loader_frame(link, command, transaction, session, body)
+    if r['result'] not in (0, 12):
+        raise RuntimeError('%s: %s (phase %s)' % (command, RESULTS[r['result']] if r['result'] < len(RESULTS) else r['result'],
+                                                   PHASES[r['phase']] if r['phase'] < len(PHASES) else r['phase']))
+    return r
+
+
+def loader_mods(link):
+    """The pool and the live modules: (free, largest, refusal, [(id, name)])."""
+    first, live = 0, []
+    while True:
+        status, p = link.call('mods', first)
+        if status:
+            raise RuntimeError('unit: %s (a base without the loader?)' % STATUS.get(status, status))
+        head = unpack7(p)
+        free, largest, refusal, active = struct.unpack('>4I', head[:16])
+        n = head[19]
+        for i in range(n):
+            e = head[20 + 24 * i:44 + 24 * i]
+            live.append(('%08x' % struct.unpack('>I', e[4:8])[0], e[8:24].split(b'\0')[0].decode('ascii', 'replace')))
+        if n < 3 or len(live) >= active:
+            return free, largest, REFUSALS[refusal] if refusal < len(REFUSALS) else refusal, live
+        first += n
+
+
+def loader_finish(link, keep):
+    r = loader_frame(link, 'hello', 0, bytes(32))
+    session, t = r['session'], r['current'] or r['last']
+    if PHASES[r['phase']] != 'trial':
+        raise RuntimeError('nothing on trial (phase %s)' % PHASES[r['phase']])
+    loader_must(link, 'enter', 0, session)
+    loader_must(link, 'accept' if keep else 'rollback', t, session)
+    r = loader_must(link, 'leave', t, session)
+    return '%s: phase %s, generation %d' % ('kept' if keep else 'undone', PHASES[r['phase']], r['generation'])
+
+
+def empty_package(name):
+    """No image, hooks or sites under the module's id (the first four bytes of the SHA-256 of its name): removal."""
+    import hashlib
+    return b'MWRM' + struct.pack('>HH6I', 4, 0, 0, 0, 0, 0, 0, int.from_bytes(hashlib.sha256(name.encode()).digest()[:4], 'big'))
+
+
+def loader_try(link, pkg, seconds, keep):
+    """pkg on trial: begin, chunks, verify, commit; a request a second (ten quiet seconds undo it); then keep or undo."""
+    import hashlib
+    r = loader_frame(link, 'hello', 0, bytes(32))
+    session = r['session']
+    if PHASES[r['phase']] != 'normal':
+        raise RuntimeError('the loader is busy (phase %s): wait 10 s, or rytm_link.py undo' % PHASES[r['phase']])
+    crc = int(link.ident()['set_crc'], 16)
+    if r['base'] != hashlib.sha256(crc.to_bytes(4, 'big')).digest():
+        raise RuntimeError("the unit's base identity does not match its set CRC %#x" % crc)
+    t = r['last'] + 1
+    loader_must(link, 'enter', 0, session)
+    loader_must(link, 'begin', t, session, r['base'] + hashlib.sha256(pkg).digest() + struct.pack('>II', r['generation'], len(pkg)))
+    for at in range(0, len(pkg), CHUNK):
+        loader_must(link, 'chunk', t, session, struct.pack('>I', at) + pkg[at:at + CHUNK])
+    loader_must(link, 'verify', t, session)
+    while loader_must(link, 'commit', t, session)['result'] == 12:
+        pass
+    loader_must(link, 'leave', t, session)
+    print('on trial for %g s (%d bytes)' % (seconds, len(pkg)), flush=True)
+    end = time.time() + seconds
+    while time.time() < end:
+        time.sleep(1)
+        loader_frame(link, 'hello', 0, bytes(32))
+    return loader_finish(link, keep)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--port', help='MIDI port name part (default: Analog Rytm)')
@@ -652,6 +765,17 @@ def main():
     s = sub.add_parser('diag', help="what a development base's RAM boot gate found at the last boot")
     s.add_argument('image', nargs='?', help='the image last uploaded, to compare the upload CRCs with')
     sub.add_parser('load', help='the audio load (every base)')
+    s = sub.add_parser('try', help='a runtime package on trial (every base)')
+    s.add_argument('package')
+    s.add_argument('--seconds', type=float, default=20)
+    s.add_argument('--keep', action='store_true')
+    s = sub.add_parser('remove', help='take a module out, on trial')
+    s.add_argument('name')
+    s.add_argument('--seconds', type=float, default=5)
+    s.add_argument('--keep', action='store_true')
+    sub.add_parser('mods', help='the module pool and the live modules')
+    sub.add_parser('keep', help='keep the module set on trial until the next power cycle')
+    sub.add_parser('undo', help='put the previous module set back')
     s = sub.add_parser('log', help='the diagnostics log (every base)')
     s.add_argument('--json', help='write it as JSON here')
     s.add_argument('--raw', help='write its bytes here')
@@ -747,6 +871,17 @@ def main():
             print(ascii_art(rows))
     elif a.cmd == 'mem':
         print(link.mem(a.addr, a.count).hex(' '))
+    elif a.cmd in ('try', 'remove'):
+        pkg = open(a.package, 'rb').read() if a.cmd == 'try' else empty_package(a.name)
+        print(loader_try(link, pkg, a.seconds, a.keep))
+        a.cmd = 'mods'
+    if a.cmd == 'mods':
+        free, largest, refusal, live = loader_mods(link)
+        print('pool: %d bytes free, largest run %d; live modules: %d; last refusal: %s' % (free, largest, len(live), refusal))
+        for ident, name in live:
+            print('  module %s  %s' % (ident, name or '(no name)'))
+    elif a.cmd in ('keep', 'undo'):
+        print(loader_finish(link, a.cmd == 'keep'))
     elif a.cmd == 'load':
         for k, v in link.load().items():
             print('%s: %s' % (k, v))
