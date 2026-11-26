@@ -11,7 +11,7 @@
     "sdk/octabam/modules/playmodes/playmodes.s": "e1126249d800abf97e13f38e174b986ff817a94cd9c1c84d791d0da5c79b0972",
     "sdk/octabam/modules/playmodes/test_playmode.c": "7f2fc9c9a7720b59b1ed26003691aafea7b90485e3d8e3338ecff5673bfec883",
     "sdk/octabam/modules/playmodes/test_adapter.c": "0f098972df1750e29db95aa7d3fea14cf2a8a082495472ee044127ace26796dc",
-    "sdk/octabam/modules/playmodes/octamod.module.json": "dbbf0e6a59bb63d1c55635b75a027bb26bfe2cd60dd394ff7746d0b7fb1d84de",
+    "sdk/octabam/modules/playmodes/octamod.module.json": "158fddbec7f7e19a103376b4c2be46455e6f328fbfc721bf20f3eddc2f006b5f",
     "sdk/octabam/modules/playmodes/playmode.c": "44fe79f74be585717e39aae56b5e9ae569ac3a3c8e8b778aab9ed3be2a914092",
     "sdk/octabam/modules/playmodes/verify.py": "377cc8d573ac98b1d9ec430b05f9d488bc8a37b8841cf6d9fbb64badafbf15ca",
     "sdk/octabam/modules/playmodes/adapter.c": "f79913dc6cbfe9620289f39c61e261470b9afd36c5c6a19d61fdd462a8a83d18",

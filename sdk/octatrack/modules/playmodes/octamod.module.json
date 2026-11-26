@@ -68,7 +68,7 @@
       "Does not combine with octabam's PLOCKS P2 (not in this catalog): both use battery RAM 0x100f8600.. and the 20 pattern-copy memcpy sites.",
       "Deliberate stock-flow change: TRACK held + UP / DOWN changes the mode and does not reach the stock arrow handler; project.work gains #PLAY_MODES= comment lines.",
       "Deliberate stock-flow change (0.2.0, REPEAT only): while the sequencer plays and the current track is in REPEAT, the trig keys in TRACKS trig mode loop steps and no longer trigger tracks; stopped, GRID REC, LIVE REC and the other trig modes stay stock.",
-      "Copying a single track does not copy its mode. PROJECT > NEW starts every pattern NORMAL (0.2.1, #810); it needs a base with project hooks (base 0.8).",
+      "Copying a single track does not copy its mode. PROJECT > NEW starts every pattern NORMAL (0.2.1, #810); it needs a base with project hooks.",
       "Played interactively on one MKII (builds 12-24); MKI, micro-timing, trig conditions, slides, live recording and MIDI tracks beyond a first check are untested.",
       "Chip worst-case cycles are unmeasured; no stress project has been run.",
       "Like every DRAM module, the build gives up about 10 MB of sample memory to the platform reserve.",
