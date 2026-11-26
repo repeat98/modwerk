@@ -616,6 +616,7 @@ static void link_moved(unsigned mask)
     word_t project = PROJECT_SINGLETON();
     unsigned old = known;
     int i, amount = qperf_pot ? (qperf_pot - 1) << 7 : old ? (int)PERF_AMOUNT(lowest_linked(old)) : 0;
+    int busy = hot.perf_rec_busy;       // a RECORD + YES may be writing its rows
     hot.perf_rec_busy = 1;
     for (i = 0; i < PERFS; i++) {
         if ((old & ~mask) >> i & 1)
@@ -625,7 +626,7 @@ static void link_moved(unsigned mask)
     }
     known = mask;
     seen_now();                         // our own writes are no move for the quick perf rec
-    hot.perf_rec_busy = 0;
+    hot.perf_rec_busy = busy;
 }
 
 QPERF_UI static int undo_apply(void *kit, unsigned mask)
@@ -1511,6 +1512,78 @@ QPERF_UI static void lengthen(void *trk, char *locks, int length, int steps)
 }
 
 // QPER + YES with LIVE RECORDING on.
+// RECORD + YES writes one row (one parameter of one track, up to 64 steps) a UI tick. Stock
+// sends a notice for every lock it writes, and a whole take in one call (about 1,200
+// writes for a scene of twenty locks over a 64-step loop) left the UI task waiting, keys
+// and screen dead, in rytm-emu; about 900 went through. The take stays as it is until the
+// last row: perf_rec_busy holds the audio block off it and the scene lane's tick waits.
+static struct {
+    int active, i, wrote, steps;
+    unsigned tracks, skipped, scenes;
+    int length[FX_TRACK + 1];
+    word_t pattern, steps_pattern;
+} apply_job;
+
+QPERF_UI static void apply_job_end(void)
+{
+    void *kit = active_kit();
+    unsigned skipped = apply_job.skipped, scenes = apply_job.scenes;
+    int track;
+    apply_job.active = 0;
+    release_driven();
+    if (scenes) {                       // the steps now hold the take's scenes: one still engaged
+        int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);   // would lock every step over them
+        if (active >= 0 && (scenes >> active & 1)) {
+            ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
+            scene_engaged_by_us = -1;   // the lane's own change, not a hand's
+            scene_engaged_ticks = 3;
+        }
+    }
+    wipe();
+    hot.perf_rec_busy = 0;
+    if (skipped) {
+        // Moves written where they fit: say how many tracks could not take them.
+        const char *tail;
+        char *out = message;
+        int n = 0;
+        for (track = 0; track <= FX_TRACK; track++)
+            n += skipped >> track & 1;
+        if (n > 9)
+            *out++ = (char)('0' + n / 10);
+        *out++ = (char)('0' + n % 10);
+        for (tail = n == 1 ? " TRACK LEFT OUT" : " TRACKS LEFT OUT"; *tail; )
+            *out++ = *tail++;
+        *out = 0;
+        show(message);
+    } else {
+        show(apply_job.wrote ? "APPLY PERF/SCENE REC" : "NOTHING TO APPLY");
+    }
+}
+
+// One row of the write, from the UI tick. Another kit, pattern or project ends it where it is.
+QPERF_UI static void apply_job_step(void)
+{
+    void *kit = active_kit();
+    const unsigned char *table = lock_table((void *)KIT_PERF(kit));
+    const unsigned char *st = scene_table(kit);
+    int row = 0;
+    if (kit_changed || PATTERN_OF(PROJECT_SINGLETON()) != apply_job.pattern
+        || live_pattern_data() != apply_job.steps_pattern)
+        apply_job.i = SLOTS + SCENE_SLOTS;
+    while (apply_job.i < SLOTS + SCENE_SLOTS && !row) {
+        int i = apply_job.i++;
+        const unsigned char *t = i < SLOTS ? table + SLOT_BYTES * i : st + SLOT_BYTES * (i - SLOTS);
+        if (!(i < SLOTS ? perf_rec_target(table, i) : scene_rec_target(table, st, apply_job.scenes, i - SLOTS))
+            || !(apply_job.tracks >> t[2] & 1))
+            continue;
+        row = apply_target(kit, table, apply_job.pattern, t[2], t[3], apply_job.length[t[2]],
+                           apply_job.steps, 1);
+        apply_job.wrote += row;
+    }
+    if (apply_job.i >= SLOTS + SCENE_SLOTS)
+        apply_job_end();
+}
+
 QPERF_UI static void apply_perf_rec(void)
 {
     void *kit = active_kit();
@@ -1522,7 +1595,7 @@ QPERF_UI static void apply_perf_rec(void)
     char *data;
     const unsigned char *st = scene_table(kit);
     unsigned tracks = 0, longer = 0, skipped = 0, scenes = lane_scenes();
-    int i, need = 0, wrote = 0, steps, track, length[FX_TRACK + 1];
+    int i, need = 0, steps, track, length[FX_TRACK + 1];
     if ((!hot.perf_rec_used && !scenes) || hot.perf_rec_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
@@ -1592,43 +1665,17 @@ QPERF_UI static void apply_perf_rec(void)
             lengthen((void *)PATTERN_TRACK(pattern, track), data, length[track], steps);
             length[track] = steps;
         }
-    for (i = 0; i < SLOTS; i++) {
-        const unsigned char *t = table + SLOT_BYTES * i;
-        if (perf_rec_target(table, i) && (tracks >> t[2] & 1))
-            wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
-    }
-    for (i = 0; i < SCENE_SLOTS; i++) {
-        const unsigned char *t = st + SLOT_BYTES * i;
-        if (scene_rec_target(table, st, scenes, i) && (tracks >> t[2] & 1))
-            wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
-    }
-    release_driven();
-    if (scenes) {                       // the steps now hold the take's scenes: one still engaged
-        int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);   // would lock every step over them
-        if (active >= 0 && (scenes >> active & 1)) {
-            ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
-            scene_engaged_by_us = -1;   // the lane's own change, not a hand's
-            scene_engaged_ticks = 3;
-        }
-    }
-    wipe();
-    if (skipped) {
-        // Moves written where they fit: say how many tracks could not take them.
-        const char *tail;
-        char *out = message;
-        int n = 0;
-        for (track = 0; track <= FX_TRACK; track++)
-            n += skipped >> track & 1;
-        if (n > 9)
-            *out++ = (char)('0' + n / 10);
-        *out++ = (char)('0' + n % 10);
-        for (tail = n == 1 ? " TRACK LEFT OUT" : " TRACKS LEFT OUT"; *tail; )
-            *out++ = *tail++;
-        *out = 0;
-        show(message);
-    } else {
-        show(wrote ? "APPLY PERF/SCENE REC" : "NOTHING TO APPLY");
-    }
+    apply_job.i = 0;
+    apply_job.wrote = 0;
+    apply_job.steps = steps;
+    apply_job.tracks = tracks;
+    apply_job.skipped = skipped;
+    apply_job.scenes = scenes;
+    apply_job.pattern = pattern;
+    apply_job.steps_pattern = steps_pattern;
+    for (track = 0; track <= FX_TRACK; track++)
+        apply_job.length[track] = length[track];
+    apply_job.active = 1;               // the tick writes the rows and says how it went
 }
 
 // RECORD + NO: empty the quick perf rec, and bring it back on the next press.
@@ -1649,13 +1696,16 @@ QPERF_UI static void clear_perf_rec(void)
 
 static void perf_rec_action(int key)
 {
+    if (apply_job.active)
+        return;                         // a RECORD + YES is still writing its rows
     scene_lane_sync();                  // a wipe the tick has not seen yet
     hot.perf_rec_busy = 1;
     if (key == KEY_YES)
         apply_perf_rec();
     else
         clear_perf_rec();
-    hot.perf_rec_busy = 0;
+    if (!apply_job.active)
+        hot.perf_rec_busy = 0;
 }
 
 void qperf_pad(void *event, int perf)
@@ -2002,7 +2052,10 @@ QPERF_UI void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
-    scene_lane_tick();
+    if (apply_job.active)
+        apply_job_step();
+    else
+        scene_lane_tick();
     if (hot.ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
