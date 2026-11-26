@@ -67,6 +67,9 @@ export interface FakeUnit {
   /** This start's restore has not run: the base rejects every change with no loader refusal, its record's `saved` 0
    * (modset.c modwerk_modset_check_set). */
   restoring?: boolean
+  /** The last Keep's card write failed and is retried: the base rejects every change with no loader refusal, its
+   * record's `saved` 8 (modset.c modwerk_modset_check_set). */
+  saveFailed?: boolean
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
    * the base then drops the staged package. */
   publishRefusal?: number
@@ -143,7 +146,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         if (setup.request === 39 && unit.slots) return { status: 'ok', data: new DataView(unit.slots.slice().buffer) }
         if (setup.request === 4 && unit.ep0) {
           const diag = new DataView(new ArrayBuffer(68)); diag.setUint32(0, 0x4d575544); diag.setUint8(4, 3)
-          ;[3, 4, 5, 6, 7, 14].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i]))
+          ;[3, 4, 5, 6, 7, 14, 9].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i] ?? 0))
           return { status: 'ok', data: diag }
         }
         if (setup.request === 27) { // INVENTORY, 13 a page from wValue: no DSP code, no name
@@ -159,7 +162,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
         }
-        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring || unit.busy !== undefined ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
+        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring || unit.saveFailed || unit.busy !== undefined ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back
           const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)), count = unit.installed.moduleIds.length
           ;[[0, 2], [3, count], [7, 410], [8, 655], [9, 470], [14, 47900], [15, 7], [16, count], [17, count]].forEach(([at, value]) => record.setUint32(4 * at, value))
@@ -168,6 +171,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         if (setup.request !== 21 || refusal === undefined) return { status: 'stall' }
         const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)) // the base's record, idle, with its last refusal
         record.setUint32(92, (refusal | (unit.inUseSlot ?? 0) << 16 | (unit.busy ?? 0) << 24) >>> 0)
+        if (unit.saveFailed) record.setUint32(60, 8) // saved: the last write failed
         return { status: 'ok', data: record }
       },
     }
@@ -211,7 +215,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       get status() { return status }, connectionTrusted: true,
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
-        if (unit.refusal || unit.restoring) return step('normal', 'rejected')
+        if (unit.refusal || unit.restoring || unit.saveFailed) return step('normal', 'rejected')
         if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
