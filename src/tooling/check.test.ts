@@ -100,14 +100,19 @@ it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independ
 })
 
 it('names what failed, and each one\'s first error, in the last lines of the run', () => {
-  const sdk = check('sdk:check').stdout.trim().split('\n').slice(-3)
+  // This test also runs inside GitHub Actions, where the runner writes annotations instead: ask for each form by name.
+  const plain = { GITHUB_ACTIONS: '' }
+  const sdk = check('sdk:check', false, [], plain).stdout.trim().split('\n').slice(-3)
   expect(sdk[0]).toMatch(/^Check FAILED in /)
   expect(sdk.slice(1)).toEqual(['Failed: sdk:check', '  sdk:check: SDK checks FAILED: test_base_bound.py'])
-  expect(check('lint').stdout.trim().split('\n').at(-1)).toBe('  lint: 12:3 error Unexpected any no-explicit-any')
+  expect(check('lint', false, [], plain).stdout.trim().split('\n').at(-1)).toBe('  lint: 12:3 error Unexpected any no-explicit-any')
   // The draft doctor's test passes after the suite failed: the suite is still named.
-  expect(check('', false, [], { CHECK_TEST_FLAKY: 'again' }).stdout).toMatch(/\nFailed: test\n {2}test: .*FAIL.* src\/a\.test\.ts > waits out a reply timer\n/)
-  expect(check('').stdout).not.toContain('Failed:')
-  expect(check('', false, [], { CHECK_TEST_FLAKY: 'alone' }).stdout).not.toContain('Failed:')
+  expect(check('', false, [], { ...plain, CHECK_TEST_FLAKY: 'again' }).stdout).toMatch(/\nFailed: test\n {2}test: .*FAIL.* src\/a\.test\.ts > waits out a reply timer\n/)
+  expect(check('', false, [], plain).stdout).not.toContain('Failed:')
+  expect(check('', false, [], { ...plain, CHECK_TEST_FLAKY: 'alone' }).stdout).not.toContain('Failed:')
+  // On GitHub Actions each failure is an error annotation, which the pull request's checks page shows.
+  expect(check('sdk:check', false, [], { GITHUB_ACTIONS: 'true' }).stdout.trim().split('\n').slice(-2))
+    .toEqual(['Failed: sdk:check', '::error title=sdk:check failed::SDK checks FAILED: test_base_bound.py'])
 })
 
 it.each([['alone', 0], ['again', 1]])('reruns a failed test file alone on one worker and passes only when it passes there (%s)', (mode, status) => {
