@@ -1,11 +1,20 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Prepares FRACT for the released Modwerk 0.8.1 base.",
+      "SRNG uses the shared two-position page control for FULL and LOCAL.",
+      "Hardware timing, stress and companion qualification remain pending."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-11-10",
     "changes": [
       "Adds the FRACT three-grain sample machine with centered SIZE and wrapping POS.",
       "Uses native FLEX pitch, with three overlapping grain markers on the display.",
-      "Supports one active FRACT owner on tracks T1–T4.",
+      "Supports one active FRACT owner on tracks T1\u2013T4.",
       "Known issue: maximum-load and companion-module testing is incomplete."
     ]
   }

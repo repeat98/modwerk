@@ -341,9 +341,9 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "cbd0fa736250c328efdfaa0f015217a42e124cb8f73c4718f5d90f4b2977319c",
+      "sha256": "f403fd92a5211f59002e3391f81f5a4750441fd168485fea538bbeae45ad77e3",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "output-matrix",
@@ -357,9 +357,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "0b9bf60368dd2cb538970de6ea58334bb001f63d1e3eaea9bec3256bb0894372",
+      "sha256": "0c9e62f2e8a38f6a083dd72a7015b9a9efccb92d9899af115949c16048fdce94",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "cc-map",
@@ -375,7 +375,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -451,9 +451,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
+      "sha256": "6b56878207e4ca0333684cde89b8e4762a0fe29a38e31cf6e735b79d46b1b5e6",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     {
       "id": "analog-bassdrum",
@@ -467,9 +467,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930",
+      "sha256": "2ce9f2f53081821c088972044538c8a5dbcb1b08e53823cc065df82b47e9cbca",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -677,7 +677,7 @@
       "id": "midi-scenes",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.3.0-experimental",
+      "version": "0.3.1-experimental",
       "abi": 8,
       "features": 129,
       "sites": 33,
@@ -685,9 +685,9 @@
       "fills": 0,
       "name": "MIDI Scenes",
       "module": "21a6ffd7",
-      "bytes": 8560,
-      "sha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
-      "path": "octatrack-modules/midi-scenes/0.3.0-experimental.mwrm"
+      "bytes": 9864,
+      "sha256": "17f934ffa1110dc6d3a9f20caea3cee456234dd6b4b8124382673f1248b08563",
+      "path": "octatrack-modules/midi-scenes/0.3.1-experimental.mwrm"
     },
     {
       "id": "kits",
@@ -878,7 +878,7 @@
       "copies": 4,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
     },
     "configurable-0.4": {
       "name": "USB Audio",
@@ -892,7 +892,7 @@
       "copies": 4,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "a991caf0e7b55b31c83fe113e5566312568fce3ef01ff541d2c06c635dd2bb1a"
     },
     "configurable-0.3": {
       "name": "USB Audio",
@@ -906,7 +906,7 @@
       "copies": 3,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+      "requiredBase": "ada74e3d084c9f9943855d9da4a6a14819e9f734dd79de8227706f4aef413ecf"
     }
   }
 }

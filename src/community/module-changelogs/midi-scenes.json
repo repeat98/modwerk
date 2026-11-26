@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.1-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Uses 121 KB of the shared module memory instead of 272 KB, so far larger module sets fit beside it.",
+      "Up to 24 of a project's 64 Parts hold MIDI scene locks; a lock in a 25th Part is refused with LOCKS: 24 PARTS.",
+      "A project with more locked Parts loads 24 and says LOCKS NOT LOADED; its file on the card stays untouched."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-16",
     "changes": [

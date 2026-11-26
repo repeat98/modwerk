@@ -646,6 +646,37 @@ int main(int argc, char **argv)
         assert(frames_checked);
         return 0;
     }
+    if (mode == 76 || mode == 77) {
+        /* #2189: Sidechain installed and parked (no COMPRESSOR in the bank yet). Big effects on core A go under the top
+         * words its engines take once it is used, not into them, so COMPRESSOR then starts it with nothing to move.
+         * From the arena's top as before, 700 words at the top and 600 under them left 636 free words below, too few
+         * to move the 700 into: refused for memory, and COMPRESSOR stayed stock with no word why. Mode 77: three big
+         * effects that do not fit under the engines at all go up as before, and the refusal shows the pause notice. */
+        names_compressor = 0; ++board_bank;
+        assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
+        run(300);
+        assert(slot_for(SC, MW_CTL_BOUND) && !dl_engine_reserved(0) && !dl_engine_reserved(1));
+        test_fx(10, 700); test_fx(11, 600); test_fx(12, 500);
+        uint8_t ids[16] = {0};
+        ids[4] = 10; ids[5] = 11; /* T5, T6 FX1: core A */
+        if (mode == 77) ids[6] = 12;
+        memcpy(test_parts[0], ids, 16);
+        assert(test_select(ids, pump) == 1);
+        if (mode == 76) assert(test_live(0, 10) == (int)(sc - 700u) && test_live(0, 11) == (int)(sc - 1300u));
+        else assert(test_live(0, 10) == (int)(top - 700u) && test_live(0, 11) == (int)(top - 1300u) && test_live(0, 12) == (int)(top - 1800u));
+        assert(!mw_project_sidechain_notice());
+        names_compressor = 1;
+        run(300);
+        if (mode == 76) {
+            assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !dl_engine_evacuations);
+            placed_at(0, 1, sc); placed_at(0, 8, kb);
+            assert(!mw_project_sidechain_notice());
+        } else {
+            assert(slot_for(SC, MW_CTL_BOUND) && !dsp_mask[0] && !dsp_mask[1] && !dl_engine_reserved(0));
+            assert(mw_project_sidechain_notice() && !mw_project_sidechain_notice());
+        }
+        return 0;
+    }
     if (mode == 69) {
         uint8_t light[16] = {0}, heavy[16] = {0};
         leasing = 0;
@@ -2125,7 +2156,7 @@ class ResidentEnginesBoard(unittest.TestCase):
             generated(work, bundles())
             binary, result = build(work)
             self.assertEqual(result.returncode, 0, result.stderr)
-            for mode in (*range(self.MODES), *range(69, 76)):
+            for mode in (*range(self.MODES), *range(69, 78)):
                 with self.subTest(mode=mode):
                     result = subprocess.run([str(binary), str(mode)], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, parseDeviceLog } from './device-log'
+import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, freezeSamples, parseDeviceLog } from './device-log'
 import { DSP_REPORT_NAMES, describeStallFrames, describeStallPacket, describeStallPackets, stallLateness } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
@@ -32,6 +32,24 @@ describe('the unit’s diagnostics log', () => {
     expect(parsed.incidents).toHaveLength(1)
     expect(parsed.incidents[0]).toMatchObject({ seq: 8, boot: 3, second: 61, a: 16536, kind: 'freeze', cpu: 950, dsp5to8: 500, dsp1to4: 400, screen: 0x400cbf2c, tempo24: 2880, playing: true })
     expect(parsed.incidents[0].machines[0]).toBe(1); expect(parsed.incidents[0].fx[0]).toBe(33); expect(parsed.incidents[0].keys[15]).toBe(19)
+  })
+  it('reads where the processor was in a freeze (FREEZE_PC): the unit’s own record of a 9 s FREEZE TEST', () => {
+    const parsed = parseDeviceLog(log(view => {
+      const i = INCIDENTS, ui = [0x46, 0xc7, 0xbe, 0xd8]
+      view.setUint32(i, 5); view.setUint32(i + 4, 1098); view.setUint32(i + 8, 36); view.setUint32(i + 12, 0x40a9fea6)
+      view.setUint16(i + 16, 14); view.setUint16(i + 18, 0x2000); view.setUint16(i + 20, 0x2000); view.setUint16(i + 22, 0x2000)
+      for (let k = 0; k < 4; k++) ui.forEach((b, j) => view.setUint8(i + 24 + 4 * k + j, b))
+      ;[0x40, 0xa9, 0xfe, 0xb4, 0x20, 0x00].forEach((b, j) => view.setUint8(i + 40 + j, b))
+      for (let j = 0; j < 16; j++) view.setUint8(i + 64 + j, 0xff)
+      view.setUint32(i + 80, 0x40a9feb4); view.setUint32(i + 84, 0x40a9feb4)
+      const late = INCIDENTS + 92 // a freeze the tick left after its first sample, in an interrupt handler at level 5
+      view.setUint32(late, 6); view.setUint32(late + 4, 1099); view.setUint32(late + 12, 0x40015526); view.setUint16(late + 16, 14)
+      view.setUint16(late + 18, 0x2500); [0x46, 0x0d, 0xdd, 0xe4].forEach((b, j) => view.setUint8(late + 24 + j, b))
+    }))!
+    expect(parsed.incidents.map(r => r.kind)).toEqual(['freeze_pc', 'freeze_pc'])
+    expect(freezeSamples(parsed.incidents[0])).toEqual([0x40a9fea6, 0x40a9feb4, 0x40a9feb4, 0x40a9feb4].map(pc =>
+      ({ pc, sr: 0x2000, level: 0, tcb: 0x46c7bed8, task: 'UI task 0x40061a94, priority 1' })))
+    expect(freezeSamples(parsed.incidents[1])).toEqual([{ pc: 0x40015526, sr: 0x2500, level: 5, tcb: 0x460ddde4, task: 'engine task 0x4008445c (card jobs), priority 1' }])
   })
   it('refuses another magic or version and a short read', () => {
     expect(parseDeviceLog(log(view => view.setUint32(4, 3)))).toBeUndefined()
