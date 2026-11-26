@@ -242,3 +242,37 @@ saved copy (6,322 bytes) before each case and after it, and its saved copy never
   with it, and still refuses while T1 really records. Nothing was saved or kept.
 - Not run: the same steps on a twin with the old test (the unit had none booted; the flashed 0.8.1 takes no USB keys);
   the release base, which still needs Analog BD's recipe recaptured once the 0.8.2 fixes are folded.
+
+## 26 November 2026: the release image with the testers' fixes (#2216)
+
+In since the entry above: NO and the arrows on a MODWERK page go back to the menu (#2217); big DSP effects load under
+Sidechain's engine words, and a refused COMPRESSOR pick says SIDECHAIN PAUSED / DSP MEMORY (#2222, for #2189); a power-up
+keeps the current bank when stock's checks fix a value, with a RESTORE record (#2223, for #2201); a freeze records the
+processor's PC, level and task (#2226, for #2225: the save freeze itself was not reproduced). The saved-set change #2109
+is still an open draft and is **not** in 0.8.2.
+
+- **Builds** (OS 1.40C, outside Git): main `4d4af12f2` merged; Analog BD's recipe recaptured (only its `imageSha256`,
+  `ec3a42c0` → `3d24a7fe`). Release base `24e480c435a41324…`, browser = native `.bin` `390ae8f5702aa234…` (834,708 bytes;
+  container 834,692 of 851,712). Development twin of the same source with controller rows `8a3417258c90dfda…`.
+- **Base-bound packages relinked:** the controller write lease moved (`0x40a9d794`/`0x40a9d7b0` → `0x40a9d850`/`0x40a9d86c`).
+  Output Matrix 0.1.1 `0c9e62f2…`, Analog BD 0.1.7 `2ce9f2f5…` and Sidechain Compressor 0.2.2 `f403fd92…` are the 0.8.1
+  packages with those two addresses substituted and no other byte changed (6, 2 and 2 words), so their active-load
+  readings are rebound (`2026-11-21-octatrack-active-load.json`).
+- **Release image on the owner's MKII, RAM boot over the flashed 0.8.1:** back on USB in 18 s; a Screen Off trial
+  admitted and rolled back; development keys refused, as a release base refuses them. The first screen read BASE UPDATE /
+  WAITING FOR MODWERK (an unconfirmed RAM boot), then MISSING MODULES for the project's seven modules.
+- **Development twin `8a341725` over USB** (throwaway copy of a project; nothing saved, kept or flashed):
+
+  | Case | Why this change makes it a risk | How run | Result |
+  | --- | --- | --- | --- |
+  | A retriggered recorder, then a sync (#2221) | the busy test reads the selected bank only | T1 + REC AB twice, STOP, try a module; then T1 + REC AB and try again | pass: bank B kept 2, trial admitted and rolled back; refused `unsafe` while T1 recorded |
+  | Sidechain beside E-Verb and Resonator (#2222) | big effects now load below Sidechain's words | E-Verb T6 FX2 (@2361), Resonator T7 FX1 (@850), COMPRESSOR on T5 FX1 | pass: FX1 SETUP shows RMS MON KEY KGN KBAS KWID |
+  | NO and the arrows on MODWERK pages (#2217) | the page now returns to the menu instead of closing it | SETTINGS > NO, RIGHT, LEFT; MODULES > NO; PROJ | pass: each back on the MODWERK list; PROJ closes it |
+  | MODULES on/off with the menu open (#2217) | the list redraws under the open page | needs a Keep | not run: needs a kept set |
+  | Power-up with a clean bank (#2223) | the base now runs stock's checks before stock's restore | two boots | pass: no RESTORE record (none expected), Part 1 back with its effects |
+  | Power-up with a value to fix (#2223) | the case the tester hit | emulator two-process power cycle only | not run on a unit: the tester's value is unknown |
+  | Playing with picks and Part switches | the UI tick and restore changes run every frame | set + picks, 12 s and 90 s with Part switches | pass: 0 stalls, 0 skips, 0 late entries, CPU 37-52 % |
+  | E-Verb picked beside Tape Echo | the effect placement below Sidechain's words | `pick:T6:FX2:E-VERB` with Tape Echo in the set | fail: not admitted within 5 s, on T6 FX2 later; unexplained |
+  | CPU with eight tracks recording, 0.8.1 vs 0.8.2 | the recorder skip's saving | twins side by side | not run |
+
+- **Not run:** a power cycle of the flashed release with a real project; the CPU A/B; a Keep of the release image.

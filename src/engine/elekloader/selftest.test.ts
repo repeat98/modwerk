@@ -52,7 +52,7 @@ describe('the base self-test as the update stress test', () => {
     view.setUint32(92, 14 << 16 | 7) // in use, by T6's FX2 (base 0.8.2 on)
     expect(parseSelftest(view)).toEqual({ state: 2, failed: 0, modules: 6, dsp: 6, intact: 6, ran: 6,
       peaks: { tracks1to4: 669, tracks5to8: 571, cpu: 536 }, done: 8, total: 8, frameGap: 52000, saved: 7, savedCount: 6, live: 6,
-      culprit: 0x873d83cc, culpritName: 'E-Verb', refusal: 7, inUseSlot: 14 })
+      culprit: 0x873d83cc, culpritName: 'E-Verb', refusal: 7, inUseSlot: 14, busy: 0 })
     view.setUint32(92, 107) // a refused base write (flash.h), as older bases send any refusal: no slot
     expect(parseSelftest(view)).toMatchObject({ refusal: 107, inUseSlot: 0 })
     expect(() => parseSelftest(new DataView(new ArrayBuffer(72)))).toThrow()
