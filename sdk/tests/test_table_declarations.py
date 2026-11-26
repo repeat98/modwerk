@@ -29,7 +29,7 @@ class TableDeclarationTests(unittest.TestCase):
         (self.root / 'table.s').write_text('authored source snapshot\n')
         self.sources = {'table.s': sha((self.root / 'table.s').read_bytes())}
 
-    def entry(self, owner='quantizer', hooks=(), **changes):
+    def entry(self, owner='quantizer', hooks=(), rest=None, **changes):
         _, count, insert, added, _, roots, refs, count_at, count_code = declarations.SHAPES[owner]
         image, relocations, sites, copies = bytearray(512), [], [], []
         offsets = [80, 160, 240]
@@ -45,6 +45,11 @@ class TableDeclarationTests(unittest.TestCase):
                     n = min(8, end - row) * 4
                     copies.append((base + 4 * (row + extra), roots[table] + 4 * row, n, bytes((table + 1,)) * 32))
         sites.append((count_at, bytes((4,)) * 32, count_code, [], 0, len(count_code)))
+        if rest == 'detour':  # one of the owner's own detours, resting with it (runtime.json "rests")
+            sites.append((0x40004dc6, bytes((5,)) * 32, bytes((0x4e, 0x71, 0x4e, 0x71)), [], 0, 4, True))
+        elif rest in ('pointer', 'count'):
+            at = next(i for i, site in enumerate(sites) if site[0] == (refs[0][0] if rest == 'pointer' else count_at))
+            sites[at] = sites[at] + (True,)
         package = builder.package(bytes(image), 0, list(hooks), relocations, sites, name=owner,
                                   hashed=True, title='TABLE', layout=1, copies=copies, abi=8)
         names = ['labels', 'getters', 'setters']
@@ -93,6 +98,18 @@ class TableDeclarationTests(unittest.TestCase):
             with self.subTest(at=at, value=value), self.assertRaises(ValueError):
                 declarations.validate(**dict(entry, package=bytes(package), declaration=declaration,
                                              reviewed_sha256=sha(declaration)))
+
+    def test_an_owner_rests_its_own_detours_but_never_a_table_site(self):
+        """Mute Modes 0.2.4 rests in MUTE MODE OT (ev_in_use, runtime.json "rests"): the rest bit on its own detours is
+        admitted; on a table pointer or the count patch, which hold MUTE MODE's rows while it rests, it is refused."""
+        none = builder.NONE
+        hooks = [none] * 4 + [50 << 24 | 8, none, none, 255 << 24 | 16]
+        resting = self.entry('mute-modes', hooks=hooks, rest='detour')
+        self.assertEqual(declarations.validate(**resting).family, 2)
+        self.assertNotEqual(resting['package'], self.entry('mute-modes', hooks=hooks)['package'])
+        for site in ('pointer', 'count'):
+            with self.subTest(site=site), self.assertRaises(ValueError):
+                declarations.validate(**self.entry('mute-modes', hooks=hooks, rest=site))
 
     def test_pointer_sites_relocations_and_original_word_mapping_cannot_drift(self):
         entry = self.entry()

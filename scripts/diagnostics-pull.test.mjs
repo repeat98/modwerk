@@ -231,6 +231,13 @@ describe('diagnostics pull', () => {
     expect(text).toContain('  unit: #4 start 3 +4m0s hot (10 half-seconds at 90 %+), cpu 92.0%')
     expect(text).toContain('machines ' + Array(24).fill(0).join(' ') + ' (an earlier log, base aaaaaaaa)\n  unit: #2 start 1 +2m0s base bbbbbbbb\n')
   })
+  it('names the machines a CPU record refused this time, and keeps an older base’s record as it was', () => {
+    const machines = Array(24).fill(0); machines.splice(6, 3, 1, 0x46, 0x4d); machines.splice(15, 3, 0, 0x47, 0x52) // T3 FM, T6 GR
+    const at = a => ({ seq: 7, boot: 2, second: 75, kind: 'cpu', a, cpu: 600, dsp1to4: 0, dsp5to8: 0, machines,
+      fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing: true })
+    expect(unitLines([at((0x24 << 24 | 0x24 << 16 | 5) >>> 0)])[0]).toContain(' cpu 5 machines refused for CPU since the start, this time T3 FM, T6 GR, cpu 60.0%')
+    expect(unitLines([at(0x04 << 24 | 3)])[0]).toContain(' cpu 3 machines refused for CPU, tracks 3, cpu 60.0%')
+  })
   it('leaves short hot spells of a stopped unit out and counts them, keeping long and playing ones', () => {
     const at = (seq, kind, a, playing = false) => ({ seq, boot: 1, second: 0, kind, a, cpu: 950, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing })
