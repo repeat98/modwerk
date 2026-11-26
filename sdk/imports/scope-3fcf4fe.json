@@ -58,6 +58,17 @@
       "note": "Imported unchanged"
     },
     {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "note": "octabam's MIT licence (Sam Banks), kept with upstream/ for its maintainers' edits"
+    },
+    {
       "path": "manifest.py",
       "repository": "https://github.com/sambanks/octabam",
       "revision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
@@ -70,7 +81,7 @@
         "Linked path modules/scope/scope.s -> unit.s beside this manifest.",
         "Proof path -> Proof.UNTESTED for the Modwerk draft; octabam hardware stays in TESTING.md.",
         "Category.UTILITIES (octabam) -> Category.MACHINES (Modwerk schema).",
-        "Gate path modules/scope/verify.py; stub until an ot_emu check lands.",
+        "Gate path modules/scope/verify.py: the ot_emu check of DOWN+TEMPO, the stock TEMPO path and the quiet closed state.",
         "Docstring notes the Tuner site clash and the needed base hook."
       ]
     }

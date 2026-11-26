@@ -49,8 +49,10 @@ See [TESTING.md](TESTING.md).
 
 ## Authorship and licences
 
-ilia-murzinov, MIT. See [LICENSE](LICENSE). Upstream octabam copy under
-`upstream/modules/scope/`.
+ilia-murzinov, MIT. See [LICENSE](LICENSE). The octabam copy under
+`upstream/modules/scope/` also carries edits by octabam's maintainers (its
+manifest's evidence records and README), under octabam's MIT licence (Sam
+Banks), kept as [upstream/LICENSE](upstream/LICENSE).
 
 ## Screens and audio
 

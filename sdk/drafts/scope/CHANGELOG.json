@@ -5,7 +5,7 @@
     "changes": [
       "First Modwerk draft: standalone SCOPE from octabam (DOWN + TEMPO OSC/XY/ALL).",
       "Known issue: conflicts with Tuner on the TEMPO, frame and UI sites until a base hook exists.",
-      "Known issue: no Modwerk USB package or unit qualification yet."
+      "Tried over USB on one MKII; not yet qualified with device:qualify."
     ]
   }
 ]

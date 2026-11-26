@@ -68,12 +68,12 @@
     "conflicts": ["tuner"],
     "uiClaims": ["key:DOWN+TEMPO"],
     "limitations": [
-      "Draft Modwerk port. Octabam hardware on the author's MKII (LSCOPE BJ, 24 Oct 2026) and OCTA S2 loader matrix (15 Nov 2026) is not Modwerk USB qualification.",
+      "Draft Modwerk port. Tried by hand on one MKII over USB (26 Nov 2026), alone on release base 0.8.1; not timed, soaked or priced.",
       "Patches the same TEMPO, frame and UI-loop sites as Tuner. A set cannot install both until a Modwerk base hook owns those sites (propose a hook). Until then this module lists Tuner as a conflict.",
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
       "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
-      "No Modwerk USB package, monochrome UI captures or device:qualify run yet."
+      "No device:qualify run, CPU price or monochrome UI captures yet."
     ]
   },
   "resources": {
@@ -120,9 +120,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Draft only. Octabam evidence (MKII LSCOPE BJ; OCTA S2 loader matrix) is recorded in TESTING.md. No Modwerk USB package, module:dev trial or device:qualify run yet.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9",
+    "summary": "Reported by hand on one MKII over USB, 26 Nov 2026: package 48522941… on release base 0.8.1, alone. A RAM trial and a Keep with clean verdicts; TEMPO alone stays stock, DOWN then TEMPO opens OSC, XY and ALL, and TEMPO, YES and NO close it. The base refused removal while the window was open and removed it cleanly once closed. verify.py passes 14 checks under ot_emu. Not timed, soaked or priced; test:procedure not run.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "02e03d4a3eb1aa8a96e92745d89f2386102cb39c",
     "gates": [
       "modules/scope/verify.py"
     ]

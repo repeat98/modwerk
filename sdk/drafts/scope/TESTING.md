@@ -3,22 +3,69 @@
 Draft Modwerk port of octabam `modules/scope` at
 `3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
 
-## Commands
+## 0.1.0-experimental
+
+**Hardware status: reported by hand on one MKII over USB, 26 November 2026.**
+Source: branch `feature/scope-draft` at `02e03d4a` (`unit.s` unchanged since
+the import). Package built with `npm run module:dev -- scope --build-only`:
+SHA-256 `48522941a043dad83d0ebfcb26e4b68734ddc439b16d443e5f87eecb6cf63b57`,
+module `5f161c91`, 37,584 bytes of code and data, 0 of bss, 195 relocations,
+three hashed stock-code sites. Unit: ilia-murzinov's MKII, flashed with the
+release base 0.8.1 `eb6679620d0c9ed7…` (rebuilt from 1.40C with
+`npm run octatrack:base -- --beta`, byte-identical to the committed base),
+no other module installed, so SCOPE was the only DRAM module.
+
+| Case | How run | Result |
+| --- | --- | --- |
+| RAM trial | `npm run module:dev -- scope`, interrupted after 223 s | rolled back; verdict: no fault logged, one note (CPU at 90 % or more for 1 s, 156 s in) |
+| TEMPO alone vs DOWN then TEMPO | by hand, during the trial and installed | pass (reported): TEMPO alone opens the stock tempo window; DOWN then TEMPO opens SCOPE |
+| OSC, XY, ALL; GAIN, TIME; help | by hand, screens read over USB (`device -- screen`) | pass: all three views draw live audio, GAIN changes the HUD's G, RIGHT shows the help page |
+| Close with TEMPO, YES and NO | by hand | pass (reported) |
+| Keep | `npm run device -- try FILE --seconds 20 --accept` | accepted; verdict: no crash, stall, freeze or skipped track |
+| Removal while open | `npm run device -- remove FILE --accept` with the window open | refused by the base (loader refusal 11, `RUNTIME_UI_OPEN`); SCOPE stayed installed and running |
+| Removal after closing | the same, window closed | accepted; verdict clean; the unit back on the base with no module |
+| Undo while open | not run | not run |
+| `npm run test:procedure -- scope` | not run | not run: steps 6 to 10 need a shared unit session, step 5 a development twin |
+
+The trial's single refusal counter (`refusals 1`) was set at submission and
+did not move during the trial. Nothing was timed, recorded or soaked; the
+CPU price is not measured.
+
+## Emulator (`verify.py`)
+
+`ot_emu` approximates the instrument: no real-time timing and no audio
+check. 26 November 2026, `verify.py` as of this branch: 14 of 14 checks pass.
+
+Image: a native build in a scratch copy of `sdk/octabam` with this folder
+copied to `modules/scope` and a local remix of SCOPE plus every stock effect
+(`static_stock=True`), `make bus REMIX=scope-stock BUILD=0`: MAIN OS SHA-256
+`a219cecc361e4a174fcf3e28c71781327c147b24409dbd5914c972697124d6c9`, the
+unit in the DRAM reserve at `0x40a955e0`, detours `sc_tempo` at
+`0x40059ef0`, `sc_frame` at `0x4000d99a` and `sc_tick` at `0x40056c72`.
+Port: `ot_emu` from octabam `f7d7290` (`npm run upstream:tools`, then
+`make setup` and `make emu-cf` there). Fixture: one of the author's own
+projects, staged with `stage_card.py`.
 
 ```sh
-npm run module:doctor -- --draft scope
-npm run modules:compat -- --with scope
-npm run module:dev -- scope --build-only
+SCOPE_PROJECT=<project folder> python3 modules/scope/verify.py   # from that octabam root
 ```
 
-Native behaviour gate (once the draft is staged for a package build):
+- At rest nothing is copied or drawn: `scope_win` 0, the ring index and
+  frame count still, `sc_draw` never runs.
+- TEMPO alone opens stock's tempo window, not SCOPE; NO closes it.
+- DOWN then TEMPO creates SCOPE's window and its view toast, not stock's;
+  the ring fills from 0 and `sc_draw` runs (97 times in 1.5 s).
+- UP and DOWN step OSC, XY, ALL and back.
+- TEMPO, YES and NO each close SCOPE: its window destroyed, and the ring
+  and the draw stop again.
+- TEMPO alone still opens stock's window afterwards.
+
+## Other commands
 
 ```sh
-python3 modules/scope/verify.py
+npm run module:doctor -- --draft scope    # experimental lines green but cross-compatibility
+npm run modules:compat -- --with scope    # three clashes with Tuner (same detour sites)
 ```
-
-`verify.py` is still a stub. Replace it with a Modwerk/ot_emu check of
-DOWN+TEMPO open/close and a quiet closed path before listing.
 
 ## Octabam evidence (not Modwerk USB)
 
@@ -31,19 +78,10 @@ Recorded against octabam images, not a Modwerk package:
   transitions on `SFX_01`. Zero bad DSP records either side. Median audio gap
   340 ms in both states. Details in upstream README.
 
-## Modwerk status
-
-| Check | Result |
-| --- | --- |
-| `module:doctor -- --draft scope` | run on this branch |
-| USB trial / Keep / power cycle | not run |
-| `device:qualify` | not run |
-| Monochrome UI captures | not taken |
-| Beside Tuner | refused by site overlap until a base hook |
-
 ## Source pin
 
 | File | Role |
 | --- | --- |
 | `unit.s` | octabam `modules/scope/scope.s` at the pin above |
 | `upstream/modules/scope/` | unchanged octabam README, manifest, scope.s |
+| `upstream/LICENSE` | octabam's MIT licence at the pin, for its maintainers' edits |
