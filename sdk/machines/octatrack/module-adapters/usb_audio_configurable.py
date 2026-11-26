@@ -173,7 +173,7 @@ def source(root, module, layout, functions, load, sine_curve, package_hooks, *, 
     text = checked(text, 'mwua_bus_end: ', 'mwua_bus_end:\n    clrb uac2_set_pending\n    | ')
     if usb_input:
         text = checked(text, '.set USB_IN, 0\n', '.set USB_IN, 1\n')
-        text = input_trim(usb_input.package_source(text))
+        text = output_trim(input_trim(usb_input.package_source(text)))
     return text
 
 
@@ -206,6 +206,42 @@ mwua_trims:   .long 0               | drift trims: absorbed << 16 | repeated
     | ''')
     text = checked(text, '    moveq   #14,%d0\n.Linput_counters:', '    moveq   #15,%d0\n.Linput_counters:')
     return checked(text, '    moveal  #SRAM_REPLY,%a0\n    moveq   #60,%d0\n', '    moveal  #SRAM_REPLY,%a0\n    moveq   #64,%d0\n')
+
+
+def output_trim(text):
+    """Send the recording on the host's clock while the host plays into the unit (#2263).
+
+    The input stream is adaptive, on the host's clock. With the recording on the unit's crystal (the rate
+    servo), macOS runs both in one I/O cycle and its output buffer slid against what it sent until it sent
+    stale buffers: a buzz at its buffer's rate after about three minutes. So while EP3 OUT is up
+    (in_running), each packet takes the nominal 11.025 frames a poll and usb_audio_output_trim.c absorbs the
+    producer's drift in the ring. With nothing played in, the servo runs as before. The trims go out as a
+    sixteenth long of vendor request 0x55."""
+    text = checked(text, '''    bnes    .Lsrv_done              | ring, send nominal: the bring-up burst's
+''', '''    bnes    .Lsrv_done              | ring, send nominal: the bring-up burst's
+    tstb    in_running              | the host plays in: nominal, on its clock
+    bnes    .Lsrv_done              | (usb_audio_output_trim.c holds the ring)
+''')
+    text = checked(text, '''    movel   %d2,usbaudio_lastfill
+''', '''    movel   %d2,usbaudio_lastfill
+    tstb    in_running
+    beqs    .Lmwua_trimmed
+    movel   %a0,%sp@-
+    movel   %d4,%sp@-               | n
+    movel   %d2,%sp@-               | the fill before this packet
+    movel   usbaudio_consumed,%sp@-
+    pea     aud_ring
+    jsr     mwua_output_trim
+    lea     %sp@(16),%sp
+    moveal  %sp@+,%a0
+    addl    %d0,usbaudio_consumed   | 1: a frame absorbed, -1: one repeated
+.Lmwua_trimmed:
+''')
+    text = checked(text, 'aud_produced:      .long 0          | producer frame count\n', '''aud_produced:      .long 0          | producer frame count
+    .global mwua_out_trims
+mwua_out_trims:    .long 0          | recording drift trims: absorbed << 16 | repeated
+''')
+    return checked(text, '    lea     usbaudio_consumed,%a0\n    moveq   #60,%d0\n', '    lea     usbaudio_consumed,%a0\n    moveq   #64,%d0\n')
 
 
 # The imported layouts (layouts/descriptors.py, pinned in sdk/imports/usb-audio-outbox-7b2984c8.json) declare the input

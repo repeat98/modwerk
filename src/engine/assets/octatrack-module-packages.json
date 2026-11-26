@@ -866,6 +866,20 @@
   "usbAudio": {
     "configurable": {
       "name": "USB Audio",
+      "version": "0.4.2-experimental",
+      "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.2-experimental.mwrm",
+      "bytes": 21808,
+      "sha256": "4d98ffdf44e19949b096180c35c928f67f93c6f506cf10f3efead25c206ebcb6",
+      "abi": 8,
+      "features": 131,
+      "sites": 3,
+      "copies": 4,
+      "fills": 0,
+      "installPresets": true,
+      "requiredBase": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
+    },
+    "configurable-0.4.1": {
+      "name": "USB Audio",
       "version": "0.4.1-experimental",
       "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.4.1-experimental.mwrm",
       "bytes": 20824,

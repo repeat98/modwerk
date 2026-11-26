@@ -1,5 +1,14 @@
 # USB Audio testing
 
+## 0.4.2-experimental (draft), 26 November 2026
+
+**#2263 reproduced with 0.4.1 on macOS and its cause found; 0.4.2's fix ran without frame spikes on the unit; the long listening run is still to do.** Owner's MKII, macOS, development twins of the 0.8.3 base draft (`65f8604c`, `ec9f6ccc`), Main + Cue, INPUTS AB, a 1 kHz tone from the Mac through a Thru on T7 of a test Part, Main recorded back over USB (`rec.swift`, `tone.swift`).
+
+- **0.4.1 buzzes after about three minutes on a Mac.** Three of four runs: clean for 180-200 s, then sidebands at 1,000 ± 86.13 Hz (44,100 / 512) growing to -4 dB, fading again by about 500 s. The input counters (vendor request 0x56) stayed clean throughout: no underrun, overrun, reprime or error, every block's transfer completed, the trim absorbing 2.6 frames a second. With the Mac's I/O buffer at 256 frames the buzz began at about 105 s at ±172.3 Hz (44,100 / 256): it follows the Mac's own buffer. Cause: 0.4.1's input is adaptive (the Mac's clock) and its recording asynchronous (the Octatrack's crystal), and macOS runs both in one I/O cycle, so its output buffer slides 2.6 frames a second against what it sends until it sends stale buffers.
+- **0.4.2:** while the Mac plays in (EP3 OUT up), the recording goes out at the host's nominal 11.025 frames a poll and `usb_audio_output_trim.c` absorbs the producer's drift in the ring. A first build that interpolated every word of a whole packet made frames of 112-125 % with late starts and one skipped-frame wait in 30 s, and held the sequencer's step lights back (owner, by eye); the shipped one rewrites four frames of the words the packet sends: the longest frame 68.6-71.3 % against 0.4.1's 67.4 % in the same scene, no late starts, no wait, 166 frames repeated in about 70 s (the Octatrack about 54 ppm slow against the Mac).
+- **At rest** (`device:price`, three 8 s readings each, empty pattern, `65f8604c`): 0.3.0 +1.3 frame / +1.5 CPU, 0.4.0 +1.3 / +1.8, 0.4.1 +1.3 / +1.7, 0.4.2 +1.6 / +2.0.
+- **Not yet run:** the 10-minute listening run on 0.4.2 (a run on the second twin recorded silence for every version, its input path broken by an earlier session's set), 16 and 20 channels, Windows (needs the owner's PC), an MKI.
+
 ## 0.4.1-experimental (draft), 25 November 2026
 
 **Windows 11 shows Code 10 with 0.4.0 and INPUTS AB, the reporter's error; 0.4.1 starts and plays with INPUTS ABCD, and all three Undos reconnected.** One agent-run unit turn on the owner's Octatrack MKII, base 0.8.1 `e11525835106` RAM-booted from its release image with an empty set (24 November had the owner's kept set of four modules loaded), Windows 11 (usbaudio2 10.0.26100.9974), RAM trials only, nothing kept. Each trial was rolled back and the unit checked 30 s later.

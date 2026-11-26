@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.4.2-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "INPUTS on a Mac: audio played into the Octatrack began to buzz and distort after about three minutes. While the computer plays into the Octatrack, its recording from the Octatrack now runs on the computer's clock too, so the Mac keeps the two in step.",
+      "The Octatrack evens out the small speed difference on the recording side the same way it does on the input side: one sample at a time, smoothed over a tenth of a millisecond.",
+      "With INPUTS OFF, or while nothing plays into the Octatrack, the recording works exactly as before. An Octatrack running 0.4.1 gets this version with its next sync."
+    ]
+  },
+  {
     "version": "0.4.1-experimental",
     "date": "2026-11-24",
     "changes": [
