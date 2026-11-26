@@ -159,8 +159,13 @@ store+0x2fe+30·track+6·fx.
 - **Emulator** (`ot_emu` adapted build, twin `764b6e71`, a scripted host): addressed and never configured, the unit was
   re-offered within 8 s; configured, no re-offer in 15 s. The old rule re-offered a configured unit there too, since the
   emulator keeps DEVICEADDR at 0, so the emulator cannot show the old rule's gap; the unit run below can.
-- **Pending on the unit:** a twin with this change, no `usb` incident in normal use over USB Audio installs and layout
-  changes, and whether a drop now heals by itself.
+- **On the unit** (owner's MKII, evening of 26 November, twins with this change: `764b6e71` running base `478c0c8d`,
+  boots 1129 and 1131, and the built-in USB Audio twin `853a9af2`, boot 1130): three RAM boots, twelve USB Audio trials
+  installed and rolled back (0.3.0 to 0.4.2), and two layout changes (MAIN + CUE to 16 CH and back) with the Mac
+  recording and playing in. The unit stayed on USB throughout, and the log holds no `usb` incident: nothing needed a
+  re-offer. So the change caused no false re-offer in normal use, but no drop happened to show that it heals one.
+- **Not shown:** the re-offer healing a drop on hardware, the released 0.8.2 base (which keeps the old rule), an MKI,
+  a cold start after a power cycle, Windows.
 
 ## Builds and pending
 
