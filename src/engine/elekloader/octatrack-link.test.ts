@@ -273,7 +273,7 @@ describe('sending a module', () => {
           connectionTrusted: { get: () => trusted },
           stage: { value: async () => {
             trusted = false; unit.staged = true
-            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0] // eight submissions refused at their SETUP, across the wrap
+            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0, 0x0fc00020] // eight submissions refused at their SETUP, across the wrap; a data buffer error
             throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause, {command: 'chunk', chunkOffset: 4043, sequence: 9})
           } },
         })
@@ -285,7 +285,7 @@ describe('sending a module', () => {
     }
     const upload = {command: 'chunk', chunkOffset: 4043}
     expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError', upload },
-      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0], upload }))])
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0, 0x20], upload }))])
   })
   it.each([[56, 0, 1, 56], [0, 0, 1, 0], [65535, 0, 1, undefined], [56, 1, 1, undefined], [56, 0, 0, undefined]] as const)(
     'matches an EP0 sample (%s bytes, %s resets, %s primes) to the failed attempt', async (residual, resets, primes, expected) => {
@@ -446,6 +446,12 @@ describe('sending a module', () => {
     unit.restoring = true // rejected with no loader refusal, the record's saved still 0
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/hasn’t loaded its saved modules yet, so nothing changed/)
+  })
+  it('says the last change is not on the card yet when a sync comes while its save keeps failing', async () => {
+    const { unit, link } = await linked()
+    unit.saveFailed = true // rejected with no loader refusal, the record's saved 8
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/^The Octatrack couldn’t save your last change to its card yet, so nothing changed\./)
   })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')
@@ -848,7 +854,7 @@ describe('loading a module set', () => {
   })
   it('says a kept set is still to be saved when the unit has not saved it in time, and that a save failed only when it did', async () => {
     const reading = (saved: number) => ({ state: 0, failed: 0, modules: 0, dsp: 0, intact: 0, ran: 0, peaks: { cpu: 0, tracks1to4: 0, tracks5to8: 0 }, done: 0, total: 0, frameGap: 0, saved, savedCount: 0, live: 2, culprit: 0, culpritName: '', refusal: 0 })
-    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live/, 'sync_failed']] as const) {
+    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live to the card yet\. It keeps trying/, 'sync_failed']] as const) {
       const { link } = await loaded(), events: string[] = []
       link.subscribeDiagnostics(diagnostic => events.push(diagnostic.event))
       vi.spyOn(UsbVendorTransport.prototype, 'selftest').mockResolvedValue(reading(saved))
