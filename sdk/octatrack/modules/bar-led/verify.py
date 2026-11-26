@@ -21,6 +21,10 @@ and A02 at 12, [PLAY], then [PTN] + [TRIG 2] in the first pass. Stock switches
 at A01's end (the playing-pattern byte 0x800065be turns 1); it passes when the
 step-0 rule holds throughout, the green lands on A02's 1 at least twice, and
 A02's passes end on step 8 (12 steps, beats on 0, 4, 8), not 12.
+A sixth run boots the port as an MKII (--mkii, #1680) at 16 steps: every beat
+flash asks for stock's 38, and the palette call (0x40013368) sets id 38's
+register 1 to green (0, level, 0) just before each flash on step 0 and back to
+red (level, 0, 0) just before the flash after it, and at no other time.
 
 Reads, and SKIPs without any of them: the port (out/emu/ot_emu, OT_EMU), the
 stock MAIN OS (out/raw/section_3_MAIN_OS.bin, BAR_IMAGE) and a card holding a
@@ -50,6 +54,7 @@ PATTERN_WRITE = re.compile(r"\[0x800065be\] <- (0x[0-9a-f]+|0) \(1\) at pc \S+ i
 CHANGE = (("0 poke %#x=16" % PATTERN_LENGTH), ("0 poke %#x=12" % NEXT_LENGTH), "200 key 0x28 down", "320 key 0x28 up",
           "3000 key 0x2e down", "3120 key 0x01 down", "3240 key 0x01 up", "3360 key 0x2e up", "10000 quit")
 FLASH = re.compile(r"\[\s*(\d+)\] at 0x40013784 .*?\[sp 0x[0-9a-f]+: (0x[0-9a-f]+) (0x[0-9a-f]+) (0x[0-9a-f]+)")
+PALETTE = re.compile(r"\[\s*(\d+)\] at 0x40013368 .*?\[sp 0x[0-9a-f]+: (0x[0-9a-f]+) (0x[0-9a-f]+|0) (0x[0-9a-f]+|0) (0x[0-9a-f]+|0) (0x[0-9a-f]+|0)")
 
 
 def skip(why):
@@ -121,6 +126,33 @@ def main():
               and max((f[0] for f in after), default=99) == 8)
         text = " ".join(("G" if led == 39 else "r") + "@%s%s" % (step, "" if p == 0 else "(A02)") for step, led, _, p in seen)
         print("[%s] bar-led: A01 16 steps, then A02 12 steps cued while playing: %s" % ("PASS" if ok else "FAIL", text))
+        failed |= not ok
+        log = subprocess.run([str(EMU), "--image", str(IMAGE), "--mkii",
+                              "--preload", "%#x=%s;%#x=%s" % (CAVE, tmp / "u.bin", SITE, tmp / "jsr.bin"),
+                              "--card", CARD, "--set", SET, "--project", PROJECT, "--load-ms", "20000",
+                              "--sequencer", "--internal-clock", "--frames", "20000",
+                              "--step", "-:poke:%#x=16" % PATTERN_LENGTH,
+                              "--watch-mem", "0x800065b4,2", "--watch-pc", "0x40013784,0x40013368"],
+                             capture_output=True, text=True, timeout=600).stdout
+        seen, colour, out = flashes(log), None, []
+        calls = sorted([(int(i), "f") for i, ret, _, _ in FLASH.findall(log) if int(ret, 16) == RETURN]
+                       + [(int(i), (int(a, 16), int(b, 16), int(r, 16), int(g, 16))) for i, ret, a, b, r, g in PALETTE.findall(log)
+                          if int(ret, 16) in range(CAVE, CAVE + 0x100)])
+        for _, call in calls:
+            if call == "f":
+                out.append(colour)
+                colour = None
+            else:
+                colour = "G" if call[:2] == (38, 1) and call[2] == 0 and call[3] else "R" if call[:2] == (38, 1) and call[2] and call[3] == 0 else "?"
+        wrong = [f for f in seen if f[1:3] != (38, 3)]
+        want = []
+        for i, f in enumerate(seen):
+            want.append("G" if f[0] == 0 else "R" if i and seen[i - 1][0] == 0 else None)
+        greens = sum(1 for c in out if c == "G")
+        ok = not wrong and out == want and greens >= 3
+        text = " ".join(("G" if c == "G" else "r" if c == "R" else "-") + "@%s" % f[0] for f, c in zip(seen, out))
+        print("[%s] bar-led: MKII, 16 steps, id 38's colour set before each flash (G green, r back to red, - none): %s"
+              % ("PASS" if ok else "FAIL", text))
         failed |= not ok
     sys.exit(1 if failed else 0)
 
