@@ -1,0 +1,1 @@
+Analog Rytm MKII base: modules that patch stock code can now load over USB on trial, and each trial frees its module memory again after Undo; a module can no longer patch over the base's own code. The link sends each reply in one piece, so it never mixes with a SysEx transfer running at the same time.

@@ -456,6 +456,48 @@ class MachineBases(unittest.TestCase):
         self.assertEqual(body("sdk/machines/analog-rytm-mkii/elekloader/base/modules.c"), body("sdk/machines/model-cycles/elekloader/base/modules.c"))
         self.assertIn("#define LAPSE_TICKS 200u", (APP / "sdk/machines/analog-rytm-mkii/elekloader/base/modules.c").read_text())
 
+    def test_a_rytm_runtime_module_never_patches_over_the_base(self):
+        """machine:base writes the base's own sites beside runtime.c (held-sites.h), from the core's and base.json's:
+        in every variant they are exactly the pinned package's sites, and the glue's patchable refuses any module site
+        that touches one, while stock bytes away from them stay patchable (owner's review of #1934)."""
+        import shutil, subprocess
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        record = json.loads((APP / "sdk/imports/elekloader-modwerk-base-analog-rytm-mkii-2026-11-06.json").read_text())
+        binding = json.loads((APP / "sdk/machines/analog-rytm-mkii/base-binding.json").read_text())["variants"]
+        packages = {name: APP / "sdk/imports/packages/modwerk-base-analog-rytm-mkii" / ("modwerk-base-analog-rytm-mkii-%s.elemod" % identity[:8])
+                    for name, identity in binding.items()}
+        self.assertTrue(all(p.name in json.dumps(record) for p in packages.values()))
+        cc = shutil.which("cc")
+        for name, add, leave in machine_base.variants(config):
+            with tempfile.TemporaryDirectory() as work:
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                header = (core / "../base/held-sites.h").resolve()
+                ranges = [(int(a, 16), int(b, 16)) for a, b in re.findall(r"\{0x([0-9a-f]+)u, 0x([0-9a-f]+)u\}", header.read_text())]
+                sites = json.loads(packages[name].read_text())["sites"]
+                self.assertEqual(machine_base.held_ranges(sites), ranges, name)
+                if not cc:
+                    continue
+                main = pathlib.Path(work) / "main.c"
+                probes = [(int(site["addr"], 16), site["len"]) for site in sites]
+                probes = [(a, n, 0) for a, n in probes] + [(a + n - 1, 4, 0) for a, n in probes] + [(a - 2, 4, 0) for a, n in probes]
+                free = [(a + 0x10, 6) for a, b in zip([r[1] for r in ranges], [r[0] for r in ranges[1:]]) if b - a >= 0x20 for a in [a]]
+                probes += [(a, n, 1) for a, n in free[:20]] + [(0x400003fc, 6, 0), (0x402cdffc, 8, 0)]
+                rows = "".join("    {0x%08xu, %du, %d},\n" % p for p in probes)
+                main.write_text("#include <stdint.h>\n#include <stdio.h>\nint modwerk_machine_patchable(uint32_t, uint32_t);\n"
+                                "static const struct { uint32_t at, n; int ok; } p[] = {\n" + rows + "};\nint main(void) {\n"
+                                "    int bad = 0;\n    for (unsigned i = 0; i < sizeof p / sizeof p[0]; ++i)\n"
+                                "        if (!modwerk_machine_patchable(p[i].at, p[i].n) != !p[i].ok) { printf(\"%x %u\\n\", (unsigned)p[i].at, (unsigned)p[i].n); bad = 1; }\n"
+                                "    return bad;\n}\n")
+                base, rt = header.parent, APP / "sdk/runtime"
+                built = subprocess.run([cc, "-std=c11", "-DMODWERK_HOST", "-DRUNTIME_MODULES=16u", "-DRUNTIME_POOL_BYTES=65536u",
+                                        "-I", base, "-I", rt / "loader", "-I", rt / "upload", main, base / "runtime.c", base / "modules.c",
+                                        rt / "loader/loader.c", rt / "upload/upload.c", rt / "upload/wire.c", rt / "upload/sha256.c",
+                                        "-o", pathlib.Path(work) / "t"], capture_output=True, text=True)
+                self.assertEqual(built.returncode, 0, built.stderr)
+                ran = subprocess.run([pathlib.Path(work) / "t"], capture_output=True, text=True)
+                self.assertEqual(ran.returncode, 0, name + ": wrongly judged " + ran.stdout)
+                self.assertGreater(len(free), 5, name)
+
     def test_the_rytm_diagnostics_log_is_the_octatrack_layout(self):
         """The site reads the Rytm's log with the Octatrack's parser, so its numbers and structs are the Octatrack's
         word for word (base/diag.h), and every kind it names is the Octatrack's."""

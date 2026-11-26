@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Rytm's link over USB MIDI. Every base (base.json's common) answers IDENT (with the set identity:
 // the CRC32 and length of the .run block, taken at boot), DIAG, LOAD and LOG (the diagnostics log,
-// diag.c): a host identifies the unit and reads what it runs and how it runs, and nothing more, as on
-// the Octatrack and the Model:Cycles. Development bases (base.json's dev, MODWERK_DEV, npm run
+// diag.c), and runs a module on trial (UP_PART, UP_RUN, MODS: the runtime loader, modules.c) with
+// nobody at the unit, as the Octatrack does: any host with SysEx access to its USB MIDI port can send
+// one and Keep it, and a power cycle undoes it. Nothing more on a release base. Development bases (base.json's dev, MODWERK_DEV, npm run
 // machine:base -- analog-rytm-mkii --dev) add the screen and read-only memory and, while the unit is
 // armed on its own panel, keys, encoder turns and pads as the panel posts them, the remote YES of
 // stock's OS upgrade and a RAM boot. Built so an agent can flash or RAM-boot a test image (stock's OS
@@ -22,9 +23,9 @@
 //   router's first instructions: F0 7D 'MWL' from USB (iface 2, or 4 on the auto
 //   channel) is copied into a ring here and goes no further; anything else goes on
 //   to stock unchanged. DIN (iface 8 / 0x10) is never served.
-// - Work: ev_tick (UI task, about 20 Hz) takes the ring, acts and replies through
-//   stock's sysex_send on USB (never from the audio
-//   interrupt; waits a tick while stock is mid-SysEx on USB).
+// - Work: ev_tick (UI task, about 20 Hz) takes the ring, acts and replies on USB with
+//   stock's USB MIDI writer, the whole reply under stock's USB lock and never while
+//   another sender's SysEx is open (never from the audio interrupt; LINK.md).
 // - Keys and encoders: posted on the UI task's queue (0x4011fb56, queue_put
 //   0x400013b2) as the panel's messages are, so the UI loop (0x400a46f0) plays them
 //   through the core's ev_key/ev_enc sites and stock: modules see them too. The
@@ -79,8 +80,15 @@
 #define LINK_VERSION 1
 
 // Stock, OS 1.74.
-#define SYSEX_SEND ((int (*)(const uint8_t *, int, const uint8_t *, int))SYSEX_SEND_AT)
-#define USB_SYSEX_STATE (*(volatile uint32_t *)USB_SYSEX_STATE_AT)
+// Its USB MIDI writer, the lock around it and the writer's SysEx state (LINK.md, "Stock's send from two tasks").
+#define USB_LOCK ((void (*)(void))USB_LOCK_AT)         // takes stock's USB MIDI lock, waiting for it
+#define USB_UNLOCK ((void (*)(void))USB_UNLOCK_AT)
+#define USB_WRITE ((void (*)(int, const uint8_t *))USB_WRITE_AT)   // write(len, bytes): MIDI bytes to USB packets
+#define MIDI_ON (*(volatile uint32_t *)MIDI_ON_AT)     // stock's send sends nothing while it is 0
+#define USB_SYSEX_STATE (*(volatile uint32_t *)USB_SYSEX_STATE_AT) // 0xF0 while a SysEx is written but not yet ended
+#define SYSEX_OPEN (USB_SYSEX_STATE == 0xF0)
+#define OPEN_TICKS 30                   // about a second and a half: longer, and the open SysEx counts as one left unended
+#define PART 144                        // bytes in one write, as stock's send splits a message
 #define UI_QUEUE ((void *(*)(void))UI_QUEUE_AT)
 #define QUEUE_POST ((void (*)(void *, const void *))QUEUE_POST_AT)
 #define VIEW_INVALIDATE ((void (*)(void *))VIEW_INVALIDATE_AT)
@@ -501,10 +509,42 @@ static uint8_t *begin(int seq, int cmd, int status)
     return p;
 }
 
+// Stock's send releases its lock after every 144-byte part, so another task's part could land between two of a
+// reply's (and the reverse), which breaks both SysEx. The link writes the whole reply under the lock, and never
+// while another sender's SysEx is open, as the Model:Cycles' link does. A reply that meets an open SysEx is held, not
+// dropped (its request has run: an UP_RUN may have kept or undone a set), and goes out at a later tick; the link acts
+// on no request while one is held (mw_link_tick). An open SysEx that lasts more than OPEN_TICKS no longer holds it.
+static int reply_held;                  // the bytes of a reply in reply[] not yet written
+static uint32_t open_ticks;             // ticks the current open SysEx has lasted
+
+static int sysex_holds(void)
+{
+    return SYSEX_OPEN && open_ticks <= OPEN_TICKS;
+}
+
+static void write_held(void)
+{
+    int k;
+    if (!MIDI_ON) {                     // stock's send would drop it too
+        reply_held = 0;
+        return;
+    }
+    USB_LOCK();
+    if (sysex_holds()) {                // opened since the tick looked: a later tick
+        USB_UNLOCK();
+        return;
+    }
+    for (k = 0; k < reply_held; k += PART)
+        USB_WRITE(reply_held - k < PART ? reply_held - k : PART, reply + k);
+    USB_UNLOCK();
+    reply_held = 0;
+}
+
 static void send(uint8_t *end)
 {
     *end++ = 0xF7;
-    SYSEX_SEND(reply, end - reply, 0, USB);
+    reply_held = (int)(end - reply);
+    write_held();
 }
 
 #ifdef MODWERK_DEV
@@ -745,10 +785,12 @@ void mw_link_tick(char *ctrl)
         pend_age = 0;
     }
 #endif
-    for (done = 0; done < PER_TICK && ring_tail != ring_head; done++) {
+    open_ticks = SYSEX_OPEN ? open_ticks + 1 : 0;
+    if (reply_held && !sysex_holds())
+        write_held();
+    // Another sender's SysEx open, or a reply held: the next request waits for a later tick.
+    for (done = 0; done < PER_TICK && ring_tail != ring_head && !sysex_holds() && !reply_held; done++) {
         uint32_t t = ring_tail;
-        if (USB_SYSEX_STATE == 0xF0)
-            break;                      // stock is mid-SysEx on USB: next tick
         act(ring[t % RING], ring_len[t % RING]);
         ring_tail = t + 1;
     }

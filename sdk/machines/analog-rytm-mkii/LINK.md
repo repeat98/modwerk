@@ -2,14 +2,14 @@
 
 The Rytm's link over USB MIDI. Every Modwerk base carries the part for musicians' units, as the
 Octatrack's and the Model:Cycles' do: a host reads the unit's identity with the set identity (which
-build runs), the audio load and the diagnostics log. A development base adds the screen and memory,
+build runs), the audio load and the diagnostics log, and loads a module on trial. A development base adds the screen and memory,
 and presses keys, plays pads, turns encoders and confirms an OS upgrade as a person at the panel
 would: with it an agent flashes or RAM-boots a test image and drives a test without a hand on the
 unit. It is the Rytm's transport the [machine recipe](../../../docs/MACHINE_RECIPE.md) asks for,
 SysEx because USB MIDI is all the unit offers. The Model:Cycles' link follows this one (the same
 wire, the same commands). The developer MCP's `device_status`, `device_load` and `device_log` read it
 with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analog-rytm-mkii-over-its-link),
-`src/engine/elektron/rytm-link.ts`); the machine page does not yet.
+`src/engine/elektron/rytm-link.ts`), and so does the machine page's Status, Your Analog Rytm.
 
 - Unit side: [`elekloader/base/link.c`](elekloader/base/link.c), [`link.s`](elekloader/base/link.s)
   and the log and load ([`diag.c`](elekloader/base/diag.c), [`load.c`](elekloader/base/load.c)),
@@ -22,8 +22,10 @@ with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analo
 
 Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`,
 and takes runtime modules on trial (`up_part`, `up_run`, `mods`: [Loading modules](#loading-modules)).
-Beyond that it reads and changes nothing: no host can press a key, read memory outside the log or
-confirm an upgrade on a release base, which answers every other request `bad request`. On the
+A trial needs nobody at the unit, as on the Octatrack: any host with SysEx access to the unit's USB
+MIDI port can load a module on trial and Keep it, and a power cycle always undoes it (nothing is
+saved). Beyond that it reads and changes nothing: no host can press a key, read memory outside the
+log or confirm an upgrade on a release base, which answers every other request `bad request`. On the
 send-bus variant they cost 3,396 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
 it the log (voices the same; plain 3,348 and 6,848), and one site each in stock's SysEx router and
 boot (`0x40083dd8`, `0x400008c6`). The boot site computes the set identity, with the data cache off
@@ -160,7 +162,11 @@ What the glue rests on (read from OS 1.74; `runtime.c`'s header has the addresse
 the Model:Cycles' design (the switch saves d0-a7 at TCB + 0x0c, one ready list a priority), with sixteen tasks created
 with constant arguments, two of them a factory test console's behind a boot flag; caches as theirs (CACR
 `0xa50ce100`, data ACR0 `0x4007e020`), so DDR's mirror at +0x0800_0000 is uncached; the audio interrupt at level 5,
-so the loader's level-4 lock leaves it running; sites only in stock code below its `.data` image (`0x402ce000`).
+so the loader's level-4 lock leaves it running; sites only in stock code below its `.data` image (`0x402ce000`), and
+never over the base's own: `machine:base` writes the core's and base.json's sites beside the glue (`held-sites.h`),
+and `patchable` refuses a module site that touches one (`sdk/tests/test_machine_base.py` checks the ranges against
+the pinned packages). A switch with sites needs every task's stack and saved registers (`modwerk_machine_paused`,
+2 x 16 spans, at most `RUNTIME_PAUSED`).
 
 **Cost.** About 32 KB of `.run` and 108 KB of the shared mod area in every base, 96 KB of it the pool and the upload
 staging. Nothing in the audio interrupt; the four UI hooks return after one test while no module is live, and the
@@ -172,16 +178,31 @@ tick counts the live modules once (16 reads, about 20 times a second).
   anything that is not Elektron's. `link.s` takes its first instructions: `F0 7D 'MWL'` from USB
   (interface 2, or 4 on the auto channel) goes into a ring and no further; the rest goes on to
   stock unchanged.
-- **Work.** `ev_tick` (UI task, about 20 Hz) takes the ring, acts and replies through stock's
-  `sysex_send` on USB, never from the audio interrupt, and waits a tick while stock is mid-SysEx.
-  `sysex_send` waits for room in the USB ring: a host that stops reading in the middle of a reply
-  can hold the UI task, as stock's own SysEx can. Keep the port open until the reply.
+- **Work.** `ev_tick` (UI task, about 20 Hz) takes the ring, acts and replies on USB, never from
+  the audio interrupt: the whole reply under stock's USB lock, never while another sender's SysEx
+  is open ([below](#stocks-send-from-two-tasks)). Stock's writer waits for room in the USB ring: a
+  host that stops reading in the middle of a reply can hold the UI task (and stock's own USB
+  sends, which wait for the lock), as stock's own SysEx can. Keep the port open until the reply.
 - **Keys and encoders** go on the UI task's queue (0x4011fb56, `queue_put` 0x400013b2) as the
   panel's messages do, so the UI loop plays them through the core's `ev_key`/`ev_enc` and stock:
   modules see them too. `is_key_held` (0x40081c28) is pointed at `mw_link_held`, so a key the link
   holds reads as held there: FUNC + turn and every other held-key test behave as on the panel.
 - **Screen.** Stock sends `*0x40287b68` to the display, then swaps it with `*0x40287b6c`, so the
   frame on the screen is the second; the link reads that one.
+
+### Stock's send from two tasks
+
+Read from OS 1.74's code, 26 November 2026. Stock's SysEx send `0x40085a18(bytes, len, error flag, port)` returns at
+once while `0x419f28a8` is 0, splits a message into 144-byte parts and hands each to `0x400857ca(len, bytes, port)`.
+For USB (port 2, and 4 with DIN) that takes stock's USB lock (`0x40002914`: a kernel mutex at `0x42f67a28`,
+`0x400010bc`, which makes another task wait; `0x40002924` gives it back, `0x400011ee`, to the next waiter: no count,
+so a holder that calls the send loses it after the first part), writes the part with `0x400029e0` and gives the lock
+back. So one part is never torn, but the lock is free between the parts of a message. `0x400029e0` turns MIDI bytes
+into USB MIDI packets and keeps its SysEx state across calls (`0x413db244`: `0xF0` from a SysEx's `F0` until its
+`F7`), so a part of another sender between two parts of a message breaks both. The link therefore writes each reply
+whole under the lock, with the writer itself, and holds it while another sender's SysEx is open (as the
+Model:Cycles' link, from 26 November 2026; before, a reply over 144 bytes, such as a `log` block, could interleave
+with a Transfer's SysEx).
 
 ## Key flags
 

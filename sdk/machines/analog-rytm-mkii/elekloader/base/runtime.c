@@ -123,6 +123,11 @@ static const struct { uint32_t tcb, stack, size; } tasks[] = {
     {0x413d2f48u, 0x413d2f9cu, 0x4000u},
 };
 #define TASKS (sizeof tasks / sizeof tasks[0])
+/* The most spans paused() reports: the trap's registers, every task's stack, and the saved registers of every task but
+ * the running one: 1 + TASKS + (TASKS - 1) = 2 x TASKS. The loader's array holds RUNTIME_PAUSED; a guard one span too
+ * strict answered "unknown" every time with sixteen tasks, so the loader refused every switch with sites and freed no
+ * pool (owner's review of #1934, 26 November 2026). */
+_Static_assert(2u * TASKS <= RUNTIME_PAUSED, "paused() needs room for 2 x TASKS spans");
 #define CURRENT_TCB 0x42f67924u
 #define READY_LISTS 0x42f678e4u     /* one head a priority; the OS creates tasks at 0 to 10 */
 #define PRIORITIES 11u
@@ -148,7 +153,7 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max, const s
 {
     uint32_t current = U32(CURRENT_TCB);
     unsigned n = 0;
-    if (!context || !known(current) || !ready_tasks_known() || max < 2u * TASKS + 1u) return max + 1u;
+    if (!context || !known(current) || !ready_tasks_known() || max < 2u * TASKS) return max + 1u;
     span[n++] = (struct runtime_span){(const uint8_t *)context->registers, (const uint8_t *)(context->registers + 16)};
     for (unsigned i = 0; i < TASKS; ++i) {
         uint32_t top = tasks[i].stack + tasks[i].size, saved;
@@ -167,9 +172,27 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max, const s
 int modwerk_machine_dsp_admit(const struct runtime_dsp *from, struct runtime_dsp *to) { (void)from; return to->count ? RUNTIME_MALFORMED : RUNTIME_OK; }
 void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct runtime_dsp *to) { (void)from; (void)to; }
 
+/* The base's own sites (held-sites.h, written by machine:base from the core's and base.json's): a module site over one
+ * would replace the base's code with what the hash thought stock, and one running into the lean engine's jsr would
+ * stop the audio interrupt (owner's review of #1934, 26 November 2026). The Octatrack keeps them in its event list. */
+#ifdef MODWERK_HOST
+#if __has_include("held-sites.h")
+#include "held-sites.h"
+#else
+#define MW_HELD_SITES 1u
+static const uint32_t mw_held_sites[MW_HELD_SITES][2] = {{0x400008c0u, 0x400008c6u}};
+#endif
+#else
+#include "held-sites.h"
+#endif
 int modwerk_machine_patchable(uint32_t address, uint32_t length)
 {
-    return address >= STOCK_FROM && address < STOCK_DATA && length <= STOCK_DATA - address;
+    if (!(address >= STOCK_FROM && address < STOCK_DATA && length <= STOCK_DATA - address))
+        return 0;
+    for (unsigned i = 0; i < MW_HELD_SITES; ++i)
+        if (address < mw_held_sites[i][1] && mw_held_sites[i][0] < address + length)
+            return 0;
+    return 1;
 }
 
 /* core-ar2's hooks to the live modules', in position order (README.md "Package"). A module's draw gets the core's
