@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "First Modwerk draft: standalone SCOPE from octabam (DOWN + TEMPO OSC/XY/ALL).",
+      "Known issue: conflicts with Tuner on the TEMPO, frame and UI sites until a base hook exists.",
+      "Tried over USB on one MKII; not yet qualified with device:qualify."
+    ]
+  }
+]

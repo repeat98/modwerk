@@ -1,4 +1,4 @@
-import { availableModules } from './availability'
+import { listedModules } from './availability'
 import { LIBRARY_CATEGORIES } from './modules'
 import { DIGI_MODS, isDigiDevice } from '../devices/digi-mods'
 import { DEVICES_BY_ID, deviceHref } from '../devices/registry'
@@ -16,7 +16,7 @@ function validLibraryRoute(route: string) {
 }
 
 function target(id: string, betaAccess = false) {
-  const module = availableModules(betaAccess).find(module => module.id === id)
+  const module = listedModules(betaAccess).find(module => module.id === id)
   if (module) return { id, name: module.name, href: moduleHref(id) }
   const mod = DIGI_MODS.find(mod => mod.device + '-' + mod.id === id)
   return mod ? { id, name: mod.title + ' · ' + DEVICES_BY_ID[mod.device].name, href: deviceHref(mod.device, 'module/' + mod.id) } : undefined
