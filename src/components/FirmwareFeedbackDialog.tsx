@@ -54,7 +54,7 @@ export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, on
   const saved = selected ? status(selected.id) : ''
   const content = <>
     <header className="firmware-feedback-header">
-      <div><h2 id={heading}>{build.machine === 'Octatrack' ? 'Inside your .bin' : 'Inside your firmware'}</h2><p id={description} className="firmware-feedback-intro">Flash it, then open a fresh project and try your modules.</p><p className="firmware-feedback-build">{build.machine} · OS {build.os} · {build.modules.length} {build.modules.length === 1 ? 'module' : 'modules'}</p></div>
+      <div><h2 id={heading}>{build.machine === 'Octatrack' ? 'Your new modules' : 'Inside your firmware'}</h2><p id={description} className="firmware-feedback-intro">{build.machine === 'Octatrack' ? 'Once they’re on your Octatrack, open a fresh project and try them.' : 'Flash it, then open a fresh project and try your modules.'}</p><p className="firmware-feedback-build">{build.machine} · OS {build.os} · {build.modules.length} {build.modules.length === 1 ? 'module' : 'modules'}</p></div>
       <p className="firmware-feedback-header-help">Only confirm modules you’ve tested.</p>
       <button type="button" className="icon-button firmware-feedback-close" aria-label="Close firmware overview" disabled={busy} autoFocus={!inline} onClick={onClose}><Icon name="close" size={21}/></button>
     </header>

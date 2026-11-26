@@ -84,6 +84,15 @@ export const LINK_DEVICES: LinkDevice[] = [
     areas: { ddr: [0x47be0000, 0x47c00000] },
     ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
   },
+  {
+    // The Modwerk base from core-mc 0.3's source has no .fast copy table, so mods get the 256 KB of DDR alone.
+    key: 'model-cycles', machine: 'model-cycles', name: 'Model:Cycles', sysexId: 0x11, mainLoad: 0x40000400,
+    releases: [
+      { version: '1.13', syxSha256: '44fe586269631a0ca7da25a3383fc6733c314809505fc3cc52f1e0ed9800640c', mainSha256: 'cc99d4f0175d34d1e91d046e6ec85a5e8ab58ab9edbb3c24406acd48cb99ee98', mainLength: 1744192 },
+    ],
+    areas: { ddr: [0x47e00000, 0x47e40000] },
+    ddr: [0x47e00000, 0x47e40000], sramCode: [0, 0], fastTable: '', protected: [],
+  },
 ]
 
 type Part = { kind: 'hex'; bytes: Uint8Array } | { kind: 'stock'; addr: number; length: number }

@@ -97,7 +97,9 @@ describe('module qualification hard gates',()=>{
     try {
       mkdirSync(resolve(root,'sdk','approvals'),{recursive:true}); mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'raise AssertionError("never execute module source")\n')
-      const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octatrack/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
+      const published=parseModuleDocument(JSON.parse(readFileSync('sdk/octatrack/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
+      // at the version its OT UI captures document, so the fixture stays publishable when an update keeps earlier captures
+      const document={...published,version:published.media.find(item=>item.otUi)?.otUi?.moduleVersion??published.version}
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.'}
       const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=(doc=document)=>requireFolderQualification(folder,doc,new Map(),new Map(),{root})
