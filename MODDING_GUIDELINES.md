@@ -23,6 +23,14 @@ These rules protect the makers' copyright and the goodwill that lets modding exi
 - **Keep firmware on its instrument.** No plugin, app or emulator that lets people use a maker's firmware without the instrument. Developer emulators that run your own OS on your own computer to test modules are fine.
 - **Don't pass as official.** A modified build shows that it is modified wherever the instrument allows, for example on its start-up screen. Makers' names appear only to say what something works with ("modules for the Elektron Octatrack"), never as the name of a module or a build. Modwerk is independent: it is not affiliated with, endorsed by or supported by any maker.
 
+## Respect the instrument
+
+An instrument that does exactly what it was built for is a joy to play and easy to understand. Mods add to it the way plugins add to a studio. They don't turn it into something else.
+
+- **Build for this panel.** A feature follows the instrument's own labels, button layout and way of working, so every control still does what it says.
+- **No one-to-one copies of another instrument.** A feature or workflow taken from another instrument is redesigned for this one, not carried over screen for screen. Copied unchanged, its controls stop matching their labels.
+- **Keep it focused.** Make the instrument better at what it is. Don't turn it into a general-purpose machine where nobody can tell what does what.
+
 ## Keep a way back
 
 - An instrument gets public downloads only once its official OS restores it, with the steps written down.

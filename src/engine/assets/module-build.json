@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "35ea8e27cb3f148b0cb7886bc49039c17382a946",
+  "sourceCommit": "5f7179395e54526259c9b02b87173379e461b2f0",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "0140f4665ecafdba822208a82e84ac4baf401a7c4a29a936b2fa315b23af7952",
-  "compilerSha256": "cf83b1dd46431e5bd257abe5aeebf6961075dc2cde35e7c8e48e15e2bbbf09fc",
+  "sourceTreeSha256": "9d1579472df3ef359fcab7fbc90046438afe16775c9764baf35d0539d94ca278",
+  "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
@@ -18,6 +18,8 @@
     "ring-sc": "0.2.1-experimental",
     "vibrato": "0.1.0-experimental",
     "resonator": "0.1.0-experimental",
+    "mackity": "0.1.0-experimental",
+    "midiverb": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.4.0-experimental",
     "quantizer": "0.1.5-experimental",
@@ -45,8 +47,8 @@
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 86027,
-      "sha256": "111b8dad5bc68547bf938ac59316a4b889906d656b91e038941a43da7b7c468b"
+      "bytes": 93512,
+      "sha256": "4eb8d65bfd303b63c490f33b719127fc9d1429c696027c876bbcb51a085eaab0"
     },
     "resident-dsp.json": {
       "bytes": 6981,
@@ -65,12 +67,12 @@
       "sha256": "f4b17e0eb4e297e6dbfc61781fe5aed41262c1e7263e42579184c7cc15fa843e"
     },
     "menu-recipes.json": {
-      "bytes": 30022,
-      "sha256": "427972231beb55518aee663db1df9f4cf4d8debf1d7aa6b574f97d499f6a0842"
+      "bytes": 32016,
+      "sha256": "96ca9f4ddac0fe38905c2c530d70e08600b19a175f8b0feb289d03b095352d9e"
     },
     "descriptor-recipes.json": {
-      "bytes": 77122,
-      "sha256": "07342b7a6793e0526b0fca8776f49e750d9793461333fb53536d5414622aef4b"
+      "bytes": 87819,
+      "sha256": "91f797592fe15e07794f26d5083148af88644a55b4a69fbf177d8b52d8e20636"
     },
     "platform-writes.json": {
       "bytes": 15585,
