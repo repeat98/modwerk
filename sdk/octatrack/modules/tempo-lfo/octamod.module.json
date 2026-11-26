@@ -107,6 +107,15 @@
         "rationale": "Authored .bss 24 bytes plus small contribute record and TEMPO label; package totals unmeasured.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-26",
+      "conditions": "Octatrack MKII, after tip24 Keep PC, Part 1, transport playing, stock FILTER/DELAY companions, empty twin inventory, Undo-only trial; base dce64a781f8581b4 (development twin, Base draft index 63 + guard, after tip24 Keep PC); 3 readings of 8 s a state. Frame interrupt 52.1 % before, 52.1 % installed and used nowhere; CPU meter 62 % before, 62 % at rest.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
