@@ -1,53 +1,161 @@
 {
   "module": "miniverb",
-  "version": "0.2.3-experimental",
-  "base": "development twin d3d71297 of base 0.7.8 (main 02dfa20ca)",
-  "scene": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE",
+  "version": "0.2.4-experimental",
+  "base": "46c30886 (base 0.8.2 development twin of main 48f4a9b9c)",
+  "scene": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02 (one trig, on T7), readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples; rebuilt in the working copy on 26 Nov, not saved) at 126 BPM; owner's MKII, OS 1.40C",
+  "inputs": {
+    "transport": "playing"
+  },
   "seconds": 8,
-  "measuredAt": "2026-11-18T13:14:59.997Z",
+  "readings": 3,
+  "measuredAt": "2026-11-26T20:53:00.464Z",
   "result": {
     "id": "miniverb",
-    "version": "0.2.3-experimental",
+    "version": "0.2.4-experimental",
+    "packageSha256": "cf610384ad37447fbd9dc5fb59d326edeeafb0fb993f3caf376f3d46f55c5f84",
     "before": {
-      "frame": 41.2,
-      "frameMax": 76.1,
-      "frames": 22780,
+      "frame": 35.6,
+      "frameMax": 79.4,
+      "frames": 67243,
       "skipped": 0,
-      "cpu": 63.1,
-      "dsp1to4": 38.3,
-      "dsp5to8": 45.5
+      "cpu": 50.8,
+      "dsp1to4": 33.9,
+      "dsp5to8": 42.9,
+      "dsp1to4Peak": 41.3,
+      "dsp5to8Peak": 45.7,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.1,
+        "dsp1to4": 1,
+        "dsp5to8": 5.8,
+        "frameMax": 0.5,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0
+      },
+      "allocation": {
+        "modulePoolBytes": 0,
+        "dspProgramWordsT1to4": 441,
+        "dspProgramWordsT5to8": 441
+      }
     },
     "atRest": {
-      "frame": 41.1,
-      "frameMax": 75,
-      "frames": 22775,
+      "frame": 35.6,
+      "frameMax": 80.3,
+      "frames": 67349,
       "skipped": 0,
-      "cpu": 63.9,
-      "dsp1to4": 38.3,
-      "dsp5to8": 45.6
+      "cpu": 51.6,
+      "dsp1to4": 38.8,
+      "dsp5to8": 42.4,
+      "dsp1to4Peak": 41.3,
+      "dsp5to8Peak": 98.4,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 1.3,
+        "dsp1to4": 1.2,
+        "dsp5to8": 0.2,
+        "frameMax": 0.9,
+        "dsp1to4Peak": 0.9,
+        "dsp5to8Peak": 52.7
+      },
+      "allocation": {
+        "modulePoolBytes": 3424,
+        "dspProgramWordsT1to4": 441,
+        "dspProgramWordsT5to8": 441
+      }
     },
     "atRestAdds": {
-      "frame": -0.1,
+      "frame": 0,
       "cpu": 0.8,
-      "dsp1to4": 0,
-      "dsp5to8": 0.1
+      "dsp1to4": 4.9,
+      "dsp5to8": -0.5,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 52.7
     },
     "inUse": {
-      "frame": 41,
-      "frameMax": 74.1,
-      "frames": 22775,
+      "frame": 35.6,
+      "frameMax": 80.1,
+      "frames": 67552,
       "skipped": 0,
-      "cpu": 60.8,
-      "dsp1to4": 52.4,
-      "dsp5to8": 45
+      "cpu": 51.8,
+      "dsp1to4": 46.5,
+      "dsp5to8": 45.5,
+      "dsp1to4Peak": 53,
+      "dsp5to8Peak": 45.7,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.6,
+        "dsp1to4": 4,
+        "dsp5to8": 1.9,
+        "frameMax": 1.4,
+        "dsp1to4Peak": 0.5,
+        "dsp5to8Peak": 0
+      },
+      "allocation": {
+        "modulePoolBytes": 3424,
+        "dspProgramWordsT1to4": 966,
+        "dspProgramWordsT5to8": 441
+      }
     },
     "inUseAdds": {
-      "frame": -0.2,
-      "cpu": -2.3,
-      "dsp1to4": 14.1,
-      "dsp5to8": -0.5
+      "frame": 0,
+      "cpu": 1,
+      "dsp1to4": 12.6,
+      "dsp5to8": 2.6,
+      "dsp1to4Peak": 11.7,
+      "dsp5to8Peak": 0
     },
     "inUseOn": "T1 FX2",
+    "curve": {
+      "tracks": [
+        "T1",
+        "T3",
+        "T6",
+        "T7"
+      ],
+      "points": [
+        80.3,
+        78.7,
+        79,
+        79,
+        79.8
+      ],
+      "adds": [
+        -1.6,
+        -1.3,
+        -1.3,
+        -0.5
+      ],
+      "first": 0,
+      "each": 0,
+      "notes": [],
+      "admission": [
+        {
+          "pattern": "empty",
+          "number": 2,
+          "track": "T1",
+          "seconds": 8,
+          "admitted": true,
+          "frameMax": 52.2,
+          "frame": 28.6,
+          "dropped": 0,
+          "stalls": 0
+        },
+        {
+          "pattern": "medium",
+          "number": 4,
+          "track": "T1",
+          "seconds": 8,
+          "admitted": true,
+          "frameMax": 80.6,
+          "frame": 35.6,
+          "dropped": 0,
+          "stalls": 0
+        }
+      ]
+    },
     "rolledBack": true
   }
 }
