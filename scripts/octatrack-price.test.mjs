@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, rolledBackIn } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -179,4 +179,13 @@ it('reads a curve with the module\'s each booked at 0 and every other figure as 
   // Unbooked: the unit charges it by its descriptor, and its table is left alone.
   expect(measuringCosts(list, 'syntiz')).toBeNull()
   expect(measuringCosts(null, 'grain')).toBeNull()
+})
+
+it('reads the rollback from try on SIGINT and from recover (Windows sends a child no SIGINT)', () => {
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\ninterrupted: rolling back\nrolled back (pass --accept to keep it)\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\nfound trial, generation 3, active a8bcdca3ac910e22…\nnow normal, generation 4, active 4c7eb79b844c8139…\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\nrecovered from trial \nnormal, generation 4, active 4c7eb79b844c8139…\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\n')).toBe(false)
+  expect(rolledBackIn('nothing to recover \nnormal, generation 4, active 4c7eb79b844c8139…\n')).toBe(false)
+  expect(rolledBackIn('found trial, generation 3\nnow trial, generation 3\n')).toBe(false)
 })

@@ -75,6 +75,9 @@ export function allocationReading(text) {
   if (!pool || !core1 || !core0) return { unavailable: 'The development base did not report the module pool and both DSP program arenas.' }
   return { modulePoolBytes: Number(pool[1]), dspProgramWordsT1to4: Number(core1[1]), dspProgramWordsT5to8: Number(core0[1]) }
 }
+/** Whether a trial's output shows it rolled back: `try` says so on SIGINT, `device -- recover` by leaving the trial for normal
+ *  ("recovered from trial", then "normal, …"; a served session's recover says "now normal, …"). */
+export const rolledBackIn = log => /rolled back/.test(log) || /^recovered from (trial|pending|recovery|publishing)\b/m.test(log) || /^now normal,/m.test(log)
 /** What went wrong with a pick, from the session's reply (device.mjs pick's errors), or null when the slot runs it. */
 export const pickFailure = reply => /error|refused|not admitted|timed out/i.test(reply) ? reply.trim().split('\n').find(line => /error|refused|not admitted|timed out/i.test(line)).slice(0, 200) : null
 /** The session's `state` reply says the transport is stopped (device.mjs: "stopped" or "playing"). */
@@ -421,7 +424,13 @@ if (import.meta.filename === process.argv[1]) {
     await send('STOP w500')
     trial.kill('SIGINT') // rolls the trial back
     await ended
-    result.rolledBack = /rolled back/.test(log) || Boolean(result.refused) // a refused module was never in
+    // Windows sends a child no SIGINT: kill() ends it before its handler rolls back, and the trial stays on the unit.
+    // Roll it back as `npm run device -- recover` does, which finds the trial and leaves it for normal.
+    if (!result.refused && !rolledBackIn(log) && process.platform === 'win32') {
+      const recover = device('recover'); recover.stdout.on('data', chunk => { log += chunk }); recover.stderr.on('data', chunk => { log += chunk })
+      await new Promise(done => recover.on('exit', done))
+    }
+    result.rolledBack = rolledBackIn(log) || Boolean(result.refused) // a refused module was never in
     // The measuring table outlives the rollback: offer the package once more with this checkout's table and roll it back a second later.
     if (measuring && /frame costs/.test(log)) {
       let back = ''; const again = device('set', packagePath, '--seconds', '1')
