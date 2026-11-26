@@ -186,6 +186,10 @@ describe('module resource gauges', () => {
     ['previewvol', '0.944 kB'],
   ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
     const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+    // The 21 November readings are of the then-current packages: a later version shows no measured figure until its own pool is read.
+    if (poolEvidence.measurements.find(record => record.module === id)!.version !== document.version) {
+      return expect(moduleResourceIndicators(document)[2].status).not.toMatch(/^Measured/)
+    }
     expect(moduleResourceIndicators(document)[2]).toMatchObject({
       value, status: 'Measured · module pool', score: null,
       source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',
