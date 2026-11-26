@@ -372,6 +372,11 @@ since, the link has not.
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).
+- The runtime loader on a unit (25 November 2026, the test rig, hands off): SR08 (the combo set on the voices
+  development base with the loader, RAM-booted) took `examples/hello.c` on trial in 0.9 s, its square showed on the
+  screen and went with Undo; a trial and Keep kept it; a removal while a pattern played was refused (`unsafe`).
+  SR09 (the release base) took a trial and Undo. Every upload part (124-byte messages) arrived whole.
+  [Verification record](../../../docs/verification/2026-11-25-rytm-runtime-loader.md).
 - Every base's part on a unit (25 November 2026, the test rig, hands off), on the build before the
   load and log moved out of the audio interrupt (the gap between blocks was then measured): SR01 (the combo set of
   FXCJ on its voices development base with this change, layout unchanged) RAM-booted over FXCJ:
