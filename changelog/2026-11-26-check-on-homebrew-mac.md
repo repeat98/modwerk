@@ -1,0 +1,1 @@
+Checks: `npm run check` passes again on a Mac with Homebrew. The check-runner test hid the ColdFire tools by dropping their folder from PATH, which there also hid Python 3.12, and the loader host test called `sprintf`, which Apple marks deprecated and the test builds with warnings as errors.

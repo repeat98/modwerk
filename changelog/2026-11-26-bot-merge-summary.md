@@ -1,0 +1,1 @@
+Maintenance bot: a pass that proposes a merge works again. Since the base-merge rule, a merge reached the ledger without its summary, the Worker refused the whole pass, and nothing the pass proposed was filed.

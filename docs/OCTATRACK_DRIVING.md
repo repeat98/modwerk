@@ -137,6 +137,11 @@ it with `Get-CimInstance Win32_Process`; `wmic` is gone). `boot` and `try` on Wi
 2026 or later: older ones send 4,148-byte frames, which WinUSB refuses
 ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)).
 
+**On Windows without WSL**, give the session and its share port numbers, since Windows has no Unix sockets:
+`MODWERK_DEV_SOCKET=47812 node scripts/device.mjs serve --socket 47811 --share 47813`. With the same
+`MODWERK_DEV_SOCKET`, `device-send.py`, `device:qualify`, `device:test` and `octatrack-measure.py` reach it over TCP;
+`device:price` takes `--socket 47812 --share 47813` and `device:test` `--share 47813`.
+
 ## Send steps
 
 ```sh

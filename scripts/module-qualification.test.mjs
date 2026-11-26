@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { crlfModuleFiles, evidenceOnBaseProblem, gitStoredBytes, moduleEarlierPerformanceSourceSha256, moduleFolderSha256, moduleNativeSourceSha256, modulePerformanceSourceSha256, modulePricelessFolderSha256, testingVersionProblem } from './module-qualification.mjs'
+import { crlfModuleFiles, evidenceOnBaseProblem, gitStoredBytes, moduleEarlierPerformanceSourceSha256, moduleFolderSha256, moduleNativeSourceSha256, modulePerformanceSourceSha256, modulePricelessFolderSha256, procedureRecordProblem, testingVersionProblem } from './module-qualification.mjs'
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
@@ -106,6 +106,35 @@ it('asks a new version\'s TESTING.md to name it, and leaves an unchanged version
   // 0.2.0 is not 0.2.01 or 10.2.0.
   write(folder + 'TESTING.md', 'Ran 10.2.0 and 0.2.01.')
   expect(testingVersionProblem({ root, base: main })).toMatch(/does not name/)
+})
+
+it('asks a new version for the test procedure\'s record on the package it ships, and leaves drafts and unchanged versions alone', () => {
+  const root = mkdtempSync(join(tmpdir(), 'procedure-')); roots.push(root)
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim()
+  const write = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text) }
+  const ot = 'sdk/octatrack/modules/echo/', rytm = 'sdk/analog-rytm-mkii/modules/qperf/'
+  git('init', '-q', '-b', 'main'); git('config', 'user.email', 'a@b.c'); git('config', 'user.name', 'a')
+  write(ot + 'octamod.module.json', JSON.stringify({ version: '0.1.0-experimental' })); write(rytm + 'modwerk.module.json', JSON.stringify({ version: '0.1.0-experimental' }))
+  git('add', '.'); git('commit', '-qm', 'main')
+  const main = git('rev-parse', 'HEAD')
+  expect(procedureRecordProblem({ root, base: main })).toBe(null)
+  // An update with only a typed line, as five releases before 26 November 2026 had.
+  write(ot + 'octamod.module.json', JSON.stringify({ version: '0.1.1-experimental' })); write('public/octatrack-modules/echo/0.1.1-experimental.mwrm', 'package')
+  write(ot + 'TESTING.md', 'Tested on a unit: 0.1.1, MKII.')
+  expect(procedureRecordProblem({ root, base: main })).toMatch(/^sdk\/octatrack\/modules\/echo\/TESTING\.md has no record of `npm run test:procedure -- echo` for 0\.1\.1/)
+  // A record of another build, then of the package that ships (sha256 of "package" starts bc4a7118).
+  write(ot + 'TESTING.md', '0.1.1: `npm run test:procedure -- echo --package echo.mwrm`, package `0123abcd`.')
+  expect(procedureRecordProblem({ root, base: main })).toMatch(/does not name the package that ships, public\/octatrack-modules\/echo\/0\.1\.1-experimental\.mwrm/)
+  write(ot + 'TESTING.md', '0.1.1: `npm run test:procedure -- echo --package echo.mwrm`, package `bc4a7118`.')
+  expect(procedureRecordProblem({ root, base: main })).toBe(null)
+  // Another machine: the command with its machine, and not another module whose id starts the same.
+  write(rytm + 'modwerk.module.json', JSON.stringify({ version: '0.2.0-experimental' })); write(rytm + 'TESTING.md', '0.2.0: `npm run test:procedure -- analog-rytm-mkii:qperf-two`')
+  expect(procedureRecordProblem({ root, base: main })).toMatch(/qperf\/TESTING\.md has no record/)
+  write(rytm + 'TESTING.md', '0.2.0: `npm run test:procedure -- analog-rytm-mkii:qperf`, steps 6 to 10 not run: no USB link.')
+  expect(procedureRecordProblem({ root, base: main })).toBe(null)
+  // A draft in sdk/drafts/ ships nothing yet.
+  write('sdk/drafts/scope/octamod.module.json', JSON.stringify({ version: '0.1.0-experimental' }))
+  expect(procedureRecordProblem({ root, base: main })).toBe(null)
 })
 
 it('keeps a qualified folder retained when only a measured CPU price and its readings were added, and nothing else', async () => {

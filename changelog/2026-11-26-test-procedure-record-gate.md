@@ -1,0 +1,1 @@
+Module releases: every new module version, first release or update, now goes through the test procedure. A ready pull request fails its module checks until the module's TESTING.md holds the `npm run test:procedure` record for the package that ships. A draft only gets a warning. Before, a typed "Tested on a unit" line in the description was enough.

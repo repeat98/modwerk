@@ -165,6 +165,29 @@ class Emulator(unittest.TestCase):
         self.assertIn("until(lambda: mem(0x800065bd, 2) == bytes([bank, pattern]), 20)", source)
 
 
+class Session(unittest.TestCase):
+    def test_a_port_number_reaches_the_session_over_tcp(self):
+        # Windows Python has no AF_UNIX: there the session listens on a port (MODWERK_DEV_SOCKET=47812).
+        import socket, threading
+        server = socket.create_server(('127.0.0.1', 0))
+        self.addCleanup(server.close)
+        heard = []
+
+        def answer():
+            conn, _ = server.accept()
+            with conn:
+                heard.append(conn.makefile().readline())
+                conn.sendall(b'part 1, stopped\n')
+        threading.Thread(target=answer, daemon=True).start()
+        with mock.patch.object(qualify, 'SOCKET', str(server.getsockname()[1])):
+            self.assertEqual(qualify.send('ui'), 'part 1, stopped\n')
+        self.assertEqual(heard, ['ui\n'])
+
+    def test_a_path_stays_a_unix_socket(self):
+        self.assertEqual(qualify.session_address('/tmp/modwerk-dev.sock'), '/tmp/modwerk-dev.sock')
+        self.assertEqual(qualify.session_address('47812'), ('127.0.0.1', 47812))
+
+
 class Qualify(unittest.TestCase):
     def test_it_starts_only_once_the_keeps_are_acknowledged(self):
         with mock.patch.object(sys, 'argv', ['octatrack-qualify.py', 'x.mwrm']), mock.patch.object(qualify, 'send', side_effect=AssertionError('reached the unit')):
