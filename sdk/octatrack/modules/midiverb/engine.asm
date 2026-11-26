@@ -385,9 +385,7 @@ mvqFRMB:
         asr     b
         move    #>$ffff00,x0            ; the halving's mask, in x0 while the program runs
         and     x0,b
-        bpl     mvqHIN_
-        add     y0,b
-mvqHIN_:
+        add     y0,b            ifmi
         move    b,y:(r5+n5)             ; word = half(input)
         clr     a               y:(r4)+,n1
         move    y:(r4)+,n5
@@ -396,6 +394,8 @@ mvqHIN_:
 ; The handlers, SLOT (24) words apart from mvqJTAB in generate.mjs HANDLER's order (verify.py checks the layout).
 ; Each but END starts with READS (7) read pairs, acc += word, the last pair's fetch taking the operation's offset;
 ; a unit's handler word lands k pairs before the operation. Each ends by fetching the next unit and jumping there.
+; A halving adds its 16-bit LSB to a negative word with `add y0,b ifmi` (the 56300's conditional ALU execution, on
+; the flags the mask's and leaves): no branch.
 mvqJTAB:
 ; 0: reads only, then the next unit (a run longer than READS before an operation).
         move    y:(r5+n5),b
@@ -442,12 +442,12 @@ mvqST__:
         move    a1,a                    ; acc wrapped to 16 bits
         asr     #$1,a,b
         and     x0,b            y:(r4)+,n1
-        bpl     mvqH1__
-        add     y0,b
-mvqH1__:
+        add     y0,b            ifmi
         move    b,y:(r5+n5)
         add     b,a             y:(r4)+,n5
         jmp     (r1+n1)
+        nop
+        nop
         nop
 ; 2: word = half(acc), then acc = 0 (the next step loads)
         move    y:(r5+n5),b
@@ -468,12 +468,12 @@ mvqSTC_:
         move    a1,a                    ; acc wrapped to 16 bits
         asr     #$1,a,b
         and     x0,b            y:(r4)+,n1
-        bpl     mvqH1C_
-        add     y0,b
-mvqH1C_:
+        add     y0,b            ifmi
         move    b,y:(r5+n5)
         clr     a               y:(r4)+,n5
         jmp     (r1+n1)
+        nop
+        nop
         nop
 ; 3: word = half(~acc), acc = word. not a1 is ~acc with its low byte set, which the shift and the mask drop.
         move    y:(r5+n5),b
@@ -495,12 +495,12 @@ mvqSTN_:
         move    a1,a                    ; ~acc wrapped to 16 bits
         asr     a
         and     x0,a
-        bpl     mvqH2__
-        add     y0,a
-mvqH2__:
+        add     y0,a            ifmi
         move    a,y:(r5+n5)
         move    y:(r4)+,n5
         jmp     (r1+n1)
+        nop
+        nop
 ; 4: word = half(~acc), then acc = 0 (the next step loads)
         move    y:(r5+n5),b
         add     b,a             y:(r4)+,n5
@@ -521,12 +521,12 @@ mvqSNC_:
         move    a1,a                    ; ~acc wrapped to 16 bits
         asr     a
         and     x0,a
-        bpl     mvqH2C_
-        add     y0,a
-mvqH2C_:
+        add     y0,a            ifmi
         move    a,y:(r5+n5)
         clr     a               y:(r4)+,n5
         jmp     (r1+n1)
+        nop
+        nop
 ; 5-8: an output tap reads a whole word: twice the stored half, then 16-bit << 3 (right to 09, left to 08);
 ; 6 and 8 then clear acc (the next step loads).
         move    y:(r5+n5),b

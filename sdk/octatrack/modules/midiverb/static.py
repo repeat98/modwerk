@@ -13,8 +13,8 @@ import pathlib
 HERE = pathlib.Path(__file__).resolve().parent
 HANDLERS = ["run", "st", "stc", "stn", "stnc", "outR", "outRc", "outL", "outLc", "end"]
 SLOT, READS = 24, 7
-COST = {"run": 3, "st": 8, "stc": 8, "stn": 9, "stnc": 9, "outR": 6, "outRc": 6, "outL": 6, "outLc": 6, "end": 4}
-FRAME_A, FRAME_B, MIX = 21, 34, 18
+COST = {"run": 3, "st": 7, "stc": 7, "stn": 8, "stnc": 8, "outR": 6, "outRc": 6, "outL": 6, "outLc": 6, "end": 4}
+FRAME_A, FRAME_B, MIX = 21, 33, 18
 
 
 def units(words):
