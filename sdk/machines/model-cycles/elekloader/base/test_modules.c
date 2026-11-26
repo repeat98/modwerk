@@ -4,6 +4,7 @@
 //   P offset hex    an UP_PART's packed bytes -> the bytes taken
 //   R length        an UP_RUN                 -> the controller's response in hex, or an empty line
 //   T n             n UI ticks                -> the lapses counted so far
+//   S 0 or 1        the transport playing (0) or stopped (1), as runtime.c reads it -> the same
 // cc -std=c99 -DMODWERK_HOST -I sdk/runtime/loader -I sdk/runtime/upload test_modules.c modules.c runtime.c
 //   sdk/runtime/loader/loader.c sdk/runtime/upload/{upload,wire,sha256}.c
 #include <stdio.h>
@@ -15,6 +16,7 @@ unsigned mw_modules_run(uint32_t length, uint8_t *out);
 void mw_modules_identity(uint32_t crc);
 void mw_modules_tick(void);
 extern volatile uint32_t mw_modules_lapses;
+extern int modwerk_test_stopped;
 
 int main(void)
 {
@@ -34,6 +36,9 @@ int main(void)
             unsigned k = mw_modules_run(v, out);
             for (unsigned i = 0; i < k; i++) printf("%02x", out[i]);
             printf("\n");
+        } else if (op == 'S') {
+            modwerk_test_stopped = (int)v;
+            printf("%u\n", v);
         } else {
             while (v--) mw_modules_tick();
             printf("%u\n", (unsigned)mw_modules_lapses);

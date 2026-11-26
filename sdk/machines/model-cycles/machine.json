@@ -18,7 +18,7 @@
       }
     ],
     "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. The site builds Modwerk's Model:Cycles base from that file as a local preview; downloads remain disabled until review.",
-    "recovery": "Hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock .syx over 5-pin MIDI; recovery mode does not use USB."
+    "recovery": "Hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock .syx to MIDI IN, the 3.5 mm TRS jack (a DIN interface through a TRS-to-DIN adapter); recovery mode does not use USB."
   },
   "steps": {
     "format": "done",
@@ -83,8 +83,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 153790,
-        "note": "Pinned Modwerk base: 37994 bytes .run plus 115796 bytes .bss (and 76 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
+        "value": 154010,
+        "note": "Pinned Modwerk base: 38214 bytes .run plus 115796 bytes .bss (and 76 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
       }
     ]
   },

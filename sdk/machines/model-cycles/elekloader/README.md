@@ -28,9 +28,10 @@ npm run machine:base -- model-cycles --stock /private/model-cycles_OS1.13.syx --
 
 ## Results
 
-- Built 2026-11-24 with m68k-elf GCC 16.2.0 and binutils 2.47 against the kit at `3b31ef3`: package `4d4d91d2…`
-  (see [base-binding.json](../base-binding.json)), 76 bytes `.boot`, 37994 `.run`, 115796 `.bss`, 8 sites, with the
-  link, the audio load, the log and the runtime loader ([LINK.md](../LINK.md)); before them, `2e5243e6…` had 220
+- Built 2026-11-25 with m68k-elf GCC 16.2.0 and binutils 2.47 against the kit at `3b31ef3`: package `646706ff…`
+  (see [base-binding.json](../base-binding.json)), 76 bytes `.boot`, 38214 `.run`, 115796 `.bss`, 8 sites, with the
+  link, the audio load, the log and the runtime loader ([LINK.md](../LINK.md)). Before it, `4d4d91d2…` (24 November,
+  before the review fixes and whole-reply sends) had 37994 bytes `.run`; before the link, `2e5243e6…` had 220
   bytes `.run`, 16 `.bss` and 6 sites. core-mc 0.3's release has 180 bytes `.run` and 5 sites.
 - An image of stock OS 1.13 with this base and a test module that blinks TRIG 16 through `ev_key_leds`, asking for each
   LED frame from `ev_tick` (`7bdfbcde…`), runs in digiemu and on a unit as expected: TRIG 16 blinks in every view, over the stock LEDs

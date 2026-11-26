@@ -35,7 +35,11 @@ Node must resolve to version 24. No HTTP listener, browser extension, cloud MCP
 endpoint or administrator key is installed. The transport implements the
 [MCP stdio protocol](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports).
 
-The frontend is imported through an in-memory Vite bundle. Route
+The frontend is imported through an in-memory Vite bundle. Before each site or
+device tool call the server compares the files that bundle and the package
+manifest were built from, and rebuilds them when a branch switch or a base
+regeneration changed one, so the new base is known without reconnecting (/mcp).
+An open trial keeps its bundle until Keep or Undo. Route
 `console.error`, `warn`, `info` and `debug` through `formatMcpLog(...args)` and
 keep protocol output on stdout. Sanitizing only exceptions leaves warnings
 able to print large data-URL stacks; bounded messages must omit stacks,
@@ -277,7 +281,7 @@ counterpart for; once a Zoom base loads modules over USB, that goes behind
 `device_review`, `device_trial`, Keep and Undo, as the
 [recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
 
-### A Model:Cycles over its development link
+### A Model:Cycles over its link
 
 ```sh
 node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --elektron-midi [--elektron-images DIR] [--allow-device-writes]
@@ -312,7 +316,16 @@ package's SHA-256 and changes nothing. `device_trial` (with
 sends a request every three seconds, since the unit undoes a trial by itself
 after ten quiet seconds; `device_keep` keeps it until the next power cycle,
 `device_undo` puts the previous set back and checks it is the one reviewed.
-Closing the MCP during a trial undoes it ten seconds later. Nothing is
+While a pattern plays the unit refuses both (`unsafe`): the trial and its
+pings stay, so stop playback and call the tool again. A ping that fails shows
+as `state.trial.pingError` in `device_status`, and `state.status` turns
+`trial-lost` once no ping has reached the unit for ten seconds. When the unit no
+longer has the trial (its loader in the normal phase, or in the ready phase
+after an ACCEPT or ROLLBACK whose answer was lost, which the MCP then leaves),
+its active set tells what happened: the reviewed set means the trial was undone
+(`trial-lost`), another set means a Keep went through (`trial-kept`). A later
+`device_keep` or `device_undo` reports the same, as done when it matches. A remote session or a rebuilt site bundle waits for
+the trial's end. Closing the MCP during a trial undoes it ten seconds later. Nothing is
 saved: there are no saved sets. Close Elektron Transfer first. Tests run
 against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the
 base's own transport, controller and loader compiled for the computer.

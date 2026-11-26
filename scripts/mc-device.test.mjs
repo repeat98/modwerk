@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { spawn, spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
@@ -37,22 +37,31 @@ function logBytes() {
   ;[[1, 1, 0], [2, 7, 0x4f182a66]].forEach(([seq, kind, a], n) => { const at = incident + 92 * n; v.setUint32(at, seq); v.setUint32(at + 4, 1); v.setUint32(at + 12, a); v.setUint16(at + 16, kind) })
   return bytes
 }
-// A unit with a development base: answers ident with the given set identity, load (0x23) with the given tenths of a
+// A unit with a Modwerk base: answers ident with the given set identity, load (0x23) with the given tenths of a
 // percent and counts (link.c CMD_LOAD), and diag (0x22) and log (0x24) with a log; without them, as a base before the load
 // probe or the log (status 2, bad request).
 // With `loader`, the base's own upload transport, controller and runtime loader compiled for the host
 // (base/test_modules.c): up_part (0x31) and up_run (0x32) go to it, mods (0x33) answers an empty pool.
 function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null, loader = null) {
-  const input = { id: 'i', name, state: 'connected', onmidimessage: null }
+  const input = { id: 'i', name, state: 'connected', onmidimessage: null }, requests = {}
+  // lose.cmd: the next frame with that wire command runs on the loader, but its answer is a refusal, as an answer lost
+  // on the way (without the wait for a timeout); frame is the command of the frame whose parts came last
+  const lose = { cmd: null }
+  let frame = null
   const fields = [1, 1, 0, 146, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, ...(set ? [set.crc, set.bytes] : [])]
   const answer = (data, status, reply) => input.onmidimessage?.({ data: Uint8Array.from([0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1, data[6], data[7] | 0x40, status, ...reply, 0xf7]) })
   const output = { id: 'o', name, state: 'connected', send(data) {
     const body = data.slice(8, -1)
+    requests[data[7]] = (requests[data[7]] ?? 0) + 1
     if (data[7] >= 0x31 && data[7] <= 0x33) {
       if (!loader) { queueMicrotask(() => answer(data, 2, [])); return }
+      if (data[7] === 0x31 && get32(body, 0) === 0) frame = body[5 + 9]   // the wire header's command byte, packed
       const line = data[7] === 0x31 ? 'P ' + get32(body, 0) + ' ' + Buffer.from(Uint8Array.from(body).subarray(5)).toString('hex') : data[7] === 0x32 ? 'R ' + get32(body, 0) : null
       if (!line) { queueMicrotask(() => answer(data, 0, pack7(Uint8Array.from([0, 0, 0xfe, 0x60, 0, 0, 0xfe, 0x60, 0, 0, 0, 0, 0, 0, 0, 0, 0x4d, 0x57, 0x49, 0])))); return }
-      loader.ask(line).then(out => answer(data, data[7] === 0x31 ? (Number(out) ? 0 : 4) : out ? 0 : 4, data[7] === 0x31 || !out ? [] : pack7(Uint8Array.from(Buffer.from(out, 'hex')))))
+      loader.ask(line).then(out => {
+        if (data[7] === 0x32 && lose.cmd !== null && lose.cmd === frame) { lose.cmd = null; answer(data, 4, []); return }
+        answer(data, data[7] === 0x31 ? (Number(out) ? 0 : 4) : out ? 0 : 4, data[7] === 0x31 || !out ? [] : pack7(Uint8Array.from(Buffer.from(out, 'hex'))))
+      })
       return
     }
     const [status, reply] = data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
@@ -61,7 +70,9 @@ function fakeCycles(set, name = 'Elektron Model:Cycles', load = null, log = null
       : [0, fields.flatMap(put32)]
     queueMicrotask(() => answer(data, status, reply))
   } }
-  return { inputs: new Map([['i', input]]), outputs: new Map([['o', output]]), onstatechange: null, close() {} }
+  const inputs = new Map([['i', input]]), outputs = new Map([['o', output]])
+  // unplug() takes the ports away, plug() brings them back
+  return { inputs, outputs, requests, lose, onstatechange: null, close() {}, unplug() { inputs.clear(); outputs.clear() }, plug() { inputs.set('i', input); outputs.set('o', output) } }
 }
 
 describe('the developer MCP’s Model:Cycles identity', () => {
@@ -77,7 +88,8 @@ describe('the developer MCP’s Model:Cycles identity', () => {
     await writeFile(join(images, 'a-other.syx'), syx(3)); await writeFile(join(images, 'b-built.syx'), syx(7)); await writeFile(join(images, 'notes.txt'), 'x')
   })
   afterEach(async () => { await service?.close(); service = undefined; await rm(folder, { recursive: true, force: true }); await rm(images, { recursive: true, force: true }) })
-  const open = (access, options = {}) => createFrontendTools({ dataDir: folder, elektronMidi: true, elektronImages: images, ...options }, frontend, { elektronAccess: async () => access })
+  let now = 0
+  const open = (access, options = {}) => createFrontendTools({ dataDir: folder, elektronMidi: true, elektronImages: images, ...options }, frontend, { elektronAccess: async () => access, now: () => now })
 
   it('reads the link identity and names the image whose set the unit runs', async () => {
     const set = frontend.mcSetIdentity(syx(7), 64)
@@ -106,7 +118,7 @@ describe('the developer MCP’s Model:Cycles identity', () => {
     await service.close(); service = await open(fakeCycles(null, 'IAC Driver Bus 1'))
     await expect(service.call('device_load')).rejects.toThrow(/No Model:Cycles answered/)
   })
-  it('reads the diagnostics log through diag and mem, and reports an older base without it as unsupported', async () => {
+  it('reads the diagnostics log through log, and reports an older base without it as unsupported', async () => {
     service = await open(fakeCycles(null, undefined, null, logBytes()))
     const { machine, supported, log } = await service.call('device_log')
     expect({ machine, supported, boot: log.boot, seq: log.seq }).toEqual({ machine: 'model-cycles', supported: true, boot: 1, seq: 3 })
@@ -126,7 +138,8 @@ describe('the developer MCP’s Model:Cycles identity', () => {
   // The base's transport, controller and loader on the host (the harness sdk/tests/test_machine_base.py runs): its base
   // identity is the SHA-256 of the set CRC 0x12345678.
   const cc = spawnSync('cc', ['--version']).status === 0
-  it.skipIf(!cc)('reviews a package, puts it on trial, undoes it and keeps it, through the base\'s own loader', async () => {
+  // The base's loader on the host, one request a line (test_modules.c), and a runtime package for it.
+  function hostLoader() {
     const base = join(root, 'sdk/machines/model-cycles/elekloader/base'), rt = join(root, 'sdk/runtime')
     const exe = join(folder, 'loader')
     const built = spawnSync('cc', ['-std=c99', '-DMODWERK_HOST', '-DRUNTIME_MODULES=16u', '-DRUNTIME_POOL_BYTES=65536u', '-I', join(rt, 'loader'), '-I', join(rt, 'upload'),
@@ -137,10 +150,14 @@ describe('the developer MCP’s Model:Cycles identity', () => {
     lines.on('line', line => waiting.shift()?.(line))
     let chain = Promise.resolve()
     const loader = { ask: line => (chain = chain.then(() => new Promise(resolve => { waiting.push(resolve); child.stdin.write(line + '\n') }))) }
+    // ABI 4: a tick hook that returns at once
+    const pkg = Buffer.concat([Buffer.from('MWRM'), Buffer.from([0, 4, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0x59, 0x4c, 0xfd, 0x26]),
+      Buffer.alloc(4), Buffer.from([0x4e, 0x75, 0x4e, 0x71])])
+    return { child, loader, pkg }
+  }
+  it.skipIf(!cc)('reviews a package, puts it on trial, undoes it and keeps it, through the base\'s own loader', async () => {
+    const { child, loader, pkg } = hostLoader()
     try {
-      // ABI 4: a tick hook that returns at once
-      const pkg = Buffer.concat([Buffer.from('MWRM'), Buffer.from([0, 4, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0x59, 0x4c, 0xfd, 0x26]),
-        Buffer.alloc(4), Buffer.from([0x4e, 0x75, 0x4e, 0x71])])
       await writeFile(join(images, 'frames.mwrm'), pkg)
       service = await open(fakeCycles({ crc: 0x12345678, bytes: 64 }, undefined, null, null, loader), { allowDeviceWrites: true })
       expect((await service.call('device_status')).loader).toMatchObject({ free: 65120, active: 0, modules: [] })
@@ -158,5 +175,73 @@ describe('the developer MCP’s Model:Cycles identity', () => {
       expect(kept.active).not.toBe(review.active)
       await expect(service.call('device_keep', { trial: again.trial })).rejects.toThrow(/No matching/)
     } finally { child.stdin.end() }
+  }, 30000)
+  // Pings every three seconds (fake setInterval): a ping and a Keep go in turn; a Keep or Undo the unit refuses while a
+  // pattern plays leaves the trial and its pings; a failed ping and ten quiet seconds show in device_status.
+  it.skipIf(!cc)('keeps a refused trial, pings it in turn, and reports a lost one', async () => {
+    const { child, loader, pkg } = hostLoader()
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    const pinged = async (access, before) => { vi.advanceTimersByTime(3000); while ((access.requests[1] ?? 0) <= before) await new Promise(resolve => setTimeout(resolve, 5)) }
+    try {
+      await writeFile(join(images, 'frames.mwrm'), pkg)
+      const access = fakeCycles({ crc: 0x12345678, bytes: 64 }, undefined, null, null, loader)
+      service = await open(access, { allowDeviceWrites: true })
+      const review = await service.call('device_review', { moduleIds: ['frames.mwrm'] })
+      const trial = await service.call('device_trial', { review: review.review })
+      // a pattern plays: the unit answers unsafe, the trial stays and is still pinged
+      await loader.ask('S 0')
+      await expect(service.call('device_keep', { trial: trial.trial })).rejects.toThrow(/Keep did not finish: .*unsafe.*trial stays on/s)
+      await expect(service.call('device_undo', { trial: trial.trial })).rejects.toThrow(/Undo did not finish: .*unsafe.*trial stays on/s)
+      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial', trial: { lost: null, kept: null, pingError: null } })
+      const idents = access.requests[1]
+      await pinged(access, idents)
+      expect(access.requests[1]).toBeGreaterThan(idents)
+      // stopped: a ping fires and a Keep follows at once; they go in turn, so the Keep's frame arrives whole
+      await loader.ask('S 1')
+      vi.advanceTimersByTime(3000)
+      const kept = await service.call('device_keep', { trial: trial.trial })
+      expect(kept).toMatchObject({ kept: true, completed: true, phase: 'normal' })
+      expect((await service.call('device_status')).state.status).toBe('ready')
+      // a second trial loses its unit: the failed ping is reported, and after ten quiet seconds the trial is lost
+      const again = await service.call('device_trial', { review: (await service.call('device_review', { moduleIds: ['remove:frames'] })).review })
+      access.unplug()
+      vi.advanceTimersByTime(3000)
+      await new Promise(resolve => setTimeout(resolve, 50))
+      access.plug()
+      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial', trial: { lost: null, pingError: expect.stringMatching(/No Model:Cycles answered/) } })
+      now += 11000
+      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial-lost', trial: { lost: expect.stringMatching(/ten quiet seconds/) } })
+      await service.call('device_undo', { trial: again.trial })
+    } finally { vi.useRealTimers(); now = 0; child.stdin.end() }
+  }, 30000)
+  // The unit did the Keep (or the Undo) but its answer went missing: the trial stays, and once the unit no longer has
+  // it, its active set says which way it went.
+  it.skipIf(!cc)('tells a Keep or Undo whose answer was lost by the unit\'s active set', async () => {
+    const { child, loader, pkg } = hostLoader()
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    const pinged = async (access, before) => { vi.advanceTimersByTime(3000); while ((access.requests[1] ?? 0) <= before) await new Promise(resolve => setTimeout(resolve, 5)) }
+    try {
+      await writeFile(join(images, 'frames.mwrm'), pkg)
+      const access = fakeCycles({ crc: 0x12345678, bytes: 64 }, undefined, null, null, loader)
+      service = await open(access, { allowDeviceWrites: true })
+      // a Keep that went through: the ping finds the trial over on another set, and device_keep says it was kept
+      const review = await service.call('device_review', { moduleIds: ['frames.mwrm'] })
+      const trial = await service.call('device_trial', { review: review.review })
+      access.lose.cmd = 6   // ACCEPT
+      await expect(service.call('device_keep', { trial: trial.trial })).rejects.toThrow(/Keep did not finish.*trial stays on/s)
+      await pinged(access, access.requests[1])
+      expect((await service.call('device_status')).state).toMatchObject({ status: 'trial-kept', trial: { lost: null, kept: expect.stringMatching(/a Keep went through/) } })
+      const kept = await service.call('device_keep', { trial: trial.trial })
+      expect(kept).toMatchObject({ kept: true, completed: true, note: expect.stringMatching(/a Keep went through/) })
+      expect(kept.active).not.toBe(review.active)
+      expect((await service.call('device_status')).state.status).toBe('ready')
+      // an Undo that went through: device_undo again reports it undone
+      const before = await service.call('device_review', { moduleIds: ['remove:frames'] })
+      const again = await service.call('device_trial', { review: before.review })
+      access.lose.cmd = 7   // ROLLBACK
+      await expect(service.call('device_undo', { trial: again.trial })).rejects.toThrow(/Undo did not finish.*trial stays on/s)
+      const undone = await service.call('device_undo', { trial: again.trial })
+      expect(undone).toMatchObject({ kept: false, completed: true, active: before.active, note: expect.stringMatching(/undone/) })
+    } finally { vi.useRealTimers(); child.stdin.end() }
   }, 30000)
 })

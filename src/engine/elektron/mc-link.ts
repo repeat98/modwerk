@@ -4,16 +4,17 @@
 // link's; sdk/machines/model-cycles/tools/mc_link.py speaks it from the computer. Reads: `ident`, `load`, `diag`, `log`
 // and `mods`, all of them in every base (`mem` is a development base's and is not used here). The diagnostics log is the Octatrack's layout and reads with its parser, as the Digitone II's. The one
 // path that changes the unit is the runtime loader's upload controller (mcUploadTransport for UploadSession): its wire
-// frames go in parts, as the link takes them (base/modules.c), where the Digitone II's link takes a whole frame.
+// frames go in parts, as the link takes them (base/modules.c), where the Digitone II's link takes a whole frame. The
+// wire (header, request, reply, 7-bit numbers and blocks) is link-wire.ts, shared with the Digitone II; this file keeps
+// the Model:Cycles' commands, status wording and readings.
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log'
 import { UploadSession, type UploadTransport } from '../elekloader/upload-session'
 import { UPLOAD_RESPONSE, type UploadStatus } from '../elekloader/upload-wire'
-import { pack7, unpack7 } from './dn2-link'
+import { get32, linkExchange, linkFrame, pack7, parseLinkReply, u32 as put32, unpack7 } from './link-wire'
 import { ELE3_DEVICES, mainImage, readEle3Syx } from './ele3'
 import { findUnit, midiLine, type MidiAccessLike } from './os-upgrade-midi'
 
-export const MC_LINK_HEADER = [0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1] as const
 const IDENT = 0x01, DIAG = 0x22, LOAD = 0x23, LOG = 0x24, UP_PART = 0x31, UP_RUN = 0x32, MODS = 0x33
 /** An upload frame's part: 8 + 5 + 110 packed + 1 = 124 bytes a message, under the 128 of stock's upgrade messages. */
 export const MC_PART_BYTES = 96
@@ -59,23 +60,16 @@ export class McRefused extends Error {
   }
 }
 
-/** A link request: header, sequence number, command, body. */
-export function mcRequest(seq: number, cmd: number, body: readonly number[] = []): Uint8Array {
-  return Uint8Array.from([...MC_LINK_HEADER, seq & 0x7f, cmd, ...body, 0xf7])
-}
-
-/** 32 bits from five 7-bit groups, low first (link.c put32). */
-function get32(p: Uint8Array, at: number) {
-  return (p[at] | p[at + 1] << 7 | p[at + 2] << 14 | p[at + 3] << 21 | (p[at + 4] & 0x0f) << 28) >>> 0
-}
+/** A link request: header, sequence number, command, body (link-wire's linkFrame). */
+export const mcRequest = linkFrame
 
 /** The reply to request `seq` and `cmd` (link.c's begin(): the command with 0x40 set), or null for any other message.
  * Throws on a refusal. */
 export function mcReply(message: Uint8Array, seq: number, cmd: number): Uint8Array | null {
-  if (message.length < 10 || MC_LINK_HEADER.some((b, i) => message[i] !== b) || message[6] !== seq || message[7] !== (cmd | 0x40)) return null
-  const status = message[8]
-  if (status) throw new McRefused(status)
-  return message.subarray(9, message.length - 1)
+  const reply = parseLinkReply(message)
+  if (!reply || reply.seq !== seq || reply.command !== cmd) return null
+  if (reply.status) throw new McRefused(reply.status)
+  return reply.payload
 }
 
 /** ident's payload as named fields. */
@@ -107,22 +101,15 @@ export async function withMc<T>(access: MidiAccessLike, timeoutMs: number, work:
   const line = midiLine(unit.input, unit.output)
   let seq = Date.now() / 100 & 0x7f
   const call: McCall = async (cmd, body = []) => {
-    seq = seq + 1 & 0x7f
-    line.send(mcRequest(seq, cmd, body))
-    for (const end = Date.now() + timeoutMs; Date.now() < end;) {
-      const message = await line.next(end - Date.now())
-      if (!message) break
-      const payload = mcReply(message, seq, cmd)
-      if (payload) return payload
-    }
-    return null
+    const reply = await linkExchange(line, seq = seq + 1 & 0x7f, cmd, body, timeoutMs)
+    if (reply?.status) throw new McRefused(reply.status)
+    return reply ? reply.payload : null
   }
   try { return await work(call) } finally { line.close() }
 }
 const mcCall = (access: MidiAccessLike, cmd: number, timeoutMs: number) => withMc(access, timeoutMs, call => call(cmd))
-const put32 = (v: number) => [0, 1, 2, 3, 4].map(i => Math.floor(v / 2 ** (7 * i)) & 0x7f)
 
-/** Ask the connected Model:Cycles for its identity. Needs a development base with the link; null when no unit or no reply. */
+/** Ask the connected Model:Cycles for its identity. Needs a Modwerk base; null when no unit or no reply. */
 export async function readMcIdentity(access: MidiAccessLike, timeoutMs = 2000): Promise<McIdentity | null> {
   const payload = await mcCall(access, IDENT, timeoutMs)
   return payload && parseMcIdent(payload)
@@ -169,7 +156,7 @@ export async function readMcLog(access: MidiAccessLike, timeoutMs = 2000): Promi
   }
 }
 
-/** The base identity a development base's upload controller binds a BEGIN to (base/modules.c): the SHA-256 of its set
+/** The base identity a base's upload controller binds a BEGIN to (base/modules.c): the SHA-256 of its set
  * CRC, big-endian, as hex. */
 export function mcUploadBase(setCrc: number): string {
   return sha(Uint8Array.of(setCrc >>> 24, setCrc >>> 16 & 0xff, setCrc >>> 8 & 0xff, setCrc & 0xff))
@@ -240,7 +227,7 @@ export async function mcUploadSession(call: McCall, timeoutMs = 20000): Promise<
   const payload = await call(IDENT)
   if (!payload) return null
   const set = parseMcIdent(payload).set
-  if (!set) throw new Error('This development base reports no set identity: build a newer one.')
+  if (!set) throw new Error('This base reports no set identity: build a newer one.')
   return UploadSession.connect(mcUploadTransport(call), mcUploadBase(set.crc), { timeoutMs })
 }
 

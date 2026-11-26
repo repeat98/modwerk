@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { existsSync } from 'node:fs'
-import { readFile, readdir, writeFile, mkdir, rename, lstat, rm } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { readFile, readdir, writeFile, mkdir, rename, lstat, rm, stat } from 'node:fs/promises'
+import { resolve, join, isAbsolute } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { randomUUID, createHash } from 'node:crypto'
 import { createInterface } from 'node:readline'
@@ -63,9 +63,9 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read a Model:Cycles development base’s link identity, the image in --elektron-images that matches its set, and its runtime loader’s live modules.'),
-  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, a Model:Cycles development base’s audio load over its link. Read-only.'),
-  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, a Model:Cycles development base’s log over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
+  tool('device_status', 'Read identity and inventory through the site’s device link. On Octatrack also read missing modules and diagnostic status. With --zoom-midi alone, read the pedal’s file inventory. With --elektron-midi alone, read the link identity of a Model:Cycles running a Modwerk base, the image in --elektron-images that matches its set, and its runtime loader’s live modules.'),
+  tool('device_load', 'Read one CPU/DSP meter snapshot through the site’s device link. Uses the Octatrack’s cached reading or the Zoom pedal’s MIDISTOMP load reply when available; with --elektron-midi alone, the audio load of a Model:Cycles running a Modwerk base, over its link. Read-only.'),
+  tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client; with --elektron-midi alone, the log of a Model:Cycles running a Modwerk base, over its link. Read-only; Zoom pedals and older Octatrack and Model:Cycles bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('device_review', 'Review a requested set against exact connected base, active digest and verified packages. Returns a short-lived plan; no device changes. With --elektron-midi alone (a Model:Cycles), moduleIds is one change: a runtime package file NAME.mwrm in --elektron-images, or remove:NAME to take out the module built as NAME.', { moduleIds: strings }, ['moduleIds']),
@@ -144,14 +144,38 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   try { await takeLease(lease, dependencies.lease) } catch (error) { activeWorkspace = false; throw error }
   try {
   await writeFile(join(lease, 'owner.json'), JSON.stringify({ pid: process.pid, started: new Date().toISOString() }), { mode: 0o600, flag: 'wx' })
-  let frontend = injected
-  if (!frontend) {
-    const bridge = join(ROOT, 'scripts/frontend-mcp-bridge.ts')
-    const bundled = await build({ root, configFile: false, logLevel: 'silent', plugins: [{ name: 'mcp-candidate-source', resolveId(id, importer) { if (importer === bridge && id.startsWith('../src/')) return resolve(root, id.slice(3)) } }], define: { 'import.meta.env.VITE_COMMUNITY_API_URL': JSON.stringify(api.href), 'import.meta.env.DEV': 'false', 'import.meta.env.BASE_URL': JSON.stringify('/') }, build: { ssr: bridge, write: false, minify: false, sourcemap: false } })
-    const source = bundled.output.find(entry => entry.type === 'chunk' && entry.isEntry)?.code
+  // The site bundle and the package manifest, with the files they were built from. A branch switch or a base regeneration
+  // changes those files, and a server that kept its first bundle refused the new base until the developer reconnected
+  // (/mcp). So each tool call compares them first and rebuilds what changed (refreshFrontend below).
+  const bridge = join(ROOT, 'scripts/frontend-mcp-bridge.ts')
+  const bundle = dependencies.bundle ?? (async entry => {
+    const bundled = await build({ root, configFile: false, logLevel: 'silent', plugins: [{ name: 'mcp-candidate-source', resolveId(id, importer) { if (importer === bridge && id.startsWith('../src/')) return resolve(root, id.slice(3)) } }], define: { 'import.meta.env.VITE_COMMUNITY_API_URL': JSON.stringify(api.href), 'import.meta.env.DEV': 'false', 'import.meta.env.BASE_URL': JSON.stringify('/') }, build: { ssr: entry, write: false, minify: false, sourcemap: false } })
+    const chunks = bundled.output.filter(item => item.type === 'chunk'), source = chunks.find(item => item.isEntry)?.code
     if (!source) throw new Error('Could not load the frontend testing bridge.')
-    frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
+    return { module: await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64')), files: chunks.flatMap(item => item.moduleIds).filter(id => isAbsolute(id) && existsSync(id)) }
+  })
+  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts'), packagesFile = join(root, 'src/engine/assets/octatrack-module-packages.json')
+  // Size and modification time of each file. A file written while the bundle was being built (a regeneration still running)
+  // leaves the stamp empty, so the next call builds again instead of keeping a bundle of half-written inputs. File times
+  // run on a coarser clock than Date.now() (and some file systems keep 2 s), so the build counts from 2 s before it began.
+  const stamp = async (files, since = Infinity) => {
+    const seen = await Promise.all(files.map(file => stat(file).then(info => ({ line: file + ' ' + info.size + ' ' + info.mtimeMs, late: info.mtimeMs >= since }), () => ({ line: file + ' gone', late: true }))))
+    return seen.some(item => item.late) ? '' : seen.map(item => item.line).join('\n')
   }
+  let frontend, preparedModules, catalogue, built = { files: [], stamp: '' }
+  async function loadFrontend() {
+    const started = (dependencies.now ?? Date.now)() - 2000
+    const site = injected ? { module: injected, files: [] } : await bundle(bridge)
+    // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
+    const published = !options.preparedModules && !injected && existsSync(publication) ? await bundle(publication) : null
+    const nextManifest = published ? published.module.publishedPackages : JSON.parse(await readFile(packagesFile, 'utf8'))
+    const prepared = options.preparedModules && await loadPreparedModules(options.preparedModules, nextManifest, site.module)
+    const files = injected ? [] : [...new Set([...site.files, ...published ? published.files : [packagesFile], ...options.preparedModules ? [options.preparedModules] : []])]
+    const nextCatalogue = prepared?.catalogue ?? site.module.createRuntimeCatalogue(nextManifest)
+    frontend = site.module; preparedModules = prepared; catalogue = nextCatalogue
+    built = { files, stamp: await stamp(files, started) }
+  }
+  await loadFrontend()
   if (!Array.isArray(sets) || sets.length > 100) throw new Error('The local set file is invalid.')
   sets = sets.map(frontend.validateConfiguration)
   const save = async values => {
@@ -159,20 +183,14 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     try { await writeFile(temporary, JSON.stringify(values, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); sets = values }
     finally { await rm(temporary, { force: true }) }
   }
-  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts')
-  // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
-  const manifest = !options.preparedModules && !injected && existsSync(publication)
-    ? (await import(pathToFileURL(publication).href)).publishedPackages
-    : JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
-  const preparedModules = options.preparedModules && await loadPreparedModules(options.preparedModules, manifest, frontend)
-  const catalogue = preparedModules?.catalogue ?? frontend.createRuntimeCatalogue(manifest)
-  const load = preparedModules?.load ?? (async entry => {
+  const load = entry => preparedModules?.load ? preparedModules.load(entry) : loadSitePackage(entry)
+  const loadSitePackage = async entry => {
     if (!/^octatrack-modules\/[a-z0-9-]+\/[a-zA-Z0-9.-]+\.mwrm$/.test(entry.path) &&
         !(/^[a-f0-9]{64}$/.test(entry.sha256) && entry.path === 'octatrack-base-packages/' + entry.sha256 + '.mwrm')) throw new Error('Unexpected module asset path.')
     const bytes = new Uint8Array(await readFile(join(root, 'public', entry.path)))
     if (bytes.length !== entry.bytes || hash(bytes) !== entry.sha256) throw new Error('The local site package differs from its manifest.')
     return bytes
-  })
+  }
   const storage = () => { const map = new Map(); return { getItem: key => map.get(key) ?? null, setItem: (key, value) => map.set(key, value), removeItem: key => map.delete(key) } }
   globalThis.localStorage = storage(); globalThis.sessionStorage = storage()
   if (credentials) {
@@ -223,10 +241,10 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   const clock = dependencies.now ?? Date.now
   const reviews = new Map()
   const zoomSelected = () => options.zoomMidi && !options.deviceSocket && !remote
-  // The Model:Cycles over its development link (startup --elektron-midi): identity, load, log and the runtime loader.
+  // The Model:Cycles over its link, in every Modwerk base (startup --elektron-midi): identity, load, log and the runtime loader.
   const cyclesSelected = () => options.elektronMidi && !options.deviceSocket && !remote
   async function connected() {
-    if (cyclesSelected()) throw new Error('The Model:Cycles has no saved sets: device_status, device_load, device_log, device_review, device_trial, device_keep and device_undo work over its development link.')
+    if (cyclesSelected()) throw new Error('The Model:Cycles has no saved sets: device_status, device_load, device_log, device_review, device_trial, device_keep and device_undo work over its link.')
     if (zoomSelected()) throw new Error('MIDISTOMP does not provide the runtime set loader or saved-set files. Use zoom_list or zoom_backup for the pedal’s files.')
     if (!options.deviceSocket && !remote) throw new Error('Device tools require an explicitly selected --device-socket or a connected remote session (remote_session_connect).')
     if (remote?.relay.state().ended) { remote = undefined; dropLink(); throw new Error('The remote session has ended.') }
@@ -296,7 +314,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }
   // The Model:Cycles: a fresh MIDI port list per read (RtMidi has no hot-plug here), its link's ident, and the built
   // image in --elektron-images whose set identity matches the one the unit took at boot.
-  const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a development base with the link (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
+  const noCycles = 'No Model:Cycles answered over USB MIDI. It needs a Modwerk base (sdk/machines/model-cycles/LINK.md), Elektron Transfer closed, and exactly one Model:Cycles connected.'
   async function withCycles(what, read) {
     const turn = dependencies.elektronAccess || trialTurn ? null : await unitTurn(what, 10000)
     let access
@@ -318,16 +336,17 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         if (set.crc === identity.set.crc) { build = { file: name, sha256: hash(bytes) }; break }
       }
     }
-    return { machine: 'model-cycles', state: { status: cyclesTrial ? 'trial' : 'ready', identity }, build, inventory: null, loader }
+    const trial = cyclesTrialState()
+    return { machine: 'model-cycles', state: { status: !trial ? 'ready' : trial.lost ? 'trial-lost' : trial.kept ? 'trial-kept' : 'trial', identity, ...(trial && { trial }) }, build, inventory: null, loader }
   }))
   // The audio's share of the CPU from the base's load probe (LINK.md `load`); an older development base refuses it.
-  const cyclesLoad = () => withCycles('read Model:Cycles load', async access => {
+  const cyclesLoad = () => cyclesSerial(() => withCycles('read Model:Cycles load', async access => {
     const reading = await frontend.readMcLoad(access)
     if (!reading) throw new Error(noCycles)
     return reading === 'unsupported' ? { machine: 'model-cycles', supported: false, reading: null } : { machine: 'model-cycles', supported: true, reading }
-  })
+  }))
   // The base's diagnostics log (LINK.md `diag`), in the Octatrack's layout; an older development base refuses it.
-  const cyclesLog = () => withCycles('read Model:Cycles log', async access => {
+  const cyclesLog = () => cyclesSerial(() => withCycles('read Model:Cycles log', async access => {
     const read = await frontend.readMcLog(access)
     if (!read) throw new Error(noCycles)
     if (read === 'unsupported') return { machine: 'model-cycles', supported: false, log: null }
@@ -335,7 +354,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     // The nonce identifies the unit's log across connections; like the Octatrack's, it stays out.
     const { boot, seq, loads, incidents } = read.log
     return { machine: 'model-cycles', supported: true, log: { boot, seq, loads, incidents } }
-  })
+  }))
   // The Model:Cycles' runtime loader (LINK.md "Loading modules"): one change a trial, read from --elektron-images. The
   // unit undoes a trial by itself after ten seconds without a link request, so a trial pings every three seconds until
   // its Keep or Undo. Every exchange goes in turn: a frame's parts from two requests must not interleave.
@@ -348,6 +367,29 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   }))
   const cyclesModules = call => frontend.mcModules(call).catch(error => { if (error instanceof frontend.McRefused && error.status === 2) return 'unsupported'; throw error })
   let cyclesTrial
+  // A trial's pings: the last one that reached the unit and the last failure. Once the unit's loader is in the ready
+  // phase (an ACCEPT or ROLLBACK whose answer was lost: upload mode is left here) or back in the normal one, the trial
+  // is over, and its active set tells how: the reviewed one means undone, another means a Keep
+  // went through though its answer was lost. More than ten seconds without a ping that reached it means it was
+  // probably undone.
+  const CYCLES_LAPSE = 10000
+  // The unit's set, leaving upload mode when an ACCEPT or ROLLBACK left it in the ready phase.
+  const cyclesSettle = async call => {
+    const session = await frontend.mcUploadSession(call)
+    if (!session) return null
+    const phase = session.status.phase
+    if (phase === 'ready') await session.leaveUploadMode()
+    return { over: phase === 'ready' || phase === 'normal', phase: session.status.phase, generation: session.status.generation, active: session.status.active }
+  }
+  const cyclesEnding = (active, before) => active === before.active
+    ? { kept: false, text: 'The unit no longer has the trial and runs the reviewed set again: the trial was undone (ten seconds without a ping, a power cycle, or an Undo whose answer was lost).' }
+    : { kept: true, text: 'The unit no longer has the trial and runs a different set than the reviewed one: a Keep went through though its answer was lost.' }
+  function cyclesTrialState() {
+    if (!cyclesTrial) return null
+    const quiet = clock() - cyclesTrial.lastPing, ended = cyclesTrial.ended
+    const lost = ended ? (ended.kept ? null : ended.text) : quiet > CYCLES_LAPSE ? 'No ping reached the unit for ' + Math.round(quiet / 1000) + ' s; it undoes a trial after ten quiet seconds.' : null
+    return { lost, kept: ended?.kept ? ended.text : null, pingError: cyclesTrial.pingError }
+  }
   async function cyclesPackage(change) {
     const removal = /^remove:([A-Za-z0-9._-]{1,64})$/.exec(change)
     if (removal) return { module: change, data: frontend.mcRemovalPackage(removal[1]) }
@@ -383,25 +425,49 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
         if (session.status.base !== plan.before.base || session.status.active !== plan.before.active) throw new Error('The device changed after review; nothing was sent.')
         return frontend.mcTry(call, plan.change.data)
       })
-      const id = randomUUID()
-      const ping = setInterval(() => { cyclesLine('keep Model:Cycles trial', call => frontend.mcUploadSession(call)).catch(() => {}) }, 3000)
-      ping.unref?.()
-      cyclesTrial = { id, ping, before: plan.before }
+      const trial = { id: randomUUID(), before: plan.before, lastPing: clock(), pingError: null, ended: null }
+      trial.ping = setInterval(() => {
+        cyclesLine('keep Model:Cycles trial', cyclesSettle).then(now => {
+          if (cyclesTrial !== trial) return
+          if (now.over) { clearInterval(trial.ping); trial.ended = cyclesEnding(now.active, trial.before); return }
+          trial.lastPing = clock(); trial.pingError = null
+        }, error => { if (cyclesTrial === trial) trial.pingError = error.message })
+      }, 3000)
+      trial.ping.unref?.()
+      cyclesTrial = trial
+      const id = trial.id
       return { trial: id, machine: 'model-cycles', state: { phase: status.phase, generation: status.generation, active: status.active } }
     } finally { if (!cyclesTrial) endTrialTurn() }
   }
   async function cyclesFinish(args, keep) {
     if (!options.allowDeviceWrites || !cyclesTrial || args.trial !== cyclesTrial.id) throw new Error('No matching authorized device trial.')
     const completed = cyclesTrial
-    clearInterval(completed.ping)
+    const done = () => { clearInterval(completed.ping); if (cyclesTrial === completed) cyclesTrial = undefined; endTrialTurn() }
+    // The trial and its pings stay until the unit has finished: a refusal (unsafe while a pattern plays) leaves both,
+    // so the agent can try again, as the Octatrack's finish() does.
+    let after
     try {
-      const after = await cyclesLine((keep ? 'keep' : 'undo') + ' Model:Cycles trial', async call => {
+      after = await cyclesLine((keep ? 'keep' : 'undo') + ' Model:Cycles trial', async call => {
         const status = await frontend.mcFinish(call, keep)
         return status && { phase: status.phase, generation: status.generation, active: status.active, loader: await cyclesModules(call) }
       })
-      if (!keep && after.active !== completed.before.active) throw new Error('Undo did not restore the reviewed set.')
-      return { kept: keep, completed: true, machine: 'model-cycles', ...after }
-    } finally { cyclesTrial = undefined; endTrialTurn() }
+    } catch (error) {
+      if (/Nothing is on trial/.test(error.message)) {
+        // The trial ended without an answer that said so: the unit's active set tells which way.
+        const now = await cyclesLine('read Model:Cycles set', async call => {
+          const settled = await cyclesSettle(call)
+          return settled && { phase: settled.phase, generation: settled.generation, active: settled.active, loader: await cyclesModules(call) }
+        })
+        done()
+        const ending = cyclesEnding(now.active, completed.before)
+        if (ending.kept === keep) return { kept: keep, completed: true, machine: 'model-cycles', ...now, note: ending.text }
+        throw new Error(ending.text + (keep ? ' Nothing was kept.' : ' Undo changed nothing: remove the module with remove:NAME, or power-cycle the unit.'), { cause: error })
+      }
+      throw new Error((keep ? 'Keep' : 'Undo') + ' did not finish: ' + error.message + ' The trial stays on and its pings go on: stop playback if a pattern plays, then call ' + (keep ? 'device_keep' : 'device_undo') + ' again.', { cause: error })
+    }
+    done()
+    if (!keep && after.active !== completed.before.active) throw new Error('Undo did not restore the reviewed set.')
+    return { kept: keep, completed: true, machine: 'model-cycles', ...after }
   }
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
@@ -609,7 +675,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     remote_session_status: async args => ({ ...await adminApi('/admin/remote-sessions/' + sessionId(args.session)), relay: remote?.id === args.session ? remote.relay.state() : null }),
     remote_session_connect: async args => {
       const id = sessionId(args.session)
-      if (trial) throw new Error('Finish the current trial first.')
+      if (trial || cyclesTrial) throw new Error('Finish the current trial first.')
       const { ticket } = await adminApi('/admin/remote-sessions/' + id + '/ticket', 'POST', {})
       const url = new URL(api.href + '/remote-sessions/' + id + '/socket')
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'; url.searchParams.set('ticket', ticket)
@@ -649,6 +715,15 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!keep && !frontend.sameModules(result.inventory.moduleIds, completed.before.inventory.moduleIds)) throw new Error('Undo did not restore the reviewed inventory.')
     return { kept: keep, completed: true, ...result }
   }
+  // Before each tool call: rebuild the bundle when a file it was built from changed. An open trial (the Octatrack's or
+  // the Model:Cycles') keeps the bundle it started with until Keep or Undo; the link and reviews belong to the old bundle, so they are dropped.
+  async function refreshFrontend() {
+    if (trial || cyclesTrial || await stamp(built.files) === built.stamp) return
+    dropLink(); closeZoom()
+    try { await loadFrontend() }
+    catch (error) { throw new Error('The checkout changed since this server bundled the site (a branch switch or base regeneration), and rebuilding failed: ' + error.message + ' Once the checkout builds again, call the tool again; nothing was sent.', { cause: error }) }
+    console.error('Rebuilt the site bundle: the checkout changed since the last tool call.')
+  }
   let running = false
   return {
     tools: TOOLS,
@@ -664,7 +739,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       if (closed) throw new Error('The MCP workspace is closed.')
       if (running) throw new Error('Another frontend/device operation is running.')
       running = true
-      try { return await handlers[name](args) } finally { running = false; releaseIdleLink() }
+      try { if (!name.startsWith('board_')) await refreshFrontend(); return await handlers[name](args) } finally { running = false; releaseIdleLink() }
     },
     // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
     // exits only after the lock is removed (an early return here once let the process exit with the lock still there).

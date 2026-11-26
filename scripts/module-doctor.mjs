@@ -17,9 +17,9 @@ import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
 import { MODULE_V3_CATEGORIES } from '../src/catalog/module-contract-v3.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { moduleSourceFingerprint } from './module-source.mjs'
+import { isDocumentationPath, moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
-import { moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { crlfModuleFiles, moduleEarlierPerformanceSourceSha256, moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
 import { judgeRecord, ownerWaivedPerformanceRow, priceLimits, approvalCoversSource, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
@@ -30,6 +30,8 @@ import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
 import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
+import { qualifyProblems } from './module-qualify.mjs'
+import { freeFx2Ids } from './module-list.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -80,7 +82,7 @@ const nativeParams = compatResult?.nativeParams
 // The modules listed before every module had to name its CPU price, which wait for a measurement.
 const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
-const nativeHashes = new Map(), performanceHashes = new Map()
+const nativeHashes = new Map(), performanceHashes = new Map(), earlierPerformanceHashes = new Map(), crlfFiles = new Map(), qualifyChecks = new Map()
 // The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
 let packageRows = null
 const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
@@ -128,6 +130,19 @@ function octatrack(id) {
       'python3 -B ' + (draft ? 'sdk/drafts/' + id + failed[0].file.slice(folder.length) : failed[0].file) + ', and fix what it reports. A test_*.py runs with no arguments and no firmware, unit or emulator; rename a script that needs one (docs/ADD_A_MODULE.md, Host tests)')
     else ok('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ' pass (a test skips what this computer lacks a tool for)')
   } else info('host tests', 'none: a test_*.py in the module folder runs here and in npm run sdk:check')
+  // Its own scripts under npm run lint's rules, here and not first at pr:ready: an edit made after the evidence was stamped moves
+  // the source hashes it names, and the packages' fingerprint with them (25 November 2026: a two-line lint fix cost a rebuild).
+  const scripts = all ? [] : readdirSync(resolve(root, folder), { recursive: true }).filter(path => /\.[cm]?[jt]sx?$/.test(path) && !path.split(/[\\/]/).includes('node_modules'))
+  if (scripts.length) {
+    const lint = spawnSync(process.execPath, ['node_modules/eslint/bin/eslint.js', '--no-cache', '--format', 'json', ...scripts.map(path => folder + '/' + path)], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 })
+    let results = null
+    try { results = JSON.parse(lint.stdout) } catch { /* reported below */ }
+    const shown = draft ? 'sdk/drafts/' + id : folder
+    const errors = (results ?? []).flatMap(file => file.messages.filter(message => message.severity === 2).map(message => file.filePath.slice(resolve(root, folder).length + 1) + ':' + message.line + ' ' + message.message))
+    if (!results) fail('lint', 'eslint did not run: ' + ((lint.stderr || lint.error?.message || '').trim().split('\n').pop() || 'no output'), 'npm ci, then run this again')
+    else if (errors.length) fail('lint', errors.length + ' error' + (errors.length === 1 ? '' : 's') + ', first: ' + errors[0], 'npx eslint ' + shown + ', and fix them before you measure or stamp anything')
+    else ok('lint', scripts.length + ' script' + (scripts.length === 1 ? '' : 's') + ' pass npm run lint\'s rules')
+  }
   // No gate can see how an effect sounds, so this only points at the check and says whether TESTING.md already answers it.
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''
@@ -157,7 +172,7 @@ function octatrack(id) {
     }
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
     // Were these numbers taken on this code? The stamp names the source they were measured on.
-    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json')
+    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json', earlierPerformanceHashes.get(id))
     if (stamped.state === 'fail' && !record.sourceSha256 && approvalCoversSource(hardwareApproval, id, document.version, nativeHashes.get(id)))
       info('performance stamp', 'not stamped: the owner\'s approval binds this exact source, record included (' + approvalPath + ')')
     else if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
@@ -169,6 +184,13 @@ function octatrack(id) {
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
   else fail('thumbnail', 'no presentation/thumbnail.svg and no hand-drawn art', 'add a 320x192 presentation/thumbnail.svg that shows what the module does')
+
+  // Git stores text with LF (.gitattributes). The evidence hashes read files as Git stores them; the compiled-package fingerprint, here
+  // and in the compiler, reads them as they are, so a CRLF file the compiler reads is a different package fingerprint here than in CI.
+  const crlf = crlfFiles.get(id) ?? [], compiled = moduleCardless(id) ? [] : crlf.filter(path => !isDocumentationPath('modules/' + id + '/' + path))
+  const crlfFix = "sed -i 's/\\r$//' " + crlf.slice(0, 3).map(path => (draft ? 'sdk/drafts/' + id : folder) + '/' + path).join(' ') + (crlf.length > 3 ? ' … (' + crlf.length + ' files)' : '')
+  if (compiled.length) fail('line endings', compiled.slice(0, 3).join(', ') + (compiled.length > 3 ? ' and ' + (compiled.length - 3) + ' more' : '') + ' ha' + (compiled.length === 1 ? 's' : 've') + ' CRLF line endings here, Git stores LF, so the package fingerprint here differs from CI\'s', crlfFix)
+  else if (crlf.length) info('line endings', crlf.slice(0, 3).join(', ') + (crlf.length > 3 ? ' and ' + (crlf.length - 3) + ' more' : '') + ': CRLF here, LF in Git; the evidence hashes read them as Git stores them. To match: ' + crlfFix)
 
   // A page descriptor written by hand is where a short list ends up as a knob: the widget word (desc+0x132) beside the count (desc+0xd2).
   const sources = readdirSync(resolve(root, folder), { recursive: true, encoding: 'utf8' }).filter(name => /\.(c|h|py)$/.test(name)).map(name => [name, readFileSync(resolve(root, folder, name), 'utf8')])
@@ -212,6 +234,11 @@ function octatrack(id) {
   else if (curve.state === 'ok') ok('frame cost', curve.detail)
   else info('frame cost', curve.detail + (curve.fix ? '. Fix: ' + curve.fix : ''))
 
+  // The release record against the source it was tested on, and drafted words nobody has read yet (npm run module:qualify).
+  const qualified = qualifyChecks.get(id) ?? []
+  if (qualified.length) fail('qualification', qualified.map(problem => problem.detail).join('; '), qualified[0].fix)
+  else if (document.tests.qualification) ok('qualification', 'bound to this source, nothing left drafted (npm run module:qualify -- ' + id + ' --check)')
+
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
@@ -249,6 +276,7 @@ function octatrack(id) {
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
   const compared = withId.length > 0 || (entry && !paused)
   if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.12+, then npm run modules:compat')
+  else if (clashes.length && clashes[0].text.includes('FX2 id') && !freeFx2Ids(root).length) fail('cross-compatibility', clashes[0].text + ', and no FX2 id is left: stock and the listed modules hold 0x04-0x1f, all the build takes', 'a new effect waits until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md); ask the owner on Discord')
   else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- --with ' + id + ' lists every one')
   else if (!compared) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
   else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat' + (entry && !paused ? '' : ' -- --with ' + id) + ')')
@@ -299,7 +327,7 @@ function machineModule({ id, machine, folder, zdl = false }) {
 // Two tiers. A draft is experimental: to try it on your unit and share it with testers, it needs these lines green (it is what it
 // says it is, it follows the category's rules and DSP traps, it installs beside every other module and the base, and nobody else
 // holds it). Every other line is what listing it needs; for a draft they read as still to do (○) until --release.
-const EXPERIMENTAL = new Set(['category guide', 'category', 'sound quality', 'dsp sources', 'cross-compatibility', 'hook migration', 'ui claims', 'conflicts', 'board claim', 'board messages'])
+const EXPERIMENTAL = new Set(['category guide', 'category', 'sound quality', 'dsp sources', 'lint', 'cross-compatibility', 'hook migration', 'ui claims', 'conflicts', 'board claim', 'board messages'])
 const symbol = { ok: '✓', fail: '✗', info: '·', later: '○' }
 const print = line => {
   console.log('  ' + symbol[line.state] + ' ' + line.name.padEnd(20) + line.detail)
@@ -340,6 +368,9 @@ for (const id of octatrackIds) {
   const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
   nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
   performanceHashes.set(id, await modulePerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  earlierPerformanceHashes.set(id, await moduleEarlierPerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  crlfFiles.set(id, await crlfModuleFiles(resolve(root, 'sdk/octatrack/modules', id)))
+  qualifyChecks.set(id, await qualifyProblems({ root, folder: resolve(root, 'sdk/octatrack/modules', id), document, nativeSha: nativeHashes.get(id), evidence: false }))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.
 const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(root)) === json('src/engine/assets/module-build.json').sourceTreeSha256

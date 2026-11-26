@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Adds UNGEMACH, a dissonant, living drone machine for dark techno: sixteen detuned voices, a sub and noise in stereo.",
+      "DISS widens the chord from unison to a scream while its pitch rises; WAVE has 32 waveforms from dull to shrill.",
+      "RATE drifts pitch, filter and level freely or pulses in time with the track; PNCH punches on every trig.",
+      "One UNGEMACH track per Part.",
+      "Known issue: tested only on the author's MKI; a busy pattern can skip a few of its frames a second."
+    ]
+  }
+]

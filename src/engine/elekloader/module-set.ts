@@ -43,10 +43,10 @@ export interface RuntimePackageManifest {
   usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
-export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 9 : kind === 'configurable-0.4' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
 const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
 const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
-for (const kind of ['configurable', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
+for (const kind of ['configurable', 'configurable-0.4', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
@@ -125,6 +125,11 @@ export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identit
 /** loader.h RUNTIME_DSP_CLAIMS: the X/Y spans one package may claim outside its own slot; RUNTIME_DSP_HOOK_ENTRIES, an
  * engine's entries; RUNTIME_DSP_INIT_WORDS, its claims' initial words. */
 const DSP_CLAIMS = 16, HOOK_ENTRIES = 8, INIT_WORDS = 4096
+/** The base's module pool (build_core.py RUNTIME_POOL_BYTES), and the loader's records in it on the ColdFire: loader.h's
+ * runtime_module, runtime_site, runtime_dsp_claim and runtime_dsp_entry, as the unit's pool readings confirm
+ * (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
+export const OCTATRACK_POOL_BYTES = 768 * 1024
+const MODULE_RECORD = 736, SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
@@ -269,7 +274,13 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
     if (at >= dspWords || at <= previous || (!fixed && view.getUint32(end + 4 * at) >= dspWords) || exits.includes(at)) fail()
     previous = at
   }
+  // What the loader takes from the pool for it (loader.c prepare: head + code + tail, each in whole 16-byte lines).
+  const lines = (n: number) => Math.ceil(n / 16) * 16
+  return lines(MODULE_RECORD + SITE_RECORD * want.sites) + lines(image + bss) +
+    lines(((4 * dspWords + 2 * dspRelocations + 3) & ~3) + CLAIM_RECORD * want.claims + ENTRY_RECORD * want.entries + 4 * initWords)
 }
+/** The bytes of the base's module pool a published package takes once installed. */
+export const poolExtent = (entry: RuntimePackage & { id: string }, data: Uint8Array) => checkPackage(entry, data, entry.id)
 
 /** Expand known machine groups for display, while planning replacements from their exact inventory layouts. */
 export function createRuntimeCatalogue(document: RuntimePackageManifest) {
@@ -437,12 +448,26 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     async prepare(full: InventoryTarget, current: Inventory, load = fetchPackage, capabilities?: RuntimeCapabilities, base?: string): Promise<{ name: string; changes: SetChange[] }> {
       const target = packagedTarget(full), { steps } = plan(target, current); requireBase(steps, capabilities, base); requireLayout(full, base)
       // Fetch and verify every forward and rollback package before the first write to the unit.
-      const packages = new Map<RuntimePackage, Uint8Array>()
+      const packages = new Map<RuntimePackage, Uint8Array>(), extents = new Map<RuntimePackage, number>()
       await Promise.all(steps.flatMap(step => [step.add, step.undo].filter((entry): entry is RuntimePackage => !!entry).map(async entry => {
         const data = await load(entry)
-        checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined, audioEntry.get(entry))
+        extents.set(entry, checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined, audioEntry.get(entry)))
         packages.set(entry, data)
       })))
+      // The set must fit the base's module pool. The loader refuses a package it has no room for (RUNTIME_MEMORY) only
+      // after the transfer, and a card set loses modules at power-on. A module the site can't name counts nothing.
+      // shortcut: a module that stays at an older version is priced at the published one; read the unit's package
+      // hashes (INVENTORY) here if a release ever changes its pool use by much.
+      const staying = await Promise.all(target.moduleIds.filter(id => current.moduleIds.includes(id) && !steps.some(step => step.id === id)).map(async id => {
+        const entry = audioPackages && id === USB_AUDIO_MODULE ? current.usbAudioLayout && audio[current.usbAudioLayout] : published.get(id)
+        return { name: name(id), bytes: entry ? checkPackage(entry, await load(entry), id, undefined, audioEntry.get(entry)) : 0 }
+      }))
+      const priced = [...steps.flatMap(step => step.add ? [{ name: step.name, bytes: extents.get(step.add)! }] : []), ...staying]
+      const total = priced.reduce((sum, item) => sum + item.bytes, 0), kB = (bytes: number) => Math.ceil(bytes / 1000)
+      if (total > OCTATRACK_POOL_BYTES) {
+        const largest = priced.sort((a, b) => b.bytes - a.bytes).slice(0, 3).map(item => `${item.name} (${kB(item.bytes)} kB)`)
+        throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. Take out ${kB(total - OCTATRACK_POOL_BYTES)} kB or more. The largest here are ${list(largest)}.`)
+      }
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.
       function configured(entry: RuntimePackage, preset: number) {

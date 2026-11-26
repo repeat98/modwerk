@@ -60,7 +60,7 @@ import { useFirstBaseInstall } from './hooks/useBaseInstallPrompt'
 import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctatrackLink'
 import { recordLoad } from './hooks/useOctatrackLoad'
 import { baseGuideToReopen, forgetBaseGuideReopen, pendingBaseInstall } from './config/octatrack-progress'
-import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
+import { coreBuildPreviewOpen, digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
 import { comesWithBase, USB_AUDIO_PACKAGED, USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
@@ -88,7 +88,7 @@ import type { ZoomLink } from './engine/zoom/zoom-link'
 import { DIGI_DEVICES, DIGI_MODS, isDigiDevice, type DigiMod } from './devices/digi-mods'
 import { configurationDevice, type Configuration } from './config/workspace'
 import './devices/devices.css'
-import { SupportButton, SupportDialog } from './components/SupportDialog'
+import { SupportButton, SupportDialog, SupportMilestone, SupportMilestonePreview } from './components/SupportDialog'
 import { OverviewPage } from './overview/OverviewPage'
 import { DevelopCard } from './overview/DevelopCard'
 import { developHighlight, machineOverview } from './overview/overview'
@@ -134,6 +134,7 @@ const MoreModsPrompt = lazy(() => import('./components/MoreModsPrompt').then(mod
 const BetaModuleSets = lazy(() => beta().then(module => ({ default: module.BetaModuleSets })))
 const FirmwareFeedbackPreview = import.meta.env.DEV ? lazy(() => import('./components/FirmwareFeedbackPreview')) : () => null
 const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'firmware-feedback'
+const supportThanksPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'support-thanks'
 // Dev previews of the USB card and the base install prompt against a pretend unit.
 const usbPreview = import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('preview') : null
 const usbLinkPreview = usbPreview === 'usb-link' || usbPreview === 'screen' || usbPreview === 'base-install'
@@ -177,7 +178,7 @@ export default function App() {
   const mobileWorkspace = useMobileWorkspace()
   const presence = useMembersOnline(), online = presence?.online ?? null
   const { session, loading: sessionLoading, developer, catalog } = useCommunity()
-  const betaAccess = hasBetaAccess(session), accessibleModules = availableModules(betaAccess)
+  const betaAccess = hasBetaAccess(session), accessibleModules = availableModules(betaAccess), betaUi = hasBetaUi(session)
   const detailModule = moduleRoute.startsWith('module/') ? accessibleModules.find((module) => module.id === moduleRoute.slice(7)) : undefined
   const pausedModule = MODULES.find(module => isModulePaused(module.id) && !isModuleAvailable(module.id, betaAccess) && (moduleRoute === 'module/' + module.id || moduleRoute === 'community-module/' + module.id))
   const configuration = route === 'configuration'
@@ -190,7 +191,7 @@ export default function App() {
   const digiDevice = machineRoute && isDigiDevice(machineRoute.device.id) ? machineRoute.device as DeviceProfile & { id: DigiMod['device'] } : undefined
   const digiMod = digiDevice && machineRoute?.view === 'module' ? DIGI_MODS.find(mod => mod.device === digiDevice.id && mod.id === machineRoute.moduleId) : undefined
   const zoomEffect = machineRoute?.view === 'module' && machineRoute.device.family === 'zoom' ? ZOOM_EFFECTS.find(effect => effect.machine === machineRoute.device.id && effect.id === machineRoute.moduleId) : undefined
-  const machineView = !machineRoute ? undefined : machineRoute.view === 'module' ? (digiMod || zoomEffect ? 'module' : undefined) : machineRoute.view === 'configuration' ? (digiDevice ? 'configuration' : undefined) : !machineRoute.category || LIBRARY_CATEGORIES.includes(machineRoute.category as ModuleCategory) ? 'library' : undefined
+  const machineView = !machineRoute ? undefined : machineRoute.view === 'module' ? (digiMod || zoomEffect ? 'module' : undefined) : machineRoute.view === 'configuration' ? (digiDevice && (betaUi || !isCoreBuildPreview(digiDevice.id)) ? 'configuration' : undefined) : !machineRoute.category || LIBRARY_CATEGORIES.includes(machineRoute.category as ModuleCategory) ? 'library' : undefined
   const forumRoute = route === 'forum' || route.startsWith('forum/') || route.startsWith('forum?')
   const developerRoute = route === 'developer' || route.startsWith('developer/')
   const betaInvitationRoute = moduleRoute.startsWith('beta/join/')
@@ -200,7 +201,7 @@ export default function App() {
   // Loading a module set sends the site's packages (module-set.ts) and keeps them.
   // The Octatrack base path's interface (module sets, the hub, sync, base install; one switch releases it) and the rest
   // of the beta (the beta-only Zoom pedal pages): beta testers, verified administrators and dev builds; else main's.
-  const octatrackUi = hasOctatrackBase(session), betaUi = hasBetaUi(session), w = setWords(octatrackUi)
+  const octatrackUi = hasOctatrackBase(session), w = setWords(octatrackUi)
   const usbAllowed = !mobileWorkspace && hasUsbLinkAccess(session, touchOnly) && !usbLinkPreview && usbPreview !== 'diagnostics'
   // This member can sync over USB here: the base path is open to them and this browser reaches the unit (not Firefox,
   // Safari or a phone). Without it the module set goes onto the unit as the card file.
@@ -291,14 +292,17 @@ export default function App() {
   const allMachines = allRoute || overviewRoute || (!machineView && !octatrackRoute && remembered === ALL_MACHINES)
   const currentDevice = DEVICES_BY_ID[zoomHub ? zoomHub.device.id : mcUnit ? 'model-cycles' : machineView ? machineRoute!.device.id : octatrackRoute ? 'octatrack' : remembered && remembered !== ALL_MACHINES ? remembered : 'octatrack']
   const machineHasMods = !allMachines && (currentDevice.status === 'available' || currentDevice.status === 'preview')
-  const machineBuildPreview = !allMachines && isCoreBuildPreview(currentDevice.id) && currentDevice.status === 'research' && !!currentDevice.sdk
+  const machineBuildPreview = !allMachines && coreBuildPreviewOpen(currentDevice.id, betaUi) && currentDevice.status === 'research' && !!currentDevice.sdk
   const machineCanConfigure = machineHasMods || machineBuildPreview
   // A machine that has mods or a core build preview, as machineCanConfigure asks of the page's machine.
-  const takesSets = (device: DeviceProfile) => device.status === 'available' || device.status === 'preview' || (isCoreBuildPreview(device.id) && device.status === 'research' && !!device.sdk)
+  const takesSets = (device: DeviceProfile) => device.status === 'available' || device.status === 'preview' || (coreBuildPreviewOpen(device.id, betaUi) && device.status === 'research' && !!device.sdk)
   // The overview shows All machines too, so the forum and other machine-less pages after it don't fall back to an older machine.
   useEffect(() => { if (allRoute || overviewRoute) rememberDevice(ALL_MACHINES); else if (machineView || octatrackRoute) rememberDevice(currentDevice.id) }, [allRoute, overviewRoute, machineView, octatrackRoute, currentDevice.id])
   // #devices, the old machine overview, opens the overview page.
   useEffect(() => { if (machineRoute?.view === 'configuration' && isZoomSetDevice(machineRoute.device.id)) window.location.replace(zoomHubHref(machineRoute.device.id, 'set')) }, [machineRoute?.view, machineRoute?.device.id])
+  // A beta-only core build preview's configuration route opens the machine's page for everyone else, once the session
+  // has loaded: until then betaUi is false for everyone on the live site, beta testers included.
+  useEffect(() => { if (!sessionLoading && !betaUi && machineRoute?.view === 'configuration' && isCoreBuildPreview(machineRoute.device.id)) window.location.replace(deviceHref(machineRoute.device.id)) }, [sessionLoading, betaUi, machineRoute?.view, machineRoute?.device.id])
   useEffect(() => { if (devicesRoute) window.location.replace('#overview'); else if ((route === 'octatrack' || route.startsWith('octatrack/')) && !octatrackUi) window.location.replace('#library'); else if (!betaUi && parseZoomHubRoute(route) && !isZoomSetDevice(parseZoomHubRoute(route)!.device.id)) window.location.replace('#' + parseZoomHubRoute(route)!.device.id); else if (octatrackUi && route === 'your-octatrack') window.location.replace('#octatrack'); else if (route.startsWith('device/')) window.location.replace(DEVICES_BY_ID[route.slice(7)] ? deviceHref(route.slice(7)) : '#devices') }, [route, devicesRoute, octatrackUi, betaUi])
   const libraryCount = (category?: ModuleCategory) =>
     (allMachines || currentDevice.id === 'octatrack' ? accessibleModules.filter(module => !category || module.category === category).length : 0)
@@ -664,6 +668,7 @@ export default function App() {
       </Suspense>
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}
       <HardwareFeedbackCheckIn enabled={!accountRoute && !developerRoute && !adminRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content', 'submit'].includes(route.split('/')[0]) && !firmwareFeedbackPreview}/>
+      <SupportMilestone enabled={!supportOpen && !accountRoute && !developerRoute && !adminRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content', 'submit'].includes(route.split('/')[0])}/>
       <div className="workspace">
         <header className="app-toolbar" ref={toolbarRef}>
           <a className="toolbar-brand" href="#overview" aria-label="Modwerk overview"><img src={import.meta.env.BASE_URL + 'modwerk-mark.svg'} width="30" height="30" alt="" /><BrandName session={session} /></a>
@@ -690,6 +695,7 @@ export default function App() {
         </header>
         <main className="workspace-content" id="main-content" ref={mainRef} tabIndex={-1}>
           {firmwareFeedbackPreview && <Suspense fallback={null}><FirmwareFeedbackPreview/></Suspense>}
+          {supportThanksPreview && <SupportMilestonePreview/>}
           {!accountRoute && <SignupWelcome key={route} />}
           {!accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !adminRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <HardwareFeedbackReminder />}
           {workspace.storageError && <div className="file-error" role="alert">{workspace.storageError} Export important configurations before closing this tab.</div>}

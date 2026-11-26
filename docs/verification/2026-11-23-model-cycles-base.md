@@ -19,7 +19,23 @@ bytes"), found when the first test module was linked. Nothing subscribed, so the
 - **On a unit** (the submitter's Model:Cycles, flashed as an OS update, then a power cycle): boots normally and behaves
   as with stock 1.13.
 
-## 4d4d91d2: the base this pull request vendors (24 November 2026)
+## 646706ff: the base this pull request vendors (25 November 2026)
+
+`4d4d91d2` (below) with the owner's review fixes: a RAM boot keeps an accepted request's numbers, the flush pushes
+all four cache ways, a release base sends 0 for the RAM-boot words, and the link writes each reply whole under
+stock's USB lock, holds it while another SysEx is open (for up to a second) and drops none
+([LINK.md](../../sdk/machines/model-cycles/LINK.md), "Stock's send from two tasks"). 76 bytes `.boot`, 38214 `.run`,
+115796 `.bss`, 8 sites. Its image `89edf78e…` (stock 1.13 and the base alone) is byte for byte what the site's kit
+builds from the stock file. On the submitter's Model:Cycles, flashed with stock's upgrade: identity `0x7c774e99`
+and RAM-boot words 0; the loader's edge cases (try, keep, undo, refused while a pattern plays, the 10 s lapse, two
+modules on the draw hook with one removed, `frames.mwrm` on a stock-code site on trial, undone, kept and removed);
+Transfer connected beside the link (419 requests, none dropped, no send failures); stock 1.13 flashed over it and
+the base back from the site's send dialog. The development base of the same source (`d0a26304`, image `1d6c4052…`):
+the site's stock bytes back after each undo and removal, the masked-span counters (longest 7.27 µs), a RAM boot, and
+a FREEZE incident from a test module that held the UI tick for 6 s while the audio ran on. Rows in
+[LINK.md](../../sdk/machines/model-cycles/LINK.md#evidence).
+
+## 4d4d91d2: the base before the review fixes (24 November 2026)
 
 `2e5243e6` (below) with the link, the audio load, the diagnostics log and the runtime loader in every base, as the
 owner asked: 76 bytes `.boot`, 37994 `.run`, 115796 `.bss`, 8 sites. Its image `ec928894…` (stock 1.13 and the base
@@ -64,6 +80,31 @@ nobody answered "Upgrade OS now?", and the link answered ok and reset the unit. 
 repeated: the unit reset by itself, TRIG 16 blinked, and `ident` reported the mailbox `booted`, `booted from RAM` and
 CRC `0x36fc4fa1`. A power cycle then booted the flashed image: TRIG 16 did not blink. Nothing was flashed for the RAM
 boot.
+
+## The page and its send dialog (24 and 25 November 2026)
+
+The catalogue record pins `modwerk-base-model-cycles-646706ff.elemod` (base `646706ff`, #2077). The kit's `build` in
+Node (`prepareBuild`, the version name `1.13`, `buildWithLock`, as the page runs them) writes `89edf78e…`
+(1,006,880 bytes) from the stock `model-cycles_OS1.13.syx` (`44fe5862…`): byte for byte the image Elekloader's
+patcher built, which ran flashed in #2077's record.
+
+In a browser (`npm run dev` with `npm run dev:community`, Chrome on a Mac, `'model-cycles': true` in
+`DIGI_DOWNLOADS_ENABLED` locally, not committed), on the submitter's Model:Cycles:
+
+- **25 November, base `646706ff`:** the page built from the stock 1.13 file and its download was `89edf78e…`, byte for
+  byte. The send dialog sent it to the unit on stock 1.13; YES at UPGRADE OS NOW? installed it (`ident`: set CRC
+  `0x7c774e99`, 38,272 bytes).
+- **24 and 25 November, base `4d4d91d2`:** the page built `ec928894…`, byte for byte. Chrome asked for MIDI device
+  control once the site's permission was reset; the dialog's Connect, Send and Confirm on the unit ticked. NO at
+  UPGRADE OS NOW? kept the running OS without a restart (the dialog stays at "Press YES on the unit", since the page
+  cannot see the answer); YES installed it (`0x15eddb5a`, 38,052 bytes), also after stock 1.13 was flashed over it.
+  With Transfer open and connected the dialog sent and the unit asked (macOS).
+- **Not run:** Windows, where a MIDI port opens only once (no Windows machine here).
+
+Beta only: the preview, `#model-cycles/configuration` and its button follow `hasBetaUi`. Checked by tests that render
+a released build (`USB_LINK` off): `core-build-preview-gate.test.ts` (the button for a beta tester, not a visitor)
+and `App.model-cycles-preview.test.ts` (the route waits for the session, keeps a beta tester, sends a visitor to the
+machine page). Not checked in a deployed build.
 
 ## The site's build of 4d4d91d2 (24 November 2026)
 

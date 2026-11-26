@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "about": "GitHub accounts whose own merges into main the owner approves for publication (scripts/release-approval.mjs). Matched by immutable user id. A listed maintainer's merge does not count when it changes sdk/approvals/ or the release gate itself; those need the owner's merge.",
+  "maintainers": [
+    {
+      "login": "npp1993",
+      "id": 833410,
+      "approvedBy": "repeat98",
+      "approvedOn": "2026-11-26",
+      "ownerStatement": "\"I approve all merges by npp1993, he is a collaborator and maintainer\" (26 November 2026), after the release gate held back the publication of #2111 because npp1993 had merged #2206 himself."
+    }
+  ]
+}

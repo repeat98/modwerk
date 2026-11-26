@@ -69,15 +69,17 @@ export function collectBrowserDiagnosticEvents(given?: EventTarget) {
   const context = captureSiteDiagnosticContext()
   const target = given ?? (typeof window === 'undefined' ? undefined : window)
   if (!context || !target) return () => {}
+  // A cross-origin or extension script's error and browser notices come without an error object: kept apart from real throws.
+  const kind = (thrown: unknown) => thrown == null ? 'NoErrorObject' : diagnosticErrorKind(thrown)
   const error = (event: Event) => {
     const thrown = (event as ErrorEvent).error
-    if (!isExpectedDiagnosticCancellation(thrown)) emitSiteDiagnosticEvent({ event: 'browser_error', phase: 'browser', area: diagnosticArea(), kind: diagnosticErrorKind(thrown) }, context)
+    if (!isExpectedDiagnosticCancellation(thrown)) emitSiteDiagnosticEvent({ event: 'browser_error', phase: 'browser', area: diagnosticArea(), kind: kind(thrown) }, context)
   }
   const rejection = (event: Event) => {
     const rejected = event as PromiseRejectionEvent
     const stamp = rejected.promise && promises.get(rejected.promise)
     if (stamp && (stamp.context !== context || !stamp.valid())) return
-    if (!isExpectedDiagnosticCancellation(rejected.reason)) emitSiteDiagnosticEvent({ event: 'unhandled_rejection', phase: 'browser', area: diagnosticArea(), kind: diagnosticErrorKind(rejected.reason) }, context)
+    if (!isExpectedDiagnosticCancellation(rejected.reason)) emitSiteDiagnosticEvent({ event: 'unhandled_rejection', phase: 'browser', area: diagnosticArea(), kind: kind(rejected.reason) }, context)
   }
   target.addEventListener('error', error); target.addEventListener('unhandledrejection', rejection)
   return () => { target.removeEventListener('error', error); target.removeEventListener('unhandledrejection', rejection) }

@@ -15,9 +15,9 @@ the OS. No flash over the link yet: a base still goes on the unit as an OS updat
 
 ## Every base, and development bases
 
-Every base answers `ident`, `diag`, `load`, `log` and the loader (`up_part`, `up_run`, `mods`). It costs 37994 bytes
+Every base answers `ident`, `diag`, `load`, `log` and the loader (`up_part`, `up_run`, `mods`). It costs 38214 bytes
 of `.run` and 115796 of `.bss` in the 256 KiB shared mod area, 96 KB of it the module pool and the upload staging
-(release base `4d4d91d2`). Any USB host can load modules, as on the Octatrack; a trial goes back on its own when the
+(release base `646706ff`). Any USB host can load modules, as on the Octatrack; a trial goes back on its own when the
 host falls quiet for ten seconds, and a power cycle always restores the flashed set.
 
 Development bases add `mem`, `key`, `enc`, `release`, `disarm` and `ramboot` (a release base answers them `bad
@@ -65,7 +65,7 @@ Status: 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person is 
 | `up_run` | 0x32 | runs the frame's first N bytes as one wire request; the upload controller's 144-byte response, packed |
 | `mods` | 0x33 | the module pool's free bytes and largest run, the last refusal, the live count and up to three inventory entries from the n-th |
 
-The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. The developer MCP reads the same identity with `device_status` (`--elektron-midi`, [FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-development-link)) and names the matching image in `--elektron-images`. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
+The set identity tells a host which build runs: `mc_link.py runid IMAGE.syx` computes the same two numbers from a built image and the patcher's `IMAGE.syx.json` (the `.run` block sits at the layout's `run_load` in the MAIN OS and is copied unchanged to DDR). The base cannot carry its own package hash; the build that made the image knows it. The developer MCP reads the same identity with `device_status` (`--elektron-midi`, [FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-link)) and names the matching image in `--elektron-images`. `mc_link.py rundiff IMAGE.syx` reads the running block and lists every word that differs from the image.
 
 The screen needs no command: stock answers Elektron's own screenshot request over USB.
 
@@ -89,7 +89,7 @@ mc_link.py remove NAME --seconds 5 [--keep]   # an empty package with NAME's id:
 ```
 
 The developer MCP does the same with `device_review`, `device_trial`, `device_keep` and `device_undo`
-([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-development-link)), through
+([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#a-modelcycles-over-its-link)), through
 [`mc-link.ts`](../../../src/engine/elektron/mc-link.ts)'s `mcUploadTransport` and the site's `UploadSession`.
 
 A module patches stock code at declared sites: [`tools/build_sites.py`](tools/build_sites.py) `--sites SITES.json` (around the loader's `build.py`) takes them in base.json's format (a `jsr`
@@ -153,9 +153,45 @@ image must carry a development base: only its `ev_boot` handler boots from RAM.
   is 15 + n. Encoders: 1 LEVEL/DATA, 2-15 the parameter knobs (seen on a unit: 2 PITCH, 13 CHANCE, 14 REVERB, 15 DELAY); 0 is
   not one the main screen reads.
 - **USB only.** A request from USB arrives with port 2. The link drops its messages from any other port.
-- **Work.** `ev_tick` (UI task) takes the ring, acts and replies with stock's SysEx send `0x400828fe(bytes, len, 0,
-  port)`, which writes 144-byte parts. Its ports: 1 the MIDI setting's choice, 2 USB, 3 DIN, 4 both. Do not run
-  Transfer at the same time: a reply could land between the parts of one of stock's.
+- **Work.** `ev_tick` (UI task) takes the ring, acts and replies on USB through stock's USB MIDI writer
+  `0x40003396(len, bytes)` in 144-byte parts, under stock's USB lock for the whole reply and never while another
+  sender's SysEx is open (below).
+
+### Stock's send from two tasks
+
+Read from OS 1.13's code, 25 November 2026. Stock's SysEx send `0x400828fe(bytes, len, error flag, port)` returns
+at once while `0x40fe4228` is 0, splits a message into 144-byte parts and hands each to `0x400826b0(len, bytes,
+port)`. For USB (port 2, and 4 with DIN) that takes stock's USB lock (`0x400032ca`: a kernel mutex at `0x422ff010`,
+`0x40001cc4`, which makes another task wait; `0x400032da` gives it back), writes the part with `0x40003396` and
+gives the lock back. So one part is never torn, but the lock is free between the parts of a message. `0x40003396`
+turns MIDI bytes into USB MIDI packets and keeps its SysEx state across calls (`0x404a096c`: `0xF0` from a SysEx's
+`F0` until its `F7`), so a part of another sender between two parts of a message breaks both.
+
+Two tasks do send. The UI task does (the link, and stock's own MIDI out). Stock's SysEx router runs in the MIDI task
+and jumps straight to the handler of an Elektron message (`F0 00 20 3C id sub cmd`, table `0x40148d08`): for id
+`0x10` (Transfer and the screenshot) `0x40085702` builds its reply in a writer of 144-byte parts (`0x400823f6`,
+flushed through `0x400822ec` into `0x400828fe`), so stock's replies to Transfer leave from the MIDI task. Before
+this, a link reply of more than one part (LOG, UP_RUN and MEM are about 170 bytes) could take a part of Transfer's
+reply between its own, or put one of its parts into Transfer's.
+
+The link now writes a reply through `0x40003396` itself, in the same 144-byte parts, holding the lock from the first
+part to the last; a stock sender waits for it as for any part. It acts on no request while `0x404a096c` is `0xF0`
+(another sender is between its parts) and takes the next one at a later tick. If a SysEx opens between that look
+and the lock, the reply is held, not dropped (its request has run: an `UP_RUN` may have kept or undone a set), and
+goes out at a later tick; no request is acted on while a reply is held, and a RAM boot waits for its reply. The lock
+cannot be held across stock's own send: its give-back frees it whatever its owner took before.
+
+Can `0x404a096c` stay `0xF0`? It is cleared when a write ends a SysEx (`F7`) and by the USB MIDI driver's setup
+(`0x40003112`, run when the host configures the port), so a message cut short by unplugging USB is forgotten when
+it comes back. `0x40fe4228` is set once and never cleared, so stock's send does not stop between parts. But the
+writer that builds Transfer's replies (`0x400823f6`) sends whatever it holds when it is closed (`0x40082324`), and
+whether every reply ends in `F7` before that was not read. So the wait has a limit: a SysEx open for more than
+about a second (30 UI ticks) no longer holds the link, and its reply's `F7` ends the open one.
+
+Left as stock has it: id `0x04`'s commands 1 and 3 (`0x40080822`, `0x4008084a`) write a 9-byte reply on USB with
+`0x40003396` in the MIDI task without the lock, as they do beside stock's own senders. Which of the two tasks runs
+first was not read (the scheduler's order of priorities); the link covers both orders. On a unit: not run yet on
+this build.
 
 The audio load (`base/load.c`, `load.s`, every base): the base's probe replaces the audio interrupt's call of the audio function (OS 1.13 `0x40059382`, `jsr 0x4005979e`) and reads DMA timer 0 before and after it, 90,112 ticks a codec block. Over 750 blocks (half a second) the busy ticks give the share; about 25 instructions a block. On the Model:Cycles every voice runs whether a pattern plays or not, so the load hardly changes with the sequencer. The developer MCP's `device_load` reads it (`--elektron-midi`).
 
@@ -212,6 +248,19 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 | the same | `try` the 33,832-byte package; two 31,832-byte modules kept, then a third | `limit (too large)`; 3 live, 1168 bytes free, the third `rejected` (`memory`) |
 | the same, Transfer open and connected | `try grab.mwrm --seconds 10`, `load`, `log`, `ident` | on trial and undone, the load and the log read; 0 requests dropped, 0 send failures; Transfer still connected |
 | the same | a power cycle | 65536 bytes free, 0 live, no module on the screen |
+| `89edf78e…` (release base `646706ff`: the review round's fixes and whole-reply sends; stock 1.13 + the base alone), flashed with stock's upgrade, 25 November 2026 | `ident` | set CRC `0x7c774e99`, 38272 bytes (as `runid` computes); RAM boot mailbox empty, status none, image CRC 0 (a release base sends 0) |
+| the same | `try frames.mwrm --seconds 10`, `mods` | "F1 n" for 10 s, undone (generation 2), 0 live, 65120 bytes free |
+| the same | `hello` and `corner` (both on the draw hook) kept, then `remove corner --keep` | both squares, 2 live; then only hello's square, 1 live (`2cf24dba`) |
+| the same | `try frames.mwrm --seconds 5` while a pattern plays | `enter: unsafe`, no "F1 n", the square stays, the pattern plays without dropouts |
+| the same | `try frames.mwrm --seconds 60`, Ctrl-C after about 5 s | "F1 n" gone about 10 s after Ctrl-C; the square stays |
+| the same | `try frames.mwrm --seconds 3 --keep`, then `remove frames --keep` | "F1 n" stays, 2 live; after the removal "F1" gone, 1 live |
+| the same, Transfer open and connected | `load`, `log`, `try frames.mwrm --seconds 10`, `ident` | 74.3 / 79.0 / 83.7 %; START and BASE `0x7c774e99`, two load records; on trial and undone; 419 requests, 0 dropped, 418 replies, 0 send failures; Transfer still connected (macOS) |
+| the same | stock 1.13 with Transfer, then this base from the site's send dialog | stock boots and plays as stock, `ident` unanswered; back on the base: set CRC `0x7c774e99` |
+| `1d6c4052…` (development base `d0a26304`, the same source), flashed | `ident` | set CRC `0xb8018c7a`, 42296 bytes, armed; the RAM-boot words read the mailbox as DDR holds it after a cold boot (`4291608025`, `3082223327`, `0xd7f97dbd`): a development base only writes it at a RAM boot |
+| the same | `try frames.mwrm --seconds 5`, `--seconds 3 --keep`, `remove frames --keep`, `mem 0x40007678 6` after each | stock bytes `4e b9 40 07 00 a4` after the undo and after the removal; `4e b9 4f e1 6d e0` while kept (the module's code in the uncached alias) |
+| the same | `mem` of the masked-span counters after those three | 6 spans, the longest 982 DMA-timer counts (7.27 µs; 874 = 6.47 µs before the flush pushed all four ways) |
+| the same | `ramboot` of the same image, `ident` | uploaded in 3.3 s; `ok` before the reset (the held reply went out first); booted from RAM, image CRC `0xe6d65848` (the upload's MAIN OS) |
+| the same, RAM-booted, with a test module that holds `ev_tick` for 6 s on TRIG 16 (not in this repository) kept | TRIG 16 while a pattern plays, then `log` | the screen and keys stand still for about 6 s while the audio plays on without dropouts, no reset; four FREEZE incidents, each 9001 or 9002 blocks without a tick (6.0 s), CPU 72-73 %, the six machines and the last keys (TRIG 16 = 31); trigs pressed in the 6 s play when the UI task runs again (stock's key queue) |
 
 ## Not tested
 
@@ -222,7 +271,7 @@ On the submitter's Model:Cycles, OS 1.13, 23 November 2026, `mc_link.py` from a 
 - Keys under FUNC and the flags stock's panel sets on a release.
 - A request while Transfer sends (it offers the Model:Cycles no sample upload; tested with Transfer open and connected) or another SysEx stream runs.
 - A host that stops reading in the middle of a reply.
-- A HOT or FREEZE incident on a unit, and the keys in an incident (host test only).
+- A HOT incident on a unit (FREEZE: seen, above).
 - A site under a task paused inside it (the switch is refused and retried).
 - A site's stock bytes after an undo on a release base (`mem` is development-only; seen on a development base).
 - A trial's pool extent is freed at the next change, not at its undo (seen: 416 bytes held until then).

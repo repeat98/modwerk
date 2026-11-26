@@ -32,7 +32,7 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
 7. **Test** with `/modwerk-test-on-unit`, which runs `docs/TEST_PROCEDURE.md` (`npm run test:procedure -- <id>`) and the module's own edge cases: your own tests on their unit first, then theirs; without a unit, in the emulator. Record only what was observed, on the named build.
 8. **Finish,** once the developer says testing is done (until then, the pull request stays a draft):
    - docs, credits, and a thumbnail in the shared style (`docs/ADD_A_MODULE.md#module-thumbnail-style`);
-   - release notes in `src/community/module-changelogs/`;
+   - release notes in `src/community/module-changelogs/` (an Octatrack DSP or hybrid FX2 effect: `npm run module:list -- <id>` moves the draft and its notes into place and writes its listing);
    - review it as the owner will, against the pull request worker's checklist and the rules contributions most often break (`docs/MAINTENANCE.md#pull-request-worker`), and have a fresh agent session that never saw the work review the diff (in Claude Code, `/code-review`); fix what applies;
    - then `/modwerk-pr-ready`, and mark the draft ready.
 
