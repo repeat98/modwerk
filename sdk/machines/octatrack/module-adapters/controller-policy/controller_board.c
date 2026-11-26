@@ -798,6 +798,8 @@ static void advance(unsigned at)
         roomless[at] = !mw_engines_ready(b->identity.feature, need) &&
             mw_engines_admit(b->identity.feature, engine_features() | (kb_wanted ? KEYBUS : 0u),
                              MW_DSP_PACKAGED & b->identity.feature ? m->dsp.engine_count : 0u) == MW_ENGINE_MEMORY;
+        /* Used, but no room: COMPRESSOR keeps its stock page, so say why (#2189). */
+        if (roomless[at] && !was && (b->identity.feature & MW_DSP_SIDECHAIN)) mw_project_sidechain_refused();
         if (roomless[at] || was) break;
         if (mw_engines_place(b->identity.feature, need, b->generation, transport.held, mask, mask_known) <= 0) break;
 #endif

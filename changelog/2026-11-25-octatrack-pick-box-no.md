@@ -1,0 +1,1 @@
+Octatrack base 0.8.2: after you pick a module effect in FX1 or FX2 SETUP, one NO now takes you back to the effect's page, as after a stock effect. Before, the first NO only closed the memory box that a pick shows, and the knobs stayed on SETUP until you left the page.

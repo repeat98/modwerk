@@ -116,6 +116,7 @@ uint8_t modwerk_test_live_fx[16];
 volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille = 30u; /* machine_registry.c's */
+volatile uint8_t mw_cpu_track_refusals[8];
 /* machine_registry.c's effect modules that rest: effect 27's module rests while effect_rests; a wake records its id. */
 static int effect_rests; static unsigned effect_wakes, effect_woken;
 int modwerk_machine_effect_resting(unsigned id) { return effect_rests && id == 27u; }
@@ -277,6 +278,39 @@ static void check_settings_panel(void)
     settings_press(NO);
     CHECK(strstr(shows(),"SETTINGS|USB AUDIO|OTHER MOD|"));
     settings_press(NO);
+    CHECK(open == CLOSED && !close_menu);                              /* back to PROJ > MODWERK: the menu stays */
+    /* Every page opened from the menu is a level of it (a tester, 25 November 2026: NO closed the whole menu): NO and
+     * LEFT or RIGHT close the page back to the menu, their releases taken; the menu stays open, its cursor untouched. */
+    void (*const rows[5])(int) = {modwerk_load_menu, modwerk_modules_menu, modwerk_missing_menu, modwerk_settings_menu,
+                                  modwerk_switches_menu};
+    static const int backs[3] = {NO, LEFT, RIGHT};
+    for (unsigned r = 0; r < 5u; ++r) {
+        for (unsigned b = 0; b < 3u; ++b) {
+            rows[r](0);
+            CHECK(open != CLOSED);
+            CHECK(modwerk_status_key(backs[b], 1) && open == CLOSED && modwerk_status_key(backs[b], 0) && !close_menu);
+        }
+        rows[r](0);                                                    /* PROJ goes on to stock's menu, which closes */
+        CHECK(!modwerk_status_key(PROJ, 1) && open == CLOSED && !modwerk_status_key(PROJ, 0) && !close_menu);
+        rows[r](0);                                                    /* a knob too */
+        CHECK(!modwerk_status_enc(0, 1) && open == CLOSED && !close_menu);
+    }
+    modwerk_load_menu(0);                                              /* STATUS has no list: UP and DOWN go back too */
+    CHECK(modwerk_status_key(UP, 1) && open == CLOSED && modwerk_status_key(UP, 0) && !close_menu);
+    modwerk_load_menu(0);
+    CHECK(modwerk_status_key(DOWN, 1) && open == CLOSED && modwerk_status_key(DOWN, 0) && !close_menu);
+    modwerk_load_menu(0);                                              /* YES closes the menu with it, as before */
+    CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0) && close_menu);
+    close_menu = 0;
+    modwerk_modules_menu(0);
+    CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0) && close_menu);
+    close_menu = 0;
+    modwerk_test_menu_open = 0;                                        /* CUE + PROJ's status, no menu: arrows reach stock */
+    modwerk_status_key(CUE, 1); modwerk_status_key(PROJ, 1); modwerk_status_key(PROJ, 0); modwerk_status_key(CUE, 0);
+    CHECK(open == SHOWN && !modwerk_status_key(LEFT, 1) && open == CLOSED && !modwerk_status_key(LEFT, 0));
+    modwerk_status_key(CUE, 1); modwerk_status_key(PROJ, 1); modwerk_status_key(PROJ, 0); modwerk_status_key(CUE, 0);
+    CHECK(open == SHOWN && modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0) && !close_menu);
+    missing_asked = 0;
     grouped_fixture = 0;
     fixture_rows = 0;
     modwerk_test_menu_open = close_menu = 0;
@@ -458,6 +492,10 @@ int main(void)
     CHECK(open == MEMORY && budget_slot == 12);                        /* Euclid picked on T5 FX2 */
     CHECK(modwerk_status_key(YES, 1) && open == CLOSED);               /* YES only closes it (owner, 14 October 2026) */
     CHECK(modwerk_status_key(YES, 0));                                 /* and takes its release */
+    modwerk_test_live_fx[12] = 27; ++dl_selection_completed; memory_tick();
+    CHECK(open == MEMORY);                                             /* E-Verb picked on T5 FX2 */
+    CHECK(!modwerk_status_key(NO, 1) && open == CLOSED);               /* NO closes it and leaves SETUP, as stock's */
+    CHECK(!modwerk_status_key(NO, 0));                                 /* its release reaches stock too */
     modwerk_test_live_fx[9] = 27, modwerk_test_live_fx[10] = 29; ++dl_selection_completed; memory_tick();
     CHECK(open == CLOSED);                                             /* two slots changed: a Part change */
     ++modwerk_boot_accepted; memory_tick();
@@ -535,12 +573,13 @@ int main(void)
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
     CHECK(mw_frame_line == 1100u && mw_stock_reserve == RESERVE_ADAPTIVE && mw_track_stock == 70u);
     mw_frame_line = 500u, mw_stock_reserve = 0; /* the figures below in round numbers, the reserve tried on its own */
-    { uint32_t before = mw_cpu_refusals;
+    { uint32_t before = mw_cpu_refusals; uint8_t t6 = mw_cpu_track_refusals[5];
       transport_stopped = 1, frame_newest = 400u;
       CHECK(modwerk_status_frame_load() == 400u);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 99u, 0, 0) && open == CLOSED);   /* 49.9 %: passes */
       CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 120u, 0, 0) && open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 5);
       CHECK(refused_booked == 400u && refused[4] == 120u && refused_allowed == 500u && refused_busy && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 5);
+      CHECK(mw_cpu_track_refusals[5] == (uint8_t)(t6 + 1u)); /* T6's own counter moves, so diag.c's CPU record names T6 */
       CHECK(!strcmp(refused_name, "AMIGA") && strstr(shows(), "AMIGA NEEDS +24%|CPU|80%|PART IS BUSY|")); /* no module: the Part's own load */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(open == CLOSED);
