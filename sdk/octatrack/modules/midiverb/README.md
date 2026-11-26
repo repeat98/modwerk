@@ -4,13 +4,13 @@ Version 0.1.0-experimental · the Alesis Midiverb (Keith Barr), from Eric Bromba
 
 ## Overview
 
-The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, the Midiverb II and the Midifex. Every program is the original's, played step for step at the original's arithmetic: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding. That grain is part of the sound. 174 programs are in this release: 59 Midiverb, 56 Midiverb II and 59 Midifex.
+The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, the Midiverb II and the Midifex. Every program is the original's, played step for step at the original's arithmetic: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding. That grain is part of the sound. Every program of the three is here, 225 in all: 63 Midiverb, 99 Midiverb II and 63 Midifex. The Midiverb II's chorus and flange programs (50-69) sweep with their own LFOs, computed as its controller computed them.
 
 ## Controls
 
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
-| A | PROG | 1-59 | 1 | The program in the current bank. Its name shows in a message box while you turn. Past the bank's last program it stays on the last one (Midiverb and Midifex have 59, Midiverb II 56). |
+| A | PROG | 1-99 | 1 | The program in the current bank, by the original's number. Its name shows in a message box while you turn. Past the bank's last program it stays on the last one (Midiverb and Midifex have 63, Midiverb II 99). |
 | B | LEVL | 0-127 | 64 | Input level into the 12-bit converter: unity at 32, 64 is +6 dB, 127 about +12 dB. Higher levels use more of the 12 bits and sound cleaner; too high and the reverb crunches. |
 | D | BANK | MV1, MV2, FEX | MV1 | Midiverb, Midiverb II or Midifex programs. The bank's name shows while you turn. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
@@ -28,7 +28,7 @@ The four controls are ordinary FX2 knobs, so parameter locks, LFOs and scenes re
 ## Quick tutorial
 
 1. Load a drum loop on track 1, press FX2, then FUNC + FX2, scroll to MIDIVRB I/II with LEVEL, press YES, then FX2: the page shows PROG, LEVL, BANK and MIX.
-2. Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs, or FEX for the Midifex's.
+2. Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs (its flanges and choruses from 50 to 69), or FEX for the Midifex's.
 3. Turn F (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back.
 
 ## Compatibility and limitations
@@ -36,8 +36,8 @@ The four controls are ordinary FX2 knobs, so parameter locks, LFOs and scenes re
 - FX2 only, on the Modwerk base 0.8.1 or later. Each instance takes 15,870 words of its track's 16K FX2 buffer, so it cannot share a core's FX2 memory with Analog BD.
 - It patches one stock site of its own, where the Octatrack finishes each frame's parameters (0x4000d568). Euclid's patch ends there and returns into it, so both install together.
 - It takes the knob's value store while the FX2 page shows, only to name the program or bank; every value is stored as stock stores it.
-- DSP time: at most 398 instructions a sample in the DSP emulator, about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more are not in this release, nor the Midiverb II's chorus and flange programs.
-- Not like the original: it runs at 22.05 kHz instead of about 23.4 kHz, so reverb times and delays are about 6 % longer; the original's analog filters and noise are not modelled; some long delays are up to 4.5 % shorter to fit the memory; the input is the average of left and right.
+- DSP time: at most 331 instructions a sample in the DSP emulator, about 1.05 times stock SPRING REV at its worst (314); the chorus and flange programs, with their LFOs, are the dearest.
+- Not like the original: it runs at 22.05 kHz instead of about 23.4 kHz, so reverb times and delays are about 6 % longer; the original's analog filters and noise are not modelled; some long delays are up to 4.5 % shorter to fit the memory; the input is the average of left and right. The Midiverb II's chorus and flange LFOs step once every 8 samples, a pace not read from the original, and its three triggered flanges (50, 53 and 57) sweep on their own, with no trigger.
 - With Scale Quantizer or FM Synth installed the program and bank names do not show, and on base 0.8.1 slow PROG and BANK turns right after a pick need an FX2 re-entry: those modules take the knob store first.
 - Known issue on base 0.8.1: after picking it in FX2 SETUP the first NO only closes the memory box; press FX2 for its page instead. Base 0.8.2 fixes it. (Otherwise PROG and BANK turn from the first detent on either base: Midiverb stages them itself.)
 
@@ -85,4 +85,5 @@ No audio preview yet.
 
 - Hear it: `npm run module:dev -- midiverb` builds it and tries it on your unit over USB; `--watch` does that again on every save.
 - Programs: `node generate.mjs --mv1 … --mv2 … --fex …` with your own ROM files proves them against the original machine; `--write` writes `stream.h` and `programs.json`, `--stream` writes `stream.s`.
-- Engine: `python3 verify.py` runs it in `dsp_host`, bit for bit against a model of the table.
+- LFOs: `node generate.mjs --mv2 … --firmware --states FILE` runs the Midiverb II's own controller firmware (`i8051.mjs`) against the chorus and flange model, update by update.
+- Engine: `python3 verify.py` runs it in `dsp_host`, bit for bit against a model of the table. `--all` runs every program, `--lfo FILE` the LFOs against that firmware run, `--cycles` sdk/cycle-scan's cycle model.

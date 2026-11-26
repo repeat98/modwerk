@@ -23,15 +23,18 @@
 ; calls); while none plays the reverb is silent and the dry stays at its mix.
 ;
 ; State, r7+: 00 base  01 ring pointer  02 clear counter  03 phase
-; 04 unused  05 first frame's (L+R)/2  06/07 unused  08/09 current out L/R
+; 04 the LFO update keeps r4  05 first frame's (L+R)/2  06/07 the update keeps r3, the mode  08/09 current out L/R
 ; 0a program playing ($ffffff none)  0b/0c the out L/R played (frame B copies 08/09 there first)  0d mix  0e level
-; 0f unused  10 program loading ($ffffff none)  11 its next chunk
+; 0f the update's scratch  10 program loading ($ffffff none)  11 its next chunk
 ; 12 loaded (1)  13 its running sum  14 its N  15 its checksum
 ; 16 fade calls left  17 the wet's mix  18 its fall a sample  19 this build's
-; signature ($4d5606: bump it with any change to this layout or the program's)  1a the tail kill holds
+; signature ($4d5607: bump it with any change to this layout or the program's)  1a the tail kill holds
+; 1b program samples to the next LFO update, in $100s (0: the program's first)  1c-1f the two LFOs' state
 ; Program words (generate.mjs encode): the input's ring offset, then units [handler word][k offsets][offset]: k reads
 ; added to the accumulator, then the handler's operation. The handlers sit SLOT (24) words apart from mvqJTAB in
 ; HANDLER's order, each with READS (7) read pairs before its operation; the handler word lands k pairs before it.
+; A Midiverb II chorus or flange program starts with a tick unit and moves the ring pointer with sh units: its
+; LFOs (generate.mjs encodeLfo, lfoUpdate) rewrite four of its words each, once every 8 program samples.
 
 init:
         move    #>$ffffff,m4
@@ -48,7 +51,7 @@ mvqZERO:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)            ; nothing plays until a program arrives
         move    a,x:(r7+$10)
-        move    #>$4d5606,a
+        move    #>$4d5607,a
         move    a,x:(r7+$19)            ; this build's state
         rts
 
@@ -60,7 +63,7 @@ proc:
 ; changes, so a new version installed over the same id meets the old one's
 ; state. Start afresh then, keeping only the slot's buffer base.
         move    x:(r7+$19),a
-        move    #>$4d5606,x0
+        move    #>$4d5607,x0
         cmp     x0,a
         beq     mvqSIGK
         move    x:(r7+$00),b
@@ -74,7 +77,7 @@ mvqSIGZ:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)
         move    a,x:(r7+$10)
-        move    #>$4d5606,a
+        move    #>$4d5607,a
         move    a,x:(r7+$19)
 mvqSIGK:
 ; The stream's chunk: k and g from r6+$c.
@@ -173,6 +176,11 @@ mvqNEWP:
         move    a,x:(r7+$11)
         move    a,x:(r7+$12)
         move    a,x:(r7+$13)
+        move    a,x:(r7+$1b)            ; the LFOs start afresh
+        move    a,x:(r7+$1c)
+        move    a,x:(r7+$1d)
+        move    a,x:(r7+$1e)
+        move    a,x:(r7+$1f)
         move    a,x:(r7+$03)
         move    a,x:(r7+$04)
         move    a,x:(r7+$0b)
@@ -635,6 +643,257 @@ mvqEND_:
         clr     a
         move    a,x:(r7+$03)
         jmp     (r3)
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+; 10: an LFO program's first unit (no reads; its word, in n5, the LFO block's place from r2): the update is due on
+; the program's first sample and every eighth after.
+mvqTICK:
+        move    x:(r7+$1b),b
+        sub     y0,b                    ; y0 is $000100 here
+        move    b,x:(r7+$1b)
+        ble     mvqLFOU
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+; 11: the ring pointer moves by the word (modulo the ring): into an LFO's window by size - w, out of it by w.
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqSH__:
+        move    (r5)+n5
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
+
+; The LFO update (generate.mjs lfoUpdate), between two units of the program's first: each LFO's step, then its w
+; and row written into the program (its two sh words and its window's two row reads). Every register the program
+; holds comes back: r4 (the next unit), r1 (mvqJTAB), r3 (MIX's entry), x0 and y0, and a = 0.
+mvqLFOU:
+        move    #>$800,x1
+        move    x1,x:(r7+$1b)           ; eight program samples to the next
+        move    r4,x:(r7+$04)
+        move    r3,x:(r7+$06)
+        move    r2,b
+        move    n5,x1
+        add     x1,b
+        move    b,r4                    ; the LFO block
+        move    r7,b
+        add     #>$1c,b
+        move    b,r3                    ; the first LFO's state
+mvqLFON:
+        move    y:(r4)+,a               ; its mode: 0 triangle, 1 sine, 2 sine read two bits over, 3 none left
+        tst     a
+        beq     mvqTRI_
+        cmp     #>$3,a
+        bne     mvqSIN_
+        move    x:(r7+$06),r3
+        move    x:(r7+$04),r4
+        move    #>mvqJTAB,r1
+        move    #>$ffff00,x0
+        move    #>$000100,y0
+        clr     a
+        move    y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
+
+; A triangle: [rate] [ceiling] [unused]; state (position, rising).
+mvqTRI_:
+        move    y:(r4)+,x1
+        move    y:(r4)+,y1
+        move    (r4)+
+        move    x:(r3),a
+        move    x:(r3+$1),b
+        tst     b
+        beq     mvqTDN_
+        add     x1,a
+        cmp     y1,a
+        ble     mvqTST_
+        move    y1,a                    ; at the ceiling it turns
+        clr     b
+        bra     mvqTST_
+mvqTDN_:
+        sub     x1,a
+        bge     mvqTST_
+        clr     a                       ; at 0 it turns
+        move    #>$1,b
+mvqTST_:
+        move    a,x:(r3)
+        move    b,x:(r3+$1)
+        bra     mvqLFOP
+
+; A sine (the firmware's magic circle): [rate] [limit, the clamp << 8] [y0]; state (x, y - y0). y += M(top(x)),
+; x += ~M(top(y)), each clamped to -limit..limit - 1; top(v) = v >> 8 (mode 2: v >> 6), M(t) = (t r) >> 8, or
+; ~((~t r) >> 8) for a negative t (the 8031's signed multiply).
+mvqSIN_:
+        move    a,x:(r7+$07)
+        move    y:(r4)+,a
+        asl     #$f,a,a
+        move    a1,y1                   ; rate << 15: a product's a1 is (t r) >> 8
+        move    y:(r4)+,x1              ; the limit
+        move    y:(r4)+,a
+        move    a,x:(r7+$0f)            ; y0
+        move    x:(r3+$1),b
+        add     a,b
+        move    b,x:(r3+$1)             ; y, while it steps
+        move    x:(r3),b
+        move    x:(r7+$07),a
+        cmp     #>$2,a
+        bne     mvqSA1_
+        asl     #$2,b,b
+mvqSA1_:
+        asr     #$8,b,b                 ; t = top(x)
+        tst     b
+        blt     mvqSN1_
+        move    b1,x0
+        mpy     x0,y1,b
+        bra     mvqSM1_
+mvqSN1_:
+        not     b
+        move    b1,x0
+        mpy     x0,y1,b
+        not     b
+mvqSM1_:
+        move    b1,x0                   ; M(top(x))
+        move    x:(r3+$1),a
+        add     x0,a
+        cmp     x1,a
+        blt     mvqSC1_
+        move    x1,a
+        sub     #>$1,a
+mvqSC1_:
+        move    a,b
+        add     x1,b
+        bge     mvqSD1_
+        clr     a
+        sub     x1,a
+mvqSD1_:
+        move    a,x:(r3+$1)             ; y
+        move    a,b
+        move    x:(r7+$07),a
+        cmp     #>$2,a
+        bne     mvqSA2_
+        asl     #$2,b,b
+mvqSA2_:
+        asr     #$8,b,b                 ; t = top(y)
+        tst     b
+        blt     mvqSN2_
+        move    b1,x0
+        mpy     x0,y1,b
+        bra     mvqSM2_
+mvqSN2_:
+        not     b
+        move    b1,x0
+        mpy     x0,y1,b
+        not     b
+mvqSM2_:
+        move    b1,x0                   ; M(top(y))
+        move    x:(r3),a
+        sub     x0,a
+        sub     #>$1,a                  ; x + ~M
+        cmp     x1,a
+        blt     mvqSC2_
+        move    x1,a
+        sub     #>$1,a
+mvqSC2_:
+        move    a,b
+        add     x1,b
+        bge     mvqSD2_
+        clr     a
+        sub     x1,a
+mvqSD2_:
+        move    a,x:(r3)                ; x
+        move    x:(r3+$1),b
+        move    x:(r7+$0f),x0
+        sub     x0,b
+        move    b,x:(r3+$1)             ; y - y0
+        move    x:(r7+$07),b
+        cmp     #>$2,b
+        bne     mvqLFOP
+        asr     #$2,a,a                 ; mode 2: x >> 2
+
+; a1: the LFO's value. [base] [sh in] [sh out] [row read] [row read] [16 rows of two offsets]: w = base + value >> 8
+; into both sh words (size - w, modulo the ring, and w), the row (value >> 4) & 15's offsets into the two reads.
+mvqLFOP:
+        move    r4,x:(r7+$0f)
+        asr     #$3,a,b                 ; b1: value >> 3
+        asr     #$8,a,a
+        move    y:(r4)+,x1
+        add     x1,a
+        move    a1,x1                   ; w
+        move    #>$3cf8,a
+        sub     x1,a
+        cmp     #>$3cf8,a
+        bne     mvqLFW_
+        clr     a                       ; w = 0: no move
+mvqLFW_:
+        move    r2,r1
+        move    y:(r4)+,n1
+        move    a,y:(r1+n1)             ; size - w
+        move    y:(r4)+,n1
+        move    x1,y:(r1+n1)            ; w
+        move    y:(r4)+,n1
+        move    y:(r4)+,y1
+        and     #>$00001e,b             ; twice the row
+        move    b1,x0
+        move    x0,n4
+        move    (r4)+n4
+        move    y:(r4)+,x0
+        move    x0,y:(r1+n1)
+        move    y1,n1
+        move    y:(r4),x0
+        move    x0,y:(r1+n1)
+        move    x:(r7+$0f),a
+        add     #>$25,a                 ; past the 37 words
+        move    a,r4                    ; the next LFO's
+        move    (r3)+
+        move    (r3)+
+        move    #>mvqLFON,r1          ; dsp_asm takes no backward bra (TRAPS.md)
+        jmp     (r1)
 
 ; A fade runs: the wet's mix falls by its step every frame, to 0.
 mvqMIXF:

@@ -4,12 +4,19 @@ The ColdFire half streams a program through FX2's page 2 (stream.c); here a test
 copies each call's three stream words into the parameter block, as stream.c leaves them in the frame record, then
 runs the engine unchanged. The model takes the stream as engine.asm must (chunk 0 first, in order, the checksum,
 the ring cleared meanwhile) and runs each program as generate.mjs's DSP form defines it, with the engine's half-rate
-input, LEVL, output interpolation and MIX in the DSP's integer arithmetic. generate.mjs proves the programs against
-the original machine; this proves the engine against them.
+input, LEVL, output interpolation and MIX in the DSP's integer arithmetic, and the chorus and flange programs' LFO
+update (generate.mjs lfoUpdate). generate.mjs proves the programs against the original machine; this proves the engine
+against them.
+
+  python3 verify.py                  the five cases
+  python3 verify.py --all            and every program, unsplit and split at frames 1 and 7
+  python3 verify.py --lfo FILE       and the LFOs against the firmware (FILE: generate.mjs --firmware --states)
+  python3 verify.py --cycles [MV210 ...]   and sdk/cycle-scan's cycle model of each program (ILSCAN_HOST)
 """
 import itertools
 import json
 import pathlib
+import re
 import struct
 import subprocess
 import sys
@@ -99,6 +106,7 @@ def model(chunks, left, right, knobs, lengths=None):
     lev, mix = knobs[1] << 16, knobs[5] << 16
     mix = 0x7FFFFF if mix == 0x7F0000 else mix
     s = dict(playing=NONE, loading=NONE, next=0, loaded=False, sum=0, n=0, chk=None, counter=0, fade=0, kill=False)
+    lfo = dict(count=0, state=[0, 0, 0, 0])
     area, ring = [0] * 262, [0] * RING
     p = acc = phase = held = 0
     wet_mix = step = 0
@@ -127,6 +135,7 @@ def model(chunks, left, right, knobs, lengths=None):
             else:
                 if s["loading"] != g and k == 0 and A & 0x8000 and 4 <= (A & 0x7FFF) <= 0x105:
                     s.update(loading=g, n=A & 0x7FFF, next=0, loaded=False, sum=0, chk=None, playing=NONE, counter=31)
+                    lfo = dict(count=0, state=[0, 0, 0, 0])
                     p = acc = phase = 0
                     y_prev, y_cur = [0, 0], [0, 0]
                     ring = [0] * RING
@@ -173,7 +182,7 @@ def model(chunks, left, right, knobs, lengths=None):
             else:
                 x0 = (dl + dr + 2 * held) >> 2
                 x1 = clamp((x0 * lev) >> 21)
-                p = run(area, ring, p, half((x1 >> 3) & ~0x1FF), out_run)
+                p = run(area, ring, p, half((x1 >> 3) & ~0x1FF), out_run, lfo)
                 y_prev, y_cur = y_cur, list(out_run)
                 wet, phase = list(y_prev), 0
             if s["fade"]:
@@ -187,14 +196,57 @@ def mixed(dry, wet, mix, wet_mix):
     return clamp(((dry << 24) - 2 * dry * mix + 2 * wet * wet_mix) >> 24)
 
 
-HANDLERS = ["run", "st", "stc", "stn", "stnc", "outR", "outRc", "outL", "outLc", "end"]
+HANDLERS = ["run", "st", "stc", "stn", "stnc", "outR", "outRc", "outL", "outLc", "end", "tick", "sh"]
 SLOT, READS = 24, 7  # generate.mjs SLOT and READS: a unit's first word lands k read pairs before its handler
-LABELS = ["mvqRUN_", "mvqST__", "mvqSTC_", "mvqSTN_", "mvqSNC_", "mvqOUTR", "mvqORC_", "mvqOUTL", "mvqOLC_", "mvqEND_"]
+LABELS = ["mvqRUN_", "mvqST__", "mvqSTC_", "mvqSTN_", "mvqSNC_", "mvqOUTR", "mvqORC_", "mvqOUTL", "mvqOLC_", "mvqEND_",
+          "mvqTICK", "mvqSH__"]
+NO_READS = ("mvqEND_", "mvqTICK")
+LFO_EVERY = 8  # generate.mjs LFO_EVERY: program samples between two LFO updates
 
 
-def run(words, ring, p, w_in, out):
-    """One program sample: words[0] is the header, words[1] the input's offset, then the units."""
-    at = lambda off: (p + off) % RING  # noqa: E731
+def m8(t, r):
+    """The 8031's signed multiply as the firmware's sine uses it (generate.mjs M8)."""
+    return (t * r) >> 8 if t >= 0 else ~((~t * r) >> 8)
+
+
+def clamp16(v, lim):
+    return lim - 1 if v >= lim else -lim if v < -lim else v
+
+
+def lfo_update(words, state):
+    """generate.mjs lfoUpdate: each LFO's step from its block, its w and row written into the program's words."""
+    w = lambda i: words[1 + i]  # noqa: E731
+    at, l = w(2), 0
+    while w(at) != 3:
+        mode, rate, lim, y0, base = (w(at + j) for j in range(5))
+        if mode == 0:
+            u, up = state[2 * l], state[2 * l + 1]
+            if up:
+                u += rate
+                if u > lim:
+                    u, up = lim, 0
+            else:
+                u -= rate
+                if u < 0:
+                    u, up = 0, 1
+            state[2 * l], state[2 * l + 1], value = u, up, u
+        else:
+            s = 2 if mode == 2 else 0
+            x, y = state[2 * l], state[2 * l + 1] + y0
+            y = clamp16(y + m8((x << s) >> 8, rate), lim)
+            x = clamp16(x + ~m8((y << s) >> 8, rate), lim)
+            state[2 * l], state[2 * l + 1], value = x, y - y0, x >> s
+        ww, row = base + (value >> 8), (value >> 4) & 15
+        words[1 + w(at + 5)], words[1 + w(at + 6)] = (RING - ww) % RING, ww
+        words[1 + w(at + 7)], words[1 + w(at + 8)] = w(at + 9 + 2 * row), w(at + 10 + 2 * row)
+        at, l = at + 9 + 32, l + 1
+
+
+def run(words, ring, p, w_in, out, lfo):
+    """One program sample: words[0] is the header, words[1] the input's offset, then the units. lfo: the LFO update's
+    count and the LFOs' state (an LFO program's tick unit)."""
+    base = p
+    at = lambda off: (base + off) % RING  # noqa: E731
     ring[at(words[1])] = w_in
     acc, i = 0, 2
     while True:
@@ -202,7 +254,15 @@ def run(words, ring, p, w_in, out):
         kind = HANDLERS[h // SLOT]
         i += 1
         if kind == "end":
+            assert base == p, "the ring pointer did not come back"
             return (p + 1) % RING
+        if kind == "tick":
+            lfo["count"] -= 1
+            if lfo["count"] <= 0:
+                lfo_update(words, lfo["state"])
+                lfo["count"] = LFO_EVERY
+            i += 1
+            continue
         k = READS - (h % SLOT) // 2
         for off in words[i:i + k]:
             acc += ring[at(off)]
@@ -216,6 +276,8 @@ def run(words, ring, p, w_in, out):
             ring[at(arg)] = half(x); acc = x + ring[at(arg)]
         elif op == "stn":
             ring[at(arg)] = half(-x - 0x100); acc = ring[at(arg)]
+        elif op == "sh":
+            base = (base + arg) % RING
         else:
             out[0 if op == "outL" else 1] = clamp(ring[at(arg)] * 16)
         if kind.endswith("c"):
@@ -258,6 +320,46 @@ def every_program(asm, work, left, right):
     ok = not failed
     print(("[PASS]" if ok else "[FAIL]") + f" every program ({len(PROGRAMS)}), unsplit and split at 1 and 7: "
           + (f"bit-exact; the dearest {worst[1]} at {worst[0]} executed instructions a sample" if ok else "; ".join(failed[:8])))
+    return ok
+
+
+def lfo_trace(asm, work, path):
+    """--lfo FILE (generate.mjs --mv2 ROM --firmware --states FILE): each chorus and flange program's LFOs, update by
+    update, against the Midiverb II's own firmware. The model's lfo_update must keep the firmware's state and write
+    the words generate.mjs lfoUpdate writes; the engine in dsp_host, one update a call, must keep the same state in
+    r7+$1c-$1f after every call (-track), and its program words must end as the model's (-peeky)."""
+    want = json.loads(pathlib.Path(path).read_text())
+    by = {(q["bank"], q["number"]): g for g, q in enumerate(PROGRAMS)}
+    ok, bad, base = True, [], G.ALLOC_WORD + 0x3cf9  # dsp_host's buffer; r2, the program's words after its header
+    for number, rec in sorted(want.items(), key=lambda kv: int(kv[0])):
+        g, n = by[("MV2", int(number))], len(rec["states"])
+        blocks = n + 200
+        chunks = stream([(0, g)], blocks)
+        image = G.write_image(asm.words, work / "t.mem", org=asm.org,
+                              extra=[(G.P, STREAM_AT, [v for t in chunks for v in t])])
+        words, state = list(PROGRAMS[g]["words"]), [0, 0, 0, 0]
+        w = lambda i: words[1 + i]  # noqa: E731
+        slots = [w(a + j) for a in (w(2), w(2) + 41) for j in (5, 6, 7, 8)]
+        track = work / "track.txt"
+        r = G.run(asm, [G.Instance([0] * (16 * blocks), knobs=(0, 127, 0, 0, 0, 127))], image=image,
+                  extra=["-track", "1b,1c,1d,1e,1f", "-trackout", track, "-peeky", ",".join(f"{base + i:x}" for i in slots)])
+        rows = [[int(v) for v in line.split()[1:]] for line in track.read_text().splitlines()]
+        start = next(i for i, row in enumerate(rows) if row[0])  # the call of the first update: one a call from there
+        got = [[((v & 0xFFFFFF) ^ 0x800000) - 0x800000 for v in row[1:]] for row in rows[start:]]
+        for u in range(max(n, len(got))):
+            lfo_update(words, state)
+            if u < n and (state != rec["states"][u] or [words[1 + i] for i in slots] != rec["words"][u]):
+                bad.append(f"MV2 #{number} model, update {u + 1}: {state} want {rec['states'][u]}")
+                break
+            if u < len(got) and got[u] != state:
+                bad.append(f"MV2 #{number} engine, update {u + 1}: {got[u]} want {state}")
+                break
+        peek = [int(m, 16) for m in re.findall(r"Y:0x[0-9a-f]+ = 0x([0-9a-f]+)", r.stdout)]
+        if not bad and peek != [words[1 + i] for i in slots]:
+            bad.append(f"MV2 #{number} engine's program words after {len(got)} updates: {peek} want {[words[1 + i] for i in slots]}")
+    ok = not bad
+    print(("[PASS]" if ok else "[FAIL]") + f" LFOs against the firmware ({len(want)} programs, {n} updates each): "
+          + ("the model and the engine keep its state, and write the model's words" if ok else "; ".join(bad[:6])))
     return ok
 
 
@@ -321,7 +423,7 @@ def main():
     ok = not problems
     print(("[PASS]" if ok else "[FAIL]") + f" assembler traps: {problems or 'none'}")
     base = asm.syms["mvqJTAB"]
-    entry = [SLOT * k + (0 if name == "mvqEND_" else 2 * READS) for k, name in enumerate(LABELS)]
+    entry = [SLOT * k + (0 if name in NO_READS else 2 * READS) for k, name in enumerate(LABELS)]
     misplaced = [f"{name} at +{asm.syms[name] - base}" for k, name in enumerate(LABELS) if asm.syms[name] - base != entry[k]]
     ok &= not misplaced
     print(("[PASS]" if not misplaced else "[FAIL]") + f" handlers {SLOT} words apart from mvqJTAB: {misplaced or 'all'}")
@@ -351,6 +453,8 @@ def main():
         print(("[PASS]" if good else "[FAIL]") + f" {name}: bit-exact{' and silent' if quiet else ''}{where}")
     if "--all" in sys.argv:
         ok &= every_program(asm, work, sig, right)
+    if "--lfo" in sys.argv:
+        ok &= lfo_trace(asm, work, sys.argv[sys.argv.index("--lfo") + 1])
     if "--cycles" in sys.argv:
         names = [a for a in sys.argv[sys.argv.index("--cycles") + 1:] if not a.startswith("--")]
         which = [g for g, q in enumerate(PROGRAMS) if not names or f"{q['bank']}{q['number']}" in names]
