@@ -32,11 +32,11 @@
   },
   "stack": {
     "base": "started",
-    "link": "started",
-    "flash": "started",
+    "link": "done",
+    "flash": "done",
     "loader": "done",
-    "status": "started",
-    "diagnostics": "started",
+    "status": "done",
+    "diagnostics": "done",
     "tools": "done"
   },
   "research": [

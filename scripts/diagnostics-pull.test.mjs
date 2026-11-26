@@ -42,6 +42,22 @@ describe('diagnostics pull', () => {
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
   })
+  it('lists an Analog Rytm MKII’s log apart, in its own units, and keeps it out of the Octatrack’s', () => {
+    const load = { seq: 3, boot: 1, minute: 5, cpu: [585, 636], dsp1to4: [0, 0], dsp5to8: [0, 0], samples: 600, playing: 0, frameGap: 0, tickGap: 76 }
+    const record = (seq, kind, a) => ({ seq, boot: 1, second: 90, kind, a, cpu: 585, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0), fx: Array(16).fill(0), keys: [...Array(15).fill(255), 0x31], screen: 0, tempo24: 0, playing: false })
+    const rytm = { event: 'device_log', phase: 'ready', machine: 'analog-rytm-mkii', set: { crc: 0xf92cbc54, bytes: 237004 } }
+    const events = [entry(1, 'rytmer', { ...rytm, id: 'a', log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }),
+      entry(2, 'rytmer', { ...rytm, id: 'a', log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }), // sent twice: kept once
+      entry(3, 'rytmer', { ...rytm, id: 'b', log: { loads: [load, { ...load, seq: 4, minute: 10 }], incidents: [] } }), // regrouped with a newer one: once
+      entry(4, 'rytmer', { ...rytm, id: 'c', log: { loads: [{ ...load, seq: 2, minute: 0, cpu: [580, 600] }], incidents: [] } })] // a lower seq: the next boot's
+    const member = members(events).get('rytmer')
+    expect(member.incidents).toBeUndefined()
+    const text = summary({ events, counts: [] })
+    expect(text).toContain("  Analog Rytm MKII's log (set f92cbc54, 237004 bytes): 3 five-minute records, CPU peak 63.6%, mean 58.3%")
+    expect(text).toContain('  analog-rytm-mkii: #2 +1m30s base set f92cbc54')
+    expect(text).toContain('  analog-rytm-mkii: #4 +1m30s freeze 5.0 s, cpu 58.5%, stopped, keys 31')
+    expect(text).not.toContain('unit: ')
+  })
   it('shows how a disconnected trial ended in Problems', () => {
     const event = entry(1, 'tester', { event: 'sync_failed', phase: 'trial', error: 'disconnected', step: 'trial', reconnect: 'closed' })
     expect(summary({ events: [event], counts: [] }).split('Problems (')[1]).toContain('error=disconnected step=trial reconnect=closed')

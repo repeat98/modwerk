@@ -5,12 +5,14 @@
 /** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`).
  * 2026-11-19.1 says reports may lead to a personal email about a problem they show and its fix (server/diagnostics-mail.ts);
  * the owner chose to let it cover everyone already sharing (19 Nov 2026).
+ * 2026-11-25.1 adds an Analog Rytm MKII's own log, read on its page (`machine`, `set`); it covers everyone already
+ * sharing, as 2026-11-19.1 did (Nathaniel Pavel, maintainer, 25 Nov 2026; for the owner to confirm before base-next ships).
  * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
  * never a reason to ask members again. */
-export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-19.1'
+export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-25.1'
 /** The versions the server takes reports and choices under: the current one and the one before, so a page still open on
  * the previous text keeps sending after a deploy instead of being refused until it is reloaded. */
-export const OCTATRACK_DIAGNOSTICS_ACCEPTED: readonly string[] = [OCTATRACK_DIAGNOSTICS_VERSION, '2026-11-11.1']
+export const OCTATRACK_DIAGNOSTICS_ACCEPTED: readonly string[] = [OCTATRACK_DIAGNOSTICS_VERSION, '2026-11-19.1']
 /** The invitation's Not now is remembered under this version, not the current one, so a new text never asks again. */
 export const DIAGNOSTICS_INVITATION_VERSION = '2026-11-11.1'
 export const DIAGNOSTIC_RETENTION_DAYS = 30
@@ -176,6 +178,11 @@ export interface DeviceIncident {
    * FX2), the last 16 key codes (255: none), stock's screen code and the tempo times 24. */
   machines: number[]; fx: number[]; keys: number[]; screen: number; tempo24: number; playing: boolean
 }
+/** The machines besides the Octatrack whose own log (the Octatrack's layout, device-log.ts) a member shares, read over
+ * their link on their page (ModelCyclesUnit.tsx): a `device_log` that names its `machine`, with its set identity (`set`,
+ * the `.run` block's CRC32 and length) in place of the Octatrack's base and set hashes. */
+export const DIAGNOSTIC_LOG_MACHINES = ['analog-rytm-mkii'] as const
+export type DiagnosticLogMachine = typeof DIAGNOSTIC_LOG_MACHINES[number]
 export const DEVICE_LOG_LOADS = 40, DEVICE_LOG_INCIDENTS = 10 /* a record's most, so one fits the 8 KiB request */
 export const DIAGNOSTIC_USB_PHASES = ['unsupported', 'idle', 'connecting', 'stock', 'busy', 'ready', 'sending', 'testing', 'trial', 'finishing'] as const
 export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancelled', 'stale', 'save', 'rollback', 'unknown', 'disconnected'] as const
@@ -225,6 +232,9 @@ export interface OctatrackDiagnostic {
   buildKind?: DiagnosticBuildKind
   base?: string
   active?: string
+  /** A `device_log` from another machine than the Octatrack (DIAGNOSTIC_LOG_MACHINES), and its set identity. */
+  machine?: DiagnosticLogMachine
+  set?: { crc: number; bytes: number }
   error?: typeof DIAGNOSTIC_ERRORS[number]
   result?: typeof DIAGNOSTIC_RESULTS[number]
   refusal?: number

@@ -1,9 +1,13 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { DeviceImage } from '../devices/DeviceImage'
 import { MC_UNIT_ROUTE, RYTM_UNIT_ROUTE, deviceHref, type DeviceProfile } from '../devices/registry'
 import { findUnit, type MidiAccessLike } from '../engine/elektron/os-upgrade-midi'
 import { readMcStatus, type McLoad, type McModules } from '../engine/elektron/mc-link'
-import { RYTM_PORT, readRytmStatus } from '../engine/elektron/rytm-link'
+import { RYTM_PORT, readRytmLog, readRytmStatus } from '../engine/elektron/rytm-link'
+import type { DeviceLog } from '../engine/elekloader/device-log'
+import { deviceLogWanted, diagnosticPreference, reportDeviceLog, subscribeDiagnosticPreference } from '../community/octatrack-diagnostics'
+import { browserRequestsPrivacy } from '../community/usage'
+import type { DiagnosticLogMachine } from '../community/octatrack-diagnostics-contract'
 import { browserMidi } from '../engine/elektron/usb-upgrade'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { Icon } from './Icon'
@@ -20,9 +24,12 @@ export type UnitStatus = {
 }
 /** A machine the page reads over its link: the model name its USB MIDI port carries, its reader, its route, and how
  * its audio note reads. */
-export type UnitKind = { port: string; route: string; read: (access: MidiAccessLike) => Promise<UnitStatus | null>; audio: string }
+export type UnitKind = { port: string; route: string; read: (access: MidiAccessLike) => Promise<UnitStatus | null>; audio: string
+  /** The unit's own log, shared with the member's diagnostics (octatrack-diagnostics.ts reportDeviceLog). */
+  log?: { machine: DiagnosticLogMachine; read: (access: MidiAccessLike, stop: () => boolean) => Promise<{ log: DeviceLog | undefined } | 'unsupported' | null> } }
 export const MC_UNIT: UnitKind = { port: 'Model:Cycles', route: MC_UNIT_ROUTE, read: access => readMcStatus(access), audio: 'the six tracks’ sound takes' }
-export const RYTM_UNIT: UnitKind = { port: RYTM_PORT, route: RYTM_UNIT_ROUTE, read: access => readRytmStatus(access), audio: 'the voices, the sample playback and the FX take' }
+export const RYTM_UNIT: UnitKind = { port: RYTM_PORT, route: RYTM_UNIT_ROUTE, read: access => readRytmStatus(access), audio: 'the voices, the sample playback and the FX take',
+  log: { machine: 'analog-rytm-mkii', read: (access, stop) => readRytmLog(access, 2000, stop) } }
 
 const INTERVAL = 2000, HISTORY = 150
 const SERIES: { key: 'audio' | 'block'; title: string; className: string }[] = [{ key: 'audio', title: 'Audio', className: 'load-core1' }, { key: 'block', title: 'Busiest block', className: 'load-cpu' }]
@@ -41,7 +48,17 @@ function useUnit(kind: UnitKind, request: (() => Promise<MidiAccessLike>) | null
   const [state, setState] = useState<{ status: Status; read?: UnitStatus; points: Point[]; now: number; error?: string }>({ status: request ? 'idle' : 'unsupported', points: [], now: 0 })
   useEffect(() => {
     if (!access) return
-    let live = true, timer: ReturnType<typeof setTimeout> | undefined, windows: number | undefined
+    let live = true, timer: ReturnType<typeof setTimeout> | undefined, windows: number | undefined, logAt = 0
+    /* For a member who shares diagnostics, the unit's own log at the first reading and every ten minutes, as the
+     * Octatrack's collector reads its log; nothing is read for it otherwise. A failed read waits for the next round. */
+    const shareLog = async (set: UnitStatus['identity']['set']) => {
+      if (!kind.log || !deviceLogWanted() || Date.now() - logAt < 600_000) return
+      logAt = Date.now()
+      try {
+        const read = await kind.log.read(access, () => !live)
+        if (live && read && read !== 'unsupported' && read.log) await reportDeviceLog(kind.log.machine, read.log, set)
+      } catch { /* the next round asks again */ }
+    }
     const tick = async () => {
       try {
         const read = findUnit(access, kind.port) ? await kind.read(access) : undefined
@@ -50,6 +67,8 @@ function useUnit(kind: UnitKind, request: (() => Promise<MidiAccessLike>) | null
         windows = load?.windows
         setState(s => ({ status: read ? 'ready' : read === null ? 'stock' : 'none', read: read ?? undefined, now: Date.now(),
           points: [...s.points, { at: Date.now(), reading: fresh && { audio: tenths(fresh.windowPercent)!, block: tenths(fresh.windowPeakPercent) ?? 0 } }].slice(-HISTORY) }))
+        // After the reading, never beside it: the log takes the same MIDI line.
+        if (read) await shareLog(read.identity.set)
       } catch (error) { if (live) setState(s => ({ ...s, error: (error as Error).message })) }
       if (live) timer = setTimeout(() => void tick(), INTERVAL)
     }
@@ -78,6 +97,7 @@ export const RytmUnit = (props: UnitProps) => <ElektronUnit {...props} kind={RYT
 export function ElektronUnit({ device, header, request = browserMidi(), kind }: UnitProps & { kind: UnitKind }) {
   const mobile = useMobileWorkspace()
   const { status, read, points, now, error, connect, clear } = useUnit(kind, request)
+  const sharing = useSyncExternalStore(subscribeDiagnosticPreference, diagnosticPreference, diagnosticPreference).enabled, privacy = browserRequestsPrivacy()
   const identity = read?.identity, modules = read?.modules, load = read?.load, ready = status === 'ready'
   const last = points.at(-1), latest = ready && last && now - last.at <= 6000 ? last.reading : null
   const build = <a href={deviceHref(device.id, 'configuration')}>Build the base</a>
@@ -129,6 +149,7 @@ export function ElektronUnit({ device, header, request = browserMidi(), kind }: 
               <p className="hub-test"><span className="unit-led is-on" aria-hidden="true" />Modwerk {identity.release === false ? 'development base' : 'base'} · link {identity.linkVersion}{identity.label && <> · {identity.label}</>}</p>
               <p className="hub-empty">{identity.set ? <>Set {identity.set.crc.toString(16).padStart(8, '0')} · {identity.set.bytes} bytes: the base and the modules flashed with it.</> : 'This base doesn’t report its set. A newer one does.'}</p>
               {identity.ramBoot.status === 'booted from RAM' && <p className="hub-empty">Running from RAM: a power cycle brings back the flashed OS.</p>}
+              {kind.log && <p className="hub-empty">{sharing && privacy ? 'Its own log stays on the unit: this browser asks sites not to track it.' : sharing ? 'Its own log (load, overloads, freezes) goes with your diagnostics while this page is open.' : <>Its own log stays on the unit. <a href="#account/security">Share diagnostics</a> to send it with this page open.</>}</p>}
             </>}
           </section>
           <section className="hub-cell hub-cell-unit" aria-labelledby="mc-memory-cell">

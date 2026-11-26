@@ -3,10 +3,11 @@ import { MODULES } from '../catalog/modules'
 import type { Inventory } from '../config/inventory'
 import type { OctatrackLink, LinkDiagnostic } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
+import type { DeviceLog } from '../engine/elekloader/device-log'
 import { PARTLY_RESTORED, restoreDiagnostic } from '../engine/elekloader/restore-outcomes'
 import { browserRequestsPrivacy, countOctatrackAction } from './usage'
 import { diagnosticClient } from './diagnostic-client'
-import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, syncFailureReason, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
+import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, syncFailureReason, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, type DiagnosticLogMachine, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
 import { subscribeSiteDiagnosticEvents, collectBrowserDiagnosticEvents } from './site-diagnostic-events'
 
 /** A visitor's random ID (DIAGNOSTICS_GUEST): made only when they agree to share, removed when they stop, kept in this
@@ -70,6 +71,18 @@ let linkFailures: ((failure: PreLinkFailure) => void) | undefined
  * `permission-denied` when opening it is refused (a SecurityError or NotAllowedError). Each category is recorded at
  * most once in ten minutes. */
 export function reportLinkFailure(failure: PreLinkFailure) { try { linkFailures?.(failure) } catch { /* Diagnostics never affect USB work. */ } }
+
+/** The running collector's way to take another machine's log (DIAGNOSTIC_LOG_MACHINES); none while none runs. */
+let machineLogs: { wanted: () => boolean; send: (machine: DiagnosticLogMachine, log: DeviceLog, set: { crc: number; bytes: number } | null) => Promise<void> } | undefined
+/** Whether a machine's page should read its unit's log now: only while the member or visitor shares diagnostics, so a
+ * page reads nothing for this before consent. */
+export function deviceLogWanted() { try { return !!machineLogs?.wanted() } catch { return false } }
+/** Another machine's own log, read over its link on its page (ModelCyclesUnit.tsx), sent as the Octatrack's is: the
+ * records newer than the last stored for that log, in the same groups, with the machine and its set identity. Nothing
+ * happens without consent. */
+export async function reportDeviceLog(machine: DiagnosticLogMachine, log: DeviceLog, set: { crc: number; bytes: number } | null) {
+  try { await machineLogs?.send(machine, log, set) } catch { /* Diagnostics never affect the unit's page. */ }
+}
 
 /** One collector per page, for the verified member or, without one, the visitor (`memberId` DIAGNOSTICS_GUEST). No persistent trace queue, arbitrary errors, extra device identifiers,
  * project references or diagnostic reads before consent. Unsent events are dropped; USB work never awaits the network. */
@@ -239,27 +252,34 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     try {
       const log = await link!.deviceLog(signal, allowed)
       if (!log || !allowed()) return
-      const scope = await digest(memberId + ':' + log.nonce), key = 'modwerk.diagnostics.device-log:' + scope
-      /* A mark per kind, moved only past groups stored in order: loads and incidents share the unit's seq, so one mark
-       * moved by a stored load group skipped the incidents of a group that failed or never left a closing tab. The
-       * mark before 27 October 2026 (one for both) is where each starts. */
-      const mark = (kind: 'loads' | 'incidents') => { try { return Number(localStorage.getItem(key + ':' + kind) ?? localStorage.getItem(key)) || 0 } catch { return 0 /* storage off: send what the unit holds */ } }
-      const keep = (kind: 'loads' | 'incidents', from: number, seq: number) => () => { try { const at = mark(kind); if (at >= from && seq > at) localStorage.setItem(key + ':' + kind, String(seq)) } catch { /* storage off */ } }
-      const from = {loads: mark('loads'), incidents: mark('incidents')}
-      const groups = [...chunks(log.loads.filter(record => record.seq > from.loads), DEVICE_LOG_LOADS).map(loads => ({kind: 'loads' as const, log: {loads, incidents: []}})),
-        ...chunks(log.incidents.filter(record => record.seq > from.incidents), DEVICE_LOG_INCIDENTS).map(incidents => ({kind: 'incidents' as const, log: {loads: [], incidents}}))]
-      for (const group of groups) {
-        const seqs = [...group.log.loads, ...group.log.incidents].map(record => record.seq), last = Math.max(...seqs)
-        send({event:'device_log',...unit(),log:group.log}, eventId(await digest(scope + ':' + seqs.join(','))), keep(group.kind, from[group.kind], last))
-        from[group.kind] = last
-      }
-      /* The crash and stall records (log version 2), once per count: the id makes a resend a duplicate. */
-      if (log.crash || log.stall) {
-        const id = await digest(scope + ':records:' + (log.crash?.count ?? 0) + ':' + (log.stall?.count ?? 0))
-        send({event:'device_log',...unit(),log:{loads:[],incidents:[],...(log.crash ? {crash:log.crash} : {}),...(log.stall ? {stall:log.stall} : {})}}, eventId(id), () => {})
-      }
+      await sendLog(log, unit())
     } catch { /* Busy or an older base; the next round asks again. */ }
   }
+  /** A log's records newer than the last stored for it, in groups (another machine's log is scoped by its name too, so
+   * its marks and ids never meet the Octatrack's). */
+  async function sendLog(log: DeviceLog, fields: ReturnType<typeof unit> | { phase: 'ready'; machine: DiagnosticLogMachine; set?: { crc: number; bytes: number } }) {
+    const scope = await digest(memberId + ':' + ('machine' in fields ? fields.machine + ':' : '') + log.nonce), key = 'modwerk.diagnostics.device-log:' + scope
+    /* A mark per kind, moved only past groups stored in order: loads and incidents share the unit's seq, so one mark
+     * moved by a stored load group skipped the incidents of a group that failed or never left a closing tab. The
+     * mark before 27 October 2026 (one for both) is where each starts. */
+    const mark = (kind: 'loads' | 'incidents') => { try { return Number(localStorage.getItem(key + ':' + kind) ?? localStorage.getItem(key)) || 0 } catch { return 0 /* storage off: send what the unit holds */ } }
+    const keep = (kind: 'loads' | 'incidents', from: number, seq: number) => () => { try { const at = mark(kind); if (at >= from && seq > at) localStorage.setItem(key + ':' + kind, String(seq)) } catch { /* storage off */ } }
+    const from = {loads: mark('loads'), incidents: mark('incidents')}
+    const groups = [...chunks(log.loads.filter(record => record.seq > from.loads), DEVICE_LOG_LOADS).map(loads => ({kind: 'loads' as const, log: {loads, incidents: []}})),
+      ...chunks(log.incidents.filter(record => record.seq > from.incidents), DEVICE_LOG_INCIDENTS).map(incidents => ({kind: 'incidents' as const, log: {loads: [], incidents}}))]
+    for (const group of groups) {
+      const seqs = [...group.log.loads, ...group.log.incidents].map(record => record.seq), last = Math.max(...seqs)
+      send({event:'device_log',...fields,log:group.log}, eventId(await digest(scope + ':' + seqs.join(','))), keep(group.kind, from[group.kind], last))
+      from[group.kind] = last
+    }
+    /* The crash and stall records (log version 2), once per count: the id makes a resend a duplicate. */
+    if (log.crash || log.stall) {
+      const id = await digest(scope + ':records:' + (log.crash?.count ?? 0) + ':' + (log.stall?.count ?? 0))
+      send({event:'device_log',...fields,log:{loads:[],incidents:[],...(log.crash ? {crash:log.crash} : {}),...(log.stall ? {stall:log.stall} : {})}}, eventId(id), () => {})
+    }
+  }
+  const machineLog = { wanted: allowed, async send(machine: DiagnosticLogMachine, log: DeviceLog, set: { crc: number; bytes: number } | null) { if (allowed()) await sendLog(log, {phase:'ready',machine,...(set ? {set} : {})}) } }
+  machineLogs = machineLog
   async function tick() {
     syncSiteCollection()
     // Without a connected unit there is nothing to read, so no consent read either: it was 35% of all API requests
@@ -282,7 +302,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   globalThis.document?.addEventListener('visibilitychange', visible)
   // shortcut: a report still sending when the tab closes holds the readings back, so they are lost; a queue on disk would keep them.
   globalThis.addEventListener?.('pagehide', flushLoad)
-  return () => { stopped = true; unwatch?.(); if (linkFailures === linkFailed) linkFailures = undefined; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
+  return () => { stopped = true; unwatch?.(); if (linkFailures === linkFailed) linkFailures = undefined; if (machineLogs === machineLog) machineLogs = undefined; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
 }
 
 const chunks = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))

@@ -129,9 +129,10 @@ export async function readRytmLoad(access: MidiAccessLike, timeoutMs = 2000): Pr
 
 /** The diagnostics log (base/diag.c, the Octatrack's layout): null when no unit or no reply, 'unsupported' from a base
  * before the log. */
-export async function readRytmLog(access: MidiAccessLike, timeoutMs = 2000): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined } | 'unsupported' | null> {
+export async function readRytmLog(access: MidiAccessLike, timeoutMs = 2000, stop?: () => boolean): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined } | 'unsupported' | null> {
   try {
-    return await withRytm(access, timeoutMs, call => readLinkLog(call, 'The Analog Rytm link'))
+    // `stop`: asked before each of the log's blocks, so a page that went away frees the MIDI line within one exchange.
+    return await withRytm(access, timeoutMs, call => readLinkLog(!stop ? call : async (cmd, body) => { if (stop()) throw new Error('The log read was stopped.'); return call(cmd, body) }, 'The Analog Rytm link'))
   } catch (error) {
     if (error instanceof RytmRefused && error.status === BAD_REQUEST) return 'unsupported'
     throw error
