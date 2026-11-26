@@ -124,6 +124,9 @@
 #define CMD_DIAG 0x22                   // the log's address and size (the Model:Cycles' and Digitone II's number)
 #define CMD_LOAD 0x23                   // the audio load (load.c)
 #define CMD_LOG 0x24                    // bytes of the diagnostics log, and nothing else
+#define CMD_UP_PART 0x31                // the runtime loader (modules.c): a part of an upload frame
+#define CMD_UP_RUN 0x32                 // run the frame, the upload controller's response back
+#define CMD_MODS 0x33                   // the module pool and the live modules
 #define ST_OK 0
 #define ST_NOT_ARMED 1
 #define ST_BAD 2
@@ -132,7 +135,7 @@
 #define ST_HUMAN 5
 
 #define RING 8                          // commands waiting for the UI task
-#define CMD_BYTES 48                    // a command's bytes, F0..F7 (the longest, RAMBOOT, is 29)
+#define CMD_BYTES 128                   // a command's bytes, F0..F7 (an UP_PART at most 124, RAMBOOT 29)
 #define SLOTS 64                        // posted messages, reused in turn: more than PENDING keys and turns, one
                                         //   release_all's pad messages (2 x PADS) and a tick's pad posts (at most
                                         //   PER_TICK + 1: a release in the tick adds 2 for a pad pressed in it)
@@ -438,11 +441,21 @@ void mw_link_project(int how, unsigned dropped)
 #endif
 
 // ---- replies ---------------------------------------------------------------
+#define UP_RESPONSE 144                 // the upload controller's response (wire.h MU_WIRE_RESPONSE)
+#define MODS_MOST 3                     // inventory entries in one MODS reply
 #ifdef MODWERK_DEV
 static uint8_t reply[HEADER + 1 + 5 + (SCREEN_PART / 7 + 1) * 8 + 1];   // the largest: SCREEN's
 #else
-static uint8_t reply[HEADER + 1 + 10 + (MEM_MAX / 7 + 1) * 8 + 1];      // the largest: LOG's (IDENT's is 103)
+#define REPLY_LOG (HEADER + 1 + 10 + (MEM_MAX / 7 + 1) * 8 + 1)
+#define REPLY_UP_RUN (HEADER + 1 + (UP_RESPONSE / 7 + 1) * 8 + 1)
+static uint8_t reply[REPLY_LOG > REPLY_UP_RUN ? REPLY_LOG : REPLY_UP_RUN];   // the larger of LOG's and UP_RUN's
 #endif
+static uint8_t up_out[UP_RESPONSE];
+extern void mw_modules_identity(uint32_t crc);
+extern unsigned mw_modules_part(uint32_t offset, const uint8_t *packed, unsigned n);
+extern unsigned mw_modules_run(uint32_t length, uint8_t *out);
+extern unsigned mw_modules_list(uint32_t first, unsigned most, uint8_t *out);
+extern void mw_modules_tick(void);
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -582,6 +595,27 @@ static void COLD act(const uint8_t *m, int len)
         send(pack(p, (const volatile uint8_t *)&mw_diag_log + at, (int)count));
         return;
     }
+    case CMD_UP_PART:                   // offset, then up to 96 bytes packed
+        if (n < 7 || !mw_modules_part(get32(a), a + 5, (unsigned)(n - 5))) {
+            send(begin(seq, cmd, n < 7 ? ST_BAD : ST_RANGE));
+            return;
+        }
+        send(begin(seq, cmd, ST_OK));
+        return;
+    case CMD_UP_RUN: {                  // the frame's length; the controller's 144-byte response, packed
+        unsigned got = n < 5 ? 0 : mw_modules_run(get32(a), up_out);
+        if (got != UP_RESPONSE) {
+            send(begin(seq, cmd, n < 5 ? ST_BAD : ST_RANGE));
+            return;
+        }
+        send(pack(begin(seq, cmd, ST_OK), up_out, UP_RESPONSE));
+        return;
+    }
+    case CMD_MODS: {                    // from the n-th live module: free, largest run, refusal, count, entries
+        unsigned got = mw_modules_list(n >= 5 ? get32(a) : 0, MODS_MOST, up_out);
+        send(pack(begin(seq, cmd, ST_OK), up_out, (int)got));
+        return;
+    }
 #ifdef MODWERK_DEV
     case CMD_DISARM:
         disarm();
@@ -718,6 +752,7 @@ void mw_link_tick(char *ctrl)
         act(ring[t % RING], ring_len[t % RING]);
         ring_tail = t + 1;
     }
+    mw_modules_tick();                  // a host that went quiet mid-trial counts as unplugged (modules.c); idle: one test
 #ifdef MODWERK_DEV
     if (ui_dirty) {
         ui_dirty = 0;
@@ -967,6 +1002,7 @@ void COLD mw_boot_gate(void)
     boot_rsr = RSR;
     run_bytes = (uint32_t)__run_words * 4;
     run_crc = crc32(__run_start, run_bytes);
+    mw_modules_identity(run_crc);       // the base identity an upload's BEGIN names (modules.c)
     mw_diag_start(DTCN0 ^ run_crc, run_crc);
 #ifdef MODWERK_DEV
     ramboot_gate();

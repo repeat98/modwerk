@@ -437,6 +437,25 @@ class MachineBases(unittest.TestCase):
                 self.assertEqual(dev, {"mw_link_key", "mw_link_enc", "mw_link_settings"} <= fns, name)
                 self.assertEqual(dev, "mw_link_carry" in [field["sym"] for field in parts.get("storage", [])], name)
 
+    def test_every_rytm_base_carries_the_runtime_loader_and_nothing_of_it_in_the_audio_interrupt(self):
+        """The Octatrack's runtime loader and upload controller (sdk/runtime, shared as on the Model:Cycles), the Rytm's
+        glue (runtime.c, from OS 1.74's code) and the Model:Cycles' link transport (modules.c) in every variant, its
+        hooks on the UI task only."""
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        for name, add, leave in machine_base.variants(config):
+            parts = machine_base.parts(config, add=add, leave=leave)
+            for source in ("../base/runtime.c", "../base/modules.c", "../base/loader.c", "../base/upload.c", "../base/wire.c", "../base/sha256.c"):
+                self.assertIn(source, parts["sources"], name)
+            self.assertIn("sdk/runtime/loader/loader.c", parts["shared"]["base"], name)
+            subs = {(sub["event"], sub["fn"]) for sub in parts["subscribe"]}
+            self.assertLessEqual({("ev_tick", "mw_runtime_tick"), ("ev_draw", "mw_runtime_draw"), ("ev_key", "mw_runtime_key"), ("ev_enc", "mw_runtime_enc")}, subs, name)
+            self.assertFalse([fn for event, fn in subs if fn.startswith(("mw_runtime", "mw_modules")) and event.startswith("ev_render")], name)
+        # The transport is the Model:Cycles' file but for its header note and the lapse, counted in the Rytm's slower
+        # UI ticks: ten seconds either way.
+        body = lambda path: re.sub(r"#define LAPSE_TICKS \d+u.*", "", (APP / path).read_text().split("#include <stdint.h>", 1)[1])
+        self.assertEqual(body("sdk/machines/analog-rytm-mkii/elekloader/base/modules.c"), body("sdk/machines/model-cycles/elekloader/base/modules.c"))
+        self.assertIn("#define LAPSE_TICKS 200u", (APP / "sdk/machines/analog-rytm-mkii/elekloader/base/modules.c").read_text())
+
     def test_the_rytm_diagnostics_log_is_the_octatrack_layout(self):
         """The site reads the Rytm's log with the Octatrack's parser, so its numbers and structs are the Octatrack's
         word for word (base/diag.h), and every kind it names is the Octatrack's."""

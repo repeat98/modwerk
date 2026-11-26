@@ -1,4 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { spawn, spawnSync } from 'node:child_process'
+import { createInterface } from 'node:readline'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -45,7 +47,9 @@ function logBytes() {
 // boot's status, SRAM CRC, image CRC, the diagnostics' place (0 in a release base) and the set identity; load (0x23),
 // diag (0x22) and log (0x24) as every base answers them, or status 2 (bad request) from an older base without them.
 // bumps: the log's seq moves by one before each of the first `bumps` closing looks at it, as a record written during the read.
-function fakeRytm({ set = null, release = true, load = null, log = null, name = 'Elektron Analog Rytm MKII', bumps = 0 } = {}) {
+// loader: the base's own transport, controller and runtime loader compiled for the computer (hostLoader below):
+// up_part (0x31) and up_run (0x32) go to it, mods (0x33) answers an empty pool; without it, a base before the loader.
+function fakeRytm({ set = null, release = true, load = null, log = null, name = 'Elektron Analog Rytm MKII', bumps = 0, loader = null } = {}) {
   const input = { id: 'i', name, state: 'connected', onmidimessage: null }, requests = {}
   const head = [1, release ? 0 : 1, 0, 0, 0, 0, 0, 3, 228, 32, 0], tail = release ? [0, 0, 0, 0] : [1, 0x6e29194e, 0x5ae21e42, 0x47feffbc]
   const ident = [...head.flatMap(put32), ...ascii('FXCJ'), ...ascii('0176'), ...(set ? [...tail, set.crc, set.bytes] : tail.slice(0, 3)).flatMap(put32)]
@@ -53,6 +57,12 @@ function fakeRytm({ set = null, release = true, load = null, log = null, name = 
   const output = { id: 'o', name, state: 'connected', send(data) {
     const body = data.slice(8, -1)
     requests[data[7]] = (requests[data[7]] ?? 0) + 1
+    if (data[7] >= 0x31 && data[7] <= 0x33 && loader) {
+      const line = data[7] === 0x31 ? 'P ' + get32(body, 0) + ' ' + Buffer.from(Uint8Array.from(body).subarray(5)).toString('hex') : data[7] === 0x32 ? 'R ' + get32(body, 0) : null
+      if (!line) { queueMicrotask(() => answer(data, 0, pack7(Uint8Array.from([0, 0, 0xfe, 0x60, 0, 0, 0xfe, 0x60, 0, 0, 0, 0, 0, 0, 0, 0, 0x4d, 0x57, 0x49, 0])))); return }
+      loader.ask(line).then(out => answer(data, data[7] === 0x31 ? (Number(out) ? 0 : 4) : out ? 0 : 4, data[7] === 0x31 || !out ? [] : pack7(Uint8Array.from(Buffer.from(out, 'hex')))))
+      return
+    }
     const [status, reply] = data[7] === 0x01 ? [0, ident]
       : data[7] === 0x23 ? (load ? [0, load.flatMap(put32)] : [2, []])
       : data[7] === 0x22 ? (log ? [0, [0x47b5ae1c, log.length].flatMap(put32)] : [2, []])
@@ -128,10 +138,11 @@ describe('the developer MCP’s Analog Rytm MKII over its link', () => {
     expect(await service.call('device_load')).toEqual({ machine: 'analog-rytm-mkii', supported: false, reading: null })
     expect(await service.call('device_log')).toEqual({ machine: 'analog-rytm-mkii', supported: false, log: null })
   })
-  it('says the Rytm has no runtime loader yet, and what a missing unit needs', async () => {
+  it('reports a base without the loader, and what a missing unit needs', async () => {
     await writeFile(join(images, 'x.mwrm'), Uint8Array.from([...ascii('MWRM'), ...new Array(60).fill(0)]))
     service = await open(fakeRytm({ set: { crc: 1, bytes: 64 } }), { allowDeviceWrites: true })
-    await expect(service.call('device_review', { moduleIds: ['x.mwrm'] })).rejects.toThrow(/no runtime loader yet/)
+    expect((await service.call('device_status')).loader).toBe('unsupported')
+    await expect(service.call('device_review', { moduleIds: ['x.mwrm'] })).rejects.toThrow(/hello was not confirmed/)   // the upload session's word for a base that refuses up_part
     await service.close(); service = await open(fakeRytm({ name: 'IAC Driver Bus 1' }))
     await expect(service.call('device_status')).rejects.toThrow(/nor an Analog Rytm MKII/)
     await service.close(); service = await open(fakeRytm({ name: 'Elektron Analog Rytm' }))   // an MKI is not this link's
@@ -145,6 +156,43 @@ describe('the developer MCP’s Analog Rytm MKII over its link', () => {
     await service.close(); service = await open(fakeRytm({ log: logBytes(), bumps: 3 }))
     await expect(service.call('device_log')).rejects.toThrow(/kept changing/)
   })
+  // The base's loader on the host, one request a line (the Model:Cycles' harness, test_modules.c, over the Rytm's
+  // modules.c and runtime.c), and a runtime package for it: ABI 4, a tick hook that returns at once.
+  const cc = spawnSync('cc', ['--version']).status === 0
+  function hostLoader() {
+    const base = join(root, 'sdk/machines/analog-rytm-mkii/elekloader/base'), rt = join(root, 'sdk/runtime')
+    const exe = join(folder, 'loader')
+    const built = spawnSync('cc', ['-std=c99', '-DMODWERK_HOST', '-DRUNTIME_MODULES=16u', '-DRUNTIME_POOL_BYTES=65536u', '-I', join(rt, 'loader'), '-I', join(rt, 'upload'),
+      join(root, 'sdk/machines/model-cycles/elekloader/base/test_modules.c'), join(base, 'modules.c'), join(base, 'runtime.c'), join(rt, 'loader/loader.c'),
+      join(rt, 'upload/upload.c'), join(rt, 'upload/wire.c'), join(rt, 'upload/sha256.c'), '-o', exe])
+    expect(built.status, String(built.stderr)).toBe(0)
+    const child = spawn(exe), lines = createInterface({ input: child.stdout }), waiting = []
+    lines.on('line', line => waiting.shift()?.(line))
+    let chain = Promise.resolve()
+    const loader = { ask: line => (chain = chain.then(() => new Promise(resolve => { waiting.push(resolve); child.stdin.write(line + '\n') }))) }
+    const pkg = Buffer.concat([Buffer.from('MWRM'), Buffer.from([0, 4, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0x59, 0x4c, 0xfd, 0x26]),
+      Buffer.alloc(4), Buffer.from([0x4e, 0x75, 0x4e, 0x71])])
+    return { child, loader, pkg }
+  }
+  it.skipIf(!cc)('reviews a package, puts it on trial, undoes it and keeps it, through the base\'s own loader', async () => {
+    const { child, loader, pkg } = hostLoader()
+    try {
+      await writeFile(join(images, 'hello.mwrm'), pkg)
+      service = await open(fakeRytm({ set: { crc: 0x12345678, bytes: 64 }, loader }), { allowDeviceWrites: true })
+      expect((await service.call('device_status')).loader).toMatchObject({ free: 65120, active: 0, modules: [] })
+      const review = await service.call('device_review', { moduleIds: ['hello.mwrm'] })
+      expect(review).toMatchObject({ machine: 'analog-rytm-mkii', changes: [{ module: 'hello.mwrm', bytes: pkg.length, undoAvailable: true }] })
+      expect(review.base).toBe(frontend.mcUploadBase(0x12345678))
+      const trial = await service.call('device_trial', { review: review.review })
+      expect(trial).toMatchObject({ machine: 'analog-rytm-mkii', state: { phase: 'trial' } })
+      const undone = await service.call('device_undo', { trial: trial.trial })
+      expect(undone).toMatchObject({ machine: 'analog-rytm-mkii', kept: false, completed: true, phase: 'normal', active: review.active })
+      const again = await service.call('device_trial', { review: (await service.call('device_review', { moduleIds: ['hello.mwrm'] })).review })
+      const kept = await service.call('device_keep', { trial: again.trial })
+      expect(kept).toMatchObject({ kept: true, completed: true, phase: 'normal' })
+      expect(kept.active).not.toBe(review.active)
+    } finally { child.stdin.end() }
+  }, 30000)
   it('asks a Model:Cycles first when both are connected', async () => {
     service = await open(withCycles(fakeRytm({ set: { crc: 1, bytes: 64 } })))
     expect((await service.call('device_status')).machine).toBe('model-cycles')
