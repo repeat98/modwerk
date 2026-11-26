@@ -25,8 +25,18 @@
  * on the lead itself only takes the lead's new values (its trig locks) without copying them, and each frame one voice
  * track holding no note is copied from the lead in full.
  *
+ * Stock loads a track's sound in full only when the sound a note names (+0x3c; a note from the keys or MIDI names
+ * none, which means the track's own) differs from the one the track last loaded (0x8000470c, one pointer a track).
+ * A note-on the base moves to a voice track names the lead's sound, so the voice loads the lead's sound whenever it
+ * last loaded another (its own, after stock forgot what it loaded), never its own.
+ *
+ * A track that leaves a group (VOICES lowered, or its lead's group moved) stays its lead's former voice until it plays
+ * a note of its own: it keeps the lead's machine, so a note still ringing or fading there is not handed to another
+ * machine's player midway, and a note-off naming the lead for a note it still holds goes to it. Its own note forgets
+ * the sound it last loaded, so that note loads its own sound in full.
+ *
  * The setting is the project's (core_project_archive, tag VOC1), saved with the project and reset by a project
- * saved without it. With every track at 1 nothing here changes a note. Emulator-checked only; see VOICES.md.
+ * saved without it. With every track at 1 nothing here changes a note. See VOICES.md for what was checked.
  */
 #include <stdint.h>
 #include "mk2/core.h"
@@ -46,9 +56,17 @@ enum {
 #define NOTE_PITCH ((const volatile int32_t *)0x47db4560u)   /* its pitch, -1 none */
 #define MUTES (*(const volatile uint32_t *)0x8000467cu)
 #define MUTES_OVERRIDE (*(const volatile uint32_t *)0x80004680u) /* nonzero: the inverse of the mutes in force */
+/* The sound each track last loaded in full (vector-191 handler, 0x4002e53e); 0 makes its next note load its own. */
+#define LOADED_SOUND ((volatile uint32_t *)0x8000470cu)
+/* The kit's track sounds: track t's at this + 0x34 + 0x450 * t (what a note naming none loads, 0x4002e522). */
+#define TRACK_SOUNDS (*(const volatile uint32_t *)0x80004704u)
+#define SOUND_STRIDE 0x450u
 
 static uint8_t voices[TRACKS];      /* the project's setting, 0 or 1 for a track that plays only its own notes */
-static uint8_t lead_of[TRACKS];     /* each track's lead, NONE outside a group */
+static uint8_t lead_of[TRACKS] = { [0 ... TRACKS - 1] = NONE }; /* each track's lead, NONE outside a group */
+static volatile uint8_t former_of[TRACKS] = { [0 ... TRACKS - 1] = NONE }; /* a track that left a group and has not
+                                                                              * played a note of its own: its lead */
+static volatile uint8_t formers;    /* nonzero while a former_of entry may be set */
 static uint8_t next_voice[TRACKS];  /* per lead: where the search for a free voice starts */
 static uint8_t sync_next[TRACKS];   /* per lead: the voice track the idle copy looks at next */
 static volatile uint16_t absorb;    /* leads whose own note set its targets this frame */
@@ -58,10 +76,12 @@ static int16_t last[TRACKS][VALUES];
 static void regroup(void)
 {
     uint16_t found = 0;
+    uint8_t was[TRACKS];
     /* The frame interrupt reads the groups: route nothing while they change (the menu and a project load run in
      * tasks), and publish the leads last. */
     leads = 0;
     for (unsigned int t = 0; t < TRACKS; ++t) {
+        was[t] = lead_of[t];
         lead_of[t] = NONE;
     }
     /* A track that is already another lead's voice leads nothing; a group ends at track 16. */
@@ -88,6 +108,17 @@ static void regroup(void)
             for (unsigned int v = lead + 1; v < t; ++v) {
                 TARGETS[VALUES * v + j] = value;
             }
+        }
+    }
+    /* A voice track back on its own stays its lead's former voice until it plays a note of its own (core_voice_event,
+     * core_voice_lead); a track in a group now is no one's former voice. */
+    for (unsigned int t = 0; t < TRACKS; ++t) {
+        const unsigned int lead = was[t];
+        if (lead_of[t] != NONE && lead_of[t] != t) {
+            former_of[t] = NONE;
+        } else if (lead != NONE && lead != t) {
+            former_of[t] = (uint8_t)lead;
+            formers = 1;
         }
     }
     leads = found;
@@ -128,13 +159,39 @@ static int32_t record_pitch(const uint8_t *record)
     return (int8_t)lock[2];
 }
 
+/* Former voices (regroup): a note-on of a former voice's own makes it its own track again, loading its own sound in
+ * full; a note-off of `track` for a note a former voice of it still holds goes there (the older note ends first, as it
+ * would on one track). Nonzero: the record is routed. */
+static int former(uint8_t *record, unsigned int track)
+{
+    if (*(const uint32_t *)(record + 4) == 1u) {
+        if (former_of[track] != NONE) {
+            former_of[track] = NONE;
+            LOADED_SOUND[track] = 0;
+        }
+        return 0;
+    }
+    const uint32_t source = *(const uint32_t *)(record + 0x14);
+    const int32_t pitch = record_pitch(record);
+    for (unsigned int t = 0; t < TRACKS; ++t) {
+        if (former_of[t] == track && NOTE_SOURCE[t] == source && NOTE_PITCH[t] == pitch) {
+            *(uint32_t *)(record + 0x10) = t;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void core_voice_event(uint8_t *record)
 {
-    if (!leads || *(const uint32_t *)record > 1u) {
+    if (!(leads || formers) || *(const uint32_t *)record > 1u) {
         return;
     }
     const uint32_t lead = *(const uint32_t *)(record + 0x10);
     if (lead >= TRACKS) {
+        return;
+    }
+    if (formers && former(record, lead)) {
         return;
     }
     if (!((leads >> lead) & 1u)) {
@@ -183,6 +240,10 @@ void core_voice_event(uint8_t *record)
         }
     } else {
         *(uint32_t *)(record + 0x10) = to;
+        /* A note-on from the keys or MIDI names no sound, which would load the voice's own: name the lead's. */
+        if (*(const uint32_t *)(record + 4) == 1u && !*(const uint32_t *)(record + 0x3c)) {
+            *(uint32_t *)(record + 0x3c) = TRACK_SOUNDS + 0x34u + SOUND_STRIDE * lead;
+        }
     }
 }
 
@@ -199,6 +260,13 @@ void core_voice_frame(void)
 {
     const uint16_t taken = absorb;
     absorb = 0;
+    if (formers) {
+        unsigned int any = 0;
+        for (unsigned int t = 0; t < TRACKS; ++t) {
+            any |= former_of[t] != NONE;
+        }
+        formers = (uint8_t)any;
+    }
     for (unsigned int lead = 0; lead < TRACKS; ++lead) {
         if (!((leads >> lead) & 1u)) {
             continue;
@@ -237,11 +305,19 @@ void core_voice_frame(void)
     }
 }
 
-/* The track whose machine a track plays: its lead while it is linked, else itself (machine-frame.c sends that track's
- * machine type for the sound chip's player dispatch). */
+/* The track whose machine a track plays: its lead while it is linked, and as its lead's former voice until it plays a
+ * note of its own, else itself (machine-frame.c sends that track's machine type for the sound chip's player
+ * dispatch). */
 unsigned int core_voice_lead(unsigned int track)
 {
-    return track < TRACKS && lead_of[track] != NONE ? lead_of[track] : track;
+    if (track >= TRACKS) {
+        return track;
+    }
+    if (lead_of[track] != NONE) {
+        return lead_of[track];
+    }
+    const unsigned int lead = former_of[track];
+    return lead != NONE ? lead : track;
 }
 
 /* ---- SETTINGS > VOICES ------------------------------------------------------------------------------------------ */
@@ -253,12 +329,23 @@ static unsigned int active_track(void)
     return track < TRACKS ? track : 0;
 }
 
+/* The row is core's value row (core-dt2 rows.c) with an icon and a label that follows the track. Like core_addvalue's,
+ * it draws the count right-aligned at the row's x + 19 with the menus' value font, and only LEFT and RIGHT change it.
+ * A SETTINGS row has its 9x9 icon at x + 0..8, two rows above its label's text, and the label from x + 12 (panel probe
+ * of the stock rows), so the label starts with spaces and the count sits between the icon and the label's text. */
+extern void core_addrow(void *menu, const void *const row[4], void *payload);
+extern void core_voice_row_label(void); /* voices-entry.s: refreshes the label, then core's core_value_label */
+extern uintptr_t fw_op_new(uint32_t bytes);
+extern int fw_textbox(void *bmp, const void *font, int x, int y, int align, int deco, const char *tmpl,
+                      const char *fmt, ...);
+extern const char fw_font_menu[];
+
 static const char *const counts[MAX_VOICES] = { "1", "2", "3", "4", "5", "6", "7", "8" };
-/* core_addvalue draws the value right-aligned at the row's x + 19, where PERSONALIZE leaves room for it. A SETTINGS
- * row has its icon there and the label after it (panel probe: the value landed on the label's second character), so
- * the label starts with spaces and the value takes the icon's place. */
 #define LABEL_INDENT 3
 static char label[16] = "   T1 VOICES";
+
+/* The icon, rows top to bottom, bit c lit at x + c. */
+static const uint16_t icon[9] = { 0x080, 0x180, 0x080, 0x08a, 0x0e0, 0x06e, 0x011, 0x011, 0x00e };
 
 static uint32_t get_voices(void)
 {
@@ -276,7 +363,13 @@ static void set_voices(uint32_t value)
 
 static const core_value_t voices_row = { label, counts, MAX_VOICES, get_voices, set_voices };
 
-void core_voice_settings(void *menu)
+typedef struct {
+    const core_value_t *row; /* first: core_value_label reads the label through it */
+    void *menu;
+} cell_t;
+
+/* Called for the row's label each time the menu asks for it: the track on now. */
+void core_voice_label_update(void)
 {
     const unsigned int track = active_track() + 1u;
     unsigned int i = LABEL_INDENT + 1u;
@@ -291,7 +384,68 @@ void core_voice_settings(void *menu)
         label[i++] = rest[k];
     }
     label[i] = 0;
-    core_addvalue(menu, &voices_row);
+}
+
+static void row_select(cell_t **storage)
+{
+    (void)storage; /* YES does nothing */
+}
+
+static void row_draw(cell_t **storage, void *item, void *bmp, int x, int y)
+{
+    (void)storage;
+    (void)item;
+    for (int r = 0; r < 9; ++r) {
+        const unsigned int bits = icon[r];
+        int c = 0;
+        while (c < 9) {
+            if (!((bits >> c) & 1u)) {
+                ++c;
+                continue;
+            }
+            const int from = c;
+            while (c < 9 && ((bits >> c) & 1u)) {
+                ++c;
+            }
+            fw_fillrect(bmp, x + from, y + 8 - r, x + c - 1, y + 8 - r, 1); /* fw_fillrect counts rows upward */
+        }
+    }
+    const uint32_t v = get_voices();
+    if (v < MAX_VOICES) {
+        fw_textbox(bmp, fw_font_menu, x + 19, y + 2, 2, 0, 0, counts[v]);
+    }
+}
+
+static void row_change(cell_t **storage, void *item, int delta)
+{
+    cell_t *c = *storage;
+    (void)item;
+    int v = (int)get_voices() + delta;
+    if (v < 0) {
+        v = 0;
+    }
+    if (v >= MAX_VOICES) {
+        v = MAX_VOICES - 1;
+    }
+    if ((uint32_t)v != get_voices()) {
+        set_voices((uint32_t)v);
+    }
+    fw_invalidate((char *)c->menu + 0x38);
+}
+
+void core_voice_settings(void *menu)
+{
+    static const void *const callbacks[4] = {
+        (const void *)core_voice_row_label, (const void *)row_select, (const void *)row_draw, (const void *)row_change,
+    };
+    cell_t *c = (cell_t *)fw_op_new(sizeof *c);
+    if (!c) {
+        return;
+    }
+    c->row = &voices_row;
+    c->menu = menu;
+    core_voice_label_update();
+    core_addrow(menu, callbacks, c);
 }
 
 /* ---- the project's setting ---------------------------------------------------------------------------------------- */
