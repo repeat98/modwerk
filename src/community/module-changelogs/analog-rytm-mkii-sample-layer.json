@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "First version: press SMPL after the waveform for SMPL LAYER, a filter (LP, BP, HP) and a decay for the sample alone.",
+      "The analog machine and the AMP envelope are left as they are."
+    ]
+  }
+]

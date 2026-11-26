@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 3,
+  "id": "sample-layer",
+  "name": "Sample Layer",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "chevyone",
+    "credits": [
+      "chevyone"
+    ]
+  },
+  "maintainers": [
+    "chevyone"
+  ],
+  "presentation": {
+    "label": "SAMPLE LAYER",
+    "family": "Sound",
+    "summary": "A filter and a decay for the sample alone, on a page after SMPL's waveform, so the sample layered on an analog drum can be shaped apart from it.",
+    "overview": "Sample Layer shapes a track's sample before it reaches its DAC, leaving the analog machine as it is. Press SMPL until the SMPL LAYER page shows, after the waveform: FRQ, RES and TYP (OFF, LP, BP, HP) set a 12 dB per octave filter on the sample, and DEC gives the sample a decay of its own, started at each trig, from 4 ms to 3 s or INF. The AMP envelope and the analog filter still shape the whole sound. The settings are kept with the sound.",
+    "highlights": [
+      "A page after SMPL's waveform: the waveform view stays where it was.",
+      "LP, BP or HP on the sample alone, with resonance.",
+      "DEC: a decay for the sample, under the AMP envelope, restarted at every trig.",
+      "TYP OFF and DEC INF leave the sample exactly as stock plays it."
+    ],
+    "usage": [
+      "Put a sample on a BD track with an analog machine. Press SMPL until SMPL LAYER shows.",
+      "Set TYP to HP and turn FRQ up: the sample becomes a click on top of the analog body.",
+      "Turn DEC down: the sample is only the attack of the hit while the analog part rings on."
+    ]
+  },
+  "access": {
+    "location": "SMPL key, pressed until the SMPL LAYER page shows (after the waveform).",
+    "steps": [
+      "Select a voice track with a sample.",
+      "Press SMPL: the SAMPLE page, then the waveform, then SMPL LAYER."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "FRQ",
+      "default": 127,
+      "doc": "The filter's frequency, 20 Hz to 18 kHz. Its text is stock FILTER FRQ's.",
+      "labels": null
+    },
+    {
+      "name": "RES",
+      "default": 0,
+      "doc": "Resonance, 0 to 15: Q 0.5 to 4, up to +12 dB at FRQ.",
+      "labels": null
+    },
+    {
+      "name": "TYP",
+      "default": 0,
+      "doc": "OFF, LP, BP or HP, 12 dB per octave.",
+      "labels": [
+        "OFF",
+        "LP",
+        "BP",
+        "HP"
+      ]
+    },
+    {
+      "name": "DEC",
+      "default": 127,
+      "doc": "The sample's own decay from each trig, 0 (4 ms) to 126 (3 s); 127 is INF, no decay.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 on Modwerk's base only (it follows the base's AMP record for the trigs).",
+      "The settings cannot be p-locked or reached over MIDI: they live outside the sound's parameters.",
+      "20 of the sound's 56 storage bits: a set whose sound fields need more will not link (Voice DAC takes 39).",
+      "A change reaches a playing voice within about 50 ms."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_amp_record"
+    ],
+    "claims": [
+      "ui:SAMPLE key, third press: SMPL LAYER page (core_view_pages)",
+      "param:hidden ids 447-450",
+      "audio:sample stream before the voice mixer"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Probe SL01 and build SL02 on @chevyone's unit (OS 1.74): reported working; load, sound reset and other modules beside it not tested."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Sample Layer thumbnail",
+      "alt": "Placeholder thumbnail for Sample Layer",
+      "credit": "chevyone",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}
