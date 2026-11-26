@@ -61,6 +61,19 @@ The first red comes before [PLAY]'s first step write (stock's flash while stoppe
 | MIDI handler entries (note on / off / CC / clock) | 20,667 / 20,666 / 20,667 / 6,200 | the same |
 | beat flashes; instructions from the call to `set_led` | 154; 1 | 154; 8 to 12 |
 
+## ot_emu as an MKII (#1680, 26 November 2026)
+
+Not hardware evidence. The report (an MKII, OS 1.40C, synced over USB): the [TEMPO] key never turns green. Stock 1.40C under `ot_emu`, the unit preloaded as above, a staged template project, `--sequencer --internal-clock`, watching the tempo LED's bits (`0x460ba9b2`: bit 6 = id 38, bit 7 = id 39) and the calls to `set_led` and `led_palette` (`0x40013368`).
+
+| Source | Model | Seen | Read |
+|---|---|---|---|
+| 0.1.0 | MKI and `--mkii` | the same on both: id 39 alone on the 1, id 38 on every other beat (64-step pattern: `39@0 38@4 … 38@60 39@0`); the steady LED map's byte for ids 32-39 (`0x460ba990`) reads `0x25` throughout playing, so nothing else lights 38 or 39 | the firmware asks for 39 on an MKII as on an MKI, so the missing green is the MKII panel's |
+| stock | `--mkii` | the boot's colour setup (`0x400133cc`) programs every key lamp, the tempo key (id 38) among them: register 0 dim white, register 1 `(68, 0, 0)`, register 2 `(0, 68, 0)` at brightness 2 | an MKII lamp's colour is a palette entry; id 38 lit shows register 1, which every stock flash and the base's white startup (`boot_anim.c`, register 1 white) use |
+| this source | `--mkii` | every flash lights id 38; `led_palette(38, 1, 0, 68, 0)` just before the flash on the 1, `led_palette(38, 1, 68, 0, 0)` just before the next one, nothing else (`GfRfffffffffffffffGf`, G green set, R red set back, f a flash) | green on the 1 through the colour stock's flash already shows |
+| this source | MKI | id 39 on the 1, 38 on the others, no palette call | unchanged |
+
+`verify.py`'s sixth run checks the MKII sequence (written for the gate's own staged project; the runs above used a 64-step template project, where the gate's pattern-length poke does not apply, so its step-count runs were not repeated here). The colour on an MKII panel is not seen yet: the panel's own firmware is not emulated, so whether `(0, 68, 0)` reads as green there is the open question for a unit.
+
 ## Hardware
 
 **Reported by the tester (@nathangroth), MKI, 2 November 2026.** Build: the tester's private octabam remix `home-base` 5 (octabam-home commit `404ef7bd`), a native card build carrying this unit's source, booted from the card through REMIX SWITCH (`/BRAIN/REMIXES/HOMEBAS5.RMX`, SHA-256 `72a711492805c7ef331d8be69617f9bd77e41f858d1481da3779a14dbe4126eb`), not flashed. Before it, the tester's MKI in TEST mode lit the tempo LED red, green and amber.

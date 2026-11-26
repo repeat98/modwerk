@@ -30,11 +30,13 @@ Stock flashes the tempo LED from its clock-message loop: every 24 clock ticks (o
 
 Bar LED takes that one call (`0x40056f24`). While the transport plays it reads the sequencer's master step (`0x800065b4`, the step now playing, which wraps at the pattern's length). A flash that sees a lower step than the flash before is the first since the pattern came round: it passes 39 instead of 38. So does the first flash after [PLAY] from the top; continuing from a pause compares with the step it paused on. Then it calls stock's `set_led` with the same duration. Every other call, stopped included, reaches `set_led` unchanged.
 
+An MKII has RGB lamps whose colours the firmware programs, and there id 39 alone never shows green on the [TEMPO] key ([#1680](https://github.com/repeat98/modwerk/issues/1680)). So on an MKII the 1 keeps stock's id 38 and, just before that flash, sets id 38's colour (stock's `led_palette`, `0x40013368`) to green at the LED brightness setting; the next flash sets it back to stock's red first. The MKI keeps id 39.
+
 It keeps no clock or count of its own ([sequencing](../../../../docs/module-guides/sequencing.md)): the flash is stock's, so it keeps the project tempo, and the step is the sequencer's.
 
 ## Compatibility and limitations
 
-- OS 1.40C. Run on an MKI only; not yet tested on an MKII.
+- OS 1.40C. Run on an MKI. On an MKII the green comes from the tempo key's colour setting instead (above): checked in the emulator, not yet seen on an MKII.
 - The tempo LED only flashes on whole beats. When the pattern's 1 falls between beats (say 14 steps at 1x), the green comes on the first flash after it.
 - A pattern no longer than one beat (1, 2 or 4 steps at 1x, or 8 steps at 2x) is green only on the first flash after [PLAY], then red on every beat: every flash sees step 0, so the step never drops. 4 steps at 1x was seen under the port (reported in review of octabam's copy); 8 at 2x is inferred, not run. Counting "the same step again" as a new pass would fix it, but would also turn green every flash inside step 0 at a slow scale where one step lasts several beats, so it stays as it is until a fix can tell the two apart.
 - Changing the stock flow: the tempo LED is green instead of red on the pattern's 1 while playing. That is the module's whole job; remove it to get the stock LED back.
