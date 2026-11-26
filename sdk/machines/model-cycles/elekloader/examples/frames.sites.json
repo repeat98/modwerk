@@ -1,0 +1,9 @@
+[
+  {
+    "addr": "0x40007678",
+    "len": 6,
+    "stockSha256": "679bfd6305fd564a8e5df60b4433d0a1d2ec742c890c1992a498676b0382db6d",
+    "op": "jsr",
+    "target": "frames_end"
+  }
+]

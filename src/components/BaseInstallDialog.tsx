@@ -18,6 +18,7 @@ import { RiskAcceptance } from './ConfigurationLayout'
 import { Icon } from './Icon'
 import { LinkHero } from './LinkHero'
 import { SupportActions } from './SupportActions'
+import { noteSupportBase } from '../community/support-prompt'
 import type { BaseGuideStep, BaseInstallFailure } from '../community/octatrack-diagnostics-contract'
 import { offerDiagnostics } from '../community/diagnostics-reask'
 
@@ -198,6 +199,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   function report(reached: BaseGuideStage, detail?: BaseGuideFailure) {
     if (reported.current.has(reached)) return
     reported.current.add(reached); onStage?.(reached, detail)
+    if (reached === 'first-connection' || reached === 'usb-update-done') noteSupportBase()
   }
   function step(reached: BaseGuideStep) {
     if (stepsSeen.current.has(reached)) return

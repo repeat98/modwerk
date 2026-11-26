@@ -57,6 +57,7 @@ import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPac
 import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
+import { chooserIndex } from './chooser-name.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
@@ -321,8 +322,11 @@ async function partMenu(steps) {
 async function pick(track, slot, wanted) {
   const tables = await effectTables(), ids = tables.ids[slot - 1], rows = tables.rows[slot - 1]
   let id = typeof wanted === 'number' ? wanted : -1 // a number: that effect id, through its chooser row (pickid)
-  for (let i = 0; i < tables.count && id < 0; i++)
-    if (ids[i] && Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '').toLowerCase() === wanted.toLowerCase()) id = i
+  if (id < 0) { // a name: the chooser's own, or shortened there to its 12 letters (chooser-name.mjs)
+    const names = []
+    for (let i = 0; i < tables.count; i++) names.push(ids[i] ? Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '') : null)
+    id = chooserIndex(names, wanted)
+  }
   if (id < 0 || id >= tables.count || (typeof wanted === 'number' && !rows[id])) throw new Error('No ' + wanted + ' in the FX' + slot + ' chooser.')
   // NO first: right after a pick on another track the next FUNC+FX can be lost, and the LEVEL turn below then changes that
   // track's level in the Part instead of scrolling (owner's MKII, 20 October 2026)
