@@ -1,5 +1,10 @@
 # Tempo LFO testing
 
+Version **0.1.0-experimental**. Upstream listing build: USB package
+`654530b1…` / 852 B (Base draft index 63); Undo-only `device:price` = 0 on
+that digest (2026-11-26). Keep/reboot/audible cites remain fork tip
+`643b46c3…` unless re-Accept on the shipped image.
+
 ### MOP-204 tip scaffold
 
 Parked draft under `sdk/octabam/modules/tempo-lfo/`: contribute `ot_lfo_pmtr_dest`
