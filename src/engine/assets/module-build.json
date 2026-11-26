@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "649cb8b8e3079d14d50ec093a39414f230633ccd",
+  "sourceCommit": "a4c5accc7032f3786aa62fe0f8eef5735abd8399",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "88eadf642ac030aa3dca3358cedb49d69da30f17275a27f350247fcea9d09106",
+  "sourceTreeSha256": "aa3826068d8845bb43b5c3c259063e68fcc2f3f023a4aecbcc9f24a977e24bc1",
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
-    "miniverb": "0.2.3-experimental",
+    "miniverb": "0.2.4-experimental",
     "tapeecho": "0.1.9-experimental",
     "euclid": "0.1.5-experimental",
     "repitch": "0.2.1-experimental",
@@ -47,8 +47,8 @@
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 93512,
-      "sha256": "4eb8d65bfd303b63c490f33b719127fc9d1429c696027c876bbcb51a085eaab0"
+      "bytes": 93434,
+      "sha256": "cd5fe595ad5c7cf334f2cc45d11090f3ee781c0bed30e7caee007d51b726f839"
     },
     "resident-dsp.json": {
       "bytes": 6981,
