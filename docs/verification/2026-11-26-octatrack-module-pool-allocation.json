@@ -3,13 +3,158 @@
   "instrument": "Octatrack MKII",
   "developmentBase": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
   "loaderLayout": {
-    "moduleBytes": 736,
+    "moduleBytes": 754,
     "siteBytes": 74,
     "claimBytes": 12,
     "entryBytes": 8,
     "alignment": 16
   },
-  "method": "Two rolled-back RAM trials per package on the owner’s MKII, on development twin 46c30886 of base 0.8.2 (build_core.py with the beta flags and --dev, no controller rows, built from main 48f4a9b9c), RAM-booted from the flashed base. Each trial is one npm run device:price -- --memory run: the module is the only one installed, and the pool is read before it goes in and again while it is installed and used nowhere. For Mini Verb and Euclid the first trial is their instance-curve run (--curve). The 2026-11-21 record’s twin 8850f539 could not be rebuilt byte for byte from its source (same symbols, another configuration hash), so these readings name their own twin. The loader layout is unchanged from that record.",
+  "method": "Two rolled-back RAM trials per package on the owner’s MKII, on development twin 46c30886 of base 0.8.2 (build_core.py with the beta flags and --dev, no controller rows, built from main 48f4a9b9c), 26 November 2026. Each trial is one npm run device:price -- --memory --readings 1 run (a plain trial, no cost table sent): the module is the only one installed, and the pool is read while it is installed and used nowhere. In every trial the reading matched the full loader extent of the exact package: the 16-byte-aligned module record (754 bytes on base 0.8, whose 59 site events give each module 63 hooks; 736 on base 0.7 with 57) and its patched-site records, image and BSS, and the packaged DSP tail. The 2026-11-21 record’s twin 8850f539 could not be rebuilt byte for byte from its source (the same symbols, another configuration hash), so these readings name their own twin.",
   "scope": "ColdFire module-pool bytes for one installed module, and the resident DSP program words the installed module adds at rest. DSP memory, sample RAM and shared platform allocations use separate regions.",
-  "measurements": []
+  "measurements": [
+    {
+      "module": "euclid",
+      "version": "0.1.6-experimental",
+      "package": "release-source",
+      "packageSha256": "27263940b8322448b69e13dc1d11108c6b909f9ba2b2c33bb96824e44093adf6",
+      "sourceCommit": "eaba405a5439e45082d2c2b5a47c8f9354f7e4bb",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 10480,
+      "scene": "Octatrack MKII, LIVE/Dev17 bank C pattern 2, Part 1, transport played by the tool. Each package ran alone in two separate RAM trials; the pool before a trial still held the previous trial’s module until the next install.",
+      "packageLayout": {
+        "imageBytes": 7940,
+        "bssBytes": 0,
+        "patchedSites": 3,
+        "dspWords": 385
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-26T20:24:22.865Z",
+          "before": {
+            "modulePoolBytes": 3424,
+            "dspProgramWordsT1to4": 441,
+            "dspProgramWordsT5to8": 441
+          },
+          "installed": {
+            "modulePoolBytes": 10480,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-26T20:25:09.387Z",
+          "before": {
+            "modulePoolBytes": 10480,
+            "dspProgramWordsT1to4": 441,
+            "dspProgramWordsT5to8": 441
+          },
+          "installed": {
+            "modulePoolBytes": 10480,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "miniverb",
+      "version": "0.2.4-experimental",
+      "package": "release-source",
+      "packageSha256": "cf610384ad37447fbd9dc5fb59d326edeeafb0fb993f3caf376f3d46f55c5f84",
+      "sourceCommit": "aa4bb6b2db377ef292e90d4c54322e3762b29df8",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 3424,
+      "scene": "Octatrack MKII, LIVE/Dev17 bank C pattern 2, Part 1, transport played by the tool. Each package ran alone in two separate RAM trials; the pool before a trial still held the previous trial’s module until the next install.",
+      "packageLayout": {
+        "imageBytes": 540,
+        "bssBytes": 0,
+        "patchedSites": 0,
+        "dspWords": 525
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-26T20:22:51.769Z",
+          "before": {
+            "modulePoolBytes": 0,
+            "dspProgramWordsT1to4": 441,
+            "dspProgramWordsT5to8": 441
+          },
+          "installed": {
+            "modulePoolBytes": 3424,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-26T20:23:37.282Z",
+          "before": {
+            "modulePoolBytes": 3424,
+            "dspProgramWordsT1to4": 441,
+            "dspProgramWordsT5to8": 441
+          },
+          "installed": {
+            "modulePoolBytes": 3424,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "repitch",
+      "version": "0.2.2-experimental",
+      "package": "release-source",
+      "packageSha256": "e3c37df63692c4a91675f0e8741d47837929ea6256fecb03d082d059c94b02b7",
+      "sourceCommit": "25635f35f6ab3367b8848a43ca98f420a35c6cf0",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 2720,
+      "scene": "Octatrack MKII, LIVE/Dev17 bank C pattern 2, Part 1, transport played by the tool. Each package ran alone in two separate RAM trials; the pool before a trial still held the previous trial’s module until the next install.",
+      "packageLayout": {
+        "imageBytes": 912,
+        "bssBytes": 8,
+        "patchedSites": 14,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-26T20:25:55.208Z",
+          "before": {
+            "modulePoolBytes": 10480,
+            "dspProgramWordsT1to4": 441,
+            "dspProgramWordsT5to8": 441
+          },
+          "installed": {
+            "modulePoolBytes": 2720,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-26T20:26:23.880Z",
+          "before": {
+            "modulePoolBytes": 2720,
+            "dspProgramWordsT1to4": 441,
+            "dspProgramWordsT5to8": 441
+          },
+          "installed": {
+            "modulePoolBytes": 2720,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    }
+  ]
 }
