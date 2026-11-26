@@ -63,7 +63,8 @@ import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 import { bootOverPendingUpdate, stageRefusal } from './octatrack-step-base.mjs'
-import { describeDsp, describeStream, parseStreamReply, STREAM_DSP_BITS, STREAM_OPS, STREAM_REPLY_BYTES, STREAM_REQUEST } from './stream-probe.mjs'
+import { describeDsp, describeStream, describeStreamRead, parseStreamReadReply, parseStreamReply, STREAM_DSP_BITS, STREAM_OPS, STREAM_READ_OPS,
+  STREAM_READ_REPLY_BYTES, STREAM_READ_REQUEST, STREAM_REPLY_BYTES, STREAM_REQUEST } from './stream-probe.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -407,6 +408,17 @@ async function streamProbe(op) {
   console.log(describeDsp(r))
 }
 
+/** Stream probe B (dev request 48; built with --stream-read N): `streamb` prints the reads' counts, the ColdFire's check of
+ * the blocks and the times since the last `streamb`; `streamb:on` starts reading (counts and times restart), `streamb:off`
+ * stops, `streamb:zero` zeroes the block counts. */
+async function streamRead(op) {
+  const code = op ? STREAM_READ_OPS[{ on: 'start', off: 'stop', zero: 'zero' }[op]] : STREAM_READ_OPS.window
+  const r = parseStreamReadReply(await devIn(STREAM_READ_REQUEST, code, STREAM_READ_REPLY_BYTES))
+  if (op && !r.taken) throw new Error(op === 'off' ? 'Stream probe B was not reading.' :
+    'Stream probe B did not start: the watchdog stopped it when it recovered the frame chain; RAM-boot the twin again.')
+  console.log(describeStreamRead(r))
+}
+
 /** One connection for a whole sequence: KEY or KEY+KEY (with *N to repeat), w300 (wait ms), encC+3, fader128, ui, screen, state,
  * stats (one line: CPU, each core's mean/peak per mille and idle passes a frame), png:FILE, mem:0xADDR:LEN, part1-4, pick:T1:FX2:NAME,
  * +KEY / -KEY (press, release), crash (the last crash's record), crashtest (development bases: crash on purpose),
@@ -420,6 +432,8 @@ async function streamProbe(op) {
  * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
  * stream, stream:on, stream:off, stream:dsp (stream probe twins, build_core.py --stream-probe N through
  *   module-adapters/stream_probe.py: the block times since the last `stream`; start; stop; the core-0 checker's counts),
+ * streamb, streamb:on, streamb:off, streamb:zero (stream probe B twins, --stream-read N: the reads' counts, the ColdFire's
+ *   check of the blocks and the times since the last `streamb`; start; stop; zero the block counts),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
@@ -510,6 +524,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       console.log('guarded renders, longest since the last read (% of a frame, both passes): ' + [...Array(8).keys()].map(t => `T${t + 1} ${pc(b.readUInt32BE(12 + 4 * t) + b.readUInt32BE(44 + 4 * t))}`).join(', '))
     }
     else if ((m = /^stream(?::(on|off|dsp))?$/.exec(step))) await streamProbe(m[1])
+    else if ((m = /^streamb(?::(on|off|zero))?$/.exec(step))) await streamRead(m[1])
     else if (step === 'gap') { const g = Buffer.from(await devIn(23, 0, 4)).readUInt32BE(0); console.log(`gap ${g} counts ${(g / 132).toFixed(0)} us`) } // since the last read
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
     else if (step === 'reload') await partMenu('UP w150 UP w150 UP w150 DOWN w200 YES w1000')
