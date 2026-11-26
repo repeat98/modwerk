@@ -1067,7 +1067,7 @@
       "loader": "started",
       "status": "open",
       "diagnostics": "started",
-      "tools": "open"
+      "tools": "started"
     },
     "art": {
       "body": "model",
