@@ -33,7 +33,7 @@ MODULE = Module(
         fx2_id=0x0a,                  # no card id is free; the base assigns the live one over USB
         donor_desc=0x400d58b8,        # DARK REV; every drawn slot is written below
         abbr=b"COMB",
-        fullname=b"Combo",
+        fullname=b"COMBO",
         build_tag=False,
     ),
 

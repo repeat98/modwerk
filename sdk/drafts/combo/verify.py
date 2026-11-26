@@ -12,7 +12,7 @@ real dispatcher, the panel and the sound on a unit.
 Gates:
   1. Every instruction decodes as the mnemonic written: every product is
      the signed mpy/mac x0,y1 form (no mpysu/macsu), there is no rep, the
-     state stays inside X:(r7+$00..$4f), and the fixed constants in the
+     state stays inside X:(r7+$00..$5f), and the fixed constants in the
      assembly are tables.py's.
   2. Bit for bit the model in reference.py: stereo noise at the defaults,
      a loud tone at the dearest setting, every CAB, knob automation over
@@ -191,7 +191,10 @@ def main():
              f"({len(products)} in the disassembly, {wanted} in the source)")
         gate("1 no rep, no mpysu/macsu", not any(re.search(r"\brep\b|mpysu|macsu", l) for l in dis))
         offsets = [int(m, 16) for m in re.findall(r"\(r7\+\$([0-9a-f]+)\)", src)]
-        gate("1 state inside X:(r7+$00..$4f)", max(offsets) <= 0x4f, f"(highest $%02x)" % max(offsets))
+        gate("1 state inside X:(r7+$00..$5f)", max(offsets) <= 0x5f, f"(highest $%02x)" % max(offsets))
+        copy_end = 0x40 + 5 + 15
+        gate("1 the coefficient copy ends inside the state init clears",
+             "move    #>$40,n4" in src and "do      #96," in src and copy_end <= 0x60, f"(ends at ${copy_end - 1:02x})")
         imms = {int(m, 16) for m in re.findall(r"#>\$([0-9a-f]{6})", src)}
         missing = [k for k, v in T.CONSTANTS.items() if (v & 0xffffff) not in imms]
         gate("1 the assembly carries tables.py's constants", not missing, f"missing {missing}" if missing else "")
@@ -232,6 +235,12 @@ def main():
         for k in ({}, DEAR, {"GAIN": 0, "LEV": 0, "CAB": 0}, {"BASS": 0, "MID": 0, "TREB": 0}):
             (got,), _, _ = run(work, mem, syms, [(z, z, {0: k})], tag="zero")
             gate(f"3 silence in, silence out at {k or 'the defaults'}", not any(s24(got[0]) + s24(got[1])))
+
+        m3 = 44100 * 3
+        burst = noise(4410, 0.5, 3) + [0] * (m3 - 4410)
+        (got,), _, _ = run(work, mem, syms, [(burst, burst, {0: DEAR})], tag="tail")
+        gate("3 a burst's tail at the dearest setting ends in exact silence",
+             not any(s24(got[0][-44100:]) + s24(got[1][-44100:])))
 
         # 4. the float design
         m = 16 * 600

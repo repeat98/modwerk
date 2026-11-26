@@ -4,12 +4,15 @@ Everything here is Modwerk's own design, from textbook filter formulas
 (Robert Bristow-Johnson's Audio EQ Cookbook); no impulse response, curve or
 voicing is taken from any product.
 
-  CAB   5 rows x 15 words: one row per CAB setting (OFF, 1X10, 1X12, 2X12,
+  PRE   5 words: the 7 kHz pre low-pass biquad (below), as the CAB rows.
+  CAB   5 rows x 15 words from word 5: one row per CAB setting (OFF, 1X10, 1X12, 2X12,
         4X12), three biquads per row, each as b0, b1, b2, -a1, -a2, halved,
         in Q23. A cabinet is a resonant high-pass (the low thump), a
         resonant low-pass (the speaker's upper-mid bump and roll-off) and a
         second low-pass that steepens the top. OFF is three unit
         passthroughs, so CAB OFF is exact.
+  COMP  128 words from word 80: the level after the curve at each GAIN
+        step, 1/sqrt(G) halved, so turning GAIN up adds drive, not volume.
 
 The fixed filters (combo.asm immediates):
   KHP   pre high-pass one-pole at 90 Hz (keeps the drive from farting out)
@@ -17,6 +20,8 @@ The fixed filters (combo.asm immediates):
         waveshaper, so its harmonics alias less
   KL    tone stack's low split, one-pole at 300 Hz
   KT    tone stack's high split, one-pole at 2.2 kHz
+  KDC   DC blocker after the cabinet, one-pole high-pass at 10 Hz: the cabinet's
+        resonant high-pass can freeze a truncated offset in its dead band
 """
 import math
 
@@ -80,7 +85,18 @@ def cab_biquads(i):
 
 
 CAB_ROWS = tuple(tuple(w for bq in cab_biquads(i) for w in halved(bq)) for i in range(len(CAB_NAMES)))
-TABLE = tuple(w & 0xffffff for row in CAB_ROWS for w in row)
+
+
+def gain_g(k):
+    """GAIN's drive: ((k+16)/16)^2, +0 dB at 0, +38 dB at 127."""
+    return ((k + 16) / 16.0) ** 2
+
+
+# COMP: the level after the curve for each GAIN step, 1/sqrt(G) = 16/(k+16), halved: more GAIN
+# drives the curve harder without getting louder, and the cabinet keeps its headroom.
+PRE_WORDS = 5
+COMP_AT = PRE_WORDS + len(CAB_ROWS) * 15
+COMP = tuple(q23(0.5 / math.sqrt(gain_g(k))) for k in range(128))
 
 
 def one_pole(fc):
@@ -90,11 +106,12 @@ def one_pole(fc):
 KHP = q23(one_pole(90.0))
 KL = q23(one_pole(300.0))
 KT = q23(one_pole(2200.0))
+KDC = q23(one_pole(10.0))
 PRE = halved(lowpass(7000.0, 0.7071))
+TABLE = tuple(w & 0xffffff for w in PRE + tuple(w for row in CAB_ROWS for w in row) + COMP)
 CA, CB = q23(0.1875), q23(0.0625)      # the curve: 0.1875 c - 0.0625 c^3 (quarter scale of 0.75c - 0.25c^3)
 
-CONSTANTS = {"KHP": KHP, "KL": KL, "KT": KT, "CA": CA, "CB": CB,
-             **{f"P{i}": w for i, w in enumerate(PRE)}}
+CONSTANTS = {"KHP": KHP, "KL": KL, "KT": KT, "KDC": KDC, "CA": CA, "CB": CB}
 
 
 def response(coeffs, f):

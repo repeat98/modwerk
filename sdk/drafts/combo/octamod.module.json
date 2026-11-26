@@ -18,7 +18,7 @@
     "summary": "An amp and speaker cabinet for any track: drive, a three-band tone stack and four cabinets.",
     "overview": "Each channel runs a 90 Hz high-pass and a 7 kHz band-limit into GAIN, a soft curve that flattens at full scale, a tone stack that splits the sound at 300 Hz and 2.2 kHz (BASS, MID and TREB set each band, flat at the centre), then one of four speaker cabinets or none, and LEV. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
     "highlights": [
-      "GAIN from clean to fully driven, with a curve that rounds off instead of hard clipping",
+      "GAIN from clean to fully driven at about the same volume, with a curve that rounds off instead of hard clipping",
       "BASS, MID and TREB each cut to silence or boost up to +6 dB, and are exactly flat at the centre",
       "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off"
     ],
@@ -84,7 +84,8 @@
     "limitations": [
       "Experimental draft: rendered bit for bit against its model in dsp_host; not yet run on a unit.",
       "No free effect id is left for card builds (docs/OCTATRACK_MORE_EFFECT_IDS.md); over USB the base assigns the live id.",
-      "CAB switches its filters at once, so turning it while audio plays can click."
+      "CAB switches its filters at once, so turning it while audio plays can click.",
+      "At high GAIN with loud, bright input it aliases: no oversampling yet (TESTING.md, Sound quality)."
     ],
     "effectId": 10
   },
@@ -111,7 +112,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence, and 381.2 cycles a sample. Hardware, fx:audit, stress and CPU price not yet run.",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence and a silent tail, 394.8 instructions a sample. Emulator: installs, draws its page, 60 s trial without fault. fx:audit: no DC, no clipping, digital silence after input; aliasing fails at high drive. Hardware, stress and CPU price not yet run.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

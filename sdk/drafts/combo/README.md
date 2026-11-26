@@ -6,10 +6,11 @@ Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for
 
 COMBO puts a track through an amp and a speaker cabinet. GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track, in stereo: both channels run the same amp with their own state.
 
-Signal chain, per channel: `in -> 90 Hz high-pass -> 7 kHz band-limit -> GAIN -> soft curve -> BASS/MID/TREB -> CAB -> LEV -> out`.
+Signal chain, per channel: `in -> 90 Hz high-pass -> 7 kHz band-limit -> GAIN -> soft curve -> level (1/√GAIN × LEV) -> BASS/MID/TREB -> CAB -> 10 Hz DC blocker -> out`.
 
 - The high-pass keeps the lowest lows from muddying the drive; the band-limit keeps the curve's harmonics from aliasing as much.
-- The curve is 0.75c - 0.25c³ on the gained signal, limited at full scale, so it flattens smoothly instead of clipping hard. At full drive it peaks at half of full scale, which LEV's +12 dB brings back up.
+- The curve is 0.75c - 0.25c³ on the gained signal, limited at full scale, so it flattens smoothly instead of clipping hard.
+- After the curve the level comes down by the square root of GAIN's boost, so turning GAIN up adds drive, not volume: on a clean guitar DI the output stays within about 8 dB from GAIN 0 to 127. This also leaves the cabinet room, so nothing clips at LEV 64.
 - The tone stack splits the sound at 300 Hz and 2.2 kHz. With BASS, MID and TREB at their centre it is exactly flat.
 - Each cabinet is a resonant high-pass (its low thump), a resonant low-pass (its upper-mid bump and roll-off) and a second low-pass that steepens the top. They are Modwerk's own designs from textbook filter formulas, not impulse responses or models of any product.
 
@@ -19,7 +20,7 @@ FX page (FX1 or FX2):
 
 | Knob | Range | Default | What it does |
 | --- | --- | --- | --- |
-| GAIN | 0 to 127 | 40 | Drive into the amp: +0 dB at 0 (clean on most material), +22 dB at 40 (crunch), +38 dB at 127. |
+| GAIN | 0 to 127 | 40 | Drive into the amp: +0 dB at 0 (clean on most material), +22 dB at 40 (crunch), +38 dB at 127. The output level is compensated, so GAIN changes the drive, not the volume. |
 | BASS | -64 to +63 | 0 | Lows below 300 Hz: cut to silence at -64, flat at 0, +6 dB at +63. |
 | MID | -64 to +63 | 0 | Mids, 300 Hz to 2.2 kHz: the same range. |
 | TREB | -64 to +63 | 0 | Highs above 2.2 kHz: the same range. |
@@ -32,12 +33,12 @@ GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking the
 
 1. Install COMBO on a unit running the Modwerk USB base (`npm run module:dev -- combo` for a trial in RAM).
 2. Select an audio track, hold FUNC and press FX1 (or FX2), turn LEVEL to COMBO and press YES.
-3. Press FX1 (or FX2) for its knobs.
+3. Press FX1 (or FX2) for its knobs. Its SETUP page (FUNC + FX1) is empty for now.
 
 ## Quick tutorial
 
 1. Put a drum loop or a synth line on a track and pick COMBO on its FX1. At the defaults you hear a light crunch through a 1X12 cabinet.
-2. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy, and raise LEV to match the level.
+2. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy.
 3. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
 
 ## Compatibility and limitations
@@ -46,10 +47,11 @@ GAIN, BASS, MID, TREB and LEV glide (about 1.5 ms), so turning them, locking the
 - It takes no key gesture and no stock screen, and patches no stock code: it is one entry in the base's FX list.
 - Card builds refuse it beside Analog BD, as they refuse every effect not on Analog BD's reviewed list.
 - CAB switches its filters at once, so turning it while audio plays can click.
+- At high GAIN with loud, bright input it aliases (harsh tones that do not follow the note): see TESTING.md, Sound quality. Lowering TREB or GAIN reduces it.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence, and measures 381.2 cycles a sample (stock SPRING REV: about 314). Nothing has run on a unit yet.
+See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit for bit against [reference.py](reference.py), gives exact silence for silence, and measures 394.8 instructions a sample (stock SPRING REV: about 314). It installs and draws its page in the emulator. Nothing has run on a unit yet.
 
 ## Authorship and licences
 
@@ -63,4 +65,6 @@ None yet.
 
 - Hear it: `npm run module:dev -- combo` builds it and tries it on your unit over USB; `--watch` does that again on every save.
 - Gate: `python3 verify.py` (Python 3.12+, the vendored dsp56300 tools from `npm run upstream:tools`). `python3 tables.py` prints every cabinet's response.
+- Hear any WAV through it: `python3 render.py IN.wav OUT.wav GAIN=90 CAB=4X12` (`--dir` for a folder), the assembled DSP in dsp_host.
+- Emulator: `python3 tools/emu_session.py EMU TWIN PKG REPO OUT 11` installs the package on a scratch card and captures choosing COMBO and its page (TESTING.md).
 - Check it: `npm run module:doctor -- --draft combo`.

@@ -17,8 +17,7 @@ KNOBS = tuple(KNOB_DEFAULTS)
 
 # ---- the float design -------------------------------------------------------
 
-def gain_g(k):
-    return ((k + 16) / 16.0) ** 2
+gain_g = T.gain_g
 
 
 def float_combo(left, right, knobs):
@@ -47,13 +46,13 @@ def float_combo(left, right, knobs):
             sh += hp * (x - sh)
             v = bq(pre, sp, x - sh)
             c = max(-1.0, min(1.0, v * g))
-            p = 0.75 * c - 0.25 * c ** 3
+            p = (0.75 * c - 0.25 * c ** 3) / math.sqrt(g) * lev
             sl += lk * (p - sl)
             st += tk * (p - st)
             v = gb * sl + gm * (st - sl) + gt * (p - st)
             for c_, s_ in zip(cab, sc):
                 v = bq(c_, s_, v)
-            y.append(max(-1.0, min(1.0, v * lev)))
+            y.append(max(-1.0, min(1.0, v)))
         out.append(y)
     return out
 
@@ -116,7 +115,7 @@ class Model:
     """One instance of combo.asm. call(frames, words) runs one proc; words are the six knob words."""
 
     def __init__(self):
-        self.x = [0] * 0x50   # X:(r7+$00..$4f), as init leaves it
+        self.x = [0] * 0x60   # X:(r7+$00..$5f), as init leaves it
 
     def knobs(self, w):
         x = self.x
@@ -127,17 +126,19 @@ class Model:
         x[0x34] = hi(ld(w[2] & 0x7fffff))
         x[0x36] = hi(ld(w[3] & 0x7fffff))
         ln = w[5] & 0x7fffff
-        x[0x38] = lim(mac(0, ln, ln))
+        lv = lim(mac(0, ln, ln))
+        x[0x38] = lim(mac(0, lv, T.COMP[(w[0] & 0x7f0000) >> 16]))
         idx = min((w[4] & 0x7f0000) >> 16, 4)
-        x[0x40:0x4f] = list(ROWS[idx])
+        x[0x40:0x45] = list(PRE)
+        x[0x45:0x54] = list(ROWS[idx])
 
     def call(self, frames, words):
         x = self.x
         self.knobs(words)
-        if x[0x3a] == 0:
+        if x[0x3f] == 0:
             for t in range(0x30, 0x3a, 2):
                 x[t + 1] = x[t]
-            x[0x3a] = 1
+            x[0x3f] = 1
         for t in range(0x30, 0x3a, 2):
             if abs(ld(x[t]) - ld(x[t + 1])) < ld(64):
                 x[t + 1] = x[t]
@@ -150,14 +151,14 @@ class Model:
 
     def channel(self, base, sample):
         x = self.x
-        s = x[base:base + 0x16]
+        s = x[base:base + 0x18]
         # pre high-pass
         h = hi(ld(sample) >> 2)
         b = one_pole(s, 0, h, T.KHP)
         y = lim(ld(h) - ld(hi(b)))
         # pre low-pass
         st = s[2:6]
-        a = biquad_fx(y, st, PRE)
+        a = biquad_fx(y, st, x[0x40:0x45])
         s[2:6] = st
         # gain and the limit
         q = lim(a)
@@ -167,6 +168,8 @@ class Model:
         c3 = lim(mac(0, c2, c))
         bb = mac(0, c3, T.CB)
         p = lim(mac(0, c, T.CA) - bb)
+        # OUT = COMP x LEV
+        p = lim(w56(mac(0, p, x[0x39]) << 3))
         # tone stack
         one_pole(s, 6, p, T.KL)
         one_pole(s, 8, p, T.KT)
@@ -180,12 +183,13 @@ class Model:
         # cabinet
         for j, sb in enumerate((0x0a, 0x0e, 0x12)):
             st = s[sb:sb + 4]
-            a = biquad_fx(v, st, x[0x40 + 5 * j:0x45 + 5 * j])
+            a = biquad_fx(v, st, x[0x45 + 5 * j:0x4a + 5 * j])
             v = lim(a)
             s[sb:sb + 4] = st
-        x[base:base + 0x16] = s
-        # LEV
-        return w56(mac(0, v, x[0x39]) << 4)
+        # DC blocker, then back to full scale
+        b = one_pole(s, 0x16, v, T.KDC)
+        x[base:base + 0x18] = s
+        return w56((ld(v) - ld(hi(b))) << 2)
 
 
 def knob_words(k, pwords=None):
