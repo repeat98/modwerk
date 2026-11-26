@@ -448,7 +448,7 @@ if (import.meta.filename === process.argv[1]) {
     const { first, each, adds, tracks, notes } = result.curve, wanted = args.curve.split(',').length
     const rest = restCost(result.before, result.atRest)
     console.log(result.id.padEnd(28) + `curve on ${tracks.join(' ')}: +${adds.join(', +')} -> rest ${rest}, first ${first}, each ${each}` + (notes.length ? ' (' + notes.join('; ') + ')' : ''))
-    const problem = curveProblem({ points: result.curve.points, admission: result.curve.admission })
+    const problem = curveProblem({ module: result.id, points: result.curve.points, admission: result.curve.admission })
     console.log(result.id.padEnd(28) + 'admission: ' + result.curve.admission.map(run => run.pattern + ' ' + (run.admitted ? `admitted, longest frame ${run.frameMax} %, ${run.dropped} dropped, ${run.stalls} stalls` : run.admitted === false ? 'REFUSED' : 'not verified')).join('; ') +
       (problem ? '\n' + ''.padEnd(28) + 'NOT RELEASABLE: ' + problem : ''))
     if (problem) process.exitCode = 1 // the test procedure's step 9 stops here: this build does not carry a release
