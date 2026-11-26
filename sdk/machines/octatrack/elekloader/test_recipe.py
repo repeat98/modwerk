@@ -301,6 +301,10 @@ class RuntimeSlotTests(unittest.TestCase):
     def test_module_set_on_the_host(self):
         self.host_test('test_modset.c')
 
+    def test_module_set_on_a_card_on_the_host(self):
+        # modset.c's own sector store and load: the power cut before every stock file call of a save, and failed reads.
+        self.host_test('test_modset_card.c', defines=('-DMODWERK_HOST_CARD',))
+
     def test_status_keys_on_the_host(self):
         self.host_test('test_status.c')
 
