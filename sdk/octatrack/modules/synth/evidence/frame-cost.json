@@ -1,10 +1,10 @@
 {
   "module": "synth",
   "version": "0.1.5-experimental",
-  "base": "dce1d30e (0.8 development twin)",
-  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; stock alone 79.4 %), picks on empty C02; owner's MKII",
+  "base": "46c30886 (0.8 development twin of main 48f4a9b9c, base 24e480c4)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; the trigs placed again in the working copy on 26 November 2026, never saved: the card's copy of bank C had none), picks on empty C02, Part 1; owner's MKII",
   "seconds": 8,
-  "measuredAt": "2026-11-22T11:53:49.405Z",
+  "measuredAt": "2026-11-26T20:34:46.282Z",
   "tracks": [
     "T1",
     "T3",
@@ -12,27 +12,20 @@
     "T7"
   ],
   "rest": 0,
-  "first": 31.3,
+  "first": 32.8,
   "each": 0.5,
   "points": [
-    81,
-    107.9,
-    112.8,
-    113.3,
-    112.1
+    80.4,
+    110.3,
+    113.7,
+    111.7,
+    112.2
   ],
   "adds": [
-    26.9,
-    31.8,
-    32.3,
-    31.1
-  ],
-  "notes": [
-    "package sha256 8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de",
-    "Measured on that package. The current package 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9 differs from it in one byte only, the machine descriptor's CPU price (reserved[0], offset 27,925: 6 to 4); its code and data are the same.",
-    "Booked again from this Dev17 C04 curve (owner, 26 November 2026), after a re-read on CPUCURVE2 A03 (4b434cb28: stock alone 64.2 %, +16.8, +20.6, +20.8, +19.5, so first 20.4, each 0.2): a lighter pattern than the medium one reads a heavy machine low.",
-    "Read before repeat98/modwerk#2110 fixed the reference reading; its stock alone (81 %) is the 79.4-81 % every other C04 curve reads, so the reference played.",
-    "The admission runs are the A03 run's (Laslo's MKII, 24 November 2026, 0.8 twin 2f0dcfa3, package 791e26c5): CPUCURVE2 A02 empty admitted (longest 54 %, 0 dropped), A01 medium (78.4 % stock alone) refused with 31.3 booked."
+    29.9,
+    33.3,
+    31.3,
+    31.8
   ],
   "admission": [
     {
@@ -41,17 +34,24 @@
       "track": "T1",
       "seconds": 8,
       "admitted": true,
-      "frameMax": 54,
-      "frame": 34,
+      "frameMax": 64.5,
+      "frame": 32.3,
       "dropped": 0,
       "stalls": 0
     },
     {
       "pattern": "medium",
-      "number": 1,
+      "number": 4,
       "track": "T1",
       "seconds": 8,
       "admitted": false
     }
+  ],
+  "notes": [
+    "package sha256 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9",
+    "the Part's CPU allowance at 400 % for the curve's picks, back to 45 % for the admission runs",
+    "Read again on the owner's decision of 26 November 2026 to price FM Synth correctly. It agrees with the C04 curve of 22 November (81 -> 107.9, 112.8, 113.3, 112.1: first 31.3, each 0.5). A re-read on CPUCURVE2 A03, a lighter pattern (64.2 % stock alone), had read +16.8 (first 20.4, each 0.2).",
+    "Four FM Synth tracks took the medium pattern to 112.2 % with no render skipped, so a further track costs about 0.5 on the longest frame. The medium admission run was refused, judged by FM Synth's booked 31.3.",
+    "Its whole-track mean the same evening (T1 on FM Synth against T1 on STATIC, the same trigs, 6-s guard readings): 52.0 % against 35.5 % of a frame in the frame interrupt, +16.5. Its descriptor price (reserved[0]) is 4."
   ]
 }
