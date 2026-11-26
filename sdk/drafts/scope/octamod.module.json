@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 2,
+  "id": "scope",
+  "key": "SCOPE",
+  "name": "Scope",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "ilia-murzinov",
+    "credits": [
+      "ilia-murzinov: SCOPE ColdFire unit, panel, documentation."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Live waveform on DOWN + TEMPO",
+    "family": "Meter",
+    "summary": "Hold DOWN and press TEMPO for a full-screen scope of the selected track: OSC, XY or ALL eight tracks, with GAIN and TIME on A and B.",
+    "overview": "SCOPE opens a full-panel window over the page and plots the selected audio track after its effects and before its fader. OSC draws a mono polyline, XY plots left against right, and ALL shows eight mini level strips in track-pad order. Encoder A sets GAIN, encoder B sets TIME. Push A to reset GAIN and clear the peak hold. Release CUE to toggle the G/P HUD. UP and DOWN cycle the three views; RIGHT shows help and LEFT returns.",
+    "highlights": [
+      "DOWN + TEMPO opens OSC, XY or ALL without using an effect slot.",
+      "GAIN and TIME on A and B; push A clears the peak; CUE release toggles G/P.",
+      "Standalone: no TUNER module required."
+    ],
+    "usage": [
+      "Hold [DOWN] and press [TEMPO] to open SCOPE on the selected audio track.",
+      "Turn DATA ENTRY A for GAIN and B for TIME; press [UP] or [DOWN] to switch OSC, XY and ALL.",
+      "Press [TEMPO], [YES] or [NO] to close, or hold [DOWN] and press [TEMPO] again."
+    ]
+  },
+  "access": {
+    "location": "Front panel: hold DOWN first, then press TEMPO.",
+    "steps": [
+      "Select an audio track that is making sound. No effect slot is required.",
+      "Hold [DOWN] first, then press [TEMPO]. The full-panel SCOPE window opens.",
+      "Turn DATA ENTRY A (GAIN) and B (TIME). Press [UP] or [DOWN] to cycle OSC, XY and ALL.",
+      "Press [TEMPO], [YES] or [NO] to close. Hold [DOWN] and press [TEMPO] again to reopen."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "GAIN",
+      "default": 20,
+      "count": 41,
+      "labels": null,
+      "doc": "Vertical scale for OSC and XY. Centre (20) is 0 dB; 0..40 is about ±20 dB. Push A resets to centre and clears the peak hold."
+    },
+    {
+      "name": "TIME",
+      "default": 3,
+      "count": 10,
+      "labels": null,
+      "doc": "How much of the ring maps across the panel. Higher values show a longer stretch of audio."
+    },
+    {
+      "name": "VIEW",
+      "default": 0,
+      "count": 3,
+      "labels": ["OSC", "XY", "ALL"],
+      "doc": "OSC is a mono polyline of the selected track. XY is left against right. ALL is eight mini strips in track-pad order."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Audio tracks",
+    "conflicts": ["tuner"],
+    "uiClaims": ["key:DOWN+TEMPO"],
+    "limitations": [
+      "Draft Modwerk port. Tried by hand on one MKII over USB (26 Nov 2026), alone on release base 0.8.1; not timed, soaked or priced.",
+      "Patches the same TEMPO, frame and UI-loop sites as Tuner. A set cannot install both until a Modwerk base hook owns those sites (propose a hook). Until then this module lists Tuner as a conflict.",
+      "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
+      "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
+      "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
+      "No device:qualify run, CPU price or monochrome UI captures yet."
+    ]
+  },
+  "resources": {
+    "recorded": "Not measured on Modwerk; octabam sizes are in TESTING.md",
+    "storage": {
+      "label": "ColdFire code and ring",
+      "display": "Not measured on Modwerk",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "One DRAM linked unit (unit.s from octabam scope.s) and three six-byte detours. Exact package size pending a Modwerk package build.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, while open",
+      "display": "Not measured on Modwerk",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Octabam MKII CF METER (LSCOPE BJ): ISR mean 291 µs open / 288 µs closed on a busy 8-track project. Modwerk USB timing not run.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One open SCOPE window on the selected audio track. Estimates from source structure until Modwerk measures.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Frame interrupt copies 16 stereo samples into a ring while open; the UI task redraws about 60 Hz. No pitch detector.",
+        "source": "unit.s"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP program or effect slot. Reads the existing audio read-back arena.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One DRAM unit with stereo rings and draw state; creates the DRAM platform reserve when alone.",
+        "source": "unit.s"
+      }
+    },
+    "cpuPrice": {
+      "value": 0.2,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-26",
+      "conditions": "author's project, pattern A02, playing; base twin 4c7eb79b, MKII; 3 readings of 8 s a state. Frame interrupt 68.4 % before, 68.6 % installed and used nowhere; CPU meter 92.2 % before, 93.3 % at rest.",
+      "source": "evidence/cpu-price.json"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Reported by hand on one MKII over USB, 26 Nov 2026: package 48522941… on release base 0.8.1, alone. A RAM trial and a Keep with clean verdicts; TEMPO alone stays stock, DOWN then TEMPO opens OSC, XY and ALL, and TEMPO, YES and NO close it. The base refused removal while the window was open and removed it cleanly once closed. verify.py passes 14 checks under ot_emu. Not timed, soaked or priced; test:procedure not run.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "6e8f9fb4ecadff9cddbf529743000c0cb8a076c2",
+    "gates": [
+      "modules/scope/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original SCOPE ColdFire source and documentation by ilia-murzinov under MIT. No Elektron firmware, extracted routines or tables."
+  },
+  "media": []
+}
