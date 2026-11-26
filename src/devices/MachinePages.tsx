@@ -42,7 +42,7 @@ import { ModuleAuthors } from '../components/ModuleAuthors'
 import { digiMatchesQuery, octatrackMatchesQuery } from '../catalog/module-search'
 import { useModuleAudioPreviews } from '../components/audio-preview-context'
 import { ModuleAudioCardCover } from '../components/ModuleAudioPreview'
-import { useBetaUi, useSetWords } from '../community/beta-ui'
+import { useSetWords } from '../community/beta-ui'
 import { DEVELOP_PITCH, UNLOCK_NOTE, developHref } from '../overview/overview'
 
 type DigiDevice = DeviceProfile & { id: DigiMod['device'] }
@@ -302,9 +302,10 @@ function StackLadder({ device }: { device: DeviceProfile }) {
 
 // Machines without mods: the library page becomes an invitation to open the first one.
 export function EmptyMachine({ device, machinePicker, embedded = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean }) {
-  const repository = issueRepository(), mobile = useMobileWorkspace(), betaUi = useBetaUi()
+  // hasBetaUi, not useBetaUi: that context is the Octatrack base path's, open to everyone since its release.
+  const repository = issueRepository(), mobile = useMobileWorkspace(), betaUi = hasBetaUi(useCommunity().session)
   const page = FAMILY_PAGE[device.family], ready = readyForMods(device), steps = deviceSteps(device)
-  const preview = coreBuildPreviewOpen(device.id, hasBetaUi(useCommunity().session)) && !!device.sdk
+  const preview = coreBuildPreviewOpen(device.id, betaUi) && !!device.sdk
   return (
     <div className="device-page">
       {machinePicker && <div className="discovery-tools">{machinePicker}</div>}
