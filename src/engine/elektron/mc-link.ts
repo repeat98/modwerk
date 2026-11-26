@@ -215,7 +215,7 @@ export async function mcModules(call: McCall): Promise<McModules | null> {
     if (!p) return null
     const bytes = unpack7(p), view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
     if (bytes.length < 20 || String.fromCharCode(...bytes.subarray(16, 19)) !== 'MWI' || bytes.length < 20 + 24 * bytes[19])
-      throw new Error('The Model:Cycles sent a malformed module list.')
+      throw new Error('The unit sent a malformed module list.')
     const why = view.getUint32(8)
     Object.assign(out, { free: view.getUint32(0), largest: view.getUint32(4), refusal: REFUSALS[why] ?? 'refusal ' + why, active: view.getUint32(12) })
     for (let i = 0; i < bytes[19]; i++) {
@@ -226,6 +226,20 @@ export async function mcModules(call: McCall): Promise<McModules | null> {
     first += bytes[19]
     if (bytes[19] < 3 || out.modules.length >= out.active) return out
   }
+}
+
+export type McStatus = { identity: McIdentity; modules: McModules | null; load: McLoad | null }
+/** What the machine page's Status shows, over one line: the identity, then the live modules and the load, each null
+ * from a base without them (it refuses the command as a bad request). Null when no unit answers the identity. */
+export async function readMcStatus(access: MidiAccessLike, timeoutMs = 2000): Promise<McStatus | null> {
+  return withMc(access, timeoutMs, async call => {
+    const ident = await call(IDENT)
+    if (!ident) return null
+    const optional = async <T>(read: () => Promise<T | null>) => {
+      try { return await read() } catch (error) { if (error instanceof McRefused && error.status === BAD_REQUEST) return null; throw error }
+    }
+    return { identity: parseMcIdent(ident), modules: await optional(() => mcModules(call)), load: await optional(async () => { const p = await call(LOAD); return p && parseMcLoad(p) }) }
+  })
 }
 
 /** The upload controller's session with the connected unit: identity first, so BEGIN names the running base. */

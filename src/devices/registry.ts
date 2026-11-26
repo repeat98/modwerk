@@ -154,6 +154,11 @@ export function parseDeviceRoute(route: string): DeviceRoute | undefined {
   return undefined
 }
 
+/** The Model:Cycles' own page (ModelCyclesUnit.tsx), beside its machine page. */
+export const MC_UNIT_ROUTE = 'model-cycles/unit'
+/** The Analog Rytm MKII's own page (ModelCyclesUnit.tsx's RytmUnit), beside its machine page. */
+export const RYTM_UNIT_ROUTE = 'analog-rytm-mkii/unit'
+
 export function deviceHref(id: string, path = '') {
   if (id === 'octatrack') return '#' + (path || 'library')
   if (id === ALL_MACHINES) return '#all'
