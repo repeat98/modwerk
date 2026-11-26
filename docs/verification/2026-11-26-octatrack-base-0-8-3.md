@@ -1,8 +1,9 @@
-# Octatrack base 0.8.3: three fixes on top of 0.8.2, 26 November 2026
+# Octatrack base 0.8.3: four fixes on top of 0.8.2, 26 November 2026
 
-Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus three changes, each its author's commit:
+Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus four changes, each its author's commit:
 the frame interrupt's Part read from SRAM (#2174, Laslo), a Keep that never loses to an unreadable saved-set file
-(#2109), and module knob names that follow the drawn track (#2228, #2042). Base builds: see the end.
+(#2109), module knob names that follow the drawn track (#2228, #2042), and a USB Audio stream in the CPU limit (#2251).
+Base builds: see the end.
 
 ## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
 
@@ -108,12 +109,48 @@ store+0x2fe+30·track+6·fx.
 | LFO destination lists | they show these names too | not changed | known gap: the last-drawn track's names |
 | UI and frame cost of three more hooks | they run on every draw of those pages | not run | needs the unit |
 
+## 26 November 2026: a USB Audio stream counts in the CPU limit (#2251)
+
+- **Report:** UNGEMACH, SYNTIZ or FM Synth picked while no computer streamed broke up once Ableton recorded 16 channels
+  (MKI); picks made while it streamed were refused as PART IS BUSY, and that refusal outlived the stream.
+- **Cause, on the owner's MKII** (0.8.3 development twins, USB Audio 0.4.1, macOS recording with `rec.swift`, the guard
+  step's frame interrupt figures): the USB interrupt runs inside the frame interrupt's renders, so a stream stretches
+  every frame rather than adding a slice after it. USB Audio's own frame block took 0.5 % of a frame.
+
+  | Scene (twin) | No stream: longest / mean | Stream | Stretch of the mean |
+  | --- | --- | --- | --- |
+  | Empty pattern (1) | 33 / 24.2 % | 4 ch: 52.4 / 33.5 % | 1.38 |
+  | Empty pattern (1) | 32.8 / 24.5 % | 16 ch: 69.3 / 43.1 % | 1.76 |
+  | UNGEMACH trigging on T1 (1) | 66.5-73 / 37.6 % | 16 ch: 88.5-91.2 / 58.4-61.9 %, one render dropped in 6 s | 1.63 |
+  | UNGEMACH (1) | 66.7 / 37.4 % | 2 ch: 76-83.6 / 52.8-53.8 % | 1.43 |
+  | UNGEMACH (2, four takes) | 66.4-67.4 / 36.8-37.4 % | 16 ch: 69.4-72.6 / 43.7-44.4 % | 1.19 |
+  | UNGEMACH (2, after an INPUTS reconnect) | 66.8-69.9 / 37.4 % | 16 ch: 77.7-82 / 45.9 %; and playing into INPUTS AB: 45.8 % | 1.23 |
+
+  The stretch differed between boots (twin 1 and twin 2 differ only in a timer read twin 1 took around the USB block,
+  too little to explain it); not explained. Each stream start brought frames of 95-99 % and, once, 14 late entries
+  (the latest 259 µs).
+- **Change:** `usb_function.c` reports from EP3's enable bits (ENDPTCTRL3) whether the host streams, and in which
+  direction. `status.c` stretches what the reserve predicts and what a pick adds by `stream_factor()` (1.65 for every
+  stream, the stretch a Part dropped renders at; the set's `stock` carries `stream` and `streamDuplex` as pseudo ids
+  `0xffffffe0`/`1`), keeps the figures kept from a play as they would be without the stream, and names USB AUDIO STREAM
+  in CPU FULL and in the predicted brake's notice when the stream is what leaves no room.
+- **On the unit (twin 2, `6590dcdf` MAIN):** with 16 channels streaming, SYNTIZ on T3 of an empty pattern was refused:
+  CPU FULL, SYNTIZ NEEDS +30 %, USB AUDIO STREAM. With the stream closed the same pick was made. With UNGEMACH and
+  SYNTIZ on the Part, a pattern started while streaming paused SYNTIZ with the notice USB AUDIO STREAM / SYNTIZ, and
+  UNGEMACH played on.
+- **Host:** `test_status.c` (factor from the set and compiled, the stretched pick and its box, the brake and its notice,
+  the kept figure without the stream), `test_usb_function.c` (the enable bits), `set-package.test.ts` (the ids).
+- **Known limit:** a light Part with one heavy machine picked before the stream starts is not paused (its stretched
+  figure stays under the brake's 122 %) and can drop that machine's renders once the stream opens, as on the MKI. The
+  stream's own cost is the bigger lever (USB Audio).
+
 ## Builds and pending
 
-- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `a7771b082b3a0750…`,
-  browser = native `.bin` `cc0519b85418b0d4…` (835,484 bytes). Every change inside a declared site; the bootloader copy
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `71ecb7a1e7d8d831…`,
+  browser = native `.bin` `27472da4c5a3eeca…` (835,864 bytes; 835,848 of 851,712 container bytes). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
   with their bytes unchanged. Not yet booted on a unit.
+- Pending for #2251 on a unit: the release image, an MKI, 20 channels, and why the stretch differed between boots.
 - Pending on a unit: Euclid on two tracks (one AMP, one LP), switching between their main and FX1/FX2 SETUP pages,
   each showing its own names, with the UI and frame cost of the three hooks; a Keep, then two power cycles; the frame
   interrupt A/B on the release image.
