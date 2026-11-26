@@ -129,7 +129,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Reported by hand on one MKII over USB, 26 Nov 2026: package 48522941… on release base 0.8.1, alone. A RAM trial and a Keep with clean verdicts; TEMPO alone stays stock, DOWN then TEMPO opens OSC, XY and ALL, and TEMPO, YES and NO close it. The base refused removal while the window was open and removed it cleanly once closed. verify.py passes 14 checks under ot_emu. Not timed, soaked or priced; test:procedure not run.",
+    "summary": "0.2.0 package f8a1ffeb… on dev twin 4c7eb79b (26 Nov 2026): device:test and device:test --soak 120 passed; selftest 3/3 with Tuner kept beside Scope; DOWN+TEMPO UX reported by hand. At-rest CPU price ≈0 % delta (cpu-price-0.2.0.json). Release base 0.8.1 and removal-while-open cases reuse 0.1.0 notes until re-run on hooks base.",
     "hardwareStatus": "reported",
     "evidenceRevision": "6e8f9fb4ecadff9cddbf529743000c0cb8a076c2",
     "gates": [

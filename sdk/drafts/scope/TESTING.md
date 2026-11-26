@@ -5,15 +5,33 @@ Draft Modwerk port of octabam `modules/scope` at
 
 ## 0.2.0-experimental
 
-**Hardware status: not run.** Built with `npm run module:dev -- scope --build-only`
-on 26 November 2026: SHA-256 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`,
+**Hardware status: reported by hand on one MKII over USB, 26 November 2026,
+plus automated runs on a development twin.** Package from `npm run module:dev --
+scope --build-only`: SHA-256 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`,
 module `5f161c91`, 37,704 bytes, 198 relocations, **three hooks, zero stock
 sites** (`runtime.json`: `module_key`, `module_tick`, `ev_usb_frame`).
 
-`module:doctor --draft scope` is green on cross-compatibility with Tuner.
-`verify.py` still targets an octabam bus image with detours; it skips when
-the image has no patch at `0x40059ef0`. Emulator or unit trial of the `.mwrm`
-on a development twin is still open.
+Unit: ilia-murzinov's MKII, RAM boot of development twin `twin-dev-1014`, base
+`4c7eb79b844c8139…`, pattern A03, Part 2 (set also held **SEQ**, stock
+**Tuner** `05fef397…`, and **Scope** after the coexistence Keep).
+
+| Case | How run | Result |
+| --- | --- | --- |
+| `npm run device:test` (default 30 s) | automated, trial rolled back | pass: selftest 2/2 intact with SEQ only in set; inventory unchanged (`device-test.md`) |
+| `npm run device:test --soak 120` | automated, trial rolled back | pass: 120 s soak, core peak 429 ‰, inventory unchanged (`device-test-soak.md`) |
+| Tuner + Scope one set | Tuner Keep, then Scope Keep | pass: inventory SEQ + Tuner + Scope; `selftest` 3/3 intact |
+| DOWN + TEMPO UX | by hand on the dev twin | pass (reported): opens, draws, closes |
+| `npm run device:price` | trial rolled back; pattern playing, 3×8 s readings | at rest adds −0.1 % frame interrupt, +0.1 % CPU meter (`evidence/cpu-price-0.2.0.json`) |
+| Part put-back | `octatrack-part-state.mjs restore` | not automatic: Part 2 working copy differs from saved after qualify/soak; RELOAD by hand if you need a clean Part |
+| `verify.py` (octabam bus) | local | skip: no `sdk/out/mainos_bus.bin` in this worktree |
+
+`module:doctor --draft scope` is green on cross-compatibility with Tuner (no
+`conflicts` entry).
+
+Do not use `device:test --seconds 90` on this harness: qualify's batched
+`stats` step exceeds the dev socket timeout (40 s). Default 30 s is fine.
+
+Logs and generated entries: `~/modwerk-builds/scope-0.2.0-steps/`.
 
 ## 0.1.0-experimental
 
