@@ -1,0 +1,1 @@
+Digitone II: the development link no longer reads memory at an address the computer names. It answers only with its own counters and the screen, sent as one frame even while the display changes. Release bases do not have the link.
