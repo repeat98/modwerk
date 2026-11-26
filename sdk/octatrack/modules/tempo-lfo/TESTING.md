@@ -163,13 +163,16 @@ Tip-docs only. **No USB. No Accept.** Intended mirror of Micro Timing
 **not opened**: upstream tip requires `resources.cpuPrice` with
 `tool` starting `npm run device:price`. Fork pin has none. mop255 cfmeter
 load (287.8/287.8) is **not** a price — do not relabel. Same gate as
-Seq Pos MOP-249.
+Seq Pos MOP-249. Base draft `cursor/ot-lfo-pmtr-dest-base-a318` @ `9cd7428c4`
+(index **63**; lea deferred) is on the fork; PR held for Jon.
 
 | Gate | Result |
 | --- | --- |
 | Fork pin / Keep / qual / cycles | **PASS** (cite mop253–257) |
-| Upstream listing PR | **Blocked** — no forged `cpuPrice` |
+| Base `ot_lfo_pmtr_dest` on upstream | **Draft** on fork (PR held); not on `main` |
+| Upstream listing PR | **Blocked** — no forged `cpuPrice`; needs `.mwrm` after base |
 | Accept invent | none |
 
 Evidence:
-[`evidence/upstream-first-release-blocked-cpu-price-mop273-2026-11-26.md`](evidence/upstream-first-release-blocked-cpu-price-mop273-2026-11-26.md).
+[`evidence/upstream-first-release-blocked-cpu-price-mop273-2026-11-26.md`](evidence/upstream-first-release-blocked-cpu-price-mop273-2026-11-26.md),
+[`STAGING.md`](STAGING.md).
