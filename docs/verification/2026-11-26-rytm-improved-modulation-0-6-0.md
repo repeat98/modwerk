@@ -7,4 +7,4 @@ Nathaniel Pavel's (@npp1993) Improved Modulation (`quick-velocity-aftertouch-ass
 - **Unit:** the test rig ran R606, R607 and R608 (the source before the last one-line fix) on the author's unit, and the author tested R606 by hand (TESTING.md). This package's own image ran in rytm-emu only.
 - **Reviews:** four independent code reviews; the first three's findings are fixed in Q608, and the fourth's one (an empty SCENE + YES left another scene's undo armed) in Q609 with one line, checked in rytm-emu only. Q609 has had no further review.
 - **Memory:** 31,012 bytes of the shared mod area (base alone 118,836 free, with the module 87,824).
-- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` from the committed tree; `package-elemod-recipe.mjs`; `verify-elemod-release-exports.mjs` reproduced all 71 current exports. Package `71dd56dc…cbf3d`, pinned at `d0eb1e66`.
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` from the committed tree; `package-elemod-recipe.mjs`; `verify-elemod-release-exports.mjs` reproduced all 71 current exports. Package `66f025ae…81b59`, pinned at `9225d778`.
