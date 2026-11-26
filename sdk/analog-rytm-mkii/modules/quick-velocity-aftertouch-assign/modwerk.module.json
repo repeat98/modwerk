@@ -139,7 +139,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.7.0-experimental",
-    "sourceSha256": "cfac4e6fb646c1a6bf6671be3ecb19a34131eee4c8e2f97ff6b1e756f25913ee",
+    "sourceSha256": null,
     "reports": [
       "TESTING.md"
     ],
@@ -149,7 +149,7 @@
       "testedOn": "2026-11-25",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "On the author's Analog Rytm MKII with OS 1.74, 25 Nov 2026: a private development image of this version's source (R707, image CRC 8b6c1d98), RAM-booted over the flashed OS, scratch project, track 9 selected. The test rig, with the author's go and after two code reviews, ran 13 cases: FIX + PLAY showed CLEAR VELOCITY MODS and PLAY again UNDO CLEAR; with the four aftertouch slots in use CHRO + PLAY showed CLEAR AFTERTOUCH MODS, PLAY again UNDO CLEAR, and a new link was then refused again (AFTERTOUCH MODS FULL), so the amounts were back; LFO + PLAY from the SYNTH page showed CLEAR PAGE LFO with the destination's box gone, the page and the stopped sequencer as they were, and LFO + RECORD, PLAY, STOP copied, cleared and pasted the page (the box at +0.12 back); with performances 1 and 2 linked a PERF + knob lock showed with either one unlinked, PERF + PLAY showed CLEAR PERFORMANCES and PLAY again UNDO CLEAR, PERF + YES PERFORMANCES APPLIED and YES again UNDO APPLY; in scene mode with LIVE REC: QUANTIZED, scene 2 then scene 9 engaged, RECORD + YES showed APPLY PERF/SCENE REC and RECORD + NO then NOTHING TO CLEAR; SCENE + knob and SCENE + YES with its undo in the same and a later hold as on 0.6.0.",
+      "summary": "On the author's Analog Rytm MKII with OS 1.74, 25 Nov 2026: a private development image of this version's source (R707, CRC 8b6c1d98), RAM-booted over the flashed OS, scratch project. The test rig, with the author's go and after two code reviews, ran 13 cases: FIX + PLAY showed CLEAR VELOCITY MODS and PLAY again UNDO CLEAR; with the four aftertouch slots in use CHRO + PLAY cleared, PLAY undid, and a new link was refused again (AFTERTOUCH MODS FULL); LFO + PLAY from the SYNTH page showed CLEAR PAGE LFO with the destination's box gone and the page and stopped sequencer as they were; LFO + RECORD, PLAY, STOP copied, cleared and pasted the page; with performances 1 and 2 linked a PERF + knob lock showed with either one unlinked, PERF + PLAY showed CLEAR PERFORMANCES and PLAY again UNDO CLEAR, PERF + YES PERFORMANCES APPLIED and YES again UNDO APPLY; with LIVE REC: QUANTIZED two scene changes were written by RECORD + YES (APPLY PERF/SCENE REC); SCENE + knob and SCENE + YES with its undo as on 0.6.0.",
       "limitations": [
         "Run by the test rig only: the author has not tested 0.7.0 by hand, and nothing was judged by ear.",
         "This package's own image ran in rytm-emu only (the same C source as R707).",
