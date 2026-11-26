@@ -107,7 +107,7 @@
       "name": "AXIS",
       "default": 0,
       "count": 128,
-      "doc": "Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB",
+      "doc": "Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; with CAB OFF a gentle roll-off from 4.5 kHz",
       "labels": null
     },
     {

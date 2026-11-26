@@ -121,10 +121,11 @@ def cab_presence(i):
 
 
 def cab_offaxis(i):
-    """The cabinet's third biquad at MIC 127: the mic off the cone's axis, its top rolled off an octave lower."""
+    """The cabinet's third biquad at AXIS 127: the mic off the cone's axis, its top rolled off an octave lower;
+    with CAB OFF, a gentle roll-off from 4.5 kHz (the developer asked for AXIS without a cabinet, 26 Nov 2026)."""
     d = CAB_DESIGN[i]
     if d is None:
-        return PASS
+        return lowpass(4500.0, 0.707)
     l2f, l2q = d[2]
     return lowpass(l2f * 0.45, l2q)
 

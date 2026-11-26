@@ -138,7 +138,9 @@ The developer's Octatrack over USB, its flashed base `eb667962`; the development
 - By hand, in a 10-minute trial over USB: COMBO is the last row of T1's FX1 list; FUNC + FX1 shows the SETUP page with VOIC, TGHT, PRES, AXIS, DIST and MIX; VOIC steps through CLEAN to BASS (several encoder steps a voice, like a stock switch), TGHT showed +20, DIST 60, MIX 64. T1's FX1 was put back to FILTER, and the trial rolled back with no crash, stall, freeze or skipped track. Screens in ~/.cache/modwerk-emu/unit/shots2 (not committed).
 - Not run on the unit: the soak, MAIN and CUE recorded over USB, parameter locks, LFOs, scenes, PRES and AXIS turned, the frame-cost curve, and the release run (`device:qualify`, which Keeps).
 
-**Stage 2, the developer:** not yet.
+**Stage 2, the developer (as reported):** a 30-minute trial of the same package on their own Part, nothing kept. "Suena bien, me gustó lo que sonó"; no clicks heard. Before the trial ended they put every track back on FILTER and DELAY, and the trial rolled back with no crash, stall, freeze or skipped track. They asked that AXIS and DIST stay available with CAB OFF: DIST already did; AXIS did nothing there.
+
+**After the trial:** AXIS with CAB OFF now rolls the top off gently (a low-pass reaching 4.5 kHz at 127: −2.5 dB at 8 kHz at AXIS 64, −11.7 dB at 127; AXIS 0 stays exact). Only the table changed (tables.py, `cab_offaxis`), not the code or its cost; verify.py passes bit for bit. This table change has not run on the unit.
 
 ## On the unit (25 November 2026, build 4ae76341a, before VOIC)
 

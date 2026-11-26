@@ -60,7 +60,7 @@ MODULE = Module(
         Param(b"PRES", 0, 128, active=True, formatter=P,
               doc="Presence: the cabinet's 4-5 kHz bump, up to about +6 dB; with CAB OFF a peak at 3.5 kHz"),
         Param(b"AXIS", 0, 128, active=True, formatter=P,
-              doc="Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB"),
+              doc="Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; with CAB OFF a gentle roll-off from 4.5 kHz"),
         Param(b"DIST", 0, 128, active=True, formatter=P,
               doc="Mic distance: near at 0, far at 127, the room's early reflections in stereo"),
         Param(b"MIX", 127, 128, active=True, formatter=P,
