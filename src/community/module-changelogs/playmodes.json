@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Fixes a new project playing the previous project's modes: PROJECT > NEW now starts every pattern on NORMAL (#810).",
+      "PROJECT > CHANGE and RELOAD PROJECT still bring back the modes saved with the project.",
+      "Installs over USB on the Modwerk base with STEP REPEAT; until now USB sets got 0.1.1 without it (#764).",
+      "Known issue: not yet played on a unit by its authors; the MKI and PER TRACK under REPEAT are untested."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-19",
     "changes": [

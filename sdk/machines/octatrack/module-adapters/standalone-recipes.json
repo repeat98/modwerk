@@ -3,21 +3,21 @@
  "ports": {
   "playmodes": {
    "schema": 1,
-   "imageSha256": "8791721bb6f20898600bba88e600ad8710531c2a35db41a8299516dbc99f63b4",
+   "imageSha256": "43417b6f7b48f1fc546616e7457a2ff97970257dcc6c4a7fb97fe0b8f8f7ce18",
    "sources": {
-    "sdk/octabam/modules/playmodes/hooks.s": "55899e51737e76e9da1886353cc2330beb0f5b499e96c70fdd621172337332a3",
-    "sdk/octabam/modules/playmodes/manifest.py": "d1fc7d07762faa32c9fdc782b1b4fdcc527d2d2aba4530df69f013a0a4c4a4b8",
-    "sdk/octabam/modules/playmodes/generate.py": "b4d9cb0b38d5a946c53e4ccbf629c0cf16f59047f6a95360464acb89d6bf52a5",
-    "sdk/octabam/modules/playmodes/playmodes.s": "34a2464faadfd583c4fd9c773cfefd6e77c8125c291016a9b90942a2bb91f001",
-    "sdk/octabam/modules/playmodes/test_playmode.c": "25857c24842be4797e6a3b584c991a04329691591baf3f70a2944f69012187b4",
-    "sdk/octabam/modules/playmodes/test_adapter.c": "6765da074aa8f293081a3b2c824f81a589a7d4629e4c682c646ceb66a0804eb9",
-    "sdk/octabam/modules/playmodes/octamod.module.json": "2b8bb40bd95b908e4ca3a5d02fa642a33e2e7ccab71173cb54ba316dbc896e0e",
-    "sdk/octabam/modules/playmodes/playmode.c": "3c414a2eb48d3c198c369ee8924ed6608a0b55cf4fa03f57e424184f8485968e",
+    "sdk/octabam/modules/playmodes/hooks.s": "2b44e236ddbd9db898f60f2212ffeebaa22e4f2f6ef869781a7e21eefd09c0d9",
+    "sdk/octabam/modules/playmodes/manifest.py": "36c814b0157ca9a694ccd13cfe5ee871eb43379cbef7a9ad982010588956c0f1",
+    "sdk/octabam/modules/playmodes/generate.py": "01add234bd2588fdb218ea66516a370963650de4443a35ee4accf9dc266b5b9c",
+    "sdk/octabam/modules/playmodes/playmodes.s": "e1126249d800abf97e13f38e174b986ff817a94cd9c1c84d791d0da5c79b0972",
+    "sdk/octabam/modules/playmodes/test_playmode.c": "7f2fc9c9a7720b59b1ed26003691aafea7b90485e3d8e3338ecff5673bfec883",
+    "sdk/octabam/modules/playmodes/test_adapter.c": "0f098972df1750e29db95aa7d3fea14cf2a8a082495472ee044127ace26796dc",
+    "sdk/octabam/modules/playmodes/octamod.module.json": "158fddbec7f7e19a103376b4c2be46455e6f328fbfc721bf20f3eddc2f006b5f",
+    "sdk/octabam/modules/playmodes/playmode.c": "44fe79f74be585717e39aae56b5e9ae569ac3a3c8e8b778aab9ed3be2a914092",
     "sdk/octabam/modules/playmodes/verify.py": "377cc8d573ac98b1d9ec430b05f9d488bc8a37b8841cf6d9fbb64badafbf15ca",
-    "sdk/octabam/modules/playmodes/adapter.c": "b8786b2bfbfa9ed8f8b87ba0bdd98fbf4ed6cc0f16da8811e5cdfa3aa442fe9f",
-    "sdk/octabam/modules/playmodes/playmode.h": "1ba24397d193a3ca0ad4ed43652d19eef6ad7b0049bc26eb1265a21c69950ccc",
-    "sdk/octabam/modules/playmodes/evidence/performance.json": "8ecca1d6a7b6bebf49d306768f1d2e145e18d46bcfb8ae5044f47eb87030d1bd",
-    "sdk/octabam/modules/playmodes/media/capture.json": "98be9c2b0fe1e899be7d8c76d2e384e75d0cba9324975aee74c93f1675fc8eff",
+    "sdk/octabam/modules/playmodes/adapter.c": "f79913dc6cbfe9620289f39c61e261470b9afd36c5c6a19d61fdd462a8a83d18",
+    "sdk/octabam/modules/playmodes/playmode.h": "1e8e91e06b56e7c213e64c19ff4af305641f797b156eb14ce9b839939e5078f8",
+    "sdk/octabam/modules/playmodes/evidence/performance.json": "94801206830a177c69d58c49d03d8242750bab93f0894ee7ddfe588068f5f420",
+    "sdk/octabam/modules/playmodes/media/capture.json": "2a0f13622fb5c5b4614636ed7e8bf2cf38f67061a5ba1504ba7b2c33fabec7a0",
     "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
     "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
     "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
@@ -41,40 +41,48 @@
     "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
     "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
     "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "1a3c7746950365a34664a45e77be2f27591fabbde2ca053d781ae38b5e7e30c2",
-    "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "b2841ad6c500e3f4731221267d86d032c92dacfa604ce9e9ab85f36cb6489af3",
+    "sdk/runtime/loader/build.py": "1cab81067040bec39f391601d5f4b90e658da34dbc7351f97c4aa92a5d999dd4",
+    "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
     "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
-    "upstream/elekloader/link.py": "2d950474a5bd9d54e62747bfe7f9be30a37a7857df24cd9594e2198b912204f7",
+    "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
     "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
-    "upstream/elekloader/patch.py": "13cc7457aa9a9e6d8f40cd5add4d40b69a3fcedd2cc5f3d65fd1b9841cc8bd9f",
-    "upstream/elekloader/elemod.py": "a14188eff1975df98660fa2c4efc310a9d8bc24fa042cd796e0ac680453df9cd",
+    "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
+    "upstream/elekloader/elemod.py": "7536f9bee1e16876662bee03b1d80f81ca705e36b12b9f8ae060e1f8ae873228",
     "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
-    "upstream/elekloader/__init__.py": "0fa4969f9803f886b7ce0d82d151037670981f155f89328635e30ba77b99579d",
-    "upstream/elekloader/syx.py": "af8ccc0949b82135d9c591e0f983b50966c629037105305021b316f224e51deb",
-    "upstream/elekloader/formats.py": "4300d7f6b8692d80e68072e37af15c7706c7ef4b2b5ece646c552bc87e61ab29",
-    "upstream/elekloader/gui.py": "c4e5727bdc47da37baf6eb57126715e4fe5ae4e20c447f72ac2912fc51d3b543",
+    "upstream/elekloader/__init__.py": "eb28d2a32bf87b72fe4f792e55ce37f50c23042f573cf75275f6983731ed8779",
+    "upstream/elekloader/syx.py": "0ef9a2154ab2c100ab1cd7d09b48923916aa663c722418b8f6f4d500a56084f6",
+    "upstream/elekloader/formats.py": "715b0ca1c6bb96e41ab73338a6e625f33949d95599f58d94cd37e86ad0544b4e",
+    "upstream/elekloader/gui.py": "0d9b289bf72e6b7b23280fe099a92ee80c7007ca484a72fadc37147a4f9e8056",
     "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
     "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
-    "upstream/elekloader/lint.py": "468fc0cfd177b7646a0a4dc24f633775a8bc9a350f8c6bf0af8b29c12c762674",
-    "upstream/elekloader/isa/__init__.py": "df27c3c73735bf160a930231d5c138d848653d0820e870bb7544223afa3c6b7f",
-    "upstream/elekloader/isa/coldfire.py": "7936cd81549113d32781e5ae96f91e35c62d756ebfc509655cfa06dd00fa58df",
-    "upstream/elekloader/codec/transport.py": "b8ac543de1ff1e8c94c268256cc02ec02203145d4f5a1b4d87d50a4a34156d77",
-    "upstream/elekloader/codec/__init__.py": "df27c3c73735bf160a930231d5c138d848653d0820e870bb7544223afa3c6b7f",
-    "upstream/elekloader/codec/aplib.py": "26c86226e4ae07597012a869f97f90fd9506aed401a823506e6f8b8fc13456a1",
-    "upstream/elekloader/codec/elz.py": "bace6db7e69acc766c16cc0b4bc0ed9b33e53b91bfbc56e2c650b9c6417d65ec",
-    "upstream/elekloader/sdk/build.py": "81b6e5426a74f51d529a2c05207502bb25207b037b0e32329cdc1c70ca61c505",
-    "upstream/elekloader/sdk/octabam.py": "18cafc9e8d91917017a78330c22c3f51a2e0529abea7c292ffe8a364273802b4",
+    "upstream/elekloader/lint.py": "8eeb918e9c2d0d8a20ffa26df326834ddff2676090624a587c1902d3dee76e9c",
+    "upstream/elekloader/sdk/build.py": "a602ea4c24d80a653c2c6f6786399016503a5294674d942e97e7895983108592",
+    "upstream/elekloader/sdk/octabam.py": "26103cf846bc7a3d038ae5f213bef614b35144293539e3721e31affc0e4eda7a",
     "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
     "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
     "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
-    "upstream/elekloader/devices/digitone_mk1.py": "8f86b2384f2aae8b34fcee6036c3c347bf77c2d55dc24677649baa09a2e4adc0",
-    "upstream/elekloader/devices/__init__.py": "724ebe0ecf4d9447a5d66bba3c10b168f5abe5d2d8296b4447d3562b66141bec",
-    "upstream/elekloader/devices/octatrack.py": "110dbea9e71046994d4ae1f05638dbf6f8ab72388dca5ffc590e5e978ea38975",
-    "upstream/elekloader/devices/digitakt_mk1.py": "2126ee25bb30f98246a03e93e1766376ec975de751cf2c9b8e24f987e77fc022"
+    "upstream/elekloader/devices/digitone_mk1.py": "ddd084da185af114eeda708634a56e6601bf1d365c43d750a69b5c959d1c1900",
+    "upstream/elekloader/devices/__init__.py": "8b350354c5b1e1e2ffc0bb4f3a446b9267d29c807163a84da9312aa31a888208",
+    "upstream/elekloader/devices/octatrack.py": "6d062387e822a88f9629ba88667f031c5a933098d206377d2b18190ff87e346b",
+    "upstream/elekloader/devices/digitakt_mk1.py": "ce3df4e8b65f4d8c2265a2c0fb224ab28640b139ffcf8c98731b9561b0aae07b",
+    "sdk/octabam/modules/playmodes/runtime.json": "ebe5ea77ec4a55563368a48b0641802372c58c9893243bb2adf2a2fe05c389c2",
+    "sdk/octabam/modules/playmodes/evidence/cpu-price.json": "8766719f47b70403f3cd61c2a0a818a9f7bada7b6efa41454e569ead757bc488",
+    "upstream/elekloader/store.py": "1f20970b0da2a89a64847c337045f4d33b43038d670cf542f4ad03c01ada296d",
+    "upstream/elekloader/devices/model_cycles.py": "cfa5b27f1075669589f892f65c1bb55433a6cf12477076f4612b6531fdf37cb7",
+    "upstream/elekloader/devices/analog_four_mk2.py": "60effb1531138bceafc93d5a99fb574da51c381c39679c2b5b9f229070761102",
+    "upstream/elekloader/devices/analog_rytm_mk2.py": "07cae57bf241981c9aee8f1953ac69f0f24b9bfd9764910fc85fbc8c761a953b",
+    "upstream/elekloader/devices/model_samples.py": "2d441ab41233a228cf98894bede7e745d48eb56d85ff3d4fabe5a3045ff61e47",
+    "upstream/elekloader/sdk/bounties.py": "55170aa1cf763e3dd1d5cef7b86ccbf12e6ec4beebb7f709ac42469f9f8020cd",
+    "upstream/elekloader/sdk/coresites.py": "27c1c90ca6a96e0b7b9e9eaeae2e5709a991967eaf7db5199af955e9fe0e8589",
+    "sdk/firmware_codec/__init__.py": "0864c063d8c45793479098c425dbd4ec34b7d14acf781c1eaa8f65805e5016ca",
+    "sdk/firmware_codec/aplib.py": "b1c6473b3bc81cfa4301f599693e7959c78fa0b033ba8c3d31f560fcc41e4d2a",
+    "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
+    "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
+    "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5"
    },
    "copies": [
     {
-     "offset": 3198,
+     "offset": 3406,
      "length": 15,
      "address": 1073909732,
      "sha256": "6f0382a91ff044f6a464025c1d7f03bad8b822cb49dbce8cda3ab60535f848c7",
@@ -82,15 +90,15 @@
      "authored": {
       "source": "sdk/octabam/modules/playmodes/playmodes.s",
       "lines": [
-       1271,
-       1281
+       1351,
+       1361
       ],
       "symbol": "pm_per_track",
       "method": "native-unit"
      }
     },
     {
-     "offset": 3530,
+     "offset": 3738,
      "length": 14,
      "address": 1073882006,
      "sha256": "eb5a0a000b0368e2a23847c4251da29f3f28ada9b50cf71ca177e11ae65d2aaf",
@@ -98,15 +106,15 @@
      "authored": {
       "source": "sdk/octabam/modules/playmodes/playmodes.s",
       "lines": [
-       1393,
-       1402
+       1473,
+       1482
       ],
       "symbol": "pm_track_length",
       "method": "native-unit"
      }
     },
     {
-     "offset": 6008,
+     "offset": 7060,
      "length": 13,
      "address": 1073972194,
      "sha256": "db509240d0b12958fad1adbe414340a8580949e5116ed3ceecac4e3b5cc6c005",
@@ -114,15 +122,15 @@
      "authored": {
       "source": "sdk/octabam/modules/playmodes/playmodes.s",
       "lines": [
-       2226,
-       2234
+       2644,
+       2652
       ],
       "symbol": "pm_key_updown",
       "method": "native-unit"
      }
     },
     {
-     "offset": 7138,
+     "offset": 8286,
      "length": 12,
      "address": 1074056994,
      "sha256": "1c5975330c0ddc7a32f1d70c5735118826981c8a68a7bf3397c92d094e0e5385",
@@ -130,15 +138,31 @@
      "authored": {
       "source": "sdk/octabam/modules/playmodes/playmodes.s",
       "lines": [
-       2712,
-       2714
+       3178,
+       3180
       ],
       "symbol": "pm_key_entry",
       "method": "native-unit"
      }
     },
     {
-     "offset": 7605,
+     "offset": 8744,
+     "length": 12,
+     "address": 1074056994,
+     "sha256": "1c5975330c0ddc7a32f1d70c5735118826981c8a68a7bf3397c92d094e0e5385",
+     "purpose": "Authored pm_trig_stub instruction span; reconstructed identically from guarded stock coincidence",
+     "authored": {
+      "source": "sdk/octabam/modules/playmodes/playmodes.s",
+      "lines": [
+       3401,
+       3403
+      ],
+      "symbol": "pm_trig_stub",
+      "method": "native-unit"
+     }
+    },
+    {
+     "offset": 8837,
      "length": 13,
      "address": 1074305305,
      "sha256": "55eada7b38d544499ed47966c271580737bf1f50409d06e8c38d4289f836929f",
@@ -146,8 +170,8 @@
      "authored": {
       "source": "sdk/octabam/modules/playmodes/playmodes.s",
       "lines": [
-       2950,
-       2953
+       3465,
+       3467
       ],
       "symbol": "pm_proj_write",
       "method": "native-unit"

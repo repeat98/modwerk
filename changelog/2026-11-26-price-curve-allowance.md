@@ -1,0 +1,1 @@
+Development: `npm run device:price -- --curve` on a machine raises the Part's CPU allowance on the development twin to 400 % for the curve's picks and sets it back before the admission runs. A machine's price alone kept a second instance out whatever the cost table booked (Grain 0.1.3: 35 against 45), so its curve could read only one point.

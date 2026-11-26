@@ -229,3 +229,58 @@ under the port, micro-timing / conditions / slides on repeated steps, the
 stress project and the stock-load benchmark, chip timing. Physical reboot,
 Part/project reload after unsaved edits and distinct-track isolation remain
 unverified, as for 0.1.1.
+
+## Modwerk 0.2.1 (PROJECT > NEW, #810; USB package, #764)
+
+Source: 0.2.0 plus three handlers in `adapter.c` (`pm_ev_banks_load`,
+`pm_ev_project_reloaded`, `pm_ev_project_new`), one byte of state in
+`hooks.s` (`pm_loading`) and `runtime.json`, which subscribes them to the
+base's project hooks. `playmodes.s` regenerated with m68k-elf-gcc 16.2.0: it
+differs from 0.2.0 only in the new functions, the new byte and renumbered
+labels, so the step path and its instruction counts are 0.2.0's.
+
+- `python3 verify.py`: both host suites and the ColdFire unit pass. New
+  adapter cases: NEW empties every pattern, in battery RAM too and through a
+  simulated power cycle; CHANGE keeps the loaded modes whether its
+  `project.work` pass comes before or after the new-project step; RELOAD with
+  and without `ev_banks_load`; a NEW after those loads still empties.
+- USB package `octatrack-modules/playmodes/0.2.1-experimental.mwrm`
+  (SHA-256 `5656b2cd…aa22`, 16,478 bytes, ABI 8, 36 stock-code sites, 6
+  copies, 3 hook words). Standalone recipe recaptured against the original OS
+  1.40C: the five spans of 0.1.1 at new offsets and STEP REPEAT's trig stub
+  (`pm_trig_stub`, the same 12 bytes as `pm_key_entry`'s), each compared with
+  the OS and an assembler listing of `playmodes.s`. `build.py --standalone
+  --stock` rebuilds it byte for byte; `modules:compat`: no problem.
+
+On the owner's MKII (development base `3704e557…`, RAM trials rolled back
+at the end, verdicts "no fault logged"), 26 November 2026, by Claude Code
+for the owner. The table was read from battery RAM (`0x100f8600..`) after
+each action; G01 and A01 are the patterns whose modes were set:
+
+| case | package | result |
+|---|---|---|
+| set G01 REVERSED, SAVE, set PINGPONG (unsaved), RELOAD PROJECT | 0.2.1 (`5656b2cd`) | pass: G01 back to REVERSED, as saved |
+| PROJECT > CHANGE > CREATE EMPTY PROJECT from that project | 0.2.1 | pass: all 256 rows NORMAL |
+| CHANGE to a project saved with A01 REVERSED, from one with G01 REVERSED | 0.2.1 | pass: A01 REVERSED, G01 NORMAL |
+| the same three with the hook order logged (a private build of this source plus a log in free battery RAM, not published) | diagnostic | pass; order below |
+
+Hook order on the unit, as the diagnostic build logged it: RELOAD:
+`ev_project_reloaded`, `ev_project_new` (kept: a load was marked), the
+loader's parse-only pass, its storing pass and the `#PLAY_MODES` line. CHANGE:
+the parse-only pass, `ev_banks_load`, `ev_project_new` (kept), the parse-only
+pass again, the storing pass and the line. CREATE EMPTY PROJECT:
+`ev_project_new` alone (emptied), no project file read. So on this unit the
+storing pass comes after the new-project step in both loads; the mark keeps
+the table either way.
+
+CPU price (`npm run device:price -- --write`, same unit and base, project
+LIVE/Dev17, pattern A01, every pattern NORMAL, 3 readings of 8 s a state):
+frame interrupt 43.3 % before and 43.3 % installed and used nowhere, CPU
+meter 62.6 % and 63 % (`evidence/cpu-price.json`). A first run on the same
+scene with A01 still REVERSED from the CHANGE test read +2.8 points: that is
+the pattern playing reversed with the module in and stock order without it,
+not the module at rest, so it was discarded.
+
+Not run for 0.2.1: power cycle (the table is in battery RAM, as before),
+the MKI, Keep and removal, STEP REPEAT and the six modes played by ear on
+this build, LOAD from another set, and the authors' own units.
