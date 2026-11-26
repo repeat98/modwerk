@@ -4,7 +4,8 @@
 // ev_render_out as a share of the time between two blocks: core_audio_load, 256 = the whole period
 // (analog-rytm-mk2/load.h). The lean engine's CPU mark (perf-cpu-mark.c) already adds every block's figure up in the
 // interrupt for its own mark, and keeps the look's dearest; each look (every tenth UI tick, about half a second) it
-// hands the sums here, on the UI task. So this file adds no code to the interrupt, and the mark two instructions.
+// hands the sums here, on the UI task. So this file adds no code to the interrupt, and the mark three instructions
+// (13 a block instead of 10).
 // LOAD reports the last look's mean, its dearest block and the dearest since boot, in tenths of a percent, as the
 // Model:Cycles' load.c does. A single block's figure is less sure than the mean: the core divides by the time since
 // the block before began, so a block after a late one reads high (perf-cpu-mark.c).

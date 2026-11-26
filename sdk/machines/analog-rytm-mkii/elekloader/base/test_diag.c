@@ -126,6 +126,19 @@ int main(void)
     CHECK(mw_diag_log.incidents == stopped + 1u && last()->kind == DIAG_FREEZE && last()->a == 7600u);
     frozen = mw_diag_log.incidents;
 
+    // A look that is not a normal one cannot change a block's length: one across a stall of 40 s, which wraps the timer,
+    // and one where audio ran a quarter of the time. A five-second stall after them still reads as one.
+    mw_test_timer += 60000u * BLOCK;             // 40 s of audio, the timer wraps past its 2^32 counts (about 32 s)
+    mw_load_look(60000u * 100u, 60000u, 100u);
+    mw_test_timer += 3000u * BLOCK;              // two seconds, a quarter of it with audio
+    mw_load_look(750u * 100u, 750u, 100u);
+    mw_diag_tick(0);
+    stopped = mw_diag_log.incidents;
+    mw_test_timer += 7600u * BLOCK;
+    mw_diag_tick(0);
+    CHECK(mw_diag_log.incidents == stopped + 1u && last()->kind == DIAG_FREEZE && last()->a == 7600u);
+    frozen = mw_diag_log.incidents;
+
     // A ring past its size keeps the newest.
     for (unsigned i = 0; i < 40u; i++) {
         mw_test_timer += 8000u * BLOCK;

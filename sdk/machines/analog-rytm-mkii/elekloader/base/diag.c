@@ -27,14 +27,16 @@ extern volatile uint32_t mw_test_timer;
 #define HOT 900u                 // per mille
 #define HOT_GAP 1200u            // looks between two HOT incidents: ten minutes
 #define SETTLED 120u             // no HOT in the first minute
-#define CALIBRATE_MAX 24000u     // blocks a look may hold and still give a block's length: 16 s, under DMA timer 0's
-                                 //   wrap (2^32 counts, about 32 s); a longer look keeps the last length
+#define CALIBRATE_MIN 300u       // a look gives a block's length only when it is about a normal one (a fifth to four
+#define CALIBRATE_MAX 3000u      //   times half a second), and once one has, only within a quarter of it: a block's
+                                 //   length in timer counts never changes, so a look across a stall past the timer's
+                                 //   wrap (about 32 s) or one where audio ran part of the time cannot move it
 
 volatile struct diag_log mw_diag_log;
 #define LOG (&mw_diag_log)
 
 static uint8_t keys[16];
-static uint32_t key_count, ticks, blocks, windows, last_avg;
+static uint32_t key_count, blocks, windows, last_avg;
 static uint32_t w_sum, w_peak, w_n, w_played, w_tickgap, hot_run, hot_at;
 static uint32_t look_at, tick_at, block_counts;   // DMA timer 0 at the last look and tick; its counts in one block
 
@@ -72,7 +74,7 @@ void mw_diag_start(uint32_t nonce, uint32_t set_crc)
     LOG->version = DIAG_VERSION, LOG->magic = DIAG_MAGIC;
     start_crc = set_crc, started = 0;
     // The counts start again with the log (at boot they are zero already, the core having cleared .bss).
-    key_count = ticks = blocks = windows = last_avg = 0;
+    key_count = blocks = windows = last_avg = 0;
     w_sum = w_peak = w_n = w_played = w_tickgap = hot_run = hot_at = 0;
     look_at = tick_at = block_counts = 0;
 }
@@ -84,8 +86,11 @@ void mw_diag_window(uint32_t avg, uint32_t wmax, uint32_t n)
     uint32_t w, now = DTCN0;
     if (LOG->magic != DIAG_MAGIC)
         return;
-    if (look_at && n && n <= CALIBRATE_MAX)
-        block_counts = (now - look_at) / n;
+    if (look_at && n >= CALIBRATE_MIN && n <= CALIBRATE_MAX) {
+        uint32_t c = (now - look_at) / n;
+        if (!block_counts || (c > block_counts - block_counts / 4u && c < block_counts + block_counts / 4u))
+            block_counts = c;
+    }
     look_at = now;
     if (!n)
         return;                         // a look without audio blocks: only its time counts
@@ -128,7 +133,6 @@ void mw_diag_tick(void *ctrl)
 {
     uint32_t now = DTCN0;
     (void)ctrl;
-    ticks = ticks + 1u;
     if (LOG->magic != DIAG_MAGIC)
         return;
     if (!started) {

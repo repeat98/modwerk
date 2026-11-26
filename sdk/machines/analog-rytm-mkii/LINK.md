@@ -23,8 +23,8 @@ with `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analo
 Every base, release or development, in every variant, answers `ident`, `load`, `diag` and `log`.
 They read and change nothing else: no host can press a key, read memory outside the log or
 confirm an upgrade on a release base, which answers every other request `bad request`. On the
-send-bus variant they cost 3,460 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
-it the log (the voices and plain variants the same), and one site each in stock's SysEx router and
+send-bus variant they cost 3,396 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
+it the log (voices the same; plain 3,348 and 6,848), and one site each in stock's SysEx router and
 boot (`0x40083dd8`, `0x400008c6`). The boot site computes the set identity, with the data cache off
 (stock's own state at that point), over the `.run` block once a boot.
 
@@ -95,7 +95,7 @@ range, 5 a person is at the unit.
 | --- | --- | --- | --- |
 | `ident` | 0x01 | no | every base: link version, armed, person-at-unit flag, counters (person, posted, refused, drops, received), the link's tick count, reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM; where the gate keeps its diagnostics; and the set identity (below). A release base sends the arm, person and RAM boot fields as 0. An older base ends earlier: before the set identity, or before the diagnostics' place |
 | `diag` | 0x22 | no | every base: the diagnostics log's address and size in bytes (the Model:Cycles' and Digitone II's number) |
-| `load` | 0x23 | no | every base: the audio block's share of its period over the last half second, the half second's dearest block and the dearest block since boot (tenths of a percent), the half seconds and the blocks counted (`load.c`) |
+| `load` | 0x23 | no | every base: the audio block's share of its period over the last look (ten UI ticks, about half a second while the UI keeps up), that look's dearest block and the dearest block since boot (tenths of a percent), the looks and the blocks counted (`load.c`) |
 | `log OFF N` | 0x24 | no | every base: up to 128 bytes of the diagnostics log from OFF, as `mem`'s reply (offset, count, bytes); nothing outside the log |
 | `disarm` | 0x02 | no | turns the arm off and clears every key the link held |
 | `key ID FLAGS` | 0x10 | yes | a panel key message on the UI queue with the flags as given; a held key reads as held to `is_key_held` |
@@ -118,7 +118,7 @@ send-bus base `9413108d` + Filter Hz): `fbcf1ac8`, 42,384 bytes, from both.
 
 **The diagnostics log** is the Octatrack's layout, version 2 ([`diag.h`](elekloader/base/diag.h),
 checked against the Octatrack's by `sdk/tests/test_machine_base.py`), so the site's parser reads it.
-The Rytm fills the five-minute load records (the audio's mean and dearest block, the half seconds the
+The Rytm fills the five-minute load records (the audio's mean and dearest block, the looks the
 sequencer played and the longest time between two UI ticks, in audio blocks; the gap between audio
 blocks stays 0, since nothing of the log runs in the interrupt) and START, BASE (the set identity),
 HOT (a second at 90 % or more) and FREEZE (the UI standing still five seconds or more, logged when
