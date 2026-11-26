@@ -62,7 +62,8 @@ On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` l
   base refuses that machine's pick without a box, the track staying on its old machine (Analog BD, 17 November 2026).
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish;
-  a USB replug does not end it, and a RAM boot from it fails (22 November 2026, #1386).
+  a USB replug does not end it, and a RAM boot from it fails (22 November 2026, #1386), as did one right after a
+  `recover` that finished (26 November 2026): after a recovery, ask for a power cycle before the next RAM boot.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
   cycle before the next RAM boot: one such boot hung at the logo (12 October 2026,
   [traps](OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code)).
