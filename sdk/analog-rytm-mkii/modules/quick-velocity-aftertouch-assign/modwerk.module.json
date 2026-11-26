@@ -122,7 +122,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 30820,
+    "memoryBytes": 30996,
     "fastBytes": 0,
     "load": {
       "display": "About 0.5 % of the audio block idle (QPER's quick perf rec, measured on a unit); the rest is UI only",
@@ -131,18 +131,31 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.6.0-experimental",
     "sourceSha256": null,
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-25",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "On the author's Analog Rytm MKII with OS 1.74, 25 Nov 2026: private development images of this version's source (R606, R607, R608), RAM-booted over the flashed OS, scratch project. The test rig, with the author's go, ran R608, the final source: SCENE + knob; PERF + knob's lock box, PERF + PLAY clearing and undoing; SCENE + YES applying at once and undoing, also from a later hold; PERF + YES applying and undoing with the amount set by MIDI; scene changes in LIVE RECORDING written by RECORD + YES (APPLY PERF/SCENE REC), RECORD + NO then NOTHING TO CLEAR. On R606 and R607 it also ran CHRO + knob, QPER + knob as stock and SCENE + pad + knob. The author tested R606 by hand: CHRO's assign and tap, SAMPLER and QPER as stock, QPER + pad linking and SCENE + YES passed, and asked for the immediate keys, the lasting undo, PERF mode's pads left to stock and the new messages, which R607 and R608 carry.",
+      "limitations": [
+        "The hand test ran on R606; R607 and R608 (its requests and the review fixes) ran by the rig only, and this package's own image in rytm-emu only.",
+        "Scene playback from the take and a scene take across a loop length change were checked in rytm-emu, not on the unit; the sound was not judged.",
+        "PERF + YES needs the QPER knob moved since power on: by hand it said NOTHING TO APPLY until then.",
+        "Duration not recorded."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.6.0 in rytm-emu against stock: the PERF hold, QPER's link, the CHRO hold and tap, SCENE + YES and its undo, the scene lane (record, playback over a pass, RECORD + YES locks), and 33 rig cases; see TESTING.md for what ran on the author's unit. Earlier versions as recorded there.",
+    "summary": "0.6.0 in rytm-emu against stock (the PERF and CHRO holds, QPER's link, SCENE + YES and the undos, the scene lane: record, two changes, playback over a pass, RECORD + YES locks) and 33 rig cases; on the author's unit the rig ran R606 to R608 and the author tested R606 by hand. Three independent code reviews; see TESTING.md. Earlier versions as recorded there.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -199,8 +212,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -215,8 +228,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -231,8 +244,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -247,8 +260,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -263,8 +276,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -279,8 +292,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -295,8 +308,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -311,8 +324,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -327,8 +340,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -343,8 +356,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-        "setup": "Headless rytm-emu (dtboot) running Q606: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+        "setup": "Headless rytm-emu (dtboot) running Q608: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Improved Modulation 0.6.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

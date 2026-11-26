@@ -4,16 +4,16 @@
   "moduleId": "quick-velocity-aftertouch-assign",
   "moduleVersion": "0.6.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-26T03:00:00Z",
-  "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.6.0-experimental, materialised against stock OS 1.74, --version Q606",
+  "capturedAt": "2026-11-26T01:00:00Z",
+  "imageSha256": "cad7264b1b505a67c3f4e5637a27ee619ff1a096bd3303db8562ef76e83ca216",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.6.0-experimental, materialised against stock OS 1.74, --version Q608",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot Q606 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first eight captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. Apart from perf-lock.png, which is new, every capture is byte-identical to 0.5.0's file (chro-amp.png to sampler-amp.png, the hold now on CHRO).",
+  "conditions": "SETUP: boot Q608 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first eight captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. perf-lock.png is new and the two quick perf rec captures show the new messages (APPLY and CLEAR PERF/SCENE REC); the other seven are byte-identical to 0.5.0's files (chro-amp.png to sampler-amp.png, the hold now on CHRO).",
   "captures": [
     {
       "path": "media/fix-filter.png",
@@ -67,13 +67,13 @@
       "path": "media/apply-quick-perf-rec.png",
       "frame": "end.png",
       "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:100M --press SD@9423M:12M --press PERF@9523M:150M --turn 0:4@9563Mx5/8M --press PERF@9723M:12M --press RECORD@9823M:80M --press PLAY@9853M:12M --raw 9150@10073M --raw 9100@10123M --press RECORD@10423M:12M --press RECORD@10723M:80M --press YES@10753M:12M",
-      "sha256": "ba47455ee9c438eb5c608071791b6649683a0df9bb639f9246e898557b5bc71c"
+      "sha256": "7f452f9b16f7f8c7419ddcb06083ed02a5868da906bab1b1943262a54d07b5cc"
     },
     {
       "path": "media/clear-quick-perf-rec.png",
       "frame": "end.png",
       "plan": "--press NO@7003M:80M --press NO@7303M:80M --press NO@7603M:80M --press NO@7903M:80M --press NO@8203M:80M --press NO@8503M:80M --press NO@8803M:80M --press NO@9103M:80M --press QPER@9403M:100M --press SD@9423M:12M --press PERF@9523M:150M --turn 0:4@9563Mx5/8M --press PERF@9723M:12M --press RECORD@9823M:80M --press PLAY@9853M:12M --raw 9150@10073M --raw 9100@10123M --press RECORD@10423M:12M --press RECORD@10723M:80M --press NO@10753M:12M",
-      "sha256": "123985db4933e426efdace5853be57b6778272b6f1b3e8489ab46536d4c6d687"
+      "sha256": "90603eb72baacfde87fc62f2821d896a07306408c52de3ea8a769da88ccc1509"
     }
   ]
 }
