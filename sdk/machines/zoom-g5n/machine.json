@@ -29,7 +29,7 @@
     {
       "label": "mungewell/zoom-zt2",
       "url": "https://github.com/mungewell/zoom-zt2",
-      "note": "MIT, by Simon Wood. decode_preset.py's Construct definitions for the PTCF/TXJ1/TXE1 patch container confirm the chunk layout read from this pedal; its SysEx tools are written for the ZD2 pedals, not this one."
+      "note": "MIT, by Simon Wood. decode_preset.py's Construct definitions for the PTCF/TXJ1/TXE1 patch container confirm the chunk layout read from this pedal; its SysEx tools are written for other ZD2 pedals and are not yet tried on this one."
     }
   ],
   "art": {
