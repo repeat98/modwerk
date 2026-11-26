@@ -134,11 +134,16 @@ static void streamed(unsigned s, int ok)
 {
     struct slot *t = &slots[s];
     if (!ok) { mw_programs_failed = mw_programs_failed + 1, t->sstep = S_STUCK; return; }
-    if (t->sstep == S_NAME_OUT) t->sstep = t->in_offset ? S_NAME_IN : S_LIVE;
-    else if (t->sstep == S_NAME_IN) t->sstep = S_LIVE;
+    if (t->sstep == S_NAME_OUT) { /* take() runs before the in-block is named, so a DSP that waits for both takes no frame unseen */
+        mw_stream_live(t->lane, 1);
+        t->sstep = t->in_offset ? S_NAME_IN : S_LIVE;
+    } else if (t->sstep == S_NAME_IN) t->sstep = S_LIVE;
     else if (t->sstep == S_DROP_IN) t->sstep = t->out_offset ? S_DROP_OUT : S_NONE;
     else if (t->sstep == S_DROP_OUT) t->sstep = S_NONE;
-    if (t->sstep == S_LIVE) mw_stream_live(t->lane, 1), mw_programs_streams = mw_programs_streams + 1;
+    if (t->sstep == S_LIVE) {
+        if (!t->out_offset) mw_stream_live(t->lane, 1);
+        mw_programs_streams = mw_programs_streams + 1;
+    }
     if (t->sstep == S_NONE) unstream(s);
 }
 

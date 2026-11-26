@@ -234,13 +234,17 @@ static void dsp_stream(uint32_t k)
         unsigned c = core_of(s);
         uint32_t in = X[c][record_of(s) + 1u], out = X[c][record_of(s) + 2u];
         if (mw_programs_test_live[s] != STREAMED || !(in | out)) continue;
-        if (!in || !out) continue; /* named out first, in last; cleared in first: live only with both */
-        CHECK(in >= MW_STREAM_IN_REGION && out >= MW_STREAM_OUT_REGION);
-        CHECK(in + SIN <= MW_STREAM_IN_REGION + (c ? MW_STREAM_IN1_WORDS : MW_STREAM_IN_WORDS));
+        /* named out first, in last; cleared in first. The out-block is written once it is named: take() runs from then
+         * on, before the in-block is named, so a DSP that starts with both named has its first frame taken. */
+        if (!out) continue;
+        CHECK(out >= MW_STREAM_OUT_REGION);
+        if (!chain_down) for (unsigned i = 0; i < SOUT; ++i) bank[c][k & 1u][out + i] = out_word(s, k, i);
+        ++outs_checked[s];
+        if (!in) continue;
+        CHECK(in >= MW_STREAM_IN_REGION && in + SIN <= MW_STREAM_IN_REGION + (c ? MW_STREAM_IN1_WORDS : MW_STREAM_IN_WORDS));
         if (chain_down) continue;
         for (unsigned i = 0; i < SIN; ++i) CHECK(bank[c][k & 1u][in + i] == in_word(s, k, i)); /* named only once filled */
-        for (unsigned i = 0; i < SOUT; ++i) bank[c][k & 1u][out + i] = out_word(s, k, i);
-        ++ins_checked[s], ++outs_checked[s];
+        ++ins_checked[s];
     }
 }
 static void run_streamed(unsigned ticks, unsigned frames)
