@@ -140,7 +140,9 @@ The developer's Octatrack over USB, its flashed base `eb667962`; the development
 
 **Stage 2, the developer (as reported):** a 30-minute trial of the same package on their own Part, nothing kept. "Suena bien, me gustó lo que sonó"; no clicks heard. Before the trial ended they put every track back on FILTER and DELAY, and the trial rolled back with no crash, stall, freeze or skipped track. They asked that AXIS and DIST stay available with CAB OFF: DIST already did; AXIS did nothing there.
 
-**After the trial:** AXIS with CAB OFF now rolls the top off gently (a low-pass reaching 4.5 kHz at 127: −2.5 dB at 8 kHz at AXIS 64, −11.7 dB at 127; AXIS 0 stays exact). Only the table changed (tables.py, `cab_offaxis`), not the code or its cost; verify.py passes bit for bit. This table change has not run on the unit.
+**After the trial:** AXIS with CAB OFF now rolls the top off gently (a low-pass reaching 4.5 kHz at 127: −2.5 dB at 8 kHz at AXIS 64, −11.7 dB at 127; AXIS 0 stays exact). Only the table changed (tables.py, `cab_offaxis`), not the code or its cost; verify.py passes bit for bit.
+
+**The exact build for review (package SHA-256 `b4b4757a173787bcad959d176afa7f98b9aec70b9fa6d3eb14e0df404d1cb4d5`, 338 cycles, 118 state words), same twin and Part:** `npm run device:test` passed. Self-test passed (longest frame 398 us); COMBO alone on FX2 of T1 peaked at 485 per mille, of T5 at 553; seven at once while the pattern played peaked at 828 (T1-T4) and 768 (T5-T8), the eighth refused for CPU; 12 of 12 Part switches; the inventory ended as it began. The busier figures than the run above follow the pattern the developer left playing (CPU 493 against 372). AXIS with CAB OFF was not listened to on the unit.
 
 ## On the unit (25 November 2026, build 4ae76341a, before VOIC)
 
