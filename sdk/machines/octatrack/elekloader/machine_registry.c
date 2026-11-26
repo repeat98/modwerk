@@ -244,14 +244,24 @@ unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint1
         unsigned p = at[i];
         if (p > 15u) { most[i] = tracks[i] = 8u; continue; } /* not a pattern of the bank: the safe side */
         const volatile uint8_t *pattern = AT(U32(BANK) + PATTERN_STRIDE * p);
+        /* Each track's 64 steps read once, eight bytes (the banks are uncached; every UI tick asks: reading a byte per
+         * step and track was 512 reads, an emulated 0.8.1 twin's busiest stretch of the tick, 25 November 2026), then
+         * every step counted at once: plane[h][b] is bit b of each step's count of trigging tracks, steps 1-32 (h 0)
+         * and 33-64 (h 1), one step a bit. */
+        uint32_t plane[2][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
         unsigned top = 0, any = 0;
-        for (unsigned s = 0; s < 64u; ++s) {
-            unsigned n = 0;
-            for (unsigned t = 0; t < 8u; ++t) {
-                unsigned on = pattern[PATTERN_TRACK * t + 7u - s / 8u] >> (s % 8u) & 1u;
-                n += on, any |= on << t;
-            }
-            if (n > top) top = n;
+        for (unsigned t = 0; t < 8u; ++t) {
+            const volatile uint8_t *m = pattern + PATTERN_TRACK * t;
+            uint32_t w[2] = {(uint32_t)m[4] << 24 | (uint32_t)m[5] << 16 | (uint32_t)m[6] << 8 | m[7],
+                             (uint32_t)m[0] << 24 | (uint32_t)m[1] << 16 | (uint32_t)m[2] << 8 | m[3]};
+            if (w[0] | w[1]) any |= 1u << t;
+            for (unsigned h = 0; h < 2u; ++h)
+                for (uint32_t x = w[h], b = 0; b < 4u && x; ++b) { uint32_t carry = plane[h][b] & x; plane[h][b] ^= x; x = carry; }
+        }
+        for (unsigned h = 0; h < 2u; ++h) { /* the largest count: its bits from the top, among the steps that have them */
+            uint32_t steps = ~0u; unsigned v = 0;
+            for (unsigned b = 4u; b-- > 0u;) if (plane[h][b] & steps) v |= 1u << b, steps &= plane[h][b];
+            if (v > top) top = v;
         }
         unsigned count = 0;
         for (; any; any &= any - 1u) ++count;
@@ -311,10 +321,11 @@ static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, 
     return sum;
 }
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
+volatile uint8_t mw_cpu_track_refusals[8]; /* each track's refusals, wrapping: diag.c names the tracks refused since its last CPU record */
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
 {
-    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track, ++mw_cpu_track_refusals[track];
     modwerk_status_cpu_refused(track, who->label, 10u * booked, 10u * cpu_price(who), 10u * mw_cpu_allowance);
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
@@ -497,14 +508,22 @@ static void fx_scanned(void) /* the machine map's refresh, with its whole scan *
     if (fx_wanted >= 0 && (fx_in(used, (unsigned)fx_wanted) || fx_idle[fx_wanted] >= REST_AFTER)) fx_wanted = -1;
 }
 uint32_t modwerk_status_module_rest(uint32_t module);
-/* status.c's reserve: what every installed module adds on no track or slot (the table's `rest`), per mille. */
+uint32_t modwerk_status_costs_key(void); /* status.c: the cost table as last checked */
+/* status.c's reserve: what every installed module adds on no track or slot (the table's `rest`), per mille. Each UI
+ * tick asks (the hush), and each module is a search of the cost table, so the sum is kept while the installed set (the
+ * loader's owner epoch, odd while a change runs) and the table stand. */
+static uint32_t booked_epoch, booked_key, booked_sum;
+static int booked_ok;
 uint32_t modwerk_machine_rest_booked(void)
 {
+    uint32_t epoch = modwerk_runtime_owner_epoch(), key = modwerk_status_costs_key();
+    if (booked_ok && epoch == booked_epoch && key == booked_key) return booked_sum;
     uint32_t sum = 0;
     for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
         const struct runtime_module *m = modwerk_runtime_module(p);
         if (m) sum += modwerk_status_module_rest(m->id);
     }
+    booked_ok = !(epoch & 1u), booked_epoch = epoch, booked_key = key, booked_sum = sum;
     return sum;
 }
 /* status.c, before stock writes an effect pick: whether the module behind `id` rests, and its wake. */
@@ -773,20 +792,40 @@ static int deadline_effect(uintptr_t fn)
     }
     return -1;
 }
+/* The ev_frame_deadline rows' effect handles, kept while the rows, the installed set and the handle map stand: each UI
+ * tick asks for them (brake_tick, twice), and each row's owner is a walk of the loader's modules (an emulated 0.8.1
+ * twin, 25 November 2026: Tape Echo, resting, cost 1,030 instructions a tick here). */
+uint32_t modwerk_fxmap_generation(void); /* fxmap.c */
+static uintptr_t deadline_kept[24];
+static int deadline_id[24];
+static unsigned deadline_n;
+static uint32_t deadline_epoch, deadline_generation;
+static int deadline_ok;
+static unsigned deadline_ids(void)
+{
+    uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
+    uint32_t epoch = modwerk_runtime_owner_epoch(), generation = modwerk_fxmap_generation();
+    unsigned n = 0;
+    int same = deadline_ok && epoch == deadline_epoch && generation == deadline_generation;
+    for (; row && row[n] && n < 24u; ++n) same = same && n < deadline_n && row[n] == deadline_kept[n];
+    if (same && n == deadline_n) return n;
+    for (unsigned i = 0; i < n; ++i) deadline_kept[i] = row[i], deadline_id[i] = deadline_effect(row[i]);
+    deadline_n = n, deadline_epoch = epoch, deadline_generation = generation, deadline_ok = 1;
+    return n;
+}
 /* The ev_frame_deadline rows (bit i) whose module's effect is in `fx`. */
 static uint32_t deadline_rows(fx_set fx)
 {
     uint32_t rows = 0;
-    uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
-    for (unsigned i = 0; row && *row && i < 24u; ++row, ++i) { int e = deadline_effect(*row); if (e >= 0 && fx_in(fx, (unsigned)e)) rows |= 1u << i; }
+    for (unsigned i = 0, n = deadline_ids(); i < n; ++i)
+        if (deadline_id[i] >= 0 && fx_in(fx, (unsigned)deadline_id[i])) rows |= 1u << i;
     return rows;
 }
 /* status.c: the effects whose module subscribes ev_frame_deadline, so can bypass dry on a hushed pattern. */
 fx_set modwerk_machine_deadline_effects(void)
 {
     fx_set fx = {{0}};
-    uintptr_t volatile *row = modwerk_runtime_event_row[MODWERK_EV_FRAME_DEADLINE - RUNTIME_EVENTS];
-    for (unsigned i = 0; row && *row && i < 24u; ++row, ++i) { int e = deadline_effect(*row); if (e >= 0) fx = fx_with(fx, (unsigned)e); }
+    for (unsigned i = 0, n = deadline_ids(); i < n; ++i) if (deadline_id[i] >= 0) fx = fx_with(fx, (unsigned)deadline_id[i]);
     return fx;
 }
 static void brake_tick(void)       /* released at STOP or a Part change */

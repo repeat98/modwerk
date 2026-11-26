@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
     auto stock = load(argv[1]); auto code = load(argv[2]);
     Fixture f(stock);
     for (unsigned i = 0; i < code.size(); i++) f.m.write8(ROUTINE + i, code[i]);
+    f.m.write32(0x460d165c, 0); /* no input layer until E */
     /* A module page: slot 0 a select of 9 values (KEY), slot 1 a 0..127 knob. */
     for (unsigned s = 0; s < 12; s++) f.m.write32(MODULE + P_COUNT + 4 * s, s == 0 ? 9 : 128);
     unsigned checks = 0;
@@ -96,6 +97,35 @@ int main(int argc, char **argv) {
         f.stage(0, 256, 128, 200);
         auto want = f.state(0, f.call(STEPPER, 0, 0, 1, 0));
         assert(same(got, want)); ++checks;
+    }
+    /* E: the page's input layer holds the previous page's staging too, and the panel copies it into the record before
+     * each turn: the module knob's definition is staged as its record, so the next detent keeps the remainder; a
+     * definition naming another routine (a held scene's) and a stock page's layer are left as they are. */
+    {
+        constexpr uint32_t LAYER = 0x47600000, DEFS = LAYER + 0x100, KNOB = 0x40055008;
+        f.m.write32(0x460d165c, LAYER); f.m.write32(LAYER + 8, DEFS);
+        for (unsigned s = 0; s < 6; s++) {
+            f.m.write8(DEFS + 22 * s, s); f.m.write8(DEFS + 22 * s + 1, 0);
+            f.m.write32(DEFS + 22 * s + 2, s == 1 ? 0x40053498 : KNOB);
+            f.m.write32(DEFS + 22 * s + 10, 256); f.m.write32(DEFS + 22 * s + 18, 128);
+        }
+        f.stage(0, 256, 128, 200);
+        f.call(ROUTINE, MODULE, 0, 1, 0);
+        assert(f.m.read32(DEFS + 10) == 32768 / 40 && f.m.read32(DEFS + 18) == 9); ++checks;
+        f.stage(0, 256, 128, 0); /* the panel's copy from the layer, now the module's staging, before the next turn */
+        f.m.write32(REC + 8, f.m.read32(DEFS + 10)); f.m.write32(REC + 16, f.m.read32(DEFS + 18));
+        f.m.write32(RUN, 500);
+        auto got = f.state(0, f.call(ROUTINE, MODULE, 0, 1, 3));
+        f.stage(0, 819, 9, 500);
+        auto want = f.state(0, f.call(STEPPER, 0, 0, 1, 3));
+        assert(same(got, want)); ++checks;                                        /* the remainder kept */
+        f.m.write32(DEFS + 22 + 10, 999); f.m.write32(DEFS + 44 + 18, 77); /* marks: what the two calls must not touch */
+        f.stage(1, 256, 128, 0);
+        f.call(ROUTINE, MODULE, 1, 1, 64);
+        f.stage(2, 256, 128, 0);
+        f.call(ROUTINE, STOCKDESC, 2, 1, 64);
+        assert(f.m.read32(DEFS + 22 + 10) == 999 && f.m.read32(DEFS + 44 + 18) == 77); ++checks;
+        f.m.write32(0x460d165c, 0);
     }
     std::printf("knob step: %u checks passed\n", checks);
     return 0;
