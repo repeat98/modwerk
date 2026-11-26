@@ -278,6 +278,39 @@ static void check_settings_panel(void)
     settings_press(NO);
     CHECK(strstr(shows(),"SETTINGS|USB AUDIO|OTHER MOD|"));
     settings_press(NO);
+    CHECK(open == CLOSED && !close_menu);                              /* back to PROJ > MODWERK: the menu stays */
+    /* Every page opened from the menu is a level of it (a tester, 25 November 2026: NO closed the whole menu): NO and
+     * LEFT or RIGHT close the page back to the menu, their releases taken; the menu stays open, its cursor untouched. */
+    void (*const rows[5])(int) = {modwerk_load_menu, modwerk_modules_menu, modwerk_missing_menu, modwerk_settings_menu,
+                                  modwerk_switches_menu};
+    static const int backs[3] = {NO, LEFT, RIGHT};
+    for (unsigned r = 0; r < 5u; ++r) {
+        for (unsigned b = 0; b < 3u; ++b) {
+            rows[r](0);
+            CHECK(open != CLOSED);
+            CHECK(modwerk_status_key(backs[b], 1) && open == CLOSED && modwerk_status_key(backs[b], 0) && !close_menu);
+        }
+        rows[r](0);                                                    /* PROJ goes on to stock's menu, which closes */
+        CHECK(!modwerk_status_key(PROJ, 1) && open == CLOSED && !modwerk_status_key(PROJ, 0) && !close_menu);
+        rows[r](0);                                                    /* a knob too */
+        CHECK(!modwerk_status_enc(0, 1) && open == CLOSED && !close_menu);
+    }
+    modwerk_load_menu(0);                                              /* STATUS has no list: UP and DOWN go back too */
+    CHECK(modwerk_status_key(UP, 1) && open == CLOSED && modwerk_status_key(UP, 0) && !close_menu);
+    modwerk_load_menu(0);
+    CHECK(modwerk_status_key(DOWN, 1) && open == CLOSED && modwerk_status_key(DOWN, 0) && !close_menu);
+    modwerk_load_menu(0);                                              /* YES closes the menu with it, as before */
+    CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0) && close_menu);
+    close_menu = 0;
+    modwerk_modules_menu(0);
+    CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0) && close_menu);
+    close_menu = 0;
+    modwerk_test_menu_open = 0;                                        /* CUE + PROJ's status, no menu: arrows reach stock */
+    modwerk_status_key(CUE, 1); modwerk_status_key(PROJ, 1); modwerk_status_key(PROJ, 0); modwerk_status_key(CUE, 0);
+    CHECK(open == SHOWN && !modwerk_status_key(LEFT, 1) && open == CLOSED && !modwerk_status_key(LEFT, 0));
+    modwerk_status_key(CUE, 1); modwerk_status_key(PROJ, 1); modwerk_status_key(PROJ, 0); modwerk_status_key(CUE, 0);
+    CHECK(open == SHOWN && modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0) && !close_menu);
+    missing_asked = 0;
     grouped_fixture = 0;
     fixture_rows = 0;
     modwerk_test_menu_open = close_menu = 0;

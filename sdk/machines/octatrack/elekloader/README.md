@@ -387,7 +387,12 @@ it is named first: the current bank, then the others, a working Part before a sa
 its slots show NONE's page renamed MISSING, `MISS` in the footer; since 0.7.3 also each machine the project uses that
 no installed machine serves, from `machine_registry.c`'s machine map: a Part names a machine only by its signature, so
 the map keeps each one's module and name, in battery RAM at `0x100ffd40` and in project.work as `#MODWERK_MC=` lines
-beside the effects' `#MODWERK_FX=`; its track then says `MISSING POLY8` or `POLY8 IS OFF`) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
+beside the effects' `#MODWERK_FX=`; its track then says `MISSING POLY8` or `POLY8 IS OFF`) and SELF TEST. SYSTEM stays stock.
+Each page is a level of the menu, as stock's are (base 0.8.2; before, a row closed the menu and NO left it): the menu
+stays open under the page, so NO, and LEFT or RIGHT (on STATUS, which has no list, any arrow), close the page back to
+the MODWERK list with the cursor on the row that opened it. YES on a page that closes closes the menu with it, as before.
+Any other key or knob closes the page and goes on to the menu as to stock's, so PROJ closes the menu. SELF TEST still
+closes the menu as it starts (it plays the pattern), and its NO stops the test. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
 of a 72,520-cycle frame; recalibrate with `build_core.py --dsp-burn 1000` (core 0) or `-1000` (core 1).
 
 
