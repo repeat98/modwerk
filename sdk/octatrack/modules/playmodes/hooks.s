@@ -406,7 +406,7 @@ pm_clear_pattern:
         .global pm_state, pm_ready, pm_last_transport, pm_last_bank
         .global pm_last_pattern, pm_toast, pm_held_track, pm_restart, pm_line
         .global pm_table, pm_cur, pm_clip, pm_undo, pm_comp
-        .global pm_held, pm_rep_last, pm_rep_page
+        .global pm_held, pm_rep_last, pm_rep_page, pm_loading
 pm_state:
         .zero   224
 pm_ready:
@@ -427,6 +427,8 @@ pm_line:
         .zero   40                      | a project line: 12 + 4 + 17 + CR LF + NUL
 pm_cur:
         .short  0                       | the row in pm_state.settings + 1, 0 = none
+pm_loading:
+        .byte   0                       | 1 = a CHANGE or RELOAD is under way (adapter.c, #810)
         .balign 4
 pm_table:
         .zero   4352                    | 256 patterns x 17 modes (bank * 16 + pattern)
