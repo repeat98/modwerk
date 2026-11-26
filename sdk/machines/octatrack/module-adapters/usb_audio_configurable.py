@@ -208,6 +208,26 @@ mwua_trims:   .long 0               | drift trims: absorbed << 16 | repeated
     return checked(text, '    moveal  #SRAM_REPLY,%a0\n    moveq   #60,%d0\n', '    moveal  #SRAM_REPLY,%a0\n    moveq   #64,%d0\n')
 
 
+# The imported layouts (layouts/descriptors.py, pinned in sdk/imports/usb-audio-outbox-7b2984c8.json) declare the input
+# stream's EP3 OUT asynchronous and mark EP3 IN as its implicit-feedback source. Windows' usbaudio2 supports neither
+# (Code 10 with INPUTS on, reported on Windows 10 on 24 November 2026, reproduced on Windows 11 on 25 November).
+# From 0.4.1 the package declares EP3 OUT adaptive and leaves EP3 IN a plain asynchronous data endpoint, as with
+# INPUTS OFF; usb_audio_input_trim.c absorbs the drift. The upstream file stays exact.
+IMPLICIT_FEEDBACK_IN = bytes([7, 5, 0x83, 0x25])
+ASYNCHRONOUS_OUT = bytes([7, 5, 0x03, 0x05])
+
+
+def adaptive_input(block):
+    """An input profile's descriptors with EP3 OUT adaptive (0x09) and EP3 IN no longer implicit feedback (0x05).
+    At full speed the profile carries no input stream, so neither endpoint is there."""
+    marks = block.count(IMPLICIT_FEEDBACK_IN), block.count(ASYNCHRONOUS_OUT)
+    if marks == (0, 0):
+        return block
+    if marks != (1, 1):
+        raise ValueError('The input profile no longer has exactly one EP3 IN and one EP3 OUT endpoint descriptor.')
+    return block.replace(IMPLICIT_FEEDBACK_IN, bytes([7, 5, 0x83, 0x05])).replace(ASYNCHRONOUS_OUT, bytes([7, 5, 0x03, 0x09]))
+
+
 def records(root, module, supported, functions, usb, function_block, descriptor_records, *, usb_input=None):
     descriptors = SimpleNamespace(**runpy.run_path(str(root / 'sdk/octatrack/modules' / module / 'layouts/descriptors.py')))
     keys = [supported[i] for i in (0,1,3,4,0)]
@@ -229,7 +249,7 @@ def records(root, module, supported, functions, usb, function_block, descriptor_
         profiles = []
         for (hs, other), output_only in zip(speeds, rows):
             def block(key, name):
-                return function_block(functions, usb, descriptors, key, hs, other, audio_input=name)
+                return adaptive_input(function_block(functions, usb, descriptors, key, hs, other, audio_input=name))
             blocks = usb_input.descriptor_profiles(keys, output_only, block)
             profiles.append([(3 if hs and i >= len(keys) else 2, value) for i, value in enumerate(blocks)])
         return usb_input.records(names, profiles), max(len(value) for row in profiles for _, value in row)

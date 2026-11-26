@@ -54,14 +54,11 @@ UAC2_CLOCK_ID, UAC2_IT_ID, UAC2_OT_ID = 0x10, 0x11, 0x12
 # USB AUDIO IN (Bryan T, 26 Sep 2026; AB / CD / ABCD 28 Sep): the host's
 # channels standing in for inputs. AudioStreaming interface 5, EP3
 # OUT (the only free endpoint: EP1 is mass storage, EP2 USB MIDI, EP3 IN the
-# output stream). ADAPTIVE: the host sends at its own clock's nominal rate
-# and the unit absorbs the difference to its crystal (module-adapters/
-# usb_audio_input_trim.c). No endpoint is left for an explicit feedback IN,
-# and Microsoft documents that usbaudio2 needs one for an asynchronous OUT
-# and does not support implicit feedback (Code 10 on Windows 10 with INPUTS
-# on, 24 Nov 2026). So EP3 IN stays a plain asynchronous data endpoint, never
-# marked as implicit feedback. Same clock source. It polls every 250 us as
-# every out layout does (since 28 Sep 2026).
+# input stream). Asynchronous with IMPLICIT feedback: no endpoint is left
+# for an explicit feedback IN, so EP3 IN is marked as the implicit-feedback
+# data endpoint and the host sizes each OUT packet from EP3 IN's. Same
+# clock source. It needs a USB AUDIO input layout for that feedback, one
+# that polls every 250 us as this stream does (every out layout since 28 Sep 2026).
 # HIGH SPEED ONLY: the full-speed configurations carry no interface 5 (the
 # unit does not serve it), so a full-speed host is never offered one.
 USBIN_AS_IFACE = 5
@@ -125,8 +122,9 @@ def audio_config(hs, other_speed=False, key="USB AUDIO OUT TRACKS MAIN CUE", wit
 
     `with_in`: the USB AUDIO IN module's key (IN_LAYOUT), or None -- at high
     speed, add the host -> device path (IT 0x13 -> OT 0x14, AudioStreaming
-    interface 5 with an adaptive EP3 OUT, 2 or 4 channels). EP3 IN keeps
-    its attributes. The full-speed configuration is the one without it.
+    interface 5 with EP3 OUT, 2 or 4 channels) and mark EP3 IN as its
+    implicit-feedback source. The full-speed configuration is the one
+    without it.
     """
     with_in = with_in if hs else None
     in_ch = IN_LAYOUT[with_in] if with_in else 0
@@ -160,9 +158,9 @@ def audio_config(hs, other_speed=False, key="USB AUDIO OUT TRACKS MAIN CUE", wit
         bytes([16, 0x24, 1, ot, 0, 1]) + struct.pack("<I", 1) +
         bytes([nch]) + struct.pack("<I", chcfg) + bytes([0]) +
         bytes([6, 0x24, 2, 1, SUBSLOT, BITS]) +
-        # bmAttributes: isochronous, asynchronous, data (never implicit
-        # feedback: usbaudio2 does not support it)
-        bytes([7, 5, 0x83, 0x05]) + struct.pack("<H", maxpkt) +
+        # bmAttributes: isochronous, asynchronous; + usage "implicit
+        # feedback data" (bits 5:4 = 10) when USB AUDIO IN pairs with it
+        bytes([7, 5, 0x83, 0x25 if with_in else 0x05]) + struct.pack("<H", maxpkt) +
         bytes([HS_BINTERVAL if hs else FS_BINTERVAL]) +
         bytes([8, 0x25, 1, 0, 0, 0]) + struct.pack("<H", 0))
     if with_in:
@@ -173,7 +171,7 @@ def audio_config(hs, other_speed=False, key="USB AUDIO OUT TRACKS MAIN CUE", wit
             bytes([16, 0x24, 1, USBIN_IT_ID, 0, 1]) + struct.pack("<I", 1) +
             bytes([in_ch]) + struct.pack("<I", in_cfg) + bytes([0]) +
             bytes([6, 0x24, 2, 1, SUBSLOT, BITS]) +
-            bytes([7, 5, 0x03, 0x09]) +                      # iso, adaptive, data
+            bytes([7, 5, 0x03, 0x05]) +                      # iso, asynchronous, data
             struct.pack("<H", 12 * in_ch * SUBSLOT) +       # 96 B for a pair, 192 for four
             bytes([HS_BINTERVAL]) +
             bytes([8, 0x25, 1, 0, 0, 0]) + struct.pack("<H", 0))
@@ -223,7 +221,8 @@ def remix_inc(modules):
     audio = audio[0] if audio else None
     with_in = in_key(modules)
     if with_in:
-        assert audio, f"{with_in} needs a USB AUDIO OUT module beside it: it joins that audio function"
+        assert audio, (f"{with_in} needs a USB AUDIO OUT module beside it: EP3 IN is "
+                       "its implicit-feedback source")
     tables, length = configs(audio, with_in)
     what = ("USB MIDI + " + audio if audio else "USB MIDI") + (f" + {with_in}" if with_in else "")
     lines = [f"| remix.inc -- the configuration descriptors for this remix ({what}),",

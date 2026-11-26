@@ -30,7 +30,8 @@ class InputTrim(unittest.TestCase):
         compiler = shutil.which('cc') or shutil.which('gcc')
         if not compiler:
             raise unittest.SkipTest('a host C compiler is required')
-        cls.temp = tempfile.TemporaryDirectory()
+        # Windows keeps a loaded library locked, so its folder may outlive the test run there.
+        cls.temp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         library = Path(cls.temp.name) / 'trim.so'
         stub = Path(cls.temp.name) / 'counters.c'
         stub.write_text('#include <stdint.h>\nuint32_t mwua_trims;\n')
