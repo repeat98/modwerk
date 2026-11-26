@@ -677,7 +677,7 @@
       "id": "midi-scenes",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.3.0-experimental",
+      "version": "0.3.1-experimental",
       "abi": 8,
       "features": 129,
       "sites": 33,
@@ -685,9 +685,9 @@
       "fills": 0,
       "name": "MIDI Scenes",
       "module": "21a6ffd7",
-      "bytes": 8560,
-      "sha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
-      "path": "octatrack-modules/midi-scenes/0.3.0-experimental.mwrm"
+      "bytes": 9864,
+      "sha256": "17f934ffa1110dc6d3a9f20caea3cee456234dd6b4b8124382673f1248b08563",
+      "path": "octatrack-modules/midi-scenes/0.3.1-experimental.mwrm"
     },
     {
       "id": "kits",
