@@ -1,0 +1,62 @@
+{
+ "firmware": "1.40C",
+ "moduleVersion": "0.1.0-experimental",
+ "hardware": true,
+ "model": "MKII",
+ "capturedOn": "2026-11-25",
+ "capturedBy": "repeat98",
+ "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+ "baseIdentity": "4c7eb79b844c81391f62c5ce99250101a711506ba982ece678122dd66838885f",
+ "packageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
+ "sourceRevision": "461f05d21983d1bc436dbeb6b79c0e9feb5cdc51",
+ "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned).",
+ "palette": {
+  "on": [
+   24,
+   24,
+   24
+  ],
+  "off": [
+   255,
+   255,
+   255
+  ]
+ },
+ "images": [
+  {
+   "path": "midiverb-chooser.png",
+   "sha256": "8e23670ce9dcc1de395e2dbbdd97cd11ace45390238582f8bf9130dfe8dd757c",
+   "scale": 2,
+   "page": "FX2 SETUP (effect chooser)",
+   "state": "Track 2 on FX2 SETUP: FUNC+FX2 opened the chooser, LEVEL moved the cursor down to MIDIVRB I/II (DELAY is the track's current effect)."
+  },
+  {
+   "path": "midiverb-page.png",
+   "sha256": "8534cd8297a2bbbbec0d944ac9cb2a5198955efebc4a5c88af1c0c4d38931cbb",
+   "scale": 2,
+   "page": "FX2",
+   "state": "Track 2 with Midiverb I/II on FX2 after YES and FX2: PROG, LEVL, BANK and MIX at the defaults."
+  },
+  {
+   "path": "midiverb-prog.png",
+   "sha256": "5a577335f3a2a668c500a9d62515af982efa609e9c796f0e69d72b11d0160462",
+   "scale": 2,
+   "page": "FX2",
+   "state": "Knob A turned: the message box names the program, .25 MEDIUM BRIGHT."
+  },
+  {
+   "path": "midiverb-bank.png",
+   "sha256": "eda2099603acf4cd775ea14c9e3fedae262cad53276bcdbd50b4d8f92553b465",
+   "scale": 2,
+   "page": "FX2",
+   "state": "Knob D turned to MV2: the message box names the bank, MIDIVERB II."
+  },
+  {
+   "path": "midiverb-mix.png",
+   "sha256": "1688c32e3ad946f9515c49b3afe65c9c574e0692eab86f4b3265fdccf998fbd9",
+   "scale": 2,
+   "page": "FX2",
+   "state": "MIX (knob F) turned up to 80 of 127."
+  }
+ ]
+}

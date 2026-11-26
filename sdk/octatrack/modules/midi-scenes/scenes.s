@@ -15,7 +15,7 @@
 |     MSC[scene << 8 | track << 5 | flat],  0xff = no lock
 |
 | flat = MIDI page * 6 + knob (NOTE 0, LFO 1, ARP 2, CTRL1 3, CTRL2 4;
-| flats 0..29). There is one table per Part (scn_lib, in the storage
+| flats 0..29). There is one table per Part with locks (scn_blk, in the storage
 | section); every site reads the displayed Part's (0x100b14cf) in the
 | current bank.
 |
@@ -89,7 +89,7 @@
         .globl  scn_morph, scn_xf1, scn_xf2, scn_clear, scn_copy, scn_paste
         .globl  scn_qrec, scn_qcommit, scn_switch, scn_step, scn_evt, scn_pwrite, scn_invalidate
         .globl  scn_snap1, scn_snap2, scn_ccnote
-        .globl  scn_lib, scn_clip, scn_state
+        .globl  scn_blk, scn_map, scn_used, scn_clip, scn_state
         .globl  scn_ev_banks_load, scn_ev_banks_loaded, scn_ev_bank_load, scn_ev_bank_loaded
         .globl  scn_ev_project_new, scn_ev_bank_written, scn_ev_project_store, scn_ev_project_stored
         .globl  scn_ev_project_reloaded, scn_ev_part_clear, scn_ev_modules_ready
@@ -127,13 +127,21 @@ scn_hold_b:
 | Returns d0 = 1, or 0 when the Part has no scene assigned to that key.
 | Clobbers d1-d2, d4-d5, a0-a1.
 hold_store:
+        bsr.w   toast_due
         bsr.w   row_offset              | d1 = MSC offset of the row, -1 = none
         tstl    %d1
         bmi.s   8f
         bsr.w   flat_of_knob            | d5 = flat; keeps d1
         addl    %d5,%d1
         bsr.w   msc_a0
-        lea     %a0@(0,%d1:l),%a1       | a1 -> the lock
+        lea     scn_sink,%a1
+        cmpal   %a1,%a0
+        bne.s   1f
+        lea     TXT_FULL,%a0            | NBLK Parts hold locks: refused
+        bsr.w   scn_notify
+        moveq   #1,%d0
+        rts
+1:      lea     %a0@(0,%d1:l),%a1       | a1 -> the lock
         mvzb    %a1@,%d1
         cmpil   #NOLOCK,%d1
         bne.s   2f
@@ -1143,7 +1151,17 @@ scn_paste:
         andil   #15,%d0
         lsll    #8,%d0
         bsr.w   msc_a0
-        moveal  %a0,%a1
+        lea     scn_sink,%a1
+        cmpal   %a1,%a0
+        bne.s   3f
+        lea     TXT_FULL,%a0            | NBLK Parts hold locks: refused
+        bsr.w   scn_notify
+        moveal  %sp@+,%a1
+        moveal  %sp@+,%a0
+        movel   %sp@+,%d1
+        movel   %sp@+,%d0
+        bra.s   2f
+3:      moveal  %a0,%a1
         addal   %d0,%a1
         lea     scn_clip:l,%a0
         movel   #256,%d1
@@ -1159,9 +1177,18 @@ scn_paste:
 2:      jmp     0x40027578
 
 | ================================================================ storage ====
-| One lock table per Part, 4,096 B each (scn_lib: 16 banks x 4 Parts, slot =
-| bank * 4 + Part). Every table above is the displayed Part's slot in the
-| current bank (msc_a0). The library is written whole to scenes.work beside
+| One lock table per Part, 4,096 B each, for the 64 Parts of a project (slot =
+| bank * 4 + Part). Modwerk 0.3.1 keeps NBLK tables (scn_blk) and gives one to a
+| Part when it is displayed or gets locks (scn_map: slot -> table + 1, 0 =
+| none); every other Part reads the one empty table (scn_empty, 0xff, never
+| written). A table that holds no lock goes back when another Part needs one,
+| unless its Part is displayed or mixed (blk_take). With all NBLK holding
+| locks, the displayed Part gets the sink (scn_sink, 0xff again on every call):
+| an edit there is refused with a toast (hold_store, scn_paste). So at most
+| NBLK Parts hold locks; the 256 KiB library of 0.3.0 took 35 % of the base's
+| module pool for every set. Every table above is the displayed Part's
+| (msc_a0); the mix reads the mix Part's (msc_mix), which never allocates.
+| The library is written whole to scenes.work beside
 | the bank files. The current bank's locks are copied to battery RAM
 | (0x100f9800..0x100fbf00, sdk/machines/octatrack/battery-ram.json) on every
 | edit, load and bank write, as stock keeps its Part copy there: an unsaved
@@ -1175,6 +1202,10 @@ scn_paste:
 | long per lock, (Part << 12 | scene << 8 | track << 5 | flat) << 8 | value.
 | The sum adds the bank, the project id, the count and every entry. A bank
 | with more locks than fit keeps no copy (the magic stays 0).
+| A load (scenes.work, the battery-RAM copy, a 2.x project's blobs) that finds
+| more locked Parts than NBLK leaves the rest empty, counts them in
+| scn_cnt_drop, never writes scenes.work over (scn_nowrite: the file keeps
+| them) and shows a toast at the next scene gesture (scn_toast).
 
         .set    CUR_BANK,       0x80000002      | byte: the current bank
         .set    CS1_BASE,       0x100f9800
@@ -1183,7 +1214,10 @@ scn_paste:
         .set    CS1_MAX,        (CS1_END-CS1_DATA)/4
         .set    CS1_MAGIC,      0x53435332      | 'SCS2'
         .set    FMAGIC,         0x4d534357      | 'MSCW'
-        .set    LIB_B,          64*4096
+        .set    LIB_B,          64*4096         | scenes.work's payload: all 64 slots
+        .set    NBLK,           24              | Parts that may hold locks (at most 32: scn_used)
+        .set    NOTIFY,         0x4005a2b8      | (text, ticks > 0): the stock toast; the UI task only
+        .set    TOAST_T,        0x48            | 1.2 s at the 60 Hz UI tick
         .set    F_COPY,         0x40016388      | (dst path, src path, 0) -> <0 error
         .set    F_OPEN,         0x40016864      | (fo, path, mode, buffer, size) -> <0 error
         .set    F_READ,         0x40016564      | (fo, dst, n) -> 1
@@ -1193,26 +1227,32 @@ scn_paste:
         .set    SPRINTF,        0x40013a08
         .set    IOB_LEN,        0x1000
 
-| msc_a0: a0 = the displayed Part's table. Keeps every other register.
+| msc_a0: a0 = the displayed Part's table, given one when it has none (the
+| stock sites write through it: B1, B3, B6), the sink when none is free or a
+| load is running. Keeps every other register.
 msc_a0:
         movel   %d0,%sp@-
         movel   %d1,%sp@-
         bsr.w   scn_ensure
-        mvzb    CUR_BANK,%d0
-        andil   #15,%d0
-        lsll    #2,%d0
-        mvzb    PART_DISP,%d1
-        andil   #3,%d1
-        addl    %d1,%d0
-        lsll    #7,%d0
-        lsll    #5,%d0
-        addil   #scn_lib,%d0
-        moveal  %d0,%a0
-        movel   %sp@+,%d1
+        bsr.w   disp_slot
+        tstl    scn_loading
+        bne.s   1f
+        bsr.w   tbl_w
+        bra.s   9f
+1:      bsr.w   tbl_r                   | a load is filling tables: only one it already has
+        movel   %a0,%d1
+        lea     scn_empty,%a0
+        cmpl    %a0,%d1
+        bne.s   2f
+        bsr.w   sink_ff                 | none: the sink, never the shared empty table
+        bra.s   9f
+2:      moveal  %d1,%a0
+9:      movel   %sp@+,%d1
         movel   %sp@+,%d0
         rts
 
-| msc_mix: a0 = the mix Part's table (scn_pbi, scn_pp). Keeps every other register.
+| msc_mix: a0 = the mix Part's table (scn_pbi, scn_pp), the empty table when
+| it has none; never allocates (the sequencer step calls it). Keeps every other register.
 msc_mix:
         movel   %d0,%sp@-
         movel   %d1,%sp@-
@@ -1223,29 +1263,297 @@ msc_mix:
         movel   scn_pp,%d1
         andil   #3,%d1
         addl    %d1,%d0
-        lsll    #7,%d0
-        lsll    #5,%d0
-        addil   #scn_lib,%d0
-        moveal  %d0,%a0
+        bsr.w   tbl_r
         movel   %sp@+,%d1
         movel   %sp@+,%d0
         rts
 
-| scn_ensure: the library is 0xff (no lock) before first use. Keeps every register.
+| scn_ensure: the empty table is 0xff before first use. Keeps every register.
 scn_ensure:
         tstl    scn_ready
         bne.s   9f
         movel   %d0,%sp@-
         movel   %d1,%sp@-
         movel   %a0,%sp@-
-        lea     scn_lib,%a0
-        movel   #LIB_B/4,%d0
+        lea     scn_empty,%a0
+        movel   #1024,%d0
         bsr.w   fill_ff
         moveq   #1,%d0
         movel   %d0,scn_ready
         moveal  %sp@+,%a0
         movel   %sp@+,%d1
         movel   %sp@+,%d0
+9:      rts
+
+| disp_slot: d0 = the displayed Part's slot. Keeps every other register.
+disp_slot:
+        movel   %d1,%sp@-
+        mvzb    CUR_BANK,%d0
+        andil   #15,%d0
+        lsll    #2,%d0
+        mvzb    PART_DISP,%d1
+        andil   #3,%d1
+        addl    %d1,%d0
+        movel   %sp@+,%d1
+        rts
+
+| mix_slot: d0 = the mix Part's slot, -1 with none. Keeps every other register.
+mix_slot:
+        movel   scn_pbi,%d0
+        cmpil   #15,%d0
+        bhi.s   8f
+        lsll    #2,%d0
+        movel   %d1,%sp@-
+        movel   scn_pp,%d1
+        andil   #3,%d1
+        addl    %d1,%d0
+        movel   %sp@+,%d1
+        rts
+8:      moveq   #-1,%d0
+        rts
+
+| blk_at: d0 = a table's index -> a0 = its address. Keeps every other register.
+blk_at:
+        movel   %d0,%sp@-
+        lsll    #6,%d0
+        lsll    #6,%d0
+        lea     scn_blk,%a0
+        addal   %d0,%a0
+        movel   %sp@+,%d0
+        rts
+
+| tbl_r: d0 = a slot (0..63) -> a0 = its table, the empty table when it has
+| none. Keeps every other register.
+tbl_r:
+        movel   %d0,%sp@-
+        andil   #63,%d0
+        lea     scn_map,%a0
+        addal   %d0,%a0
+        mvzb    %a0@,%d0
+        tstl    %d0
+        bne.s   1f
+        lea     scn_empty,%a0
+        bra.s   9f
+1:      subql   #1,%d0
+        bsr.s   blk_at
+9:      movel   %sp@+,%d0
+        rts
+
+| sink_ff: a0 = the sink, all 0xff again. Keeps every other register.
+sink_ff:
+        movel   %d0,%sp@-
+        movel   %d1,%sp@-
+        lea     scn_sink,%a0
+        movel   #1024,%d0
+        bsr.w   fill_ff
+        lea     scn_sink,%a0
+        movel   %sp@+,%d1
+        movel   %sp@+,%d0
+        rts
+
+| tbl_w: d0 = a slot -> a0 = its table, a fresh one (0xff) when it had none,
+| the sink (0xff, counted in scn_cnt_full) when no table is free. Keeps every
+| other register. The table is filled before the map names it, so a reader
+| on another task never sees it half made.
+tbl_w:
+        lea     %sp@(-16),%sp
+        movem.l %d0-%d2/%a1,%sp@
+        andil   #63,%d0
+        movel   %d0,%d2                 | d2 = the slot
+        bsr.w   tbl_r
+        lea     scn_empty,%a1
+        cmpal   %a1,%a0
+        bne.s   9f                      | it has one
+        bsr.w   blk_take                | d0 = a table claimed for it, -1 none
+        tstl    %d0
+        bmi.s   7f
+        tstl    scn_loading
+        beq.s   1f
+        movel   scn_fresh,%d1           | a load's table: not taken back until it ends
+        bset    %d0,%d1
+        movel   %d1,scn_fresh
+1:      movel   %d0,%sp@-               | its index
+        bsr.w   blk_at
+        movel   %a0,%sp@-
+        movel   #1024,%d0
+        bsr.w   fill_ff                 | clobbers d0, d1, a0
+        moveal  %sp@+,%a0
+        movel   %sp@+,%d0
+        lea     scn_owner,%a1
+        moveb   %d2,%a1@(0,%d0:l)       | its owner
+        addql   #1,%d0
+        lea     scn_map,%a1
+        moveb   %d0,%a1@(0,%d2:l)       | published: the slot names it
+        bra.s   9f
+7:      bsr.w   sink_ff
+        addql   #1,scn_cnt_full
+9:      movem.l %sp@,%d0-%d2/%a1
+        lea     %sp@(16),%sp
+        rts
+
+| blk_take -> d0 = a table claimed (its bit set in scn_used), -1 when none
+| is free and none can be taken back. Taking back: a table whose slot no
+| longer names it, or one with no lock whose Part is neither displayed nor
+| mixed; never one the running load gave out (scn_fresh: it may still be
+| filling it), and not again until a lock has changed since the last scan that
+| found none (scn_edits). Keeps every other register.
+blk_take:
+        lea     %sp@(-36),%sp
+        movem.l %d1-%d6/%a0-%a2,%sp@
+        bsr.w   blk_free                | under the mask: a free one claimed
+        tstl    %d0
+        bpl.w   9f
+        movel   scn_edits,%d0
+        cmpl    scn_nofit,%d0
+        beq.w   8f
+        bsr.w   disp_slot
+        movel   %d0,%d4                 | d4 = the displayed slot
+        bsr.w   mix_slot
+        movel   %d0,%d5                 | d5 = the mix slot
+        moveq   #0,%d3                  | d3 = the table
+1:      movel   scn_used,%d0
+        btst    %d3,%d0
+        beq.w   5f
+        movel   scn_fresh,%d0
+        btst    %d3,%d0
+        bne.w   5f
+        lea     scn_owner,%a1
+        mvzb    %a1@(0,%d3:l),%d6       | d6 = its slot
+        cmpil   #63,%d6
+        bhi.w   5f                      | pending: another task is giving it out
+        lea     scn_map,%a2
+        mvzb    %a2@(0,%d6:l),%d0
+        subql   #1,%d0
+        cmpl    %d3,%d0
+        bne.w   4f                      | the slot no longer names it: free to take
+        cmpl    %d4,%d6
+        beq.w   5f
+        cmpl    %d5,%d6
+        beq.w   5f
+        movel   %d3,%d0
+        bsr.w   blk_at
+        bsr.w   is_empty
+        tstl    %d0
+        beq.w   5f
+4:      move.w  %sr,%d1                 | under the mask: still the same, then it is ours
+        move.w  #0x2700,%sr
+        movel   scn_used,%d0
+        btst    %d3,%d0
+        beq.w   6f
+        lea     scn_owner,%a1
+        mvzb    %a1@(0,%d3:l),%d0
+        cmpl    %d6,%d0
+        bne.w   6f
+        lea     scn_map,%a2
+        mvzb    %a2@(0,%d6:l),%d0
+        subql   #1,%d0
+        cmpl    %d3,%d0
+        bne.w   3f
+        clrb    %a2@(0,%d6:l)           | the slot loses it
+3:      moveq   #-1,%d0
+        moveb   %d0,%a1@(0,%d3:l)       | pending, as blk_free leaves it
+        move.w  %d1,%sr
+        movel   %d3,%d0
+        bra.w   9f
+6:      move.w  %d1,%sr
+5:      addql   #1,%d3
+        cmpil   #NBLK,%d3
+        bne.w   1b
+        movel   scn_edits,%d0
+        movel   %d0,scn_nofit
+8:      moveq   #-1,%d0
+9:      movem.l %sp@,%d1-%d6/%a0-%a2
+        lea     %sp@(36),%sp
+        rts
+
+| blk_free -> d0 = a free table claimed under the mask (its owner 0xff,
+| pending, so blk_take on another task leaves it), -1 none. Keeps every other register.
+blk_free:
+        movel   %d1,%sp@-
+        movel   %d2,%sp@-
+        move.w  %sr,%d2
+        move.w  #0x2700,%sr
+        movel   scn_used,%d1
+        moveq   #0,%d0
+1:      btst    %d0,%d1
+        beq.s   2f
+        addql   #1,%d0
+        cmpil   #NBLK,%d0
+        bne.s   1b
+        moveq   #-1,%d0
+        bra.s   9f
+2:      bset    %d0,%d1
+        movel   %d1,scn_used
+        movel   %a0,%sp@-
+        lea     scn_owner,%a0
+        moveq   #-1,%d1
+        moveb   %d1,%a0@(0,%d0:l)       | pending: no slot until tbl_w publishes it
+        moveal  %sp@+,%a0
+9:      move.w  %d2,%sr
+        movel   %sp@+,%d2
+        movel   %sp@+,%d1
+        rts
+
+| slot_free: d0 = a slot -> it has no table; its table, if any, is free. Keeps every register.
+slot_free:
+        lea     %sp@(-16),%sp
+        movem.l %d0-%d2/%a0,%sp@
+        andil   #63,%d0
+        move.w  %sr,%d2
+        move.w  #0x2700,%sr
+        lea     scn_map,%a0
+        mvzb    %a0@(0,%d0:l),%d1
+        clrb    %a0@(0,%d0:l)
+        tstl    %d1
+        beq.s   9f
+        subql   #1,%d1
+        movel   scn_used,%d0
+        bclr    %d1,%d0
+        movel   %d0,scn_used
+9:      move.w  %d2,%sr
+        movem.l %sp@,%d0-%d2/%a0
+        lea     %sp@(16),%sp
+        rts
+
+| is_empty: a0 = a table -> d0 = 1 when it holds no lock (4,096 bytes of 0xff), else 0.
+| Keeps every other register.
+is_empty:
+        movel   %d1,%sp@-
+        movel   %a0,%sp@-
+        movel   #1024,%d1
+1:      movel   %a0@+,%d0
+        notl    %d0
+        bne.s   2f
+        subql   #1,%d1
+        bne.s   1b
+        moveq   #1,%d0
+        bra.s   9f
+2:      moveq   #0,%d0
+9:      moveal  %sp@+,%a0
+        movel   %sp@+,%d1
+        rts
+
+| scn_notify: the UI task only. a0 = a toast's text. Keeps every register.
+scn_notify:
+        lea     %sp@(-16),%sp
+        movem.l %d0-%d1/%a0-%a1,%sp@
+        pea     TOAST_T
+        movel   %a0,%sp@-
+        jsr     NOTIFY
+        addql   #8,%sp
+        movem.l %sp@,%d0-%d1/%a0-%a1
+        lea     %sp@(16),%sp
+        rts
+
+| toast_due: the UI task only. A load that dropped locked Parts shows its toast once. Keeps every register.
+toast_due:
+        tstl    scn_toast
+        beq.s   9f
+        clrl    scn_toast
+        movel   %a0,%sp@-
+        lea     TXT_DROP,%a0
+        bsr.s   scn_notify
+        moveal  %sp@+,%a0
 9:      rts
 
 | fill_ff: a0 = start, d0 = longs. Clobbers d0, d1, a0.
@@ -1262,6 +1570,7 @@ fill_ff:
 msc_edited:
         lea     %sp@(-32),%sp
         movem.l %d0-%d5/%a0-%a1,%sp@
+        addql   #1,scn_edits            | a table may have emptied: blk_take may look again
         moveq   #1,%d0
         movel   %d0,scn_dirty
         mvzb    CUR_BANK,%d0
@@ -1302,7 +1611,11 @@ msc_edited:
 | is the one whose copy stands. The magic is set under the mask with the
 | last compare, after the bank, the count and the sum.
 cs1_full:
-        lea     %sp@(-40),%sp
+        tstl    scn_dropped
+        beq.s   1f
+        clrl    CS1_BASE                | a load left a Part out: no copy (load_drop)
+        rts
+1:      lea     %sp@(-40),%sp
         movem.l %d0-%d5/%a0-%a1,%sp@
         andil   #15,%d0
         move.w  %sr,%d1
@@ -1323,14 +1636,20 @@ cf_run: clrl    scn_again
         movel   scn_projid,%d3
         movel   %d3,%a1@(16)
         addl    %d0,%d3                 | the sum: the bank, the project id, then the entries and the count
-        lsll    #7,%d0
-        lsll    #7,%d0
-        lea     scn_lib,%a0
-        addal   %d0,%a0                 | the bank's four tables
+        lsll    #2,%d0
+        movel   %d0,%sp@(36)            | the bank's first slot
         lea     CS1_DATA,%a1
         moveq   #0,%d2                  | the byte's index in the bank: Part << 12 | scene << 8 | track << 5 | flat
         moveq   #0,%d4                  | entries
-1:      movel   %a0@+,%d0
+1:      movel   %d2,%d0
+        andil   #0xfff,%d0
+        bne.s   6f
+        movel   %d2,%d0                 | a Part's first byte: its table
+        lsrl    #6,%d0
+        lsrl    #6,%d0
+        addl    %sp@(36),%d0
+        bsr.w   tbl_r
+6:      movel   %a0@+,%d0
         moveq   #-1,%d1
         cmpl    %d1,%d0
         bne.s   2f
@@ -1402,15 +1721,15 @@ cs1_restore:
         lea     CS1_BASE,%a1
         movel   %a1@,%d1
         cmpil   #CS1_MAGIC,%d1
-        bne.s   cr_out
+        bne.w   cr_out
         cmpl    %a1@(4),%d0
-        bne.s   cr_out
+        bne.w   cr_out
         movel   scn_projid,%d1
         cmpl    %a1@(16),%d1
-        bne.s   cr_out
+        bne.w   cr_out
         movel   %a1@(8),%d2             | the count
         cmpil   #CS1_MAX,%d2
-        bhi.s   cr_out
+        bhi.w   cr_out
         movel   %d0,%d3
         addl    %d1,%d3
         addl    %d2,%d3
@@ -1421,23 +1740,31 @@ cs1_restore:
         subql   #1,%d1
         bne.s   1b
 2:      cmpl    %a1@(12),%d3
-        bne.s   cr_out
-        lsll    #7,%d0
-        lsll    #7,%d0
-        lea     scn_lib,%a1
-        addal   %d0,%a1                 | the bank's four tables
-        moveal  %a1,%a0
-        movel   #4096,%d0
-        bsr.w   fill_ff
-        lea     CS1_DATA,%a0
+        bne.w   cr_out
+        movel   %d0,%d3
+        lsll    #2,%d3                  | d3 = the bank's first slot
+        bsr.w   bank_free               | its four Parts lose their tables
+        lea     CS1_DATA,%a1
         tstl    %d2
         beq.s   4f
-3:      movel   %a0@+,%d0
-        movel   %d0,%d1
-        lsrl    #8,%d1
-        andil   #0x3fff,%d1
-        moveb   %d0,%a1@(0,%d1:l)
-        subql   #1,%d2
+3:      movel   %a1@+,%d1               | an entry: (Part << 12 | index) << 8 | value
+        movel   %d1,%d0
+        lsrl    #8,%d0
+        lsrl    #6,%d0
+        lsrl    #6,%d0
+        andil   #3,%d0
+        addl    %d3,%d0
+        bsr.w   tbl_w                   | a0 = the Part's table
+        movel   %a0,%d0
+        cmpil   #scn_sink,%d0
+        bne.s   5f
+        bsr.w   load_drop               | no table left: not restored
+        bra.s   6f
+5:      movel   %d1,%d0
+        lsrl    #8,%d0
+        andil   #0xfff,%d0
+        moveb   %d1,%a0@(0,%d0:l)
+6:      subql   #1,%d2
         bne.s   3b
 4:      moveq   #1,%d0
         movel   %d0,scn_dirty           | the copy may hold edits the file lacks
@@ -1468,32 +1795,62 @@ proj_id:
         movel   %sp@+,%d2
         rts
 
-| clear_banks: d1 = a bank mask -> those banks' tables empty. Clobbers d0-d3, a0.
+| clear_banks: d1 = a bank mask -> those banks' Parts have no table (no lock). Clobbers d0-d3, a0.
 clear_banks:
         movel   %d1,%d3
         moveq   #0,%d2
 1:      btst    %d2,%d3
         beq.s   2f
         movel   %d2,%d0
-        lsll    #7,%d0
-        lsll    #7,%d0
-        lea     scn_lib,%a0
-        addal   %d0,%a0
-        movel   #4096,%d0
-        bsr.w   fill_ff
+        bsr.s   bank_free
 2:      addql   #1,%d2
         cmpil   #16,%d2
         bne.s   1b
         rts
 
-| write_scenes -> d0 = 0 when scenes.work holds the library.
+| bank_free: d0 = a bank -> its four Parts have no table. Keeps every register.
+bank_free:
+        movel   %d0,%sp@-
+        movel   %d1,%sp@-
+        andil   #15,%d0
+        lsll    #2,%d0
+        moveq   #4,%d1
+1:      bsr.w   slot_free
+        addql   #1,%d0
+        subql   #1,%d1
+        bne.s   1b
+        movel   %sp@+,%d1
+        movel   %sp@+,%d0
+        rts
+
+| load_drop: a load found no table for a locked Part. It stays empty, the file
+| that holds it is never written over, battery RAM keeps no copy of the bank
+| (cs1_full: a copy without that Part would replace the file's at the next
+| install), and the toast is due. Keeps every register.
+load_drop:
+        addql   #1,scn_cnt_drop
+        mov3ql  #1,scn_dropped
+        mov3ql  #1,scn_nowrite
+        mov3ql  #1,scn_toast
+        rts
+
+| write_scenes -> d0 = 0 when scenes.work holds the library: all 64 slots, a
+| Part without a table as the empty table (the file's format is 0.3.0's).
 write_scenes:
         movel   %d2,%sp@-
-        lea     scn_lib,%a0
-        movel   #LIB_B,%d0
-        moveq   #0,%d1
+        movel   %d3,%sp@-
+        moveq   #0,%d3                  | the slot
+        moveq   #0,%d2                  | the running CRC
+1:      movel   %d3,%d0
+        bsr.w   tbl_r
+        movel   #4096,%d0
+        movel   %d2,%d1
         jsr     scn_crc32
-        movel   %d0,scn_hdr+12
+        movel   %d0,%d2
+        addql   #1,%d3
+        cmpil   #64,%d3
+        bne.s   1b
+        movel   %d2,scn_hdr+12
         movel   #FMAGIC,%d0
         movel   %d0,scn_hdr
         moveq   #1,%d0
@@ -1514,11 +1871,16 @@ write_scenes:
         moveq   #16,%d0
         jsr     scn_fwrite
         movel   %d0,%d2
-        lea     scn_lib,%a0
-        movel   #LIB_B,%d0
+        moveq   #0,%d3
+2:      movel   %d3,%d0
+        bsr.w   tbl_r
+        movel   #4096,%d0
         jsr     scn_fwrite
         subql   #1,%d0
         bne.s   7f
+        addql   #1,%d3
+        cmpil   #64,%d3
+        bne.s   2b
         subql   #1,%d2
         bne.s   7f
         jsr     scn_fclose
@@ -1527,7 +1889,8 @@ write_scenes:
 7:      jsr     scn_fclose
 8:      addql   #1,scn_cnt_ioerr
         moveq   #-1,%d0
-9:      movel   %sp@+,%d2
+9:      movel   %sp@+,%d3
+        movel   %sp@+,%d2
         rts
 
 write_if_dirty:
@@ -1545,14 +1908,16 @@ write_if_dirty:
 
 | read_scenes: d1 = a bank mask -> d0 = 0 the masked banks read, 1 no file,
 | 2 a file that is not scenes.work version 1 or fails its CRC (the masked
-| banks then hold what was read, and load_masked empties them). Slot by slot:
-| a masked bank's slots go straight into the library, the others through
-| scn_scratch, and the CRC runs over all of them.
+| banks then hold what was read, and load_masked empties them). Slot by slot
+| through scn_scratch, the CRC over all of them: a masked bank's slot that
+| holds a lock gets a table and the slot's bytes (load_drop when none is left).
 read_scenes:
         movel   %d2,%sp@-
         movel   %d3,%sp@-
         movel   %d4,%sp@-
-        movel   %d1,%d3
+        movel   %d1,%sp@-
+        bsr.w   clear_banks             | the masked banks start empty
+        movel   %sp@+,%d3               | d3 = the mask
         lea     FMT_WORK,%a0
         lea     scn_path,%a1
         moveq   #0,%d0
@@ -1582,27 +1947,37 @@ read_scenes:
         bne.w   7f
         moveq   #0,%d2                  | the slot
         moveq   #0,%d4                  | the running CRC
-2:      movel   %d2,%d0
-        lsrl    #2,%d0                  | its bank
-        lea     scn_scratch,%a0
-        btst    %d0,%d3
-        beq.s   3f
-        movel   %d2,%d0
-        lsll    #7,%d0
-        lsll    #5,%d0
-        lea     scn_lib,%a0
-        addal   %d0,%a0
-3:      movel   %a0,%sp@-
+2:      lea     scn_scratch,%a0
         movel   #4096,%d0
         jsr     scn_fread
-        moveal  %sp@+,%a0
         subql   #1,%d0
         bne.s   7f
+        lea     scn_scratch,%a0
         movel   #4096,%d0
         movel   %d4,%d1
         jsr     scn_crc32
         movel   %d0,%d4
-        addql   #1,%d2
+        movel   %d2,%d0
+        lsrl    #2,%d0                  | its bank
+        btst    %d0,%d3
+        beq.s   5f
+        lea     scn_scratch,%a0
+        bsr.w   is_empty
+        tstl    %d0
+        bne.s   5f                      | no lock: the Part keeps no table
+        movel   %d2,%d0
+        bsr.w   tbl_w
+        movel   %a0,%d0
+        cmpil   #scn_sink,%d0
+        bne.s   3f
+        bsr.w   load_drop
+        bra.s   5f
+3:      lea     scn_scratch,%a1
+        movel   #1024,%d0
+4:      movel   %a1@+,%a0@+
+        subql   #1,%d0
+        bne.s   4b
+5:      addql   #1,%d2
         cmpil   #64,%d2
         bne.s   2b
         jsr     scn_fclose
@@ -1726,14 +2101,20 @@ cv_chk: mvzb    %a2@,%d0
         addql   #3,%a2
         subql   #1,%d3
         bne.w   cv_chk
-cv_ok:  movel   %d6,%d0
+cv_ok:  movel   %a0,%sp@-               | the caller's Part
+        movel   %d6,%d0
         lsll    #2,%d0
         addl    %d5,%d0
-        lsll    #7,%d0
-        lsll    #5,%d0
-        addil   #scn_lib,%d0
-        moveal  %d0,%a2                 | the Part's table
-        lea     %a1@(4),%a1
+        bsr.w   tbl_w
+        moveal  %a0,%a2                 | the Part's table
+        moveal  %sp@+,%a0
+        movel   %a2,%d0
+        cmpil   #scn_sink,%d0
+        bne.s   1f
+        addql   #1,scn_cnt_drop         | no table left: the blob stays in the Part, unread
+        mov3ql  #1,scn_toast
+        bra.w   cv_no
+1:      lea     %a1@(4),%a1
         tstl    %d2
         beq.w   cv_yes
 cv_ap:  mvzb    %a1@,%d0
@@ -1781,11 +2162,16 @@ cv_fill:
 | C convention: the arguments on the stack, d2-d7/a2-a6 kept, the result in
 | d0 (0: these handlers add nothing to a hook whose answers are OR'd).
 
-| hook_call: a1 = the handler, d0 and d1 its arguments.
+| hook_call: a1 = the handler, d0 and d1 its arguments. While it runs a load
+| may fill tables (scn_loading): the displayed Part gets none it lacks
+| (msc_a0), and the tables it gives out are not taken back (scn_fresh).
 hook_call:
         lea     %sp@(-44),%sp
         movem.l %d2-%d7/%a2-%a6,%sp@
+        mov3ql  #1,scn_loading
         jsr     %a1@
+        clrl    scn_loading
+        clrl    scn_fresh
         movem.l %sp@,%d2-%d7/%a2-%a6
         lea     %sp@(44),%sp
         moveq   #0,%d0
@@ -1827,6 +2213,7 @@ scn_ev_modules_ready:
 
 st_loadall_pre:
         bsr.w   scn_ensure
+        clrl    scn_dropped
         clrl    scn_nowrite
         clrl    scn_dirty
         movel   #0xffff,%d1
@@ -1849,12 +2236,13 @@ st_load_post:
         bra.w   cs1_full
 
 st_newproj:
-        lea     scn_lib,%a0
-        movel   #LIB_B/4,%d0
-        bsr.w   fill_ff
+        bsr.w   scn_ensure
+        movel   #0xffff,%d1
+        bsr.w   clear_banks             | no Part holds a table
         moveq   #1,%d0
         movel   %d0,scn_ready
         movel   %d0,scn_dirty
+        clrl    scn_dropped
         clrl    scn_nowrite
         rts
 
@@ -1908,6 +2296,7 @@ st_preload_post:
         lea     %sp@(12),%sp
         tstl    %d0
         bmi.s   1f
+        clrl    scn_dropped
         clrl    scn_nowrite
         clrl    scn_dirty
         movel   #0xffff,%d1
@@ -1924,12 +2313,7 @@ st_partclear:                           | d0 = the part
         andil   #15,%d1
         lsll    #2,%d1
         addl    %d1,%d0
-        lsll    #7,%d0
-        lsll    #5,%d0
-        addil   #scn_lib,%d0
-        moveal  %d0,%a0
-        movel   #1024,%d0
-        bsr.w   fill_ff
+        bsr.w   slot_free               | the Part's table goes back: no lock
         moveq   #1,%d0
         movel   %d0,scn_dirty
         movel   %d0,scn_state+ST_DUE
@@ -2088,7 +2472,19 @@ scn_pnd_b:      .long   0
 scn_pnd_p:      .long   0
 scn_clip:
         .fill   256, 1, 0xff            | the scene clipboard
-scn_ready:      .long   0               | scn_lib is filled
+scn_ready:      .long   0               | scn_empty is filled
+scn_used:       .long   0               | bit n: table n of scn_blk is given out
+scn_fresh:      .long   0               | bit n: given out by the running load (blk_take leaves it)
+scn_loading:    .long   0               | a project hook is running (hook_call)
+scn_edits:      .long   0               | locks changed (msc_edited)
+scn_nofit:      .long   -1              | scn_edits when blk_take last found nothing to take back
+scn_toast:      .long   0               | a load left locked Parts empty: the toast is due
+scn_cnt_full:   .long   0               | a table asked for with none left
+scn_cnt_drop:   .long   0               | a load left a locked Part (or a lock) out
+scn_dropped:    .long   0               | since the last whole load: a Part was left out (load_drop)
+TXT_FULL:       .asciz  "LOCKS: 24 PARTS"
+TXT_DROP:       .asciz  "LOCKS NOT LOADED"
+        .align  4
 scn_dirty:      .long   0               | scenes.work is due
 cv_base:        .long   0
 scn_cvmask:     .long   0               | banks to read 2.x blobs from once they are loaded
@@ -2108,8 +2504,12 @@ MODE_W:         .asciz  "w"
 
         .section .bss
         .align  4
-scn_lib:        .space  LIB_B           | 64 Parts, 4,096 B each; 0xff until scn_ensure
-scn_scratch:    .space  4096            | read_scenes: a slot of a bank not being loaded
+scn_blk:        .space  NBLK*4096       | the Parts' tables, given out by tbl_w
+scn_empty:      .space  4096            | the table of every Part without one: 0xff, never written
+scn_sink:       .space  4096            | the displayed Part's when no table is left: 0xff again on every call
+scn_map:        .space  64              | per slot: its table + 1, 0 = none
+scn_owner:      .space  32              | per table: the slot it was given to
+scn_scratch:    .space  4096            | read_scenes: each slot as it is read
 scn_crctab:     .space  256*4
 scn_ctx:        .space  4120            | the stock file object and its buffer
 scn_hdr:        .space  16

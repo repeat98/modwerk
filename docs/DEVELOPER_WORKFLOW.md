@@ -52,12 +52,12 @@ npm run pr:ready -- --author <login>   # a registered author's update: also the 
 
 The command fetches `main` and runs CI’s scoped checks. With `--commit`, stage the whole change. Success commits it with your hooks, verifies tree and parent, and checks scope and board claims. Failure leaves it staged. The default checks a clean commit and regenerates stale catalogues or notices after a failure. Files that fail the full test run and pass alone are listed as flaky.
 
-Once **Ready**, push and run `gh pr view <URL> --json state,headRefOid,isDraft`. When the open PR points to the checked commit and required testing is recorded, run `gh pr ready <URL>` yourself if it is a draft. Confirm the same head has `isDraft: false` before reporting completion, then watch `gh pr checks <URL> --watch` until green. If it stays a draft, name the blocker and who owns it. This includes contributor PRs into `base/<machine>-next`. The owner promotes the cumulative PR from that branch into `main`.
+Once **Ready**, push and run `gh pr view <URL> --json state,headRefOid,isDraft`. When the open PR points to the checked commit and required testing is recorded, run `gh pr ready <URL>` yourself if it is a draft. Confirm the same head has `isDraft: false` before reporting completion, then watch `gh pr checks <URL> --watch` until green. If it stays a draft, name the blocker and who owns it. This includes contributor PRs into `base/<machine>-next`, whose cumulative PR the owner promotes into `main`.
 
 Common checks and failures follow.
 
 - **main moved.** An author update merges automatically only when its CI ran against the current `main`; the scope job's name records both commits. When `main` moves first, run `pr:ready` again and push.
-- **A narrow clone kept a stale ref.** `pr:ready` updates the remote's `main` tracking ref even in a single-branch clone. A manual `git fetch origin main` can update only `FETCH_HEAD` under a narrow fetch refspec; fetch `refs/heads/main:refs/remotes/origin/main` before following a `git merge origin/main` instruction in that setup.
+- **A narrow clone kept a stale ref.** `pr:ready` updates the remote's `main` tracking ref even in a single-branch clone; by hand, `git fetch origin main` may update only `FETCH_HEAD`, so fetch `refs/heads/main:refs/remotes/origin/main` before `git merge origin/main`.
 - **Stale generated files.** `src/catalog/module-documents.json` and the compatibility files go stale whenever `main` moves under your branch. `pr:ready` regenerates them; commit what it names. Never edit them by hand.
 - **Letter case.** macOS and Windows find `Foo.s` when you wrote `foo.s`; Linux CI does not. `modules:check` refuses a manifest path in the wrong case, but not an `.include` line inside an assembly source, so check those yourself.
 - **Conflicts in Octatrack base and package assets.** Take `main`'s base files and rebuild them; never take one side's module asset JSONs (`dsp-packages.json`, `coldfire-packages.json`, `octatrack-module-packages.json` and the like) whole, since each side carries its own modules' rows. Merge them row by row, keep one row per module, then rebuild as a base change does: the beta base, `octatrack:module-packages -- --base-only`, the isolated build and import (it rewrites `module-build.json`, the one file holding build provenance, so on a conflict there take `main`'s copy), the standalone recipe pins and Analog BD's proofs. After a base rebuild, `octatrack:module-packages -- --base-only --stock OS.bin` holds back a base-bound package that lags its catalogue version (`lagsBehind`): set that row's `requiredBase` to the new identity by hand; `sdk/tests/test_base_bound.py` rebuilds it and fails unless its published bytes still match.
@@ -84,7 +84,7 @@ Common checks and failures follow.
 
 The Octatrack compiler job rebuilds every base-bound package with the pinned Elekloader sources and compares its bytes with the published package. To repeat that check from the repository root, run `bash scripts/test-base-bound.sh <compiler-image-id> [local-elekloader-checkout]`. It uses the committed tree. The SDK summary lists other skipped checks and their prerequisites.
 
-The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. When changing how the checker reads form fields, [exercise inline labels and standalone questions](../scripts/agent-eval/markdown-fields.md). The branch must be current with main to merge.
+The required PR check includes the description and hardware-evidence verdict. A description edit or draft change reruns it. Check it early: `npm run pr:body -- pr.md` (`--draft`, `--changed-since <base>`, `-` for stdin). When changing how the checker reads form fields, [exercise inline labels and standalone questions](../scripts/agent-eval/markdown-fields.md). The branch must be current with main to merge.
 
 ### Who reviews a first release
 
@@ -126,8 +126,9 @@ Follow checks, the author publisher and deployments; then verify the live versio
 
 A base update carries several developers' changes onto players' instruments at once, so it ships as one release and only after a long run on hardware. Each machine has one cumulative draft pull request from `base/<machine>-next`, and the owner decides when it ships (owner, 18 and 19 November 2026).
 
-- **Find the draft first.** Run `gh pr list --state open --head base/<machine>-next` with the machine ID. Add every base fix, hook and rebuild directly to that branch and update the same pull request. From a fork, link your commits on the cumulative draft so a maintainer can apply them with your authorship. If the machine has no open cumulative draft, start one from `base/<machine>-next` into `main`.
-- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
+- **Find the draft first.** Run `gh pr list --state open --head base/<machine>-next`. Add every base fix, hook and rebuild to that branch and update that pull request. From a fork, link your commits on the draft so a maintainer can apply them as yours. With none open, start one from `base/<machine>-next` into `main`.
+- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` in, and never rebase or force-push it. Keep the description's list of what is in it current.
+- **A pull request into the branch** is cut from it and checked with `npm run pr:ready -- --base-branch base/<machine>-next`; without it `pr:ready` merges and compares `main`.
 - **It stays a draft** until the base has been tested extensively on a unit. Each submitter lists pending tests on the draft, then adds the [build, unit and results](TEST_PROCEDURE.md#what-a-base-adds) before release. Only the owner marks it ready and ships it.
 
 ## Manage reports on GitHub

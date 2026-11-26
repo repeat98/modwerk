@@ -58,6 +58,11 @@ bytes: keep it private, like a firmware image. `verify_static.py` then links
 the same module statically with Elekloader and requires the package, placed
 at the same address, to match it byte for byte.
 
+A C module for the Model:Cycles patches stock code through
+[`build_sites.py`](../../machines/model-cycles/tools/build_sites.py) `--sites SITES.json`, which wraps this
+`build.py`: each site, in a machine base's `base.json` format (`addr`, `len`, `stockSha256`, `op` `jsr` or `jmp`,
+`target` a function of the module), becomes an ABI 7 site that carries the stock bytes' SHA-256 instead of the bytes.
+
 ```sh
 python3 -B sdk/runtime/loader/build.py MODULE.c -o MODULE.mwrm
 npm run device -- try MODULE.mwrm --seconds 10   # scripts/device.mjs
@@ -379,9 +384,16 @@ A machine provides, next to its base:
 - Trampolines subscribed to its core's `ev_tick`, `ev_draw`, `ev_key` and
   `ev_enc`. Each reads every position (`modwerk_runtime_module(i)`) once
   and calls its hook.
+- `memcpy` and `memset`: GCC calls them for struct copies and clears, and a
+  base has no C library.
+
+A machine with only USB MIDI carries the upload controller's wire frames in
+SysEx parts over its link (the Model:Cycles:
+[`modules.c`](../../machines/model-cycles/elekloader/base/modules.c)).
 
 The Octatrack's glue is
-[`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c).
+[`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c), the Model:Cycles'
+[`sdk/machines/model-cycles/elekloader/base/runtime.c`](../../machines/model-cycles/elekloader/base/runtime.c).
 Key codes, encoder numbers, the frame layout and stock code addresses are the
 machine's own, so a module is built for one machine and OS.
 

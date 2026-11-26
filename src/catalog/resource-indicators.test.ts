@@ -25,6 +25,7 @@ import tempSaveApproval from '../../sdk/approvals/temp-save-build-approval.json'
 import kitsApproval from '../../sdk/approvals/kits-build-approval.json'
 import grainApproval from '../../sdk/approvals/grain-build-approval.json'
 import syntizApproval from '../../sdk/approvals/syntiz-build-approval.json'
+import ungemachApproval from '../../sdk/approvals/ungemach-build-approval.json'
 import sdkCatalog from '../../sdk/catalog.json'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
 
@@ -35,7 +36,7 @@ describe('module resource gauges', () => {
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
-    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval, tempSaveApproval, kitsApproval, grainApproval, syntizApproval].map(module => module.id))
+    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval, tempSaveApproval, kitsApproval, grainApproval, syntizApproval, ungemachApproval].map(module => module.id))
     for (const document of MODULE_DOCUMENTS) {
       const indicators = moduleResourceIndicators(document)
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])
