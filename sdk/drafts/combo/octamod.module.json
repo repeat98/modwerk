@@ -16,12 +16,12 @@
     "label": "AMP + CAB",
     "family": "Saturation",
     "summary": "An amp and speaker cabinet for any track: drive, a three-band tone stack and four cabinets.",
-    "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BRIT, HGAIN or SOLID. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, with PRES and a MIC position, a DC blocker and LEV, and MIX blends it with the dry track. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
+    "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BOOST, ROCK, SOLID or BASS. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, with PRES and a mic you can turn off axis and move back into the room, a DC blocker and LEV, and MIX blends it with the dry track. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
     "highlights": [
-      "Four amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BRIT (chiming crunch with even harmonics), HGAIN (tight lows, mids forward, the most drive) and SOLID (flat, clean, hard clip at the top)",
+      "Five amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BOOST (chiming crunch with even harmonics), ROCK (tight lows, mids forward, the most drive), SOLID (flat, clean, hard clip at the top) and BASS",
       "GAIN from clean to fully driven at about the same volume, in every voice",
       "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off",
-      "A SETUP page with TGHT (the low cut before the drive), PRES, MIC (the mic on or off the speaker's axis) and MIX (dry to amp, for parallel drive)"
+      "A SETUP page with TGHT (the low cut before the drive), PRES, the mic's AXIS and DIST (from near to far, into the room's early reflections, in stereo) and MIX (dry to amp, for parallel drive)"
     ],
     "usage": [
       "Pick COMBO in a track's FX1 or FX2 list, choose a voice with VOIC on its SETUP page, start with GAIN around 40, then turn CAB to taste; PRES, MIC and MIX on the SETUP page finish the sound."
@@ -79,13 +79,14 @@
     {
       "name": "VOIC",
       "default": 1,
-      "count": 4,
-      "doc": "Amp voice: CLEAN, BRIT (chiming crunch), HGAIN (tight high gain) or SOLID (flat, hard clip)",
+      "count": 5,
+      "doc": "Amp voice: CLEAN, BOOST (chiming crunch), ROCK (tight high gain), SOLID (flat, hard clip) or BASS",
       "labels": [
         "CLEAN",
-        "BRIT",
-        "HGAIN",
-        "SOLID"
+        "BOOST",
+        "ROCK",
+        "SOLID",
+        "BASS"
       ]
     },
     {
@@ -103,10 +104,17 @@
       "labels": null
     },
     {
-      "name": "MIC",
+      "name": "AXIS",
       "default": 0,
       "count": 128,
-      "doc": "Mic position: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB",
+      "doc": "Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB",
+      "labels": null
+    },
+    {
+      "name": "DIST",
+      "default": 0,
+      "count": 128,
+      "doc": "Mic distance: near at 0, far at 127, the room's early reflections in stereo",
       "labels": null
     },
     {
@@ -124,10 +132,11 @@
     "uiClaims": [],
     "limitations": [
       "Experimental draft: rendered bit for bit against its model in dsp_host and installed in the emulator; the build before page 2 passed device:test on a unit.",
-      "Mono, like a guitar amp: at MIX 127 stereo input comes out in mono on both sides; below 127 the dry stereo comes back.",
+      "Mono amp: at DIST 0 and MIX 127 both sides are the same; DIST's reflections and MIX's dry track bring stereo back.",
       "No free effect id is left for card builds (docs/OCTATRACK_MORE_EFFECT_IDS.md); over USB the base assigns the live id.",
       "CAB and VOIC switch their filters at once, so turning them while audio plays can click.",
-      "At high GAIN with loud, bright input some aliasing remains, even at 2x, most in HGAIN (TESTING.md, Sound quality)."
+      "At high GAIN with loud, bright input some aliasing remains, even at 2x, most in ROCK (TESTING.md, Sound quality).",
+      "DIST uses 1,024 words of the slot's own delay memory and reflects nothing for the first 23 ms after COMBO is picked."
     ],
     "effectId": 10
   },
@@ -163,7 +172,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 369.1 instructions a sample. Emulator: installs, draws both pages, trial without fault. fx:audit per voice: no DC, digital silence after input; aliasing best in CLEAN, worst in HGAIN at high GAIN. Unit (0.1.0 before page 2): device:test passed, CPU price measured; page 2 not yet run on a unit.",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), DIST's ring on FX1 and FX2 slots inside its own buffer (dsp_host's guard), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 392.6 instructions a sample. Emulator: installs, draws both pages, trial without fault. fx:audit: no DC, digital silence after input; aliasing best in CLEAN, worst in ROCK at high GAIN. Unit (0.1.0 before page 2): device:test passed, CPU price measured; page 2 not yet run on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

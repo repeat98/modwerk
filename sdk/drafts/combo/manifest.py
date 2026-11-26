@@ -1,13 +1,13 @@
 """COMBO -- an amp and speaker cabinet in one insert. Original Modwerk design.
 
-A buffer-free insert for FX1 or FX2 of any track (no allocator, no bus
-role, no absolute Y), mono like a guitar amp: (L + R)/2 through a 90 Hz
+An insert for FX1 or FX2 of any track (no bus role, no absolute Y; DIST's
+1,024-word ring sits in the slot's own allocator buffer), mono like a guitar amp: (L + R)/2 through a 90 Hz
 high-pass and a 7 kHz band-limit, then at 2x (halfband.py) GAIN into a soft
 curve flat at full scale, a level that follows GAIN, a three-band tone stack
 (BASS, MID, TREB, flat at 64), one of four speaker cabinets or OFF (CAB, from
 the P table in tables.py), a DC blocker and LEV, to both sides. VOIC (SETUP page,
-slot 6) picks one of four amp voices from the same table; TGHT, PRES, MIC and MIX
-(slots 7 to 10) move the low cut, the cabinet's presence and mic, and the dry mix. verify.py holds the assembly
+slot 6) picks one of four amp voices from the same table; TGHT, PRES, AXIS, DIST and MIX
+(slots 7 to 11) move the low cut, the cabinet's presence, the mic's axis and distance, and the dry mix. verify.py holds the assembly
 to reference.py's model bit for bit. Hardware operation is untested.
 
 The FX2 id: the card's 32 ids are all taken (docs/OCTATRACK_MORE_EFFECT_IDS.md),
@@ -17,7 +17,7 @@ the live id; a card build waits for the owner.
 from pathlib import Path
 from runpy import run_path
 
-from remix.schema import (Category, Proof, BusRole, DspSection, Formatter, Gate, Harness, Kind,
+from remix.schema import (Category, Claims, Proof, BusRole, DspSection, Formatter, Gate, Harness, Kind,
                           MenuEntry, Module, Param, YBase)
 
 _T = run_path(str(Path(__file__).with_name("tables.py")))
@@ -53,17 +53,18 @@ MODULE = Module(
               doc="Speaker cabinet: OFF, one 10-inch, one 12-inch, two 12-inch or four 12-inch"),
         Param(b"LEV", 64, 128, active=True, formatter=P,
               doc="Output level (LEV/64)^2: silence at 0, 0 dB at 64, +12 dB at 127"),
-        Param(b"VOIC", 1, 4, active=True, formatter=S, labels=_T["VOICE_NAMES"],
-              doc="Amp voice: CLEAN, BRIT (chiming crunch), HGAIN (tight high gain) or SOLID (flat, hard clip)"),
+        Param(b"VOIC", 1, 5, active=True, formatter=S, labels=_T["VOICE_NAMES"],
+              doc="Amp voice: CLEAN, BOOST (chiming crunch), ROCK (tight high gain), SOLID (flat, hard clip) or BASS"),
         Param(b"TGHT", 64, 128, active=True, formatter=B,
               doc="Tightness: the low cut before the drive, looser below 0, the voice's own at 0, tighter above"),
         Param(b"PRES", 0, 128, active=True, formatter=P,
               doc="Presence: the cabinet's 4-5 kHz bump, up to about +6 dB; with CAB OFF a peak at 3.5 kHz"),
-        Param(b"MIC", 0, 128, active=True, formatter=P,
-              doc="Mic position: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB"),
+        Param(b"AXIS", 0, 128, active=True, formatter=P,
+              doc="Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; needs a CAB"),
+        Param(b"DIST", 0, 128, active=True, formatter=P,
+              doc="Mic distance: near at 0, far at 127, the room's early reflections in stereo"),
         Param(b"MIX", 127, 128, active=True, formatter=P,
               doc="Dry to amp: 0 the dry track in stereo, 127 all amp; between, parallel drive"),
-        BLANK,
     ),
 
     dsp=DspSection(
@@ -77,11 +78,13 @@ MODULE = Module(
         ptable=_T["TABLE"],
     ),
 
+    # DIST's ring: Y base + $400..$7ff of the slot's own allocator buffer, which fits an FX1 slot's 3,072.
+    claims=Claims(stock_instance_buffer=True, buffer_words=2048),
     harness=Harness(layout_char=None, is_server=False),
 
     gates=(Gate("modules/combo/verify.py", remix_arg=False),),
     # The sample loop's work is the same at every setting; the top of every
     # knob keeps the limit and the curve busy.
     dear={"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2,
-          "TGHT": 127, "PRES": 127, "MIC": 127, "MIX": 64},
+          "TGHT": 127, "PRES": 127, "AXIS": 127, "DIST": 127, "MIX": 64},
 )

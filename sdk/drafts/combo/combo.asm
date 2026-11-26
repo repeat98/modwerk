@@ -23,11 +23,13 @@
 ;        weight, stored k/128 x w/2
 ;   CAB  x:(r6+4): 0 OFF, 1 1X10, 2 1X12, 3 2X12, 4 4X12 (above 4 is 4X12)
 ;   LEV  x:(r6+5): (k/64)^2, 64 is 0 dB. OUT is stored as COMP/2 x (k/128)^2 x VC
-;   VOIC x:(r6+$c), SETUP page slot 6: 0 CLEAN, 1 BRIT, 2 HGAIN, 3 SOLID (above 3 is SOLID)
+;   VOIC x:(r6+$c), SETUP page slot 6: 0 CLEAN, 1 BOOST, 2 ROCK, 3 SOLID, 4 BASS (above 4 is BASS)
 ;   TGHT x:(r6+$c) bits 8-15, slot 7: the pre high-pass x (t+16)/80, 64 the voice's own
-;   PRES x:(r6+$d), slot 8, MIC bits 8-15, slot 9: each cab's biquad 2 and 3 move
-;        k/128 of the way to their PRES 127 / MIC 127 versions (tables.py cab_row)
-;   MIX  x:(r6+$e), slot 10: dry to wet, 127 all wet; it glides like OUT ($3a/$3b)
+;   PRES x:(r6+$d), slot 8, AXIS bits 8-15, slot 9: each cab's biquad 2 and 3 move
+;        k/128 of the way to their PRES 127 / AXIS 127 versions (tables.py cab_row)
+;   DIST x:(r6+$e), slot 10: the mic's distance: four early reflections from a 1024-word
+;        Y ring (tables.py ROOM_L, ROOM_R), the direct sound down by up to 0.35
+;   MIX  x:(r6+$e) bits 8-15, slot 11: dry to wet, 127 all wet; it glides like OUT ($3a/$3b)
 ; GAIN, BASS, MID, TREB, OUT and MIX glide per sample (1/64 a sample) and snap
 ; onto their target at the start of a call once within 64 LSB. The first
 ; call after init starts on the knobs. CAB and VOIC switch at the start of a call.
@@ -44,17 +46,28 @@
 ;   $38/$39 OUT target/run    $3a/$3b MIX target/run    $3f seeded
 ;   $40..$44 the voice's pre low-pass, $45..$53 the CAB row (b0 b1 b2 -a1 -a2, halved)
 ;   $54..$5a the voice's KHP CA CB BIAS FB KL KT
-; Nothing above $5f is touched.
+;   $5b ring pointer (Y)   $5c samples until the ring is full   $5d..$60 reflection gains L1 L2 R1 R2
+; Nothing above $63 is touched (init clears $00..$63). Y: base + $400..$7ff of this slot's buffer.
 ; Every product is the signed mpy/mac x0,y1 form.
 ; CYCLES_FORWARD_BRANCHES
 init:
         move    r7,r5
         move    #>$ffffff,m5
         clr     a
-        do      #96,>cmb_zero
+        do      #100,>cmb_zero
         move    a,x:(r5)+
 cmb_zero:
         nop
+; DIST's ring: 1024 words at this slot's Y base + $400 (FX1 bases are 1024-aligned, FX2 ones more;
+; + $400 also stays clear of the FX2 words stock keeps at a shared-window base). r1/n1/m1 untouched.
+        move    x:>$213,r4
+        move    #>$ffffff,m4
+        move    x:(r4),a
+        move    #>$400,x0
+        add     x0,a
+        move    a1,x:(r7+$5b)
+        move    #>1024,x0
+        move    x0,x:(r7+$5c)
         rts
 
 proc:
@@ -63,19 +76,19 @@ proc:
         move    #>$ffffff,m3
         move    #>$ffffff,m4
         move    #>$ffffff,m5
-; VOIC x:(r6+$c): r1 = its row (16 words a voice, tables.py VOICES); above 3 is SOLID.
+; VOIC x:(r6+$c): r1 = its row (16 words a voice, tables.py VOICES); above 4 is BASS.
         move    #>$fab1e0,r2
         move    r2,r1
         move    x:(r6+$c),a
         and     #>$7f0000,a
         asr     #16,a,a
-        move    #>3,x0
+        move    #>4,x0
         cmp     x0,a
         tgt     x0,a
         asl     #4,a,a
         move    a1,n1
         move    (r1)+n1
-; The voice's pre low-pass to $40..$44, CAB's rows (table word 64 + 25 CAB) to $45..$53,
+; The voice's pre low-pass to $40..$44, CAB's rows (table word 80 + 25 CAB) to $45..$53,
 ; then the voice's KHP CA CB BIAS FB KL KT to $54..$5a.
         move    #>$40,n4
         move    r7,r4
@@ -96,7 +109,7 @@ cmb_pre:
         add     a,b
         asl     #1,a,a
         add     b,a
-        move    #>64,x0
+        move    #>80,x0
         add     x0,a
         move    r2,r3
         move    a1,n3
@@ -152,9 +165,10 @@ cmb_voice:
         mpy     x0,y1,a
         asl     #2,a,a
         move    a,x:(r7+$54)
-; MIX, x:(r6+$e): k/128 + k/16384, so 127 leaves the dry 1/16384.
+; MIX, x:(r6+$e) companion field (bits 8-15): k/128 + k/16384, so 127 leaves the dry 1/16384.
         move    x:(r6+$e),a
-        and     #>$7f0000,a
+        and     #>$007f00,a
+        asl     #8,a,a
         tfr     a,b
         asr     #7,b,b
         add     b,a
@@ -169,12 +183,12 @@ cmb_voice:
         move    x0,y1
         mpy     x0,y1,a
         move    a,x:(r7+$30)
-; OUT: COMP/2 (table word 189 + GAIN's whole step) x (k/128)^2 x the voice's VC.
+; OUT: COMP/2 (table word 205 + GAIN's whole step) x (k/128)^2 x the voice's VC.
         move    r2,r3
         move    x:(r6+$0),a
         and     #>$7f0000,a
         asr     #16,a,a
-        move    #>189,x0
+        move    #>205,x0
         add     x0,a
         move    a1,n3
         move    (r3)+n3
@@ -209,6 +223,42 @@ cmb_voice:
         move    p:(r1)+,y1
         mpy     x0,y1,a
         move    a,x:(r7+$36)
+; DIST, x:(r6+$e): the direct sound x (1 - 0.35 d) into OUT; the reflections' gains d x G
+; ($5d..$60), 0 until the ring has been written once ($5c counts the samples left).
+        move    x:(r6+$e),a
+        and     #>$7f0000,a
+        move    a1,x0
+        move    #>$2ccccd,y1
+        mpy     x0,y1,b
+        move    #>$7fffff,a
+        sub     b,a
+        move    a,x0
+        move    x:(r7+$38),y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$38)
+        move    x:(r7+$5c),a
+        move    n7,x0
+        sub     x0,a
+        move    #>0,x0
+        tlt     x0,a
+        move    a1,x:(r7+$5c)
+        move    x:(r6+$e),b
+        and     #>$7f0000,b
+        tst     a
+        tne     x0,b
+        move    b1,x0
+        move    #>$400000,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$5d)
+        move    #>$d1eb85,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$5e)
+        move    #>$3ae148,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$5f)
+        move    #>$d9999a,y1
+        mpy     x0,y1,a
+        move    a,x:(r7+$60)
 ; The first call after init starts on the knobs.
         move    x:(r7+$3f),a
         tst     a
@@ -237,6 +287,8 @@ cmb_seeded:
         move    b1,x:(r4)+
 cmb_snap:
         nop
+        move    x:(r7+$5b),r1
+        move    #>$3ff,m1
         do      n7,>cmb_frameend
         move    x:(r7+$30),a
         move    x:(r7+$31),x0
@@ -276,8 +328,30 @@ cmb_snap:
         move    a1,x:(r7+$3b)
         move    r7,r5
         bsr     cmb_chan
-; MIX: each side = 2 (d/2 + MIX (h - d/2)), h the wet halved.
+; DIST: the wet into the ring, then each side's two reflections (r1 runs modulo $400).
         move    a,x1
+        move    x1,y:(r1)+
+        move    x1,a
+        move    #>$fffef8,n1
+        move    x:(r7+$5d),y1
+        move    y:(r1+n1),x0
+        mac     x0,y1,a
+        move    #>$fffdc4,n1
+        move    x:(r7+$5e),y1
+        move    y:(r1+n1),x0
+        mac     x0,y1,a
+        move    x1,b
+        move    #>$fffe7a,n1
+        move    x:(r7+$5f),y1
+        move    y:(r1+n1),x0
+        mac     x0,y1,b
+        move    #>$fffce2,n1
+        move    x:(r7+$60),y1
+        move    y:(r1+n1),x0
+        mac     x0,y1,b
+        move    a,x1
+        move    b,y0
+; MIX: each side = 2 (d/2 + MIX (h - d/2)), h that side's wet, halved (L in x1, R in y0).
         move    x:(r7+$3b),y1
         move    x:(r0),b
         asr     #1,b,b
@@ -289,7 +363,7 @@ cmb_snap:
         move    b,x:(r0)+
         move    x:(r0),b
         asr     #1,b,b
-        move    x1,a
+        move    y0,a
         sub     b,a
         move    a,x0
         mac     x0,y1,b
@@ -297,6 +371,8 @@ cmb_snap:
         move    b,x:(r0)+
 cmb_frameend:
         nop
+        move    r1,x:(r7+$5b)
+        move    #>$ffffff,m1
         rts
 
 ; The amp: in x:(r0) and x:(r0+1), state block at r5; out in a, which the

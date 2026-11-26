@@ -96,7 +96,8 @@ def write_mem(blob, path):
     body = rec(0, ORG, words) + rec(0, TABLE_AT, list(T.TABLE)) + rec(0, 0x40, [0, 0, 0, 0])
     x = {0x415: 0x700, 0x416: 0x700, 0x419: 0, 0x208: 0x500, 0x20a: 0x6000,
          0x20c: 0, 0x20d: 16, 0x20e: 0, 0x213: 0x256}
-    x.update({0x256 + i: 0x4000 for i in range(16)})
+    # the allocator's table: FX1 and FX2 bases alternate, as on the unit (dsp_host's -alloc indexes it)
+    x.update({0x255 + i: b for i, b in enumerate((0x1000, 0x4000, 0x1c00, 0x8000, 0x2800, 0x4000, 0x3400, 0x8000))})
     for a, v in x.items():
         body += rec(1, a, [v])
     path.write_bytes(body + struct.pack("<BII", 0xff, 0, 0))
@@ -104,7 +105,7 @@ def write_mem(blob, path):
 
 
 def knob_row(k):
-    return [k[n] for n in R.KNOBS] + [0]
+    return [k[n] for n in R.KNOBS]
 
 
 def full(rows):
@@ -169,7 +170,7 @@ def rms(v):
     return math.sqrt(sum(s * s for s in v) / len(v)) or 1e-30
 
 
-DEAR = {"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2}
+DEAR = {"GAIN": 127, "BASS": 127, "MID": 127, "TREB": 127, "CAB": 4, "LEV": 127, "VOIC": 2, "DIST": 127}
 
 
 def main():
@@ -191,10 +192,11 @@ def main():
              f"({len(products)} in the disassembly, {wanted} in the source)")
         gate("1 no rep, no mpysu/macsu", not any(re.search(r"\brep\b|mpysu|macsu", l) for l in dis))
         offsets = [int(m, 16) for m in re.findall(r"\(r7\+\$([0-9a-f]+)\)", src)]
-        gate("1 state inside X:(r7+$00..$5f)", max(offsets) <= 0x5f, f"(highest $%02x)" % max(offsets))
+        gate("1 state inside X:(r7+$00..$63), the block init clears", max(offsets) <= 0x63,
+             f"(highest $%02x)" % max(offsets))
         copy_end = 0x40 + 5 + 15 + 7
         gate("1 the coefficient copy ends inside the state init clears",
-             "move    #>$40,n4" in src and "do      #96," in src and "do      #7," in src and copy_end <= 0x60,
+             "move    #>$40,n4" in src and "do      #100," in src and "do      #7," in src and copy_end <= 0x64,
              f"(ends at ${copy_end - 1:02x})")
         # the GAIN product before the limit: q (limited at full scale by the pre low-pass's and the
         # all-passes' stores) x G/256 x 2^9 must stay inside the accumulator's +-256
@@ -204,6 +206,9 @@ def main():
         imms = {int(m, 16) for m in re.findall(r"#>\$([0-9a-f]{6})", src)}
         missing = [k for k, v in T.CONSTANTS.items() if (v & 0xffffff) not in imms]
         gate("1 the assembly carries tables.py's constants", not missing, f"missing {missing}" if missing else "")
+        offsets_ok = f"move    #>{T.CAB_AT},x0" in src and f"move    #>{T.COMP_AT},x0" in src
+        gate("1 the assembly finds CAB's rows and COMP where tables.py puts them", offsets_ok,
+             f"(CAB at {T.CAB_AT}, COMP at {T.COMP_AT})")
 
         # 2. bit for bit the model
         n = 16 * 160
@@ -236,36 +241,56 @@ def main():
         same("2 two instances: the first", a, nl, nr, {})
         same("2 two instances: the second", b, t, t, {0: {"GAIN": 110, "CAB": 1, "TREB": 20}})
         for vi, vn in enumerate(T.VOICE_NAMES):
-            k = {"VOIC": vi, "GAIN": 100, "BASS": 90, "MID": 30, "TREB": 100}
+            k = {"VOIC": vi, "GAIN": 100, "BASS": 90, "MID": 30, "TREB": 100, "DIST": 90}
             (got,), _, _ = run(work, mem, syms, [(t, nl, {0: k})], tag=f"voice{vi}")
             same(f"2 VOIC {vn}, a loud tone", got, t, nl, {0: k})
         vrows = {0: {"VOIC": 0}, 12: {"VOIC": 2, "GAIN": 127}, 25: {"VOIC": 3}, 37: {"VOIC": 1, "GAIN": 0},
-                 50: {"VOIC": 9}, 70: {"VOIC": 0, "CAB": 0}}
+                 50: {"VOIC": 9}, 60: {"VOIC": 4}, 70: {"VOIC": 0, "CAB": 0}}
         (got,), _, _ = run(work, mem, syms, [(nl, nr, vrows)], tag="vauto")
-        same("2 VOIC automation, a stored VOIC above 3 plays SOLID", got, nl, nr, vrows)
+        same("2 VOIC automation, a stored VOIC above 4 plays BASS", got, nl, nr, vrows)
         for k in ({"TGHT": 0}, {"TGHT": 127, "VOIC": 2}, {"PRES": 127, "CAB": 1}, {"PRES": 127, "CAB": 0},
-                  {"MIC": 127, "CAB": 4}, {"MIC": 64, "PRES": 64, "CAB": 3}, {"MIX": 0}, {"MIX": 64, "GAIN": 110}):
+                  {"AXIS": 127, "CAB": 4}, {"AXIS": 64, "PRES": 64, "CAB": 3}, {"MIX": 0}, {"MIX": 64, "GAIN": 110},
+                  {"DIST": 127}, {"DIST": 60, "MIX": 90, "CAB": 0}):
             (got,), _, _ = run(work, mem, syms, [(t, nl, {0: k})], tag="p2")
             same(f"2 page 2: {k}", got, t, nl, {0: k})
-        prows = {0: {}, 8: {"PRES": 127, "MIC": 30}, 16: {"TGHT": 0, "MIX": 0}, 24: {"MIX": 127, "TGHT": 127},
-                 33: {"MIC": 127, "PRES": 0, "MIX": 40}, 50: dict(R.KNOB_DEFAULTS)}
+        prows = {0: {}, 8: {"PRES": 127, "AXIS": 30}, 16: {"TGHT": 0, "MIX": 0}, 24: {"MIX": 127, "TGHT": 127},
+                 33: {"AXIS": 127, "PRES": 0, "MIX": 40}, 70: {"DIST": 127}, 90: {"DIST": 20, "MIX": 100},
+                 120: dict(R.KNOB_DEFAULTS)}
         (got,), _, _ = run(work, mem, syms, [(nl, nr, prows)], extra=("-split", "5"), tag="pauto")
         same("2 page 2 automation with a trig split every block", got, nl, nr, prows, split=5)
         (got,), _, _ = run(work, mem, syms, [(nl, nr, {0: {"MIX": 0}})], tag="dry")
         gate("2 MIX 0 is the dry signal, bit for bit", s24(got[0][:n]) == nl and s24(got[1][:n]) == nr)
+        # DIST's ring in the slot's Y buffer: an FX1 instance (alloc 0, Y:$1000, 3,072 words) and two FX2
+        # ones, each policed by dsp_host's guard to its own buffer
+        kd = {0: {"DIST": 127, "GAIN": 90}}
+        (got,), _, out = run(work, mem, syms, [(t, nl, kd)], extra=("-alloc", "0", "-r7", "1", "-guard", "3072"),
+                             tag="fx1")
+        same("2 DIST on FX1 (Y:$1000), the guard on its 3,072 words", got, t, nl, kd)
+        gate("2 the FX1 ring writes only inside its buffer", "guard clean" in out and "stray   inst" not in out)
+        (got,), _, out = run(work, mem, syms, [(t, nl, kd)], extra=("-alloc", "0", "-r7", "1", "-guard", "2048"),
+                             tag="fx1w")
+        gate("2 the ring sits in its buffer's first 2,048 words (a 2,048-word window holds every write)",
+             "guard clean" in out and "stray   inst" not in out)
+        a, b = run(work, mem, syms, [(t, nl, kd), (nl, t, {0: {"DIST": 64, "VOIC": 4}})],
+                   extra=("-guard", "16384"), tag="fx2")[0]
+        _, _, out = run(work, mem, syms, [(t, nl, kd), (nl, t, {0: {"DIST": 64}})], extra=("-guard", "2048"),
+                        tag="fx2w")
+        gate("2 two FX2 rings, each inside its own buffer", "guard clean" in out and "stray   inst" not in out)
+        same("2 DIST on two FX2 instances: the first", a, t, nl, kd)
+        same("2 DIST on two FX2 instances: the second", b, nl, t, {0: {"DIST": 64, "VOIC": 4}})
 
         # 3. silence
         z = [0] * n
         for k in ({}, DEAR, {"GAIN": 0, "LEV": 0, "CAB": 0}, {"BASS": 0, "MID": 0, "TREB": 0},
                   *({"VOIC": v, "GAIN": 127} for v in range(4)),
-                  {"PRES": 127, "MIC": 127, "TGHT": 127, "MIX": 64}):
+                  {"PRES": 127, "AXIS": 127, "TGHT": 127, "MIX": 64, "DIST": 127}):
             (got,), _, _ = run(work, mem, syms, [(z, z, {0: k})], tag="zero")
             gate(f"3 silence in, silence out at {k or 'the defaults'}", not any(s24(got[0]) + s24(got[1])))
 
         m3 = 44100 * 3
         burst = noise(4410, 0.5, 3) + [0] * (m3 - 4410)
-        for vi in range(4):
-            k = {**DEAR, "VOIC": vi, "PRES": 127, "MIC": 64, "MIX": 90}
+        for vi in range(5):
+            k = {**DEAR, "VOIC": vi, "PRES": 127, "AXIS": 64, "MIX": 90, "DIST": 127}
             (got,), _, _ = run(work, mem, syms, [(burst, burst, {0: k})], tag="tail")
             gate(f"3 a burst's tail at the dearest setting, VOIC {T.VOICE_NAMES[vi]}, ends in exact silence",
                  not any(s24(got[0][-44100:]) + s24(got[1][-44100:])))
@@ -280,7 +305,8 @@ def main():
             tail = slice(m // 2, m)
             d = 20 * math.log10(rms(s24(got[0])[tail]) / Q / rms(fl[tail]))
             gate(f"4 VOIC {vn}: the render matches the float design at 1 kHz", abs(d) < 0.5, f"({d:+.2f} dB)")
-        for knobs in ({"CAB": 2, "PRES": 127, "MIC": 64, "TGHT": 0}, {"CAB": 4, "MIC": 127, "TGHT": 127, "MIX": 64}):
+        for knobs in ({"CAB": 2, "PRES": 127, "AXIS": 64, "TGHT": 0}, {"CAB": 4, "AXIS": 127, "TGHT": 127, "MIX": 64},
+                      {"DIST": 127, "CAB": 0}):
             (got,), _, _ = run(work, mem, syms, [(k1, k1, {0: knobs})], tag="float")
             fl, _ = R.float_combo([s / Q for s in k1], [s / Q for s in k1], knobs)
             d = 20 * math.log10(rms(s24(got[0])[tail]) / Q / rms(fl[tail]))
