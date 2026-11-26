@@ -75,3 +75,11 @@
 #define STEP_COND_SET_AT 0x400c03d6     // (track, step, condition), with its notice
 #define STEP_FLAG_SET_AT 0x400c2482     // (track, step, mask, on)
 #define PAD_TRACK_AT 0x400aefa2         // (track index): 1 for a pad track
+// Scenes, for the scene lane (0.6.0): the kit's active scene (0..11, -1 none), the routine a
+// scene pad engages with (kit, scene or -1, 1), and the kit's Scenes object, whose slot + 40
+// answers its 48-entry lock table (s16 value, u8 track, u8 word, s8 scene; track 0xff empty).
+#define ACTIVE_SCENE_AT 0x400a6fdc
+#define SCENE_ENGAGE_AT 0x400a7d70
+#define KIT_SCENES_AT 0x400a680a
+#define SCENES_TABLE 40
+#define SCENE_SLOTS 48

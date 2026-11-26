@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// QPERF for the Analog Rytm MKII: set performance locks from the QPER key.
+// QPER and performance locks for the Analog Rytm MKII (QPER Live Rec before 0.5.0).
 //
 // Stock lets QPER link several performances, which add up. Here a press links
 // one: with QPER held, a pad or trig moves the link to that performance, and the
 // linked one unlinks it. A kit that brings several keeps them until that press.
-// So, with QPER held and one performance linked:
+// Since 0.6.0 the PERF hold (main.c) does the rest, on the linked performance (in
+// performance edit, the one it shows), through qperf_locker and qperf_action:
 //
 //   turn a knob   Stock's own lock edit on the linked performance, drawn as when
 //                 a performance pad is held. The kit has 48 lock slots for all
@@ -119,6 +120,7 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define KEY_STOP 0x52
 #define KEY_FUNC 0x80
 #define KEY_NO 0x45
+#define KEY_SCENE 0x13              // held: the scene lane keeps the scene still
 #define EV_KEY 12                   // event + 12: the key
 #define EV_FLAGS 16                 // event + 16: bit 0 down (clear on release), 8 repeat
 #define PRESSED 1
@@ -241,6 +243,24 @@ static int perf_rec_period;             // the take repeats every this many step
                                         // last recorded at, or a shorter one it was cut to since
 static int pass_steps, passes;          // the loop's comings round at one length, up to 2
 
+// The scene lane (0.6.0): the scene engaged at each point, + 1 (0 for none), recorded in
+// LIVE RECORDING from a scene change to the loop's end, played back by engaging the
+// scene where it changes, and written by RECORD + YES as the scene's locks. UI side only.
+static unsigned char scene_rec[REC_POINTS];
+static unsigned char scene_rec_has[STEPS];
+static int scene_used;                  // any point recorded
+static int scene_armed;                 // recording from a change to the loop's end
+static int scene_last_pos = -1;         // the position at the last tick, -1 stopped
+static int scene_last_seen = -2;        // the active scene at the last tick
+static int scene_engaged_by_us = -2;    // the scene the lane engaged, for the tick after
+static int scene_engaged_ticks;         // ticks that guard lasts
+static int scene_loop, scene_period;    // the lane's loop and its repeat period, as the
+                                        // performance lanes' (it extends in the UI tick)
+static volatile int scene_wipe;         // a wipe asks the UI to empty the lane: 1, or 2 for a
+                                        // new pattern or project (no scene change to record yet)
+static int scene_pass_steps, scene_passes;  // the lane's own pass count, as pass_steps and passes
+QPERF_UI static void scene_lane_sync(void);
+
 // What the audio block reads when nothing happens, together on four cache lines: stock's
 // audio work evicts module data every block, and each cold line costs about 20 ticks.
 static struct qperf_hot {
@@ -358,13 +378,21 @@ static unsigned linked(void *kit)
     return (unsigned)KIT_QPER_MASK(kit) & 0xfff;
 }
 
-// What the last QPER + YES applied, so a second YES in the same QPER hold puts it back:
+// The performance the PERF hold edits and acts on: the one performance edit shows, or
+// QPER's link (from 0.6.0 PERF holds the gestures QPER held before; QPER keeps its link).
+static int forced = -1;
+static unsigned target(void *kit)
+{
+    return forced >= 0 ? 1u << forced : linked(kit);
+}
+
+// What the last PERF + YES applied, so a second YES puts it back:
 // the kit's values as they were and the locks it removed. Any other QPER action, a lock
-// edit, a new hold or another kit forgets it, as stock's undo for clear and paste does.
+// edit or another kit forgets it, as stock's undo for clear and paste does.
 static struct {
     void *kit;
     int index, count, valid;
-    struct { unsigned char track, param; short lock; int old, now; } e[SLOTS];
+    struct { unsigned char track, param; short lock; int old, now, expect; } e[SLOTS];
 } applied;
 
 static const unsigned char *lock_table(void *perf)
@@ -419,11 +447,23 @@ QPERF_UI static int param_read(void *set, int id)
     return (*(set_read_t *)(*(word_t *)set + VT_READ))(set, id);
 }
 
+// A value as stock's setter keeps it: within the parameter row's range (as RECORD + YES
+// clamps its locks), so an undo can tell its own write from a change made since, even if
+// the setter lands a moment after it is called.
+QPERF_UI static int clamp_id(int id, int value)
+{
+    const unsigned char *row = (const unsigned char *)ID_TABLE_AT + ID_ROW * id;
+    int lo = *(const int *)(row + ID_MIN), hi = *(const int *)(row + ID_MAX);
+    lo = lo < 0 ? 0 : lo;
+    hi = hi > 0x7fff ? 0x7fff : hi;
+    return value < lo ? lo : value > hi ? hi : value;
+}
+
 // The linked performance's lock on (track, param), 0 for none, or with several.
 static const unsigned char *find_lock(void *kit, int track, int param)
 {
     const unsigned char *t = lock_table((void *)KIT_PERF(kit));
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int i;
     if (several(mask))
         return 0;
@@ -433,12 +473,12 @@ static const unsigned char *find_lock(void *kit, int track, int param)
     return 0;
 }
 
-// The locker stock edits through while QPER is held. Stock calls these slots.
+// The locker stock edits through while PERF is held (main.c). Stock calls these slots.
 static int locker_has_any(void *self)
 {
     void *kit = active_kit();
     const unsigned char *t = lock_table((void *)KIT_PERF(kit));
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int i;
     (void)self;
     for (i = 0; i < SLOTS; i++, t += SLOT_BYTES)
@@ -450,7 +490,7 @@ static int locker_has_any(void *self)
 static void locker_clear(void *self, int track, int param)
 {
     void *kit = active_kit();
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     (void)self;
     if (mask && !several(mask))
         PERF_CLEAR_ONE((void *)KIT_PERF(kit), lowest_linked(mask), track, param);
@@ -459,7 +499,7 @@ static void locker_clear(void *self, int track, int param)
 static void locker_clear_all(void *self)
 {
     void *kit = active_kit();
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     (void)self;
     if (mask && !several(mask))
         PERF_CLEAR((void *)KIT_PERF(kit), lowest_linked(mask));
@@ -469,7 +509,7 @@ static void locker_set(void *self, int track, int param, int value)
 {
     void *kit = active_kit();
     void *perf = (void *)KIT_PERF(kit);
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     (void)self;
     if (!mask) {
         show("NO PERFORMANCE LINKED");
@@ -512,22 +552,6 @@ static const void *const locker_vtable[] = {
     (const void *)LOCKER_RELATIVE_AT, (const void *)LOCKER_LOCKABLE_AT,
 };
 static struct { const void *const *vtable; } locker = { locker_vtable };
-
-static void locker_install(void)
-{
-    void *ui = (void *)PARAM_UI();
-    if (GET_LOCKER(ui))
-        return;                         // a performance or scene pad holds it: stock's
-    SET_LOCKER(ui, &locker);
-    LOCK_EDIT(ui, 1);
-}
-
-static void locker_remove(void)
-{
-    void *ui = (void *)PARAM_UI();
-    if (GET_LOCKER(ui) == (word_t)&locker)
-        END_LOCK_EDIT(ui);
-}
 
 // A message with the linked performance's number in it.
 QPERF_UI static void show_numbered(const char *before, unsigned mask, const char *after)
@@ -574,15 +598,29 @@ static void link_moved(unsigned mask)
 QPERF_UI static int undo_apply(void *kit, unsigned mask)
 {
     void *perf = (void *)KIT_PERF(kit);
-    int i;
+    int i, j_free;
+    const unsigned char *t = lock_table(perf);
     if (!applied.valid || applied.kit != kit || mask != 1u << applied.index)
         return 0;
     applied.valid = 0;
+    // A lock made since on one of these (stock's performance edit, say) is the newer wish:
+    // then this YES applies afresh. So is a table with no room to put them back.
+    for (i = 0; i < SLOTS; i++) {
+        int j;
+        for (j = 0; j < applied.count; j++)
+            if (t[SLOT_BYTES * i + 2] == applied.e[j].track && t[SLOT_BYTES * i + 3] == applied.e[j].param
+                && t[SLOT_BYTES * i + 4] == applied.index)
+                return 0;
+    }
+    for (i = 0, j_free = 0; i < SLOTS; i++)
+        j_free += t[SLOT_BYTES * i + 2] > TRACK_NONE;
+    if (j_free < applied.count)
+        return 0;
     for (i = 0; i < applied.count; i++) {
         int track = applied.e[i].track, param = applied.e[i].param, id;
         void *set = (void *)KIT_PARAM_SET(kit, track);
         id = param_id(set, track, param);
-        if (id && param_read(set, id) == applied.e[i].now)
+        if (id && (param_read(set, id) == applied.e[i].now || param_read(set, id) == applied.e[i].expect))
             SET_VALUE(set, id, applied.e[i].old, track, 1, 1);     // unless MIDI changed it since
         PERF_SET(perf, applied.index, track, param, applied.e[i].lock);
     }
@@ -594,7 +632,7 @@ QPERF_UI static void apply_linked(void *kit)
 {
     void *perf = (void *)KIT_PERF(kit);
     const unsigned char *t = lock_table(perf);
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int i, changed = 0;
     if (undo_apply(kit, mask))
         return;
@@ -620,6 +658,7 @@ QPERF_UI static void apply_linked(void *kit)
         applied.e[applied.count].old = param_read(set, id);
         applied.count++;
         applied.index = index;
+        applied.e[applied.count - 1].expect = clamp_id(id, param_read(set, id) + value);
         SET_VALUE(set, id, param_read(set, id) + value, track, 1, 1);
         applied.e[applied.count - 1].now = param_read(set, id);
         PERF_CLEAR_ONE(perf, index, track, param);
@@ -661,7 +700,7 @@ QPERF_UI static void perf_action(int key)
 {
     void *kit = active_kit();
     void *perf = (void *)KIT_PERF(kit);
-    unsigned mask = linked(kit);
+    unsigned mask = target(kit);
     int index;
     if (several(mask)) {
         show(SEVERAL);
@@ -781,6 +820,7 @@ static void wipe(void)
     }
     hot.perf_rec_used = 0;
     hot.perf_rec_hidden = 0;
+    scene_wipe = 1;                     // the UI tick empties the scene lane
     perf_rec_loop = perf_rec_period = perf_rec_steps(live_pattern_data());
 }
 
@@ -827,6 +867,7 @@ static void render_all(void)
     if (pattern != hot.perf_rec_pattern) {
         release_driven();
         wipe();
+        scene_wipe = 2;
         hot.perf_rec_pattern = pattern;
     }
     // A longer loop fills its new steps with the take, once, here; a shorter one plays the
@@ -1054,6 +1095,26 @@ QPERF_UI static int track_steps(word_t pattern, int track, int steps)
     return track_length(pattern, track);
 }
 
+QPERF_UI static int perf_rec_target(const unsigned char *table, int i);
+
+// Each (track, word) a scene in the scene lane locks that no performance target already
+// covers, once.
+QPERF_UI static int scene_rec_target(const unsigned char *table, const unsigned char *st, unsigned scenes, int i)
+{
+    const unsigned char *t = st + SLOT_BYTES * i, *u = st;
+    int j, sc = (signed char)t[4];
+    if (t[2] > TRACK_NONE || sc < 0 || sc >= 12 || !(scenes >> sc & 1) || t[3] >= WORDS)
+        return 0;
+    for (j = 0; j < i; j++, u += SLOT_BYTES)
+        if (u[2] == t[2] && u[3] == t[3] && (signed char)u[4] >= 0 && (signed char)u[4] < 12
+            && (scenes >> (signed char)u[4] & 1))
+            return 0;
+    for (j = 0; j < SLOTS; j++)
+        if (perf_rec_target(table, j) && table[SLOT_BYTES * j + 2] == t[2] && table[SLOT_BYTES * j + 3] == t[3])
+            return 0;
+    return 1;
+}
+
 // Each (track, word) a performance in the quick perf rec locks, once.
 QPERF_UI static int perf_rec_target(const unsigned char *table, int i)
 {
@@ -1070,15 +1131,51 @@ QPERF_UI static int perf_rec_target(const unsigned char *table, int i)
 // One (track, word): each step a quick perf rec move reaches gets the step's own lock or
 // the kit's value plus the moves, and the step after a move gets that value
 // back. Returns how many steps it writes, and writes only with write set.
+// The scene the lane plays at a step's first recorded point, -1 for none or no point.
+QPERF_UI static int step_scene(int step)
+{
+    unsigned bits = scene_used ? scene_rec_has[step] : 0;
+    int q = 0;
+    if (!bits)
+        return -1;
+    while (!(bits >> q & 1))
+        q++;
+    return scene_rec[step * POINTS + q] - 1;
+}
+
+// The kit's scene lock table.
+QPERF_UI static const unsigned char *scene_table(void *kit)
+{
+    word_t scenes = ((word_t (*)(void *))KIT_SCENES_AT)(kit);
+    return ((const unsigned char *(*)(word_t))(*(word_t **)scenes)[SCENES_TABLE / 4])(scenes);
+}
+
+// The scenes the lane plays, a bit each.
+QPERF_UI static unsigned lane_scenes(void)
+{
+    unsigned mask = 0;
+    int step, sc;
+    for (step = 0; step < STEPS; step++)
+        if ((sc = step_scene(step)) >= 0)
+            mask |= 1u << sc;
+    return mask;
+}
+
 QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
                        int length, int steps, int write)
 {
     void *set = (void *)KIT_PARAM_SET(kit, track);
     int id = param_id(set, track, word), kit_value = 0, lo = 0, hi = 0, at, was = 0, n = 0, i;
-    int locks[PERFS], perfs[PERFS], count = 0;
+    int locks[PERFS], perfs[PERFS], count = 0, scene_lock[12];
+    const unsigned char *st = scene_table(kit);
     void *trk = 0;
     if (!id)
         return 0;
+    for (i = 0; i < 12; i++)
+        scene_lock[i] = -1;
+    for (i = 0; i < SCENE_SLOTS; i++, st += SLOT_BYTES)
+        if (st[2] == track && st[3] == word && (signed char)st[4] >= 0 && (signed char)st[4] < 12)
+            scene_lock[(signed char)st[4]] = (short)(st[0] << 8 | st[1]);
     for (i = 0; i < SLOTS && count < PERFS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
         if (t[2] == track && t[3] == word && t[4] < PERFS && (hot.perf_rec_used >> t[4] & 1)) {
@@ -1099,24 +1196,27 @@ QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t p
     // wraps it, a longer one repeats it. The counters run a step ahead of what
     // plays, so step at's lock comes from the quick perf rec one step on.
     for (at = 0; at < length; at++) {
-        int step = (at + 1) % steps, offset = 0, lock, value;
+        int step = (at + 1) % steps, offset = 0, lock, value, sc = step_scene(step), base;
+        int scened = sc >= 0 && scene_lock[sc] >= 0, active;
         for (i = 0; i < count; i++) {
             int amount = step_amount(perfs[i], step);
             if (amount >= 0)
                 offset += locks[i] * amount >> AMOUNT_SCALE;
         }
-        if (!offset && !was) {
+        active = offset || scened;
+        if (!active && !was) {
             was = 0;
             continue;                   // nothing to add, and nothing to return from
         }
-        was = offset != 0;
+        was = active;
         n++;
         if (!write)
             continue;
         lock = STEP_LOCK_GET(trk, at, word, 0);
-        if (!offset && lock >= 0)
+        if (!active && lock >= 0)
             continue;                   // its own lock is the sound to return to
-        value = (lock >= 0 ? lock : kit_value) + offset;
+        base = scened ? scene_lock[sc] : lock >= 0 ? lock : kit_value;   // a scene replaces the base
+        value = base + offset;
         if (!ID_FINE(id))
             value = (value + 0x80) & ~0xff;     // a whole step: it has no fine part
         value = value < lo ? lo : value > hi ? hi : value;
@@ -1250,9 +1350,10 @@ QPERF_UI static void apply_perf_rec(void)
     void *any_track = (void *)PATTERN_TRACK(pattern, 0);
     void *locks = *(void **)((char *)any_track + PATTERN_LOCKS);
     char *data;
-    unsigned tracks = 0, longer = 0, skipped = 0;
+    const unsigned char *st = scene_table(kit);
+    unsigned tracks = 0, longer = 0, skipped = 0, scenes = lane_scenes();
     int i, need = 0, wrote = 0, steps, track, length[FX_TRACK + 1];
-    if (!hot.perf_rec_used || hot.perf_rec_hidden || !steps_pattern || !locks) {
+    if ((!hot.perf_rec_used && !scenes) || hot.perf_rec_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
     }
@@ -1264,6 +1365,9 @@ QPERF_UI static void apply_perf_rec(void)
     for (i = 0; i < SLOTS; i++)
         if (perf_rec_target(table, i))
             tracks |= 1u << table[SLOT_BYTES * i + 2];
+    for (i = 0; i < SCENE_SLOTS; i++)
+        if (scene_rec_target(table, st, scenes, i))
+            tracks |= 1u << st[SLOT_BYTES * i + 2];
     for (track = 0; track <= FX_TRACK; track++) {
         length[track] = track_steps(steps_pattern, track, steps);
         if (!(tracks >> track & 1))
@@ -1295,6 +1399,18 @@ QPERF_UI static void apply_perf_rec(void)
             id = param_id((void *)KIT_PARAM_SET(kit, t[2]), t[2], t[3]);
             need += 1 + (ID_FINE(id) != 0);
         }
+        for (i = 0; i < SCENE_SLOTS; i++) {
+            const unsigned char *t = st + SLOT_BYTES * i;
+            int at = longer >> t[2] & 1 ? steps : length[t[2]], id;
+            if (!scene_rec_target(table, st, scenes, i) || !(tracks >> t[2] & 1)
+                || !apply_target(kit, table, pattern, t[2], t[3], at, steps, 0))
+                continue;
+            writes |= 1u << t[2];
+            if (row_used(data, t[2], t[3]))
+                continue;
+            id = param_id((void *)KIT_PARAM_SET(kit, t[2]), t[2], t[3]);
+            need += 1 + (ID_FINE(id) != 0);
+        }
         longer &= writes;
     }
     if (matrix_rows(data) + need > ROWS) {
@@ -1311,7 +1427,20 @@ QPERF_UI static void apply_perf_rec(void)
         if (perf_rec_target(table, i) && (tracks >> t[2] & 1))
             wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
     }
+    for (i = 0; i < SCENE_SLOTS; i++) {
+        const unsigned char *t = st + SLOT_BYTES * i;
+        if (scene_rec_target(table, st, scenes, i) && (tracks >> t[2] & 1))
+            wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
+    }
     release_driven();
+    if (scenes) {                       // the steps now hold the take's scenes: one still engaged
+        int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);   // would lock every step over them
+        if (active >= 0 && (scenes >> active & 1)) {
+            ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
+            scene_engaged_by_us = -1;   // the lane's own change, not a hand's
+            scene_engaged_ticks = 3;
+        }
+    }
     wipe();
     if (skipped) {
         // Moves written where they fit: say how many tracks could not take them.
@@ -1328,21 +1457,21 @@ QPERF_UI static void apply_perf_rec(void)
         *out = 0;
         show(message);
     } else {
-        show(wrote ? "APPLY QUICK PERF REC" : "NOTHING TO APPLY");
+        show(wrote ? "APPLY PERF/SCENE REC" : "NOTHING TO APPLY");
     }
 }
 
-// QPER + NO: empty the quick perf rec, and bring it back on the next press.
+// RECORD + NO: empty the quick perf rec, and bring it back on the next press.
 QPERF_UI static void clear_perf_rec(void)
 {
     passes = 0;                         // hidden or back: its passes count from here
     if (hot.perf_rec_hidden) {
         hot.perf_rec_hidden = 0;
         show("UNDO CLEAR");
-    } else if (hot.perf_rec_used) {
+    } else if (hot.perf_rec_used || scene_used) {
         release_driven();
         hot.perf_rec_hidden = 1;
-        show("CLEAR QUICK PERF REC");
+        show("CLEAR PERF/SCENE REC");
     } else {
         show("NOTHING TO CLEAR");
     }
@@ -1350,6 +1479,7 @@ QPERF_UI static void clear_perf_rec(void)
 
 static void perf_rec_action(int key)
 {
+    scene_lane_sync();                  // a wipe the tick has not seen yet
     hot.perf_rec_busy = 1;
     if (key == KEY_YES)
         apply_perf_rec();
@@ -1407,15 +1537,11 @@ QPERF_UI int qperf_key(void *brain, void *event)
     views = *(void **)((char *)brain + BRAIN_VIEWS);
     if (key == KEY_QPER) {
         if (!(flags & PRESSED)) {
-            if (held)
-                locker_remove();
             held = 0;
             close_qper_view();
         } else if (!(flags & REPEAT) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
-            held = 1;
+            held = 1;                   // QPER keeps only its link (QPER + pad or trig)
             swallowed = 0;
-            applied.valid = 0;          // the undo of a YES lasts one hold
-            locker_install();
         }
         return 0;
     }
@@ -1453,22 +1579,69 @@ QPERF_UI int qperf_key(void *brain, void *event)
         perf_rec_action(key);
         return 1;
     }
-    if (key == KEY_NO)
-        return 0;                       // QPER + NO stays stock's
-    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || top_view() != QPER_VTABLE)
-        return 0;
-    swallowed |= bit;
+    return 0;                           // QPER + YES, PLAY, RECORD, STOP: stock's (PERF has them)
+}
+
+// For the PERF hold (main.c): the locker on the performance it edits (index, or -1 for
+// QPER's link), whether a locker is that one, and YES, PLAY, RECORD or STOP on it.
+void *qperf_locker(int index)
+{
+    forced = index;
+    return &locker;
+}
+
+// RECORD is down (from its own events): RECORD + YES and NO are the quick perf rec's.
+int qperf_record_held(void)
+{
+    return record_held;
+}
+
+int qperf_is_locker(unsigned long object)
+{
+    return object == (word_t)&locker;
+}
+
+void qperf_action(int key, int index)
+{
+    forced = index;
     perf_action(key);
-    return 1;
+}
+
+
+// For SCENE + YES (main.c): a kit parameter by a lock's track and parameter index, read
+// and written as QPER + YES does. Returns -1 when the index has no parameter here.
+int qperf_kit_clamp(int track, int param, int value)
+{
+    void *set = (void *)KIT_PARAM_SET(active_kit(), track);
+    int id = param_id(set, track, param);
+    return id ? clamp_id(id, value) : value;
+}
+
+int qperf_kit_read(int track, int param)
+{
+    void *set = (void *)KIT_PARAM_SET(active_kit(), track);
+    int id = param_id(set, track, param);
+    return id ? param_read(set, id) : -1;
+}
+
+void qperf_kit_write(int track, int param, int value)
+{
+    void *set = (void *)KIT_PARAM_SET(active_kit(), track);
+    int id = param_id(set, track, param);
+    if (id)
+        SET_VALUE(set, id, value, track, 1, 1);
 }
 
 // A kit can bring other links: its own stay, and the amounts follow them. Acting
 // directly in stock's kit routine and the project event left the kit blank at
 // boot, so they only ask and the tick acts.
+extern void improved_modulation_kit_changed(void);
 void qperf_kit_changed(void)
 {
     kit_changed = 1;
     applied.valid = 0;
+    improved_modulation_kit_changed();
+    scene_last_seen = -2;               // another kit's scene is no take
 }
 
 QPERF_UI void qperf_project(int how, unsigned dropped)
@@ -1477,7 +1650,138 @@ QPERF_UI void qperf_project(int how, unsigned dropped)
     (void)dropped;
     hot.ready = 1;
     kit_changed = 1;
+    applied.valid = 0;                  // an undo is the old project's: flags only here,
+    improved_modulation_kit_changed();  // as for kit_changed
     hot.perf_rec_pattern = -2;          // a new project: the next block empties it
+}
+
+// The scene lane, once a UI tick (50 ms); only the UI touches it. While the pattern plays:
+// in LIVE RECORDING a scene change that was not the lane's own records the engaged scene
+// from there to the loop's end; otherwise, where the lane's value changes (or starts after
+// a stretch with none), the lane engages its scene, so a scene picked by hand stays until
+// the next recorded change. A SCENE hold keeps the scene still. A longer loop repeats the
+// lane at its period, as the performance lanes do.
+QPERF_UI static void scene_lane_clear(int steps)
+{
+    int i;
+    for (i = 0; i < STEPS; i++)
+        scene_rec_has[i] = 0;
+    scene_used = scene_armed = 0;
+    scene_loop = scene_period = steps;
+}
+
+// Empties the lane when a wipe asked for it (the audio block's on a new pattern or a
+// replaced take, RECORD + YES's own).
+QPERF_UI static void scene_lane_sync(void)
+{
+    int asked = scene_wipe;
+    if (!asked)
+        return;
+    scene_wipe = 0;
+    scene_lane_clear(perf_rec_steps(live_pattern_data()));
+    if (asked == 2)
+        scene_last_seen = -2;           // a new pattern or project: no change to record yet
+}
+
+QPERF_UI static void scene_lane_record(int from, int to, int scene)
+{
+    int i;
+    for (i = from; i <= to; i++) {
+        scene_rec[i] = (unsigned char)(scene + 1);
+        scene_rec_has[i / POINTS] |= (unsigned char)(1 << (i % POINTS));
+    }
+    scene_used = 1;
+}
+
+QPERF_UI static void scene_lane_tick(void)
+{
+    void *kit = active_kit();
+    int active, pos, from, i, steps, wrapped;
+    if (!hot.ready)
+        return;
+    scene_lane_sync();
+    if (scene_engaged_ticks && !--scene_engaged_ticks)
+        scene_engaged_by_us = -2;       // the guard covers the lane's own change landing, then a hand may pick it
+    if (scene_last_seen == -2)
+        scene_armed = 0;                // another kit or pattern: its scene is no take
+    steps = perf_rec_steps(live_pattern_data());
+    active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);
+    if (steps != scene_loop && !hot.perf_rec_hidden) {
+        if (steps > scene_loop && scene_used && scene_period)
+            for (i = scene_loop > scene_period ? scene_loop : scene_period; i < steps; i++) {
+                int t = i - scene_period, q;
+                for (q = 0; q < POINTS; q++)
+                    scene_rec[i * POINTS + q] = scene_rec[t * POINTS + q];
+                scene_rec_has[i] = scene_rec_has[t];
+            }
+        scene_loop = steps;
+    }
+    if (!playing()) {
+        scene_last_pos = -1;
+        scene_armed = 0;
+        scene_last_seen = active;       // a change while stopped is not a take
+        return;
+    }
+    pos = position();
+    from = scene_last_pos;
+    // The pulse handler can cut the tick's read of the position, which then reads up to a
+    // step ahead: a step back from that is standing still, not the loop coming round.
+    if (from >= 0 && pos < from && from - pos < POINTS)
+        pos = from;
+    wrapped = from < 0 ? pos < POINTS : pos < from && from < steps * POINTS;
+    // The lane's period follows a shorter loop once a whole pass has played at it, as the
+    // performance lanes' does.
+    if (steps != scene_pass_steps || hot.perf_rec_hidden) {
+        scene_pass_steps = steps;
+        scene_passes = 0;
+    }
+    if (wrapped) {
+        if (scene_passes < 2)
+            scene_passes++;
+        if (scene_passes == 2 && steps < scene_period)
+            scene_period = steps;
+    }
+    if (!live_rec())
+        scene_armed = 0;
+    else if (scene_last_seen != -2 && active != scene_last_seen && active != scene_engaged_by_us) {
+        if (hot.perf_rec_hidden) {      // a new take replaces the cleared one
+            hot.perf_rec_busy = 1;
+            release_driven();
+            wipe();
+            hot.perf_rec_busy = 0;
+            scene_wipe = 0;
+            scene_lane_clear(steps);
+        }
+        if (!scene_used || scene_period < scene_loop)
+            scene_period = scene_loop = steps;
+        if (scene_armed && from >= 0)   // a second change in one take: the stretch since the last
+            scene_lane_record(from + 1, (pos >= from ? pos : steps * POINTS) - 1, scene_last_seen);   // tick played the old scene
+        scene_armed = 1;                // the musician changed the scene: record from here
+        from = -1;                      // from this tick's place, not the last one's
+    }
+    if (scene_armed) {
+        if (from >= 0 && pos < from) {  // the loop came round: fill to its end, then the take plays
+            scene_lane_record(from + 1, steps * POINTS - 1, scene_last_seen);
+            scene_armed = 0;
+        } else {
+            // A tick is 50 ms, several points at a fast tempo: fill what it passed. A jump
+            // of more than four steps is a new place, not a stretch played.
+            if (from < 0 || pos - from > 4 * POINTS)
+                from = pos - 1;
+            scene_lane_record(from + 1, pos, active);
+        }
+    } else if (scene_used && !hot.perf_rec_hidden && from != pos && !IS_KEY_HELD(KEY_SCENE)
+               && (scene_rec_has[pos / POINTS] >> (pos % POINTS) & 1)) {
+        int was = from >= 0 && !wrapped && (scene_rec_has[from / POINTS] >> (from % POINTS) & 1)
+            ? scene_rec[from] : -1;
+        if (scene_rec[pos] != was && scene_rec[pos] != active + 1) {
+            ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, scene_rec[pos] - 1, 1);
+            scene_engaged_by_us = active = scene_rec[pos] - 1;
+            scene_engaged_ticks = 3;    // counted down from the next tick's top
+        }
+    }
+    scene_last_pos = pos;
+    scene_last_seen = active;
 }
 
 QPERF_UI void qperf_tick(void *ctrl)
@@ -1487,6 +1791,7 @@ QPERF_UI void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
+    scene_lane_tick();
     if (hot.ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
