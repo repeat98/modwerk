@@ -87,3 +87,8 @@
 // own message reads it at 0x400419f2: the project's globals, then the switch.
 #define QPERF_GLOBALS_AT 0x400ae49e     // (project): its globals
 #define LIVE_QUANTIZE_AT 0x400b5be6     // (globals): 1 when quantized
+// Stock's lock writer 0x400ac6dc(locks, track, step, word, value, fine) stores the value as
+// a word at matrix + 5674 * track + 88 * step + 2 * word, the row's fine flag at
+// + 5674 * track + 5632 + word, sends one notice naming track and word (no step), and has
+// this recount the step's locks into the long at + 84 of the step.
+#define LOCKS_RECOUNT_AT 0x400ac646     // (locks, track, step)

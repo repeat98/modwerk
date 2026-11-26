@@ -340,13 +340,15 @@ static void show(const char *text)
 // What is on screen: the top view's class, past the popups, which pass keys on.
 QPERF_UI static word_t top_view(void)
 {
+    char *sentinel = (char *)views + MANAGER_LIST;
     char *node = *(char **)((char *)views + MANAGER_LAST);
-    for (;;) {
+    while (node && node != sentinel) {
         word_t vtable = **(word_t **)(node + NODE_VIEW);
         if (vtable != POPUP_VTABLE)
             return vtable;
         node = *(char **)(node + NODE_PREV);
     }
+    return 0;                           // only popups: no page of ours
 }
 
 // A screen can take QPER's release, which leaves stock's QPER view open behind
@@ -1332,6 +1334,18 @@ QPERF_UI static unsigned lane_scenes(void)
     return mask;
 }
 
+// Stock's notices, counted over one go at the write: RECORD + YES stops for the tick at
+// APPLY_BUDGET. A looped scene take written through stock's writers in one key event
+// (about 1,200 lock writes and 230 new lock trigs, some 3,300 notices: each lock trig is
+// nine flag writes, 0x400c2698) left the UI task waiting in rytm-emu; some 2,500 went
+// through. So the values go straight into the lock matrix, stock's writer is called once
+// a row for its notice, and lock trigs and lengthened tracks count against the budget.
+#define APPLY_BUDGET 1000
+#define LOCK_TRIG_COST 9                // STEP_MAKE_LOCK_TRIG: nine STEP_FLAG_SET calls
+#define LENGTHEN_COST 258               // lengthen's worst for a track: clears, flags, conditions
+#define LOCKS_RECOUNT ((void (*)(void *, int, int))LOCKS_RECOUNT_AT)
+static int apply_cost;
+
 QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
                        int length, int steps, int write)
 {
@@ -1339,7 +1353,9 @@ QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t p
     int id = param_id(set, track, word), kit_value = 0, lo = 0, hi = 0, at, was = 0, n = 0, i;
     int locks[PERFS], perfs[PERFS], count = 0, scene_lock[12];
     const unsigned char *st = scene_table(kit);
-    void *trk = 0;
+    void *trk = 0, *lk = 0;
+    char *mx = 0;
+    int index = 0, last_at = -1, last_value = 0;
     if (!id)
         return 0;
     for (i = 0; i < 12; i++)
@@ -1362,6 +1378,13 @@ QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t p
         lo = lo < 0 ? 0 : lo;
         hi = hi > 0x7fff ? 0x7fff : hi;
         trk = (void *)PATTERN_TRACK(pattern, track);
+        lk = *(void **)((char *)trk + PATTERN_LOCKS);
+        index = *(int *)((char *)trk + TRACK_INDEX);
+        if (!lk || index < 0 || index > FX_TRACK)
+            return 0;
+        mx = (char *)(*(word_t (**)(void *))(*(word_t *)lk + LOCKS_DATA))(lk);
+        if (!mx)
+            return 0;
     }
     // Each of the track's steps takes the quick perf rec where it plays: a shorter track
     // wraps it, a longer one repeats it. The counters run a step ahead of what
@@ -1391,9 +1414,21 @@ QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t p
         if (!ID_FINE(id))
             value = (value + 0x80) & ~0xff;     // a whole step: it has no fine part
         value = value < lo ? lo : value > hi ? hi : value;
-        if (!STEP_AUDIBLE(trk, at) && !STEP_LOCK_TRIG(trk, at))
+        if (!STEP_AUDIBLE(trk, at) && !STEP_LOCK_TRIG(trk, at)) {
             STEP_MAKE_LOCK_TRIG(trk, at, 1);
-        STEP_LOCK_SET(trk, at, word, value, ID_FINE(id) != 0);
+            apply_cost += LOCK_TRIG_COST;
+        }
+        if (last_at >= 0) {             // the step before: its word, and stock's recount of it
+            *(unsigned short *)(mx + MATRIX_TRACK * index + MATRIX_STEP * last_at + 2 * word)
+                = (unsigned short)last_value;
+            LOCKS_RECOUNT(lk, index, last_at);
+        }
+        last_at = at;
+        last_value = value;
+    }
+    if (write && last_at >= 0) {        // the row's last step through stock: fine flag, notice
+        STEP_LOCK_SET(trk, last_at, word, last_value, ID_FINE(id) != 0);
+        apply_cost++;
     }
     return n;
 }
@@ -1512,15 +1547,16 @@ QPERF_UI static void lengthen(void *trk, char *locks, int length, int steps)
 }
 
 // QPER + YES with LIVE RECORDING on.
-// RECORD + YES writes one row (one parameter of one track, up to 64 steps) a UI tick. Stock
-// sends a notice for every lock it writes, and a whole take in one call (about 1,200
-// writes for a scene of twenty locks over a 64-step loop) left the UI task waiting, keys
-// and screen dead, in rytm-emu; about 900 went through. The take stays as it is until the
-// last row: perf_rec_busy holds the audio block off it and the scene lane's tick waits.
+// RECORD + YES writes its rows at once, in the key event, and only goes on in the next UI
+// ticks when a go has made APPLY_BUDGET stock calls (a take that needs hundreds of new
+// lock trigs). The take stays as it is until the last row: perf_rec_busy holds the audio
+// block off it and the scene lane's tick waits.
 static struct {
     int active, i, wrote, steps;
-    unsigned tracks, skipped, scenes;
-    int length[FX_TRACK + 1];
+    int pending, pending_pos, at_wrap;  // waiting for the loop's start; the try made there
+    unsigned tracks, skipped, scenes, longer;
+    int length[FX_TRACK + 1], from[FX_TRACK + 1];   // each track's steps for the write, and before it
+    char *data;                         // the pattern's lock matrix
     word_t pattern, steps_pattern;
 } apply_job;
 
@@ -1566,19 +1602,29 @@ QPERF_UI static void apply_job_step(void)
     void *kit = active_kit();
     const unsigned char *table = lock_table((void *)KIT_PERF(kit));
     const unsigned char *st = scene_table(kit);
-    int row = 0;
+    int track;
     if (kit_changed || PATTERN_OF(PROJECT_SINGLETON()) != apply_job.pattern
         || live_pattern_data() != apply_job.steps_pattern)
-        apply_job.i = SLOTS + SCENE_SLOTS;
-    while (apply_job.i < SLOTS + SCENE_SLOTS && !row) {
+        apply_job.i = SLOTS + SCENE_SLOTS, apply_job.longer = 0;
+    apply_cost = 0;
+    // The tracks to lengthen first, a few a go: a row is written at its track's new length.
+    for (track = 0; track <= FX_TRACK && apply_cost < APPLY_BUDGET; track++)
+        if (apply_job.longer >> track & 1) {
+            lengthen((void *)PATTERN_TRACK(apply_job.pattern, track), apply_job.data,
+                     apply_job.from[track], apply_job.steps);
+            apply_job.longer &= ~(1u << track);
+            apply_cost += LENGTHEN_COST;
+        }
+    if (apply_job.longer)
+        return;
+    while (apply_job.i < SLOTS + SCENE_SLOTS && apply_cost < APPLY_BUDGET) {
         int i = apply_job.i++;
         const unsigned char *t = i < SLOTS ? table + SLOT_BYTES * i : st + SLOT_BYTES * (i - SLOTS);
         if (!(i < SLOTS ? perf_rec_target(table, i) : scene_rec_target(table, st, apply_job.scenes, i - SLOTS))
             || !(apply_job.tracks >> t[2] & 1))
             continue;
-        row = apply_target(kit, table, apply_job.pattern, t[2], t[3], apply_job.length[t[2]],
-                           apply_job.steps, 1);
-        apply_job.wrote += row;
+        apply_job.wrote += apply_target(kit, table, apply_job.pattern, t[2], t[3],
+                                        apply_job.length[t[2]], apply_job.steps, 1);
     }
     if (apply_job.i >= SLOTS + SCENE_SLOTS)
         apply_job_end();
@@ -1660,11 +1706,23 @@ QPERF_UI static void apply_perf_rec(void)
         show("LOCK MEM FULL!");
         return;
     }
-    for (track = 0; track <= FX_TRACK; track++)
-        if (longer >> track & 1) {
-            lengthen((void *)PATTERN_TRACK(pattern, track), data, length[track], steps);
-            length[track] = steps;
-        }
+    // A track lengthened while it plays keeps its step, which is the loop's own step only
+    // in the loop's first steps: later, its locks would sit that far off the pattern until
+    // the transport restarts. So with a track to lengthen the write waits for the loop to
+    // come round (the tick); the take keeps playing until then.
+    if (longer && playing() && !apply_job.at_wrap) {
+        apply_job.pending = 1;
+        apply_job.pending_pos = position();
+        show("APPLY AT LOOP START");
+        return;
+    }
+    for (track = 0; track <= FX_TRACK; track++) {
+        apply_job.from[track] = length[track];
+        if (longer >> track & 1)
+            length[track] = steps;      // the job lengthens it before its rows
+    }
+    apply_job.longer = longer;
+    apply_job.data = data;
     apply_job.i = 0;
     apply_job.wrote = 0;
     apply_job.steps = steps;
@@ -1675,7 +1733,8 @@ QPERF_UI static void apply_perf_rec(void)
     apply_job.steps_pattern = steps_pattern;
     for (track = 0; track <= FX_TRACK; track++)
         apply_job.length[track] = length[track];
-    apply_job.active = 1;               // the tick writes the rows and says how it went
+    apply_job.active = 1;
+    apply_job_step();                   // all of it now, unless the budget stops it for the tick
 }
 
 // RECORD + NO: empty the quick perf rec, and bring it back on the next press.
@@ -1696,8 +1755,9 @@ QPERF_UI static void clear_perf_rec(void)
 
 static void perf_rec_action(int key)
 {
-    if (apply_job.active)
-        return;                         // a RECORD + YES is still writing its rows
+    if (apply_job.active || (apply_job.pending && key == KEY_YES))
+        return;                         // a RECORD + YES is still writing, or waits for the loop
+    apply_job.pending = 0;              // RECORD + NO calls a waiting write off
     scene_lane_sync();                  // a wipe the tick has not seen yet
     hot.perf_rec_busy = 1;
     if (key == KEY_YES)
@@ -1894,10 +1954,13 @@ QPERF_UI static void scene_lane_clear(int steps)
 // replaced take, RECORD + YES's own).
 QPERF_UI static void scene_lane_sync(void)
 {
-    int asked = scene_wipe;
+    int asked, busy = hot.perf_rec_busy;
+    hot.perf_rec_busy = 1;              // the block sets the flag too: not between the read and the clear
+    asked = scene_wipe;
+    scene_wipe = 0;
+    hot.perf_rec_busy = busy;
     if (!asked)
         return;
-    scene_wipe = 0;
     scene_lane_clear(perf_rec_steps(live_pattern_data()));
     if (asked == 2)
         scene_last_seen = -2;           // a new pattern or project: no change to record yet
@@ -2054,8 +2117,24 @@ QPERF_UI void qperf_tick(void *ctrl)
     (void)ctrl;
     if (apply_job.active)
         apply_job_step();
-    else
-        scene_lane_tick();
+    else {
+        if (apply_job.pending) {
+            int pos = position();
+            if (!playing() || pos < apply_job.pending_pos) {    // stopped, or the loop came round
+                apply_job.pending = 0;
+                apply_job.at_wrap = 1;
+                scene_lane_sync();
+                hot.perf_rec_busy = 1;
+                apply_perf_rec();
+                if (!apply_job.active)
+                    hot.perf_rec_busy = 0;
+                apply_job.at_wrap = 0;
+            } else
+                apply_job.pending_pos = pos;
+        }
+        if (!apply_job.active)
+            scene_lane_tick();
+    }
     if (hot.ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
