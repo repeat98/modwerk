@@ -16,6 +16,51 @@ written as empty.
 `npm run module:dev -- midi-scenes --build-only`: package `17f934ff`, 7,196 bytes of code and data, 116,368 of bss,
 11 hooks, 33 stock-code sites, the same sites as 0.3.0.
 
+### MKII, 26 November: gestures, the crossfader, in use and the price
+
+The owner's MKII on OS 1.40C, RAM-booted into the development twin `8fd6d456` of base 0.8.1 (`eb667962` with `--dev`),
+the owner's loaded project as the twin booted it (bank G, pattern 1), package `17f934ff` (built the same from main and
+from base/octatrack-next at 0.8.2's head `e7d07acf1`). Two rolled-back trials and `device:price`; SAVE never pressed,
+nothing kept or flashed; the flashed base and its four kept modules came back afterwards. Script and log:
+`unit-ms.sh` (local). MIDI track 1's record read at 0x46c76dc0 (byte 0 is encoder A on the NOTE page, base 48); the
+crossfader is 0-255 over USB, 0 being the scene B end here.
+
+| Step | Observed |
+|---|---|
+| `memory` empty, then installed | pool 0, then 126,768 bytes used, one free run of 659,664 |
+| Lock T1 encoder A: scene A +10, scene B −10 | battery copy count 1, then 2 |
+| Crossfader 0 / 127 / 64 | 38 (scene B, 48 − 10) / 49 / 43 |
+| Clear scene B (hold SCENE B, push A), crossfader 127 | count 1; 53, halfway from 48 to scene A's 58 |
+| Roll back, install again | the battery copy brought scene A's lock back (count 1); crossfader 0 read 48 |
+| 16 locks: T1-T8 encoder A, scenes A and B | count 16; T1 at crossfader 0 read 38, at 127 read 55 |
+| Clear all 16 | count 0, the record back to 48 |
+
+Playing, with the crossfader swept end to end every 250 ms for 8 s (`guard`, then `stats`):
+
+| | Frame interrupt | Longest frame | CPU meter |
+|---|---|---|---|
+| No module | 28.5 % | 56.4 % | 44.4 % |
+| Installed, no lock | 28.6 % | 56.3 % | 43.1 % |
+| 16 locks | 28.5 % | 57.2 % | 44.2 % |
+
+No render skipped; both trials ended with "no crash, stall, freeze or skipped track logged during the trial".
+`npm run device:price -- --write --memory` (3 readings of 8 s a state, playing): +0 points of the frame interrupt at
+rest (28.5 % before and after) and +0.3 on the CPU meter, written into `octamod.module.json` and
+`evidence/cpu-price.json`.
+
+### Power cycle: owner's steps
+
+Not run: it needs the owner. With a test project, never one the owner needs unchanged:
+
+1. Agent: `npm run device -- do inventory` and note the kept set. Install 0.3.1 and keep it
+   (`npm run device -- try midi-scenes.mwrm --seconds 600 --accept`) on the flashed base.
+2. Agent: in the test project, lock MIDI track 1's encoder A in scene A in Part 1, and in scene B in Part 2.
+   SAVE the project. Read the battery copy (`mem:0x100f9800:16`: count 2).
+3. Owner: switch the Octatrack off and on again.
+4. Agent: `inventory` and `restore` show MIDI Scenes loaded with the set. The battery copy still counts 2, and the
+   crossfader still morphs Part 1's record. RELOAD the project: both locks are back from scenes.work.
+5. Agent: remove MIDI Scenes, or leave it if the owner wants it kept. `inventory` then equals the set noted in step 1.
+
 ### Emulator: locks, the limit, save, reload and a project over the limit
 
 `ot_emu` (the adapted build, paced to the wall clock, no DSP) on the development twin `8fd6d456` of base 0.8.1, with a
@@ -60,8 +105,12 @@ image was RAM-booted back afterwards with the nine kept modules.
 
 No render was skipped in any window. The crash and stall records (12 and 56) did not change.
 
-Not run for 0.3.1: scene gestures, the crossfader and CC output on a unit (the logic they reach is 0.3.0's, but msc_a0
-now allocates), a power cycle, `device:price` at rest and in use, a MIDISC 2.x project over the limit, the MKI.
+Not run for 0.3.1: a power cycle (above, the owner's steps), CC output measured at a MIDI port, a unit on base 0.8.2,
+a MIDISC 2.x project over the limit, the MKI. The gestures, the crossfader, in-use cost and `device:price` ran on 26
+November (above). CC output was tried in `ot_emu` on 26 November. The lock on CTRL1's CC1 morphed MIDI track 1's record:
+107 at the scene B end, 117 halfway, 127 at scene A. But the throwaway project's track sent nothing: its CC values stayed
+OFF whatever the encoder did, so no byte reached UART0. Stock sends from the record, and 0.3.1 changes where locks are
+stored, not the mix.
 
 ## 0.3.0-experimental (draft, 16 November 2026)
 

@@ -129,13 +129,13 @@
       }
     },
     "cpuPrice": {
-      "value": 0.2,
+      "value": 0,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
-      "tool": "npm run device:price",
-      "date": "2026-11-16",
-      "conditions": "MKII, base 0.7.4 development twin 31d16f88, the owner's project A01 playing, installed and used nowhere, 8 s per reading; in use with 480 scene locks on eight MIDI tracks and the crossfader sweeping it read +0.1 (alone) and +0.0 (beside 14 other modules); MIDI channels off, so no CC was sent",
-      "source": "TESTING.md"
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-26",
+      "conditions": "MKII, OS 1.40C, development twin 8fd6d456 of base 0.8.1 (eb667962 with --dev); the owner's loaded project as the twin booted it (bank G, pattern 1), MIDI Scenes installed with no lock, MIDI channels as saved; base 8fd6d456; 3 readings of 8 s a state. Frame interrupt 28.5 % before, 28.5 % installed and used nowhere; CPU meter 43.6 % before, 43.9 % at rest. In use, 26 November: 16 scene locks on eight MIDI tracks (encoder A, scenes A and B) and the crossfader swept end to end every 250 ms while playing read 28.5 % of the frame, as with no module and with no lock (28.5, 28.6 %); no render skipped",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
