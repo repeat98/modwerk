@@ -25,7 +25,7 @@ import process from 'node:process';
 import { Board, DSP_BYTES } from './machine.mjs';
 
 const DISPATCH = 0x0643;            // JMP @A+DPTR to the handler
-const ASSUMED_RESPONSE = 3;         // machine cycles from timer overflow to the vector, which the emulator does not count
+export const ASSUMED_RESPONSE = 3;  // machine cycles from timer overflow to the vector, which the emulator does not count
 const SAMPLES_PER_MS = 42;          // the firmware's own figure
 
 // ---- the LFO kinds --------------------------------------------------------------------------
@@ -158,7 +158,7 @@ function pitchModel(iram, fade) {
 // Leslie: two rotors, each a 16-bit triangle swept as 1 - p^2 into an interpolated pair (around 0x1900
 // and 0x1b00) and, linearly, into two gains (amplitude modulation). Every 256 ticks each rotor's rate
 // moves by a fixed step toward the target of the selected speed, and its depth follows the rate.
-const LESLIE_SPEEDS = {       // targets per rotor [rate, step every 256 ticks]; parameters of the code
+export const LESLIE_SPEEDS = {  // targets per rotor [rate, step every 256 ticks]; parameters of the code
   stop: [[0x0000, 6], [0x0000, 0x14]],
   slow: [[0x0058, 6], [0x006a, 0x32]],
   fast: [[0x0230, 9], [0x03da, 0x37]],
@@ -268,7 +268,7 @@ function ticker(b) {
 }
 
 // Tables the firmware uses, read from the ROM passed in (never stored in the repository).
-function romCurves(rom) {
+export function romCurves(rom) {
   return {
     fade: (i) => rom[0x2a74 + i],
     leslieDepth: (c, i) => rom[(c ? 0x064d : 0x0644) + i],
@@ -283,10 +283,13 @@ const formulas = {
 
 const name = (b, p) => String.fromCharCode(...b.record(p).subarray(0x6a, 0x78)).replace(/\0/g, ' ').trim();
 
-export function analyse(b, p, seconds, curves) {
+// opts.until(iram): run ticks after the recall until it holds (the Leslie's rotors at their speed);
+// opts.onTick(ran, dsp): called after every tick that ran with the firmware's DSP bytes.
+export function analyse(b, p, seconds, curves, opts = {}) {
   const cpu = b.cpu, next = ticker(b);
   b.recall(p);
   next();                                   // start on a tick boundary
+  for (let k = 0; opts.until && !opts.until(cpu.iram); k++) { if (k > 1e6) throw new Error('until: never'); next(); }
   const target = (cpu.iram[0x60] << 8) | cpu.iram[0x61];
   const iram = Uint8Array.from(cpu.iram), ram = b.ram;
   let model = null;
@@ -295,6 +298,7 @@ export function analyse(b, p, seconds, curves) {
   else if (target === 0x0660) model = leslieModel(iram, ram, curves.leslieDepth);
   else if (target === 0x96ee) model = shifterModel(iram, curves.shifter);
   const params = model ? JSON.parse(JSON.stringify(model.par)) : { kind: target === 0x0d17 ? 'none' : `handler ${target.toString(16)}` };
+  const start = { state: model ? JSON.parse(JSON.stringify(model.st)) : null, dsp: Array.from(b.dsp.subarray(0, DSP_BYTES)) };
   // the gate's settings (edit buffer 0x83xx), and whether a signal onset restarts the sweep
   const x = (a) => ram[a - 0x8000];
   const gate = x(0x83a3) ? { open: x(0x839b), closed: x(0x83a1), hold: x(0x833f) + 1, decay: x(0x8340),
@@ -322,10 +326,11 @@ export function analyse(b, p, seconds, curves) {
     let diff = 0;
     for (let a = 0; a <= DSP_BYTES; a++) if (shadow[a] !== b.dsp[a]) diff++;
     if (diff) { bad++; if (!firstBad) firstBad = { tick: ran, bytes: diff }; shadow.set(b.dsp.subarray(0, DSP_BYTES + 1)); }
+    if (opts.onTick) opts.onTick(ran, b.dsp, shadow);
   }
   b.xwrite = xw;
   moved.delete(0x5f); moved.delete(0x60);
-  return { p, name: name(b, p), target, params, model, gate, trigger, ticks, ran, bad, firstBad,
+  return { p, name: name(b, p), target, params, model, start, gate, trigger, ticks, ran, bad, firstBad,
     cyclesPerTick: ran > 1 ? cycles / (ran - 1) : NaN, moved: [...moved].sort((x, y) => x - y), mainWrites };
 }
 

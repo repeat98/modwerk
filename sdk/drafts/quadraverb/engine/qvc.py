@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """The Quadraverb engine's integer model, its relocation into one FX2 ring, and the code generator.
 
-A prototype (ENGINE.md, "The first bit-exact prototype"): one static factory program becomes straight-line
-DSP56300 code that verify.py runs in dsp_host, bit for bit against the models here.
+A prototype (ENGINE.md, "The first bit-exact prototype" and "Modulation on the DSP"): one factory program becomes
+straight-line DSP56300 code that verify.py runs in dsp_host, bit for bit against the models here. A moving program
+(sweeps, pitch shift, Leslie) keeps its code; its LFO runs on the DSP on tick samples and rewrites the tables
+(Lfo, Moving, tick_lines).
 
   python3 -B qvc.py <programs.json> <program> [--asm OUT.asm]   sizes, the code, the tables
   python3 -B qvc.py <programs.json> --all                       every program's body priced (interlock_scan's model)
+  python3 -B qvc.py - --moving <lfo dir>/lfo.json               every moving program's ring (its sweeps' whole range)
 
 programs.json comes from extract.mjs and is derived from the ROM: keep it, and every generated program, outside
 the repository (~/.cache/modwerk-local/quadraverb/engine/).
@@ -147,40 +150,359 @@ def raw_machine(steps, frac=23):
     return Machine(steps, 0x10000, [s["a"] for s in steps], frac)
 
 
+# ---- the modulation (tools/qvlfo.mjs, ported byte for byte) ------------------------------------------
+#
+# Each kind's tick returns the firmware's writes into the DSP program as (byte address, value), exactly as
+# qvlfo.mjs reconstructs them (and qvlfo.mjs checks against the firmware). extract_lfo.mjs gives every moving
+# program's parameters, its start state and the firmware's program after every later tick.
+
+def tri8(st, r):
+    """The sweeps' triangle: 16-bit phase, 8-bit rate on the low byte, reflected at both ends, H flips at the top."""
+    h, l = st["P"] >> 8, st["P"] & 0xFF
+    if not st["D"]:
+        l += r
+        if l > 0xFF:
+            l &= 0xFF
+            h = (h + 1) & 0xFF
+            if h == 0:
+                st["D"] = 1
+                st["H"] ^= 1
+                h = 0xFF
+                l = (-l) & 0xFF
+                if l == 0:
+                    l = 0xFF
+    else:
+        l -= r
+        if l < 0:
+            l &= 0xFF
+            h = (h - 1) & 0xFF
+            if h == 0xFF:
+                st["D"] = 0
+                h = 0
+                l = (-l) & 0xFF
+                if l == 0:
+                    h = 1
+    st["P"] = (h << 8) | l
+
+
+def tri8_plain(P, D, r):
+    """tri8 as the DSP computes it: up, P += r and past 0xffff P = 0x10000 - max(P - 0x10000, 1); down, P -= r and
+    below 0 P = -P. Returns (P, D, flipped H). check_lfo() holds it to tri8 for every phase and direction."""
+    if not D:
+        P += r
+        if P > 0xFFFF:
+            return 0x10000 - max(P - 0x10000, 1), 1, True
+        return P, 0, False
+    P -= r
+    return (-P, 0, False) if P < 0 else (P, 1, False)
+
+
+def tri16(s, R):
+    """A Leslie rotor: 16-bit rate, reflected as 0xffff - P at both ends; H flips at the top, B at the bottom."""
+    if not s["D"]:
+        P = s["P"] + R
+        if P > 0xFFFF:
+            s["D"] = 1
+            s["H"] ^= 1
+            P = 0xFFFF - (P & 0xFFFF)
+    else:
+        P = s["P"] - R
+        if P < 0:
+            s["D"] = 0
+            s["B"] ^= 1
+            P = 0xFFFF - (P & 0xFFFF)
+    s["P"] = P
+
+
+def shape(P, parabolic):
+    """0..0xffff, largest at P = 0: 1 - p^2 squared in 8-bit pieces as the firmware does (equal to floor(P^2/65536)),
+    or 1 - p."""
+    if not parabolic:
+        return 0xFFFF - P
+    h, l = P >> 8, P & 0xFF
+    return 0xFFFF - ((h * h + ((2 * h * l + ((l * l) >> 8)) >> 8)) & 0xFFFF)
+
+
+def displacement(X, depth):
+    return (X * depth // 256) & 0xFFFF
+
+
+def pair_writes(w, near, far, centre, sign, disp):
+    n, f = disp >> 8, disp & 0xFF
+    a = (centre + sign * n) & 0xFFFF
+    b = (a + sign) & 0xFFFF
+    w += [(near * 4, a & 0xFF), (near * 4 + 1, a >> 8), (near * 4 + 2, 255 - f),
+          (far * 4, b & 0xFF), (far * 4 + 1, b >> 8), (far * 4 + 2, f)]
+
+
+LESLIE_TARGET = {"stop": (0x0000, 0x0000), "slow": (0x0058, 0x006A), "fast": (0x0230, 0x03DA)}
+
+
+class Lfo:
+    """One program's modulation: kind, parameters and state as extract_lfo.mjs gives them. tick() returns the
+    firmware's writes. moves(): every address each moving read can take and the steps whose coefficient moves."""
+
+    def __init__(self, row):
+        self.kind, self.par = row["kind"], row["params"]
+        self.st = json.loads(json.dumps(row["state"]))
+        if self.kind == "leslie":
+            # The speed bits come from MIDI, which the engine does not take: the rotors turn at the program's own
+            # speed, and extract_lfo.mjs starts them there, so the rate's slew toward it never acts.
+            t = LESLIE_TARGET[self.par["speed"]]
+            assert (self.st["r1"]["rate"], self.st["r2"]["rate"]) == t, "the rotors start at the program's speed"
+
+    def pairs(self):
+        """The sweeps' pairs as (near, far, centre, pair sign), the near step chosen by the overall sign later."""
+        return [(p["steps"], (self.par["centre"] + p["offset"]) & 0xFFFF, p["sign"], p["near"]) for p in self.par["pairs"]]
+
+    def tick(self):
+        w = []
+        st, par = self.st, self.par
+        if self.kind == "sweep":
+            tri8(st, par["rate"])
+            disp = displacement(shape(st["P"], par["parabolic"]), par["depth"])
+            sgn = -1 if st["H"] else 1
+            for (lo, hi), centre, psign, near in self.pairs():
+                s = sgn * psign
+                nf = (lo, hi) if near == "first" or s > 0 else (hi, lo)
+                pair_writes(w, nf[0], nf[1], centre, s, disp)
+            w.append((0x17F, 1))
+        elif self.kind == "pitch":
+            R = par["rate"] & 0xFFFF
+            st["P"] = (st["P"] + R) & 0xFFFF
+            h, l = st["P"] >> 8, st["P"] & 0xFF
+            idx = ((h if h & 0x80 else 0xFF - h) << 1) & 0xFF
+            w += [(0x1B * 4 + 2, self.fade[idx]), (0x1C * 4 + 2, self.fade[0xFF - idx])]
+            h2 = h ^ 0x80
+            h2p = h2 + 1
+            h1p = (h2p & 0xFF) ^ 0x80
+            w += [(0x14 * 4, h), (0x18 * 4, h2), (0x19 * 4, h2p & 0xFF), (0x15 * 4, h1p)]
+            if h2p > 0xFF:
+                w += [(0x15 * 4 + 1, 0x18), (0x19 * 4 + 1, 0x19)]
+            elif h1p == 0xFF:
+                w += [(0x15 * 4 + 1, 0x19), (0x19 * 4 + 1, 0x18)]
+            else:
+                w += [(0x15 * 4 + 1, 0x18), (0x19 * 4 + 1, 0x18)]
+            w += [(0x16 * 4 + 2, l), (0x1A * 4 + 2, l)]
+        elif self.kind == "leslie":
+            st["count"] = (st["count"] + 1) & 0xFF          # the slew's clock; at the program's speed it changes nothing
+            am = par["am"]
+            for s, centre, (near, far), (g1s, g2s) in self.rotors():
+                tri16(s, s["rate"])
+                disp = displacement(shape(s["P"], True), s["depth"])
+                pair_writes(w, near, far, centre, -1 if s["H"] else 1, disp)
+                top = s["P"] >> 8
+                Bm = (top * am) >> 8
+                R0 = (0x7F - am) & 0xFF
+                if not s["H"]:
+                    R0 = (R0 + ((0xFF - top) >> 1)) & 0xFF
+                g1, g2 = (R0 - Bm, R0 + Bm) if s["B"] else (R0 + Bm, R0 - Bm)
+                w += [(g1s * 4 + 2, g1 & 0xFF), (g2s * 4 + 2, g2 & 0xFF)]
+        else:
+            raise ValueError(self.kind)
+        w += [(0x17F, 1)] if self.kind != "sweep" else []
+        return w
+
+    def rotors(self):
+        return [(self.st["r1"], 0x1900, (0x0B, 0x0C), (0x0F, 0x11)), (self.st["r2"], 0x1B00, (0x13, 0x14), (0x17, 0x19))]
+
+    def moves(self, steps):
+        """({step: every address it can take}, {steps whose coefficient moves}), from the parameters: every
+        displacement in samples at both signs (sweeps, Leslie), every tap position (pitch). steps: the program."""
+        addrs, coef = {}, set()
+
+        def collect(w):
+            cur = {}
+            for b, v in w:
+                s, k = b >> 2, b & 3
+                if k == 2:
+                    coef.add(s)
+                elif k == 3:
+                    assert b == 0x17F and v == 1, f"byte {b:#x}: an op byte that moves"
+                else:
+                    a = cur.get(s, steps[s]["a"])
+                    cur[s] = (a & 0xFF00) | v if k == 0 else (a & 0xFF) | (v << 8)
+            for s, a in cur.items():
+                addrs.setdefault(s, set()).add(a)
+
+        def sweep_all(groups, depth):
+            for n in range(displacement(0xFFFF, depth) // 256 + 1):
+                for sgn in (1, -1):
+                    w = []
+                    for near, far, centre, s in groups(sgn):
+                        pair_writes(w, near, far, centre, s, n << 8)
+                    collect(w)
+
+        if self.kind == "sweep":
+            def groups(sgn):
+                out = []
+                for (lo, hi), centre, psign, near in self.pairs():
+                    s = sgn * psign
+                    nf = (lo, hi) if near == "first" or s > 0 else (hi, lo)
+                    out.append((nf[0], nf[1], centre, s))
+                return out
+            sweep_all(groups, self.par["depth"])
+        elif self.kind == "leslie":
+            for s, centre, (near, far), gains in self.rotors():
+                coef.update(gains)
+                sweep_all(lambda sgn: [(near, far, centre, sgn)], s["depth"])
+        elif self.kind == "pitch":
+            saved = json.loads(json.dumps(self.st))
+            for h in range(256):
+                self.st["P"] = ((h << 8) - self.par["rate"]) & 0xFFFF
+                collect(self.tick())
+            self.st = saved
+        return addrs, coef
+
+
+def image_of(steps):
+    """The 384 bytes of a program, as the firmware holds it."""
+    out = bytearray(384)
+    for i, s in enumerate(steps):
+        out[4 * i:4 * i + 4] = bytes([s["a"] & 0xFF, s["a"] >> 8, s["c"] >> 3, ((s["c"] & 7) << 5) | s["op"]])
+    return out
+
+
+def step_of(img, i):
+    d = img[4 * i:4 * i + 4]
+    return {"a": d[0] | d[1] << 8, "c": d[2] << 3 | d[3] >> 5, "op": d[3] & 0x1F}
+
+
+def load_lfo(path, p):
+    """Program p of extract_lfo.mjs's lfo.json: (row, fade table) or (None, None) when it is not there."""
+    data = json.load(open(path))
+    row = next((r for r in data["programs"] if r["p"] == p), None)
+    return row, data.get("fade")
+
+
+def ticks_of(lfo_dir, p):
+    """The firmware's whole DSP program after every recorded tick (extract_lfo.mjs): a list of 384-byte images."""
+    import gzip
+    raw = gzip.open(pathlib.Path(lfo_dir) / f"ticks-{p}.bin.gz").read()
+    return [raw[k:k + 384] for k in range(0, len(raw), 384)]
+
+
+# The tick timing. The firmware's ticks come from the 8051's timer (tickUs: the emulator's cycles a tick plus the
+# assumed 3-cycle interrupt response, at 1 us a cycle); the original's DSP runs at 42 samples a millisecond (the
+# firmware's own conversion of delay times), so a tick comes every 10.73 of its samples (22.3 for the Leslies).
+# ENGINE.md, "Tick timing": the engine keeps that figure in samples (ORIGINAL_KHZ), so a program plays sample for
+# sample as on the original, its sweeps 5 % faster in seconds like its delays; --realtime uses 44.1 instead
+# (ticks a second as on the original). Either way: samples a tick = INT + FRAC / 2^23, a tick lands before a sample
+# whenever the count of samples to wait reaches 0, and then the count restarts at INT, or INT + 1 when FRAC's
+# running sum carries.
+ORIGINAL_KHZ = 42.0
+ENGINE_KHZ = 44.1
+
+
+def tick_timing(row, realtime=False):
+    t = (ENGINE_KHZ if realtime else ORIGINAL_KHZ) * round(row["tickUs"], 2) / 1000
+    i = int(t)
+    f = round((t - i) * (1 << 23))
+    return i, f, t
+
+
+class Moving:
+    """The engine with its modulation: a Machine whose steps the LFO rewrites on tick samples.
+
+    off: step -> the offset that takes a moving read's original address to its relocated one (relocate()); None runs
+    on the original's own 64K addresses (raw). The first tick comes after INT samples."""
+
+    def __init__(self, row, fade, size, addr, off, timing, frac=23):
+        self.lfo = Lfo(row)
+        self.lfo.fade = fade
+        self.img = image_of(row["steps"])
+        steps = [step_of(self.img, i) for i in range(96)]
+        self.m = Machine(steps, size, list(addr), frac)
+        self.off = off
+        self.INT, self.FRAC = timing[0], timing[1]
+        self.wait, self.acc = self.INT, 0
+
+    def tick(self):
+        for b, v in self.lfo.tick():
+            self.img[b] = v
+        for i in range(96):
+            s = step_of(self.img, i)
+            if s != self.m.steps[i]:
+                if s["a"] != self.m.steps[i]["a"]:
+                    self.m.addr[i] = s["a"] if self.off is None else (s["a"] + self.off[i]) % self.m.size
+                self.m.steps[i] = s
+
+    def sample(self, x):
+        if self.wait == 0:
+            self.tick()
+            self.acc += self.FRAC
+            self.wait = self.INT + (self.acc >> 23)
+            self.acc &= (1 << 23) - 1
+        self.wait -= 1
+        return self.m.sample(x)
+
+    def run(self, left, right):
+        out_l, out_r = [], []
+        for l, r in zip(left, right):
+            ol, orr = self.sample((l + r) >> 1)
+            out_l.append(ol)
+            out_r.append(orr)
+        return out_l, out_r
+
+
 # ---- delay lines and relocation ------------------------------------------------------------------
 
-def live_read(i, s):
-    """A read whose word matters: a product, a latch, or an output."""
-    return s["c"] > 0 or bits(s["op"])["latch"] or i in (LEFT_STEP, RIGHT_STEP)
+def live_read(i, s, coef=()):
+    """A read whose word matters: a product (a coefficient the modulation can make non-zero counts), a latch, or an
+    output."""
+    return s["c"] > 0 or i in coef or bits(s["op"])["latch"] or i in (LEFT_STEP, RIGHT_STEP)
 
 
-def analyse(steps):
+def analyse(steps, moving=None):
     """Every live read as (line, delay): the line is the write that last stored its word (the nearest write; on a
     tie the later step in the frame), the delay in samples. A delay of 0 reads what a write earlier in this frame
-    stored; a write later in the frame at the same address stored it 65,536 samples ago."""
+    stored; a write later in the frame at the same address stored it 65,536 samples ago.
+
+    moving: (addrs, coef) from Lfo.moves(): a moving read must take its word from the same line at every address it
+    can take, at a delay of at least 1, and its line covers the longest; a step whose coefficient moves is live.
+    Returns (access, length, reach): reach maps a moving read to its delays from its line at every address."""
+    addrs, coef = moving or ({}, set())
     order = {i: j for j, i in enumerate(FRAME)}
     writes = [i for i in FRAME if steps[i]["op"] & 8]
-    access, length = {}, {w: None for w in writes}
-    for r in FRAME:
-        s = steps[r]
-        if s["op"] & 8 or not live_read(r, s):
-            continue
+    for i in addrs:
+        assert i not in writes, f"step {i:#x}: a write that moves"
+    access, length, reach = {}, {w: None for w in writes}, {}
+
+    def nearest(r, a):
         best = None
         for w in writes:
-            d = (s["a"] - steps[w]["a"]) & 0xFFFF
+            d = (a - steps[w]["a"]) & 0xFFFF
             if d == 0 and order[w] > order[r]:
                 d = 0x10000
             if best is None or d < best[1] or (d == best[1] and order[w] > order[best[0]]):
                 best = (w, d)
+        return best
+
+    for r in FRAME:
+        s = steps[r]
+        if s["op"] & 8 or not live_read(r, s, coef):
+            continue
+        best = nearest(r, s["a"])
+        if r in addrs:
+            seen = {a: nearest(r, a) for a in addrs[r] | {s["a"]}}
+            lines = {v[0] for v in seen.values()}
+            if len(lines) != 1:
+                raise ValueError(f"step {r:#x}: its sweep reads from {len(lines)} lines")
+            reach[r] = {a: d for a, (_, d) in seen.items()}
+            if min(reach[r].values()) < 1:
+                raise ValueError(f"step {r:#x}: its sweep reaches a delay of 0")
+            length[best[0]] = max(length[best[0]] or 0, max(reach[r].values()))
         access[r] = best
         length[best[0]] = max(length[best[0]] or 0, best[1])
-    return access, length
+    return access, length, reach
 
 
-def relocate(steps, ring_max=FX2_WORDS):
+def relocate(steps, ring_max=FX2_WORDS, moving=None):
     """Pack the lines head to tail: line w takes words h_w .. h_w + length_w. A write nothing reads keeps no word.
-    Returns (addr by step, ring size). Raises when the lines need more than ring_max words."""
-    access, length = analyse(steps)
+    Returns (addr by step, ring size), and with moving (Lfo.moves()) also off: a moving read's relocated address is
+    its original address + off[step] at every address it can take. Raises when the lines need more than ring_max
+    words."""
+    access, length, reach = analyse(steps, moving)
     head, at = {}, 0
     for w in sorted(length, key=lambda w: FRAME.index(w)):
         if length[w] is None:
@@ -194,7 +516,16 @@ def relocate(steps, ring_max=FX2_WORDS):
         addr[w] = h
     for r, (w, d) in access.items():
         addr[r] = head[w] + d
-    return addr, at
+    if moving is None:
+        return addr, at
+    off = {}
+    for r, ds in reach.items():
+        w = access[r][0]
+        offs = {head[w] + d - a for a, d in ds.items()}
+        if len(offs) != 1:
+            raise ValueError(f"step {r:#x}: its sweep wraps the original's 64K ring")
+        off[r] = offs.pop()
+    return addr, at, off
 
 
 # ---- code generation --------------------------------------------------------------------------------
@@ -297,18 +628,27 @@ def rmove(src, dst, tag=None):
     return Op("r", f"{src},{dst}", {src}, {dst}, (src, dst), tag=tag)
 
 
-def generate(steps, addr, size, prefix="qv", schedule=True):
+def generate(steps, addr, size, prefix="qv", schedule=True, mod=None):
     """Straight-line code for one sample, the tables and init/proc around it. Returns (asm text, info).
+
+    mod: a moving program's modulation, dict(lfo=Lfo, moving=Lfo.moves(), off=relocate()'s off, timing=tick_timing(),
+    fade=the pitch crossfade). Every step whose coefficient can move is a product (its coefficient may be 0 now),
+    and proc runs the samples in segments between ticks, rewriting the tables on each tick (tick_lines).
 
     schedule=False is the plain form: every read's word fetched right after the access before it, every reload in the
     first free slot after its access or else right after it. schedule=True moves a read's word ahead of the stores
     before it (unless it reads one of them at delay 0) into the product before them, and puts a reload that needs an
     instruction of its own where it fills a stall (a move of A right after the instruction that computes it) and
     stays three instructions ahead of its chain's next access."""
-    line_of, _ = analyse(steps)      # live read -> (line, delay)
+    moving = mod["moving"] if mod else None
+    mcoef = moving[1] if moving else set()
+    line_of, _, _ = analyse(steps, moving)      # live read -> (line, delay)
     frame_acc = [i for i in FRAME if addr[i] is not None]      # the accesses: live reads, stores a line keeps
     reads = [i for i in frame_acc if not steps[i]["op"] & 8]
-    products = [i for i in FRAME if steps[i]["c"] > 0]
+
+    def has_product(i):
+        return steps[i]["c"] > 0 or i in mcoef
+    products = [i for i in FRAME if has_product(i)]
     coef = [steps[i]["c"] << 12 for i in products]
     ops = []                         # the micro-ops of one sample, in order
     fetched = set()
@@ -376,7 +716,7 @@ def generate(steps, addr, size, prefix="qv", schedule=True):
                 ops.append(alu("tfr b,a", {"b"}, {"a"}))
             elif not add_a and o["sel"] == 3:
                 ops.append(alu("tfr x1,a", {"x1"}, {"a"}))
-            if s["c"]:
+            if has_product(i):
                 mac = "mpy" if o["sel"] == 0 else "mac"
                 ops.append(alu(f"{mac} {sign}y0,x0,a", {"y0", "x0"} | ({"a"} if mac == "mac" else set()), {"a"},
                                tag="product"))
@@ -395,14 +735,14 @@ def generate(steps, addr, size, prefix="qv", schedule=True):
             elif o["sel"] == 3:
                 pre = alu("tfr x1,a", {"x1"}, {"a"})
             src = "n7" if i == IN_STEP else "y1" if pre else "a"
-            need_y1 = s["c"] > 0 or (o["latch"] and i != IN_STEP) or (store and src == "y1")
+            need_y1 = has_product(i) or (o["latch"] and i != IN_STEP) or (store and src == "y1")
             if need_y1:
                 ops.append(rmove("a", "y1"))
             if pre:
                 ops.append(pre)
             if store:
                 ops.append(access(i, src, True))
-            if s["c"]:
+            if has_product(i):
                 mac = "mac" if (o["sel"] in (2, 3) or add_a) else "mpy"
                 ops.append(alu(f"{mac} {sign}x0,y1,a", {"x0", "y1"} | ({"a"} if mac == "mac" else set()), {"a"},
                                tag="product"))
@@ -511,11 +851,385 @@ def generate(steps, addr, size, prefix="qv", schedule=True):
     body = [c.text() for c in code]
     info = dict(coef=coef, dist=dist, closure=closure, first=first_cell, size=size, words=len(body),
                 accesses=len(order), products=len(products), body=body)
+    if mod:
+        # What a tick rewrites. A moving read k changes the distance into it, D[k], loaded by the reload after the
+        # access before it on its chain, and the distance out of it, D[next]. A chain's first access in a sample is
+        # reached from the last one of the sample before: it must not move (the register already points at it).
+        reload_at = {m.tag[1]: j for j, m in enumerate(reloads)}
+        chains = {c: [k for k in order if chain[k] == c] for c in CHAINS}
+        need = []
+        for k in sorted(moving[0]):
+            c = chain[k]
+            mine = chains[c]
+            j = mine.index(k)
+            assert j > 0, f"step {k:#x}: a moving read is its chain's first access"
+            for x in (mine[j - 1], k):
+                if x not in need:
+                    need.append(x)
+        dists = []
+        for x in need:
+            mine = chains[chain[x]]
+            j = mine.index(x)
+            nxt, last = (mine[j + 1], False) if j + 1 < len(mine) else (mine[0], True)
+            dists.append(dict(x=x, next=nxt, last=last, slot=reload_at[mine[j - 1]],
+                              first_reg=f"n{chain[x]}" if j == 0 else None))
+        info.update(mod=mod, coef_index={i: products.index(i) for i in products}, dists=dists, addr=list(addr),
+                    steps=steps, order=order, chain=chain, reload_at=reload_at)
     return assemble_text(info, prefix), info
+
+
+def imm(v):
+    return f"#>${v & 0xFFFFFF:06x}"
+
+
+# A moving program's state beyond STATE: the samples left in this call, the samples before the next tick, the tick
+# timing's running fraction; the LFO's own words after the coefficient table (at most 97 words from COEF_AT).
+MSTATE = dict(rem=0x0D, wait=0x0E, frac=0x0F)
+LFO_AT = 0x71
+R7_END = 0x84            # the r7 block is $00..$83 (sdk/octabam/docs/TRAPS.md)
+
+
+def lfo_words(lfo):
+    """The LFO's words in the r7 block, from LFO_AT, with their start values: the phase, and the flags (bit 0
+    direction D, bit 1 the half H, bit 2 the Leslie's B); the Leslie adds four scratch words for its taps."""
+    st = lfo.st
+    flags = lambda s: s["D"] | s["H"] << 1 | s.get("B", 0) << 2
+    if lfo.kind == "sweep":
+        return [("P", st["P"]), ("F", flags(st))]
+    if lfo.kind == "pitch":
+        return [("P", st["P"])]
+    return [("P1", st["r1"]["P"]), ("F1", flags(st["r1"])), ("P2", st["r2"]["P"]), ("F2", flags(st["r2"])),
+            ("S0", 0), ("S1", 0), ("S2", 0), ("S3", 0)]
+
+
+def tick_lines(info, P):
+    """One tick on the DSP: the LFO's step and every table entry it moves (the X coefficients through r7, the Y
+    distances through r3, which points at the distance table on every sample boundary). Uses a, b, x0, x1, y0, y1
+    (A, B and M are saved in the state block around it) and n3, which it restores."""
+    mod, steps, addr = info["mod"], info["steps"], info["addr"]
+    lfo, off = mod["lfo"], mod["off"]
+    W = {k: LFO_AT + j for j, (k, _) in enumerate(lfo_words(lfo))}
+    out = []
+    e = out.append
+    ci = info["coef_index"]
+    low = lambda i: (steps[i]["c"] & 7) << 12
+
+    def x7(k):
+        return f"x:(r7+${k:02x})"
+
+    def coef_x(i):
+        return x7(COEF_AT + ci[i])
+
+    def store_g(i):
+        """a1 holds a coefficient's high byte g (any bits above): its table entry is (g & 0xff) << 15 | low << 12."""
+        e("        and     #>$0000ff,a")
+        e("        asl     #15,a,a")
+        if low(i):
+            e(f"        add     {imm(low(i))},a")
+        e(f"        move    a1,{coef_x(i)}")
+
+    def parabola_disp(depth):
+        """a: P (clean). Leaves x1 = f << 15 and b = n (clean), the displacement's sample and fraction."""
+        e("        asl     #7,a,b")
+        e("        move    b1,x0")
+        e("        move    a1,y1")
+        e("        mpy     x0,y1,b")
+        e("        move    b1,x0")
+        e(f"        move    {imm(0xFFFF)},b")
+        e("        sub     x0,b")
+        disp(depth)
+
+    def disp(depth):
+        """b: X (clean). floor(X * depth / 256) = d: x1 = (d & 0xff) << 15, b = d >> 8."""
+        e("        asl     #7,b,b")
+        e("        move    b1,x0")
+        e(f"        move    {imm(depth << 8)},y1")
+        e("        mpy     x0,y1,a")
+        e("        tfr     a,b")
+        e("        asl     #15,b,b")
+        e("        and     #>$7f8000,b")
+        e("        move    b1,x1")
+        e("        asr     #8,a,a")
+        e("        move    a1,y0")
+        e("        tfr     y0,b")
+
+    def pair(near, far, centre, s, dest):
+        """x1 = f << 15, b = n: the near step reads centre + s n with weight 255 - f, the far one a sample further
+        out with f. Their relocated addresses go to dest[near], dest[far] (a register or an r7 word)."""
+        e(f"        move    {imm(0x7F8000 | low(near))},a")
+        e("        sub     x1,a")
+        e(f"        move    a1,{coef_x(near)}")
+        if low(far):
+            e("        tfr     x1,a")
+            e(f"        add     {imm(low(far))},a")
+            e(f"        move    a1,{coef_x(far)}")
+        else:
+            e(f"        move    x1,{coef_x(far)}")
+        for k, extra in ((near, 0), (far, s)):
+            base = centre + extra
+            nmax = displacement(0xFFFF, lfo_depth(k)) >> 8
+            assert 0 <= base - nmax and base + nmax <= 0xFFFF, "a sweep that wraps the 16-bit address"
+            e(f"        move    {imm(base + off[k])},a")
+            e(f"        {'add' if s > 0 else 'sub'}     b,a")
+            e(f"        move    a1,{dest[k]}")
+
+    def lfo_depth(k):
+        if lfo.kind == "sweep":
+            return lfo.par["depth"]
+        r = lfo.st["r1"] if k in (0x0B, 0x0C) else lfo.st["r2"]
+        return r["depth"]
+
+    regs = {}
+    if lfo.kind == "sweep":
+        par = lfo.par
+        e(f"        move    {x7(W['P'])},a")
+        e(f"        move    {x7(W['F'])},b")
+        e(f"        jset    #0,b1,{P}TDN")
+        e(f"        add     {imm(par['rate'])},a")
+        e(f"        cmp     {imm(0xFFFF)},a")
+        e(f"        jle     {P}TPS")
+        e(f"        sub     {imm(0x10000)},a")
+        e(f"        move    {imm(1)},x0")
+        e("        cmp     x0,a")
+        e("        tlt     x0,a")
+        e("        neg     a")
+        e(f"        add     {imm(0x10000)},a")
+        e("        eor     #>$000003,b")
+        e(f"        jmp     {P}TPS")
+        e(f"{P}TDN:")
+        e(f"        sub     {imm(par['rate'])},a")
+        e(f"        jge     {P}TPS")
+        e("        neg     a")
+        e("        bclr    #0,b1")
+        e(f"{P}TPS:")
+        e(f"        move    a1,{x7(W['P'])}")
+        e(f"        move    b1,{x7(W['F'])}")
+        if par["parabolic"]:
+            parabola_disp(par["depth"])
+        else:
+            e(f"        move    {imm(0xFFFF)},b")
+            e("        sub     a,b")
+            disp(par["depth"])
+        moving_steps = sorted(mod["moving"][0])
+        assert len(moving_steps) <= 4
+        regs = dict(zip(moving_steps, ("x0", "y0", "y1", "x1")))
+        # x1 holds f << 15 until the pairs' coefficients are written; the last pair's far step may take it after
+        e(f"        move    {x7(W['F'])},a")
+        e(f"        jset    #1,a1,{P}TH1")
+        for sgn, label in ((1, None), (-1, f"{P}TH1")):
+            if label:
+                e(f"{label}:")
+            plan = []
+            for (lo, hi), centre, psign, near in lfo.pairs():
+                s = sgn * psign
+                nf = (lo, hi) if near == "first" or s > 0 else (hi, lo)
+                plan.append((nf[0], nf[1], centre, s))
+            # every coefficient first (they need x1), then every address
+            for near, far, centre, s in plan:
+                e(f"        move    {imm(0x7F8000 | low(near))},a")
+                e("        sub     x1,a")
+                e(f"        move    a1,{coef_x(near)}")
+                if low(far):
+                    e("        tfr     x1,a")
+                    e(f"        add     {imm(low(far))},a")
+                    e(f"        move    a1,{coef_x(far)}")
+                else:
+                    e(f"        move    x1,{coef_x(far)}")
+            for near, far, centre, s in plan:
+                for k, extra in ((near, 0), (far, s)):
+                    nmax = displacement(0xFFFF, par["depth"]) >> 8
+                    base = centre + extra
+                    assert 0 <= base - nmax and base + nmax <= 0xFFFF, "a sweep that wraps the 16-bit address"
+                    e(f"        move    {imm(base + off[k])},a")
+                    e(f"        {'add' if s > 0 else 'sub'}     b,a")
+                    e(f"        move    a1,{regs[k]}")
+            if sgn > 0:
+                e(f"        jmp     {P}TDS")
+    elif lfo.kind == "pitch":
+        L = len(info["dist"])
+        R16 = lfo.par["rate"] & 0xFFFF
+        e(f"        move    {x7(W['P'])},a")
+        e(f"        add     {imm(R16)},a")
+        e("        and     #>$00ffff,a")
+        e(f"        move    a1,{x7(W['P'])}")
+        e("        asl     #15,a,b")
+        e("        and     #>$7f8000,b")
+        e("        move    b1,x1")                      # l << 15, the taps' fraction
+        e("        asr     #8,a,a")
+        e("        move    a1,y0")                      # h, the tap in the window
+        e("        tfr     y0,a")
+        e(f"        jset    #7,y0,{P}TPH")
+        e(f"        move    {imm(0xFF)},a")
+        e("        sub     y0,a")
+        e(f"{P}TPH:")
+        e("        asl     a")
+        e("        and     #>$0000ff,a")                # idx: the crossfade's position
+        e(f"        add     {imm(L)},a")
+        e("        move    a1,n3")
+        e(f"        move    {imm(2 * L + 0xFF)},b")
+        e("        sub     a,b")
+        e("        move    y:(r3+n3),a")                # fade[idx] << 15
+        e("        move    b1,n3")
+        if low(0x1B):
+            e(f"        add     {imm(low(0x1B))},a")
+        e(f"        move    a1,{coef_x(0x1B)}")
+        e("        move    y:(r3+n3),a")                # fade[0xff - idx] << 15
+        if low(0x1C):
+            e(f"        add     {imm(low(0x1C))},a")
+        e(f"        move    a1,{coef_x(0x1C)}")
+        e(f"        move    {imm(-(L - 1))},n3")
+        for i in (0x16, 0x1A):
+            if low(i):
+                e("        tfr     x1,a")
+                e(f"        add     {imm(low(i))},a")
+                e(f"        move    a1,{coef_x(i)}")
+            else:
+                e(f"        move    x1,{coef_x(i)}")
+        # the taps: 14 at the window's page + h, 18 at + (h ^ 0x80), 19 at 0x1800 + (h ^ 0x80) + 1, and 15 at
+        # 0x1800 + h + 1, but 0x19ff at h = 0xfe and 0x1800 at h = 0xff (the firmware's quirk)
+        hi14, hi18 = steps[0x14]["a"] & 0xFF00, steps[0x18]["a"] & 0xFF00
+        e("        tfr     y0,b")
+        e("        eor     #>$000080,b")
+        e("        tfr     b,a")
+        e(f"        add     {imm(hi18 + off[0x18])},a")
+        e("        move    a1,x1")
+        e("        tfr     b,a")
+        e(f"        add     {imm(0x1801 + off[0x19])},a")
+        e("        move    a1,y1")
+        e("        tfr     y0,b")
+        e(f"        add     {imm(0x1801 + off[0x15])},b")
+        e("        tfr     y0,a")
+        e(f"        cmp     {imm(0xFE)},a")
+        e(f"        jlt     {P}TQ")
+        e(f"        jgt     {P}TQF")
+        e(f"        add     {imm(0x100)},b")
+        e(f"        jmp     {P}TQ")
+        e(f"{P}TQF:")
+        e(f"        sub     {imm(0x100)},b")
+        e(f"{P}TQ:")
+        e(f"        add     {imm(hi14 + off[0x14])},a")
+        e("        move    a1,x0")
+        e("        move    b1,y0")
+        regs = {0x14: "x0", 0x15: "y0", 0x18: "x1", 0x19: "y1"}
+        assert set(regs) == set(mod["moving"][0])
+    elif lfo.kind == "leslie":
+        am = lfo.par["am"]
+        scratch = {}
+        for r, (s_, centre, (near, far), (g1s, g2s)) in enumerate(lfo.rotors()):
+            Pw, Fw = W[f"P{r + 1}"], W[f"F{r + 1}"]
+            R = s_["rate"]
+            t = f"{P}L{r}"
+            e(f"        move    {x7(Pw)},a")
+            e(f"        move    {x7(Fw)},b")
+            e(f"        jset    #0,b1,{t}DN")
+            e(f"        add     {imm(R)},a")
+            e(f"        cmp     {imm(0xFFFF)},a")
+            e(f"        jle     {t}PS")
+            e("        neg     a")
+            e(f"        add     {imm(0x1FFFF)},a")
+            e("        eor     #>$000003,b")
+            e(f"        jmp     {t}PS")
+            e(f"{t}DN:")
+            e(f"        sub     {imm(R)},a")
+            e(f"        jge     {t}PS")
+            e("        neg     a")
+            e(f"        sub     {imm(1)},a")
+            e("        eor     #>$000005,b")
+            e(f"{t}PS:")
+            e(f"        move    a1,{x7(Pw)}")
+            e(f"        move    b1,{x7(Fw)}")
+            parabola_disp(s_["depth"])
+            dest = {near: x7(W[f"S{2 * r}"]), far: x7(W[f"S{2 * r + 1}"])}
+            scratch.update(dest)
+            e(f"        move    {x7(Fw)},a")
+            e(f"        jset    #1,a1,{t}H1")
+            pair(near, far, centre, 1, dest)
+            e(f"        jmp     {t}HD")
+            e(f"{t}H1:")
+            pair(near, far, centre, -1, dest)
+            e(f"{t}HD:")
+            # the gains: R0 = 127 - AM, plus 127 - (top >> 1) while H is 0; then R0 +- top * AM / 256, by B
+            e(f"        move    {x7(Pw)},a")
+            e("        asr     #8,a,a")
+            e("        move    a1,x0")
+            e(f"        move    {imm(am << 15)},y1")
+            e("        mpy     x0,y1,a")
+            e("        move    a1,y0")                  # Bm
+            e(f"        move    {x7(Fw)},b")
+            e(f"        move    {imm((0x7F - am) & 0xFF)},a")
+            e(f"        jset    #1,b1,{t}R0")
+            e(f"        move    {x7(Pw)},b")
+            e("        asr     #9,b,b")
+            e("        move    b1,x1")
+            e(f"        add     {imm(0x7F)},a")
+            e("        sub     x1,a")
+            e("        and     #>$0000ff,a")
+            e(f"{t}R0:")
+            e("        move    a1,x1")                  # R0
+            e(f"        move    {x7(Fw)},b")
+            e("        tfr     x1,a")
+            e(f"        jset    #2,b1,{t}B1")
+            e("        add     y0,a")
+            store_g(g1s)
+            e("        tfr     x1,a")
+            e("        sub     y0,a")
+            store_g(g2s)
+            e(f"        jmp     {t}GD")
+            e(f"{t}B1:")
+            e("        sub     y0,a")
+            store_g(g1s)
+            e("        tfr     x1,a")
+            e("        add     y0,a")
+            store_g(g2s)
+            e(f"{t}GD:")
+        regs = dict(zip(sorted(scratch), ("x0", "y0", "y1", "x1")))
+        for k, reg in regs.items():
+            e(f"        move    {scratch[k]},{reg}")
+    e(f"{P}TDS:")
+    # The distances: D[x] = the relocated address of x's next access on its chain - x's own (- 1 past the
+    # sample's end), into the distance table's slot that the reload before x loads, and into x's n register
+    # when x is its chain's first access of the sample (its reload has run already).
+    for d in info["dists"]:
+        x, nx = d["x"], d["next"]
+        c = -1 if d["last"] else 0
+        if nx in regs and x in regs:
+            e(f"        tfr     {regs[nx]},a")
+            e(f"        sub     {regs[x]},a")
+            if c:
+                e(f"        add     {imm(c)},a")
+        elif nx in regs:
+            e(f"        tfr     {regs[nx]},a")
+            e(f"        sub     {imm(addr[x] - c)},a")
+        else:
+            e(f"        move    {imm(addr[nx] + c)},a")
+            e(f"        sub     {regs[x]},a")
+        e(f"        move    a1,y:(r3+${d['slot']:02x})")
+        if d["first_reg"]:
+            e(f"        move    a1,{d['first_reg']}")
+    return forward_branches(out)
+
+
+def forward_branches(lines):
+    """dsp_asm assembles no absolute jump to a label and no backward branch (sdk/octabam/docs/TRAPS.md,
+    trap-bra-back): every conditional here is a forward bcc, a bit test btst + bcs/bcc."""
+    import re
+    out = []
+    for l in lines:
+        m = re.match(r"^\s+j(set|clr)\s+#(\d+),(\w+),(\w+)$", l)
+        if m:
+            out += [f"        btst    #{m.group(2)},{m.group(3)}", f"        {'bcs' if m.group(1) == 'set' else 'bcc'}     {m.group(4)}"]
+            continue
+        m = re.match(r"^\s+j(le|ge|lt|gt|eq|ne|mp)\s+(\w+)$", l)
+        if m:
+            out.append(f"        {'bra' if m.group(1) == 'mp' else 'b' + m.group(1)}     {m.group(2)}")
+            continue
+        out.append(l)
+    return out
 
 
 def assemble_text(info, P):
     size, coef, dist = info["size"], info["coef"], info["dist"]
+    mod = info.get("mod")
     S = STATE
     L = len(dist)
     lines = [f"; Generated by qvc.py: one Quadraverb program as straight-line code. Ring {size} words, "
@@ -536,6 +1250,11 @@ def assemble_text(info, P):
              "        nop"]
     for k, d in enumerate(dist):     # r4 now points at the table, just after the ring
         lines += [f"        move    #>${d:06x},x0", "        move    x0,y:(r4)+"]
+    if mod and mod["lfo"].kind == "pitch":
+        # The pitch crossfade after the distances (from the ROM, so only ever in a generated program)
+        assert len(mod["fade"]) == 256
+        for v in mod["fade"]:
+            lines += [f"        move    {imm(v << 15)},x0", "        move    x0,y:(r4)+"]
     lines += [f"        lua     (r7+${COEF_AT:02x}),r4"]
     for v in coef:
         lines += [f"        move    #>${v:06x},x0", "        move    x0,x:(r4)+"]
@@ -545,8 +1264,15 @@ def assemble_text(info, P):
                   f"        move    #>${info['closure'][c]:06x},x0", f"        move    x0,x:(r7+${S['n%d' % c]:02x})"]
     lines += ["        clr     b",
               *[f"        move    b,x:(r7+${S[k]:02x})" for k in ("a2", "a1", "a0", "b", "x1")],
-              f"        move    #>${SIGNATURE:06x},x0", f"        move    x0,x:(r7+${S['sig']:02x})",
-              "        rts", "",
+              f"        move    #>${SIGNATURE:06x},x0", f"        move    x0,x:(r7+${S['sig']:02x})"]
+    if mod:
+        words = lfo_words(mod["lfo"])
+        assert COEF_AT + len(coef) + 1 <= LFO_AT and LFO_AT + len(words) <= R7_END, "the r7 block is full"
+        lines += [f"        move    {imm(mod['timing'][0])},x0", f"        move    x0,x:(r7+${MSTATE['wait']:02x})",
+                  f"        move    b,x:(r7+${MSTATE['frac']:02x})"]
+        for j, (_, v) in enumerate(words):
+            lines += [f"        move    {imm(v)},x0", f"        move    x0,x:(r7+${LFO_AT + j:02x})"]
+    lines += ["        rts", "",
               "proc:",
               "; (L + R) / 2 into every left slot, while a and b are free.",
               "        move    r0,r1",
@@ -572,26 +1298,65 @@ def assemble_text(info, P):
               "        move    a,r3",
               f"        move    #>${(-(L - 1)) & 0xFFFFFF:06x},n3",
               f"        lua     (r7+${COEF_AT:02x}),r2",
-              f"        move    #>${(-len(coef)) & 0xFFFFFF:06x},n2",
-              f"        move    x:(r7+${S['a1']:02x}),a",
-              f"        move    x:(r7+${S['a0']:02x}),a0",
-              f"        move    x:(r7+${S['a2']:02x}),a2",
-              f"        move    x:(r7+${S['b']:02x}),b",
-              f"        move    x:(r7+${S['x1']:02x}),x1",
-              f"        do      n7,>{P}SMPE"]
-    lines += [f"{P}BODY:"] + [f"        {t}" for t in info["body"]]
-    lines += [f"{P}SMPE:",
-              *[f"        move    r{c},x:(r7+${S['r%d' % c]:02x})" for c in CHAINS],
-              *[f"        move    n{c},x:(r7+${S['n%d' % c]:02x})" for c in CHAINS],
-              f"        move    a2,x:(r7+${S['a2']:02x})",
-              f"        move    a1,x:(r7+${S['a1']:02x})",
-              f"        move    a0,x:(r7+${S['a0']:02x})",
-              f"        move    b1,x:(r7+${S['b']:02x})",
-              f"        move    x1,x:(r7+${S['x1']:02x})",
-              "        move    #>$ffffff,m4",
-              "        move    #>$ffffff,m5",
-              "        move    #>$ffffff,m6",
-              "        rts", ""]
+              f"        move    #>${(-len(coef)) & 0xFFFFFF:06x},n2"]
+    restore = [f"        move    x:(r7+${S['a1']:02x}),a",
+               f"        move    x:(r7+${S['a0']:02x}),a0",
+               f"        move    x:(r7+${S['a2']:02x}),a2",
+               f"        move    x:(r7+${S['b']:02x}),b",
+               f"        move    x:(r7+${S['x1']:02x}),x1"]
+    save = [f"        move    a2,x:(r7+${S['a2']:02x})",
+            f"        move    a1,x:(r7+${S['a1']:02x})",
+            f"        move    a0,x:(r7+${S['a0']:02x})",
+            f"        move    b1,x:(r7+${S['b']:02x})",
+            f"        move    x1,x:(r7+${S['x1']:02x})"]
+    tail = [*[f"        move    r{c},x:(r7+${S['r%d' % c]:02x})" for c in CHAINS],
+            *[f"        move    n{c},x:(r7+${S['n%d' % c]:02x})" for c in CHAINS],
+            "        move    #>$ffffff,m4",
+            "        move    #>$ffffff,m5",
+            "        move    #>$ffffff,m6",
+            "        rts", ""]
+    body = [f"{P}BODY:"] + [f"        {t}" for t in info["body"]]
+    if not mod:
+        lines += restore + [f"        do      n7,{P}SMPE"] + body + [f"{P}SMPE:"] + save + tail
+        return "\n".join(lines)
+    M = MSTATE
+    INT, FRAC = mod["timing"][0], mod["timing"][1]
+    nseg = 16 // INT + 2          # segments a call of up to 16 samples can need: ticks come INT or more apart
+    seg = [f"        move    n7,x:(r7+${M['rem']:02x})",
+           "; The samples run in segments: up to the next tick or the call's end. A tick rewrites the tables",
+           "; between two samples, with A, B and M saved. An idle segment skips to the outer loop's end.",
+           f"        do      #{nseg},{P}OUTE",
+           f"{P}SEG:",
+           f"        move    x:(r7+${M['rem']:02x}),a",
+           "        tst     a",
+           f"        jeq     {P}SKIP",
+           f"        move    x:(r7+${M['wait']:02x}),b",
+           "        tst     b",
+           f"        jne     {P}RUN",
+           f"{P}TICK:"]
+    seg += tick_lines(info, P)
+    seg += [f"        move    x:(r7+${M['frac']:02x}),a",
+            f"        add     {imm(FRAC)},a",
+            f"        move    {imm(INT)},b",
+            f"        jclr    #23,a1,{P}NC",
+            "        bclr    #23,a1",
+            "        add     #1,b",
+            f"{P}NC:",
+            f"        move    a1,x:(r7+${M['frac']:02x})",
+            f"        move    x:(r7+${M['rem']:02x}),a",
+            f"{P}TEND:",
+            f"{P}RUN:",
+            "        cmp     b,a",
+            "        tgt     b,a",
+            "        sub     a,b",
+            f"        move    b1,x:(r7+${M['wait']:02x})",
+            "        move    a1,x0",
+            f"        move    x:(r7+${M['rem']:02x}),b",
+            "        sub     a,b",
+            f"        move    b1,x:(r7+${M['rem']:02x})",
+            *restore,
+            f"        do      x0,{P}SMPE"]
+    lines += forward_branches(seg) + body + [f"{P}SMPE:"] + save + [f"{P}SKIP:", "        nop", f"{P}OUTE:"] + tail
     return "\n".join(lines)
 
 
@@ -626,6 +1391,20 @@ def main(argv):
             for x in rs[:2] + rs[-3:]:
                 print(f"    {x[2]:2d} {x[3]:16s} {x[1]:5.1f} cycles  {x[4]} instructions  ring {x[5]}  stalls "
                       + ", ".join(f"{k} {v:.0f}" for k, v in x[6].items()))
+        return
+    if argv[1] == "--moving":
+        # Every moving program extract_lfo.mjs gives: its ring with every sweep's whole range, and whether it fits.
+        data = json.load(open(argv[2]))
+        fit = []
+        for r in data["programs"]:
+            lfo = Lfo(r)
+            lfo.fade = data["fade"]
+            addr, size, off = relocate(r["steps"], 1 << 30, lfo.moves(r["steps"]))
+            if size <= FX2_WORDS:
+                fit.append(r["p"])
+            print(f"{r['p']:2d} {r['name']:16s} {r['kind']:6s} ring {size:6d} words"
+                  + ("  fits the FX2 buffer" if size <= FX2_WORDS else ""))
+        print(f"{len(fit)} of {len(data['programs'])} fit {FX2_WORDS} words: {fit}")
         return
     p = int(argv[1])
     name, steps, static = load(path, p)
