@@ -708,6 +708,8 @@ QPERF_UI static void apply_linked(void *kit)
             if (applied.e[j].track == track && applied.e[j].param == param)
                 total += applied.e[j].now;
         id = param_id(set, track, param);
+        if (!id)
+            continue;                   // not since the first pass; the undo skips it too
         base = param_read(set, id);
         expect = clamp_id(id, base + total);
         SET_VALUE(set, id, base + total, track, 1, 1);
@@ -764,9 +766,15 @@ QPERF_UI static unsigned linked_sum(const unsigned char *t, unsigned mask)
     unsigned sum = 0;
     int i;
     for (i = 0; i < SLOTS; i++, t += SLOT_BYTES)
-        if (t[2] <= TRACK_NONE && t[4] < PERFS && (mask >> t[4] & 1))
-            sum += 0x01000193u + (unsigned)(t[0] << 8 | t[1]) * 31u + t[2] * 7919u + t[3] * 131071u
-                + t[4] * 524287u;
+        if (t[2] <= TRACK_NONE && t[4] < PERFS && (mask >> t[4] & 1)) {
+            // Each lock mixed on its own before the sum, so two edits cannot cancel.
+            unsigned h = (unsigned)(t[0] << 8 | t[1]) * 0x9e3779b1u
+                ^ (unsigned)(t[2] << 16 | t[3] << 8 | t[4]) * 0x85ebca6bu;
+            h ^= h >> 15;
+            h *= 0x2c1b3c6du;
+            h ^= h >> 12;
+            sum += h + 1u;
+        }
     return sum;
 }
 
@@ -786,7 +794,7 @@ QPERF_UI static void restore_before(void *perf, unsigned mask)
 QPERF_UI static void several_action(void *perf, unsigned mask, int key)
 {
     const unsigned char *t = lock_table(perf);
-    int i, room = 0, changed = 0, each = -1, uneven = 0;
+    int i, room = 0, each = 0, first, others;
     for (i = 0; i < SLOTS; i++)         // free slots, and those the linked ones would free
         room += t[SLOT_BYTES * i + 2] > TRACK_NONE
             || (t[SLOT_BYTES * i + 4] < PERFS && (mask >> t[SLOT_BYTES * i + 4] & 1));
@@ -824,28 +832,36 @@ QPERF_UI static void several_action(void *perf, unsigned mask, int key)
         show("CLEAR PERFORMANCES");
         return;
     }
-    for (i = 0; i < PERFS; i++)
-        if (mask >> i & 1)
-            changed |= (unsigned char)PERF_PASTE(perf, i, 0) != 0;
-    // Each linked one holds the clipboard's locks now, unless the table ran out: then
-    // some hold fewer, and everything goes back as it was.
-    for (i = 0; i < PERFS; i++)
-        if (mask >> i & 1) {
-            int n = 0, k;
-            for (k = 0; k < SLOTS; k++)
-                n += t[SLOT_BYTES * k + 2] <= TRACK_NONE && t[SLOT_BYTES * k + 4] == i;
-            if (each < 0)
-                each = n;
-            uneven |= n != each;
-        }
-    if (uneven) {
+    // The lowest linked one first: stock's paste gives no count and stops quietly when the
+    // table is full. With a slot still free after it, it holds the whole clipboard, and the
+    // others need as many each. Without room for all of them everything goes back as it was.
+    first = lowest_linked(mask);
+    if (!(unsigned char)PERF_PASTE(perf, first, 0)) {
+        show("NOTHING TO PASTE");       // no clipboard: stock leaves the table alone
+        return;
+    }
+    for (i = 0, room = 0, each = 0; i < SLOTS; i++) {
+        int track = t[SLOT_BYTES * i + 2], index = t[SLOT_BYTES * i + 4];
+        if (track > TRACK_NONE)
+            room++;
+        else if (index == first)
+            each++;
+        else if (index < PERFS && (mask >> index & 1))
+            room++;                     // a linked one's own locks go when it is pasted into
+    }
+    for (i = first + 1, others = 0; i < PERFS; i++)
+        others += mask >> i & 1;
+    if (!slots_free(t) || others * each > room) {
         restore_before(perf, mask);
         show("LOCK MEM FULL!");
         return;
     }
+    for (i = first + 1; i < PERFS; i++)
+        if (mask >> i & 1)
+            PERF_PASTE(perf, i, 0);
     before.after = linked_sum(t, mask);
-    before.valid = changed;
-    show(changed ? "PASTE PERFORMANCES" : "NOTHING TO PASTE");
+    before.valid = 1;
+    show("PASTE PERFORMANCES");
 }
 
 QPERF_UI static void perf_action(int key)
