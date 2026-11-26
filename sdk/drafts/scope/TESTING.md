@@ -11,17 +11,30 @@ scope --build-only`: SHA-256 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9
 module `5f161c91`, 37,704 bytes, 198 relocations, **three hooks, zero stock
 sites** (`runtime.json`: `module_key`, `module_tick`, `ev_usb_frame`).
 
-Unit: ilia-murzinov's MKII, RAM boot of development twin `twin-dev-1014`, base
-`4c7eb79b844c8139…`, pattern A03, Part 2 (set also held **SEQ**, stock
-**Tuner** `05fef397…`, and **Scope** after the coexistence Keep).
+**Which twin raises `ev_usb_frame`.** SCOPE's ring subscribes to that hook.
+`build_core.py --packaged-usb-audio` (and a linked USB Audio producer) leaves
+the frame site to USB Audio; the base does not call `modwerk_raise_ev_usb_frame`
+there ([HOOKS.md](../../machines/octatrack/HOOKS.md)). A dev twin built with USB
+MIDI and site events, **without** `--packaged-usb-audio`, uses the base shim at
+`0x4000d9a0` (`modwerk_usb_function_frame` in `usb_function.c`).
+
+| Twin dir | Build flags (subset) | Base id (26 Nov 2026) | `ev_usb_frame` path |
+| --- | --- | --- | --- |
+| `~/modwerk-builds/twin-dev-1014` | `… --packaged-usb-audio --usb-input …` | `4c7eb79b844c8139…` | USB Audio slot; **not** the base shim |
+| `~/modwerk-builds/twin-evusb-frame` | `… --dev --dsp-loader --usb-midi --site-events …` (no packaged USB Audio) | `6fe0262876380656…` | base shim |
+
+Unit: ilia-murzinov's MKII. First automation and the reported DOWN+TEMPO UX
+used **twin-dev-1014** (wrong twin for `ev_usb_frame`). After maintainer
+feedback, **twin-evusb-frame** RAM-booted and `device:test` re-ran there.
 
 | Case | How run | Result |
 | --- | --- | --- |
-| `npm run device:test` (default 30 s) | automated, trial rolled back | pass: selftest 2/2 intact with SEQ only in set; inventory unchanged (`device-test.md`) |
-| `npm run device:test --soak 120` | automated, trial rolled back | pass: 120 s soak, core peak 429 ‰, inventory unchanged (`device-test-soak.md`) |
-| Tuner + Scope one set | Tuner Keep, then Scope Keep | pass: inventory SEQ + Tuner + Scope; `selftest` 3/3 intact |
-| DOWN + TEMPO UX | by hand on the dev twin | pass (reported): opens, draws, closes |
-| `npm run device:price` | trial rolled back; pattern playing, 3×8 s readings | at rest adds −0.1 % frame interrupt, +0.1 % CPU meter (`evidence/cpu-price-0.2.0.json`) |
+| `npm run device:test` (default 30 s) | twin-dev-1014; trial rolled back | pass: selftest 2/2 (`device-test.md`) — **does not prove `ev_usb_frame`** |
+| `npm run device:test --soak 120` | twin-dev-1014 | pass (`device-test-soak.md`) — same caveat |
+| `npm run device:test` (default 30 s) | **twin-evusb-frame** (`6fe02628…`); trial rolled back | pass: selftest 2/2, inventory unchanged (`device-test-evusb.md`) |
+| Tuner + Scope one set | on twin-dev-1014 | pass: `selftest` 3/3 intact (Tuner + Scope Keep) |
+| DOWN + TEMPO UX | by hand on twin-dev-1014 | pass (reported) — **ring path not shown**; repeat on twin-evusb-frame when checking the hook |
+| `npm run device:price` | twin-dev-1014; trial rolled back | at rest adds −0.1 % frame, +0.1 % CPU (`evidence/cpu-price-0.2.0.json`) |
 | Part put-back | `octatrack-part-state.mjs restore` | not automatic: Part 2 working copy differs from saved after qualify/soak; RELOAD by hand if you need a clean Part |
 | `verify.py` (octabam bus) | local | skip: no `sdk/out/mainos_bus.bin` in this worktree |
 
