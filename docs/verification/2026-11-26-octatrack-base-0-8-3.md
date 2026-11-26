@@ -166,6 +166,10 @@ store+0x2fe+30·track+6·fx.
   re-offer. So the change caused no false re-offer in normal use, but no drop happened to show that it heals one.
 - **Not shown:** the re-offer healing a drop on hardware, the released 0.8.2 base (which keeps the old rule), an MKI,
   a cold start after a power cycle, Windows.
+- **A different loss, open:** the same night another session's three DSP stall runs (twin `764b6e71` and a 0.8.2 twin)
+  each lost USB at the rollback that removed USB Audio after a stream; `npm run device -- recover` finished each without
+  a power cycle. Both bases, so not this rule. In the twelve rollbacks above, the Mac's stream had closed before the
+  removal and USB stayed up: removal under an open stream is the lead, not yet separated on the unit.
 
 ## Builds and pending
 
