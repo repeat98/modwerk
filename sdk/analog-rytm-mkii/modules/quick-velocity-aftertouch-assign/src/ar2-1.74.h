@@ -149,6 +149,16 @@
 #define HOLDER_VTABLE 0x401e20d4
 #define HOLDER_LFO_VIEW 248
 #define HOLDER_FX_LFO_VIEW 296           // the FX track's LFO page view: (32 + 5) * 8
+// A parameter page view's page keys, as its page key + REC, STOP, PLAY run them (the view's
+// methods 0x4003a270, 0x4003a314, 0x4003a42c, at + 176, + 180, + 184 of its table): each
+// reads the page's number through the view's method + 104 and the page store at view + 104,
+// calls one of these and raises the message. Paste and clear try the undo first.
+#define PAGE_NUMBER 104                 // method: the page's number
+#define PAGE_STORE 104                  // field: the store the page keys act on
+#define PAGE_COPY_AT 0x400b1480         // (store, page): 1 when copied
+#define PAGE_UNDO_AT 0x400b1588         // (store, page, 1): 1 when it undid a paste or clear
+#define PAGE_PASTE_AT 0x400b364c        // (store, page, 1): 1 when pasted
+#define PAGE_CLEAR_AT 0x400b37ea        // (store, page, 1): 1 when cleared
 #define KNOB_DEP 7
 
 // The LFO page key. Its press shows the LFO page (the page holder's key
