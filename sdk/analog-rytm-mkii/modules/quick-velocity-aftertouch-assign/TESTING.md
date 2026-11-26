@@ -6,7 +6,7 @@ The module was called Quick Mod Assign up to 0.3.1 and Improved Mod Assign in 0.
 
 The PERF hold takes the gestures QPER held (QPER keeps its link), CHRO holds the aftertouch assign (SAMPLER is stock's again), SCENE + YES writes a scene into the kit, and the quick perf rec keeps scene changes. The undo of an apply now also accepts the value it expected to write, so it does not depend on when stock's setter lands.
 
-rytm-emu (2ac0f1f, ramboot build), Q602 to Q605 on the plain base 1c14b6b0, against stock QS00 where stock does something; not hardware evidence:
+rytm-emu (2ac0f1f, ramboot build), Q602 to Q606 on the plain base 1c14b6b0, against stock QS00 where stock does something; not hardware evidence:
 
 | Check | Stock | 0.6.0 |
 | --- | --- | --- |
@@ -26,12 +26,13 @@ rytm-emu (2ac0f1f, ramboot build), Q602 to Q605 on the plain base 1c14b6b0, agai
 | The same with no scene change | | NOTHING TO APPLY |
 | Scene engaged while stopped, then LIVE RECORDING | | NOTHING TO APPLY: no take from a change made while stopped |
 | Scene 2 recorded, LIVE RECORDING off, scene 2 disengaged by hand, a pass later | | scene 2 engaged again by the lane (scene edit shows SCENE: 2; before the pass came round, SCENE: 1) |
+| Scene 2 engaged in LIVE RECORDING, RECORD + YES | | scene 2 is disengaged by the apply (scene edit shows SCENE: 1, none active), so its locks play only on the steps that got them |
 
-The nine gesture screens are byte-identical between Q602 and Q604 (before and after the review fixes). Screenshots: Q605's captures; the nine earlier files are byte-identical with the new plans (CHRO for SAMPLER, PERF for QPER's knob), `perf-lock.png` is new. Memory: Q605 leaves 88,344 bytes of the shared mod area (the base alone 118,836), so the module takes 30,492.
+The nine gesture screens are byte-identical between Q602 and Q604 (before and after the review fixes). Screenshots: Q606's captures; the nine earlier files are byte-identical with the new plans (CHRO for SAMPLER, PERF for QPER's knob), `perf-lock.png` is new. Memory: Q606 leaves 88,016 bytes of the shared mod area (the base alone 118,836), so the module takes 30,820.
 
-Rig cases, rytm-emu, R605 (`9a2af68e…`, the development base 25f2c915): 32 of 33 pass. The one failure is the private case look-sampler-800, which tested the old SAMPLER hold: SAMPLER now opens the recorder as stock does. The two new CHRO look cases pass.
+Rig cases, rytm-emu, R605 (`9a2af68e…`) and R606 (`002b19ad…`), the development base 25f2c915: 32 of 33 pass. The one failure is the private case look-sampler-800, which tested the old SAMPLER hold: SAMPLER now opens the recorder as stock does. The two new CHRO look cases pass.
 
-An independent code review of 0.6.0 found five faults in SCENE + YES and the scene lane (an undo that outlived its hold, a scene the lane had engaged that a hand could not record again, a take armed by a change made while stopped, no new scene take after RECORD + NO, a scenes-only take not following a longer loop) and smaller ones (the first change after a gap not played back, a quick CHRO tap losing its toggle, recording running on after LIVE RECORDING went off, the audio block and the UI tick both writing the lane). All are fixed in Q604/Q605: the lane now lives in the UI tick alone. Not re-reviewed after those fixes.
+An independent code review of 0.6.0 found five faults in SCENE + YES and the scene lane (an undo that outlived its hold, a scene the lane had engaged that a hand could not record again, a take armed by a change made while stopped, no new scene take after RECORD + NO, a scenes-only take not following a longer loop) and smaller ones (the first change after a gap not played back, a quick CHRO tap losing its toggle, recording running on after LIVE RECORDING went off, the audio block and the UI tick both writing the lane). All are fixed in Q604/Q605: the lane now lives in the UI tick alone. A second review of those fixes found RECORD + YES leaving the take's scene engaged, the tick recording one point where it had passed several, a cut position read ending a take early, the lane's period not following a shorter loop, and a pending wipe ignored by RECORD + YES; fixed in Q606, where the seven lane checks above give the same screens as on Q604. Q606's fixes have had no further review.
 
 Not tested: anything of 0.6.0 on a unit (see below when it has run); a scene take across a loop length change; scene changes by MIDI; the lane beside performance moves on the same parameter by ear.
 

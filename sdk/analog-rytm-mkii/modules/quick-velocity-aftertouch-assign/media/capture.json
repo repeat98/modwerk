@@ -5,15 +5,15 @@
   "moduleVersion": "0.6.0-experimental",
   "firmware": "1.74",
   "capturedAt": "2026-11-26T03:00:00Z",
-  "imageSha256": "bea515f3eef756b48976765f04ba5e01d126677ed9b648dab7b81d3425c66166",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.6.0-experimental, materialised against stock OS 1.74, --version Q605",
+  "imageSha256": "99b420d8bbf57dbad54b9b829d313d4729d3ebc421f6319f8a68b397da786663",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Improved Modulation 0.6.0-experimental, materialised against stock OS 1.74, --version Q606",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot Q605 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first eight captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. Apart from perf-lock.png, which is new, every capture is byte-identical to 0.5.0's file (chro-amp.png to sampler-amp.png, the hold now on CHRO).",
+  "conditions": "SETUP: boot Q606 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each of the first eight captures loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M. The two quick perf rec captures boot cold instead and run their whole plan with --instr 10820M --every 1000M: eight NO presses from 7003M, 300M apart; QPER held with SD pressed (links performance 2); PERF held with knob A turned five times: a lock on performance 2; PERF tapped (PERF mode); RECORD held with PLAY: LIVE RECORDING; SD pressure 0x50 and then 0 as raw panel bytes; RECORD (LIVE RECORDING off); then RECORD held with YES or NO. Apart from perf-lock.png, which is new, every capture is byte-identical to 0.5.0's file (chro-amp.png to sampler-amp.png, the hold now on CHRO).",
   "captures": [
     {
       "path": "media/fix-filter.png",
