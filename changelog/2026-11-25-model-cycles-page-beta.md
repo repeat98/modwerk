@@ -1,0 +1,1 @@
+The Model:Cycles' local build preview, its configuration page and the button that opens it are beta-only again, as a machine page is until its release; the Model:Cycles gets its own recovery answer in the FAQ (MIDI IN on its 3.5 mm TRS jack).

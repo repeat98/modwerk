@@ -107,12 +107,16 @@ function stockFacts(t) {
   return { ids: new Set(ids[1].split(',').map(item => item.trim()).filter(Boolean).map(Number)), names }
 }
 
+const freeIds = (stock, rows) => Array.from({ length: 0x1c }, (_, i) => i + 4).filter(i => !stock.ids.has(i) && !rows.some(row => row.fxId === i)).map(i => hex(i, 2))
+/** The FX2 ids in the build's range 0x04-0x1f that neither stock nor a listed module's recorded page guard holds. */
+export function freeFx2Ids(root) { const t = tree(root); return freeIds(stockFacts(t), recordedGuards(t)) }
+
 /** The guard's addresses from the manifest, and its hashes from guards already verified on the same donor and kind of slot. */
 export function deriveGuard(t, id, facts) {
   if (facts.fxId === undefined || facts.donor === undefined) refuse(`${id}: manifest.py's MenuEntry gives no fx2_id or donor_desc as a number; module:list reads both from it.`)
   const stock = stockFacts(t), rows = recordedGuards(t).filter(row => row.id !== id)
   const fxId = facts.fxId, donorAddress = facts.donor + DONOR_GUARD, fx2Slot = FX2_IDS + 4 * fxId
-  const free = Array.from({ length: 0x1c }, (_, i) => i + 4).filter(i => !stock.ids.has(i) && !rows.some(row => row.fxId === i)).map(i => hex(i, 2))
+  const free = freeIds(stock, rows)
   if (fxId < 0x04 || fxId > 0x1f) refuse(`${id}: FX2 id ${hex(fxId, 2)} is outside 0x04-0x1f.`)
   const taken = rows.find(row => row.fxId === fxId)
   if (taken) refuse(`${id}: FX2 id ${hex(fxId, 2)} is already ${taken.id}'s. Pick a free one in manifest.py (${free.join(', ') || 'none is left'}).`)

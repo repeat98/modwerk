@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-model-cycles-2026-11-24",
+  "cores": [
+    {
+      "file": "modwerk-base-model-cycles-646706ff.elemod",
+      "sha256": "646706ff3374ad4deaf2f8a1a4200efcf9a1612f5cd84bc4cb1f55b236b44323",
+      "id": "core",
+      "version": "0.3",
+      "device": "model-cycles",
+      "os": "1.13",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a6b03de85c1dd8d9ed31482a738ae79ab2d0fac9",
+        "path": "sdk/imports/packages/modwerk-base-model-cycles/modwerk-base-model-cycles-646706ff.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

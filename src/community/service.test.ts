@@ -35,6 +35,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0009_module_downloads.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0042_usage_breakdowns.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0083_usage_machine_coverage.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0104_usage_model_cycles.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0051_support_and_hourly_usage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0052_module_first_download.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0011_forum_accounts.sql',import.meta.url),'utf8'))
@@ -812,7 +813,7 @@ it('protects the first-reply queue with the administrator boundary and validates
 })
 
 describe('usage breakdowns: failed builds, machines and weekly module trends',()=>{
- it.each(['digitakt-ii','analog-rytm-mkii'])('attributes consented and identifier-free %s events with retry safety',async device=>{
+ it.each(['digitakt-ii','analog-rytm-mkii','model-cycles'])('attributes consented and identifier-free %s events with retry safety',async device=>{
   const {call,admin}=await fixture()
   for(const event of ['build_succeeded','build_failed','firmware_download_requested']){
    const body={...usageEvent(event),device}
@@ -839,7 +840,7 @@ describe('usage breakdowns: failed builds, machines and weekly module trends',()
   const result=await (await call('/admin/statistics?days=7','GET',undefined,'',undefined,admin)).json()
   expect(result.rows[0]).toMatchObject({builds:3,builds_failed:1,downloads:1})
   expect(result.breakdownsStarted).toMatch(/^\d{4}-\d{2}-\d{2}T/)
-  expect(result.devices).toEqual([{device:'octatrack',builds:1,builds_failed:0,downloads:0},{device:'digitakt',builds:1,builds_failed:1,downloads:0},{device:'digitone',builds:0,builds_failed:0,downloads:1},{device:'digitakt-ii',builds:0,builds_failed:0,downloads:0},{device:'analog-rytm-mkii',builds:0,builds_failed:0,downloads:0}])
+  expect(result.devices).toEqual([{device:'octatrack',builds:1,builds_failed:0,downloads:0},{device:'digitakt',builds:1,builds_failed:1,downloads:0},{device:'digitone',builds:0,builds_failed:0,downloads:1},{device:'digitakt-ii',builds:0,builds_failed:0,downloads:0},{device:'analog-rytm-mkii',builds:0,builds_failed:0,downloads:0},{device:'model-cycles',builds:0,builds_failed:0,downloads:0}])
   expect(JSON.stringify(db.prepare('SELECT * FROM usage_device_daily').all())).not.toContain(failed.visitor)
  })
  it('accepts a machine on identifier-free counts and keeps daily module counts for weekly trends',async()=>{

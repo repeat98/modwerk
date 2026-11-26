@@ -24,7 +24,9 @@ target, a subscription's fn, a contribution's symbols, a storage field's sym, a 
 remains keeps add's order, so the variant with all of add is built as before. base.json's common holds what every
 variant carries (the same keys as add), merged before add; with neither, a variant is the imported recipe alone.
 Each variant is built and checked the same way, and the binding records every variant's identity under variants, the default's as identity.
-base.json's dev holds what only development bases carry (the same keys as add, and its own about), such as a USB
+common, add and dev may each hold shared: sdk/runtime/ sources copied into a staged folder beside the machine's own,
+such as the runtime loader, staged whenever that part is (the Model:Cycles' add stages the loader in every base).
+base.json's dev holds what only development bases carry (the same keys as add, its own about), such as a USB
 link any host may drive with no hand on the unit: --dev builds every variant with dev merged after add, writes them
 as modwerk-base-<id>-dev-<sha>.elemod and checks them against no binding, so they can never be recorded or released.
 A machine whose OS shares another's base names that machine in source: its elekloader folder is staged instead,
@@ -141,7 +143,7 @@ def check_toolchain(toolchain):
 
 
 LISTS = ('sources', 'cflags', 'sites', 'subscribe', 'contribute', 'storage', 'weak', 'copied', 'requires', 'conflicts')
-DICTS = ('defsym', 'collections')
+DICTS = ('defsym', 'collections', 'shared')
 
 
 def merge(mod, add, sites):
@@ -284,6 +286,13 @@ def stage(machine, config, root, sites=None, add=True, recipe_sites=None, dev=Fa
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)
     add = parts(config, add, dev, leave)
+    for folder, files in add.pop('shared', {}).items():
+        # Modwerk's machine-neutral sources (the runtime loader, the upload controller) beside the machine's own, so
+        # their headers resolve as in their home folder; never a file of another machine's base.
+        if not all(f.startswith('sdk/runtime/') for f in files) or not (mods / folder).is_dir():
+            raise ValueError('base.json shared: %s takes files of sdk/runtime/ into a staged folder.' % folder)
+        for f in files:
+            shutil.copyfile(APP / f, mods / folder / Path(f).name)
     if sites is None:
         add.pop('sites', None)
     recipe = dict(config.get('recipe', {}))

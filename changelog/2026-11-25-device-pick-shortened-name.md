@@ -1,0 +1,1 @@
+Developer tools: `pick:` (and with it `device:test` and `device:price`) finds an effect whose chooser shows its name shortened to fit 12 letters, such as Midivrb I/II for Midiverb I/II. Before, those picks failed with "No … in the FX2 chooser".

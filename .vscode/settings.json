@@ -1,0 +1,15 @@
+{
+  "C_Cpp.files.exclude": {
+    "**/.vscode": true,
+    "**/.vs": true,
+    "**/node_modules": true,
+    "**/.claude/worktrees": true,
+    "**/.codex/worktrees": true,
+    "**/*.local": true
+  },
+  "files.watcherExclude": {
+    "**/.claude/worktrees/**": true,
+    "**/.codex/worktrees/**": true,
+    "**/*.local/**": true
+  }
+}
