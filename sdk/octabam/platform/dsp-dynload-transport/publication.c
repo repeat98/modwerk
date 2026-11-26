@@ -3,7 +3,13 @@
 #include "publication.h"
 #include "selection.h"
 #include "transfer.h"
+#ifdef MODWERK_RESIDENT_STOCK_HOOKS
+/* Resident builds must link the reservation gate. Other loader variants have
+ * no returning processor and keep their original admission behavior. */
 extern int modwerk_dsp_track_target(const uint8_t *);
+#else
+static int modwerk_dsp_track_target(const uint8_t *ids) { (void)ids; return 1; }
+#endif
 static int track_ready(const uint8_t *ids)
 { return modwerk_dsp_track_target(ids) && dl_publication_ready(ids); }
 static unsigned track_waited;

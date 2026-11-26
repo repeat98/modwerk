@@ -72,6 +72,11 @@ void dl_residency_nudge(void){++budget_nudges;}
     subprocess.run([str(work/'budget-test')],check=True)
     (work/'publication.c').write_text(publication((dyn/'publication.c').read_text()))
     fixture=(SDK/'octabam/tools/experimental/dsp_dynload/test_publication.c').read_text()
+    # Ordinary DSP-loader builds have no resident track reservation service.
+    # Keep the unmodified baseline fixture as a link/behavior regression.
+    (work/'publication-baseline.c').write_text(fixture)
+    subprocess.run([*flags,'-DDL_NATIVE_TEST','-I'+str(dyn),str(work/'publication.c'),str(work/'publication-baseline.c'),'-o',str(work/'publication-baseline')],check=True)
+    subprocess.run([str(work/'publication-baseline')],check=True)
     fixture=fixture.replace('static unsigned prepared,cancelled,armed,requeued;',
 '''static unsigned prepared,cancelled,armed,requeued;
 static unsigned target_open=1,target_calls;
@@ -105,7 +110,7 @@ int modwerk_dsp_track_target(const uint8_t *ids){(void)ids;++target_calls;return
 '''
     fixture=fixture.replace('    puts("PASS:',cases+'    puts("PASS:',1)
     (work/'publication-test.c').write_text(fixture)
-    subprocess.run([*flags,'-DDL_NATIVE_TEST','-I'+str(dyn),str(work/'publication.c'),str(work/'publication-test.c'),'-o',str(work/'publication-test')],check=True)
+    subprocess.run([*flags,'-DMODWERK_RESIDENT_STOCK_HOOKS','-DDL_NATIVE_TEST','-I'+str(dyn),str(work/'publication.c'),str(work/'publication-test.c'),'-o',str(work/'publication-test')],check=True)
     subprocess.run([str(work/'publication-test')],check=True)
     # Compile the actual immediate/project request logic with only its native
     # register access and calls substituted. No stock routine is executed.
@@ -174,6 +179,6 @@ int main(void){
 }
 '''
     (work/'immediate-test.c').write_text(fixture)
-    subprocess.run([*flags,'-DDL_NATIVE_TEST','-I'+str(work),'-I'+str(dyn),str(work/'immediate-test.c'),'-o',str(work/'immediate-test')],check=True)
+    subprocess.run([*flags,'-DMODWERK_RESIDENT_STOCK_HOOKS','-DDL_NATIVE_TEST','-I'+str(work),'-I'+str(dyn),str(work/'immediate-test.c'),'-o',str(work/'immediate-test')],check=True)
     subprocess.run([str(work/'immediate-test')],check=True)
 print('PASS: actual DSP glue/budget race, mandatory-bank pause, retained charge/nudge, bound/unbound publication waits, retry and supersession; host facts only')
