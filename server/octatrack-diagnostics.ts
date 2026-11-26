@@ -104,7 +104,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
         && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
         && (!('busy' in value) || value.event === 'sync_failed' && value.error === 'device' && value.result === 'unsafe' && upTo(value.busy, 0xff))
-        && (!('usb' in value) || value.event === 'sync_failed' && value.error === 'transport' && Array.isArray(value.usb) && value.usb.length === 6 && value.usb.every(uint))
+        && (!('usb' in value) || value.event === 'sync_failed' && value.error === 'transport' && Array.isArray(value.usb) && (value.usb.length === 6 || value.usb.length === 7 && value.usb[6] <= 0xff) && value.usb.every(uint))
         && (!('upload' in value) || value.event === 'sync_failed' && value.step === 'stage' && (value.error === 'transport' || value.error === 'device') && stagingUpload(value.upload))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)

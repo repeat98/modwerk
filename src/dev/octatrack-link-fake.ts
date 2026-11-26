@@ -143,7 +143,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         if (setup.request === 39 && unit.slots) return { status: 'ok', data: new DataView(unit.slots.slice().buffer) }
         if (setup.request === 4 && unit.ep0) {
           const diag = new DataView(new ArrayBuffer(68)); diag.setUint32(0, 0x4d575544); diag.setUint8(4, 3)
-          ;[3, 4, 5, 6, 7, 14].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i]))
+          ;[3, 4, 5, 6, 7, 14, 9].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i] ?? 0))
           return { status: 'ok', data: diag }
         }
         if (setup.request === 27) { // INVENTORY, 13 a page from wValue: no DSP code, no name

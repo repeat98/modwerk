@@ -273,7 +273,7 @@ describe('sending a module', () => {
           connectionTrusted: { get: () => trusted },
           stage: { value: async () => {
             trusted = false; unit.staged = true
-            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0] // eight submissions refused at their SETUP, across the wrap
+            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0, 0x0fc00020] // eight submissions refused at their SETUP, across the wrap; a data buffer error
             throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause, {command: 'chunk', chunkOffset: 4043, sequence: 9})
           } },
         })
@@ -285,7 +285,7 @@ describe('sending a module', () => {
     }
     const upload = {command: 'chunk', chunkOffset: 4043}
     expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError', upload },
-      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0], upload }))])
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0, 0x20], upload }))])
   })
   it.each([[56, 0, 1, 56], [0, 0, 1, 0], [65535, 0, 1, undefined], [56, 1, 1, undefined], [56, 0, 0, undefined]] as const)(
     'matches an EP0 sample (%s bytes, %s resets, %s primes) to the failed attempt', async (residual, resets, primes, expected) => {
