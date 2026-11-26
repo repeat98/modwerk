@@ -9,7 +9,8 @@ import { noteSupportInstall } from '../community/support-prompt'
 import { SupportLine } from './SupportDialog'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
-import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
+import { digiDownloadsEnabled, usbUpgradeEnabled } from '../engine/elekloader/protocol'
+import { UsbUpgradePanel } from './UsbUpgradePanel'
 import { FIRMWARE_SHARING_NOTICE, FLASHING_RISKS } from '../firmware-notices'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { RecoveryNotice } from './RecoveryNotice'
@@ -31,7 +32,7 @@ const kib = (bytes: number) => (bytes / 1024).toFixed(0) + ' KB'
 
 export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport, exported, canExport, results }: { device: { id: DigiMod['device']; name: string; firmware?: { recovery: string } }; firmware: ReturnType<typeof useDigiFirmware>; moduleIds: readonly string[]; storage?: BuildStorage; onExport: () => void; exported: boolean; canExport: boolean; results: HTMLElement | null }) {
   const w = useSetWords()
-  const downloadsEnabled = digiDownloadsEnabled(device.id)
+  const downloadsEnabled = digiDownloadsEnabled(device.id), usbUpgrade = usbUpgradeEnabled(device.id)
   const ready = firmware.state === 'ready' && !!firmware.file, release = ready ? firmware.firmware?.release : undefined
   const plan = release ? planBuild(device.id, release, moduleIds) : undefined
   const missing = plan?.missing.map(id => DIGI_MODS.find(mod => mod.device === device.id && mod.id === id)?.title ?? id) ?? []
@@ -100,6 +101,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
     {/* The build card stays in the page's sticky column; what follows a build reads in the main column. */}
     {results && createPortal(<>
       {result && <div className="build-facts"><span>Size <strong>{kib(result.bytes)}</strong></span><span>OS version <strong>{result.version}</strong></span><span>Built in <strong>{result.seconds.toFixed(1)} s</strong></span></div>}
+      {result && usbUpgrade && (file => file && <UsbUpgradePanel machine={device.id} name={device.name} syx={new Uint8Array(file.data)} sha256={result.sha256} version={result.version} recovery={result.recovery || device.firmware?.recovery} riskAccepted={riskAccepted} />)(result.files.find(file => /\.syx$/i.test(file.name)))}
       {result && !downloadsEnabled && <aside className="risk-note" role="note"><strong>Downloads open after review</strong><p>The build ran and verified in this browser. Modwerk will offer {device.name} firmware files once their release is approved. Nothing was uploaded.</p></aside>}
       {result && downloadsEnabled && <section className="configuration-section install-guide" aria-labelledby="digi-install-title"><div className="section-title"><h2 id="digi-install-title">Install on your {device.name}</h2><span className="pill">{result.version}</span></div>
         <ol><li>Connect the {device.name} over USB and open Elektron Transfer.</li><li>Select the unit, connect, and drop the .syx onto Transfer.</li><li>Press YES on the unit and keep it powered until the update finishes.</li></ol>

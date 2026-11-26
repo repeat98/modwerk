@@ -1,0 +1,1 @@
+Digitone II: the machine page can send the base built there straight to the unit over USB, without Elektron Transfer, once the owner turns it on for beta users. The unit then asks UPGRADE OS NOW?: YES installs it, NO keeps its OS.
