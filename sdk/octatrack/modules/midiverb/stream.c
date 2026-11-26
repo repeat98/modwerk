@@ -35,13 +35,12 @@ static int mv_id(void)
     return ((const volatile u8 *)d)[3];
 }
 
+/* PROG's value to the program: 0.1.0's values keep their programs (generate.mjs valueMap). */
 static unsigned mv_program(unsigned bank, unsigned prog)
 {
     if (bank > 2u) bank = 2u;
-    unsigned n = mv_bank_count[bank];
-    if (!n) return 0;
-    if (prog >= n) prog = n - 1u;
-    return mv_bank_first[bank] + prog;
+    if (prog >= MV_VALUES) prog = MV_VALUES - 1u;
+    return mv_value[bank][prog];
 }
 
 const char *mv_name(unsigned bank, unsigned prog)

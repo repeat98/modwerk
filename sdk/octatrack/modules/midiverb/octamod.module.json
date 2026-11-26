@@ -42,8 +42,8 @@
     {
       "name": "PROG",
       "default": 0,
-      "count": 99,
-      "doc": "the bank's program; its name shows in a message box while it turns",
+      "count": 102,
+      "doc": "the bank's program; its number and name show in a message box while it turns. 0.1.0's programs keep their places, the ones added in 0.2.0 follow",
       "labels": [
         "1",
         "2",
@@ -143,7 +143,10 @@
         "96",
         "97",
         "98",
-        "99"
+        "99",
+        "100",
+        "101",
+        "102"
       ]
     },
     {

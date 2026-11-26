@@ -5,7 +5,7 @@
     "changes": [
       "All 225 programs of the Midiverb, Midiverb II and Midifex are in: the 31 that needed more DSP time are back.",
       "New: the Midiverb II's chorus and flange programs (50-69), sweeping with the LFOs its own controller computed.",
-      "PROG now shows the original's program numbers (1-63 on MV1 and FEX, 1-99 on MV2), so a project saved with 0.1.0 may play a different program.",
+      "Projects saved with 0.1.0 keep their programs: the added ones come after them on PROG, and the message box names each with its original number.",
       "Known issue: the triggered flanges (50, 53 and 57) sweep on their own; nothing triggers them.",
       "Known issue: the chorus and flange speeds follow an assumed pace, not one measured on a real Midiverb II."
     ]

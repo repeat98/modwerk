@@ -10,7 +10,7 @@ The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, t
 
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
-| A | PROG | 1-99 | 1 | The program in the current bank, by the original's number. Its name shows in a message box while you turn. Past the bank's last program it stays on the last one (Midiverb and Midifex have 63, Midiverb II 99). |
+| A | PROG | 1-102 | 1 | The program in the current bank. A message box shows its number on the original and its name while you turn. 0.1.0's programs keep their places, so a project saved with 0.1.0 plays the same program; the ones added in 0.2.0 follow them (Midiverb and Midifex from 60 to 63, Midiverb II from 60 to 102). Past the bank's last program it stays on the last one. |
 | B | LEVL | 0-127 | 64 | Input level into the 12-bit converter: unity at 32, 64 is +6 dB, 127 about +12 dB. Higher levels use more of the 12 bits and sound cleaner; too high and the reverb crunches. |
 | D | BANK | MV1, MV2, FEX | MV1 | Midiverb, Midiverb II or Midifex programs. The bank's name shows while you turn. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
@@ -28,7 +28,7 @@ The four controls are ordinary FX2 knobs, so parameter locks, LFOs and scenes re
 ## Quick tutorial
 
 1. Load a drum loop on track 1, press FX2, then FUNC + FX2, scroll to MIDIVRB I/II with LEVEL, press YES, then FX2: the page shows PROG, LEVL, BANK and MIX.
-2. Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs (its flanges and choruses from 50 to 69), or FEX for the Midifex's.
+2. Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs (its flanges and choruses, 50 to 69 on the original, are the last twenty), or FEX for the Midifex's.
 3. Turn F (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back.
 
 ## Compatibility and limitations
