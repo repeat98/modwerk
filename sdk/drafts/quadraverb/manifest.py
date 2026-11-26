@@ -1,6 +1,6 @@
-"""Quadraverb: the Alesis Quadraverb's reverb programs, compiled to straight-line DSP code at a pick.
+"""Quadraverb: the Alesis Quadraverb's factory programs, compiled to straight-line DSP code at a pick.
 
-The release (0.1.0-experimental, not built yet): PROG (A) picks one of the 22 reverbs in REVERBS, MIX (F) sets dry and
+The release (0.1.0-experimental, not built yet): PROG (A) picks one of the 76 programs in PROGRAMS, MIX (F) sets dry and
 wet. Its package requires the base's program areas and stream channel (BASE_FEATURES, loader ABI 9): the base writes
 the picked program's code into one of the slot's two areas and moves the long delay lines to and from the ColdFire
 every frame (ENGINE.md, "On the base"). The code, its tables and its stream plan are compiled from the owner's own ROM
@@ -16,9 +16,12 @@ import pathlib
 from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Harness, Kind, Linked, MenuEntry, Module,
                           Param, Proof, YBase)
 
-# The release's programs, by their number on the original (user memory 0-89): the configuration-4 reverbs that are not
-# gated (FIRMWARE.md, "The firmware"; the gate needs a detector the original has in hardware).
-REVERBS = (1, 2, *range(10, 23), 52, 53, 66, 78, 79, 80, 81)
+# The release's programs, by their number on the original (user memory 0-89): every factory program the engine plays bit
+# for bit without the original's signal detector, as Midiverb offers every program. Left out: the gated ones and the
+# sweeps a signal onset restarts (FIRMWARE.md, "The gate": the detector is hardware), and 73 VERB SHIFTER (gated, and
+# the engine has no tick for its coefficient sweep).
+LEFT_OUT = (3, 23, 24, 25, 26, 27, 28, 29, 31, 32, 73, 86, 87, 88)
+PROGRAMS = tuple(p for p in range(90) if p not in LEFT_OUT)
 # Base features the release package requires (sdk/runtime/loader/abi9.py base_features): the program areas and the
 # stream channel, both on the base 0.8.3 draft (#2246) only.
 BASE_FEATURES = ("programs",)
@@ -35,7 +38,7 @@ MODULE = Module(
     name="quadraverb", key="QUADRAVERB", kind=Kind.HYBRID if _RELEASE else Kind.DSP_EFFECT,
     category=Category.TRACK, author="repeat98", author_url="https://github.com/repeat98",
     proof=Proof.RENDER, proof_note="engine/verify.py, verify_stream.py: bit-exact against the integer model in dsp_host; not on a unit yet",
-    doc="The Alesis Quadraverb's reverb programs compiled to straight-line DSP code, own FX2 ring and a ColdFire stream.",
+    doc="The Alesis Quadraverb's factory programs compiled to straight-line DSP code, own FX2 ring and a ColdFire stream.",
     # 0x0a as Midiverb: the USB base picks the effect id at install. No id is free for a pinned card build.
     menu=MenuEntry(fx2_id=0x0a, donor_desc=0x400d58b8,   # DARK REV
                    abbr=b"QVRB" if _P is None else b"QV" + _TAG[:2],
@@ -43,7 +46,7 @@ MODULE = Module(
     params=(
         # PROG on the dial, as Midiverb's: stock's stepped tick widget holds five positions (it crashed the owner's unit
         # with 24 on 25 Nov 2026).
-        Param(b"PROG", 2, len(REVERBS), True, Formatter.WIDE_STEPPED, labels=tuple("%02d" % n for n in REVERBS),
+        Param(b"PROG", PROGRAMS.index(10), len(PROGRAMS), True, Formatter.WIDE_STEPPED, labels=tuple("%02d" % n for n in PROGRAMS),
               doc="the factory program, by its number on the original Quadraverb"),
         *(Param() for _ in range(4)),
         Param(b"MIX", 40, 128, True, Formatter.PLAIN, doc="dry/wet: 0 the dry alone, 127 the wet alone"),

@@ -4,7 +4,7 @@ Version 0.1.0-experimental (built, not yet run on a unit) · the Alesis Quadrave
 
 ## Overview
 
-The reverbs of the Alesis Quadraverb on FX2: rooms, halls, chambers and plates. Each is the original's factory program, the 96-step DSP program its firmware builds, compiled to DSP code when you pick it and run step for step at 44.1 kHz. Its sweeps move as the original's do. Its long delay lines live in the Octatrack's main memory, and the base moves them to and from the DSP every 16 samples. 22 programs are in this release.
+The factory programs of the Alesis Quadraverb on FX2: rooms, halls, chambers and plates, delays, choruses, flanges, pitch shifts and rotary speakers. Each is the original's factory program, the 96-step DSP program its firmware builds, compiled to DSP code when you pick it and run step for step at 44.1 kHz. Its sweeps move as the original's do. Its long delay lines live in the Octatrack's main memory, and the base moves them to and from the DSP every 16 samples. 76 of its 90 programs are in this release: every one but the gated ones (Compatibility and limitations).
 
 Nobody has compared it with a real Quadraverb: there was none to hand. Every claim here is about the original's firmware, run in an emulator, and the engine's arithmetic, which is an assumption where the firmware does not say (FIRMWARE.md, ENGINE.md).
 
@@ -12,7 +12,7 @@ Nobody has compared it with a real Quadraverb: there was none to hand. Every cla
 
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
-| A | PROG | 01-81 (22 programs) | 10 | The factory program, by its number on the original: 01 and 02 reverbs with EQ, 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 52 and 53 the snare reverbs, 66 HOLMES' Plate, 78-81 the velocity and tube reverbs. |
+| A | PROG | 00-89 (76 programs) | 10 | The factory program, by its number on the original: for example 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 04 and 33 choruses, 05 and 30 flanges, 07 and 37 pitch shifts, 08 and 38 Leslies, 40-43 delays, 66 HOLMES' Plate. The gated programs are skipped. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
 
 Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as any effect's (not tried on a unit). A new program starts from silence; the dry signal keeps playing at its MIX level meanwhile.
@@ -36,13 +36,14 @@ Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as a
 - One instance a DSP core at most: the base keeps two copies of a program's code a slot (up to 1,168 words each) in the about 4,700 words a core has for effect code, beside a Part's stock effects.
 - DSP time: 272-342 chip cycles a sample an instance by the stall model on traces in the DSP emulator, 353 while a pick fades it, under the base's admission limit; not measured on a unit. Most programs move more data a frame than the stream channel has carried on a unit so far (160 halfwords each way, reads alone 256): 5 of the 22 stay within 160, the rooms and halls need 208-247 in, the plates up to 352 in and 144 out.
 - Not like the original: 44.1 kHz instead of about 42 kHz, so reverb times, delays and sweeps are about 5 % shorter and faster; the input is the average of left and right; words are 24 bits in the DSP and 16 bits where they cross to the ColdFire. Nothing records the original's own width.
-- The gated reverbs (03 and 23-27) are not in this release: their gate needs a signal detector the original has in hardware.
+- Not in this release: the gated programs and the sweeps a signal onset restarts (03, 23-29, 31, 32, 86-88), whose gate needs a signal detector the original has in hardware, and 73 VERB SHIFTER.
 - A new program fades the old one's wet out over 256 samples and starts from silence; unlike the original, the old tail does not run on into the new program (TESTING.md, "The fade at a pick").
+- The Leslies play their default speed (38 and 82 fast; 08, 39 and 67 slow): the original switches them by MIDI aftertouch, pitch bend or the sustain pedal, which this effect does not take. MIDI modulation of sweep rate and depth is not taken either.
 - Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer; no Alesis program is in this repository.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md): the engine against the integer model in the DSP emulator (89 of the 90 factory programs bit-exact, all 22 of this release among them), the development builds priced on the owner's Octatrack MKII, and what is not tested yet. How the engine works: [ENGINE.md](ENGINE.md). What was read from the firmware: [FIRMWARE.md](FIRMWARE.md).
+See [TESTING.md](TESTING.md): the engine against the integer model in the DSP emulator (89 of the 90 factory programs bit-exact, all 76 of this release among them), the development builds priced on the owner's Octatrack MKII, and what is not tested yet. How the engine works: [ENGINE.md](ENGINE.md). What was read from the firmware: [FIRMWARE.md](FIRMWARE.md).
 
 ## Authorship and licences
 
