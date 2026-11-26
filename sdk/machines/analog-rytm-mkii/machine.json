@@ -35,6 +35,7 @@
     "link": "started",
     "flash": "started",
     "loader": "done",
+    "status": "started",
     "diagnostics": "started",
     "tools": "done"
   },

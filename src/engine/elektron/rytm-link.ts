@@ -6,7 +6,7 @@
 // keeps the Rytm's identity layout, port name and set identity.
 import { type DeviceLog } from '../elekloader/device-log'
 import { get32, linkExchange, parseLinkReply } from './link-wire'
-import { McRefused, parseMcLoad, readLinkLog, withMc, type McCall, type McLoad } from './mc-link'
+import { McRefused, mcModules, parseMcLoad, readLinkLog, withMc, type McCall, type McLoad, type McModules } from './mc-link'
 import { ELE3_DEVICES, mainImage, readEle3Syx } from './ele3'
 import { findUnit, midiLine, type MidiAccessLike } from './os-upgrade-midi'
 
@@ -92,6 +92,21 @@ export async function withElektron<T>(access: MidiAccessLike, timeoutMs: number,
   }
   const out = await withRytm(access, timeoutMs, work)
   return out === null ? null : { machine: 'analog-rytm-mkii', out }
+}
+
+export type RytmStatus = { identity: RytmIdentity; modules: McModules | null; load: McLoad | null }
+/** What the machine page's Status shows, over one line, as the Model:Cycles' readMcStatus: the identity, then the live
+ * modules and the load, each null from a base without them (it refuses the command as a bad request). Null when no
+ * unit answers the identity. */
+export async function readRytmStatus(access: MidiAccessLike, timeoutMs = 2000): Promise<RytmStatus | null> {
+  return withRytm(access, timeoutMs, async call => {
+    const ident = await call(IDENT)
+    if (!ident) return null
+    const optional = async <T>(read: () => Promise<T | null>) => {
+      try { return await read() } catch (error) { if (error instanceof McRefused && error.status === BAD_REQUEST) return null; throw error }
+    }
+    return { identity: parseRytmIdent(ident), modules: await optional(() => mcModules(call)), load: await optional(async () => { const p = await call(LOAD); return p && parseMcLoad(p) }) }
+  })
 }
 
 /** Ask the connected Rytm for its identity; null when no unit or no reply (a base without the link, or a stock OS). */
