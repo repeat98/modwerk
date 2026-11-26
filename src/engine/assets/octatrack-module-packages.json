@@ -457,22 +457,36 @@
     },
     {
       "id": "analog-bassdrum",
-      "base": true,
-      "abi": 10,
-      "features": 130,
+      "sources": [
+        "sdk/octabam/modules/analog-bassdrum/drum.c",
+        "sdk/octabam/modules/analog-bassdrum/drum_machine.c"
+      ],
+      "subscribe": [
+        "ot_machines:ab_machine:20"
+      ],
+      "raise": [
+        "ev_trig_muted"
+      ],
+      "partSignature": {
+        "sig": "AB",
+        "lo": 1,
+        "hi": 1,
+        "flags": [
+          "PROTECT",
+          "LIST"
+        ]
+      },
+      "version": "0.2.0-experimental",
+      "path": "octatrack-modules/analog-bassdrum/0.2.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
       "sites": 0,
-      "copies": 6,
+      "copies": 0,
       "fills": 0,
-      "version": "0.1.7-experimental",
-      "name": "Analog BD",
+      "name": "analog-bassdrum",
       "module": "abdb1445",
-      "bytes": 26172,
-      "sha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930",
-      "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
-      "requires": 0,
-      "claims": 1,
-      "entries": 1
+      "bytes": 38160,
+      "sha256": "bf9c69b4e32d68bdfd017a1cbe699dadc9a12103e0365d082dc892cbdc537dcd"
     },
     {
       "id": "beat-slicer",

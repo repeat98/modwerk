@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "version": "0.1.7-experimental",
+  "version": "0.2.0-experimental",
   "nativeManifest": "manifest.py",
   "media": [
     {
@@ -72,8 +72,8 @@
     "github": "repeat98",
     "name": "Jannik Aßfalg",
     "credits": [
-      "repeat98: original 808/909 fixed-point engines and machine integration",
-      "Sam Banks: octabam composition infrastructure"
+      "repeat98: original 808/909 engines, the 0.2.0 ColdFire rewrite and machine integration",
+      "Sam Banks: octabam composition infrastructure (0.1.x)"
     ]
   },
   "presentation": {
@@ -101,7 +101,7 @@
       "name": "PTCH",
       "default": 64,
       "count": 128,
-      "doc": "Body pitch. 909: one octave, 32.7 Hz at 0, the recorded 909 at 64, 65.4 Hz at 127.",
+      "doc": "Body pitch. 909: one octave, 32.7 Hz at 0, the recorded 909 (45.6 Hz) at 64, 65.4 Hz at 127.",
       "labels": null
     },
     {
@@ -122,28 +122,31 @@
       "name": "ATK",
       "default": 64,
       "count": 128,
-      "doc": "Transient strength and shape.",
+      "doc": "Transient strength: the 808's trigger transient; the 909's click, attack noise and lead-in.",
       "labels": null
     },
     {
       "name": "SWEP / TDEP",
       "default": 64,
       "count": 128,
-      "doc": "808 pitch excursion; 909 pitch-envelope amount with sample-wise smoothing.",
+      "doc": "808 pitch bend; 909 pitch-envelope depth and the thump that comes with it.",
       "labels": null
     },
     {
-      "name": "SAT",
+      "name": "TYPE",
       "default": 0,
-      "count": 128,
-      "doc": "Drive into the shared Mackie desk stage, with smooth table interpolation during modulation.",
-      "labels": null
+      "count": 2,
+      "doc": "SRC SETUP top left: 808 (left) or 909 (right). Switching keeps the other control bytes; a sounding hit finishes on its model.",
+      "labels": [
+        "808",
+        "909"
+      ]
     },
     {
       "name": "FIXD",
       "default": 0,
       "count": 2,
-      "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: sweep depth, click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
+      "doc": "SRC SETUP top middle. OFF varies every hit slightly (909: sweep depth, click strength, lead-in level and noise; 808: trigger transient strength); ON makes every hit open identically.",
       "labels": [
         "OFF",
         "ON"
@@ -153,28 +156,7 @@
       "name": "ACNT",
       "default": 64,
       "count": 128,
-      "doc": "Accent, SETUP top right.",
-      "labels": null
-    },
-    {
-      "name": "LOW",
-      "default": 64,
-      "count": 128,
-      "doc": "Desk low band; 64 is neutral. Weighted, not saturated on its own.",
-      "labels": null
-    },
-    {
-      "name": "HIGH",
-      "default": 64,
-      "count": 128,
-      "doc": "Desk high band; 64 is neutral. Weighted, not saturated on its own.",
-      "labels": null
-    },
-    {
-      "name": "LPF",
-      "default": 127,
-      "count": 128,
-      "doc": "SETUP bottom right. Output low-pass: 500 Hz at 0, ORIG around 6.57 kHz at 63, 18 kHz at 126, OFF at 127 (fully clockwise, the default).",
+      "doc": "Accent, SRC SETUP top right: level and attack. The recordings are ACNT 72; above about 95 a 909 can reach full scale and clips.",
       "labels": null
     }
   ],
@@ -186,70 +168,63 @@
       "synth"
     ],
     "limitations": [
-      "SPRING REV is excluded from the upstream standalone remix; its shared DARK helper must be restored from local firmware.",
-      "Owner reports stable MKII 0.1.3 operation with distinct 808/909 instances and physical persistence. Maximum eight-voice FX load, worst-case chip timing and full memory bounds remain unqualified.",
-      "Saving this project on stock firmware can overwrite synth settings.",
-      "909 reference uses a decay-modified TR-909 at one recorded decay setting; the full modified range and exact intermediate knob positions are not reproduced.",
-      "The direct-out reference excludes the 909 main-out LPF: LPF OFF (127, the assignment default) is the reference comparison.",
-      "Neighboring transient shapes remain more consistent than the reference. Owner reports FLEX reboot persistence for AB015FIX01; current-source audio, broader persistence/instance checks, maximum FX load, chip timing and complete memory bounds remain unverified. Output Matrix sequencer halt remains unverified."
+      "Needs the Modwerk base over USB, in a version with machine rows (ot_machines). Card firmware cannot include it; 0.1.x's card build is gone.",
+      "Until its CPU price is measured the base charges each Analog BD track its default share, so a fourth Analog BD track in one Part is refused (CPU FULL).",
+      "SAT, LOW, HIGH and LPF (0.1.x's desk) are gone; their bytes stay in saved Parts, unread. Kicks that used them, or ACNT near 127, sound different from 0.1.7.",
+      "909 reference: one decay-modified TR-909 at one recorded decay setting; the full modified range and the exact intermediate knob positions are not reproduced.",
+      "Tested on one MKII (24 Nov 2026): sound, picks on up to three tracks, retriggers, the cost curve and rollback. Not yet tested: MKI, save/reload and a power cycle with Analog BD tracks, eight tracks with heavy effects.",
+      "Saving a project with Analog BD tracks on stock firmware can clamp its controls; keep a copy for stock."
     ]
   },
   "resources": {
-    "recorded": "9 Oct 2026 (native/emulator regression; owner reports FLEX reboot persistence)",
+    "recorded": "24 Nov 2026: package 934c9557 (this code) on the owner's MKII, twin of base 0.8.1",
     "storage": {
-      "label": "DSP code",
-      "display": "1008 P words",
-      "value": 1008,
-      "unit": "P words",
+      "label": "Storage",
+      "display": "39,864 bytes",
+      "value": 39864,
+      "unit": "bytes",
       "method": "static",
-      "conditions": "Combined 808/909 glue and engines use 1008 P words (0.1.5: 997; 0.1.6 saves 26 by rescheduling and adds 37 for the FIXD tests and the 808's per-hit variation) plus the separate 35-word stock helper. Existing X upload remains 3776 words/core with four 64-word voices; Y/ColdFire allocation unchanged. Complete stack/lifetime bounds remain unmeasured.",
+      "conditions": "From the USB package (build.py): 37,592 bytes of ColdFire code and data (about 28 KB of tables: the 909 body in three band-limited copies, click, noise and lead-in, the 808's body and transient) and 2,272 of bss (eight voices). No DSP code or DSP memory, no heap, no stock code written.",
       "source": "TESTING.md"
     },
     "processing": {
-      "label": "DSP execution",
-      "display": "808: 252.13 · 909: 374.94",
-      "value": null,
-      "unit": "instructions/sample",
-      "method": "emulator",
-      "conditions": "Peak 4034/5999 executed instructions per 16-sample block in the 0.1.6 dsp_host comparison (52 scenarios: control extremes, SAT steps, ramps and jitter, random automation, retriggers); 0.1.5 measured 4260/6534 in the same set. Mean 3345/5519: about 15% fewer executed instructions on average than 0.1.5 (emulator count), peaks about 5% (808) and 8% (909) lower, with bit-identical audio and state. Not chip cycles or full-chain utilization; the declared DSP price (411 per voice) is unchanged, so no voice gains room. On a MKII (dev base meter, one voice, 16 trigs a bar) one voice loads its core 26 % (909) and 21 % (808) less than 0.1.5 (TESTING.md).",
-      "source": "TESTING.md"
+      "label": "Frame interrupt",
+      "display": "First track +8.7 % · each further +4.0 %",
+      "value": 8.7,
+      "unit": "percent-of-frame",
+      "method": "hardware",
+      "conditions": "The longest frame's rise with Analog BD on one, two and three empty tracks of a medium pattern (Dev17 C04: trigs on steps 1/5/9/13 of six tracks, two playing samples, 77.9 % stock alone), picked on an empty one; 0.1.7 on the same scene added 20.7/32.6/40.8 and a DSP voice each. No render dropped, no stall. Installed on no track it adds nothing.",
+      "source": "evidence/frame-cost.json"
     },
     "impact": {
-      "conditions": "Per active Analog BD voice; both models, control endpoints and trigger splits on both DSP cores. Ratings express relative demand, not chip utilization or maximum FX-load headroom.",
+      "conditions": "Per Analog BD track; the 909's attack (first 50 ms) is its busiest stretch, a resting voice costs nothing.",
       "cpu": {
-        "level": "low",
-        "basis": "source-estimate",
-        "rationale": "Guarded machine assignment now restores twelve bytes in each Part copy when leaving Analog BD. This runs only on assignment, outside the DSP audio loop; chip timing remains unmeasured.",
-        "source": "TESTING.md"
-      },
-      "dsp": {
         "level": "moderate",
         "basis": "measured-comparison",
-        "rationale": "0.1.7: peak 909 186 and 808 184 executed DSP instructions per sample (377 and 255 for 0.1.6 on the same cases), shipping configuration in bd909_host: defaults, FIXD, ATK/ACNT/DECAY/SAT/LOW/HIGH extremes, a trig at every frame offset, retriggers, moving knobs; a resting voice 3. The 909 reads its body and click from tables, walks its state in read order and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
-        "source": "CPU.md"
+        "rationale": "Each Analog BD track renders on the ColdFire in the frame interrupt. On the owner's MKII the first track added 8.7 % of the longest frame and each further one about 4 %, against 0.1.7's 20.7 % and 8 to 12 % (which also held a DSP voice each).",
+        "source": "evidence/frame-cost.json"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs: the samples go to the packer as a sample's do, and the track's own AMP and effects run as stock. 0.1.x's DSP voice and its DSP memory are gone.",
+        "source": "README.md"
       },
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "The engines grow by 11 DSP P words over 0.1.5 (1009 per core resident, was 998): the FIXD tests and the 808's per-hit variation (one LCG state word in the 808 voice block, which had it free) outweigh the scheduling savings. FIXD reuses an existing control byte. Complete memory/stack bounds remain unmeasured.",
+        "rationale": "39,864 bytes in the module pool (37,592 of code and tables, 2,272 of voice state), from the package; no DSP memory, no heap.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.7: the recorded-909 engine (October refit) at half the 909's DSP work and about three quarters of the 808's, with a lighter shared desk. DSP matches its float model at -85 dB or better in the shipping configuration; the new 909 model matches the refit's at -63 dB with equal band levels; exact-render pins and the instruction-form precedent check pass; card and USB packages rebuilt (USB package identical on --check, same base and trust row). Not run on a unit: sound, install, several voices, persistence and chip timing are untested; the declared price is unchanged.",
+    "summary": "0.2.0: rewritten as a ColdFire machine (no DSP). The 909 keeps 0.1.7's fit and adds the lead-in every recorded hit shows; the 808 matches 0.1.7's at -50 to -55 dB. On the owner's MKII (24 Nov 2026): played over USB in four trials (sound bugs he heard fixed in between: aliasing, block-rate whine, retrigger clicks, stale knob values), the final build approved by ear; cost curve first 8.7 / each 4.0 % of the longest frame (0.1.7: 24.4 / 8.2 and a DSP voice), at rest 0, no render dropped. Not tested: MKI, project save/reload and power cycle with Analog BD tracks.",
     "hardwareStatus": "untested",
     "evidenceRevision": "62e9a424b7a08d7fcbbf321124ba6ef10f63d852",
     "gates": [
-      "sdk/drafts/analog-bassdrum-909-reference/run.py",
-      "sdk/drafts/analog-bassdrum-909-reference/qualification/multi-test.py",
-      "sdk/drafts/analog-bassdrum-909-reference/qualification/ranges.py",
-      "sdk/drafts/analog-bassdrum-909-reference/qualification/costs.py",
-      "sdk/drafts/analog-bassdrum-909-reference/qualification/port.py",
-      "sdk/drafts/analog-bassdrum-909-reference/qualification/reference.py",
-      "sdk/drafts/analog-bassdrum-flex-restore/verify.py",
-      "sdk/drafts/analog-bassdrum-flex-restore/reboot.py"
+      "modules/analog-bassdrum/test_drum.py"
     ],
     "documentation": {
       "tutorial": {
