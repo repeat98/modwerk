@@ -48,7 +48,13 @@
       "../base/link.c",
       "../base/link.s",
       "../base/load.c",
-      "../base/diag.c"
+      "../base/diag.c",
+      "../base/runtime.c",
+      "../base/modules.c",
+      "../base/loader.c",
+      "../base/upload.c",
+      "../base/wire.c",
+      "../base/sha256.c"
     ],
     "sites": [
       {
@@ -282,7 +288,9 @@
       "-DLE_UI_QUEUE_AT=0x41943f54",
       "-DSEQ_PLAYING_AT=0x405c8cf8",
       "-DSYSEX_SEND_AT=0x40085a18",
-      "-DUSB_SYSEX_STATE_AT=0x413db244"
+      "-DUSB_SYSEX_STATE_AT=0x413db244",
+      "-DRUNTIME_MODULES=16u",
+      "-DRUNTIME_POOL_BYTES=65536u"
     ],
     "defsym": {
       "LE_VERIFY": "0",
@@ -384,11 +392,46 @@
         "event": "ev_key",
         "fn": "mw_diag_key",
         "order": 0
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_runtime_tick",
+        "order": 241
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_runtime_draw",
+        "order": 250
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_runtime_key",
+        "order": 2
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_runtime_enc",
+        "order": 2
       }
     ],
     "collections": {
       "mw_machine_sections": 4,
       "ev_amp_record": 4
+    },
+    "shared": {
+      "base": [
+        "sdk/runtime/loader/loader.c",
+        "sdk/runtime/loader/loader.h",
+        "sdk/runtime/loader/modwerk_module.h",
+        "sdk/runtime/loader/context.h",
+        "sdk/runtime/loader/journal.h",
+        "sdk/runtime/loader/set_package.h",
+        "sdk/runtime/upload/upload.c",
+        "sdk/runtime/upload/upload.h",
+        "sdk/runtime/upload/wire.c",
+        "sdk/runtime/upload/wire.h",
+        "sdk/runtime/upload/sha256.c"
+      ]
     }
   },
   "reference": {
