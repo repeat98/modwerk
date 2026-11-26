@@ -27,7 +27,7 @@ MIDI port can load a module on trial and Keep it, and a power cycle always undoe
 saved). Beyond that it reads and changes nothing: no host can press a key, read memory outside the
 log or confirm an upgrade on a release base, which answers every other request `bad request`. On the
 send-bus variant they cost 3,396 bytes of `.run` and 6,848 of RAM in the shared mod area, 6,148 of
-it the log (voices the same; plain 3,348 and 6,848), and one site each in stock's SysEx router and
+it the log (voices the same; plain 3,348 and 6,848; measured 25 November 2026, before the whole-reply send), and one site each in stock's SysEx router and
 boot (`0x40083dd8`, `0x400008c6`). The boot site computes the set identity, with the data cache off
 (stock's own state at that point), over the `.run` block once a boot.
 
@@ -202,7 +202,9 @@ into USB MIDI packets and keeps its SysEx state across calls (`0x413db244`: `0xF
 `F7`), so a part of another sender between two parts of a message breaks both. The link therefore writes each reply
 whole under the lock, with the writer itself, and holds it while another sender's SysEx is open (as the
 Model:Cycles' link, from 26 November 2026; before, a reply over 144 bytes, such as a `log` block, could interleave
-with a Transfer's SysEx).
+with a Transfer's SysEx). Two of stock's own handlers (`0x40083124`, `0x4008315a`) write 9 bytes to USB with the
+writer directly and take no lock, so one of those can still land between two 144-byte parts of a long reply, as it
+can inside stock's own SysEx.
 
 ## Key flags
 
@@ -419,7 +421,8 @@ since, the link has not.
 
 - On a unit: a flashed release base (only RAM-booted ones); the boot time the set identity adds
   (not measured: RAM boots came back in 11 to 14 s, as before); the plain and send-bus variants of
-  every base's part; a HOT or FREEZE incident.
+  every base's part; a HOT or FREEZE incident. A development base's CONFIRM or RAMBOOT reply held by
+  an open SysEx just before its reset (the Model:Cycles' link waits for the reply; the Rytm's posts YES at once).
 - On a unit: the plain variant with `dev`; cancelling a RAM boot by a panel press, `disarm` or the
   timeout (emulator only); a RAM boot across storage layouts read back by the flashed OS (read in
   the code only); `flash` in Overbridge mode; a watchdog in a longer gate run (none bit in 13 s
