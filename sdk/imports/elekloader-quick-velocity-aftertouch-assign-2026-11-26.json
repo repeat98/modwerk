@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "quick-velocity-aftertouch-assign-0.7.0-experimental-os1.74.elemod",
-      "sha256": "6728dd9ca0cb62b687ca6c9e2aa0d2e6f67b7ef48c3377268cf9c2769315cf20",
+      "sha256": "528ff5fbc1e8be529f0afa5f694ca554994f20875895437b3ddc09625734e61c",
       "id": "quick-velocity-aftertouch-assign",
       "version": "0.7.0-experimental",
       "device": "analog-rytm-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "7f1e3409b7aa467a1c835c0d8b91c6534de06617",
+        "commit": "c7931c78e16f18835a6eb5dbfca8ab7141fb56ed",
         "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.7.0-experimental-os1.74.elemod"
       },
       "title": "Improved Modulation",
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: earlier versions as recorded in TESTING.md. 0.7.0's source passed the test rig's 13 cases on a private development image (R707); the author has not tested it by hand, and this package's own image ran in rytm-emu only."
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: earlier versions as recorded in TESTING.md. 0.7.0's source ran on private development images: the test rig's cases on R707 and R712 and the author's hand tests of both; this package's own image and its last review fixes ran in rytm-emu only."
     }
   ]
 }
