@@ -6,7 +6,7 @@ high-pass and a 7 kHz band-limit, then at 2x (halfband.py) GAIN into a soft
 curve flat at full scale, a level that follows GAIN, a three-band tone stack
 (BASS, MID, TREB, flat at 64), one of four speaker cabinets or OFF (CAB, from
 the P table in tables.py), a DC blocker and LEV, to both sides. VOIC (SETUP page,
-slot 6) picks one of four amp voices from the same table; TGHT, PRES, AXIS, DIST and MIX
+slot 6) picks one of five amp voices from the same table; TGHT, PRES, AXIS, DIST and MIX
 (slots 7 to 11) move the low cut, the cabinet's presence, the mic's axis and distance, and the dry mix. verify.py holds the assembly
 to reference.py's model bit for bit. Hardware operation is untested.
 

@@ -1,10 +1,10 @@
 # Combo
 
-Version 0.1.0 · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before page 2 ran on a unit.
+Version 0.1.0-experimental · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before page 2 ran on a unit; COMBO is a USB package only for now (no card id is free).
 
 ## Overview
 
-COMBO puts a track through an amp and a speaker cabinet, miked. VOIC picks one of four amp voices, GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
+COMBO puts a track through an amp and a speaker cabinet, miked. VOIC picks one of five amp voices, GAIN drives a soft curve that rounds off as it reaches full scale, BASS, MID and TREB shape the result, and CAB picks one of four cabinets, or none. It is an insert for FX1 or FX2 on any track. Like a guitar amp it is mono: it plays the sum of both sides through one amp and sends the result to both.
 
 Signal chain: `(L + R)/2 -> the voice's high-pass (TGHT) and band-limit -> [2x: GAIN -> the voice's curve] -> level (1/√GAIN × LEV) -> BASS/MID/TREB at the voice's splits -> CAB (with PRES and the mic's AXIS) -> 10 Hz DC blocker -> the mic's DIST (early reflections, stereo) -> MIX with the dry L and R`.
 
@@ -74,7 +74,7 @@ See [TESTING.md](TESTING.md). In short: `verify.py` renders it in dsp_host bit f
 
 ## Authorship and licences
 
-Original code and filter design by @sebasprosala-sys, under the MIT licence in LICENSE. The filters use Robert Bristow-Johnson's Audio EQ Cookbook formulas, and the oversampler Valenzuela and Constantinides' published polyphase half-band design, written here from the formulas. The four voices are general styles of amp built from these formulas; no impulse response, curve, circuit or voicing is taken from any product, and nothing comes from Elektron's firmware.
+Original code and filter design by @sebasprosala-sys, under the MIT licence in LICENSE. The filters use Robert Bristow-Johnson's Audio EQ Cookbook formulas, and the oversampler Valenzuela and Constantinides' published polyphase half-band design, written here from the formulas. The five voices are general styles of amp built from these formulas; no impulse response, curve, circuit or voicing is taken from any product, and nothing comes from Elektron's firmware.
 
 ## Screens and audio
 

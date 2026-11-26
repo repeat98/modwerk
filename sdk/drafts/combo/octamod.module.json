@@ -3,7 +3,7 @@
   "id": "combo",
   "key": "COMBO",
   "name": "Combo",
-  "version": "0.1.0",
+  "version": "0.1.0-experimental",
   "category": "effects",
   "author": {
     "github": "sebasprosala-sys",
