@@ -268,11 +268,17 @@ is still an open draft and is **not** in 0.8.2.
   | A retriggered recorder, then a sync (#2221) | the busy test reads the selected bank only | T1 + REC AB twice, STOP, try a module; then T1 + REC AB and try again | pass: bank B kept 2, trial admitted and rolled back; refused `unsafe` while T1 recorded |
   | Sidechain beside E-Verb and Resonator (#2222) | big effects now load below Sidechain's words | E-Verb T6 FX2 (@2361), Resonator T7 FX1 (@850), COMPRESSOR on T5 FX1 | pass: FX1 SETUP shows RMS MON KEY KGN KBAS KWID |
   | NO and the arrows on MODWERK pages (#2217) | the page now returns to the menu instead of closing it | SETTINGS > NO, RIGHT, LEFT; MODULES > NO; PROJ | pass: each back on the MODWERK list; PROJ closes it |
-  | MODULES on/off with the menu open (#2217) | the list redraws under the open page | needs a Keep | not run: needs a kept set |
+  | MODULES on/off with the menu open (#2217) | the list redraws under the open page | twin `8a341725`, Slow LFO 0.1.0 kept; PROJ > MODWERK > MODULES, YES, YES, NO | pass: OFF, then ON, the page stayed; NO back on the MODWERK list at MODULES |
   | Power-up with a clean bank (#2223) | the base now runs stock's checks before stock's restore | two boots | pass: no RESTORE record (none expected), Part 1 back with its effects |
   | Power-up with a value to fix (#2223) | the case the tester hit | emulator two-process power cycle only | not run on a unit: the tester's value is unknown |
   | Playing with picks and Part switches | the UI tick and restore changes run every frame | set + picks, 12 s and 90 s with Part switches | pass: 0 stalls, 0 skips, 0 late entries, CPU 37-52 % |
   | E-Verb picked beside Tape Echo | the effect placement below Sidechain's words | `pick:T6:FX2:E-VERB` with Tape Echo in the set | fail: not admitted within 5 s, on T6 FX2 later; unexplained |
   | CPU with eight tracks recording, 0.8.1 vs 0.8.2 | the recorder skip's saving | twins side by side | not run |
 
-- **Not run:** a power cycle of the flashed release with a real project; the CPU A/B; a Keep of the release image.
+- **Flash and Keep, 26 November 2026, over USB (the owner away from the unit):** release `24e480c4` RAM-booted again, then
+  `npm run device -- flash`: written and verified into slot B (generation 24, not confirmed, no start used; 0.8.1 stays in
+  slot A, generation 23). The project's three missing modules kept on it: Tape Echo 0.1.9, Euclid 0.1.5, Air Chorus
+  0.1.3 (trial 8 s, no crash, stall, freeze or skipped track; MISSING then empty). No restart after the flash: every
+  restart, a RAM boot too, spends one of the unconfirmed slot's starts.
+- **Not run:** the first start from slot B (a power cycle with USB connected 15 s confirms it), with the project's bank
+  and the kept set coming back; the CPU A/B.
