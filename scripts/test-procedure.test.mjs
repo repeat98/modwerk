@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, LAYER, largeSet, plan, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
+import { context, LAYER, largeSet, packageRunsDsp, plan, preflightCommand, reading, record, recordMarkdown, rehearsal, runProcedure, STEPS, suggestEdgeCases, unitSteps } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -37,6 +37,7 @@ function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['
   }
 }
 const statuses = steps => Object.fromEntries(steps.map(step => [step.id, step.status]))
+const PREFLIGHT = 'python3 -B scripts/octatrack-preflight.py --pick-pattern 2'
 
 describe('the steps', () => {
   it('runs in the fixed order, the unit steps after the software, emulator and build steps', () => {
@@ -48,14 +49,18 @@ describe('the steps', () => {
     const deps = fakeDeps()
     const steps = await runProcedure(moduleCtx(), deps)
     expect(deps.ran).toEqual([
+      PREFLIGHT, // before step 1, and again as the unit steps start
       'npm run module:doctor -- vibrato',
       'npm run modules:compat -- vibrato',
       'npm run module:dev -- vibrato --build-only --out /out/vibrato.mwrm',
+      PREFLIGHT,
       'node scripts/device.mjs status --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs read --socket /tmp/share.sock --out /out/part-start.json',
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
       'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md --soak 120 /out/vibrato.mwrm',
       expect.stringMatching(/^npm run device:price -- --share \/tmp\/share.sock --out \/out\/price.json --scene .+ --curve T1,T3,T6,T7 \/out\/vibrato.mwrm$/), // the curve and the admission run
       'node scripts/device.mjs do inventory --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json',
     ])
     expect(statuses(steps)).toEqual({ software: 'passed', compat: 'passed', build: 'passed', 'cost-model': 'not run', emulator: 'not run', 'unit-read': 'passed',
       'unit-pass': 'passed', soak: 'passed', 'cost-unit': 'passed', restore: 'passed', 'by-hand': 'to do', developer: 'to do' })
@@ -66,7 +71,7 @@ describe('the steps', () => {
   it('stops at the first failure and records every later step as not run, with the step that stopped it', async () => {
     const deps = fakeDeps({ fail: ['modules:compat'] })
     const steps = await runProcedure(moduleCtx(), deps)
-    expect(deps.ran).toEqual(['npm run module:doctor -- vibrato', 'npm run modules:compat -- vibrato'])
+    expect(deps.ran).toEqual([PREFLIGHT, 'npm run module:doctor -- vibrato', 'npm run modules:compat -- vibrato'])
     expect(statuses(steps)).toMatchObject({ software: 'passed', compat: 'failed', build: 'not run', 'unit-pass': 'not run', 'by-hand': 'not run', developer: 'not run' })
     expect(steps.find(step => step.id === 'build').reason).toBe('stopped: step 2 (Beside every other module) failed')
     expect(steps.find(step => step.id === 'compat').reason).toBe('exit 1: npm run modules:compat -- vibrato')
@@ -87,6 +92,56 @@ describe('the steps', () => {
   it('fails the put-back step when the inventory at the end differs from the one read first', async () => {
     const steps = await runProcedure(moduleCtx(), fakeDeps({ inventories: [INVENTORY, '[]'] }))
     expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/inventory differs/) })
+  })
+
+  const START = JSON.stringify({ part: { bank: 2, pattern: 0, part: 0, stopped: true, saved: true, banks: { 2: [] }, summary: 'Part 1 on C01: working = saved, saved once so that RELOAD works at the end' } })
+  const READ = 'octatrack-part-state.mjs read', RESTORE = 'octatrack-part-state.mjs restore'
+
+  it('reads the Part at step 6, keeps the soak in that bank, and puts the bank, pattern and Part back after the soak and at step 10', async () => {
+    const tools = { cycleScan: false, soak: true, unitQueue: false }
+    const back = JSON.stringify({ part: { ok: true, summary: 'Part 1 on C01: transport stopped, back on C01 from C03, Part 1 on C01 reloaded; working = saved' } })
+    const deps = fakeDeps({ said: { [READ]: START, [RESTORE]: back } }), ctx = moduleCtx({ tools })
+    const steps = await runProcedure(ctx, deps)
+    const unit = deps.ran.slice(deps.ran.indexOf('node scripts/device.mjs status --socket /tmp/share.sock'))
+    expect(unit).toEqual([
+      'node scripts/device.mjs status --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs read --socket /tmp/share.sock --out /out/part-start.json',
+      'node scripts/device.mjs do inventory --socket /tmp/share.sock',
+      'npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md /out/vibrato.mwrm',
+      'node scripts/octatrack-soak.mjs --seconds 120 --programs 32-35 --log /out/soak.json', // bank C's patterns 1-4, not the owner's bank A
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json', // before step 9 prices the scene
+      expect.stringMatching(/^npm run device:price /),
+      'node scripts/device.mjs do inventory --socket /tmp/share.sock',
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json',
+    ])
+    expect(steps.find(step => step.id === 'unit-read')).toMatchObject({ status: 'passed', part: 'Part 1 on C01: working = saved, saved once so that RELOAD works at the end' })
+    expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'passed', part: expect.stringMatching(/reloaded; working = saved$/) })
+    const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- vibrato' }))
+    expect(md).toContain('| 10 | Put back | unit | passed: Part 1 on C01: transport stopped, back on C01 from C03, Part 1 on C01 reloaded; working = saved |')
+    // Programs given on the command line stay as given, and the read covers their banks too.
+    const given = fakeDeps({ said: { [READ]: START } })
+    await runProcedure(moduleCtx({ tools, soak: { programs: '0-3' } }), given)
+    expect(given.ran).toContain('node scripts/octatrack-part-state.mjs read --socket /tmp/share.sock --out /out/part-start.json --programs 0-3')
+    expect(given.ran).toContain('node scripts/octatrack-soak.mjs --seconds 120 --programs 0-3 --log /out/soak.json')
+  })
+
+  it('fails the put-back loudly, with the fix, when the Part cannot be reloaded, and still compares the inventory', async () => {
+    const refused = 'not put back: RELOAD did not bring Part 1 on C01 back: put it back by hand (docs/OCTATRACK_DRIVING.md#the-rules)'
+    const steps = await runProcedure(moduleCtx(), fakeDeps({ said: { [READ]: START, [RESTORE]: refused }, fail: [RESTORE], inventories: [INVENTORY, '[]'] }))
+    expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'failed', reason: refused + '; and the inventory differs from the one read first: [{"name":"KITS","version":"0.2.0"}] then []' })
+  })
+
+  it('puts back after a failed soak, but not when the unit was never read', async () => {
+    const tools = { cycleScan: false, soak: true, unitQueue: false }
+    const deps = fakeDeps({ said: { [READ]: START }, fail: ['octatrack-soak.mjs'] })
+    const steps = await runProcedure(moduleCtx({ tools }), deps)
+    expect(statuses(steps)).toMatchObject({ soak: 'failed', 'cost-unit': 'not run', restore: 'passed', 'by-hand': 'not run' })
+    expect(deps.ran.at(-1)).toBe('node scripts/octatrack-part-state.mjs restore --socket /tmp/share.sock --start /out/part-start.json')
+    const unread = fakeDeps({ said: { [READ]: 'not read: The unit did not answer the position read' }, fail: [READ] })
+    const none = await runProcedure(moduleCtx(), unread)
+    expect(none.find(step => step.id === 'unit-read')).toMatchObject({ status: 'failed', reason: 'not read: The unit did not answer the position read' })
+    expect(none.find(step => step.id === 'restore')).toMatchObject({ status: 'not run', reason: 'stopped: step 6 (Read the unit) failed' })
+    expect(unread.ran.some(line => line.includes(RESTORE))).toBe(false)
   })
 
   it('uses a package it is given instead of building one, and names it by its SHA-256', async () => {
@@ -123,7 +178,7 @@ describe('the steps', () => {
     const deps = fakeDeps()
     const ctx = moduleCtx({ kind: 'base', id: undefined, machine: 'octatrack', version: '0.7', pkg: '/r/octatrack-base.elemod', setPackages: ['/p/a.mwrm', '/p/b.mwrm'] })
     const steps = await runProcedure(ctx, deps)
-    expect(deps.ran.slice(0, 2)).toEqual(['npm run sdk:check', 'npm run modules:compat'])
+    expect(deps.ran.slice(0, 3)).toEqual(['python3 -B scripts/octatrack-preflight.py', 'npm run sdk:check', 'npm run modules:compat']) // a base picks nothing
     expect(deps.ran).toContain('node scripts/device.mjs set /p/a.mwrm,/p/b.mwrm --seconds 30 --split --socket /tmp/share.sock')
     expect(deps.ran.find(line => line.startsWith('npm run device:price'))).toMatch(/--scene .+[^m]$/) // no package named: every USB package
     expect(steps.find(step => step.id === 'unit-pass').title).toBe('Large set and Undo')
@@ -161,6 +216,49 @@ describe('the steps', () => {
     expect(steps.find(step => step.id === 'unit-pass').reason).toMatch(/unit queue run ended without a result \(exit 1\)/)
   })
 
+})
+
+describe('the preflight', () => {
+  // What failed unit runs minutes in on 25 November 2026, as octatrack-preflight.py prints it.
+  const NOT_READY = 'preflight: Part 1 of bank C differs from its saved copy, …\npreflight: no MIDI bridge on 127.0.0.1:50124 (…): start …'
+
+  it('checks what the unit steps will need: the pick pattern for a module, the MIDI bridge when the soak runs', () => {
+    expect(preflightCommand(moduleCtx())).toEqual(['python3', '-B', 'scripts/octatrack-preflight.py', '--pick-pattern', '2'])
+    expect(preflightCommand(moduleCtx({ pickPattern: '5', tools: { soak: true } })).join(' ')).toBe('python3 -B scripts/octatrack-preflight.py --pick-pattern 5 --midi 127.0.0.1:50124')
+    expect(preflightCommand(moduleCtx({ kind: 'base', id: undefined, tools: { soak: true } })).join(' ')).toBe('python3 -B scripts/octatrack-preflight.py --midi 127.0.0.1:50124')
+    expect(preflightCommand(moduleCtx({ target: 'emulator', tools: { soak: true } })).join(' ')).toBe('python3 -B scripts/octatrack-preflight.py')
+    expect(preflightCommand(moduleCtx({ unit: { available: false, reason: 'none' } }))).toBeNull()
+    expect(preflightCommand(moduleCtx({ machine: 'analog-rytm-mkii' }))).toBeNull()
+  })
+
+  it('fails step 6 before step 1 with each problem, and builds, boots and installs nothing', async () => {
+    const deps = fakeDeps({ fail: ['octatrack-preflight'], said: { 'octatrack-preflight': '> state\n' + NOT_READY } })
+    const ctx = moduleCtx({ tools: { soak: true } }), steps = await runProcedure(ctx, deps)
+    expect(deps.ran).toEqual(['python3 -B scripts/octatrack-preflight.py --pick-pattern 2 --midi 127.0.0.1:50124'])
+    expect(deps.started).toEqual([])
+    expect(steps.find(step => step.id === 'unit-read')).toMatchObject({ status: 'failed', log: 'logs/00-preflight.log',
+      reason: 'the unit is not ready: Part 1 of bank C differs from its saved copy, …; no MIDI bridge on 127.0.0.1:50124 (…): start …' })
+    expect(steps.filter(step => step.id !== 'unit-read').every(step => step.status === 'not run' && /not ready \(step 6\), before step 1/.test(step.reason))).toBe(true)
+    expect(steps.find(step => step.id === 'unit-pass').commands[0]).toMatch(/^npm run device:test/) // still named
+    expect(recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'x' }))).toMatch(/^Not tested on a unit: the unit is not ready: Part 1 of bank C/m)
+  })
+
+  it('reads the unit again as the turn starts, and installs nothing when it is no longer ready', async () => {
+    const deps = fakeDeps({ fail: ['octatrack-preflight'], said: { 'octatrack-preflight': NOT_READY } })
+    const steps = await unitSteps(moduleCtx(), deps)
+    expect(deps.ran).toEqual([PREFLIGHT])
+    expect(statuses(steps)).toEqual({ 'unit-read': 'failed', 'unit-pass': 'not run', soak: 'not run', 'cost-unit': 'not run', restore: 'not run' })
+    expect(steps.find(step => step.id === 'unit-pass').reason).toBe('stopped: the preflight found the unit not ready (step 6)')
+    expect(steps.find(step => step.id === 'unit-read').log).toBe('logs/06-preflight.log')
+  })
+
+  it('leaves the first reading to this run\'s own turn while another session holds the unit', async () => {
+    const deps = fakeDeps({ fail: ['npm run unit'] })
+    deps.unitBusy = async () => 'The unit is in use: other-worktree (fix/x) has it since 10:00 (4m).'
+    await runProcedure(moduleCtx({ tools: { unitQueue: true } }), deps)
+    expect(deps.ran[0]).toBe('npm run module:doctor -- vibrato')
+    expect(deps.ran.some(line => line.includes('octatrack-preflight'))).toBe(false) // the inner run, in the turn, reads it
+  })
 })
 
 describe('every machine', () => {
@@ -352,5 +450,122 @@ describe('the real unit queue', () => {
     expect(ctx.env.MODWERK_UNIT).toBe('emulator')
     const { takeUnitTurn } = await import('./unit-queue.mjs')
     expect(await takeUnitTurn({ env: { MODWERK_UNIT: 'emulator' } })).toBeNull()
+  })
+})
+
+describe('the emulator rehearsal (step 5)', () => {
+  const twin = { emulator: '/emu/ot_emu', image: '/twins/t1/MAIN.raw', identity: '8fd6d456abf3865b', dir: '/tmp/mw-emu-1' }
+  /** fakeDeps with a fake session: what it was asked to start, and whether it was stopped. */
+  const withSession = (deps, { fails } = {}) => {
+    deps.sessions = []
+    deps.session = async spec => {
+      if (fails) throw new Error(fails)
+      const session = { spec, stopped: false, ended: new Promise(() => {}), stop: async () => { session.stopped = true } }
+      deps.sessions.push(session)
+      return session
+    }
+    return deps
+  }
+
+  it('starts its own session when an ot_emu and a twin are there, and runs the unit\'s cases in it before the unit', async () => {
+    const deps = withSession(fakeDeps()), ctx = moduleCtx({ rehearsal: twin })
+    const steps = await runProcedure(ctx, deps)
+    expect(deps.sessions).toHaveLength(1)
+    expect(deps.sessions[0].spec).toEqual({ emulator: '/emu/ot_emu', image: '/twins/t1/MAIN.raw', dir: '/tmp/mw-emu-1', dsp: undefined, package: '/out/vibrato.mwrm' })
+    expect(deps.sessions[0].stopped).toBe(true)
+    // Step 6, 7 and 10's commands on the session's sockets, in its environment, then the same on the unit.
+    expect(deps.ran.slice(4, 10)).toEqual([
+      'node scripts/device.mjs status --socket /tmp/mw-emu-1/share.sock',
+      'node scripts/octatrack-part-state.mjs read --socket /tmp/mw-emu-1/share.sock --out /out/emulator/part-start.json',
+      'node scripts/device.mjs do inventory --socket /tmp/mw-emu-1/share.sock',
+      'npm run device:test -- --share /tmp/mw-emu-1/share.sock --testing-entry /out/emulator/device-test.md --soak 120 /out/vibrato.mwrm',
+      'node scripts/device.mjs do inventory --socket /tmp/mw-emu-1/share.sock',
+      'node scripts/octatrack-part-state.mjs restore --socket /tmp/mw-emu-1/share.sock --start /out/emulator/part-start.json',
+    ])
+    expect(deps.envs.slice(4, 10).every(env => env.MODWERK_UNIT === 'emulator' && env.MODWERK_DEV_SOCKET === '/tmp/mw-emu-1/dev.sock')).toBe(true)
+    expect(deps.ran[11]).toBe('node scripts/device.mjs status --socket /tmp/share.sock')
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'passed', emulator: true, reason: expect.stringContaining('twin 8fd6d456abf3865b in ot_emu, not hardware evidence') })
+    const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- vibrato' }))
+    expect(md).toMatch(/\| 5 \| Emulator rehearsal \(emulator\) \| emulator \| passed: the development twin 8fd6d456abf3865b/)
+    expect(md).toMatch(/^Tested on a unit: package/m) // the unit's own pass makes that line; the rehearsal never does
+  })
+
+  it('stops before the unit when the rehearsal fails, and stops the session', async () => {
+    const deps = withSession(fakeDeps({ fail: ['device:test -- --share /tmp/mw-emu-1'] }))
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(statuses(steps)).toMatchObject({ emulator: 'failed', 'unit-read': 'not run', 'unit-pass': 'not run' })
+    expect(steps.find(step => step.id === 'emulator').reason).toMatch(/^exit 1: npm run device:test .* \(the development twin 8fd6d456abf3865b in ot_emu/)
+    expect(steps.find(step => step.id === 'unit-read').reason).toBe('stopped: step 5 (Emulator rehearsal) failed')
+    expect(deps.ran.some(line => line.includes('/tmp/share.sock'))).toBe(false)
+    expect(deps.sessions[0].stopped).toBe(true)
+  })
+
+  it('fails when the emulator\'s inventory at the end differs from the one it read first', async () => {
+    const deps = withSession(fakeDeps()), exec = deps.exec, inventories = [INVENTORY, '[]']
+    deps.exec = async (argv, ...rest) => {
+      const run = await exec(argv, ...rest)
+      return argv.join(' ').endsWith('do inventory --socket /tmp/mw-emu-1/share.sock') ? { code: 0, output: inventories.shift() } : run
+    }
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/^the inventory differs from the one read first/) })
+  })
+
+  it('reports an emulator that died during the run with the failure', async () => {
+    const deps = withSession(fakeDeps({ fail: ['device:test -- --share /tmp/mw-emu-1'] }))
+    const session = deps.session
+    deps.session = async spec => ({ ...(await session(spec)), ended: Promise.resolve('ot_emu exited (139)') })
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(steps.find(step => step.id === 'emulator').reason).toMatch(/; ot_emu exited \(139\) \(the development twin/)
+  })
+
+  it('leaves the step not run, and the unit steps running, when the session does not start', async () => {
+    const deps = withSession(fakeDeps(), { fails: 'ot_emu ended before the session was ready (exit 1)' })
+    const steps = await runProcedure(moduleCtx({ rehearsal: twin }), deps)
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/^the emulator session did not start: ot_emu ended/) })
+    expect(statuses(steps)).toMatchObject({ 'unit-read': 'passed', 'unit-pass': 'passed', restore: 'passed' })
+  })
+
+  it('says what is missing and how to get it, and leaves the step out on request', async () => {
+    const none = rehearsal({}, {}, () => false)
+    expect(none.missing).toMatch(/no adapted ot_emu: .*MODWERK_OT_EMU.*--emulator OT_EMU; no development twin: .*MODWERK_OT_TWIN.*--twin DIR/)
+    expect(rehearsal({}, { MODWERK_OT_EMU: '/e/ot_emu', MODWERK_OT_TWIN: '/t' }, path => path === '/e/ot_emu').missing)
+      .toBe('no MAIN.raw at /t/MAIN.raw (MODWERK_OT_TWIN or --twin names a development twin\'s build folder)')
+    expect(rehearsal({ 'no-emulator': true }, { MODWERK_OT_EMU: '/e', MODWERK_OT_TWIN: '/t' }).missing).toBe('left out with --no-emulator')
+    // A build folder names its twin by its configuration, a bare MAIN.raw by its path. The arguments win over the environment.
+    expect(rehearsal({ twin: '/t' }, { MODWERK_OT_EMU: '/e/ot_emu', MODWERK_OT_TWIN: '/other' }, () => true, () => '{"configurationHash":"8fd6d456abf3865b0011"}'))
+      .toEqual({ emulator: '/e/ot_emu', image: '/t/MAIN.raw', identity: '8fd6d456abf3865b' })
+    expect(rehearsal({ emulator: '/e/ot_emu', twin: '/t/MAIN.raw' }, {}, () => true, () => { throw new Error('no proofs') }))
+      .toEqual({ emulator: '/e/ot_emu', image: '/t/MAIN.raw', identity: undefined })
+    const steps = await runProcedure(moduleCtx({ rehearsal: none, unit: { available: false, reason: 'none' } }), withSession(fakeDeps()))
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/^no emulator session: no adapted ot_emu/) })
+  })
+
+  it('rehearses a base\'s large set with the DSPs running, and fails a refusal there', async () => {
+    const ctx = moduleCtx({ kind: 'base', id: undefined, pkg: '/b/base.elemod', setPackages: ['/p/a.mwrm', '/p/b.mwrm'], rehearsal: twin, unit: { available: false, reason: 'none' } })
+    const deps = withSession(fakeDeps({ said: { 'set /p/a.mwrm,/p/b.mwrm --seconds 30 --split --socket /tmp/mw-emu-1/share.sock': 'refused: module pool full' } }))
+    const steps = await runProcedure(ctx, deps)
+    expect(deps.sessions[0].spec.dsp).toBe(true)
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/^refused: module pool full/) })
+  })
+
+  it('runs ot_emu with --dsp only for a package that carries DSP code', () => {
+    const header = dsp => { const bytes = Buffer.alloc(64); bytes.write('MWRM'); bytes.writeUInt32BE(dsp, 32); return bytes }
+    expect(packageRunsDsp(header(120))).toBe(true)
+    expect(packageRunsDsp(header(0))).toBe(false)
+    expect(packageRunsDsp(Buffer.alloc(8))).toBe(false)
+  })
+
+  it('reads the ot_emu and the twin from the environment, and plans the session in a short folder of its own', () => {
+    const root = join(import.meta.dirname, '..'), dir = mkdtempSync(join(tmpdir(), 'twin-'))
+    writeFileSync(join(dir, 'MAIN.raw'), '')
+    writeFileSync(join(dir, 'proofs.json'), '{"configurationHash":"0123456789abcdef99"}')
+    writeFileSync(join(dir, 'ot_emu'), '')
+    const ctx = context(root, { out: mkdtempSync(join(tmpdir(), 'procedure-')) }, ['vibrato'], { MODWERK_OT_EMU: join(dir, 'ot_emu'), MODWERK_OT_TWIN: dir })
+    expect(ctx.rehearsal).toMatchObject({ emulator: join(dir, 'ot_emu'), image: join(dir, 'MAIN.raw'), identity: '0123456789abcdef' })
+    expect(join(ctx.rehearsal.dir, 'share.sock').length).toBeLessThan(104) // a Unix socket path holds about 104 characters on macOS
+    const p = plan(STEPS.find(step => step.id === 'emulator'), ctx)
+    expect(p.commands.map(argv => argv.join(' '))).toContain('node scripts/device.mjs status --socket ' + join(ctx.rehearsal.dir, 'share.sock'))
+    // Inside an emulator session (device:emulator) the unit steps are the rehearsal, and step 5 is not run again.
+    expect(plan(STEPS.find(step => step.id === 'emulator'), { ...ctx, target: 'emulator' }).skip).toMatch(/--target emulator/)
   })
 })
