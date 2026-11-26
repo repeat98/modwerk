@@ -30,6 +30,9 @@ function check(failure = '', buildOnly = false, args: string[] = [], env: Record
     const name = process.argv[3]
     appendFileSync(process.env.CHECK_TEST_LOG, JSON.stringify(process.argv.slice(3)) + '\\n')
     process.exitCode = process.env.CHECK_TEST_FAIL === name ? 1 : 0
+    // A failed check prints its error far above the verdict, with a passing test's expected error after it.
+    if (process.exitCode && name === 'sdk:check') console.log('test_a ... ok\\nSDK checks FAILED: test_base_bound.py\\nError: an expected error a passing test printed')
+    if (process.exitCode && name === 'lint') console.log('/repo/src/a.ts\\n  12:3  error  Unexpected any  no-explicit-any')
     // CHECK_TEST_FLAKY: the full Vitest run fails one file; rerun alone, it passes ('alone') or fails again.
     const args = process.argv.slice(5)
     if (name === 'test' && process.env.CHECK_TEST_FLAKY && !args.includes('-t')) {
@@ -94,6 +97,17 @@ it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independ
   expect(result.scripts.indexOf('sdk:check')).toBeGreaterThan(result.scripts.indexOf('test'))
   // The module doctor's draft test copies a draft under sdk/octatrack/modules/, so it runs alone once the parallel stage is done.
   expect(result.scripts.at(-1)).toBe('test')
+})
+
+it('names what failed, and each one\'s first error, in the last lines of the run', () => {
+  const sdk = check('sdk:check').stdout.trim().split('\n').slice(-3)
+  expect(sdk[0]).toMatch(/^Check FAILED in /)
+  expect(sdk.slice(1)).toEqual(['Failed: sdk:check', '  sdk:check: SDK checks FAILED: test_base_bound.py'])
+  expect(check('lint').stdout.trim().split('\n').at(-1)).toBe('  lint: 12:3 error Unexpected any no-explicit-any')
+  // The draft doctor's test passes after the suite failed: the suite is still named.
+  expect(check('', false, [], { CHECK_TEST_FLAKY: 'again' }).stdout).toMatch(/\nFailed: test\n {2}test: .*FAIL.* src\/a\.test\.ts > waits out a reply timer\n/)
+  expect(check('').stdout).not.toContain('Failed:')
+  expect(check('', false, [], { CHECK_TEST_FLAKY: 'alone' }).stdout).not.toContain('Failed:')
 })
 
 it.each([['alone', 0], ['again', 1]])('reruns a failed test file alone on one worker and passes only when it passes there (%s)', (mode, status) => {
