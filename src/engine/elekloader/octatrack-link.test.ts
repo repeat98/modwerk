@@ -447,6 +447,12 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/hasn’t loaded its saved modules yet, so nothing changed/)
   })
+  it('says the last change is not on the card yet when a sync comes while its save keeps failing', async () => {
+    const { unit, link } = await linked()
+    unit.saveFailed = true // rejected with no loader refusal, the record's saved 8
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/^The Octatrack couldn’t save your last change to its card yet, so nothing changed\./)
+  })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')
     expect(inUseHint(['Tape Echo', 'Tape Echo'])).toBe(' Look for Tape Echo on the tracks.')
@@ -848,7 +854,7 @@ describe('loading a module set', () => {
   })
   it('says a kept set is still to be saved when the unit has not saved it in time, and that a save failed only when it did', async () => {
     const reading = (saved: number) => ({ state: 0, failed: 0, modules: 0, dsp: 0, intact: 0, ran: 0, peaks: { cpu: 0, tracks1to4: 0, tracks5to8: 0 }, done: 0, total: 0, frameGap: 0, saved, savedCount: 0, live: 2, culprit: 0, culpritName: '', refusal: 0 })
-    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live/, 'sync_failed']] as const) {
+    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live to the card yet\. It keeps trying/, 'sync_failed']] as const) {
       const { link } = await loaded(), events: string[] = []
       link.subscribeDiagnostics(diagnostic => events.push(diagnostic.event))
       vi.spyOn(UsbVendorTransport.prototype, 'selftest').mockResolvedValue(reading(saved))
