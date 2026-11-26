@@ -10,12 +10,12 @@
     "SCENE + YES writes the scene into the kit; YES again undoes. With SCENE or PERF held, PLAY no longer starts the sequencer.",
     "LIVE RECORDING keeps scene changes too: RECORD + YES writes them as locks, RECORD + NO clears them."
   ],
-  "runtimeSourceSha256": "37b01222b612986cb69ca5cce37d5f7d5ab54ec0eae39bdd05bc812ea8e6c0c5",
+  "runtimeSourceSha256": "5008ff12b79656544d89c7194dc0c9ffc6cba517638c62838b64f9e6618f3678",
   "packages": [
     {
       "os": "1.74",
       "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.6.0-experimental-os1.74.elemod",
-      "sha256": "66f025ae4cc5cc8761978e000ad02c9fcdc690871e6018c904d66cd694681b59"
+      "sha256": "ba0a413b1a52a0d47f1706a551ee821676df2f0f2c754384d85fdc37048c3e94"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
