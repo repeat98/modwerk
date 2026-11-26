@@ -4,8 +4,9 @@
     "date": "2026-11-26",
     "changes": [
       "Costs the Octatrack almost nothing while no track uses REPITCH: it rests until a track does.",
-      "Any Part of the project with a track set to REPITCH keeps it awake, so Part and bank changes play as before. A sample whose own TIMESTRETCH is REPITCH, on a TSTR AUTO track, is seen only on the playing Part: brought in by a Part change while playing, its first moments may play at stock speed.",
-      "Known issue: the resting was measured on an MKII on a build just before this one; this exact version has not run on a unit, and nobody has listened to a REPITCH track on it."
+      "Any Part of the project with a track set to REPITCH keeps it awake, so Part and bank changes play as before.",
+      "Known issue: a sample whose own TIMESTRETCH is REPITCH, on a TSTR AUTO track, is seen only on the playing Part. Brought in by a Part change while playing, its first moments may play at stock speed.",
+      "Known issue: nobody has yet listened to a REPITCH track on this exact version. The build just before it was measured resting on an MKII."
     ]
   },
   {
