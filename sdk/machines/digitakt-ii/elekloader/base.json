@@ -12,7 +12,17 @@
   "reference": {
     "file": "vendor/elekloader/catalog/core-1.0.elemod",
     "sha256": "95303655a9358f581b485acb68b884b394a577f5d0b373f0a3e5957c8d0ca72c",
-    "keeps": ["id", "sites", "exports", "imports", "weak", "contribute", "collections", "requires", "conflicts"]
+    "keeps": [
+      "id",
+      "sites",
+      "exports",
+      "imports",
+      "weak",
+      "contribute",
+      "collections",
+      "requires",
+      "conflicts"
+    ]
   },
   "copies": [
     {
@@ -34,7 +44,37 @@
       "../modwerk/startup-kitdata-refresh.c",
       "../modwerk/project-archive.c",
       "../modwerk/project-kitdata.c",
+      "../modwerk/mixer.c",
+      "../modwerk/mixer-entry.s",
+      "../modwerk/machines.c",
+      "../modwerk/machine-knobs.c",
+      "../modwerk/machine-frame.c",
+      "../modwerk/machines-entry.s",
+      "../modwerk/voices.c",
+      "../modwerk/voices-entry.s",
       "../modwerk/fw-bindings.s"
+    ],
+    "subscribe": [
+      {
+        "event": "ev_settings",
+        "fn": "core_voice_settings",
+        "order": 10
+      }
+    ],
+    "contribute": [
+      {
+        "to": "core_project_archive",
+        "order": 10,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:core_voice_archive",
+            0
+          ]
+        ]
+      }
     ],
     "defsym": {
       "FW_FILLRECT": "0x401131ae",
@@ -60,6 +100,104 @@
       "FW_STARTUP_KIT_STRIDE": "0x5800"
     },
     "sites": [
+      {
+        "addr": "0x4002dd74",
+        "len": 6,
+        "stockSha256": "3b5bfef87fffe24f50bcde099ab9d3bc80df33b6497b71debb052fa2595c9ef1",
+        "op": "jsr",
+        "target": "core_audio_frame_entry"
+      },
+      {
+        "addr": "0x4002dff4",
+        "len": 6,
+        "stockSha256": "03aea46edf4951a496a72ca6cad701db0693d269aca529ebc661a3dbc8fcce0c",
+        "op": "jsr",
+        "target": "core_voice_event_entry"
+      },
+      {
+        "addr": "0x40066df2",
+        "len": 6,
+        "stockSha256": "b8166e3ccf519a59609e171fee14e51db8875e12043168606db823f0f24f64a1",
+        "op": "jmp",
+        "target": "core_mixer_count_entry"
+      },
+      {
+        "addr": "0x40066e02",
+        "len": 6,
+        "stockSha256": "210b33b627af0389b1bddbc2f87f7980cacebd89ef5ac3ba7c4646a7800bc064",
+        "op": "jmp",
+        "target": "core_mixer_list_entry"
+      },
+      {
+        "addr": "0x400c898a",
+        "len": 6,
+        "stockSha256": "4804747ca9c54fb6cf82b4a21415559c390b2b2f9fc4f3cea86546d00ee4dc72",
+        "op": "jmp",
+        "target": "core_mixer_descriptor_entry"
+      },
+      {
+        "addr": "0x400763ac",
+        "len": 8,
+        "stockSha256": "f884edfcc4fdbe8c922f8080094cae67fdc2e7e87655c90c4eb6b79282f65f60",
+        "op": "jmp",
+        "target": "core_mixer_draw_entry"
+      },
+      {
+        "addr": "0x400c89a4",
+        "len": 6,
+        "stockSha256": "90d4add99e5a31399efe8b6d7879deb65375e21f97ebcdfd761b45d0fa6f5b13",
+        "op": "jmp",
+        "target": "core_machine_descriptor_entry"
+      },
+      {
+        "addr": "0x400da3a2",
+        "len": 6,
+        "stockSha256": "7004f7c54162426867d6e17e181d3ea5de00a97027c223cf901c7be0b6a6a967",
+        "op": "jmp",
+        "target": "core_machine_param_entry"
+      },
+      {
+        "addr": "0x400db47a",
+        "len": 16,
+        "stockSha256": "8686c14efc6286fbc78202ff9e239a5206ce5b2dfb5cd85b3124e6437a613f38",
+        "op": "jmp",
+        "target": "core_machine_kit_type_entry"
+      },
+      {
+        "addr": "0x400da514",
+        "len": 8,
+        "stockSha256": "db448c4c3bfa3ffd560154abc31cbfd90268d767f02135f4bad97068c40800d3",
+        "op": "jmp",
+        "target": "core_machine_permit_entry"
+      },
+      {
+        "addr": "0x40052a08",
+        "len": 8,
+        "stockSha256": "3df2a4fe58f85e06d5e747d7222e4f771af0e1b77b0543ac228c30636a57aecc",
+        "op": "jmp",
+        "target": "core_machine_list_entry"
+      },
+      {
+        "addr": "0x400da6ac",
+        "len": 6,
+        "stockSha256": "90d4add99e5a31399efe8b6d7879deb65375e21f97ebcdfd761b45d0fa6f5b13",
+        "op": "jmp",
+        "target": "core_machine_name_entry"
+      },
+      {
+        "addr": "0x400da6d2",
+        "len": 6,
+        "stockSha256": "90d4add99e5a31399efe8b6d7879deb65375e21f97ebcdfd761b45d0fa6f5b13",
+        "op": "jmp",
+        "target": "core_machine_short_entry"
+      },
+      {
+        "addr": "0x400da6f8",
+        "len": 6,
+        "stockSha256": "90d4add99e5a31399efe8b6d7879deb65375e21f97ebcdfd761b45d0fa6f5b13",
+        "op": "jmp",
+        "target": "core_machine_menu_entry"
+      },
       {
         "addr": "0x40041b52",
         "len": 6,
@@ -115,13 +253,114 @@
         "stockSha256": "9123093562f982f533c055b957ef510dd2438a23b5bd8ed1470024b218b90344",
         "op": "jsr",
         "target": "core_project_created"
+      },
+      {
+        "addr": "0x4001702c",
+        "len": 6,
+        "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+        "op": "jsr",
+        "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40017736",
+        "len": 6,
+        "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+        "op": "jsr",
+        "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40017ada",
+        "len": 6,
+        "stockSha256": "2001dd6b8e36e960a9c43babf34e205b422dc6e19c770075056fc34e193c7a6f",
+        "op": "jsr",
+        "target": "core_machine_sample_draw_entry"
+      },
+      {
+        "addr": "0x40017bd2",
+        "len": 6,
+        "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+        "op": "jsr",
+        "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40016cec",
+        "len": 10,
+        "stockSha256": "3c3a5a4fc3004501c92d5cc476f354ca4508c5d36072f4810557a56b775d6ada",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_16cec"
+      },
+      {
+        "addr": "0x40016da6",
+        "len": 10,
+        "stockSha256": "d581632ccbce8164087b12b726317861af8d3d64a124ca78e757781e69f3c3d4",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_16da6"
+      },
+      {
+        "addr": "0x40017748",
+        "len": 10,
+        "stockSha256": "b1677fa1491e6ad567c2224c89d3c2bf5a64e819a6625a625869e59c491f1858",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_17748"
+      },
+      {
+        "addr": "0x40017d56",
+        "len": 10,
+        "stockSha256": "d581632ccbce8164087b12b726317861af8d3d64a124ca78e757781e69f3c3d4",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_17d56"
+      },
+      {
+        "addr": "0x40017f74",
+        "len": 10,
+        "stockSha256": "dfa0725ffa418b84f677f9b4207f8a2869883512e1328ca10171f4d0f99459bd",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_17f74"
+      },
+      {
+        "addr": "0x400183f4",
+        "len": 10,
+        "stockSha256": "0cc58e5b9df3c576d226ba5b85c3c68ba0b42a51d78db6c8253f6903705a4dde",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_183f4"
+      },
+      {
+        "addr": "0x4001844c",
+        "len": 10,
+        "stockSha256": "0166e13a30fefeb32317b7893a65d1b7f86a9432659ec84c3b1b1982262375f3",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_1844c"
       }
     ],
     "collections": {
       "ev_seq_note": 4,
       "ev_seq_grid": 4,
       "ev_seq_audio_phrase": 4,
-      "core_project_archive": 4
+      "core_mixer_pages": 4,
+      "ev_audio_frame": 4,
+      "core_project_archive": 4,
+      "core_machines": 4
     }
+  },
+  "dev": {
+    "about": "A development base adds one test machine (type 7) that stands for SAMPLE, to check the machine hooks in the emulator. Never released.",
+    "sources": [
+      "../base/machines-fixture.c"
+    ],
+    "contribute": [
+      {
+        "to": "core_machines",
+        "order": 50,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:dt2_test_machine",
+            0
+          ]
+        ]
+      }
+    ]
   }
 }

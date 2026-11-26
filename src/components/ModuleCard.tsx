@@ -1,7 +1,7 @@
 import { useContext, useId, useRef, useState, type ReactNode, type Ref } from 'react'
 import { isBetaModule } from '../catalog/availability'
 import { moduleCaution } from '../catalog/module-cautions'
-import type { AddBlock } from '../catalog/add-blocks'
+import { refusesAdd, type AddBlock } from '../catalog/add-blocks'
 import { moduleBuildPending } from '../catalog/build-support'
 import { moduleHardwareEvidence } from '../catalog/module-evidence'
 import { moduleStability, type ModuleStability } from '../catalog/module-stability'
@@ -43,7 +43,7 @@ export type AddConflict = { block: AddBlock; open: boolean; controls: string; on
 export function AddButton({ name, selected, onToggle, configure = false, conflict, blocked, ref }: { name: string; selected: boolean; onToggle: () => void; configure?: boolean; conflict?: AddConflict; blocked?: AddBlock; ref?: Ref<HTMLButtonElement> }) {
   const w = useSetWords()
   // A module this member cannot load at all (usb-only) cannot be added; the reason stays readable on the button.
-  if (blocked && !selected) return <button ref={ref} className="add-button is-blocked" disabled aria-label={name + ': ' + blocked.reason} title={blocked.detail}><Icon name="lock" size={15} /><span>{blocked.kind === 'limit' ? 'Full' : 'USB only'}</span></button>
+  if (blocked && !selected) return <button ref={ref} className="add-button is-blocked" disabled aria-label={name + ': ' + blocked.reason} title={blocked.detail}><Icon name="lock" size={15} /><span>{blocked.kind === 'limit' ? 'Full' : blocked.kind === 'paused' ? 'Paused' : 'USB only'}</span></button>
   // A conflicting add asks first instead of adding. It stays an enabled button so it can be reached by keyboard and touch.
   if (conflict && !selected) {
     const swappable = !!conflict.block.swapRemoveIds
@@ -105,7 +105,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
     <div className="module-card-body" inert={prompt.open}>
       <div className="module-card-title">
         <div className="module-card-heading"><a href={moduleHref(module.id)} aria-describedby={caution ? cautionId : undefined} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
-        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={comesWithBase(module.id)} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
+        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={comesWithBase(module.id)} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={refusesAdd(pending) ? pending : undefined} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>

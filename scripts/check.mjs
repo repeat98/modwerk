@@ -10,6 +10,7 @@ import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
 import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
+import { m68kToolchainProblem } from './m68k-preflight.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 import { localPythonProblem, moduleScopeProblems } from './pr-ready.mjs'
 
@@ -57,6 +58,7 @@ async function run(name, args = [], env = {}) {
       const passed = code === 0
       console.log(`${name}: ${passed ? 'passed' : 'FAILED'} (${((performance.now() - started) / 1000).toFixed(2)}s)`)
       results.set(key, passed)
+      if (!passed) failures.set(key, [name, firstCause(name, Buffer.concat(output).toString('utf8'))])
       if (name === 'test') outputs.set(key, Buffer.concat(output).toString('utf8'))
       resolve(passed)
     })
@@ -86,6 +88,23 @@ const suiteOnly = !!part && part !== 'contract'
 const record = fileURLToPath(new URL('../node_modules/.cache/check-last.json', import.meta.url))
 const WRITES = new Set(['prepare', 'licenses:generate', 'machines:generate', 'modules:generate'])
 const results = new Map(), skipped = [], outputs = new Map(), flaky = []
+// What failed, for the last lines of the run: a failed check's own output can sit thousands of lines above the verdict, behind
+// the checks that ran beside it, and a reader of the end of the log (a developer, an agent, a CI summary) saw only "FAILED".
+const failures = new Map()
+const CAUSE = [/^SDK checks FAILED: .+/m, /^\s*(?:FAIL|×)\s+\S+\.test\.[cm]?[jt]sx?.*/m, /^✗ .+/m, /^.*\berror TS\d+: .+/m, /^\s*\d+:\d+\s+error\s+.+/m,
+  /^(?:\w+Error|Error)\b.*: .+/m, /^.*\bError: .+/m]
+const oneLine = line => { const text = line.trim().replace(/\s+/g, ' '); return text.length > 240 ? text.slice(0, 239) + '…' : text }
+function firstCause(name, text) {
+  const plain = stripVTControlCharacters(text)
+  const files = name === 'test' ? failedTestFiles(plain) : []
+  if (files.length > 1) return `${files.length} test files: ${files.slice(0, 4).join(', ')}${files.length > 4 ? ', …' : ''}`
+  return oneLine(CAUSE.map(pattern => plain.match(pattern)?.[0]).find(Boolean) ?? plain.trim().split('\n').at(-1) ?? '')
+}
+/** A failure outside an npm script (release notes, document sizes, the base): printed where it happens and named at the end. */
+function problem(name, message) {
+  console.error(message)
+  if (!failures.has(name)) failures.set(name, [name, oneLine(message.trim().split('\n')[0].replace(name + ': ', ''))])
+}
 // A Vitest file that fails in the full run but passes when rerun alone on one worker timed out under load (other sessions' checks
 // on this computer) or leans on another file's state: it is reported, not failed (owner, 21 November 2026). A file that fails alone
 // too fails the check, and more than RERUN_LIMIT failed files is a real break, so they are not rerun.
@@ -97,6 +116,7 @@ async function rerunAlone(args) {
   console.log(`Rerunning the ${failed.length} failed test file(s) alone on one worker: ${failed.join(', ')}`)
   if (!await run('test', failed, { MODWERK_DEFER_DRAFT_DOCTOR: '1', MODWERK_TEST_WORKERS: '1' })) return false
   flaky.push(...failed)
+  failures.delete(['test', ...args].join(' '))
   return true
 }
 let previous = null
@@ -114,13 +134,13 @@ async function changelogs() {
       const notes = await checkModuleChangelogs(root, base)
       console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
     }
-  } catch (error) { console.error(`Module changelogs: ${error.message}`); passed = false }
+  } catch (error) { problem('Module changelogs', `Module changelogs: ${error.message}`); passed = false }
   try {
     console.log(`Application changelog: ${checkChangelog(root, base).entries} entries in changelog/`)
-  } catch (error) { console.error(`Application changelog: ${error.message}`); passed = false }
+  } catch (error) { problem('Application changelog', `Application changelog: ${error.message}`); passed = false }
   try {
     if (plan.guides) console.log(`Documents: ${checkDocs(root, base).documents} within the size limit, frozen logs unchanged`)
-  } catch (error) { console.error(`Documents: ${error.message}`); passed = false }
+  } catch (error) { problem('Documents', `Documents: ${error.message}`); passed = false }
   return passed
 }
 // Run every check of a stage even when one fails, so a pull request sees all its problems in one run.
@@ -135,7 +155,13 @@ let passed = await run('prepare')
 // The module gates and sdk:check run in Python 3.12+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
 if (!buildOnly && !suiteOnly && passed && (plan.metadata || plan.native)) {
   const python = localPythonProblem(root)
-  if (python) { console.error(python); passed = false }
+  if (python) { problem('Python', python); passed = false }
+}
+// sdk:check stops on a compiler without its binutils (scripts/m68k-preflight.mjs), but here it runs last, after the whole test
+// suite: say so in the first seconds instead. CI's parts leave it to sdk:check itself.
+if (!buildOnly && !part && !documentationOnly && passed && plan.sdk) {
+  const toolchain = m68kToolchainProblem()
+  if (toolchain) { problem('ColdFire toolchain', toolchain); passed = false }
 }
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
 if (!buildOnly && !suiteOnly && passed) {
@@ -148,8 +174,8 @@ if (!buildOnly && !suiteOnly && plan.native && passed) passed = await all(() => 
 // How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs), and
 // whether its base-bound packages name it (scripts/base-bound.mjs): both follow a base change, so one run names both.
 if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope.base)) {
-  try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
-  try { console.log(checkBaseBound(root)) } catch (error) { console.error(error.message); passed = false }
+  try { console.log(checkBaseSize(root)) } catch (error) { problem('Base size', 'Base size: ' + error.message); passed = false }
+  try { console.log(checkBaseBound(root)) } catch (error) { problem('Base bound', error.message); passed = false }
 }
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 // The bundle imports the generated media too, so a frontend-only change needs the writes as much as a module change does.
@@ -162,7 +188,7 @@ if (passed && !suiteOnly && base && process.env.GITHUB_EVENT_PATH) {
   const pull = (() => { try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request ?? null } catch { return null } })()
   const files = execFileSync('git', ['diff', '--name-only', '--no-renames', base + '...HEAD'], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\n').filter(Boolean)
   const problems = pull ? moduleScopeProblems(files, { author: pull.user?.login, owner: process.env.GITHUB_REPOSITORY_OWNER, openedAt: pull.created_at }) : []
-  for (const problem of problems) console.error('Module scope: ' + problem)
+  for (const line of problems) problem('Module scope', 'Module scope: ' + line)
   if (problems.length) passed = false
 }
 // The agent board's claims (docs/AGENT_BOARD.md): a module, hook or migration this branch adds that someone else holds fails it;
@@ -217,6 +243,14 @@ try {
 } catch { /* the record only speeds up a rerun */ }
 const queued = (started - requested) / 1000
 console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - requested) / 1000).toFixed(2)}s${queued >= 1 ? ` (including ${queued.toFixed(1)}s waiting for a slot)` : ''}`)
+// The verdict's own lines say what failed and each one's first error; the rest of that check's output is above, under its name.
+// Vitest can fail twice (the full run, then its failed files alone): the first run's cause stands for both.
+const failed = new Map()
+for (const [name, cause] of failures.values()) if (!failed.has(name)) failed.set(name, cause)
+if (!passed && failed.size) {
+  console.log(`Failed: ${[...failed.keys()].join(', ')}`)
+  for (const [name, cause] of failed) console.log(`${process.env.GITHUB_ACTIONS ? `::error title=${name} failed::` : `  ${name}: `}${cause}`)
+} else if (!passed && interrupted) console.log('Stopped before it finished: no check failed.')
 if (flaky.length) console.log(`${process.env.GITHUB_ACTIONS ? '::warning title=Flaky tests::' : ''}Failed in the full run and passed alone, so they did not fail the check: ${flaky.join(', ')}. A file listed here run after run needs its own fix.`)
 if (skipped.length) console.log(`Rerun: ${skipped.join(', ')} passed in the last run and did not run now. Run the full check (or pr:ready) before you push.`)
 if (!passed && !process.exitCode) process.exitCode = 1

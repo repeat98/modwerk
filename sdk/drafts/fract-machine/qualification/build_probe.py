@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build a private, base72-only measurement package; never opens USB.
+"""Build a private measurement package for a verified named base; never opens USB.
 
-Run in the pinned isolated toolchain. --base-tree is an archive of c2671568,
-retaining the exact tested package's base inputs. Stock stays local/read-only.
+The defaults retain the historical base72/package6ff reproduction. For a new
+base, name BOTH its identity and the independently reproduced normal package
+SHA-256. Run in the pinned isolated toolchain; stock stays local/read-only.
 """
 import argparse
 import hashlib
@@ -22,13 +23,62 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def checked_baseline(args):
+    expected_base = getattr(args, 'base_identity', None)
+    expected_normal = getattr(args, 'normal_sha256', None)
+    if (expected_base is None) != (expected_normal is None):
+        raise ValueError('Name both --base-identity and --normal-sha256, or neither')
+    if expected_base is None:
+        expected_base, expected_normal = BASE, NORMAL_SHA
+    if any(not re.fullmatch(r'[0-9a-f]{64}', value)
+           for value in (expected_base, expected_normal)):
+        raise ValueError('Base identity and normal package hash must be lowercase SHA-256 values')
+    binding = json.loads((args.base_tree / 'sdk/machines/octatrack/base-binding.json').read_text())
+    if binding['identity'] != expected_base:
+        raise ValueError('Source tree does not match the explicitly named measurement base')
+    return expected_base, expected_normal
+
+
+def counter_addresses(package, origin, linked):
+    """Use the stock linker's real layout, including collections and BSS padding."""
+    layout, mapping = linked['link']['layout'], linked['_map']
+    run_align = package['sections']['.run'].get('align', 4)
+    if (type(run_align) is not int or not 1 <= run_align <= 4096
+            or run_align & (run_align - 1)):
+        raise ValueError('Invalid measurement section alignment: .run')
+    run_align = max(4, run_align)
+    if (layout['ddr'][0] + run_align - 1) & -run_align != origin:
+        raise ValueError('Linked base runtime origin differs from the normal package')
+    names = {'FRAMES': 'mw_frame_count', 'IDLE': 'modwerk_idle_counts',
+             'FRAME_MAX': 'mw_frame_max', 'SHARE': 'mw_frame_share', 'SHEDS': 'mw_frame_sheds'}
+    addresses = {}
+    for key, name in names.items():
+        section, offset = package['symbols'][name]
+        if section not in ('.run', '.bss'):
+            raise ValueError('Unsupported measurement section: ' + name)
+        definition = package['sections'][section]
+        size = definition['len' if section == '.run' else 'size']
+        alignment = definition.get('align', 4)
+        if (type(alignment) is not int or not 1 <= alignment <= 4096
+                or alignment & (alignment - 1)):
+            raise ValueError('Invalid measurement section alignment: ' + name)
+        if type(offset) is not int or offset < 0 or offset + 4 > size or offset % 2:
+            raise ValueError('Unaligned/out-of-section measurement symbol: ' + name)
+        start, end = layout['ddr' if section == '.run' else 'bss']
+        base = origin if section == '.run' else (start + max(4, alignment) - 1) & -max(4, alignment)
+        address = mapping[name]
+        if (type(address) is not int or address != base + offset or address % 2
+                or not start <= base < base + size <= end):
+            raise ValueError('Measurement symbol differs from the linked layout: ' + name)
+        addresses[key] = address
+    return addresses
+
+
 def build(args):
     out = args.output.resolve()
     if out.exists():
         raise ValueError('Use a new private output directory; existing evidence is preserved')
-    binding = json.loads((args.base_tree / 'sdk/machines/octatrack/base-binding.json').read_text())
-    if binding['identity'] != BASE:
-        raise ValueError('The measurement addresses require the named base72 source archive')
+    expected_base, expected_normal = checked_baseline(args)
     out.mkdir(parents=True)
     root = out / 'source'
     for relative in ('sdk/runtime', 'sdk/firmware_codec', 'sdk/machines/octatrack', 'sdk/drafts/fract-machine'):
@@ -44,23 +94,25 @@ def build(args):
     folder = root / 'sdk/drafts/fract-machine'
     recipe = folder / 'runtime-build.json'
     _, normal = builder.build(root, recipe, out / 'normal.mwrm', args.cross, args.stock, args.upstream)
-    if normal['sha256'] != NORMAL_SHA or normal['stockVerification'] != 'PASS':
+    if normal['sha256'] != expected_normal or normal['stockVerification'] != 'PASS':
         raise ValueError('The exact tested normal package did not reproduce')
     normal_work = out / 'normal-compile'; normal_work.mkdir()
     builder.compile_image(root, recipe, args.cross, normal_work)
 
     package = json.loads((root / 'src/engine/assets/octatrack-base.elemod').read_text())
     origin = normal['baseRunOrigin']
-    bss = (origin + package['sections']['.run']['len'] + 511) & ~511
-    names = {'FRAMES': 'mw_frame_count', 'IDLE': 'modwerk_idle_counts',
-             'FRAME_MAX': 'mw_frame_max', 'SHARE': 'mw_frame_share', 'SHEDS': 'mw_frame_sheds'}
-    addresses = {}
-    for key, name in names.items():
-        section, offset = package['symbols'][name]
-        size = package['sections'][section].get('size', package['sections'][section].get('len'))
-        if section not in ('.run', '.bss') or offset < 0 or offset + 4 > size or offset % 4:
-            raise ValueError('Unaligned/out-of-section measurement symbol: ' + name)
-        addresses[key] = (origin if section == '.run' else bss) + offset
+    # Stock linking includes collection tables after .run, then each section's
+    # declared alignment. Never infer BSS from a historical 512-byte boundary.
+    # The committed package omits DSP words; the standard site path restores
+    # its guarded fills from original stock before calling the pinned linker.
+    layout_receipt = out / 'base-link.json'
+    layout_tool = HERE / 'link_base_layout.mjs'
+    subprocess.run(['node', str(layout_tool), '--base-tree', str(args.base_tree.resolve()), '--stock', str(args.stock),
+                    '--output', str(layout_receipt)], check=True)
+    linked = json.loads(layout_receipt.read_text())
+    if linked['baseIdentity'] != expected_base:
+        raise ValueError('Original-stock linked base identity differs from the named base')
+    addresses = counter_addresses(package, origin, linked)
     header = folder / 'qualification/probe_addresses.h'
     header.write_text('/* Private named-base read-only addresses; not a release header. */\n' +
                       ''.join(f'#define FRACT_PROBE_{key} 0x{value:08x}u\n' for key, value in addresses.items()))
@@ -105,13 +157,15 @@ def build(args):
     capture = folder / declaration['reconstruction']
     builder.build(root, recipe, out / 'probe.mwrm', args.cross, args.stock, args.upstream, capture)
     _, probe = builder.build(root, recipe, out / 'probe.mwrm', args.cross, args.stock, args.upstream)
-    receipt = {'schema': 1, 'kind': 'PRIVATE_MEASUREMENT_ONLY', 'normalPackageSha256': NORMAL_SHA,
-               'baseIdentity': BASE, 'normal': normal, 'probe': probe, 'probeSourceSha256': sha(HERE / 'render_probe.c'),
+    receipt = {'schema': 1, 'kind': 'PRIVATE_MEASUREMENT_ONLY', 'normalPackageSha256': expected_normal,
+               'baseIdentity': expected_base, 'normal': normal, 'probe': probe, 'probeSourceSha256': sha(HERE / 'render_probe.c'),
                'originalExecutableSections': sections, 'readOnlyBaseAddresses': addresses,
+               'linkedBaseLayout': linked['link']['layout'],
+               'layoutToolSha256': sha(layout_tool),
                'hardware': 'NOT_RUN', 'deviceOpened': False, 'guardDisabled': False,
                'limits': 'Probe is a different package. Original units retain their instruction bytes, but the wrapper adds timer/call overhead. Base frame peak is since boot, not a reset window; guard share is whole-ISR, not free FRACT headroom.'}
     (out / 'probe-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
-    print(json.dumps({'normalSha256': NORMAL_SHA, 'probeSha256': probe['sha256'], 'stockVerification': probe['stockVerification'],
+    print(json.dumps({'normalSha256': expected_normal, 'probeSha256': probe['sha256'], 'stockVerification': probe['stockVerification'],
                       'originalUnitsUnchanged': len(sections), 'deviceOpened': False}))
 
 
@@ -122,4 +176,6 @@ if __name__ == '__main__':
     parser.add_argument('--stock', type=Path, required=True)
     parser.add_argument('--upstream', type=Path, required=True)
     parser.add_argument('--cross', default='m68k-elf-')
+    parser.add_argument('--base-identity', help='Expected new base identity; requires --normal-sha256')
+    parser.add_argument('--normal-sha256', help='Independently reproduced normal package hash; requires --base-identity')
     build(parser.parse_args())

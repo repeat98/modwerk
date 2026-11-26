@@ -18,35 +18,52 @@ import tempfile
 
 MODULE = Path(__file__).resolve().parents[1]
 ROOT = MODULE.parents[2]
-IMAGE_SHA = '611191d7ad91ff5ac536d9b3aec7b4a9c5e00cc33483e87a26282274a46af5a2'
-PACKAGE_SHA = '6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874'
-# Compared with the local native proof for base 72defb09. These files govern
+IMAGE_SHA = 'a80a7032c23c5e76fd1943f3bcd07ba5e3bbca215942bf1e35298f292c87e577'
+PACKAGE_SHA = 'c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29'
+# Compared with the local native proof for base eb667962. These files govern
 # the struct layout/allocation formula but need not change the module image.
 LOADER_INPUTS = {
-    'sdk/runtime/loader/loader.h': '1a1181510e5a6ba000ad57b51daad9bf0a6aa4fb27d41792ddc7e94a9b3de9e9',
-    'sdk/runtime/loader/loader.c': 'e6c210a6fc954a0558837c7d0dca6149c3c5fec35446c64853c3f3636ededf63',
+    'sdk/runtime/loader/loader.h': 'f105ada3121166179bd8ac199883e5185916329ea427eb0e8c64338eeaa50b01',
+    'sdk/runtime/loader/loader.c': '69bbdf33558eddb7cba344f550ce6ab06bfc4d0986ea950b988b681d1ed41d8a',
 }
 
 # Every register-indirect call in this exact image, resolved against its
 # containing C/assembly source and the register definitions in the disassembly.
 # The three assembly JMPs are local loop continuations, not recursive calls.
 INDIRECT = {
-    0x18cc: (), 0x194e: (), 0x2502: (),
+    0x18cc: (),
+    0x194e: (),
+    0x2502: (),
     0x3528: ('ui_pixel',),
-    **{p: ('page_text',) for p in (0x361a, 0x362e, 0x364e)},
-    **{p: ('page_word',) for p in
-       (0x3662, 0x3682, 0x369a, 0x36a2, 0x36aa, 0x36ca, 0x36d6, 0x36f2)},
-    0x3bce: ('og_pool_signed',), 0x3bde: ('og_grain_layout_upgrade',),
-    0x3efe: ('ui_unsigned',), 0x3f56: ('ui_unsigned',),
-    **{p: ('ui_text',) for p in (0x3fbc, 0x402c, 0x407a)},
-    **{p: ('ui_pixel',) for p in (0x41d2, 0x41e0, 0x42ee)},
-    0x4660: ('ui_peak',), 0x46c2: ('ui_peak',),
-    0x4712: ('fract_ui_pool_title_context',),
-    0x472c: ('fract_ui_pool_title_context',),
-    0x4788: ('og_machine_owns',), 0x4798: ('fract_ui_machine_icon',),
-    0x484a: ('og_pan_root',), 0x4856: ('og_pan_root',),
-    0x541a: ('og_mix_span', 'og_mix_span_reverse',
-             'og_join_span', 'og_join_span_reverse'),
+    0x36cc: ('page_text',),
+    0x36dc: ('page_text',),
+    0x3752: ('modwerk_page_put32.constprop.0',),
+    0x375a: ('modwerk_page_put32.constprop.0',),
+    0x3780: ('modwerk_page_put32.constprop.0',),
+    0x3790: ('modwerk_page_put32.constprop.0',),
+    0x3798: ('modwerk_page_put32.constprop.0',),
+    0x37ba: ('page_word',),
+    0x37c6: ('page_word',),
+    0x37e2: ('page_word',),
+    0x3c6a: ('og_pool_signed',),
+    0x3c7a: ('og_grain_layout_upgrade',),
+    0x3f9a: ('ui_unsigned',),
+    0x3ff2: ('ui_unsigned',),
+    0x4058: ('ui_text',),
+    0x40c8: ('ui_text',),
+    0x4116: ('ui_text',),
+    0x426e: ('ui_pixel',),
+    0x427c: ('ui_pixel',),
+    0x438a: ('ui_pixel',),
+    0x46fc: ('ui_peak',),
+    0x475e: ('ui_peak',),
+    0x47ae: ('fract_ui_pool_title_context',),
+    0x47c8: ('fract_ui_pool_title_context',),
+    0x4824: ('og_machine_owns',),
+    0x4834: ('fract_ui_machine_icon',),
+    0x48e6: ('og_pan_root',),
+    0x48f2: ('og_pan_root',),
+    0x54b6: ('og_mix_span', 'og_mix_span_reverse', 'og_join_span', 'og_join_span_reverse'),
 }
 EXTERNAL = {
     0x40004008: 'native FLEX render',
@@ -54,7 +71,7 @@ EXTERNAL = {
     0x4004d948: 'native browser redraw',
     0x40054cd8: 'native parameter publication',
     0x4007893c: 'native browser leave',
-    0x40ad05a8: 'base stock-pool open',
+    0x40ae101c: 'base stock-pool open',
 }
 ASM_FRAMES = {'og_mix_span': 48, 'og_mix_span_reverse': 48,
               'og_join_span': 56, 'og_join_span_reverse': 56}
@@ -73,6 +90,9 @@ def own_stack(work, cross, text_end):
             if qualifier not in ('static', 'dynamic,bounded'):
                 raise ValueError('Unbounded compiler frame: ' + row)
             name, amount = location.rsplit(':', 1)[1], int(amount)
+            # GCC's .su label omits the final clone ordinal in this pinned image.
+            if name == 'modwerk_page_put32.constprop':
+                name = 'modwerk_page_put32.constprop.0'
             if name in frames and frames[name] != amount:
                 raise ValueError('Ambiguous compiler frame: ' + name)
             frames[name] = amount
@@ -172,8 +192,8 @@ def measure(cross, work):
     includes = ['sdk/runtime/loader', 'sdk/runtime/upload', 'sdk/runtime/logging',
                 'sdk/machines/octatrack/elekloader']
     # The loader uses Elekloader's default 2-byte aggregate alignment, unlike
-    # FRACT's -malign-int compilation. Applying the module ABI here would add
-    # 16 bytes to the aligned header and overstate the base's real allocation.
+    # FRACT's -malign-int compilation. Applying the module ABI here changes
+    # the struct sizes being counted; measure the loader's actual ABI.
     run([cross + 'gcc', '-mcpu=54455', '-mno-align-int', '-msoft-float', '-Os',
          '-ffreestanding', '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u',
          '-DRUNTIME_POOL_BYTES=786432u', *['-I' + str(ROOT / p) for p in includes],
@@ -181,7 +201,7 @@ def measure(cross, work):
     run([cross + 'objcopy', '-O', 'binary', '--only-section=.rodata',
          work / 'layout.o', work / 'layout.bin'])
     header, owner, site, hooks, pointer = struct.unpack('>5I', (work / 'layout.bin').read_bytes())
-    if (header, owner, site, hooks, pointer) != (528, 88, 72, 38, 4):
+    if (header, owner, site, hooks, pointer) != (754, 88, 74, 63, 4):
         raise ValueError('Unexpected reviewed base-loader ABI')
     align = lambda size: (size + 15) & ~15
     return {'schema': 1, 'status': 'OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED',

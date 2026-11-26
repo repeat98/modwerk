@@ -60,6 +60,12 @@ describe('finding the unit', () => {
     expect(linkBusy('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the latest base from the card once')
     expect(linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).not.toContain('card')
   })
+  it('names the Octatrack itself first when a claim fails: starting, or stuck after a save (#2212)', () => {
+    const mac = linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')
+    expect(mac.startsWith('Your Octatrack isn’t answering this page.')).toBe(true)
+    expect(mac).toContain('wait until its screen responds')
+    expect(mac).toContain('another tab or browser')
+  })
   it('reports a browser without WebUSB instead of offering a dead button', () => {
     expect(new OctatrackLink(undefined).getState().status).toBe('unsupported')
   })

@@ -1,48 +1,43 @@
-# FRACT 0.1.2-experimental release preparation
+# FRACT 0.1.3-experimental qualification preparation
 
-This unlisted candidate consumes the merged source-runtime adapter
-(PR1274). No base firmware, active catalogue row or shared SDK code changes.
-`catalog-entry.json` and `package-entry.json` are prospective release rows.
-The package row sets `base: true` so `--base-only` rebuilds it, and declares
-`requiredBase: 72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`; its bytes/hash match
-`candidate-proof.json`. The site must admit that base before installation.
+FRACT has been relinked against released base 0.8.1, identity
+`eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0`.
+Normal package `c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`
+passes byte-exact reconstruction and both strict original-stock scans. Controls
+use the SDK page helper, with SRNG as a two-value switch. The module remains
+unlisted; there is no approved release or public package.
 
-The recipe pins only `mw_stock_pool_open` and the fixed run origin. Identity,
-package hash and export addresses come from the committed base. No base IDs or
-base-memory digest reader are compiled into FRACT. The legacy readiness entry
-now returns ready because package selection performs admission. Rebuilding a
-compatible base relinks the proven import word using the same reconstruction
-recipe. Tests exercise the actual full machine under a synthetic base change.
+The base prerequisites #1418 and #1165 have merged. Current preparation and
+remaining cases are recorded in [the dated run](qualification-20261125.md).
+The [resource audit](resources.md) now names this exact build. Hardware timing,
+stress, lifecycle, rendered UI and listening on it have not run. The
+[10 November functional report](hardware-20261110.md), existing screenshots,
+the original package6ff/base72 receipts and rows are retained in
+`history/20261110/`. Current `candidate-proof.json` and prospective catalogue/package
+rows name 0.1.3 and explicitly record hardware NOT_RUN; none is active or published.
 
-The reviewed reconstruction has nine bounded stock-copy references, one proven
-import word, no firmware bytes, and passes byte-exact reconstruction and both
-unchanged strict scans locally. Resident extent is 31,424 bytes and the own
-callback stack bound is 712 bytes. The [hardware report](hardware-20261110.md)
-records this exact candidate's functional checks, including physical reboot and
-USB restoration readback. Exact-package full-emulator START/three-head/retrigger
-and UI capture checks also pass; hardware timing/stress qualification remains
-pending. Earlier package54ca observations remain in
-`history/20261106/` and the historical section of TESTING.md.
+The normal recipe still imports only `mw_stock_pool_open` at the reviewed run
+origin. Base identity/hash are provenance and admission metadata; no digest
+reader is compiled into FRACT. Nine guarded stock-copy references reconstruct
+locally from the author's OS. No firmware, extracted code or built image is public.
 
 ## Before promotion
 
-1. Follow [the 12 November review plan](review-20261112.md). Wait for base
-   PR #1418 and then #1165 before final relinking and hardware timing. Merge
-   current main, reproduce the final package and rebuild the probe against it.
-2. Retain the completed named-build functional hardware report. Finish untested
-   stock flows, companion/stress and active replacement cases, especially Part
-   reload with another module’s machine on a neighbouring track, required for
-   qualification; do not transfer package6ff/base72 evidence to other builds.
-3. Supply the named-build performance record: worst own render/block versus
-   budget, matched native-FLEX frame/idle comparison, the frame interrupt via
-   `npm run device -- guard`, and audio stress. Nulls have
-   reasons; the owner's first-release waiver decision is pending.
-4. Retain the current screenshots and provenance in `media/`; finish
-   stock-flow/companion evidence and the qualification record, retaining every
-   untested case and reload incident.
-5. After qualification, move sources to sdk/octatrack/modules, activate catalogue
-   and package rows and community release notes, reproduce the final bytes,
-   run doctor/pr:ready and isolated release builds, and obtain owner's approval.
+1. Use the [measurement kit](../qualification/README.md) to reproduce the normal
+   package and a separately named probe for the exact running base. A development
+   twin needs its own relinked packages; release-base packages cannot substitute.
+2. Complete the fixed test procedure and change-specific cases, including all
+   controls/screens, stock flows, neighbouring-machine Part reload, active
+   replacement, exact Undo/inventory/Part restoration, MAIN/CUE dropouts and stress.
+3. Measure idle/mean CPU, both DSPs, installation and supported-instance costs,
+   admission under empty/medium load and worst render/block against the shared
+   frame guard. FRACT supports one owner; do not claim a four-instance curve.
+   Retain raw records and current source stamps; performance fields remain null.
+4. Have the author perform listening, exact-version Keep and physical reboot
+   checks after agent stage 1 passes. Earlier reports do not qualify this build.
+5. Obtain the owner's first-release decision and any explicitly required waiver;
+   then move sources to sdk/octatrack/modules, activate current catalogue/package
+   rows, reproduce final bytes and finish doctor/pr:ready and release checks.
 
-A draft preparation PR is not the listed release or approval. Do not activate
-or advertise a public download until those prerequisites are met.
+A preparation PR is not release approval. The author owns the remaining hardware
+session; the owner's review follows its evidence, not another base waiting period.

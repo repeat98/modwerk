@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
 import { ModuleDetail } from '../components/ModuleDetail'
-import { AVAILABLE_MODULES } from '../catalog/availability'
+import { AVAILABLE_MODULES, listedModules } from '../catalog/availability'
 import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { CommunityContext, emptySession } from '../community/context'
 import type { Session } from '../community/api'
@@ -98,7 +98,7 @@ describe('module detail parity across machines', () => {
     ['poly8', 'heavy', 'Heavy CPU', 'one POLY8 track with repeated trigs'],
     ['output-matrix', 'high', 'High CPU', '13.1 percentage points of audio-frame load added with ALL routes in MATRIX mode'],
   ])('shows the %s CPU badge and workload on its module page', (id, tier, badge, workload) => {
-    const module = AVAILABLE_MODULES.find(module => module.id === id)!
+    const module = listedModules().find(module => module.id === id)! // POLY8 is paused but keeps its page
     const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
     const notice = html.match(/<p class="module-caution"[^>]*>[\s\S]+?<\/p>/)?.[0]
     expect(notice).toContain('data-tier="' + tier + '"')
