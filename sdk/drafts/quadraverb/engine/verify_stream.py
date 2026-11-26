@@ -111,13 +111,6 @@ qvWXE:
 """
 
 
-def labels_unique(text):
-    import re
-    labels = re.findall(r"^(\w+):", text, re.M)
-    bad = [(a, b) for a in labels for b in labels if a != b and a in b]
-    return bad
-
-
 def junk(blocks, seed):
     rnd = random.Random(seed)
     return [[(v & 0xFFFF) | (rnd.randrange(1, 256) << 16) for v in b] for b in blocks]
@@ -234,7 +227,7 @@ def main(argv):
     work = pathlib.Path(argv[argv.index("--keep") + 1]) if "--keep" in argv else pathlib.Path(tmp.name)
     work.mkdir(parents=True, exist_ok=True)
     text = text.replace("\nproc:", "\nqvENGP:") + harness(info["stream"], plan.in_words, plan.out_words)
-    bad = labels_unique(text)
+    bad = V.labels_unique(text)
     gates("labels: none is part of another (dsp_asm substitutes label text)", not bad, str(bad[:3]))
     asm = G.assemble(text, work, name=f"qvs{p}")
     problems = G.trap_problems(asm, forms=("x0,y1", "y0,x0"))

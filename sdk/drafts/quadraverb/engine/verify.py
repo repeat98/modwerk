@@ -152,6 +152,13 @@ def price(asm, stdout, frames=G.FRAMES):
     return out
 
 
+def labels_unique(text):
+    """Pairs of labels where one is part of the other: dsp_asm substitutes a label's text wherever it appears
+    (sdk/machines/octatrack/module-adapters/stream_probe.py), so qvTQ inside qvTQF sent a branch astray."""
+    labels = re.findall(r"^(\w+):", text, re.M)
+    return [(a, b) for a in labels for b in labels if a != b and a in b]
+
+
 def main(argv):
     path, p = argv[0], int(argv[1])
     n = int(argv[argv.index("--samples") + 1]) if "--samples" in argv else 16 * 1000
@@ -200,6 +207,8 @@ def main(argv):
     tmp = G.workdir("qv-engine-")
     work = pathlib.Path(argv[argv.index("--keep") + 1]) if "--keep" in argv else pathlib.Path(tmp.name)
     work.mkdir(parents=True, exist_ok=True)
+    bad = labels_unique(text)
+    gates("labels: none is part of another (dsp_asm substitutes label text)", not bad, str(bad[:3]))
     asm = G.assemble(text, work, name=f"qv{p}")
     problems = G.trap_problems(asm, forms=("x0,y1", "y0,x0"))
     gates("assembler traps", not problems, "; ".join(problems[:5]))
