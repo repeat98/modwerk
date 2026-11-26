@@ -85,3 +85,59 @@ mw_knob_step:
         clr.l   8(%a0)                                  | a select's step neither jumps nor steps back
         clr.l   12(%a0)
 2:      jmp     (MW_STEPPER).l
+
+| MODE renames follow the track being drawn (issue #2042; fxpage.c modwerk_fxpage_names). A select that renames its
+| neighbours writes the names into its module's page, which every track running the module shares, so before a page
+| draws its six names the base runs that page's renaming formatters with the drawn track's own values. Each hook
+| keeps every register and the flags the next stock instruction does not set.
+|
+| The main page drawer's audio arm (0x4004d948), right after it resolved the page: d0 = the descriptor, 8(%fp) = the
+| page (3 FX1, 4 FX2), the track 0x100b14cc and the Part 0x100b14cf as the drawer reads the values with. Displaced:
+| move.l %d0,-16(%fp) ; mvs.b %d6,%d0.
+        .global mw_names_main
+mw_names_main:
+        move.l  %d0,-16(%fp)
+        lea     -16(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,(%sp)
+        move.l  8(%fp),%d1
+        subq.l  #3,%d1                                  | 0 FX1, 1 FX2; anything else is refused in C
+        move.l  %d1,-(%sp)
+        mvz.b   0x100b14cf,%d1
+        move.l  %d1,-(%sp)
+        mvz.b   0x100b14cc,%d1
+        move.l  %d1,-(%sp)
+        move.l  %d0,-(%sp)
+        jsr     modwerk_fxpage_names
+        lea     16(%sp),%sp
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     16(%sp),%sp
+        mvs.b   %d6,%d0
+        jmp     0x4004e4d8
+
+| The FX1 SETUP drawer (0x4003792c) and its FX2 twin (0x40037590), before their loop over the six slots: a5 = the
+| descriptor, d5 = the track (0x80000000), d6's low byte = the Part (0x80000003). Displaced: lea 58(%a5),%a4 ;
+| lea 226(%a5),%a3.
+        .global mw_names_fx1_setup
+        .global mw_names_fx2_setup
+mw_names_fx1_setup:
+        moveq   #0,%d0                                  | d0-d1 are free here: the loop sets them before use
+        bsr.s   1f
+        jmp     0x40037b94
+mw_names_fx2_setup:
+        moveq   #1,%d0
+        bsr.s   1f
+        jmp     0x400377f8
+1:      lea     -8(%sp),%sp
+        movem.l %a0-%a1,(%sp)
+        move.l  %d0,-(%sp)
+        mvz.b   %d6,%d1
+        move.l  %d1,-(%sp)
+        move.l  %d5,-(%sp)
+        move.l  %a5,-(%sp)
+        jsr     modwerk_fxpage_names
+        lea     16(%sp),%sp
+        movem.l (%sp),%a0-%a1
+        lea     8(%sp),%sp
+        lea     58(%a5),%a4
+        lea     226(%a5),%a3
+        rts

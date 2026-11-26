@@ -206,6 +206,11 @@ DYNLOAD_HOOKS = (
     (0x4008540e, 6, 'c607734f7f97b4a13e2047f38d5e2feace1aa3018ec9f19742f612139e7ac0bd', 'mw_project_end'),
     # Modwerk's: the shared wide dial for module pages' controls with more than five labels (fxpage.s).
     (0x40047a3c, 6, '9b2c003ba4d776237ad71bef15451bfea4447f2acca77ef6922dcea6ac52ca78', 'mw_wide_dial'),
+    # Modwerk's: MODE renames follow the track being drawn (fxpage.s, issue #2042): the main page drawer right after
+    # it resolved an audio track's page, and both FX SETUP drawers before their six slots.
+    (0x4004e4d2, 6, '43fb8971d058934152f99193cacc35348c6d8adede3bc870c64a201d67413995', 'mw_names_main'),
+    (0x40037b8c, 8, '7011c8e9e3666bd3caebbb2a519ace70b675a1c5000be08263a69a681271dc93', 'mw_names_fx1_setup'),
+    (0x400377f0, 8, '7011c8e9e3666bd3caebbb2a519ace70b675a1c5000be08263a69a681271dc93', 'mw_names_fx2_setup'),
     # Modwerk's: main's idle spin counts the ColdFire's idle time (status.s, status.c). Its last init call only:
     # stock's spin stays, where ot_emu parks main again after a bench call.
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
