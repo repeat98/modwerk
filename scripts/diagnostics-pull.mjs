@@ -238,11 +238,17 @@ export function members(events) {
     // Another machine's log (`machine`: the Analog Rytm MKII's, from 25 November 2026) is kept apart, once per record:
     // the Octatrack's bases, keys, restarts and freeze readings don't apply to it (machineLines).
     if (data.machine) {
-      const unit = (member.machines ??= {})[data.machine] ??= { loads: new Map(), incidents: new Map() }
+      const unit = (member.machines ??= {})[data.machine] ??= { loads: new Map(), incidents: new Map(), logs: { loads: { epoch: 0, seen: new Map(), last: 0 }, incidents: { epoch: 0, seen: new Map(), last: 0 } } }
       if (data.set) unit.set = data.set
-      // Its log starts again at every boot (start 1, seq 1), so a record is told apart by the report it came in: a
-      // group sent twice keeps its id (derived from the log's nonce and seqs in the browser), another boot's never has it.
-      for (const kind of ['incidents', 'loads']) for (const r of data.log?.[kind] ?? []) unit[kind].set(data.id + '/' + r.seq, { ...r, at: createdAt })
+      // Its log starts again at every boot (start 1, seq 1): the Octatrack's rule below tells one log from the next (a
+      // seq seen with other content, or a new one below the highest), so a group sent again, even regrouped, counts once.
+      // shortcut: two boots whose records match byte for byte at the same seqs read as one, as on the Octatrack.
+      for (const kind of ['incidents', 'loads']) {
+        const records = data.log?.[kind] ?? [], log = unit.logs[kind]
+        const same = r => JSON.stringify(r)
+        if (records.some(r => log.seen.has(r.seq) ? log.seen.get(r.seq) !== same(r) : r.seq < log.last)) Object.assign(log, { epoch: log.epoch + 1, seen: new Map(), last: 0 })
+        for (const r of records) { log.seen.set(r.seq, same(r)); log.last = Math.max(log.last, r.seq); unit[kind].set(log.epoch + '/' + r.seq, { ...r, epoch: log.epoch }) }
+      }
       found.set(username, member)
       continue
     }
@@ -291,7 +297,7 @@ export function reportsByMember(issues) {
 const MACHINE_NAMES = { 'analog-rytm-mkii': 'Analog Rytm MKII' }
 export function machineLines(member) {
   return Object.entries(member.machines ?? {}).flatMap(([machine, unit]) => {
-    const loads = [...unit.loads.values()], incidents = [...unit.incidents.values()].filter(r => r.kind !== 'start').sort((a, b) => a.at.localeCompare(b.at) || a.seq - b.seq)
+    const loads = [...unit.loads.values()], incidents = [...unit.incidents.values()].filter(r => r.kind !== 'start').sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
     const rytmIncident = r => `${r.kind}` + (r.kind === 'freeze' ? ` ${(r.a * 32 / 48000).toFixed(1)} s` : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'base' ? ` set ${r.a.toString(16).padStart(8, '0')}` : '')
       + (r.kind === 'base' ? '' : `, cpu ${percent(r.cpu)}, ${r.playing ? 'playing' : 'stopped'}, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}`)
     return [`  ${MACHINE_NAMES[machine] ?? machine}'s log` + (unit.set ? ` (set ${unit.set.crc.toString(16).padStart(8, '0')}, ${unit.set.bytes} bytes)` : '')

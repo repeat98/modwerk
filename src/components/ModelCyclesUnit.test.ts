@@ -120,10 +120,9 @@ describe('the Analog Rytm MKII page and diagnostics', () => {
     await settle(2100)
     expect(read).toHaveBeenCalledTimes(1) // not at the next reading
     const now = Date.now(), clock = vi.spyOn(Date, 'now').mockReturnValue(now + 600_000)
-    await settle(2100)
-    clock.mockRestore()
+    try { await settle(4500) } finally { clock.mockRestore() } // two readings' time: the first after the jump reads it
     expect(read).toHaveBeenCalledTimes(2) // ten minutes on
-  })
+  }, 15_000)
   it('reads no log without sharing, and says where to turn it on', async () => {
     const read = vi.fn(async () => ({ log }))
     await renderWith(rytm(), read)

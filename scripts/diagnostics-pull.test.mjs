@@ -48,11 +48,12 @@ describe('diagnostics pull', () => {
     const rytm = { event: 'device_log', phase: 'ready', machine: 'analog-rytm-mkii', set: { crc: 0xf92cbc54, bytes: 237004 } }
     const events = [entry(1, 'rytmer', { ...rytm, id: 'a', log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }),
       entry(2, 'rytmer', { ...rytm, id: 'a', log: { loads: [load], incidents: [record(1, 'start', 0), record(2, 'base', 0xf92cbc54), record(4, 'freeze', 7500)] } }), // sent twice: kept once
-      entry(3, 'rytmer', { ...rytm, id: 'b', log: { loads: [load], incidents: [] } })] // the same record from the next boot: its own
+      entry(3, 'rytmer', { ...rytm, id: 'b', log: { loads: [load, { ...load, seq: 4, minute: 10 }], incidents: [] } }), // regrouped with a newer one: once
+      entry(4, 'rytmer', { ...rytm, id: 'c', log: { loads: [{ ...load, seq: 2, minute: 0, cpu: [580, 600] }], incidents: [] } })] // a lower seq: the next boot's
     const member = members(events).get('rytmer')
     expect(member.incidents).toBeUndefined()
     const text = summary({ events, counts: [] })
-    expect(text).toContain("  Analog Rytm MKII's log (set f92cbc54, 237004 bytes): 2 five-minute records, CPU peak 63.6%, mean 58.5%")
+    expect(text).toContain("  Analog Rytm MKII's log (set f92cbc54, 237004 bytes): 3 five-minute records, CPU peak 63.6%, mean 58.3%")
     expect(text).toContain('  analog-rytm-mkii: #2 +1m30s base set f92cbc54')
     expect(text).toContain('  analog-rytm-mkii: #4 +1m30s freeze 5.0 s, cpu 58.5%, stopped, keys 31')
     expect(text).not.toContain('unit: ')
