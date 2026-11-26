@@ -166,11 +166,20 @@ load (287.8/287.8) is **not** a price — do not relabel. Same gate as
 Seq Pos MOP-249. Base draft `cursor/ot-lfo-pmtr-dest-base-a318` @ `9cd7428c4`
 (index **63**; lea deferred) is on the fork; PR held for Jon.
 
+**Shipped vs Keep package:** hardware/qual cites bind Keep tip
+`643b46c3…` / 724 B (fork base index 31). Staged upstream USB package is
+`654530b1…` / 852 B / module `038b0514` (offline rebuild vs Base draft
+index 63). The earlier Keep run does **not** cover the shipped digest —
+after `device:price`, run `device:qualify` (or re-Accept) on the priced
+tip-matched image and rebind `imageSha256`. See
+[`evidence/mwrm-rebuild-base63-mop273-2026-11-26.md`](evidence/mwrm-rebuild-base63-mop273-2026-11-26.md).
+
 | Gate | Result |
 | --- | --- |
-| Fork pin / Keep / qual / cycles | **PASS** (cite mop253–257) |
+| Fork pin / Keep / qual / cycles | **PASS** (cite mop253–257; Keep `643b46c3…`) |
+| Staged upstream `.mwrm` | `654530b1…` / 852 B — **not** covered by Keep |
 | Base `ot_lfo_pmtr_dest` on upstream | **Draft** on fork (PR held); not on `main` |
-| Upstream listing PR | **Blocked** — no forged `cpuPrice`; needs `.mwrm` after base |
+| Upstream listing PR | **Blocked** — no forged `cpuPrice`; price + qualify on shipped |
 | Accept invent | none |
 
 Evidence:
