@@ -1,0 +1,1 @@
+Octatrack base 0.8.2: when the CPU budget refuses a machine, the diagnostics log now says which tracks were refused since its last record, so the owner's summary can name the machines whose CPU price was too high. Before, it gave only every track refused since the start.

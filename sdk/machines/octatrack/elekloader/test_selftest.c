@@ -64,6 +64,8 @@ unsigned modwerk_runtime_intact(void) { return modules; }
 uint32_t modwerk_runtime_broken(void) { return 0; }
 static enum runtime_refusal test_refusal; /* the loader's own last refusal */
 enum runtime_refusal modwerk_runtime_refusal(void) { return test_refusal; }
+static enum runtime_check test_check; /* ... and the admission check that said it */
+enum runtime_check modwerk_runtime_refused_check(void) { return test_check; }
 static int test_keybus_lost; /* controller_board.c's answer: a live reader whose key bus cannot come up this boot */
 int modwerk_controller_keybus_lost(void) { return test_keybus_lost; }
 int modwerk_machine_stopped(void) { return !modwerk_test_playing; }
@@ -309,6 +311,15 @@ int main(void)
     test_refusal = RUNTIME_CONFLICT;
     modwerk_selftest_refresh();
     CHECK(modwerk_selftest.refusal == RUNTIME_CONFLICT);
+    /* A module a track runs: the slot that runs it rides above the refusal, so the site can name the track. */
+    test_refusal = RUNTIME_IN_USE, test_check = RUNTIME_CHECK_DSP, in_use_slot = 14u;
+    modwerk_selftest_refresh();
+    CHECK(modwerk_selftest.refusal == (14u << 16 | RUNTIME_IN_USE));
+    /* A controller's own in-use refusal (Analog BD, Output Matrix) in a later sync: that slot is an earlier one's, so none. */
+    test_check = RUNTIME_CHECK_NONE;
+    modwerk_selftest_refresh();
+    CHECK(modwerk_selftest.refusal == RUNTIME_IN_USE);
+    in_use_slot = 0;
     test_refusal = RUNTIME_OK;
     test_keybus_lost = 0;
     modwerk_selftest_refresh();

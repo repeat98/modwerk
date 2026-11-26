@@ -1,0 +1,1 @@
+Octatrack base 0.8.2: when a sync can't change a module because a track runs it as an effect, the site now names that track and its effect slot, for example "Track 6 runs Tape Echo as its FX2 effect in the current Part." Before, it could only list the modules the sync changed and ask you to look for them on the tracks. Older bases keep the old message.

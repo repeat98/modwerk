@@ -19,6 +19,15 @@
    "reviewedSha256": "334e32907136c79f53c0b732d739ba3f5368a53fc03dde675f3bf6475cc92f4d",
    "approval": "repeat98, 18 Nov 2026: Mute Modes 0.2.3 table owner approved for package d460c7e2, declaration 334e3290 (https://github.com/repeat98/modwerk/pull/1652#issuecomment-6971850708); the base is rebuilt with it after #1418",
    "sourceRoot": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.3/source"
+  },
+  {
+   "module": "mute-modes",
+   "package": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.4/mute-modes.mwrm",
+   "declaration": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.4/declaration.json",
+   "recipe": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.4/recipe.json",
+   "reviewedSha256": "64253fe395c591777ac01c89ceceb5f5166b64e81dbc5addcb47feda7c987009",
+   "approval": "repeat98, 25 Nov 2026: Mute Modes 0.2.4 table owner approved for package 7542f10c, declaration 64253fe3 (\"We can do that base change and push the mute modes update\", in the session that built it); base 0.8.2 admits 0.2.2, 0.2.3 and 0.2.4",
+   "sourceRoot": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes/0.2.4/source"
   }
  ]
 }

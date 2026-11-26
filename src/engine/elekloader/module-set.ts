@@ -468,6 +468,18 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
         const largest = priced.sort((a, b) => b.bytes - a.bytes).slice(0, 3).map(item => `${item.name} (${kB(item.bytes)} kB)`)
         throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. Take out ${kB(total - OCTATRACK_POOL_BYTES)} kB or more. The largest here are ${list(largest)}.`)
       }
+      // A sync is one transaction: the loader places every new package while the modules it takes out or replaces still
+      // run, and frees them only once the whole set is in, so a refused set rolls back (loader.c set_prepare_context,
+      // set_end). The pool holds both at once. A module switched off on the unit waits on the shelf, not in the pool.
+      const live = (step: Step) => step.group ? !!current.runtimeGroups?.some(item => item.id === step.id) : current.moduleIds.includes(step.id)
+      const leaving = steps.flatMap(step => step.undo && live(step) ? [{ name: step.name, bytes: extents.get(step.undo)!, removed: !step.add }] : [])
+      const peak = total + leaving.reduce((sum, item) => sum + item.bytes, 0)
+      if (peak > OCTATRACK_POOL_BYTES) {
+        const removed = leaving.filter(item => item.removed).map(item => item.name)
+        const adding = steps.filter(step => step.add && !(step.undo && live(step))).map(step => step.name)
+        throw new ModuleSetError(`The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs ${kB(peak)} kB of module memory at once, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. ` +
+          (removed.length && adding.length ? `First sync with ${list(removed)} taken out and ${list(adding)} left out, then add ${list(adding)} and sync again.` : `Take out ${kB(peak - OCTATRACK_POOL_BYTES)} kB or more.`))
+      }
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.
       function configured(entry: RuntimePackage, preset: number) {

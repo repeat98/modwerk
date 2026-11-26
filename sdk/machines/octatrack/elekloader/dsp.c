@@ -122,11 +122,15 @@ uint8_t modwerk_test_live_fx[16], *modwerk_test_bank;
 #define PART(bank, i) ((const volatile uint8_t *)((bank) + ((i) < 4 ? 0x8ed80u : 0x9504au - 4u * 6322u) + (i) * 6322u))
 static volatile int nudge;
 
+/* The first slot that runs effect `id`, + 1 (1-8 FX1 of T1-T8, 9-16 FX2), or 0. */
 static int in_use(unsigned id)
 {
-    for (unsigned i = 0; i < 16; ++i) if (LIVE_FX[i] == id) return 1;
+    for (unsigned i = 0; i < 16; ++i) if (LIVE_FX[i] == id) return (int)i + 1;
     return 0;
 }
+/* The slot behind the last admission's RUNTIME_IN_USE (selftest.h `refusal`, bits 16-23). The record shows it only while
+ * the loader's refusal is that admission's (RUNTIME_CHECK_DSP): Analog BD's and Output Matrix's controllers refuse in use too. */
+static uint32_t in_use_slot;
 /* Handles (owner, 11 October 2026): a module's effect id is a handle, not the module's for good. The
  * project's map (fxmap.c) names the module behind each; `owner` is who holds each this session. A
  * module goes where the map puts it, else to its preferred id (today's catalogue assignment), else to
@@ -285,9 +289,9 @@ int modwerk_machine_dsp_admit(const struct runtime_dsp *from, struct runtime_dsp
 {
     /* An effect a track runs, or one a transaction may hold between prepare and retirement, stays.
      * A new one may register at any time: no transaction names an effect nobody has picked. */
-    int had = from->count ? handle_of(from->module) : -1;
-    if (from->count && had >= 0 && in_use((unsigned)had)) {
-        if (!modwerk_runtime_restoring()) return RUNTIME_IN_USE; /* the host says why: pick another effect */
+    int had = from->count ? handle_of(from->module) : -1, at = had >= 0 ? in_use((unsigned)had) : 0;
+    if (from->count && at) {
+        if (!modwerk_runtime_restoring()) { in_use_slot = (uint32_t)at; return RUNTIME_IN_USE; } /* the host says why, and where */
         park((unsigned)had);
     }
     if (from->count && (!dl_publication_idle() || rebinding)) return RUNTIME_BUSY;
@@ -1057,7 +1061,7 @@ void modwerk_selftest_refresh(void)
     modwerk_selftest.live = modwerk_runtime_active();
     { extern volatile uint32_t modwerk_flash_refusal; uint32_t loader = modwerk_runtime_refusal();
       modwerk_selftest.refusal = modwerk_flash_refusal ? 100u + modwerk_flash_refusal : /* flash.h: a refused or failed base write, apart from the loader's */
-          loader ? loader : modwerk_controller_keybus_lost() ? (uint32_t)RUNTIME_FEATURE : (uint32_t)RUNTIME_OK; }
+          loader ? loader | (loader == RUNTIME_IN_USE && modwerk_runtime_refused_check() == RUNTIME_CHECK_DSP ? in_use_slot << 16 : 0u) : modwerk_controller_keybus_lost() ? (uint32_t)RUNTIME_FEATURE : (uint32_t)RUNTIME_OK; }
 }
 enum { PLACE, WAIT, HOLD, CODE, CLEAR, EMPTY, RESET };
 /* st_live: what each slot ran before the test; st_base: the batch's background, that with a core the batch emptied
@@ -1426,6 +1430,7 @@ int dl_move(unsigned core, unsigned p, unsigned offset);
 unsigned dl_arena(unsigned core);
 int modwerk_compact_plan(const unsigned *at, const unsigned *n, const unsigned *align, unsigned k, unsigned cap, unsigned *which, unsigned *to);
 unsigned modwerk_compact_left(const unsigned *at, const unsigned *n, const unsigned *align, unsigned k, unsigned cap);
+unsigned modwerk_dsp_soft_ceiling(unsigned core, unsigned capacity); /* resident_engines.c; allocator.c's weak: capacity */
 static uint32_t compact_at;
 int modwerk_dsp_compact(void)
 {
@@ -1445,11 +1450,21 @@ static unsigned placed(unsigned c, unsigned *at, unsigned *n, unsigned *align, u
     }
     return k;
 }
+/* The words packing works in: up to the allocator's soft ceiling while all of core c's code is under it, so a big block is
+ * never packed up into the words an installed controller's engines will take (#2189); else the whole arena. */
+static unsigned compact_cap(unsigned c, const unsigned *at, const unsigned *n, unsigned k)
+{
+    unsigned cap = dl_arena(c), soft = modwerk_dsp_soft_ceiling(c, cap);
+    for (unsigned i = 0; soft < cap && i < k; ++i) if (at[i] + n[i] > soft) return cap;
+    return soft < cap ? soft : cap;
+}
 static int holes(void) /* a core's free code words are in more than one run */
 {
     unsigned at[MODWERK_FX_IDS], n[MODWERK_FX_IDS], align[MODWERK_FX_IDS], id[MODWERK_FX_IDS];
-    for (unsigned c = 0; c < 2u; ++c)
-        if (modwerk_compact_left(at, n, align, placed(c, at, n, align, id), dl_arena(c))) return 1;
+    for (unsigned c = 0; c < 2u; ++c) {
+        unsigned k = placed(c, at, n, align, id);
+        if (modwerk_compact_left(at, n, align, k, compact_cap(c, at, n, k))) return 1;
+    }
     return 0;
 }
 static int move_one(void)
@@ -1457,7 +1472,7 @@ static int move_one(void)
     for (unsigned c = 0; c < 2u; ++c) {
         unsigned at[MODWERK_FX_IDS], n[MODWERK_FX_IDS], align[MODWERK_FX_IDS], id[MODWERK_FX_IDS], k = placed(c, at, n, align, id),
             which, to;
-        if (modwerk_compact_plan(at, n, align, k, dl_arena(c), &which, &to) && dl_move(c, id[which], to)) return 1;
+        if (modwerk_compact_plan(at, n, align, k, compact_cap(c, at, n, k), &which, &to) && dl_move(c, id[which], to)) return 1;
     }
     return 0;
 }
@@ -1476,11 +1491,12 @@ static void compact_tick(void)
     if (key != modwerk_status_key_at || modwerk_dsp_compact_step == 1u) key = modwerk_status_key_at, spent = 0;
     if (modwerk_dsp_compact_step == 1u) modwerk_dsp_compact_step = 2u;
     if (packed && (packed_commits != dl_residency_commits || packed_rollbacks != dl_residency_rollbacks ||
-                   packed_arena[0] != dl_arena(0) || packed_arena[1] != dl_arena(1))) packed = 0;
+                   packed_arena[0] != modwerk_dsp_soft_ceiling(0, dl_arena(0)) ||
+                   packed_arena[1] != modwerk_dsp_soft_ceiling(1, dl_arena(1)))) packed = 0;
     if (spent < 32u && (!packed || modwerk_dsp_compact_step)) {
         if (move_one()) { ++spent, modwerk_dsp_compact_moves = modwerk_dsp_compact_moves + 1; return; }
         packed = 1, packed_commits = dl_residency_commits, packed_rollbacks = dl_residency_rollbacks;
-        packed_arena[0] = dl_arena(0), packed_arena[1] = dl_arena(1);
+        packed_arena[0] = modwerk_dsp_soft_ceiling(0, dl_arena(0)), packed_arena[1] = modwerk_dsp_soft_ceiling(1, dl_arena(1));
     }
     if (modwerk_dsp_compact_step)
         modwerk_dsp_compact_counts = holes() ? 0xffffffffu : *(volatile uint32_t *)0xfc07c00cu - compact_at, modwerk_dsp_compact_step = 0;

@@ -1,0 +1,41 @@
+/* A module's video on its Overview: a wide card drawn from the module's own cover art and screen, played from YouTube on click. */
+.module-video h2 { display: flex; align-items: baseline; gap: 10px; }
+.module-video h2 small { color: var(--faint); font-size: 12px; font-weight: 400; }
+.module-video-player.forum-video { max-width: 760px; }
+.module-video-player iframe { border-radius: 12px; }
+.module-video-player .forum-video-play.has-poster { position: relative; display: block; overflow: hidden; padding: 0; border-radius: 12px; border-color: var(--line); background: var(--preview); text-align: left; }
+.module-video-player .forum-video-play.has-poster:hover { border-color: var(--line-hover); background: var(--preview); }
+
+.module-video-art { position: absolute; inset: 0; opacity: .5; transition: opacity .2s; }
+.module-video-art .module-preview { height: 100%; }
+.module-video-art .preview-label, .module-video-art .preview-controls { visibility: hidden; }
+.module-video-art .signal-art { height: 100%; }
+.forum-video-play.has-poster:hover .module-video-art { opacity: .7; }
+
+.module-video-screen { position: absolute; top: 50%; right: 5%; width: 38%; translate: 0 -50%; border: 6px solid #0d0d10; border-radius: 4px; box-shadow: 0 10px 30px #00000080; image-rendering: pixelated; filter: grayscale(1) brightness(1.15); }
+.module-video-shade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--preview) 0%, color-mix(in srgb, var(--preview) 70%, transparent) 45%, transparent 75%); }
+
+.module-video-text { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 10px; max-width: 60%; padding: 0 6%; }
+.module-video-text strong { color: var(--text); font-size: clamp(15px, 2vw, 21px); font-weight: 650; line-height: 1.3; letter-spacing: -.3px; text-wrap: balance; }
+.module-video-text small { color: var(--muted); font-size: 12px; }
+.module-video-play { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 4px; border-radius: 50%; background: #727dde; color: #fff; transition: transform .2s; }
+.module-video-play svg { fill: currentColor; }
+.forum-video-play.has-poster:hover .module-video-play { transform: scale(1.06); }
+
+.module-video-player figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; color: var(--faint); }
+
+/* The hero's link down to the video. */
+.module-watch-video { margin-top: 12px; gap: 8px; min-height: 32px; color: var(--text-secondary); font-size: 13px; }
+.module-watch-video:hover { color: var(--text); }
+.module-watch-video-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #727dde; color: #fff; }
+.module-watch-video-icon svg { fill: currentColor; }
+
+@media (max-width: 700px) {
+  .module-video-screen { display: none; }
+  .module-video-shade { background: linear-gradient(0deg, var(--preview) 15%, color-mix(in srgb, var(--preview) 40%, transparent) 100%); }
+  .module-video-text { justify-content: flex-end; max-width: 100%; padding-bottom: 5%; }
+  .module-video-play { position: absolute; top: 42%; left: 50%; translate: -50% -50%; width: 48px; height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .module-video-art, .module-video-play { transition: none; }
+}
