@@ -74,7 +74,7 @@ function buttons(row: Pick<ActionRow, 'id' | 'tier'>, expanded = false) {
 async function state(db: Database) {
   const rows = (await db.prepare('SELECT key,value FROM maintenance_bot_state').all<{ key: string; value: string }>()).results
   const value = (key: string) => rows.find(row => row.key === key)?.value ?? ''
-  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), upstream: value('upstream'), pilotReported: value('eval-pilot-reported') === '1' }
+  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), items: value('items'), upstream: value('upstream'), pilotReported: value('eval-pilot-reported') === '1' }
 }
 const setState = (db: Database, key: string, value: string) => db.prepare('INSERT INTO maintenance_bot_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key, value).run()
 
@@ -95,14 +95,17 @@ function proposal(value: unknown) {
   return { id, kind, target: target as number, tier: tier as BotTier, summary: summary.trim(), reason: reason.trim(), json, hours }
 }
 
-/** Records new proposals once; a proposal the bot already made (same id) keeps its first decision. */
+/**
+ * Records new proposals once; a proposal the bot already made (same id) keeps its first decision. One exception:
+ * an ask still waiting for the owner runs when the policy now lets it run at once (a first-time contributor's checks).
+ */
 async function propose(env: Env, db: Database, body: Record<string, unknown>) {
   if (!Array.isArray(body.actions) || body.actions.length > 50) throw new HttpError(400, 'Send at most 50 actions.')
   const items = body.actions.map(proposal), created: string[] = [], at = now()
   for (const item of items) {
     const status = item.tier === 'notify' ? 'approved' : 'pending'
     const due = item.tier === 'window' ? at + Math.round(item.hours * 3600) : at
-    const inserted = await db.prepare('INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING RETURNING id')
+    const inserted = await db.prepare(`INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET tier='notify',status='approved',updated_at=excluded.updated_at WHERE maintenance_bot_actions.status='pending' AND maintenance_bot_actions.tier='ask' AND excluded.tier='notify' RETURNING id`)
       .bind(item.id, item.kind, item.target, item.tier, item.summary, item.reason, item.json, status, due, at, at).first()
     if (inserted) created.push(item.id)
     if (!inserted || item.tier !== 'notify') await deliverNotice(env, db, item.id)
@@ -123,7 +126,7 @@ async function deliverNotice(env: Env, db: Database, id: string) {
   if (!row) return
   const seconds = row.due_at - row.created_at
   try {
-    const sent = await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: actionText({ ...row, due_at: at + seconds }), reply_markup: buttons(row), link_preview_options: { is_disabled: true } })
+    const sent = await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: actionText({ ...row, due_at: at + seconds }), reply_markup: buttons(row), link_preview_options: { is_disabled: true }, disable_notification: row.tier === 'window' })
     if (!sent?.message_id) throw new Error('Missing Telegram message ID')
     const delivered = now()
     await db.prepare('UPDATE maintenance_bot_actions SET telegram_message_id=?,due_at=?,updated_at=? WHERE id=? AND updated_at=? AND telegram_message_id IS NULL')
@@ -134,6 +137,7 @@ async function deliverNotice(env: Env, db: Database, id: string) {
   }
 }
 
+// Only what needs the owner makes the phone buzz: an ask, a failure, an urgent to-do. A window arrives silently.
 const eligible = "status='approved' OR (status='pending' AND tier='window' AND telegram_message_id IS NOT NULL AND due_at<=?)"
 
 async function due(env: Env, db: Database) {
@@ -162,6 +166,15 @@ async function finish(env: Env, db: Database, id: string, body: Record<string, u
     const text = status === 'done' ? outcomeText('✅', row) : status === 'failed' ? outcomeText('❌ Failed:', row, result) : outcomeText('➖ Dropped:', row, 'changed since')
     await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text }).catch(() => undefined)
   }
+  return { ok: true }
+}
+
+/** Drops an action that still waits but can no longer happen (closed, merged, new commits), and says so in Telegram. */
+async function expire(env: Env, db: Database, id: string, body: Record<string, unknown>) {
+  const result = typeof body.result === 'string' ? body.result.slice(0, 200) : ''
+  const row = await db.prepare(`UPDATE maintenance_bot_actions SET status='expired',result=?,updated_at=? WHERE id=? AND status='pending' RETURNING ${PUBLIC},telegram_message_id`).bind(result, now(), id).first<ActionRow>()
+  if (!row) throw new HttpError(409, 'That action no longer waits.')
+  if (row.telegram_message_id) await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text: outcomeText('➖ Dropped:', row, result) }).catch(() => undefined)
   return { ok: true }
 }
 
@@ -516,20 +529,22 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (board && method === 'POST' && (board[1] === 'claims') === (board[3] === 'release')) return response(await boardAction(env, db, board[3], board[2], await jsonBody(request)))
   if (route === '/state' && method === 'GET') return response(await state(db))
   if (route === '/state' && method === 'PUT') {
-    const body = await jsonBody(request)
+    const body = await jsonBody(request, 256 * 1024)
     if (body.fingerprint !== undefined && (typeof body.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(body.fingerprint))) throw new HttpError(400, 'A fingerprint is a SHA-256 hex digest.')
     if (body.upstream !== undefined && (typeof body.upstream !== 'string' || body.upstream.length > 4000)) throw new HttpError(400, 'The upstream heads are a short JSON text.')
-    if (body.fingerprint === undefined && body.upstream === undefined && body.pilotReported !== true) throw new HttpError(400, 'Send a fingerprint or the upstream heads.')
+    if (body.items !== undefined && (typeof body.items !== 'string' || body.items.length > 200000)) throw new HttpError(400, 'The item map is a JSON text of at most 200000 characters.')
+    if (body.fingerprint === undefined && body.upstream === undefined && body.items === undefined && body.pilotReported !== true) throw new HttpError(400, 'Send a fingerprint, the item map or the upstream heads.')
     if (body.pilotReported === true) await setState(db, 'eval-pilot-reported', '1')
     if (typeof body.fingerprint === 'string') await setState(db, 'fingerprint', body.fingerprint)
     if (typeof body.upstream === 'string') await setState(db, 'upstream', body.upstream)
+    if (typeof body.items === 'string') await setState(db, 'items', body.items)
     return response({ ok: true })
   }
   if (route === '/actions' && method === 'POST') return response(await propose(env, db, await jsonBody(request, 256 * 1024)))
   if (route === '/actions/due' && method === 'GET') return response(await due(env, db))
   if (route === '/actions/recent' && method === 'GET') return response(await recent(db, Number(new URL(request.url).searchParams.get('hours') ?? 24) || 24))
-  const item = route.match(/^\/actions\/([a-f0-9]{16})\/(claim|result)$/)
-  if (item && method === 'POST') return response(item[2] === 'claim' ? await claim(db, item[1]) : await finish(env, db, item[1], await jsonBody(request)))
+  const item = route.match(/^\/actions\/([a-f0-9]{16})\/(claim|result|expire)$/)
+  if (item && method === 'POST') return response(item[2] === 'claim' ? await claim(db, item[1]) : item[2] === 'expire' ? await expire(env, db, item[1], await jsonBody(request)) : await finish(env, db, item[1], await jsonBody(request)))
   if (route === '/report' && method === 'POST') return response(await report(env, await jsonBody(request, 64 * 1024)))
   throw new HttpError(404, 'Unknown maintenance bot route.')
 }

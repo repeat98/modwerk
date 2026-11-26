@@ -314,6 +314,24 @@ describe('maintenance bot ledger', () => {
     expect(db.prepare("SELECT status,result,payload_json FROM maintenance_bot_actions WHERE kind='review_merge'").get()).toMatchObject({ status:'done',result:merged,payload_json:JSON.stringify(body) })
   })
 
+  it('drops a waiting action that can no longer happen, starts a waiting ask the policy now runs at once, and buzzes only for asks', async () => {
+    const { bot, sent, db } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'ask'), action('b'.repeat(16), 'window', { windowHours: 1 }), action('c'.repeat(16), 'ask', { kind: 'approve_run' })] })
+    expect(sent.filter(item => item.method === 'sendMessage').map(item => item.body.disable_notification)).toEqual([false, true, false])
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/expire', 'POST', { result: 'it was closed in the meantime' })).status).toBe(200)
+    expect(sent.at(-1)).toMatchObject({ method: 'editMessageText', body: { text: '➖ Dropped: #7 Merge the thing (it was closed in the meantime)' } })
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/expire', 'POST', { result: 'again' })).status).toBe(409)
+    // The same proposal, now a notice: the waiting ask runs. A stopped one stays stopped.
+    await bot('/actions', 'POST', { actions: [action('c'.repeat(16), 'notify', { kind: 'approve_run' })] })
+    expect((await (await bot('/actions/due')).json()).actions.map((row: { id: string }) => row.id)).toEqual(['c'.repeat(16)])
+    db.prepare("UPDATE maintenance_bot_actions SET status='vetoed' WHERE id=?").run('c'.repeat(16))
+    await bot('/actions', 'POST', { actions: [action('c'.repeat(16), 'notify', { kind: 'approve_run' })] })
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+    // The map of what the last pass saw travels with the fingerprint.
+    await bot('/state', 'PUT', { items: '{"p7":"abc"}' })
+    expect((await (await bot('/state')).json()).items).toBe('{"p7":"abc"}')
+  })
+
   it('keeps the fingerprint and splits long reports', async () => {
     const { bot, sent } = await fixture()
     expect((await bot('/state', 'PUT', { fingerprint: 'nope' })).status).toBe(400)

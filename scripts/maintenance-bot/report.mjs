@@ -10,10 +10,14 @@ export function dailyReport(actions, todos = [], date = new Date()) {
   const done = Object.entries(kinds).map(([kind, n]) => n + ' ' + (NOUNS[kind]?.[n === 1 ? 0 : 1] ?? kind)).join(', ')
   const failed = actions.filter(a => a.status === 'failed' || (a.status === 'running' && date.getTime() / 1000 - a.updated_at > 3600))
   const waiting = [count('pending', 'ask') && count('pending', 'ask') + ' need your OK', count('pending', 'window') && count('pending', 'window') + ' run unless you stop them'].filter(Boolean).join(', ')
-  const urgent = todos.filter(todo => todo.urgent).slice(0, 2).map(todo => '• #' + todo.target + ' ' + todo.note.slice(0, 90))
+  const urgent = todos.filter(todo => todo.urgent).slice(0, 2).map(todo => '• ' + (todo.target ? '#' + todo.target + ' ' : '') + todo.note.slice(0, 90))
+  // Windows arrive silently, so the report names what can still be stopped, soonest first.
+  const clock = seconds => new Date(seconds * 1000).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })
+  const stoppable = actions.filter(a => a.status === 'pending' && a.tier === 'window').sort((a, b) => a.due_at - b.due_at).slice(0, 8).map(a => '• ' + clock(a.due_at) + ' ' + a.summary)
   return [
     'Modwerk, ' + date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/Berlin' }),
     waiting ? 'Waiting: ' + waiting + ' (messages above).' : 'Nothing waits for you.',
+    ...stoppable,
     done && 'Done: ' + done + '.',
     ...failed.map(a => '❌ ' + a.summary + (a.result ? ' (' + a.result.slice(0, 80) + ')' : ' (outcome unknown, check GitHub)')),
     todos.length ? 'At your computer: ' + todos.length + ' to-do' + (todos.length === 1 ? '' : 's') + ', run /modwerk-todo.' + (urgent.length ? '\n' + urgent.join('\n') : '') : '',

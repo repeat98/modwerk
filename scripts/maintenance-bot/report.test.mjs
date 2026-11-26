@@ -5,12 +5,13 @@ const row = (kind, status, tier = 'notify', extra = {}) => ({ kind, status, tier
 
 describe('maintenance bot report', () => {
   it('counts what was done and what waits, in a few lines', () => {
-    const actions = [...Array(23).fill(row('label', 'done')), row('comment', 'done'), row('merge', 'pending', 'ask'), row('close', 'pending', 'window'), row('review', 'vetoed', 'window'), row('comment', 'expired', 'window')]
+    const actions = [...Array(23).fill(row('label', 'done')), row('comment', 'done'), row('merge', 'pending', 'ask'), row('close', 'pending', 'window', { due_at: Date.parse('2026-11-17T09:30:00Z') / 1000 }), row('review', 'vetoed', 'window'), row('comment', 'expired', 'window')]
     const todos = [{ target: 1386, note: 'USB base update stuck in recovery', urgent: true }, { target: 1624, note: 'card install picks an older .bin', urgent: false }]
     const text = dailyReport(actions, todos, new Date('2026-11-17T07:00:00Z'))
     expect(text).toBe([
       'Modwerk, 17 Nov',
       'Waiting: 1 need your OK, 1 run unless you stop them (messages above).',
+      '• 10:30 #1 close',
       'Done: 23 labels, 1 reply.',
       'At your computer: 2 to-dos, run /modwerk-todo.',
       '• #1386 USB base update stuck in recovery',
@@ -43,5 +44,9 @@ describe('maintenance bot model status', () => {
     expect(silent.ok).toBe(false)
     expect(silent.line).toMatch(/No proposals returned\.$/)
     expect(modelStatus('Fraki asked about Keep').line).not.toContain('Fraki')
+    // Each lane's answer joins one file; only the three lists are taken, and every action carries its lane.
+    const { addLane } = await import('./model-status.mjs')
+    const merged = addLane({ actions: [{ kind: 'label', lane: 'light' }], todos: [], drop: [], items: { p1: 'x' } }, { ...proposals, items: { p1: 'forged' }, drop: ['t1'] }, 'hard')
+    expect(merged).toEqual({ actions: [{ kind: 'label', lane: 'light' }, { ...proposals.actions[0], lane: 'hard' }], todos: [], drop: ['t1'], items: { p1: 'x' } })
   })
 })
