@@ -79,7 +79,7 @@
     },
     {
       "id": "usb-audio-out-tracks-main-cue",
-      "version": "0.4.0-experimental",
+      "version": "0.4.1-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -219,7 +219,7 @@
     },
     {
       "id": "midi-scenes",
-      "version": "0.3.0-experimental",
+      "version": "0.3.1-experimental",
       "addedAt": "2026-11-16T20:00:00Z"
     },
     {
@@ -246,6 +246,11 @@
       "id": "songbook",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-24T09:10:19Z"
+    },
+    {
+      "id": "ungemach",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-25T20:05:10Z"
     }
   ]
 }

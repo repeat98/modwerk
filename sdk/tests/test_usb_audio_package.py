@@ -39,8 +39,8 @@ class UsbAudioPackage(unittest.TestCase):
     def test_one_configurable_package_describes_every_output_width(self):
         data, facts = builder.build(None)
         self.assertEqual(struct.unpack_from('>H', data, 66)[0], 7)
-        # The duplex package is the published one: its own kind, so the site replaces 0.3.0 with it.
-        self.assertEqual(struct.unpack_from('>H', builder.build(None, usb_input=True)[0], 66)[0], 8)
+        # The duplex package is the published one: its own kind, so the site replaces 0.3.0 and 0.4.0 with it.
+        self.assertEqual(struct.unpack_from('>H', builder.build(None, usb_input=True)[0], 66)[0], 9)
         self.assertLess(facts['image'] + facts['bss'], 128 * 1024)
         hook_count = struct.unpack_from('>I', data, 20)[0]
         hook_index = next(e['index'] for e in events.load()['events'] if e['event'] == 'ot_usb_functions')

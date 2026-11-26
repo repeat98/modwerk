@@ -1,0 +1,1 @@
+Development: a failed `npm run check` (and so `npm run pr:ready` and the pull request checks) now ends by naming every check that failed and each one's first error, for example `Failed: sdk:check` and `sdk:check: SDK checks FAILED: test_base_bound.py`. Before, the last line said only `Check FAILED`, and the cause sat far above it in the output.

@@ -31,7 +31,7 @@ function linkedTab(): DetailTab {
   return tabs.find(value => value.toLowerCase() === query.get('tab')) ?? 'Overview'
 }
 
-export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro, addBlock, onSwap, modal = false }: {
+export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, videoTarget, overviewIntro, addBlock, onSwap, modal = false }: {
   browse?: CatalogBrowse | null; onBackToResults?: () => void
   /** Shown in a dialog over another page: no way back, since nothing navigated. */
   modal?: boolean
@@ -39,6 +39,8 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   contributors?: readonly ModuleContributor[]
   titleBadge?: string
   configureTarget?: string
+  /** The id of the Overview's video section; the hero then links down to it. */
+  videoTarget?: string
   selected: boolean; onToggle: () => void; backHref: string; backLabel: string
   preview: ReactNode; resources: ReactNode; notice?: ReactNode; guide: ReactNode
   issueReport: (openRequest: number) => ReactNode
@@ -76,6 +78,14 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
       document.getElementById(configureTarget!)?.focus({ preventScroll: true })
     })
   }
+  function showVideo() {
+    setTab('Overview')
+    requestAnimationFrame(() => {
+      const section = document.getElementById(videoTarget!)
+      section?.scrollIntoView({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+      section?.querySelector<HTMLElement>('button, iframe')?.focus({ preventScroll: true })
+    })
+  }
   function showDiscussion() {
     setTab('Discussion')
     document.getElementById('tab-Discussion')?.focus()
@@ -106,6 +116,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
           {prompt.conflict && prompt.open && <AddBlockPrompt id={prompt.id} name={title} block={prompt.conflict} onCancel={prompt.close}
             onSwap={() => { onSwap?.(prompt.conflict?.swapRemoveIds ?? []); prompt.close() }} onAddAnyway={() => { onToggle(); prompt.close() }} />}
         </div>
+        {videoTarget && <button type="button" className="text-button module-watch-video" onClick={showVideo}><span className="module-watch-video-icon" aria-hidden="true"><Icon name="play" size={12} /></span>Watch the video</button>}
         <ModuleUpdateButton id={id} compact />
         <ModuleFeedbackPanel workingCount={workingCount} workingAction={<ModuleWorksReportButton key={id} id={id}/>} onReportIssue={showIssueReport}/>
         <div className="detail-rating"><button className="text-button" onClick={showDiscussion}>Reviews & discussion{discussionBadge}</button></div>
