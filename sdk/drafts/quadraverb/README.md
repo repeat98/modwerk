@@ -1,6 +1,6 @@
 # Quadraverb reverbs (draft)
 
-Status: research, 26 November 2026. A model of the DSP plays the factory reverbs on the developer's computer. Nothing here runs on an Octatrack yet.
+Status: research, 26 November 2026. A model of the DSP plays every factory program except the gated ones on the developer's computer; the memory plan is decided. Nothing here runs on an Octatrack yet.
 
 The goal is an FX2 effect that plays the Alesis Quadraverb's reverbs (plate, room, chamber, hall, reverse, gated) the way Midiverb I/II plays the Midiverb's programs: the original programs on a model of the original DSP. The owner's decisions (25 November 2026):
 
@@ -22,6 +22,8 @@ node tools/i8051.check.mjs                      # the 8051 core's self-check
 node tools/qv.check.mjs <rom>                   # the DSP model against the known programs
 node tools/dump.mjs <rom> 10 15 17              # SMALL ROOM, Concert Hall 1, SML VOCALPLATE side by side
 node tools/dump.mjs <rom> --sweep 10            # which record bytes change which DSP steps
+node tools/dis8051.mjs <rom> 61f 40             # disassemble 8051 code (any 8051 image)
+node tools/mv2lfo.mjs <midiverb2-rom>           # the Midiverb II's chorus/flange LFOs, run from its firmware
 ```
 
 `dump.mjs` prints each step as: index, op (5 bits), delay address, coefficient. The emulator boots the firmware (the display reads `PROGRAM 00 "BASIC PROGRAM"`), copies the 90 factory programs into user memory as RECALL ALL does, and recalls one with a MIDI program change. Program numbers here are those user-memory slots (0-89).
@@ -100,7 +102,16 @@ Sweeps measured on the emulator (6 s runs): STEREO CHORUS moves 356 samples over
 
 ## Memory
 
-Midiverb's relocation (`generate.mjs`: every read becomes a delay line and a delay, dead reads dropped, lines packed head to tail) applied to all 90 programs, with each sweep's full range: they need 0.5K-63K words at 42 kHz. One FX2 instance gets at most 15,870 words (16,384 if it gives up block 3; `elekloader/dsp.c`). At half rate, 29 programs fit untouched. With the longest line shortened by up to 15 %, about 18 more. The plates and gated programs need about 24K, the 1.5 s delays 31.5K.
+Midiverb's relocation (`generate.mjs`: every read becomes a delay line and a delay, dead reads dropped, lines packed head to tail) applied to all 90 programs, with each sweep's full range: they need 0.5K-63K words at 42 kHz. One FX2 instance gets at most 15,870 words (16,384 if it gives up block 3; `elekloader/dsp.c`, `FX2_BUFFER`). The dynamic loader does not change that: it loads code, and every FX2 instance still reads its own track's 16K block. At half rate, 29 programs fit untouched; with the longest line shortened by up to 15 %, about 18 more. The plates and gated programs need about 24K, the 1.5 s delays 31.5K.
+
+**The owner's decision (26 November 2026): a hybrid.** Shortening delays, storing samples in fewer bits, and giving one instance a second block were all turned down. Instead, the short lines stay in the DSP buffer and the long ones live in SDRAM, moved by the ColdFire once a 16-sample frame. A line can move when every read from it lags its head by more than the round trip (assumed 64 samples, four frames). With that, all 90 programs fit untouched in 16-bit:
+
+| | Programs | Words crossing per frame, per instance, each way |
+| --- | --- | --- |
+| Half rate (21 kHz) | 90 / 90 | median 32, worst 160 (HOLMES' Plate) |
+| Full rate (42 kHz) | 90 / 90 | median 224, worst 560 |
+
+For scale, stock DELAY moves about 100 words a frame for each of the eight tracks. This needs a new base feature, a module's own DSP↔SDRAM stream: see [RESEARCH-2026-11-26.md](RESEARCH-2026-11-26.md).
 
 ## The firmware
 
@@ -151,18 +162,14 @@ In the graphic-EQ configuration, bytes 0x01-0x0b are the eleven band gains: 14 i
 
 ## Next steps
 
-1. **The LFO.** The timer interrupt rewrites the swept delay reads (0x0e60-0x0f27). The model sees one snapshot. Port the update rule or record it from the emulator.
-2. **The gate.** The gated programs (23-27) stay silent: the firmware drives the gate at run time (0x6ff4-0x70bd). Same approach as the LFO.
-3. **Word width and saturation.** Unknown. Whatever is chosen is an assumption and is labelled as one.
-4. **Listen.** Render the reverbs and judge them by ear; compare with published recordings of the Quadraverb where they exist, labelled as such.
-5. **Fit it on the Octatrack.** An FX2 slot has 16K words. The reverbs use nearly all 64K, so even at half the rate (21 kHz) they need about 32K. The options:
-   - configuration 0's reverb (24K words, 12K at half rate: fits, a smaller tank);
-   - the full reverbs at a quarter rate (lo-fi);
-   - a second buffer from the base, if one exists;
-   - shorter delays (no longer the original).
-   The owner picks.
-6. The module needs an FX2 id: none is left until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md).
-7. The other ROMs (QV+ 2.03, GT 1.03) need their factory-table and RAM addresses added to `ROMS` in `tools/machine.mjs`; the routines should be the same shape.
+1. **The base stream channel** (owner's decision, 26 November 2026): probe A first (extra host-port blocks to DSP core 0, timed, with a checker), then reads, core 1 and an SDRAM echo, on a branch of the cumulative base draft (#2079). Plan in [RESEARCH-2026-11-26.md](RESEARCH-2026-11-26.md).
+2. **The sweeps as parameters.** For each program, record range, period, waveform and phase of every swept pair from the emulator (as `tools/` did for the Midiverb II), and check a parametric reconstruction against the trace within a sample. Pitch shift and Leslie need their own forms.
+3. **The gate.** The gated programs (3, 23, 26) stay silent: the firmware drives the gate at run time (0x6ff4-0x70bd).
+4. **The engine.** Midiverb's pattern (a DSP interpreter fed by a stream of program words), with the sweeps generated on the DSP and the long lines through the stream channel. Half rate first: DSP time at full rate is unlikely to fit 414 executed instructions.
+5. **Word width and saturation.** Unknown. Whatever is chosen is an assumption and is labelled as one.
+6. **Listen.** Render the programs and judge them by ear; compare with published recordings of the Quadraverb where they exist, labelled as such.
+7. The module needs an FX2 id: none is left until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md).
+8. The other ROMs (QV+ 2.03, GT 1.03) need their factory-table and RAM addresses added to `ROMS` in `tools/machine.mjs`; the routines should be the same shape.
 
 ## Authorship
 
