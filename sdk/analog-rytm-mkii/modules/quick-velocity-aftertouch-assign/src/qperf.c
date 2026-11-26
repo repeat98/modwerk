@@ -256,7 +256,10 @@ static int scene_engaged_by_us = -2;    // the scene the lane engaged, for the t
 static int scene_engaged_ticks;         // ticks that guard lasts
 static int scene_loop, scene_period;    // the lane's loop and its repeat period, as the
                                         // performance lanes' (it extends in the UI tick)
-static volatile int scene_wipe;         // the audio block's wipe asks the tick to empty it
+static volatile int scene_wipe;         // a wipe asks the UI to empty the lane: 1, or 2 for a
+                                        // new pattern or project (no scene change to record yet)
+static int scene_pass_steps, scene_passes;  // the lane's own pass count, as pass_steps and passes
+QPERF_UI static void scene_lane_sync(void);
 
 // What the audio block reads when nothing happens, together on four cache lines: stock's
 // audio work evicts module data every block, and each cold line costs about 20 ticks.
@@ -850,6 +853,7 @@ static void render_all(void)
     if (pattern != hot.perf_rec_pattern) {
         release_driven();
         wipe();
+        scene_wipe = 2;
         hot.perf_rec_pattern = pattern;
     }
     // A longer loop fills its new steps with the take, once, here; a shorter one plays the
@@ -1415,10 +1419,13 @@ QPERF_UI static void apply_perf_rec(void)
             wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
     }
     release_driven();
-    if (scenes) {                       // the steps now hold the scenes: one the lane engaged would add again
-        int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);
-        if (active >= 0 && active == scene_engaged_by_us)
+    if (scenes) {                       // the steps now hold the take's scenes: one still engaged
+        int active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);   // would lock every step over them
+        if (active >= 0 && (scenes >> active & 1)) {
             ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, -1, 1);
+            scene_engaged_by_us = -1;   // the lane's own change, not a hand's
+            scene_engaged_ticks = 2;
+        }
     }
     wipe();
     if (skipped) {
@@ -1458,6 +1465,7 @@ QPERF_UI static void clear_perf_rec(void)
 
 static void perf_rec_action(int key)
 {
+    scene_lane_sync();                  // a wipe the tick has not seen yet
     hot.perf_rec_busy = 1;
     if (key == KEY_YES)
         apply_perf_rec();
@@ -1644,18 +1652,37 @@ QPERF_UI static void scene_lane_clear(int steps)
     scene_loop = scene_period = steps;
 }
 
+// Empties the lane when a wipe asked for it (the audio block's on a new pattern or a
+// replaced take, RECORD + YES's own).
+QPERF_UI static void scene_lane_sync(void)
+{
+    int asked = scene_wipe;
+    if (!asked)
+        return;
+    scene_wipe = 0;
+    scene_lane_clear(perf_rec_steps(live_pattern_data()));
+    if (asked == 2)
+        scene_last_seen = -2;           // a new pattern or project: no change to record yet
+}
+
+QPERF_UI static void scene_lane_record(int from, int to, int scene)
+{
+    int i;
+    for (i = from; i <= to; i++) {
+        scene_rec[i] = (unsigned char)(scene + 1);
+        scene_rec_has[i / POINTS] |= (unsigned char)(1 << (i % POINTS));
+    }
+    scene_used = 1;
+}
+
 QPERF_UI static void scene_lane_tick(void)
 {
     void *kit = active_kit();
-    int active, pos, from, i, steps, engaged = 0;
+    int active, pos, from, i, steps, engaged = 0, wrapped;
     if (!hot.ready)
         return;
+    scene_lane_sync();
     steps = perf_rec_steps(live_pattern_data());
-    if (scene_wipe) {
-        scene_wipe = 0;
-        scene_lane_clear(steps);
-        scene_last_seen = -2;           // a new pattern or project: no change to record yet
-    }
     active = ((int (*)(void *))ACTIVE_SCENE_AT)(kit);
     if (steps != scene_loop && !hot.perf_rec_hidden) {
         if (steps > scene_loop && scene_used && scene_period)
@@ -1675,6 +1702,23 @@ QPERF_UI static void scene_lane_tick(void)
     }
     pos = position();
     from = scene_last_pos;
+    // The pulse handler can cut the tick's read of the position, which then reads up to a
+    // step ahead: a step back from that is standing still, not the loop coming round.
+    if (from >= 0 && pos < from && from - pos < POINTS)
+        pos = from;
+    wrapped = from < 0 ? pos < POINTS : pos < from;
+    // The lane's period follows a shorter loop once a whole pass has played at it, as the
+    // performance lanes' does.
+    if (steps != scene_pass_steps || hot.perf_rec_hidden) {
+        scene_pass_steps = steps;
+        scene_passes = 0;
+    }
+    if (wrapped) {
+        if (scene_passes < 2)
+            scene_passes++;
+        if (scene_passes == 2 && steps < scene_period)
+            scene_period = steps;
+    }
     if (!live_rec())
         scene_armed = 0;
     else if (scene_last_seen != -2 && active != scene_last_seen && active != scene_engaged_by_us) {
@@ -1689,22 +1733,23 @@ QPERF_UI static void scene_lane_tick(void)
         if (!scene_used || scene_period < scene_loop)
             scene_period = scene_loop = steps;
         scene_armed = 1;                // the musician changed the scene: record from here
+        from = -1;                      // from this tick's place, not the last one's
     }
     if (scene_armed) {
-        if (from >= 0 && pos < from)
-            scene_armed = 0;            // the loop came round: the take plays from now
-        else {
-            if (from < 0 || pos - from > POINTS)
+        if (from >= 0 && pos < from) {  // the loop came round: fill to its end, then the take plays
+            scene_lane_record(from + 1, steps * POINTS - 1, scene_last_seen);
+            scene_armed = 0;
+        } else {
+            // A tick is 50 ms, several points at a fast tempo: fill what it passed. A jump
+            // of more than four steps is a new place, not a stretch played.
+            if (from < 0 || pos - from > 4 * POINTS)
                 from = pos - 1;
-            for (i = from + 1; i <= pos; i++) {
-                scene_rec[i] = (unsigned char)(active + 1);
-                scene_rec_has[i / POINTS] |= (unsigned char)(1 << (i % POINTS));
-            }
-            scene_used = 1;
+            scene_lane_record(from + 1, pos, active);
         }
     } else if (scene_used && !hot.perf_rec_hidden && from != pos && !IS_KEY_HELD(KEY_SCENE)
                && (scene_rec_has[pos / POINTS] >> (pos % POINTS) & 1)) {
-        int was = from >= 0 && (scene_rec_has[from / POINTS] >> (from % POINTS) & 1) ? scene_rec[from] : -1;
+        int was = from >= 0 && !wrapped && (scene_rec_has[from / POINTS] >> (from % POINTS) & 1)
+            ? scene_rec[from] : -1;
         if (scene_rec[pos] != was && scene_rec[pos] != active + 1) {
             ((void (*)(void *, int, int))SCENE_ENGAGE_AT)(kit, scene_rec[pos] - 1, 1);
             scene_engaged_by_us = active = scene_rec[pos] - 1;
