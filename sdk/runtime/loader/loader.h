@@ -139,6 +139,8 @@ int modwerk_runtime_owner_held(const struct runtime_owner *,unsigned *hint);
  * journal switch); odd while one is under way. A result derived from owners while it was even and unchanged still
  * holds, apart from each owner's own header, which modwerk_runtime_owner_held checks. */
 uint32_t modwerk_runtime_owner_epoch(void);
+/* Stable lock held. Changes only when this image is actually republished. */
+uint32_t modwerk_runtime_publication(uintptr_t image);
 /* Why the last package was refused, for diagnostics and the unit's own message. */
 enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CONFLICT, RUNTIME_FULL, RUNTIME_BUSY, RUNTIME_CYCLES,
                        RUNTIME_IN_USE /* a track runs the effect it would replace or remove */,
@@ -167,6 +169,7 @@ extern const struct mu_backend modwerk_runtime_backend;
  * uses the production module admission/switches and retains every predecessor
  * through trial. Publish may return MU_PUBLISHING_MORE; never implicit Keep. */
 int modwerk_runtime_set_busy(void);
+int modwerk_runtime_set_trial_ready(void);
 #ifdef MODWERK_RUNTIME_SETS
 extern const struct mu_backend modwerk_runtime_set_backend;
 int modwerk_runtime_handle_reserved(uint32_t module, unsigned handle);

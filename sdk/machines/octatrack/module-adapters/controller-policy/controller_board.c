@@ -141,7 +141,12 @@ static int same_identity(const struct mw_controller_identity *a, const struct mw
         a->parameter_revision == b->parameter_revision;
 }
 static int held(const struct mw_controller_slot *s) { return s->state != MW_CTL_EMPTY && s->state != MW_CTL_RELEASED; }
-static int jobs(const struct mw_controller_slot *s) { return s->job_state[0] || s->job_state[1]; }
+static int track_jobs(const struct mw_controller_slot *);
+static void track_poll(void);
+static int track_prepare(unsigned);
+static int track_capacity(const struct mw_controller_slot *,const struct runtime_module *);
+void modwerk_dsp_track_tick(void);
+static int jobs(const struct mw_controller_slot *s) { return s->job_state[0] || s->job_state[1] || track_jobs(s); }
 
 /* The compiled rows, whole: one identity and image per package, valid entries. */
 static int rows_valid(void)
@@ -456,6 +461,7 @@ static void begin(unsigned at, unsigned c, unsigned op)
 {
     struct mw_controller_slot *s = &REGISTRY.slots[at];
     if (transport.held[c] || s->job_state[c] || kb_lane[c].op) return;
+    if (op == MW_CTL_ENABLE && !track_prepare(at)) return;
     if (mw_controller_transport_begin(&transport, &s->binding, c, op) == MW_CTL_PENDING && op == MW_CTL_ENABLE)
         verified[at] = s->binding.generation;
 }
@@ -755,10 +761,12 @@ static void advance(unsigned at)
     int quiesce = !published || (want[at].generation == b->generation && want[at].quiesce);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
     /* Unused by this bank (use_tick): never placed, or parked while the unit is quiet and settled, as compaction waits. */
-    int idle = !quiesce && !(used & b->identity.feature), park = idle && !jobs(s) && mw_engines_settled();
+    int capacity = !track_capacity(s,m);
+    int idle = !quiesce && (!(used & b->identity.feature) || capacity);
+    int park = idle && !jobs(s) && (capacity || mw_engines_settled());
     if (!idle && s->state != MW_CTL_DISABLING && s->state != MW_CTL_RETIRING) parked[at] = 0;
 #else
-    int idle = 0, park = 0;
+    int idle = !quiesce && !track_capacity(s,m), park = idle && !jobs(s);
 #endif
     switch (s->state) {
     case MW_CTL_RESERVED:
@@ -842,7 +850,7 @@ static void advance(unsigned at)
     default: break; /* QUARANTINED holds everything; nothing is retried */
     }
 }
-void modwerk_controller_tick(void)
+__attribute__((optimize("no-jump-tables"))) void modwerk_controller_tick(void)
 {
     uint32_t irq = modwerk_machine_lock();
     ++ticks;
@@ -852,7 +860,9 @@ void modwerk_controller_tick(void)
             !mw_controller_transport_init(&transport, &REGISTRY, &providers, 0);
     }
     if (!closed) {
+        modwerk_dsp_track_tick();
         poll();
+        track_poll();
 #ifdef MODWERK_RESIDENT_ON_DEMAND
         mw_engines_poll();
 #endif
@@ -992,3 +1002,5 @@ unsigned modwerk_controller_held(void)
         ((kb_dirty[0] || kb_dirty[1]) && !closed)) features |= KEYBUS; /* until its seed is scrubbed */
     return features;
 }
+
+#include "track_control.inc"

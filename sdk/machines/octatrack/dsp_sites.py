@@ -55,14 +55,21 @@ def load(path=REGISTRY):
                              '"feature" (exclusive) or a "features" list (a chain)' % n)
         if s['kind'] == 'exclusive' and (s['feature'] not in bits or s['feature'] in packaged):
             raise ValueError('dsp-sites.json: exclusive site %d has an unknown or a packaged feature' % n)
-        # A chain: the base's stub calls each listed packaged feature's engine in turn, so every one of them must run
-        # on each payload the site exists on, and leave through its exit.
-        if s['kind'] == 'chain' and (not s['features'] or len(set(s['features'])) != len(s['features']) or
-                                     any(f not in packaged or set(packaged[f]['cores']) != {'A', 'B'} & set(s)
-                                         for f in s['features']) or 'exit' not in s):
-            raise ValueError('dsp-sites.json: chain site %d lists a feature that is not packaged, runs on other '
-                             'payloads than the site, or appears twice; or it has no exit' % n)
-        chained += s.get('features', [])
+        # Returning chains can mix named resident entries and packaged entries.
+        features = {f['bit']: f for f in reg['features']}
+        if s['kind'] == 'chain':
+            members = s['features']
+            if not members or len(set(members)) != len(members) or any(
+                    f not in features or set(features[f]['cores']) != {'A', 'B'} & set(s)
+                    for f in members):
+                raise ValueError('Invalid chain members/cores')
+            residents = {str(f) for f in members if f not in packaged}
+            if set(s.get('entries', {})) != residents or any(
+                    not isinstance(v, str) or not v for v in s.get('entries', {}).values()):
+                raise ValueError('Every resident chain member needs exactly one named entry')
+            if residents and 'exit' in s:
+                raise ValueError('Resident members are supported only in returning chains')
+            chained += [f for f in members if f in packaged]
         if not {'A', 'B'} & set(s) or len(s['guardSha256']) != 64:
             raise ValueError('dsp-sites.json: site %s names no payload or no guard' % s['name'])
         for tag in ('A', 'B'):

@@ -833,7 +833,8 @@ void modwerk_modset_service(void)
         modwerk_modset_switch_result = switch_now(switch_id, switch_on);
         switch_asked = 0;
     }
-    if (VOLATILE_BLOCKED() || !GATE()) return;
+    if ((VOLATILE_BLOCKED() && !modwerk_runtime_set_trial_ready()) || !GATE()) return;
+    if (!restored && VOLATILE_BLOCKED()) return;
     if (!restored) { /* three seconds in: the project and the card are up; then the restore's retries */
         if (!restore_tries) { if (TICKS > 180u) restore(); }
         else if (TICKS >= retry_at) restore_pass();
@@ -854,6 +855,7 @@ void modwerk_modset_service(void)
         }
     }
 #endif
+    if (VOLATILE_BLOCKED()) return; /* trial readiness never permits a saved-set write */
     if (!pending || TICKS < retry_at) return;
     slot ^= 1u;
     if (!store(slot)) slot ^= 1u, retry_at = TICKS + 600u, modwerk_modset_result = SAVE_FAILED; /* ten seconds, then again */

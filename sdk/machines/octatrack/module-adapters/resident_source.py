@@ -65,6 +65,10 @@ def sources(root=ROOT):
         output[name] = ''.join(lines + original[name][cursor:])
     if set(output) != set(original):
         raise ValueError('Incomplete resident base source patch')
+    from track_receiver import loader_source
+    from track_budget import dsp
+    output['dsp_receiver.asm'] = loader_source(output['dsp_receiver.asm'])
+    output['dsp.c'] = dsp(output['dsp.c'], (RUNTIME / 'track_budget.c').read_text())
     return output
 
 

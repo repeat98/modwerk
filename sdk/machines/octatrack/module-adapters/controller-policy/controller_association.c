@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "controller_association.h"
+#include "controller_features.h"
 
 enum { JOB_NONE, JOB_SUBMITTED, JOB_ACKED, JOB_UNKNOWN };
 static void zero(void *out,unsigned size) { uint8_t *p=out; while(size--) *p++=0; }
@@ -7,7 +8,7 @@ static int same_digest(const uint8_t *a,const uint8_t *b) {
     for(unsigned i=0;i<32;++i) if(a[i]!=b[i]) return 0;
     return 1;
 }
-static unsigned cores(unsigned feature) { return feature==2u ? 1u : feature==1u || feature==4u ? 3u : 0u; }
+static unsigned cores(unsigned feature) { return mw_controller_cores(feature); }
 static int digest(const uint8_t d[32]) { unsigned v=0; for(unsigned i=0;i<32;++i) v|=d[i]; return v!=0; }
 static int identity(const struct mw_controller_identity *a,const struct mw_controller_identity *b) {
     return same_digest(a->package_sha256,b->package_sha256) && same_digest(a->source_policy_sha256,b->source_policy_sha256) &&
@@ -96,14 +97,14 @@ int mw_controller_start(struct mw_controller_registry *r,const struct mw_control
     } else if(j->operation==MW_CTL_ENABLE) {
         if((s->state!=MW_CTL_READY && s->state!=MW_CTL_PUBLISHING) || (s->state==MW_CTL_READY && jobs(s)) ||
            s->enable_acks>>c&1u || j->offset || j->count ||
-           (j->expected&~(c ? 13u : 15u)) || j->desired!=(j->expected|feature) ||
+           (j->expected&~mw_controller_allowed(c)) || j->desired!=(j->expected|feature) ||
            !r->backend->resources_idle || r->backend->resources_idle(r->context,b)!=1) return MW_CTL_CLOSED;
         next=MW_CTL_PUBLISHING;
     } else if(j->operation==MW_CTL_DISABLE) {
         /* A restored generation is touched before its first reset ACK: its
          * feature is already off, so this disable is the exact no-op CAS. */
         if((s->state<MW_CTL_INITIALIZING && !(s->state==MW_CTL_BOUND && s->touched)) || s->state>MW_CTL_QUARANTINED || j->offset || j->count ||
-           (j->expected&~(c ? 13u : 15u)) || j->desired!=(j->expected&~feature)) return MW_CTL_CLOSED;
+           (j->expected&~mw_controller_allowed(c)) || j->desired!=(j->expected&~feature)) return MW_CTL_CLOSED;
         if(s->state!=MW_CTL_DISABLING) {
             if(jobs(s)) return MW_CTL_CLOSED;
             s->disable_acks=0;

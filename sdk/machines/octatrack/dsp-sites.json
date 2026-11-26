@@ -6,13 +6,15 @@
     {"bit": 2, "name": "matrix", "cores": ["A"], "implies": [], "about": "Output Matrix's mix and phones paths"},
     {"bit": 4, "name": "analog-bd", "cores": ["A", "B"], "implies": [], "packaged": true, "about": "Analog BD's source: its engine and initial X words come from its controller's package (ABI 10), never from the base"},
     {"bit": 8, "name": "keybus", "cores": ["A", "B"], "implies": [], "about": "the base-owned key bus: every track's FX1 input, on each core and in the cross-core window",
-     "executed": 25, "hardware": 43, "evidence": "evidence/keybus-tap-timing-20261123.json", "cost": "its tap, per core while the base holds it. executed: instructions a sample for a core's four tracks, seeded, counted statically from its source (resident_dsp.keybus_executed; 25 since Sidechain Compressor 0.2.0's one-pass tap, 41 before). hardware: chip cycles a sample on core 0 of an MKII (load meter, the evidence file): 42.2 for the one-pass tap on 23 November 2026, charged rounded up; 51 on the 41-instruction tap (23 October 2026)"}
+     "executed": 25, "hardware": 43, "evidence": "evidence/keybus-tap-timing-20261123.json", "cost": "its tap, per core while the base holds it. executed: instructions a sample for a core's four tracks, seeded, counted statically from its source (resident_dsp.keybus_executed; 25 since Sidechain Compressor 0.2.0's one-pass tap, 41 before). hardware: chip cycles a sample on core 0 of an MKII (load meter, the evidence file): 42.2 for the one-pass tap on 23 November 2026, charged rounded up; 51 on the 41-instruction tap (23 October 2026)"},
+    {"bit": 16, "name": "track-processor", "cores": ["A", "B"], "implies": [], "packaged": true, "about": "Private returning pre-FX track processor; unqualified"}
   ],
   "sites": [
-    {"index": 0, "name": "dsp_fx1_dispatch", "feature": 8, "module": "sidechain-compressor", "label": "sctap",
+    {"index": 0, "name": "dsp_fx1_dispatch", "features": [16, 8], "entries": {"8": "sctap"}, "module": "sidechain-compressor", "label": "sctap",
      "A": "0x004a7", "B": "0x0029c", "words": 2, "guardSha256": "92441a8fc9f1dd20359d87c8342e3d5653d8c853a274358df0cfc0451c57115b",
      "when": "the dispatcher, for every track on every block, before FX1; X:$420 holds the track",
-     "clobbers": ["a", "b", "r0", "r1", "n1", "x0"], "kind": "exclusive"},
+     "clobbers": ["a", "b", "r0", "r1", "n1", "x0"], "kind": "chain",
+     "contract": "Returning chain: packaged processor, then native key-bus tap, then stock replay and FX1/FX2. No skip exit."},
     {"index": 1, "name": "dsp_compressor_proc", "feature": 1, "module": "sidechain-compressor", "label": "scdet",
      "A": "0x01ab1", "B": "0x01871", "words": 2, "guardSha256": "114aacb95ee45437fff14f2dcd91b67e26d8bc42ef3ba2e9f6ae0cb8be1574fa",
      "when": "stock COMPRESSOR's proc, at its first instruction", "clobbers": [], "kind": "exclusive"},
@@ -42,6 +44,7 @@
     {"feature": 2, "space": "y", "cores": ["A"], "start": "0xc00", "words": "0xc1", "about": "Output Matrix's levels and state"},
     {"feature": 4, "space": "x", "cores": ["A", "B"], "start": "0x2840", "words": "0xec0", "about": "Analog BD's tables and voice blocks"},
     {"feature": 8, "space": "y", "shared": true, "start": "0x3dfe", "words": "0x202", "about": "seed, counter, then 4 tracks x 4 generations x 32 words: listed first, so a reset's first chunk zeroes the seed"},
-    {"feature": 8, "space": "y", "cores": ["A", "B"], "start": "0x7e00", "words": "0x200", "about": "the key bus: 8 tracks x 64 words, the first 32 published; the first internal FX2 slot's tail (+$3E00), past every +$3DFD ring"}
+    {"feature": 8, "space": "y", "cores": ["A", "B"], "start": "0x7e00", "words": "0x200", "about": "the key bus: 8 tracks x 64 words, the first 32 published; the first internal FX2 slot's tail (+$3E00), past every +$3DFD ring"},
+    {"feature": 16, "space": "y", "cores": ["A", "B"], "start": "0xd00", "words": "0xc0", "about": "Four 32-word processor states plus 64 register/publication scratch words; private unqualified claim"}
   ]
 }

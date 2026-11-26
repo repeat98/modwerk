@@ -27,6 +27,7 @@ static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static struct runtime_module *volatile live[RUNTIME_MODULES];
+static uint32_t publication_serial[RUNTIME_MODULES], publication_sequence;
 /* One bit per position for each of the four UI hooks, lowest position first (ColdFire ff1). */
 static volatile uint32_t ui_positions[RUNTIME_EVENTS][(RUNTIME_MODULES + 31u) / 32u];
 static struct runtime_module *owned[OWNERS]; /* every module holding pool memory */
@@ -77,6 +78,15 @@ static struct {
 #define JUDGED_CAPABILITY 0u
 #endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
+int modwerk_runtime_set_trial_ready(void)
+{
+#ifdef MODWERK_RUNTIME_SETS
+    return !modwerk_runtime_volatile_busy() && change_set.count && !change_set.preparing &&
+        change_set.complete && change_set.published == change_set.count;
+#else
+    return 0;
+#endif
+}
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
 __attribute__((weak)) int modwerk_machine_journal_enabled(void) { return 0; }
 __attribute__((weak)) int modwerk_machine_journal_begin_safe(void) { return 0; }
@@ -127,12 +137,22 @@ __attribute__((weak)) int modwerk_machine_image_validate(const struct runtime_ds
 const struct runtime_module *modwerk_runtime_module(unsigned i) { return i < RUNTIME_MODULES ? live[i] : 0; }
 /* The engine task is the only writer. Add the new bits before publishing the module and clear its absent
  * hooks afterwards. A reader can interrupt anywhere: an extra bit just makes it look at the live slot. */
+uint32_t modwerk_runtime_publication(uintptr_t image)
+{
+    /* Caller holds the machine's stable lock, as for owner resolution. */
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i)
+        if (live[i] && (uintptr_t)live[i]->dsp.image == image) return publication_serial[i];
+    return 0;
+}
 static void set_live(unsigned position, struct runtime_module *m)
 {
     unsigned word = position / 32u;
     uint32_t bit = 0x80000000u >> (position % 32u);
     for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
         if (m && m->hook[e]) ui_positions[e][word] |= bit;
+    /* Never reuse a serial, including after Undo republishes the old image.
+     * Exhaustion fails closed for clients, rather than confusing continuity. */
+    publication_serial[position] = m && publication_sequence != UINT32_MAX ? ++publication_sequence : 0;
     live[position] = m;
     for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
         if (!m || !m->hook[e]) ui_positions[e][word] &= ~bit;

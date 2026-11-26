@@ -385,14 +385,15 @@ def manager(text):
 
 
 def transport(text):
-    """The generated transfer.c, after resident_driver.transport."""
-    return _change(text, '    if(op==10u && (id&~(c ? 13u:15u) || init&~(c ? 13u:15u) || proc)) return 0;',
-                   '    if(op==10u && (proc>=0x2000u || (!proc && (id&~(c ? 13u:15u) || init&~(c ? 13u:15u))))) return 0;\n'
-                   '    /* PLACE (word 7 the engine\'s words, 1..0x1fff): one on-demand feature this core carries; offset 0\n'
-                   '     * unplaces, else a table offset inside the arena (the receiver bounds the engine\'s end by its\n'
-                   '     * permanent block). */\n'
-                   '    if(op==10u && proc && ((id!=1u && id!=2u && id!=4u && id!=8u) || id&~(c ? 13u:15u) ||\n'
-                   '       (init && (init<DL_CODE_START || init>=dl_pool_words[c])))) return 0;', 'transport PLACE')
+    """Ledger-driven PLACE validation, after resident_driver.transport."""
+    a,b=resident_dsp.ALLOWED['A'],resident_dsp.ALLOWED['B']
+    mask='(c ? %du:%du)' % (b,a)
+    before='    if(op==10u && (id&~%s || init&~%s || proc)) return 0;' % (mask,mask)
+    one=' && '.join('id!=%du' % f for f in FEATURES)
+    after=('    if(op==10u && (proc>=0x2000u || (!proc && (id&~%s || init&~%s)))) return 0;\n'
+           '    if(op==10u && proc && ((%s) || id&~%s ||\n'
+           '       (init && (init<DL_CODE_START || init>=dl_pool_words[c])))) return 0;') % (mask,mask,one,mask)
+    return _change(text,before,after,'transport PLACE')
 
 
 def status(text):
