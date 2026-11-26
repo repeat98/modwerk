@@ -41,6 +41,12 @@ extern volatile struct diag_trace modwerk_test_trace;
 #define TRACE (&modwerk_test_trace)
 extern volatile struct diag_lates modwerk_test_lates;
 #define LATES (&modwerk_test_lates)
+extern volatile struct diag_freeze_pc modwerk_test_freeze_pc;
+#define FREEZE_PC (&modwerk_test_freeze_pc)
+extern volatile uint16_t modwerk_test_interrupted[4]; /* the frame interrupt's exception frame: format and vector, SR, PC */
+#define INTERRUPTED modwerk_test_interrupted
+extern volatile uint32_t modwerk_test_tcb;
+#define CURRENT_TCB modwerk_test_tcb
 extern volatile uint8_t modwerk_test_running[16];
 #define LOG (&modwerk_test_log)
 #define CRASH modwerk_test_crash
@@ -76,6 +82,15 @@ typedef char diag_fits_battery_ram[0x100fc000u + sizeof(struct diag_log) <= 0x10
 typedef char diag_trace_fits_battery_ram[0x100ffb30u + sizeof(struct diag_trace) <= 0x100fff00u ? 1 : -1];
 #define LATES ((volatile struct diag_lates *)0x100f9710u) /* after status.c's MWER (battery-ram.json) */
 typedef char diag_lates_fit[sizeof(struct diag_lates) == 24u ? 1 : -1];
+#define FREEZE_PC ((volatile struct diag_freeze_pc *)0x100f9728u) /* after MWLR (battery-ram.json) */
+typedef char diag_freeze_pc_fits[sizeof(struct diag_freeze_pc) == 48u ? 1 : -1];
+/* The exception frame of the interrupt modwerk_diag_frame runs in: the eDMA frame transfer's (level 6, stock's handler
+ * 0x40004840 saves 16 bytes, then its step 7 is dsp_hooks.s's dl_state7, which saves 44 and keeps the stack pointer in
+ * modwerk_diag_frame_sp before it calls dl_frame: build_core.py's DSP_EDITS), so the frame (format and vector, SR, PC)
+ * is 60 bytes above it. */
+volatile uint32_t modwerk_diag_frame_sp;
+#define INTERRUPTED ((const volatile uint16_t *)(uintptr_t)(modwerk_diag_frame_sp + 60u))
+#define CURRENT_TCB (*(volatile uint32_t *)0x800068fcu) /* the kernel's current task (octabam's KERNEL.md) */
 #define PLAYING (*(volatile uint32_t *)0x800065b8u == 1u) /* dsp.c's PLAYING */
 #define TEMPO24 (*(volatile uint32_t *)0x80001814u)        /* the tempo times 24, as Recorder Loop Fix reads it */
 #define SCREEN (*(volatile uint32_t *)0x460d165cu)         /* stock's list of input layers, the top one (status.c) */
@@ -112,6 +127,9 @@ static int32_t settings_check(unsigned i)
 #define HOT 900u             /* per mille */
 #define HOT_GAP 36000u       /* ticks between two HOT incidents: ten minutes, so they leave room for the rest */
 #define SETTLED 3600u        /* no HOT in the first minute: the project load at the start runs the CPU near 95 % */
+#define SAMPLE_FRAMES 2756u  /* a second of frames: FREEZE_PC's samples, one at 5, 6, 7 and 8 s of a freeze */
+/* The eDMA frame transfer's vectors, channels 0, 1 and 7 (KERNEL.md), the one handler modwerk_diag_frame runs in. */
+#define FRAME_VECTOR(v) ((v) == 0x48u || (v) == 0x49u || (v) == 0x4fu)
 
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
@@ -168,6 +186,22 @@ static void add_freeze(volatile struct diag_log *l)
     for (unsigned i = sizeof r->seq; i < sizeof *r; ++i) ((volatile uint8_t *)r)[i] = from[i];
     push(l, r);
 }
+/* Right after its FREEZE: where the frame interrupt found the processor during it (diag.h's FREEZE_PC). */
+static void add_freeze_pc(volatile struct diag_log *l)
+{
+    volatile struct diag_freeze_pc *z = FREEZE_PC;
+    if (z->magic != DIAG_FREEZE_PC_MAGIC || z->boot != l->freeze.boot) return;
+    z->magic = 0;
+    volatile struct diag_incident *r = slot(l);
+    bare(r, DIAG_FREEZE_PC);
+    r->boot = z->boot, r->second = l->freeze.second, r->a = z->pc[0], r->screen = z->pc[1], r->tempo24 = z->pc[2];
+    r->cpu = z->sr[0], r->dsp0 = z->sr[1], r->dsp1 = z->sr[2];
+    volatile uint8_t *b = r->machine;
+    for (unsigned i = 0; i < 16u; ++i) b[i] = (uint8_t)(z->tcb[i / 4u] >> (24u - 8u * (i % 4u)));
+    for (unsigned i = 0; i < 4u; ++i) b[16u + i] = (uint8_t)(z->pc[3] >> (24u - 8u * i));
+    b[20] = (uint8_t)(z->sr[3] >> 8), b[21] = (uint8_t)z->sr[3];
+    push(l, r);
+}
 /* The power-up's battery restore of the current bank (status.s mw_boot_restore, in place of main's init call of stock's
  * 0x40025770 at 0x4001fb78, before any tick). Stock refuses the whole bank when any of its checks has a single value to
  * fix: the bank is then never copied in nor applied, every Part and pattern of it reads as stock's empty defaults, and
@@ -209,7 +243,7 @@ static void start(volatile struct diag_log *l)
         l->crash_seen = crashes, l->stall_seen = stalls;
         l->version = DIAG_VERSION, l->magic = DIAG_MAGIC;
     }
-    if (l->freeze_state) add_freeze(l), l->freeze_state = 0; /* the last session froze; a = 0 if it never came back */
+    if (l->freeze_state) add_freeze(l), add_freeze_pc(l), l->freeze_state = 0; /* the last session froze; a = 0 if it never came back */
     l->boot = l->boot + 1u;
     add(l, DIAG_START, crashes << 16 | (stalls & 0xffffu), 1);
     add(l, DIAG_BASE, (uint32_t)modwerk_base_digest[0] << 24 | (uint32_t)modwerk_base_digest[1] << 16 | (uint32_t)modwerk_base_digest[2] << 8 | modwerk_base_digest[3], 0);
@@ -292,7 +326,7 @@ static void diag_tick(void)
     ticks = ticks + 1u;
     uint32_t stalled = stall_count(); /* a stall record since the last tick: keep the frames before it */
     if (stalled != stalls) { if (stalled) keep_trace(stalled); stalls = stalled; }
-    if (l->freeze_state == 2u) add_freeze(l), l->freeze_state = 0;
+    if (l->freeze_state == 2u) add_freeze(l), add_freeze_pc(l), l->freeze_state = 0;
     uint32_t skipped = mw_frame_sheds; /* the frame guard skipped a render: at most one incident in HOT_GAP */
     if (skipped != sheds && (!shed_at || ticks - shed_at >= HOT_GAP))
         add(l, DIAG_SHED, (mw_frame_shed_tracks & 0xffu) << 24 | (skipped & 0xffffffu), 1), shed_at = ticks, sheds = skipped;
@@ -376,8 +410,24 @@ int modwerk_diag_key(int code, int pressed)
     return 0;
 }
 
+/* At 5, 6, 7 and 8 s of a freeze (sample k): what the frame transfer's interrupt interrupted, and the current task. */
+static void freeze_pc(volatile struct diag_log *l, unsigned k)
+{
+    volatile struct diag_freeze_pc *z = FREEZE_PC;
+    if (!k) {
+        z->magic = 0, z->boot = l->boot;
+        for (unsigned i = 0; i < DIAG_FREEZE_PC_SAMPLES; ++i) z->pc[i] = 0, z->tcb[i] = 0, z->sr[i] = 0;
+    }
+    const volatile uint16_t *x = INTERRUPTED;
+    uint32_t format = x[0];
+    z->sr[k] = x[1];
+    z->pc[k] = FRAME_VECTOR(format >> 2 & 0xffu) ? (uint32_t)x[2] << 16 | x[3] : 0xffffffffu;
+    z->tcb[k] = CURRENT_TCB;
+    if (!k) z->magic = DIAG_FREEZE_PC_MAGIC;
+}
+
 /* In the frame interrupt (level 5): a few compares a frame, and once a freeze the context, well under the 200 µs
- * the frame interrupt may be held (OCTATRACK_HARDWARE_TRAPS.md). It writes only the freeze slot. */
+ * the frame interrupt may be held (OCTATRACK_HARDWARE_TRAPS.md). It writes only the freeze slot and FREEZE_PC. */
 void modwerk_diag_frame(void)
 {
     static uint32_t seen, still, last;
@@ -401,6 +451,8 @@ void modwerk_diag_frame(void)
         r->seq = 0, r->boot = l->boot, r->second = ticks / 60u, r->a = 0;
         l->freeze_state = 1u;
     }
+    if (l->freeze_state == 1u && still >= FREEZE_FRAMES && (still - FREEZE_FRAMES) % SAMPLE_FRAMES == 0u
+        && (still - FREEZE_FRAMES) / SAMPLE_FRAMES < DIAG_FREEZE_PC_SAMPLES) freeze_pc(l, (still - FREEZE_FRAMES) / SAMPLE_FRAMES);
 }
 
 /* The log, then crash.c's and dsp.c's records and the trace (diag.h), then zeros. */

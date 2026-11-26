@@ -755,7 +755,8 @@ DSP_EDITS = {
                 ('dl_rx_nbytes: .long 0\n', 'dl_rx_nbytes: .long 0\ndl_early: .long 0     | state-7 visits with channel 0 still running\n'
                  'dl_pin7: .long 0\ndl_straddle: .long 0\ndl_pin_sent: .long 0  | 4 | pin 1 when a packet started, 0 none\n'),
                 ('        jsr dl_frame\n', '        move.b 0xfc094005,%d0\n        btst #1,%d0\n        beq 1f\n        addq.l #1,dl_pin7\n'
-                 '1:\n        jsr dl_frame\n'),
+                 '1:\n        move.l %sp,modwerk_diag_frame_sp | diag.c: this interrupt\'s exception frame is 60 bytes up\n'
+                 '        jsr dl_frame\n'),
                 ('dl_complete:\n', 'dl_complete:\n        move.l dl_pin_sent,%d0\n        beq 1f\n        clr.l dl_pin_sent\n'
                  '        move.b 0xfc094005,%d1\n        andi.l #2,%d1\n        addq.l #4,%d1\n        cmp.l %d0,%d1\n        beq 1f\n'
                  '        addq.l #1,dl_straddle\n1:\n'),

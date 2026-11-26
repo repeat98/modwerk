@@ -65,6 +65,21 @@ function incident(view: DataView, at: number): DeviceIncident | undefined {
 }
 /** The written records, oldest first; undefined for anything but a version 1 or 2 log. A record still being written
  * has seq 0 and is left out. A version 2 log carries the crash and stall records when their magic is there. */
+/** The stock tasks by TCB (octabam's STEM_REC.md task census, OS 1.40C): entry and priority, higher runs first. */
+const TASKS = new Map<number, string>([[0x46c7bed8, 'UI task 0x40061a94, priority 1'], [0x460ddde4, 'engine task 0x4008445c (card jobs), priority 1'],
+  [0x46105508, 'task 0x40098a5c, priority 1'], [0x460e0e38, 'task 0x4009203c, priority 2'], [0x460fab80, 'task 0x40091d18, priority 2'],
+  [0x460ffd44, 'task 0x400921c4, priority 2'], [0x460d59d4, 'housekeeping task 0x40056c40, priority 3'],
+  [0x460d4f80, 'key-repeat task 0x4005593c, priority 4'], [0x460bcc2c, 'USB task 0x4001ee30, priority 5'], [0x46c7fb0c, 'task 0x40005540, priority 6']])
+/** A FREEZE_PC record (diag.h, bases from 0.8.2), right after the FREEZE it belongs to: where the processor was at 5, 6,
+ * 7 and 8 s of that freeze, as the audio frame's eDMA interrupt found it. `level` is the interrupted priority level
+ * (above 0: an interrupt handler), `task` the kernel's current task. A sample after the tick moved again is left out. */
+export function freezeSamples(r: DeviceIncident): { pc: number; sr: number; level: number; tcb: number; task: string }[] {
+  const long = (i: number) => (r.machines[i] << 24 | r.machines[i + 1] << 16 | r.machines[i + 2] << 8 | r.machines[i + 3]) >>> 0
+  const pcs = [r.a, r.screen, r.tempo24, long(16)], srs = [r.cpu, r.dsp5to8, r.dsp1to4, r.machines[20] << 8 | r.machines[21]]
+  return pcs.map((pc, i) => ({ pc, sr: srs[i], level: srs[i] >> 8 & 7, tcb: long(4 * i), task: TASKS.get(long(4 * i)) ?? 'TCB 0x' + long(4 * i).toString(16) }))
+    .filter(s => s.pc || s.sr || s.tcb)
+}
+
 export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
   if (data.byteLength < 8) return undefined
   const head = new DataView(data.buffer, data.byteOffset, 8), version = head.getUint32(4)

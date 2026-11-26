@@ -2,7 +2,8 @@
  * Host check of diag.c: a new log ignores earlier crashes, each start is counted and reports what crashed or stalled
  * since; five minutes of meters make one load record; the CPU at 90 % for a second makes one HOT incident with the
  * unit's context, at most one in ten minutes; five seconds without a UI tick while frames run make a FREEZE, added
- * with its length once the tick moves again, or with length 0 at the next start; the frame guard's skips make one
+ * with its length once the tick moves again, or with length 0 at the next start, each followed by a FREEZE_PC with
+ * what the frame interrupt interrupted at 5, 6, 7 and 8 s of it; the frame guard's skips make one
  * SHED, at most one in ten minutes; a boot's first USB re-offer makes one USB incident; LOG pages are 244 bytes. */
 #include "diag.c"
 #include <stdio.h>
@@ -12,6 +13,9 @@ static unsigned failures;
 volatile struct diag_log modwerk_test_log;
 volatile struct diag_trace modwerk_test_trace;
 volatile struct diag_lates modwerk_test_lates;
+volatile struct diag_freeze_pc modwerk_test_freeze_pc;
+volatile uint16_t modwerk_test_interrupted[4];
+volatile uint32_t modwerk_test_tcb;
 volatile uint16_t mw_late_ring[8];
 volatile uint32_t mw_late_count;
 volatile uint32_t mw_frame_last; /* machine_registry.c */
@@ -201,25 +205,48 @@ int main(void)
     tick();
     CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_CPU && last()->a == (0x28u << 24 | 0x20u << 16 | 3u));
 
-    /* The UI stands still for six seconds while frames run, then moves again. */
+    /* The UI stands still for six seconds while frames run, then moves again. The frame interrupt interrupted a task
+     * (level 0) at 0x40015520 each time (channel 1's vector): one FREEZE_PC sample at 5 s; the tick moved before the one at 6 s. */
     modwerk_status[0] = 100u;
+    modwerk_test_interrupted[0] = 0x4000u | 0x49u << 2, modwerk_test_interrupted[1] = 0x2000u;
+    modwerk_test_interrupted[2] = 0x4001u, modwerk_test_interrupted[3] = 0x5520u, modwerk_test_tcb = 0x46c7bed8u;
     before = LOG->incidents;
     for (unsigned f = 0; f < FREEZE_FRAMES + 2756u; ++f) modwerk_diag_frame();
     CHECK(LOG->freeze_state == 1u && LOG->freeze.kind == DIAG_FREEZE && LOG->freeze.boot == 4u && LOG->freeze.fx[0] == 33u);
-    CHECK(LOG->incidents == before);
+    CHECK(LOG->incidents == before && FREEZE_PC->magic == DIAG_FREEZE_PC_MAGIC && FREEZE_PC->boot == 4u && FREEZE_PC->pc[1] == 0u);
     tick(), modwerk_diag_frame(); /* the UI moves; the next frame sees it */
     CHECK(LOG->freeze_state == 2u && LOG->incidents == before);
     tick();
-    CHECK(LOG->freeze_state == 0u && LOG->incidents == before + 1u && last()->kind == DIAG_FREEZE && last()->a == FREEZE_FRAMES + 2755u); /* the first frame only saw the tick move */
-    CHECK(last()->seq == LOG->seq && last()->boot == 4u);
+    CHECK(LOG->freeze_state == 0u && LOG->incidents == before + 2u);
+    volatile struct diag_incident *frozen = &LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS];
+    CHECK(frozen->kind == DIAG_FREEZE && frozen->a == FREEZE_FRAMES + 2755u); /* the first frame only saw the tick move */
+    CHECK(last()->kind == DIAG_FREEZE_PC && last()->seq == LOG->seq && last()->boot == 4u && last()->second == frozen->second);
+    CHECK(last()->a == 0x40015520u && last()->cpu == 0x2000u && last()->screen == 0u && last()->tempo24 == 0u && last()->dsp0 == 0u);
+    CHECK(last()->machine[0] == 0x46u && last()->machine[3] == 0xd8u && last()->machine[4] == 0u && last()->keys[0] == 0xffu);
+    CHECK(FREEZE_PC->magic == 0u);
 
-    /* Frozen until a power cycle: the next start adds it with length 0, under the session it happened in. */
-    for (unsigned f = 0; f <= FREEZE_FRAMES; ++f) modwerk_diag_frame();
+    /* Frozen until a power cycle, inside an interrupt handler at level 3 for the last two samples: the next start adds the
+     * freeze with length 0 and its four samples, under the session it happened in. */
+    for (unsigned f = 0; f <= FREEZE_FRAMES + 2756u; ++f) modwerk_diag_frame();
+    modwerk_test_interrupted[1] = 0x2300u, modwerk_test_interrupted[3] = 0x5526u, modwerk_test_tcb = 0x460ddde4u;
+    for (unsigned f = 0; f < 2u * 2756u; ++f) modwerk_diag_frame();
     CHECK(LOG->freeze_state == 1u);
     restart();
     CHECK(LOG->boot == 5u && LOG->freeze_state == 0u);
-    CHECK(LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].kind == DIAG_FREEZE && LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].a == 0u);
-    CHECK(LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].boot == 4u && LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].kind == DIAG_START && last()->kind == DIAG_BASE && last()->boot == 5u);
+    CHECK(LOG->incident[(LOG->incidents - 4u) % DIAG_INCIDENTS].kind == DIAG_FREEZE && LOG->incident[(LOG->incidents - 4u) % DIAG_INCIDENTS].a == 0u);
+    frozen = &LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS];
+    CHECK(frozen->kind == DIAG_FREEZE_PC && frozen->boot == 4u && frozen->a == 0x40015520u && frozen->screen == 0x40015520u && frozen->tempo24 == 0x40015526u);
+    CHECK(frozen->cpu == 0x2000u && frozen->dsp0 == 0x2000u && frozen->dsp1 == 0x2300u && frozen->machine[11] == 0xe4u && frozen->machine[15] == 0xe4u);
+    CHECK(frozen->machine[16] == 0x40u && frozen->machine[19] == 0x26u && frozen->machine[20] == 0x23u && frozen->machine[21] == 0u);
+    CHECK(LOG->incident[(LOG->incidents - 4u) % DIAG_INCIDENTS].boot == 4u && LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].kind == DIAG_START && last()->kind == DIAG_BASE && last()->boot == 5u);
+
+    /* A frame that is not the frame transfer's (the DSP frame's vector, never seen): its program counter is all ones. */
+    modwerk_test_interrupted[0] = 0x4000u | 0x41u << 2;
+    tick(), modwerk_diag_frame(); /* the tick moves: a new count */
+    for (unsigned f = 0; f < FREEZE_FRAMES; ++f) modwerk_diag_frame();
+    tick(), modwerk_diag_frame(), tick();
+    CHECK(last()->kind == DIAG_FREEZE_PC && last()->a == 0xffffffffu && last()->boot == 5u);
+    modwerk_test_interrupted[0] = 0x4000u | 0x48u << 2;
 
     /* Frames before the first tick of a start belong to nobody. */
     started = 0;

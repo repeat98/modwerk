@@ -12,7 +12,7 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13, DIAG_FREEZE_PC = 14 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
@@ -31,6 +31,15 @@ struct diag_trace { uint32_t magic, count; uint16_t frame[DIAG_TRACE_FRAMES][2];
  * Read from battery RAM; LOG does not page it. */
 #define DIAG_LATES_MAGIC 0x4d574c52u
 struct diag_lates { uint32_t magic, count; uint16_t late[8]; };
+/* Where the processor was while the UI tick stood still ("MWFZ", 0x100f9728, bases from 0.8.2): at 5, 6, 7 and 8
+ * seconds of a freeze, what the audio frame's eDMA interrupt (level 6, where modwerk_diag_frame runs) interrupted:
+ * the program counter and status register of its exception frame, and the kernel's current task (its TCB,
+ * 0x800068fc). An interrupted level (SR bits 8-10) above 0 is an interrupt handler that never returns (5: the DSP
+ * frame's or the card's); at level 0 the PC is the task that runs (a loop in it, or the idle loop when the UI task
+ * waits). `pc` 0xffffffff: the frame was not that interrupt's (never seen). Read from battery RAM at the next start or once the tick moves again, as the FREEZE_PC incident (below). */
+#define DIAG_FREEZE_PC_MAGIC 0x4d57465au
+#define DIAG_FREEZE_PC_SAMPLES 4u
+struct diag_freeze_pc { uint32_t magic, boot, pc[DIAG_FREEZE_PC_SAMPLES], tcb[DIAG_FREEZE_PC_SAMPLES]; uint16_t sr[DIAG_FREEZE_PC_SAMPLES]; };
 typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1 : -1];
 
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the
@@ -65,6 +74,10 @@ struct diag_load {
  * settings and arrangements, `dsp0` in the bank's Parts, `dsp1` in its patterns, `screen` the first record that
  * needed one (1-3 the settings checks, 0x100 + 2 x Part for a saved Part and + 1 for its working copy, 0x200 +
  * pattern) and `tempo24` the restore's result (0 restored with the fixes, 0xffffffff refused: too many to trust).
+ * FREEZE_PC (bases from 0.8.2, right after the FREEZE it belongs to, with its boot and second) where the processor
+ * was during that freeze (struct diag_freeze_pc): `a`, `screen`, `tempo24` the program counter at 5, 6 and 7 s,
+ * `cpu`, `dsp0`, `dsp1` the status register then; `machine` the four current TCBs (big-endian, 16 bytes), then the
+ * program counter at 8 s and its status register; 0 where the tick moved again before that sample.
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */
