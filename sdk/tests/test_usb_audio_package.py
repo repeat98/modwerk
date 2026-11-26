@@ -87,6 +87,25 @@ class UsbAudioPackage(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Not built as a package yet'):
             builder.build('USB AUDIO IN')
 
+    def test_the_configurable_producer_skips_what_its_layout_does_not_send(self):
+        configurable = load('modwerk_usb_configurable', OT / 'module-adapters/usb_audio_configurable.py')
+        text = configurable.source(builder.ROOT, builder.MODULE, builder.SUPPORTED[0], functions, builder.load,
+                                   builder.sine_curve, builder.package_hooks,
+                                   usb_input=builder.load('modwerk_usb_input', OT / 'module-adapters/usb_audio_input.py'))
+        # Every gain-history pass and its EMAC restore sit behind the POST tap, and the frame's two calls test
+        # the same flag, so the EMAC is restored exactly when it was saved. The single-layout TRACKS POST
+        # producer is not assembled here (the twenty-channel layout is).
+        start = text.index('.elseif USB_LAYOUT == LAYOUT_TRACKS_POST\n')
+        text = text[:start] + text[text.index('\n.else\naudio_frame_shim_body:', start):]
+        for call in ('    bsr     post_frame\n', '    bsr post_emac_leave\n', '    bsr     post_emac_leave\n'):
+            for at in [i for i in range(len(text)) if text.startswith(call, i)]:
+                self.assertIn('tstb    mwua_post', text[max(0, at - 160):at], call)
+        # The track stores are skipped only at high speed, in the two-pair profile, with no track word sent.
+        skip = text.split('.Lpre_words:\n', 1)[1].split('.Lstems_store:\n', 1)[0]
+        for test in ('movel   %a1,%d0', 'mvzb    mwua_pairs,%d0', 'subql   #2,%d0', 'andil   #0xffff,%d0',
+                     'lea     %a3@(64),%a3'):
+            self.assertIn(test, skip)
+
     def test_the_setting_offers_main_and_cue_only_in_the_twenty_channel_layout(self):
         twenty, tracks = builder.source(functions, usb, LAYOUT), builder.source(functions, usb, 'USB AUDIO OUT TRACKS')
         self.assertIn('    .long 1, mwua_set_label, 3, mwua_set_choices, mwua_setting_apply, 0', twenty)

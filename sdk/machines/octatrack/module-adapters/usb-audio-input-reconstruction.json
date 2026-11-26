@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "imageSha256": "8271da94a6d0c07c54e653ebbdbb571616bf777c856afa69e5ce30bf11225639",
+  "imageSha256": "97a22802cf3bb113d7f12649ebc779d6c688a6915bf3f20c163fcdc1a0661c61",
   "sources": {
-    "generatedAssembly": "2a5aebcdc8b273984853dfc950479412fea8515f137411e269fe45b0ae19f46c",
+    "generatedAssembly": "6848dd391ce25215cc9eccdaadcd253f6af02b9e98d197fd3c5fac2738846f69",
     "sdk/machines/octatrack/module-adapters/usb_audio_settings.c": "e893cec8f8054a39d53f96124667bd44639122e5c338d5f180d23ce9e0e97f89",
     "sdk/machines/octatrack/include/modwerk_events.h": "42415791ac6cbc294c2353f36a7914278453b10e8998ac406b0980bc9ae2d0cd",
     "sdk/octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_input_trim.c": "6b128ab96ae73b136afb9ccf3acfb4e9d21168b5452e5f835b7588f80364cba0",
@@ -18,21 +18,21 @@
       "purpose": "Authored audio_pkt_build + 608 in the USB Audio image"
     },
     {
-      "offset": 3478,
+      "offset": 3534,
       "length": 6,
       "address": 1073863924,
       "sha256": "868378f30d4ed1251a28851782180b919dbfbd18ea839b594142244f6e06fb8a",
       "purpose": "Authored uac2_set_done + 52 in the USB Audio image"
     },
     {
-      "offset": 3484,
+      "offset": 3540,
       "length": 10,
       "address": 1073864298,
       "sha256": "c1ed73406504f0066c561fa89bfd547fa1c6825d89a28c3442c7997413e0b84c",
       "purpose": "Authored uac2_set_done + 58 in the USB Audio image"
     },
     {
-      "offset": 4890,
+      "offset": 4946,
       "length": 12,
       "address": 1073858896,
       "sha256": "adf82a9ab72faf6ad2a911fa873acbf3195bd4a8a4a73771edb96a383405204c",

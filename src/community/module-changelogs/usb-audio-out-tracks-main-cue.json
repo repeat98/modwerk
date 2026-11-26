@@ -5,6 +5,7 @@
     "changes": [
       "INPUTS on a Mac: audio played into the Octatrack began to buzz after about three minutes. While the computer plays in, the recording from the Octatrack now runs on the computer's clock too.",
       "The Octatrack evens out the small speed difference on the recording side one sample at a time, smoothed over a tenth of a millisecond.",
+      "Recording MAIN + CUE to a computer now costs about half the CPU it did, and a little less with nothing recording: the Octatrack no longer prepares track channels it does not send.",
       "With INPUTS OFF, or while nothing plays into the Octatrack, the recording works as before. An Octatrack running 0.4.1 gets this version with its next sync."
     ]
   },

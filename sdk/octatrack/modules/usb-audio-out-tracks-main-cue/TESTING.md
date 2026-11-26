@@ -2,13 +2,13 @@
 
 ## 0.4.2-experimental (draft), 26 November 2026
 
-**#2263 reproduced with 0.4.1 on macOS and its cause found; 0.4.2's fix held a 10-minute run with no buzz and no frame spikes.** Owner's MKII, macOS, development twins of the 0.8.3 base draft (`65f8604c`, `ec9f6ccc`), Main + Cue, INPUTS AB, a 1 kHz tone from the Mac through a Thru on T7 of a test Part, Main recorded back over USB (`rec.swift`, `tone.swift`).
+**#2263 reproduced with 0.4.1 on macOS and its cause found; 0.4.2's fix held a 10-minute run with no buzz and no frame spikes, and the release build halves what a Main + Cue recording costs.** Release package `480842ea201e4fd3…`. Owner's MKII, macOS, development twins of the 0.8.3 base draft (`65f8604c`, `ec9f6ccc`, `764b6e71`), Main + Cue, INPUTS AB, a 1 kHz tone from the Mac through a Thru on T7 of a test Part, Main recorded back over USB (`rec.swift`, `tone.swift`).
 
 - **0.4.1 buzzes after about three minutes on a Mac.** Three of four runs: clean for 180-200 s, then sidebands at 1,000 ± 86.13 Hz (44,100 / 512) growing to -4 dB, fading again by about 500 s. The input counters (vendor request 0x56) stayed clean throughout: no underrun, overrun, reprime or error, every block's transfer completed, the trim absorbing 2.6 frames a second. With the Mac's I/O buffer at 256 frames the buzz began at about 105 s at ±172.3 Hz (44,100 / 256): it follows the Mac's own buffer. Cause: 0.4.1's input is adaptive (the Mac's clock) and its recording asynchronous (the Octatrack's crystal), and macOS runs both in one I/O cycle, so its output buffer slides 2.6 frames a second against what it sends until it sends stale buffers.
 - **0.4.2:** while the Mac plays in (EP3 OUT up), the recording goes out at the host's nominal 11.025 frames a poll and `usb_audio_output_trim.c` absorbs the producer's drift in the ring. A first build that interpolated every word of a whole packet made frames of 112-125 % with late starts and one skipped-frame wait in 30 s, and held the sequencer's step lights back (owner, by eye); the shipped one rewrites four frames of the words the packet sends: the longest frame 68.6-71.3 % against 0.4.1's 67.4 % in the same scene, no late starts, no wait, 166 frames repeated in about 70 s (the Octatrack about 54 ppm slow against the Mac).
 - **At rest** (`device:price`, three 8 s readings each, empty pattern, `65f8604c`): 0.3.0 +1.3 frame / +1.5 CPU, 0.4.0 +1.3 / +1.8, 0.4.1 +1.3 / +1.7, 0.4.2 +1.6 / +2.0.
-- **Ten minutes on a Mac** (twin `764b6e71`, base `478c0c8d`, C02 with the other tracks muted, 1 kHz at -30 dBFS into INPUTS AB, Main recorded back): sidebands at 1,000 ± 86 Hz stayed at -67 to -74 dB in every 10 s (0.4.1 reached -6 dB after two minutes), no sample jump above a clean sine's (×1.06), the slips steady at about 3.4 a second through the whole run, no late frame entry and no wait, longest frame 89.0 %. This run used a build that interpolated all 20 words of a slip (`766fcb49`); the shipped build (`4d98ffdf`) computes the same values for the words it sends and skips the rest.
-- **Why the slip touches only the sent words** (same twin and scene, 25 s readings): the all-words build made frames of 86.6-87.6 % against 69.0-71.0 % for the shipped build, recording alone too, since macOS runs the output side whenever the input runs.
+- **Ten minutes on a Mac** (twin `764b6e71`, base `478c0c8d`, C02 with the other tracks muted, 1 kHz at -30 dBFS into INPUTS AB, Main recorded back): sidebands at 1,000 ± 86 Hz stayed at -67 to -74 dB in every 10 s (0.4.1 reached -6 dB after two minutes), no sample jump above a clean sine's (×1.06), the slips steady at about 3.4 a second through the whole run, no late frame entry and no wait, longest frame 89.0 %. This run used a build that interpolated all 20 words of a slip (`766fcb49`), without the cost cut below; the release computes the same values for the words it sends and skips the rest. The release itself had two 40 s runs with the Mac playing in (below), not ten minutes.
+- **Why the slip touches only the sent words** (same twin and scene, 25 s readings): the all-words build made frames of 86.6-87.6 % against 69.0-71.0 % for the sent-words build (`4d98ffdf`), recording alone too, since macOS runs the output side whenever the input runs.
 - **Stream cost against earlier versions** (same twin and scene, the frame interrupt's mean, its longest frame and the CPU meter; recording Main + Cue to the Mac, and recording while the Mac plays into INPUTS AB):
 
   | Version | No stream | Recording | Recording + input |
@@ -18,10 +18,20 @@
   | 0.3.0 | 25.3 %, 48.3 %, 37.2 | 34.9 %, 63.1 %, 48.3 | |
   | 0.4.0 | 25.4 %, 48.9 %, 37.6 | 35.8 %, 67.3 %, 51.6 | 35.8 %, 67.8 %, 51.8 |
   | 0.4.1 | 25.3 %, 48.6 %, 37.1 | 35.7 %, 68.7 %, 52.3 | 35.8 %, 68.2 %, 51.9 |
-  | 0.4.2 | 25.4 %, 49.0 %, 37.6 | 36.1 %, 69.0 %, 52.6 | 36.1 %, 71.0 %, 52.2 |
+  | 0.4.2 before the cut (`4d98ffdf`) | 25.4 %, 49.0 %, 37.6 | 36.1 %, 69.0 %, 52.6 | 36.1 %, 71.0 %, 52.2 |
 
   Every package costs about the same, and about four times what the built-in original costs: installed with no stream it adds 2.6 points to the mean and 17 to the longest frame, and a recording adds 10 more (the built-in: 3). No late entry or wait in any reading.
-- **Not yet run:** 16 and 20 channels, Windows (needs the owner's PC), an MKI.
+- **The cost cut** (the release, `480842ea`): module data is uncached, so two things the packaged producer did every frame cost far more than in the built-in original. The POST tap's gain history (eight tracks of reads and writes) now runs only while TRACK TAP is POST LEVEL, and in MAIN + CUE at high speed the producer no longer writes the sixteen track words it never sends. A/B on twin `764b6e71` (base `478c0c8d`), alternated A B A B in the same C02 scene, which ran heavier than the table's after another session's run (25 s readings; mean, longest frame, CPU meter):
+
+  | | No stream | Recording | Recording + input |
+  | --- | --- | --- | --- |
+  | 0.4.2 before the cut (`4d98ffdf`), twice | 30.0 %, 53.3-53.5 %, 42.3 | 46.0-46.2 %, 75.0-77.4 %, 58.7-59.0 | 46.1 %, 79.0-79.7 %, 58.4-58.7 |
+  | The release (`480842ea`), twice | 29.0 %, 52.4-52.8 %, 41.1 | 36.6 %, 71.2-71.8 %, 52.0-52.6 | 36.5-36.6 %, 69.1-70.0 %, 52.1-52.7 |
+
+  The stream's own cost fell from about 16 points of the mean to about 7.6. No late entry or wait in any trial. Both release runs with the Mac playing in recorded a clean tone (sidebands -67 to -73 dB, no jump above a clean sine's, the slips steady).
+- **POST after the cut** (the release, same twin, one trial): LAYOUT 16 CH, TRACK TAP PRE then POST LEVEL while playing and recording. T7's stem carried the tone at -27 dBFS on PRE and -30 dBFS on POST (its level applied), clean; the muted tracks' stems fell further on POST. In this heavy scene 16 channels ran the frame interrupt at 54.1 % (PRE) and 59.3 % (POST) with longest frames of 92.8 % and 96.5 %: no late entry, but close; the eight stems' uncached stores are the next cost to cut.
+- **USB on twin `764b6e71` and the built-in twin `853a9af2`** (both with the 0.8.3 draft's attach watchdog change): three RAM boots, twelve USB Audio trials installed and rolled back, two layout changes (MAIN + CUE to 16 CH and back): the unit stayed on USB throughout, and the battery-RAM log holds no `usb` incident, so the watchdog never had to re-offer it.
+- **Not yet run:** 20 channels, Windows (needs the owner's PC), an MKI, the released 0.8.2 base, a Keep and a power cycle.
 
 ## 0.4.1-experimental (draft), 25 November 2026
 

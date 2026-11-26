@@ -26,11 +26,28 @@ def configure_source(text):
     for marker in ('| d2 = the stem', '    | The gain history', '| ==== TRACKS POST', '    .balign 4\npost_hidx:'):
         old = '.if USB_LAYOUT == LAYOUT_TRACKS_POST\n' + marker
         text = checked(text, old, '.if 1\n' + marker)
+    # Module data is uncached, so the gain history's eight-track pass cost every frame of every layout about
+    # 2.6 points of the frame interrupt with no stream (owner's MKII, 26 November 2026). It serves the POST tap
+    # alone, so it runs only while that is on; turning POST on starts from the history of when it was last on,
+    # settled within four frames. mwua_begin_frame sets mwua_post before this shim, so it holds for the frame.
+    text = checked(text, '''    moveq   #0,%d0                  | state only, no per-sample table
+    bsr     post_frame
+    bsr     post_emac_leave
+''', '''    tstb    mwua_post
+    beqs    .Lpost_gate_idle
+    moveq   #0,%d0                  | state only, no per-sample table
+    bsr     post_frame
+    bsr     post_emac_leave
+.Lpost_gate_idle:
+''')
     text = checked(text, 'audio_frame_shim_body:\n', '''audio_frame_shim_body:
-    mvzb    mwua_post,%d0
+    tstb    mwua_post
+    beqs    .Lpost_gate_body
+    moveq   #1,%d0
     bsr     post_frame
     lea     post_gtab,%a0
     movel   %a0,mwua_gain
+.Lpost_gate_body:
 ''')
     start = text.index('    moveq   #RB_TRACKS-1,%d7\n2:  movel   %a0@,%d2')
     end = text.index('    bpl     2b\n', start) + len('    bpl     2b\n')
@@ -44,8 +61,29 @@ def configure_source(text):
     moveal  %sp@+,%a4
     bra     .Lstems_done
 .Lpre_words:
+    | MAIN + CUE sends no track word: its sixteen uncached stores a frame are skipped. Only there: it is the one
+    | layout with a profile of its own (two pairs), so leaving it re-enumerates and the stream restarts on fresh
+    | slots. In a layout that can start sending a track without that (ALL from MAIN + CUE ONLY, TRACK 8 from MAIN),
+    | the packets would first carry the ring's words from before.
+    movel   %a1,%d0
+    beqs    .Lstems_store           | full speed sends the tracks' sum: copy them
+    mvzb    mwua_pairs,%d0
+    subql   #2,%d0
+    bnes    .Lstems_store
+    movel   mwua_sent_words,%d0
+    andil   #0xffff,%d0             | tracks 1-8's words
+    bnes    .Lstems_store
+    lea     %a3@(64),%a3            | past the slot's track words, left as they were
+    bra     .Lstems_done
+.Lstems_store:
 ''' + loop + '.Lstems_done:\n' + text[end:]
-    text = checked(text, '    movel   %d4,aud_produced\n.endif\n', '    movel   %d4,aud_produced\n    bsr post_emac_leave\n.endif\n')
+    text = checked(text, '    movel   %d4,aud_produced\n.endif\n', '''    movel   %d4,aud_produced
+    tstb    mwua_post
+    beqs    .Lpost_gate_done
+    bsr post_emac_leave
+.Lpost_gate_done:
+.endif
+''')
     text = checked(text, '    tstb    usbaudio_alt\n    bnes    .Lproduce', '''    tstb    mwua_off
     beqs    .Loutput_on
     addql   #8,aud_produced
