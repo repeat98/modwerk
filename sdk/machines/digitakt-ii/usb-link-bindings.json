@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "machine": "digitakt-ii",
+  "os": "1.17",
+  "evidence": "Static inspection of the owner's stock OS through Modwerk's ELE3 reader. Addresses and hashes only. No firmware bytes, DigiKit implementation or hardware qualification.",
+  "stockSha256": "26c22f6652625ac2cfd47f7ee970d388ed8b6427dae3563c0a6a2f2d334350d5",
+  "mainSha256": "a1e7b657b705eba1a19d81c33c1e11ba9c409816447ad74005d7bbf36da6d964",
+  "mainLoad": "0x40000400",
+  "mainLength": 3275616,
+  "profileTable": "0x4029ef80",
+  "profileStride": 40,
+  "vid": "0x1935",
+  "profiles": [
+    { "name": "MIDI", "index": 2, "pid": "0x012b", "midiInterface": 1 },
+    { "name": "Audio/MIDI", "index": 5, "pid": "0x102b", "midiInterface": 4 },
+    { "name": "Overbridge", "index": 6, "pid": "0x0b2b", "midiInterface": 5 }
+  ],
+  "guards": [
+    {
+      "name": "SysEx router candidate",
+      "address": "0x4011ffda",
+      "length": 8,
+      "sha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0"
+    },
+    {
+      "name": "Stock SysEx sender entry",
+      "address": "0x40121d2a",
+      "length": 32,
+      "sha256": "01e357f81e08195d56c729caf93d5778981f5e48abf2ba0084588642a98fdbf0"
+    },
+    {
+      "name": "USB MIDI serializer including queue waits",
+      "address": "0x40004734",
+      "length": 128,
+      "sha256": "cee6988062fe5113499ba3dbe3e4bde874539d72944c27d0100afe3b62e63d64"
+    }
+  ]
+}

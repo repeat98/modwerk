@@ -8,6 +8,8 @@ The browser builds on Modwerk's pinned 1.1 base. The Digitakt II follows the Oct
 
 The [Modwerk base](elekloader/README.md) adds the audio sequencer pitch and phrase hooks and active-project lifecycle to the pinned core 1.1 source. The 1.1 additions below give mods per-frame parameter values, key LEDs and per-project and per-kit data.
 
+USB link contributors start with the [offline OS 1.17 binding preflight](LINK.md#check-the-stock-bindings-before-porting). The native responder and runtime glue are not implemented; a passing offline check is not hardware qualification.
+
 ## Core hooks
 
 The [core contract](../../digitakt-ii/core-profile/interface.json) describes the UI and sequencer hooks supplied by the Modwerk base. A mod that needs one of those sites proposes a core hook first and never patches the site itself ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)); the hook goes into the Digitakt II's Modwerk base ([Modwerk stack](#modwerk-stack)).
