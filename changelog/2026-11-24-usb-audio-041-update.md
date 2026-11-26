@@ -1,0 +1,1 @@
+Octatrack: a sync now replaces USB Audio 0.4.0 on the unit with 0.4.1, whose USB input Windows accepts (tested on Windows 11; Windows 10 and macOS not yet tried). The module page, INPUTS caption and README say so instead of "not yet on Windows". The two packages report different kinds, so the site tells them apart, and Undo puts back the exact 0.4.0 package.

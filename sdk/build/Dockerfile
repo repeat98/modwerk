@@ -3,6 +3,7 @@ FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea41952009
 # Multi-architecture index digest of ubuntu:24.04, resolved 1 October 2026.
 FROM ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
 ENV DEBIAN_FRONTEND=noninteractive
+RUN printf 'Acquire::http::Pipeline-Depth "0";\nAcquire::Retries "5";\nAcquire::Queue-Mode "access";\nAcquire::http::No-Cache "true";\n' > /etc/apt/apt.conf.d/99local
 RUN apt-get update && apt-get install -y --no-install-recommends python3 git cmake make g++ curl xz-utils ca-certificates libgmp-dev libmpfr-dev libmpc-dev && rm -rf /var/lib/apt/lists/*
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 # The same GNU binutils release and m68k-elf target as the toolchain that produced the committed,

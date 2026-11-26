@@ -5,7 +5,8 @@ import { SUPPORT_URL } from '../config/support'
 import { assetUrl } from '../hosting'
 import { useCommunity } from './context'
 import { hasSignupWelcome, takeSignupWelcome } from './member-access'
-import { trackUsage } from './usage'
+import { countSupportPrompt, trackUsage } from './usage'
+import { answerSupportPrompt } from './support-prompt'
 
 /** A quiet welcome on the page the new member was heading to, never another popup. */
 export function SignupWelcome() {
@@ -25,6 +26,6 @@ export function SignupWelcome() {
       <div><h3>Meet the people building Modwerk</h3><p>Join our development Discord to share ideas, get help and say hello.</p></div>
       <a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord (opens in a new tab)" onClick={() => { if (!preview) trackUsage('discord_welcome_join_clicked') }}><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true" />Join Discord<span aria-hidden="true">↗</span></a>
     </div>
-    <p className="signup-welcome-support">Enjoying Modwerk? <a href={SUPPORT_URL} target="_blank" rel="noreferrer" aria-label="Support on Ko-fi (opens in a new tab)" onClick={() => { if (!preview) trackUsage('support_link_opened') }}><Icon name="heart" size={14} />Support on Ko-fi<span aria-hidden="true">↗</span></a><span className="subtle">Always optional.</span></p>
+    <p className="signup-welcome-support">Enjoying Modwerk? <a href={SUPPORT_URL} target="_blank" rel="noreferrer" aria-label="Support on Ko-fi (opens in a new tab)" onClick={() => { if (!preview) { trackUsage('support_link_opened'); countSupportPrompt('welcome-kofi'); answerSupportPrompt('kofi') } }}><Icon name="heart" size={14} />Support on Ko-fi<span aria-hidden="true">↗</span></a><span className="subtle">Always optional.</span></p>
   </section>
 }

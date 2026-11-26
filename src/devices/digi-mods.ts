@@ -9,7 +9,7 @@ import type { ElemodPlatform, ModwerkModule } from '../catalog/module-contract-v
 import { displayName, type ModuleContributor } from '../catalog/module-authors'
 import { moduleReleasedAt } from '../catalog/module-releases'
 
-export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
+export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' | 'model-cycles'
 
 export type DigiMod = {
   id: string
@@ -44,7 +44,7 @@ export type DigiMod = {
 // The Modwerk core is not built yet; until it is measured, the estimate reserves room for it.
 export const CORE_RESERVE_BYTES = 4096
 const profile = (id: DigiMachine) => (MACHINES as MachineProfile[]).find(machine => machine.id === id)!.sdk!
-export const DIGI_CORES: Record<DigiMachine, { version: string; ramBytes: number; areaBytes: number; slots: string }> = Object.fromEntries((['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const).map(id => {
+export const DIGI_CORES: Record<DigiMachine, { version: string; ramBytes: number; areaBytes: number; slots: string }> = Object.fromEntries((['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii', 'model-cycles'] as const).map(id => {
   const sdk = profile(id)
   return [id, { version: sdk.core?.version ?? '', ramBytes: sdk.budgets.find(budget => budget.name === 'Core image')?.value ?? CORE_RESERVE_BYTES, areaBytes: sdk.budgets.find(budget => budget.name === 'Shared mod memory')!.value, slots: sdk.budgets.filter(budget => budget.unit === 'slots').map(budget => budget.value + ' ' + budget.name.toLowerCase()).join(' · ') }]
 })) as Record<DigiMachine, { version: string; ramBytes: number; areaBytes: number; slots: string }>
@@ -118,6 +118,17 @@ export const DIGI_DEVICES = Object.keys(DIGI_CORES) as DigiMachine[]
 export function isDigiDevice(id: string): id is DigiMachine { return (DIGI_DEVICES as string[]).includes(id) }
 
 export function categorySlug(category: string) { return category.toLowerCase() }
+
+// Retired from a machine's library for good. A saved configuration or version pin that still names one loses it quietly
+// when it is read, instead of becoming unreadable, as REMOVED_MODULE_IDS does for the Octatrack. A module that leaves the
+// library adds its id here in the same change.
+export const RETIRED_DIGI_MODULE_IDS: Readonly<Partial<Record<DigiMachine, readonly string[]>>> = {
+  'analog-rytm-mkii': ['pipo-loop', 'improved-performance'], // #1650 (16 November 2026), #1944 (21 November 2026)
+}
+export function withoutRetiredDigiModules(device: DigiMachine, ids: readonly string[]): string[] {
+  const retired = RETIRED_DIGI_MODULE_IDS[device] ?? []
+  return ids.filter(id => !retired.includes(id))
+}
 
 export function resolveDigiSelection(device: DigiMod['device'], ids: readonly string[]): DigiMod[] {
   const mods = DIGI_MODS.filter(mod => mod.device === device)

@@ -17,6 +17,8 @@ import { LoginPromptDialog } from '../community/LoginPromptDialog'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { Icon } from './Icon'
 import { LinkHero } from './LinkHero'
+import { SupportActions } from './SupportActions'
+import { noteSupportBase } from '../community/support-prompt'
 import type { BaseGuideStep, BaseInstallFailure } from '../community/octatrack-diagnostics-contract'
 import { offerDiagnostics } from '../community/diagnostics-reask'
 
@@ -197,6 +199,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   function report(reached: BaseGuideStage, detail?: BaseGuideFailure) {
     if (reported.current.has(reached)) return
     reported.current.add(reached); onStage?.(reached, detail)
+    if (reached === 'first-connection' || reached === 'usb-update-done') noteSupportBase()
   }
   function step(reached: BaseGuideStep) {
     if (stepsSeen.current.has(reached)) return
@@ -323,6 +326,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
           <strong>The update stopped.</strong>
           <p>{failed.error}{failed.stepped ? ' The first of the two updates is saved. Start the update again for the second.' : failed.at < save ? ' Nothing was saved: your Octatrack keeps its current base.' : ''}</p>
           {state.status !== 'ready' && <p>Connect the Octatrack again to try again.</p>}
+          <SupportActions link={link} what={switching ? 'Change USB Audio' : 'Base update over USB'} error={failed.error} />
         </div>}
         {!usb && <>
           {/* Three short lines to read, not a paragraph (owner, 13 November 2026). */}
@@ -389,6 +393,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
         <p>Keep the USB cable connected. Press <b>Connect Octatrack</b> and choose your Octatrack in the browser’s list.</p>
         <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'busy' ? LINK_BUSY : stillPrevious ? STILL_PREVIOUS_BASE : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
         {state.notice && <p className="file-error" role="status">{state.notice.text}</p>}
+        {state.notice?.tone === 'error' && <SupportActions link={link} what="Connecting after the base install" error={state.notice.text} />}
         {!found && <details className="base-install-recovery"><summary>Your Octatrack isn’t in the list?</summary><p>If it is still in <b>USB DISK MODE</b>, leave it first, and wait until the Octatrack shows its normal screen. Use the Octatrack’s USB port and a cable that carries data. On Linux, Chrome needs a permission rule first: Your Octatrack → Setup → Can’t connect has it. If the list shows your Octatrack but it stays in use, close Modwerk in other tabs and browsers.</p></details>}
       </>}
     </>}

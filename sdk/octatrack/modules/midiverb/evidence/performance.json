@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "module": "midiverb",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "5f24930e171b2101b7d2666491bf034a28f5da177964d8380303efb86e7d4ebb",
+  "kind": "dsp",
+  "cycles": {
+    "unit": "instructions/sample",
+    "static": 395.5,
+    "measured": 397.1,
+    "instancesPerCore": 4,
+    "method": "static: static.py counts each handler's longest path in engine.asm (every conditional add taken) over each program's units, with frame B's prologue, frame A and MIX while a fade runs, averaged over a program sample's two frames: the dearest, Midiverb #16, 395.5; per-call work (the stream's loader, the ring clear) is outside the sample loop. measured: dsp_host, each of the 174 programs streamed by its index through verify.py's test driver at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7, the worst block: Midiverb #16, 397.1 (395.6 while it fades out into another program during a split), the test driver's few instructions included. Declared 398 executed (the base charges 7/4 of it, 696 of the 726 one instance may take). Chip timing: on the owner's MKII one instance took about 17.5 points of a DSP core."
+  },
+  "stock": {
+    "comparator": "DARK REV",
+    "comparatorWorst": 242.38,
+    "dearestWorst": 330.94,
+    "baseline": "E-Verb's matched stock benchmark (sdk/octatrack/modules/everb/evidence/performance.json): perf.py bench on the original image, SPRING REV, DARK REV, PLATE REV and DJ EQ through fixed and moving controls and a trig split at every position; its unsplit figures reproduce out/stock_dsp_bench/results.json. Not rerun for Midiverb.",
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "justification": "Midiverb runs the original machines' programs step for step: up to 128 operations a sample at half rate, each a read, a halving store or an output, with the originals' 16-bit arithmetic kept exact, plus the loader of the program stream. Its dearest program costs 397.1, 1.64 times DARK REV (242.38), 1.26 times SPRING REV (314.19, the cost target for new FX) and 1.20 times DJ EQ (330.94, the dearest stock effect). Each unit jumps straight to its handler (the first engine cost 18 % more), and the 31 programs above 400 stay out. Four instances on a core are 4 x 395.5 = 1,582 of the 3,120 static; on the owner's MKII the base admitted three on core 1 (peak 88.4 % of the core with the stock effects) and two on core 0, with no dropped render or stall."
+  },
+  "stress": {
+    "instancesPerCore": 4,
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "lockedSlots": 12,
+    "seconds": 2,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "stress.py: eight instances, four a core, each at stock's own FX2 buffer (dsp_host booted on stock's DSP payloads gives Y:$4000, $8000 and two in the shared window, $30000/$34000 on core 0 and $38000/$3c000 on core 1; the gate's synthetic image gets that table), 2.0 s in dsp_host -guard 0x3dfe -guard-shared -dirty 0x5a. Programs switch every sixteenth at 120 BPM (the dearest, Midiverb #16, half the time), STOP's tail kill holds twice, three LFOs each (LEVL sine, MIX triangle, slot E square), all twelve slots get a new value every sixteenth, trig splits 1, 3, 7, 8, 12 and 15 on six instances. No hang, 0 clobbers, 0 stray writes, every instance sounds, each equals itself rendered alone (core 1 position 2, where dsp_host writes a word of its own, equals itself beside seven instances on silence). Worst block per core 1,591.9 and 1,566.3 executed instructions a sample. A test driver copies each instance's own stream, as the ColdFire half does on a unit; the firmware's own LFO and lock delivery are not in it."
+  }
+}

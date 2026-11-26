@@ -1,0 +1,10 @@
+{
+ "schema": 1,
+ "rests": [
+  "0x4000d568"
+ ],
+ "subscribe": [
+  {"event": "ev_tail_kill", "fn": "mv_tail_kill", "order": 50},
+  {"event": "ev_knob_store", "fn": "mv_take_knob", "order": 69}
+ ]
+}

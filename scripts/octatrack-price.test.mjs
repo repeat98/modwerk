@@ -2,7 +2,8 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { added, allocationReading, curveFit, curveRoom, notPlaying, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
+import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -33,11 +34,34 @@ it('finds a published package by runtime id even when its file is named after th
 
 it('reads the guard window and the mean of the meter readings, and what a module added', () => {
   const guard = share => `frame max 112.2 %, latest start 12.2 %, in the frame interrupt ${share} % over 22000 frames, skipped 2 on T1 T3, share 80.0 %\n`
-  const before = reading(guard('41.1') + 'stats cpu 640 T1-4 328/338 T5-8 419/420 passes 1.0 2.0\nstats cpu 660 T1-4 330/338 T5-8 419/420 passes 1.0 2.0\n')
-  expect(before).toEqual({ frame: 41.1, frameMax: 112.2, frames: 22000, skipped: 2, cpu: 65, dsp1to4: 32.9, dsp5to8: 41.9 })
+  const before = reading(guard('41.1') + 'stats cpu 640 T1-4 328/338 T5-8 419/420 passes 1.0 2.0\nstats cpu 660 T1-4 330/352 T5-8 419/420 passes 1.0 2.0\n')
+  expect(before).toEqual({ frame: 41.1, frameMax: 112.2, frames: 22000, skipped: 2, cpu: 65, dsp1to4: 32.9, dsp5to8: 41.9, dsp1to4Peak: 35.2, dsp5to8Peak: 42 })
   const after = reading(guard('64.5') + 'stats cpu 750 T1-4 428/438 T5-8 419/420 passes 1.0 2.0\n')
-  expect(added(before, after)).toEqual({ frame: 23.4, cpu: 10, dsp1to4: 9.9, dsp5to8: 0 })
+  expect(added(before, after)).toEqual({ frame: 23.4, cpu: 10, dsp1to4: 9.9, dsp5to8: 0, dsp1to4Peak: 8.6, dsp5to8Peak: 0 })
   expect(() => reading('stats cpu 1 T1-4 1/1 T5-8 1/1')).toThrow('No guard')
+})
+
+it('keeps no peak in what a module added when the reading before it kept none (a record from before the peaks)', () => {
+  const old = { frame: 41, frameMax: 74.2, cpu: 60.5, dsp1to4: 38.4, dsp5to8: 45.6 }
+  expect(added(old, { ...old, dsp1to4: 45.9, dsp1to4Peak: 50, dsp5to8Peak: 47 })).toEqual({ frame: 0, cpu: 0, dsp1to4: 7.5, dsp5to8: 0 })
+})
+
+it('takes several readings of one state as one: means averaged, peaks the highest, and how far they spread', () => {
+  const one = (frame, frameMax, dsp1to4, dsp1to4Peak, skipped) => ({ frame, frameMax, frames: 22000, skipped, cpu: 60, dsp1to4, dsp5to8: 40, dsp1to4Peak, dsp5to8Peak: 44 })
+  const a = one(41, 74.2, 45.9, 52.1, 0)
+  expect(combined([a])).toBe(a) // one reading is the record it always was: no count, no spread
+  expect(combined([a, one(41.4, 76.9, 46.3, 58.4, 0), one(40.9, 75, 45.6, 51, 1)])).toEqual({
+    frame: 41.1, frameMax: 76.9, frames: 66000, skipped: 1, cpu: 60, dsp1to4: 45.9, dsp5to8: 40, dsp1to4Peak: 58.4, dsp5to8Peak: 44,
+    readings: 3, spread: { frame: 0.5, cpu: 0, dsp1to4: 0.7, dsp5to8: 0, frameMax: 2.7, dsp1to4Peak: 7.4, dsp5to8Peak: 0 },
+  })
+  const allocation = { modulePoolBytes: 0, dspProgramWordsT1to4: 1, dspProgramWordsT5to8: 2 }
+  expect(combined([a, { ...a, allocation }]).allocation).toEqual(allocation) // the last reading's, read after them
+})
+
+it('records what played: the transport always, the key bus only when the caller says', () => {
+  expect(priceInputs(undefined)).toEqual({ transport: 'playing' })
+  expect(priceInputs('live')).toEqual({ transport: 'playing', keyBus: 'live' })
+  expect(() => priceInputs('on')).toThrow(/--key-bus takes live/)
 })
 
 it('records the module pool and each DSP program arena in their own units', () => {
@@ -76,6 +100,10 @@ it('writes a clean reading as the module\'s price, its readings beside it, and t
     expect(price.conditions).toBe('MKII, bank C pattern C01; base 945cc074; 8 s per reading. Frame interrupt 30.1 % before, 30.3 % installed and used nowhere, 31.4 % on T1 FX2; CPU meter 50 % before, 50.2 % at rest, 51 % in use.')
     expect(JSON.parse(readFileSync(join(root, 'sdk/octatrack/modules/echo/evidence/cpu-price.json'), 'utf8'))).toMatchObject({ module: 'echo', version: '0.2.0', base: '945cc074', result: { inUseAdds: { frame: 1.3 } } })
     expect(JSON.parse(readFileSync(join(root, 'sdk/module-cpu-prices-pending.json'), 'utf8')).pending).toEqual({ other: 'price not yet measured' })
+    // Three readings a state and a named key bus: the record says so, and so do the price's conditions.
+    expect(writePrice({ root, result, base: '945cc074', scene: 'MKII, bank C pattern C01', seconds: 8, measuredAt: '2026-11-24T10:00:00.000Z', readings: 3, inputs: priceInputs('live') })).toMatch(/1.3 % of a frame/)
+    expect(JSON.parse(readFileSync(manifest, 'utf8')).resources.cpuPrice.conditions).toMatch(/^MKII, bank C pattern C01; base 945cc074; 3 readings of 8 s a state\. Frame interrupt 30.1 % before/)
+    expect(JSON.parse(readFileSync(join(root, 'sdk/octatrack/modules/echo/evidence/cpu-price.json'), 'utf8'))).toMatchObject({ readings: 3, inputs: { transport: 'playing', keyBus: 'live' }, seconds: 8 })
     writeFileSync(manifest, JSON.stringify({ id: 'echo', version: '0.2.0', compatibility: { location: 'Track machine' }, resources: {} }))
     expect(write({})).toMatch(/machine-render/)
   } finally { rmSync(root, { recursive: true, force: true }) }
@@ -137,4 +165,18 @@ it('stops the curve before it starts when the booked first instance leaves no ro
   expect(curveRoom({ atRest: 65, booked: 31.3, pattern: '3' })).toBeNull()
   // A module nothing books yet: its first reading decides (curveProblem judges it).
   expect(curveRoom({ atRest: 95, booked: undefined, pattern: '1' })).toBeNull()
+})
+
+it('reads a curve with the module\'s each booked at 0 and every other figure as booked', () => {
+  const list = { about: 'x', stock: { line: 95 }, costs: { grain: { first: 33.3, each: 33.3, rest: 0, points: [33.3] }, amiga: { first: 26.6, each: 4, rest: 0.1 } } }
+  const measuring = measuringCosts(list, 'grain')
+  expect(measuring.costs.grain).toEqual({ first: 33.3, each: 0, rest: 0, points: [33.3] })
+  expect(measuring.costs.amiga).toBe(list.costs.amiga)
+  expect(measuring.stock).toBe(list.stock)
+  expect(list.costs.grain.each).toBe(33.3) // the checkout's table is not changed
+  // What the unit is sent: a further instance adds 0 per mille, the first still its booked 33.3 (wake).
+  expect(frameCostTable({ grain: measuring.costs.grain }, null)).toEqual([{ module: frameCostTable({ grain: list.costs.grain }, null)[0].module, use: 0, wake: 333, rest: 0 }])
+  // Unbooked: the unit charges it by its descriptor, and its table is left alone.
+  expect(measuringCosts(list, 'syntiz')).toBeNull()
+  expect(measuringCosts(null, 'grain')).toBeNull()
 })
