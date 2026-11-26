@@ -558,7 +558,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         const kept = tv.getUint32(0) === 0x4d574654 && tv.getUint32(4) === w(1)
         console.log(`stall ${w(1)}: ${['test', 'frames stopped', 'eDMA refused a transfer'][w(2)] ?? 'reason ' + w(2)} at tick ${w(3)}\n  ` +
         named(i => i < w(4) ? w(5 + i) : 0) + `\n  packets core 0 ${Buffer.from(b.subarray(404, 420)).toString('hex')} core 1 ${Buffer.from(b.subarray(420, 436)).toString('hex')}` +
-        '\n  ' + describeStallPackets({ packets: [0, 1].map(c => Array.from({ length: 8 }, (_, i) => v.getUint16(404 + 16 * c + 2 * i))), report: Array.from({ length: Math.min(w(4), 96) }, (_, i) => w(5 + i)) }) +
+        '\n  ' + describeStallPackets({ packets: [0, 1].map(c => Array.from({ length: 8 }, (_, i) => v.getUint16(404 + 16 * c + 2 * i))), report: Array.from({ length: Math.min(w(4), 96) }, (_, i) => w(5 + i)), host: [v.getUint16(452), v.getUint16(454)] }) +
         `\n  live FX ${Buffer.from(b.subarray(436, 452)).toString('hex')}\n  host ISR selected core 0x${v.getUint16(452).toString(16)} ` +
         `(RXDF ${v.getUint16(452) & 1}: a word the ColdFire never took), core 1 as last read 0x${v.getUint16(454).toString(16)}` +
         (kept ? '\n  ' + describeStallFrames(Array.from({ length: 256 }, (_, i) => us(i))) + '\n  gaps ' + Array.from({ length: 128 }, (_, i) => us(2 * i)).join(' ') + '\n  runs ' + Array.from({ length: 128 }, (_, i) => us(2 * i + 1)).join(' ') : '\n  no frames kept with it (a base before the trace)'))
