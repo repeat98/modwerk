@@ -861,6 +861,22 @@
       "module": "e7e04dd9",
       "bytes": 52126,
       "sha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968"
+    },
+    {
+      "id": "tempo-lfo",
+      "octabam": true,
+      "abi": 7,
+      "features": 1,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "version": "0.1.0-experimental",
+      "name": "TEMPO LFO",
+      "module": "038b0514",
+      "bytes": 852,
+      "sha256": "654530b1accbaa058768f36cc17f1e541680d31d0187d4f46191de2eb8751c96",
+      "path": "octatrack-modules/tempo-lfo/0.1.0-experimental.mwrm",
+      "usbOnly": true
     }
   ],
   "usbAudio": {

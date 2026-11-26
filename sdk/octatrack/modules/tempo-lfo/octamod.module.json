@@ -63,7 +63,7 @@
       "Publishes global PROJECT_BPM24; last writing track wins. Does not own per-track scale/speed (use TSPD).",
       "Does not claim ev_audio_step / Play Modes / SPOS remapper sites.",
       "Flash/code package totals unmeasured on tip (authored .bss 24 B tip-wired). Emulator instruction counts ≠ chip wall-clock.",
-      "Upstream first-release staging (MOP-273): Base draft cursor/ot-lfo-pmtr-dest-base-a318 @9cd7428c4 (index 63; lea deferred; PR held). resources.cpuPrice via npm run device:price not yet measured — do not invent; USB .mwrm row not yet shipped (Keep tip package 643b46c3… / 724 B).",
+      "Upstream first-release staging (MOP-273): Base draft cursor/ot-lfo-pmtr-dest-base-a318 @9cd7428c4 (index 63; lea deferred; PR held). USB .mwrm rebuilt offline 654530b1…/852 B against that draft (not Keep 643b46c3…). resources.cpuPrice via npm run device:price not yet measured — do not invent.",
       "Peer LFO / sequencer modules (including seq-pos) stay conflict-listed until they are listed on upstream and modules:compat proves coexistence; conflicts array left empty while those ids are absent from sdk/octatrack/modules (modules:generate refuses unknown conflict ids)."
     ]
   },

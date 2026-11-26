@@ -26,7 +26,11 @@ Same gate as Seq Pos (MOP-249). mop255 cfmeter is **not** a price. **No USB this
 
 ### 3. USB `.mwrm`
 
-Keep tip `643b46c3…` / 724 B. Needs merged base event + m68k-elf + Elekloader (or Jon private rebuild).
+Offline rebuild against Base draft index **63** staged:
+`public/octatrack-modules/tempo-lfo/0.1.0-experimental.mwrm`
+(`654530b1…` / 852 B, module `038b0514`). **Not** the fork Keep tip
+`643b46c3…` / 724 B (different base hook index). See
+`evidence/mwrm-rebuild-base63-mop273-2026-11-26.md`.
 
 ## Done on this branch
 
@@ -36,15 +40,14 @@ Keep tip `643b46c3…` / 724 B. Needs merged base event + m68k-elf + Elekloader 
 - [x] Qual cites retained; `sourceSha256` rehashed for this tree
 - [x] Honesty: no forged `cpuPrice`
 - [x] Base draft prepared separately (index 63; PR held)
-- [ ] USB `.mwrm` row
+- [x] USB `.mwrm` row (upstream rebuild vs Base draft — needs `device:price`)
 - [ ] Measured `resources.cpuPrice`
 - [ ] Upstream listing PR
 
 ## Resume order
 
 1. Jon authorizes → open Base PR from `cursor/ot-lfo-pmtr-dest-base-a318` → `repeat98:main` (do not merge).
-2. Follow-up: FM Synth `po_lfo3b` → `0x4000d03a` + claim dest lea + owner OS base rebuild.
-3. Rebuild USB `.mwrm` against that base; add packages row (Keep `643b46c3…` title-variant honesty as #2193).
-4. Undo-only `device:price --write` for tempo-lfo.
-5. `modules:generate`; doctor; `modules:check -- --base upstream/main`.
-6. Open owner first-release PR to `repeat98:main`. **Do not merge.**
+2. Follow-up: FM Synth `po_lfo3b` → `0x4000d03a` + claim dest lea + owner OS base rebuild; rebuild `.mwrm` if hook layout moves.
+3. Undo-only `device:price --write` for tempo-lfo on the staged image (or tip-matched rebuild).
+4. `modules:generate`; doctor; `modules:check -- --base upstream/main`.
+5. Open owner first-release PR to `repeat98:main`. **Do not merge.**
