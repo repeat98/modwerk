@@ -446,7 +446,9 @@ void mw_link_project(int how, unsigned dropped)
 #ifdef MODWERK_DEV
 static uint8_t reply[HEADER + 1 + 5 + (SCREEN_PART / 7 + 1) * 8 + 1];   // the largest: SCREEN's
 #else
-static uint8_t reply[HEADER + 1 + (UP_RESPONSE / 7 + 1) * 8 + 1];       // the largest: UP_RUN's (LOG's 172, IDENT's 103)
+#define REPLY_LOG (HEADER + 1 + 10 + (MEM_MAX / 7 + 1) * 8 + 1)
+#define REPLY_UP_RUN (HEADER + 1 + (UP_RESPONSE / 7 + 1) * 8 + 1)
+static uint8_t reply[REPLY_LOG > REPLY_UP_RUN ? REPLY_LOG : REPLY_UP_RUN];   // the larger of LOG's and UP_RUN's
 #endif
 static uint8_t up_out[UP_RESPONSE];
 extern void mw_modules_identity(uint32_t crc);

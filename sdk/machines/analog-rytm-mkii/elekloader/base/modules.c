@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Every base (base.json's common): loading modules without a reflash over the link, the Model:Cycles' transport
  * (sdk/machines/model-cycles/elekloader/base/modules.c, durchgemacht) unchanged but for this note: the same link
- * commands, frames and lapse; the Rytm's DMA timers are the same ColdFire's. The
+ * commands and frames, the lapse counted in the Rytm's slower UI ticks (about 20 a second, the Model:Cycles' 30); the
+ * Rytm's DMA timers are the same ColdFire's. The
  * Octatrack's upload controller (sdk/runtime/upload: wire envelope version 1) drives the runtime loader's backend
  * (sdk/runtime/loader); where the Octatrack carries one wire frame in an EP0 data stage, the link carries it in parts
  * (link.c: UP_PART, then UP_RUN), each SysEx under 128 bytes as stock's own upgrade messages are. Frames run on the UI
@@ -16,7 +17,7 @@
 #include "wire.h"
 
 #define STAGING_BYTES 32768u            /* the largest package this base takes; larger ones are refused (LIMIT) */
-#define LAPSE_TICKS 300u                /* about ten seconds of UI ticks */
+#define LAPSE_TICKS 200u                /* about ten seconds of UI ticks (the Rytm's are about 20 a second) */
 
 static uint8_t staging[STAGING_BYTES] __attribute__((aligned(16)));
 static struct mu_context mu;

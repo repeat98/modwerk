@@ -153,7 +153,7 @@ rytm_link.py remove NAME --seconds 5 [--keep]
 The developer MCP's `device_review`, `device_trial`, `device_keep` and `device_undo` do the same with
 `--elektron-midi` ([FRONTEND_MCP.md](../../../docs/FRONTEND_MCP.md#an-analog-rytm-mkii-over-its-link)). A module's
 handlers run on the UI task: `module_draw` gets the core's bitmap (stock's fillrect, `FILLRECT_AT`), `module_key` the
-panel's key code and whether it went down, `module_enc` the knob (0-7 A-H, 8 LEVEL) and its count. Key codes and
+panel's key code and whether it went down (a held key's repeats arrive as presses, as on the Model:Cycles), `module_enc` the knob (0-7 A-H, 8 LEVEL) and its count. Key codes and
 addresses are OS 1.74's.
 
 What the glue rests on (read from OS 1.74; `runtime.c`'s header has the addresses): the kernel is the Octatrack's and

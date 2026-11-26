@@ -450,9 +450,11 @@ class MachineBases(unittest.TestCase):
             subs = {(sub["event"], sub["fn"]) for sub in parts["subscribe"]}
             self.assertLessEqual({("ev_tick", "mw_runtime_tick"), ("ev_draw", "mw_runtime_draw"), ("ev_key", "mw_runtime_key"), ("ev_enc", "mw_runtime_enc")}, subs, name)
             self.assertFalse([fn for event, fn in subs if fn.startswith(("mw_runtime", "mw_modules")) and event.startswith("ev_render")], name)
-        # The transport is the Model:Cycles' file but for its header note.
-        body = lambda path: (APP / path).read_text().split("#include <stdint.h>", 1)[1]
+        # The transport is the Model:Cycles' file but for its header note and the lapse, counted in the Rytm's slower
+        # UI ticks: ten seconds either way.
+        body = lambda path: re.sub(r"#define LAPSE_TICKS \d+u.*", "", (APP / path).read_text().split("#include <stdint.h>", 1)[1])
         self.assertEqual(body("sdk/machines/analog-rytm-mkii/elekloader/base/modules.c"), body("sdk/machines/model-cycles/elekloader/base/modules.c"))
+        self.assertIn("#define LAPSE_TICKS 200u", (APP / "sdk/machines/analog-rytm-mkii/elekloader/base/modules.c").read_text())
 
     def test_the_rytm_diagnostics_log_is_the_octatrack_layout(self):
         """The site reads the Rytm's log with the Octatrack's parser, so its numbers and structs are the Octatrack's
