@@ -52,10 +52,21 @@ export interface FakeUnit {
   /** A published candidate whose page closed during its trial (its digest): only a session that adopts it can roll it back. */
   orphan?: string
   orphanTransaction?: number
+  bootSession?: string
   /** Previews only: a passed self-test with the set saved on the card, and live meters (requests 21 and 30). */
   status?: boolean
+  /** Optional LCD frames for the local Screen preview. */
+  screen?: () => Promise<DataView>
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
+  /** With refusal 7, the effect slot that runs the module, as base 0.8.2 reports it (1-8 FX1 of T1-T8, 9-16 FX2). */
+  inUseSlot?: number
+  /** What its record says keeps a change from beginning (runtime.h MACHINE_BUSY_*, the track above), as base 0.8.2
+   * reports it beside an `unsafe` (set `playing` too). */
+  busy?: number
+  /** This start's restore has not run: the base rejects every change with no loader refusal, its record's `saved` 0
+   * (modset.c modwerk_modset_check_set). */
+  restoring?: boolean
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
    * the base then drops the staged package. */
   publishRefusal?: number
@@ -108,9 +119,10 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         if (setup.request === 3) return { status: 'ok', data: new DataView(identityBytes(unit.base).buffer) }
         if (setup.request === 29) { // CAPABILITIES, MWCP v1: loader ABI 8, the feature bits, 24 sites, 8 copies
           const caps = new DataView(new ArrayBuffer(12)); caps.setUint32(0, 0x4d574350); caps.setUint8(4, 1); caps.setUint8(5, 8)
-          caps.setUint16(6, 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0)); caps.setUint16(8, 24); caps.setUint16(10, 8)
+          caps.setUint16(6, 128 | (unit.updatesBase ? 256 : 0) | (unit.moduleSets ? 512 : 0) | (unit.screen ? 8192 : 0)); caps.setUint16(8, 24); caps.setUint16(10, 8)
           return { status: 'ok', data: caps }
         }
+        if (setup.request === 7 && unit.screen) return { status: 'ok', data: await unit.screen() }
         if (setup.request === 38 && unit.moduleSets) {
           const bytes = new Uint8Array(40), view = new DataView(bytes.buffer)
           view.setUint32(0, 0x4d575344); view.setUint8(4, 1); view.setUint8(5, 1); view.setUint16(6, unit.modules.length)
@@ -147,7 +159,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
         }
-        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
+        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring || unit.busy !== undefined ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back
           const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)), count = unit.installed.moduleIds.length
           ;[[0, 2], [3, count], [7, 410], [8, 655], [9, 470], [14, 47900], [15, 7], [16, count], [17, count]].forEach(([at, value]) => record.setUint32(4 * at, value))
@@ -155,7 +167,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         }
         if (setup.request !== 21 || refusal === undefined) return { status: 'stall' }
         const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)) // the base's record, idle, with its last refusal
-        record.setUint32(92, refusal)
+        record.setUint32(92, (refusal | (unit.inUseSlot ?? 0) << 16 | (unit.busy ?? 0) << 24) >>> 0)
         return { status: 'ok', data: record }
       },
     }
@@ -183,7 +195,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
   return async (_transport?: unknown, _base?: string, options: { timeoutMs?: number } = {}): Promise<LinkSession> => {
     if ((options.timeoutMs ?? 0) > UPLOAD_TIMEOUT_MAX_MS) throw new Error('Upload timeout must be at most ' + UPLOAD_TIMEOUT_MAX_MS + ' ms.') // as UploadSession.connect
     let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: unit.staged ? 'receiving' : unit.orphan ? 'trial' : 'normal', activeKnown: true, generation: unit.orphan ? 1 : 0,
-      lastTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, currentTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: '00'.repeat(32),
+      lastTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, currentTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: unit.bootSession ?? '00'.repeat(32),
       active: unit.orphan ?? unit.active }
     let staged = unit.active, owned = false, data: Uint8Array | undefined
     // The base a staged container holds: its section's image. A base before the two slots writes only itself.
@@ -199,7 +211,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       get status() { return status }, connectionTrusted: true,
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
-        if (unit.refusal) return step('normal', 'rejected')
+        if (unit.refusal || unit.restoring) return step('normal', 'rejected')
         if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
@@ -274,10 +286,41 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
  * Dev previews (`?preview=usb-link|base-install&unit=base|stock|none|unsupported`): the link against a pretend
  * unit, driven from the console through `modwerkUsbPreview`: plug('base' | 'stock'), unplug(),
  * playing = true, taken = true. Add `inventory=empty` for a freshly installed base and `missing=project` for
- * a project needing E-Verb, Euclid, Air Chorus and TapeHead, and `status=old` for a base without a self-test record or live load.
+ * a project needing E-Verb, Euclid, Air Chorus and TapeHead, `status=old` for a base without a self-test record or live load,
+ * and `refusal=7` for a sync the loader refuses (a module in use).
  * There is no pretend base build: a preview must never save a file
  * that looks like firmware.
  */
+/** Feed existing documentation captures through the same USB decoder, pop-out and recorder as a real unit. */
+function sampleScreens() {
+  const urls = [
+    new URL('../../sdk/octatrack/modules/synth/media/ot-location.png', import.meta.url),
+    new URL('../../sdk/octatrack/modules/synth/media/ot-controls.png', import.meta.url),
+    new URL('../../sdk/octatrack/modules/synth/media/ot-voices.png', import.meta.url),
+  ]
+  const frames = new Map<number, DataView>()
+  return async () => {
+    const index = Math.floor(performance.now() / 2000) % urls.length
+    const cached = frames.get(index)
+    if (cached) return cached
+    const source = new Image()
+    source.src = urls[index].href
+    await source.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = 128; canvas.height = 64
+    const ctx = canvas.getContext('2d')!
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(source, 0, 0, 128, 64)
+    const pixels = ctx.getImageData(0, 0, 128, 64).data, frame = new Uint8Array(1028)
+    frame.set(ascii('MWLC'))
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 128; x++) {
+      if (pixels[4 * (128 * y + x)] > 127) frame[4 + 8 * x + 7 - (y >> 3)] |= 1 << (y & 7)
+    }
+    const view = new DataView(frame.buffer)
+    frames.set(index, view)
+    return view
+  }
+}
 export function previewKit() {
   const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
   const params = new URLSearchParams(window.location.search), kind = params.get('unit')
@@ -285,6 +328,7 @@ export function previewKit() {
   const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
   unit.installed = { moduleIds: params.get('inventory') === 'empty' ? [] : ['everb', 'airwindows-chorus', 'poly8'], removedStockFx: [] }
   unit.status = params.get('status') !== 'old'
+  if (params.get('preview') === 'screen') unit.screen = sampleScreens()
   // &base=older: a unit on an older base, so the base dialog offers the update over USB; &slots=one|two: what the
   // base's SLOTS says (one copy: Send, Restart, Save; two slots: Send, Save, Restart), absent for a base before them.
   if (params.get('base') === 'older') unit.base = unit.flashed = unit.active = 'aa'.repeat(32)
@@ -293,6 +337,10 @@ export function previewKit() {
     unit.slots = new Uint8Array(24)
     unit.slots.set([0x4d, 0x57, 0x53, 0x53, slots === 'two' ? 1 : 0, slots === 'two' ? 0 : 0xff])
   }
+  // &refusal=7: the loader refuses every sync with this reason (loader.h runtime_refusal), so a failed sync and its
+  // Copy details, Save report and Report a problem can be looked at; `modwerkUsbPreview.refusal = 0` lets syncs through.
+  const refusal = Number(params.get('refusal'))
+  if (Number.isInteger(refusal) && refusal > 0) unit.refusal = refusal
   if (params.get('missing') === 'project') unit.project = [{ id: 'everb', name: 'E-Verb' }, { id: 'euclid', name: 'Euclid' }, { id: 'airwindows-chorus', name: 'Air Chorus' }, { id: 'tapehead', name: 'TapeHead' }]
   Object.assign(window, { modwerkUsbPreview: unit })
   return {

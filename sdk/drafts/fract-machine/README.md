@@ -1,6 +1,6 @@
 # FRACT source draft
 
-Version 0.1.2-experimental · author @ex1010
+Version 0.1.3-experimental · author @ex1010
 
 ## Overview
 
@@ -63,11 +63,11 @@ superseded by that consolidation. The base keeps FR:1 at boot (`known[]`, added 
 the author completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
 See TESTING.md for identities, reported observations and limits. No active catalogue entry or public package exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
-TESTING.md. The current 0.1.2 candidate follows the merged base-aware builder
-and has a named-build functional hardware report; timing/stress and full release
-qualification remain pending. Publication remains incomplete.
+TESTING.md. The historical 0.1.2 candidate has a named-build functional hardware report.
+Current 0.1.3 is relinked for released base0.8.1 and has updated shared page
+controls; current-build hardware, timing/stress and qualification remain pending.
 
-Historical 0.1.1 results remain in TESTING.md. The current candidate's Part and
+Historical 0.1.1 results remain in TESTING.md. The historical 0.1.2 candidate's Part and
 project reload, lifecycle and cold boot are scoped in
 [the 10 November report](release/hardware-20261110.md). Standalone missing-module
 Part reload, live-trigger deletion, full timing/stress and companion-module
@@ -114,21 +114,22 @@ independence is limited to the frozen implementation files.
 
 ## Screens and audio
 
-The current candidate has three actual emulator captures:
-[SRC SETUP and selection](media/ot-setup.png), [MAIN](media/ot-main.png) and
-[playing MAIN](media/ot-playing.png). Follow the captions in the manifest and
-the Quick tutorial above. SETUP includes PAN/SRNG; MAIN includes all six grain
-controls. The stored fixture shows SIZE 106 and PTCH +3.0, not fresh defaults;
-neutral PTCH is raw 64, displayed 0.0.
+Current 0.1.3 emulator captures show [MAIN](media/qualification-20261125-main.png),
+[SRC SETUP / FULL](media/qualification-20261125-full.png) and
+[SRC SETUP / LOCAL](media/qualification-20261125-local.png). SRNG uses stock's
+two-value switch; PAN remains a knob. No sample was loaded for these UI checks.
+[Provenance](media/qualification-20261125.json) names the exact development twin,
+package and emulator. The 120-second UI trial returned to its pretrial module set.
+These captures establish neither playback nor hardware timing.
 
-[Capture provenance](media/capture.json) binds these pixels to package6ff/base72
-and records the completed real renderer before export. The original
-[artwork and prototype previews](../../../docs/media/fract/README.md) remain
+Earlier [SETUP](media/ot-setup.png), [MAIN](media/ot-main.png) and
+[playing MAIN](media/ot-playing.png) remain package6ff/base72 captures;
+[their provenance](media/capture.json) retains that scope. The original
+[artwork and prototype previews](../../../docs/media/fract/README.md) are
 historical. Artwork is MIT; the capture declaration preserves underlying
-interface rights. No sample audio is included. UI evidence does not qualify
-hardware sound or timing.
+interface rights. No sample audio is included.
 
-## Named-build candidate — 10 November 2026
+## Historical named build — 10 November 2026
 
 `runtime-build.json` consumes the merged host recipe compiler. Base imports
 follow the committed base; the recipe reviews only import names/run origin.
@@ -137,7 +138,7 @@ carries `requiredBase`, matching base `72defb09` for this build. A base refresh
 relinks imports through the same reviewed reconstruction recipe. The machine
 and START records, grain engine, controls and UI are unchanged.
 
-The new `0.1.2-experimental` package has canonical runtime identity `fract-machine`.
+That `0.1.2-experimental` package has canonical runtime identity `fract-machine`.
 The private `grnyv1` package must be replaced as a controlled set; do not install
 both identities together. The historical package54ca test remains in TESTING.md.
 The [named-build hardware report](release/hardware-20261110.md) records functional
@@ -156,8 +157,9 @@ reproduction without firmware. Original-OS reconstruction and both strict scans
 also pass locally. Resource and remaining release work are in release/README.md.
 
 [The remaining review work](release/review-20261112.md) follows repeat98’s
-12 November request: final relinking and timing wait for #1418 and then #1165.
-The 10 November evidence stays bound to its original package.
+12 November request. Both prerequisites #1418/#1165 have merged. See the
+[current preparation](release/qualification-20261125.md); hardware measurements
+remain ours to run. The 10 November evidence stays bound to its original package.
 
 [The offline measurement kit](qualification/README.md) documents the separate
 private probe, matched project generator, read-only collector and their limits.

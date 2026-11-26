@@ -51,12 +51,47 @@ out.wav` plays a 44.1 kHz WAV through it, both without Zoom firmware. Leave
 whose coefficient knobs (depth, rate, mix) read the firmware refuses to render
 without one; test it on the pedal.
 
+## MS-70CDR stack progress
+
+| Piece | Verified capability and next check |
+| --- | --- |
+| Modwerk base | The browser builds pinned MIDISTOMP from the owner's 2.10 updater. Define the common loader sites and admission limits before publishing the first runtime module. |
+| USB link | The pedal page and the shared developer MCP read identity and installed effects over USB MIDI. |
+| Setup and updates | The pedal page guides backup, a bootloader flash and reconnection. Zoom's updater is the stock recovery route. |
+| Loading without a reflash | The development probe counted ELF-header reads on the original pedal. Qualify read, seek and close, then run one effect from RAM and verify Undo and reboot. Keep needs a separate persistence check. |
+| Status page | Status shows firmware, installed effects and any load snapshot the connected base supplies. |
+| Diagnostics | USB load support and the development loader counter are in place. Device self-test and a consent-gated diagnostic log remain to be wired. |
+| Device tools | Shared status and load calls reach the pedal. Review, Trial, Keep and Undo depend on the qualified RAM loader. |
+
+The [Editor tab](https://modwerk.app/#zoom-ms-70cdr/pedal/editor) reads
+the active patch over the same USB link. Stock and Modwerk effects in the
+patch appear in slot order. Names and parameter ranges come from the pedal's
+registered effect files, read locally. Modwerk modules also use named choices
+from their catalog and [Roman Rusinov's editor](https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/tools/patch_editor.html).
+Turn a knob by dragging up or down or using the arrow keys. In slots 1-3 (all
+six from MIDISTOMP 2.0.4) a knob moves on the pedal as it turns (`31`). Every
+other change is staged: the other slots' knobs, bypass, the name, and a slot's
+effect, chosen from the pedal's effect list with its knobs at their defaults.
+**Apply to pedal** checks that the patch still matches, changes only those
+fields, then reads them back. The pedal's Auto Save setting controls whether
+applied changes outlast choosing another patch; **Save** stores the patch into a
+program (`32`, read back from it) and asks first when that overwrites another
+patch. **Read all 50** sends a program change to each patch, so the pedal plays
+each one for a moment, then goes back and writes the edit buffer back, so changes
+not saved are kept; any listed patch then opens with one click. The page follows
+a patch chosen on the pedal itself, which says so only by a program change: until
+one has come, Save asks where. The Editor's first write on a connection asks for
+the model printed on the pedal, as installs do: another pedal running MIDISTOMP
+answers as an MS-70CDR. D004 supports set sync using the same file
+commands as the released base.
+
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |
 | --- | --- | --- |
 | MS-70CDR | 2.10 | Main target: effects, NAM/cab loader and patch editor tested by the owner |
-| MS-50G | 3.10 | NAM and cab effects confirmed by a user ([#1](https://github.com/themanro/ZoomMultistompZDL/issues/1), [#5](https://github.com/themanro/ZoomMultistompZDL/issues/5)); patch editor writes opt-in |
+| MS-50G | 3.10 | NAM and cab effects confirmed by a user ([#1](https://github.com/themanro/ZoomMultistompZDL/issues/1), [#5](https://github.com/themanro/ZoomMultistompZDL/issues/5)); patch editor writes opt-in. Read over USB (23 November 2026): its pedal page in Chrome and `npm run zoom` name it, list 162 files and back them up, the two backups byte-identical and matching another tool's; in update mode the bootloader answers as `0x58`, 1.10 |
 | MS-60B | — | Same family; unconfirmed |
 | G1on / G1Xon / B1on / B1Xon | G1Xon 1.21 | NAM loader effects reported working on a G1Xon ([#6](https://github.com/themanro/ZoomMultistompZDL/issues/6)); others unconfirmed |
 | MS-100BT | — | No USB MIDI; effects installed with third-party Bluetooth tools ([#4](https://github.com/themanro/ZoomMultistompZDL/issues/4)) |
@@ -86,7 +121,7 @@ pedals, see Stomphacks and nam2zoom, which already have their own pipelines.
 | Module | One ZDL effect, or a NAM/cab slot built from a template | Module manifest for a prebuilt binary plus source |
 | Build | Effects: prebuilt (the TI compiler cannot run in CI or the browser and is not redistributed). NAM/cab: in the browser from MIT templates (`nam_loader.js`, `cab_loader.js`, `slot_identity.js`, `cover_art.js`) | No native build in Modwerk |
 | Install | The pedal page installs and removes one effect file at a time over USB (Web MIDI SysEx), each write read back, and syncs a module set; Zoom Effect Manager 2.3.3+ stays the fallback | No runtime loader, trial or Keep/Undo: an effect loads when the pedal is power-cycled; Effect Manager reflashes the whole effect file system |
-| Patches | The project's Web MIDI patch editor (MS-70CDR mapped; read-only elsewhere) | Optional integration |
+| Patches | The pedal page's Editor (`ZoomPatchEditor.tsx`; `parseCurrentPatch`/`editCurrentPatch` in `zoom-protocol.ts`): MS-70CDR mapped, other pedals not yet | Reorder, import/export and the DSP meter still to port |
 | Combination budget | Summed DSP cost per patch: refused between 224.4 and 228.4 on the MS-70CDR 2.10 (measured); 6 slots | A `percent`-style budget in the profile |
 | Resource rules | Effect ID unique per pedal (the project reserves 403-499, 500-699 NAM, 700-899 cab, 900-957), file name 8 characters unique, file size cap (~32 KB proven) | A per-family ID ledger, like Stomphacks' author ranges for ZD2 |
 | Evidence | Owner hardware tests per release, user reports, emulator/host parity | Same evidence rules apply |
@@ -103,10 +138,14 @@ its files and backs every file up into a zip, and installs or removes one added 
 on removal, every write read back, the list from before offered for saving and written back if the new one
 fails. The link itself refuses to install or remove anything but an added effect, and an effect ID known
 to clash across collections; an effect whose ID another effect on the pedal has gets a local ID
-([Effect IDs](ZDL_MODULE_CONTRACT.md#effect-ids)); after removing, it lists the files again to check the file went. Status, Backups and Setup are its unit
+([Effect IDs](ZDL_MODULE_CONTRACT.md#effect-ids)); after removing, it lists the files again to check the file went. Status, Editor, Backups and Setup are its unit
 pages. Status is the Octatrack's console (`ZoomLoad.tsx` shares its meters and chart): CPU, the effect chain and
 the patch's DSP out of 300 now, the last five minutes, each slot's share, the firmware, and the effects on the
-pedal, read by itself; NAM / Cab (in the Samples slot), Patches and module sets follow. Tests run against
+pedal, read by itself; NAM / Cab (in the Samples slot) and module sets follow. The Editor is described
+[above](#ms-70cdr-stack-progress): it reads the edit buffer (`29`, answered by a 146-byte `28`), writes it in editor mode
+(`50`), and its knobs, names and defaults come from the pedal's own effect files; Modwerk carries no tables of
+Zoom's effects. Never send `33`: on an MS-70CDR an unknown command erased all fifty patches (the project's
+docs/PROBING-A-NEW-PEDAL.md). Tests run against
 a fake pedal (`src/dev/zoom-pedal-fake.ts`) in the pedal's reply formats. On an MS-70CDR 2.10 (27 October
 2026) it identified the pedal, listed its 162 files and backed them up: every file byte-identical to the
 project's Patch Editor backup, the effect list apart (changed on the pedal in between). Installing and
@@ -304,12 +343,17 @@ finds where they are tied to it.
    answering as it. On the unit, its beta pedal page names the pedal and
    firmware, lists the files and backs them all up, byte-identical to another
    tool's backup.
+   MS-50G: done on 3.10 (23 November 2026). Its bootloader counts as update mode (`isUpdateMode`); the base
+   still flashes only an MS-70CDR (`canFlashBase`).
 2. **Write.** Installs and removals stay refused on a pedal and firmware they
    have not run on. Record Effect Manager or the project's editor installing an
    effect there (MIDI Monitor, as for the flash) and compare it with the link's
    messages; then install and remove one effect from the page, power-cycle, and
    check it appeared in its category, went again and left the rest unchanged.
    Only then add the pedal and firmware to `canWriteFiles`.
+   MS-50G 3.10 (23 November 2026): Effect Manager 2.3.3 erases the whole effect file system and rewrites it; wait
+   until the pedal's replies stop before unplugging. A pedal unplugged mid-write showed a file system error until a
+   second write finished.
 3. **Listing.** The profile gets an `sdk` section like the MS-70CDR's, with its
    own guide (`sdk/machines/<id>/README.md`, from the MS-70CDR's) and budgets
    measured on that pedal (the MS-60B chains four effects, not six); then
@@ -329,7 +373,10 @@ finds where they are tied to it.
    releases are built from the MS-70CDR's 2.10 for all three pedals and answer
    as an MS-70CDR; on an MS-50G or MS-60B that runs one model's firmware on
    another, which the [modding guidelines](../MODDING_GUIDELINES.md) refuse, so
-   the page never flashes that build onto another pedal. Their base is
+   the page never offers that build for another pedal. It can't tell over USB:
+   a pedal running that build answers as an MS-70CDR whatever it is (the model
+   byte is in its flash, #2076), so the page asks for the model printed on the
+   pedal before the base flash and the first effect write. Their base is
    MIDISTOMP's patches on the pedal's own OS from its own updater (MIDISTOMP's
    `models/ms50g.yaml` and `ms60b.yaml` name them): a build per pedal agreed
    with Luca, imported like `ms70cdr-2.10` (`BUILD` in
@@ -371,6 +418,11 @@ install throughout.
    and Mangle followed (10 November 2026). Next: `divf` from TI's RTS source, the
    effect-ID ledger and the DSP limit of 300 under MIDISTOMP 2.
 8. The other pedals: [Another ZDL pedal](#another-zdl-pedal).
-9. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), loading
-   effects without a reboot, in-browser NAM and cab builds, and the patch
-   editor as a device page.
+9. Prove loading without a reboot on the original MS-70CDR. On a development
+   base, try one ZDL from RAM without changing saved patches or effect files.
+   Check the playing chain after Undo, then check an unkept trial after a
+   power cycle. After that, put review, trial, Keep and Undo behind the
+   shared loader and device tools. See the [MS-70CDR SDK guide](../sdk/machines/zoom-ms-70cdr/README.md#modwerk-stack).
+10. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`),
+    in-browser NAM and cab builds, and the rest of the patch editor on the Editor (reorder, import and
+    export, the DSP meter, the effects' animations).

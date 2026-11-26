@@ -2,11 +2,11 @@
 import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../dev/zoom-pedal-fake'
+import { fakeCurrentPatch, fakeEffect, fakeEffectList, fakeZoomPedal, withFakeEffectControls } from '../dev/zoom-pedal-fake'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { parseZoomHubRoute, zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
 import { ZoomLink } from '../engine/zoom/zoom-link'
-import { effectInfo } from '../engine/zoom/zoom-protocol'
+import { effectInfo, parseCurrentPatch } from '../engine/zoom/zoom-protocol'
 import type { ZoomEffect } from '../devices/zoom-effects'
 import { InstrumentItem } from './InstrumentItem'
 import { ZoomHub, ZoomSidebarStatus } from './ZoomHub'
@@ -34,9 +34,187 @@ describe('the Zoom pedal page', () => {
   it('has its routes, beside the machine’s library', () => {
     expect(zoomHubHref('zoom-ms-70cdr')).toBe('#zoom-ms-70cdr/pedal')
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/backups')).toMatchObject({ device: { id: 'zoom-ms-70cdr' }, view: 'backups' })
+    expect(zoomHubHref('zoom-ms-70cdr', 'editor')).toBe('#zoom-ms-70cdr/pedal/editor')
+    expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/editor')?.view).toBe('editor')
+    expect(parseZoomHubRoute('zoom-ms-50g/pedal/editor')).toBeUndefined()
     expect(parseZoomHubRoute('zoom-ms-50g/pedal')?.view).toBe('status')
     expect(parseZoomHubRoute('octatrack/pedal')).toBeUndefined()
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/samples')).toBeUndefined()
+  })
+
+  it('shows stock and Modwerk controls in patch order and applies only staged changes', async () => {
+    const patch = fakeCurrentPatch('Afterglow', [
+      { index: 0, gid: 7, fxid: 16, values: [250, 35] },
+      { index: 1, gid: 8, fxid: 993, values: [78, 52, 24, 0, 1, 144] },
+      { index: 2, gid: 8, fxid: 414 },
+      { index: 5, gid: 8, fxid: 993, enabled: false, values: [25, 50, 70, 0, 0, 98] },
+    ])
+    const fake = fakeZoomPedal({ patch, firmware: 'D004', files: [
+      withFakeEffectControls(fakeEffect('DELAY.ZDL', 7, 16, '1.00'), 'Tape Echo', [['Time', 2000], ['Feedback', 100]]),
+      withFakeEffectControls(fakeEffect('LOOP.ZDL', 8, 993, '0.03'), 'Loop', [['Loop', 100], ['Dry', 100], ['Fade', 100], ['Undo', 1], ['Long', 1], ['Tempo', 250]]),
+      fakeEffect('SCOPE.ZDL', 8, 414, '0.03'), fakeEffect('SPECTRUM.ZDL', 8, 468, '0.02'),
+      fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'SPECTRUM.ZDL'] }),
+    ] })
+    const link = new ZoomLink(() => Promise.resolve(fake.access), 100)
+    const confirm = vi.fn(() => true)   // the printed model, asked before the first write
+    vi.stubGlobal('confirm', confirm)
+    await render('editor', link)
+    expect(open().textContent).toContain('Connect your MS-70CDR')
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!)
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    const cards = [...open().querySelectorAll('.zoom-patch-card')]
+    expect(open().querySelector('h2')?.textContent).toBe('Afterglow')
+    expect(cards.map(card => card.getAttribute('aria-label'))).toEqual(['Tape Echo, slot 1', 'Loop, slot 2', 'Unknown effect, slot 3', 'Loop, slot 6'])
+    expect(cards[0].textContent).toContain('Stock effect')
+    expect(cards[0].querySelector<HTMLInputElement>('input[aria-label="Time"]')).toMatchObject({ type: 'range', max: '2000', value: '250' })
+    expect(cards[1].querySelector<HTMLSelectElement>('select')?.selectedOptions[0].textContent).toBe('On')
+    expect(cards[2].querySelector('input, select')).toBeNull()
+    expect(cards[3].textContent).toContain('Bypassed')
+    expect(cards[3].querySelector<HTMLSelectElement>('select')?.selectedOptions[0].textContent).toBe('Off')
+    expect(container.querySelector('iframe')).toBeNull()
+    expect(container.querySelector('[aria-current=page]')?.textContent).toBe('Editor')
+    const patchCommands = () => fake.sent.filter(m => m[1] === 0x52 && m[4] !== 0x60).map(m => m[4])
+    expect(patchCommands()).toEqual([0x29])
+
+    const long = cards[3].querySelector('select')!
+    await act(() => { long.value = '1'; long.dispatchEvent(new Event('change', { bubbles: true })) })
+    await click(cards[0].querySelector('button')!)
+    expect(patchCommands()).toEqual([0x29])
+    await click(button('Apply to pedal'))
+    for (let i = 0; i < 100 && !open().textContent?.includes('Patch changes applied'); i++) await settle()
+    expect(open().textContent).toContain('Patch changes applied and read back.')
+    expect(patchCommands()).toEqual([0x29, 0x29, 0x50, 0x28, 0x29])
+    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(confirm.mock.calls[0]).toEqual([expect.stringContaining('does it say MS-70CDR?')])
+    expect(await link.currentPatch()).toMatchObject({
+      slots: [{ enabled: false }, { values: [78, 52, 24, 0, 1, 144, 0, 0, 0] }, { fxid: 414 }, { enabled: false, values: [25, 50, 70, 0, 1, 98, 0, 0, 0] }],
+    })
+    await idle(link)
+
+    patch.splice(0, patch.length, ...fakeCurrentPatch('Stock only', [{ index: 0, gid: 7, fxid: 16 }]))
+    await click(button('Refresh patch'))
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    expect(open().querySelector('h2')?.textContent).toBe('Stock only')
+    expect([...open().querySelectorAll('.zoom-patch-card')].map(card => card.getAttribute('aria-label'))).toEqual(['Tape Echo, slot 1'])
+    await idle(link)
+  })
+
+  it('moves live knobs at once, stages the rest, adds an effect, saves into another patch and lists all fifty', async () => {
+    const fifty = Array.from({ length: 50 }, (_, at) => fakeCurrentPatch(at ? 'Patch ' + (at + 1) : 'Afterglow', [{ index: 0, gid: 7, fxid: 16, values: [250, 35] }, { index: 5, gid: 7, fxid: 16, values: [10, 20] }]))
+    const fake = fakeZoomPedal({ patches: fifty, files: [
+      withFakeEffectControls(fakeEffect('DELAY.ZDL', 7, 16, '1.00'), 'Tape Echo', [['Time', 2000], ['Feedback', 100]]),
+      withFakeEffectControls(fakeEffect('LOOP.ZDL', 8, 993, '0.03'), 'Loop', [['Loop', 100], ['Dry', 100]]),
+      fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL'] }),
+    ] })
+    const link = new ZoomLink(() => Promise.resolve(fake.access), 100)
+    const confirm = vi.fn(() => true)
+    vi.stubGlobal('confirm', confirm)
+    await render('editor', link)
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!)
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    const turn = (input: HTMLInputElement, value: number) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, String(value))
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    const card = (label: string) => open().querySelector<HTMLElement>('[aria-label="' + label + '"]')!
+    const choose = (select: HTMLSelectElement, value: string) => act(() => { select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })) })
+
+    // Slot 1 takes live knob messages: the pedal hears it now, nothing waits for Apply. Slot 6 waits.
+    await turn(card('Tape Echo, slot 1').querySelector<HTMLInputElement>('input[aria-label="Time"]')!, 300)
+    await vi.waitFor(() => expect(fake.knobs).toEqual([[0, 2, 44, 2, 0xf7]]))
+    expect(button('Apply to pedal')).toBeUndefined()
+    await turn(card('Tape Echo, slot 6').querySelector<HTMLInputElement>('input[aria-label="Time"]')!, 400)
+    expect(fake.knobs).toHaveLength(1)
+    expect(button('Apply to pedal')).toBeTruthy()
+
+    // An effect into the empty slot 2, from the pedal's effect list, then Apply sends it with the slot 6 knob.
+    await click([...open().querySelectorAll('.zoom-patch-slot-empty button')][0])
+    for (let i = 0; i < 100 && !open().querySelector('optgroup'); i++) await settle()
+    await choose(open().querySelector<HTMLSelectElement>('select[aria-label="Effect for slot 2"]')!, 'LOOP.ZDL')
+    for (let i = 0; i < 100 && !card('Loop, slot 2'); i++) await settle()
+    expect(card('Loop, slot 2').textContent).toContain('not applied')
+    await click(button('Apply to pedal'))
+    for (let i = 0; i < 100 && !open().textContent?.includes('Patch changes applied'); i++) await settle()
+    expect(parseCurrentPatch(fake.patch!)?.slots.map(s => [s.index, s.fxid, s.values[0]])).toEqual([[0, 16, 300], [1, 993, 0], [5, 16, 400]])
+    expect(fake.patches![0]).toEqual(fifty[0])
+
+    // Save into patch 5 asks first, since it overwrites another patch.
+    await choose(open().querySelector<HTMLSelectElement>('.zoom-patch-save select')!, '4')
+    await click(button('Save'))
+    for (let i = 0; i < 150 && !open().textContent?.includes('Saved as patch 5.'); i++) await settle()
+    expect(confirm).toHaveBeenCalledWith('Save over patch 5?')
+    expect(fake.patches![4]).toEqual(fake.patch!)
+    expect(open().querySelector('.zoom-patch-number')?.textContent).toBe('Patch 5')
+
+    // Read all lists the fifty, and the pedal comes back to patch 5.
+    await click(button('Read all 50'))
+    for (let i = 0; i < 400 && !open().querySelector('.zoom-patch-list li:nth-child(50) button:not(:disabled)'); i++) await settle()
+    const list = [...open().querySelectorAll('.zoom-patch-list button')]
+    expect(list.map(b => b.textContent)).toEqual(Array.from({ length: 50 }, (_, at) => (at + 1) + (at === 0 || at === 4 ? 'Afterglow' : 'Patch ' + (at + 1))))
+    expect(list[4].getAttribute('aria-current')).toBe('true')
+    expect(fake.program).toBe(4)
+    await idle(link)
+  }, 20_000)
+
+  it('keeps changes not saved through Read all when the pedal never said which patch it was on', async () => {
+    const fifty = Array.from({ length: 50 }, (_, at) => fakeCurrentPatch('Patch ' + (at + 1), [{ index: 0, gid: 7, fxid: 16, values: [at] }]))
+    const fake = fakeZoomPedal({ patches: fifty, program: 3, files: [withFakeEffectControls(fakeEffect('DELAY.ZDL', 7, 16, '1.00'), 'Tape Echo', [['Time', 2000]]), fakeEffectList({ 7: ['DELAY.ZDL'] })] })
+    fake.patch!.splice(0, 146, ...fakeCurrentPatch('Edited', [{ index: 0, gid: 7, fxid: 16, values: [999] }]))
+    const link = new ZoomLink(() => Promise.resolve(fake.access), 100)
+    vi.stubGlobal('confirm', vi.fn(() => true))
+    await render('editor', link)
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!)
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    await click(button('Read all 50'))
+    for (let i = 0; i < 400 && !open().textContent?.includes('kept but not saved'); i++) await settle()
+    expect(open().textContent).toContain('its changes match none of the 50, so they’re kept but not saved')
+    expect(open().textContent).not.toContain('was chosen on the pedal')
+    expect(open().querySelector('h2')?.textContent).toBe('Edited')
+    expect(open().querySelector('.zoom-patch-number')).toBeNull()
+    expect(open().querySelector<HTMLSelectElement>('.zoom-patch-save select')?.value).toBe('')
+    expect(button('Save').disabled).toBe(true)
+    expect(parseCurrentPatch(fake.patch!)?.name).toBe('Edited')
+    await idle(link)
+  }, 20_000)
+
+  it('writes no patch change before the model printed on the pedal is confirmed', async () => {
+    const fifty = Array.from({ length: 50 }, (_, at) => fakeCurrentPatch('Patch ' + (at + 1), [{ index: 0, gid: 7, fxid: 16, values: [at] }, { index: 5, gid: 7, fxid: 16 }]))
+    const fake = fakeZoomPedal({ patches: fifty, files: [withFakeEffectControls(fakeEffect('DELAY.ZDL', 7, 16, '1.00'), 'Tape Echo', [['Time', 2000]]), fakeEffectList({ 7: ['DELAY.ZDL'] })] })
+    const link = new ZoomLink(() => Promise.resolve(fake.access), 100)
+    const confirm = vi.fn<(text: string) => boolean>(() => false)
+    vi.stubGlobal('confirm', confirm)
+    await render('editor', link)
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!)
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    const turn = (input: HTMLInputElement, value: number) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, String(value))
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    const [first, sixth] = [...open().querySelectorAll<HTMLInputElement>('input[aria-label="Time"]')]
+    await turn(first, 300)
+    await turn(sixth, 400)
+    await click(button('Apply to pedal'))
+    await click(button('Save'))
+    await click(button('Read all 50'))
+    await settle()
+    expect(confirm.mock.calls.every(([text]) => text.includes('does it say MS-70CDR?'))).toBe(true)
+    expect(fake.sent.some(m => m[0] === 0xc0 || (m[1] === 0x52 && [0x28, 0x31, 0x32, 0x50].includes(m[4])))).toBe(false)
+    await idle(link)
+  })
+
+  it('follows a patch chosen on the pedal', async () => {
+    const fifty = Array.from({ length: 50 }, (_, at) => fakeCurrentPatch('Patch ' + (at + 1), [{ index: 0, gid: 7, fxid: 16, values: [at] }]))
+    const fake = fakeZoomPedal({ patches: fifty, files: [withFakeEffectControls(fakeEffect('DELAY.ZDL', 7, 16, '1.00'), 'Tape Echo', [['Time', 2000]]), fakeEffectList({ 7: ['DELAY.ZDL'] })] })
+    const link = new ZoomLink(() => Promise.resolve(fake.access), 100)
+    await render('editor', link)
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!)
+    for (let i = 0; i < 100 && !open().querySelector('.zoom-patch-card'); i++) await settle()
+    expect(open().querySelector('h2')?.textContent).toBe('Patch 1')
+    await act(() => fake.turn(8))
+    for (let i = 0; i < 100 && open().querySelector('h2')?.textContent !== 'Patch 9'; i++) await settle()
+    expect(open().querySelector('h2')?.textContent).toBe('Patch 9')
+    expect(open().textContent).toContain('Patch 9 was chosen on the pedal')
+    await idle(link)
   })
 
   it('connects, then reads what’s on the pedal by itself', async () => {
@@ -201,6 +379,26 @@ describe('installing and removing on the pedal page', () => {
     expect(fake.sent.some(m => m[4] === 0x60 && m[5] === 0x23)).toBe(false)
     await idle(fake.link)
   })
+  it('asks for the model printed on the pedal before the first write of a connection, and Cancel writes nothing (#2076)', async () => {
+    const fake = await setup(), asked: string[] = []
+    let answer = false
+    vi.stubGlobal('confirm', (text: string) => { asked.push(text); return /front of your pedal/.test(text) ? answer : true })
+    await click([...open().querySelectorAll('.zoom-files button')][0])
+    await until(() => asked.length > 0)
+    expect(asked).toHaveLength(1)
+    expect(asked[0]).toMatch(/does it say MS-70CDR\? A pedal running MIDISTOMP answers as an MS-70CDR/)
+    expect(fake.files.some(f => f.name === 'LOOP.ZDL'), 'Cancel removed nothing').toBe(true)
+    answer = true
+    await click([...open().querySelectorAll('.zoom-files button')][0])
+    await until(() => !fake.files.some(f => f.name === 'LOOP.ZDL'))
+    expect(asked.filter(text => /front of your pedal/.test(text))).toHaveLength(2)
+    const input = open().querySelector<HTMLInputElement>('input[type=file]')!
+    Object.defineProperty(input, 'files', { value: [new File([Uint8Array.from(fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)], 'nam1smok.zdl')], configurable: true })
+    await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
+    await until(() => /installed and read back/.test(open().textContent ?? ''))
+    expect(asked.filter(text => /front of your pedal/.test(text)), 'asked once a connection, not before every write').toHaveLength(2)
+    await idle(fake.link)
+  })
   it('removes an added effect', async () => {
     const fake = await setup()
     await click([...open().querySelectorAll('.zoom-files button')][0])
@@ -275,7 +473,7 @@ describe('syncing the set to the pedal', () => {
   const listed = async (id: string, file: string, fxid: number, data: number[]) => ({ id, name: id, version: '0.1.0', machine: device.id, presentation: { summary: '' }, media: [{ kind: 'thumbnail', path: 'thumbnail.svg' }],
     platform: { kind: 'zdl', file, effectId: { gid: 8, fxid }, effectVersion: '0.03', dspCost: 8, binary: { sha256: await sha(data), bytes: data.length, release: { repository: 'https://github.com/x/y', tag: 't', asset: file } }, screen: 'static', pedals: [] } }) as unknown as ZoomEffect
 
-  it.each([false, true])('repairs a set with a missing or unlisted file (unlisted: %s)', async orphan => {
+  it.each([['2.10', false], ['D004', true]] as const)('syncs a set on %s with a missing or unlisted file (unlisted: %s)', async (firmware, orphan) => {
     vi.stubGlobal('confirm', () => true)
     const loop = fakeEffect('LOOP.ZDL', 8, 467, '0.03', 1300), scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), dirt = fakeEffect('DIRT.ZDL', 8, 469, '0.03', 700)
     const effects = [await listed('loop', 'Loop.ZDL', 467, loop.data), await listed('scope', 'Scope.ZDL', 468, scope.data), await listed('dirt', 'Dirt.ZDL', 469, dirt.data)]
@@ -283,7 +481,7 @@ describe('syncing the set to the pedal', () => {
     vi.stubGlobal('fetch', async (url: string) => new Response(Uint8Array.from(served[url.split('/').pop()!])))
     const files = [fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 467, '0.02', 1300), dirt, fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'DIRT.ZDL'] })]
     if (orphan) files.push(scope)
-    const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
+    const fake = fakeZoomPedal({ firmware, files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
     const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['loop', 'scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
     await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
@@ -355,6 +553,46 @@ describe('syncing the set to the pedal', () => {
     await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
     for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
     expect(button('Sync to MS-70CDR').disabled).toBe(true)
-    expect(button('Sync to MS-70CDR').title).toMatch(/tested only on the MS-70CDR with Zoom’s firmware 2\.10/)
+    expect(open().querySelector('.hub-sync p')?.textContent).toMatch(/Effect file changes require the MS-70CDR with Zoom 2\.10/)
+  })
+})
+
+describe('the MS-50G’s pedal page (read only)', () => {
+  const device = DEVICES_BY_ID['zoom-ms-50g']
+  const files = [fakeEffect('DELAY.ZDL', 8, 8, '1.00'), fakeEffectList({ 8: ['DELAY.ZDL'] })]
+  const render = (view: ZoomHubView, link: ZoomLink) => act(() => root.render(createElement(ZoomHub, { device, view, link })))
+
+  it('names the pedal and its firmware, backs up its files, and offers no base', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ deviceId: 0x58, firmware: '3.10', files }).access), 200)
+    await link.connect()
+    await render('backups', link)
+    expect(container.querySelector('[role=alert]')?.textContent ?? '').not.toMatch(/not an/)
+    expect(container.textContent).not.toMatch(/Install base/)
+    await click(button('Back up all files'))
+    for (let i = 0; i < 100 && !open().querySelector('a[download]'); i++) await settle()
+    expect(open().querySelector<HTMLAnchorElement>('a[download]')?.download).toMatch(/^zoom-ms-50g-backup-.*\.zip$/)
+    expect(open().textContent).toMatch(/2 files/)
+    await idle(link)
+  })
+
+  it('describes the MS-50G’s own firmware, and no base for it yet', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ deviceId: 0x58, firmware: '3.10', files }).access), 200)
+    await link.connect()
+    await render('setup', link)
+    const rows = [...open().querySelectorAll('.zoom-firmware tbody tr')].map(tr => tr.textContent)
+    expect(rows[0]).toMatch(/^Zoom’s firmware \(3\.10\) with effect files/)
+    expect(rows[1]).toMatch(/Not on the MS-50G yet/)
+    expect(rows[1]).not.toMatch(/own updater|2\.10 updater/)
+    await render('status', link)
+    expect(open().textContent).toMatch(/Zoom’s firmware doesn’t report its load\./)
+    expect(open().textContent).not.toMatch(/The base will/)
+    await idle(link)
+  })
+
+  it('shows an MS-50G in update mode as update mode', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ deviceId: 0x58, firmware: '1.10' }).access), 200)
+    await link.connect()
+    await render('status', link)
+    expect(container.querySelector('[role=status]')?.textContent).toBe('Connected in update mode · bootloader 1.10')
   })
 })

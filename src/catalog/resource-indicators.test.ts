@@ -9,6 +9,7 @@ import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './res
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
 import directDspEvidence from '../../docs/verification/2026-11-21-octatrack-direct-dsp-code.json'
+import poolEvidence from '../../docs/verification/2026-11-21-octatrack-module-pool-allocation.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import retained from '../../sdk/module-resource-estimates.json'
 import waivers from '../../sdk/approvals/module-release-waivers.json'
@@ -23,6 +24,8 @@ import amigaApproval from '../../sdk/approvals/amiga-build-approval.json'
 import tempSaveApproval from '../../sdk/approvals/temp-save-build-approval.json'
 import kitsApproval from '../../sdk/approvals/kits-build-approval.json'
 import grainApproval from '../../sdk/approvals/grain-build-approval.json'
+import syntizApproval from '../../sdk/approvals/syntiz-build-approval.json'
+import ungemachApproval from '../../sdk/approvals/ungemach-build-approval.json'
 import sdkCatalog from '../../sdk/catalog.json'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
 
@@ -33,7 +36,7 @@ describe('module resource gauges', () => {
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
-    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval, tempSaveApproval, kitsApproval, grainApproval].map(module => module.id))
+    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval, tempSaveApproval, kitsApproval, grainApproval, syntizApproval, ungemachApproval].map(module => module.id))
     for (const document of MODULE_DOCUMENTS) {
       const indicators = moduleResourceIndicators(document)
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])
@@ -121,8 +124,8 @@ describe('module resource gauges', () => {
   it('shows the measured active CPU load when an Octatrack build has a verified workload', () => {
     const analog = MODULE_DOCUMENTS.find(module => module.id === 'analog-bassdrum')!
     for (const [id, value] of [
-      ['amiga', '7.4%'], ['analog-bassdrum', '10.1%'], ['poly8', '41.9%'], ['syntiz', '8.5%'],
-      ['usb-audio-out-tracks-main-cue', '13.3%'], ['vector', '0.6%'],
+      ['amiga', '7.4%'], ['analog-bassdrum', '10.1%'], ['poly8', '41.9%'],
+      ['vector', '0.6%'],
     ]) {
       const document = MODULE_DOCUMENTS.find(module => module.id === id)!
       const [cpu] = moduleResourceIndicators(document)
@@ -180,10 +183,13 @@ describe('module resource gauges', () => {
     ['cc-map', '1.568 kB'],
     ['playmodes', '17.168 kB'],
     ['recorder-loop-fix', '2.208 kB'],
-    ['usb-audio-out-tracks-main-cue', '105.408 kB'],
     ['previewvol', '0.944 kB'],
   ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
     const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+    // The 21 November readings are of the then-current packages: a later version shows no measured figure until its own pool is read.
+    if (poolEvidence.measurements.find(record => record.module === id)!.version !== document.version) {
+      return expect(moduleResourceIndicators(document)[2].status).not.toMatch(/^Measured/)
+    }
     expect(moduleResourceIndicators(document)[2]).toMatchObject({
       value, status: 'Measured · module pool', score: null,
       source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',
@@ -191,9 +197,11 @@ describe('module resource gauges', () => {
     expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[2].status).toBe('Estimated')
   })
 
-  it('includes Kits’ observed sample lease with the measured module pool', () => {
+  it('includes Kits’ observed sample lease with the measured module pool, on the version it was read on', () => {
     const kits = MODULE_DOCUMENTS.find(module => module.id === 'kits')!
     const memory = moduleResourceIndicators(kits)[2]
+    // The 21 November reading is Kits 0.1.0's package: a later version shows no measured figure until its own pool is read.
+    if (poolEvidence.measurements.find(record => record.module === 'kits')!.version !== kits.version) return expect(memory.status).not.toMatch(/^Measured/)
     expect(memory).toMatchObject({ value: '2,085.232 kB', status: 'Measured · two pools', score: null })
     expect(memory.description).toContain('51.568 kB in the module pool and 2,033.664 kB in leased sample RAM')
   })

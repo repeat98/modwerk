@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
+import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness, targetBranch } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('merges a clean main itself and leaves a conflicting one untouched, naming its files', () => {
@@ -64,10 +64,11 @@ describe('pr:ready verdict', () => {
     expect(readiness({}).ok).toBe(true)
     for (const state of [{ dirty: ['a.ts'] }, { behind: true }, { regenerated: ['src/catalog/module-documents.json'] }, { checkPassed: false }]) expect(readiness(state).ok).toBe(false)
   })
-  it('says the checks need Python 3.10+ instead of letting an older one crash inside them', () => {
-    for (const version of ['3.10.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+  it('says the checks need Python 3.12+ instead of letting an older one crash inside them', () => {
+    for (const version of ['3.12.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+    expect(pythonProblem({ version: '3.11.0' })).toContain('python3 is 3.11.0')   // sdk:check parses 3.12 f-strings
     const old = pythonProblem({ command: 'python3', version: '3.9.6' })
-    expect(old).toContain('needs Python 3.10 or newer')
+    expect(old).toContain('needs Python 3.12 or newer')
     expect(old).toContain('python3 is 3.9.6')
     expect(pythonProblem({ command: 'python', error: 'spawn python ENOENT' })).toContain('python did not run (spawn python ENOENT)')
     expect(pythonProblem({ version: null })).toContain('an unknown version')
@@ -84,6 +85,17 @@ describe('pr:ready verdict', () => {
   })
   it('says how to bring a stale branch up to date from the remote that holds main', () => {
     expect(readiness({ behind: true, remote: 'upstream' }).problems[0]).toContain('git merge upstream/main')
+  })
+  it('compares with the branch the pull request targets when --base-branch names one, and with main otherwise', () => {
+    expect(targetBranch([])).toBe('main')
+    expect(targetBranch(['--author', 'someone', '--base-branch', 'base/analog-rytm-mkii-next'])).toBe('base/analog-rytm-mkii-next')
+    for (const argv of [['--base-branch'], ['--base-branch', '--draft'], ['--base-branch', 'a..b'], ['--base-branch', 'base/'], ['--base-branch', 'x y']]) {
+      expect(() => targetBranch(argv)).toThrow('--base-branch needs the branch the pull request targets')
+    }
+    const next = { remote: 'origin', target: 'base/analog-rytm-mkii-next' }
+    expect(readiness({ ...next, behind: true }).problems[0]).toContain('git merge origin/base/analog-rytm-mkii-next')
+    expect(readiness({ ...next, behind: true, conflicts: ['shared'] }).problems[0]).toMatch(/^Merging current base\/analog-rytm-mkii-next conflicts in shared/)
+    expect(readiness(next).notes.at(-1)).toContain('If base/analog-rytm-mkii-next moves before the merge')
   })
   it('names the generated files to commit', () => {
     expect(readiness({ regenerated: ['src/catalog/module-documents.json'] }).problems[0]).toContain('src/catalog/module-documents.json')
@@ -106,6 +118,15 @@ describe('pr:ready verdict', () => {
     expect(verdict.notes.find(note => note.startsWith('This changes what runs on an instrument'))).toContain('gh pr create --draft')
     expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
     expect(readiness({}).instrument).toBe(false)
+  })
+  it('checks the description with --body as CI\'s describe check does, and otherwise says how to', () => {
+    const refused = readiness({ description: ['The edge-case table under "Edge cases" has a row still to finish: row "Undo": …'] })
+    expect(refused.ok).toBe(false)
+    expect(refused.problems).toEqual(['Description: The edge-case table under "Edge cases" has a row still to finish: row "Undo": …'])
+    const passed = readiness({ description: [] })
+    expect(passed.ok).toBe(true)
+    expect(passed.notes.join(' ')).toContain('with the description you checked')
+    expect(readiness({}).notes.join(' ')).toContain('npm run pr:body -- FILE.md')
   })
   it('routes a base build to the cumulative draft without prompting for a topic PR', () => {
     const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
@@ -210,16 +231,21 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
+      // --body checks the description against the template, as CI's describe check does.
+      mkdirSync(join(checkout, '.github'))
+      copyFileSync(new URL('../.github/pull_request_template.md', import.meta.url), join(checkout, '.github', 'pull_request_template.md'))
+      writeFileSync(join(directory, 'body.md'), 'Moves the README line and checks it with pr:ready on the topic branch.\n')
       // A stale branch must stop before any generator/check invocation.
-      const result = spawnSync(process.execPath, [script, '--remote', 'origin'], { cwd: checkout,
+      const result = spawnSync(process.execPath, [script, '--remote', 'origin', '--body', join(directory, 'body.md')], { cwd: checkout,
         env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })
       expect(result.status, result.stderr).toBe(1)
       expect(result.stdout).toContain('git merge origin/main')
+      expect(result.stdout).toContain('✗ Description: Say what the guides lacked')
       expect(result.stdout).toContain('Not ready yet.')
       expect(git(checkout, 'rev-parse', 'origin/main')).toBe(current)
       git(checkout, 'merge', '--ff-only', 'origin/main')
       expect(git(checkout, 'rev-parse', 'HEAD')).toBe(current)
-      git(checkout, 'add', 'scripts', 'src')
+      git(checkout, 'add', 'scripts', 'src', '.github')
       git(checkout, 'commit', '-m', 'Track the local check fixture')
       writeFileSync(join(checkout, 'new-helper.ts'), 'export const enabled = true\n')
       const dirty = spawnSync(process.execPath, [script], { cwd: checkout,
@@ -227,6 +253,52 @@ describe('pr:ready verdict', () => {
       expect(dirty.status, dirty.stderr).toBe(1)
       expect(dirty.stdout).toContain('new-helper.ts')
       expect(dirty.stdout).not.toContain('Your branch does not contain current main')
+    } finally { rmSync(directory, { recursive: true, force: true }) }
+  }, 20_000)
+
+  it('fetches and judges a branch cut from a next-base branch against that branch, leaving main out of it', () => {
+    const directory = realpathSync(mkdtempSync(join(tmpdir(), 'modwerk-ready-base-branch-')))
+    const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: join(directory, 'no-global-config') }
+    const git = (cwd, ...args) => execFileSync('git', ['-c', 'user.name=Readiness test',
+      '-c', 'user.email=readiness@example.invalid', '-c', 'commit.gpgsign=false', ...args],
+    { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
+    const next = 'base/analog-rytm-mkii-next'
+    try {
+      const remote = join(directory, 'remote.git'), seed = join(directory, 'seed'), checkout = join(directory, 'checkout')
+      git(directory, 'init', '--bare', '--initial-branch=main', remote)
+      git(directory, 'init', '--initial-branch=main', seed)
+      writeFileSync(join(seed, 'README'), 'baseline\n')
+      git(seed, 'add', 'README'); git(seed, 'commit', '-m', 'Baseline')
+      // The next base carries a base change main lacks; the topic is cut from it.
+      git(seed, 'switch', '-c', next)
+      writeFileSync(join(seed, 'BASE'), 'next base\n')
+      git(seed, 'add', 'BASE'); git(seed, 'commit', '-m', 'A base change')
+      git(seed, 'branch', 'topic'); git(seed, 'remote', 'add', 'origin', remote)
+      git(seed, 'push', 'origin', 'main', next, 'topic')
+      git(directory, 'clone', '--single-branch', '--branch', 'topic', remote, checkout)
+      // Both branches move on after the clone: only the next base's move leaves the topic behind its target.
+      writeFileSync(join(seed, 'BASE'), 'next base, moved\n')
+      git(seed, 'commit', '-am', 'Advance the next base'); git(seed, 'push', 'origin', next)
+      const current = git(seed, 'rev-parse', 'HEAD')
+      git(seed, 'switch', 'main')
+      writeFileSync(join(seed, 'README'), 'new main\n')
+      git(seed, 'commit', '-am', 'Advance main'); git(seed, 'push', 'origin', 'main')
+      mkdirSync(join(checkout, 'scripts'))
+      const script = join(checkout, 'scripts', 'pr-ready.mjs')
+      copyFileSync(new URL('./pr-ready.mjs', import.meta.url), script)
+      copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
+      copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
+      mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
+      copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
+      // The fixture files leave the checkout uncommitted, so the run stops before any generator or check.
+      const result = spawnSync(process.execPath, [script, '--remote', 'origin', '--base-branch', next], { cwd: checkout,
+        env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })
+      expect(result.status, result.stderr).toBe(1)
+      expect(result.stdout).toContain('Fetching origin/' + next)
+      expect(result.stdout).toContain('git merge origin/' + next)
+      expect(result.stdout).not.toContain('origin/main')
+      expect(git(checkout, 'rev-parse', 'origin/' + next)).toBe(current)
+      expect(() => git(checkout, 'rev-parse', '--verify', 'origin/main')).toThrow()
     } finally { rmSync(directory, { recursive: true, force: true }) }
   }, 20_000)
 })

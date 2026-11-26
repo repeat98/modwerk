@@ -20,7 +20,9 @@ enum { SELFTEST_CONFIGURATION = 1, SELFTEST_TOGETHER, SELFTEST_STRESS, SELFTEST_
 #define SELFTEST_CORRUPT 1024u   /* a module's code on a DSP does not sum as its package */
 #define SELFTEST_FEATURE 2048u   /* a live module requires a base feature that cannot come up this boot (the key bus with a
                                   * DSP core's state lost, controller_board.c): it would only pass its audio */
-#define SELFTEST_FRAME_LIMIT 68000u /* DTCN3 counts between two frames: one is about 47,900 (16 samples at 132 MHz) */
+/* DTCN3 counts between two frames: one is about 47,900 (16 samples at 132 MHz). 68,000 and the 10,560 (80 µs) the
+ * late-entry wait (machine_registry.c) may hold an entry: a frame it held comes up to 553 µs after the last. */
+#define SELFTEST_FRAME_LIMIT 78560u
 
 struct selftest {
     uint32_t state, phase, failed;
@@ -33,7 +35,10 @@ struct selftest {
     uint32_t culprit;               /* the module behind the first failure (its runtime id), 0 none: the one that failed
                                      * alone, or the dearest of the batch that overloaded or ran late */
     char culprit_name[16];          /* its name as the chooser shows it, empty when it brings no effect */
-    uint32_t refusal;               /* now: the loader's last refusal (loader.h), so a host can say why it refused */
+    uint32_t refusal;               /* now: the loader's last refusal (loader.h), so a host can say why it refused; with
+                                     * RUNTIME_IN_USE, bits 16-23 the slot that runs it (1-8 FX1 of T1-T8, 9-16 FX2, 0 unknown);
+                                     * in the copy a host reads (ep0.c), bits 24-31 what keeps a change from beginning now
+                                     * (runtime.h MACHINE_BUSY_*, 0 none) */
 };
 typedef char selftest_size[sizeof(struct selftest) == 96u ? 1 : -1]; /* not a whole number of 64-byte EP0 packets */
 extern volatile struct selftest modwerk_selftest;

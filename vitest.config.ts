@@ -15,9 +15,16 @@ if (!Number.isInteger(requestedWorkers) || requestedWorkers < 1 || requestedWork
 export default defineConfig({
   test: {
     environment: 'node',
+    // Many tests exercise a failure on purpose, and the code under test logs it. With every such line printed, one failed
+    // pull request job carried over 100 KB of expected errors around the one that mattered. Print a test's console output
+    // only when that test fails; `npx vitest run FILE --silent=false` shows everything again.
+    silent: 'passed-only',
     include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs', 'desktop/src/**/*.test.mjs'],
     pool: 'threads',
-    fsModuleCache: true,
+    // shortcut: no persistent transform cache. An eager import.meta.glob bakes its file list into the importing module's
+    // cached transform, keyed only by that module's content, so a new evidence file stayed invisible locally and in CI
+    // (SYNTIZ's frame-cost.json, #2124). Re-enable once the cache key covers glob file lists.
+    fsModuleCache: false,
     fsModuleCachePath: 'node_modules/.vite/vitest/transforms',
     maxWorkers: Math.min(requestedWorkers, availableParallelism()),
     fileParallelism: true,

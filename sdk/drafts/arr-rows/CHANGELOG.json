@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "Hold CUE and press LEFT or RIGHT to move the selected rows, or the cursor row, up or down one place.",
+      "LOOP and JUMP rows keep pointing at the rows they pointed at; moving back undoes a move.",
+      "While rows move, the editor scrolls along and keeps the row they move towards in view.",
+      "FUNC + DOWN on a HALT row keeps both rows HALTs, instead of stock's endless LOOP below it."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-17",
     "changes": [

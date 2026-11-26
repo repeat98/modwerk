@@ -10,7 +10,31 @@
 #include "../loader.c"
 #include "../../upload/sha256.c"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+/* A 64-bit host can load the pool across a 4 GB line. The loader keeps 32-bit addresses, as its machines do, where no
+ * pool reaches the top of the address space; on the host an extent across the line ends below where it starts, and
+ * reclaim does not see a paused task's address inside it. That is one start in about 16,000 for the default pool and
+ * one in 5,500 for the largest, and sdk:check failed on it now and then (a paused task's module was freed: "free ==
+ * RUNTIME_POOL_BYTES - old->size - small"). Start again for another layout, a few times at most. */
+#if !defined(_WIN32) && UINTPTR_MAX > 0xffffffffu
+extern int execv(const char *path, char *const argv[]);
+extern int setenv(const char *name, const char *value, int overwrite);
+__attribute__((constructor)) static void start_off_the_4gb_line(int argc, char **argv)
+{
+    const char *counted = getenv("MODWERK_HOST_RESTARTS");
+    int restarts = counted ? atoi(counted) : 0;
+    if ((uint32_t)(uintptr_t)pool <= UINT32_MAX - RUNTIME_POOL_BYTES) return;
+    if (argc > 0 && restarts < 8) {
+        char next[12];
+        sprintf(next, "%d", restarts + 1);
+        setenv("MODWERK_HOST_RESTARTS", next, 1);
+        execv(argv[0], argv);
+    }
+    fprintf(stderr, "host_test: the pool is across a 4 GB line after %d restarts; its address checks can fail\n", restarts);
+}
+#endif
 
 #ifdef MODWERK_HOST_OVERLAP_STOCK
 #define STOCK ((uint32_t)(uintptr_t)pool)
@@ -301,7 +325,7 @@ int main(void)
     uint8_t capabilities[14]; memset(capabilities, 0xa5, sizeof capabilities);
     CHECK(modwerk_runtime_capabilities(capabilities) == 12u);
     CHECK(!memcmp(capabilities, "MWCP", 4) && capabilities[4] == 1 && capabilities[5] == 10);
-    CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
+    CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY | COSTS_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
     CHECK(capabilities[12] == 0xa5 && capabilities[13] == 0xa5);
 
     struct runtime_module alias_group; memset(&alias_group, 0, sizeof alias_group);

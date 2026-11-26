@@ -38,7 +38,7 @@ DETOURS = (
     Detour(0x4002E7B8, stock_guard(0x4002e7b8, 6, "8adfee488b57380b5f698f0700f6346c3f459548c12c942a5843f2e750ab1a77"), "kits", "kits_partkey",
            "PART (MKII), FUNC+MIDI (MKI): LOAD KIT"),
     Detour(0x4002DC9C, stock_guard(0x4002dc9c, 6, "d0ec7e0980705bdda9e9859f3b6caa119d97dab71385585f3a78e9e893f81d5d"), "kits", "kits_savekey",
-           "the Part edit menu (MKII FUNC+PART): SAVE KIT"),
+           "the Part edit menu's opener (MKII FUNC+PART): FUNC+PASTE+PART's clone, else stock (the base's Part Edit menu)"),
     Detour(0x40058A64, stock_guard(0x40058a64, 8, "2be469e0167bae6ee4ac4288dff1ce5ed285f46e1d21b5aa77321c0aecdb208c"), "kits", "kits_mkisave",
            "the MKI FUNC+BANK dispatch: SAVE KIT from LOAD KIT, else stock", pad_to=8),
     Detour(0x4004C146, stock_guard(0x4004c146, 6, "721b1a82cfa67d26611e24e28c05a498a15c2e72fbce2bc3a06cbad6e01cc6a7"), "kits", "kits_status",
@@ -70,7 +70,7 @@ MODULE = Module(
     category=Category.PARTS, author="sambanks", author_url="https://github.com/sambanks",
     proof=Proof.UNTESTED,
     proof_note="USB package only; no emulator or hardware result for this port yet (TESTING.md).",
-    doc="255 Kits per project: PART = LOAD KIT, FUNC+PART = SAVE KIT (MKI: FUNC+MIDI, "
+    doc="255 Kits per project: PART = LOAD KIT, FUNC+PART = SAVE, RELOAD, RENAME KIT (MKI: FUNC+MIDI, "
         "then FUNC+BANK); each pattern plays its Kit through the stock Part slots. After Em's Octakit.",
     linked=(Linked("kits", "modules/kits/kits.s", dram=True),),
     detours=DETOURS,

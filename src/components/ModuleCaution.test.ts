@@ -7,34 +7,36 @@ import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { classifyCpuCaution, MODULE_CAUTIONS } from '../catalog/module-cautions'
 import { CautionBadge, ModuleCard } from './ModuleCard'
 
+// A badge follows from a module's own CPU evidence (classifyCpuCaution), so these tests hold the rule and read which modules
+// carry one from the catalogue. They once listed the badged modules and their readings by hand: every release that measured a
+// module then had to edit this file, and two such pull requests open at once failed each other's checks after the first merged.
+const cautioned = Object.keys(MODULE_CAUTIONS)
+const plain = MODULES.find(module => !MODULE_CAUTIONS[module.id])!.id
+
 describe('Octatrack CPU cautions', () => {
-  it('reserves Heavy CPU for POLY8 and Grain and marks five catalog modules High CPU', () => {
-    expect(Object.fromEntries(Object.entries(MODULE_CAUTIONS).map(([id, caution]) => [id, caution.badge]))).toEqual({
-      poly8: 'Heavy CPU',
-      grain: 'Heavy CPU',
-      syntiz: 'High CPU',
-      tapeecho: 'High CPU',
-      'usb-audio-out-tracks-main-cue': 'High CPU',
-      'output-matrix': 'High CPU',
-      'analog-bassdrum': 'High CPU',
-    })
-    for (const id of Object.keys(MODULE_CAUTIONS)) expect(MODULES.some(module => module.id === id)).toBe(true)
+  it('badges catalogue modules only, each at the tier of the frame share its reading names', () => {
+    expect(cautioned.length).toBeGreaterThan(0)
+    for (const [id, caution] of Object.entries(MODULE_CAUTIONS)) {
+      expect(MODULES.some(module => module.id === id), id).toBe(true)
+      // The reading leads with the share that set the tier; a stacked-limit caution may carry no share of its own.
+      const share = Number(caution.detail.match(/^(?:The release budgets )?(\d+(?:\.\d+)?)/)?.[1] ?? NaN)
+      if (!Number.isNaN(share)) expect(caution.badge, id).toBe(share >= 30 ? 'Heavy CPU' : 'High CPU')
+    }
   })
 
-  it.each([
-    ['poly8', 'heavy', 'Heavy CPU', '41.9 percentage points of audio-frame load added with one POLY8 track with repeated trigs'],
-    ['usb-audio-out-tracks-main-cue', 'high', 'High CPU', '13.3 percentage points of audio-frame load added with a 44.1 kHz stereo MAIN stream'],
-  ])('shows the CPU badge and accessible workload for %s', (id, tier, label, workload) => {
+  it.each(cautioned)('shows the CPU badge and accessible workload for %s', id => {
+    const caution = MODULE_CAUTIONS[id]
     const doc = new DOMParser().parseFromString(renderToStaticMarkup(createElement(CautionBadge, { id })), 'text/html')
     const badge = doc.querySelector('.module-caution-badge')
-    expect(badge?.getAttribute('data-tier')).toBe(tier)
-    expect(badge?.textContent).toContain(label)
-    expect(badge?.getAttribute('title')).toContain(workload)
-    expect(badge?.querySelector('.sr-only')?.textContent).toContain(workload)
+    expect(badge?.getAttribute('data-tier')).toBe(caution.tier)
+    expect(badge?.textContent).toContain(caution.badge)
+    expect(caution.detail).not.toBe('')
+    expect(badge?.getAttribute('title')).toBe(caution.detail)
+    expect(badge?.querySelector('.sr-only')?.textContent).toContain(caution.detail)
   })
 
   it('shows nothing for a module without a caution', () => {
-    expect(renderToStaticMarkup(createElement(CautionBadge, { id: 'miniverb' }))).toBe('')
+    expect(renderToStaticMarkup(createElement(CautionBadge, { id: plain }))).toBe('')
   })
 
   it.each([
@@ -50,11 +52,8 @@ describe('Octatrack CPU cautions', () => {
     expect(classifyCpuCaution({ ...document, version: '99.0.0-experimental' })).toBeUndefined()
   })
 
-  it.each([
-    ['poly8', 'Heavy CPU'],
-    ['output-matrix', 'High CPU'],
-    ['synth', null],
-  ])('uses the appropriate artwork indicator on the %s card', (id, label) => {
+  it.each([...cautioned, plain])('uses the appropriate artwork indicator on the %s card', id => {
+    const label = MODULE_CAUTIONS[id]?.badge ?? null
     const module = MODULES.find(item => item.id === id)!
     const card = createElement(ModuleCard, { module, selected: false, compared: false, canCompare: true, baseline: null, onToggle() {}, onCompare() {} })
     const doc = new DOMParser().parseFromString(renderToStaticMarkup(card), 'text/html')

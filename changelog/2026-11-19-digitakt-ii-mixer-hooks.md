@@ -1,0 +1,1 @@
+SDK, Digitakt II base: modules can add their own pages to the Mixer through the new `core_mixer_pages` table, and update their own state on each audio frame, just before the stock DSP transfer, through the new `ev_audio_frame` event. Both are part of core 1.1 in the Digitakt II core interface and ship with the next Digitakt II base release.

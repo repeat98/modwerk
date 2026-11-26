@@ -144,6 +144,24 @@
    "identities": [
     "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a"
    ]
+  },
+  {
+   "version": "0.8",
+   "identities": [
+    "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7"
+   ]
+  },
+  {
+   "version": "0.8.1",
+   "identities": [
+    "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0"
+   ]
+  },
+  {
+   "version": "0.8.2",
+   "identities": [
+    "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5"
+   ]
   }
  ]
 }

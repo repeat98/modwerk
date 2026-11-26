@@ -428,6 +428,36 @@
      "container": 812568
     }
    }
+  },
+  {
+   "base": "0.8",
+   "identity": "e11525835106699a237e00e414c268b58128609a6be575a8276bf29a1dd876e7",
+   "layouts": {
+    "off": {
+     "main": 1347681,
+     "container": 830980
+    }
+   }
+  },
+  {
+   "base": "0.8.1",
+   "identity": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
+   "layouts": {
+    "off": {
+     "main": 1347890,
+     "container": 831248
+    }
+   }
+  },
+  {
+   "base": "0.8.2",
+   "identity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+   "layouts": {
+    "off": {
+     "main": 1350956,
+     "container": 834692
+    }
+   }
   }
  ]
 }

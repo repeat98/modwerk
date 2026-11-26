@@ -112,7 +112,7 @@ function setupGuidance(repository = REPOSITORY, login = '') {
     '  1. A free GitHub account (github.com/signup). Ask for my login and use it as the module author.',
     '  2. Fork ' + repository + ' with the Fork button, install git if I have none, then clone my fork and install its packages (Node 24 through nvm; nvm-windows on Windows):',
     ...cloneCommands(repository, login).split('\n').map(line => '     ' + line),
-    '  3. A coding agent that works on files in that folder: Claude Code (Claude subscription) or Codex (ChatGPT plan), as a desktop app, IDE extension or terminal tool. Octatrack native builds also need Python 3.10+, Docker and my own stock OS 1.40C, which stays on my computer and is never sent to you. Testing on my own unit, connected by USB, is recommended; an emulator works without one.',
+    '  3. A coding agent that works on files in that folder: Claude Code (Claude subscription) or Codex (ChatGPT plan), as a desktop app, IDE extension or terminal tool. Octatrack native builds also need Python 3.12+, Docker and my own stock OS 1.40C, which stays on my computer and is never sent to you. Testing on my own unit, connected by USB, is recommended; an emulator works without one.',
     '  4. Open the cloned folder in that agent, then tell me to copy this whole prompt from my first message and paste it there. Then stop: the agent takes over.',
   ]
 }
@@ -139,12 +139,14 @@ const GENERAL_READING = ['AGENTS.md', 'docs/DEVELOPER_WORKFLOW.md', 'docs/ADD_A_
 const ZOOM_READING = ['docs/ZOOM_MULTISTOMP.md', 'docs/ZDL_MODULE_CONTRACT.md']
 /** The ZD2 pedals' own reading: their research report, which says what of the ZDL work does not carry over. */
 const ZD2_READING = ['docs/ZOOM_ZD2.md']
+/** The ZD2 pedals whose patch protocol docs/ZOOM_PATCH_PROTOCOL.md reads. */
+const PATCH_PROTOCOL_PEDALS: readonly string[] = ['zoom-ms-200d-plus', 'zoom-g5n']
 
 /** The files a module starter needs read, relative to the repository root. */
 export function starterReading(machine: StarterMachine, starter: Starter) {
   const files = [...GENERAL_READING, ...starter.guides.map(guide => 'docs/module-guides/' + guide)]
   const device = DEVICES_BY_ID[machine]
-  const zoomReading = device?.family === 'zoom' ? isZd2Pedal(device) ? ZD2_READING : ZOOM_READING : []
+  const zoomReading = device?.family === 'zoom' ? isZd2Pedal(device) ? [...ZD2_READING, ...PATCH_PROTOCOL_PEDALS.includes(machine) ? ['docs/ZOOM_PATCH_PROTOCOL.md'] : []] : ZOOM_READING : []
   if (starter.id === 'stack') return ['AGENTS.md', 'docs/MACHINE_RECIPE.md', 'docs/ADD_A_MACHINE.md', 'docs/FRONTEND_MCP.md', ...zoomReading, device.sdk!, 'sdk/machines/' + machine + '/machine.json']
   if (starter.id === 'integration') return [...files, 'docs/ADD_A_MACHINE.md', 'docs/MACHINE_RECIPE.md', 'sdk/machines/README.md', ...zoomReading, ...(device?.sdk ? [device.sdk] : []), 'sdk/machines/' + machine + '/machine.json']
   return machine === 'octatrack' ? [...files, 'sdk/octabam/AGENTS.md'] : [...files, ...(device.family === 'zoom' && !isZd2Pedal(device) ? ZOOM_READING : []), device.sdk!]
@@ -155,7 +157,7 @@ const MIDISTOMP_PEDALS: StarterMachine[] = ['zoom-ms-70cdr', 'zoom-ms-50g', 'zoo
 
 /** Zoom pedals take effect files on their own firmware, so the Elektron road (OS rebuild, boot, core) does not apply; this says what does. */
 function zoomGuidance(machine: StarterMachine) {
-  if (isZd2Pedal(DEVICES_BY_ID[machine])) return zd2Guidance()
+  if (isZd2Pedal(DEVICES_BY_ID[machine])) return zd2Guidance(machine)
   return [
     DEVICES_BY_ID[machine]?.sdk
       ? 'Where the Zoom work stands: the `zdl` module contract is in force here. Follow "Create an effect" in ' + DEVICES_BY_ID[machine].sdk + ' (build with the own runtime, check, try on my pedal, release, list). Open steps: docs/ZOOM_MULTISTOMP.md#plan.'
@@ -172,10 +174,10 @@ function zoomGuidance(machine: StarterMachine) {
 }
 
 /** The ZD2 pedals (docs/ZOOM_ZD2.md): effect files on the stock firmware, but none of the ZDL family's pedal page, base or contract. */
-function zd2Guidance() {
+function zd2Guidance(machine: StarterMachine) {
   return [
     'Where the ZD2 work stands: this pedal loads .ZD2 effects, not the ZDL family\'s .ZDL files, so the pedal page, its link, MIDISTOMP and the proposed `zdl` module contract do not apply. docs/ZOOM_ZD2.md separates hardware results, firmware readings and unknowns and ends with the open steps; pick up the next one rather than starting a parallel one, and check the agent board and open pull requests first.',
-    'Anything Modwerk lists carries no stock Zoom code: no effect grafted onto, patched into or built from a stock one, and no knob handlers taken from a stock effect. Build on the clean-room route the report describes (Stomphacks\' pipeline plus one header change), which runs on this pedal.',
+    'Anything Modwerk lists carries no stock Zoom code: no effect grafted onto, patched into or built from a stock one, and no knob handlers taken from a stock effect. Build on the clean-room route the report describes (Stomphacks\' pipeline plus one header change)' + (machine === 'zoom-g1-four' ? ', which runs on this pedal.' : '. It is shown on the G1 FOUR only and unproven on this pedal, so prove it here first.'),
     'Install over USB MIDI with the pedal\'s own file commands (zoom-zt2); Zoom\'s Guitar Lab stays the fallback. Every write is persistent: back the pedal up first, keep autosave off, keep custom effects out of saved patches and keep the recovery from its profile at hand.',
   ]
 }

@@ -46,6 +46,21 @@ Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Cho
 - **`dear`:** every knob at its dearest setting. Pressure renders and the stress project read it.
 - **`gates`:** the verifiers `make check` runs when a remix carries your module.
 
+### Choose the widget
+
+The formatter decides how the panel draws a knob, so pick it by what the knob holds. `module:doctor` refuses a draft that breaks these rules and tells a listed module.
+
+| The knob holds | Formatter | The panel draws | Example |
+|---|---|---|---|
+| a range, 0-127 | `PLAIN` | a knob and its number | TIME, DCAY, MIX |
+| a range around a centre (64 is neutral) | `BIPOLAR` | -64…+63; FUNC + turn jumps to the centre | TONE (low-pass left, flat at 64, high-pass right), BAL |
+| two to five choices | `STEPPED`, a word for each | a switch with that many positions | SYNC FREE / BEAT, VOIC 1-4 |
+| six or more named choices | `WIDE_STEPPED`, a word for each | a dial that prints the word | CHRD, TYPE, SCALE |
+
+- **A mode select names itself.** The `mode_slot` knob shows its value's word in place of its name (`mode_names.with_selfname`), so its words say what each mode is: FREE / BEAT, NOTE / COLUN. OFF / ON leaves a switch without a name (Resonator, 24 November 2026).
+- **Distinct things are a select.** Use a knob only where the steps between values make sense to turn through.
+- **A number the musician has to translate** (a MIDI note, a time, a gain in dB) can get its own formatter cave (`FormatterReg`), as Tape Echo's TIME does. Where it does not, the README says what the number means.
+
 ## Behave like the instrument
 
 - [ ] **Safe defaults.** Say what the effect does with every knob at its default. An insert that should be transparent is a bit-exact passthrough at defaults (Euclid's MIX 0 is exact dry passthrough).
@@ -126,7 +141,7 @@ How much it costs and whether it survives being worked hard: see [Performance](R
 
 - [ ] **Cycles.** `tools/build/cycle_count.py` for the static floor, `dsp_host` at the dearest knob and mode settings with the knobs moving for the measured cost. State `instancesPerCore`, the most you support.
 - [ ] **Stock.** Name the stock effect closest in function (a delay against COMPRESSOR is not a comparison; a reverb against PLATE REV is), and benchmark worst-case stock SPRING REV as the cost target for new FX. Aim for the same ballpark under matched conditions, including expensive modes/settings, moving controls and trigger splits on both cores. Read the closest-counterpart ratio from `benchmark_stock_dsp.py`; explain additional cost and remaining headroom in TESTING.md, and revisit substantially heavier designs for optimization and review.
-- [ ] **Stress.** `stress_project.py` and `pressure.py render` with `dsp_host -guard -dirty`: your instances on both cores, three LFOs per track, locked slots on every step.
+- [ ] **Stress.** `stress_project.py` and `pressure.py render` with `dsp_host -guard -dirty`: your instances on both cores, three LFOs per track, locked slots on every step. `dsp_gate.py`'s synthetic image hands every instance Y:$4000; stock gives a core's FX2 slots $4000, $8000 and two in the window both cores share ($30000 and $34000 on core 0, $38000 and $3c000 on core 1), so write those into its allocator entries ($256, $258, $25a, $25c) for a multi-instance run, as Midiverb's `stress.py` does.
 - [ ] `npm run perf:audit -- check <module>/evidence/performance.json` passes, and its table is in TESTING.md.
 
 ## Integrate
@@ -155,7 +170,7 @@ Octabam's behaviour tests run through its DSP host and need a native toolchain (
 - A knob rename or count change is a stored-data change. Stamp every project before anyone plays it.
 - A formatter overrides the count it sits beside; declare `formatter=` per slot.
 - FUNC + turn comes from the donor too. The descriptor word at P+0x12a (`Param.word_12a`) is a knob's edit handler. With FUNC held, `0x400328e4` (the stock reverbs' MIX and BAL, most bipolar knobs) steps through 0, 64 and 127; `0x40032814` (DARK REV's TIME to LP, the MIX of PHASER, FLANGER, CHORUS and COMB FILTER) jumps between 0 and 127 only; 0 does not jump. The builder writes the word for `BIPOLAR` and stepped slots; `PLAIN` and `INHERIT` keep the donor's. For three stops on a plain knob, set `formatter_word=0, widget_word=0, word_12a=0x400328e4`. E-Verb 0.1.0 inherited two stops on four knobs this way (#438). Measured on the ColdFire emulator with OS 1.40C, not on hardware.
-- A labelled select wider than five values falls back to a plain dial unless it uses `Formatter.WIDE_STEPPED`.
+- A labelled select wider than five values falls back to a plain dial unless it uses `Formatter.WIDE_STEPPED`. Never force stock's switch past five positions: it read a label as an address and crashed the owner's unit (Midiverb, 25 November 2026).
 - Sidechain Compressor keeps its cross-core key window in the last 514 words (+$3DFE..+$3FFF) of the bank-track-3 FX2 slots: Y:$30000 for T7 on core A and Y:$38000 for T3 on core B. An FX2 effect that uses its whole 16K slot writes that window on those tracks (#696), so declare the words you use in `Claims(buffer_words=...)` and stop short of the window. The base refuses the buffer on that block at run time (`stock_hook_resources.c`). On a base with the key bus ([OCTATRACK_PACKAGE_DSP_HOOKS.md](../OCTATRACK_PACKAGE_DSP_HOOKS.md)) the window is the bus's, so that refusal holds while Sidechain or any package that requires the key bus is installed, and while the base does not know whether a core's bus is off (an owned job that failed or is uncertain). E-Verb's and Mini Verb's rings end at +$3DFD, so a word added below the window meets them. A ring with modulus 16,384 covers every word of the slot, whatever its segments add up to. The FX2 slot bases are 16K-aligned, so a non-power-of-two modulus wraps cleanly: `$3dfd` stops a ring at +$3DFD. Keep any clearing loop inside the same span, and declare it in `Claims(buffer_words=...)`. E-Verb 0.1.2 does this, and its `verify.py` window gate checks it. Measured in `dsp_host`, not on hardware.
 - One render of `verify_knob_clicks.py`'s census reads one alignment. Two things change what it sees: where a knob event falls in the effect's refresh cycle (E-Verb refreshes its knobs in four groups, one per block), and the test tone's phase there. E-Verb 0.1.1 passed at the gate's alignment, yet the same census flagged SIZE and SPD at 4 to 6 of 16 other alignments, up to −59 dBFS. A control build whose SIZE glide slope changed only every fourth block flagged at only 7 of 16 alignments, so whether the gate catches it depends on where it happens to measure. A ratio of two maxima over noise behaves the same way: E-Verb's DPTH-lock step test failed 0.1.1 at another noise seed. Before calling a flag a regression, run the old build over the same grid of alignments and seeds. If the gate needs changing, prove the new rule against a control build that puts the fault back, such as a knob with its smoothing removed, and check that the control still fails.
 - Voicing is judged by ear, level-matched, A/B/A/B, wet only. Render locally rather than flashing.

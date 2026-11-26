@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, inUseSlotHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, VendorTransportError, parseBaseSlots } from './upload-usb'
 
@@ -59,6 +59,12 @@ describe('finding the unit', () => {
   it('names the computer, not only another tab, when Windows can’t claim the unit', () => {
     expect(linkBusy('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the latest base from the card once')
     expect(linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).not.toContain('card')
+  })
+  it('names the Octatrack itself first when a claim fails: starting, or stuck after a save (#2212)', () => {
+    const mac = linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')
+    expect(mac.startsWith('Your Octatrack isn’t answering this page.')).toBe(true)
+    expect(mac).toContain('wait until its screen responds')
+    expect(mac).toContain('another tab or browser')
   })
   it('reports a browser without WebUSB instead of offering a dead button', () => {
     expect(new OctatrackLink(undefined).getState().status).toBe('unsupported')
@@ -209,6 +215,18 @@ describe('sending a module', () => {
     unit.playing = true; await link.update('PREVIEW VOL', one)
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback or finish recording on the Octatrack to continue.' } })
   })
+  it('says and records what kept an unsafe sync from beginning, as base 0.8.2 reports it (#2211)', async () => {
+    for (const [busy, text] of [[0x31, /^Track 4’s recorder is still recording\. Let it finish or press STOP/], [0x72, /^Track 8’s recorder/],
+      [3, /^Stop playback or finish recording/], [0x94, /^Stop playback or finish recording/], [5, /still finishing its last change/],
+      [0, /^Stop playback or finish recording/]] as const) {
+      const { unit, link } = await linked(), failures: unknown[] = []
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ result: event.result, busy: event.busy, refusal: event.refusal }) })
+      unit.playing = true; unit.busy = busy
+      await link.update('PREVIEW VOL', one)
+      expect(link.getState().notice).toMatchObject({ tone: 'error', text: expect.stringMatching(text) })
+      expect(failures).toEqual([{ result: 'unsafe', busy, refusal: undefined }])
+    }
+  })
   it('installs an update without running a self-test', async () => {
     const { link } = await linked(), seen: string[] = []
     link.subscribe(() => { seen.push(link.getState().status) })
@@ -256,18 +274,46 @@ describe('sending a module', () => {
           stage: { value: async () => {
             trusted = false; unit.staged = true
             if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0] // eight submissions refused at their SETUP, across the wrap
-            throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause)
+            throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause, {command: 'chunk', chunkOffset: 4043, sequence: 9})
           } },
         })
       }
       const link = new OctatrackLink(unit.usb, connect, 300)
-      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind, usb: event.usb }) })
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind, usb: event.usb, upload: event.upload }) })
       link.start(); await settle(); await settle()
       await link.update('PREVIEW VOL', one)
     }
-    expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError' },
-      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
+    const upload = {command: 'chunk', chunkOffset: 4043}
+    expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError', upload },
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0], upload }))])
   })
+  it.each([[56, 0, 1, 56], [0, 0, 1, 0], [65535, 0, 1, undefined], [56, 1, 1, undefined], [56, 0, 0, undefined]] as const)(
+    'matches an EP0 sample (%s bytes, %s resets, %s primes) to the failed attempt', async (residual, resets, primes, expected) => {
+      const unit = fakeUnit(), [device] = await unit.usb.getDevices(), base = fakeSession(unit)
+      const reads: number[][] = [], read = device.controlTransferIn.bind(device)
+      vi.spyOn(device, 'controlTransferIn').mockImplementation((setup, length) => {
+        if (setup.request !== 4) return read(setup, length)
+        reads.push([setup.value, length])
+        const data = new DataView(new ArrayBuffer(length))
+        data.setUint32(0, 0x4d575544); data.setUint8(4, 3); data.setUint8(5, 1)
+        if (length === 70) {
+          data.setUint32(28, resets); data.setUint32(32, primes)
+          data.setUint16(68, residual)
+        }
+        return Promise.resolve({ status: 'ok', data })
+      })
+      const connect: typeof base = async (...args) => {
+        const session = await base(...args)
+        return Object.create(session, { stage: { value: () => {
+          throw new UploadUnconfirmedError('fixture', session.status, undefined, {command: 'chunk', chunkOffset: 0, sequence: 32})
+        } } })
+      }
+      const link = new OctatrackLink(unit.usb, connect, 300), uploads: unknown[] = []
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') uploads.push(event.upload) })
+      await link.connect(); await link.update('PREVIEW VOL', one)
+      expect(reads).toEqual([[0, 68], [32, 70]])
+      expect(uploads).toEqual([{command: 'chunk', chunkOffset: 0, ...(expected !== undefined ? {remainingBytes: expected} : {})}])
+    })
   it.each(['cancel', 'timeout'] as const)('closes a pending diagnostic read before continuing from %s', async outcome => {
     const unit = fakeUnit(), [device] = await unit.usb.getDevices()
     const connect = vi.fn(fakeSession(unit)), link = new OctatrackLink(unit.usb, connect, 300)
@@ -385,6 +431,21 @@ describe('sending a module', () => {
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
+  })
+  it('names the track and effect slot that runs a module in use, when the base says which', async () => {
+    const { unit, link } = await linked()
+    unit.refusal = 7
+    unit.inUseSlot = 14 // T6's FX2
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes.* Track 6 runs it as its FX2 effect in the current Part\.$/)
+    expect(link.getState().notice?.text).not.toContain('Look for')
+    expect(inUseSlotHint(3, ['Tape Echo', 'Tape Echo'])).toBe(' Track 3 runs Tape Echo as its FX1 effect in the current Part.')
+  })
+  it('says the saved modules are still loading when a sync comes before this start’s restore', async () => {
+    const { unit, link } = await linked()
+    unit.restoring = true // rejected with no loader refusal, the record's saved still 0
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/hasn’t loaded its saved modules yet, so nothing changed/)
   })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')
@@ -682,6 +743,14 @@ describe('a sync that changes the unit’s USB configuration', () => {
     await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
     expect(unit.orphan).toBe(candidate)
   })
+  it('leaves a matching USB Audio trial from a different boot session with its owner', async () => {
+    const { unit, link } = await reconnecting()
+    const candidate = unit.orphan
+    unit.bootSession = '17'.repeat(32)
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe(candidate)
+  })
   it('resumes the same USB Audio trial after a second format change from the panel', async () => {
     const { unit, link } = await reconnecting()
     for (let i=0; i<2; i++) {
@@ -841,7 +910,7 @@ describe('loading a module set', () => {
     link.start(); await settle(); await settle(); unit.modules = ['0000000a']
     await link.update('Live', set)
     expect(stages).toBe(1); expect(unit.kept).toEqual([]); expect(unit.modules).toEqual(['0000000a'])
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'There isn’t enough module memory left on the Octatrack. Remove a module, then try again.' } })
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'There isn’t enough module memory left on the Octatrack in one piece: modules taken out since it started can leave gaps. Restart the Octatrack, then sync again. If it is refused again, remove a module.' } })
   })
   it('does not need the website to retain packages for Undo', async () => {
     const { unit, link } = await linked('base', true); unit.modules = ['0000000a']

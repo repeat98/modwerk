@@ -1,0 +1,1 @@
+`npm run check` now says in its first stage when a base change left base-bound Octatrack packages naming the old base, with the relink command, beside the base size record. Before, only the SDK tests found it, at the end of the run.

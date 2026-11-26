@@ -1,0 +1,55 @@
+{
+  "module": "syntiz",
+  "version": "0.1.1-experimental",
+  "base": "678843cc (base 0.8 development twin, main b5864cce7)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples), picks on empty C02, Part 1; owner's MKII",
+  "seconds": 8,
+  "measuredAt": "2026-11-23T14:28:21.043Z",
+  "tracks": [
+    "T1",
+    "T3",
+    "T6",
+    "T7"
+  ],
+  "rest": 0,
+  "first": 18.6,
+  "each": 5.5,
+  "points": [
+    81.5,
+    97.7,
+    105.6,
+    111.1,
+    112.4
+  ],
+  "adds": [
+    16.2,
+    24.1,
+    29.6,
+    30.9
+  ],
+  "admission": [
+    {
+      "pattern": "empty",
+      "number": 2,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 56,
+      "frame": 36.9,
+      "dropped": 0,
+      "stalls": 0
+    },
+    {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 95.4,
+      "frame": 48.6,
+      "dropped": 0,
+      "stalls": 0
+    }
+  ],
+  "notes": []
+}

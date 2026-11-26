@@ -64,6 +64,27 @@ int main(void)
     CHECK(modwerk_fxmap_read == 4 && !strcmp(name, "Hundred") && modwerk_test_map.e[127].layout == 3);
     CHECK(modwerk_fxmap_handle(0x09u) == 9 && modwerk_fxmap_handle(0x99u) == 99 && modwerk_fxmap_handle(0x100u) == 100 &&
           modwerk_fxmap_handle(0x127u) == 127 && !modwerk_fxmap_module(27));
+    /* The handle cache: a reassignment (a write and a seal) is answered at once, and so is an entry written before
+     * its seal (a project load), whatever was asked before. */
+    CHECK(modwerk_fxmap_handle(0x99u) == 99 && modwerk_fxmap_handle(0x55u) == -1);
+    modwerk_fxmap_assign(99, 0x55u, 1, "Moved");
+    CHECK(modwerk_fxmap_handle(0x99u) == -1 && modwerk_fxmap_handle(0x55u) == 99);
+    put(&modwerk_test_map.e[99], 0x99u, 1, "Back");                        /* unsealed, as a load writes */
+    CHECK(modwerk_fxmap_handle(0x99u) == 99 && modwerk_fxmap_handle(0x55u) == -1);
+    modwerk_fxmap_assign(99, 0x99u, 1, "Ninety-nine");
+    /* Damage that leaves the generation (a bad battery): found by the whole check within a second of DTIM3, however
+     * few or many calls came between. */
+    CHECK(modwerk_fxmap_module(99) == 0x99u);                                /* the last seal checked */
+    unsigned before = checks;
+    modwerk_test_map.e[100].module = 0x77u;                                 /* the sum no longer matches */
+    modwerk_test_now += CHECK_EVERY / 2u;
+    CHECK(modwerk_fxmap_module(100) == 0x77u);                              /* half a second: not checked yet */
+    modwerk_test_now += CHECK_EVERY / 2u;
+    CHECK(modwerk_fxmap_module(100) != 0x77u && checks == before + 2u);     /* a second: reseeded */
+    modwerk_fxmap_assign(9, 0x09u, 1, "Nine");
+    modwerk_fxmap_assign(99, 0x99u, 1, "Ninety-nine");
+    modwerk_fxmap_assign(100, 0x100u, 2, "Hundred");
+    modwerk_fxmap_assign(127, 0x127u, 3, "Last");
     /* Where a handle is named (the MISSING page): the current bank first, a working Part before a saved copy. */
     unsigned bank, part, track;
     CHECK(!modwerk_fxmap_where(99, &bank, &part, &track));

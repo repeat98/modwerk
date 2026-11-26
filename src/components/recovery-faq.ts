@@ -10,4 +10,5 @@ export const RECOVERY_FAQ: Record<RecoveryMachine, string> = {
   'digitakt-ii': 'digi-recovery',
   digitone: 'digi-recovery',
   'analog-rytm-mkii': 'digi-recovery',
+  'model-cycles': 'cycles-recovery',
 }

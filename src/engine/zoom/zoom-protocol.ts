@@ -45,6 +45,115 @@ export function unpack7(bytes: ArrayLike<number>): number[] {
   for (let i = 0; i < bytes.length; i += 8) for (let j = 1; j < 8 && i + j < bytes.length; j++) out.push(bytes[i + j] | (bytes[i] & (1 << (7 - j)) ? 0x80 : 0))
   return out
 }
+/** Current edit buffer on the original MS-70CDR. The query alone leaves the active patch in place. */
+export const CURRENT_PATCH = { request: 0x29, reply: 0x28, edit: 0x50 } as const
+export const isCurrentPatchReply = (m: number[], deviceId: number) =>
+  deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && m.length === 146 &&
+  m[0] === 0xf0 && m[1] === 0x52 && m[2] === 0 && m[3] === deviceId && m[4] === CURRENT_PATCH.reply &&
+  m[145] === 0xf7
+
+export type ZoomPatchSlot = { index: number; gid: number; fxid: number; enabled: boolean; values: number[] }
+export type ZoomCurrentPatch = { name: string; slots: ZoomPatchSlot[] }
+/** A staged edit: one knob, a slot on or off, the patch's name, or a slot's effect (`gid`/`fxid` 0 empties it) with
+ * its knobs' starting values. */
+export type ZoomPatchChange = { slot: number; parameter: number; value: number } | { slot: number; enabled: boolean } | { name: string } |
+  { slot: number; gid: number; fxid: number; values: readonly number[] }
+
+/** The MS-70CDR keeps 50 patches; a program change (C0 <program>) loads one into the edit buffer. */
+export const PATCH_PROGRAMS = 50
+export const PATCH_NAME_LENGTH = 10
+export const PATCH_SLOTS = 6
+/** Patch commands beyond the edit buffer, as the ZoomMultistompZDL patch editor sends them (MIT): store the edit
+ * buffer into a program (a flash write), and turn one knob live (field 2-10 are the nine parameters, 14 bits). */
+export const PATCH_COMMANDS = {
+  store: (program: number) => [0x32, 0x01, 0x00, 0x00, program & 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00],
+  knob: (slot: number, parameter: number, value: number) => [0x31, slot, parameter + 2, value & 0x7f, (value >> 7) & 0x7f],
+}
+/** How many slots take a live knob message (31): the first three on Zoom's firmware, all six from MIDISTOMP 2.0.4
+ * (identity `M204`, matujuice/zoom-ms-midistomp#77). The other slots take Apply. */
+export function liveSlots(firmware: string | undefined) {
+  const tag = /^M(\d{3})$/.exec((firmware ?? '').trim())
+  return tag && +tag[1] >= 204 ? PATCH_SLOTS : 3
+}
+/** Where patches may be changed: where effect files may be written (canWriteFiles), and MIDISTOMP 2.0.4 or later,
+ * whose live knobs reach every slot. */
+export const canEditPatches = (identity?: ZoomIdentity) => canWriteFiles(identity) ||
+  (identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && liveSlots(identity.firmware) === PATCH_SLOTS)
+/** A name the pedal can show: printable 7-bit characters, at most ten. */
+export const cleanPatchName = (name: string) => name.replace(/[^\x20-\x7e]/g, '').slice(0, PATCH_NAME_LENGTH).trimEnd()
+
+// Unpacking the SysEx collectors leaves the same little-endian bit fields in each 18-byte slot.
+const PATCH_CONTROLS = [[29, 12], [42, 11], [55, 11], [68, 8], [76, 8], [84, 8], [92, 8], [100, 9], [128, 8]]
+const PATCH_NAME_AT = 111, PATCH_COUNT_AT = 109
+
+export function zoomPatchParameterMax(slot: number, parameter: number): number {
+  // The high bit of the ninth knob in slot 5 is unverified. Preserve it.
+  const width = slot === 4 && parameter === 8 ? 7 : PATCH_CONTROLS[parameter]?.[1] ?? 0
+  return (1 << width) - 1
+}
+
+/** Overlay changed fields on a fresh reply, preserving the IDs, the name and unmodelled bytes unless changed. Effect
+ * changes go first (they decide which slots exist and set their knobs), then knobs and on/off on top. */
+export function editCurrentPatch(message: number[], changes: readonly ZoomPatchChange[]): number[] {
+  const patch = parseCurrentPatch(message)
+  if (!patch) throw new Error('The pedal did not return its active patch.')
+  const raw = unpack7(message.slice(5, -1)), slots = new Set(patch.slots.map(slot => slot.index))
+  const write = (slot: number, bit: number, max: number, value: number) => {
+    if (!Number.isInteger(value) || value < 0 || value > max) throw new Error('The parameter value does not fit this patch slot.')
+    const at = slot * 18 + (bit >> 3), shift = bit & 7, mask = max << shift
+    const current = raw[at] | raw[at + 1] << 8 | raw[at + 2] << 16
+    const updated = (current & ~mask) | (value << shift)
+    raw[at] = updated & 255
+    raw[at + 1] = (updated >> 8) & 255
+    raw[at + 2] = (updated >> 16) & 255
+  }
+  for (const change of [...changes.filter(c => 'gid' in c), ...changes.filter(c => !('gid' in c))]) {
+    if ('name' in change) {
+      const name = cleanPatchName(change.name).padEnd(PATCH_NAME_LENGTH)
+      for (let i = 0; i < PATCH_NAME_LENGTH; i++) raw[PATCH_NAME_AT + i] = name.charCodeAt(i)
+      continue
+    }
+    if (!Number.isInteger(change.slot) || change.slot < 0 || change.slot >= PATCH_SLOTS) throw new Error('There is no such slot in a patch.')
+    if ('gid' in change) {
+      const used = !!(change.gid || change.fxid)
+      write(change.slot, 25, 15, change.gid)
+      write(change.slot, 1, 1023, change.fxid)
+      write(change.slot, 0, 1, Number(used))
+      PATCH_CONTROLS.forEach(([bit], parameter) => write(change.slot, bit, zoomPatchParameterMax(change.slot, parameter), used ? change.values[parameter] ?? 0 : 0))
+      // The slot count only grows, to cover a slot given an effect: lowering it would drop the slots past it.
+      const count = (raw[PATCH_COUNT_AT] >> 2) & 7
+      if (used && change.slot >= count) raw[PATCH_COUNT_AT] = (raw[PATCH_COUNT_AT] & ~0x1c) | ((change.slot + 1) << 2)
+      if (used) slots.add(change.slot)
+      else slots.delete(change.slot)
+      continue
+    }
+    if (!slots.has(change.slot)) throw new Error('The effect slot is no longer in the active patch.')
+    if ('parameter' in change && !PATCH_CONTROLS[change.parameter]) throw new Error('The parameter value does not fit this patch slot.')
+    if ('parameter' in change) write(change.slot, PATCH_CONTROLS[change.parameter][0], zoomPatchParameterMax(change.slot, change.parameter), change.value)
+    else write(change.slot, 0, 1, Number(change.enabled))
+  }
+  return [...message.slice(0, 5), ...pack7(raw), 0xf7]
+}
+
+export function parseCurrentPatch(m: number[]): ZoomCurrentPatch | undefined {
+  if (!isCurrentPatchReply(m, ZOOM_DEVICE_IDS['zoom-ms-70cdr']) || m.slice(5, -1).some(byte => byte < 0 || byte > 127)) return undefined
+  const raw = unpack7(m.slice(5, -1))
+  const name = String.fromCharCode(...raw.slice(111, 121)).replace(/[^ -~]/g, ' ').trimEnd()
+  const count = (raw[109] >> 2) & 7
+  if (count > 6) return undefined
+  const slots: ZoomPatchSlot[] = []
+  for (let index = 0; index < count; index++) {
+    const read = (at: number, width: number) => {
+      const byte = 18 * index + (at >> 3)
+      return ((raw[byte] | raw[byte + 1] << 8 | raw[byte + 2] << 16) >>> (at & 7)) & ((1 << width) - 1)
+    }
+    const gid = read(25, 4), fxid = read(1, 10)
+    if (!gid && !fxid) continue
+    slots.push({ index, gid, fxid, enabled: !!read(0, 1), values: PATCH_CONTROLS.map(([offset, width]) => read(offset, width)) })
+  }
+  return { name, slots }
+}
+
 export function crc32(bytes: ArrayLike<number>): number {
   let c = 0xffffffff
   for (let i = 0; i < bytes.length; i++) { c ^= bytes[i]; for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1 }
@@ -218,12 +327,20 @@ export function parseLoad(m: number[]): MidistompLoad | undefined {
   return { window: word(12), cpu: tenths(0), audio: tenths(1), audioMax: tenths(2), system: tenths(3), perform: tenths(4), late: word(11), midi: tenths(13), lateTotal: word(14), dsp: slots.reduce((sum, slot) => sum + slot.dsp, 0), slots }
 }
 
-/** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
- * version 1.1x and takes the flash commands below. */
-export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && identity.deviceId === 0x61 && identity.firmware.startsWith('1.1')
-/** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, or on
- * the base (Zoom's 2.10, patched). Every other pedal or firmware is only read. */
-export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag)
+/** Update mode (hold Up and Down while plugging in USB): the bootloader answers the identity request with version 1.1x
+ * and the model byte from the pedal's flash, and takes the flash commands below. Seen on the MS-70CDR and on an MS-50G
+ * (23 November 2026: 0x58, 1.10, recorded while Effect Manager 2.3.3 wrote its effects). */
+const UPDATE_MODE_SEEN = [ZOOM_DEVICE_IDS['zoom-ms-70cdr'], ZOOM_DEVICE_IDS['zoom-ms-50g']]
+export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && UPDATE_MODE_SEEN.includes(identity.deviceId) && identity.firmware.startsWith('1.1')
+/** Where the base may be flashed: an MS-70CDR in update mode. The base is built from the MS-70CDR's OS, and the
+ * modding guidelines allow no firmware flips, so another pedal in update mode is refused. */
+export const canFlashBase = (identity?: ZoomIdentity) => isUpdateMode(identity) && identity!.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr']
+/** D004 adds loader diagnostics to M201 and uses the same effect file service. */
+export const ZOOM_FILE_WRITE_REQUIREMENT = 'Effect file changes require the MS-70CDR with Zoom 2.10, MIDISTOMP 2.0.1, or development build D004.'
+/** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, on the base
+ * (Zoom's 2.10, patched), or on development build D004. Every other pedal or firmware is only read. */
+export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] &&
+  (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag || identity.firmware === 'D004')
 /** The bootloader's answer to a flash command: F0 52 00 <id> 00 <status> F7, 00 done, 08 a write's checksum failed. */
 export const isFlashReply = (m: number[], deviceId: number) => m.length === 7 && m[1] === 0x52 && m[3] === deviceId && m[4] === 0x00
 export const FLASH_OK = 0x00, FLASH_BAD_CRC = 0x08

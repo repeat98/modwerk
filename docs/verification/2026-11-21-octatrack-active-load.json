@@ -307,7 +307,8 @@
           ]
         }
       ],
-      "releasePackageSha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b"
+      "releasePackageSha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
+      "reboundReleasePackageSha256": "0c9e62f2e8a38f6a083dd72a7015b9a9efccb92d9899af115949c16048fdce94"
     },
     {
       "module": "analog-bassdrum",
@@ -430,7 +431,8 @@
             }
           ]
         }
-      ]
+      ],
+      "reboundReleasePackageSha256": "2ce9f2f53081821c088972044538c8a5dbcb1b08e53823cc065df82b47e9cbca"
     },
     {
       "module": "sidechain-compressor",
@@ -665,7 +667,8 @@
             }
           ]
         }
-      ]
+      ],
+      "reboundReleasePackageSha256": "f403fd92a5211f59002e3391f81f5a4750441fd168485fea538bbeae45ad77e3"
     },
     {
       "module": "usb-audio-out-tracks-main-cue",
@@ -947,5 +950,6 @@
         }
       ]
     }
-  ]
+  ],
+  "releaseRebindVerification": "For the three records with a rebound release digest, comparison against the original release package reproduced the 0.7.13 bytes exactly by substituting the two controller write-lease addresses from the 0.7.13 base binding; the 0.8.2 release packages (base 24e480c4) are in turn the 0.8.1 ones with the same two addresses substituted (0x40a9d794/0x40a9d7b0 to 0x40a9d850/0x40a9d86c) and no other byte changed. The hardware readings and scene refer to the named development base."
 }

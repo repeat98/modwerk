@@ -1,0 +1,1 @@
+Releases: a merge into main by a maintainer the owner lists in `sdk/approvals/release-maintainers.json` (npp1993 from 26 November 2026) now counts as approved for publication, so it no longer holds back the site. Their merges that change that list or the release gate still need the owner's merge.

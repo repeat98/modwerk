@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 2,
+  "id": "mackity",
+  "key": "MACKITY",
+  "name": "Mackity",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "Chris Johnson / Airwindows: original Mackity algorithm and MIT-licensed source"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "MACKITY",
+    "family": "Saturation",
+    "summary": "Chris Johnson's Airwindows Mackity: the input stage of a Mackie-style mixing desk, driven by IN TRIM, on FX1 or FX2 of any track.",
+    "overview": "Mackity is Airwindows' model of a Mackie-style desk's input stage. The track's audio passes a gentle low cut, the desk's high-frequency rolloff, the IN TRIM gain and the console's clip, rounded by its curve, then a second rolloff and a DC blocker. At TRIM 13 it adds only the desk's colour; turning TRIM up drives the channel into the clip, from warm thickening to hard, square distortion. PAD sets the output level. The algorithm is upstream's, unchanged, in 24-bit fixed point at the Octatrack's 44.1 kHz.",
+    "highlights": [
+      "Upstream's complete Mackity algorithm, credited to Chris Johnson",
+      "TRIM from silence through 0 dB (13) to +39.6 dB into the console's clip",
+      "Stereo and buffer-free: FX1 or FX2 on any track"
+    ],
+    "usage": [
+      "Put MACKITY on FX1 of a drum or bass track. At TRIM 13 and PAD 127 it adds the desk's colour without a change in level.",
+      "Turn TRIM up for drive: at 26 (+12 dB) a track peaking at -12 dBFS reaches the clip, and above that it clips harder.",
+      "Turn PAD down to set the output level after heavy drive."
+    ]
+  },
+  "controls": [
+    {
+      "name": "TRIM",
+      "default": 13,
+      "count": 128,
+      "labels": null,
+      "doc": "In Trim: the gain into the desk, (TRIM/13)^2 as in the original. 13 is 0 dB, 26 is +12 dB, 52 is +24 dB, 127 is +39.6 dB; 0 is silence. More gain drives the signal into the console's clip."
+    },
+    {
+      "name": "PAD",
+      "default": 127,
+      "count": 128,
+      "labels": null,
+      "doc": "Out Pad: the output level, PAD/128; 127 is exactly 0 dB, 64 is -6 dB, 0 is silence. With heavy drive the desk's rolloff peaks up to about 0.6 dB over full scale, which the Octatrack's output limits; PAD 120 or lower keeps every peak."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX1 / FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "At high TRIM the clip makes harmonics above 22 kHz that fold back below it, as the original does at 44.1 kHz.",
+      "With heavy drive, peaks up to about 0.6 dB over full scale are limited by the Octatrack's output; PAD 120 or lower keeps them.",
+      "On a pattern that already fills the CPU, a pick can be refused with CPU FULL (it asks +3 % on a busy eight-track pattern).",
+      "Tested on one MKII by the test procedure; the MKI, a Part or project reload with it saved and a power cycle were not tested by hand.",
+      "The original's 32-bit float dither is left out: the Octatrack's path is 24-bit fixed point."
+    ],
+    "effectId": 26
+  },
+  "resources": {
+    "recorded": "2026-11-25",
+    "storage": {
+      "label": "DSP program / state",
+      "display": "208 words / 32-word state",
+      "value": null,
+      "unit": "see display",
+      "method": "static",
+      "conditions": "The USB package's DSP effect: 208 program words on each DSP core it runs on; 32 words of the 256-word X block per instance (31 used); no buffer, no Y memory, no ColdFire code per frame.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "DSP instruction peak",
+      "display": "228 instructions/sample per instance",
+      "value": null,
+      "unit": "see display",
+      "method": "emulator",
+      "conditions": "perf.py in dsp_host, 48 cases (defaults, TRIM 127, moving knobs, each unsplit and with a trig split at 1-15): worst 228.2 with a 1-frame split, 225.3 unsplit at every setting, against 290.1 for LO-FI and 330.9 for DJ EQ, the dearest stock effect. On the unit the DSP meter on T1-T4 rose 8.1 points with it on T1 FX2. Executed instructions, not chip cycles.",
+      "source": "TESTING.md"
+    },
+    "cpuPrice": {
+      "value": 0.1,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-25",
+      "conditions": "Project on the owner's development unit, bank C, Part 1 reloaded in RAM to its saved copy; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7) at the project tempo; transport played by the tool; base development twin 8fd6d456 of base 0.8.1 (eb6679620d0c9ed7), the owner's MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 32.2 % before, 32.2 % installed and used nowhere, 32.3 % on T1 FX2; CPU meter 55.7 % before, 55.7 % at rest, 55.7 % in use.",
+      "source": "evidence/cpu-price.json"
+    },
+    "impact": {
+      "conditions": "One active instance at the dearest setting (TRIM 127) with moving knobs and trig splits; no buffer; on the unit, the frame-interrupt price on a medium pattern.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "No ColdFire audio code: the stock FX page publishes the knobs. On the owner's MKII the frame interrupt rose 0.1 points with it on T1 FX2 and 0 installed and unused; the instance curve read first 0.9, each 0.9.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "moderate",
+        "basis": "measured-comparison",
+        "rationale": "228.2 executed instructions/sample worst case with trig splits, 0.79 of LO-FI (290.1) and 0.69 of DJ EQ (330.9), the dearest stock effect, under matching cases; the static bound for four per core is 1,004 of 3,120 cycles a sample. Chip timing is unmeasured.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "208 program words per core, 32 words of the 256-word X block per instance, no buffer.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "verify.py matches the bit-exact model in dsp_host in every case; test_reference.py holds the model to upstream's algorithm; perf:audit passes at 0.79 of LO-FI's worst; npm run test:procedure steps 1-10 passed on the owner's MKII (25 Nov 2026), with the soak, the CPU price and the instance curve, and the screens captured on the unit.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "ccbb96b6c06ae074159be45d66f69812d450793f",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "7271f6d9bb015b103e2048bf65912cd8b78bdcbe6205c37cb58f7434f22af846",
+      "cycles": [
+        {
+          "processor": "dsp",
+          "worstCase": 4078,
+          "maxConfiguration": 16312,
+          "maxInstances": 8,
+          "budget": 49920,
+          "unit": "cycles/block",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "Static bound per 16-frame block from the assembled words (perf.py): the per-sample loop's 21 words plus twice the 115-word channel routine, 251 cycles a sample (x16 = 4,016), plus the 62-word per-call setup (knob decode, seeding, the glides' snap) charged once per call. The loop and the routine have no conditional branch, so every knob value runs the same words.",
+            "parameterModulation": "Two calls per block cover a trig split: 16 x 251 + 2 x 31 = 4,078 (the setup's words split between its two halves, each charged on every call). LFOs, locks, scenes and CC reach the same two knob words, decoded every call and glided per sample. The dsp_host measurement with moving knobs and splits at 1-15 read at most 228.2 executed instructions a sample (3,651 a block), inside the bound.",
+            "modeSwitching": "Mackity has no modes: TRIM and PAD are continuous and run the same code at every value. Part changes reach it as knob changes.",
+            "maxLoad": "Eight instances, four per DSP core (FX2 of four tracks, or FX1 and FX2 of two): 4 x 4,078 = 16,312 per core within the SDK's 49,920 module allowance (3,120 a sample x 16). On the unit, eight at once while playing ran with CPU 458 and DSP peaks 663 and 743 per mille (device:test). The 2 s eight-instance dsp_host stress run peaked at 913.0 executed instructions a sample per core (evidence/performance.json). Real-chip contention and stalls are not modelled.",
+            "inputConditions": "The bound does not depend on sample values: silence, impulses, full-scale and clipping input run the same straight-line code. The stress stems include full-scale squares, impulses, DC steps, noise and a 20 Hz-20 kHz sweep."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "DSP program, the package's effect on each core it runs on",
+            "space": "dsp-p",
+            "words": 208,
+            "wordBits": 24,
+            "bytes": 624,
+            "scope": "shared"
+          },
+          {
+            "name": "Used and initialized stock X state, r7+0..0x1f",
+            "space": "dsp-x",
+            "words": 32,
+            "wordBits": 24,
+            "bytes": 96,
+            "scope": "instance"
+          },
+          {
+            "name": "Reserved remainder of the 256-word stock X block",
+            "space": "dsp-x",
+            "words": 224,
+            "wordBits": 24,
+            "bytes": 672,
+            "scope": "instance"
+          },
+          {
+            "name": "System stack, one bsr inside the sample loop's do, on both cores",
+            "space": "dsp-x",
+            "words": 8,
+            "wordBits": 24,
+            "bytes": 24,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 768,
+        "sharedBytes": 648,
+        "maxInstances": 8,
+        "totalBytes": 6792,
+        "conditions": "The USB package (472 bytes of code and data, no bss, one DSP effect of 208 words) as the Modwerk base loads it into each core's DSP arena; per instance the stock 256-word r7 block an FX instance gets, of which Mackity initializes $00-$1f and uses $00-$1e; no allocator buffer, no Y memory (ybase NEVER), no scratch outside r7. The system stack holds the do loop and one bsr. Logical 24-bit DSP words.",
+        "report": "TESTING.md"
+      },
+      "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-25",
+        "tester": "repeat98",
+        "sourceRevision": "ccbb96b6c06ae074159be45d66f69812d450793f",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "summary": "On the owner's Octatrack MKII (OS 1.40C), RAM-booted on development twin 8fd6d456 of base 0.8.1 (imageSha256 is that twin's MAIN image), the agent in the owner's session ran npm run test:procedure on the package of this source (5a58d4cc): software checks, the cost model, device:test (alone on FX2 of T1 and T5, eight at once while playing, 12 Part switches), a 2-minute soak, device:price with the instance curve and admission on the empty C02 and the medium C04, and the inventory put back; all passed. Earlier the same day, a 30-second RAM trial on the release base 0.8.1 and device:test on an empty bank passed too. The screens were read off the unit's LCD during a trial. The owner asked for it to be released without the hands-on stage (25 Nov 2026: \"you can merge and get it live yourself\").",
+        "limitations": [
+          "One unit and its owner's session, not an independent reviewer; the MKI was not tested.",
+          "The owner's listening, a Part and project save and reload, and the Keep with a power cycle were not run by hand.",
+          "MAIN and CUE were not recorded over USB.",
+          "Single 8-s readings of the DSP load scatter by about a point; the DSP cost stands on dsp_host's count.",
+          "A card build beside Analog BD was not built or placed."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Put MACKITY on FX1 of a drum loop's track: hold FUNC, press FX1, turn LEVEL to Mackity and press YES. At TRIM 13 and PAD 127 the loop keeps its level and gains the desk's colour.",
+            "Turn TRIM to 40 on the FX1 page. The loop thickens and its peaks flatten into the clip; turn PAD to about 90 to bring the level back down.",
+            "Set TRIM 13 and PAD 127 to return to the clean desk, or select NONE in the FX1 chooser to remove it."
+          ]
+        },
+        "screenshots": [
+          "media/mackity-chooser.png",
+          "media/mackity-main.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "source": {
+    "repository": "https://github.com/airwindows/airwindows",
+    "revision": "e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea",
+    "path": "plugins/LinuxVST/src/Mackity"
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Chris Johnson's published Mackity source and his full MIT copyright and permission notice are retained in upstream/ and LICENSE; the Octatrack adaptation is distributed under the same terms. No desktop binary, firmware, extracted stock routine or table, or memory dump is included."
+  },
+  "media": [
+    {
+      "path": "media/mackity-chooser.png",
+      "captureType": "hardware",
+      "caption": "Select an audio track, hold FUNC and press FX1. Turn LEVEL down the list to Mackity and press YES to put it on FX1 (FX2 works the same).",
+      "alt": "Octatrack FX1 SETUP: the effect list from FLANGER to LO-FI with the cursor on Mackity.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX1 SETUP (effect chooser)",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 8fd6d456 of Modwerk base 0.8.1, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 25 November 2026, during a RAM trial of this version's package 5a58d4cc, built by module:dev from source ccbb96b6c. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited."
+      }
+    },
+    {
+      "path": "media/mackity-main.png",
+      "captureType": "hardware",
+      "caption": "Press FX1 for its page: TRIM (knob A) drives the desk, 13 is 0 dB; PAD (knob B) sets the output level, 127 is 0 dB.",
+      "alt": "Octatrack FX1 page of track 2 running Mackity: knobs TRIM and PAD, FX1 Mackity in the bottom line.",
+      "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX1",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "af4934ce5cdbc9816bc49864bd8848a6bad0af9af692b6752f330749b5f1b5c6",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 8fd6d456 of Modwerk base 0.8.1, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 25 November 2026, during a RAM trial of this version's package 5a58d4cc, built by module:dev from source ccbb96b6c. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited."
+      }
+    }
+  ],
+  "access": {
+    "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser. TRIM and PAD are on the FX page (knobs A and B).",
+    "steps": [
+      "Select an audio track that plays a sample.",
+      "Hold FUNC and press FX1 (or FX2) to open its SETUP. Turn LEVEL to Mackity and press YES.",
+      "Press FX1 (or FX2) for its page: TRIM on knob A, PAD on knob B.",
+      "Set TRIM 13 and PAD 127 for the desk's colour at unchanged level, or select NONE to remove it."
+    ],
+    "screenshots": [
+      "media/mackity-chooser.png",
+      "media/mackity-main.png"
+    ]
+  }
+}

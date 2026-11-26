@@ -2,15 +2,19 @@
 // in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access. With firmware 1.10 it is in update
 // mode: it takes the flash commands into a 4 MB flash where, as in NOR flash, a write only clears bits until erased.
 // With `midistomp` it also answers MIDISTOMP's hello (version, feature bits) and, given `load`, its load request.
-import { crc32, pack7, unpack7, type MidistompLoad } from '../engine/zoom/zoom-protocol'
+import { crc32, editCurrentPatch, pack7, unpack7, type MidistompLoad } from '../engine/zoom/zoom-protocol'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, patch: startPatch = undefined as number[] | undefined, patches = undefined as number[][] | undefined, program: startProgram = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
   let firmware = started, starting = 0
+  // With `patches` (fifty replies, fakeCurrentPatch), a program change (C0) loads one into the edit buffer (`patch`), store (32)
+  // writes the buffer into one, and live knobs (31) are kept in `knobs`.
+  let program = startProgram
+  const patch = startPatch ?? patches?.[program]?.slice(), knobs: number[][] = []
   let writes = 0
   let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
   const input: MidiIn & { state: string } = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
@@ -49,6 +53,14 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
       if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
+      if (patches && m[0] === 0xc0) { program = m[1]; patch!.splice(0, patch!.length, ...patches[program]); return reply([0xc0, program]) }
+      if (m[1] === 0x52 && m[3] === deviceId && patch) {
+        if (m[4] === 0x29) { current = m[4]; return reply(patch) }
+        if (m[4] === 0x28 && m.length === 146) { patch.splice(0, patch.length, ...m); return }
+        if (m[4] === 0x32 && patches) { patches[m[8]] = patch.slice(); return }
+        // A live knob moves the buffer's knob, as on the pedal (one in an empty slot is ignored).
+        if (m[4] === 0x31) { knobs.push(m.slice(5, 10)); try { patch.splice(0, patch.length, ...editCurrentPatch(patch, [{ slot: m[5], parameter: m[6] - 2, value: m[7] | m[8] << 7 }])) } catch { /* an empty slot: ignored */ } return }
+      }
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
       const cmd = m[5], name = cmd === 0x20 ? String.fromCharCode(...m.slice(16, m.indexOf(0, 16))) : ''   // read: 9 zero bytes, then the name
@@ -102,7 +114,30 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
     input.state = output.state = 'disconnected'; access.onstatechange?.({})
     firmware = next; starting = boot; input.state = output.state = 'connected'; access.onstatechange?.({})
   }
-  return { access, sent, input, output, files, flash, replug }
+  return { access, sent, input, output, files, flash, replug, patch, patches, knobs, get program() { return program },
+    /** A patch chosen on the pedal itself: it plays it and says so with a program change. */
+    turn(next: number) { program = next; patch!.splice(0, patch!.length, ...patches![next]); reply([0xc0, next]) } }
+}
+
+/** A synthetic current-patch reply. Slots are zero-based. */
+export function fakeCurrentPatch(name: string, slots: { index: number; gid: number; fxid: number; enabled?: boolean; values?: number[] }[]) {
+  const data = new Uint8Array(122)
+  data[109] = (Math.max(-1, ...slots.map(slot => slot.index)) + 1) << 2
+  data.set(Array.from(name.slice(0, 10).padEnd(10), c => c.charCodeAt(0)), 111)
+  const offsets = [29, 42, 55, 68, 76, 84, 92, 100, 128]
+  for (const { index, gid, fxid, enabled = true, values = [] } of slots) {
+    const start = index * 18
+    data[start] = (fxid << 1) | Number(enabled)
+    data[start + 1] = fxid >> 7
+    data[start + 3] = gid << 1
+    values.forEach((value, parameter) => {
+      const position = offsets[parameter], byte = start + (position >> 3), bits = value << (position & 7)
+      data[byte] |= bits
+      data[byte + 1] |= bits >> 8
+      data[byte + 2] |= bits >> 16
+    })
+  }
+  return [0xf0, 0x52, 0, 0x61, 0x28, ...pack7(data), 0xf7]
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */
@@ -113,6 +148,19 @@ export function fakeEffect(name: string, gid: number, fxid: number, version: str
   Array.from(version).forEach((c, i) => { data[0x44 + i] = c.charCodeAt(0) })
   data[0x4c] = 0x7f; Array.from('ELF').forEach((c, i) => { data[0x4d + i] = c.charCodeAt(0) })
   return { name, data }
+}
+
+/** Synthetic descriptor across a file block boundary, with no bytes from a pedal. */
+export function withFakeEffectControls(file: FakePedalFile, name: string, parameters: [string, number][]): FakePedalFile {
+  const entries: [string, number][] = [['OnOff', 1], [name, 0xffffffff], ...parameters]
+  for (const [index, [label, max]] of entries.entries()) {
+    const bytes = new Uint8Array(0x30)
+    bytes.set(Array.from(label, char => char.charCodeAt(0)))
+    new DataView(bytes.buffer).setUint32(0x0c, max, true)
+    if (index === entries.length - 1) bytes[0x2c] = 4
+    file.data.splice(500 + index * 0x30, bytes.length, ...bytes)
+  }
+  return file
 }
 
 /** A stand-in effect list: one section per group, the given names in them, zero padding to 4108 bytes. */

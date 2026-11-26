@@ -1,30 +1,29 @@
 {
   "schema": 1,
   "module": "beat-slicer",
-  "version": "0.1.66-experimental",
+  "version": "0.1.68-experimental",
+  "sourceSha256": "1d373e42a4ea6ea82585404aa558bbc5577528c156845bf8a0dda7df26464a12",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": 279312,
+    "measured": 52298,
     "budget": 4330000,
-    "method": "An event is one composed screen frame while the CREATE BEAT GRID popup is open: module_draw redraws the popup over the stock AED frame, on the UI task, not in an interrupt. Measured on the owner's MKII, 27 Oct 2026 (evidence/hardware.md): the development twin's modwerk_cost[22] (runtime module draw, DTIM3 counts at 132 MHz) read before and after 9.9 s with the popup open and BEATS/BPM turned 16 times: 640 ms over 605 UI ticks, 1,058 us a tick, 279,312 cycles at 264 MHz. An average over 605 frames, not a per-frame maximum; the drawing is a fixed layout, so frames differ only in their text. No static bound was counted. Grid calculation (bs_grid_preview, at most 65 grid points and 64-entry inserts) runs once per encoder step in module_tick: runtime_tick went from 25.8 to 27.0 us a tick in the same window. Budget: one UI tick, 16.4 ms at 61 ticks a second (4,330,000 cycles)."
+    "method": "An event is one composed screen frame while the CREATE BEAT GRID popup is open: module_draw combines the cached popup with the stock home frame, on the UI task, not in an interrupt. Measured on the author's MKII, 20 Nov 2026, agent's run, a development twin of base 0.7.11 with SNAP (54cab594, RAM boot) and package 195d2b46: modwerk_cost[22] (runtime module draw, DTIM3 counts at 132 MHz) read before and after about 10 s with the popup open and its settings turned 16 times: 198.1 us a tick over 695 UI ticks, 52,298 cycles at 264 MHz (0.1.66: 1,058 us). Popup closed: 6.3 us a tick over 604 ticks. An average, not a per-frame maximum; the popup is cached until its data changes, so frames after a turn cost more than idle ones. No static bound was counted. SNAP analysis runs in the base's engine task, not in the module, and is measured separately (TESTING.md). Budget: one UI tick, 16.4 ms at 61 ticks a second (4,330,000 cycles)."
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": 125.2,
-    "moduleLongestUs": 126.6,
-    "stockIdlePercent": 43.2,
-    "moduleIdlePercent": 36.8,
-    "method": "Hardware, not cfmeter.py, on the owner's MKII with the transport stopped on the AED SLICE page of a Flex sample. Longest frame from the base's guard (47,891 counts a frame): 34.5 % (125.2 us) with no module, 34.9 % (126.6 us) with the popup open and its settings turning. Idle: the base's CPU meter swung between 41 % and 60 % with the popup open and closed alike (ten readings a second apart in each state), so the module's share is taken from its own hook instead: stock idle 43.2 % (100 minus the closed median, 56.8 %), module idle 36.8 %, that minus the draw hook's 6.4 % (1,055 us in each of 61 UI ticks a second, modwerk_cost[22]). Nothing else measurably changed (module tick 26-27 us a tick in both states). The cost applies only while the popup is open. No MIDI flood ran."
+    "stockLongestUs": 131.3,
+    "moduleLongestUs": 132.4,
+    "stockIdlePercent": 60.4,
+    "moduleIdlePercent": 59.8,
+    "method": "Hardware, not cfmeter.py, on the author's MKII (twin 54cab594), transport stopped on the AED SLICE page of a Static sample, Beat Slicer installed as a trial. Longest frame from the base's guard: 36.2 % (131.3 us) with the popup closed, 36.5 % (132.4 us) with it open and its settings turning. CPU meter, six readings each: 394-396 per mille closed, 401-403 open, so idle 60.4 % and 59.8 %; the difference matches the draw hook's 198 us in each 16.4 ms tick (1.2 %). The cost applies only while the popup is open. With the pattern playing and a SNAP ON replace analysing, the guard's longest frame stayed at 38 % with no frame skipped (TESTING.md). No MIDI flood ran."
   },
   "stress": {
-    "floodMessagesPerSecond": null,
-    "clockBpm": null,
-    "seconds": null,
-    "stuckNotes": null,
-    "hangs": null,
-    "dropped": null,
-    "droppedExplanation": "No MIDI flood ran: Beat Slicer has no MIDI path, and nothing on this Mac sends MIDI yet. Instead it re-sliced while the pattern played, and the base self-test passed with it installed (evidence/hardware.md)."
-  }
+    "events": 20,
+    "playing": true,
+    "hangs": 0,
+    "method": "On the author's MKII (twin 54cab594), T1 Static sample, bank H Part 1, Beat Slicer 0.1.68 installed as a timed trial: the dearest event, opening CREATE BEAT GRID (FUNC+AED twice, the popup drawn) and closing it with NO, pressed 20 times while the pattern played, in two batches of 10 with STOP, PLAY and a Part change to Part 2 and back between them. A screenshot in each batch showed the popup; it answered every time. Health afterwards: loader stalls and errors 0, no new crash or stall record, the guard's longest frame 63.1 % with nothing skipped. SNAP replaces while playing were run separately (TESTING.md)."
+  },
+  "trigger": "key"
 }

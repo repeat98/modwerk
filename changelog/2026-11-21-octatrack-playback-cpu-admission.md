@@ -1,0 +1,1 @@
+On the Octatrack, pressing PLAY keeps the last playing CPU reading in use until four seconds of fresh playback have been measured. When a machine or effect would reach the CPU limit, the box shows the load, the extra CPU it needs and the limit.

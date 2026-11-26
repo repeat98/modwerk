@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "about": "Modwerk's Model:Cycles OS 1.13 base, built by npm run machine:base -- model-cycles: core-mc 0.3's source from Elekloader v0.11.0, unchanged (sdk/imports/core-mc-source-f20ffda.json). Modwerk adds ev_key_leds (base/key-leds.s), the key-LED frame, as the Digitakt II has it: one source, one site and its collection. Every base carries the link's part for musicians' units, as the Octatrack's does (base/link.c, LINK.md): its identity with the set identity, the audio load (base/load.c, load.s), the diagnostics log in the Octatrack's layout (base/diag.c) read through LOG, and the runtime loader (base/runtime.c, base/modules.c: the Octatrack's loader and upload controller from sdk/runtime/, wire frames in parts over the link), which loads modules to RAM on trial and keeps or undoes them without a reflash. The base keeps everything of the core-mc 0.3 release. A collection's number is its entry size in bytes (a handler's address), not a count: the linker puts every subscriber in the hook's table.",
+  "core": "core-mc",
+  "include": "sdk/machines/model-cycles/include",
+  "os": "1.13",
+  "toolchain": {
+    "cross": "m68k-elf-",
+    "gcc": "16.2.0",
+    "binutils": "2.47"
+  },
+  "reference": {
+    "file": "vendor/elekloader/catalog/core-mc-0.3.elemod",
+    "sha256": "e214e171a8bfd13f67ceaac66ff3ce3b899372722fdc582274c43a6db74065c0",
+    "keeps": [
+      "id",
+      "sites",
+      "exports",
+      "imports",
+      "weak",
+      "contribute",
+      "collections",
+      "requires",
+      "conflicts"
+    ]
+  },
+  "add": {
+    "sources": [
+      "../base/key-leds.s",
+      "../base/link.c",
+      "../base/link.s",
+      "../base/load.c",
+      "../base/load.s",
+      "../base/diag.c",
+      "../base/runtime.c",
+      "../base/modules.c",
+      "../base/loader.c",
+      "../base/upload.c",
+      "../base/wire.c",
+      "../base/sha256.c"
+    ],
+    "defsym": {
+      "LEDS_CLEAR": "0x4000602a",
+      "FW_LED_SET": "0x40005f86",
+      "mw_link_router_resume": "0x400812fe",
+      "LOAD_TIMER": "0xfc07000c",
+      "LOAD_AUDIO_FN": "0x4005979e"
+    },
+    "sites": [
+      {
+        "addr": "0x40006a6e",
+        "len": 6,
+        "stockSha256": "9f48a2517e97304835d43b3bed1fea7eb50c134ed6b74c21e3bd9776e84aa3e8",
+        "op": "jsr",
+        "target": "core_key_leds"
+      },
+      {
+        "addr": "0x400812f6",
+        "len": 8,
+        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+        "op": "jmp",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x40059382",
+        "len": 6,
+        "stockSha256": "bc2910c59a0d8e6999ccd601395bca9fd72e3e23d992899f38377b3b07ac2f81",
+        "op": "jsr",
+        "target": "mw_load_probe"
+      }
+    ],
+    "collections": {
+      "ev_key_leds": 4
+    },
+    "cflags": [
+      "-DUSB_LOCK_AT=0x400032ca",
+      "-DUSB_UNLOCK_AT=0x400032da",
+      "-DUSB_WRITE_AT=0x40003396",
+      "-DMIDI_ON_AT=0x40fe4228",
+      "-DUSB_SYSEX_AT=0x404a096c",
+      "-DRUNTIME_MODULES=16u",
+      "-DRUNTIME_POOL_BYTES=65536u"
+    ],
+    "subscribe": [
+      {
+        "event": "ev_boot",
+        "fn": "mw_boot_gate",
+        "order": 1
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_diag_key",
+        "order": 0
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_diag_tick",
+        "order": 239
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_runtime_tick",
+        "order": 241
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_runtime_draw",
+        "order": 250
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_runtime_key",
+        "order": 2
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_runtime_enc",
+        "order": 2
+      }
+    ],
+    "shared": {
+      "base": [
+        "sdk/runtime/loader/loader.c",
+        "sdk/runtime/loader/loader.h",
+        "sdk/runtime/loader/modwerk_module.h",
+        "sdk/runtime/loader/context.h",
+        "sdk/runtime/loader/journal.h",
+        "sdk/runtime/loader/set_package.h",
+        "sdk/runtime/upload/upload.c",
+        "sdk/runtime/upload/upload.h",
+        "sdk/runtime/upload/wire.c",
+        "sdk/runtime/upload/wire.h",
+        "sdk/runtime/upload/sha256.c"
+      ]
+    }
+  },
+  "dev": {
+    "about": "Development bases add (MODWERK_DEV) what only a developer's unit should answer: memory reads, panel keys and encoder turns from the host while the link is armed (at every boot; stock's is_key_held points at the link's holds), and a RAM boot of an uploaded image (the ev_boot gate). Any USB host can drive them: development bases only.",
+    "sources": [],
+    "sites": [
+      {
+        "addr": "0x4007faf4",
+        "len": 6,
+        "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
+        "op": "jmp",
+        "target": "mw_link_held"
+      }
+    ],
+    "cflags": [
+      "-DMODWERK_DEV",
+      "-DUI_QUEUE_PTR_AT=0x40148cd0",
+      "-DQUEUE_POST_AT=0x40001fba",
+      "-DKEY_INDEX_AT=0x4010ae5c",
+      "-DKEY_BITS_AT=0x40f95744"
+    ],
+    "subscribe": [
+      {
+        "event": "ev_key",
+        "fn": "mw_link_key",
+        "order": 1
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_link_enc",
+        "order": 1
+      }
+    ]
+  }
+}

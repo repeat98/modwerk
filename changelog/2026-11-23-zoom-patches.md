@@ -1,0 +1,2 @@
+The MS-70CDR Editor does more of the patch: knobs in slots 1-3 (all six on MIDISTOMP 2.0.4) move on the pedal as you turn them, and you can rename the patch and change a slot's effect, then Apply. Save stores the patch into any of the fifty, asking before it overwrites another. Read all 50 lists them so you can open any one, and keeps your unsaved changes. The Editor also follows a patch chosen on the pedal.
+ Read all is gated like every other patch write: on a firmware that cannot change patches it is off and sends nothing.

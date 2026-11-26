@@ -8,10 +8,10 @@ from pathlib import Path
 import argparse, hashlib, importlib.util, json, os, re, shutil, struct, subprocess, sys, tempfile
 
 APP = Path(__file__).resolve().parents[1]
-ORDER = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', 'vibrato']
+ORDER = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', 'vibrato', 'resonator', 'mackity', 'midiverb']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
-REQUESTED = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec']
+REQUESTED = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec', 'songbook']
 UTILITIES = ['previewvol', 'cc-map']
 ASSET_NAMES = ['dsp-packages.json', 'coldfire-packages.json', 'resident-dsp.json', 'rom-packages.json',
                'bootstrap-package.json', 'menu-recipes.json', 'descriptor-recipes.json', 'platform-writes.json', 'requested-packages.json', 'utility-packages.json', 'usb-audio-packages.json']
@@ -572,6 +572,30 @@ def main():
                 fxId=0x0b, donorAddress=0x400d58f0,
                 donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
                 fx2Slot=0x400d6008,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'resonator' for row in descriptor_guards):
+            # The same DARK REV donor and stock NONE at unused FX2 id 0x07, as the effects above;
+            # the build checks both hashes against the private OS 1.40C. Never retain stock bytes.
+            descriptor_guards.append(dict(id='resonator', key='RESONATOR', author='repeat98',
+                fxId=0x07, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d5ff8,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'mackity' for row in descriptor_guards):
+            # The same DARK REV donor and stock NONE at unused FX2 id 0x1a, as the effects above;
+            # the build checks both hashes against the private OS 1.40C. Never retain stock bytes.
+            descriptor_guards.append(dict(id='mackity', key='MACKITY', author='repeat98',
+                fxId=0x1a, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d6044,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
+        if not any(row['id'] == 'midiverb' for row in descriptor_guards):
+            # The same DARK REV donor and stock NONE at unused FX2 id 0x0a (checked against the private OS 1.40C,
+            # 25 Nov 2026, hashes only). Never retain stock bytes. On USB the base gives it an id of its own.
+            descriptor_guards.append(dict(id='midiverb', key='MIDIVERB', author='repeat98',
+                fxId=0x0a, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d6004,
                 slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
         for old in descriptor_guards:
             module = byid[old['id']]

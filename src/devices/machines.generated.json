@@ -345,8 +345,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 19880,
-          "note": "Pinned Modwerk base: 10,032 bytes .run plus 9,848 bytes .bss. The linker measures each selected set."
+          "value": 28290,
+          "note": "Pinned Modwerk base: 15,626 bytes .run plus 12,664 bytes .bss. The linker measures each selected set."
         },
         {
           "name": "Fast SRAM for code",
@@ -1052,22 +1052,22 @@
     "name": "Model:Cycles",
     "family": "elektron",
     "status": "research",
-    "summary": "Six-track FM groovebox. Its OS file is documented and rebuilt byte for byte, and modified builds boot on units. No shared core yet.",
+    "summary": "Six-track FM groovebox. Its OS file is rebuilt byte for byte and modified builds boot on units. A Modwerk base from core-mc 0.3's source, with a key-LED hook, runs on a unit; no modules yet.",
     "steps": {
       "format": "done",
       "rebuild": "done",
       "boot": "done",
-      "core": "open",
+      "core": "started",
       "mods": "open"
     },
     "stack": {
-      "base": "open",
-      "link": "open",
-      "flash": "open",
-      "loader": "open",
-      "status": "open",
-      "diagnostics": "open",
-      "tools": "open"
+      "base": "started",
+      "link": "started",
+      "flash": "started",
+      "loader": "started",
+      "status": "started",
+      "diagnostics": "started",
+      "tools": "started"
     },
     "art": {
       "body": "model",
@@ -1076,7 +1076,27 @@
       "pads": 6,
       "knobs": 6
     },
+    "firmware": {
+      "releases": [
+        {
+          "version": "1.13",
+          "files": [
+            {
+              "name": "model-cycles_OS1.13.syx",
+              "sha256": "44fe586269631a0ca7da25a3383fc6733c314809505fc3cc52f1e0ed9800640c"
+            }
+          ]
+        }
+      ],
+      "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. The site builds Modwerk's Model:Cycles base from that file as a local preview; beta testers can download it and send it over USB, everyone else once it is reviewed.",
+      "recovery": "Hold FUNC while powering on for the STARTUP MENU, press TRIG 4 (OS UPGRADE), then send the owner's stock .syx to MIDI IN, the 3.5 mm TRS jack (a DIN interface through a TRS-to-DIN adapter); recovery mode does not use USB."
+    },
     "research": [
+      {
+        "label": "elekloader core-mc",
+        "url": "https://github.com/elekloader/elekloader/tree/v0.11.0/mods/core-mc",
+        "note": "drumkilla's Model:Cycles core on irpina's hook bus: boot copier, UI hooks, firmware locations and ev_boot (0.3, Elekloader v0.11.0). The Modwerk base starts from its source."
+      },
       {
         "label": "elektron-firmware-tool",
         "url": "https://github.com/mischa85/elektron-firmware-tool",
@@ -1097,7 +1117,32 @@
         "url": "https://github.com/drumkilla/elektron-model-tweaks",
         "note": "Byte-level tweaks for Model:Cycles and Model:Samples OS 1.13, each listing the original and the new bytes."
       }
-    ]
+    ],
+    "sdk": {
+      "platform": "elemod",
+      "modules": "sdk/model-cycles/modules",
+      "catalog": null,
+      "guide": "sdk/machines/model-cycles/README.md",
+      "core": {
+        "version": "0.3",
+        "path": "sdk/model-cycles/core-profile"
+      },
+      "toolchain": "m68k-elf GCC and binutils and the pinned Elekloader kit; firmware builds start from the owner's exact OS 1.13 .syx.",
+      "budgets": [
+        {
+          "name": "Shared mod memory",
+          "unit": "bytes",
+          "value": 262144,
+          "note": "Model:Cycles DDR region 0x47E00000–0x47E40000, shared by core and linked mods."
+        },
+        {
+          "name": "Core image",
+          "unit": "bytes",
+          "value": 154010,
+          "note": "Pinned Modwerk base: 38214 bytes .run plus 115796 bytes .bss (and 76 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
+        }
+      ]
+    }
   },
   {
     "schemaVersion": 1,
@@ -1174,11 +1219,11 @@
     },
     "stack": {
       "base": "started",
-      "link": "started",
+      "link": "done",
       "flash": "done",
-      "loader": "open",
+      "loader": "started",
       "status": "done",
-      "diagnostics": "open",
+      "diagnostics": "started",
       "tools": "started"
     },
     "art": {
@@ -1532,6 +1577,88 @@
         "label": "Erica Synths: LXR-02 goes open source",
         "url": "https://www.ericasynths.lv/news/post/lxropen/",
         "note": "The release announcement. Erica Synths supports only its own firmware; modified firmware is installed at the owner's risk."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-200d-plus",
+    "order": 310,
+    "name": "MS-200D+",
+    "family": "zoom",
+    "status": "open",
+    "summary": "A ZD2 pedal (stock effects are .ZD2 files); custom effects are not started. Its patch SysEx protocol (PTCF/EDTB) is read, decoded and written on hardware, the write confirmed through a power cycle.",
+    "steps": {
+      "format": "open",
+      "load": "open",
+      "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "started",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "research": [
+      {
+        "label": "thammer/zoom-explorer",
+        "url": "https://github.com/thammer/zoom-explorer",
+        "note": "MIT, by Thomas Hammer. The EDTB chunk's byte-reversed bitstream layout (on/off, 29-bit effect id, per-slot parameters) and its encoder, which this pedal's write path ports from, round-trip verified byte-identical across a full factory patch library before any hardware write."
+      },
+      {
+        "label": "mungewell/zoom-zt2",
+        "url": "https://github.com/mungewell/zoom-zt2",
+        "note": "MIT, by Simon Wood. decode_preset.py's Construct definitions for the PTCF/TXJ1/TXE1 patch container confirm the chunk layout read from this pedal; its SysEx tools are written for other ZD2 pedals and are not yet tried on this one."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-g5n",
+    "order": 320,
+    "name": "G5n",
+    "family": "zoom",
+    "status": "open",
+    "summary": "A ZD2 pedal (stock effects are .ZD2 files); custom effects are not started. Its patch SysEx protocol (PTCF/EDTB) is read and written on hardware; slot write persistence is not yet isolated.",
+    "steps": {
+      "format": "open",
+      "load": "open",
+      "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "started",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
+    "art": {
+      "body": "floor",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "research": [
+      {
+        "label": "thammer/zoom-explorer",
+        "url": "https://github.com/thammer/zoom-explorer",
+        "note": "MIT, by Thomas Hammer. The EDTB chunk's byte-reversed bitstream layout (on/off, 29-bit effect id, per-slot parameters) and its encoder, which this pedal's write path ports from, round-trip verified byte-identical across a full factory patch library before any hardware write."
+      },
+      {
+        "label": "mungewell/zoom-zt2",
+        "url": "https://github.com/mungewell/zoom-zt2",
+        "note": "MIT, by Simon Wood. decode_preset.py's Construct definitions for the PTCF/TXJ1/TXE1 patch container confirm the chunk layout read from this pedal; its SysEx tools are written for other ZD2 pedals and are not yet tried on this one."
       }
     ]
   }

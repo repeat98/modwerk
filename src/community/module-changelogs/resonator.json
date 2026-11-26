@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-24",
+    "changes": [
+      "New FX1/FX2 effect: your track sets eight tuned partials ringing, shared by one to four voices (VOIC on the setup page, three to start with).",
+      "TYPE gives the voices a body: PURE, STRNG, TUBE, BAR, PLATE, DRUM or BELL. DCAY lets them ring from a short knock to ten seconds.",
+      "CHRD picks the voices' chord and SCALE keeps it in a key. Lock PTCH or CHRD on trigs and the sequencer plays the ring.",
+      "The COLUN switch on the setup page (NOTE or COLUN) turns PTCH into a degree of Aleksi Perälä's Colundi sequence and tunes every voice to its frequencies.",
+      "TONE darkens or brightens what sets the ring off. MIX fades from the dry sound to the ring alone without the level jumping."
+    ]
+  }
+]
