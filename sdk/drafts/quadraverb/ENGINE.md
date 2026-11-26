@@ -1,9 +1,10 @@
 # Quadraverb engine: design (draft, 26 November 2026)
 
-Status: design, a pricing prototype, and a bit-exact prototype of the generator: five static programs and two moving
-ones (stereo sweeps) run in `dsp_host` bit for bit against an integer model, and the pitch shift, a single-pair sweep and
-a Leslie do on a larger host-only ring ([below](#the-first-bit-exact-prototype-26-november-2026),
-[modulation](#modulation-on-the-dsp-26-november-2026)). Nothing has run on a unit.
+Status: design, a pricing prototype, and a bit-exact prototype of the generator. With the SDRAM stream every program
+but the gated ones fits the FX2 buffer at full rate, and each runs in `dsp_host` bit for bit against an integer model,
+the stream's ColdFire side modelled ([below](#the-first-bit-exact-prototype-26-november-2026),
+[modulation](#modulation-on-the-dsp-26-november-2026), [the stream](#the-sdram-stream-26-november-2026)). Nothing has
+run on a unit.
 
 ## The owner's decisions (26 November 2026)
 
@@ -53,15 +54,15 @@ MKII, not a measurement):
 | The 96 steps | 274-328 (median 306), of which 24-39 are stalls from storing A right after computing it |
 | Input, output, mix | about 15 (estimate) |
 | Sweeps, pitch shift, Leslie: table rewrites about every 10.7 samples | about 5-10 (estimate); measured 12-16.5, ticks of 130-155 cycles (367 for a Leslie) ([below](#modulation-on-the-dsp-26-november-2026)) |
-| Copying the SDRAM lines in and out | about 25 median, up to about 70 (estimate, from the full-rate stream sizes) |
+| Copying the SDRAM lines in and out | about 25 median, up to about 70 (estimate, from the full-rate stream sizes); measured 6-57 (2.1-2.5 a halfword in, 1.3-2.0 out) ([the stream](#the-sdram-stream-26-november-2026)) |
 | Block overhead | about 3 |
-| **Total** | **about 350 median, about 425 worst (estimate)** |
+| **Total** | **about 350 median, about 425 worst (estimate)**; measured 207-310 on average, 316 in the dearest block |
 
 The prototype below measures the steps far lower: 164-231 (median 205), the proc around them about 12.5 more.
 
-So 400 looks reachable for most programs; the dearest need the stalls scheduled away (reordering a write's copy of A
-away from the step that computes it) or a cheaper stream copy. Code: 248-287 program words a program, plus 96 X and
-about 100 Y table words, per instance.
+So 400 is reached by every program, with room ([the stream](#the-sdram-stream-26-november-2026)). Code: 248-287
+program words a program, plus 96 X and about 100 Y table words, per instance, and the stream's copies (about one P word
+a halfword out, two in; the long static run in a DO loop).
 
 ## What it needs from the base
 
@@ -69,8 +70,12 @@ about 100 Y table words, per instance.
   two code areas per instance, written while the other runs, switched at a frame boundary. The base's WRITE path
   already places engine code into unused arena words while playing (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md);
   switching a running slot's code is new.
-- **The SDRAM stream** at full rate: a median of 224 and at most 560 halfwords a frame each way per instance. Probe A
-  passed on the unit at 64, 128 and 160 (26 November 2026); probe B (reads, larger blocks) is being built.
+- **The SDRAM stream**: per instance and frame, a median of 96 and at most 352 halfwords to the DSP, 64 and at most 144
+  from it, at a fixed latency ([what the base must provide](#what-the-base-must-provide)). On the owner's MKII (26
+  November 2026) probe A (to core 0) passed at 64-160 halfwords, probe B (from core 0) at 64-256, and both together at
+  160 each through a 5-minute soak: 160-256 each way per core is proven, and the frame interrupt, not memory or DMA,
+  limits it. That budget is per core, shared by every instance on it: one instance fits 160 each way in 59 of the 76
+  programs, 256 in 68; the 8 plates need 336-352 in.
 
 ## The first bit-exact prototype (26 November 2026)
 
@@ -138,7 +143,7 @@ sample's start, before the left output overwrites its slot); `r0` and `r1` walk 
 `y:(r3)+n3`, which close both tables for the next sample; the distance table sits in Y right after the ring.
 
 **Simplified or not done:**
-- No stream: only programs whose lines fit the buffer. The modulation is below.
+- No stream in this first step: only programs whose lines fit the buffer ([the stream](#the-sdram-stream-26-november-2026) came next). The modulation is below.
 - init clears the whole ring in one loop and writes both tables from immediates; on a unit the base writes the code and
   tables at a pick, and the clear has to be spread over calls (Midiverb clears 512 words a call).
 - No knobs: wet only, no mix or level.
@@ -166,8 +171,9 @@ words) and 30 MONO FLANGE (13,026). Both are stereo sweeps. The other 65 need 16
 --moving`): no single-pair sweep, pitch shift or Leslie fits. So those kinds run in `dsp_host` on a larger ring
 (`--test-ring`). That proves the code, not that the program fits a unit: on a unit they need the stream. A test ring
 can hold at most 32,768 words: the DSP56300's modulo buffers stop there (M from $8000 selects multiple wrap-around),
-in `dsp_host` too. So the slow Leslies (8, 39, 67: 38,750 words and more) have no host test; their code differs from
-38's only in the rotors' rate and depth.
+in `dsp_host` too. So the slow Leslies (8, 39, 67: 38,750 words and more) had no host test; their code differs from
+38's only in the rotors' rate and depth. With the stream all of them fit the real buffer and run bit for bit
+([the stream](#the-sdram-stream-26-november-2026)); the figures below are from the test ring, without it.
 
 | Program | Kind | Ring (words) | Fits | Body | Proc, average | Dearest block | A tick | Dearest sample |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -270,13 +276,179 @@ two-word instructions: long immediates and displaced moves. Not optimised yet: t
 straight from the displacement (each is a constant plus 0, 1 or 2 times it), and the Leslie's taps could skip the
 scratch words.
 
+## The SDRAM stream (26 November 2026)
+
+Long delay lines now live in a ColdFire-side ring and reach the DSP through per-frame blocks, so every program but the
+gated ones fits the FX2 buffer at full rate, untouched.
+
+```sh
+python3 -B engine/qvs.py <programs.json> --all                         # every program's split and transfer sizes
+python3 -B engine/qvs.py <programs.json> <p> [--force 34]              # one plan, and the models' closed loop
+python3 -B engine/verify_stream.py <programs.json> <p> [--cycles <host>] [--force 34] [--lat FRAMES]
+python3 -B engine/widths.py <programs.json> <p> ...                    # 16-bit words against 24-bit
+```
+
+**What runs bit-exact.** All 69 programs that stream run bit-exact: 54 sweeps (the rooms, halls, chambers and plates among them, and the choruses, flanges and echoes), the 4 static ones that stream (PINGPONG DELAY, MEDIUM HALL, the 500 ms and 1.5 s delays), all 6 pitch shifts and all 5 Leslies. Each passes `verify_stream.py`: the DSP model and the ColdFire model together
+equal the integer model of the unsplit program on the original's 64K addresses (noise and two impulses, 16,000 samples
+or 3,200 past the longest streamed delay: 66,208 for the 1.5 s delay), and `dsp_host` equals them bit for bit, audio
+and every out-block: one instance, trig splits at frames 1, 5, 7 and 13, a dirty Y before init, two instances (the
+second split at 7). Every injected halfword carries random junk in bits 16-23. One flipped LSB in one in-block word
+fails the gate. A moving program also passes with a swept tap through the stream: SMALL ROOM with its swept line
+forced out (`--force 34`; the split itself keeps every moving read local). The 7 programs that need no stream (5, 30,
+40, 41, 56, 76, 77) keep `verify.py`. The 69 include the slow Leslies (8, 39, 67), which had no host test before, and
+the pitch shifts, which found a bug in the earlier prototype: two labels of the pitch tick, `qvTQ` and `qvTQF`, where
+dsp_asm put the first's address into the second, so the tick went astray when the phase reached $FE. Both gates now
+refuse a label inside another.
+
+**The split** (`qvs.Plan`). A read at delay D (from `qvc.analyse`) can take its word from SDRAM when D is at least 16 ×
+LAT, the channel's round trip in samples. A greedy pass streams the reads that free the most ring words per transferred
+halfword (an in-word counts twice, as it costs two cycles), from the farthest end of each line, until the ring and its
+tables fit 15,870 words; a second pass then takes back any streaming the budget no longer needs. A streamed line keeps
+its head in the ring: 16 samples, or up to its longest read that stays. Reads of one line less than 16 apart share a
+window. Every factory program but the gated ones fits:
+
+| | Halfwords a frame to the DSP | from the DSP | Ring (words) |
+| --- | --- | --- | --- |
+| 76 programs (69 stream) | median 96, at most 352 | median 64, at most 144 | 79 (1.5 s delay) to 15,772 |
+
+The earlier estimate (README, Memory: median 224, worst 560 each way) streamed whole lines, a 16-word run for every
+read. The plan is the same for every latency from 2 to 32 frames: the reads that move are all far longer.
+
+Per kind (the 69 that stream; `qvs.py --all` lists every program), with cycles a sample by interlock_scan's model on
+the traced proc, one instance, blocks 1 to 32 for a moving program:
+
+| Kind | Programs | Ring (words) | In | Out | Proc, average | Dearest block | Of it, the copies |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| sweep | 54 | 444-15,772 | 16-352 | 16-144 | 207-310 | 214-316 | 6-57 |
+| static | 4 | 79-15,681 | 16-215 | 16-80 | 234-248 | 234-248 | 6-36 |
+| pitch shift | 6 | 12,879-15,417 | 64-128 | 64-96 | 220-287 | 226-293 | 16-25 |
+| Leslie | 5 | 13,963-15,567 | 32-128 | 32-96 | 259-274 | 267-282 | 10-25 |
+
+**The transfer plan**, fixed per program. In-block (ColdFire to DSP, read in frame k): each window's run of W
+halfwords, newest first. Out-block (DSP to ColdFire, written in frame k): each streamed line's 16 new head words, newest
+first, then one word per moving window. The ColdFire keeps a ring per streamed line (a power of two above its longest
+read plus the latency: 2,048 to 81,920 halfwords an instance, median 36,864) and builds in-block k from out-blocks up to
+k − LAT. Its whole work a frame is copying 6 to 31 runs (median 11), each contiguous in its ring: no arithmetic but
+the moving windows' start. `qvs.ColdFire` is that model; it refuses to read a sample it has not received.
+
+In the DSP's ring, a window is a region read and written only relative to the sample pointer, like a line: its run
+lands at the frame's start, newest word at the region's head, and the read at line delay D reads local delay 15 + D −
+Dmin. As the pointer walks down 16 words, each word is read before the region above takes it, and the region below
+never reaches it. So the step code is unchanged; only its addresses move.
+
+**Moving reads.** A streamed swept tap gets a window that moves with it. The DSP publishes the tap's address in every
+out-block and keeps the last LAT values. At frame k both sides take the value published at frame k − LAT and start the
+run at its delay plus `lo`, where `lo` and `hi` bound the drift of every tap in the window from the published one over
+LAT + 1 frames. The generator finds them over the LFO's whole cycle, with the most ticks that fit that span. So W = 16 +
+hi − lo, and the region holds every start the run can take (the sweep's range plus W). The copy writes at the region's
+offset for this frame's start; the tick code and the step code are as before.
+
+The other way, the ColdFire running the same LFO, would need only the drift within one frame. The windows come out
+almost the same: 19-22 halfwords against 19-20 (a pair needs 17), on every moving read long enough to stream, because
+the sweeps move only a few samples over five frames. Publishing was chosen: it costs one word out and one or two in a
+window, and it keeps a second copy of the modulation, with the tick timing to stay in step with, off the ColdFire. A
+missed frame or an unexpected pick cannot leave the two out of step.
+
+**The DSP code** (`qvs.stream_code`, through hooks in `qvc.assemble_text`):
+- **Which call.** An a=0 call starts a split frame; an a=1 call ends every frame. The frame's first call copies the
+  in-block in, before anything else; the a=1 call copies the out-block out at its end. A frame split by a trig is
+  copied once each way.
+- **In: two cycles a halfword.** The halfword lands in bits 0-15 with bits 16-23 unknown (on the unit, reported set in
+  every word), so it cannot go through an accumulator move: `mpy x0,y1,a` with y1 = $80 leaves exactly h << 8 in a0,
+  whatever bits 16-23 hold, and `move a0,y0` takes it to the Y store. An XY move cannot store a0, so a halfword is two
+  instructions: `mpy x0,y1,a x:(r3)+,x0 y0,y:(r5)+` and `move b0,y0`, a and b in turn so no move reads an
+  accumulator the instruction before wrote. No `rep`; the static windows sit side by side in the ring, so they are one
+  run, in a DO loop.
+- **Out: one cycle a halfword.** `mpy y0,x0,a a,x:(r3)+ y:(r5)+,y0` with x0 = $008000 floors the word to its top 16
+  bits in a1's low bits, and stores the accumulator it computed two instructions earlier. The last read of a line skips
+  to the next line's head with `(r5)+n5`.
+- **State.** In the r7 block's free words after the coefficients (and after the LFO's words): FLAG, LAST, the two
+  block addresses, and per moving window its address and the last LAT published ones. The most a program needs is
+  four words, plus five per moving window at LAT 4.
+
+| Program | Ring | In / out | Body | Copy in | Copy out | Proc, average | Dearest block |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 10 SMALL ROOM | 15,526 | 208 / 96 | 206.0 | 27.6 | 8.6 | 275.3 | 281.2 |
+| 10, its swept line streamed (`--force 34`) | 15,343 | 228 / 113 | 206.0 | 32.8 | 9.9 | 282.1 | 288.1 |
+| 15 Concert Hall 1 | 15,582 | 247 / 80 | 201.9 | 32.5 | 7.3 | 275.4 | 281.5 |
+| 66 HOLMES' Plate | 15,170 | 352 / 144 | 213.0 | 45.6 | 11.6 | 303.5 | 309.5 |
+| 53 BALLAD SNARE 2 (the dearest) | 15,114 | 352 / 144 | | | | 310 | 316 |
+| 43 1500 ms DELAY | 79 | 16 / 16 | 213.0 | 3.6 | 2.9 | 233.6 | 233.6 |
+| 6 PINGPONG DELAY | 111 | 32 / 32 | 212.0 | 5.6 | 4.0 | 235.7 | 235.7 |
+
+Cycles a sample. The copies cost 2.1-2.5 cycles a halfword in and 1.3-2.0 out, the setup, the frame test and each
+line's skip included. Every program stays under 400: 207-310 on average, 316 in the dearest block.
+
+### What the base must provide
+- **Blocks each way, every frame**, per instance: up to 352 halfwords to the DSP (median 96) and up to 144 from it
+  (median 64). The unit's measured budget (probes A and B on the owner's MKII, 26 November 2026) is per core and
+  shared by every instance on it: 160 each way passed a 5-minute soak, the frame interrupt's unmask then coming at
+  worst at 328 µs of the 363 µs frame; reads alone passed at 256 (worst 319 µs). The frame interrupt, not memory or
+  DMA, is the limit. A transfer costs about 0.07 µs a halfword (4.8 µs for 64, 11.2 for 160, 17.7 for 256, either
+  way), so a median instance adds about 7 µs in and 5 out a frame, the dearest about 23 and 10 (extrapolated past 256).
+  One instance a core fits 160 each way (proven both ways) in 59 of the 76 programs, and 256 (proven for reads; writes
+  ran to 160) in 68; the 8 plates (17-19, 52, 53, 66, 78, 79) need 336-352 in. Several Quadraverbs on one core, or the plates, need a channel
+  that carries more a frame (not run: 384, 560, both ways at 560) or spreads its transfers over the frame. Core 0's
+  free run in each bank (X:$x1840-$x1f7f, 1,856 words) holds the blocks of four median instances, not four dearest.
+- **Where.** In the frame's bank, both blocks: the in-block written by the ColdFire for the frame that reads it, the
+  out-block read after the frame that wrote it, as probes A and B do on the unit (A sends at state 7 into the bank the DSP
+  reads next frame; B reads at the next frame's state 0 the bank the DSP wrote). The engine reads the two addresses from r7
+  words at the frame's first call (MBIN, MBOUT); how the base names them per FX2 position is open.
+- **Words.** In: the halfword in bits 0-15 (probe A on the unit); bits 16-23 are ignored. Out: the halfword in bits
+  0-15, as probe B reads it (intact on the unit at 64-256).
+- **A fixed latency** of LAT frames: in-block k built from out-blocks up to k − LAT, every frame, none dropped. Assumed
+  LAT = 4 (64 samples). By the probes' timing the shortest is 2: an out-block written in frame k − 1 is read at frame
+  k's state 0, and state 7 of the same frame sends into the bank of frame k + 1. The engine is generated for one LAT;
+  the split is the same for any LAT from 2 to 32 frames, only a moving window's W and FIFO depend on it.
+- **Rings** per instance: 2,048 to 81,920 halfwords (4 to 160 KB), cleared at the pick, with the frame count starting
+  at the engine's first call. A first call that starts mid-frame (an effect added at a trig) shifts both sides' sample
+  count by the same amount, so it needs nothing more (by reasoning; `dsp_host` does not model that call).
+- **The plan** from the generator: per window its line, W and start (a constant, or the published word's offset), per
+  streamed line its ring.
+
+**Assumed or not done:**
+- LAT = 4, the in-block's junk bits, the block addresses handed over in r7 words: assumptions, listed above.
+- The words crossing SDRAM are floored to 16 bits, not rounded: rounding (`mpyr`) would need a clamp at +full scale.
+- The copies take 59-194 P words a program (median 126); the copy out could fold into DO loops too.
+- The engine has not run on a unit; the channel ran there only as probes A and B, on core 0, up to 160-256 a frame.
+
+### Word width: the input to the owner's decision
+
+`widths.py`, 2 s of the integer model on the original's addresses, against all words at 24 bits: "stream" floors the
+words that cross SDRAM (what the engine runs), "all 16" floors every store. The largest difference / its RMS, in dB
+below full scale, beside the 24-bit output's peak:
+
+| Program | Noise 0.1: peak | stream | all 16 | Impulse 0.25: peak | stream | all 16 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 10 SMALL ROOM | -29 | -90 / -96 | -57 / -58 | -32 | -90 / -93 | -59 / -59 |
+| 11 MEDIUM ROOM | -29 | -92 / -98 | -57 / -58 | -38 | -92 / -97 | -59 / -59 |
+| 12 LARGE ROOM | -29 | -91 / -97 | -56 / -57 | -40 | -91 / -96 | -55 / -56 |
+| 13 SMALL HALL | -28 | -84 / -88 | -53 / -54 | -44 | -84 / -88 | -57 / -58 |
+| 14 MEDIUM HALL | -29 | -84 / -89 | -51 / -52 | -45 | -84 / -89 | -54 / -55 |
+| 15 Concert Hall 1 | -28 | -78 / -81 | -50 / -51 | -45 | -83 / -88 | -52 / -54 |
+| 16 Concert Hall 2 | -35 | -79 / -82 | -50 / -52 | -54 | -84 / -88 | -54 / -56 |
+| 17 SML VOCALPLATE | -24 | -87 / -91 | -72 / -74 | -37 | -87 / -91 | -76 / -78 |
+| 20 LO DIFUZ CHMBR | -25 | -87 / -94 | -46 / -47 | -38 | -88 / -94 | -46 / -47 |
+| 22 KINGS CHAMBER | -32 | -88 / -95 | -52 / -53 | -59 | -88 / -95 | -48 / -49 |
+| 1 PRE EQ REVERB | -28 | -82 / -86 | -46 / -47 | -45 | -82 / -87 | -52 / -54 |
+| 52 BALLAD SNARE 1 | -26 | -86 / -90 | -57 / -58 | -40 | -86 / -90 | -60 / -61 |
+| 66 HOLMES' Plate | -23 | -80 / -84 | -35 / -36 | -39 | -79 / -81 | -42 / -43 |
+| 78 VELOCITY+REVRB | -26 | -90 / -95 | -49 / -50 | -27 | -94 / -96 | -71 / -72 |
+| 6 PINGPONG DELAY | -27 | -97 / -108 | -82 / -90 | -24 | none | -104 / -153 |
+| 43 1500 ms DELAY | -30 | -108 / -118 | -82 / -91 | -27 | none | -92 / -140 |
+
+On noise, flooring only the words that cross SDRAM stays 43-74 dB below each reverb's output peak (-78 to -93 dBFS).
+Flooring every store stays only 12-59 dB below it (-35 to -72 dBFS), within 30 dB in most reverbs and 12 dB in
+HOLMES' Plate. Its error hardly changes between noise at 0.1 and 0.3, so it does not scale with the signal: probably
+the floor's downward bias, which the tanks' filters and feedback gather (not analysed further). Noise at 0.3 gives
+the same picture (`widths.py` prints it). Neither is a claim about the original's width.
+
 ## Not settled
 
-- **Word width and saturation.** The engine stores 24-bit words in the DSP ring; the stream carries 16 bits. Whether
-  to round every store to 16 bits (about 1 cycle a write) for one behaviour throughout is open. Either way it is an
+- **Word width and saturation.** The engine keeps 24-bit words in the DSP ring and floors a word to 16 bits where it
+  crosses SDRAM. Whether to store every word as 16 bits instead, for one behaviour throughout, is the owner's open
+  decision; the numbers are in [Word width](#word-width-the-input-to-the-owners-decision). Either way it is an
   assumption, labelled as one: nothing records the original's width. SKANK GUITAR's resonant filters amplify
   truncation (above): with 16-bit words the integer model departs from the float model by -46 dBFS on quiet noise.
 - **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (README, "The gate").
-- **Moving reads through the stream.** A streamed line that a moving read takes from needs a copy window covering
-  the read's whole sweep (up to ±255 samples): not designed yet. Every moving program but 5 and 30 needs the stream.
-- **A reverb through the stream**, bit-exact.
+- **The stream's base side**: the channel's latency, mailboxes and core 1 ([what the base must provide](#what-the-base-must-provide)).
