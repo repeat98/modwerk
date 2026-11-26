@@ -59,6 +59,11 @@ export interface FakeUnit {
   screen?: () => Promise<DataView>
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
+  /** With refusal 7, the effect slot that runs the module, as base 0.8.2 reports it (1-8 FX1 of T1-T8, 9-16 FX2). */
+  inUseSlot?: number
+  /** What its record says keeps a change from beginning (runtime.h MACHINE_BUSY_*, the track above), as base 0.8.2
+   * reports it beside an `unsafe` (set `playing` too). */
+  busy?: number
   /** This start's restore has not run: the base rejects every change with no loader refusal, its record's `saved` 0
    * (modset.c modwerk_modset_check_set). */
   restoring?: boolean
@@ -154,7 +159,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
         }
-        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
+        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.restoring || unit.busy !== undefined ? 0 : undefined) ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back
           const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)), count = unit.installed.moduleIds.length
           ;[[0, 2], [3, count], [7, 410], [8, 655], [9, 470], [14, 47900], [15, 7], [16, count], [17, count]].forEach(([at, value]) => record.setUint32(4 * at, value))
@@ -162,7 +167,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
         }
         if (setup.request !== 21 || refusal === undefined) return { status: 'stall' }
         const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)) // the base's record, idle, with its last refusal
-        record.setUint32(92, refusal)
+        record.setUint32(92, (refusal | (unit.inUseSlot ?? 0) << 16 | (unit.busy ?? 0) << 24) >>> 0)
         return { status: 'ok', data: record }
       },
     }

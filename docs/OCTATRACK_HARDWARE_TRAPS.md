@@ -566,24 +566,24 @@ follow-up; fill freed memory with illegal instructions on a dev twin to see
 such a leftover call at once instead of on a later install.
 
 **The boot validates the bank before any module is back.** At power-up and
-RAM boot stock restores the current bank from its battery-backed Part copies
-(`0x40025770`) and runs the Part validator on each first; the saved set
-reinstalls modules about 3 s later. One value the validator has to fix
-refuses the whole restore: the bank is never copied in or applied, every Part
-reads STATIC with stock defaults, no track is ever bound (renderer slots stay
-`0x400047f0`) and the unit is silent. A module whose Part bytes stock would reject must be kept
-from the validator by the base, before the module is installed (beta
-finding 24: Analog BD). So must a module that gives a stock effect's slots new
-meanings: Sidechain Compressor's KEY, KFLT and KGN in COMPRESSOR's page-2 slots
-8-11 wiped testers' current banks at power-on (finding 47). It also caps stock
-fields, holds XVOL at 127 and runs on every bank read
+RAM boot stock restores the current bank from its battery-backed copy
+(`0x40025770`) after checking the project settings, the
+arrangements, both copies of each Part and the 16 patterns; the saved set
+reinstalls modules about 3 s later. On stock one value a check has to fix
+refuses the whole restore: every Part reads STATIC with stock defaults, no track
+is bound and the unit is silent. The fixes
+stay in the battery copy, and a RELOAD of a save
+that holds the value brings it back for the next power-up (#2201). From base
+0.8.2 the base runs those checks first and keeps their fixes, as a bank file
+load does (`diag.c` `modwerk_boot_restore`); more than 64 fixes is still
+refused; a start that fixed anything logs a RESTORE incident. A module whose Part bytes stock would fix must still be kept from the
+validator by the base before it is installed (beta findings 24, Analog BD,
+and 47, Sidechain's KEY, KFLT and KGN in COMPRESSOR's slots 8-11). The validator also caps stock fields, holds XVOL at 127 and
+runs on every bank read
 ([register](../sdk/octabam/docs/remixer/FAILURE_MODES.md#the-part-validator-caps-stock-fields-and-runs-on-every-bank-read)).
-A pattern validator (`0x4009a670`, not hooked) checks all 16 too. To test,
-RAM-boot with the module set up in a scratch bank. A refused restore has written its fixes
-into the battery copy, so the next boot restores the bank with them
-changed (Sidechain's KFLT 64 became 1). To recover a bank lost this way, do not
-save or edit: power-cycle once more, or PROJECT > RELOAD the last save from the
-card.
+To test, RAM-boot with the module set up in a scratch bank, or in ot_emu poke
+a byte out of range into the battery copy's Part 1 (`0x100a4ece + 16`) and
+power-cycle (`--cs1-in`).
 
 **Stock redraws a page only on its own events.** A module that patches how stock
 draws a page shows only at the next key that redraws it. On the Output Matrix

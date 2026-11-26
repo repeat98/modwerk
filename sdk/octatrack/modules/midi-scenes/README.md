@@ -44,7 +44,9 @@ On a MIDI track, the scene-held encoder turn and press, the lock LEDs, the scene
 - A damaged scenes.work, or one from a newer version, is never overwritten: that project then has no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.
 - Keep MIDI Scenes installed while you save, reload or copy a project that uses it: without it, scenes.work is not saved, reloaded or copied with the project.
 - The power-cycle copy holds about 2,500 locks of the current bank. With more, unsaved locks since the last save are lost at a power cut.
-- It uses about 272 KB of the module memory all modules share: a lock table for each of the project's 64 Parts.
+- Up to 24 of a project's 64 Parts hold MIDI scene locks. A lock in a 25th Part is refused with LOCKS: 24 PARTS on the screen; clear a Part's locks to free its place.
+- A project saved with more than 24 locked Parts loads the first 24 and shows LOCKS NOT LOADED at the next scene gesture. Its scenes.work is then never written over, so the card keeps every lock, and edits made meanwhile are not saved.
+- It uses about 121 KB of the module memory all modules share (0.3.0 took 272 KB: a lock table for each of the 64 Parts).
 
 ## Tests and measurements
 

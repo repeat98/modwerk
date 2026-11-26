@@ -5,6 +5,7 @@
 #include "render.h"
 #include "base_binding.h"
 #include "modwerk_events.h"
+#include "modwerk_page.h"
 #ifdef OG_MACHINE_SOURCE_STAGE
 #include "loader.h"
 #include "source_lifecycle.h"
@@ -69,18 +70,9 @@ static uint32_t og_machine_page(const volatile uint8_t *slot) {
             og_machine_page_data[i] = U8(0x400d3176u + i);
         page_text(0x3c, "FRCT", 5); page_text(0x41, "GRANULAR", 13);
         for (unsigned i = 0; i < 12; ++i) {
-            page_text(0x4e + 6 * i, names[i], 6);
-            og_machine_page_data[0x96 + i] = og_machine_defaults[i];
-            page_word(0xa2 + 4 * i, 0);
-            page_word(0xd2 + 4 * i, i == 8 ? 2 :
-#ifdef OG_MACHINE_GRAIN_ONLY
-                      i < 7 ? 128 : 0);
-#else
-                      i < 7 ? 128 : 0);
-#endif
-            page_word(0x102 + 4 * i, i == 8 ? (uint32_t)(uintptr_t)range_text : 0);
-            page_word(0x132 + 4 * i, 0); /* ordinary stock knob/value widget */
-            page_word(0x162 + 4 * i, 0); /* ordinary bounded parameter editor */
+            modwerk_page_control(og_machine_page_data, i, names[i],
+                og_machine_defaults[i], i == 8 ? 2u : i < 7 ? 128u : 0u,
+                i == 8 ? range_text : 0);
         }
         /* Main A-F; grain-only SETUP exposes SRNG in C. */
         page_word(0x1c2, 0x1);

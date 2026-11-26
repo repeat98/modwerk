@@ -72,7 +72,7 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(made['copies'][0]['address'], 0x40000430)
         self.assertEqual(made['copies'][0]['sha256'], item['sha256'])
 
-    def test_release_row_matches_named_receipt_and_scoped_hardware_report(self):
+    def test_current_release_row_does_not_inherit_historical_hardware_evidence(self):
         row = json.loads((MODULE / 'release/package-entry.json').read_text())
         proof = json.loads((MODULE / 'release/candidate-proof.json').read_text())
         manifest = json.loads((MODULE / 'octamod.module.json').read_text())
@@ -82,12 +82,32 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(row['bytes'], proof['bytes'])
         self.assertEqual(row['version'], proof['version'])
         self.assertEqual(row['version'], manifest['version'])
-        self.assertEqual(proof['hardware'], 'FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK')
-        self.assertEqual(manifest['tests']['hardwareStatus'], 'reported')
+        self.assertEqual(proof['hardware'], 'NOT_RUN')
+        self.assertEqual(manifest['tests']['hardwareStatus'], 'untested')
+        resources = json.loads((MODULE / 'release/resource-audit-20261125.json').read_text())
+        self.assertEqual(resources['packageSha256'], proof['sha256'])
+        self.assertEqual(resources['memory']['residentPoolExtentBytes'], manifest['resources']['storage']['value'])
         report = (MODULE / 'release' / proof['hardwareReport']).read_text()
         self.assertIn(proof['sha256'], report)
         self.assertIn(proof['baseIdentity'], report)
         self.assertIn(manifest['source']['revision'], report)
+        self.assertIn('No physical USB device was opened', report)
+
+    def test_release_row_matches_named_receipt_and_scoped_hardware_report(self):
+        history = MODULE / 'release/history/20261110'
+        row = json.loads((history / 'package-entry.json').read_text())
+        proof = json.loads((history / 'candidate-proof.json').read_text())
+        manifest = json.loads((history / 'module-manifest.json').read_text())
+        self.assertEqual(row['version'], manifest['version'])
+        self.assertEqual(row['version'], proof['version'])
+        self.assertEqual(row['sha256'], proof['sha256'])
+        self.assertEqual(row['bytes'], proof['bytes'])
+        self.assertEqual(row['requiredBase'], proof['baseIdentity'])
+        self.assertEqual(proof['hardware'], 'FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK')
+        self.assertEqual(manifest['tests']['hardwareStatus'], 'reported')
+        report = (MODULE / 'release' / proof['hardwareReport']).read_text()
+        for value in (proof['sha256'], proof['baseIdentity'], manifest['source']['revision']):
+            self.assertIn(value, report)
         self.assertIn('not complete release qualification', report)
 
     @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
@@ -107,7 +127,7 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(proof['stockCopies'], 9)
         binding = json.loads((ROOT / 'sdk/machines/octatrack/base-binding.json').read_text())
         self.assertEqual(proof['baseIdentity'], binding['identity'])
-        self.assertEqual(proof['baseImports'], [{'offset': 14660, 'name': 'mw_stock_pool_open', 'addend': 0}])
+        self.assertEqual(proof['baseImports'], [{'offset': 14816, 'name': 'mw_stock_pool_open', 'addend': 0}])
         self.assertNotIn(bytes.fromhex(proof['baseIdentity']), data)
 
 

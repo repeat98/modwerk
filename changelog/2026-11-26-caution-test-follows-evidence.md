@@ -1,0 +1,1 @@
+Development: the CPU caution test no longer lists by hand which modules carry a High CPU or Heavy CPU badge. It checks that every badge matches the frame share its own reading names, so a module release that measures CPU no longer has to edit a shared test, and two such pull requests no longer fail each other's checks.

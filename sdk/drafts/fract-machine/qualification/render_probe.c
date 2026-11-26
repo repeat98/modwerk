@@ -13,7 +13,13 @@
 #define FRACT_PROBE_CLOCK() (*(volatile uint32_t *)0xfc07c00cu)
 #endif
 #ifndef FRACT_PROBE_READ
-#define FRACT_PROBE_READ(address) (*(volatile uint32_t *)(uintptr_t)(address))
+/* Base assembly counters can be word-aligned even with -malign-int. The
+ * MCF54455 supports longword reads there (Reference Manual, table 3-12).
+ * Tell C the real alignment; retain one volatile longword load, not two C
+ * loads which an interrupt could separate.
+ */
+typedef uint32_t fract_probe_counter __attribute__((aligned(2)));
+#define FRACT_PROBE_READ(address) (*(volatile fract_probe_counter *)(uintptr_t)(address))
 #endif
 
 void module_tick(struct modwerk_runtime_api *api);

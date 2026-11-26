@@ -1,0 +1,1 @@
+Octatrack base 0.8.2: a module effect's stepped control, such as Midiverb's PROG, now moves at its own pace from the first turn after you pick the effect. Before, slow turns did nothing and only quick ones moved it, until you left the effect's page and came back.

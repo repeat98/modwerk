@@ -1,20 +1,20 @@
 {
   "schema": 1,
   "id": "fract-machine",
-  "bytes": 31772,
-  "imageBytes": 30260,
+  "bytes": 31948,
+  "imageBytes": 30416,
   "bssBytes": 636,
-  "relocations": 222,
+  "relocations": 227,
   "eventWords": 38,
-  "sha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
-  "authoredImageSha256": "611191d7ad91ff5ac536d9b3aec7b4a9c5e00cc33483e87a26282274a46af5a2",
-  "reviewedImageSha256": "eeb99e384900b6683fb853557d956161e5d03a467dbe77207624e9914adb6bef",
-  "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
-  "basePackageSha256": "722ff28f693fa58854e669f94087bc8dde513b345a814ad50baaa13cba74e51e",
+  "sha256": "c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29",
+  "authoredImageSha256": "a80a7032c23c5e76fd1943f3bcd07ba5e3bbca215942bf1e35298f292c87e577",
+  "reviewedImageSha256": "d343d813e212ff9d8c4595cac479efb57da0047edd89ce8bd6ef1ff16e828a3f",
+  "baseIdentity": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
+  "basePackageSha256": "390f74e9b8f362ccd24172cc5672e5262dec1a2877323ed7a8ac368378d4753a",
   "baseRunOrigin": 1084839424,
   "baseImports": [
     {
-      "offset": 14660,
+      "offset": 14816,
       "name": "mw_stock_pool_open",
       "addend": 0
     }
@@ -22,9 +22,9 @@
   "stockCopies": 9,
   "stockFills": 0,
   "stockVerification": "PASS",
-  "hardware": "FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK",
-  "version": "0.1.2-experimental",
-  "qualification": "PENDING_TIMING_STRESS_INTEGRATION_AND_FIRST_RELEASE_APPROVAL",
-  "previousHardwarePackage": "54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e",
-  "hardwareReport": "hardware-20261110.md"
+  "hardware": "NOT_RUN",
+  "version": "0.1.3-experimental",
+  "qualification": "PENDING_CURRENT_BUILD_HARDWARE_TIMING_STRESS_INTEGRATION_AND_FIRST_RELEASE_APPROVAL",
+  "hardwareReport": "qualification-20261125.md",
+  "previousHardwarePackage": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874"
 }

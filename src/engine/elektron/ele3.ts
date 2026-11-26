@@ -9,7 +9,7 @@ import { CHUNK_SIZE, FIRST_COUNTER, contentChecksum, decodeDataMessages, encodeS
 const COUNT_OFFSET = 0x1c, TABLE_OFFSET = 0x20, ENTRY_SIZE = 16, VERSION_FIELD = [0x14, 0x18] as const
 const OFFSET_BIAS = 767, FAR_OFFSET = 3328
 
-export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
+export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' | 'model-cycles'
 // Machines with a container and linker profile; the app's firmware flow covers DigiMachine only.
 export type ElemodMachine = DigiMachine | 'syntakt' | 'analog-four-mkii' | 'digitone-ii'
 export type Ele3Device = { mainSection: number; mainLoad: number; stage: number; flashAt: number; flashLimit: number; sysexId: number; seal?: 'hmac' }
@@ -29,6 +29,8 @@ export const ELE3_DEVICES: Record<ElemodMachine, Ele3Device> = {
   // Syntakt (docs/SYNTAKT_OS_RESEARCH.md): the container is read from host SPI flash at 0x80000. The upgrade receiver
   // checks no size, and the unit's own analog calibration record sits at 0x300000, so this bound is the only guard for it.
   syntakt: { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x280000, sysexId: 0x16 },
+  // The Model:Cycles stages at 0x40200000 and flashes its main OS from 0x20000 up to 0x1e0000, sealed like the Digitakt II.
+  'model-cycles': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x20000, flashLimit: 0x1e0000, sysexId: 0x11, seal: 'hmac' },
 }
 
 export type Ele3Section = { id: number; offset: number; length: number; destination: number }

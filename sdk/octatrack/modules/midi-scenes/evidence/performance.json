@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "module": "midi-scenes",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "No static count and no event counter (waived by the owner, sdk/approvals). On the unit with 480 locks and the crossfader sweeping, the CPU meter moved 0.2 points and no render was skipped (TESTING.md)."
+    "method": "No static count and no event counter (waived by the owner, sdk/approvals). On the unit, 26 November 2026, 16 locks with the crossfader sweeping left the frame interrupt at 28.5 % against 28.5 % without the module, and no render was skipped (TESTING.md)."
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": 123.4,
-    "moduleLongestUs": 124.1,
-    "stockIdlePercent": 57.4,
-    "moduleIdlePercent": 57.2,
-    "method": "Hardware, not cfmeter: the owner's MKII on a development twin of base 0.7.4, 16 November 2026, package f38ae755 (the published one). Pattern B16 with a trig on every step of all eight MIDI tracks (channels off), playing, the crossfader swept through 12 positions between readings. Without the module, then with it and 480 scene locks: the frame guard's longest frame interrupt (34.0 % and 34.2 % of a frame) and the CPU meter (42.6 % and 42.8 %; idle taken as 100 less the meter), 10 readings each (TESTING.md)."
+    "stockLongestUs": 204.6,
+    "moduleLongestUs": 207.5,
+    "stockIdlePercent": 55.6,
+    "moduleIdlePercent": 55.8,
+    "method": "Hardware, not cfmeter: the owner's MKII on the development twin 8fd6d456 of base 0.8.1, 26 November 2026, package 17f934ff (0.3.1). The owner's loaded project (bank G, pattern 1) playing, the crossfader swept end to end every 250 ms for 8 s. Without the module, then with it and 16 scene locks (T1-T8, encoder A, scenes A and B): the frame guard's longest frame interrupt (56.4 % and 57.2 % of a frame; its share 28.5 % both) and the CPU meter (44.4 % and 44.2 %; idle taken as 100 less the meter) (TESTING.md)."
   },
   "stress": {
     "floodMessagesPerSecond": null,
