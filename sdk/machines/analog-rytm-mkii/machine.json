@@ -100,20 +100,20 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 26471,
-        "note": "The base's plain variant (1f06d2b4), for a set with no send effect or digital voice machine: 18,063 bytes .run plus 8,408 .bss (the lean engine 3,879 and 189, pad pressure 44, the link's identity, load and log 3,348 and 6,848), and a 94-byte .boot copier."
+        "value": 168050,
+        "note": "The base's plain variant (52ba262e), for a set with no send effect or digital voice machine: 50,798 bytes .run plus 117,252 .bss (the runtime loader about 32,700 and 108,800 of them, its pool and staging 96 KB), and a 94-byte .boot copier."
       },
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
-        "value": 51553,
-        "note": "The base's send-bus variant (c88a39b4), for a set with a send effect: 40,341 bytes .run plus 11,212 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "value": 193136,
+        "note": "The base's send-bus variant (1604081c), for a set with a send effect: 73,076 bytes .run plus 120,060 bytes .bss, the runtime loader included. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       },
       {
         "name": "Core image with the digital voices",
         "unit": "bytes",
-        "value": 32083,
-        "note": "The base's voices variant (0999d0db), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 22,211 bytes .run plus 9,872 bytes .bss."
+        "value": 173662,
+        "note": "The base's voices variant (bb463068), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 54,946 bytes .run plus 118,716 bytes .bss."
       }
     ]
   },
