@@ -15,6 +15,14 @@ Version: 0.1.6-experimental · author: [Jannik Aßfalg](https://github.com/repea
 
 - **In use:** the DSP reading isn't lower despite the speed-ups (one run of three readings, peaks equal within 0.1); the cycle scan's -9.1 cycles a sample is the static figure. Not re-measured by ear.
 - Not run on this release: the instance curve, the test procedure, Part/project reload and power cycles, an MKI.
+- **Performance record, on a computer** (26 November 2026, `evidence/performance.json`): from `sdk/octabam`, `python3 tools/build/cycle_count.py` (the module's `measure`), `python3 tools/harness/benchmark_stock_dsp.py`, `python3 modules/euclid/perf.py bench OUT` and `python3 modules/euclid/perf.py stress OUT --seconds 2`, then `npm run perf:audit -- check … --stamp`. The DSP filter alone, on a private image (`0c23ac7d…`); not hardware.
+
+  | | |
+  | --- | --- |
+  | cycles | 4 x 182 = 728 of 3120 per sample per core (23 %), measured 187.75 per instance |
+  | stock benchmark | 187.75 vs FILTER 284.88 (0.66x); the dearest stock effect is 330.94 |
+  | stress | 4 per core, eight tracks, 3 LFOs and 20 locked slots, 2 s, no clobber, no hang |
+- **Module pool, on a unit** (26 November 2026): two rolled-back trials of `27263940…` on development twin `46c30886` of base 0.8.2 read 10,480 bytes each, the loader extent of base 0.8's module record (#2284).
 
 ## 0.1.6-experimental: rests while no slot uses it (prepared 20 November 2026, tested on 0.7.11 below)
 
