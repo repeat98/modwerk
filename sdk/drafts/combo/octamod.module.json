@@ -109,6 +109,15 @@
       "method": "unmeasured",
       "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
       "source": "TESTING.md"
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-26",
+      "conditions": "fresh project, bank A pattern 01 Part 1, no samples or trigs, transport started by the tool; base 5d2fe44d; 3 readings of 8 s a state. Frame interrupt 23.7 % before, 23.7 % installed and used nowhere, 23.7 % on T1 FX2; CPU meter 35.8 % before, 35.8 % at rest, 36.4 % in use.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {

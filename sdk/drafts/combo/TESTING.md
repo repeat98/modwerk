@@ -60,9 +60,18 @@ Adapted `ot_emu` (scripts/octatrack-emulator/build.py) on a development twin of 
 - **Screens** (`tools/emu_session.py`, empty scratch card, MKII panel): COMBO is the last row of track 1's FX1 list, after LO-FI; YES picks it; FX1 draws GAIN, BASS, MID, TREB, CAB and LEV, BASS and MID centred; turning A moves GAIN from 40 to 90 and prints it; FUNC + FX1 shows an empty SETUP page. FX2, other tracks, locks, LFOs and scenes: not run.
 - **The test procedure** (`npm run test:procedure`): stops at step 1 because module:doctor refuses the FX2 id (no card id is free), so steps 2 to 11 have not run.
 
-## On the unit
+## On the unit (25 November 2026)
 
-Not tested.
+The developer's Octatrack over USB, its flashed base `eb667962` with 12 modules kept; the development twin `5d2fe44d` (base 0.3.1-modwerk-dev.1, built from main at the draft's commit) RAM-booted for the run, nothing written to the flash or the card. Package `combo.mwrm`, source 4ae76341a, SHA-256 `2c0e88f0ba9d21ec89141b1c72e139b171928c1f33d1e3b6eb48a543cf13b39b`, declared 332 executed cycles and 96 state words.
+
+**Stage 1, the agent (hardware evidence for what it measured, not for the sound or a power cycle):**
+- Preflight: transport stopped, bank A pattern 01 Part 1, working copy equal to its saved one; twin inventory empty.
+- `npm run device:test`: passed. Self-test passed (longest frame 430 us); COMBO on FX2 of T1 admitted in 114 ms, peak 453 per mille of a frame, and of T5 in 115 ms, peak 531; seven COMBOs at once ran while playing (CPU 370, core peaks 801 and 764 per mille) and the eighth was refused for CPU, as the base should; 12 of 12 Part switches ran their effects; the inventory ended as it began. The scene was a fresh project with no trigs, so these frame figures are for an empty pattern.
+- `npm run device:price -- --write` (same scene): at rest frame +0, CPU +0; in use frame +0, CPU +0.6, DSP +11.6 % on its core (resources.cpuPrice, evidence/cpu-price.json).
+- By hand, the panel over USB: COMBO is the last row of track 1's FX1 list after LO-FI; YES picks it; FX1 draws GAIN, BASS, MID, TREB, CAB and LEV; A turned GAIN to 90 and printed it; FUNC + FX1 shows an empty SETUP page; T1's FX1 was put back to FILTER before the trial ended, and the trial rolled back with no crash, stall, freeze or skipped track.
+- Not run on the unit: the soak, MAIN and CUE recorded over USB, parameter locks, LFOs, scenes, FX2 by hand, a stereo sample, the frame-cost curve, and the release run (`device:qualify`, which Keeps).
+
+**Stage 2, the developer (as reported):** listened for about 15 minutes in a 30-minute trial with their guitar sample on T1: "suena bien para un primer intento". No dropouts were reported. The trial was then ended at the developer's request and rolled back cleanly; nothing was kept. Not reported on: each knob, clicks, the cabinets one by one, locks, LFOs, scenes, a power cycle.
 
 ## Stock flows
 

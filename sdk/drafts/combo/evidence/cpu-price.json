@@ -1,0 +1,98 @@
+{
+  "module": "combo",
+  "version": "0.1.0",
+  "base": "5d2fe44d",
+  "scene": "fresh project, bank A pattern 01 Part 1, no samples or trigs, transport started by the tool",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-26T01:59:12.136Z",
+  "result": {
+    "id": "combo",
+    "version": "file",
+    "packageSha256": "2c0e88f0ba9d21ec89141b1c72e139b171928c1f33d1e3b6eb48a543cf13b39b",
+    "before": {
+      "frame": 23.7,
+      "frameMax": 33.5,
+      "frames": 67114,
+      "skipped": 0,
+      "cpu": 35.8,
+      "dsp1to4": 32.7,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 33.8,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.1,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 1,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 1
+      }
+    },
+    "atRest": {
+      "frame": 23.7,
+      "frameMax": 33,
+      "frames": 67117,
+      "skipped": 0,
+      "cpu": 35.8,
+      "dsp1to4": 32.7,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 33.8,
+      "dsp5to8Peak": 42.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.2,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.5,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0,
+      "dsp1to4": 0,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": -0.1
+    },
+    "inUse": {
+      "frame": 23.7,
+      "frameMax": 33.2,
+      "frames": 67097,
+      "skipped": 0,
+      "cpu": 36.4,
+      "dsp1to4": 44.3,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 45.4,
+      "dsp5to8Peak": 42.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.1,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.6,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "inUseAdds": {
+      "frame": 0,
+      "cpu": 0.6,
+      "dsp1to4": 11.6,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 11.6,
+      "dsp5to8Peak": -0.1
+    },
+    "inUseOn": "T1 FX2",
+    "rolledBack": true
+  }
+}
