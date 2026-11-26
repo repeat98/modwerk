@@ -79,10 +79,10 @@ Link a performance with QPER + a pad, shape it with PERF held and a few knob tur
 ### Quick tutorial
 
 1. Select a sound track and press FLTR. Hold FIX and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.
-2. Press AMP, hold CHRO and turn DEC: pad pressure now lengthens the decay. Hold FIX and press a knob to set its link back to 0.
+2. Press AMP, hold CHRO and turn DEC: pad pressure now lengthens the decay. Hold FIX and press a knob to set its link back to 0, or PLAY for all of them (PLAY again undoes).
 3. Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth.
 4. Hold SCENE: the active scene's locks show as boxes. Turn SWT: it becomes a lock in that scene, and the page stays. Still holding SCENE, press REC to copy the scene.
-5. Hold QPER and press pad 1 to link its performance. Then hold PERF, turn FLTR's cutoff up and let go.
+5. Hold QPER and press pad 1 to link its performance (more pads link more; a linked one unlinks). Then hold PERF, turn FLTR's cutoff up and let go.
 6. Sweep the QPER knob: the cutoff comes in. When a position sounds right, hold PERF and press YES to keep it in the kit.
 7. Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2, or engage a scene. Let go and listen to the next pass.
 8. Hold RECORD and press YES to write the moves into the pattern.
