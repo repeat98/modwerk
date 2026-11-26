@@ -336,6 +336,12 @@
    "index": 62,
    "event": "ev_frame_deadline",
    "kind": "raise"
+  },
+  {
+   "index": 63,
+   "event": "ev_audio_step",
+   "kind": "call",
+   "room": 8
   }
  ]
 }

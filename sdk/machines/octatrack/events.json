@@ -535,6 +535,20 @@
     "1: jmp 0x4009fb5e"
    ],
    "done": null
+  },
+  {
+   "site": "0x400a2d6a",
+   "length": 6,
+   "guard": "1cb5e6a4478a2248b033baac126f63d4930860b767556518139cf5f717c08433",
+   "routine": "the tick's audio pass, just before 0x4009d1e8(track, bank, pattern, step, n): stock loads step = 0x800064d0[track] (track in d5) via lea 0x800064d0,%a0 (this site) then mvzb; remappers mutate the step before the call",
+   "head": [
+    "lea     0x800064d0,%a0",
+    "mvz.b   (0,%a0,%d5.l),%d0 | stock step for track d5 (displaced mvzb at 0x400a2d70)"
+   ],
+   "tail": [
+    "jmp 0x400a2d74 | movel %d0,%sp@- (the step argument to 0x4009d1e8)"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -2464,6 +2478,44 @@
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
+  },
+  {
+   "event": "ev_audio_step",
+   "index": 63,
+   "site": "0x400a2d6a",
+   "length": 6,
+   "room": 8,
+   "prototype": "int f(unsigned *step, unsigned track)",
+   "args": [
+    "&d0",
+    "d5"
+   ],
+   "results": {
+    "0": "next",
+    "*": "tail"
+   },
+   "when": "the tick's audio pass loads step = 0x800064d0[track] (track in d5) just before 0x4009d1e8(track, bank, pattern, step, n); remappers may change the step that plays",
+   "context": "the audio tick / frame interrupt: short, no firmware call that can block, the EMAC kept as found",
+   "contract": "Base loads the stock step into *step. Change *step to change which pattern step plays for this track. Return nonzero to take the track: no later handler runs. The base leaves the final step in d0 and rejoins at 0x400a2d74. The tick's d2-d7/a2-a6 are intact in a handler and must be kept, as C keeps them. PHAS does not subscribe (fire-time 0x400a2e12).",
+   "order": "lower first, then module id. 40: Keep Play Modes mode map; 50: Seq Pos address remap when enabled. v1 remappers return 0 to chain.",
+   "subscribers": [
+    {
+     "module": "playmodes",
+     "fn": "pm_ev_audio_step",
+     "order": 40,
+     "does": "maps the raw (or prior) step through the current play mode; returns 0 to chain",
+     "evidence": "machine-ports playmodes callWrappers step_ptr_track via pm_step_entry replaces pm_audio_step (fork mop102; native sources unchanged until a follow-up owner-approved playmodes runtime.json)"
+    },
+    {
+     "module": "seq-pos",
+     "fn": "sp_ev_audio_step",
+     "order": 50,
+     "does": "when sp_en[t], address-remaps *step via sp_map; else leaves it; returns 0 to chain",
+     "evidence": "sdk/octatrack/modules/seq-pos/unit.s sp_map; runtime.json subscribe replaces sp_audio_step (fork mop102); listing tip cursor/seq-pos-publish-f021"
+    }
+   ],
+   "orderEvidence": "Fork mop101/102: Play Modes order 40 then Seq Pos order 50 so address-mode modulates the play-mode-mapped step. PHAS stays off this list. Upstream hook index 63 (append after ev_frame_deadline 62; open ot_lfo_pmtr_dest #2261 must rebase to the next free index if this lands first). Nonzero take reserved for a future exclusive remapper.",
+   "kind": "call"
   }
  ]
 }
