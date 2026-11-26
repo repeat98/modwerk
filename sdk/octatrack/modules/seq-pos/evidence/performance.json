@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "module": "seq-pos",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 752,
+    "measured": 752,
+    "budget": 4790,
+    "method": "Static (MOP-178): m68k-elf-as -mcpu=54455 --defsym MODWERK_EVENTS=1 on sdk/drafts/seq-pos/unit.s; objdump -d; address-on sp_map 39 + sp_ev_audio_step 8 = 47 ×16 = 752. Measured (MOP-179, DESKTOP, 24 Nov 2026 Europe/London): private remix test/seq-pos BUILD=94 under ot_emu --mkii --frame with card-backed LOAD PROJECT; --watch-pc on every instruction of address-on sp_map + Detour sp_audio_step (45 PCs from linked runtime.elf); DRAM trampoline moveq #0,d0 / moveq #8,d1 / jmp sp_map at 0x40a98000 via --step N:call. Cases: follow (en=0) 20 authored → 320; on_mid (SPOS=64) 33 → 528; on_0 / on_127 47 → 752. Worst event 47 authored ×16 = 752; matches tip static. Emulator instruction counts ≠ chip timing. Budget 4790 = 10% of 362.8 µs frame at 132 MHz. Tip remapper USB lineage twin 775d9322… / remapper 4ef940ac7942 (mop178); Undo [] before Jon PC; Keep tip24 after."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 287.8,
+    "moduleLongestUs": 287.8,
+    "stockIdlePercent": 0.0,
+    "moduleIdlePercent": 0.0,
+    "method": "Emulator, not hardware (MOP-179, DESKTOP, 24 Nov 2026 Europe/London): ot_emu --mkii --dsp; stock image test/cfmeter-port BUILD=92; module test/cfmeter-seq-pos BUILD=95 (CF METER + SEQ POS). ot_fresh NOPROJ card, T8 FX2 = CF METER all banks/parts; --audio-in tones; same ~12 s / 33,075-frame MIDI flood both images (note on/off + CC ch 1–8/11 + clock 240 BPM; ~3,000 three-byte/s). Block-dump T8 read-back stayed silent (cfmeter.py --dump: no sync edges) — known port dry/FX read-back gap on this fresh project. Load taken from CF METER page-2 publisher lane 0x80000a40 via --watch-mem (N/REF/k writes at m_tail); slot k=4 = isr max counts/4 → µs at 132 MHz. Four mid-run 2 s cycles: stock 266.1 / 279.5 / 287.8 / 266.8 → longest 287.8; module 266.1 / 279.5 / 287.8 / 266.8 → longest 287.8. Idle slot k=2 = 0.00 both (no CF METER IDLE). Δ ISR 0.0 µs; idle Δ 0. Port period slot k=5 read ~725 µs (≈2×362.8 late-frame under this USB-in-remix flood) — recorded, not used as frameUs. Port times are not the unit's."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 3000,
+    "clockBpm": 240,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware (MOP-181, DESKTOP, 24 Nov 2026 Europe/London): mop57-shaped 62 s / 170,887 frames on cfmeter-seq-pos BUILD=95 + CF METER card with ~3,000 three-byte/s + clock 240 BPM and STOP/START holds at 7/22/37/52 s. No Part callAsMain (mop179's --step 85000:call:0x4004a8a4 omitted — that path ILLEGAL on this ot_emu). Ended REACHED; MIDI IN queued 0; MIDI OUT 3 bytes (0 after transport); watch-pc total 191,960 on note/CC/clock sites (= flood three-byte + clocks). hangs=0; stuckNotes=0; dropped=0. Keep tip24; no twin/Accept. Prior mop179 incomplete stress cited in usb-cycles-mop179 / usb-stress-mop181."
+  },
+  "sourceSha256": "2e2b8280de1d5c213aa9c685d85691000a3755882bdcf06d98037565173bffb2"
+}

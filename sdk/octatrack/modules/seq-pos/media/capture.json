@@ -1,0 +1,98 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+  "captureType": "hardware",
+  "setup": "Hardware USB --dev twin 775d9322d45235d5… (configHash 775d9322…; tip-matched ev_audio_step). Tip dual coexist MWMS (Play Modes + SEQ POS + LFO peers; no trig-prob) under Undo-only mid-trial (no Accept). MKII panel via USB key/encoder; transport stopped; 128×64 LCD over development screen request, scaled ×2, monochrome on=255 off=24. Inventory during capture: [\"Play Modes\",\"Seq Reset\",\"Slice Num\",\"Swing LFO\",\"Track Speed LFO\",\"Track Len\",\"Track Phase Off\",\"SEQ POS\",\"Time Stretch\"]; rolled back to []. Keep tip24 (eb667962…) restored by Jon power-cycle after the pass — not during capture.",
+  "palette": {
+    "on": [
+      255,
+      255,
+      255
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "plan": [
+    {
+      "press": [
+        "STOP"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "LFO"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "LFO"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "encoder": "A",
+      "note": "scroll PMTR to index 37 (coexist dial-max 37)"
+    },
+    {
+      "capture": "ot-setup-pmtr-spos.png"
+    }
+  ],
+  "screenshots": {
+    "ot-setup-pmtr-spos.png": {
+      "sha256": "247cdd2b1f8ba017df30a4f5d3b7cf2e443937518caa8ea0f2034cec8df11e77",
+      "page": "LFO SETUP",
+      "shows": "controls",
+      "note": "PMTR = SPOS (index 37); dial-max 37; tip remapper 4ef940ac7942"
+    },
+    "ot-toast-spos-nn.png": {
+      "sha256": "1c8e20513ffbc25ab776aded6af5344fa17e47c96b30eaabc1d0000163a9c93c",
+      "page": "SRC+FLEX (toast overlay)",
+      "shows": "toast",
+      "note": "MOP-196: T1+FUNC+LEVEL → toast T1 SPOS 127; tip wire 8816abca1"
+    },
+    "ot-toast-spos-off.png": {
+      "sha256": "fd2aa1c953ec9bcc8a7306ca81b13259f4b6541daf1f855c1e01bc8e8147f7fe",
+      "page": "SRC+FLEX (toast overlay)",
+      "shows": "toast",
+      "note": "MOP-196: T1+FUNC+NO → toast T1 SPOS OFF; tip wire 8816abca1"
+    }
+  },
+  "limits": [
+    "FUNC+TRACK toast pages Proven mop196 (FUNC+track-pad; not TRACK page key).",
+    "No ot_emu framebuffer session — hardware USB LCD only.",
+    "Not a catalogue force-list; draft evidence only. No Accept."
+  ]
+}

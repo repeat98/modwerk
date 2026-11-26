@@ -16095,6 +16095,331 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "seq-pos",
+      "key": "SEQ POS",
+      "name": "Seq Pos",
+      "version": "0.1.0-experimental",
+      "category": "machines",
+      "access": {
+        "location": "FUNC + TRACK + LEVEL for SPOS; LFO SETUP → PMTR = SPOS for modulation",
+        "steps": [
+          "Select an audio track with a pattern of distinct steps.",
+          "Hold FUNC and the TRACK key, turn LEVEL to set SPOS and enable address mode.",
+          "Hold FUNC and press LFO; set PMTR to SPOS and adjust DEP / WAVE / TRIG.",
+          "Hold FUNC + TRACK and press NO to return that track to the stock playhead."
+        ],
+        "screenshots": [
+          "media/ot-setup-pmtr-spos.png",
+          "media/ot-toast-spos-nn.png",
+          "media/ot-toast-spos-off.png"
+        ]
+      },
+      "author": {
+        "github": "jonathanwardle1992-beep",
+        "credits": [
+          "jonathanwardle1992-beep: sequencer-position LFO PMTR SPOS destination, address-mode step remap, ColdFire unit, documentation and thumbnail."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "SEQ POS",
+        "family": "Sequencer",
+        "summary": "Exposes sequencer position as an LFO PMTR destination (SPOS) so LFOs can address which step plays.",
+        "overview": "Seq Pos adds a per-audio-track sequencer position word that stock LFOs can write through PMTR = SPOS. When address mode is on, the tick plays the step selected by that word (scaled across the track length) instead of the stock playhead. Default off leaves stock sequencing unchanged until you set SPOS or point an LFO at it.",
+        "highlights": [
+          "LFO SETUP: PMTR = SPOS (index 37) addresses the played step",
+          "Per-track address mode; default off = stock playhead",
+          "FUNC + TRACK + LEVEL sets SPOS 0–127 and enables; FUNC + TRACK + NO restores stock",
+          "ColdFire only: no DSP, no effect slot"
+        ],
+        "usage": [
+          "Hold FUNC + TRACK n and turn LEVEL to set that track’s addressed position (toast Tn SPOS nn).",
+          "In LFO SETUP set PMTR to SPOS and raise DEP so the LFO sweeps which step plays.",
+          "Hold FUNC + TRACK n and press NO to follow the stock playhead again."
+        ]
+      },
+      "controls": [
+        {
+          "name": "SPOS",
+          "default": 0,
+          "count": 128,
+          "doc": "Per-track sequencer position address 0–127, scaled across the track length when address mode is on. Edited with FUNC+TRACK+LEVEL; LFO PMTR SPOS writes the live word.",
+          "labels": null
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [
+          "playmodes"
+        ],
+        "uiClaims": [
+          "key:FUNC+TRACK+LEVEL",
+          "key:FUNC+TRACK+NO"
+        ],
+        "limitations": [
+          "USB packages contribute ot_lfo_pmtr_dest (SPOS index 37) and drop base-owned count/formatter/beq/lea alone-sink sites (#21/#23/#25; MOP-61). Peer LFO drafts remain parked (not catalog co-selectables) until each is pinned; dest lea dropped (MOP-61; base owns 0x4000d042 after #25).",
+          "Also UI-claim overlap with parked trig-prob / track-len on FUNC+TRACK+LEVEL (and track-len on FUNC+TRACK+NO); those drafts list seq-pos until they pin.",
+          "Catalog-listed under sdk/octatrack/modules/seq-pos/ (upstream first release; fork MOP-248 pin). Production SPOS=37 (pad_to=8). Jump-colour under address mode remains Unproven/waived (mop243; mop219 Open fixture retained) — not Proven.",
+          "Audio tracks only; MIDI step remap and MIDI LFOs unwired in 0.1.0.",
+          "Conflicts with Play Modes on the tick audio step remap site until a shared step-map event exists.",
+          "Length defaults to 16 and learns from the observed playhead; exact pattern-blob length read is not wired.",
+          "Look-ahead, rebuild, LED playhead and MIDI sites from Play Modes §4 are not remapped in 0.1.0.",
+          "Enable / SPOS words are DRAM-only in 0.1.0 and do not survive reboot (known gap; mop247 proves inventory presence only).",
+          "Keep Accept + reboot persistence Proven on tip package 97de37e6… (mop245/247). Catalog conflicts list playmodes only; peer LFO drafts stay parked."
+        ]
+      },
+      "resources": {
+        "recorded": "25 November 2026; cycles mop179/181; memory mop202 sp_len init",
+        "storage": {
+          "label": "DRAM unit and per-track state",
+          "display": "944 B shared (892 image + 52 bss)",
+          "value": 944,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "MOP-202 tip linked USB remapper package after sp_len .data init: image 892 B + bss 52 B (pos_w 16 + sink 2 + en 8 + toast 16 + held 4 + func 4 + ALIGN pad 2; sp_len defaults in image). sites 0 (tip remapper). mop195 was 848+60=908; mop192 was 336+36=372. No DSP memory. See evidence/sp-len-init-tip-mop202-2026-11-25.md.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per audio step when address mode is on",
+          "display": "752 cycles/event worst (emulator)",
+          "value": 752,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": "mop179 ot_emu PC-watch worst 47 authored ×16 = 752 (SPOS 0/127 address-on); matches mop178 static. Load Δ ISR 0.0 µs vs stock under matched flood (address mode off). mop181 stress 62 s REACHED. Emulator ≠ chip. See evidence/performance.json.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "Eight audio tracks in address mode; up to three LFOs per track on SPOS.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "Emulator worst event 752 cycles/event (budget 4790). Matched CF METER flood: stock/module longest 287.8/287.8 µs (Δ 0 with address mode off). No per-sample DSP work. Emulator figures, not the unit's time.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "Linked tip USB package after MOP-202 sp_len .data init: 892 B code/data + 52 B BSS = 944 B shared (mop195 was 908; mop192 was 372). No DSP memory; tip remapper unevents Detour (sites 0).",
+            "source": "TESTING.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-26",
+          "conditions": "Octatrack MKII, after tip24 Keep PC, Part 1, transport playing, stock FILTER/DELAY companions, empty twin inventory, Undo-only trial; base dce64a781f8581b4 (development twin, Base draft index 63 + guard, after tip24 Keep PC); 3 readings of 8 s a state. Frame interrupt 52.1 % before, 52.1 % installed and used nowhere; CPU meter 62 % before, 62 % at rest.",
+          "source": "evidence/cpu-price.json"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "First upstream catalog listing of Seq Pos 0.1.0-experimental under sdk/octatrack/modules/seq-pos/. Keep Accept inventory/card-save + physical reboot persistence Proven on tip package 97de37e6… (mop245/247). Jump-colour under address mode remains Unproven/waived (mop243; mop219 Open fixture retained) — not Proven. tests.qualification place mop197: 752 cycles/event, budget 4790, memory 944. Shipped USB package 9bb78c63… (1224 B, module f7bb3258, ABI 8, features 128, sites 0). No new Accept / device_keep in this PR. resources.cpuPrice 0 (% of frame) from Undo-only npm run device:price -- --write on 2026-11-26 against package 9bb78c63… (evidence/cpu-price.json; at rest frame +0, cpu +0). Honest zero.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "8816abca1ad4a42a47d8036a66a09885f51c9048",
+        "gates": [
+          "modules/seq-pos/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Include Seq Pos in a configuration (catalog-listed MOP-248). Put a pattern with distinct steps on an audio track (different locks or samples per step help).",
+                "Hold FUNC and the track’s TRACK key, turn LEVEL. The toast reads `Tn SPOS nn` and address mode turns on; you should hear the addressed step instead of the marching playhead.",
+                "Hold FUNC and press LFO. Set PMTR to SPOS, raise DEP, pick a WAVE. The LFO now sweeps which step plays. Hold FUNC + TRACK and press NO (`Tn SPOS OFF`) to follow the stock playhead again."
+              ]
+            },
+            "screenshots": [
+              "media/ot-setup-pmtr-spos.png",
+              "media/ot-toast-spos-nn.png",
+              "media/ot-toast-spos-off.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "c8fc3b8a4a042f45d56a83385f750700aafbb0c971f9046f1ada6e2ef761f3fe",
+          "imageSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 752,
+              "maxConfiguration": 752,
+              "maxInstances": 1,
+              "budget": 4790,
+              "unit": "cycles/event",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "SPOS 0/127 and mid (64); address mode on/off. mop179 ot_emu PC-watch: follow(en=0) 20→320; on_mid 33→528; on_0/on_127 47→752. mop178 static address-on sp_map 39 + sp_ev_audio_step 8 = 47×16 = 752.",
+                "parameterModulation": "LFO→SPOS + DEP extremes cited in recipe; simultaneous multi-LFO / scene / CC matrix not re-measured this tip — cite mop179 worst event only.",
+                "modeSwitching": "Address on/off paths covered in PC-watch cases; FUNC+TRACK+NO / Part / Undo not claimed as qualification stress.",
+                "maxLoad": "Emulator flood ~3000 three-byte/s + clock 240 BPM; mop181 stress 62.0 s REACHED (170887 frames; hangs 0; dropped 0; no Part callAsMain). mop179 Part path ILLEGAL — omitted.",
+                "inputConditions": "ot_emu card-backed project; address-on worst at SPOS 0/127. Emulator instruction counts ≠ chip wall-clock."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Authored ColdFire unit (code + data incl. sp_len defaults, DRAM)",
+                "space": "sdram",
+                "words": 892,
+                "wordBits": 8,
+                "bytes": 892,
+                "scope": "shared"
+              },
+              {
+                "name": "Per-track sp_pos_w halfwords (8 tracks)",
+                "space": "sdram",
+                "words": 8,
+                "wordBits": 16,
+                "bytes": 16,
+                "scope": "shared"
+              },
+              {
+                "name": "Per-track sp_en (8)",
+                "space": "sdram",
+                "words": 8,
+                "wordBits": 8,
+                "bytes": 8,
+                "scope": "shared"
+              },
+              {
+                "name": "sp_dest_sink halfword (LFO dest sink)",
+                "space": "sdram",
+                "words": 1,
+                "wordBits": 16,
+                "bytes": 2,
+                "scope": "shared"
+              },
+              {
+                "name": "sp_toast buffer (16)",
+                "space": "sdram",
+                "words": 16,
+                "wordBits": 8,
+                "bytes": 16,
+                "scope": "shared"
+              },
+              {
+                "name": "sp_held_track + sp_func_held",
+                "space": "sdram",
+                "words": 2,
+                "wordBits": 32,
+                "bytes": 8,
+                "scope": "shared"
+              },
+              {
+                "name": "BSS ALIGN(4) pad",
+                "space": "sdram",
+                "words": 2,
+                "wordBits": 8,
+                "bytes": 2,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 944,
+            "maxInstances": 1,
+            "totalBytes": 944,
+            "conditions": "MOP-202 tip sp_len .data init re-count after mop195. USB tip remapper package ABI 8: image 892 B + bss 52 B (sha256 97de37e698ac88a7f2ad921462e18b7adf6c3fe92b590656d1bfe32c907ce222; sites 0). sp_len[8] defaults live in image .data (eight bytes of 16) — not BSS. BSS: pos_w 16 + sink 2 + en 8 + toast 16 + held 4 + func 4 + ALIGN pad 2 = 52. Region sums 892+16+8+2+16+8+2=944. mop195 was 848+60=908; mop192 was 336+36=372.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-25",
+            "tester": "jonathanwardle1992-beep",
+            "sourceRevision": "8816abca1ad4a42a47d8036a66a09885f51c9048",
+            "imageSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+            "summary": "Owner-authorized tip placement (MOP-197 / Jon push) of landed Keep-safe Undo USB digs on tip-matched --dev twin lineage (configHash 775d9322…; remapper 4ef940ac7942; OS image 34695b60… from mop172 SETUP capture; tip wire #165 / 8816abca1). Audible address-mode coexist WAV Proven (mop157 / #130 — onset Δ −254; peaks near-null; Detour-on-twin honesty retained). Tip-matched remapper + dual-install inventory Proven (mop167). SETUP PMTR=SPOS monochrome Proven (mop172). Dual-install words-move Proven (mop184 — T1 unique 33). Play Modes 0.2.1 runtime.json dual-install Proven (mop188 tip + mop189 USB — dial/PMTR 37; words unique 25; afterStore 35664; Undo []). FUNC+TRACK toast USB Proven (mop196 / #166 — T1 SPOS 127 / T1 SPOS OFF; publication PNGs; tip wire mop195). Emulator cycles/stress Proven in performance.json (mop179/181 — 752 / 62 s REACHED). Memory tip-wired 892+52=944 sharedBytes (mop202; mop195 was 908; mop192 was 372). Keep Accept inventory/card-save + physical reboot persistence Proven (mop245/247 on tip24 eb667962…; package 97de37e6…). Catalog PINNED (MOP-248; cite Keep mop245/247 + jump-colour Unproven/waived mop243 + qual place mop197).",
+            "limitations": [
+              "Memory integers tip-wired after MOP-202 sp_len .data init: linked image 892 + bss 52 = 944 sharedBytes (mop195 was 908; mop192 was 372). Detours omitted (sites 0; tip remapper unevented).",
+              "imageSha256 binds the mop172 SETUP capture OS image (1.40C / 34695b60…) on tip twin 775d9322… lineage. Tip subscribe package digest 97de37e6… (1224 B file; 892+52 payload) measured mop202; mop195 digest 5c1b28d9… was pre-sp_len-init; mop192 digest 2c56e500… was pre-toast-wire.",
+              "FUNC+TRACK toast USB Proven (mop196 / #166) after tip wire mop195 — T1 SPOS 127 / T1 SPOS OFF publication PNGs. TRACK page key compare remains AMP SETUP (mop185; not the recipe gesture).",
+              "Jump-colour / distinct-step colour under address mode Unproven/waived (mop243 owner waive — not Proven). mop219 Open fixture retained (SLICE/STRT S0≈S15; abort C/D); mop211 PTCH mute-isolation Open (S0≈S15); mop216 shared-Flex-attr-lock dead-end; mop223 protocol consumed; mop209 remapper-colour not reached; mop203 sp_len=16 + toast bound / C≈D cited; mop157 peaks near-null / timing-lag audible only. Cite mop227/mop242 decision path. Do not invent jump-colour Proven.",
+              "Keep Accept + reboot inventory Proven (mop245/247). Enable / SPOS DRAM words still do not survive reboot in 0.1.0 — mop247 proves module inventory presence only, not address-mode state survival.",
+              "Emulator instruction counts and mop181 stress are not chip wall-clock timing.",
+              "mop157 audible used a Detour-on-twin package (620 B); tip-matched remapper coexistence is from mop167/184/189/196, not that twin.",
+              "Published Play Modes 0.1.1 .mwrm still Detours (lagsBehind 0.2.1); mop189 used the source-built 0.2.1 runtime package.",
+              "Duration / eight-track stress on hardware were not recorded as a separate qualification stress pass; mop181 is emulator-only.",
+              "First catalog release (MOP-248) after mop197 place + mop245/247 Keep; cite jump-colour Unproven/waived mop243; no Accept invent."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original work by jonathanwardle1992-beep, MIT (LICENSE). Site plan uses published addresses and SHA-256 guards only. No Elektron firmware, extracted routines or tables."
+      },
+      "media": [
+        {
+          "path": "media/ot-setup-pmtr-spos.png",
+          "captureType": "hardware",
+          "caption": "LFO SETUP PMTR = SPOS on a tip-matched --dev twin mid-trial (Undo-only). Hardware USB LCD.",
+          "alt": "Octatrack LFO SETUP page with PMTR set to SPOS.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "LFO SETUP",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+            "setup": "Hardware USB --dev twin (configHash 775d9322…) tip-matched ev_audio_step; tip dual coexist MWMS under Undo; transport stopped; 128×64 LCD over development screen request, scale 2, monochrome. FUNC+TRACK toast pages Proven mop196."
+          }
+        },
+        {
+          "path": "media/ot-toast-spos-nn.png",
+          "captureType": "hardware",
+          "caption": "FUNC+track-pad+LEVEL toast T1 SPOS 127 on tip twin mid-trial (Undo-only) after mop195 tip wire.",
+          "alt": "Octatrack LCD toast reading T1 SPOS 127 over SRC+FLEX.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC+FLEX",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+            "setup": "Hardware USB tip twin 775d9322… tip dual; T1+FUNC+LEVEL; wired seq-pos 8816abca1; Undo []."
+          }
+        },
+        {
+          "path": "media/ot-toast-spos-off.png",
+          "captureType": "hardware",
+          "caption": "FUNC+track-pad+NO toast T1 SPOS OFF on tip twin mid-trial (Undo-only) after mop195 tip wire.",
+          "alt": "Octatrack LCD toast reading T1 SPOS OFF over SRC+FLEX.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC+FLEX",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+            "setup": "Hardware USB tip twin 775d9322… tip dual; T1+FUNC+NO; wired seq-pos 8816abca1; Undo []."
+          }
+        }
+      ]
     }
   ]
 }

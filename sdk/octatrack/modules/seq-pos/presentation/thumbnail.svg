@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Seq Pos — LFO addresses sequencer steps</title>
+<desc id="description">An LFO wave feeding a step-address arrow into a 16-step grid. Conceptual signal art, not a measured screen.</desc>
+<style>
+.signal-art{width:100%;height:calc(100% - 46px);overflow:visible;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.signal-grid{stroke:#ffffff;opacity:.035;stroke-width:.7}
+.signal-main{stroke:#6ec4a8;stroke-width:2.3}
+.signal-secondary{stroke:#6ec4a8;opacity:.45;stroke-width:1.7}
+.signal-ghost{stroke:#6ec4a8;opacity:.2;stroke-width:1.3}
+.signal-dot{fill:#6ec4a8}
+.signal-art text{fill:#6ec4a8;opacity:.52;font:8px monospace;letter-spacing:.7px;stroke:none}
+</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid">
+  <path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/>
+  <path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/>
+</g>
+<g>
+  <text x="24" y="28">LFO</text>
+  <text x="210" y="28">PMTR SPOS</text>
+  <!-- LFO wave -->
+  <path class="signal-main" d="M28 88C40 60 52 60 64 88S88 116 100 88S124 60 136 88"/>
+  <path class="signal-secondary" d="M136 88H168"/>
+  <path class="signal-main" d="M162 83L168 88L162 93"/>
+  <!-- addressed step highlight on a 16-step row -->
+  <g>
+    <rect class="signal-ghost" x="176" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="188" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="200" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="212" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-main" x="224" y="64" width="8" height="40" rx="1"/>
+    <rect class="signal-ghost" x="236" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="248" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="260" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="272" y="72" width="8" height="32" rx="1"/>
+    <rect class="signal-ghost" x="284" y="72" width="8" height="32" rx="1"/>
+    <circle class="signal-dot" cx="228" cy="58" r="2.5"/>
+  </g>
+  <text x="24" y="150">ADDRESS</text>
+  <text x="176" y="150">STEP GRID</text>
+  <path class="signal-ghost" d="M28 168H292"/>
+  <text x="24" y="182">SEQ POS</text>
+  <text x="210" y="182">LFO → STEP</text>
+</g>
+</svg>
