@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * Stream probe A, the ColdFire side (build_core.py --stream-probe N): development twins only, never for users.
+ * Stream probe A, the ColdFire side (stream_probe.py --stream-probe N): development twins only, never for users.
  * module-adapters/stream_probe.py has the design. dsp_hooks.s calls the first three from the frame transfer's
  * state 7, in the eDMA completion interrupt (IPL 6) with the frame interrupt masked: short, no firmware call.
  *
@@ -11,14 +11,16 @@
  * 2 stops after one last block that asks the checker for a snapshot; 3 asks the next block for a snapshot, then
  * reads the checker's published words with the loader's PEEK (a bit a packet: read again until 240 bits are in);
  * 4 reads and restarts the time windows. Times are DTCN3 counts (132 MHz, 47,891 a frame) since the frame
- * interrupt's entry (mw_frame_t0). A block whose transfer the watchdog gave up (dsp.c) stops the probe for good. */
+ * interrupt's entry (mw_frame_t0); the unmask is kept for frames without a block too, as the baseline. A block whose
+ * transfer the watchdog gave up (dsp.c) stops the probe for good. */
 #include <stdint.h>
 
 #define WORDS MODWERK_STREAM_WORDS
 #define LOOPS (WORDS / 32u)
 #define MAGIC 0x5350u
 #define DSP_WORDS 10u
-#define REPLY_WORDS 46u
+#define WINDOWS 5u
+#define REPLY_WORDS (16u + 5u * WINDOWS + DSP_WORDS)
 #define DTCN3 (*(volatile uint32_t *)0xfc07c00cu)
 #define PINS (*(volatile uint8_t *)0xfc094005u) /* EPORT pin levels: bit 1 is core 0's host request */
 #define TCD0_SADDR (*(volatile uint32_t *)0xfc045000u)
@@ -49,7 +51,8 @@ static volatile uint8_t pin_done;
 static volatile uint32_t saved_saddr, saved_nbytes;
 static volatile uint16_t saved_citer, saved_biter;
 struct window { uint32_t min, max, count, hi, lo; };
-static volatile struct window windows[4]; /* the block's start, its completion, the transfer, the unmask */
+/* The block's start, its completion, the transfer, the unmask; the unmask in a frame without a block (the baseline). */
+static volatile struct window windows[WINDOWS];
 
 static void keep(unsigned k, uint32_t v)
 {
@@ -98,7 +101,10 @@ void mw_stream_account(void)
         snap_wait = snap_wait - 1u;
         if (!snap_wait) mw_stream_dsp_wanted = 1, snaps = snaps + 1u;
     }
-    if (!(f & 1u)) return;
+    if (!(f & 1u)) {
+        keep(4, now - t0);
+        return;
+    }
     TCD0_SADDR = saved_saddr, TCD0_NBYTES = saved_nbytes, TCD0_CITER = saved_citer, TCD0_BITER = saved_biter;
     if (f & 4u) {
         uint32_t start = mw_stream_started;
@@ -127,15 +133,15 @@ uint32_t modwerk_stream_request(unsigned op, uint8_t *out)
                                (snap_wait ? 16u : 0u) | (mw_stream_dsp_wanted ? 32u : 0u),
                                offered, sent, completed, accounted, straddles, refused, snaps, seq, dl_early, dl_straddle,
                                mw_stream_dsp_bits, MODWERK_STREAM_COUNTERS, taken};
-    uint32_t sr = modwerk_machine_mask(); /* 20 words, well under the frame interrupt's 200 us */
-    for (unsigned k = 0; k < 4u; ++k) {
+    uint32_t sr = modwerk_machine_mask(); /* 25 words, well under the frame interrupt's 200 us */
+    for (unsigned k = 0; k < WINDOWS; ++k) {
         volatile struct window *w = &windows[k];
         v[16u + 5u * k] = w->min, v[17u + 5u * k] = w->max, v[18u + 5u * k] = w->count;
         v[19u + 5u * k] = w->hi, v[20u + 5u * k] = w->lo;
         if (op == 1u || op == 4u) w->min = w->max = w->count = w->hi = w->lo = 0;
     }
     modwerk_machine_unmask(sr);
-    for (unsigned i = 0; i < DSP_WORDS; ++i) v[36u + i] = mw_stream_dsp[i];
+    for (unsigned i = 0; i < DSP_WORDS; ++i) v[16u + 5u * WINDOWS + i] = mw_stream_dsp[i];
     for (unsigned i = 0; i < 4u * REPLY_WORDS; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
     return 4u * REPLY_WORDS;
 }

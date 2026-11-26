@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { describeDsp, describeStream, parseStreamReply, STREAM_DSP_BITS, STREAM_REPLY_BYTES } from './stream-probe.mjs'
 
-// A reply as stream_probe.c lays it out: 46 big-endian words.
+// A reply as stream_probe.c lays it out: 51 big-endian words.
 function reply(set = {}) {
-  const words = new Array(46).fill(0)
+  const words = new Array(51).fill(0)
   Object.assign(words, { 0: 0x4d575350, 1: 64, 2: 1, 3: 1000, 4: 1000, 5: 1000, 6: 1000, 10: 1000, 13: STREAM_DSP_BITS, 14: 0x1fd5, 15: 1 }, set)
   const bytes = new Uint8Array(4 * words.length), view = new DataView(bytes.buffer)
   words.forEach((w, i) => view.setUint32(4 * i, w >>> 0))
@@ -20,15 +20,16 @@ describe('stream probe reply', () => {
     const text = describeStream(r)
     expect(text).toContain('64 halfwords a frame: sending')
     expect(text).toContain('unmask   min 250.0 us (68.9 %)')
-    expect(text).toContain('start    no blocks in this window')
+    expect(text).toContain('start    none in this window')
+    expect(r.windows.baseline.count).toBe(0)
   })
 
   it('reads the checker counters and refuses a torn or partial read', () => {
-    const counters = { 36: 3, 37: 5000, 38: 4990, 39: 1, 40: 9, 41: 0, 42: 2, 43: 4990, 44: 0x10, 45: 3 }
+    const counters = { 41: 3, 42: 5000, 43: 4990, 44: 1, 45: 9, 46: 0, 47: 2, 48: 4990, 49: 0x10, 50: 3 }
     const text = describeDsp(parseStreamReply(reply(counters)))
     expect(text).toContain('5000 frames, 4990 good, 1 bad, 9 missing, 0 out of order, 2 with bits 16-23 set')
     expect(text).toContain("last bad block's differences $000010")
-    expect(describeDsp(parseStreamReply(reply({ ...counters, 45: 4 })))).toContain('torn read (serials 3 and 4)')
+    expect(describeDsp(parseStreamReply(reply({ ...counters, 50: 4 })))).toContain('torn read (serials 3 and 4)')
     expect(describeDsp(parseStreamReply(reply({ ...counters, 13: 100 })))).toBe('DSP checker: 100 of 240 bits read')
   })
 

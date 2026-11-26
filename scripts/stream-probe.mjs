@@ -3,10 +3,10 @@
 // development twins built with --stream-probe N. device.mjs `do stream`, `stream:on`, `stream:off`, `stream:dsp`.
 export const STREAM_REQUEST = 47
 export const STREAM_OPS = { read: 0, start: 1, stop: 2, snapshot: 3, window: 4 }
-export const STREAM_REPLY_BYTES = 184
+export const STREAM_REPLY_BYTES = 204
 export const STREAM_DSP_BITS = 240
 const FRAME = 47891 // DTCN3 counts a frame (16 samples at 44.1 kHz, 132 MHz)
-const WINDOWS = ['start', 'complete', 'transfer', 'unmask']
+const WINDOWS = ['start', 'complete', 'transfer', 'unmask', 'baseline'] // baseline: the unmask in a frame without a block
 const DSP = ['frames', 'good', 'bad', 'missing', 'jumps', 'junk', 'last', 'diff']
 
 /** The reply's words, named; throws on anything that is not a stream probe reply. */
@@ -18,7 +18,7 @@ export function parseStreamReply(bytes) {
     const at = 16 + 5 * k, count = w(at + 2), sum = w(at + 3) * 2 ** 32 + w(at + 4)
     return [name, { min: w(at), max: w(at + 1), count, mean: count ? sum / count : 0 }]
   }))
-  const published = Array.from({ length: 10 }, (_, i) => w(36 + i))
+  const published = Array.from({ length: 10 }, (_, i) => w(16 + 5 * WINDOWS.length + i))
   return {
     words: w(1), armed: !!(flags & 1), stopping: !!(flags & 2), failed: !!(flags & 4), snapshotPending: !!(flags & 8),
     snapshotWaiting: !!(flags & 16), dspReadQueued: !!(flags & 32), offered: w(3), sent: w(4), completed: w(5), accounted: w(6),
@@ -37,7 +37,7 @@ export function describeStream(r) {
     `${r.accounted} accounted, ${r.refused} refused, ${r.straddles} across a frame start; state-7 early visits ${r.early}, loader packets across a frame start ${r.loaderStraddles}`]
   for (const name of WINDOWS) {
     const t = r.windows[name]
-    lines.push(`  ${name.padEnd(8)} ${t.count ? `min ${us(t.min)}, mean ${us(t.mean)}, max ${us(t.max)} over ${t.count}` : 'no blocks in this window'}`)
+    lines.push(`  ${name.padEnd(8)} ${t.count ? `min ${us(t.min)}, mean ${us(t.mean)}, max ${us(t.max)} over ${t.count}` : 'none in this window'}`)
   }
   return lines.join('\n')
 }

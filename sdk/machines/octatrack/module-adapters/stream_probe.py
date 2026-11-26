@@ -47,7 +47,7 @@ CAPACITY = 0x400 - REGION  # 160 words a bank, up to stock's own $x400 transfer
 WORDS = tuple(range(32, CAPACITY + 1, 32))  # whole 64-byte minor loops: 32, 64, 96, 128, 160
 MAGIC = 0x5350         # bit 0 set: publish the counters after this block (a snapshot)
 REQUEST = 47           # dev.c: STREAM PROBE; wValue 0 read, 1 start, 2 stop, 3 snapshot, 4 read and restart the windows
-REPLY_WORDS = 46
+REPLY_WORDS = 51      # 16 counts, 5 time windows of 5 words, the published copy
 DSP_WORDS = 10         # the published copy: serial, frames, good, bad, missing, jumps, junk, last, diff, serial
 COUNTERS = ('frames', 'good', 'bad', 'missing', 'jumps', 'junk', 'last', 'diff')
 

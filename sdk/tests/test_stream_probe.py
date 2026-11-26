@@ -145,6 +145,15 @@ copied:
                 stream_probe.check_words(bad)
         self.assertGreater(stream_probe.proof(), 0)
         self.assertEqual(stream_probe.REGION + stream_probe.CAPACITY, 0x400)
+        # stream_probe.c's reply, dev.c's length check and scripts/stream-probe.mjs agree on its size.
+        c = stream_probe.SOURCE.read_text()
+        define = lambda name: int(re.search(rf'#define {name} (\d+)u', c).group(1))
+        self.assertEqual(16 + 5 * define('WINDOWS') + define('DSP_WORDS'), stream_probe.REPLY_WORDS)
+        self.assertEqual(define('DSP_WORDS'), stream_probe.DSP_WORDS)
+        self.assertEqual(int(re.search(r'#define MAGIC 0x([0-9a-f]+)u', c).group(1), 16), stream_probe.MAGIC)
+        reader = (SDK.parents[2] / 'scripts/stream-probe.mjs').read_text()
+        self.assertIn(f'STREAM_REPLY_BYTES = {4 * stream_probe.REPLY_WORDS}', reader)
+        self.assertIn(f'STREAM_REQUEST = {stream_probe.REQUEST}', reader)
 
     def test_build_seams_and_scheduler(self):
         core = stream_probe.build_core_module()  # every seam found once, and the edited build_core.py compiles
