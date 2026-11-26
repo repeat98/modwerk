@@ -1,0 +1,78 @@
+{
+  "module": "midi-scenes",
+  "version": "0.3.1-experimental",
+  "base": "8fd6d456",
+  "scene": "MKII, OS 1.40C, development twin 8fd6d456 of base 0.8.1 (eb667962 with --dev); the owner's loaded project as the twin booted it (bank G, pattern 1), MIDI Scenes installed with no lock, MIDI channels as saved",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-26T06:50:00.485Z",
+  "result": {
+    "id": "midi-scenes",
+    "version": "file",
+    "packageSha256": "17f934ffa1110dc6d3a9f20caea3cee456234dd6b4b8124382673f1248b08563",
+    "before": {
+      "frame": 28.5,
+      "frameMax": 56.2,
+      "frames": 67238,
+      "skipped": 0,
+      "cpu": 43.6,
+      "dsp1to4": 32.7,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 33.8,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.3,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.5,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      },
+      "allocation": {
+        "modulePoolBytes": 126768,
+        "dspProgramWordsT1to4": 441,
+        "dspProgramWordsT5to8": 441
+      }
+    },
+    "atRest": {
+      "frame": 28.5,
+      "frameMax": 56.7,
+      "frames": 67183,
+      "skipped": 0,
+      "cpu": 43.9,
+      "dsp1to4": 32.7,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 33.8,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.2,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.4,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      },
+      "allocation": {
+        "modulePoolBytes": 126768,
+        "dspProgramWordsT1to4": 441,
+        "dspProgramWordsT5to8": 441
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0.3,
+      "dsp1to4": 0,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 0
+    },
+    "rolledBack": true
+  }
+}
