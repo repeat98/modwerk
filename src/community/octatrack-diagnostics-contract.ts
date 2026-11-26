@@ -100,8 +100,9 @@ export interface DeviceCrash { count: number; vector: number; pc: number; sr: nu
  * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
  * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none.
  * `packets`: each core's last loader packet header, eight 16-bit words (the record's tx[2][8]); sites before
- * 16 November 2026 sent none. */
-export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][] }
+ * 16 November 2026 sent none. `host`: the host port's status (the record's isr[2]): the selected core's ISR when the
+ * stall was found, and core 1's as dsp_core1.s last read it; sites before 27 November 2026 sent none. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][]; host?: number[] }
 const FRAME_US = 363, LATE_WINDOW = [110, 190] as const, LATE_TAIL = 6
 /** How late each of a stall's frames began against the DSP's frame grid, in µs: the lateness before it plus its gap
  * less one frame, never under 0. Past a whole frame (or within 20 µs of one) the DSP has skipped that frame, and a gap
@@ -118,7 +119,7 @@ export function stallLateness(frames: number[]): number[] {
 /** A stall in a line: its frames (the last gaps, the longest with the run before it, and whether one of the last frames
  * began in the late entry's window, docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame), then each core's
  * last packet and whether a publication was under way (describeStallPackets). '' when the record holds none of these. */
-export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report'>): string {
+export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report' | 'host'>): string {
   return [frames?.length ? stallFrames(frames) : '', describeStallPackets(stall)].filter(Boolean).join('; ')
 }
 function stallFrames(frames: number[]): string {
@@ -152,11 +153,19 @@ export function describeStallPacket(header: number[]): string {
 /** Each core's last packet, and whether the loader's manager was publishing (a pick, a Part change or an install) when
  * the stall was found: the report's `manager` word, phase in its low byte (0 idle). The watchdog finds a stall only
  * while a job waits (OCTATRACK_HARDWARE_TRAPS.md), so a publication may have begun after the frames stopped. */
-export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report'> | undefined): string {
+export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report' | 'host'> | undefined): string {
   const lines = (stall?.packets ?? []).map((header, core) => `core ${core} last packet: ${describeStallPacket(header)}`)
-  const manager = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report?.[DSP_REPORT_NAMES.indexOf('manager')] : undefined
-  const phase = (manager ?? 0) & 0xff
+  const report = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report : undefined, word = (name: string) => report?.[DSP_REPORT_NAMES.indexOf(name)]
+  const manager = word('manager'), phase = (manager ?? 0) & 0xff
   if (manager !== undefined) lines.push(phase ? `a pick, Part change or install under way when it was found (manager phase ${phase}${MANAGER_PHASES[phase] ? ', ' + MANAGER_PHASES[phase] : ''})` : 'no pick, Part change or install under way when it was found')
+  // A job still waiting (status 0) whose core's header carries no magic was queued but never sent (transfer.c sends a
+  // queued job at the next frame): the frames had stopped before it, so it found the stall and did not cause it.
+  const unsent = [0, 1].filter(core => word(core ? 'job1' : 'job0') === 0 && stall?.packets?.[core]?.length && stall.packets[core][0] !== PACKET_MAGIC)
+  if (unsent.length) lines.push(`the waiting job on core ${unsent.join(' and ')} was never sent: the frames had stopped before it`)
+  // dsp.c's HOST_ISR: bit 0 RXDF (the core holds a word the ColdFire never took, so it waits at P:$97), bit 1 TXDE.
+  const isr = stall?.host?.[0], select = (word('eportPinFlagSelect') ?? 0) & 0xff
+  if (isr !== undefined) lines.push(`core ${select} host port: ${isr & 1 ? 'a word waiting for the ColdFire (RXDF), so the core waits at P:$97 for it' : 'no word waiting for the ColdFire, so the core was not waiting on the host'}` +
+    (isr & 2 ? '' : ", and it had not taken the ColdFire's last word (TXDE clear)"))
   return lines.join('; ')
 }
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
@@ -249,7 +258,9 @@ export interface OctatrackDiagnostic {
   step?: DiagnosticSyncStep
   reconnect?: typeof TRIAL_RECONNECT_FAILURES[number]
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
-   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+   * received, refusals, bus resets, data stages primed, completed and abandoned; from 26 November 2026 a seventh entry,
+   * the last completed data stage's descriptor status byte (0x40 halted, 0x20 data buffer error, 0x08 transaction error),
+   * as it stands after the sync: it belongs to this sync only when the completed count rose. */
   usb?: number[]
   /** Offset into the staged package (CHUNK only). Remaining bytes refer to the entire EP0 OUT frame. */
   upload?: { command: StagingCommand; chunkOffset?: number; remainingBytes?: number }
