@@ -282,8 +282,8 @@ int mw_link_key(void *brain, char *event)
     person = (uint32_t)key < KEY_IDS && !mine && (flags & KEY_DOWN) && (!replay || panel_down(key));
     last_key = key;
     last_tick = ticks;
-    if (mine) {                         // a press the link queued before UPGRADE OS NOW? opened never reaches it
-        if (!(flags & KEY_DOWN) || !flash_waits())
+    if (mine) {                         // nothing the link queued reaches UPGRADE OS NOW?, a press or a release: stock
+        if (!flash_waits())             // takes the release of a YES it saw go down as the answer (on a unit, 26 Nov)
             return 0;
         held_back();
         return 1;
